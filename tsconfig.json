@@ -1,0 +1,62 @@
+{
+    "compilerOptions": 
+    {
+        "module": "commonjs",
+        "noImplicitAny": true,
+        "removeComments": true,
+        "preserveConstEnums": true,
+        "outFile": "bin/webmolkit-build.js",
+        "sourceMap": true
+    },
+    "files": 
+    [
+        "src/decl/jquery.d.ts",
+        
+        "src/data/DataSheet.ts",
+        "src/data/DataSheetStream.ts",
+        "src/data/FormatList.ts",
+        "src/data/Molecule.ts",
+        "src/data/MoleculeStream.ts",
+        "src/data/MolUtil.ts",
+        "src/data/Rendering.ts",
+        "src/data/SketchUtil.ts",
+        
+        "src/dialog/Dialog.ts",
+        "src/dialog/Download.ts",
+        "src/dialog/EditCompound.ts",
+        "src/dialog/MapReaction.ts",
+        "src/dialog/PickRecent.ts",
+        
+        "src/gfx/FontData.ts",
+        "src/gfx/Geom.ts",
+        "src/gfx/MetaVector.ts",
+        
+        "src/rpc/Account.ts",
+        "src/rpc/Func.ts",
+        "src/rpc/Pile.ts",
+        "src/rpc/RPC.ts",
+        "src/rpc/Search.ts",
+
+        "src/sketcher/CommandBank.ts",
+        "src/sketcher/MoleculeActivity.ts",
+        "src/sketcher/Sketcher.ts",
+        "src/sketcher/TemplateBank.ts",
+        "src/sketcher/ToolBank.ts",
+
+        "src/ui/ButtonBank.ts",
+        "src/ui/ButtonView.ts",
+        "src/ui/CircleButton.ts",
+        "src/ui/OptionList.ts",
+        "src/ui/RowView.ts",
+        "src/ui/SearchPanel.ts",
+        "src/ui/SearchMolecules.ts",
+        "src/ui/SearchReactions.ts",
+        "src/ui/Tooltip.ts",
+        "src/ui/ViewStructure.ts",
+        "src/ui/Widget.ts",
+        
+        "src/util/Cookies.ts",
+        "src/util/util.ts",
+        "src/util/vec.ts"
+    ]
+}

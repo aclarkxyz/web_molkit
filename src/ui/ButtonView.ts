@@ -1,0 +1,1030 @@
+/*
+    MolSync
+
+    (c) 2010-2016 Molecular Materials Informatics, Inc.
+
+    All rights reserved
+    
+    http://molmatinf.com
+
+	[PKG=molsync]
+*/
+
+///<reference path='Widget.ts'/>
+
+/*
+	ButtonView: a container for a stack of ButtonBanks. The ButtonView handles all the display/user interaction parts
+	of a button bank. A ButtonView should be owned by a container object that defines a region of space within which this
+	object can position itself.
+*/
+
+interface ButtonViewDisplay
+{
+	id:string;
+	x?:number;
+	y?:number;
+	width?:number;
+	height?:number;
+	helpSpan?:JQuery;
+	svgDOM?:Element;
+}
+
+class ButtonView extends Widget
+{
+	border = 0x808080;
+	background = 0xFFFFFF;
+	buttonColNorm1 = 0x47D5D2;
+	buttonColNorm2 = 0x008FD1;
+	buttonColActv1 = 0x30FF69;
+	buttonColActv2 = 0x008650;
+	buttonColSel1 = 0xFFFFFF;
+	buttonColSel2 = 0xE0E0E0;
+
+	canvas:HTMLCanvasElement = null;
+	stack:ButtonBank[] = [];
+	display:ButtonViewDisplay[] = [];
+	selectedButton:string = null;
+	highlightButton:string = null;
+	hasBigButtons = true;
+	prefabImgSize = 44;
+	idealSize = 50;
+	gripHeight = 30;
+	gripWidth = 50;
+	isRaised = true;
+	outPadding = 2;
+	inPadding = 2;
+	x = 0;
+	y = 0;
+	width = 0;
+	height = 0;
+
+	// static cache: needs to be filled out just once; will contain the {icon:svg} pairs that can be used in the buttons
+	private static ACTION_ICONS:any = null;
+		
+	constructor(private position:string, private parentX:number, private parentY:number, private parentWidth:number, private parentHeight:number)
+	{
+		super();
+	}
+
+	// static: should be called before making use of buttons; does nothing if they are already defined
+	public static prepare(callback:() => void, master:any)
+	{
+		if (ButtonView.ACTION_ICONS)
+		{
+			callback.call(master);
+			return;
+		}
+		
+		let fcn = function(result:any, error:ErrorRPC)
+		{
+			if (!result.actions)
+			{
+				alert('Fetching action icons failed: ' + error.message);
+				return;
+			}
+			ButtonView.ACTION_ICONS = result.actions;
+			
+			callback.call(master);
+		};
+		Func.getActionIcons({}, fcn, this);
+	}
+
+	// --------------------------------------- public methods ---------------------------------------
+
+	// create the canvas
+	public render(parent:any):void
+	{
+		super.render(parent);
+		
+		this.content.css('position', 'absolute');
+		this.content.css('width', `${this.width}px`);
+		this.content.css('height', `${this.height}px`);
+		this.content.addClass('no_selection');
+		
+		this.layoutButtons();
+		
+		let canvasStyle = 'position: absolute; left: 0; top: 0;';
+		canvasStyle += 'pointer-events: none;';
+		this.canvas = <HTMLCanvasElement>newElement(this.content, 'canvas', {'width': this.width, 'height': this.height, 'style': canvasStyle});
+		this.canvas.style.width = this.width + 'px';
+		this.canvas.style.height = this.height + 'px';
+		
+		this.applyOffset();
+		this.redraw();
+
+		const self = this;		
+		this.content.click(function(event:MouseEvent) {self.mouseClick(event);});
+		this.content.dblclick(function(event:MouseEvent) {self.mouseDoubleClick(event);});
+		this.content.mousedown(function(event:JQueryEventObject) {self.mouseDown(event);});
+		this.content.mouseup(function(event:JQueryEventObject) {self.mouseUp(event);});
+		this.content.mouseover(function(event:JQueryEventObject) {self.mouseOver(event);});
+		this.content.mouseout(function(event:JQueryEventObject) {self.mouseOut(event);});
+		this.content.mousemove(function(event:JQueryEventObject) {self.mouseMove(event);});
+		this.content.keypress(function(event:KeyboardEvent) {self.keyPressed(event);});
+		this.content.keydown(function(event:KeyboardEvent) {self.keyDown(event);});
+		this.content.keyup(function(event:KeyboardEvent) {self.keyUp(event);});
+	}
+
+	// adds a new molsync.ui.ButtonBank instance to the stack, making it the current one
+	public pushBank(bank:ButtonBank):void
+	{
+		bank.buttonView = this;
+		bank.isSubLevel = this.stack.length > 0;
+		bank.init();
+		this.stack.push(bank);
+		
+		if (this.canvas != null)
+		{
+			this.layoutButtons();
+			this.replaceCanvas();
+			this.applyOffset();
+			this.redraw();
+		}
+	}
+
+	// removes the top buttonbank from the stack
+	public popBank():void
+	{
+		if (this.stack.length == 0) return;
+		this.stack[this.stack.length - 1].bankClosed();
+		this.stack.length--;
+		
+		if (this.canvas != null)
+		{
+			this.layoutButtons();
+			this.replaceCanvas();
+			this.applyOffset();
+			this.redraw();
+		}
+	}
+
+	// updates the current bank, given that the buttons have probably changed
+	public refreshBank():void
+	{
+		if (this.canvas != null)
+		{
+			this.layoutButtons();
+			this.replaceCanvas();
+			this.applyOffset();
+			this.redraw();
+		}
+	}
+
+	// get/set the selected button index, by ID
+	public getSelectedButton():string
+	{
+		return this.selectedButton;
+	}
+	public setSelectedButton(id:string):void
+	{
+		if (id != this.selectedButton)
+		{
+			this.selectedButton = id;
+			this.redraw();
+		}
+	}
+
+	// raises or lowers the buttonbank
+	public raiseBank():void
+	{
+		if (this.isRaised) return;
+		this.isRaised = true;
+		if (this.content)
+		{
+			this.layoutButtons();
+			this.replaceCanvas();
+			this.applyOffset();
+			this.redraw();
+		}
+	}
+	public lowerBank():void
+	{
+		if (!this.isRaised) return;
+		this.isRaised = false;
+		if (this.content)
+		{
+			this.layoutButtons();
+			this.replaceCanvas();
+			this.applyOffset();
+			this.redraw();
+		}
+	}
+
+	// determines whether or not the "big buttons" are used; big buttons are typically better for mobile devices, which
+	// tend to have high screen DPI, while on PC monitors they tend to look a bit goofy
+	public getHasBigButtons():boolean
+	{
+		return this.hasBigButtons;
+	};
+	public setHasBigButtons(flag:boolean)
+	{
+		this.hasBigButtons = flag;
+		this.prefabImgSize = flag ? 44 : 36;
+		this.idealSize = flag ? 50 : 40;
+	};
+	
+	// returns true if the coordinate is (more or less) within the button outline, which is necessary for propagating mouse events;
+	// it's also sometimes handy for exterior code to check if the position is covered
+	public withinOutline(x:number, y:number)
+	{
+		let w = this.width, h = this.height;
+		if (x < 0 || x > w || y < 0 || y > h) return false;
+		
+		if (this.position == 'centre' || this.stack.length == 0) return true;
+		if (this.position == 'left')
+		{
+			let my = 0.5 * h - 1, gw = this.gripHeight, hg = 0.5 * this.gripWidth;
+			return x < w - gw || (y > my - hg && y < my + hg);
+		}
+		else if (this.position == 'right')
+		{
+			let my = 0.5 * h - 1, gw = this.gripHeight, hg = 0.5 * this.gripWidth;
+			return x > gw || (y > my - hg && y < my + hg);
+		}
+		else if (this.position == 'top')
+		{
+			let mx = 0.5 * w - 1, gh = this.gripHeight, hg = 0.5 * this.gripWidth;
+			return y < h - gh || (x > mx - hg && x < mx + hg);
+		}
+		else if (this.position == 'bottom')
+		{
+			let mx = 0.5 * w - 1, gh = this.gripHeight, hg = 0.5 * this.gripWidth;
+			return y > gh || (x > mx - hg && x < mx + hg);
+		}
+		return true;
+	};
+
+	// --------------------------------------- private methods ---------------------------------------
+
+	// figures out the size that this buttonview needs to be
+	private layoutButtons():void
+	{
+		if (this.content == null) return; // too soon
+
+		let outPadding = this.outPadding, inPadding = this.inPadding;
+		
+		// clean up previous buttons
+		this.removeDisplayButtons();
+
+		// special case: no content
+		if (this.stack.length == 0)
+		{
+			this.width = 10;
+			this.height = 10;
+			if (this.position == 'left' || this.position == 'right') this.height = this.parentHeight;
+			else if (this.position == 'top' || this.position == 'bottom') this.width = this.parentWidth;
+			return;
+		}
+		
+		// it not raised, it shall be small, and have only a grip
+		if (!this.isRaised)
+		{
+			if (this.position == 'left' || this.position == 'right')
+			{
+				this.width = this.gripHeight;
+				this.height = this.gripWidth + 2 * outPadding;
+			}
+			else if (this.position == 'top' || this.position == 'bottom')
+			{
+				this.width = this.gripWidth + 2 * outPadding;
+				this.height = this.gripHeight;
+			}
+			this.addGripButton();
+			return;
+		}
+			
+		let bank = this.stack[this.stack.length - 1];
+		bank.buttons = [];
+		bank.update();
+		
+		// decide how much room the 'pop button' takes up
+		let popWidth = 0, popHeight = 0;
+		if (this.stack.length == 1) {}
+		else if (this.position == 'left' || this.position == 'right') popHeight = this.gripHeight + inPadding;
+		else if (this.position == 'top' || this.position == 'bottom') popWidth = this.gripHeight + inPadding;
+
+		// burn through layout possibilities, and keep the best one
+		let bestLayout:string[][] = null, bestScore:number = null;
+		if (this.position == 'left' || this.position == 'right')
+		{
+			let maxSlotHeight = Math.floor((this.parentHeight - 2 * outPadding - inPadding /*- popHeight*/) / (this.idealSize + inPadding));
+			let minSlotHeight = Math.ceil(0.5 * maxSlotHeight);
+			for (let i = maxSlotHeight; i >= minSlotHeight; i--)
+			{
+				let slotWidth = Math.ceil(bank.buttons.length / i);
+				for (let j = slotWidth; j <= slotWidth + 1; j++)
+				{
+					let layout = this.layoutMaxHeight(bank, i, j);
+					let score = this.scoreLayout(layout) + 1 * layout[0].length;
+					if (bestLayout == null || score < bestScore)
+					{
+						bestLayout = layout;
+						bestScore = score;
+					}
+				}
+			}
+		}
+		else if (this.position == 'top' || this.position == 'bottom')
+		{
+			let maxSlotWidth = Math.floor((this.parentWidth - 2 * outPadding - inPadding - popWidth) / (this.idealSize + inPadding));
+			let minSlotWidth = Math.ceil(0.5 * maxSlotWidth);
+			for (let n = maxSlotWidth; n >= minSlotWidth; n--)
+			{
+				let layout = this.layoutMaxWidth(bank, n);
+				let score = this.scoreLayout(layout) + 1 * layout.length;
+				if (bestLayout == null || score < bestScore)
+				{
+					bestLayout = layout;
+					bestScore = score;
+				}
+			}
+		}
+		else
+		{
+			// !! implement...
+		}
+
+		// determine total size, and position everything
+		let ncols = bestLayout[0].length, nrows = bestLayout.length;
+		this.width = 2 * outPadding + inPadding + (this.idealSize + inPadding) * ncols + popWidth;
+		this.height = 2 * outPadding + inPadding + (this.idealSize + inPadding) * nrows + popHeight;
+
+		if (this.position == 'left' || this.position == 'right') this.width += this.gripHeight;
+		else if (this.position == 'top' || this.position == 'bottom') this.height += this.gripHeight;
+
+		this.addGripButton();
+
+		if (popWidth > 0 || popHeight > 0)
+		{
+			let d =
+			{
+				'id': '!',
+				'x': outPadding + inPadding,
+				'y': outPadding + inPadding,
+				'width': popWidth - inPadding,
+				'height': popHeight - inPadding
+			};
+			if (this.position == 'right') d.x += this.gripHeight;
+			else if (this.position == 'bottom') d.y += this.gripHeight;
+			if (popWidth == 0) d.width = ncols * this.idealSize + inPadding * (ncols - 1);
+			if (popHeight == 0) d.height = nrows * this.idealSize + inPadding * (nrows - 1);
+			this.display.push(d);
+		}
+
+		// add in all the actual buttons
+		for (let y = 0; y < nrows; y++) for (let x = 0; x < ncols; x++)
+		{
+			for (let n = 0; n < bank.buttons.length; n++) if (bestLayout[y][x] == bank.buttons[n].id)
+			{
+				let b = bank.buttons[n], d:ButtonViewDisplay = {'id': b.id};
+				d.x = outPadding + inPadding + popWidth + (this.idealSize + inPadding) * x;
+				d.y = outPadding + inPadding + popHeight + (this.idealSize + inPadding) * y;
+				if (this.position == 'right') d.x += this.gripHeight;
+				else if (this.position == 'bottom') d.y += this.gripHeight;
+				d.width = this.idealSize;
+				d.height = this.idealSize;
+				this.display.push(d);
+			}
+		}
+	}
+
+	// if appropriate, adds a grip button, with a suitable position
+	private addGripButton():void
+	{
+		if (this.position == 'centre') return;
+
+		let d:ButtonViewDisplay = {'id': '*'}, spc = 3;
+		if (this.position == 'left')
+		{
+			d.width = this.gripHeight - spc;
+			d.height = this.gripWidth - 2 * spc;
+			d.x = this.width - d.width - spc - 1;
+			d.y = 0.5 * (this.height - d.height);
+		}
+		else if (this.position == 'right')
+		{
+			d.width = this.gripHeight - spc;
+			d.height = this.gripWidth - 2 * spc;
+			d.x = spc + 1;
+			d.y = 0.5 * (this.height - d.height);
+		}
+		else if (this.position == 'top')
+		{
+			d.width = this.gripWidth - 2 * spc;
+			d.height = this.gripHeight - spc;
+			d.x = 0.5 * (this.width - d.width);
+			d.y = this.height - d.height - spc - 1;
+		}
+		else if (this.position == 'bottom')
+		{
+			d.width = this.gripWidth - 2 * spc;
+			d.height = this.gripHeight - spc;
+			d.x = 0.5 * (this.width - d.width);
+			d.y = spc + 1;
+		}
+		this.display.push(d);
+	}
+
+	// recreates the canvas, on account of it having a different size; note the "setSize" method is marked to-be-done in the closures
+	// library, so this may not always be necessary
+	private replaceCanvas():void
+	{
+		this.content.empty();
+		
+		for (let n = 0; n < this.display.length; n++) 
+		{
+			this.display[n].svgDOM = null;
+			this.display[n].helpSpan = null;
+		}
+				
+		let canvasStyle = 'position: absolute; left: 0; top: 0;';
+		canvasStyle += 'pointer-events: none;';
+		this.canvas = <HTMLCanvasElement>newElement(this.content, 'canvas', {'width': this.width, 'height': this.height, 'style': canvasStyle});
+	}
+
+	// removes all the display buttons, making sure to delete the HTML objects as necessary
+	private removeDisplayButtons():void
+	{
+		this.content.empty();
+		this.display = [];
+	}
+
+	// positions the canvas within its parent
+	private applyOffset():void
+	{
+		let x:number, y:number;
+		if (this.position == 'left')
+		{
+			x = 0;
+			y = 0.5 * (this.parentHeight - this.height);
+		}
+		else if (this.position == 'right')
+		{
+			x = this.parentWidth - this.width;
+			y = 0.5 * (this.parentHeight - this.height);
+		}
+		else if (this.position == 'top')
+		{
+			x = 0.5 * (this.parentWidth - this.width);
+			y = 0;
+		}
+		else if (this.position == 'bottom')
+		{
+			x = 0.5 * (this.parentWidth - this.width);
+			y = this.parentHeight - this.height;
+		}
+		else // == 'centre'
+		{
+			x = 0.5 * (this.parentWidth - this.width);
+			y = 0.5 * (this.parentHeight - this.height);
+		}
+
+		this.x = this.parentX + x;
+		this.y = this.parentY + y;
+
+		this.content.css('position', 'absolute');
+		this.content.css('width', this.width + 'px');
+		this.content.css('height', this.height + 'px');
+		this.content.css('left', this.x + 'px');
+		this.content.css('top', this.y + 'px');
+	}
+
+	// redraws the buttons, in response to some kind of state change
+	private redraw():void
+	{
+		if (!this.content || !this.canvas) return;
+		
+		// background
+		
+		let density = pixelDensity();
+		this.canvas.width = this.width * density;
+		this.canvas.height = this.height * density;
+		this.canvas.style.width = this.width + 'px';
+		this.canvas.style.height = this.height + 'px';
+
+		let ctx = this.canvas.getContext('2d');
+		ctx.save();
+		ctx.scale(density, density);
+		ctx.clearRect(0, 0, this.width, this.height);
+		
+		let path = this.traceOutline();
+		ctx.fillStyle = colourCanvas(this.background);
+		ctx.fill(path);
+		ctx.strokeStyle = colourCanvas(this.border);
+		ctx.lineWidth = 1;
+		ctx.stroke(path);
+
+		let bank = this.stack.length > 0 ? this.stack[this.stack.length - 1] : null;
+
+		this.content.css('width', this.width + 'px');
+		this.content.css('height', this.height + 'px');
+
+		// button outlines
+		for (let n = 0; n < this.display.length; n++)
+		{
+			let d = this.display[n], b = this.buttonFromID(d.id);
+			
+			let col1:number, col2:number;
+			if (this.highlightButton != null && d.id == this.highlightButton)
+			{
+				col1 = this.buttonColActv1;
+				col2 = this.buttonColActv2;
+			}
+			else if (this.selectedButton != null && d.id == this.selectedButton)
+			{
+				col1 = this.buttonColSel1;
+				col2 = this.buttonColSel2;
+			}
+			else
+			{
+				col1 = this.buttonColNorm1;
+				col2 = this.buttonColNorm2;
+			}
+			
+			ctx.save();
+			path = pathRoundedRect(d.x + 0.5, d.y + 0.5, d.x + d.width - 1, d.y + d.height - 1, 5);
+			if (col2 != null)
+			{
+				let grad = ctx.createLinearGradient(d.x, d.y, d.x + d.width, d.y + d.height);
+				grad.addColorStop(0, colourCanvas(col1));
+				grad.addColorStop(1, colourCanvas(col2));
+				ctx.fillStyle = grad;
+			}
+			else ctx.fillStyle = colourCanvas(col1);
+			ctx.fill(path);
+			ctx.strokeStyle = colourCanvas(this.border);
+			ctx.lineWidth = 0.5;
+			ctx.stroke(path);
+			ctx.restore();
+			
+			if (d.svgDOM != null) 
+			{
+				$(d.svgDOM).remove();
+				d.svgDOM = null;
+			}
+			
+			if (b != null)
+			{
+				if (d.helpSpan == null) 
+				{
+					d.helpSpan = $('<span style="position: absolute;"></span>').appendTo(this.content);
+					addTooltip(d.helpSpan, b.helpText);
+				}
+				d.helpSpan.css('left', d.x + 'px');
+				d.helpSpan.css('top', d.y + 'px');
+				d.helpSpan.css('width', d.width + 'px');
+				d.helpSpan.css('height', d.height + 'px');
+			}
+			
+			if (b == null) {}
+			else if (b.imageFN != null && d.svgDOM == null)
+			{
+				let sz = this.prefabImgSize;
+				let bx = d.x + Math.floor(0.5 * (d.width - sz));
+				let by = d.y + Math.floor(0.5 * (d.height - sz));
+
+				let svg = ButtonView.ACTION_ICONS[b.imageFN];
+				if (svg)
+				{
+					let extra = 'style="position: absolute; left: ' + bx + 'px; top: ' + by + 'px; width: ' + sz + 'px; height: ' + sz + 'px; pointer-events: none;"';
+					svg = svg.substring(0, 4) + ' ' + extra + svg.substring(4);
+					//d.svgDOM = goog.dom.htmlToDocumentFragment(svg);
+					//this.content.appendChild(d.svgDOM);
+					d.svgDOM = $(svg)[0];
+					this.content.append(d.svgDOM);
+				}
+				else console.log('Action button "' + b.imageFN + '" not found.');
+			}
+			else if (b.metavec != null)
+			{
+				let draw = new MetaVector(b.metavec);
+				draw.offsetX = d.x + Math.floor(0.5 * (d.width - draw.width));
+				draw.offsetY = d.y + Math.floor(0.5 * (d.height - draw.height));
+				draw.renderContext(ctx);
+			}
+			else if (b.text != null)
+			{
+				let sz = this.idealSize;
+				let draw = new MetaVector({'size': [sz,sz]});
+				let fsz = sz * 0.6;
+				let wad = draw.measureText(b.text, fsz);
+
+				if (wad[1] + wad[2] > sz)
+				{
+					fsz *= sz / (wad[1] + wad[2]);
+					wad = draw.measureText(b.text, fsz);
+				}
+				if (wad[0] > sz)
+				{
+					fsz *= sz / wad[0];
+					wad = draw.measureText(b.text, fsz);
+				}
+				let x = 0.5 * (sz - wad[0]), y = 0.5 * (sz + wad[1]);
+				draw.drawText(x - 1, y, b.text, fsz, 0x000000);
+				draw.drawText(x + 1, y, b.text, fsz, 0x000000);
+				draw.drawText(x, y - 1, b.text, fsz, 0x000000);
+				draw.drawText(x, y + 1, b.text, fsz, 0x000000);
+				draw.drawText(x, y, b.text, fsz, 0xFFFFFF);
+				draw.offsetX = d.x + Math.floor(0.5 * (d.width - draw.width));
+				draw.offsetY = d.y + Math.floor(0.5 * (d.height - draw.height));
+				draw.renderContext(ctx);
+			}
+			
+			// optionally draw the submenus indicator
+			if (b != null && b.isSubMenu)
+			{
+				ctx.save();
+				let sx = d.x + d.width - 3, sy = d.y + d.height - 3;
+				ctx.beginPath();
+				ctx.moveTo(sx, sy);
+				ctx.lineTo(sx - 6, sy);
+				ctx.lineTo(sx, sy - 6);
+				ctx.closePath();
+				ctx.fillStyle = 'black';
+				ctx.fill();
+				ctx.restore();
+			}
+			
+			// if it's the grip-button, draw the caret
+			if (d.id == '*')
+			{
+				ctx.save();
+				
+				path = new Path2D();
+				let px:number[], py:number[], flip = this.isRaised;
+				if (this.position == 'left' || this.position == 'right')
+				{
+					px = [0.2, 0.7, 0.7]; py = [0.5, 0.3, 0.7];
+					if (this.position == 'left') flip = !flip;
+				}
+				else if (this.position == 'top' || this.position == 'bottom')
+				{
+					px = [0.5, 0.3, 0.7]; py = [0.2, 0.7, 0.7];
+					if (this.position == 'top') flip = !flip;
+				}
+				if (flip) {px = [1 - px[0], 1 - px[1], 1 - px[2]]; py = [1 - py[0], 1 - py[1], 1 - py[2]];}
+				path.moveTo(d.x + d.width * px[0], d.y + d.height * py[0]);
+				path.lineTo(d.x + d.width * px[1], d.y + d.height * py[1]);
+				path.lineTo(d.x + d.width * px[2], d.y + d.height * py[2]);
+				path.closePath();
+				ctx.fillStyle = 'white';
+				ctx.strokeStyle = 'black';
+				ctx.lineWidth = 0;
+				ctx.fill(path);
+				ctx.stroke(path);
+				
+				ctx.restore();
+			}
+			else if (d.id == '!')
+			{
+				ctx.save();
+				
+				let path1 = new Path2D(), path2 = new Path2D();
+				
+				let inset = 5;
+				let w = d.width - inset * 2, h = d.height - inset * 2;
+
+				for (let z = 5; z < w + h - 1; z += 12)
+				{
+					let x1 = 0, y1 = z, x2 = z, y2 = 0;
+					if (y1 > h)
+					{
+						let delta = y1 - h;
+						x1 += delta;
+						y1 -= delta;
+					}
+					if (x2 > w)
+					{
+						let delta = x2 - w;
+						x2 -= delta;
+						y2 += delta;
+					}
+					path1.moveTo(d.x + inset + x1, d.y + inset + y1);
+					path1.lineTo(d.x + inset + x2, d.y + inset + y2);
+					path2.moveTo(d.x + inset + x1 + 1, d.y + inset + y1);
+					path2.lineTo(d.x + inset + x2 + 1, d.y + inset + y2);
+				}
+				
+				ctx.lineWidth = 1;
+				ctx.strokeStyle = '#404040';
+				ctx.stroke(path1);
+				ctx.strokeStyle = 'white';
+				ctx.stroke(path2);
+
+				ctx.restore();
+			}
+		}
+		
+		ctx.restore();
+	};
+	private delayedRedraw():void
+	{
+		//let redrawAction = function() {this.redraw();};
+		//new goog.async.Delay(redrawAction, 100, this).start();
+		const self = this;
+		window.setTimeout(function() {self.redraw();}, 100);
+	};
+
+	// mapping ID tags into raw/display button objects
+	private buttonFromID(id:string):ButtonBankItem
+	{
+		let bank = this.stack[this.stack.length - 1];
+		for (let n = 0; n < bank.buttons.length; n++) if (bank.buttons[n].id == id) return bank.buttons[n];
+		return null;
+	}
+	private displayFromID(id:string):ButtonViewDisplay
+	{
+		for (let n = 0; n < this.display.length; n++) if (this.display[n].id == id) return this.display[n];
+		return null;
+	}
+
+	// produces a path that runs around the outside edge of the buttonbank; the shape depends on the orientation
+	private traceOutline():Path2D
+	{
+		let w = this.width, h = this.height, uw = w - 1, uh = h - 1, r = 8;
+		if (this.position == 'centre' || this.stack.length == 0) return pathRoundedRect(0.5, 0.5, w - 0.5, h - 0.5, r);
+
+		let path = new Path2D();
+		
+		if (this.position == 'left')
+		{
+			let my = 0.5 * h - 1, gw = this.gripHeight, hg = 0.5 * this.gripWidth;
+			path.moveTo(0.5, 0.5);
+			path.lineTo(0.5 + uw - gw - r, 0.5);
+			path.bezierCurveTo(0.5 + uw - gw, 0.5, 0.5 + uw - gw, 0.5, 0.5 + uw - gw, 0.5 + r);
+			path.lineTo(0.5 + uw - gw, 0.5 + my - hg);
+			path.lineTo(0.5 + uw - r, 0.5 + my - hg);
+			path.bezierCurveTo(0.5 + uw, 0.5 + my - hg, 0.5 + uw, 0.5 + my - hg, 0.5 + uw, 0.5 + my - hg + r);
+			path.lineTo(0.5 + uw, 0.5 + my + hg - r);
+			path.bezierCurveTo(0.5 + uw, 0.5 + my + hg, 0.5 + uw, 0.5 + my + hg, 0.5 + uw - r, 0.5 + my + hg);
+			path.lineTo(0.5 + uw - gw, 0.5 + my + hg);
+			path.lineTo(0.5 + uw - gw, 0.5 + uh - r);
+			path.bezierCurveTo(0.5 + uw - gw, 0.5 + uh, 0.5 + uw - gw, 0.5 + uh, 0.5 + uw - gw - r, 0.5 + uh);
+			path.lineTo(0.5, 0.5 + uh);
+		}
+		else if (this.position == 'right')
+		{
+			let my = 0.5 * h - 1, gw = this.gripHeight, hg = 0.5 * this.gripWidth;
+			path.moveTo(w - 0.5, 0.5);
+			path.lineTo(w - (0.5 + uw - gw - r), 0.5);
+			path.bezierCurveTo(w - (0.5 + uw - gw), 0.5, w - (0.5 + uw - gw), 0.5, w - (0.5 + uw - gw), 0.5 + r);
+			path.lineTo(w - (0.5 + uw - gw), 0.5 + my - hg);
+			path.lineTo(w - (0.5 + uw - r), 0.5 + my - hg);
+			path.bezierCurveTo(w - (0.5 + uw), 0.5 + my - hg, w - (0.5 + uw), 0.5 + my - hg, w - (0.5 + uw), 0.5 + my - hg + r);
+			path.lineTo(w - (0.5 + uw), 0.5 + my + hg - r);
+			path.bezierCurveTo(w - (0.5 + uw), 0.5 + my + hg, w - (0.5 + uw), 0.5 + my + hg, w - (0.5 + uw - r), 0.5 + my + hg);
+			path.lineTo(w - (0.5 + uw - gw), 0.5 + my + hg);
+			path.lineTo(w - (0.5 + uw - gw), 0.5 + uh - r);
+			path.bezierCurveTo(w - (0.5 + uw - gw), 0.5 + uh, w - (0.5 + uw - gw), 0.5 + uh, w - (0.5 + uw - gw - r), 0.5 + uh);
+			path.lineTo(w - 0.5, 0.5 + uh);
+		}
+		else if (this.position == 'top')
+		{
+			let mx = 0.5 * w - 1, gh = this.gripHeight, hg = 0.5 * this.gripWidth;
+			path.moveTo(0.5, h - (0.5 + uh));
+			path.lineTo(0.5, h - (0.5 + gh + r));
+			path.bezierCurveTo(0.5, h - (0.5 + gh), 0.5, h - (0.5 + gh), 0.5 + r, h - (0.5 + gh));
+			path.lineTo(0.5 + mx - hg, h - (0.5 + gh));
+			path.lineTo(0.5 + mx - hg, h - (0.5 + r));
+			path.bezierCurveTo(0.5 + mx - hg, h - 0.5, 0.5 + mx - hg, h - 0.5, 0.5 + mx - hg + r, h - 0.5);
+			path.lineTo(0.5 + mx + hg - r, h - 0.5);
+			path.bezierCurveTo(0.5 + mx + hg, h - 0.5, 0.5 + mx + hg, h - 0.5, 0.5 + mx + hg, h - (0.5 + r));
+			path.lineTo(0.5 + mx + hg, h - (0.5 + gh));
+			path.lineTo(0.5 + uw - r, h - (0.5 + gh));
+			path.bezierCurveTo(0.5 + uw, h - (0.5 + gh), 0.5 + uw, h - (0.5 + gh), 0.5 + uw, h - (0.5 + gh + r));
+			path.lineTo(0.5 + uw, h - (0.5 + uh));
+		}
+		else if (this.position == 'bottom')
+		{
+			let mx = 0.5 * w - 1, gh = this.gripHeight, hg = 0.5 * this.gripWidth;
+			path.moveTo(0.5, 0.5 + uh);
+			path.lineTo(0.5, 0.5 + gh + r);
+			path.bezierCurveTo(0.5, 0.5 + gh, 0.5, 0.5 + gh, 0.5 + r, 0.5 + gh);
+			path.lineTo(0.5 + mx - hg, 0.5 + gh);
+			path.lineTo(0.5 + mx - hg, 0.5 + r);
+			path.bezierCurveTo(0.5 + mx - hg, 0.5, 0.5 + mx - hg, 0.5, 0.5 + mx - hg + r, 0.5);
+			path.lineTo(0.5 + mx + hg - r, 0.5);
+			path.bezierCurveTo(0.5 + mx + hg, 0.5, 0.5 + mx + hg, 0.5, 0.5 + mx + hg, 0.5 + r);
+			path.lineTo(0.5 + mx + hg, 0.5 + gh);
+			path.lineTo(0.5 + uw - r, 0.5 + gh);
+			path.bezierCurveTo(0.5 + uw, 0.5 + gh, 0.5 + uw, 0.5 + gh, 0.5 + uw, 0.5 + gh + r);
+			path.lineTo(0.5 + uw, 0.5 + uh);
+		}
+		return path;
+	}
+
+	// used for horizontal buttonbanks: provide a maximum width, and try to fill it evenly; returns slot[y][x]='id'/undef
+	private layoutMaxWidth(bank:ButtonBank, slotWidth:number):string[][]
+	{
+		if (bank.buttons.length == 0) return [[null]];
+
+		// !! consider the buddy system when feeding things in...
+		let bx = new Array(bank.buttons.length), by = new Array(bank.buttons.length);
+		let x = 0, y = 0, w = 0, h = 0;
+		for (let n = 0; n < bank.buttons.length; n++)
+		{
+			w = Math.max(x + 1, w);
+			h = Math.max(y + 1, h);
+			bx[n] = x;
+			by[n] = y;
+			x++;
+			if (x >= slotWidth) {x = 0; y++;}
+		}
+		let slot = new Array(h);
+		for (let n = 0; n < h; n++) slot[n] = new Array(w);
+		for (let n = 0; n < bank.buttons.length; n++)
+		{
+			slot[by[n]][bx[n]] = bank.buttons[n].id;
+		}
+		return slot;
+	}
+
+	// used for vertical buttonbanks: provide a maximum height, and a row width, and try to fill it evenly; note that the buttons
+	// are still fed in left-to-right, just like the layoutMaxWidth method; returns slot[y][x]='id'/undef
+	private layoutMaxHeight(bank:ButtonBank, slotHeight:number, slotWidth:number):string[][]
+	{
+		if (bank.buttons.length == 0) return [[null]];
+
+		// !! consider the buddy system when feeding things in...
+		let bx = new Array(bank.buttons.length), by = new Array(bank.buttons.length);
+		let x = 0, y = 0, w = 0, h = 0;
+		for (let n = 0; n < bank.buttons.length; n++)
+		{
+			w = Math.max(x + 1, w);
+			h = Math.max(y + 1, h);
+			bx[n] = x;
+			by[n] = y;
+			x++;
+			if (x >= slotWidth) {x = 0; y++;}
+		}
+		let slot = new Array(h);
+		for (let n = 0; n < h; n++) slot[n] = new Array(w);
+		for (let n = 0; n < bank.buttons.length; n++)
+		{
+			slot[by[n]][bx[n]] = bank.buttons[n].id;
+		}
+		return slot;
+	}
+
+	// takes an array of slot[y][x], and calculates a base score; higher is bad, i.e. penalty based
+	private scoreLayout(slots:string[][])
+	{
+		let score = 0;
+		for (let y = 0; y < slots.length; y++) for (let x = 0; x < slots[y].length; x++)
+		{
+			if (slots[y][x] == null) score++;
+		}
+		return score;
+	}
+
+	// returns the index of the button underneath the position, or -1 if none
+	private pickButtonIndex(x:number, y:number)
+	{
+		for (let n = 0; n < this.display.length; n++)
+		{
+			let d = this.display[n];
+			if (x >= d.x && y >= d.y && x < d.x + d.width && y < d.y + d.height) return n;
+		}
+		return -1;
+	}
+	private pickButtonID(x:number, y:number):string
+	{
+		let idx = this.pickButtonIndex(x, y);
+		if (idx < 0) return undefined;
+		return this.display[idx].id;
+	}
+
+	// the button index has been clicked, so activate the corresponding action
+	private triggerButton(id:string):void
+	{
+		if (id == '*')
+		{
+			if (this.isRaised)
+				this.lowerBank();
+			else
+				this.raiseBank();
+			return;
+		}
+		else if (id == '!')
+		{
+			this.popBank();
+			return;
+		}
+		let bank = this.stack[this.stack.length - 1];
+		bank.hitButton(id);
+	}
+
+	// --------------------------------------- toolkit events ---------------------------------------
+
+	// event responses
+	private mouseClick(event:MouseEvent):void
+	{
+		/*let xy = eventCoords(event, this.content);
+		if (!this.withinOutline(xy[0], xy[1])) return; // propagate
+		
+		let shift = event.shiftKey, ctrl = event.ctrlKey, alt = event.altKey, meta = event.metaKey, plat = event.platformModifierKey;
+		let id = this.pickButtonID(xy[0], xy[1]);
+		this.triggerButton(id);
+		
+		event.stopPropagation();*/
+	}
+	private mouseDoubleClick(event:MouseEvent):void
+	{
+		// (do something?)
+		event.stopImmediatePropagation();
+	}
+	private mouseDown(event:JQueryEventObject):void
+	{
+		let xy = eventCoords(event, this.content);
+		if (!this.withinOutline(xy[0], xy[1])) return; // propagate
+		
+		// !! ?? let shift = event.shiftKey, ctrl = event.ctrlKey, alt = event.altKey, meta = event.metaKey, plat = event.platformModifierKey;
+		let id = this.pickButtonID(xy[0], xy[1]);
+
+		if (id != this.highlightButton)
+		{
+			this.highlightButton = id;
+			this.redraw();
+		}
+		
+		event.stopPropagation();
+	}
+	private mouseUp(event:JQueryEventObject):void
+	{
+		let xy = eventCoords(event, this.content);
+		if (!this.withinOutline(xy[0], xy[1])) return; // propagate
+		
+		// !! ?? let shift = event.shiftKey, ctrl = event.ctrlKey, alt = event.altKey, meta = event.metaKey, plat = event.platformModifierKey;
+		let id = this.pickButtonID(xy[0], xy[1]);
+		
+		if (id != null && this.highlightButton == id)
+		{
+			this.highlightButton = undefined;
+			this.triggerButton(id);
+			this.delayedRedraw();
+		}
+		else
+		{
+			this.highlightButton = undefined;
+			this.delayedRedraw();
+		}
+
+		event.stopPropagation();
+	}
+	private mouseOver(event:JQueryEventObject):void
+	{
+		let xy = eventCoords(event, this.content);
+		if (!this.withinOutline(xy[0], xy[1])) return; // propagate
+
+		// (do something?)
+
+		event.stopPropagation();
+	}
+	private mouseOut(event:JQueryEventObject):void
+	{
+		let xy = eventCoords(event, this.content);
+		if (!this.withinOutline(xy[0], xy[1])) 
+		{
+			if (this.highlightButton != null) 
+			{
+				this.highlightButton = null;
+				this.delayedRedraw();
+			}
+			return;
+		}
+
+		if (this.highlightButton != null)
+		{
+			let xy = eventCoords(event, this.content);
+			let id = this.pickButtonID(xy[0], xy[1]);
+			if (id != this.highlightButton)
+			{
+				this.highlightButton = null;
+				this.delayedRedraw();
+			}
+		}
+
+		event.stopPropagation();
+	}
+	private mouseMove(event:JQueryEventObject):void
+	{
+		let xy = eventCoords(event, this.content);
+		if (!this.withinOutline(xy[0], xy[1])) return; // propagate
+
+		// (do something?)
+
+		//event.stopPropagation();
+	}
+	private keyPressed(event:KeyboardEvent):void
+	{
+		// !!
+	}
+	private keyDown(event:KeyboardEvent):void
+	{
+		// !!
+	}
+	private keyUp(event:KeyboardEvent):void
+	{
+		// !!
+	}
+}
