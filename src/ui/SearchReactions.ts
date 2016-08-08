@@ -1,5 +1,5 @@
 /*
-    MolSync
+    WebMolKit
 
     (c) 2010-2016 Molecular Materials Informatics, Inc.
 
@@ -7,11 +7,11 @@
     
     http://molmatinf.com
 
-	[PKG=molsync]
+	[PKG=webmolkit]
 */
 
 ///<reference path='Widget.ts'/>
-///<reference path='ViewExperiment.ts'/>
+///<reference path='ViewStructure.ts'/>
 ///<reference path='Tooltip.ts'/>
 ///<reference path='../rpc/Search.ts'/>
 

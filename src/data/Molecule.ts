@@ -1,5 +1,5 @@
 /*
-    MolSync
+    WebMolKit
 
     (c) 2010-2016 Molecular Materials Informatics, Inc.
 
@@ -7,8 +7,12 @@
     
     http://molmatinf.com
 
-	[PKG=molsync]
+	[PKG=webmolkit]
 */
+
+///<reference path='MoleculeStream.ts'/>
+///<reference path='Chemistry.ts'/>
+///<reference path='../util/Vec.ts'/>
 
 /*
 	A dynamic representation of a molecule, which is analogous to the com.mmi.core.mol.Molecule class.
@@ -50,7 +54,14 @@ class Molecule
 	private hasTransient = false;
 	
 	private graph:number[][] = null;
-	private graphBond:number[][] = null;	
+	private graphBond:number[][] = null;
+	private ringID:number[] = null;
+	private compID:number[] = null;
+	private ring3:number[][] = null;
+	private ring4:number[][] = null;
+	private ring5:number[][] = null;
+	private ring6:number[][] = null;
+	private ring7:number[][] = null;
 
 	public static IDEALBOND = 1.5;
 	public static HEXPLICIT_UNKNOWN = -1;
@@ -298,6 +309,40 @@ class Molecule
 		return 0;
 	}
 
+	// returns whether an atom logically ought to be drawn "explicitly";if false, it is a carbon which should be just a dot
+	public atomExplicit(idx:number):boolean
+	{
+		let a = this.atoms[idx - 1];
+		if (a.isotope != Molecule.ISOTOPE_NATURAL) return true;
+		if (a.element != 'C' || a.charge != 0 || a.unpaired != 0) return true;
+		if (this.atomAdjCount(idx) == 0) return true;
+		return false;
+	}
+
+	// returns the numerical ID of the ring block in which the atom resides, or 0 if it is not in a ring   
+	public atomRingBlock(idx:number):number
+	{
+		if (this.graph == null) this.buildGraph();
+		if (this.ringID == null) this.buildRingID();
+		return this.ringID[idx - 1];
+	}
+
+	// returns whether or not a bond resides in a ring (i.e. ring block of each end is the same and nonzero)
+	public bondInRing(idx:number):boolean
+	{
+		let r1 = this.atomRingBlock(this.bondFrom(idx)), r2 = this.atomRingBlock(this.bondTo(idx));
+		return r1 > 0 && r1 == r2;
+	}
+
+	// returns the connected component ID of the atom, always 1 or more
+	public atomConnComp(idx:number):number
+	{
+		if (this.graph == null) this.buildGraph();
+		if (this.compID == null) this.buildConnComp();
+		return this.compID[idx - 1];
+	}
+
+
 	// returns the number of neighbours of an atom
 	// NOTE: uncached==>slow
 	public atomAdjCount(idx:number):number
@@ -320,6 +365,72 @@ class Molecule
 	{
 		this.buildGraph();
 		return this.graphBond[idx - 1].slice(0);
+	}
+
+	// returns _all_ rings of indicated size; each item in the array list is an array of int[Size], a consecutively ordered array of atom 
+	// numbers; uses a recursive depth first search, which must be bounded above by Size being small in order to avoid exponential blowup
+	public findRingsOfSize(size:number):number[][]
+	{
+		let rings:number[][] = null;
+		if (size == 3 && this.ring3 != null) rings = this.ring3;
+		if (size == 4 && this.ring4 != null) rings = this.ring4;
+		if (size == 5 && this.ring5 != null) rings = this.ring5;
+		if (size == 6 && this.ring6 != null) rings = this.ring6;
+		if (size == 7 && this.ring7 != null) rings = this.ring7;
+
+		if (rings == null)
+		{
+			if (this.graph == null) this.buildGraph();
+			if (this.ringID == null) this.buildRingID();
+
+			rings = [];
+			for (let n = 1; n <= this.atoms.length; n++)
+			{
+				if (this.ringID[n - 1] > 0)
+				{
+					let path = Vec.numberArray(0, size);
+					path[0] = n;
+					this.recursiveRingFind(path, 1, size, this.ringID[n - 1], rings);
+				}
+			}
+
+			if (size == 3) this.ring3 = rings;
+			if (size == 4) this.ring4 = rings;
+			if (size == 5) this.ring5 = rings;
+			if (size == 6) this.ring6 = rings;
+			if (size == 7) this.ring7 = rings;
+		}
+
+		let ret:number[][] = [];
+		for (let n = 0; n < rings.length; n++) ret.push(rings[n].slice(0));
+		return ret;
+	}
+
+	// molecule boundaries
+	public boundary():Box
+	{
+		if (this.atoms.length == 0) return Box.zero();
+		let x1 = this.atoms[0].x, x2 = x1;
+		let y1 = this.atoms[0].y, y2 = y1;
+		for (let n = 1; n < this.atoms.length; n++)
+		{
+			x1 = Math.min(x1, this.atoms[n].x);
+			y1 = Math.min(y1, this.atoms[n].y);
+			x2 = Math.max(x2, this.atoms[n].x);
+			y2 = Math.max(y2, this.atoms[n].y);
+		}
+		return new Box(x1, y1, x2 - x1, y2 - y1);
+	}
+
+	// lookup the atomic number for the element, or return 0 if not in the periodic table
+	public atomicNumber(idx:number):number
+	{
+		return Molecule.atomicNumber(this.atomElement(idx));
+	}
+
+	public static atomicNumber(element:string):number
+	{
+		return Math.max(0, Chemistry.ELEMENTS.indexOf(element));
 	}
 
 	// literal comparison to another molecule, which can be used for ordering purposes: returns -1/0/1
@@ -413,5 +524,218 @@ class Molecule
 		this.graph = graph;
 		this.graphBond = graphBond;
 	}
+
+	// passes over the graph establishing which component each atom belongs to
+	private buildConnComp():void
+	{
+		const numAtoms = this.atoms.length;
+
+		this.compID = Vec.numberArray(0, numAtoms);
+		for (let n = 0; n < numAtoms; n++) this.compID[n] = 0;
+		let comp = 1;
+		this.compID[0] = comp;
+
+		// (not very efficient, should use a stack-based depth first search)
+		while (true)
+		{
+			let anything = false;
+			for (let n = 0; n < numAtoms; n++) if (this.compID[n] == comp)
+			{
+				for (let i = 0; i < this.graph[n].length; i++)
+				{
+					if (this.compID[this.graph[n][i]] == 0)
+					{
+						this.compID[this.graph[n][i]] = comp;
+						anything = true;
+					}
+				}
+			}
+
+			if (!anything)
+			{
+				for (let n = 0; n < numAtoms; n++)
+				{
+					if (this.compID[n] == 0)
+					{
+						this.compID[n] = ++comp;
+						anything = true;
+						break;
+					}
+				}
+				if (!anything) break;
+			}
+		}
+	}
+
+	// update the ring-block-identifier for each atom
+	private buildRingID():void
+	{
+		const numAtoms = this.atoms.length;
+
+		this.ringID = Vec.numberArray(0, numAtoms);
+		if (numAtoms == 0) return;
+		let visited = Vec.booleanArray(false, numAtoms);
+		for (let n = 0; n < numAtoms; n++)
+		{
+			this.ringID[n] = 0;
+			visited[n] = false;
+		}
+
+		let path = Vec.numberArray(0, numAtoms + 1), plen = 0, numVisited = 0;
+		while (true)
+		{
+			let last:number, current:number;
+
+			if (plen == 0) // find an element of a new component to visit
+			{
+				last = -1;
+				for (current = 0; visited[current]; current++) {}
+			}
+			else
+			{
+				last = path[plen - 1];
+				current = -1;
+				for (let n = 0; n < this.graph[last].length; n++)
+				{
+					if (!visited[this.graph[last][n]])
+					{
+						current = this.graph[last][n];
+						break;
+					}
+				}
+			}
+
+			if (current >= 0 && plen >= 2) // path is at least 2 items long, so look for any not-previous visited neighbours
+			{
+				let back = path[plen - 1];
+				//System.out.println(" back="+back);
+				for (let n = 0; n < this.graph[current].length; n++)
+				{
+					let join = this.graph[current][n];
+					if (join != back && visited[join])
+					{
+						path[plen] = current;
+						for (let i = plen; i == plen || path[i + 1] != join; i--)
+						{
+							let id = this.ringID[path[i]];
+							if (id == 0) this.ringID[path[i]] = last;
+							else if (id != last)
+							{
+								for (let j = 0; j < numAtoms; j++)
+									if (this.ringID[j] == id) this.ringID[j] = last;
+							}
+						}
+					}
+				}
+			}
+			if (current >= 0) // can mark the new one as visited
+			{
+				visited[current] = true;
+				path[plen++] = current;
+				numVisited++;
+			}
+			else
+			{
+				// otherwise, found nothing and must rewind the path
+				plen--;
+			}
+
+			if (numVisited == numAtoms) break;
+		}
+
+		// the ring ID's are not necessarily consecutive, so reassign them to 0=none, 1..NBlocks
+		let nextID = 0;
+		for (let i = 0; i < numAtoms; i++)
+		{
+			if (this.ringID[i] > 0)
+			{
+				nextID--;
+				for (let j = numAtoms - 1; j >= i; j--) if (this.ringID[j] == this.ringID[i]) this.ringID[j] = nextID;
+			}
+		}
+		for (let i = 0; i < numAtoms; i++) this.ringID[i] = -this.ringID[i];
+	}
+
+	// ring hunter: recursive step; finds, compares and collects
+	private recursiveRingFind(path:number[], psize:number, capacity:number, rblk:number, rings:number[][]):void
+	{
+		// not enough atoms yet, so look for new possibilities
+		if (psize < capacity)
+		{
+			let last = path[psize - 1];
+			for (let n = 0; n < this.graph[last - 1].length; n++)
+			{
+				let adj = this.graph[last - 1][n] + 1;
+				if (this.ringID[adj - 1] != rblk) continue;
+				let fnd = false;
+				for (let i = 0; i < psize; i++)
+				{
+					if (path[i] == adj)
+					{
+						fnd = true;
+						break;
+					}
+				}
+				if (!fnd)
+				{
+					let newPath = path.slice(0);
+					newPath[psize] = adj;
+					this.recursiveRingFind(newPath, psize + 1, capacity, rblk, rings);
+				}
+			}
+			return;
+		}
+
+		// path is full, so make sure it eats its tail
+		let last = path[psize - 1];
+		let fnd = false;
+		for (let n = 0; n < this.graph[last - 1].length; n++)
+		{
+			if (this.graph[last - 1][n] + 1 == path[0])
+			{
+				fnd = true;
+				break;
+			}
+		}
+		if (!fnd) return;
+
+		// make sure every element in the path has exactly 2 neighbours within the path; otherwise it is spanning a bridge, which
+		// is an undesirable ring definition
+		for (let n = 0; n < path.length; n++)
+		{
+			let count = 0, p = path[n] - 1;
+			for (let i = 0; i < this.graph[p].length; i++) if (path.indexOf(this.graph[p][i] + 1) >= 0) count++;
+			if (count != 2) return; // invalid
+		}
+
+		// reorder the array then look for duplicates
+		let first = 0;
+		for (let n = 1; n < psize; n++) if (path[n] < path[first]) first = n;
+		let fm = (first - 1 + psize) % psize, fp = (first + 1) % psize;
+		let flip = path[fm] < path[fp];
+		if (first != 0 || flip)
+		{
+			let newPath = Vec.numberArray(0, psize);
+			for (let n = 0; n < psize; n++) newPath[n] = path[(first + (flip ? psize - n : n)) % psize];
+			path = newPath;
+		}
+
+		for (let n = 0; n < rings.length; n++)
+		{
+			let look = rings[n];
+			let same = true;
+			for (let i = 0; i < psize; i++)
+			{
+				if (look[i] != path[i])
+				{
+					same = false;
+					break;
+				}
+			}
+			if (same) return;
+		}
+
+		rings.push(path);
+	}	
 }
 

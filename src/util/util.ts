@@ -1,5 +1,5 @@
 /*
-    MolSync
+    WebMolKit
 
     (c) 2010-2016 Molecular Materials Informatics, Inc.
 
@@ -7,7 +7,7 @@
     
     http://molmatinf.com
 
-	[PKG=molsync]
+	[PKG=webmolkit]
 */
 
 //import $ from "JQuery";
@@ -171,6 +171,9 @@ function sqr(v:number):number
 {
 	return v * v;
 }
+
+// returns true if the numbers are effectively equal, assuming double precision
+function realEqual(v1:number, v2:number) {return v1 == v2 || Math.abs(v1 - v2) <= 1E-14 * Math.max(v1, v2);}
 
 // angle helpers
 const TWOPI = 2 * Math.PI;

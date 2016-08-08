@@ -1,7 +1,7 @@
 {
     "compilerOptions": 
     {
-        "module": "commonjs",
+        "module": "system",
         "noImplicitAny": true,
         "removeComments": true,
         "preserveConstEnums": true,
@@ -12,13 +12,13 @@
     [
         "src/decl/jquery.d.ts",
         
+        "src/data/CoordUtil.ts",
         "src/data/DataSheet.ts",
         "src/data/DataSheetStream.ts",
         "src/data/FormatList.ts",
         "src/data/Molecule.ts",
         "src/data/MoleculeStream.ts",
         "src/data/MolUtil.ts",
-        "src/data/Rendering.ts",
         "src/data/SketchUtil.ts",
         
         "src/dialog/Dialog.ts",
@@ -27,9 +27,11 @@
         "src/dialog/MapReaction.ts",
         "src/dialog/PickRecent.ts",
         
+        "src/gfx/ArrangeMeasure.ts",
+        "src/gfx/ArrangeMolecule.ts",
         "src/gfx/FontData.ts",
-        "src/gfx/Geom.ts",
         "src/gfx/MetaVector.ts",
+        "src/gfx/Rendering.ts",
         
         "src/rpc/Account.ts",
         "src/rpc/Func.ts",
@@ -56,7 +58,8 @@
         "src/ui/Widget.ts",
         
         "src/util/Cookies.ts",
+        "src/util/Geom.ts",
         "src/util/util.ts",
-        "src/util/vec.ts"
+        "src/util/Vec.ts"
     ]
 }

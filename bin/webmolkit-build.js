@@ -523,6 +523,209 @@ var FormatList = (function () {
     };
     return FormatList;
 }());
+var MoleculeStream = (function () {
+    function MoleculeStream() {
+    }
+    MoleculeStream.readNative = function (strData) {
+        var mol = new Molecule();
+        mol.keepTransient = true;
+        var lines = strData.split(/\r?\n/);
+        if (lines.length < 2)
+            return null;
+        if (!lines[0].startsWith('SketchEl!') && lines.length >= 4 && lines[3].indexOf('V2000') >= 0) {
+            var i = strData.indexOf('SketchEl!');
+            if (i < 0)
+                return null;
+            lines = strData.substring(i).split(/r?\n/);
+        }
+        var bits = lines[0].match(/^SketchEl\!\((\d+)\,(\d+)\)/);
+        if (!bits)
+            return null;
+        var numAtoms = parseInt(bits[1]), numBonds = parseInt(bits[2]);
+        if (lines.length < 2 + numAtoms + numBonds)
+            return null;
+        if (!lines[1 + numAtoms + numBonds].match(/^!End/))
+            return null;
+        for (var n = 0; n < numAtoms; n++) {
+            bits = lines[1 + n].split(/[=,;]/);
+            var num = mol.addAtom(bits[0], parseFloat(bits[1]), parseFloat(bits[2]), parseInt(bits[3]), parseInt(bits[4]));
+            var extra = [], trans = [];
+            for (var i = 5; i < bits.length; i++) {
+                var ch = bits[i].charAt(0);
+                if (bits[i].charAt(0) == 'i') { }
+                else if (bits[i].charAt(0) == 'e')
+                    mol.setAtomHExplicit(num, parseInt(bits[i].substring(1)));
+                else if (bits[i].charAt(0) == 'm')
+                    mol.setAtomIsotope(num, parseInt(bits[i].substring(1)));
+                else if (bits[i].charAt(0) == 'n')
+                    mol.setAtomMapNum(num, parseInt(bits[i].substring(1)));
+                else if (bits[i].charAt(0) == 'x')
+                    extra.push(MoleculeStream.sk_unescape(bits[i]));
+                else if (bits[i].charAt(0) == 'y')
+                    trans.push(MoleculeStream.sk_unescape(bits[i]));
+                else
+                    extra.push(MoleculeStream.sk_unescape(bits[i]));
+            }
+            mol.setAtomExtra(num, extra);
+            mol.setAtomTransient(num, trans);
+        }
+        for (var n = 0; n < numBonds; n++) {
+            bits = lines[1 + numAtoms + n].split(/[-=,]/);
+            var num = mol.addBond(parseInt(bits[0]), parseInt(bits[1]), parseInt(bits[2]), parseInt(bits[3]));
+            var extra = new Array(), trans = new Array();
+            for (var i = 4; i < bits.length; i++) {
+                var ch = bits[i].charAt(0);
+                if (bits[i].charAt(0) == 'x')
+                    extra.push(MoleculeStream.sk_unescape(bits[i]));
+                else if (bits[i].charAt(0) == 'y')
+                    trans.push(MoleculeStream.sk_unescape(bits[i]));
+                else
+                    extra.push(MoleculeStream.sk_unescape(bits[i]));
+            }
+            mol.setBondExtra(num, extra);
+            mol.setBondTransient(num, trans);
+        }
+        mol.keepTransient = false;
+        return mol;
+    };
+    MoleculeStream.writeNative = function (mol) {
+        var ret = 'SketchEl!(' + mol.numAtoms() + ',' + mol.numBonds() + ')\n';
+        for (var n = 1; n <= mol.numAtoms(); n++) {
+            var el = mol.atomElement(n), x = mol.atomX(n), y = mol.atomY(n), charge = mol.atomCharge(n), unpaired = mol.atomUnpaired(n);
+            var hy = mol.atomHExplicit(n) != Molecule.HEXPLICIT_UNKNOWN ? ('e' + mol.atomHExplicit(n)) : ('i' + mol.atomHydrogens(n));
+            ret += MoleculeStream.sk_escape(el) + '=' + x.toFixed(4) + ',' + y.toFixed(4) + ';' + charge + ',' + unpaired + ',' + hy;
+            if (mol.atomIsotope(n) != Molecule.ISOTOPE_NATURAL)
+                ret += ',m' + mol.atomIsotope(n);
+            if (mol.atomMapNum(n) > 0)
+                ret += ',n' + mol.atomMapNum(n);
+            ret += MoleculeStream.sk_encodeExtra(mol.atomExtra(n));
+            ret += MoleculeStream.sk_encodeExtra(mol.atomTransient(n));
+            ret += '\n';
+        }
+        for (var n = 1; n <= mol.numBonds(); n++) {
+            ret += mol.bondFrom(n) + '-' + mol.bondTo(n) + '=' + mol.bondOrder(n) + ',' + mol.bondType(n);
+            ret += MoleculeStream.sk_encodeExtra(mol.bondExtra(n));
+            ret += MoleculeStream.sk_encodeExtra(mol.bondTransient(n));
+            ret += '\n';
+        }
+        ret += '!End\n';
+        return ret;
+    };
+    ;
+    MoleculeStream.sk_unescape = function (str) {
+        var ret = '', match;
+        while (match = str.match(/^(.*?)\\([0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f])(.*)/)) {
+            ret += match[1] + String.fromCharCode(parseInt("0x" + match[2]));
+            str = match[3];
+        }
+        return ret + str;
+    };
+    ;
+    MoleculeStream.sk_escape = function (str) {
+        var ret = '';
+        for (var n = 0; n < str.length; n++) {
+            var ch = str.charAt(n), code = str.charCodeAt(n);
+            if (code <= 32 || code > 127 || ch == '\\' || ch == ',' || ch == ';' || ch == '=') {
+                var hex = (code & 0xFFFF).toString(16).toUpperCase();
+                ret += '\\';
+                for (var i = 4 - hex.length; i > 0; i--)
+                    ret += '0';
+                ret += hex;
+            }
+            else
+                ret += ch;
+        }
+        return ret;
+    };
+    ;
+    MoleculeStream.sk_encodeExtra = function (extra) {
+        var ret = '';
+        for (var n = 0; n < extra.length; n++)
+            ret += ',' + MoleculeStream.sk_escape(extra[n]);
+        return ret;
+    };
+    ;
+    return MoleculeStream;
+}());
+var Vec = (function () {
+    function Vec() {
+    }
+    Vec.anyTrue = function (arr) {
+        if (arr == null)
+            return false;
+        for (var _i = 0, arr_1 = arr; _i < arr_1.length; _i++) {
+            var v = arr_1[_i];
+            if (v)
+                return true;
+        }
+        return false;
+    };
+    Vec.allTrue = function (arr) {
+        if (arr == null)
+            return true;
+        for (var _i = 0, arr_2 = arr; _i < arr_2.length; _i++) {
+            var v = arr_2[_i];
+            if (!v)
+                return false;
+        }
+        return true;
+    };
+    Vec.anyFalse = function (arr) {
+        if (arr == null)
+            return false;
+        for (var _i = 0, arr_3 = arr; _i < arr_3.length; _i++) {
+            var v = arr_3[_i];
+            if (!v)
+                return true;
+        }
+        return false;
+    };
+    Vec.allFalse = function (arr) {
+        if (arr == null)
+            return true;
+        for (var _i = 0, arr_4 = arr; _i < arr_4.length; _i++) {
+            var v = arr_4[_i];
+            if (v)
+                return false;
+        }
+        return true;
+    };
+    Vec.booleanArray = function (val, sz) {
+        var arr = new Array(sz);
+        for (var n = sz - 1; n >= 0; n--)
+            arr[n] = val;
+        return arr;
+    };
+    Vec.numberArray = function (val, sz) {
+        var arr = new Array(sz);
+        for (var n = sz - 1; n >= 0; n--)
+            arr[n] = val;
+        return arr;
+    };
+    Vec.stringArray = function (val, sz) {
+        var arr = new Array(sz);
+        for (var n = sz - 1; n >= 0; n--)
+            arr[n] = val;
+        return arr;
+    };
+    Vec.min = function (arr) {
+        if (arr == null || arr.length == 0)
+            return Number.MAX_VALUE;
+        var v = arr[0];
+        for (var n = 1; n < arr.length; n++)
+            v = Math.min(v, arr[n]);
+        return v;
+    };
+    Vec.max = function (arr) {
+        if (arr == null || arr.length == 0)
+            return Number.MIN_VALUE;
+        var v = arr[0];
+        for (var n = 1; n < arr.length; n++)
+            v = Math.max(v, arr[n]);
+        return v;
+    };
+    return Vec;
+}());
 var Atom = (function () {
     function Atom() {
     }
@@ -541,6 +744,13 @@ var Molecule = (function () {
         this.hasTransient = false;
         this.graph = null;
         this.graphBond = null;
+        this.ringID = null;
+        this.compID = null;
+        this.ring3 = null;
+        this.ring4 = null;
+        this.ring5 = null;
+        this.ring6 = null;
+        this.ring7 = null;
         this.setAtomElement = function (idx, element) {
             this.getAtom(idx).element = element;
             this.trashTransient();
@@ -738,6 +948,34 @@ var Molecule = (function () {
             return b1;
         return 0;
     };
+    Molecule.prototype.atomExplicit = function (idx) {
+        var a = this.atoms[idx - 1];
+        if (a.isotope != Molecule.ISOTOPE_NATURAL)
+            return true;
+        if (a.element != 'C' || a.charge != 0 || a.unpaired != 0)
+            return true;
+        if (this.atomAdjCount(idx) == 0)
+            return true;
+        return false;
+    };
+    Molecule.prototype.atomRingBlock = function (idx) {
+        if (this.graph == null)
+            this.buildGraph();
+        if (this.ringID == null)
+            this.buildRingID();
+        return this.ringID[idx - 1];
+    };
+    Molecule.prototype.bondInRing = function (idx) {
+        var r1 = this.atomRingBlock(this.bondFrom(idx)), r2 = this.atomRingBlock(this.bondTo(idx));
+        return r1 > 0 && r1 == r2;
+    };
+    Molecule.prototype.atomConnComp = function (idx) {
+        if (this.graph == null)
+            this.buildGraph();
+        if (this.compID == null)
+            this.buildConnComp();
+        return this.compID[idx - 1];
+    };
     Molecule.prototype.atomAdjCount = function (idx) {
         this.buildGraph();
         return this.graph[idx - 1].length;
@@ -752,6 +990,19 @@ var Molecule = (function () {
     Molecule.prototype.atomAdjBonds = function (idx) {
         this.buildGraph();
         return this.graphBond[idx - 1].slice(0);
+    };
+    Molecule.prototype.boundary = function () {
+        if (this.atoms.length == 0)
+            return Box.zero();
+        var x1 = this.atoms[0].x, x2 = x1;
+        var y1 = this.atoms[0].y, y2 = y1;
+        for (var n = 1; n < this.atoms.length; n++) {
+            x1 = Math.min(x1, this.atoms[n].x);
+            y1 = Math.min(y1, this.atoms[n].y);
+            x2 = Math.max(x2, this.atoms[n].x);
+            y2 = Math.max(y2, this.atoms[n].y);
+        }
+        return new Box(x1, y1, x2 - x1, y2 - y1);
     };
     Molecule.prototype.compareTo = function (other) {
         if (other == null || other.numAtoms() == 0)
@@ -896,6 +1147,172 @@ var Molecule = (function () {
         this.graph = graph;
         this.graphBond = graphBond;
     };
+    Molecule.prototype.buildConnComp = function () {
+        var numAtoms = this.atoms.length;
+        this.compID = Vec.numberArray(0, numAtoms);
+        for (var n = 0; n < numAtoms; n++)
+            this.compID[n] = 0;
+        var comp = 1;
+        this.compID[0] = comp;
+        while (true) {
+            var anything = false;
+            for (var n = 0; n < numAtoms; n++)
+                if (this.compID[n] == comp) {
+                    for (var i = 0; i < this.graph[n].length; i++) {
+                        if (this.compID[this.graph[n][i]] == 0) {
+                            this.compID[this.graph[n][i]] = comp;
+                            anything = true;
+                        }
+                    }
+                }
+            if (!anything) {
+                for (var n = 0; n < numAtoms; n++) {
+                    if (this.compID[n] == 0) {
+                        this.compID[n] = ++comp;
+                        anything = true;
+                        break;
+                    }
+                }
+                if (!anything)
+                    break;
+            }
+        }
+    };
+    Molecule.prototype.buildRingID = function () {
+        var numAtoms = this.atoms.length;
+        this.ringID = Vec.numberArray(0, numAtoms);
+        if (numAtoms == 0)
+            return;
+        var visited = Vec.booleanArray(false, numAtoms);
+        for (var n = 0; n < numAtoms; n++) {
+            this.ringID[n] = 0;
+            visited[n] = false;
+        }
+        var path = Vec.numberArray(0, numAtoms + 1), plen = 0, numVisited = 0;
+        while (true) {
+            var last = void 0, current = void 0;
+            if (plen == 0) {
+                last = -1;
+                for (current = 0; visited[current]; current++) { }
+            }
+            else {
+                last = path[plen - 1];
+                current = -1;
+                for (var n = 0; n < this.graph[last].length; n++) {
+                    if (!visited[this.graph[last][n]]) {
+                        current = this.graph[last][n];
+                        break;
+                    }
+                }
+            }
+            if (current >= 0 && plen >= 2) {
+                var back = path[plen - 1];
+                for (var n = 0; n < this.graph[current].length; n++) {
+                    var join = this.graph[current][n];
+                    if (join != back && visited[join]) {
+                        path[plen] = current;
+                        for (var i = plen; i == plen || path[i + 1] != join; i--) {
+                            var id = this.ringID[path[i]];
+                            if (id == 0)
+                                this.ringID[path[i]] = last;
+                            else if (id != last) {
+                                for (var j = 0; j < numAtoms; j++)
+                                    if (this.ringID[j] == id)
+                                        this.ringID[j] = last;
+                            }
+                        }
+                    }
+                }
+            }
+            if (current >= 0) {
+                visited[current] = true;
+                path[plen++] = current;
+                numVisited++;
+            }
+            else {
+                plen--;
+            }
+            if (numVisited == numAtoms)
+                break;
+        }
+        var nextID = 0;
+        for (var i = 0; i < numAtoms; i++) {
+            if (this.ringID[i] > 0) {
+                nextID--;
+                for (var j = numAtoms - 1; j >= i; j--)
+                    if (this.ringID[j] == this.ringID[i])
+                        this.ringID[j] = nextID;
+            }
+        }
+        for (var i = 0; i < numAtoms; i++)
+            this.ringID[i] = -this.ringID[i];
+    };
+    Molecule.prototype.recursiveRingFind = function (path, psize, capacity, rblk, rings) {
+        if (psize < capacity) {
+            var last_1 = path[psize - 1];
+            for (var n = 0; n < this.graph[last_1 - 1].length; n++) {
+                var adj = this.graph[last_1 - 1][n] + 1;
+                if (this.ringID[adj - 1] != rblk)
+                    continue;
+                var fnd_1 = false;
+                for (var i = 0; i < psize; i++) {
+                    if (path[i] == adj) {
+                        fnd_1 = true;
+                        break;
+                    }
+                }
+                if (!fnd_1) {
+                    var newPath = path.slice(0);
+                    newPath[psize] = adj;
+                    this.recursiveRingFind(newPath, psize + 1, capacity, rblk, rings);
+                }
+            }
+            return;
+        }
+        var last = path[psize - 1];
+        var fnd = false;
+        for (var n = 0; n < this.graph[last - 1].length; n++) {
+            if (this.graph[last - 1][n] + 1 == path[0]) {
+                fnd = true;
+                break;
+            }
+        }
+        if (!fnd)
+            return;
+        for (var n = 0; n < path.length; n++) {
+            var count = 0, p = path[n] - 1;
+            for (var i = 0; i < this.graph[p].length; i++)
+                if (path.indexOf(this.graph[p][i] + 1) >= 0)
+                    count++;
+            if (count != 2)
+                return;
+        }
+        var first = 0;
+        for (var n = 1; n < psize; n++)
+            if (path[n] < path[first])
+                first = n;
+        var fm = (first - 1 + psize) % psize, fp = (first + 1) % psize;
+        var flip = path[fm] < path[fp];
+        if (first != 0 || flip) {
+            var newPath = Vec.numberArray(0, psize);
+            for (var n = 0; n < psize; n++)
+                newPath[n] = path[(first + (flip ? psize - n : n)) % psize];
+            path = newPath;
+        }
+        for (var n = 0; n < rings.length; n++) {
+            var look = rings[n];
+            var same = true;
+            for (var i = 0; i < psize; i++) {
+                if (look[i] != path[i]) {
+                    same = false;
+                    break;
+                }
+            }
+            if (same)
+                return;
+        }
+        rings.push(path);
+    };
     Molecule.IDEALBOND = 1.5;
     Molecule.HEXPLICIT_UNKNOWN = -1;
     Molecule.ISOTOPE_NATURAL = 0;
@@ -904,130 +1321,6 @@ var Molecule = (function () {
     Molecule.BONDTYPE_DECLINED = 2;
     Molecule.BONDTYPE_UNKNOWN = 3;
     return Molecule;
-}());
-var MoleculeStream = (function () {
-    function MoleculeStream() {
-    }
-    MoleculeStream.readNative = function (strData) {
-        var mol = new Molecule();
-        mol.keepTransient = true;
-        var lines = strData.split(/\r?\n/);
-        if (lines.length < 2)
-            return null;
-        if (!lines[0].startsWith('SketchEl!') && lines.length >= 4 && lines[3].indexOf('V2000') >= 0) {
-            var i = strData.indexOf('SketchEl!');
-            if (i < 0)
-                return null;
-            lines = strData.substring(i).split(/r?\n/);
-        }
-        var bits = lines[0].match(/^SketchEl\!\((\d+)\,(\d+)\)/);
-        if (!bits)
-            return null;
-        var numAtoms = parseInt(bits[1]), numBonds = parseInt(bits[2]);
-        if (lines.length < 2 + numAtoms + numBonds)
-            return null;
-        if (!lines[1 + numAtoms + numBonds].match(/^!End/))
-            return null;
-        for (var n = 0; n < numAtoms; n++) {
-            bits = lines[1 + n].split(/[=,;]/);
-            var num = mol.addAtom(bits[0], parseFloat(bits[1]), parseFloat(bits[2]), parseInt(bits[3]), parseInt(bits[4]));
-            var extra = [], trans = [];
-            for (var i = 5; i < bits.length; i++) {
-                var ch = bits[i].charAt(0);
-                if (bits[i].charAt(0) == 'i') { }
-                else if (bits[i].charAt(0) == 'e')
-                    mol.setAtomHExplicit(num, parseInt(bits[i].substring(1)));
-                else if (bits[i].charAt(0) == 'm')
-                    mol.setAtomIsotope(num, parseInt(bits[i].substring(1)));
-                else if (bits[i].charAt(0) == 'n')
-                    mol.setAtomMapNum(num, parseInt(bits[i].substring(1)));
-                else if (bits[i].charAt(0) == 'x')
-                    extra.push(MoleculeStream.sk_unescape(bits[i]));
-                else if (bits[i].charAt(0) == 'y')
-                    trans.push(MoleculeStream.sk_unescape(bits[i]));
-                else
-                    extra.push(MoleculeStream.sk_unescape(bits[i]));
-            }
-            mol.setAtomExtra(num, extra);
-            mol.setAtomTransient(num, trans);
-        }
-        for (var n = 0; n < numBonds; n++) {
-            bits = lines[1 + numAtoms + n].split(/[-=,]/);
-            var num = mol.addBond(parseInt(bits[0]), parseInt(bits[1]), parseInt(bits[2]), parseInt(bits[3]));
-            var extra = new Array(), trans = new Array();
-            for (var i = 4; i < bits.length; i++) {
-                var ch = bits[i].charAt(0);
-                if (bits[i].charAt(0) == 'x')
-                    extra.push(MoleculeStream.sk_unescape(bits[i]));
-                else if (bits[i].charAt(0) == 'y')
-                    trans.push(MoleculeStream.sk_unescape(bits[i]));
-                else
-                    extra.push(MoleculeStream.sk_unescape(bits[i]));
-            }
-            mol.setBondExtra(num, extra);
-            mol.setBondTransient(num, trans);
-        }
-        mol.keepTransient = false;
-        return mol;
-    };
-    MoleculeStream.writeNative = function (mol) {
-        var ret = 'SketchEl!(' + mol.numAtoms() + ',' + mol.numBonds() + ')\n';
-        for (var n = 1; n <= mol.numAtoms(); n++) {
-            var el = mol.atomElement(n), x = mol.atomX(n), y = mol.atomY(n), charge = mol.atomCharge(n), unpaired = mol.atomUnpaired(n);
-            var hy = mol.atomHExplicit(n) != Molecule.HEXPLICIT_UNKNOWN ? ('e' + mol.atomHExplicit(n)) : ('i' + mol.atomHydrogens(n));
-            ret += MoleculeStream.sk_escape(el) + '=' + x.toFixed(4) + ',' + y.toFixed(4) + ';' + charge + ',' + unpaired + ',' + hy;
-            if (mol.atomIsotope(n) != Molecule.ISOTOPE_NATURAL)
-                ret += ',m' + mol.atomIsotope(n);
-            if (mol.atomMapNum(n) > 0)
-                ret += ',n' + mol.atomMapNum(n);
-            ret += MoleculeStream.sk_encodeExtra(mol.atomExtra(n));
-            ret += MoleculeStream.sk_encodeExtra(mol.atomTransient(n));
-            ret += '\n';
-        }
-        for (var n = 1; n <= mol.numBonds(); n++) {
-            ret += mol.bondFrom(n) + '-' + mol.bondTo(n) + '=' + mol.bondOrder(n) + ',' + mol.bondType(n);
-            ret += MoleculeStream.sk_encodeExtra(mol.bondExtra(n));
-            ret += MoleculeStream.sk_encodeExtra(mol.bondTransient(n));
-            ret += '\n';
-        }
-        ret += '!End\n';
-        return ret;
-    };
-    ;
-    MoleculeStream.sk_unescape = function (str) {
-        var ret = '', match;
-        while (match = str.match(/^(.*?)\\([0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f])(.*)/)) {
-            ret += match[1] + String.fromCharCode(parseInt("0x" + match[2]));
-            str = match[3];
-        }
-        return ret + str;
-    };
-    ;
-    MoleculeStream.sk_escape = function (str) {
-        var ret = '';
-        for (var n = 0; n < str.length; n++) {
-            var ch = str.charAt(n), code = str.charCodeAt(n);
-            if (code <= 32 || code > 127 || ch == '\\' || ch == ',' || ch == ';' || ch == '=') {
-                var hex = (code & 0xFFFF).toString(16).toUpperCase();
-                ret += '\\';
-                for (var i = 4 - hex.length; i > 0; i--)
-                    ret += '0';
-                ret += hex;
-            }
-            else
-                ret += ch;
-        }
-        return ret;
-    };
-    ;
-    MoleculeStream.sk_encodeExtra = function (extra) {
-        var ret = '';
-        for (var n = 0; n < extra.length; n++)
-            ret += ',' + MoleculeStream.sk_escape(extra[n]);
-        return ret;
-    };
-    ;
-    return MoleculeStream;
 }());
 var MolUtil = (function () {
     function MolUtil() {
@@ -1042,87 +1335,221 @@ var MolUtil = (function () {
     MolUtil.ABBREV_ATTACHMENT = "*";
     return MolUtil;
 }());
-var RenderPolicy = (function () {
-    function RenderPolicy(data) {
-        if (!data) {
-            data =
-                {
-                    'name': 'default',
-                    'pointScale': 20,
-                    'resolutionDPI': 100,
-                    'fontSize': 0.65,
-                    'lineSize': 0.075,
-                    'bondSep': 0.2,
-                    'defaultPadding': 0.2,
-                    'foreground': 0x000000,
-                    'background': 0xFFFFFF,
-                    'atomCols': new Array(112)
-                };
-            for (var n = 0; n <= 111; n++)
-                data.atomCols[n] = 0x000000;
-            this.data = data;
-        }
-        else {
-            this.data = clone(data);
+function newElement(parent, tag, attr) {
+    var el = $("<" + tag + ">");
+    if (attr)
+        el.attr(attr);
+    $(parent).append(el);
+    return el[0];
+}
+function addText(parent, text) {
+    var el = parent instanceof jQuery ? parent[0] : parent;
+    el.appendChild(document.createTextNode(text));
+}
+function setVisible(node, visible) {
+    if (visible)
+        $(node).show();
+    else
+        $(node).hide();
+}
+function plural(count) {
+    return count == 1 ? '' : 's';
+}
+function colourCode(col) {
+    var hex = (col & 0xFFFFFF).toString(16);
+    while (hex.length < 6)
+        hex = '0' + hex;
+    return '#' + hex;
+}
+function colourAlpha(col) {
+    var transp = (col >>> 24) & 0xFF;
+    return transp == 0 ? 1 : transp == 0xFF ? 0 : 1 - (transp * (1.0 / 255));
+}
+var ONE_OVER_255 = 1.0 / 255;
+function colourCanvas(col) {
+    if (col == 0xFFFFFF)
+        return 'white';
+    if (col == 0x000000)
+        return 'black';
+    if (col == -1)
+        return undefined;
+    if (col >= 0 && col <= 0xFFFFFF)
+        return colourCode(col);
+    var t = ((col >> 24) & 0xFF) * ONE_OVER_255;
+    var r = ((col >> 16) & 0xFF);
+    var g = ((col >> 8) & 0xFF);
+    var b = (col & 0xFF);
+    return 'rgba(' + r + ',' + g + ',' + b + ',' + (1 - t) + ')';
+}
+function nodeText(node) {
+    var ret = '';
+    if (!node)
+        return;
+    node = node.firstChild;
+    while (node) {
+        if (node.nodeType == 3 || node.nodeType == 4)
+            ret += node.nodeValue;
+        node = node.nextSibling;
+    }
+    return ret;
+}
+function isDef(v) {
+    return !(v === null || typeof v === 'undefined');
+}
+function notDef(v) {
+    return v === null || typeof v === 'undefined';
+}
+function eventCoords(event, container) {
+    var parentOffset = $(container).offset();
+    var relX = event.pageX - parentOffset.left;
+    var relY = event.pageY - parentOffset.top;
+    return [relX, relY];
+}
+function norm_xy(dx, dy) {
+    return Math.sqrt(dx * dx + dy * dy);
+}
+function norm_xyz(dx, dy, dz) {
+    return Math.sqrt(dx * dx + dy * dy + dz * dz);
+}
+function norm2_xy(dx, dy) {
+    return dx * dx + dy * dy;
+}
+function norm2_xyz(dx, dy, dz) {
+    return dx * dx + dy * dy + dz * dz;
+}
+function sqr(v) {
+    return v * v;
+}
+function realEqual(v1, v2) { return v1 == v2 || Math.abs(v1 - v2) <= 1E-14 * Math.max(v1, v2); }
+var TWOPI = 2 * Math.PI;
+var INV_TWOPI = 1.0 / TWOPI;
+var DEGRAD = Math.PI / 180;
+var RADDEG = 180 / Math.PI;
+function angleNorm(th) {
+    if (th == -Math.PI)
+        return Math.PI;
+    if (th < -Math.PI) {
+        var mod = Math.ceil((-th - Math.PI) * INV_TWOPI);
+        return th + mod * TWOPI;
+    }
+    if (th > Math.PI) {
+        var mod = Math.ceil((th - Math.PI) * INV_TWOPI);
+        return th - mod * TWOPI;
+    }
+    return th;
+}
+function angleDiff(th1, th2) {
+    var theta = angleNorm(th1) - angleNorm(th2);
+    return theta - (theta > Math.PI ? TWOPI : 0) + (theta <= -Math.PI ? TWOPI : 0);
+}
+function angleDiffPos(th1, th2) {
+    var theta = angleNorm(th1) - angleNorm(th2);
+    return theta + (theta < 0 ? TWOPI : 0);
+}
+function sortAngles(theta) {
+    if (theta == null || theta.length < 2)
+        return theta;
+    theta = theta.slice(0);
+    for (var n = 0; n < theta.length; n++)
+        theta[n] = angleNorm(theta[n]);
+    theta.sort();
+    while (true) {
+        var a = theta[theta.length - 1], b = theta[0], c = theta[1];
+        if (angleDiff(b, a) <= angleDiff(c, b))
+            break;
+        for (var n = theta.length - 1; n > 0; n--)
+            theta[n] = theta[n - 1];
+        theta[0] = a;
+    }
+    return theta;
+}
+function uniqueAngles(theta, threshold) {
+    theta = sortAngles(theta);
+    for (var n = 1; n < theta.length; n++) {
+        if (Math.abs(angleDiff(theta[n], theta[n - 1])) <= threshold) {
+            theta.splice(n, 1);
+            n--;
         }
     }
-    ;
-    RenderPolicy.defaultBlackOnWhite = function () {
-        var policy = new RenderPolicy();
-        return policy;
-    };
-    RenderPolicy.defaultWhiteOnBlack = function () {
-        var policy = new RenderPolicy();
-        policy.data.foreground = 0xFFFFFF;
-        policy.data.background = 0x000000;
-        for (var n = 0; n <= 111; n++)
-            policy.data.atomCols[n] = 0xFFFFFF;
-        return policy;
-    };
-    RenderPolicy.defaultColourOnWhite = function () {
-        var policy = RenderPolicy.defaultBlackOnWhite();
-        policy.data.atomCols[0] = 0x404040;
-        policy.data.atomCols[1] = 0x808080;
-        policy.data.atomCols[6] = 0x000000;
-        policy.data.atomCols[7] = 0x0000FF;
-        policy.data.atomCols[8] = 0xFF0000;
-        policy.data.atomCols[9] = 0xFF8080;
-        policy.data.atomCols[15] = 0xFF8000;
-        policy.data.atomCols[16] = 0x808000;
-        policy.data.atomCols[17] = 0x00C000;
-        policy.data.atomCols[35] = 0xC04000;
-        return policy;
-    };
-    RenderPolicy.defaultColourOnBlack = function () {
-        var policy = RenderPolicy.defaultWhiteOnBlack();
-        policy.data.atomCols[0] = 0xA0A0A0;
-        policy.data.atomCols[1] = 0x808080;
-        policy.data.atomCols[6] = 0xFFFFFF;
-        policy.data.atomCols[7] = 0x4040FF;
-        policy.data.atomCols[8] = 0xFF4040;
-        policy.data.atomCols[9] = 0xFF8080;
-        policy.data.atomCols[15] = 0xFF8000;
-        policy.data.atomCols[16] = 0xFFFF00;
-        policy.data.atomCols[17] = 0x40FF40;
-        policy.data.atomCols[35] = 0xFF8040;
-        return policy;
-    };
-    RenderPolicy.defaultPrintedPublication = function () {
-        var policy = RenderPolicy.defaultBlackOnWhite();
-        policy.data.pointScale = 9.6;
-        policy.data.resolutionDPI = 600;
-        policy.data.fontSize = 0.80;
-        policy.data.bondSep = 0.27;
-        policy.data.lineSize = 0.0625;
-        return policy;
-    };
-    return RenderPolicy;
-}());
-var RenderEffects = (function () {
-    function RenderEffects() {
+    return theta;
+}
+function minArray(a) {
+    if (a == null || a.length == 0)
+        return 0;
+    var v = a[0];
+    for (var n = 1; n < a.length; n++)
+        v = Math.min(v, a[n]);
+    return v;
+}
+function maxArray(a) {
+    if (a == null || a.length == 0)
+        return 0;
+    var v = a[0];
+    for (var n = 1; n < a.length; n++)
+        v = Math.max(v, a[n]);
+    return v;
+}
+function findNode(parent, name) {
+    if (parent == null)
+        return null;
+    var node = parent.firstChild;
+    while (node) {
+        if (node.nodeType == Node.ELEMENT_NODE && node.nodeName == name)
+            return node;
+        node = node.nextSibling;
     }
-    return RenderEffects;
-}());
+    return null;
+}
+function findNodes(parent, name) {
+    if (parent == null)
+        return null;
+    var node = parent.firstChild;
+    var list = [];
+    while (node) {
+        if (node.nodeType == Node.ELEMENT_NODE && node.nodeName == name)
+            list.push(node);
+        node = node.nextSibling;
+    }
+    return list;
+}
+function pathRoundedRect(x1, y1, x2, y2, rad) {
+    var path = new Path2D();
+    path.moveTo(x2 - rad, y1);
+    path.quadraticCurveTo(x2, y1, x2, y1 + rad);
+    path.lineTo(x2, y2 - rad);
+    path.quadraticCurveTo(x2, y2, x2 - rad, y2);
+    path.lineTo(x1 + rad, y2);
+    path.quadraticCurveTo(x1, y2, x1, y2 - rad);
+    path.lineTo(x1, y1 + rad);
+    path.quadraticCurveTo(x1, y1, x1 + rad, y1);
+    path.closePath();
+    return path;
+}
+function drawLine(ctx, x1, y1, x2, y2) {
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.stroke();
+}
+var ASCENT_FUDGE = 1.4;
+function fontSansSerif(ascent) { return ascent * ASCENT_FUDGE + "px sans"; }
+function pixelDensity() {
+    if ('devicePixelRatio' in window && window.devicePixelRatio > 1)
+        return window.devicePixelRatio;
+    return 1;
+}
+function clone(obj) {
+    var dup = {};
+    for (var key in obj)
+        dup[key] = obj[key];
+    return dup;
+}
+function escapeHTML(text) {
+    if (!text)
+        return '';
+    var map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+    return text.replace(/[&<>"']/g, function (m) { return map[m]; });
+}
 var SketchUtil = (function () {
     function SketchUtil() {
     }
@@ -1516,6 +1943,412 @@ var Func = (function () {
     };
     return Func;
 }());
+var RenderPolicy = (function () {
+    function RenderPolicy(data) {
+        if (!data) {
+            data =
+                {
+                    'name': 'default',
+                    'pointScale': 20,
+                    'resolutionDPI': 100,
+                    'fontSize': 0.65,
+                    'lineSize': 0.075,
+                    'bondSep': 0.2,
+                    'defaultPadding': 0.2,
+                    'foreground': 0x000000,
+                    'background': 0xFFFFFF,
+                    'atomCols': new Array(112)
+                };
+            for (var n = 0; n <= 111; n++)
+                data.atomCols[n] = 0x000000;
+            this.data = data;
+        }
+        else {
+            this.data = clone(data);
+        }
+    }
+    ;
+    RenderPolicy.defaultBlackOnWhite = function () {
+        var policy = new RenderPolicy();
+        return policy;
+    };
+    RenderPolicy.defaultWhiteOnBlack = function () {
+        var policy = new RenderPolicy();
+        policy.data.foreground = 0xFFFFFF;
+        policy.data.background = 0x000000;
+        for (var n = 0; n <= 111; n++)
+            policy.data.atomCols[n] = 0xFFFFFF;
+        return policy;
+    };
+    RenderPolicy.defaultColourOnWhite = function () {
+        var policy = RenderPolicy.defaultBlackOnWhite();
+        policy.data.atomCols[0] = 0x404040;
+        policy.data.atomCols[1] = 0x808080;
+        policy.data.atomCols[6] = 0x000000;
+        policy.data.atomCols[7] = 0x0000FF;
+        policy.data.atomCols[8] = 0xFF0000;
+        policy.data.atomCols[9] = 0xFF8080;
+        policy.data.atomCols[15] = 0xFF8000;
+        policy.data.atomCols[16] = 0x808000;
+        policy.data.atomCols[17] = 0x00C000;
+        policy.data.atomCols[35] = 0xC04000;
+        return policy;
+    };
+    RenderPolicy.defaultColourOnBlack = function () {
+        var policy = RenderPolicy.defaultWhiteOnBlack();
+        policy.data.atomCols[0] = 0xA0A0A0;
+        policy.data.atomCols[1] = 0x808080;
+        policy.data.atomCols[6] = 0xFFFFFF;
+        policy.data.atomCols[7] = 0x4040FF;
+        policy.data.atomCols[8] = 0xFF4040;
+        policy.data.atomCols[9] = 0xFF8080;
+        policy.data.atomCols[15] = 0xFF8000;
+        policy.data.atomCols[16] = 0xFFFF00;
+        policy.data.atomCols[17] = 0x40FF40;
+        policy.data.atomCols[35] = 0xFF8040;
+        return policy;
+    };
+    RenderPolicy.defaultPrintedPublication = function () {
+        var policy = RenderPolicy.defaultBlackOnWhite();
+        policy.data.pointScale = 9.6;
+        policy.data.resolutionDPI = 600;
+        policy.data.fontSize = 0.80;
+        policy.data.bondSep = 0.27;
+        policy.data.lineSize = 0.0625;
+        return policy;
+    };
+    return RenderPolicy;
+}());
+var RenderEffects = (function () {
+    function RenderEffects() {
+    }
+    return RenderEffects;
+}());
+var MetaVector = (function () {
+    function MetaVector(vec) {
+        this.PRIM_LINE = 1;
+        this.PRIM_RECT = 2;
+        this.PRIM_OVAL = 3;
+        this.PRIM_PATH = 4;
+        this.PRIM_TEXT = 5;
+        this.ONE_THIRD = 1.0 / 3;
+        this.offsetX = 0;
+        this.offsetY = 0;
+        this.scale = 1;
+        this.density = 1;
+        this.types = vec.types;
+        this.prims = vec.prims;
+        this.width = vec.size[0];
+        this.height = vec.size[1];
+        if (this.types == null)
+            this.types = [];
+        if (this.prims == null)
+            this.prims = [];
+    }
+    MetaVector.prototype.drawLine = function (x1, y1, x2, y2, thickness, colour) {
+        if (!thickness)
+            thickness = 1;
+        var typeidx = this.findOrCreateType([this.PRIM_LINE, thickness, colour]);
+        this.prims.push([this.PRIM_LINE, typeidx, x1, y1, x2, y2]);
+    };
+    MetaVector.prototype.drawRect = function (x, y, w, h, edgeCol, fillCol, thickness) {
+        if (!edgeCol)
+            edgeCol = -1;
+        if (!fillCol)
+            fillCol = -1;
+        if (!thickness)
+            thickness = 1;
+        var typeidx = this.findOrCreateType([this.PRIM_RECT, edgeCol, fillCol, thickness]);
+        this.prims.push([this.PRIM_RECT, typeidx, x, y, w, h]);
+    };
+    MetaVector.prototype.drawOval = function (x, y, w, h, edgeCol, fillCol, thickness) {
+        if (!edgeCol)
+            edgeCol = -1;
+        if (!fillCol)
+            fillCol = -1;
+        if (!thickness)
+            thickness = 1;
+        var typeidx = this.findOrCreateType([this.PRIM_OVAL, edgeCol, fillCol, thickness]);
+        this.prims.push([this.PRIM_OVAL, typeidx, x, y, w, h]);
+    };
+    MetaVector.prototype.drawPath = function (xpoints, ypoints, ctrlFlags, isClosed, edgeCol, fillCol, thickness, hardEdge) {
+        if (edgeCol)
+            edgeCol = -1;
+        if (fillCol)
+            fillCol = -1;
+        if (thickness)
+            thickness = 1;
+        if (hardEdge)
+            hardEdge = false;
+        var typeidx = this.findOrCreateType([this.PRIM_PATH, edgeCol, fillCol, thickness, hardEdge]);
+        this.prims.push([this.PRIM_PATH, typeidx, xpoints.length, xpoints, ypoints, ctrlFlags, isClosed]);
+    };
+    MetaVector.prototype.drawText = function (x, y, txt, size, colour) {
+        var typeidx = this.findOrCreateType([this.PRIM_TEXT, size, colour]);
+        this.prims.push([this.PRIM_TEXT, typeidx, x, y, txt]);
+    };
+    MetaVector.prototype.measureText = function (txt, size) {
+        var fd = FontData.main;
+        var scale = size / fd.UNITS_PER_EM;
+        var dx = 0;
+        for (var n = 0; n < txt.length; n++) {
+            var i = txt.charCodeAt(n) - 32;
+            if (i < 0 || i >= 96) {
+                dx += fd.MISSING_HORZ;
+                continue;
+            }
+            dx += fd.HORIZ_ADV_X[i];
+            if (n < txt.length - 1) {
+                var j = txt.charCodeAt(n + 1) - 32;
+                for (var k = 0; k < fd.KERN_K.length; k++)
+                    if ((fd.KERN_G1[k] == i && fd.KERN_G2[k] == j) || (fd.KERN_G1[k] == j && fd.KERN_G2[k] == i)) {
+                        dx += fd.KERN_K[k];
+                        break;
+                    }
+            }
+        }
+        return [dx * scale, fd.ASCENT * scale * fd.ASCENT_FUDGE, -fd.DESCENT * scale];
+    };
+    MetaVector.prototype.renderInto = function (parent) {
+        var canvas = newElement(parent, 'canvas', { 'width': this.width, 'height': this.height });
+        this.renderCanvas(canvas);
+        return canvas;
+    };
+    MetaVector.prototype.renderCanvas = function (canvas, clearFirst) {
+        var ctx = canvas.getContext('2d');
+        if (clearFirst)
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        var w = canvas.style.width ? parseInt(canvas.style.width) : canvas.width / this.density;
+        var h = canvas.style.height ? parseInt(canvas.style.height) : canvas.height / this.density;
+        this.density = pixelDensity();
+        canvas.style.width = w + 'px';
+        canvas.style.height = h + 'px';
+        canvas.width = w * this.density;
+        canvas.height = h * this.density;
+        this.renderContext(ctx);
+    };
+    MetaVector.prototype.renderContext = function (ctx) {
+        ctx.save();
+        ctx.scale(this.density, this.density);
+        this.typeObj = [];
+        for (var n = 0; n < this.types.length; n++) {
+            var t = this.types[n];
+            if (t[0] == this.PRIM_LINE)
+                this.typeObj[n] = this.setupTypeLine(t);
+            else if (t[0] == this.PRIM_RECT)
+                this.typeObj[n] = this.setupTypeRect(t);
+            else if (t[0] == this.PRIM_OVAL)
+                this.typeObj[n] = this.setupTypeOval(t);
+            else if (t[0] == this.PRIM_PATH)
+                this.typeObj[n] = this.setupTypePath(t);
+            else if (t[0] == this.PRIM_TEXT)
+                this.typeObj[n] = this.setupTypeText(t);
+        }
+        for (var n = 0; n < this.prims.length; n++) {
+            var p = this.prims[n];
+            if (p[0] == this.PRIM_LINE)
+                this.renderLine(ctx, p);
+            else if (p[0] == this.PRIM_RECT)
+                this.renderRect(ctx, p);
+            else if (p[0] == this.PRIM_OVAL)
+                this.renderOval(ctx, p);
+            else if (p[0] == this.PRIM_PATH)
+                this.renderPath(ctx, p);
+            else if (p[0] == this.PRIM_TEXT)
+                this.renderText(ctx, p);
+        }
+        ctx.restore();
+    };
+    MetaVector.prototype.setupTypeLine = function (t) {
+        var thickness = t[1] * this.scale;
+        var colour = t[2];
+        return { 'thickness': thickness, 'colour': colourCanvas(colour) };
+    };
+    MetaVector.prototype.setupTypeRect = function (t) {
+        var edgeCol = t[1];
+        var fillCol = t[2];
+        var thickness = t[3] * this.scale;
+        return { 'edgeCol': colourCanvas(edgeCol), 'fillCol': colourCanvas(fillCol), 'thickness': thickness };
+    };
+    MetaVector.prototype.setupTypeOval = function (t) {
+        var edgeCol = t[1];
+        var fillCol = t[2];
+        var thickness = t[3] * this.scale;
+        return { 'edgeCol': colourCanvas(edgeCol), 'fillCol': colourCanvas(fillCol), 'thickness': thickness };
+    };
+    MetaVector.prototype.setupTypePath = function (t) {
+        var edgeCol = t[1];
+        var fillCol = t[2];
+        var thickness = t[3] * this.scale;
+        var hardEdge = t[4];
+        return { 'edgeCol': colourCanvas(edgeCol), 'fillCol': colourCanvas(fillCol), 'thickness': thickness, 'hardEdge': hardEdge };
+    };
+    MetaVector.prototype.setupTypeText = function (t) {
+        var sz = t[1] * this.scale;
+        var colour = t[2];
+        return { 'colour': colourCanvas(colour), 'size': sz };
+    };
+    MetaVector.prototype.renderLine = function (ctx, p) {
+        var type = this.typeObj[p[1]];
+        var x1 = p[2], y1 = p[3];
+        var x2 = p[4], y2 = p[5];
+        x1 = this.offsetX + this.scale * x1;
+        y1 = this.offsetY + this.scale * y1;
+        x2 = this.offsetX + this.scale * x2;
+        y2 = this.offsetY + this.scale * y2;
+        if (type.colour) {
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.strokeStyle = type.colour;
+            ctx.lineWidth = type.thickness;
+            ctx.lineCap = 'round';
+            ctx.stroke();
+        }
+    };
+    MetaVector.prototype.renderRect = function (ctx, p) {
+        var type = this.typeObj[p[1]];
+        var x = p[2], y = p[3];
+        var w = p[4], h = p[5];
+        x = this.offsetX + this.scale * x;
+        y = this.offsetY + this.scale * y;
+        w *= this.scale;
+        h *= this.scale;
+        if (type.fillCol) {
+            ctx.fillStyle = type.fillCol;
+            ctx.fillRect(x, y, w, h);
+        }
+        if (type.edgeCol) {
+            ctx.strokeStyle = type.edgeCol;
+            ctx.lineWidth = type.thickness;
+            ctx.lineCap = 'square';
+            ctx.strokeRect(x, y, w, h);
+        }
+    };
+    MetaVector.prototype.renderOval = function (ctx, p) {
+        var type = this.typeObj[p[1]];
+        var cx = p[2], cy = p[3];
+        var rw = p[4], rh = p[5];
+        cx = this.offsetX + this.scale * cx;
+        cy = this.offsetY + this.scale * cy;
+        rw *= this.scale;
+        rh *= this.scale;
+        if (type.fillCol) {
+            ctx.fillStyle = type.fillCol;
+            ctx.beginPath();
+            ctx.ellipse(cx, cy, rw, rh, 0, 0, 2 * Math.PI, true);
+            ctx.fill();
+        }
+        if (type.edgeCol) {
+            ctx.strokeStyle = type.edgeCol;
+            ctx.lineWidth = type.thickness;
+            ctx.beginPath();
+            ctx.ellipse(cx, cy, rw, rh, 0, 0, 2 * Math.PI, true);
+            ctx.stroke();
+        }
+    };
+    MetaVector.prototype.renderPath = function (ctx, p) {
+        var type = this.typeObj[p[1]];
+        var npts = p[2];
+        if (npts == 0)
+            return;
+        var x = p[3], y = p[4];
+        var ctrl = p[5];
+        var isClosed = p[6];
+        for (var n = 0; n < npts; n++) {
+            x[n] = this.offsetX + this.scale * x[n];
+            y[n] = this.offsetY + this.scale * y[n];
+        }
+        for (var layer = 1; layer <= 2; layer++) {
+            if (layer == 1 && !type.fillCol)
+                continue;
+            if (layer == 2 && !type.edgeCol)
+                continue;
+            ctx.beginPath();
+            ctx.moveTo(x[0], y[0]);
+            for (var i = 1; i < npts; i++) {
+                if (!ctrl[i]) {
+                    ctx.lineTo(x[i], y[i]);
+                }
+                else if (i < npts - 1 && !ctrl[i + 1]) {
+                    ctx.quadraticCurveTo(x[i], y[i], x[i + 1], y[i + 1]);
+                    i++;
+                }
+                else if (i < npts - 1 && !ctrl[i + 2]) {
+                    ctx.bezierCurveTo(x[i], y[i], x[i + 1], y[i + 1], x[i + 2], y[i + 2]);
+                    i += 2;
+                }
+            }
+            if (isClosed)
+                ctx.closePath();
+            if (layer == 1) {
+                ctx.fillStyle = type.fillCol;
+                ctx.fill();
+            }
+            else {
+                ctx.strokeStyle = type.edgeCol;
+                ctx.lineWidth = type.thickness;
+                ctx.lineCap = type.hardEdge ? 'square' : 'round';
+                ctx.lineJoin = type.hardEdge ? 'miter' : 'round';
+                ctx.stroke();
+            }
+        }
+    };
+    MetaVector.prototype.renderText = function (ctx, p) {
+        var type = this.typeObj[p[1]];
+        var x = p[2], y = p[3];
+        var txt = p[4];
+        var sz = type.size;
+        var fill = type.colour;
+        x = this.offsetX + this.scale * x;
+        y = this.offsetY + this.scale * y;
+        var fd = FontData.main;
+        var scale = sz / fd.UNITS_PER_EM;
+        var dx = 0;
+        for (var n = 0; n < txt.length; n++) {
+            var i = txt.charCodeAt(n) - 32;
+            if (i < 0 || i >= 96) {
+                dx += fd.MISSING_HORZ;
+                continue;
+            }
+            var path = fd.getGlyphPath(i);
+            if (path) {
+                ctx.save();
+                ctx.translate(x + dx * scale, y);
+                ctx.scale(scale, -scale);
+                ctx.fillStyle = fill;
+                ctx.fill(path);
+                ctx.restore();
+            }
+            dx += fd.HORIZ_ADV_X[i];
+            if (n < txt.length - 1) {
+                var j = txt.charCodeAt(n + 1) - 32;
+                for (var k = 0; k < fd.KERN_K.length; k++)
+                    if ((fd.KERN_G1[k] == i && fd.KERN_G2[k] == j) || (fd.KERN_G1[k] == j && fd.KERN_G2[k] == i)) {
+                        dx += fd.KERN_K[k];
+                        break;
+                    }
+            }
+        }
+    };
+    MetaVector.prototype.findOrCreateType = function (typeDef) {
+        for (var i = 0; i < this.types.length; i++) {
+            if (this.types[i].length != typeDef.length)
+                continue;
+            var match = true;
+            for (var j = 0; j < typeDef.length; j++)
+                if (typeDef[j] != this.types[i][j]) {
+                    match = false;
+                    break;
+                }
+            if (match)
+                return i;
+        }
+        this.types.push(typeDef);
+        return this.types.length - 1;
+    };
+    return MetaVector;
+}());
 var Download = (function (_super) {
     __extends(Download, _super);
     function Download(tokenID) {
@@ -1834,220 +2667,6 @@ var Download = (function (_super) {
     };
     return Download;
 }(Dialog));
-function newElement(parent, tag, attr) {
-    var el = $("<" + tag + ">");
-    if (attr)
-        el.attr(attr);
-    $(parent).append(el);
-    return el[0];
-}
-function addText(parent, text) {
-    var el = parent instanceof jQuery ? parent[0] : parent;
-    el.appendChild(document.createTextNode(text));
-}
-function setVisible(node, visible) {
-    if (visible)
-        $(node).show();
-    else
-        $(node).hide();
-}
-function plural(count) {
-    return count == 1 ? '' : 's';
-}
-function colourCode(col) {
-    var hex = (col & 0xFFFFFF).toString(16);
-    while (hex.length < 6)
-        hex = '0' + hex;
-    return '#' + hex;
-}
-function colourAlpha(col) {
-    var transp = (col >>> 24) & 0xFF;
-    return transp == 0 ? 1 : transp == 0xFF ? 0 : 1 - (transp * (1.0 / 255));
-}
-var ONE_OVER_255 = 1.0 / 255;
-function colourCanvas(col) {
-    if (col == 0xFFFFFF)
-        return 'white';
-    if (col == 0x000000)
-        return 'black';
-    if (col == -1)
-        return undefined;
-    if (col >= 0 && col <= 0xFFFFFF)
-        return colourCode(col);
-    var t = ((col >> 24) & 0xFF) * ONE_OVER_255;
-    var r = ((col >> 16) & 0xFF);
-    var g = ((col >> 8) & 0xFF);
-    var b = (col & 0xFF);
-    return 'rgba(' + r + ',' + g + ',' + b + ',' + (1 - t) + ')';
-}
-function nodeText(node) {
-    var ret = '';
-    if (!node)
-        return;
-    node = node.firstChild;
-    while (node) {
-        if (node.nodeType == 3 || node.nodeType == 4)
-            ret += node.nodeValue;
-        node = node.nextSibling;
-    }
-    return ret;
-}
-function isDef(v) {
-    return !(v === null || typeof v === 'undefined');
-}
-function notDef(v) {
-    return v === null || typeof v === 'undefined';
-}
-function eventCoords(event, container) {
-    var parentOffset = $(container).offset();
-    var relX = event.pageX - parentOffset.left;
-    var relY = event.pageY - parentOffset.top;
-    return [relX, relY];
-}
-function norm_xy(dx, dy) {
-    return Math.sqrt(dx * dx + dy * dy);
-}
-function norm_xyz(dx, dy, dz) {
-    return Math.sqrt(dx * dx + dy * dy + dz * dz);
-}
-function norm2_xy(dx, dy) {
-    return dx * dx + dy * dy;
-}
-function norm2_xyz(dx, dy, dz) {
-    return dx * dx + dy * dy + dz * dz;
-}
-function sqr(v) {
-    return v * v;
-}
-var TWOPI = 2 * Math.PI;
-var INV_TWOPI = 1.0 / TWOPI;
-var DEGRAD = Math.PI / 180;
-var RADDEG = 180 / Math.PI;
-function angleNorm(th) {
-    if (th == -Math.PI)
-        return Math.PI;
-    if (th < -Math.PI) {
-        var mod = Math.ceil((-th - Math.PI) * INV_TWOPI);
-        return th + mod * TWOPI;
-    }
-    if (th > Math.PI) {
-        var mod = Math.ceil((th - Math.PI) * INV_TWOPI);
-        return th - mod * TWOPI;
-    }
-    return th;
-}
-function angleDiff(th1, th2) {
-    var theta = angleNorm(th1) - angleNorm(th2);
-    return theta - (theta > Math.PI ? TWOPI : 0) + (theta <= -Math.PI ? TWOPI : 0);
-}
-function angleDiffPos(th1, th2) {
-    var theta = angleNorm(th1) - angleNorm(th2);
-    return theta + (theta < 0 ? TWOPI : 0);
-}
-function sortAngles(theta) {
-    if (theta == null || theta.length < 2)
-        return theta;
-    theta = theta.slice(0);
-    for (var n = 0; n < theta.length; n++)
-        theta[n] = angleNorm(theta[n]);
-    theta.sort();
-    while (true) {
-        var a = theta[theta.length - 1], b = theta[0], c = theta[1];
-        if (angleDiff(b, a) <= angleDiff(c, b))
-            break;
-        for (var n = theta.length - 1; n > 0; n--)
-            theta[n] = theta[n - 1];
-        theta[0] = a;
-    }
-    return theta;
-}
-function uniqueAngles(theta, threshold) {
-    theta = sortAngles(theta);
-    for (var n = 1; n < theta.length; n++) {
-        if (Math.abs(angleDiff(theta[n], theta[n - 1])) <= threshold) {
-            theta.splice(n, 1);
-            n--;
-        }
-    }
-    return theta;
-}
-function minArray(a) {
-    if (a == null || a.length == 0)
-        return 0;
-    var v = a[0];
-    for (var n = 1; n < a.length; n++)
-        v = Math.min(v, a[n]);
-    return v;
-}
-function maxArray(a) {
-    if (a == null || a.length == 0)
-        return 0;
-    var v = a[0];
-    for (var n = 1; n < a.length; n++)
-        v = Math.max(v, a[n]);
-    return v;
-}
-function findNode(parent, name) {
-    if (parent == null)
-        return null;
-    var node = parent.firstChild;
-    while (node) {
-        if (node.nodeType == Node.ELEMENT_NODE && node.nodeName == name)
-            return node;
-        node = node.nextSibling;
-    }
-    return null;
-}
-function findNodes(parent, name) {
-    if (parent == null)
-        return null;
-    var node = parent.firstChild;
-    var list = [];
-    while (node) {
-        if (node.nodeType == Node.ELEMENT_NODE && node.nodeName == name)
-            list.push(node);
-        node = node.nextSibling;
-    }
-    return list;
-}
-function pathRoundedRect(x1, y1, x2, y2, rad) {
-    var path = new Path2D();
-    path.moveTo(x2 - rad, y1);
-    path.quadraticCurveTo(x2, y1, x2, y1 + rad);
-    path.lineTo(x2, y2 - rad);
-    path.quadraticCurveTo(x2, y2, x2 - rad, y2);
-    path.lineTo(x1 + rad, y2);
-    path.quadraticCurveTo(x1, y2, x1, y2 - rad);
-    path.lineTo(x1, y1 + rad);
-    path.quadraticCurveTo(x1, y1, x1 + rad, y1);
-    path.closePath();
-    return path;
-}
-function drawLine(ctx, x1, y1, x2, y2) {
-    ctx.beginPath();
-    ctx.moveTo(x1, y1);
-    ctx.lineTo(x2, y2);
-    ctx.stroke();
-}
-var ASCENT_FUDGE = 1.4;
-function fontSansSerif(ascent) { return ascent * ASCENT_FUDGE + "px sans"; }
-function pixelDensity() {
-    if ('devicePixelRatio' in window && window.devicePixelRatio > 1)
-        return window.devicePixelRatio;
-    return 1;
-}
-function clone(obj) {
-    var dup = {};
-    for (var key in obj)
-        dup[key] = obj[key];
-    return dup;
-}
-function escapeHTML(text) {
-    if (!text)
-        return '';
-    var map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
-    return text.replace(/[&<>"']/g, function (m) { return map[m]; });
-}
 var Cookies = (function () {
     function Cookies() {
         this.molecules = [];
@@ -3044,354 +3663,6 @@ var ButtonView = (function (_super) {
     ButtonView.ACTION_ICONS = null;
     return ButtonView;
 }(Widget));
-var MetaVector = (function () {
-    function MetaVector(vec) {
-        this.PRIM_LINE = 1;
-        this.PRIM_RECT = 2;
-        this.PRIM_OVAL = 3;
-        this.PRIM_PATH = 4;
-        this.PRIM_TEXT = 5;
-        this.ONE_THIRD = 1.0 / 3;
-        this.offsetX = 0;
-        this.offsetY = 0;
-        this.scale = 1;
-        this.density = 1;
-        this.types = vec.types;
-        this.prims = vec.prims;
-        this.width = vec.size[0];
-        this.height = vec.size[1];
-        if (this.types == null)
-            this.types = [];
-        if (this.prims == null)
-            this.prims = [];
-    }
-    MetaVector.prototype.drawLine = function (x1, y1, x2, y2, thickness, colour) {
-        if (!thickness)
-            thickness = 1;
-        var typeidx = this.findOrCreateType([this.PRIM_LINE, thickness, colour]);
-        this.prims.push([this.PRIM_LINE, typeidx, x1, y1, x2, y2]);
-    };
-    MetaVector.prototype.drawRect = function (x, y, w, h, edgeCol, fillCol, thickness) {
-        if (!edgeCol)
-            edgeCol = -1;
-        if (!fillCol)
-            fillCol = -1;
-        if (!thickness)
-            thickness = 1;
-        var typeidx = this.findOrCreateType([this.PRIM_RECT, edgeCol, fillCol, thickness]);
-        this.prims.push([this.PRIM_RECT, typeidx, x, y, w, h]);
-    };
-    MetaVector.prototype.drawOval = function (x, y, w, h, edgeCol, fillCol, thickness) {
-        if (!edgeCol)
-            edgeCol = -1;
-        if (!fillCol)
-            fillCol = -1;
-        if (!thickness)
-            thickness = 1;
-        var typeidx = this.findOrCreateType([this.PRIM_OVAL, edgeCol, fillCol, thickness]);
-        this.prims.push([this.PRIM_OVAL, typeidx, x, y, w, h]);
-    };
-    MetaVector.prototype.drawPath = function (xpoints, ypoints, ctrlFlags, isClosed, edgeCol, fillCol, thickness, hardEdge) {
-        if (edgeCol)
-            edgeCol = -1;
-        if (fillCol)
-            fillCol = -1;
-        if (thickness)
-            thickness = 1;
-        if (hardEdge)
-            hardEdge = false;
-        var typeidx = this.findOrCreateType([this.PRIM_PATH, edgeCol, fillCol, thickness, hardEdge]);
-        this.prims.push([this.PRIM_PATH, typeidx, xpoints.length, xpoints, ypoints, ctrlFlags, isClosed]);
-    };
-    MetaVector.prototype.drawText = function (x, y, txt, size, colour) {
-        var typeidx = this.findOrCreateType([this.PRIM_TEXT, size, colour]);
-        this.prims.push([this.PRIM_TEXT, typeidx, x, y, txt]);
-    };
-    MetaVector.prototype.measureText = function (txt, size) {
-        var fd = FontData.main;
-        var scale = size / fd.UNITS_PER_EM;
-        var dx = 0;
-        for (var n = 0; n < txt.length; n++) {
-            var i = txt.charCodeAt(n) - 32;
-            if (i < 0 || i >= 96) {
-                dx += fd.MISSING_HORZ;
-                continue;
-            }
-            dx += fd.HORIZ_ADV_X[i];
-            if (n < txt.length - 1) {
-                var j = txt.charCodeAt(n + 1) - 32;
-                for (var k = 0; k < fd.KERN_K.length; k++)
-                    if ((fd.KERN_G1[k] == i && fd.KERN_G2[k] == j) || (fd.KERN_G1[k] == j && fd.KERN_G2[k] == i)) {
-                        dx += fd.KERN_K[k];
-                        break;
-                    }
-            }
-        }
-        return [dx * scale, fd.ASCENT * scale * fd.ASCENT_FUDGE, -fd.DESCENT * scale];
-    };
-    MetaVector.prototype.renderInto = function (parent) {
-        var canvas = newElement(parent, 'canvas', { 'width': this.width, 'height': this.height });
-        this.renderCanvas(canvas);
-        return canvas;
-    };
-    MetaVector.prototype.renderCanvas = function (canvas, clearFirst) {
-        var ctx = canvas.getContext('2d');
-        if (clearFirst)
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-        var w = canvas.style.width ? parseInt(canvas.style.width) : canvas.width / this.density;
-        var h = canvas.style.height ? parseInt(canvas.style.height) : canvas.height / this.density;
-        this.density = pixelDensity();
-        canvas.style.width = w + 'px';
-        canvas.style.height = h + 'px';
-        canvas.width = w * this.density;
-        canvas.height = h * this.density;
-        this.renderContext(ctx);
-    };
-    MetaVector.prototype.renderContext = function (ctx) {
-        ctx.save();
-        ctx.scale(this.density, this.density);
-        this.typeObj = [];
-        for (var n = 0; n < this.types.length; n++) {
-            var t = this.types[n];
-            if (t[0] == this.PRIM_LINE)
-                this.typeObj[n] = this.setupTypeLine(t);
-            else if (t[0] == this.PRIM_RECT)
-                this.typeObj[n] = this.setupTypeRect(t);
-            else if (t[0] == this.PRIM_OVAL)
-                this.typeObj[n] = this.setupTypeOval(t);
-            else if (t[0] == this.PRIM_PATH)
-                this.typeObj[n] = this.setupTypePath(t);
-            else if (t[0] == this.PRIM_TEXT)
-                this.typeObj[n] = this.setupTypeText(t);
-        }
-        for (var n = 0; n < this.prims.length; n++) {
-            var p = this.prims[n];
-            if (p[0] == this.PRIM_LINE)
-                this.renderLine(ctx, p);
-            else if (p[0] == this.PRIM_RECT)
-                this.renderRect(ctx, p);
-            else if (p[0] == this.PRIM_OVAL)
-                this.renderOval(ctx, p);
-            else if (p[0] == this.PRIM_PATH)
-                this.renderPath(ctx, p);
-            else if (p[0] == this.PRIM_TEXT)
-                this.renderText(ctx, p);
-        }
-        ctx.restore();
-    };
-    MetaVector.prototype.setupTypeLine = function (t) {
-        var thickness = t[1] * this.scale;
-        var colour = t[2];
-        return { 'thickness': thickness, 'colour': colourCanvas(colour) };
-    };
-    MetaVector.prototype.setupTypeRect = function (t) {
-        var edgeCol = t[1];
-        var fillCol = t[2];
-        var thickness = t[3] * this.scale;
-        return { 'edgeCol': colourCanvas(edgeCol), 'fillCol': colourCanvas(fillCol), 'thickness': thickness };
-    };
-    MetaVector.prototype.setupTypeOval = function (t) {
-        var edgeCol = t[1];
-        var fillCol = t[2];
-        var thickness = t[3] * this.scale;
-        return { 'edgeCol': colourCanvas(edgeCol), 'fillCol': colourCanvas(fillCol), 'thickness': thickness };
-    };
-    MetaVector.prototype.setupTypePath = function (t) {
-        var edgeCol = t[1];
-        var fillCol = t[2];
-        var thickness = t[3] * this.scale;
-        var hardEdge = t[4];
-        return { 'edgeCol': colourCanvas(edgeCol), 'fillCol': colourCanvas(fillCol), 'thickness': thickness, 'hardEdge': hardEdge };
-    };
-    MetaVector.prototype.setupTypeText = function (t) {
-        var sz = t[1] * this.scale;
-        var colour = t[2];
-        return { 'colour': colourCanvas(colour), 'size': sz };
-    };
-    MetaVector.prototype.renderLine = function (ctx, p) {
-        var type = this.typeObj[p[1]];
-        var x1 = p[2], y1 = p[3];
-        var x2 = p[4], y2 = p[5];
-        x1 = this.offsetX + this.scale * x1;
-        y1 = this.offsetY + this.scale * y1;
-        x2 = this.offsetX + this.scale * x2;
-        y2 = this.offsetY + this.scale * y2;
-        if (type.colour) {
-            ctx.beginPath();
-            ctx.moveTo(x1, y1);
-            ctx.lineTo(x2, y2);
-            ctx.strokeStyle = type.colour;
-            ctx.lineWidth = type.thickness;
-            ctx.lineCap = 'round';
-            ctx.stroke();
-        }
-    };
-    MetaVector.prototype.renderRect = function (ctx, p) {
-        var type = this.typeObj[p[1]];
-        var x = p[2], y = p[3];
-        var w = p[4], h = p[5];
-        x = this.offsetX + this.scale * x;
-        y = this.offsetY + this.scale * y;
-        w *= this.scale;
-        h *= this.scale;
-        if (type.fillCol) {
-            ctx.fillStyle = type.fillCol;
-            ctx.fillRect(x, y, w, h);
-        }
-        if (type.edgeCol) {
-            ctx.strokeStyle = type.edgeCol;
-            ctx.lineWidth = type.thickness;
-            ctx.lineCap = 'square';
-            ctx.strokeRect(x, y, w, h);
-        }
-    };
-    MetaVector.prototype.renderOval = function (ctx, p) {
-        var type = this.typeObj[p[1]];
-        var cx = p[2], cy = p[3];
-        var rw = p[4], rh = p[5];
-        cx = this.offsetX + this.scale * cx;
-        cy = this.offsetY + this.scale * cy;
-        rw *= this.scale;
-        rh *= this.scale;
-        if (type.fillCol) {
-            ctx.fillStyle = type.fillCol;
-            ctx.beginPath();
-            ctx.ellipse(cx, cy, rw, rh, 0, 0, 2 * Math.PI, true);
-            ctx.fill();
-        }
-        if (type.edgeCol) {
-            ctx.strokeStyle = type.edgeCol;
-            ctx.lineWidth = type.thickness;
-            ctx.beginPath();
-            ctx.ellipse(cx, cy, rw, rh, 0, 0, 2 * Math.PI, true);
-            ctx.stroke();
-        }
-    };
-    MetaVector.prototype.renderPath = function (ctx, p) {
-        var type = this.typeObj[p[1]];
-        var npts = p[2];
-        if (npts == 0)
-            return;
-        var x = p[3], y = p[4];
-        var ctrl = p[5];
-        var isClosed = p[6];
-        for (var n = 0; n < npts; n++) {
-            x[n] = this.offsetX + this.scale * x[n];
-            y[n] = this.offsetY + this.scale * y[n];
-        }
-        for (var layer = 1; layer <= 2; layer++) {
-            if (layer == 1 && !type.fillCol)
-                continue;
-            if (layer == 2 && !type.edgeCol)
-                continue;
-            ctx.beginPath();
-            ctx.moveTo(x[0], y[0]);
-            for (var i = 1; i < npts; i++) {
-                if (!ctrl[i]) {
-                    ctx.lineTo(x[i], y[i]);
-                }
-                else if (i < npts - 1 && !ctrl[i + 1]) {
-                    ctx.quadraticCurveTo(x[i], y[i], x[i + 1], y[i + 1]);
-                    i++;
-                }
-                else if (i < npts - 1 && !ctrl[i + 2]) {
-                    ctx.bezierCurveTo(x[i], y[i], x[i + 1], y[i + 1], x[i + 2], y[i + 2]);
-                    i += 2;
-                }
-            }
-            if (isClosed)
-                ctx.closePath();
-            if (layer == 1) {
-                ctx.fillStyle = type.fillCol;
-                ctx.fill();
-            }
-            else {
-                ctx.strokeStyle = type.edgeCol;
-                ctx.lineWidth = type.thickness;
-                ctx.lineCap = type.hardEdge ? 'square' : 'round';
-                ctx.lineJoin = type.hardEdge ? 'miter' : 'round';
-                ctx.stroke();
-            }
-        }
-    };
-    MetaVector.prototype.renderText = function (ctx, p) {
-        var type = this.typeObj[p[1]];
-        var x = p[2], y = p[3];
-        var txt = p[4];
-        var sz = type.size;
-        var fill = type.colour;
-        x = this.offsetX + this.scale * x;
-        y = this.offsetY + this.scale * y;
-        var fd = FontData.main;
-        var scale = sz / fd.UNITS_PER_EM;
-        var dx = 0;
-        for (var n = 0; n < txt.length; n++) {
-            var i = txt.charCodeAt(n) - 32;
-            if (i < 0 || i >= 96) {
-                dx += fd.MISSING_HORZ;
-                continue;
-            }
-            var path = fd.getGlyphPath(i);
-            if (path) {
-                ctx.save();
-                ctx.translate(x + dx * scale, y);
-                ctx.scale(scale, -scale);
-                ctx.fillStyle = fill;
-                ctx.fill(path);
-                ctx.restore();
-            }
-            dx += fd.HORIZ_ADV_X[i];
-            if (n < txt.length - 1) {
-                var j = txt.charCodeAt(n + 1) - 32;
-                for (var k = 0; k < fd.KERN_K.length; k++)
-                    if ((fd.KERN_G1[k] == i && fd.KERN_G2[k] == j) || (fd.KERN_G1[k] == j && fd.KERN_G2[k] == i)) {
-                        dx += fd.KERN_K[k];
-                        break;
-                    }
-            }
-        }
-    };
-    MetaVector.prototype.findOrCreateType = function (typeDef) {
-        for (var i = 0; i < this.types.length; i++) {
-            if (this.types[i].length != typeDef.length)
-                continue;
-            var match = true;
-            for (var j = 0; j < typeDef.length; j++)
-                if (typeDef[j] != this.types[i][j]) {
-                    match = false;
-                    break;
-                }
-            if (match)
-                return i;
-        }
-        this.types.push(typeDef);
-        return this.types.length - 1;
-    };
-    return MetaVector;
-}());
-var Geom = (function () {
-    function Geom() {
-    }
-    Geom.pointInPolygon = function (x, y, px, py) {
-        if (x < minArray(px) || x > maxArray(px) || y < minArray(py) || y > maxArray(py))
-            return false;
-        var sz = px.length;
-        for (var n = 0; n < sz; n++)
-            if (px[n] == x && py[n] == y)
-                return true;
-        var phase = false;
-        for (var n = 0; n < sz; n++) {
-            var x1 = px[n], y1 = py[n], x2 = px[n + 1 < sz ? n + 1 : 0], y2 = py[n + 1 < sz ? n + 1 : 0];
-            if (y > Math.min(y1, y2) && y <= Math.max(y1, y2) && x <= Math.max(x1, x2) && y1 != y2) {
-                var intr = (y - y1) * (x2 - x1) / (y2 - y1) + x1;
-                if (x1 == x2 || x <= intr)
-                    phase = !phase;
-            }
-        }
-        return phase;
-    };
-    return Geom;
-}());
 var ActivityType;
 (function (ActivityType) {
     ActivityType[ActivityType["Delete"] = 1] = "Delete";
@@ -5570,6 +5841,588 @@ var MapReaction = (function (_super) {
     };
     return MapReaction;
 }(Dialog));
+var GeomUtil = (function () {
+    function GeomUtil() {
+    }
+    GeomUtil.pointInPolygon = function (x, y, px, py) {
+        if (x < minArray(px) || x > maxArray(px) || y < minArray(py) || y > maxArray(py))
+            return false;
+        var sz = px.length;
+        for (var n = 0; n < sz; n++)
+            if (px[n] == x && py[n] == y)
+                return true;
+        var phase = false;
+        for (var n = 0; n < sz; n++) {
+            var x1 = px[n], y1 = py[n], x2 = px[n + 1 < sz ? n + 1 : 0], y2 = py[n + 1 < sz ? n + 1 : 0];
+            if (y > Math.min(y1, y2) && y <= Math.max(y1, y2) && x <= Math.max(x1, x2) && y1 != y2) {
+                var intr = (y - y1) * (x2 - x1) / (y2 - y1) + x1;
+                if (x1 == x2 || x <= intr)
+                    phase = !phase;
+            }
+        }
+        return phase;
+    };
+    GeomUtil.areLinesParallel = function (x1, y1, x2, y2, x3, y3, x4, y4) {
+        var dxa = x2 - x1, dxb = x4 - x3, dya = y2 - y1, dyb = y4 - y3;
+        return (realEqual(dxa, dxb) && realEqual(dya, dyb)) || (realEqual(dxa, -dxb) && realEqual(dya, -dyb));
+    };
+    GeomUtil.lineIntersect = function (x1, y1, x2, y2, x3, y3, x4, y4) {
+        var u = ((x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3)) / ((y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1));
+        return [x1 + u * (x2 - x1), y1 + u * (y2 - y1)];
+    };
+    GeomUtil.isPointOnLineSeg = function (px, py, x1, y1, x2, y2) {
+        if (px < Math.min(x1, x2) || px > Math.max(x1, x2) || py < Math.min(y1, y2) || py > Math.max(y1, y2))
+            return false;
+        if ((px == x1 && py == y1) || (px == x2 && py == y2))
+            return true;
+        var dx = x2 - x1, dy = y2 - y1;
+        if (Math.abs(dx) > Math.abs(dy))
+            return realEqual(py, (dy / dx) * (px - x1) + y1);
+        else
+            return realEqual(px, (dx / dy) * (py - y1) + x1);
+    };
+    GeomUtil.doLineSegsIntersect = function (x1, y1, x2, y2, x3, y3, x4, y4) {
+        if (Math.max(x1, x2) < Math.min(x3, x4) || Math.max(y1, y2) < Math.min(y3, y4))
+            return false;
+        if (Math.min(x1, x2) > Math.max(x3, x4) || Math.min(y1, y2) > Math.max(y3, y4))
+            return false;
+        if ((x1 == x3 && y1 == y3) || (x1 == x4 && y1 == y4) || (x2 == x3 && y2 == y3) || (x2 == x4 && y2 == y4))
+            return true;
+        if ((x1 == x2 || x3 == x4) && (x1 == x3 || x1 == x4 || x2 == x3 || x2 == x4))
+            return true;
+        if ((y1 == y2 || y3 == y4) && (y1 == y3 || y1 == y4 || y2 == y3 || y2 == y4))
+            return true;
+        var x4_x3 = x4 - x3, y4_y3 = y4 - y3, x2_x1 = x2 - x1, y2_y1 = y2 - y1, x1_x3 = x1 - x3, y1_y3 = y1 - y3;
+        var nx = x4_x3 * y1_y3 - y4_y3 * x1_x3;
+        var ny = x2_x1 * y1_y3 - y2_y1 * x1_x3;
+        var dn = y4_y3 * x2_x1 - x4_x3 * y2_y1;
+        if (dn == 0)
+            return false;
+        if (dn < 0) {
+            dn = -dn;
+            nx = -nx;
+            ny = -ny;
+        }
+        return nx >= 0 && nx <= dn && ny >= 0 && ny <= dn;
+    };
+    GeomUtil.rectsIntersect = function (x1, y1, w1, h1, x2, y2, w2, h2) {
+        if (x1 <= x2 && x1 + w1 >= x2 + w2 && y1 <= y2 && y1 + h1 >= y2 + h2)
+            return true;
+        if (x2 <= x1 && x2 + w2 >= x1 + w1 && y2 <= y1 && y2 + h2 >= y1 + h1)
+            return true;
+        if (x1 + w1 < x2 || x2 + w2 < x1 || y1 + h1 < y2 || y2 + h2 < y1)
+            return false;
+        return true;
+    };
+    return GeomUtil;
+}());
+var Pos = (function () {
+    function Pos(x, y) {
+        this.x = x == null ? 0 : x;
+        this.y = y == null ? 0 : y;
+    }
+    Pos.zero = function () { return new Pos(); };
+    Pos.prototype.clone = function () { return new Pos(this.x, this.y); };
+    Pos.prototype.scaleBy = function (mag) {
+        if (mag == 1)
+            return;
+        this.x *= mag;
+        this.y *= mag;
+    };
+    Pos.prototype.offsetBy = function (dx, dy) {
+        this.x += dx;
+        this.y += dy;
+    };
+    Pos.prototype.toString = function () { return '[' + this.x + ',' + this.y + ']'; };
+    return Pos;
+}());
+var Size = (function () {
+    function Size(w, h) {
+        this.w = w == null ? 0 : w;
+        this.h = h == null ? 0 : h;
+    }
+    Size.zero = function () { return new Size(); };
+    Size.prototype.clone = function () { return new Size(this.w, this.h); };
+    Size.prototype.scaleBy = function (mag) {
+        if (mag == 1)
+            return;
+        this.w *= mag;
+        this.h *= mag;
+    };
+    Size.prototype.fitInto = function (maxW, maxH) {
+        var scale = 1;
+        if (this.w > maxW)
+            scale = maxW / this.w;
+        if (this.h > maxH)
+            scale = Math.min(scale, maxH / this.h);
+        if (scale < 1)
+            this.scaleBy(scale);
+    };
+    Size.prototype.toString = function () { return '[' + this.w + ',' + this.h + ']'; };
+    return Size;
+}());
+var Box = (function () {
+    function Box(x, y, w, h) {
+        this.x = x == null ? 0 : x;
+        this.y = y == null ? 0 : y;
+        this.w = w == null ? 0 : w;
+        this.h = h == null ? 0 : h;
+    }
+    Box.zero = function () { return new Box(); };
+    Box.fromSize = function (sz) { return new Box(0, 0, sz.w, sz.h); };
+    Box.prototype.clone = function () { return new Box(this.x, this.y, this.w, this.h); };
+    Box.prototype.setPos = function (pos) {
+        this.x = pos.x;
+        this.y = pos.y;
+    };
+    Box.prototype.setSize = function (sz) {
+        this.w = sz.w;
+        this.h = sz.h;
+    };
+    Box.prototype.minX = function () { return this.x; };
+    Box.prototype.minY = function () { return this.y; };
+    Box.prototype.maxX = function () { return this.x + this.w; };
+    Box.prototype.maxY = function () { return this.y + this.h; };
+    Box.prototype.scaleBy = function (mag) {
+        if (mag == 1)
+            return;
+        this.x *= mag;
+        this.y *= mag;
+        this.w *= mag;
+        this.h *= mag;
+    };
+    Box.prototype.offsetBy = function (dx, dy) {
+        this.x += dx;
+        this.y += dy;
+    };
+    Box.prototype.intersects = function (other) {
+        return GeomUtil.rectsIntersect(this.x, this.y, this.w, this.h, other.x, other.y, other.w, other.h);
+    };
+    Box.prototype.toString = function () { return '[' + this.x + ',' + this.y + ';' + this.w + ',' + this.h + ']'; };
+    return Box;
+}());
+var Oval = (function () {
+    function Oval(cx, cy, rw, rh) {
+        this.cx = cx == null ? 0 : cx;
+        this.cy = cy == null ? 0 : cy;
+        this.rw = rw == null ? 0 : rw;
+        this.rh = rh == null ? 0 : rh;
+    }
+    Oval.zero = function () { return new Oval(); };
+    Oval.prototype.clone = function () { return new Oval(this.cx, this.cy, this.rw, this.rh); };
+    Oval.prototype.setCentre = function (pos) {
+        this.cx = pos.x;
+        this.cy = pos.y;
+    };
+    Oval.prototype.setRadius = function (sz) {
+        this.rw = sz.w;
+        this.rh = sz.h;
+    };
+    Oval.prototype.minX = function () { return this.cx - this.rw; };
+    Oval.prototype.minY = function () { return this.cy - this.rh; };
+    Oval.prototype.maxX = function () { return this.cx + this.rw; };
+    Oval.prototype.maxY = function () { return this.cy + this.rh; };
+    Oval.prototype.scaleBy = function (mag) {
+        if (mag == 1)
+            return;
+        this.cx *= mag;
+        this.cy *= mag;
+        this.rw *= mag;
+        this.rh *= mag;
+    };
+    Oval.prototype.offsetBy = function (dx, dy) {
+        this.cx += dx;
+        this.cy += dy;
+    };
+    Oval.prototype.toString = function () { return '[' + this.cx + ',' + this.cy + ';' + this.rw + ',' + this.rh + ']'; };
+    return Oval;
+}());
+var Line = (function () {
+    function Line(x1, y1, x2, y2) {
+        this.x1 = x1 == null ? 0 : x1;
+        this.y1 = y1 == null ? 0 : y1;
+        this.x2 = x2 == null ? 0 : x2;
+        this.y2 = y2 == null ? 0 : y2;
+    }
+    Line.zero = function () { return new Line(); };
+    Line.prototype.clone = function () { return new Line(this.x1, this.y1, this.x2, this.y2); };
+    Line.prototype.setPos1 = function (pos) {
+        this.x1 = pos.x;
+        this.y1 = pos.y;
+    };
+    Line.prototype.setPos2 = function (pos) {
+        this.x2 = pos.x;
+        this.y2 = pos.y;
+    };
+    Line.prototype.minX = function () { return Math.min(this.x1, this.x2); };
+    Line.prototype.minY = function () { return Math.min(this.y1, this.y2); };
+    Line.prototype.maxX = function () { return Math.max(this.x1, this.x2); };
+    Line.prototype.maxY = function () { return Math.max(this.y1, this.y2); };
+    Line.prototype.scaleBy = function (mag) {
+        if (mag == 1)
+            return;
+        this.x1 *= mag;
+        this.y1 *= mag;
+        this.x2 *= mag;
+        this.y2 *= mag;
+    };
+    Line.prototype.offsetBy = function (dx, dy) {
+        this.x1 += dx;
+        this.y1 += dy;
+        this.x2 += dx;
+        this.y2 += dy;
+    };
+    Line.prototype.toString = function () { return '[' + this.x1 + ',' + this.y1 + ';' + this.x2 + ',' + this.y2 + ']'; };
+    return Line;
+}());
+var ArrangeMeasurement = (function () {
+    function ArrangeMeasurement() {
+    }
+    return ArrangeMeasurement;
+}());
+var BLineType;
+(function (BLineType) {
+    BLineType[BLineType["Normal"] = 1] = "Normal";
+    BLineType[BLineType["Inclined"] = 2] = "Inclined";
+    BLineType[BLineType["Declined"] = 3] = "Declined";
+    BLineType[BLineType["Unknown"] = 4] = "Unknown";
+    BLineType[BLineType["Dotted"] = 5] = "Dotted";
+    BLineType[BLineType["DotDir"] = 6] = "DotDir";
+    BLineType[BLineType["IncDouble"] = 7] = "IncDouble";
+    BLineType[BLineType["IncTriple"] = 8] = "IncTriple";
+    BLineType[BLineType["IncQuadruple"] = 9] = "IncQuadruple";
+})(BLineType || (BLineType = {}));
+var ArrangeMolecule = (function () {
+    function ArrangeMolecule(mol, measure, policy, effects) {
+        this.mol = mol;
+        this.measure = measure;
+        this.policy = policy;
+        this.effects = effects;
+        this.MINBOND_LINE = 0.25;
+        this.MINBOND_EXOTIC = 0.5;
+        this.points = [];
+        this.lines = [];
+        this.space = [];
+    }
+    ArrangeMolecule.guestimateSize = function (mol, policy, maxW, maxH) {
+        var box = mol.boundary();
+        var minX = box.minX(), minY = box.minY(), maxX = box.maxX(), maxY = box.maxY();
+        var fontSize = policy.data.fontSize * this.FONT_CORRECT;
+        for (var n = 1; n <= mol.numAtoms(); n++)
+            if (mol.atomExplicit(n)) {
+                var plusH = mol.atomHydrogens(n) > 0 ? 1 : 0;
+                var aw = 0.5 * 0.7 * fontSize * (mol.atomElement(n).length + plusH);
+                var ah = 0.5 * fontSize * (1 + plusH);
+                var ax = mol.atomX(n), ay = mol.atomY(n);
+                minX = Math.min(minX, ax - aw);
+                maxX = Math.max(maxX, ax + aw);
+                minY = Math.min(minY, ay - ah);
+                maxY = Math.max(maxY, ay + ah);
+            }
+        var w = Math.max(1, (maxX - minX)) * policy.data.pointScale;
+        var h = Math.max(1, (maxY - minY)) * policy.data.pointScale;
+        if (maxW > 0 && w > maxW) {
+            h *= maxW / w;
+            w = maxW;
+        }
+        if (maxH > 0 && h > maxH) {
+            w *= maxH / h;
+            h = maxH;
+        }
+        return [w, h];
+    };
+    ArrangeMolecule.prototype.getMolecule = function () { return this.mol; };
+    ArrangeMolecule.prototype.getMeasure = function () { return this.measure; };
+    ArrangeMolecule.prototype.getPolicy = function () { return this.policy; };
+    ArrangeMolecule.prototype.getEffects = function () { return this.effects; };
+    ArrangeMolecule.prototype.getScale = function () { return this.scale; };
+    ArrangeMolecule.prototype.numPoints = function () { return this.points.length; };
+    ArrangeMolecule.prototype.getPoint = function (idx) { return this.points[idx]; };
+    ArrangeMolecule.prototype.numLines = function () { return this.lines.length; };
+    ArrangeMolecule.prototype.getLine = function (idx) { return this.lines[idx]; };
+    ArrangeMolecule.prototype.numSpace = function () { return this.space.length; };
+    ArrangeMolecule.prototype.getSpace = function (idx) { return this.space[idx]; };
+    ArrangeMolecule.prototype.orthogonalDelta = function (x1, y1, x2, y2, d) {
+        var ox = y1 - y2, oy = x2 - x1, dsq = norm2_xy(ox, oy);
+        var sc = dsq > 0 ? d / Math.sqrt(dsq) : 1;
+        return [ox * sc, oy * sc];
+    };
+    ArrangeMolecule.prototype.countPolyViolations = function (px, py, shortCircuit) {
+        var hits = 0;
+        var psz = px.length, nspc = this.space.length;
+        var pr = new Box(), sr = new Box();
+        for (var i1 = 0; i1 < psz; i1++) {
+            var i2 = i1 < psz - 1 ? i1 + 1 : 0;
+            pr.x = Math.min(px[i1], px[i2]) - 1;
+            pr.y = Math.min(py[i1], py[i2]) - 1;
+            pr.w = Math.max(px[i1], px[i2]) - pr.x + 2;
+            pr.h = Math.max(py[i1], py[i2]) - pr.y + 2;
+            for (var j = 0; j < nspc; j++) {
+                var spc = this.space[j];
+                if (spc.px == null)
+                    continue;
+                sr.x = spc.box.x - 1;
+                sr.y = spc.box.y - 1;
+                sr.w = spc.box.w + 1;
+                sr.h = spc.box.h + 1;
+                if (!pr.intersects(sr))
+                    continue;
+                var ssz = spc.px.length;
+                for (var j1 = 0; j1 < ssz; j1++) {
+                    var j2 = j1 < ssz - 1 ? j1 + 1 : 0;
+                    sr.x = Math.min(spc.px[j1], spc.px[j2]) - 1;
+                    sr.y = Math.min(spc.py[j1], spc.py[j2]) - 1;
+                    sr.w = Math.max(spc.px[j1], spc.px[j2]) - sr.x + 2;
+                    sr.h = Math.max(spc.py[j1], spc.py[j2]) - sr.y + 2;
+                    if (!pr.intersects(sr))
+                        continue;
+                    if (GeomUtil.doLineSegsIntersect(px[i1], py[i1], px[i2], py[i2], spc.px[j1], spc.py[j1], spc.px[j2], spc.py[j2])) {
+                        if (shortCircuit)
+                            return 1;
+                        hits++;
+                        break;
+                    }
+                    if (ssz == 1)
+                        break;
+                }
+            }
+        }
+        pr.x = Vec.min(px);
+        pr.y = Vec.min(py);
+        pr.w = Vec.max(px) - pr.x;
+        pr.h = Vec.max(py) - pr.y;
+        for (var n = nspc - 1; n >= 0; n--) {
+            var spc = this.space[n];
+            sr.x = spc.box.x;
+            sr.y = spc.box.y;
+            sr.w = spc.box.w;
+            sr.h = spc.box.h;
+            if (!pr.intersects(sr))
+                continue;
+            for (var i = spc.px.length - 1; i >= 0; i--)
+                if (GeomUtil.pointInPolygon(spc.px[i], spc.py[i], px, py)) {
+                    if (shortCircuit)
+                        return 1;
+                    hits++;
+                    break;
+                }
+            for (var i = 0; i < psz; i++)
+                if (GeomUtil.pointInPolygon(px[i], py[i], spc.px, spc.py)) {
+                    if (shortCircuit)
+                        return 1;
+                    hits++;
+                    break;
+                }
+        }
+        return hits;
+    };
+    ArrangeMolecule.prototype.adjustBondPosition = function (bf, bt, x1, y1, x2, y2) {
+        if (bf == 0 || bt == 0)
+            return null;
+        for (var n = 0; n < this.lines.length; n++) {
+            var b = this.lines[n];
+            if (this.mol.bondOrder(b.bnum) != 1 || this.mol.bondType(b.bnum) != Molecule.BONDTYPE_NORMAL)
+                continue;
+            var alt = false;
+            if (this.mol.bondFrom(b.bnum) == bf && this.mol.bondTo(b.bnum) == bt) { }
+            else if (this.mol.bondFrom(b.bnum) == bt && this.mol.bondTo(b.bnum) == bf)
+                alt = true;
+            else
+                continue;
+            var th = angleDiff(Math.atan2(b.line.y2 - b.line.y1, b.line.x2 - b.line.x1), Math.atan2(y2 - y1, x2 - x1)) * RADDEG;
+            if ((th > -5 && th < -5) || th > 175 || th < -175)
+                continue;
+            var xy = GeomUtil.lineIntersect(b.line.x1, b.line.y1, b.line.x2, b.line.y2, x1, y1, x2, y2);
+            if (this.mol.atomRingBlock(bt) == 0) {
+                if (alt) {
+                    b.line.x1 = xy[0];
+                    b.line.y1 = xy[1];
+                }
+                else {
+                    b.line.x2 = xy[0];
+                    b.line.y2 = xy[1];
+                }
+            }
+            return xy;
+        }
+        return null;
+    };
+    ArrangeMolecule.prototype.priorityDoubleSubstit = function (idx) {
+        var bf = this.mol.bondFrom(idx), bt = this.mol.bondTo(idx);
+        var nf = this.mol.atomAdjList(bf), nt = this.mol.atomAdjList(bt);
+        var a1 = this.points[bf - 1], a2 = this.getPoint[bt - 1];
+        var x1 = a1.oval.cx, y1 = a1.oval.cy, x2 = a2.oval.cx, y2 = a2.oval.cy;
+        var dx = x2 - x1, dy = y2 - y1, btheta = Math.atan2(dy, dx);
+        var idxFLeft = 0, idxFRight = 0, idxTLeft = 0, idxTRight = 0;
+        for (var n = 0; n < nf.length; n++)
+            if (nf[n] != bt) {
+                var theta = angleDiff(Math.atan2(this.points[nf[n] - 1].oval.cy - y1, this.points[nf[n] - 1].oval.cx - x1), btheta);
+                if (theta > 0) {
+                    if (idxFLeft != 0)
+                        return null;
+                    idxFLeft = nf[n];
+                }
+                else {
+                    if (idxFRight != 0)
+                        return null;
+                    idxFRight = nf[n];
+                }
+            }
+        for (var n = 0; n < nt.length; n++)
+            if (nt[n] != bf) {
+                var theta = angleDiff(Math.atan2(this.points[nt[n] - 1].oval.cy - y2, this.points[nt[n] - 1].oval.cx - x2), btheta);
+                if (theta > 0) {
+                    if (idxTLeft != 0)
+                        return null;
+                    idxTLeft = nt[n];
+                }
+                else {
+                    if (idxTRight != 0)
+                        return null;
+                    idxTRight = nt[n];
+                }
+            }
+        var sumFrom = (idxFLeft > 0 ? 1 : 0) + (idxFRight > 0 ? 1 : 0), sumTo = (idxTLeft > 0 ? 1 : 0) + (idxTRight > 0 ? 1 : 0);
+        if (sumFrom == 1 && sumTo == 0)
+            return [idxFLeft > 0 ? idxFLeft : idxFRight];
+        if (sumFrom == 0 && sumTo == 1)
+            return [idxTLeft > 0 ? idxTLeft : idxTRight];
+        if (sumFrom == 1 && sumTo == 1) {
+            if (idxFLeft > 0 && idxTLeft > 0)
+                return [idxFLeft, idxTLeft];
+            if (idxFRight > 0 && idxTRight > 0)
+                return [idxFRight, idxTRight];
+            var oxy = this.orthogonalDelta(x1, y1, x2, y2, this.bondSepPix);
+            var congestLeft = this.spatialCongestion(0.5 * (x1 + x2) + oxy[0], 0.5 * (y1 + y2) + oxy[1]);
+            var congestRight = this.spatialCongestion(0.5 * (x1 + x2) - oxy[0], 0.5 * (y1 + y2) - oxy[1]);
+            if (congestLeft < congestRight)
+                return [idxFLeft > 0 ? idxFLeft : idxTLeft];
+            else
+                return [idxFRight > 0 ? idxFRight : idxTRight];
+        }
+        if (sumFrom == 2 && sumTo == 1) {
+            if (idxTLeft == 0)
+                return [idxFRight, idxTRight];
+            else
+                return [idxFLeft, idxTLeft];
+        }
+        if (sumFrom == 1 && sumTo == 2) {
+            if (idxFLeft == 0)
+                return [idxFRight, idxTRight];
+            else
+                return [idxFLeft, idxTLeft];
+        }
+        return null;
+    };
+    ArrangeMolecule.prototype.spatialCongestion = function (x, y, thresh) {
+        if (thresh == null)
+            thresh = 0.001;
+        var congest = 0;
+        for (var n = 0; n < this.points.length; n++) {
+            var a = this.points[n];
+            if (a == null)
+                continue;
+            var dx = a.oval.cx - x, dy = a.oval.cy - y;
+            congest += 1 / (dx * dx + dy * dy + thresh);
+        }
+        return congest;
+    };
+    ArrangeMolecule.prototype.boxOverlaps = function (x, y, w, h, pointmask, linemask) {
+        var vx1 = x, vy1 = y, vx2 = x + w, vy2 = y + h;
+        for (var n = 0; n < this.points.length; n++) {
+            if (pointmask != null && !pointmask[n])
+                continue;
+            var a = this.points[n];
+            var wx1 = a.oval.cx - a.oval.rw, wy1 = a.oval.cy - a.oval.rh, wx2 = a.oval.cx + a.oval.rw, wy2 = a.oval.cy + a.oval.rh;
+            if (vx2 < wx1 || vx1 > wx2 || vy2 < wy1 || vy1 > wy2)
+                continue;
+            return true;
+        }
+        for (var n = 0; n < this.lines.length; n++) {
+            if (linemask != null && !linemask[n])
+                continue;
+            var b = this.lines[n];
+            var wx1 = b.line.x1, wy1 = b.line.y1, wx2 = b.line.x2, wy2 = b.line.y2;
+            if (vx2 < Math.min(wx1, wx2) || vx1 > Math.max(wx1, wx2) || vy2 < Math.min(wy1, wy2) || vy1 > Math.max(wy1, wy2))
+                continue;
+            if (wx1 >= vx1 && wx1 <= vx2 && wy1 >= vy1 && wy1 <= vy2)
+                return true;
+            if (wx2 >= vx1 && wx2 <= vx2 && wy2 >= vy1 && wy2 <= vy2)
+                return true;
+            if (GeomUtil.doLineSegsIntersect(wx1, wy1, wx2, wy2, vx1, vy1, vx2, vy1))
+                return true;
+            if (GeomUtil.doLineSegsIntersect(wx1, wy1, wx2, wy2, vx1, vy2, vx2, vy2))
+                return true;
+            if (GeomUtil.doLineSegsIntersect(wx1, wy1, wx2, wy2, vx1, vy1, vx1, vy2))
+                return true;
+            if (GeomUtil.doLineSegsIntersect(wx1, wy1, wx2, wy2, vx2, vy1, vx2, vy2))
+                return true;
+        }
+        return false;
+    };
+    ArrangeMolecule.prototype.resolveLineCrossings = function (bondHigher, bondLower) {
+        while (true) {
+            var anything = false;
+            for (var i1 = 0; i1 < this.lines.length; i1++) {
+                var b1 = this.lines[i1];
+                if (b1.bnum != bondHigher)
+                    continue;
+                if (b1.type != BLineType.Normal && b1.type != BLineType.Dotted && b1.type != BLineType.DotDir)
+                    continue;
+                for (var i2 = 0; i2 < this.lines.length; i2++) {
+                    var b2 = this.lines[i2];
+                    if (b2.bnum != bondLower)
+                        continue;
+                    if (b2.type == BLineType.DotDir)
+                        b2.type = BLineType.Dotted;
+                    if (b2.type != BLineType.Normal && b2.type != BLineType.Dotted)
+                        continue;
+                    if (b1.bfr == b2.bfr || b1.bfr == b2.bto || b1.bto == b2.bfr || b1.bto == b2.bto)
+                        continue;
+                    if (!GeomUtil.doLineSegsIntersect(b1.line.x1, b1.line.y1, b1.line.x2, b1.line.y2, b2.line.x1, b2.line.y1, b2.line.x2, b2.line.y2))
+                        continue;
+                    var xy = GeomUtil.lineIntersect(b1.line.x1, b1.line.y1, b1.line.x2, b1.line.y2, b2.line.x1, b2.line.y1, b2.line.x2, b2.line.y2);
+                    var dx = b2.line.x2 - b2.line.x1, dy = b2.line.y2 - b2.line.y1;
+                    var ext = Math.abs(dx) > Math.abs(dy) ? (xy[0] - b2.line.x1) / dx : (xy[1] - b2.line.y1) / dy;
+                    var dist = norm_xy(dx, dy);
+                    var delta = b2.size / dist * (b2.type == BLineType.Normal ? 2 : 4);
+                    if (ext > delta && ext < 1 - delta) {
+                        var b3 = {
+                            'bnum': b2.bnum,
+                            'bfr': b2.bfr,
+                            'bto': b2.bto,
+                            'type': b2.type,
+                            'line': b2.line.clone(),
+                            'size': b2.size,
+                            'head': b2.head,
+                            'col': b2.col
+                        };
+                        this.lines.push(b3);
+                        b2.line.x2 = b2.line.x1 + dx * (ext - delta);
+                        b2.line.y2 = b2.line.y1 + dy * (ext - delta);
+                        b3.line.x1 = b3.line.x1 + dx * (ext + delta);
+                        b3.line.y1 = b3.line.y1 + dy * (ext + delta);
+                        anything = true;
+                    }
+                    else if (ext > delta) {
+                        b2.line.x2 = b2.line.x1 + dx * (ext - delta);
+                        b2.line.y2 = b2.line.y1 + dy * (ext - delta);
+                        anything = true;
+                    }
+                    else if (ext < 1 - delta) {
+                        b2.line.x1 = b2.line.x1 + dx * (ext + delta);
+                        b2.line.y1 = b2.line.y1 + dy * (ext + delta);
+                        anything = true;
+                    }
+                }
+            }
+            if (!anything)
+                break;
+        }
+    };
+    ArrangeMolecule.FONT_CORRECT = 1.5;
+    return ArrangeMolecule;
+}());
 var FontData = (function () {
     function FontData() {
         this.FONT_ADV = 1041;
@@ -7685,44 +8538,4 @@ var SearchReactions = (function (_super) {
     SearchReactions.TYPE_RANDOM = 'random';
     return SearchReactions;
 }(Widget));
-function anyTrue(arr) {
-    if (arr == null)
-        return false;
-    for (var _i = 0, arr_1 = arr; _i < arr_1.length; _i++) {
-        var v = arr_1[_i];
-        if (v)
-            return true;
-    }
-    return false;
-}
-function allTrue(arr) {
-    if (arr == null)
-        return true;
-    for (var _i = 0, arr_2 = arr; _i < arr_2.length; _i++) {
-        var v = arr_2[_i];
-        if (!v)
-            return false;
-    }
-    return true;
-}
-function anyFalse(arr) {
-    if (arr == null)
-        return false;
-    for (var _i = 0, arr_3 = arr; _i < arr_3.length; _i++) {
-        var v = arr_3[_i];
-        if (!v)
-            return true;
-    }
-    return false;
-}
-function allFalse(arr) {
-    if (arr == null)
-        return true;
-    for (var _i = 0, arr_4 = arr; _i < arr_4.length; _i++) {
-        var v = arr_4[_i];
-        if (v)
-            return false;
-    }
-    return true;
-}
 //# sourceMappingURL=webmolkit-build.js.map

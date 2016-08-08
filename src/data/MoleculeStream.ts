@@ -1,5 +1,5 @@
 /*
-    MolSync
+    WebMolKit
 
     (c) 2010-2016 Molecular Materials Informatics, Inc.
 
@@ -7,8 +7,10 @@
     
     http://molmatinf.com
 
-	[PKG=molsync]
+	[PKG=webmolkit]
 */
+
+///<reference path='../decl/corrections.d.ts'/>
 
 /*
 	Serialisation and deserialisation utilities for the Molecule object.

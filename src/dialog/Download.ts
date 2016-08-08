@@ -1,5 +1,5 @@
 /*
-    MolSync
+    WebMolKit
 
     (c) 2010-2016 Molecular Materials Informatics, Inc.
 
@@ -7,14 +7,21 @@
     
     http://molmatinf.com
 
-	[PKG=molsync]
+	[PKG=webmolkit]
 */
 
 ///<reference path='Dialog.ts'/>
+///<reference path='../util/util.ts'/>
 ///<reference path='../ui/OptionList.ts'/>
 ///<reference path='../data/FormatList.ts'/>
 ///<reference path='../rpc/RPC.ts'/>
 ///<reference path='../rpc/Func.ts'/>
+///<reference path='../data/DataSheetStream.ts'/>
+///<reference path='../decl/jquery.d.ts'/>
+///<reference path='../data/Molecule.ts'/>
+///<reference path='../data/DataSheet.ts'/>
+///<reference path='../gfx/Rendering.ts'/>
+///<reference path='../gfx/MetaVector.ts'/>
 
 /*
 	Provides the ability to download structured data (molecules, datasheets) in all supported formats.

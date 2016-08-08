@@ -1,5 +1,5 @@
 /*
-    MolSync
+    WebMolKit
 
     (c) 2010-2016 Molecular Materials Informatics, Inc.
 
@@ -7,8 +7,12 @@
     
     http://molmatinf.com
 
-	[PKG=molsync]
+	[PKG=webmolkit]
 */
+
+///<reference path='Molecule.ts'/>
+///<reference path='CoordUtil.ts'/>
+///<reference path='../util/util.ts'/>
 
 /*
 	SketchUtil: static methods for calculating properties of molecules, typically of the geometric variety.

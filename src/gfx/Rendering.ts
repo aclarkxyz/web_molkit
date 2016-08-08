@@ -1,5 +1,5 @@
 /*
-    MolSync
+    WebMolKit
 
     (c) 2010-2016 Molecular Materials Informatics, Inc.
 
@@ -7,25 +7,11 @@
     
     http://molmatinf.com
 
-	[PKG=molsync]
+	[PKG=webmolkit]
 */
 
 /*
 	Wraps the RenderPolicy and RenderEffects objects, which are JSON-encoded analogs to the eponymous Java classes.
-
-	RenderPolicy properties:
-
-		.data
-			.name: policy name (optional)
-			.pointScale: default Angstrom-to-pixel conversion
-			.resolutionDPI: an indication of how far to scaleup bitmaps
-			.fontSize: ascent height of font (Angtroms)
-			.lineSize: width of bond lines (Angstroms)
-			.bondSep: distance between lines of multiple bonds (Angstroms)
-			.defaultPadding: minimum size around atoms (Angstroms)
-			.foreground: standard foreground colour (0xRRGGBB)
-			.background: expected background colour (0xRRGGBB)
-			.atomCols: array of colours for elements, where 0 is for those not on the periodic table
 */
 
 interface RenderData
