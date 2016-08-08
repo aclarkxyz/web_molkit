@@ -83,7 +83,7 @@ class ArrangeMolecule
 	private MINBOND_EXOTIC = 0.5;
 
 	// the angstrom-to-ascent height is corrected by this factor
-	private FONT_CORRECT = 1.5;
+	private static FONT_CORRECT = 1.5;
 
     // note: the first {#atoms} entries in the points array correspond to the atoms - and likewise for the space array; anything
     // listed after that is arbitrary; the lines are not listed in any kind of order
@@ -1157,7 +1157,7 @@ class ArrangeMolecule
 		{
 			// for this one, we need a version of the outline polygon that's slightly bigger so it's not adjacent
 			const mx1 = Vec.min(outlineY), mx2 = Vec.max(outlineX), my1 = Vec.min(outlineY), my2 = Vec.max(outlineY), cx = 0.5 * (mx1 + mx2), cy = 0.5 * (my1 + my2);
-			const mag = 1 + this.measure.scale() * this.policy.data.fontSize * this.FONT_CORRECT * 0.1 / Math.max(mx2 - cx, my2 - cy);
+			const mag = 1 + this.measure.scale() * this.policy.data.fontSize * ArrangeMolecule.FONT_CORRECT * 0.1 / Math.max(mx2 - cx, my2 - cy);
 			const psz = outlineX.length;
 			/*let magPX = new float[psz], magPY = new float[psz];
 			for (int n = 0; n < psz; n++)

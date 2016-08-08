@@ -34,6 +34,17 @@
 		[PRIM_TEXT,size,colour]
 */
 
+enum TextAlign
+{
+	Centre = 0,
+	Left = 1,
+	Right = 2,
+	Baseline = 0,
+	Middle = 4,
+	Top = 8,
+	Bottom = 16
+}
+
 class MetaVector
 {
 	private PRIM_LINE = 1;
@@ -44,6 +55,8 @@ class MetaVector
 
 	private ONE_THIRD = 1.0 / 3;
 	
+	public static NOCOLOUR = -1;
+
 	types:any[];
 	prims:any[];
 	typeObj:any[];
@@ -54,6 +67,12 @@ class MetaVector
 	public scale = 1;
 	public density = 1;
 	
+	charMask:boolean[];
+	lowX:number = null;
+	lowY:number = null;
+	highX:number = null;
+	highY:number = null;
+
 	// ------------ public methods ------------
 
 	constructor(vec:any)
@@ -65,6 +84,8 @@ class MetaVector
 		
 		if (this.types == null) this.types = [];
 		if (this.prims == null) this.prims = [];
+
+		this.charMask = Vec.booleanArray(false, FontData.main.GLYPH_COUNT);
 	}
 
 	// methods for adding a primitive (and possibly a type to go with it)
@@ -99,8 +120,60 @@ class MetaVector
 		let typeidx = this.findOrCreateType([this.PRIM_PATH, edgeCol, fillCol, thickness, hardEdge]);
 		this.prims.push([this.PRIM_PATH, typeidx, xpoints.length, xpoints, ypoints, ctrlFlags, isClosed]);
 	}
-	public drawText(x:number, y:number, txt:string, size:number, colour:number)
+	public drawPoly(xpoints:number[], ypoints:number[], edgeCol:number, fillCol:number, thickness:number, hardEdge:boolean)
 	{
+		this.drawPath(xpoints, ypoints, null, true, edgeCol, fillCol, thickness, hardEdge);
+	}
+	public drawText(x:number, y:number, txt:string, size:number, colour:number, align?:number)
+	{
+		if (align == null) align = 0;
+		const font = FontData.main;
+		for (let n = 0; n < txt.length; n++)
+		{
+			let i = txt.charCodeAt(n);
+			if (i >= font.GLYPH_MIN && i <= font.GLYPH_MAX) this.charMask[i - font.GLYPH_MIN] = true;
+		}
+
+		let metrics = this.measureText(txt, size);
+		let bx = 0, by = 0;
+
+		if ((align & TextAlign.Left) != 0) {}
+		else if ((align & TextAlign.Right) != 0) bx = -metrics[0];
+		else bx = -0.5 * metrics[0];
+
+		if ((align & TextAlign.Middle) != 0) by += 0.5 * metrics[1];
+		else if ((align & TextAlign.Top) != 0) by += metrics[1];
+		else if ((align & TextAlign.Bottom) != 0) by -= metrics[2];
+		// else: baseline
+
+		// mainstaking measurement of the boundaries (looks like overkill, but it really isn't)
+		let x1 = 0, y1 = 0, x2 = 0, y2 = 0;
+		let dx = 0;
+		for (let n = 0; n < txt.length; n++)
+		{
+			let i = txt.charCodeAt(n) - font.GLYPH_MIN;
+			if (i >= 0 && i < font.GLYPH_COUNT)
+			{
+				let outlineX = font.getOutlineX(i), outlineY = font.getOutlineY(i);
+				x1 = Math.min(x1, dx + Vec.min(outlineX));
+				x2 = Math.max(x2, dx + Vec.max(outlineX));
+				y1 = Math.min(y1, -Vec.max(outlineY));
+				y2 = Math.max(y2, -Vec.min(outlineY));
+
+				dx += font.HORIZ_ADV_X[i];
+
+				if (n < txt.length - 1)
+				{
+					let j = txt.charCodeAt(n + 1) - font.GLYPH_MIN;
+					dx += font.getKerning(i, j);
+				}
+			}
+			else dx += font.MISSING_HORZ;
+		}
+		const mscale = size * font.INV_UNITS_PER_EM;
+		this.updateBounds(x + bx + x1 * mscale, y + by + y1 * mscale);
+		this.updateBounds(x + bx + x2 * mscale, y + by + y2 * mscale);
+
 		let typeidx = this.findOrCreateType([this.PRIM_TEXT, size, colour]);
 		this.prims.push([this.PRIM_TEXT, typeidx, x, y, txt]);
 	}
@@ -109,30 +182,123 @@ class MetaVector
 	// the left/baseline as the reference position
 	public measureText(txt:string, size:number)
 	{
-		let fd = FontData.main;
+		let font = FontData.main;
 		
-		let scale = size / fd.UNITS_PER_EM;
+		let scale = size / font.UNITS_PER_EM;
 		let dx = 0;
 		for (let n = 0; n < txt.length; n++)
 		{
-			let i = txt.charCodeAt(n) - 32;
-			if (i < 0 || i >= 96)
+			let i = txt.charCodeAt(n) - font.GLYPH_MIN;
+			if (i < 0 || i >= font.GLYPH_COUNT)
 			{
-				dx += fd.MISSING_HORZ;
+				dx += font.MISSING_HORZ;
 				continue;
 			}
 			
-			dx += fd.HORIZ_ADV_X[i];
+			dx += font.HORIZ_ADV_X[i];
 			if (n < txt.length - 1)
 			{
-				let j = txt.charCodeAt(n + 1) - 32;
-				for (let k = 0; k < fd.KERN_K.length; k++)
-					if ((fd.KERN_G1[k] == i && fd.KERN_G2[k] == j) || (fd.KERN_G1[k] == j && fd.KERN_G2[k] == i))
-						{dx += fd.KERN_K[k]; break;}
+				let j = txt.charCodeAt(n + 1) - font.GLYPH_MIN;
+				dx += font.getKerning(i, j);
 			}
 		}
 
-		return [dx * scale, fd.ASCENT * scale * fd.ASCENT_FUDGE, -fd.DESCENT * scale];
+		return [dx * scale, font.ASCENT * scale * font.ASCENT_FUDGE, -font.DESCENT * scale];
+	}
+
+	// query the boundaries of the drawing, post factum
+	public boundLowX():number {return this.lowX;}
+	public boundLowY():number {return this.lowY;}
+	public boundHighX():number {return this.highX;}
+	public boundHighY():number {return this.highY;}
+
+	// makes sure everything fits into the indicated box, scaling down if necessary (but not up)	
+	public transformIntoBox(box:Box):void
+	{
+		this.transformPrimitives(-this.lowX, -this.lowY, 1, 1);
+		let nw = Math.ceil(this.highX - this.lowX), nh = Math.ceil(this.highY - this.lowY);
+		let scale = 1;
+		if (nw > box.w)
+		{
+			let mod = box.w / nw;
+			nw = box.w;
+			nh *= mod;
+			scale *= mod;
+		}
+		if (nh > box.h)
+		{
+			let mod = box.h / nh;
+			nh = box.h;
+			nw *= mod;
+			scale *= mod;
+		}
+		let ox = 0.5 * (box.w - nw), oy = 0.5 * (box.h - nh);
+		this.transformPrimitives(box.x + ox, box.y + oy, scale, scale);
+	}
+	
+	// transforms the sizes and positions of the primitives; note that this should only be called within the building stage,
+	// just before everything is emitted to the output device
+	// scaling properties:
+	//		position=(position-lowest)*scale + lowest + offset
+	//		i.e., if (ox,oy) are zero, then the lower point does not change at all, but the upper bound is stretched
+	public transformPrimitives(ox:number, oy:number, sw:number, sh:number):void
+	{
+		if (ox == 0 && oy == 0 && sw == 1 && sh == 1) return;
+
+		for (let a of this.prims)
+		{
+			const type = a[0];
+			if (type == this.PRIM_LINE)
+			{
+				a[2] = ox + ((a[2] - this.lowX) * sw + this.lowX);
+				a[3] = oy + ((a[3] - this.lowY) * sh + this.lowY);
+				a[4] = ox + ((a[4] - this.lowX) * sw + this.lowX);
+				a[5] = oy + ((a[5] - this.lowY) * sh + this.lowY);
+			}
+			else if (type == this.PRIM_RECT)
+			{
+				a[2] = ox + ((a[2] - this.lowX) * sw + this.lowX);
+				a[3] = oy + ((a[3] - this.lowY) * sh + this.lowY);
+				a[4] = a[4] * sw;
+				a[5] = a[5] * sh;
+			}
+			else if (type == this.PRIM_OVAL)
+			{
+				a[2] = ox + ((a[2] - this.lowX) * sw + this.lowX);
+				a[3] = oy + ((a[3] - this.lowY) * sh + this.lowY);
+				a[4] *= sw;
+				a[5] *= sh;
+			}
+			else if (type == this.PRIM_PATH)
+			{
+				let sz = a[2], px = a[3], py = a[4];
+				for (let n = 0; n < sz; n++)
+				{
+					px[n] = ox + ((px[n] - this.lowX) * sw + this.lowX);
+					py[n] = oy + ((py[n] - this.lowY) * sh + this.lowY);
+				}
+			}
+			else if (type == this.PRIM_TEXT)
+			{
+				a[2] = ox + ((a[2] - this.lowX) * sw + this.lowX);
+				a[3] = oy + ((a[3] - this.lowY) * sh + this.lowY);
+			}
+		}
+		let swsh = 0.5 * (sw + sh);
+		if (swsh != 1) for (let t of this.types)
+		{
+			const type = t[0];
+			if (type == this.PRIM_LINE) t[1] *= swsh;
+			else if (type == this.PRIM_RECT) t[3] *= swsh;
+			else if (type == this.PRIM_OVAL) t[3] *= swsh;
+			else if (type == this.PRIM_PATH) t[3] *= swsh;
+			else if (type == this.PRIM_TEXT) t[1] *= swsh;
+		}
+
+		this.highX = ox + this.lowX + (this.highX - this.lowX) * sw;
+		this.highY = oy + this.lowY + (this.highY - this.lowY) * sh;
+		this.lowX += ox;
+		this.lowY += oy;
 	}
 
 	// renders the meta vector by creating a new canvas
@@ -370,7 +536,6 @@ class MetaVector
 
 		x = this.offsetX + this.scale * x;
 		y = this.offsetY + this.scale * y;
-		//sz *= this.scale; (already done);
 
 		let fd = FontData.main;
 		
@@ -423,5 +588,22 @@ class MetaVector
 		}
 		this.types.push(typeDef);
 		return this.types.length - 1;
+	}
+
+	// ensures boundaries move whenever something out of range is added
+	private updateBounds(x:number, y):void
+	{
+		if (this.lowX == null)
+		{
+			this.lowX = x;
+			this.lowY = y;
+			this.highX = x;
+			this.highY = y;
+			return;
+		}
+		this.lowX = Math.min(this.lowX, x);
+		this.lowY = Math.min(this.lowY, y);
+		this.highX = Math.max(this.highX, x);
+		this.highY = Math.max(this.highY, y);
 	}
 }

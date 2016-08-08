@@ -29,6 +29,7 @@
         
         "src/gfx/ArrangeMeasure.ts",
         "src/gfx/ArrangeMolecule.ts",
+        "src/gfx/DrawMolecule.ts",
         "src/gfx/FontData.ts",
         "src/gfx/MetaVector.ts",
         "src/gfx/Rendering.ts",
