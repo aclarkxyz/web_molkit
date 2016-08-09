@@ -3368,6 +3368,11 @@ var MetaVector = (function () {
         }
         for (var n = 0; n < this.prims.length;) {
             var p = this.prims[n], num = 1;
+            if (p[0] != this.PRIM_PATH && p[0] != this.PRIM_TEXT) {
+                for (; n + num < this.prims.length; num++)
+                    if (this.prims[n + num][0] != p[0] || this.prims[n + num][1] != p[1])
+                        break;
+            }
             if (p[0] == this.PRIM_LINE) {
                 if (num == 1)
                     this.svgLine1(svg, p);
@@ -3581,6 +3586,27 @@ var MetaVector = (function () {
         }
     };
     MetaVector.prototype.svgLineN = function (svg, p, pos, sz) {
+        var type = this.typeObj[p[1]];
+        if (type.colour == null)
+            return;
+        var g = $('<g></g>').appendTo(svg);
+        g.attr('stroke', type.colour);
+        g.attr('stroke-width', type.thickness);
+        g.attr('stroke-linecap', 'round');
+        for (var n = 0; n < sz; n++) {
+            var p_1 = this.prims[pos + n];
+            var x1 = p_1[2], y1 = p_1[3];
+            var x2 = p_1[4], y2 = p_1[5];
+            x1 = this.offsetX + this.scale * x1;
+            y1 = this.offsetY + this.scale * y1;
+            x2 = this.offsetX + this.scale * x2;
+            y2 = this.offsetY + this.scale * y2;
+            var line = $('<line></line>').appendTo(g);
+            line.attr('x1', x1);
+            line.attr('y1', y1);
+            line.attr('x2', x2);
+            line.attr('y2', y2);
+        }
     };
     MetaVector.prototype.svgRect1 = function (svg, p) {
         var type = this.typeObj[p[1]];
@@ -3605,6 +3631,30 @@ var MetaVector = (function () {
         rect.attr('fill', type.fillCol == null ? 'none' : type.fillCol);
     };
     MetaVector.prototype.svgRectN = function (svg, p, pos, sz) {
+        var type = this.typeObj[p[1]];
+        var g = $('<g></g>').appendTo(svg);
+        if (type.edgeCol != null) {
+            g.attr('stroke', type.edgeCol);
+            g.attr('stroke-width', type.thickness);
+            g.attr('stroke-linecap', 'square');
+        }
+        else
+            g.attr('stroke', 'none');
+        g.attr('fill', type.fillCol == null ? 'none' : type.fillCol);
+        for (var n = 0; n < sz; n++) {
+            var p_2 = this.prims[pos + n];
+            var x = p_2[2], y = p_2[3];
+            var w = p_2[4], h = p_2[5];
+            x = this.offsetX + this.scale * x;
+            y = this.offsetY + this.scale * y;
+            w *= this.scale;
+            h *= this.scale;
+            var rect = $('<rect></rect>').appendTo(g);
+            rect.attr('x', x);
+            rect.attr('y', y);
+            rect.attr('width', w);
+            rect.attr('height', h);
+        }
     };
     MetaVector.prototype.svgOval1 = function (svg, p) {
         var type = this.typeObj[p[1]];
@@ -3614,21 +3664,47 @@ var MetaVector = (function () {
         cy = this.offsetY + this.scale * cy;
         rw *= this.scale;
         rh *= this.scale;
-        var rect = $('<ellipse></ellipse>').appendTo(svg);
-        rect.attr('cx', cx);
-        rect.attr('cy', cy);
-        rect.attr('rw', rw);
-        rect.attr('rw', rh);
+        var oval = $('<ellipse></ellipse>').appendTo(svg);
+        oval.attr('cx', cx);
+        oval.attr('cy', cy);
+        oval.attr('rw', rw);
+        oval.attr('rw', rh);
         if (type.edgeCol != null) {
-            rect.attr('stroke', type.edgeCol);
-            rect.attr('stroke-width', type.thickness);
-            rect.attr('stroke-linecap', 'square');
+            oval.attr('stroke', type.edgeCol);
+            oval.attr('stroke-width', type.thickness);
+            oval.attr('stroke-linecap', 'square');
         }
         else
-            rect.attr('stroke', 'none');
-        rect.attr('fill', type.fillCol == null ? 'none' : type.fillCol);
+            oval.attr('stroke', 'none');
+        oval.attr('fill', type.fillCol == null ? 'none' : type.fillCol);
     };
     MetaVector.prototype.svgOvalN = function (svg, p, pos, sz) {
+        var type = this.typeObj[p[1]];
+        var x = p[2], y = p[3];
+        var w = p[4], h = p[5];
+        var g = $('<g></g>').appendTo(svg);
+        if (type.edgeCol != null) {
+            g.attr('stroke', type.edgeCol);
+            g.attr('stroke-width', type.thickness);
+            g.attr('stroke-linecap', 'square');
+        }
+        else
+            g.attr('stroke', 'none');
+        g.attr('fill', type.fillCol == null ? 'none' : type.fillCol);
+        for (var n = 0; n < sz; n++) {
+            var p_3 = this.prims[pos + n];
+            var cx = p_3[2], cy = p_3[3];
+            var rw = p_3[4], rh = p_3[5];
+            cx = this.offsetX + this.scale * cx;
+            cy = this.offsetY + this.scale * cy;
+            rw *= this.scale;
+            rh *= this.scale;
+            var oval = $('<ellipse></ellipse>').appendTo(svg);
+            oval.attr('cx', cx);
+            oval.attr('cy', cy);
+            oval.attr('rw', rw);
+            oval.attr('rw', rh);
+        }
     };
     MetaVector.prototype.svgPath = function (svg, p) {
         var type = this.typeObj[p[1]];
@@ -4189,6 +4265,1637 @@ var Cookies = (function () {
     };
     return Cookies;
 }());
+var ArrangeMeasurement = (function () {
+    function ArrangeMeasurement() {
+    }
+    return ArrangeMeasurement;
+}());
+var OutlineMeasurement = (function (_super) {
+    __extends(OutlineMeasurement, _super);
+    function OutlineMeasurement(pointScale) {
+        _super.call(this);
+        this.pointScale = pointScale;
+        this.invScale = 1 / pointScale;
+    }
+    OutlineMeasurement.prototype.scale = function () { return this.pointScale; };
+    OutlineMeasurement.prototype.angToX = function (ax) { return ax * this.pointScale; };
+    OutlineMeasurement.prototype.angToY = function (ay) { return ay * -this.pointScale; };
+    OutlineMeasurement.prototype.xToAng = function (px) { return px * this.invScale; };
+    OutlineMeasurement.prototype.yToAng = function (py) { return py * -this.invScale; };
+    OutlineMeasurement.prototype.yIsUp = function () { return false; };
+    OutlineMeasurement.prototype.measureText = function (str, fontSize) { return FontData.main.measureText(str, fontSize); };
+    return OutlineMeasurement;
+}(ArrangeMeasurement));
+var BLineType;
+(function (BLineType) {
+    BLineType[BLineType["Normal"] = 1] = "Normal";
+    BLineType[BLineType["Inclined"] = 2] = "Inclined";
+    BLineType[BLineType["Declined"] = 3] = "Declined";
+    BLineType[BLineType["Unknown"] = 4] = "Unknown";
+    BLineType[BLineType["Dotted"] = 5] = "Dotted";
+    BLineType[BLineType["DotDir"] = 6] = "DotDir";
+    BLineType[BLineType["IncDouble"] = 7] = "IncDouble";
+    BLineType[BLineType["IncTriple"] = 8] = "IncTriple";
+    BLineType[BLineType["IncQuadruple"] = 9] = "IncQuadruple";
+})(BLineType || (BLineType = {}));
+var ArrangeMolecule = (function () {
+    function ArrangeMolecule(mol, measure, policy, effects) {
+        this.mol = mol;
+        this.measure = measure;
+        this.policy = policy;
+        this.effects = effects;
+        this.MINBOND_LINE = 0.25;
+        this.MINBOND_EXOTIC = 0.5;
+        this.points = [];
+        this.lines = [];
+        this.space = [];
+    }
+    ArrangeMolecule.guestimateSize = function (mol, policy, maxW, maxH) {
+        var box = mol.boundary();
+        var minX = box.minX(), minY = box.minY(), maxX = box.maxX(), maxY = box.maxY();
+        var fontSize = policy.data.fontSize * this.FONT_CORRECT;
+        for (var n = 1; n <= mol.numAtoms(); n++)
+            if (mol.atomExplicit(n)) {
+                var plusH = mol.atomHydrogens(n) > 0 ? 1 : 0;
+                var aw = 0.5 * 0.7 * fontSize * (mol.atomElement(n).length + plusH);
+                var ah = 0.5 * fontSize * (1 + plusH);
+                var ax = mol.atomX(n), ay = mol.atomY(n);
+                minX = Math.min(minX, ax - aw);
+                maxX = Math.max(maxX, ax + aw);
+                minY = Math.min(minY, ay - ah);
+                maxY = Math.max(maxY, ay + ah);
+            }
+        var w = Math.max(1, (maxX - minX)) * policy.data.pointScale;
+        var h = Math.max(1, (maxY - minY)) * policy.data.pointScale;
+        if (maxW > 0 && w > maxW) {
+            h *= maxW / w;
+            w = maxW;
+        }
+        if (maxH > 0 && h > maxH) {
+            w *= maxH / h;
+            h = maxH;
+        }
+        return [w, h];
+    };
+    ArrangeMolecule.prototype.getMolecule = function () { return this.mol; };
+    ArrangeMolecule.prototype.getMeasure = function () { return this.measure; };
+    ArrangeMolecule.prototype.getPolicy = function () { return this.policy; };
+    ArrangeMolecule.prototype.getEffects = function () { return this.effects; };
+    ArrangeMolecule.prototype.getScale = function () { return this.scale; };
+    ArrangeMolecule.prototype.arrange = function () {
+        this.scale = this.measure.scale();
+        this.bondSepPix = this.policy.data.bondSep * this.measure.scale();
+        this.lineSizePix = this.policy.data.lineSize * this.measure.scale();
+        this.fontSizePix = this.policy.data.fontSize * this.measure.scale() * ArrangeMolecule.FONT_CORRECT;
+        this.ymul = this.measure.yIsUp() ? -1 : 1;
+        for (var n = 1; n <= this.mol.numAtoms(); n++) {
+            if (this.mol.atomElement(n).length > 2 && this.mol.atomHydrogens(n) == 0) {
+                this.points.push(null);
+                this.space.push(null);
+                continue;
+            }
+            var a = {
+                'anum': n,
+                'text': this.mol.atomExplicit(n) || this.atomIsWeirdLinear(n) ? this.mol.atomElement(n) : null,
+                'fsz': this.fontSizePix,
+                'bold': this.mol.atomMapNum(n) > 0,
+                'col': this.policy.data.atomCols[this.mol.atomicNumber(n)],
+                'oval': new Oval(this.measure.angToX(this.mol.atomX(n)), this.measure.angToY(this.mol.atomY(n)), 0, 0)
+            };
+            if (a.text != null) {
+                var wad = this.measure.measureText(a.text, a.fsz);
+                var PADDING = 1.1;
+                a.oval.rw = 0.5 * wad[0] * PADDING;
+                a.oval.rh = 0.5 * wad[1] * PADDING;
+            }
+            this.points.push(a);
+            this.space.push(this.computeSpacePoint(a));
+        }
+        for (var n = 1; n <= this.mol.numAtoms(); n++)
+            if (this.points[n - 1] == null)
+                this.processLabel(n);
+        var bdbl = Vec.booleanArray(false, this.mol.numBonds());
+        for (var n = 1; n <= this.mol.numBonds(); n++) {
+            var bfr = this.mol.bondFrom(n), bto = this.mol.bondTo(n);
+            var bt = this.mol.bondType(n), bo = this.mol.bondOrder(n);
+            var col = this.policy.data.foreground;
+            bdbl[n - 1] = bo == 2 && (bt == Molecule.BONDTYPE_NORMAL || bt == Molecule.BONDTYPE_UNKNOWN);
+            var a1 = this.points[bfr - 1], a2 = this.points[bto - 1];
+            var x1 = a1.oval.cx, y1 = a1.oval.cy, x2 = a2.oval.cx, y2 = a2.oval.cy;
+            if (Math.abs(x2 - x1) <= 1 && Math.abs(y2 - y1) <= 1) {
+                bdbl[n - 1] = false;
+                continue;
+            }
+            if (bdbl[n - 1])
+                continue;
+            var minDist = (bo == 1 && bt == Molecule.BONDTYPE_NORMAL ? this.MINBOND_LINE : this.MINBOND_EXOTIC) * this.measure.scale();
+            var xy1 = this.backOffAtom(bfr, x1, y1, x2, y2, minDist);
+            var xy2 = this.backOffAtom(bto, x2, y2, x1, y1, minDist);
+            this.ensureMinimumBondLength(xy1, xy2, x1, y1, x2, y2, minDist);
+            var sz = this.lineSizePix, head = 0;
+            var ltype = BLineType.Normal;
+            if (bo == 1 && bt == Molecule.BONDTYPE_INCLINED) {
+                ltype = BLineType.Inclined;
+                head = 0.15 * this.measure.scale();
+            }
+            else if (bo == 1 && bt == Molecule.BONDTYPE_DECLINED) {
+                ltype = BLineType.Declined;
+                head = 0.15 * this.measure.scale();
+            }
+            else if (bt == Molecule.BONDTYPE_UNKNOWN) {
+                ltype = BLineType.Unknown;
+                head = 0.2 * this.measure.scale();
+            }
+            else if (bo == 0) {
+                if (bt == Molecule.BONDTYPE_INCLINED || bt == Molecule.BONDTYPE_DECLINED)
+                    ltype = BLineType.DotDir;
+                else
+                    ltype = BLineType.Dotted;
+            }
+            else if ((bo == 2 || bo == 3 || bo == 4) && (bt == Molecule.BONDTYPE_INCLINED || bt == Molecule.BONDTYPE_DECLINED)) {
+                ltype = bo == 2 ? BLineType.IncDouble : bo == 3 ? BLineType.IncTriple : BLineType.IncQuadruple;
+                head = (bo == 2 ? 0.20 : 0.25) * this.measure.scale();
+            }
+            if (bo == 0) {
+                var dx = xy2[0] - xy1[0], dy = xy2[1] - xy1[1];
+                var d = norm_xy(dx, dy), invD = 1 / d;
+                var ox = 0.5 * dx * invD * this.bondSepPix, oy = 0.5 * dy * invD * this.bondSepPix;
+                if (this.mol.atomAdjCount(bfr) > 1) {
+                    xy1[0] += ox;
+                    xy1[1] += oy;
+                }
+                if (this.mol.atomAdjCount(bto) > 1) {
+                    xy2[0] -= ox;
+                    xy2[1] -= oy;
+                }
+            }
+            if (bo != 1 && bt == Molecule.BONDTYPE_DECLINED) {
+                var tmp = xy1;
+                xy1 = xy2;
+                xy2 = tmp;
+            }
+            if (bo > 1 && (bt == Molecule.BONDTYPE_NORMAL || bt == Molecule.BONDTYPE_UNKNOWN)) {
+                var oxy = this.orthogonalDelta(xy1[0], xy1[1], xy2[0], xy2[1], this.bondSepPix);
+                var v = -0.5 * (bo - 1);
+                for (var i = 0; i < bo; i++, v++) {
+                    var lx1 = xy1[0] + v * oxy[0], ly1 = xy1[1] + v * oxy[1], lx2 = xy2[0] + v * oxy[0], ly2 = xy2[1] + v * oxy[1];
+                    var b = {
+                        'bnum': n,
+                        'bfr': bfr,
+                        'bto': bto,
+                        'type': ltype,
+                        'line': new Line(lx1, ly1, lx2, ly2),
+                        'size': sz,
+                        'head': 0,
+                        'col': col
+                    };
+                    this.lines.push(b);
+                    this.space.push(this.computeSpaceLine(b));
+                }
+            }
+            else {
+                var b = {
+                    'bnum': n,
+                    'bfr': bfr,
+                    'bto': bto,
+                    'type': ltype,
+                    'line': new Line(xy1[0], xy1[1], xy2[0], xy2[1]),
+                    'size': sz,
+                    'head': head,
+                    'col': col
+                };
+                this.lines.push(b);
+                this.space.push(this.computeSpaceLine(b));
+            }
+        }
+        var rings = this.orderedRingList();
+        for (var i = 0; i < rings.length; i++) {
+            for (var j = 0; j < rings[i].length; j++) {
+                var k = this.mol.findBond(rings[i][j], rings[i][j < rings[i].length - 1 ? j + 1 : 0]);
+                if (bdbl[k - 1]) {
+                    this.processDoubleBond(k, rings[i]);
+                    bdbl[k - 1] = false;
+                }
+            }
+        }
+        for (var i = 1; i <= this.mol.numBonds(); i++)
+            if (bdbl[i - 1])
+                this.processDoubleBond(i, this.priorityDoubleSubstit(i));
+        var hcount = Vec.numberArray(0, this.mol.numAtoms());
+        for (var n = 1; n <= this.mol.numAtoms(); n++)
+            hcount[n - 1] = this.points[n - 1].text == null ? 0 : this.mol.atomHydrogens(n);
+        for (var n = 0; n < this.mol.numAtoms(); n++)
+            if (hcount[n] > 0 && this.placeHydrogen(n, hcount[n], true))
+                hcount[n] = 0;
+        for (var n = 0; n < this.mol.numAtoms(); n++)
+            if (hcount[n] > 0)
+                this.placeHydrogen(n, hcount[n], false);
+        for (var n = 1; n <= this.mol.numAtoms(); n++)
+            if (this.mol.atomIsotope(n) != Molecule.ISOTOPE_NATURAL) {
+                var isostr = this.mol.atomIsotope(n).toString();
+                var col = this.policy.data.atomCols[this.mol.atomicNumber(n)];
+                this.placeAdjunct(n, isostr, this.fontSizePix * 0.6, col, 150 * DEGRAD);
+            }
+        for (var n = 1; n <= this.mol.numAtoms(); n++) {
+            var str = '';
+            var chg = this.mol.atomCharge(n);
+            if (chg == -1)
+                str = '-';
+            else if (chg == 1)
+                str = '+';
+            else if (chg < -1)
+                str = Math.abs(chg) + '-';
+            else if (chg > 1)
+                str = chg + '+';
+            for (var i = this.mol.atomUnpaired(n); i > 0; i--)
+                str += '.';
+            if (str.length == 0)
+                continue;
+            var col = this.policy.data.atomCols[this.mol.atomicNumber(n)];
+            this.placeAdjunct(n, str, str.length == 1 ? 0.8 * this.fontSizePix : 0.6 * this.fontSizePix, col, 30 * DEGRAD);
+        }
+    };
+    ArrangeMolecule.prototype.numPoints = function () { return this.points.length; };
+    ArrangeMolecule.prototype.getPoint = function (idx) { return this.points[idx]; };
+    ArrangeMolecule.prototype.numLines = function () { return this.lines.length; };
+    ArrangeMolecule.prototype.getLine = function (idx) { return this.lines[idx]; };
+    ArrangeMolecule.prototype.numSpace = function () { return this.space.length; };
+    ArrangeMolecule.prototype.getSpace = function (idx) { return this.space[idx]; };
+    ArrangeMolecule.prototype.offsetEverything = function (dx, dy) {
+        for (var _i = 0, _a = this.points; _i < _a.length; _i++) {
+            var a = _a[_i];
+            a.oval.offsetBy(dx, dy);
+        }
+        for (var _b = 0, _c = this.lines; _b < _c.length; _b++) {
+            var b = _c[_b];
+            b.line.offsetBy(dx, dy);
+        }
+        for (var _d = 0, _e = this.space; _d < _e.length; _d++) {
+            var spc = _e[_d];
+            spc.box.offsetBy(dx, dy);
+            Vec.addTo(spc.px, dx);
+            Vec.addTo(spc.py, dy);
+        }
+    };
+    ArrangeMolecule.prototype.scaleEverything = function (scaleBy) {
+        this.scale *= scaleBy;
+        for (var _i = 0, _a = this.points; _i < _a.length; _i++) {
+            var a = _a[_i];
+            a.oval.scaleBy(scaleBy);
+            a.fsz *= scaleBy;
+        }
+        for (var _b = 0, _c = this.lines; _b < _c.length; _b++) {
+            var b = _c[_b];
+            b.line.scaleBy(scaleBy);
+            b.size *= scaleBy;
+            b.head *= scaleBy;
+        }
+        for (var _d = 0, _e = this.space; _d < _e.length; _d++) {
+            var spc = _e[_d];
+            spc.box.scaleBy(scaleBy);
+            Vec.mulBy(spc.px, scaleBy);
+            Vec.mulBy(spc.py, scaleBy);
+        }
+    };
+    ArrangeMolecule.prototype.determineBoundary = function (padding) {
+        if (this.space.length == 0)
+            return [0, 0, 2 * padding, 2 * padding];
+        var bounds = Vec.numberArray(0, 4);
+        var spc = this.space[0];
+        bounds[0] = spc.box.x;
+        bounds[1] = spc.box.y;
+        bounds[2] = spc.box.x + spc.box.w;
+        bounds[3] = spc.box.y + spc.box.h;
+        for (var n = this.space.length - 1; n > 0; n--) {
+            spc = this.space[n];
+            bounds[0] = Math.min(bounds[0], spc.box.x);
+            bounds[1] = Math.min(bounds[1], spc.box.y);
+            bounds[2] = Math.max(bounds[2], spc.box.x + spc.box.w);
+            bounds[3] = Math.max(bounds[3], spc.box.y + spc.box.h);
+        }
+        return bounds;
+    };
+    ArrangeMolecule.prototype.squeezeInto = function (x, y, w, h, padding) {
+        if (padding > 0) {
+            x += padding;
+            y += padding;
+            w -= 2 * padding;
+            h -= 2 * padding;
+        }
+        var bounds = this.determineBoundary(0);
+        var bw = bounds[2] - bounds[0], bh = bounds[3] - bounds[1];
+        if (bw > w || bh > h) {
+            var downScale = 1;
+            if (bw > w)
+                downScale = w / bw;
+            if (bh > h)
+                downScale = Math.min(downScale, h / bh);
+            this.scaleEverything(downScale);
+            Vec.mulBy(bounds, downScale);
+        }
+        this.offsetEverything(x - bounds[0] + 0.5 * (w - bounds[2] + bounds[0]), y - bounds[1] + 0.5 * (h - bounds[3] + bounds[1]));
+    };
+    ArrangeMolecule.prototype.placeAdjunct = function (atom, str, fsz, col, angdir) {
+        var wad = this.measure.measureText(str, fsz);
+        var a = this.points[atom - 1];
+        var cx = a.oval.cx, cy = a.oval.cy, rw = 0.55 * wad[0], rh = 0.55 * wad[1];
+        var bestScore = 0, bestDX = 0, bestDY = 0;
+        var px = Vec.numberArray(0, 4), py = Vec.numberArray(0, 4);
+        var angThresh = 10;
+        var shorted = false;
+        for (var ext = 0.5 * (a.oval.rw + a.oval.rh); !shorted && ext < 1.5 * this.measure.scale(); ext += 0.1 * this.measure.scale()) {
+            var DELTA = 5 * DEGRAD;
+            for (var d = 0; !shorted && d < Math.PI - 0.0001; d += DELTA)
+                for (var s = -1; s <= 1; s += 2) {
+                    var dang = d * s + (s > 0 ? DELTA : 0), ang = angdir + dang;
+                    var dx = ext * Math.cos(ang), dy = ext * Math.sin(ang) * -this.ymul;
+                    var x1 = cx + dx - rw, x2 = cx + dx + rw, y1 = cy + dy - rh, y2 = cy + dy + rh;
+                    px[0] = x1;
+                    py[0] = y1;
+                    px[1] = x2;
+                    py[1] = y1;
+                    px[2] = x2;
+                    py[2] = y2;
+                    px[3] = x1;
+                    py[3] = y2;
+                    var viol = this.countPolyViolations(px, py, false);
+                    var score = 10 * viol + Math.abs(dang) + 10 * ext;
+                    var shortCircuit = viol == 0 && Math.abs(dang) < (angThresh + 1) * DEGRAD;
+                    if (bestScore == 0 || shortCircuit || score < bestScore) {
+                        bestScore = score;
+                        bestDX = dx;
+                        bestDY = dy;
+                    }
+                    if (shortCircuit) {
+                        shorted = true;
+                        break;
+                    }
+                }
+            angThresh += 5;
+        }
+        a =
+            {
+                'anum': 0,
+                'text': str,
+                'fsz': fsz,
+                'bold': false,
+                'col': col,
+                'oval': new Oval(cx + bestDX, cy + bestDY, rw, rh)
+            };
+        this.points.push(a);
+        var spc = {
+            'anum': 0,
+            'bnum': 0,
+            'box': new Box(a.oval.cx - rw, a.oval.cy - rh, 2 * rw, 2 * rh),
+            'px': [a.oval.cx - rw, a.oval.cx + rw, a.oval.cx + rw, a.oval.cx - rw],
+            'py': [a.oval.cy - rh, a.oval.cy - rh, a.oval.cy + rh, a.oval.cy + rh]
+        };
+        this.space.push(spc);
+    };
+    ArrangeMolecule.prototype.processLabel = function (anum) {
+        var ax = this.mol.atomX(anum), ay = this.mol.atomY(anum);
+        var left = 0, right = 0;
+        var adj = this.mol.atomAdjList(anum);
+        for (var n = 0; n < adj.length; n++) {
+            var theta = Math.atan2(this.mol.atomY(adj[n]) - ay, this.mol.atomX(adj[n]) - ax) * RADDEG;
+            if (theta >= -15 && theta <= 15)
+                right += 3;
+            else if (theta >= -85 && theta <= 85)
+                right++;
+            else if (theta > 85 && theta < 95) { }
+            else if (theta < -85 && theta > -95) { }
+            else if (theta > 165 || theta < -165)
+                left += 3;
+            else
+                left++;
+        }
+        var label = this.mol.atomElement(anum);
+        var ibar = label.indexOf('|'), ibrace = label.indexOf('{');
+        var side = 0;
+        if (left == 0 && right == 0 && ibar < 0 && ibrace < 0) { }
+        else if (left < right)
+            side = -1;
+        else if (right < left)
+            side = 1;
+        else {
+            var score1 = CoordUtil.congestionPoint(this.mol, ax - 1, ay);
+            var score2 = CoordUtil.congestionPoint(this.mol, ax + 1, ay);
+            if (score1 < 0.5 * score2)
+                side = -1;
+            else
+                side = 1;
+        }
+        var chunks = null;
+        var position = null;
+        var primary = null;
+        var refchunk = 0;
+        if (ibar < 0 && ibrace < 0) {
+            if (side == 0)
+                chunks = [label];
+            else if (side < 0) {
+                chunks = [label.substring(0, label.length - 1), label.substring(label.length - 1)];
+                refchunk = 1;
+            }
+            else
+                chunks = [label.substring(0, 1), label.substring(1)];
+        }
+        else {
+            var bits = [];
+            var bpos = [];
+            var bpri = [];
+            var blocks = label.split('|');
+            if (side < 0) {
+                var oldblk = blocks;
+                blocks = [];
+                for (var i = oldblk.length - 1; i >= 0; i--)
+                    blocks.push(oldblk[i]);
+            }
+            var buff = '';
+            for (var i = 0; i < blocks.length; i++) {
+                var isPrimary = (side >= 0 && i == 0) || (side < 0 && i == blocks.length - 1);
+                if (side < 0 && refchunk == 0 && i == blocks.length - 1)
+                    refchunk = bits.length;
+                var pos = 0;
+                buff = '';
+                for (var j = 0; j < blocks[i].length; j++) {
+                    var ch = blocks[i].charAt(j);
+                    if (ch == '{' || ch == '}') {
+                        if (buff.length > 0) {
+                            bits.push(buff.toString());
+                            bpos.push(pos);
+                            bpri.push(isPrimary);
+                        }
+                        buff = '';
+                        pos = ch == '{' ? -1 : 0;
+                    }
+                    else if (ch == '^' && pos == -1 && buff.length == 0)
+                        pos = 1;
+                    else
+                        buff += ch;
+                }
+                if (buff.length > 0) {
+                    bits.push(buff.toString());
+                    bpos.push(pos);
+                    bpri.push(isPrimary);
+                }
+            }
+            chunks = bits;
+            position = bpos;
+            primary = bpri;
+            while (refchunk < chunks.length - 1 && position[refchunk] != 0)
+                refchunk++;
+        }
+        var PADDING = 1.1;
+        var SSFRACT = 0.6;
+        var chunkw = Vec.numberArray(0, chunks.length);
+        var tw = 0;
+        for (var n = 0; n < chunks.length; n++) {
+            chunkw[n] = this.measure.measureText(chunks[n], this.fontSizePix)[0];
+            if (position != null && position[n] != 0)
+                chunkw[n] *= SSFRACT;
+            tw += chunkw[n];
+        }
+        var x = this.measure.angToX(ax), y = this.measure.angToY(ay);
+        if (side == 0)
+            x -= 0.5 * chunkw[0];
+        else if (side < 0) {
+            for (var n = 0; n < refchunk; n++)
+                x -= chunkw[n];
+            x -= 0.5 * chunkw[refchunk];
+        }
+        else {
+            x -= 0.5 * chunkw[0];
+        }
+        for (var n = 0; n < chunks.length; n++) {
+            var a = {
+                'anum': (n == refchunk || (primary != null && primary[n])) ? anum : 0,
+                'text': chunks[n],
+                'fsz': this.fontSizePix,
+                'bold': false,
+                'col': this.policy.data.atomCols[this.mol.atomicNumber(anum)],
+                'oval': new Oval(x + 0.5 * chunkw[n], y, 0.5 * chunkw[n] * PADDING, 0.5 * this.fontSizePix * PADDING)
+            };
+            if (position != null && position[n] != 0) {
+                a.fsz *= SSFRACT;
+                if (position[n] < 0)
+                    a.oval.cy += a.fsz * 0.7 * (this.measure.yIsUp() ? -1 : 1);
+                else
+                    a.oval.cy -= a.fsz * 0.3 * (this.measure.yIsUp() ? -1 : 1);
+            }
+            if (n == refchunk) {
+                this.points[anum - 1] = a;
+                this.space[anum - 1] = this.computeSpacePoint(a);
+            }
+            else {
+                this.points.push(a);
+                this.space.push(this.computeSpacePoint(a));
+            }
+            x += chunkw[n];
+        }
+    };
+    ArrangeMolecule.prototype.atomIsWeirdLinear = function (idx) {
+        var bonds = this.mol.atomAdjBonds(idx);
+        if (bonds.length != 2)
+            return false;
+        for (var n = 0; n < bonds.length; n++)
+            if (this.mol.bondOrder(bonds[n]) == 3)
+                return false;
+        var adj = this.mol.atomAdjList(idx);
+        var th1 = Math.atan2(this.mol.atomY(adj[0]) - this.mol.atomY(idx), this.mol.atomX(adj[0]) - this.mol.atomX(idx));
+        var th2 = Math.atan2(this.mol.atomY(adj[1]) - this.mol.atomY(idx), this.mol.atomX(adj[1]) - this.mol.atomX(idx));
+        return Math.abs(angleDiff(th1, th2)) >= 175 * DEGRAD;
+    };
+    ArrangeMolecule.prototype.backOffAtom = function (atom, x, y, fx, fy, minDist) {
+        if (x == fx && y == fy)
+            return [x, y];
+        var active = false;
+        var dx = 0, dy = 0, dst = 0, ext = 0;
+        for (var s = 0; s < this.space.length; s++) {
+            var spc = this.space[s];
+            if (spc.anum != atom)
+                continue;
+            var sz = spc.px.length;
+            if (sz == 0)
+                continue;
+            for (var n = 0; n < sz; n++) {
+                var nn = n < sz - 1 ? n + 1 : 0;
+                var x1 = spc.px[n], y1 = spc.py[n], x2 = spc.px[nn], y2 = spc.py[nn];
+                if (!GeomUtil.doLineSegsIntersect(x, y, fx, fy, x1, y1, x2, y2))
+                    continue;
+                var xy = GeomUtil.lineIntersect(x, y, fx, fy, x1, y1, x2, y2);
+                if (!active) {
+                    dx = x - fx;
+                    dy = y - fy;
+                    dst = norm_xy(dx, dy);
+                    ext = dst;
+                    active = true;
+                }
+                ext = Math.min(ext, norm_xy(xy[0] - fx, xy[1] - fy));
+            }
+        }
+        if (active) {
+            ext = Math.max(minDist, ext - 0.1 * this.measure.scale());
+            var idst = 1.0 / dst;
+            return [fx + ext * idst * dx, fy + ext * idst * dy];
+        }
+        else
+            return [x, y];
+    };
+    ArrangeMolecule.prototype.ensureMinimumBondLength = function (xy1, xy2, x1, y1, x2, y2, minDist) {
+        var dx = xy2[0] - xy1[0], dy = xy2[1] - xy1[1];
+        var dsq = norm2_xy(dx, dy);
+        minDist = Math.min(minDist, norm_xy(x2 - x1, y2 - y1));
+        if (dsq >= sqr(minDist - 0.0001))
+            return;
+        var d12 = Math.sqrt(dsq), d1 = norm_xy(xy1[0] - x1, xy1[1] - y1), d2 = norm_xy(x2 - xy2[0], y2 - xy2[1]);
+        var mag = 1 - minDist / d12, invD12 = 1.0 / (d1 + d2), mag1 = d1 * mag * invD12, mag2 = d2 * mag * invD12;
+        xy1[0] -= dx * mag1;
+        xy1[1] -= dy * mag1;
+        xy2[0] += dx * mag2;
+        xy2[1] += dy * mag2;
+    };
+    ArrangeMolecule.prototype.orderedRingList = function () {
+        var rings = [];
+        var SIZE_ORDER = [6, 5, 7, 4, 3];
+        for (var i = 0; i < SIZE_ORDER.length; i++) {
+            var nring = this.mol.findRingsOfSize(SIZE_ORDER[i]);
+            for (var j = 0; j < nring.length; j++)
+                rings.push(nring[j]);
+        }
+        var ringsz = rings.length;
+        var ringbusy = Vec.numberArray(0, this.mol.numAtoms());
+        for (var n = 0; n < ringsz; n++) {
+            var r = rings[n];
+            for (var i = 0; i < r.length; i++)
+                ringbusy[r[i] - 1]++;
+        }
+        var ringscore = Vec.numberArray(0, ringsz);
+        for (var n = 0; n < ringsz; n++) {
+            var r = rings[n];
+            for (var i = 0; i < r.length; i++)
+                ringscore[n] += ringbusy[r[i] - 1];
+        }
+        var ringorder = Vec.idxSort(ringscore);
+        var resbcount = Vec.numberArray(0, ringsz), maxbcount = 0;
+        for (var n = 0; n < ringsz; n++) {
+            var r = rings[ringorder[n]];
+            for (var i = 0; i < r.length; i++) {
+                var j = this.mol.findBond(r[i], r[i + 1 < r.length ? i + 1 : 0]);
+                if (this.mol.bondOrder(j) == 2)
+                    resbcount[n]++;
+            }
+            maxbcount = Math.max(maxbcount, resbcount[n]);
+        }
+        var pos = 0, ret = [];
+        for (var sz = maxbcount; sz >= 0; sz--) {
+            for (var n = 0; n < ringsz; n++)
+                if (resbcount[n] == sz)
+                    ret.push(rings[ringorder[n]]);
+        }
+        return ret;
+    };
+    ArrangeMolecule.prototype.orthogonalDelta = function (x1, y1, x2, y2, d) {
+        var ox = y1 - y2, oy = x2 - x1, dsq = norm2_xy(ox, oy);
+        var sc = dsq > 0 ? d / Math.sqrt(dsq) : 1;
+        return [ox * sc, oy * sc];
+    };
+    ArrangeMolecule.prototype.processDoubleBond = function (idx, priority) {
+        var bfr = this.mol.bondFrom(idx), bto = this.mol.bondTo(idx);
+        var nfr = this.mol.atomAdjList(bfr), nto = this.mol.atomAdjList(bto);
+        var a1 = this.points[bfr - 1], a2 = this.points[bto - 1];
+        var x1 = a1.oval.cx, y1 = a1.oval.cy, x2 = a2.oval.cx, y2 = a2.oval.cy;
+        var minDist = this.MINBOND_EXOTIC * this.measure.scale();
+        var xy1 = this.backOffAtom(bfr, x1, y1, x2, y2, minDist);
+        var xy2 = this.backOffAtom(bto, x2, y2, x1, y1, minDist);
+        this.ensureMinimumBondLength(xy1, xy2, x1, y1, x2, y2, minDist);
+        x1 = xy1[0];
+        y1 = xy1[1];
+        x2 = xy2[0];
+        y2 = xy2[1];
+        var dx = x2 - x1, dy = y2 - y1, btheta = Math.atan2(dy, dx);
+        var countFLeft = 0, countFRight = 0, countTLeft = 0, countTRight = 0;
+        var idxFLeft = 0, idxFRight = 0, idxTLeft = 0, idxTRight = 0;
+        var noshift = false;
+        for (var n = 0; n < nfr.length; n++)
+            if (nfr[n] != bto) {
+                var bo = this.mol.bondOrder(this.mol.findBond(bfr, nfr[n]));
+                if (bo == 0)
+                    continue;
+                if (bo > 1) {
+                    noshift = true;
+                    break;
+                }
+                var ispri = false;
+                for (var i = 0; i < (priority == null ? 0 : priority.length); i++)
+                    if (priority[i] == nfr[n])
+                        ispri = true;
+                var theta = angleDiff(Math.atan2(this.points[nfr[n] - 1].oval.cy - y1, this.points[nfr[n] - 1].oval.cx - x1), btheta);
+                if (Math.abs(theta) * RADDEG > 175) {
+                    noshift = true;
+                    break;
+                }
+                if (theta > 0) {
+                    if (ispri)
+                        countFLeft++;
+                    idxFLeft = nfr[n];
+                }
+                else {
+                    if (ispri)
+                        countFRight++;
+                    idxFRight = nfr[n];
+                }
+            }
+        for (var n = 0; n < nto.length; n++)
+            if (nto[n] != bfr) {
+                var bo = this.mol.bondOrder(this.mol.findBond(bto, nto[n]));
+                if (bo == 0)
+                    continue;
+                if (bo > 1) {
+                    noshift = true;
+                    break;
+                }
+                var ispri = false;
+                for (var i = 0; i < (priority == null ? 0 : priority.length); i++)
+                    if (priority[i] == nto[n])
+                        ispri = true;
+                var theta = angleDiff(Math.atan2(this.points[nto[n] - 1].oval.cy - y2, this.points[nto[n] - 1].oval.cx - x2), btheta);
+                if (Math.abs(theta) * RADDEG > 175) {
+                    noshift = true;
+                    break;
+                }
+                if (theta > 0) {
+                    if (ispri)
+                        countTLeft++;
+                    idxTLeft = nto[n];
+                }
+                else {
+                    if (ispri)
+                        countTRight++;
+                    idxTRight = nto[n];
+                }
+            }
+        var side = 0;
+        if (noshift || countFLeft > 1 || countFRight > 1 || countTLeft > 1 || countTRight > 1) { }
+        else if (countFLeft > 0 && countFRight > 0) { }
+        else if (countTLeft > 0 && countTRight > 0) { }
+        else if (countFLeft > 0 || countTLeft > 0)
+            side = 1;
+        else if (countFRight > 0 || countTRight > 0)
+            side = -1;
+        var sz = this.lineSizePix;
+        var oxy = this.orthogonalDelta(x1, y1, x2, y2, this.bondSepPix);
+        var ax1 = x1, ay1 = y1, ax2 = x2, ay2 = y2;
+        var bx1 = 0, by1 = 0, bx2 = 0, by2 = 0;
+        if (side == 0) {
+            ax1 = x1 + 0.5 * oxy[0];
+            ay1 = y1 + 0.5 * oxy[1];
+            ax2 = x2 + 0.5 * oxy[0];
+            ay2 = y2 + 0.5 * oxy[1];
+            bx1 = x1 - 0.5 * oxy[0];
+            by1 = y1 - 0.5 * oxy[1];
+            bx2 = x2 - 0.5 * oxy[0];
+            by2 = y2 - 0.5 * oxy[1];
+        }
+        else if (side > 0) {
+            bx1 = x1 + oxy[0];
+            by1 = y1 + oxy[1];
+            bx2 = x2 + oxy[0];
+            by2 = y2 + oxy[1];
+            if (nfr.length > 1 && this.points[bfr - 1].text == null) {
+                bx1 += oxy[1];
+                by1 -= oxy[0];
+            }
+            if (nto.length > 1 && this.points[bto - 1].text == null) {
+                bx2 -= oxy[1];
+                by2 += oxy[0];
+            }
+        }
+        else if (side < 0) {
+            bx1 = x1 - oxy[0];
+            by1 = y1 - oxy[1];
+            bx2 = x2 - oxy[0];
+            by2 = y2 - oxy[1];
+            if (nfr.length > 1 && this.points[bfr - 1].text == null) {
+                bx1 += oxy[1];
+                by1 -= oxy[0];
+            }
+            if (nto.length > 1 && this.points[bto - 1].text == null) {
+                bx2 -= oxy[1];
+                by2 += oxy[0];
+            }
+        }
+        if (side != 0) {
+            if (this.mol.atomElement(bfr).length <= 2 && this.mol.atomAdjCount(bfr) == 1 && this.points[bfr - 1].text != null) {
+                this.bumpAtomPosition(bfr, 0.5 * oxy[0] * side, 0.5 * oxy[1] * side);
+            }
+            if (this.mol.atomElement(bto).length <= 2 && this.mol.atomAdjCount(bto) == 1 && this.points[bto - 1].text != null) {
+                this.bumpAtomPosition(bto, 0.5 * oxy[0] * side, 0.5 * oxy[1] * side);
+            }
+        }
+        if (side == 0 && !noshift) {
+            var xy = null;
+            if (this.points[bfr - 1].text == null && !this.mol.bondInRing(idx)) {
+                xy = this.adjustBondPosition(idxFLeft, bfr, ax1, ay1, ax2, ay2);
+                if (xy != null) {
+                    ax1 = xy[0];
+                    ay1 = xy[1];
+                }
+                xy = this.adjustBondPosition(idxFRight, bfr, bx1, by1, bx2, by2);
+                if (xy != null) {
+                    bx1 = xy[0];
+                    by1 = xy[1];
+                }
+            }
+            if (this.points[bto - 1].text == null && !this.mol.bondInRing(idx)) {
+                xy = this.adjustBondPosition(idxTLeft, bto, ax2, ay2, ax1, ay1);
+                if (xy != null) {
+                    ax2 = xy[0];
+                    ay2 = xy[1];
+                }
+                xy = this.adjustBondPosition(idxTRight, bto, bx2, by2, bx1, by1);
+                if (xy != null) {
+                    bx2 = xy[0];
+                    by2 = xy[1];
+                }
+            }
+        }
+        var lt = this.mol.bondType(idx) == Molecule.BONDTYPE_UNKNOWN ? BLineType.Unknown : BLineType.Normal;
+        var col = this.policy.data.foreground;
+        var b1 = {
+            'bnum': idx,
+            'bfr': bfr,
+            'bto': bto,
+            'type': lt,
+            'line': new Line(ax1, ay1, ax2, ay2),
+            'size': sz,
+            'head': 0,
+            'col': col
+        };
+        var b2 = {
+            'bnum': idx,
+            'bfr': bfr,
+            'bto': bto,
+            'type': lt,
+            'line': new Line(bx1, by1, bx2, by2),
+            'size': sz,
+            'head': 0,
+            'col': col
+        };
+        this.lines.push(b1);
+        this.lines.push(b2);
+        this.space.push(this.computeSpaceLine(b1));
+        this.space.push(this.computeSpaceLine(b2));
+    };
+    ArrangeMolecule.prototype.placeHydrogen = function (idx, hcount, fussy) {
+        var font = FontData.main;
+        var SSFRACT = 0.6;
+        var GLYPH_H = 'H'.charCodeAt(0) - font.GLYPH_MIN;
+        var a = this.points[idx];
+        var emscale = a.fsz * font.INV_UNITS_PER_EM;
+        var sub = hcount >= 2 ? hcount.toString() : '';
+        var outlineX = font.getOutlineX(GLYPH_H), outlineY = font.getOutlineY(GLYPH_H);
+        var firstEMW = font.HORIZ_ADV_X[GLYPH_H], emw = firstEMW;
+        for (var n = 0; n < sub.length; n++) {
+            var g = sub.charCodeAt(n) - font.GLYPH_MIN;
+            if (n == 0) {
+                emw += font.getKerning(GLYPH_H, g);
+            }
+            else {
+                var gp = sub.charCodeAt(n - 1) - font.GLYPH_MIN;
+                emw += font.getKerning(gp, g) * SSFRACT;
+            }
+            var extraX = font.getOutlineX(g), extraY = font.getOutlineY(g);
+            Vec.addTo(extraX, emw / SSFRACT);
+            Vec.addTo(extraY, (SSFRACT - 1) * font.ASCENT);
+            Vec.mulBy(extraX, SSFRACT);
+            Vec.mulBy(extraY, SSFRACT);
+            outlineX = outlineX.concat(extraX);
+            outlineY = outlineY.concat(extraY);
+        }
+        if (sub.length > 0) {
+            var qh = new QuickHull(outlineX, outlineY, 0);
+            outlineX = qh.hullX;
+            outlineY = qh.hullY;
+        }
+        var emdx = -0.5 * firstEMW, emdy = 0.5 * (font.ASCENT + font.DESCENT);
+        for (var n = 0; n < outlineX.length; n++) {
+            outlineX[n] = a.oval.cx + (emdx + outlineX[n]) * emscale;
+            outlineY[n] = a.oval.cy + (emdy - outlineY[n]) * emscale * this.ymul;
+        }
+        var dx = 0, dy = 0;
+        var srcWAD = this.measure.measureText(a.text, a.fsz);
+        if (fussy) {
+            var RIGHTLEFT = [0, 1, 2, 3];
+            var LEFTRIGHT = [1, 0, 2, 3];
+            var UPDOWN = [2, 3, 0, 1];
+            var DOWNUP = [3, 2, 0, 1];
+            var quad = RIGHTLEFT, adj = this.mol.atomAdjList(a.anum);
+            if (adj.length == 0) {
+                var LEFTIES = ["O", "S", "F", "Cl", "Br", "I"];
+                if (this.mol.atomCharge(a.anum) == 0 && this.mol.atomUnpaired(a.anum) == 0 &&
+                    LEFTIES.indexOf(this.mol.atomElement(a.anum)) >= 0)
+                    quad = LEFTRIGHT;
+                else
+                    quad = RIGHTLEFT;
+            }
+            else {
+                var allLeft = true, allRight = true, allUp = true, allDown = true;
+                var ax = this.mol.atomX(a.anum), ay = this.mol.atomY(a.anum);
+                for (var n = 0; n < adj.length; n++) {
+                    var bx = this.mol.atomX(adj[n]), by = this.mol.atomY(adj[n]);
+                    if (bx > ax + 0.01)
+                        allLeft = false;
+                    if (bx < ax - 0.01)
+                        allRight = false;
+                    if (by < ay - 0.01)
+                        allUp = false;
+                    if (by > ay + 0.01)
+                        allDown = false;
+                }
+                if (allLeft) { }
+                else if (allRight)
+                    quad = LEFTRIGHT;
+                else if (allUp)
+                    quad = DOWNUP;
+                else if (allDown)
+                    quad = UPDOWN;
+            }
+            for (var n = 0; n < 4; n++) {
+                var tx = 0, ty = 0;
+                if (quad[n] == 0)
+                    tx = 0.5 * srcWAD[0] + 0.5 * firstEMW * emscale;
+                else if (quad[n] == 1)
+                    tx = -0.5 * srcWAD[0] - (emw - 0.5 * firstEMW) * emscale;
+                else if (quad[n] == 2)
+                    ty = (1.1 * srcWAD[1] + 0.5 * srcWAD[2]) * -this.ymul;
+                else if (quad[n] == 3)
+                    ty = (1.1 * srcWAD[1] + 0.5 * srcWAD[2]) * this.ymul;
+                Vec.addTo(outlineX, tx);
+                Vec.addTo(outlineX, ty);
+                var viol = this.countPolyViolations(outlineX, outlineY, true);
+                Vec.addTo(outlineX, -tx);
+                Vec.addTo(outlineY, -ty);
+                if (viol == 0) {
+                    dx = tx;
+                    dy = ty;
+                    break;
+                }
+            }
+            if (dx == 0 && dy == 0)
+                return false;
+        }
+        else {
+            var mx1 = Vec.min(outlineY), mx2 = Vec.max(outlineX), my1 = Vec.min(outlineY), my2 = Vec.max(outlineY), cx = 0.5 * (mx1 + mx2), cy = 0.5 * (my1 + my2);
+            var mag = 1 + this.measure.scale() * this.policy.data.fontSize * ArrangeMolecule.FONT_CORRECT * 0.1 / Math.max(mx2 - cx, my2 - cy);
+            var psz = outlineX.length;
+            var magPX = outlineX.slice(0), magPY = outlineY.slice(0);
+            for (var n = 0; n < psz; n++) {
+                magPX[n] = (magPX[n] - cx) * mag + cx;
+                magPY[n] = (magPY[n] - cy) * mag + cy;
+            }
+            var bestScore = 0, bestExt = 0, bestAng = 0;
+            for (var ext = 0.5 * (a.oval.rw + a.oval.rh); ext < 1.5 * this.measure.scale(); ext += 0.1 * this.measure.scale()) {
+                var anyNoClash = false;
+                for (var ang = 0; ang < 2 * Math.PI; ang += 5 * DEGRAD) {
+                    var tx = ext * Math.cos(ang), ty = ext * Math.sin(ang);
+                    Vec.addTo(magPX, tx);
+                    Vec.addTo(magPY, ty);
+                    var viol = this.countPolyViolations(magPX, magPY, false);
+                    Vec.addTo(magPX, -tx);
+                    Vec.addTo(magPY, -ty);
+                    if (viol == 0)
+                        anyNoClash = true;
+                    var score = 10 * viol + this.spatialCongestion(a.oval.cx + tx, a.oval.cy + ty, 0.5) + 2 * ext;
+                    if (bestScore == 0 || score < bestScore) {
+                        bestScore = score;
+                        bestExt = ext;
+                        bestAng = ang;
+                        dx = tx;
+                        dy = ty;
+                    }
+                }
+                if (anyNoClash)
+                    break;
+            }
+        }
+        var wad = this.measure.measureText("H", a.fsz);
+        var PADDING = 1.1;
+        var ah = {
+            'anum': 0,
+            'text': 'H',
+            'fsz': a.fsz,
+            'bold': a.bold,
+            'col': a.col,
+            'oval': new Oval(a.oval.cx + dx, a.oval.cy + dy, 0.5 * wad[0] * PADDING, 0.5 * wad[1] * PADDING)
+        };
+        this.points.push(ah);
+        if (sub.length > 0) {
+            var subFsz = SSFRACT * a.fsz;
+            wad = this.measure.measureText(sub, subFsz);
+            var an = {
+                'anum': 0,
+                'text': sub,
+                'fsz': subFsz,
+                'bold': a.bold,
+                'col': a.col,
+                'oval': new Oval(ah.oval.cx + 0.5 * firstEMW * a.fsz * font.INV_UNITS_PER_EM + 0.5 * wad[0], ah.oval.cy + (1 - SSFRACT) * a.fsz, 0.5 * wad[0] * PADDING, 0.5 * wad[1] * PADDING)
+            };
+            this.points.push(an);
+        }
+        Vec.addTo(outlineX, dx);
+        Vec.addTo(outlineY, dy);
+        var minX = Vec.min(outlineX), minY = Vec.min(outlineY);
+        var spc = {
+            'anum': 0,
+            'bnum': 0,
+            'box': new Box(minX, minY, Vec.max(outlineX) - minX, Vec.max(outlineY) - minY),
+            'px': outlineX,
+            'py': outlineY
+        };
+        this.space.push(spc);
+        return true;
+    };
+    ArrangeMolecule.prototype.computeSpacePoint = function (a) {
+        var s = {
+            'anum': a.anum,
+            'bnum': 0,
+            'box': new Box(),
+            'px': [],
+            'py': []
+        };
+        var font = FontData.main;
+        var outlineX = [], outlineY = [];
+        var emw = 0, nglyphs = 0;
+        if (a.text != null) {
+            for (var n = 0; n < a.text.length; n++) {
+                var i = a.text.charCodeAt(n) - font.GLYPH_MIN;
+                if (i >= 0 && i < font.GLYPH_COUNT) {
+                    if (emw == 0) {
+                        outlineX = font.getOutlineX(i);
+                        outlineY = font.getOutlineY(i);
+                        nglyphs = 1;
+                    }
+                    else {
+                        var extraX = font.getOutlineX(i), extraY = font.getOutlineY(i);
+                        if (extraX.length > 0) {
+                            Vec.addTo(extraX, emw);
+                            outlineX = outlineX.concat(extraX);
+                            outlineY = outlineY.concat(extraY);
+                            nglyphs++;
+                        }
+                    }
+                    emw += font.HORIZ_ADV_X[i];
+                }
+                else
+                    emw += font.MISSING_HORZ;
+                if (n < a.text.length - 1) {
+                    var j = a.text.charCodeAt(n + 1) - font.GLYPH_MIN;
+                    for (var k = 0; k < font.KERN_K.length; k++)
+                        if ((font.KERN_G1[k] == i && font.KERN_G2[k] == j) || (font.KERN_G1[k] == j && font.KERN_G2[k] == i)) {
+                            emw += font.KERN_K[k];
+                            break;
+                        }
+                }
+            }
+        }
+        if (outlineX.length > 0) {
+            if (nglyphs > 1) {
+                var qh = new QuickHull(outlineX, outlineY, 0);
+                outlineX = qh.hullX;
+                outlineY = qh.hullY;
+            }
+            var emdx = -0.5 * emw, emdy = 0.5 * (font.ASCENT + font.DESCENT);
+            var emscale = a.fsz * font.INV_UNITS_PER_EM;
+            for (var n = 0; n < outlineX.length; n++) {
+                outlineX[n] = a.oval.cx + (emdx + outlineX[n]) * emscale;
+                outlineY[n] = a.oval.cy + (emdy - outlineY[n]) * emscale * this.ymul;
+            }
+            s.px = outlineX;
+            s.py = outlineY;
+            var minX = Vec.min(outlineX), minY = Vec.min(outlineY);
+            s.box = new Box(minX, minY, Vec.max(outlineX) - minX, Vec.max(outlineY) - minY);
+        }
+        else {
+            s.box = Box.fromOval(a.oval);
+            if (s.box.w > 0 && s.box.h > 0) {
+                s.px = [s.box.minX(), s.box.maxX(), s.box.maxX(), s.box.minX()];
+                s.py = [s.box.minY(), s.box.minY(), s.box.maxY(), s.box.maxY()];
+            }
+        }
+        return s;
+    };
+    ArrangeMolecule.prototype.computeSpaceLine = function (b) {
+        var s = {
+            'anum': 0,
+            'bnum': b.bnum,
+            'box': new Box(),
+            'px': [],
+            'py': []
+        };
+        if (b.type == BLineType.Normal || b.type == BLineType.Dotted || b.type == BLineType.DotDir) {
+            s.px = [b.line.x1, b.line.x2];
+            s.py = [b.line.y1, b.line.y2];
+        }
+        else {
+            var dx = b.line.x2 - b.line.x1, dy = b.line.y2 - b.line.y1;
+            var norm = b.head / Math.sqrt(dx * dx + dy * dy);
+            var ox = norm * dy, oy = -norm * dx;
+            if (b.type == BLineType.Unknown) {
+                s.px = [b.line.x1 + ox, b.line.x1 - ox, b.line.x2 - ox, b.line.x2 + ox];
+                s.py = [b.line.y1 + oy, b.line.y1 - oy, b.line.y2 - oy, b.line.y2 + oy];
+            }
+            else {
+                s.px = [b.line.x1, b.line.x2 - ox, b.line.x2 + ox];
+                s.py = [b.line.y1, b.line.y2 - oy, b.line.y2 + oy];
+            }
+        }
+        s.box.x = Vec.min(s.px) - b.size;
+        s.box.y = Vec.min(s.py) - b.size;
+        s.box.w = Vec.max(s.px) - s.box.x + b.size;
+        s.box.h = Vec.max(s.py) - s.box.y + b.size;
+        return s;
+    };
+    ArrangeMolecule.prototype.bumpAtomPosition = function (atom, dx, dy) {
+        var p = this.points[atom - 1];
+        p.oval.cx += dx;
+        p.oval.cy += dy;
+        for (var n = this.space.length - 1; n >= 0; n--) {
+            var s = this.space[n - 1];
+            if (s.anum != atom)
+                continue;
+            s.box.x += dx;
+            s.box.y += dy;
+            Vec.addTo(s.px, dx);
+            Vec.addTo(s.py, dy);
+        }
+    };
+    ArrangeMolecule.prototype.countPolyViolations = function (px, py, shortCircuit) {
+        var hits = 0;
+        var psz = px.length, nspc = this.space.length;
+        var pr = new Box(), sr = new Box();
+        for (var i1 = 0; i1 < psz; i1++) {
+            var i2 = i1 < psz - 1 ? i1 + 1 : 0;
+            pr.x = Math.min(px[i1], px[i2]) - 1;
+            pr.y = Math.min(py[i1], py[i2]) - 1;
+            pr.w = Math.max(px[i1], px[i2]) - pr.x + 2;
+            pr.h = Math.max(py[i1], py[i2]) - pr.y + 2;
+            for (var j = 0; j < nspc; j++) {
+                var spc = this.space[j];
+                if (spc.px == null)
+                    continue;
+                sr.x = spc.box.x - 1;
+                sr.y = spc.box.y - 1;
+                sr.w = spc.box.w + 1;
+                sr.h = spc.box.h + 1;
+                if (!pr.intersects(sr))
+                    continue;
+                var ssz = spc.px.length;
+                for (var j1 = 0; j1 < ssz; j1++) {
+                    var j2 = j1 < ssz - 1 ? j1 + 1 : 0;
+                    sr.x = Math.min(spc.px[j1], spc.px[j2]) - 1;
+                    sr.y = Math.min(spc.py[j1], spc.py[j2]) - 1;
+                    sr.w = Math.max(spc.px[j1], spc.px[j2]) - sr.x + 2;
+                    sr.h = Math.max(spc.py[j1], spc.py[j2]) - sr.y + 2;
+                    if (!pr.intersects(sr))
+                        continue;
+                    if (GeomUtil.doLineSegsIntersect(px[i1], py[i1], px[i2], py[i2], spc.px[j1], spc.py[j1], spc.px[j2], spc.py[j2])) {
+                        if (shortCircuit)
+                            return 1;
+                        hits++;
+                        break;
+                    }
+                    if (ssz == 1)
+                        break;
+                }
+            }
+        }
+        pr.x = Vec.min(px);
+        pr.y = Vec.min(py);
+        pr.w = Vec.max(px) - pr.x;
+        pr.h = Vec.max(py) - pr.y;
+        for (var n = nspc - 1; n >= 0; n--) {
+            var spc = this.space[n];
+            sr.x = spc.box.x;
+            sr.y = spc.box.y;
+            sr.w = spc.box.w;
+            sr.h = spc.box.h;
+            if (!pr.intersects(sr))
+                continue;
+            for (var i = spc.px.length - 1; i >= 0; i--)
+                if (GeomUtil.pointInPolygon(spc.px[i], spc.py[i], px, py)) {
+                    if (shortCircuit)
+                        return 1;
+                    hits++;
+                    break;
+                }
+            for (var i = 0; i < psz; i++)
+                if (GeomUtil.pointInPolygon(px[i], py[i], spc.px, spc.py)) {
+                    if (shortCircuit)
+                        return 1;
+                    hits++;
+                    break;
+                }
+        }
+        return hits;
+    };
+    ArrangeMolecule.prototype.adjustBondPosition = function (bf, bt, x1, y1, x2, y2) {
+        if (bf == 0 || bt == 0)
+            return null;
+        for (var n = 0; n < this.lines.length; n++) {
+            var b = this.lines[n];
+            if (this.mol.bondOrder(b.bnum) != 1 || this.mol.bondType(b.bnum) != Molecule.BONDTYPE_NORMAL)
+                continue;
+            var alt = false;
+            if (this.mol.bondFrom(b.bnum) == bf && this.mol.bondTo(b.bnum) == bt) { }
+            else if (this.mol.bondFrom(b.bnum) == bt && this.mol.bondTo(b.bnum) == bf)
+                alt = true;
+            else
+                continue;
+            var th = angleDiff(Math.atan2(b.line.y2 - b.line.y1, b.line.x2 - b.line.x1), Math.atan2(y2 - y1, x2 - x1)) * RADDEG;
+            if ((th > -5 && th < -5) || th > 175 || th < -175)
+                continue;
+            var xy = GeomUtil.lineIntersect(b.line.x1, b.line.y1, b.line.x2, b.line.y2, x1, y1, x2, y2);
+            if (this.mol.atomRingBlock(bt) == 0) {
+                if (alt) {
+                    b.line.x1 = xy[0];
+                    b.line.y1 = xy[1];
+                }
+                else {
+                    b.line.x2 = xy[0];
+                    b.line.y2 = xy[1];
+                }
+            }
+            return xy;
+        }
+        return null;
+    };
+    ArrangeMolecule.prototype.priorityDoubleSubstit = function (idx) {
+        var bf = this.mol.bondFrom(idx), bt = this.mol.bondTo(idx);
+        var nf = this.mol.atomAdjList(bf), nt = this.mol.atomAdjList(bt);
+        var a1 = this.points[bf - 1], a2 = this.points[bt - 1];
+        var x1 = a1.oval.cx, y1 = a1.oval.cy, x2 = a2.oval.cx, y2 = a2.oval.cy;
+        var dx = x2 - x1, dy = y2 - y1, btheta = Math.atan2(dy, dx);
+        var idxFLeft = 0, idxFRight = 0, idxTLeft = 0, idxTRight = 0;
+        for (var n = 0; n < nf.length; n++)
+            if (nf[n] != bt) {
+                var theta = angleDiff(Math.atan2(this.points[nf[n] - 1].oval.cy - y1, this.points[nf[n] - 1].oval.cx - x1), btheta);
+                if (theta > 0) {
+                    if (idxFLeft != 0)
+                        return null;
+                    idxFLeft = nf[n];
+                }
+                else {
+                    if (idxFRight != 0)
+                        return null;
+                    idxFRight = nf[n];
+                }
+            }
+        for (var n = 0; n < nt.length; n++)
+            if (nt[n] != bf) {
+                var theta = angleDiff(Math.atan2(this.points[nt[n] - 1].oval.cy - y2, this.points[nt[n] - 1].oval.cx - x2), btheta);
+                if (theta > 0) {
+                    if (idxTLeft != 0)
+                        return null;
+                    idxTLeft = nt[n];
+                }
+                else {
+                    if (idxTRight != 0)
+                        return null;
+                    idxTRight = nt[n];
+                }
+            }
+        var sumFrom = (idxFLeft > 0 ? 1 : 0) + (idxFRight > 0 ? 1 : 0), sumTo = (idxTLeft > 0 ? 1 : 0) + (idxTRight > 0 ? 1 : 0);
+        if (sumFrom == 1 && sumTo == 0)
+            return [idxFLeft > 0 ? idxFLeft : idxFRight];
+        if (sumFrom == 0 && sumTo == 1)
+            return [idxTLeft > 0 ? idxTLeft : idxTRight];
+        if (sumFrom == 1 && sumTo == 1) {
+            if (idxFLeft > 0 && idxTLeft > 0)
+                return [idxFLeft, idxTLeft];
+            if (idxFRight > 0 && idxTRight > 0)
+                return [idxFRight, idxTRight];
+            var oxy = this.orthogonalDelta(x1, y1, x2, y2, this.bondSepPix);
+            var congestLeft = this.spatialCongestion(0.5 * (x1 + x2) + oxy[0], 0.5 * (y1 + y2) + oxy[1]);
+            var congestRight = this.spatialCongestion(0.5 * (x1 + x2) - oxy[0], 0.5 * (y1 + y2) - oxy[1]);
+            if (congestLeft < congestRight)
+                return [idxFLeft > 0 ? idxFLeft : idxTLeft];
+            else
+                return [idxFRight > 0 ? idxFRight : idxTRight];
+        }
+        if (sumFrom == 2 && sumTo == 1) {
+            if (idxTLeft == 0)
+                return [idxFRight, idxTRight];
+            else
+                return [idxFLeft, idxTLeft];
+        }
+        if (sumFrom == 1 && sumTo == 2) {
+            if (idxFLeft == 0)
+                return [idxFRight, idxTRight];
+            else
+                return [idxFLeft, idxTLeft];
+        }
+        return null;
+    };
+    ArrangeMolecule.prototype.spatialCongestion = function (x, y, thresh) {
+        if (thresh == null)
+            thresh = 0.001;
+        var congest = 0;
+        for (var n = 0; n < this.points.length; n++) {
+            var a = this.points[n];
+            if (a == null)
+                continue;
+            var dx = a.oval.cx - x, dy = a.oval.cy - y;
+            congest += 1 / (dx * dx + dy * dy + thresh);
+        }
+        return congest;
+    };
+    ArrangeMolecule.prototype.boxOverlaps = function (x, y, w, h, pointmask, linemask) {
+        var vx1 = x, vy1 = y, vx2 = x + w, vy2 = y + h;
+        for (var n = 0; n < this.points.length; n++) {
+            if (pointmask != null && !pointmask[n])
+                continue;
+            var a = this.points[n];
+            var wx1 = a.oval.cx - a.oval.rw, wy1 = a.oval.cy - a.oval.rh, wx2 = a.oval.cx + a.oval.rw, wy2 = a.oval.cy + a.oval.rh;
+            if (vx2 < wx1 || vx1 > wx2 || vy2 < wy1 || vy1 > wy2)
+                continue;
+            return true;
+        }
+        for (var n = 0; n < this.lines.length; n++) {
+            if (linemask != null && !linemask[n])
+                continue;
+            var b = this.lines[n];
+            var wx1 = b.line.x1, wy1 = b.line.y1, wx2 = b.line.x2, wy2 = b.line.y2;
+            if (vx2 < Math.min(wx1, wx2) || vx1 > Math.max(wx1, wx2) || vy2 < Math.min(wy1, wy2) || vy1 > Math.max(wy1, wy2))
+                continue;
+            if (wx1 >= vx1 && wx1 <= vx2 && wy1 >= vy1 && wy1 <= vy2)
+                return true;
+            if (wx2 >= vx1 && wx2 <= vx2 && wy2 >= vy1 && wy2 <= vy2)
+                return true;
+            if (GeomUtil.doLineSegsIntersect(wx1, wy1, wx2, wy2, vx1, vy1, vx2, vy1))
+                return true;
+            if (GeomUtil.doLineSegsIntersect(wx1, wy1, wx2, wy2, vx1, vy2, vx2, vy2))
+                return true;
+            if (GeomUtil.doLineSegsIntersect(wx1, wy1, wx2, wy2, vx1, vy1, vx1, vy2))
+                return true;
+            if (GeomUtil.doLineSegsIntersect(wx1, wy1, wx2, wy2, vx2, vy1, vx2, vy2))
+                return true;
+        }
+        return false;
+    };
+    ArrangeMolecule.prototype.resolveLineCrossings = function (bondHigher, bondLower) {
+        while (true) {
+            var anything = false;
+            for (var i1 = 0; i1 < this.lines.length; i1++) {
+                var b1 = this.lines[i1];
+                if (b1.bnum != bondHigher)
+                    continue;
+                if (b1.type != BLineType.Normal && b1.type != BLineType.Dotted && b1.type != BLineType.DotDir)
+                    continue;
+                for (var i2 = 0; i2 < this.lines.length; i2++) {
+                    var b2 = this.lines[i2];
+                    if (b2.bnum != bondLower)
+                        continue;
+                    if (b2.type == BLineType.DotDir)
+                        b2.type = BLineType.Dotted;
+                    if (b2.type != BLineType.Normal && b2.type != BLineType.Dotted)
+                        continue;
+                    if (b1.bfr == b2.bfr || b1.bfr == b2.bto || b1.bto == b2.bfr || b1.bto == b2.bto)
+                        continue;
+                    if (!GeomUtil.doLineSegsIntersect(b1.line.x1, b1.line.y1, b1.line.x2, b1.line.y2, b2.line.x1, b2.line.y1, b2.line.x2, b2.line.y2))
+                        continue;
+                    var xy = GeomUtil.lineIntersect(b1.line.x1, b1.line.y1, b1.line.x2, b1.line.y2, b2.line.x1, b2.line.y1, b2.line.x2, b2.line.y2);
+                    var dx = b2.line.x2 - b2.line.x1, dy = b2.line.y2 - b2.line.y1;
+                    var ext = Math.abs(dx) > Math.abs(dy) ? (xy[0] - b2.line.x1) / dx : (xy[1] - b2.line.y1) / dy;
+                    var dist = norm_xy(dx, dy);
+                    var delta = b2.size / dist * (b2.type == BLineType.Normal ? 2 : 4);
+                    if (ext > delta && ext < 1 - delta) {
+                        var b3 = {
+                            'bnum': b2.bnum,
+                            'bfr': b2.bfr,
+                            'bto': b2.bto,
+                            'type': b2.type,
+                            'line': b2.line.clone(),
+                            'size': b2.size,
+                            'head': b2.head,
+                            'col': b2.col
+                        };
+                        this.lines.push(b3);
+                        b2.line.x2 = b2.line.x1 + dx * (ext - delta);
+                        b2.line.y2 = b2.line.y1 + dy * (ext - delta);
+                        b3.line.x1 = b3.line.x1 + dx * (ext + delta);
+                        b3.line.y1 = b3.line.y1 + dy * (ext + delta);
+                        anything = true;
+                    }
+                    else if (ext > delta) {
+                        b2.line.x2 = b2.line.x1 + dx * (ext - delta);
+                        b2.line.y2 = b2.line.y1 + dy * (ext - delta);
+                        anything = true;
+                    }
+                    else if (ext < 1 - delta) {
+                        b2.line.x1 = b2.line.x1 + dx * (ext + delta);
+                        b2.line.y1 = b2.line.y1 + dy * (ext + delta);
+                        anything = true;
+                    }
+                }
+            }
+            if (!anything)
+                break;
+        }
+    };
+    ArrangeMolecule.FONT_CORRECT = 1.5;
+    return ArrangeMolecule;
+}());
+var DrawMolecule = (function () {
+    function DrawMolecule(layout, vg) {
+        this.layout = layout;
+        this.vg = vg;
+        this.mol = layout.getMolecule();
+        this.policy = layout.getPolicy();
+        this.effects = layout.getEffects();
+        this.scale = layout.getScale();
+        this.invScale = 1.0 / this.scale;
+    }
+    DrawMolecule.prototype.getMolecule = function () { return this.mol; };
+    DrawMolecule.prototype.getMetaVector = function () { return this.vg; };
+    DrawMolecule.prototype.getLayout = function () { return this.layout; };
+    DrawMolecule.prototype.getPolicy = function () { return this.policy; };
+    DrawMolecule.prototype.getEffects = function () { return this.effects; };
+    DrawMolecule.prototype.draw = function () {
+        var DRAW_SPACE = false;
+        if (DRAW_SPACE)
+            for (var n = 0; n < this.layout.numSpace(); n++) {
+                var spc = this.layout.getSpace(n);
+                this.vg.drawRect(spc.box.x, spc.box.y, spc.box.w, spc.box.h, MetaVector.NOCOLOUR, 0, 0xE0E0E0);
+                if (spc.px != null && spc.py != null && spc.px.length > 2)
+                    this.vg.drawPoly(spc.px, spc.py, 0x000000, 1, 0x808080FF, true);
+            }
+        for (var n = 0; n < this.layout.numLines(); n++) {
+            var b = this.layout.getLine(n);
+            if (b.type == BLineType.Normal) {
+                this.vg.drawLine(b.line.x1, b.line.y1, b.line.x2, b.line.y2, b.col, b.size);
+            }
+            else if (b.type == BLineType.Inclined)
+                this.drawBondInclined(b);
+            else if (b.type == BLineType.Declined)
+                this.drawBondDeclined(b);
+            else if (b.type == BLineType.Unknown)
+                this.drawBondUnknown(b);
+            else if (b.type == BLineType.Dotted || b.type == BLineType.DotDir)
+                this.drawBondDotted(b);
+            else if (b.type == BLineType.IncDouble || b.type == BLineType.IncTriple || b.type == BLineType.IncQuadruple)
+                this.drawBondIncMulti(b);
+        }
+        for (var n = 0; n < this.layout.numPoints(); n++) {
+            var p = this.layout.getPoint(n);
+            var txt = p.text;
+            if (txt == null)
+                continue;
+            var fsz = p.fsz;
+            var cx = p.oval.cx, cy = p.oval.cy, rw = p.oval.rw;
+            var col = p.col;
+            while (txt.endsWith(".")) {
+                var dw = rw / txt.length;
+                var r = fsz * 0.15;
+                this.vg.drawOval(cx + rw - dw, cy, r, r, MetaVector.NOCOLOUR, 0, col);
+                cx -= dw;
+                rw -= dw;
+                txt = txt.substring(0, txt.length - 1);
+            }
+            while (txt.startsWith("+")) {
+                var dw = rw / txt.length;
+                var x = cx - rw + dw, y = cy, r = fsz * 0.18, lsz = fsz * 0.1;
+                this.vg.drawLine(x - r, y, x + r, y, col, lsz);
+                this.vg.drawLine(x, y - r, x, y + r, col, lsz);
+                cx += dw;
+                rw -= dw;
+                txt = txt.substring(1, txt.length);
+            }
+            while (txt.startsWith("-")) {
+                var dw = rw / txt.length;
+                var x = cx - rw + dw, y = cy, r = fsz * 0.18, lsz = fsz * 0.1;
+                this.vg.drawLine(x - r, y, x + r, y, col, lsz);
+                cx += dw;
+                rw -= dw;
+                txt = txt.substring(1, txt.length);
+            }
+            if (txt.length > 0) {
+                this.vg.drawText(cx, cy, txt, fsz, col, TextAlign.Centre | TextAlign.Middle);
+            }
+        }
+    };
+    DrawMolecule.prototype.drawBondInclined = function (b) {
+        var x1 = b.line.x1, y1 = b.line.y1, x2 = b.line.x2, y2 = b.line.y2;
+        var dx = x2 - x1, dy = y2 - y1;
+        var col = b.col;
+        var size = b.size, head = b.head;
+        var norm = head / Math.sqrt(dx * dx + dy * dy);
+        var ox = norm * dy, oy = -norm * dx;
+        var px = [x1, x2 - ox, x2 + ox], py = [y1, y2 - oy, y2 + oy];
+        if (this.layout.getPoint(b.bto - 1).text == null && this.mol.atomAdjCount(b.bto) == 2) {
+            var other = null;
+            for (var n = 0; n < this.layout.numLines(); n++) {
+                var o = this.layout.getLine(n);
+                if (o.type == BLineType.Normal && (o.bfr == b.bto || o.bto == b.bto)) {
+                    if (other != null) {
+                        other = null;
+                        break;
+                    }
+                    other = o;
+                }
+            }
+            if (other != null) {
+                var th1 = Math.atan2(y1 - y2, x1 - x2);
+                var th2 = Math.atan2(other.line.y1 - other.line.y2, other.line.x1 - other.line.x2);
+                if (b.bto == other.bfr)
+                    th2 += Math.PI;
+                var diff = Math.abs(angleDiff(th1, th2));
+                if (diff > 105 * DEGRAD && diff < 135 * DEGRAD) {
+                    var ixy1 = GeomUtil.lineIntersect(px[0], py[0], px[1], py[1], other.line.x1, other.line.y1, other.line.x2, other.line.y2);
+                    var ixy2 = GeomUtil.lineIntersect(px[0], py[0], px[2], py[2], other.line.x1, other.line.y1, other.line.x2, other.line.y2);
+                    px[1] = ixy1[0];
+                    py[1] = ixy1[1];
+                    px[2] = ixy2[0];
+                    py[2] = ixy2[1];
+                    var dx1 = px[1] - px[0], dy1 = py[1] - py[0], inv1 = 0.5 * other.size / norm_xy(dx1, dy1);
+                    px[1] += dx1 * inv1;
+                    py[1] += dy1 * inv1;
+                    var dx2 = px[2] - px[0], dy2 = py[2] - py[0], inv2 = 0.5 * other.size / norm_xy(dx2, dy2);
+                    px[2] += dx2 * inv1;
+                    py[2] += dy2 * inv1;
+                }
+            }
+        }
+        if (this.layout.getPoint(b.bto - 1).text == null && this.mol.atomAdjCount(b.bto) == 3) {
+            var other1 = null, other2 = null;
+            for (var n = 0; n < this.layout.numLines(); n++) {
+                var o = this.layout.getLine(n);
+                if (o.type == BLineType.Normal && (o.bfr == b.bto || o.bto == b.bto)) {
+                    if (other1 == null)
+                        other1 = o;
+                    else if (other2 == null)
+                        other2 = o;
+                    else {
+                        other1 = other2 = null;
+                        break;
+                    }
+                }
+            }
+            if (other1 != null && other2 != null) {
+                var th1 = Math.atan2(y1 - y2, x1 - x2);
+                var th2 = Math.atan2(other1.line.y1 - other1.line.y2, other1.line.x1 - other1.line.x2);
+                var th3 = Math.atan2(other2.line.y1 - other2.line.y2, other2.line.x1 - other2.line.x2);
+                if (b.bto == other1.bfr)
+                    th2 += Math.PI;
+                if (b.bto == other2.bfr)
+                    th3 += Math.PI;
+                var dth1 = angleDiff(th1, th2), diff1 = Math.abs(dth1);
+                var dth2 = angleDiff(th1, th3), diff2 = Math.abs(dth2);
+                var diff3 = Math.abs(angleDiff(th2, th3));
+                if (diff1 > 105 * DEGRAD && diff1 < 135 * DEGRAD ||
+                    diff2 > 105 * DEGRAD && diff2 < 135 * DEGRAD ||
+                    diff3 > 105 * DEGRAD && diff3 < 135 * DEGRAD) {
+                    if (dth1 < 0)
+                        _a = [other2, other1], other1 = _a[0], other2 = _a[1];
+                    var ixy1 = GeomUtil.lineIntersect(px[0], py[0], px[1], py[1], other1.line.x1, other1.line.y1, other1.line.x2, other1.line.y2);
+                    var ixy2 = GeomUtil.lineIntersect(px[0], py[0], px[2], py[2], other2.line.x1, other2.line.y1, other2.line.x2, other2.line.y2);
+                    px = [x1, ixy1[0], x2, ixy2[0]];
+                    py = [y1, ixy1[1], y2, ixy2[1]];
+                }
+            }
+        }
+        this.vg.drawPoly(px, py, MetaVector.NOCOLOUR, 0, col, true);
+        var _a;
+    };
+    DrawMolecule.prototype.drawBondDeclined = function (b) {
+        var x1 = b.line.x1, y1 = b.line.y1, x2 = b.line.x2, y2 = b.line.y2;
+        var dx = x2 - x1, dy = y2 - y1;
+        var col = b.col;
+        var size = b.size, head = b.head;
+        var ext = Math.sqrt(dx * dx + dy * dy);
+        var nsteps = Math.ceil(ext * 2.5 * this.invScale);
+        var norm = head / ext;
+        var ox = norm * dy, oy = -norm * dx, invSteps = 1.0 / (nsteps + 1);
+        var holdout = this.mol.atomAdjCount(b.bto) == 1 && this.layout.getPoint(b.bto - 1).text == null ? 1 : 1 - (0.15 * this.scale) / ext;
+        for (var i = 0; i <= nsteps + 1; i++) {
+            var cx = x1 + i * dx * invSteps * holdout, cy = y1 + i * dy * invSteps * holdout;
+            var ix = ox * i * invSteps, iy = oy * i * invSteps;
+            this.vg.drawLine(cx - ix, cy - iy, cx + ix, cy + iy, col, size);
+        }
+    };
+    DrawMolecule.prototype.drawBondUnknown = function (b) {
+        var x1 = b.line.x1, y1 = b.line.y1, x2 = b.line.x2, y2 = b.line.y2;
+        var dx = x2 - x1, dy = y2 - y1;
+        var col = b.col;
+        var size = b.size, head = b.head;
+        var ext = Math.sqrt(dx * dx + dy * dy);
+        var nsteps = Math.ceil(ext * 3.5 * this.invScale);
+        var norm = head / ext;
+        var ox = norm * dy, oy = -norm * dx;
+        var sz = 1 + 3 * (nsteps + 1);
+        var x = Vec.numberArray(0, sz), y = Vec.numberArray(0, sz), ctrl = Vec.booleanArray(false, sz);
+        x[0] = x1;
+        y[0] = y1;
+        ctrl[0] = false;
+        for (var i = 0, j = 1; i <= nsteps; i++, j += 3) {
+            var ax = x1 + i * dx / (nsteps + 1), ay = y1 + i * dy / (nsteps + 1);
+            var cx = x1 + (i + 1) * dx / (nsteps + 1), cy = y1 + (i + 1) * dy / (nsteps + 1);
+            var bx = (ax + cx) / 2, by = (ay + cy) / 2;
+            var sign = i % 2 == 0 ? 1 : -1;
+            x[j] = ax;
+            x[j + 1] = bx + sign * ox;
+            x[j + 2] = cx;
+            y[j] = ay;
+            y[j + 1] = by + sign * oy;
+            y[j + 2] = cy;
+            ctrl[j] = true;
+            ctrl[j + 1] = true;
+            ctrl[j + 2] = false;
+        }
+        this.vg.drawPath(x, y, ctrl, true, col, size, MetaVector.NOCOLOUR, false);
+    };
+    DrawMolecule.prototype.drawBondDotted = function (b) {
+        var x1 = b.line.x1, y1 = b.line.y1, x2 = b.line.x2, y2 = b.line.y2;
+        var dx = x2 - x1, dy = y2 - y1;
+        var col = b.col;
+        var size = b.size;
+        var radius = size, dist = norm_xy(dx, dy);
+        if (dist < 0.01)
+            return;
+        var nudge = 0.5 * size / dist;
+        x1 += nudge * dx;
+        y1 += nudge * dy;
+        x2 -= nudge * dx;
+        y2 -= nudge * dy;
+        dx = x2 - x1;
+        dy = y2 - y1;
+        var nsteps = Math.ceil(0.2 * dist / radius);
+        var invSteps = 1.0 / (nsteps + 1);
+        for (var i = 0; i <= nsteps + 1; i++) {
+            var r = radius;
+            if (b.type == BLineType.DotDir)
+                r *= 1 + (i * (1.0 / (nsteps + 2)) - 0.5);
+            var cx = x1 + i * dx * invSteps, cy = y1 + i * dy * invSteps;
+            this.vg.drawOval(cx, cy, r, r, MetaVector.NOCOLOUR, 0, col);
+        }
+    };
+    DrawMolecule.prototype.drawBondIncMulti = function (b) {
+        var x1 = b.line.x1, y1 = b.line.y1, x2 = b.line.x2, y2 = b.line.y2;
+        var dx = x2 - x1, dy = y2 - y1;
+        var col = b.col;
+        var size = b.size, head = b.head;
+        var norm = head / Math.sqrt(dx * dx + dy * dy);
+        var ox = norm * dy, oy = -norm * dx;
+        this.vg.drawPoly([x1, x2 - ox, x2 + ox], [y1, y2 - oy, y2 + oy], col, this.scale * 0.05, MetaVector.NOCOLOUR, true);
+        if (b.type == BLineType.IncDouble) {
+            this.vg.drawLine(x1, y1, x2, y2, col, this.scale * 0.03);
+        }
+        else {
+            this.vg.drawLine(x1, y1, x2 + 0.33 * ox, y2 + 0.33 * oy, col, this.scale * 0.03);
+            this.vg.drawLine(x1, y1, x2 - 0.33 * ox, y2 - 0.33 * oy, col, this.scale * 0.03);
+        }
+    };
+    return DrawMolecule;
+}());
 var ViewStructure = (function (_super) {
     __extends(ViewStructure, _super);
     function ViewStructure(tokenID) {
@@ -4224,31 +5931,12 @@ var ViewStructure = (function (_super) {
     ViewStructure.prototype.setup = function (callback, master) {
         if (this.molstr == null && this.datastr == null)
             throw 'molsync.ui.ViewStructure.setup called without specifying a molecule or datasheet';
-        var input = { 'tokenID': this.tokenID };
-        if (this.policy != null)
-            input.policy = this.policy.data;
+        if (this.policy == null)
+            this.policy = RenderPolicy.defaultColourOnWhite();
         if (this.molstr != null)
-            input.molNative = this.molstr;
-        else if (this.datastr != null) {
-            input.dataXML = this.datastr;
-            input.dataRow = this.datarow;
-        }
-        var fcn = function (result, error) {
-            if (!result) {
-                alert('Setup of ViewStructure failed: ' + error.message);
-                return;
-            }
-            this.metavec = result.metavec;
-            this.naturalWidth = this.metavec.size[0];
-            this.naturalHeight = this.metavec.size[1];
-            if (this.width == 0)
-                this.width = this.naturalWidth + 2 * this.padding;
-            if (this.height == 0)
-                this.height = this.naturalHeight + 2 * this.padding;
-            if (callback)
-                callback.call(master);
-        };
-        Func.renderStructure(input, fcn, this);
+            this.setupMolecule(callback, master);
+        else
+            this.setupData(callback, master);
     };
     ViewStructure.prototype.render = function (parent) {
         if (!this.metavec)
@@ -4302,12 +5990,51 @@ var ViewStructure = (function (_super) {
             natW *= down;
             natH *= down;
         }
-        var draw = new MetaVector(this.metavec);
-        draw.offsetX = 0.5 * (this.width - natW);
-        draw.offsetY = 0.5 * (this.height - natH);
-        draw.scale = scale;
-        draw.renderContext(ctx);
+        this.metavec.offsetX = 0.5 * (this.width - natW);
+        this.metavec.offsetY = 0.5 * (this.height - natH);
+        this.metavec.scale = scale;
+        this.metavec.renderContext(ctx);
         ctx.restore();
+    };
+    ViewStructure.prototype.setupMolecule = function (callback, master) {
+        var mol = Molecule.fromString(this.molstr);
+        var effects = new RenderEffects();
+        var measure = new OutlineMeasurement(this.policy.data.pointScale);
+        var layout = new ArrangeMolecule(mol, measure, this.policy, effects);
+        layout.arrange();
+        this.metavec = new MetaVector();
+        new DrawMolecule(layout, this.metavec).draw();
+        this.metavec.normalise();
+        this.naturalWidth = this.metavec.width;
+        this.naturalHeight = this.metavec.height;
+        if (this.width == 0)
+            this.width = this.naturalWidth + 2 * this.padding;
+        if (this.height == 0)
+            this.height = this.naturalHeight + 2 * this.padding;
+        if (callback)
+            callback.call(master);
+    };
+    ViewStructure.prototype.setupData = function (callback, master) {
+        var input = { 'tokenID': this.tokenID };
+        input.policy = this.policy.data;
+        input.dataXML = this.datastr;
+        input.dataRow = this.datarow;
+        var fcn = function (result, error) {
+            if (!result) {
+                alert('Setup of ViewStructure failed: ' + error.message);
+                return;
+            }
+            this.metavec = new MetaVector(result.metavec);
+            this.naturalWidth = this.metavec.width;
+            this.naturalHeight = this.metavec.width;
+            if (this.width == 0)
+                this.width = this.naturalWidth + 2 * this.padding;
+            if (this.height == 0)
+                this.height = this.naturalHeight + 2 * this.padding;
+            if (callback)
+                callback.call(master);
+        };
+        Func.renderStructure(input, fcn, this);
     };
     return ViewStructure;
 }(Widget));
@@ -7949,1637 +9676,6 @@ var MapReaction = (function (_super) {
     };
     return MapReaction;
 }(Dialog));
-var ArrangeMeasurement = (function () {
-    function ArrangeMeasurement() {
-    }
-    return ArrangeMeasurement;
-}());
-var OutlineMeasurement = (function (_super) {
-    __extends(OutlineMeasurement, _super);
-    function OutlineMeasurement(pointScale) {
-        _super.call(this);
-        this.pointScale = pointScale;
-        this.invScale = 1 / pointScale;
-    }
-    OutlineMeasurement.prototype.scale = function () { return this.pointScale; };
-    OutlineMeasurement.prototype.angToX = function (ax) { return ax * this.pointScale; };
-    OutlineMeasurement.prototype.angToY = function (ay) { return ay * -this.pointScale; };
-    OutlineMeasurement.prototype.xToAng = function (px) { return px * this.invScale; };
-    OutlineMeasurement.prototype.yToAng = function (py) { return py * -this.invScale; };
-    OutlineMeasurement.prototype.yIsUp = function () { return false; };
-    OutlineMeasurement.prototype.measureText = function (str, fontSize) { return FontData.main.measureText(str, fontSize); };
-    return OutlineMeasurement;
-}(ArrangeMeasurement));
-var BLineType;
-(function (BLineType) {
-    BLineType[BLineType["Normal"] = 1] = "Normal";
-    BLineType[BLineType["Inclined"] = 2] = "Inclined";
-    BLineType[BLineType["Declined"] = 3] = "Declined";
-    BLineType[BLineType["Unknown"] = 4] = "Unknown";
-    BLineType[BLineType["Dotted"] = 5] = "Dotted";
-    BLineType[BLineType["DotDir"] = 6] = "DotDir";
-    BLineType[BLineType["IncDouble"] = 7] = "IncDouble";
-    BLineType[BLineType["IncTriple"] = 8] = "IncTriple";
-    BLineType[BLineType["IncQuadruple"] = 9] = "IncQuadruple";
-})(BLineType || (BLineType = {}));
-var ArrangeMolecule = (function () {
-    function ArrangeMolecule(mol, measure, policy, effects) {
-        this.mol = mol;
-        this.measure = measure;
-        this.policy = policy;
-        this.effects = effects;
-        this.MINBOND_LINE = 0.25;
-        this.MINBOND_EXOTIC = 0.5;
-        this.points = [];
-        this.lines = [];
-        this.space = [];
-    }
-    ArrangeMolecule.guestimateSize = function (mol, policy, maxW, maxH) {
-        var box = mol.boundary();
-        var minX = box.minX(), minY = box.minY(), maxX = box.maxX(), maxY = box.maxY();
-        var fontSize = policy.data.fontSize * this.FONT_CORRECT;
-        for (var n = 1; n <= mol.numAtoms(); n++)
-            if (mol.atomExplicit(n)) {
-                var plusH = mol.atomHydrogens(n) > 0 ? 1 : 0;
-                var aw = 0.5 * 0.7 * fontSize * (mol.atomElement(n).length + plusH);
-                var ah = 0.5 * fontSize * (1 + plusH);
-                var ax = mol.atomX(n), ay = mol.atomY(n);
-                minX = Math.min(minX, ax - aw);
-                maxX = Math.max(maxX, ax + aw);
-                minY = Math.min(minY, ay - ah);
-                maxY = Math.max(maxY, ay + ah);
-            }
-        var w = Math.max(1, (maxX - minX)) * policy.data.pointScale;
-        var h = Math.max(1, (maxY - minY)) * policy.data.pointScale;
-        if (maxW > 0 && w > maxW) {
-            h *= maxW / w;
-            w = maxW;
-        }
-        if (maxH > 0 && h > maxH) {
-            w *= maxH / h;
-            h = maxH;
-        }
-        return [w, h];
-    };
-    ArrangeMolecule.prototype.getMolecule = function () { return this.mol; };
-    ArrangeMolecule.prototype.getMeasure = function () { return this.measure; };
-    ArrangeMolecule.prototype.getPolicy = function () { return this.policy; };
-    ArrangeMolecule.prototype.getEffects = function () { return this.effects; };
-    ArrangeMolecule.prototype.getScale = function () { return this.scale; };
-    ArrangeMolecule.prototype.arrange = function () {
-        this.scale = this.measure.scale();
-        this.bondSepPix = this.policy.data.bondSep * this.measure.scale();
-        this.lineSizePix = this.policy.data.lineSize * this.measure.scale();
-        this.fontSizePix = this.policy.data.fontSize * this.measure.scale() * ArrangeMolecule.FONT_CORRECT;
-        this.ymul = this.measure.yIsUp() ? -1 : 1;
-        for (var n = 1; n <= this.mol.numAtoms(); n++) {
-            if (this.mol.atomElement(n).length > 2 && this.mol.atomHydrogens(n) == 0) {
-                this.points.push(null);
-                this.space.push(null);
-                continue;
-            }
-            var a = {
-                'anum': n,
-                'text': this.mol.atomExplicit(n) || this.atomIsWeirdLinear(n) ? this.mol.atomElement(n) : null,
-                'fsz': this.fontSizePix,
-                'bold': this.mol.atomMapNum(n) > 0,
-                'col': this.policy.data.atomCols[this.mol.atomicNumber(n)],
-                'oval': new Oval(this.measure.angToX(this.mol.atomX(n)), this.measure.angToY(this.mol.atomY(n)), 0, 0)
-            };
-            if (a.text != null) {
-                var wad = this.measure.measureText(a.text, a.fsz);
-                var PADDING = 1.1;
-                a.oval.rw = 0.5 * wad[0] * PADDING;
-                a.oval.rh = 0.5 * wad[1] * PADDING;
-            }
-            this.points.push(a);
-            this.space.push(this.computeSpacePoint(a));
-        }
-        for (var n = 1; n <= this.mol.numAtoms(); n++)
-            if (this.points[n - 1] == null)
-                this.processLabel(n);
-        var bdbl = Vec.booleanArray(false, this.mol.numBonds());
-        for (var n = 1; n <= this.mol.numBonds(); n++) {
-            var bfr = this.mol.bondFrom(n), bto = this.mol.bondTo(n);
-            var bt = this.mol.bondType(n), bo = this.mol.bondOrder(n);
-            var col = this.policy.data.foreground;
-            bdbl[n - 1] = bo == 2 && (bt == Molecule.BONDTYPE_NORMAL || bt == Molecule.BONDTYPE_UNKNOWN);
-            var a1 = this.points[bfr - 1], a2 = this.points[bto - 1];
-            var x1 = a1.oval.cx, y1 = a1.oval.cy, x2 = a2.oval.cx, y2 = a2.oval.cy;
-            if (Math.abs(x2 - x1) <= 1 && Math.abs(y2 - y1) <= 1) {
-                bdbl[n - 1] = false;
-                continue;
-            }
-            if (bdbl[n - 1])
-                continue;
-            var minDist = (bo == 1 && bt == Molecule.BONDTYPE_NORMAL ? this.MINBOND_LINE : this.MINBOND_EXOTIC) * this.measure.scale();
-            var xy1 = this.backOffAtom(bfr, x1, y1, x2, y2, minDist);
-            var xy2 = this.backOffAtom(bto, x2, y2, x1, y1, minDist);
-            this.ensureMinimumBondLength(xy1, xy2, x1, y1, x2, y2, minDist);
-            var sz = this.lineSizePix, head = 0;
-            var ltype = BLineType.Normal;
-            if (bo == 1 && bt == Molecule.BONDTYPE_INCLINED) {
-                ltype = BLineType.Inclined;
-                head = 0.15 * this.measure.scale();
-            }
-            else if (bo == 1 && bt == Molecule.BONDTYPE_DECLINED) {
-                ltype = BLineType.Declined;
-                head = 0.15 * this.measure.scale();
-            }
-            else if (bt == Molecule.BONDTYPE_UNKNOWN) {
-                ltype = BLineType.Unknown;
-                head = 0.2 * this.measure.scale();
-            }
-            else if (bo == 0) {
-                if (bt == Molecule.BONDTYPE_INCLINED || bt == Molecule.BONDTYPE_DECLINED)
-                    ltype = BLineType.DotDir;
-                else
-                    ltype = BLineType.Dotted;
-            }
-            else if ((bo == 2 || bo == 3 || bo == 4) && (bt == Molecule.BONDTYPE_INCLINED || bt == Molecule.BONDTYPE_DECLINED)) {
-                ltype = bo == 2 ? BLineType.IncDouble : bo == 3 ? BLineType.IncTriple : BLineType.IncQuadruple;
-                head = (bo == 2 ? 0.20 : 0.25) * this.measure.scale();
-            }
-            if (bo == 0) {
-                var dx = xy2[0] - xy1[0], dy = xy2[1] - xy1[1];
-                var d = norm_xy(dx, dy), invD = 1 / d;
-                var ox = 0.5 * dx * invD * this.bondSepPix, oy = 0.5 * dy * invD * this.bondSepPix;
-                if (this.mol.atomAdjCount(bfr) > 1) {
-                    xy1[0] += ox;
-                    xy1[1] += oy;
-                }
-                if (this.mol.atomAdjCount(bto) > 1) {
-                    xy2[0] -= ox;
-                    xy2[1] -= oy;
-                }
-            }
-            if (bo != 1 && bt == Molecule.BONDTYPE_DECLINED) {
-                var tmp = xy1;
-                xy1 = xy2;
-                xy2 = tmp;
-            }
-            if (bo > 1 && (bt == Molecule.BONDTYPE_NORMAL || bt == Molecule.BONDTYPE_UNKNOWN)) {
-                var oxy = this.orthogonalDelta(xy1[0], xy1[1], xy2[0], xy2[1], this.bondSepPix);
-                var v = -0.5 * (bo - 1);
-                for (var i = 0; i < bo; i++, v++) {
-                    var lx1 = xy1[0] + v * oxy[0], ly1 = xy1[1] + v * oxy[1], lx2 = xy2[0] + v * oxy[0], ly2 = xy2[1] + v * oxy[1];
-                    var b = {
-                        'bnum': n,
-                        'bfr': bfr,
-                        'bto': bto,
-                        'type': ltype,
-                        'line': new Line(lx1, ly1, lx2, ly2),
-                        'size': sz,
-                        'head': 0,
-                        'col': col
-                    };
-                    this.lines.push(b);
-                    this.space.push(this.computeSpaceLine(b));
-                }
-            }
-            else {
-                var b = {
-                    'bnum': n,
-                    'bfr': bfr,
-                    'bto': bto,
-                    'type': ltype,
-                    'line': new Line(xy1[0], xy1[1], xy2[0], xy2[1]),
-                    'size': sz,
-                    'head': head,
-                    'col': col
-                };
-                this.lines.push(b);
-                this.space.push(this.computeSpaceLine(b));
-            }
-        }
-        var rings = this.orderedRingList();
-        for (var i = 0; i < rings.length; i++) {
-            for (var j = 0; j < rings[i].length; j++) {
-                var k = this.mol.findBond(rings[i][j], rings[i][j < rings[i].length - 1 ? j + 1 : 0]);
-                if (bdbl[k - 1]) {
-                    this.processDoubleBond(k, rings[i]);
-                    bdbl[k - 1] = false;
-                }
-            }
-        }
-        for (var i = 1; i <= this.mol.numBonds(); i++)
-            if (bdbl[i - 1])
-                this.processDoubleBond(i, this.priorityDoubleSubstit(i));
-        var hcount = Vec.numberArray(0, this.mol.numAtoms());
-        for (var n = 1; n <= this.mol.numAtoms(); n++)
-            hcount[n - 1] = this.points[n - 1].text == null ? 0 : this.mol.atomHydrogens(n);
-        for (var n = 0; n < this.mol.numAtoms(); n++)
-            if (hcount[n] > 0 && this.placeHydrogen(n, hcount[n], true))
-                hcount[n] = 0;
-        for (var n = 0; n < this.mol.numAtoms(); n++)
-            if (hcount[n] > 0)
-                this.placeHydrogen(n, hcount[n], false);
-        for (var n = 1; n <= this.mol.numAtoms(); n++)
-            if (this.mol.atomIsotope(n) != Molecule.ISOTOPE_NATURAL) {
-                var isostr = this.mol.atomIsotope(n).toString();
-                var col = this.policy.data.atomCols[this.mol.atomicNumber(n)];
-                this.placeAdjunct(n, isostr, this.fontSizePix * 0.6, col, 150 * DEGRAD);
-            }
-        for (var n = 1; n <= this.mol.numAtoms(); n++) {
-            var str = '';
-            var chg = this.mol.atomCharge(n);
-            if (chg == -1)
-                str = '-';
-            else if (chg == 1)
-                str = '+';
-            else if (chg < -1)
-                str = Math.abs(chg) + '-';
-            else if (chg > 1)
-                str = chg + '+';
-            for (var i = this.mol.atomUnpaired(n); i > 0; i--)
-                str += '.';
-            if (str.length == 0)
-                continue;
-            var col = this.policy.data.atomCols[this.mol.atomicNumber(n)];
-            this.placeAdjunct(n, str, str.length == 1 ? 0.8 * this.fontSizePix : 0.6 * this.fontSizePix, col, 30 * DEGRAD);
-        }
-    };
-    ArrangeMolecule.prototype.numPoints = function () { return this.points.length; };
-    ArrangeMolecule.prototype.getPoint = function (idx) { return this.points[idx]; };
-    ArrangeMolecule.prototype.numLines = function () { return this.lines.length; };
-    ArrangeMolecule.prototype.getLine = function (idx) { return this.lines[idx]; };
-    ArrangeMolecule.prototype.numSpace = function () { return this.space.length; };
-    ArrangeMolecule.prototype.getSpace = function (idx) { return this.space[idx]; };
-    ArrangeMolecule.prototype.offsetEverything = function (dx, dy) {
-        for (var _i = 0, _a = this.points; _i < _a.length; _i++) {
-            var a = _a[_i];
-            a.oval.offsetBy(dx, dy);
-        }
-        for (var _b = 0, _c = this.lines; _b < _c.length; _b++) {
-            var b = _c[_b];
-            b.line.offsetBy(dx, dy);
-        }
-        for (var _d = 0, _e = this.space; _d < _e.length; _d++) {
-            var spc = _e[_d];
-            spc.box.offsetBy(dx, dy);
-            Vec.addTo(spc.px, dx);
-            Vec.addTo(spc.py, dy);
-        }
-    };
-    ArrangeMolecule.prototype.scaleEverything = function (scaleBy) {
-        this.scale *= scaleBy;
-        for (var _i = 0, _a = this.points; _i < _a.length; _i++) {
-            var a = _a[_i];
-            a.oval.scaleBy(scaleBy);
-            a.fsz *= scaleBy;
-        }
-        for (var _b = 0, _c = this.lines; _b < _c.length; _b++) {
-            var b = _c[_b];
-            b.line.scaleBy(scaleBy);
-            b.size *= scaleBy;
-            b.head *= scaleBy;
-        }
-        for (var _d = 0, _e = this.space; _d < _e.length; _d++) {
-            var spc = _e[_d];
-            spc.box.scaleBy(scaleBy);
-            Vec.mulBy(spc.px, scaleBy);
-            Vec.mulBy(spc.py, scaleBy);
-        }
-    };
-    ArrangeMolecule.prototype.determineBoundary = function (padding) {
-        if (this.space.length == 0)
-            return [0, 0, 2 * padding, 2 * padding];
-        var bounds = Vec.numberArray(0, 4);
-        var spc = this.space[0];
-        bounds[0] = spc.box.x;
-        bounds[1] = spc.box.y;
-        bounds[2] = spc.box.x + spc.box.w;
-        bounds[3] = spc.box.y + spc.box.h;
-        for (var n = this.space.length - 1; n > 0; n--) {
-            spc = this.space[n];
-            bounds[0] = Math.min(bounds[0], spc.box.x);
-            bounds[1] = Math.min(bounds[1], spc.box.y);
-            bounds[2] = Math.max(bounds[2], spc.box.x + spc.box.w);
-            bounds[3] = Math.max(bounds[3], spc.box.y + spc.box.h);
-        }
-        return bounds;
-    };
-    ArrangeMolecule.prototype.squeezeInto = function (x, y, w, h, padding) {
-        if (padding > 0) {
-            x += padding;
-            y += padding;
-            w -= 2 * padding;
-            h -= 2 * padding;
-        }
-        var bounds = this.determineBoundary(0);
-        var bw = bounds[2] - bounds[0], bh = bounds[3] - bounds[1];
-        if (bw > w || bh > h) {
-            var downScale = 1;
-            if (bw > w)
-                downScale = w / bw;
-            if (bh > h)
-                downScale = Math.min(downScale, h / bh);
-            this.scaleEverything(downScale);
-            Vec.mulBy(bounds, downScale);
-        }
-        this.offsetEverything(x - bounds[0] + 0.5 * (w - bounds[2] + bounds[0]), y - bounds[1] + 0.5 * (h - bounds[3] + bounds[1]));
-    };
-    ArrangeMolecule.prototype.placeAdjunct = function (atom, str, fsz, col, angdir) {
-        var wad = this.measure.measureText(str, fsz);
-        var a = this.points[atom - 1];
-        var cx = a.oval.cx, cy = a.oval.cy, rw = 0.55 * wad[0], rh = 0.55 * wad[1];
-        var bestScore = 0, bestDX = 0, bestDY = 0;
-        var px = Vec.numberArray(0, 4), py = Vec.numberArray(0, 4);
-        var angThresh = 10;
-        var shorted = false;
-        for (var ext = 0.5 * (a.oval.rw + a.oval.rh); !shorted && ext < 1.5 * this.measure.scale(); ext += 0.1 * this.measure.scale()) {
-            var DELTA = 5 * DEGRAD;
-            for (var d = 0; !shorted && d < Math.PI - 0.0001; d += DELTA)
-                for (var s = -1; s <= 1; s += 2) {
-                    var dang = d * s + (s > 0 ? DELTA : 0), ang = angdir + dang;
-                    var dx = ext * Math.cos(ang), dy = ext * Math.sin(ang) * -this.ymul;
-                    var x1 = cx + dx - rw, x2 = cx + dx + rw, y1 = cy + dy - rh, y2 = cy + dy + rh;
-                    px[0] = x1;
-                    py[0] = y1;
-                    px[1] = x2;
-                    py[1] = y1;
-                    px[2] = x2;
-                    py[2] = y2;
-                    px[3] = x1;
-                    py[3] = y2;
-                    var viol = this.countPolyViolations(px, py, false);
-                    var score = 10 * viol + Math.abs(dang) + 10 * ext;
-                    var shortCircuit = viol == 0 && Math.abs(dang) < (angThresh + 1) * DEGRAD;
-                    if (bestScore == 0 || shortCircuit || score < bestScore) {
-                        bestScore = score;
-                        bestDX = dx;
-                        bestDY = dy;
-                    }
-                    if (shortCircuit) {
-                        shorted = true;
-                        break;
-                    }
-                }
-            angThresh += 5;
-        }
-        a =
-            {
-                'anum': 0,
-                'text': str,
-                'fsz': fsz,
-                'bold': false,
-                'col': col,
-                'oval': new Oval(cx + bestDX, cy + bestDY, rw, rh)
-            };
-        this.points.push(a);
-        var spc = {
-            'anum': 0,
-            'bnum': 0,
-            'box': new Box(a.oval.cx - rw, a.oval.cy - rh, 2 * rw, 2 * rh),
-            'px': [a.oval.cx - rw, a.oval.cx + rw, a.oval.cx + rw, a.oval.cx - rw],
-            'py': [a.oval.cy - rh, a.oval.cy - rh, a.oval.cy + rh, a.oval.cy + rh]
-        };
-        this.space.push(spc);
-    };
-    ArrangeMolecule.prototype.processLabel = function (anum) {
-        var ax = this.mol.atomX(anum), ay = this.mol.atomY(anum);
-        var left = 0, right = 0;
-        var adj = this.mol.atomAdjList(anum);
-        for (var n = 0; n < adj.length; n++) {
-            var theta = Math.atan2(this.mol.atomY(adj[n]) - ay, this.mol.atomX(adj[n]) - ax) * RADDEG;
-            if (theta >= -15 && theta <= 15)
-                right += 3;
-            else if (theta >= -85 && theta <= 85)
-                right++;
-            else if (theta > 85 && theta < 95) { }
-            else if (theta < -85 && theta > -95) { }
-            else if (theta > 165 || theta < -165)
-                left += 3;
-            else
-                left++;
-        }
-        var label = this.mol.atomElement(anum);
-        var ibar = label.indexOf('|'), ibrace = label.indexOf('{');
-        var side = 0;
-        if (left == 0 && right == 0 && ibar < 0 && ibrace < 0) { }
-        else if (left < right)
-            side = -1;
-        else if (right < left)
-            side = 1;
-        else {
-            var score1 = CoordUtil.congestionPoint(this.mol, ax - 1, ay);
-            var score2 = CoordUtil.congestionPoint(this.mol, ax + 1, ay);
-            if (score1 < 0.5 * score2)
-                side = -1;
-            else
-                side = 1;
-        }
-        var chunks = null;
-        var position = null;
-        var primary = null;
-        var refchunk = 0;
-        if (ibar < 0 && ibrace < 0) {
-            if (side == 0)
-                chunks = [label];
-            else if (side < 0) {
-                chunks = [label.substring(0, label.length - 1), label.substring(label.length - 1)];
-                refchunk = 1;
-            }
-            else
-                chunks = [label.substring(0, 1), label.substring(1)];
-        }
-        else {
-            var bits = [];
-            var bpos = [];
-            var bpri = [];
-            var blocks = label.split('|');
-            if (side < 0) {
-                var oldblk = blocks;
-                blocks = [];
-                for (var i = oldblk.length - 1; i >= 0; i--)
-                    blocks.push(oldblk[i]);
-            }
-            var buff = '';
-            for (var i = 0; i < blocks.length; i++) {
-                var isPrimary = (side >= 0 && i == 0) || (side < 0 && i == blocks.length - 1);
-                if (side < 0 && refchunk == 0 && i == blocks.length - 1)
-                    refchunk = bits.length;
-                var pos = 0;
-                buff = '';
-                for (var j = 0; j < blocks[i].length; j++) {
-                    var ch = blocks[i].charAt(j);
-                    if (ch == '{' || ch == '}') {
-                        if (buff.length > 0) {
-                            bits.push(buff.toString());
-                            bpos.push(pos);
-                            bpri.push(isPrimary);
-                        }
-                        buff = '';
-                        pos = ch == '{' ? -1 : 0;
-                    }
-                    else if (ch == '^' && pos == -1 && buff.length == 0)
-                        pos = 1;
-                    else
-                        buff += ch;
-                }
-                if (buff.length > 0) {
-                    bits.push(buff.toString());
-                    bpos.push(pos);
-                    bpri.push(isPrimary);
-                }
-            }
-            chunks = bits;
-            position = bpos;
-            primary = bpri;
-            while (refchunk < chunks.length - 1 && position[refchunk] != 0)
-                refchunk++;
-        }
-        var PADDING = 1.1;
-        var SSFRACT = 0.6;
-        var chunkw = Vec.numberArray(0, chunks.length);
-        var tw = 0;
-        for (var n = 0; n < chunks.length; n++) {
-            chunkw[n] = this.measure.measureText(chunks[n], this.fontSizePix)[0];
-            if (position != null && position[n] != 0)
-                chunkw[n] *= SSFRACT;
-            tw += chunkw[n];
-        }
-        var x = this.measure.angToX(ax), y = this.measure.angToY(ay);
-        if (side == 0)
-            x -= 0.5 * chunkw[0];
-        else if (side < 0) {
-            for (var n = 0; n < refchunk; n++)
-                x -= chunkw[n];
-            x -= 0.5 * chunkw[refchunk];
-        }
-        else {
-            x -= 0.5 * chunkw[0];
-        }
-        for (var n = 0; n < chunks.length; n++) {
-            var a = {
-                'anum': (n == refchunk || (primary != null && primary[n])) ? anum : 0,
-                'text': chunks[n],
-                'fsz': this.fontSizePix,
-                'bold': false,
-                'col': this.policy.data.atomCols[this.mol.atomicNumber(anum)],
-                'oval': new Oval(x + 0.5 * chunkw[n], y, 0.5 * chunkw[n] * PADDING, 0.5 * this.fontSizePix * PADDING)
-            };
-            if (position != null && position[n] != 0) {
-                a.fsz *= SSFRACT;
-                if (position[n] < 0)
-                    a.oval.cy += a.fsz * 0.7 * (this.measure.yIsUp() ? -1 : 1);
-                else
-                    a.oval.cy -= a.fsz * 0.3 * (this.measure.yIsUp() ? -1 : 1);
-            }
-            if (n == refchunk) {
-                this.points[anum - 1] = a;
-                this.space[anum - 1] = this.computeSpacePoint(a);
-            }
-            else {
-                this.points.push(a);
-                this.space.push(this.computeSpacePoint(a));
-            }
-            x += chunkw[n];
-        }
-    };
-    ArrangeMolecule.prototype.atomIsWeirdLinear = function (idx) {
-        var bonds = this.mol.atomAdjBonds(idx);
-        if (bonds.length != 2)
-            return false;
-        for (var n = 0; n < bonds.length; n++)
-            if (this.mol.bondOrder(bonds[n]) == 3)
-                return false;
-        var adj = this.mol.atomAdjList(idx);
-        var th1 = Math.atan2(this.mol.atomY(adj[0]) - this.mol.atomY(idx), this.mol.atomX(adj[0]) - this.mol.atomX(idx));
-        var th2 = Math.atan2(this.mol.atomY(adj[1]) - this.mol.atomY(idx), this.mol.atomX(adj[1]) - this.mol.atomX(idx));
-        return Math.abs(angleDiff(th1, th2)) >= 175 * DEGRAD;
-    };
-    ArrangeMolecule.prototype.backOffAtom = function (atom, x, y, fx, fy, minDist) {
-        if (x == fx && y == fy)
-            return [x, y];
-        var active = false;
-        var dx = 0, dy = 0, dst = 0, ext = 0;
-        for (var s = 0; s < this.space.length; s++) {
-            var spc = this.space[s];
-            if (spc.anum != atom)
-                continue;
-            var sz = spc.px.length;
-            if (sz == 0)
-                continue;
-            for (var n = 0; n < sz; n++) {
-                var nn = n < sz - 1 ? n + 1 : 0;
-                var x1 = spc.px[n], y1 = spc.py[n], x2 = spc.px[nn], y2 = spc.py[nn];
-                if (!GeomUtil.doLineSegsIntersect(x, y, fx, fy, x1, y1, x2, y2))
-                    continue;
-                var xy = GeomUtil.lineIntersect(x, y, fx, fy, x1, y1, x2, y2);
-                if (!active) {
-                    dx = x - fx;
-                    dy = y - fy;
-                    dst = norm_xy(dx, dy);
-                    ext = dst;
-                    active = true;
-                }
-                ext = Math.min(ext, norm_xy(xy[0] - fx, xy[1] - fy));
-            }
-        }
-        if (active) {
-            ext = Math.max(minDist, ext - 0.1 * this.measure.scale());
-            var idst = 1.0 / dst;
-            return [fx + ext * idst * dx, fy + ext * idst * dy];
-        }
-        else
-            return [x, y];
-    };
-    ArrangeMolecule.prototype.ensureMinimumBondLength = function (xy1, xy2, x1, y1, x2, y2, minDist) {
-        var dx = xy2[0] - xy1[0], dy = xy2[1] - xy1[1];
-        var dsq = norm2_xy(dx, dy);
-        minDist = Math.min(minDist, norm_xy(x2 - x1, y2 - y1));
-        if (dsq >= sqr(minDist - 0.0001))
-            return;
-        var d12 = Math.sqrt(dsq), d1 = norm_xy(xy1[0] - x1, xy1[1] - y1), d2 = norm_xy(x2 - xy2[0], y2 - xy2[1]);
-        var mag = 1 - minDist / d12, invD12 = 1.0 / (d1 + d2), mag1 = d1 * mag * invD12, mag2 = d2 * mag * invD12;
-        xy1[0] -= dx * mag1;
-        xy1[1] -= dy * mag1;
-        xy2[0] += dx * mag2;
-        xy2[1] += dy * mag2;
-    };
-    ArrangeMolecule.prototype.orderedRingList = function () {
-        var rings = [];
-        var SIZE_ORDER = [6, 5, 7, 4, 3];
-        for (var i = 0; i < SIZE_ORDER.length; i++) {
-            var nring = this.mol.findRingsOfSize(SIZE_ORDER[i]);
-            for (var j = 0; j < nring.length; j++)
-                rings.push(nring[j]);
-        }
-        var ringsz = rings.length;
-        var ringbusy = Vec.numberArray(0, this.mol.numAtoms());
-        for (var n = 0; n < ringsz; n++) {
-            var r = rings[n];
-            for (var i = 0; i < r.length; i++)
-                ringbusy[r[i] - 1]++;
-        }
-        var ringscore = Vec.numberArray(0, ringsz);
-        for (var n = 0; n < ringsz; n++) {
-            var r = rings[n];
-            for (var i = 0; i < r.length; i++)
-                ringscore[n] += ringbusy[r[i] - 1];
-        }
-        var ringorder = Vec.idxSort(ringscore);
-        var resbcount = Vec.numberArray(0, ringsz), maxbcount = 0;
-        for (var n = 0; n < ringsz; n++) {
-            var r = rings[ringorder[n]];
-            for (var i = 0; i < r.length; i++) {
-                var j = this.mol.findBond(r[i], r[i + 1 < r.length ? i + 1 : 0]);
-                if (this.mol.bondOrder(j) == 2)
-                    resbcount[n]++;
-            }
-            maxbcount = Math.max(maxbcount, resbcount[n]);
-        }
-        var pos = 0, ret = [];
-        for (var sz = maxbcount; sz >= 0; sz--) {
-            for (var n = 0; n < ringsz; n++)
-                if (resbcount[n] == sz)
-                    ret.push(rings[ringorder[n]]);
-        }
-        return ret;
-    };
-    ArrangeMolecule.prototype.orthogonalDelta = function (x1, y1, x2, y2, d) {
-        var ox = y1 - y2, oy = x2 - x1, dsq = norm2_xy(ox, oy);
-        var sc = dsq > 0 ? d / Math.sqrt(dsq) : 1;
-        return [ox * sc, oy * sc];
-    };
-    ArrangeMolecule.prototype.processDoubleBond = function (idx, priority) {
-        var bfr = this.mol.bondFrom(idx), bto = this.mol.bondTo(idx);
-        var nfr = this.mol.atomAdjList(bfr), nto = this.mol.atomAdjList(bto);
-        var a1 = this.points[bfr - 1], a2 = this.points[bto - 1];
-        var x1 = a1.oval.cx, y1 = a1.oval.cy, x2 = a2.oval.cx, y2 = a2.oval.cy;
-        var minDist = this.MINBOND_EXOTIC * this.measure.scale();
-        var xy1 = this.backOffAtom(bfr, x1, y1, x2, y2, minDist);
-        var xy2 = this.backOffAtom(bto, x2, y2, x1, y1, minDist);
-        this.ensureMinimumBondLength(xy1, xy2, x1, y1, x2, y2, minDist);
-        x1 = xy1[0];
-        y1 = xy1[1];
-        x2 = xy2[0];
-        y2 = xy2[1];
-        var dx = x2 - x1, dy = y2 - y1, btheta = Math.atan2(dy, dx);
-        var countFLeft = 0, countFRight = 0, countTLeft = 0, countTRight = 0;
-        var idxFLeft = 0, idxFRight = 0, idxTLeft = 0, idxTRight = 0;
-        var noshift = false;
-        for (var n = 0; n < nfr.length; n++)
-            if (nfr[n] != bto) {
-                var bo = this.mol.bondOrder(this.mol.findBond(bfr, nfr[n]));
-                if (bo == 0)
-                    continue;
-                if (bo > 1) {
-                    noshift = true;
-                    break;
-                }
-                var ispri = false;
-                for (var i = 0; i < (priority == null ? 0 : priority.length); i++)
-                    if (priority[i] == nfr[n])
-                        ispri = true;
-                var theta = angleDiff(Math.atan2(this.points[nfr[n] - 1].oval.cy - y1, this.points[nfr[n] - 1].oval.cx - x1), btheta);
-                if (Math.abs(theta) * RADDEG > 175) {
-                    noshift = true;
-                    break;
-                }
-                if (theta > 0) {
-                    if (ispri)
-                        countFLeft++;
-                    idxFLeft = nfr[n];
-                }
-                else {
-                    if (ispri)
-                        countFRight++;
-                    idxFRight = nfr[n];
-                }
-            }
-        for (var n = 0; n < nto.length; n++)
-            if (nto[n] != bfr) {
-                var bo = this.mol.bondOrder(this.mol.findBond(bto, nto[n]));
-                if (bo == 0)
-                    continue;
-                if (bo > 1) {
-                    noshift = true;
-                    break;
-                }
-                var ispri = false;
-                for (var i = 0; i < (priority == null ? 0 : priority.length); i++)
-                    if (priority[i] == nto[n])
-                        ispri = true;
-                var theta = angleDiff(Math.atan2(this.points[nto[n] - 1].oval.cy - y2, this.points[nto[n] - 1].oval.cx - x2), btheta);
-                if (Math.abs(theta) * RADDEG > 175) {
-                    noshift = true;
-                    break;
-                }
-                if (theta > 0) {
-                    if (ispri)
-                        countTLeft++;
-                    idxTLeft = nto[n];
-                }
-                else {
-                    if (ispri)
-                        countTRight++;
-                    idxTRight = nto[n];
-                }
-            }
-        var side = 0;
-        if (noshift || countFLeft > 1 || countFRight > 1 || countTLeft > 1 || countTRight > 1) { }
-        else if (countFLeft > 0 && countFRight > 0) { }
-        else if (countTLeft > 0 && countTRight > 0) { }
-        else if (countFLeft > 0 || countTLeft > 0)
-            side = 1;
-        else if (countFRight > 0 || countTRight > 0)
-            side = -1;
-        var sz = this.lineSizePix;
-        var oxy = this.orthogonalDelta(x1, y1, x2, y2, this.bondSepPix);
-        var ax1 = x1, ay1 = y1, ax2 = x2, ay2 = y2;
-        var bx1 = 0, by1 = 0, bx2 = 0, by2 = 0;
-        if (side == 0) {
-            ax1 = x1 + 0.5 * oxy[0];
-            ay1 = y1 + 0.5 * oxy[1];
-            ax2 = x2 + 0.5 * oxy[0];
-            ay2 = y2 + 0.5 * oxy[1];
-            bx1 = x1 - 0.5 * oxy[0];
-            by1 = y1 - 0.5 * oxy[1];
-            bx2 = x2 - 0.5 * oxy[0];
-            by2 = y2 - 0.5 * oxy[1];
-        }
-        else if (side > 0) {
-            bx1 = x1 + oxy[0];
-            by1 = y1 + oxy[1];
-            bx2 = x2 + oxy[0];
-            by2 = y2 + oxy[1];
-            if (nfr.length > 1 && this.points[bfr - 1].text == null) {
-                bx1 += oxy[1];
-                by1 -= oxy[0];
-            }
-            if (nto.length > 1 && this.points[bto - 1].text == null) {
-                bx2 -= oxy[1];
-                by2 += oxy[0];
-            }
-        }
-        else if (side < 0) {
-            bx1 = x1 - oxy[0];
-            by1 = y1 - oxy[1];
-            bx2 = x2 - oxy[0];
-            by2 = y2 - oxy[1];
-            if (nfr.length > 1 && this.points[bfr - 1].text == null) {
-                bx1 += oxy[1];
-                by1 -= oxy[0];
-            }
-            if (nto.length > 1 && this.points[bto - 1].text == null) {
-                bx2 -= oxy[1];
-                by2 += oxy[0];
-            }
-        }
-        if (side != 0) {
-            if (this.mol.atomElement(bfr).length <= 2 && this.mol.atomAdjCount(bfr) == 1 && this.points[bfr - 1].text != null) {
-                this.bumpAtomPosition(bfr, 0.5 * oxy[0] * side, 0.5 * oxy[1] * side);
-            }
-            if (this.mol.atomElement(bto).length <= 2 && this.mol.atomAdjCount(bto) == 1 && this.points[bto - 1].text != null) {
-                this.bumpAtomPosition(bto, 0.5 * oxy[0] * side, 0.5 * oxy[1] * side);
-            }
-        }
-        if (side == 0 && !noshift) {
-            var xy = null;
-            if (this.points[bfr - 1].text == null && !this.mol.bondInRing(idx)) {
-                xy = this.adjustBondPosition(idxFLeft, bfr, ax1, ay1, ax2, ay2);
-                if (xy != null) {
-                    ax1 = xy[0];
-                    ay1 = xy[1];
-                }
-                xy = this.adjustBondPosition(idxFRight, bfr, bx1, by1, bx2, by2);
-                if (xy != null) {
-                    bx1 = xy[0];
-                    by1 = xy[1];
-                }
-            }
-            if (this.points[bto - 1].text == null && !this.mol.bondInRing(idx)) {
-                xy = this.adjustBondPosition(idxTLeft, bto, ax2, ay2, ax1, ay1);
-                if (xy != null) {
-                    ax2 = xy[0];
-                    ay2 = xy[1];
-                }
-                xy = this.adjustBondPosition(idxTRight, bto, bx2, by2, bx1, by1);
-                if (xy != null) {
-                    bx2 = xy[0];
-                    by2 = xy[1];
-                }
-            }
-        }
-        var lt = this.mol.bondType(idx) == Molecule.BONDTYPE_UNKNOWN ? BLineType.Unknown : BLineType.Normal;
-        var col = this.policy.data.foreground;
-        var b1 = {
-            'bnum': idx,
-            'bfr': bfr,
-            'bto': bto,
-            'type': lt,
-            'line': new Line(ax1, ay1, ax2, ay2),
-            'size': sz,
-            'head': 0,
-            'col': col
-        };
-        var b2 = {
-            'bnum': idx,
-            'bfr': bfr,
-            'bto': bto,
-            'type': lt,
-            'line': new Line(bx1, by1, bx2, by2),
-            'size': sz,
-            'head': 0,
-            'col': col
-        };
-        this.lines.push(b1);
-        this.lines.push(b2);
-        this.space.push(this.computeSpaceLine(b1));
-        this.space.push(this.computeSpaceLine(b2));
-    };
-    ArrangeMolecule.prototype.placeHydrogen = function (idx, hcount, fussy) {
-        var font = FontData.main;
-        var SSFRACT = 0.6;
-        var GLYPH_H = 'H'.charCodeAt(0) - font.GLYPH_MIN;
-        var a = this.points[idx];
-        var emscale = a.fsz * font.INV_UNITS_PER_EM;
-        var sub = hcount >= 2 ? hcount.toString() : '';
-        var outlineX = font.getOutlineX(GLYPH_H), outlineY = font.getOutlineY(GLYPH_H);
-        var firstEMW = font.HORIZ_ADV_X[GLYPH_H], emw = firstEMW;
-        for (var n = 0; n < sub.length; n++) {
-            var g = sub.charCodeAt(n) - font.GLYPH_MIN;
-            if (n == 0) {
-                emw += font.getKerning(GLYPH_H, g);
-            }
-            else {
-                var gp = sub.charCodeAt(n - 1) - font.GLYPH_MIN;
-                emw += font.getKerning(gp, g) * SSFRACT;
-            }
-            var extraX = font.getOutlineX(g), extraY = font.getOutlineY(g);
-            Vec.addTo(extraX, emw / SSFRACT);
-            Vec.addTo(extraY, (SSFRACT - 1) * font.ASCENT);
-            Vec.mulBy(extraX, SSFRACT);
-            Vec.mulBy(extraY, SSFRACT);
-            outlineX = outlineX.concat(extraX);
-            outlineY = outlineY.concat(extraY);
-        }
-        if (sub.length > 0) {
-            var qh = new QuickHull(outlineX, outlineY, 0);
-            outlineX = qh.hullX;
-            outlineY = qh.hullY;
-        }
-        var emdx = -0.5 * firstEMW, emdy = 0.5 * (font.ASCENT + font.DESCENT);
-        for (var n = 0; n < outlineX.length; n++) {
-            outlineX[n] = a.oval.cx + (emdx + outlineX[n]) * emscale;
-            outlineY[n] = a.oval.cy + (emdy - outlineY[n]) * emscale * this.ymul;
-        }
-        var dx = 0, dy = 0;
-        var srcWAD = this.measure.measureText(a.text, a.fsz);
-        if (fussy) {
-            var RIGHTLEFT = [0, 1, 2, 3];
-            var LEFTRIGHT = [1, 0, 2, 3];
-            var UPDOWN = [2, 3, 0, 1];
-            var DOWNUP = [3, 2, 0, 1];
-            var quad = RIGHTLEFT, adj = this.mol.atomAdjList(a.anum);
-            if (adj.length == 0) {
-                var LEFTIES = ["O", "S", "F", "Cl", "Br", "I"];
-                if (this.mol.atomCharge(a.anum) == 0 && this.mol.atomUnpaired(a.anum) == 0 &&
-                    LEFTIES.indexOf(this.mol.atomElement(a.anum)) >= 0)
-                    quad = LEFTRIGHT;
-                else
-                    quad = RIGHTLEFT;
-            }
-            else {
-                var allLeft = true, allRight = true, allUp = true, allDown = true;
-                var ax = this.mol.atomX(a.anum), ay = this.mol.atomY(a.anum);
-                for (var n = 0; n < adj.length; n++) {
-                    var bx = this.mol.atomX(adj[n]), by = this.mol.atomY(adj[n]);
-                    if (bx > ax + 0.01)
-                        allLeft = false;
-                    if (bx < ax - 0.01)
-                        allRight = false;
-                    if (by < ay - 0.01)
-                        allUp = false;
-                    if (by > ay + 0.01)
-                        allDown = false;
-                }
-                if (allLeft) { }
-                else if (allRight)
-                    quad = LEFTRIGHT;
-                else if (allUp)
-                    quad = DOWNUP;
-                else if (allDown)
-                    quad = UPDOWN;
-            }
-            for (var n = 0; n < 4; n++) {
-                var tx = 0, ty = 0;
-                if (quad[n] == 0)
-                    tx = 0.5 * srcWAD[0] + 0.5 * firstEMW * emscale;
-                else if (quad[n] == 1)
-                    tx = -0.5 * srcWAD[0] - (emw - 0.5 * firstEMW) * emscale;
-                else if (quad[n] == 2)
-                    ty = (1.1 * srcWAD[1] + 0.5 * srcWAD[2]) * -this.ymul;
-                else if (quad[n] == 3)
-                    ty = (1.1 * srcWAD[1] + 0.5 * srcWAD[2]) * this.ymul;
-                Vec.addTo(outlineX, tx);
-                Vec.addTo(outlineX, ty);
-                var viol = this.countPolyViolations(outlineX, outlineY, true);
-                Vec.addTo(outlineX, -tx);
-                Vec.addTo(outlineY, -ty);
-                if (viol == 0) {
-                    dx = tx;
-                    dy = ty;
-                    break;
-                }
-            }
-            if (dx == 0 && dy == 0)
-                return false;
-        }
-        else {
-            var mx1 = Vec.min(outlineY), mx2 = Vec.max(outlineX), my1 = Vec.min(outlineY), my2 = Vec.max(outlineY), cx = 0.5 * (mx1 + mx2), cy = 0.5 * (my1 + my2);
-            var mag = 1 + this.measure.scale() * this.policy.data.fontSize * ArrangeMolecule.FONT_CORRECT * 0.1 / Math.max(mx2 - cx, my2 - cy);
-            var psz = outlineX.length;
-            var magPX = outlineX.slice(0), magPY = outlineY.slice(0);
-            for (var n = 0; n < psz; n++) {
-                magPX[n] = (magPX[n] - cx) * mag + cx;
-                magPY[n] = (magPY[n] - cy) * mag + cy;
-            }
-            var bestScore = 0, bestExt = 0, bestAng = 0;
-            for (var ext = 0.5 * (a.oval.rw + a.oval.rh); ext < 1.5 * this.measure.scale(); ext += 0.1 * this.measure.scale()) {
-                var anyNoClash = false;
-                for (var ang = 0; ang < 2 * Math.PI; ang += 5 * DEGRAD) {
-                    var tx = ext * Math.cos(ang), ty = ext * Math.sin(ang);
-                    Vec.addTo(magPX, tx);
-                    Vec.addTo(magPY, ty);
-                    var viol = this.countPolyViolations(magPX, magPY, false);
-                    Vec.addTo(magPX, -tx);
-                    Vec.addTo(magPY, -ty);
-                    if (viol == 0)
-                        anyNoClash = true;
-                    var score = 10 * viol + this.spatialCongestion(a.oval.cx + tx, a.oval.cy + ty, 0.5) + 2 * ext;
-                    if (bestScore == 0 || score < bestScore) {
-                        bestScore = score;
-                        bestExt = ext;
-                        bestAng = ang;
-                        dx = tx;
-                        dy = ty;
-                    }
-                }
-                if (anyNoClash)
-                    break;
-            }
-        }
-        var wad = this.measure.measureText("H", a.fsz);
-        var PADDING = 1.1;
-        var ah = {
-            'anum': 0,
-            'text': 'H',
-            'fsz': a.fsz,
-            'bold': a.bold,
-            'col': a.col,
-            'oval': new Oval(a.oval.cx + dx, a.oval.cy + dy, 0.5 * wad[0] * PADDING, 0.5 * wad[1] * PADDING)
-        };
-        this.points.push(ah);
-        if (sub.length > 0) {
-            var subFsz = SSFRACT * a.fsz;
-            wad = this.measure.measureText(sub, subFsz);
-            var an = {
-                'anum': 0,
-                'text': sub,
-                'fsz': subFsz,
-                'bold': a.bold,
-                'col': a.col,
-                'oval': new Oval(ah.oval.cx + 0.5 * firstEMW * a.fsz * font.INV_UNITS_PER_EM + 0.5 * wad[0], ah.oval.cy + (1 - SSFRACT) * a.fsz, 0.5 * wad[0] * PADDING, 0.5 * wad[1] * PADDING)
-            };
-            this.points.push(an);
-        }
-        Vec.addTo(outlineX, dx);
-        Vec.addTo(outlineY, dy);
-        var minX = Vec.min(outlineX), minY = Vec.min(outlineY);
-        var spc = {
-            'anum': 0,
-            'bnum': 0,
-            'box': new Box(minX, minY, Vec.max(outlineX) - minX, Vec.max(outlineY) - minY),
-            'px': outlineX,
-            'py': outlineY
-        };
-        this.space.push(spc);
-        return true;
-    };
-    ArrangeMolecule.prototype.computeSpacePoint = function (a) {
-        var s = {
-            'anum': a.anum,
-            'bnum': 0,
-            'box': new Box(),
-            'px': [],
-            'py': []
-        };
-        var font = FontData.main;
-        var outlineX = [], outlineY = [];
-        var emw = 0, nglyphs = 0;
-        if (a.text != null) {
-            for (var n = 0; n < a.text.length; n++) {
-                var i = a.text.charCodeAt(n) - font.GLYPH_MIN;
-                if (i >= 0 && i < font.GLYPH_COUNT) {
-                    if (emw == 0) {
-                        outlineX = font.getOutlineX(i);
-                        outlineY = font.getOutlineY(i);
-                        nglyphs = 1;
-                    }
-                    else {
-                        var extraX = font.getOutlineX(i), extraY = font.getOutlineY(i);
-                        if (extraX.length > 0) {
-                            Vec.addTo(extraX, emw);
-                            outlineX = outlineX.concat(extraX);
-                            outlineY = outlineY.concat(extraY);
-                            nglyphs++;
-                        }
-                    }
-                    emw += font.HORIZ_ADV_X[i];
-                }
-                else
-                    emw += font.MISSING_HORZ;
-                if (n < a.text.length - 1) {
-                    var j = a.text.charCodeAt(n + 1) - font.GLYPH_MIN;
-                    for (var k = 0; k < font.KERN_K.length; k++)
-                        if ((font.KERN_G1[k] == i && font.KERN_G2[k] == j) || (font.KERN_G1[k] == j && font.KERN_G2[k] == i)) {
-                            emw += font.KERN_K[k];
-                            break;
-                        }
-                }
-            }
-        }
-        if (outlineX.length > 0) {
-            if (nglyphs > 1) {
-                var qh = new QuickHull(outlineX, outlineY, 0);
-                outlineX = qh.hullX;
-                outlineY = qh.hullY;
-            }
-            var emdx = -0.5 * emw, emdy = 0.5 * (font.ASCENT + font.DESCENT);
-            var emscale = a.fsz * font.INV_UNITS_PER_EM;
-            for (var n = 0; n < outlineX.length; n++) {
-                outlineX[n] = a.oval.cx + (emdx + outlineX[n]) * emscale;
-                outlineY[n] = a.oval.cy + (emdy - outlineY[n]) * emscale * this.ymul;
-            }
-            s.px = outlineX;
-            s.py = outlineY;
-            var minX = Vec.min(outlineX), minY = Vec.min(outlineY);
-            s.box = new Box(minX, minY, Vec.max(outlineX) - minX, Vec.max(outlineY) - minY);
-        }
-        else {
-            s.box = Box.fromOval(a.oval);
-            if (s.box.w > 0 && s.box.h > 0) {
-                s.px = [s.box.minX(), s.box.maxX(), s.box.maxX(), s.box.minX()];
-                s.py = [s.box.minY(), s.box.minY(), s.box.maxY(), s.box.maxY()];
-            }
-        }
-        return s;
-    };
-    ArrangeMolecule.prototype.computeSpaceLine = function (b) {
-        var s = {
-            'anum': 0,
-            'bnum': b.bnum,
-            'box': new Box(),
-            'px': [],
-            'py': []
-        };
-        if (b.type == BLineType.Normal || b.type == BLineType.Dotted || b.type == BLineType.DotDir) {
-            s.px = [b.line.x1, b.line.x2];
-            s.py = [b.line.y1, b.line.y2];
-        }
-        else {
-            var dx = b.line.x2 - b.line.x1, dy = b.line.y2 - b.line.y1;
-            var norm = b.head / Math.sqrt(dx * dx + dy * dy);
-            var ox = norm * dy, oy = -norm * dx;
-            if (b.type == BLineType.Unknown) {
-                s.px = [b.line.x1 + ox, b.line.x1 - ox, b.line.x2 - ox, b.line.x2 + ox];
-                s.py = [b.line.y1 + oy, b.line.y1 - oy, b.line.y2 - oy, b.line.y2 + oy];
-            }
-            else {
-                s.px = [b.line.x1, b.line.x2 - ox, b.line.x2 + ox];
-                s.py = [b.line.y1, b.line.y2 - oy, b.line.y2 + oy];
-            }
-        }
-        s.box.x = Vec.min(s.px) - b.size;
-        s.box.y = Vec.min(s.py) - b.size;
-        s.box.w = Vec.max(s.px) - s.box.x + b.size;
-        s.box.h = Vec.max(s.py) - s.box.y + b.size;
-        return s;
-    };
-    ArrangeMolecule.prototype.bumpAtomPosition = function (atom, dx, dy) {
-        var p = this.points[atom - 1];
-        p.oval.cx += dx;
-        p.oval.cy += dy;
-        for (var n = this.space.length - 1; n >= 0; n--) {
-            var s = this.space[n - 1];
-            if (s.anum != atom)
-                continue;
-            s.box.x += dx;
-            s.box.y += dy;
-            Vec.addTo(s.px, dx);
-            Vec.addTo(s.py, dy);
-        }
-    };
-    ArrangeMolecule.prototype.countPolyViolations = function (px, py, shortCircuit) {
-        var hits = 0;
-        var psz = px.length, nspc = this.space.length;
-        var pr = new Box(), sr = new Box();
-        for (var i1 = 0; i1 < psz; i1++) {
-            var i2 = i1 < psz - 1 ? i1 + 1 : 0;
-            pr.x = Math.min(px[i1], px[i2]) - 1;
-            pr.y = Math.min(py[i1], py[i2]) - 1;
-            pr.w = Math.max(px[i1], px[i2]) - pr.x + 2;
-            pr.h = Math.max(py[i1], py[i2]) - pr.y + 2;
-            for (var j = 0; j < nspc; j++) {
-                var spc = this.space[j];
-                if (spc.px == null)
-                    continue;
-                sr.x = spc.box.x - 1;
-                sr.y = spc.box.y - 1;
-                sr.w = spc.box.w + 1;
-                sr.h = spc.box.h + 1;
-                if (!pr.intersects(sr))
-                    continue;
-                var ssz = spc.px.length;
-                for (var j1 = 0; j1 < ssz; j1++) {
-                    var j2 = j1 < ssz - 1 ? j1 + 1 : 0;
-                    sr.x = Math.min(spc.px[j1], spc.px[j2]) - 1;
-                    sr.y = Math.min(spc.py[j1], spc.py[j2]) - 1;
-                    sr.w = Math.max(spc.px[j1], spc.px[j2]) - sr.x + 2;
-                    sr.h = Math.max(spc.py[j1], spc.py[j2]) - sr.y + 2;
-                    if (!pr.intersects(sr))
-                        continue;
-                    if (GeomUtil.doLineSegsIntersect(px[i1], py[i1], px[i2], py[i2], spc.px[j1], spc.py[j1], spc.px[j2], spc.py[j2])) {
-                        if (shortCircuit)
-                            return 1;
-                        hits++;
-                        break;
-                    }
-                    if (ssz == 1)
-                        break;
-                }
-            }
-        }
-        pr.x = Vec.min(px);
-        pr.y = Vec.min(py);
-        pr.w = Vec.max(px) - pr.x;
-        pr.h = Vec.max(py) - pr.y;
-        for (var n = nspc - 1; n >= 0; n--) {
-            var spc = this.space[n];
-            sr.x = spc.box.x;
-            sr.y = spc.box.y;
-            sr.w = spc.box.w;
-            sr.h = spc.box.h;
-            if (!pr.intersects(sr))
-                continue;
-            for (var i = spc.px.length - 1; i >= 0; i--)
-                if (GeomUtil.pointInPolygon(spc.px[i], spc.py[i], px, py)) {
-                    if (shortCircuit)
-                        return 1;
-                    hits++;
-                    break;
-                }
-            for (var i = 0; i < psz; i++)
-                if (GeomUtil.pointInPolygon(px[i], py[i], spc.px, spc.py)) {
-                    if (shortCircuit)
-                        return 1;
-                    hits++;
-                    break;
-                }
-        }
-        return hits;
-    };
-    ArrangeMolecule.prototype.adjustBondPosition = function (bf, bt, x1, y1, x2, y2) {
-        if (bf == 0 || bt == 0)
-            return null;
-        for (var n = 0; n < this.lines.length; n++) {
-            var b = this.lines[n];
-            if (this.mol.bondOrder(b.bnum) != 1 || this.mol.bondType(b.bnum) != Molecule.BONDTYPE_NORMAL)
-                continue;
-            var alt = false;
-            if (this.mol.bondFrom(b.bnum) == bf && this.mol.bondTo(b.bnum) == bt) { }
-            else if (this.mol.bondFrom(b.bnum) == bt && this.mol.bondTo(b.bnum) == bf)
-                alt = true;
-            else
-                continue;
-            var th = angleDiff(Math.atan2(b.line.y2 - b.line.y1, b.line.x2 - b.line.x1), Math.atan2(y2 - y1, x2 - x1)) * RADDEG;
-            if ((th > -5 && th < -5) || th > 175 || th < -175)
-                continue;
-            var xy = GeomUtil.lineIntersect(b.line.x1, b.line.y1, b.line.x2, b.line.y2, x1, y1, x2, y2);
-            if (this.mol.atomRingBlock(bt) == 0) {
-                if (alt) {
-                    b.line.x1 = xy[0];
-                    b.line.y1 = xy[1];
-                }
-                else {
-                    b.line.x2 = xy[0];
-                    b.line.y2 = xy[1];
-                }
-            }
-            return xy;
-        }
-        return null;
-    };
-    ArrangeMolecule.prototype.priorityDoubleSubstit = function (idx) {
-        var bf = this.mol.bondFrom(idx), bt = this.mol.bondTo(idx);
-        var nf = this.mol.atomAdjList(bf), nt = this.mol.atomAdjList(bt);
-        var a1 = this.points[bf - 1], a2 = this.points[bt - 1];
-        var x1 = a1.oval.cx, y1 = a1.oval.cy, x2 = a2.oval.cx, y2 = a2.oval.cy;
-        var dx = x2 - x1, dy = y2 - y1, btheta = Math.atan2(dy, dx);
-        var idxFLeft = 0, idxFRight = 0, idxTLeft = 0, idxTRight = 0;
-        for (var n = 0; n < nf.length; n++)
-            if (nf[n] != bt) {
-                var theta = angleDiff(Math.atan2(this.points[nf[n] - 1].oval.cy - y1, this.points[nf[n] - 1].oval.cx - x1), btheta);
-                if (theta > 0) {
-                    if (idxFLeft != 0)
-                        return null;
-                    idxFLeft = nf[n];
-                }
-                else {
-                    if (idxFRight != 0)
-                        return null;
-                    idxFRight = nf[n];
-                }
-            }
-        for (var n = 0; n < nt.length; n++)
-            if (nt[n] != bf) {
-                var theta = angleDiff(Math.atan2(this.points[nt[n] - 1].oval.cy - y2, this.points[nt[n] - 1].oval.cx - x2), btheta);
-                if (theta > 0) {
-                    if (idxTLeft != 0)
-                        return null;
-                    idxTLeft = nt[n];
-                }
-                else {
-                    if (idxTRight != 0)
-                        return null;
-                    idxTRight = nt[n];
-                }
-            }
-        var sumFrom = (idxFLeft > 0 ? 1 : 0) + (idxFRight > 0 ? 1 : 0), sumTo = (idxTLeft > 0 ? 1 : 0) + (idxTRight > 0 ? 1 : 0);
-        if (sumFrom == 1 && sumTo == 0)
-            return [idxFLeft > 0 ? idxFLeft : idxFRight];
-        if (sumFrom == 0 && sumTo == 1)
-            return [idxTLeft > 0 ? idxTLeft : idxTRight];
-        if (sumFrom == 1 && sumTo == 1) {
-            if (idxFLeft > 0 && idxTLeft > 0)
-                return [idxFLeft, idxTLeft];
-            if (idxFRight > 0 && idxTRight > 0)
-                return [idxFRight, idxTRight];
-            var oxy = this.orthogonalDelta(x1, y1, x2, y2, this.bondSepPix);
-            var congestLeft = this.spatialCongestion(0.5 * (x1 + x2) + oxy[0], 0.5 * (y1 + y2) + oxy[1]);
-            var congestRight = this.spatialCongestion(0.5 * (x1 + x2) - oxy[0], 0.5 * (y1 + y2) - oxy[1]);
-            if (congestLeft < congestRight)
-                return [idxFLeft > 0 ? idxFLeft : idxTLeft];
-            else
-                return [idxFRight > 0 ? idxFRight : idxTRight];
-        }
-        if (sumFrom == 2 && sumTo == 1) {
-            if (idxTLeft == 0)
-                return [idxFRight, idxTRight];
-            else
-                return [idxFLeft, idxTLeft];
-        }
-        if (sumFrom == 1 && sumTo == 2) {
-            if (idxFLeft == 0)
-                return [idxFRight, idxTRight];
-            else
-                return [idxFLeft, idxTLeft];
-        }
-        return null;
-    };
-    ArrangeMolecule.prototype.spatialCongestion = function (x, y, thresh) {
-        if (thresh == null)
-            thresh = 0.001;
-        var congest = 0;
-        for (var n = 0; n < this.points.length; n++) {
-            var a = this.points[n];
-            if (a == null)
-                continue;
-            var dx = a.oval.cx - x, dy = a.oval.cy - y;
-            congest += 1 / (dx * dx + dy * dy + thresh);
-        }
-        return congest;
-    };
-    ArrangeMolecule.prototype.boxOverlaps = function (x, y, w, h, pointmask, linemask) {
-        var vx1 = x, vy1 = y, vx2 = x + w, vy2 = y + h;
-        for (var n = 0; n < this.points.length; n++) {
-            if (pointmask != null && !pointmask[n])
-                continue;
-            var a = this.points[n];
-            var wx1 = a.oval.cx - a.oval.rw, wy1 = a.oval.cy - a.oval.rh, wx2 = a.oval.cx + a.oval.rw, wy2 = a.oval.cy + a.oval.rh;
-            if (vx2 < wx1 || vx1 > wx2 || vy2 < wy1 || vy1 > wy2)
-                continue;
-            return true;
-        }
-        for (var n = 0; n < this.lines.length; n++) {
-            if (linemask != null && !linemask[n])
-                continue;
-            var b = this.lines[n];
-            var wx1 = b.line.x1, wy1 = b.line.y1, wx2 = b.line.x2, wy2 = b.line.y2;
-            if (vx2 < Math.min(wx1, wx2) || vx1 > Math.max(wx1, wx2) || vy2 < Math.min(wy1, wy2) || vy1 > Math.max(wy1, wy2))
-                continue;
-            if (wx1 >= vx1 && wx1 <= vx2 && wy1 >= vy1 && wy1 <= vy2)
-                return true;
-            if (wx2 >= vx1 && wx2 <= vx2 && wy2 >= vy1 && wy2 <= vy2)
-                return true;
-            if (GeomUtil.doLineSegsIntersect(wx1, wy1, wx2, wy2, vx1, vy1, vx2, vy1))
-                return true;
-            if (GeomUtil.doLineSegsIntersect(wx1, wy1, wx2, wy2, vx1, vy2, vx2, vy2))
-                return true;
-            if (GeomUtil.doLineSegsIntersect(wx1, wy1, wx2, wy2, vx1, vy1, vx1, vy2))
-                return true;
-            if (GeomUtil.doLineSegsIntersect(wx1, wy1, wx2, wy2, vx2, vy1, vx2, vy2))
-                return true;
-        }
-        return false;
-    };
-    ArrangeMolecule.prototype.resolveLineCrossings = function (bondHigher, bondLower) {
-        while (true) {
-            var anything = false;
-            for (var i1 = 0; i1 < this.lines.length; i1++) {
-                var b1 = this.lines[i1];
-                if (b1.bnum != bondHigher)
-                    continue;
-                if (b1.type != BLineType.Normal && b1.type != BLineType.Dotted && b1.type != BLineType.DotDir)
-                    continue;
-                for (var i2 = 0; i2 < this.lines.length; i2++) {
-                    var b2 = this.lines[i2];
-                    if (b2.bnum != bondLower)
-                        continue;
-                    if (b2.type == BLineType.DotDir)
-                        b2.type = BLineType.Dotted;
-                    if (b2.type != BLineType.Normal && b2.type != BLineType.Dotted)
-                        continue;
-                    if (b1.bfr == b2.bfr || b1.bfr == b2.bto || b1.bto == b2.bfr || b1.bto == b2.bto)
-                        continue;
-                    if (!GeomUtil.doLineSegsIntersect(b1.line.x1, b1.line.y1, b1.line.x2, b1.line.y2, b2.line.x1, b2.line.y1, b2.line.x2, b2.line.y2))
-                        continue;
-                    var xy = GeomUtil.lineIntersect(b1.line.x1, b1.line.y1, b1.line.x2, b1.line.y2, b2.line.x1, b2.line.y1, b2.line.x2, b2.line.y2);
-                    var dx = b2.line.x2 - b2.line.x1, dy = b2.line.y2 - b2.line.y1;
-                    var ext = Math.abs(dx) > Math.abs(dy) ? (xy[0] - b2.line.x1) / dx : (xy[1] - b2.line.y1) / dy;
-                    var dist = norm_xy(dx, dy);
-                    var delta = b2.size / dist * (b2.type == BLineType.Normal ? 2 : 4);
-                    if (ext > delta && ext < 1 - delta) {
-                        var b3 = {
-                            'bnum': b2.bnum,
-                            'bfr': b2.bfr,
-                            'bto': b2.bto,
-                            'type': b2.type,
-                            'line': b2.line.clone(),
-                            'size': b2.size,
-                            'head': b2.head,
-                            'col': b2.col
-                        };
-                        this.lines.push(b3);
-                        b2.line.x2 = b2.line.x1 + dx * (ext - delta);
-                        b2.line.y2 = b2.line.y1 + dy * (ext - delta);
-                        b3.line.x1 = b3.line.x1 + dx * (ext + delta);
-                        b3.line.y1 = b3.line.y1 + dy * (ext + delta);
-                        anything = true;
-                    }
-                    else if (ext > delta) {
-                        b2.line.x2 = b2.line.x1 + dx * (ext - delta);
-                        b2.line.y2 = b2.line.y1 + dy * (ext - delta);
-                        anything = true;
-                    }
-                    else if (ext < 1 - delta) {
-                        b2.line.x1 = b2.line.x1 + dx * (ext + delta);
-                        b2.line.y1 = b2.line.y1 + dy * (ext + delta);
-                        anything = true;
-                    }
-                }
-            }
-            if (!anything)
-                break;
-        }
-    };
-    ArrangeMolecule.FONT_CORRECT = 1.5;
-    return ArrangeMolecule;
-}());
-var DrawMolecule = (function () {
-    function DrawMolecule(layout, vg) {
-        this.layout = layout;
-        this.vg = vg;
-        this.mol = layout.getMolecule();
-        this.policy = layout.getPolicy();
-        this.effects = layout.getEffects();
-        this.scale = layout.getScale();
-        this.invScale = 1.0 / this.scale;
-    }
-    DrawMolecule.prototype.getMolecule = function () { return this.mol; };
-    DrawMolecule.prototype.getMetaVector = function () { return this.vg; };
-    DrawMolecule.prototype.getLayout = function () { return this.layout; };
-    DrawMolecule.prototype.getPolicy = function () { return this.policy; };
-    DrawMolecule.prototype.getEffects = function () { return this.effects; };
-    DrawMolecule.prototype.draw = function () {
-        var DRAW_SPACE = false;
-        if (DRAW_SPACE)
-            for (var n = 0; n < this.layout.numSpace(); n++) {
-                var spc = this.layout.getSpace(n);
-                this.vg.drawRect(spc.box.x, spc.box.y, spc.box.w, spc.box.h, MetaVector.NOCOLOUR, 0, 0xE0E0E0);
-                if (spc.px != null && spc.py != null && spc.px.length > 2)
-                    this.vg.drawPoly(spc.px, spc.py, 0x000000, 1, 0x808080FF, true);
-            }
-        for (var n = 0; n < this.layout.numLines(); n++) {
-            var b = this.layout.getLine(n);
-            if (b.type == BLineType.Normal) {
-                this.vg.drawLine(b.line.x1, b.line.y1, b.line.x2, b.line.y2, b.col, b.size);
-            }
-            else if (b.type == BLineType.Inclined)
-                this.drawBondInclined(b);
-            else if (b.type == BLineType.Declined)
-                this.drawBondDeclined(b);
-            else if (b.type == BLineType.Unknown)
-                this.drawBondUnknown(b);
-            else if (b.type == BLineType.Dotted || b.type == BLineType.DotDir)
-                this.drawBondDotted(b);
-            else if (b.type == BLineType.IncDouble || b.type == BLineType.IncTriple || b.type == BLineType.IncQuadruple)
-                this.drawBondIncMulti(b);
-        }
-        for (var n = 0; n < this.layout.numPoints(); n++) {
-            var p = this.layout.getPoint(n);
-            var txt = p.text;
-            if (txt == null)
-                continue;
-            var fsz = p.fsz;
-            var cx = p.oval.cx, cy = p.oval.cy, rw = p.oval.rw;
-            var col = p.col;
-            while (txt.endsWith(".")) {
-                var dw = rw / txt.length;
-                var r = fsz * 0.15;
-                this.vg.drawOval(cx + rw - dw, cy, r, r, MetaVector.NOCOLOUR, 0, col);
-                cx -= dw;
-                rw -= dw;
-                txt = txt.substring(0, txt.length - 1);
-            }
-            while (txt.startsWith("+")) {
-                var dw = rw / txt.length;
-                var x = cx - rw + dw, y = cy, r = fsz * 0.18, lsz = fsz * 0.1;
-                this.vg.drawLine(x - r, y, x + r, y, col, lsz);
-                this.vg.drawLine(x, y - r, x, y + r, col, lsz);
-                cx += dw;
-                rw -= dw;
-                txt = txt.substring(1, txt.length);
-            }
-            while (txt.startsWith("-")) {
-                var dw = rw / txt.length;
-                var x = cx - rw + dw, y = cy, r = fsz * 0.18, lsz = fsz * 0.1;
-                this.vg.drawLine(x - r, y, x + r, y, col, lsz);
-                cx += dw;
-                rw -= dw;
-                txt = txt.substring(1, txt.length);
-            }
-            if (txt.length > 0) {
-                this.vg.drawText(cx, cy, txt, fsz, col, TextAlign.Centre | TextAlign.Middle);
-            }
-        }
-    };
-    DrawMolecule.prototype.drawBondInclined = function (b) {
-        var x1 = b.line.x1, y1 = b.line.y1, x2 = b.line.x2, y2 = b.line.y2;
-        var dx = x2 - x1, dy = y2 - y1;
-        var col = b.col;
-        var size = b.size, head = b.head;
-        var norm = head / Math.sqrt(dx * dx + dy * dy);
-        var ox = norm * dy, oy = -norm * dx;
-        var px = [x1, x2 - ox, x2 + ox], py = [y1, y2 - oy, y2 + oy];
-        if (this.layout.getPoint(b.bto - 1).text == null && this.mol.atomAdjCount(b.bto) == 2) {
-            var other = null;
-            for (var n = 0; n < this.layout.numLines(); n++) {
-                var o = this.layout.getLine(n);
-                if (o.type == BLineType.Normal && (o.bfr == b.bto || o.bto == b.bto)) {
-                    if (other != null) {
-                        other = null;
-                        break;
-                    }
-                    other = o;
-                }
-            }
-            if (other != null) {
-                var th1 = Math.atan2(y1 - y2, x1 - x2);
-                var th2 = Math.atan2(other.line.y1 - other.line.y2, other.line.x1 - other.line.x2);
-                if (b.bto == other.bfr)
-                    th2 += Math.PI;
-                var diff = Math.abs(angleDiff(th1, th2));
-                if (diff > 105 * DEGRAD && diff < 135 * DEGRAD) {
-                    var ixy1 = GeomUtil.lineIntersect(px[0], py[0], px[1], py[1], other.line.x1, other.line.y1, other.line.x2, other.line.y2);
-                    var ixy2 = GeomUtil.lineIntersect(px[0], py[0], px[2], py[2], other.line.x1, other.line.y1, other.line.x2, other.line.y2);
-                    px[1] = ixy1[0];
-                    py[1] = ixy1[1];
-                    px[2] = ixy2[0];
-                    py[2] = ixy2[1];
-                    var dx1 = px[1] - px[0], dy1 = py[1] - py[0], inv1 = 0.5 * other.size / norm_xy(dx1, dy1);
-                    px[1] += dx1 * inv1;
-                    py[1] += dy1 * inv1;
-                    var dx2 = px[2] - px[0], dy2 = py[2] - py[0], inv2 = 0.5 * other.size / norm_xy(dx2, dy2);
-                    px[2] += dx2 * inv1;
-                    py[2] += dy2 * inv1;
-                }
-            }
-        }
-        if (this.layout.getPoint(b.bto - 1).text == null && this.mol.atomAdjCount(b.bto) == 3) {
-            var other1 = null, other2 = null;
-            for (var n = 0; n < this.layout.numLines(); n++) {
-                var o = this.layout.getLine(n);
-                if (o.type == BLineType.Normal && (o.bfr == b.bto || o.bto == b.bto)) {
-                    if (other1 == null)
-                        other1 = o;
-                    else if (other2 == null)
-                        other2 = o;
-                    else {
-                        other1 = other2 = null;
-                        break;
-                    }
-                }
-            }
-            if (other1 != null && other2 != null) {
-                var th1 = Math.atan2(y1 - y2, x1 - x2);
-                var th2 = Math.atan2(other1.line.y1 - other1.line.y2, other1.line.x1 - other1.line.x2);
-                var th3 = Math.atan2(other2.line.y1 - other2.line.y2, other2.line.x1 - other2.line.x2);
-                if (b.bto == other1.bfr)
-                    th2 += Math.PI;
-                if (b.bto == other2.bfr)
-                    th3 += Math.PI;
-                var dth1 = angleDiff(th1, th2), diff1 = Math.abs(dth1);
-                var dth2 = angleDiff(th1, th3), diff2 = Math.abs(dth2);
-                var diff3 = Math.abs(angleDiff(th2, th3));
-                if (diff1 > 105 * DEGRAD && diff1 < 135 * DEGRAD ||
-                    diff2 > 105 * DEGRAD && diff2 < 135 * DEGRAD ||
-                    diff3 > 105 * DEGRAD && diff3 < 135 * DEGRAD) {
-                    if (dth1 < 0)
-                        _a = [other2, other1], other1 = _a[0], other2 = _a[1];
-                    var ixy1 = GeomUtil.lineIntersect(px[0], py[0], px[1], py[1], other1.line.x1, other1.line.y1, other1.line.x2, other1.line.y2);
-                    var ixy2 = GeomUtil.lineIntersect(px[0], py[0], px[2], py[2], other2.line.x1, other2.line.y1, other2.line.x2, other2.line.y2);
-                    px = [x1, ixy1[0], x2, ixy2[0]];
-                    py = [y1, ixy1[1], y2, ixy2[1]];
-                }
-            }
-        }
-        this.vg.drawPoly(px, py, MetaVector.NOCOLOUR, 0, col, true);
-        var _a;
-    };
-    DrawMolecule.prototype.drawBondDeclined = function (b) {
-        var x1 = b.line.x1, y1 = b.line.y1, x2 = b.line.x2, y2 = b.line.y2;
-        var dx = x2 - x1, dy = y2 - y1;
-        var col = b.col;
-        var size = b.size, head = b.head;
-        var ext = Math.sqrt(dx * dx + dy * dy);
-        var nsteps = Math.ceil(ext * 2.5 * this.invScale);
-        var norm = head / ext;
-        var ox = norm * dy, oy = -norm * dx, invSteps = 1.0 / (nsteps + 1);
-        var holdout = this.mol.atomAdjCount(b.bto) == 1 && this.layout.getPoint(b.bto - 1).text == null ? 1 : 1 - (0.15 * this.scale) / ext;
-        for (var i = 0; i <= nsteps + 1; i++) {
-            var cx = x1 + i * dx * invSteps * holdout, cy = y1 + i * dy * invSteps * holdout;
-            var ix = ox * i * invSteps, iy = oy * i * invSteps;
-            this.vg.drawLine(cx - ix, cy - iy, cx + ix, cy + iy, col, size);
-        }
-    };
-    DrawMolecule.prototype.drawBondUnknown = function (b) {
-        var x1 = b.line.x1, y1 = b.line.y1, x2 = b.line.x2, y2 = b.line.y2;
-        var dx = x2 - x1, dy = y2 - y1;
-        var col = b.col;
-        var size = b.size, head = b.head;
-        var ext = Math.sqrt(dx * dx + dy * dy);
-        var nsteps = Math.ceil(ext * 3.5 * this.invScale);
-        var norm = head / ext;
-        var ox = norm * dy, oy = -norm * dx;
-        var sz = 1 + 3 * (nsteps + 1);
-        var x = Vec.numberArray(0, sz), y = Vec.numberArray(0, sz), ctrl = Vec.booleanArray(false, sz);
-        x[0] = x1;
-        y[0] = y1;
-        ctrl[0] = false;
-        for (var i = 0, j = 1; i <= nsteps; i++, j += 3) {
-            var ax = x1 + i * dx / (nsteps + 1), ay = y1 + i * dy / (nsteps + 1);
-            var cx = x1 + (i + 1) * dx / (nsteps + 1), cy = y1 + (i + 1) * dy / (nsteps + 1);
-            var bx = (ax + cx) / 2, by = (ay + cy) / 2;
-            var sign = i % 2 == 0 ? 1 : -1;
-            x[j] = ax;
-            x[j + 1] = bx + sign * ox;
-            x[j + 2] = cx;
-            y[j] = ay;
-            y[j + 1] = by + sign * oy;
-            y[j + 2] = cy;
-            ctrl[j] = true;
-            ctrl[j + 1] = true;
-            ctrl[j + 2] = false;
-        }
-        this.vg.drawPath(x, y, ctrl, true, col, size, MetaVector.NOCOLOUR, false);
-    };
-    DrawMolecule.prototype.drawBondDotted = function (b) {
-        var x1 = b.line.x1, y1 = b.line.y1, x2 = b.line.x2, y2 = b.line.y2;
-        var dx = x2 - x1, dy = y2 - y1;
-        var col = b.col;
-        var size = b.size;
-        var radius = size, dist = norm_xy(dx, dy);
-        if (dist < 0.01)
-            return;
-        var nudge = 0.5 * size / dist;
-        x1 += nudge * dx;
-        y1 += nudge * dy;
-        x2 -= nudge * dx;
-        y2 -= nudge * dy;
-        dx = x2 - x1;
-        dy = y2 - y1;
-        var nsteps = Math.ceil(0.2 * dist / radius);
-        var invSteps = 1.0 / (nsteps + 1);
-        for (var i = 0; i <= nsteps + 1; i++) {
-            var r = radius;
-            if (b.type == BLineType.DotDir)
-                r *= 1 + (i * (1.0 / (nsteps + 2)) - 0.5);
-            var cx = x1 + i * dx * invSteps, cy = y1 + i * dy * invSteps;
-            this.vg.drawOval(cx, cy, r, r, MetaVector.NOCOLOUR, 0, col);
-        }
-    };
-    DrawMolecule.prototype.drawBondIncMulti = function (b) {
-        var x1 = b.line.x1, y1 = b.line.y1, x2 = b.line.x2, y2 = b.line.y2;
-        var dx = x2 - x1, dy = y2 - y1;
-        var col = b.col;
-        var size = b.size, head = b.head;
-        var norm = head / Math.sqrt(dx * dx + dy * dy);
-        var ox = norm * dy, oy = -norm * dx;
-        this.vg.drawPoly([x1, x2 - ox, x2 + ox], [y1, y2 - oy, y2 + oy], col, this.scale * 0.05, MetaVector.NOCOLOUR, true);
-        if (b.type == BLineType.IncDouble) {
-            this.vg.drawLine(x1, y1, x2, y2, col, this.scale * 0.03);
-        }
-        else {
-            this.vg.drawLine(x1, y1, x2 + 0.33 * ox, y2 + 0.33 * oy, col, this.scale * 0.03);
-            this.vg.drawLine(x1, y1, x2 - 0.33 * ox, y2 - 0.33 * oy, col, this.scale * 0.03);
-        }
-    };
-    return DrawMolecule;
-}());
 var Account = (function () {
     function Account() {
     }

@@ -419,12 +419,10 @@ class MetaVector
 		for (let n = 0; n < this.prims.length;)
 		{
 			let p = this.prims[n], num = 1;
-			/* !! restore...
-			if (p[0] != this.PRIM_PATH && p[0] != this.PATH_TEXT)
+			if (p[0] != this.PRIM_PATH && p[0] != this.PRIM_TEXT)
 			{
-				for (; p + num < this.prims.length; num++) if (this.prims[p + num][0] != p[0] || this.prims[p + num][1] != p[1]) break;
-			}*/
-
+				for (; n + num < this.prims.length; num++) if (this.prims[n + num][0] != p[0] || this.prims[n + num][1] != p[1]) break;
+			}
 			if (p[0] == this.PRIM_LINE) 
 			{
 				if (num == 1) this.svgLine1(svg, p); else this.svgLineN(svg, p, n, num);
@@ -684,7 +682,31 @@ class MetaVector
 	}
 	public svgLineN(svg:JQuery, p:any, pos:number, sz:number)
 	{
-		// !!
+		let type = this.typeObj[p[1]];
+		if (type.colour == null) return;
+
+		let g = $('<g></g>').appendTo(svg);
+		g.attr('stroke', type.colour);
+		g.attr('stroke-width', type.thickness);
+		g.attr('stroke-linecap', 'round');
+
+		for (let n = 0; n < sz; n++)
+		{
+			let p = this.prims[pos + n];
+			let x1 = p[2], y1 = p[3];
+			let x2 = p[4], y2 = p[5];
+			
+			x1 = this.offsetX + this.scale * x1;
+			y1 = this.offsetY + this.scale * y1;
+			x2 = this.offsetX + this.scale * x2;
+			y2 = this.offsetY + this.scale * y2;
+		
+			let line = $('<line></line>').appendTo(g);
+			line.attr('x1', x1);
+			line.attr('y1', y1);
+			line.attr('x2', x2);
+			line.attr('y2', y2);
+		}
 	}
 	public svgRect1(svg:JQuery, p:any)
 	{
@@ -715,7 +737,37 @@ class MetaVector
 	}
 	public svgRectN(svg:JQuery, p:any, pos:number, sz:number)
 	{
-		// !!
+		let type = this.typeObj[p[1]];
+
+		let g = $('<g></g>').appendTo(svg);
+		
+		if (type.edgeCol != null)
+		{
+			g.attr('stroke', type.edgeCol);
+			g.attr('stroke-width', type.thickness);
+			g.attr('stroke-linecap', 'square');
+		}
+		else g.attr('stroke', 'none');
+
+		g.attr('fill', type.fillCol == null ? 'none' : type.fillCol);
+
+		for (let n = 0; n < sz; n++)
+		{
+			let p = this.prims[pos + n];
+			let x = p[2], y = p[3];
+			let w = p[4], h = p[5];
+
+			x = this.offsetX + this.scale * x;
+			y = this.offsetY + this.scale * y;
+			w *= this.scale;
+			h *= this.scale;
+			
+			let rect = $('<rect></rect>').appendTo(g);
+			rect.attr('x', x);
+			rect.attr('y', y);
+			rect.attr('width', w);
+			rect.attr('height', h);
+		}
 	}
 	public svgOval1(svg:JQuery, p:any)
 	{
@@ -728,25 +780,57 @@ class MetaVector
 		rw *= this.scale;
 		rh *= this.scale;
 		
-		let rect = $('<ellipse></ellipse>').appendTo(svg);
-		rect.attr('cx', cx);
-		rect.attr('cy', cy);
-		rect.attr('rw', rw);
-		rect.attr('rw', rh);
+		let oval = $('<ellipse></ellipse>').appendTo(svg);
+		oval.attr('cx', cx);
+		oval.attr('cy', cy);
+		oval.attr('rw', rw);
+		oval.attr('rw', rh);
 
 		if (type.edgeCol != null)
 		{
-			rect.attr('stroke', type.edgeCol);
-			rect.attr('stroke-width', type.thickness);
-			rect.attr('stroke-linecap', 'square');
+			oval.attr('stroke', type.edgeCol);
+			oval.attr('stroke-width', type.thickness);
+			oval.attr('stroke-linecap', 'square');
 		}
-		else rect.attr('stroke', 'none');
+		else oval.attr('stroke', 'none');
 
-		rect.attr('fill', type.fillCol == null ? 'none' : type.fillCol);
+		oval.attr('fill', type.fillCol == null ? 'none' : type.fillCol);
 	}
 	public svgOvalN(svg:JQuery, p:any, pos:number, sz:number)
 	{
-		// !!
+		let type = this.typeObj[p[1]];
+		let x = p[2], y = p[3];
+		let w = p[4], h = p[5];
+
+		let g = $('<g></g>').appendTo(svg);
+		
+		if (type.edgeCol != null)
+		{
+			g.attr('stroke', type.edgeCol);
+			g.attr('stroke-width', type.thickness);
+			g.attr('stroke-linecap', 'square');
+		}
+		else g.attr('stroke', 'none');
+
+		g.attr('fill', type.fillCol == null ? 'none' : type.fillCol);
+
+		for (let n = 0; n < sz; n++)
+		{
+			let p = this.prims[pos + n];
+			let cx = p[2], cy = p[3];
+			let rw = p[4], rh = p[5];
+
+			cx = this.offsetX + this.scale * cx;
+			cy = this.offsetY + this.scale * cy;
+			rw *= this.scale;
+			rh *= this.scale;
+
+			let oval = $('<ellipse></ellipse>').appendTo(svg);
+			oval.attr('cx', cx);
+			oval.attr('cy', cy);
+			oval.attr('rw', rw);
+			oval.attr('rw', rh);
+		}
 	}
 	public svgPath(svg:JQuery, p:any)
 	{
