@@ -523,6 +523,7 @@ class ArrangeMolecule
 		this.points.push(a);
 
 		// create a square spacefiller
+		// TODO: spacefiller should use the glyph rather than just a box...
 		let spc:SpaceFiller =
 		{
 			'anum': 0,
@@ -1065,25 +1066,6 @@ class ArrangeMolecule
 		}
 
     	// transform the outline into the right position
-		/*FloatVector gx = new FloatVector(), gy = new FloatVector();
-		float emdx = -0.5f * firstEMW, emdy = 0.5f * (VectorGfxFont.ASCENT + VectorGfxFont.DESCENT);
-		float[] seg = new float[6];
-		for (PathIterator pi = outline.getPathIterator(null); !pi.isDone(); pi.next())
-		{
-			int type = pi.currentSegment(seg);
-			if (type == PathIterator.SEG_MOVETO || type == PathIterator.SEG_LINETO)
-			{
-				final float x = a.cx + (emdx + seg[0]) * emscale;
-				final float y = a.cy + (emdy - seg[1]) * emscale * ymul;
-
-				final int nn = gx.size() - 1;
-				if (nn >= 0 && Util.norm2(x - gx.get(nn), y - gy.get(nn)) < 1) continue;
-
-				gx.add(x);
-				gy.add(y);
-			}
-		}
-		float[] px = gx.getData(), py = gy.getData();*/
 		let emdx = -0.5 * firstEMW, emdy = 0.5 * (font.ASCENT + font.DESCENT);
 		for (let n = 0; n < outlineX.length; n++)
 		{
@@ -1157,12 +1139,7 @@ class ArrangeMolecule
 			const mx1 = Vec.min(outlineY), mx2 = Vec.max(outlineX), my1 = Vec.min(outlineY), my2 = Vec.max(outlineY), cx = 0.5 * (mx1 + mx2), cy = 0.5 * (my1 + my2);
 			const mag = 1 + this.measure.scale() * this.policy.data.fontSize * ArrangeMolecule.FONT_CORRECT * 0.1 / Math.max(mx2 - cx, my2 - cy);
 			const psz = outlineX.length;
-			/*let magPX = new float[psz], magPY = new float[psz];
-			for (int n = 0; n < psz; n++)
-			{
-				magPX[n] = (px[n] - cx) * mag + cx;
-				magPY[n] = (py[n] - cy) * mag + cy;
-			}*/
+
 			let magPX = outlineX.slice(0), magPY = outlineY.slice(0);
 			for (let n = 0; n < psz; n++)
 			{

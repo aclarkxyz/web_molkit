@@ -3073,13 +3073,25 @@ var MetaVector = (function () {
         this.lowY = null;
         this.highX = null;
         this.highY = null;
+        var font = FontData.main;
+        this.charMask = Vec.booleanArray(false, font.GLYPH_COUNT);
         if (vec != null) {
             this.types = vec.types;
             this.prims = vec.prims;
             this.width = vec.size[0];
             this.height = vec.size[1];
+            for (var _i = 0, _a = this.prims; _i < _a.length; _i++) {
+                var p = _a[_i];
+                if (p[0] == this.PRIM_TEXT) {
+                    var txt = p[4];
+                    for (var n = 0; n < txt.length; n++) {
+                        var i = txt.charCodeAt(n) - font.GLYPH_MIN;
+                        if (i >= 0 && i < font.GLYPH_COUNT)
+                            this.charMask[i] = true;
+                    }
+                }
+            }
         }
-        this.charMask = Vec.booleanArray(false, FontData.main.GLYPH_COUNT);
     }
     MetaVector.prototype.drawLine = function (x1, y1, x2, y2, colour, thickness) {
         if (thickness == null)
@@ -3320,6 +3332,67 @@ var MetaVector = (function () {
         }
         ctx.restore();
     };
+    MetaVector.prototype.createSVG = function () {
+        var svg = $('<svg></svg>');
+        svg.attr('xmlns', 'http://www.w3.org/2000/svg');
+        svg.attr('width', this.width);
+        svg.attr('height', this.height);
+        svg.attr('viewBox', '0 0 ' + this.width + ' ' + this.height);
+        this.renderSVG(svg);
+        var tmp = $('<tmp></tmp>');
+        tmp.append(svg);
+        return tmp.html();
+    };
+    MetaVector.prototype.renderSVG = function (svg) {
+        var font = FontData.main;
+        var defs = $('<defs></defs>').appendTo(svg);
+        for (var n = 0; n < font.GLYPH_COUNT; n++)
+            if (this.charMask[n]) {
+                var path = $('<path></path>').appendTo(defs);
+                path.attr('id', 'char' + n);
+                path.attr('d', font.GLYPH_DATA[n]);
+                path.attr('edge', 'none');
+            }
+        for (var n = 0; n < this.types.length; n++) {
+            var t = this.types[n];
+            if (t[0] == this.PRIM_LINE)
+                this.typeObj[n] = this.setupTypeLine(t);
+            else if (t[0] == this.PRIM_RECT)
+                this.typeObj[n] = this.setupTypeRect(t);
+            else if (t[0] == this.PRIM_OVAL)
+                this.typeObj[n] = this.setupTypeOval(t);
+            else if (t[0] == this.PRIM_PATH)
+                this.typeObj[n] = this.setupTypePath(t);
+            else if (t[0] == this.PRIM_TEXT)
+                this.typeObj[n] = this.setupTypeText(t);
+        }
+        for (var n = 0; n < this.prims.length;) {
+            var p = this.prims[n], num = 1;
+            if (p[0] == this.PRIM_LINE) {
+                if (num == 1)
+                    this.svgLine1(svg, p);
+                else
+                    this.svgLineN(svg, p, n, num);
+            }
+            else if (p[0] == this.PRIM_RECT) {
+                if (num == 1)
+                    this.svgRect1(svg, p);
+                else
+                    this.svgRectN(svg, p, n, num);
+            }
+            else if (p[0] == this.PRIM_OVAL) {
+                if (num == 1)
+                    this.svgOval1(svg, p);
+                else
+                    this.svgOvalN(svg, p, n, num);
+            }
+            else if (p[0] == this.PRIM_PATH)
+                this.svgPath(svg, p);
+            else if (p[0] == this.PRIM_TEXT)
+                this.svgText(svg, p);
+            n += num;
+        }
+    };
     MetaVector.prototype.setupTypeLine = function (t) {
         var thickness = t[1] * this.scale;
         var colour = t[2];
@@ -3463,16 +3536,16 @@ var MetaVector = (function () {
         var fill = type.colour;
         x = this.offsetX + this.scale * x;
         y = this.offsetY + this.scale * y;
-        var fd = FontData.main;
-        var scale = sz / fd.UNITS_PER_EM;
+        var font = FontData.main;
+        var scale = sz / font.UNITS_PER_EM;
         var dx = 0;
         for (var n = 0; n < txt.length; n++) {
             var i = txt.charCodeAt(n) - 32;
             if (i < 0 || i >= 96) {
-                dx += fd.MISSING_HORZ;
+                dx += font.MISSING_HORZ;
                 continue;
             }
-            var path = fd.getGlyphPath(i);
+            var path = font.getGlyphPath(i);
             if (path) {
                 ctx.save();
                 ctx.translate(x + dx * scale, y);
@@ -3481,15 +3554,156 @@ var MetaVector = (function () {
                 ctx.fill(path);
                 ctx.restore();
             }
-            dx += fd.HORIZ_ADV_X[i];
+            dx += font.HORIZ_ADV_X[i];
             if (n < txt.length - 1) {
                 var j = txt.charCodeAt(n + 1) - 32;
-                for (var k = 0; k < fd.KERN_K.length; k++)
-                    if ((fd.KERN_G1[k] == i && fd.KERN_G2[k] == j) || (fd.KERN_G1[k] == j && fd.KERN_G2[k] == i)) {
-                        dx += fd.KERN_K[k];
-                        break;
-                    }
+                dx += font.getKerning(i, j);
             }
+        }
+    };
+    MetaVector.prototype.svgLine1 = function (svg, p) {
+        var type = this.typeObj[p[1]];
+        var x1 = p[2], y1 = p[3];
+        var x2 = p[4], y2 = p[5];
+        x1 = this.offsetX + this.scale * x1;
+        y1 = this.offsetY + this.scale * y1;
+        x2 = this.offsetX + this.scale * x2;
+        y2 = this.offsetY + this.scale * y2;
+        if (type.colour != null) {
+            var line = $('<line></line>').appendTo(svg);
+            line.attr('x1', x1);
+            line.attr('y1', y1);
+            line.attr('x2', x2);
+            line.attr('y2', y2);
+            line.attr('stroke', type.colour);
+            line.attr('stroke-width', type.thickness);
+            line.attr('stroke-linecap', 'round');
+        }
+    };
+    MetaVector.prototype.svgLineN = function (svg, p, pos, sz) {
+    };
+    MetaVector.prototype.svgRect1 = function (svg, p) {
+        var type = this.typeObj[p[1]];
+        var x = p[2], y = p[3];
+        var w = p[4], h = p[5];
+        x = this.offsetX + this.scale * x;
+        y = this.offsetY + this.scale * y;
+        w *= this.scale;
+        h *= this.scale;
+        var rect = $('<rect></rect>').appendTo(svg);
+        rect.attr('x', x);
+        rect.attr('y', y);
+        rect.attr('width', w);
+        rect.attr('height', h);
+        if (type.edgeCol != null) {
+            rect.attr('stroke', type.edgeCol);
+            rect.attr('stroke-width', type.thickness);
+            rect.attr('stroke-linecap', 'square');
+        }
+        else
+            rect.attr('stroke', 'none');
+        rect.attr('fill', type.fillCol == null ? 'none' : type.fillCol);
+    };
+    MetaVector.prototype.svgRectN = function (svg, p, pos, sz) {
+    };
+    MetaVector.prototype.svgOval1 = function (svg, p) {
+        var type = this.typeObj[p[1]];
+        var cx = p[2], cy = p[3];
+        var rw = p[4], rh = p[5];
+        cx = this.offsetX + this.scale * cx;
+        cy = this.offsetY + this.scale * cy;
+        rw *= this.scale;
+        rh *= this.scale;
+        var rect = $('<ellipse></ellipse>').appendTo(svg);
+        rect.attr('cx', cx);
+        rect.attr('cy', cy);
+        rect.attr('rw', rw);
+        rect.attr('rw', rh);
+        if (type.edgeCol != null) {
+            rect.attr('stroke', type.edgeCol);
+            rect.attr('stroke-width', type.thickness);
+            rect.attr('stroke-linecap', 'square');
+        }
+        else
+            rect.attr('stroke', 'none');
+        rect.attr('fill', type.fillCol == null ? 'none' : type.fillCol);
+    };
+    MetaVector.prototype.svgOvalN = function (svg, p, pos, sz) {
+    };
+    MetaVector.prototype.svgPath = function (svg, p) {
+        var type = this.typeObj[p[1]];
+        var npts = p[2];
+        if (npts == 0)
+            return;
+        var x = p[3].slice(0), y = p[4].slice(0);
+        var ctrl = p[5];
+        var isClosed = p[6];
+        for (var n_1 = 0; n_1 < npts; n_1++) {
+            x[n_1] = this.offsetX + this.scale * x[n_1];
+            y[n_1] = this.offsetY + this.scale * y[n_1];
+        }
+        var shape = 'M ' + x[0] + ' ' + y[0];
+        var n = 1;
+        while (n < npts) {
+            if (!ctrl || !ctrl[n]) {
+                shape += ' L ' + x[n] + ' ' + y[n];
+                n++;
+            }
+            else if (ctrl[n] && n < npts - 1 && !ctrl[n + 1]) {
+                shape += ' Q ' + x[n] + ' ' + y[n] + ' ' + x[n + 1] + ' ' + y[n + 1];
+                n += 2;
+            }
+            else if (ctrl[n] && n < npts - 2 && ctrl[n + 1] && !ctrl[n + 2]) {
+                shape += ' C ' + x[n] + ' ' + y[n] + ' ' + x[n + 1] + ' ' + y[n + 1] + ' ' + x[n + 2] + ' ' + y[n + 2];
+                n += 3;
+            }
+            else
+                n++;
+        }
+        if (isClosed)
+            shape += ' Z';
+        var path = $('<path></path>').appendTo(svg);
+        path.attr('d', shape);
+        if (type.edgeCol != null) {
+            path.attr('stroke', type.edgeCol);
+            path.attr('stroke-width', type.thickness);
+            path.attr('stroke-linejoin', type.hardEdge ? 'miter' : 'round');
+            path.attr('stroke-linecap', type.hardEdge ? 'square' : 'round');
+        }
+        else
+            path.attr('stroke', 'none');
+        path.attr('fill', type.fillCol == null ? 'none' : type.fillCol);
+    };
+    MetaVector.prototype.svgText = function (svg, p) {
+        var type = this.typeObj[p[1]];
+        var x = p[2], y = p[3];
+        var txt = p[4];
+        var sz = type.size;
+        var fill = type.colour;
+        x = this.offsetX + this.scale * x;
+        y = this.offsetY + this.scale * y;
+        var font = FontData.main;
+        var scale = sz / font.UNITS_PER_EM;
+        var gdelta = $('<g></g>').appendTo(svg);
+        gdelta.attr('transform', 'translate(' + x + ',' + y + ')');
+        gdelta.attr('fill', fill);
+        var gscale = $('<g></g>').appendTo(gdelta);
+        gscale.attr('transform', 'scale(' + scale + ',' + (-scale) + ')');
+        var dx = 0;
+        for (var n = 0; n < txt.length; n++) {
+            var i = txt.charCodeAt(n) - font.GLYPH_MIN;
+            if (i >= 0 && i < font.GLYPH_COUNT) {
+                var use = $('<use></use>').appendTo(gscale);
+                use.attr('xlink:href', '#char' + i);
+                use.attr('x', dx);
+                dx += font.HORIZ_ADV_X[i];
+                if (n < txt.length - 1) {
+                    var j = txt.charAt(n + 1) - font.GLYPH_MIN;
+                    dx += font.getKerning(i, j);
+                }
+            }
+            else
+                dx += font.MISSING_HORZ;
         }
     };
     MetaVector.prototype.findOrCreateType = function (typeDef) {

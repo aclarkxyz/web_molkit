@@ -77,16 +77,28 @@ class MetaVector
 
 	constructor(vec?:any)
 	{
+		const font = FontData.main;
+
+		this.charMask = Vec.booleanArray(false, font.GLYPH_COUNT);
+
 		if (vec != null)
 		{
 			this.types = vec.types;
 			this.prims = vec.prims;
 			this.width = vec.size[0];
 			this.height = vec.size[1];
-		}
 
-		this.charMask = Vec.booleanArray(false, FontData.main.GLYPH_COUNT);
-		// !! TODO: if vec, rebuild the charMask...
+			// extract char-mask
+			for (let p of this.prims) if (p[0] == this.PRIM_TEXT)
+			{
+				let txt = p[4];
+				for (let n = 0; n < txt.length; n++)
+				{
+					let i = txt.charCodeAt(n) - font.GLYPH_MIN;
+					if (i >= 0 && i < font.GLYPH_COUNT) this.charMask[i] = true;
+				} 
+			}
+		}
 	}
 
 	// methods for adding a primitive (and possibly a type to go with it)
@@ -362,6 +374,77 @@ class MetaVector
 		ctx.restore();
 	}
 
+	// builds a new DOM containing an <svg> element, and everything underneath it is a representation of the graphic
+	public createSVG():string
+	{
+		let svg = $('<svg></svg>');
+		svg.attr('xmlns', 'http://www.w3.org/2000/svg'); 
+		svg.attr('width', this.width);
+		svg.attr('height', this.height);
+		svg.attr('viewBox', '0 0 ' + this.width + ' ' + this.height);
+
+		this.renderSVG(svg);
+
+		// ugly but it works
+		let tmp = $('<tmp></tmp>');
+		tmp.append(svg);
+		return tmp.html();
+	}
+
+	// given a DOM that represents an <svg> element, or some sub-container (such as <g>), populates it with all of the
+	// content from the graphic
+	public renderSVG(svg:JQuery):void
+	{
+		// !! todo: alternate destination for embeddables, and check if they already exist?
+
+		const font = FontData.main;
+		let defs = $('<defs></defs>').appendTo(svg);
+		for (let n = 0; n < font.GLYPH_COUNT; n++) if (this.charMask[n])
+		{
+			let path = $('<path></path>').appendTo(defs);
+			path.attr('id', 'char' + n);
+			path.attr('d', font.GLYPH_DATA[n]);
+			path.attr('edge', 'none');
+		}
+
+		for (let n = 0; n < this.types.length; n++)
+		{
+			let t = this.types[n];
+			if (t[0] == this.PRIM_LINE) this.typeObj[n] = this.setupTypeLine(t);
+			else if (t[0] == this.PRIM_RECT) this.typeObj[n] = this.setupTypeRect(t);
+			else if (t[0] == this.PRIM_OVAL) this.typeObj[n] = this.setupTypeOval(t);
+			else if (t[0] == this.PRIM_PATH) this.typeObj[n] = this.setupTypePath(t);
+			else if (t[0] == this.PRIM_TEXT) this.typeObj[n] = this.setupTypeText(t);
+		}
+		for (let n = 0; n < this.prims.length;)
+		{
+			let p = this.prims[n], num = 1;
+			/* !! restore...
+			if (p[0] != this.PRIM_PATH && p[0] != this.PATH_TEXT)
+			{
+				for (; p + num < this.prims.length; num++) if (this.prims[p + num][0] != p[0] || this.prims[p + num][1] != p[1]) break;
+			}*/
+
+			if (p[0] == this.PRIM_LINE) 
+			{
+				if (num == 1) this.svgLine1(svg, p); else this.svgLineN(svg, p, n, num);
+			}
+			else if (p[0] == this.PRIM_RECT) 
+			{
+				if (num == 1) this.svgRect1(svg, p); else this.svgRectN(svg, p, n, num);
+			}
+			else if (p[0] == this.PRIM_OVAL) 
+			{
+				if (num == 1) this.svgOval1(svg, p); else this.svgOvalN(svg, p, n, num);
+			}
+			else if (p[0] == this.PRIM_PATH) this.svgPath(svg, p);
+			else if (p[0] == this.PRIM_TEXT) this.svgText(svg, p);
+
+			n += num;
+		}
+		
+	}
+
 	// ------------ private methods ------------
 
 	// transform stored types into renderables
@@ -541,10 +624,252 @@ class MetaVector
 		x = this.offsetX + this.scale * x;
 		y = this.offsetY + this.scale * y;
 
-		let fd = FontData.main;
+		let font = FontData.main;
 		
-		let scale = sz / fd.UNITS_PER_EM;
+		let scale = sz / font.UNITS_PER_EM;
 		let dx = 0;
+		for (let n = 0; n < txt.length; n++)
+		{
+			let i = txt.charCodeAt(n) - 32;
+			if (i < 0 || i >= 96)
+			{
+				dx += font.MISSING_HORZ;
+				continue;
+			}
+
+			let path = font.getGlyphPath(i);
+			if (path)
+			{
+				ctx.save();
+				ctx.translate(x + dx * scale, y);
+				ctx.scale(scale, -scale);
+				ctx.fillStyle = fill;
+				ctx.fill(path);
+				ctx.restore();
+			}
+			
+			dx += font.HORIZ_ADV_X[i];
+			if (n < txt.length - 1)
+			{
+				let j = txt.charCodeAt(n + 1) - 32;
+				dx += font.getKerning(i, j);
+			}
+		}
+	}
+
+	// create SVG object for each primitive
+	// perform actual rendering for the primitives
+	public svgLine1(svg:JQuery, p:any)
+	{
+		let type = this.typeObj[p[1]];
+		let x1 = p[2], y1 = p[3];
+		let x2 = p[4], y2 = p[5];
+		
+		x1 = this.offsetX + this.scale * x1;
+		y1 = this.offsetY + this.scale * y1;
+		x2 = this.offsetX + this.scale * x2;
+		y2 = this.offsetY + this.scale * y2;
+		
+		if (type.colour != null)
+		{
+			let line = $('<line></line>').appendTo(svg);
+			line.attr('x1', x1);
+			line.attr('y1', y1);
+			line.attr('x2', x2);
+			line.attr('y2', y2);
+			line.attr('stroke', type.colour);
+			line.attr('stroke-width', type.thickness);
+			line.attr('stroke-linecap', 'round');
+		}
+	}
+	public svgLineN(svg:JQuery, p:any, pos:number, sz:number)
+	{
+		// !!
+	}
+	public svgRect1(svg:JQuery, p:any)
+	{
+		let type = this.typeObj[p[1]];
+		let x = p[2], y = p[3];
+		let w = p[4], h = p[5];
+
+		x = this.offsetX + this.scale * x;
+		y = this.offsetY + this.scale * y;
+		w *= this.scale;
+		h *= this.scale;
+
+		let rect = $('<rect></rect>').appendTo(svg);
+		rect.attr('x', x);
+		rect.attr('y', y);
+		rect.attr('width', w);
+		rect.attr('height', h);
+
+		if (type.edgeCol != null)
+		{
+			rect.attr('stroke', type.edgeCol);
+			rect.attr('stroke-width', type.thickness);
+			rect.attr('stroke-linecap', 'square');
+		}
+		else rect.attr('stroke', 'none');
+
+		rect.attr('fill', type.fillCol == null ? 'none' : type.fillCol);
+	}
+	public svgRectN(svg:JQuery, p:any, pos:number, sz:number)
+	{
+		// !!
+	}
+	public svgOval1(svg:JQuery, p:any)
+	{
+		let type = this.typeObj[p[1]];
+		let cx = p[2], cy = p[3];
+		let rw = p[4], rh = p[5];
+
+		cx = this.offsetX + this.scale * cx;
+		cy = this.offsetY + this.scale * cy;
+		rw *= this.scale;
+		rh *= this.scale;
+		
+		let rect = $('<ellipse></ellipse>').appendTo(svg);
+		rect.attr('cx', cx);
+		rect.attr('cy', cy);
+		rect.attr('rw', rw);
+		rect.attr('rw', rh);
+
+		if (type.edgeCol != null)
+		{
+			rect.attr('stroke', type.edgeCol);
+			rect.attr('stroke-width', type.thickness);
+			rect.attr('stroke-linecap', 'square');
+		}
+		else rect.attr('stroke', 'none');
+
+		rect.attr('fill', type.fillCol == null ? 'none' : type.fillCol);
+	}
+	public svgOvalN(svg:JQuery, p:any, pos:number, sz:number)
+	{
+		// !!
+	}
+	public svgPath(svg:JQuery, p:any)
+	{
+		let type = this.typeObj[p[1]];
+		let npts = p[2];
+		if (npts == 0) return;
+		let x = p[3].slice(0), y = p[4].slice(0);
+		let ctrl = p[5];
+		let isClosed = p[6];
+		
+		for (let n = 0; n < npts; n++)
+		{
+			x[n] = this.offsetX + this.scale * x[n];
+			y[n] = this.offsetY + this.scale * y[n];
+		}
+
+		let shape = 'M ' + x[0] + ' ' + y[0];
+		let n = 1;
+		while (n < npts)
+		{
+			if (!ctrl || !ctrl[n])
+			{
+				shape += ' L ' + x[n] + ' ' + y[n];
+				n++;
+			}
+			else if (ctrl[n] && n < npts - 1 && !ctrl[n + 1])
+			{
+				shape += ' Q ' + x[n] + ' ' + y[n] + ' ' + x[n + 1] + ' ' + y[n + 1];
+				n += 2;
+			}
+			else if (ctrl[n] && n < npts - 2 && ctrl[n + 1] && !ctrl[n + 2])
+			{
+				shape += ' C ' + x[n] + ' ' + y[n] + ' ' + x[n + 1] + ' ' + y[n + 1] + ' ' + x[n + 2] + ' ' + y[n + 2];
+				n += 3;
+			}
+			else n++; // (dunno, so skip)
+		}
+		if (isClosed) shape += ' Z';		
+
+		let path = $('<path></path>').appendTo(svg);
+		path.attr('d', shape);
+
+		if (type.edgeCol != null)
+		{
+			path.attr('stroke', type.edgeCol);
+			path.attr('stroke-width', type.thickness);
+			path.attr('stroke-linejoin', type.hardEdge ? 'miter' : 'round');
+			path.attr('stroke-linecap', type.hardEdge ? 'square' : 'round');
+		}
+		else path.attr('stroke', 'none');
+
+		path.attr('fill', type.fillCol == null ? 'none' : type.fillCol);
+	}
+	private svgText(svg:JQuery, p:any)
+	{
+		let type = this.typeObj[p[1]];
+		let x = p[2], y = p[3];
+		let txt = p[4];
+		
+		let sz = type.size;
+		let fill = type.colour;
+
+		x = this.offsetX + this.scale * x;
+		y = this.offsetY + this.scale * y;
+
+		let font = FontData.main;
+		
+		let scale = sz / font.UNITS_PER_EM;
+		
+		let gdelta = $('<g></g>').appendTo(svg);
+		gdelta.attr('transform', 'translate(' + x + ',' + y + ')');
+		gdelta.attr('fill', fill);
+		let gscale = $('<g></g>').appendTo(gdelta);
+		gscale.attr('transform', 'scale(' + scale + ',' + (-scale) + ')');
+		
+		let dx = 0;
+		for (let n = 0; n < txt.length; n++)
+		{
+			let i = txt.charCodeAt(n) - font.GLYPH_MIN;
+			
+			if (i >= 0 && i < font.GLYPH_COUNT)
+			{
+				let use = $('<use></use>').appendTo(gscale);
+				use.attr('xlink:href', '#char' + i);
+				use.attr('x', dx);
+
+				dx += font.HORIZ_ADV_X[i];
+				if (n < txt.length - 1)
+				{
+					let j = txt.charAt(n + 1) - font.GLYPH_MIN;
+					dx += font.getKerning(i, j);
+				}
+			}
+			else dx += font.MISSING_HORZ;
+		}
+
+/*		
+		{
+			int i = a.txt.charAt(n) - VectorGfxFont.GLYPH_MIN;
+			if (i >= 0 && i < VectorGfxFont.GLYPH_COUNT)
+			{
+				out.println("<use xlink:href=\"#char" + i + "\" fill=\"" + fill + "\"" + alpha + " x=\"" + dx + "\"/>");
+
+				dx += VectorGfxFont.HORIZ_ADV_X[i];
+
+				if (n < a.txt.length() - 1)
+				{
+					int j = a.txt.charAt(n + 1) - VectorGfxFont.GLYPH_MIN;
+					for (int k = 0; k < VectorGfxFont.KERN_K.length; k++)
+						if ((VectorGfxFont.KERN_G1[k] == i && VectorGfxFont.KERN_G2[k] == j) || 
+							(VectorGfxFont.KERN_G1[k] == j && VectorGfxFont.KERN_G2[k] == i))
+					{
+						dx += VectorGfxFont.KERN_K[k];
+						break;
+					}
+				}
+			}
+			else dx += VectorGfxFont.MISSING_HORZ;
+		}
+		
+		out.println("</g></g>");*/
+
+		/* !!
 		for (let n = 0; n < txt.length; n++)
 		{
 			let i = txt.charCodeAt(n) - 32;
@@ -573,8 +898,8 @@ class MetaVector
 					if ((fd.KERN_G1[k] == i && fd.KERN_G2[k] == j) || (fd.KERN_G1[k] == j && fd.KERN_G2[k] == i))
 						{dx += fd.KERN_K[k]; break;}
 			}
-		}
-	}
+		}*/
+	}	
 
 	// for a type definition array, see if it exists in the list, and return that index - or if not, push it on
 	private findOrCreateType(typeDef:any)
