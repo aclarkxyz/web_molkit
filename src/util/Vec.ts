@@ -86,7 +86,7 @@ class Vec
 	public static idxSort(arr:any[]):number[]
 	{
 		let idx:number[] = new Array(arr.length);
-		for (let n = 0; n < arr.length; n++) arr[n] = n;
+		for (let n = 0; n < arr.length; n++) idx[n] = n;
 		idx.sort(function(a:number, b:number):number {return arr[a] < arr[b] ? -1 : arr[a] > arr[b] ? 1 : 0;});
 		return idx;
 	}

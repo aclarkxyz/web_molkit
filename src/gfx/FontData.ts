@@ -295,6 +295,33 @@ class FontData
 		return 0;
 	}
 
+	// for text of a given size, returns [width,ascent,descent]; all of these numbers are positive; text drawing always uses
+	// the left/baseline as the reference position
+	public measureText(txt:string, size:number)
+	{
+		let font = FontData.main;
+		
+		let scale = size / font.UNITS_PER_EM;
+		let dx = 0;
+		for (let n = 0; n < txt.length; n++)
+		{
+			let i = txt.charCodeAt(n) - font.GLYPH_MIN;
+			if (i < 0 || i >= font.GLYPH_COUNT)
+			{
+				dx += font.MISSING_HORZ;
+				continue;
+			}
+			
+			dx += font.HORIZ_ADV_X[i];
+			if (n < txt.length - 1)
+			{
+				let j = txt.charCodeAt(n + 1) - font.GLYPH_MIN;
+				dx += font.getKerning(i, j);
+			}
+		}
+
+		return [dx * scale, font.ASCENT * scale * font.ASCENT_FUDGE, -font.DESCENT * scale];
+	}
 
 	pathCache:Path2D[] = [];
 

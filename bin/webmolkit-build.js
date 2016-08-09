@@ -3,6 +3,1359 @@ var __extends = (this && this.__extends) || function (d, b) {
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
+var MoleculeStream = (function () {
+    function MoleculeStream() {
+    }
+    MoleculeStream.readNative = function (strData) {
+        var mol = new Molecule();
+        mol.keepTransient = true;
+        var lines = strData.split(/\r?\n/);
+        if (lines.length < 2)
+            return null;
+        if (!lines[0].startsWith('SketchEl!') && lines.length >= 4 && lines[3].indexOf('V2000') >= 0) {
+            var i = strData.indexOf('SketchEl!');
+            if (i < 0)
+                return null;
+            lines = strData.substring(i).split(/r?\n/);
+        }
+        var bits = lines[0].match(/^SketchEl\!\((\d+)\,(\d+)\)/);
+        if (!bits)
+            return null;
+        var numAtoms = parseInt(bits[1]), numBonds = parseInt(bits[2]);
+        if (lines.length < 2 + numAtoms + numBonds)
+            return null;
+        if (!lines[1 + numAtoms + numBonds].match(/^!End/))
+            return null;
+        for (var n = 0; n < numAtoms; n++) {
+            bits = lines[1 + n].split(/[=,;]/);
+            var num = mol.addAtom(bits[0], parseFloat(bits[1]), parseFloat(bits[2]), parseInt(bits[3]), parseInt(bits[4]));
+            var extra = [], trans = [];
+            for (var i = 5; i < bits.length; i++) {
+                var ch = bits[i].charAt(0);
+                if (bits[i].charAt(0) == 'i') { }
+                else if (bits[i].charAt(0) == 'e')
+                    mol.setAtomHExplicit(num, parseInt(bits[i].substring(1)));
+                else if (bits[i].charAt(0) == 'm')
+                    mol.setAtomIsotope(num, parseInt(bits[i].substring(1)));
+                else if (bits[i].charAt(0) == 'n')
+                    mol.setAtomMapNum(num, parseInt(bits[i].substring(1)));
+                else if (bits[i].charAt(0) == 'x')
+                    extra.push(MoleculeStream.sk_unescape(bits[i]));
+                else if (bits[i].charAt(0) == 'y')
+                    trans.push(MoleculeStream.sk_unescape(bits[i]));
+                else
+                    extra.push(MoleculeStream.sk_unescape(bits[i]));
+            }
+            mol.setAtomExtra(num, extra);
+            mol.setAtomTransient(num, trans);
+        }
+        for (var n = 0; n < numBonds; n++) {
+            bits = lines[1 + numAtoms + n].split(/[-=,]/);
+            var num = mol.addBond(parseInt(bits[0]), parseInt(bits[1]), parseInt(bits[2]), parseInt(bits[3]));
+            var extra = new Array(), trans = new Array();
+            for (var i = 4; i < bits.length; i++) {
+                var ch = bits[i].charAt(0);
+                if (bits[i].charAt(0) == 'x')
+                    extra.push(MoleculeStream.sk_unescape(bits[i]));
+                else if (bits[i].charAt(0) == 'y')
+                    trans.push(MoleculeStream.sk_unescape(bits[i]));
+                else
+                    extra.push(MoleculeStream.sk_unescape(bits[i]));
+            }
+            mol.setBondExtra(num, extra);
+            mol.setBondTransient(num, trans);
+        }
+        mol.keepTransient = false;
+        return mol;
+    };
+    MoleculeStream.writeNative = function (mol) {
+        var ret = 'SketchEl!(' + mol.numAtoms() + ',' + mol.numBonds() + ')\n';
+        for (var n = 1; n <= mol.numAtoms(); n++) {
+            var el = mol.atomElement(n), x = mol.atomX(n), y = mol.atomY(n), charge = mol.atomCharge(n), unpaired = mol.atomUnpaired(n);
+            var hy = mol.atomHExplicit(n) != Molecule.HEXPLICIT_UNKNOWN ? ('e' + mol.atomHExplicit(n)) : ('i' + mol.atomHydrogens(n));
+            ret += MoleculeStream.sk_escape(el) + '=' + x.toFixed(4) + ',' + y.toFixed(4) + ';' + charge + ',' + unpaired + ',' + hy;
+            if (mol.atomIsotope(n) != Molecule.ISOTOPE_NATURAL)
+                ret += ',m' + mol.atomIsotope(n);
+            if (mol.atomMapNum(n) > 0)
+                ret += ',n' + mol.atomMapNum(n);
+            ret += MoleculeStream.sk_encodeExtra(mol.atomExtra(n));
+            ret += MoleculeStream.sk_encodeExtra(mol.atomTransient(n));
+            ret += '\n';
+        }
+        for (var n = 1; n <= mol.numBonds(); n++) {
+            ret += mol.bondFrom(n) + '-' + mol.bondTo(n) + '=' + mol.bondOrder(n) + ',' + mol.bondType(n);
+            ret += MoleculeStream.sk_encodeExtra(mol.bondExtra(n));
+            ret += MoleculeStream.sk_encodeExtra(mol.bondTransient(n));
+            ret += '\n';
+        }
+        ret += '!End\n';
+        return ret;
+    };
+    ;
+    MoleculeStream.sk_unescape = function (str) {
+        var ret = '', match;
+        while (match = str.match(/^(.*?)\\([0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f])(.*)/)) {
+            ret += match[1] + String.fromCharCode(parseInt("0x" + match[2]));
+            str = match[3];
+        }
+        return ret + str;
+    };
+    ;
+    MoleculeStream.sk_escape = function (str) {
+        var ret = '';
+        for (var n = 0; n < str.length; n++) {
+            var ch = str.charAt(n), code = str.charCodeAt(n);
+            if (code <= 32 || code > 127 || ch == '\\' || ch == ',' || ch == ';' || ch == '=') {
+                var hex = (code & 0xFFFF).toString(16).toUpperCase();
+                ret += '\\';
+                for (var i = 4 - hex.length; i > 0; i--)
+                    ret += '0';
+                ret += hex;
+            }
+            else
+                ret += ch;
+        }
+        return ret;
+    };
+    ;
+    MoleculeStream.sk_encodeExtra = function (extra) {
+        var ret = '';
+        for (var n = 0; n < extra.length; n++)
+            ret += ',' + MoleculeStream.sk_escape(extra[n]);
+        return ret;
+    };
+    ;
+    return MoleculeStream;
+}());
+var Chemistry = (function () {
+    function Chemistry() {
+    }
+    Chemistry.ELEMENTS = [
+        null,
+        "H", "He",
+        "Li", "Be", "B", "C", "N", "O", "F", "Ne",
+        "Na", "Mg", "Al", "Si", "P", "S", "Cl", "Ar",
+        "K", "Ca", "Sc", "Ti", "V", "Cr", "Mn", "Fe", "Co", "Ni", "Cu", "Zn", "Ga", "Ge", "As", "Se", "Br", "Kr",
+        "Rb", "Sr", "Y", "Zr", "Nb", "Mo", "Tc", "Ru", "Rh", "Pd", "Ag", "Cd", "In", "Sn", "Sb", "Te", "I", "Xe",
+        "Cs", "Ba",
+        "La", "Ce", "Pr", "Nd", "Pm", "Sm", "Eu", "Gd", "Tb", "Dy", "Ho", "Er", "Tm", "Yb",
+        "Lu", "Hf", "Ta", "W", "Re", "Os", "Ir", "Pt", "Au", "Hg", "Tl", "Pb", "Bi", "Po", "At", "Rn",
+        "Fr", "Ra",
+        "Ac", "Th", "Pa", "U", "Np", "Pu", "Am", "Cm", "Bk", "Cf", "Es", "Fm", "Md", "No",
+        "Lr", "Rf", "Db", "Sg", "Bh", "Hs", "Mt", "Ds", "Rg", "Cn"
+    ];
+    Chemistry.ELEMENT_GROUPS = [
+        0,
+        1, 18,
+        1, 2, 13, 14, 15, 16, 17, 18,
+        1, 2, 13, 14, 15, 16, 17, 18,
+        1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18,
+        1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18,
+        1, 2,
+        3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+        3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18,
+        1, 2,
+        3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+        3, 4, 5, 6, 7, 8, 9, 10, 11, 12
+    ];
+    Chemistry.ELEMENT_ROWS = [
+        0,
+        1, 1,
+        2, 2, 2, 2, 2, 2, 2, 2,
+        3, 3, 3, 3, 3, 3, 3, 3,
+        4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
+        5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+        6, 6,
+        6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
+        6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
+        7, 7,
+        7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+        7, 7, 7, 7, 7, 7, 7, 7, 7, 7
+    ];
+    Chemistry.ELEMENT_BLOCKS = [
+        0,
+        1, 2,
+        1, 1, 2, 2, 2, 2, 2, 2,
+        1, 1, 2, 2, 2, 2, 2, 2,
+        1, 1, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2,
+        1, 1, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2,
+        1, 1,
+        4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
+        3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2,
+        1, 1,
+        4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
+        3, 3, 3, 3, 3, 3, 3, 3, 3, 3
+    ];
+    Chemistry.ELEMENT_VALENCE = [
+        0,
+        1, 2,
+        1, 2, 3, 4, 5, 6, 7, 8,
+        1, 2, 3, 4, 5, 6, 7, 8,
+        1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 3, 4, 5, 6, 7, 8,
+        1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 3, 4, 5, 6, 7, 8,
+        1, 2,
+        4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
+        3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 3, 4, 5, 6, 7, 8,
+        1, 1,
+        4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
+        3, 4, 5, 6, 7, 8, 9, 10, 11, 12
+    ];
+    Chemistry.ELEMENT_BONDING = [
+        0,
+        1, 0,
+        1, 2, 3, 4, 3, 2, 1, 0,
+        1, 2, 3, 4, 3, 2, 1, 0,
+        1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 3, 4, 3, 2, 1, 0,
+        1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 3, 4, 3, 2, 1, 0,
+        1, 2,
+        4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
+        3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 3, 4, 3, 2, 1, 0,
+        1, 1,
+        4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
+        3, 4, 5, 6, 7, 8, 9, 10, 11, 12
+    ];
+    Chemistry.ELEMENT_SHELL = [
+        0,
+        2, 2,
+        8, 8, 8, 8, 8, 8, 8, 8,
+        8, 8, 8, 8, 8, 8, 8, 8,
+        8, 8, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 8, 8, 8, 8, 8, 8,
+        8, 8, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 8, 8, 8, 8, 8, 8,
+        8, 8,
+        18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18,
+        18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18,
+        8, 8,
+        18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18,
+        18, 18, 18, 18, 18, 18, 18, 18, 18, 18
+    ];
+    Chemistry.NATURAL_ATOMIC_WEIGHTS = [
+        0, 1.00794, 4.002602, 6.941, 9.012182, 10.811, 12.0107, 14.0067, 15.9994, 18.9984032, 20.1797,
+        22.989770, 24.3050, 26.981538, 28.0855, 30.973761, 32.065, 35.453, 39.948, 39.0983, 40.078,
+        44.955910, 47.867, 50.9415, 51.9961, 54.938049, 55.845, 58.933200, 58.6934, 63.546, 65.409,
+        69.723, 72.64, 74.92160, 78.96, 79.904, 83.798, 85.4678, 87.62, 88.90585, 91.224, 92.90638,
+        95.94, 98, 101.07, 102.90550, 106.42, 107.8682, 112.411, 114.818, 118.710, 121.760, 127.60,
+        126.90447, 131.293, 132.90545, 137.327, 138.9055, 140.116, 140.90765, 144.24, 145, 150.36,
+        151.964, 157.25, 158.92534, 162.500, 164.93032, 167.259, 168.93421, 173.04, 174.967, 178.49,
+        180.9479, 183.84, 186.207, 190.23, 192.217, 195.078, 196.96655, 200.59, 204.3833, 207.2, 208.98038,
+        209, 210, 222, 223, 226, 227, 230.0331266, 231.03588, 233.039628, 237, 244, 243, 247, 247, 251, 252, 257,
+        258, 259, 262, 261, 262, 266, 264, 277, 268, 271, 272, 285
+    ];
+    Chemistry.ELEMENT_H = 1;
+    Chemistry.ELEMENT_He = 2;
+    Chemistry.ELEMENT_Li = 3;
+    Chemistry.ELEMENT_Be = 4;
+    Chemistry.ELEMENT_B = 5;
+    Chemistry.ELEMENT_C = 6;
+    Chemistry.ELEMENT_N = 7;
+    Chemistry.ELEMENT_O = 8;
+    Chemistry.ELEMENT_F = 9;
+    Chemistry.ELEMENT_Ne = 10;
+    Chemistry.ELEMENT_Na = 11;
+    Chemistry.ELEMENT_Mg = 12;
+    Chemistry.ELEMENT_Al = 13;
+    Chemistry.ELEMENT_Si = 14;
+    Chemistry.ELEMENT_P = 15;
+    Chemistry.ELEMENT_S = 16;
+    Chemistry.ELEMENT_Cl = 17;
+    Chemistry.ELEMENT_Ar = 18;
+    Chemistry.ELEMENT_K = 19;
+    Chemistry.ELEMENT_Ca = 20;
+    Chemistry.ELEMENT_Sc = 21;
+    Chemistry.ELEMENT_Ti = 22;
+    Chemistry.ELEMENT_V = 23;
+    Chemistry.ELEMENT_Cr = 24;
+    Chemistry.ELEMENT_Mn = 25;
+    Chemistry.ELEMENT_Fe = 26;
+    Chemistry.ELEMENT_Co = 27;
+    Chemistry.ELEMENT_Ni = 28;
+    Chemistry.ELEMENT_Cu = 29;
+    Chemistry.ELEMENT_Zn = 30;
+    Chemistry.ELEMENT_Ga = 31;
+    Chemistry.ELEMENT_Ge = 32;
+    Chemistry.ELEMENT_As = 33;
+    Chemistry.ELEMENT_Se = 34;
+    Chemistry.ELEMENT_Br = 35;
+    Chemistry.ELEMENT_Kr = 36;
+    Chemistry.ELEMENT_Rb = 37;
+    Chemistry.ELEMENT_Sr = 38;
+    Chemistry.ELEMENT_Y = 39;
+    Chemistry.ELEMENT_Zr = 40;
+    Chemistry.ELEMENT_Nb = 41;
+    Chemistry.ELEMENT_Mo = 42;
+    Chemistry.ELEMENT_Tc = 43;
+    Chemistry.ELEMENT_Ru = 44;
+    Chemistry.ELEMENT_Rh = 45;
+    Chemistry.ELEMENT_Pd = 46;
+    Chemistry.ELEMENT_Ag = 47;
+    Chemistry.ELEMENT_Cd = 48;
+    Chemistry.ELEMENT_In = 49;
+    Chemistry.ELEMENT_Sn = 50;
+    Chemistry.ELEMENT_Sb = 51;
+    Chemistry.ELEMENT_Te = 52;
+    Chemistry.ELEMENT_I = 53;
+    Chemistry.ELEMENT_Xe = 54;
+    Chemistry.ELEMENT_Cs = 55;
+    Chemistry.ELEMENT_Ba = 56;
+    Chemistry.ELEMENT_La = 57;
+    Chemistry.ELEMENT_Ce = 58;
+    Chemistry.ELEMENT_Pr = 59;
+    Chemistry.ELEMENT_Nd = 60;
+    Chemistry.ELEMENT_Pm = 61;
+    Chemistry.ELEMENT_Sm = 62;
+    Chemistry.ELEMENT_Eu = 63;
+    Chemistry.ELEMENT_Gd = 64;
+    Chemistry.ELEMENT_Tb = 65;
+    Chemistry.ELEMENT_Dy = 66;
+    Chemistry.ELEMENT_Ho = 67;
+    Chemistry.ELEMENT_Er = 68;
+    Chemistry.ELEMENT_Tm = 69;
+    Chemistry.ELEMENT_Yb = 70;
+    Chemistry.ELEMENT_Lu = 71;
+    Chemistry.ELEMENT_Hf = 72;
+    Chemistry.ELEMENT_Ta = 73;
+    Chemistry.ELEMENT_W = 74;
+    Chemistry.ELEMENT_Re = 75;
+    Chemistry.ELEMENT_Os = 76;
+    Chemistry.ELEMENT_Ir = 77;
+    Chemistry.ELEMENT_Pt = 78;
+    Chemistry.ELEMENT_Au = 79;
+    Chemistry.ELEMENT_Hg = 80;
+    Chemistry.ELEMENT_Tl = 81;
+    Chemistry.ELEMENT_Pb = 82;
+    Chemistry.ELEMENT_Bi = 83;
+    Chemistry.ELEMENT_Po = 84;
+    Chemistry.ELEMENT_At = 85;
+    Chemistry.ELEMENT_Rn = 86;
+    Chemistry.ELEMENT_Fr = 87;
+    Chemistry.ELEMENT_Ra = 88;
+    Chemistry.ELEMENT_Ac = 89;
+    Chemistry.ELEMENT_Th = 90;
+    Chemistry.ELEMENT_Pa = 91;
+    Chemistry.ELEMENT_U = 92;
+    Chemistry.ELEMENT_Np = 93;
+    Chemistry.ELEMENT_Pu = 94;
+    Chemistry.ELEMENT_Am = 95;
+    Chemistry.ELEMENT_Cm = 96;
+    Chemistry.ELEMENT_Bk = 97;
+    Chemistry.ELEMENT_Cf = 98;
+    Chemistry.ELEMENT_Es = 99;
+    Chemistry.ELEMENT_Fm = 100;
+    Chemistry.ELEMENT_Md = 101;
+    Chemistry.ELEMENT_No = 102;
+    Chemistry.ELEMENT_Lr = 103;
+    Chemistry.ELEMENT_Rf = 104;
+    Chemistry.ELEMENT_Db = 105;
+    Chemistry.ELEMENT_Sg = 106;
+    Chemistry.ELEMENT_Bh = 107;
+    Chemistry.ELEMENT_Hs = 108;
+    Chemistry.ELEMENT_Mt = 109;
+    Chemistry.ELEMENT_Ds = 110;
+    Chemistry.ELEMENT_Rg = 111;
+    Chemistry.ELEMENT_Cn = 112;
+    return Chemistry;
+}());
+var Vec = (function () {
+    function Vec() {
+    }
+    Vec.anyTrue = function (arr) {
+        if (arr == null)
+            return false;
+        for (var _i = 0, arr_1 = arr; _i < arr_1.length; _i++) {
+            var v = arr_1[_i];
+            if (v)
+                return true;
+        }
+        return false;
+    };
+    Vec.allTrue = function (arr) {
+        if (arr == null)
+            return true;
+        for (var _i = 0, arr_2 = arr; _i < arr_2.length; _i++) {
+            var v = arr_2[_i];
+            if (!v)
+                return false;
+        }
+        return true;
+    };
+    Vec.anyFalse = function (arr) {
+        if (arr == null)
+            return false;
+        for (var _i = 0, arr_3 = arr; _i < arr_3.length; _i++) {
+            var v = arr_3[_i];
+            if (!v)
+                return true;
+        }
+        return false;
+    };
+    Vec.allFalse = function (arr) {
+        if (arr == null)
+            return true;
+        for (var _i = 0, arr_4 = arr; _i < arr_4.length; _i++) {
+            var v = arr_4[_i];
+            if (v)
+                return false;
+        }
+        return true;
+    };
+    Vec.booleanArray = function (val, sz) {
+        var arr = new Array(sz);
+        for (var n = sz - 1; n >= 0; n--)
+            arr[n] = val;
+        return arr;
+    };
+    Vec.numberArray = function (val, sz) {
+        var arr = new Array(sz);
+        for (var n = sz - 1; n >= 0; n--)
+            arr[n] = val;
+        return arr;
+    };
+    Vec.stringArray = function (val, sz) {
+        var arr = new Array(sz);
+        for (var n = sz - 1; n >= 0; n--)
+            arr[n] = val;
+        return arr;
+    };
+    Vec.min = function (arr) {
+        if (arr == null || arr.length == 0)
+            return Number.MAX_VALUE;
+        var v = arr[0];
+        for (var n = 1; n < arr.length; n++)
+            v = Math.min(v, arr[n]);
+        return v;
+    };
+    Vec.max = function (arr) {
+        if (arr == null || arr.length == 0)
+            return Number.MIN_VALUE;
+        var v = arr[0];
+        for (var n = 1; n < arr.length; n++)
+            v = Math.max(v, arr[n]);
+        return v;
+    };
+    Vec.setTo = function (arr, val) { for (var n = arr == null ? -1 : arr.length - 1; n >= 0; n--)
+        arr[n] = val; };
+    Vec.addTo = function (arr, val) { for (var n = arr == null ? -1 : arr.length - 1; n >= 0; n--)
+        arr[n] += val; };
+    Vec.mulBy = function (arr, val) { for (var n = arr == null ? -1 : arr.length - 1; n >= 0; n--)
+        arr[n] *= val; };
+    Vec.idxSort = function (arr) {
+        var idx = new Array(arr.length);
+        for (var n = 0; n < arr.length; n++)
+            idx[n] = n;
+        idx.sort(function (a, b) { return arr[a] < arr[b] ? -1 : arr[a] > arr[b] ? 1 : 0; });
+        return idx;
+    };
+    return Vec;
+}());
+var Atom = (function () {
+    function Atom() {
+    }
+    return Atom;
+}());
+var Bond = (function () {
+    function Bond() {
+    }
+    return Bond;
+}());
+var Molecule = (function () {
+    function Molecule() {
+        this.atoms = [];
+        this.bonds = [];
+        this.keepTransient = false;
+        this.hasTransient = false;
+        this.graph = null;
+        this.graphBond = null;
+        this.ringID = null;
+        this.compID = null;
+        this.ring3 = null;
+        this.ring4 = null;
+        this.ring5 = null;
+        this.ring6 = null;
+        this.ring7 = null;
+        this.setAtomElement = function (idx, element) {
+            this.getAtom(idx).element = element;
+            this.trashTransient();
+        };
+        this.setAtomPos = function (idx, x, y) {
+            var a = this.getAtom(idx);
+            a.x = x;
+            a.y = y;
+            this.trashTransient();
+        };
+        this.setAtomX = function (idx, x) {
+            this.getAtom(idx).x = x;
+            this.trashTransient();
+        };
+        this.setAtomY = function (idx, y) {
+            this.getAtom(idx).y = y;
+            this.trashTransient();
+        };
+        this.setAtomCharge = function (idx, charge) {
+            this.getAtom(idx).charge = charge;
+            this.trashTransient();
+        };
+        this.setAtomUnpaired = function (idx, unpaired) {
+            this.getAtom(idx).unpaired = unpaired;
+            this.trashTransient();
+        };
+        this.setAtomIsotope = function (idx, isotope) {
+            this.getAtom(idx).isotope = isotope;
+            this.trashTransient();
+        };
+        this.setAtomHExplicit = function (idx, hExplicit) {
+            this.getAtom(idx).hExplicit = hExplicit;
+            this.trashTransient();
+        };
+        this.setAtomMapNum = function (idx, mapNum) {
+            this.getAtom(idx).mapNum = mapNum;
+            this.trashTransient();
+        };
+        this.setAtomExtra = function (idx, extra) {
+            this.getAtom(idx).extra = extra.slice(0);
+        };
+        this.setAtomTransient = function (idx, transi) {
+            this.getAtom(idx).transient = transi.slice(0);
+            if (transi.length > 0)
+                this.hasTransient = true;
+        };
+    }
+    Molecule.prototype.clone = function () { return Molecule.fromString(this.toString()); };
+    Molecule.fromString = function (strData) { return MoleculeStream.readNative(strData); };
+    Molecule.prototype.toString = function () { return MoleculeStream.writeNative(this); };
+    Molecule.prototype.numAtoms = function () { return this.atoms.length; };
+    Molecule.prototype.getAtom = function (idx) {
+        if (idx < 1 || idx > this.atoms.length)
+            throw "Molecule.getAtom: index " + idx + " out of range (#atoms=" + this.atoms.length + ")";
+        ;
+        return this.atoms[idx - 1];
+    };
+    Molecule.prototype.atomElement = function (idx) { return this.getAtom(idx).element; };
+    Molecule.prototype.atomX = function (idx) { return this.getAtom(idx).x; };
+    Molecule.prototype.atomY = function (idx) { return this.getAtom(idx).y; };
+    Molecule.prototype.atomCharge = function (idx) { return this.getAtom(idx).charge; };
+    Molecule.prototype.atomUnpaired = function (idx) { return this.getAtom(idx).unpaired; };
+    Molecule.prototype.atomIsotope = function (idx) { return this.getAtom(idx).isotope; };
+    Molecule.prototype.atomHExplicit = function (idx) { return this.getAtom(idx).hExplicit; };
+    Molecule.prototype.atomMapNum = function (idx) { return this.getAtom(idx).mapNum; };
+    Molecule.prototype.atomExtra = function (idx) { return this.getAtom(idx).extra.slice(0); };
+    Molecule.prototype.atomTransient = function (idx) { return this.getAtom(idx).transient.slice(0); };
+    Molecule.prototype.numBonds = function () { return this.bonds.length; };
+    Molecule.prototype.getBond = function (idx) {
+        if (idx < 1 || idx > this.bonds.length)
+            throw "Molecule.getBond: index " + idx + " out of range (#bonds=" + this.bonds.length + ")";
+        ;
+        return this.bonds[idx - 1];
+    };
+    Molecule.prototype.bondFrom = function (idx) { return this.getBond(idx).from; };
+    Molecule.prototype.bondTo = function (idx) { return this.getBond(idx).to; };
+    Molecule.prototype.bondOrder = function (idx) { return this.getBond(idx).order; };
+    Molecule.prototype.bondType = function (idx) { return this.getBond(idx).type; };
+    Molecule.prototype.bondExtra = function (idx) { return this.getBond(idx).extra.slice(0); };
+    Molecule.prototype.bondTransient = function (idx) { return this.getBond(idx).transient.slice(0); };
+    Molecule.prototype.addAtom = function (element, x, y, charge, unpaired) {
+        if (charge === void 0) { charge = 0; }
+        if (unpaired === void 0) { unpaired = 0; }
+        var a = new Atom();
+        a.element = element;
+        a.x = x;
+        a.y = y;
+        a.charge = charge;
+        a.unpaired = unpaired;
+        a.isotope = Molecule.ISOTOPE_NATURAL;
+        a.hExplicit = Molecule.HEXPLICIT_UNKNOWN;
+        a.mapNum = 0;
+        a.extra = [];
+        a.transient = [];
+        this.atoms.push(a);
+        this.trashTransient();
+        this.trashGraph();
+        return this.atoms.length;
+    };
+    Molecule.prototype.addBond = function (from, to, order, type) {
+        if (type === void 0) { type = Molecule.BONDTYPE_NORMAL; }
+        var b = new Bond();
+        b.from = from;
+        b.to = to;
+        b.order = order;
+        b.type = type;
+        b.extra = [];
+        b.transient = [];
+        this.bonds.push(b);
+        this.trashTransient();
+        this.trashGraph();
+        return this.bonds.length;
+    };
+    Molecule.prototype.setBondFrom = function (idx, from) {
+        this.getBond(idx).from = from;
+        this.trashTransient();
+        this.trashGraph();
+    };
+    Molecule.prototype.setBondTo = function (idx, to) {
+        this.getBond(idx).to = to;
+        this.trashTransient();
+        this.trashGraph();
+    };
+    Molecule.prototype.setBondOrder = function (idx, order) {
+        this.getBond(idx).order = order;
+        this.trashTransient();
+    };
+    Molecule.prototype.setBondType = function (idx, type) {
+        this.getBond(idx).type = type;
+        this.trashTransient();
+    };
+    Molecule.prototype.setBondExtra = function (idx, extra) {
+        this.getBond(idx).extra = extra.slice(0);
+    };
+    Molecule.prototype.setBondTransient = function (idx, transi) {
+        this.getBond(idx).transient = transi.slice(0);
+        if (transi.length > 0)
+            this.hasTransient = true;
+    };
+    Molecule.prototype.deleteAtomAndBonds = function (idx) {
+        for (var n = this.numBonds(); n >= 1; n--) {
+            if (this.bondFrom(n) == idx || this.bondTo(n) == idx)
+                this.deleteBond(n);
+            else {
+                if (this.bondFrom(n) > idx)
+                    this.setBondFrom(n, this.bondFrom(n) - 1);
+                if (this.bondTo(n) > idx)
+                    this.setBondTo(n, this.bondTo(n) - 1);
+            }
+        }
+        this.atoms.splice(idx - 1, 1);
+        this.trashTransient();
+        this.trashGraph();
+    };
+    Molecule.prototype.deleteBond = function (idx) {
+        this.bonds.splice(idx - 1, 1);
+        this.trashTransient();
+        this.trashGraph();
+    };
+    Molecule.prototype.atomHydrogens = function (idx) {
+        var HYVALENCE_EL = ['C', 'N', 'O', 'S', 'P'];
+        var HYVALENCE_VAL = [4, 3, 2, 2, 3];
+        var hy = this.atomHExplicit(idx);
+        if (hy != Molecule.HEXPLICIT_UNKNOWN)
+            return hy;
+        for (var n = 0; n < HYVALENCE_EL.length; n++)
+            if (HYVALENCE_EL[n] == this.atomElement(idx)) {
+                hy = HYVALENCE_VAL[n];
+                break;
+            }
+        if (hy == Molecule.HEXPLICIT_UNKNOWN)
+            return 0;
+        var ch = this.atomCharge(idx);
+        if (this.atomElement(idx) == 'C')
+            ch = -Math.abs(ch);
+        hy += ch - this.atomUnpaired(idx);
+        var adjBonds = this.atomAdjBonds(idx);
+        for (var n = 0; n < adjBonds.length; n++)
+            hy -= this.bondOrder(adjBonds[n]);
+        return hy < 0 ? 0 : hy;
+    };
+    Molecule.prototype.findBond = function (a1, a2) {
+        for (var n = 1; n <= this.numBonds(); n++) {
+            var b1 = this.bondFrom(n), b2 = this.bondTo(n);
+            if ((a1 == b1 && a2 == b2) || (a1 == b2 && a2 == b1))
+                return n;
+        }
+        return 0;
+    };
+    Molecule.prototype.bondOther = function (idx, ref) {
+        var b1 = this.bondFrom(idx), b2 = this.bondTo(idx);
+        if (b1 == ref)
+            return b2;
+        if (b2 == ref)
+            return b1;
+        return 0;
+    };
+    Molecule.prototype.atomExplicit = function (idx) {
+        var a = this.atoms[idx - 1];
+        if (a.isotope != Molecule.ISOTOPE_NATURAL)
+            return true;
+        if (a.element != 'C' || a.charge != 0 || a.unpaired != 0)
+            return true;
+        if (this.atomAdjCount(idx) == 0)
+            return true;
+        return false;
+    };
+    Molecule.prototype.atomRingBlock = function (idx) {
+        if (this.graph == null)
+            this.buildGraph();
+        if (this.ringID == null)
+            this.buildRingID();
+        return this.ringID[idx - 1];
+    };
+    Molecule.prototype.bondInRing = function (idx) {
+        var r1 = this.atomRingBlock(this.bondFrom(idx)), r2 = this.atomRingBlock(this.bondTo(idx));
+        return r1 > 0 && r1 == r2;
+    };
+    Molecule.prototype.atomConnComp = function (idx) {
+        if (this.graph == null)
+            this.buildGraph();
+        if (this.compID == null)
+            this.buildConnComp();
+        return this.compID[idx - 1];
+    };
+    Molecule.prototype.atomAdjCount = function (idx) {
+        this.buildGraph();
+        return this.graph[idx - 1].length;
+    };
+    Molecule.prototype.atomAdjList = function (idx) {
+        this.buildGraph();
+        var adj = this.graph[idx - 1].slice(0);
+        for (var n = adj.length - 1; n >= 0; n--)
+            adj[n]++;
+        return adj;
+    };
+    Molecule.prototype.atomAdjBonds = function (idx) {
+        this.buildGraph();
+        return this.graphBond[idx - 1].slice(0);
+    };
+    Molecule.prototype.findRingsOfSize = function (size) {
+        var rings = null;
+        if (size == 3 && this.ring3 != null)
+            rings = this.ring3;
+        if (size == 4 && this.ring4 != null)
+            rings = this.ring4;
+        if (size == 5 && this.ring5 != null)
+            rings = this.ring5;
+        if (size == 6 && this.ring6 != null)
+            rings = this.ring6;
+        if (size == 7 && this.ring7 != null)
+            rings = this.ring7;
+        if (rings == null) {
+            if (this.graph == null)
+                this.buildGraph();
+            if (this.ringID == null)
+                this.buildRingID();
+            rings = [];
+            for (var n = 1; n <= this.atoms.length; n++) {
+                if (this.ringID[n - 1] > 0) {
+                    var path = Vec.numberArray(0, size);
+                    path[0] = n;
+                    this.recursiveRingFind(path, 1, size, this.ringID[n - 1], rings);
+                }
+            }
+            if (size == 3)
+                this.ring3 = rings;
+            if (size == 4)
+                this.ring4 = rings;
+            if (size == 5)
+                this.ring5 = rings;
+            if (size == 6)
+                this.ring6 = rings;
+            if (size == 7)
+                this.ring7 = rings;
+        }
+        var ret = [];
+        for (var n = 0; n < rings.length; n++)
+            ret.push(rings[n].slice(0));
+        return ret;
+    };
+    Molecule.prototype.boundary = function () {
+        if (this.atoms.length == 0)
+            return Box.zero();
+        var x1 = this.atoms[0].x, x2 = x1;
+        var y1 = this.atoms[0].y, y2 = y1;
+        for (var n = 1; n < this.atoms.length; n++) {
+            x1 = Math.min(x1, this.atoms[n].x);
+            y1 = Math.min(y1, this.atoms[n].y);
+            x2 = Math.max(x2, this.atoms[n].x);
+            y2 = Math.max(y2, this.atoms[n].y);
+        }
+        return new Box(x1, y1, x2 - x1, y2 - y1);
+    };
+    Molecule.prototype.atomicNumber = function (idx) {
+        return Molecule.atomicNumber(this.atomElement(idx));
+    };
+    Molecule.atomicNumber = function (element) {
+        return Math.max(0, Chemistry.ELEMENTS.indexOf(element));
+    };
+    Molecule.prototype.compareTo = function (other) {
+        if (other == null || other.numAtoms() == 0)
+            return this.numAtoms() == 0 ? 0 : 1;
+        if (this.numAtoms() < other.numAtoms())
+            return -1;
+        if (this.numAtoms() > other.numAtoms())
+            return 1;
+        if (this.numBonds() < other.numBonds())
+            return -1;
+        if (this.numBonds() > other.numBonds())
+            return 1;
+        for (var n = 1; n <= this.numAtoms(); n++) {
+            if (this.atomElement(n) < other.atomElement(n))
+                return -1;
+            if (this.atomElement(n) > other.atomElement(n))
+                return 1;
+            if (this.atomX(n) < other.atomX(n))
+                return -1;
+            if (this.atomX(n) > other.atomX(n))
+                return 1;
+            if (this.atomY(n) < other.atomY(n))
+                return -1;
+            if (this.atomY(n) > other.atomY(n))
+                return 1;
+            if (this.atomCharge(n) < other.atomCharge(n))
+                return -1;
+            if (this.atomCharge(n) > other.atomCharge(n))
+                return 1;
+            if (this.atomUnpaired(n) < other.atomUnpaired(n))
+                return -1;
+            if (this.atomUnpaired(n) > other.atomUnpaired(n))
+                return 1;
+            if (this.atomHExplicit(n) < other.atomHExplicit(n))
+                return -1;
+            if (this.atomHExplicit(n) > other.atomHExplicit(n))
+                return 1;
+            if (this.atomIsotope(n) < other.atomIsotope(n))
+                return -1;
+            if (this.atomIsotope(n) > other.atomIsotope(n))
+                return 1;
+            if (this.atomMapNum(n) < other.atomMapNum(n))
+                return -1;
+            if (this.atomMapNum(n) > other.atomMapNum(n))
+                return 1;
+            var tx1 = this.atomExtra(n), tx2 = other.atomExtra(n);
+            if (tx1.length < tx2.length)
+                return -1;
+            if (tx1.length > tx2.length)
+                return 1;
+            for (var i = 0; i < tx1.length; i++)
+                if (tx1[i] < tx2[i])
+                    return -1;
+                else if (tx1[i] > tx2[i])
+                    return 1;
+            tx1 = this.atomTransient(n);
+            tx2 = other.atomTransient(n);
+            if (tx1.length < tx2.length)
+                return -1;
+            if (tx1.length > tx2.length)
+                return 1;
+            for (var i = 0; i < tx1.length; i++)
+                if (tx1[i] < tx2[i])
+                    return -1;
+                else if (tx1[i] > tx2[i])
+                    return 1;
+        }
+        for (var n = 1; n <= this.numBonds(); n++) {
+            if (this.bondFrom(n) < other.bondFrom(n))
+                return -1;
+            if (this.bondFrom(n) > other.bondFrom(n))
+                return 1;
+            if (this.bondTo(n) < other.bondTo(n))
+                return -1;
+            if (this.bondTo(n) > other.bondTo(n))
+                return 1;
+            if (this.bondOrder(n) < other.bondOrder(n))
+                return -1;
+            if (this.bondOrder(n) > other.bondOrder(n))
+                return 1;
+            if (this.bondType(n) < other.bondType(n))
+                return -1;
+            if (this.bondType(n) > other.bondType(n))
+                return 1;
+            var tx1 = this.bondExtra(n), tx2 = other.bondExtra(n);
+            if (tx1.length < tx2.length)
+                return -1;
+            if (tx1.length > tx2.length)
+                return 1;
+            for (var i = 0; i < tx1.length; i++)
+                if (tx1[i] < tx2[i])
+                    return -1;
+                else if (tx1[i] > tx2[i])
+                    return 1;
+            tx1 = this.bondTransient(n);
+            tx2 = other.bondTransient(n);
+            if (tx1.length < tx2.length)
+                return -1;
+            if (tx1.length > tx2.length)
+                return 1;
+            for (var i = 0; i < tx1.length; i++)
+                if (tx1[i] < tx2[i])
+                    return -1;
+                else if (tx1[i] > tx2[i])
+                    return 1;
+        }
+        return 0;
+    };
+    Molecule.prototype.trashGraph = function () {
+        this.graph = null;
+        this.graphBond = null;
+    };
+    Molecule.prototype.trashTransient = function () {
+        if (this.keepTransient || !this.hasTransient)
+            return;
+        for (var _i = 0, _a = this.atoms; _i < _a.length; _i++) {
+            var a = _a[_i];
+            a.transient = [];
+        }
+        for (var _b = 0, _c = this.bonds; _b < _c.length; _b++) {
+            var b = _c[_b];
+            b.transient = [];
+        }
+        this.hasTransient = false;
+    };
+    Molecule.prototype.buildGraph = function () {
+        if (this.graph != null && this.graphBond != null)
+            return;
+        var graph = [], graphBond = [];
+        var na = this.numAtoms(), nb = this.numBonds();
+        for (var n = 0; n < na; n++) {
+            graph.push([]);
+            graphBond.push([]);
+        }
+        for (var n = 1; n <= nb; n++) {
+            var b = this.getBond(n);
+            graph[b.from - 1].push(b.to - 1);
+            graph[b.to - 1].push(b.from - 1);
+            graphBond[b.from - 1].push(n);
+            graphBond[b.to - 1].push(n);
+        }
+        this.graph = graph;
+        this.graphBond = graphBond;
+    };
+    Molecule.prototype.buildConnComp = function () {
+        var numAtoms = this.atoms.length;
+        this.compID = Vec.numberArray(0, numAtoms);
+        for (var n = 0; n < numAtoms; n++)
+            this.compID[n] = 0;
+        var comp = 1;
+        this.compID[0] = comp;
+        while (true) {
+            var anything = false;
+            for (var n = 0; n < numAtoms; n++)
+                if (this.compID[n] == comp) {
+                    for (var i = 0; i < this.graph[n].length; i++) {
+                        if (this.compID[this.graph[n][i]] == 0) {
+                            this.compID[this.graph[n][i]] = comp;
+                            anything = true;
+                        }
+                    }
+                }
+            if (!anything) {
+                for (var n = 0; n < numAtoms; n++) {
+                    if (this.compID[n] == 0) {
+                        this.compID[n] = ++comp;
+                        anything = true;
+                        break;
+                    }
+                }
+                if (!anything)
+                    break;
+            }
+        }
+    };
+    Molecule.prototype.buildRingID = function () {
+        var numAtoms = this.atoms.length;
+        this.ringID = Vec.numberArray(0, numAtoms);
+        if (numAtoms == 0)
+            return;
+        var visited = Vec.booleanArray(false, numAtoms);
+        for (var n = 0; n < numAtoms; n++) {
+            this.ringID[n] = 0;
+            visited[n] = false;
+        }
+        var path = Vec.numberArray(0, numAtoms + 1), plen = 0, numVisited = 0;
+        while (true) {
+            var last = void 0, current = void 0;
+            if (plen == 0) {
+                last = -1;
+                for (current = 0; visited[current]; current++) { }
+            }
+            else {
+                last = path[plen - 1];
+                current = -1;
+                for (var n = 0; n < this.graph[last].length; n++) {
+                    if (!visited[this.graph[last][n]]) {
+                        current = this.graph[last][n];
+                        break;
+                    }
+                }
+            }
+            if (current >= 0 && plen >= 2) {
+                var back = path[plen - 1];
+                for (var n = 0; n < this.graph[current].length; n++) {
+                    var join = this.graph[current][n];
+                    if (join != back && visited[join]) {
+                        path[plen] = current;
+                        for (var i = plen; i == plen || path[i + 1] != join; i--) {
+                            var id = this.ringID[path[i]];
+                            if (id == 0)
+                                this.ringID[path[i]] = last;
+                            else if (id != last) {
+                                for (var j = 0; j < numAtoms; j++)
+                                    if (this.ringID[j] == id)
+                                        this.ringID[j] = last;
+                            }
+                        }
+                    }
+                }
+            }
+            if (current >= 0) {
+                visited[current] = true;
+                path[plen++] = current;
+                numVisited++;
+            }
+            else {
+                plen--;
+            }
+            if (numVisited == numAtoms)
+                break;
+        }
+        var nextID = 0;
+        for (var i = 0; i < numAtoms; i++) {
+            if (this.ringID[i] > 0) {
+                nextID--;
+                for (var j = numAtoms - 1; j >= i; j--)
+                    if (this.ringID[j] == this.ringID[i])
+                        this.ringID[j] = nextID;
+            }
+        }
+        for (var i = 0; i < numAtoms; i++)
+            this.ringID[i] = -this.ringID[i];
+    };
+    Molecule.prototype.recursiveRingFind = function (path, psize, capacity, rblk, rings) {
+        if (psize < capacity) {
+            var last_1 = path[psize - 1];
+            for (var n = 0; n < this.graph[last_1 - 1].length; n++) {
+                var adj = this.graph[last_1 - 1][n] + 1;
+                if (this.ringID[adj - 1] != rblk)
+                    continue;
+                var fnd_1 = false;
+                for (var i = 0; i < psize; i++) {
+                    if (path[i] == adj) {
+                        fnd_1 = true;
+                        break;
+                    }
+                }
+                if (!fnd_1) {
+                    var newPath = path.slice(0);
+                    newPath[psize] = adj;
+                    this.recursiveRingFind(newPath, psize + 1, capacity, rblk, rings);
+                }
+            }
+            return;
+        }
+        var last = path[psize - 1];
+        var fnd = false;
+        for (var n = 0; n < this.graph[last - 1].length; n++) {
+            if (this.graph[last - 1][n] + 1 == path[0]) {
+                fnd = true;
+                break;
+            }
+        }
+        if (!fnd)
+            return;
+        for (var n = 0; n < path.length; n++) {
+            var count = 0, p = path[n] - 1;
+            for (var i = 0; i < this.graph[p].length; i++)
+                if (path.indexOf(this.graph[p][i] + 1) >= 0)
+                    count++;
+            if (count != 2)
+                return;
+        }
+        var first = 0;
+        for (var n = 1; n < psize; n++)
+            if (path[n] < path[first])
+                first = n;
+        var fm = (first - 1 + psize) % psize, fp = (first + 1) % psize;
+        var flip = path[fm] < path[fp];
+        if (first != 0 || flip) {
+            var newPath = Vec.numberArray(0, psize);
+            for (var n = 0; n < psize; n++)
+                newPath[n] = path[(first + (flip ? psize - n : n)) % psize];
+            path = newPath;
+        }
+        for (var n = 0; n < rings.length; n++) {
+            var look = rings[n];
+            var same = true;
+            for (var i = 0; i < psize; i++) {
+                if (look[i] != path[i]) {
+                    same = false;
+                    break;
+                }
+            }
+            if (same)
+                return;
+        }
+        rings.push(path);
+    };
+    Molecule.IDEALBOND = 1.5;
+    Molecule.HEXPLICIT_UNKNOWN = -1;
+    Molecule.ISOTOPE_NATURAL = 0;
+    Molecule.BONDTYPE_NORMAL = 0;
+    Molecule.BONDTYPE_INCLINED = 1;
+    Molecule.BONDTYPE_DECLINED = 2;
+    Molecule.BONDTYPE_UNKNOWN = 3;
+    return Molecule;
+}());
+var MolUtil = (function () {
+    function MolUtil() {
+    }
+    MolUtil.isBlank = function (mol) {
+        return mol == null || mol.numAtoms() == 0;
+    };
+    MolUtil.notBlank = function (mol) {
+        return mol != null || mol.numAtoms() > 0;
+    };
+    MolUtil.arrayAtomX = function (mol) {
+        var x = Vec.numberArray(0, mol.numAtoms());
+        for (var n = x.length - 1; n >= 0; n--)
+            x[n] = mol.atomX(n + 1);
+        return x;
+    };
+    MolUtil.arrayAtomY = function (mol) {
+        var y = Vec.numberArray(0, mol.numAtoms());
+        for (var n = y.length - 1; n >= 0; n--)
+            y[n] = mol.atomY(n + 1);
+        return y;
+    };
+    MolUtil.TEMPLATE_ATTACHMENT = "X";
+    MolUtil.ABBREV_ATTACHMENT = "*";
+    return MolUtil;
+}());
+function newElement(parent, tag, attr) {
+    var el = $("<" + tag + ">");
+    if (attr)
+        el.attr(attr);
+    $(parent).append(el);
+    return el[0];
+}
+function addText(parent, text) {
+    var el = parent instanceof jQuery ? parent[0] : parent;
+    el.appendChild(document.createTextNode(text));
+}
+function setVisible(node, visible) {
+    if (visible)
+        $(node).show();
+    else
+        $(node).hide();
+}
+function plural(count) {
+    return count == 1 ? '' : 's';
+}
+function colourCode(col) {
+    var hex = (col & 0xFFFFFF).toString(16);
+    while (hex.length < 6)
+        hex = '0' + hex;
+    return '#' + hex;
+}
+function colourAlpha(col) {
+    var transp = (col >>> 24) & 0xFF;
+    return transp == 0 ? 1 : transp == 0xFF ? 0 : 1 - (transp * (1.0 / 255));
+}
+var ONE_OVER_255 = 1.0 / 255;
+function colourCanvas(col) {
+    if (col == 0xFFFFFF)
+        return 'white';
+    if (col == 0x000000)
+        return 'black';
+    if (col == -1)
+        return undefined;
+    if (col >= 0 && col <= 0xFFFFFF)
+        return colourCode(col);
+    var t = ((col >> 24) & 0xFF) * ONE_OVER_255;
+    var r = ((col >> 16) & 0xFF);
+    var g = ((col >> 8) & 0xFF);
+    var b = (col & 0xFF);
+    return 'rgba(' + r + ',' + g + ',' + b + ',' + (1 - t) + ')';
+}
+function nodeText(node) {
+    var ret = '';
+    if (!node)
+        return;
+    node = node.firstChild;
+    while (node) {
+        if (node.nodeType == 3 || node.nodeType == 4)
+            ret += node.nodeValue;
+        node = node.nextSibling;
+    }
+    return ret;
+}
+function isDef(v) {
+    return !(v === null || typeof v === 'undefined');
+}
+function notDef(v) {
+    return v === null || typeof v === 'undefined';
+}
+function eventCoords(event, container) {
+    var parentOffset = $(container).offset();
+    var relX = event.pageX - parentOffset.left;
+    var relY = event.pageY - parentOffset.top;
+    return [relX, relY];
+}
+function norm_xy(dx, dy) {
+    return Math.sqrt(dx * dx + dy * dy);
+}
+function norm_xyz(dx, dy, dz) {
+    return Math.sqrt(dx * dx + dy * dy + dz * dz);
+}
+function norm2_xy(dx, dy) {
+    return dx * dx + dy * dy;
+}
+function norm2_xyz(dx, dy, dz) {
+    return dx * dx + dy * dy + dz * dz;
+}
+function sqr(v) {
+    return v * v;
+}
+function realEqual(v1, v2) { return v1 == v2 || Math.abs(v1 - v2) <= 1E-14 * Math.max(v1, v2); }
+var TWOPI = 2 * Math.PI;
+var INV_TWOPI = 1.0 / TWOPI;
+var DEGRAD = Math.PI / 180;
+var RADDEG = 180 / Math.PI;
+function angleNorm(th) {
+    if (th == -Math.PI)
+        return Math.PI;
+    if (th < -Math.PI) {
+        var mod = Math.ceil((-th - Math.PI) * INV_TWOPI);
+        return th + mod * TWOPI;
+    }
+    if (th > Math.PI) {
+        var mod = Math.ceil((th - Math.PI) * INV_TWOPI);
+        return th - mod * TWOPI;
+    }
+    return th;
+}
+function angleDiff(th1, th2) {
+    var theta = angleNorm(th1) - angleNorm(th2);
+    return theta - (theta > Math.PI ? TWOPI : 0) + (theta <= -Math.PI ? TWOPI : 0);
+}
+function angleDiffPos(th1, th2) {
+    var theta = angleNorm(th1) - angleNorm(th2);
+    return theta + (theta < 0 ? TWOPI : 0);
+}
+function sortAngles(theta) {
+    if (theta == null || theta.length < 2)
+        return theta;
+    theta = theta.slice(0);
+    for (var n = 0; n < theta.length; n++)
+        theta[n] = angleNorm(theta[n]);
+    theta.sort();
+    while (true) {
+        var a = theta[theta.length - 1], b = theta[0], c = theta[1];
+        if (angleDiff(b, a) <= angleDiff(c, b))
+            break;
+        for (var n = theta.length - 1; n > 0; n--)
+            theta[n] = theta[n - 1];
+        theta[0] = a;
+    }
+    return theta;
+}
+function uniqueAngles(theta, threshold) {
+    theta = sortAngles(theta);
+    for (var n = 1; n < theta.length; n++) {
+        if (Math.abs(angleDiff(theta[n], theta[n - 1])) <= threshold) {
+            theta.splice(n, 1);
+            n--;
+        }
+    }
+    return theta;
+}
+function minArray(a) {
+    if (a == null || a.length == 0)
+        return 0;
+    var v = a[0];
+    for (var n = 1; n < a.length; n++)
+        v = Math.min(v, a[n]);
+    return v;
+}
+function maxArray(a) {
+    if (a == null || a.length == 0)
+        return 0;
+    var v = a[0];
+    for (var n = 1; n < a.length; n++)
+        v = Math.max(v, a[n]);
+    return v;
+}
+function findNode(parent, name) {
+    if (parent == null)
+        return null;
+    var node = parent.firstChild;
+    while (node) {
+        if (node.nodeType == Node.ELEMENT_NODE && node.nodeName == name)
+            return node;
+        node = node.nextSibling;
+    }
+    return null;
+}
+function findNodes(parent, name) {
+    if (parent == null)
+        return null;
+    var node = parent.firstChild;
+    var list = [];
+    while (node) {
+        if (node.nodeType == Node.ELEMENT_NODE && node.nodeName == name)
+            list.push(node);
+        node = node.nextSibling;
+    }
+    return list;
+}
+function pathRoundedRect(x1, y1, x2, y2, rad) {
+    var path = new Path2D();
+    path.moveTo(x2 - rad, y1);
+    path.quadraticCurveTo(x2, y1, x2, y1 + rad);
+    path.lineTo(x2, y2 - rad);
+    path.quadraticCurveTo(x2, y2, x2 - rad, y2);
+    path.lineTo(x1 + rad, y2);
+    path.quadraticCurveTo(x1, y2, x1, y2 - rad);
+    path.lineTo(x1, y1 + rad);
+    path.quadraticCurveTo(x1, y1, x1 + rad, y1);
+    path.closePath();
+    return path;
+}
+function drawLine(ctx, x1, y1, x2, y2) {
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.stroke();
+}
+var ASCENT_FUDGE = 1.4;
+function fontSansSerif(ascent) { return ascent * ASCENT_FUDGE + "px sans"; }
+function pixelDensity() {
+    if ('devicePixelRatio' in window && window.devicePixelRatio > 1)
+        return window.devicePixelRatio;
+    return 1;
+}
+function clone(obj) {
+    var dup = {};
+    for (var key in obj)
+        dup[key] = obj[key];
+    return dup;
+}
+function escapeHTML(text) {
+    if (!text)
+        return '';
+    var map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+    return text.replace(/[&<>"']/g, function (m) { return map[m]; });
+}
+var CoordUtil = (function () {
+    function CoordUtil() {
+    }
+    CoordUtil.congestionPoint = function (mol, x, y, approach) {
+        if (approach == null)
+            approach = 1E-5;
+        var score = 0;
+        var na = mol.numAtoms();
+        for (var n = 1; n <= na; n++)
+            score += 1.0 / (approach + norm2_xy(mol.atomX(n) - x, mol.atomY(n) - y));
+        return score;
+    };
+    CoordUtil.congestionMolecule = function (mol, approach) {
+        if (approach == null)
+            approach = 1E-5;
+        var score = 0;
+        var na = mol.numAtoms();
+        var mx = MolUtil.arrayAtomX(mol), my = MolUtil.arrayAtomY(mol);
+        for (var i = 0; i < na - 1; i++)
+            for (var j = i + 1; j < na; j++)
+                score += 1.0 / (approach + norm2_xy(mx[i] - mx[j], my[i] - my[j]));
+        return score;
+    };
+    CoordUtil.OVERLAP_THRESHOLD = 0.2;
+    CoordUtil.OVERLAP_THRESHOLD_SQ = CoordUtil.OVERLAP_THRESHOLD * CoordUtil.OVERLAP_THRESHOLD;
+    return CoordUtil;
+}());
 var DataSheet = (function () {
     function DataSheet(data) {
         if (!data)
@@ -523,1033 +1876,6 @@ var FormatList = (function () {
     };
     return FormatList;
 }());
-var MoleculeStream = (function () {
-    function MoleculeStream() {
-    }
-    MoleculeStream.readNative = function (strData) {
-        var mol = new Molecule();
-        mol.keepTransient = true;
-        var lines = strData.split(/\r?\n/);
-        if (lines.length < 2)
-            return null;
-        if (!lines[0].startsWith('SketchEl!') && lines.length >= 4 && lines[3].indexOf('V2000') >= 0) {
-            var i = strData.indexOf('SketchEl!');
-            if (i < 0)
-                return null;
-            lines = strData.substring(i).split(/r?\n/);
-        }
-        var bits = lines[0].match(/^SketchEl\!\((\d+)\,(\d+)\)/);
-        if (!bits)
-            return null;
-        var numAtoms = parseInt(bits[1]), numBonds = parseInt(bits[2]);
-        if (lines.length < 2 + numAtoms + numBonds)
-            return null;
-        if (!lines[1 + numAtoms + numBonds].match(/^!End/))
-            return null;
-        for (var n = 0; n < numAtoms; n++) {
-            bits = lines[1 + n].split(/[=,;]/);
-            var num = mol.addAtom(bits[0], parseFloat(bits[1]), parseFloat(bits[2]), parseInt(bits[3]), parseInt(bits[4]));
-            var extra = [], trans = [];
-            for (var i = 5; i < bits.length; i++) {
-                var ch = bits[i].charAt(0);
-                if (bits[i].charAt(0) == 'i') { }
-                else if (bits[i].charAt(0) == 'e')
-                    mol.setAtomHExplicit(num, parseInt(bits[i].substring(1)));
-                else if (bits[i].charAt(0) == 'm')
-                    mol.setAtomIsotope(num, parseInt(bits[i].substring(1)));
-                else if (bits[i].charAt(0) == 'n')
-                    mol.setAtomMapNum(num, parseInt(bits[i].substring(1)));
-                else if (bits[i].charAt(0) == 'x')
-                    extra.push(MoleculeStream.sk_unescape(bits[i]));
-                else if (bits[i].charAt(0) == 'y')
-                    trans.push(MoleculeStream.sk_unescape(bits[i]));
-                else
-                    extra.push(MoleculeStream.sk_unescape(bits[i]));
-            }
-            mol.setAtomExtra(num, extra);
-            mol.setAtomTransient(num, trans);
-        }
-        for (var n = 0; n < numBonds; n++) {
-            bits = lines[1 + numAtoms + n].split(/[-=,]/);
-            var num = mol.addBond(parseInt(bits[0]), parseInt(bits[1]), parseInt(bits[2]), parseInt(bits[3]));
-            var extra = new Array(), trans = new Array();
-            for (var i = 4; i < bits.length; i++) {
-                var ch = bits[i].charAt(0);
-                if (bits[i].charAt(0) == 'x')
-                    extra.push(MoleculeStream.sk_unescape(bits[i]));
-                else if (bits[i].charAt(0) == 'y')
-                    trans.push(MoleculeStream.sk_unescape(bits[i]));
-                else
-                    extra.push(MoleculeStream.sk_unescape(bits[i]));
-            }
-            mol.setBondExtra(num, extra);
-            mol.setBondTransient(num, trans);
-        }
-        mol.keepTransient = false;
-        return mol;
-    };
-    MoleculeStream.writeNative = function (mol) {
-        var ret = 'SketchEl!(' + mol.numAtoms() + ',' + mol.numBonds() + ')\n';
-        for (var n = 1; n <= mol.numAtoms(); n++) {
-            var el = mol.atomElement(n), x = mol.atomX(n), y = mol.atomY(n), charge = mol.atomCharge(n), unpaired = mol.atomUnpaired(n);
-            var hy = mol.atomHExplicit(n) != Molecule.HEXPLICIT_UNKNOWN ? ('e' + mol.atomHExplicit(n)) : ('i' + mol.atomHydrogens(n));
-            ret += MoleculeStream.sk_escape(el) + '=' + x.toFixed(4) + ',' + y.toFixed(4) + ';' + charge + ',' + unpaired + ',' + hy;
-            if (mol.atomIsotope(n) != Molecule.ISOTOPE_NATURAL)
-                ret += ',m' + mol.atomIsotope(n);
-            if (mol.atomMapNum(n) > 0)
-                ret += ',n' + mol.atomMapNum(n);
-            ret += MoleculeStream.sk_encodeExtra(mol.atomExtra(n));
-            ret += MoleculeStream.sk_encodeExtra(mol.atomTransient(n));
-            ret += '\n';
-        }
-        for (var n = 1; n <= mol.numBonds(); n++) {
-            ret += mol.bondFrom(n) + '-' + mol.bondTo(n) + '=' + mol.bondOrder(n) + ',' + mol.bondType(n);
-            ret += MoleculeStream.sk_encodeExtra(mol.bondExtra(n));
-            ret += MoleculeStream.sk_encodeExtra(mol.bondTransient(n));
-            ret += '\n';
-        }
-        ret += '!End\n';
-        return ret;
-    };
-    ;
-    MoleculeStream.sk_unescape = function (str) {
-        var ret = '', match;
-        while (match = str.match(/^(.*?)\\([0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f])(.*)/)) {
-            ret += match[1] + String.fromCharCode(parseInt("0x" + match[2]));
-            str = match[3];
-        }
-        return ret + str;
-    };
-    ;
-    MoleculeStream.sk_escape = function (str) {
-        var ret = '';
-        for (var n = 0; n < str.length; n++) {
-            var ch = str.charAt(n), code = str.charCodeAt(n);
-            if (code <= 32 || code > 127 || ch == '\\' || ch == ',' || ch == ';' || ch == '=') {
-                var hex = (code & 0xFFFF).toString(16).toUpperCase();
-                ret += '\\';
-                for (var i = 4 - hex.length; i > 0; i--)
-                    ret += '0';
-                ret += hex;
-            }
-            else
-                ret += ch;
-        }
-        return ret;
-    };
-    ;
-    MoleculeStream.sk_encodeExtra = function (extra) {
-        var ret = '';
-        for (var n = 0; n < extra.length; n++)
-            ret += ',' + MoleculeStream.sk_escape(extra[n]);
-        return ret;
-    };
-    ;
-    return MoleculeStream;
-}());
-var Vec = (function () {
-    function Vec() {
-    }
-    Vec.anyTrue = function (arr) {
-        if (arr == null)
-            return false;
-        for (var _i = 0, arr_1 = arr; _i < arr_1.length; _i++) {
-            var v = arr_1[_i];
-            if (v)
-                return true;
-        }
-        return false;
-    };
-    Vec.allTrue = function (arr) {
-        if (arr == null)
-            return true;
-        for (var _i = 0, arr_2 = arr; _i < arr_2.length; _i++) {
-            var v = arr_2[_i];
-            if (!v)
-                return false;
-        }
-        return true;
-    };
-    Vec.anyFalse = function (arr) {
-        if (arr == null)
-            return false;
-        for (var _i = 0, arr_3 = arr; _i < arr_3.length; _i++) {
-            var v = arr_3[_i];
-            if (!v)
-                return true;
-        }
-        return false;
-    };
-    Vec.allFalse = function (arr) {
-        if (arr == null)
-            return true;
-        for (var _i = 0, arr_4 = arr; _i < arr_4.length; _i++) {
-            var v = arr_4[_i];
-            if (v)
-                return false;
-        }
-        return true;
-    };
-    Vec.booleanArray = function (val, sz) {
-        var arr = new Array(sz);
-        for (var n = sz - 1; n >= 0; n--)
-            arr[n] = val;
-        return arr;
-    };
-    Vec.numberArray = function (val, sz) {
-        var arr = new Array(sz);
-        for (var n = sz - 1; n >= 0; n--)
-            arr[n] = val;
-        return arr;
-    };
-    Vec.stringArray = function (val, sz) {
-        var arr = new Array(sz);
-        for (var n = sz - 1; n >= 0; n--)
-            arr[n] = val;
-        return arr;
-    };
-    Vec.min = function (arr) {
-        if (arr == null || arr.length == 0)
-            return Number.MAX_VALUE;
-        var v = arr[0];
-        for (var n = 1; n < arr.length; n++)
-            v = Math.min(v, arr[n]);
-        return v;
-    };
-    Vec.max = function (arr) {
-        if (arr == null || arr.length == 0)
-            return Number.MIN_VALUE;
-        var v = arr[0];
-        for (var n = 1; n < arr.length; n++)
-            v = Math.max(v, arr[n]);
-        return v;
-    };
-    return Vec;
-}());
-var Atom = (function () {
-    function Atom() {
-    }
-    return Atom;
-}());
-var Bond = (function () {
-    function Bond() {
-    }
-    return Bond;
-}());
-var Molecule = (function () {
-    function Molecule() {
-        this.atoms = [];
-        this.bonds = [];
-        this.keepTransient = false;
-        this.hasTransient = false;
-        this.graph = null;
-        this.graphBond = null;
-        this.ringID = null;
-        this.compID = null;
-        this.ring3 = null;
-        this.ring4 = null;
-        this.ring5 = null;
-        this.ring6 = null;
-        this.ring7 = null;
-        this.setAtomElement = function (idx, element) {
-            this.getAtom(idx).element = element;
-            this.trashTransient();
-        };
-        this.setAtomPos = function (idx, x, y) {
-            var a = this.getAtom(idx);
-            a.x = x;
-            a.y = y;
-            this.trashTransient();
-        };
-        this.setAtomX = function (idx, x) {
-            this.getAtom(idx).x = x;
-            this.trashTransient();
-        };
-        this.setAtomY = function (idx, y) {
-            this.getAtom(idx).y = y;
-            this.trashTransient();
-        };
-        this.setAtomCharge = function (idx, charge) {
-            this.getAtom(idx).charge = charge;
-            this.trashTransient();
-        };
-        this.setAtomUnpaired = function (idx, unpaired) {
-            this.getAtom(idx).unpaired = unpaired;
-            this.trashTransient();
-        };
-        this.setAtomIsotope = function (idx, isotope) {
-            this.getAtom(idx).isotope = isotope;
-            this.trashTransient();
-        };
-        this.setAtomHExplicit = function (idx, hExplicit) {
-            this.getAtom(idx).hExplicit = hExplicit;
-            this.trashTransient();
-        };
-        this.setAtomMapNum = function (idx, mapNum) {
-            this.getAtom(idx).mapNum = mapNum;
-            this.trashTransient();
-        };
-        this.setAtomExtra = function (idx, extra) {
-            this.getAtom(idx).extra = extra.slice(0);
-        };
-        this.setAtomTransient = function (idx, transi) {
-            this.getAtom(idx).transient = transi.slice(0);
-            if (transi.length > 0)
-                this.hasTransient = true;
-        };
-    }
-    Molecule.prototype.clone = function () { return Molecule.fromString(this.toString()); };
-    Molecule.fromString = function (strData) { return MoleculeStream.readNative(strData); };
-    Molecule.prototype.toString = function () { return MoleculeStream.writeNative(this); };
-    Molecule.prototype.numAtoms = function () { return this.atoms.length; };
-    Molecule.prototype.getAtom = function (idx) {
-        if (idx < 1 || idx > this.atoms.length)
-            throw "Molecule.getAtom: index " + idx + " out of range (#atoms=" + this.atoms.length + ")";
-        ;
-        return this.atoms[idx - 1];
-    };
-    Molecule.prototype.atomElement = function (idx) { return this.getAtom(idx).element; };
-    Molecule.prototype.atomX = function (idx) { return this.getAtom(idx).x; };
-    Molecule.prototype.atomY = function (idx) { return this.getAtom(idx).y; };
-    Molecule.prototype.atomCharge = function (idx) { return this.getAtom(idx).charge; };
-    Molecule.prototype.atomUnpaired = function (idx) { return this.getAtom(idx).unpaired; };
-    Molecule.prototype.atomIsotope = function (idx) { return this.getAtom(idx).isotope; };
-    Molecule.prototype.atomHExplicit = function (idx) { return this.getAtom(idx).hExplicit; };
-    Molecule.prototype.atomMapNum = function (idx) { return this.getAtom(idx).mapNum; };
-    Molecule.prototype.atomExtra = function (idx) { return this.getAtom(idx).extra.slice(0); };
-    Molecule.prototype.atomTransient = function (idx) { return this.getAtom(idx).transient.slice(0); };
-    Molecule.prototype.numBonds = function () { return this.bonds.length; };
-    Molecule.prototype.getBond = function (idx) {
-        if (idx < 1 || idx > this.bonds.length)
-            throw "Molecule.getBond: index " + idx + " out of range (#bonds=" + this.bonds.length + ")";
-        ;
-        return this.bonds[idx - 1];
-    };
-    Molecule.prototype.bondFrom = function (idx) { return this.getBond(idx).from; };
-    Molecule.prototype.bondTo = function (idx) { return this.getBond(idx).to; };
-    Molecule.prototype.bondOrder = function (idx) { return this.getBond(idx).order; };
-    Molecule.prototype.bondType = function (idx) { return this.getBond(idx).type; };
-    Molecule.prototype.bondExtra = function (idx) { return this.getBond(idx).extra.slice(0); };
-    Molecule.prototype.bondTransient = function (idx) { return this.getBond(idx).transient.slice(0); };
-    Molecule.prototype.addAtom = function (element, x, y, charge, unpaired) {
-        if (charge === void 0) { charge = 0; }
-        if (unpaired === void 0) { unpaired = 0; }
-        var a = new Atom();
-        a.element = element;
-        a.x = x;
-        a.y = y;
-        a.charge = charge;
-        a.unpaired = unpaired;
-        a.isotope = Molecule.ISOTOPE_NATURAL;
-        a.hExplicit = Molecule.HEXPLICIT_UNKNOWN;
-        a.mapNum = 0;
-        a.extra = [];
-        a.transient = [];
-        this.atoms.push(a);
-        this.trashTransient();
-        this.trashGraph();
-        return this.atoms.length;
-    };
-    Molecule.prototype.addBond = function (from, to, order, type) {
-        if (type === void 0) { type = Molecule.BONDTYPE_NORMAL; }
-        var b = new Bond();
-        b.from = from;
-        b.to = to;
-        b.order = order;
-        b.type = type;
-        b.extra = [];
-        b.transient = [];
-        this.bonds.push(b);
-        this.trashTransient();
-        this.trashGraph();
-        return this.bonds.length;
-    };
-    Molecule.prototype.setBondFrom = function (idx, from) {
-        this.getBond(idx).from = from;
-        this.trashTransient();
-        this.trashGraph();
-    };
-    Molecule.prototype.setBondTo = function (idx, to) {
-        this.getBond(idx).to = to;
-        this.trashTransient();
-        this.trashGraph();
-    };
-    Molecule.prototype.setBondOrder = function (idx, order) {
-        this.getBond(idx).order = order;
-        this.trashTransient();
-    };
-    Molecule.prototype.setBondType = function (idx, type) {
-        this.getBond(idx).type = type;
-        this.trashTransient();
-    };
-    Molecule.prototype.setBondExtra = function (idx, extra) {
-        this.getBond(idx).extra = extra.slice(0);
-    };
-    Molecule.prototype.setBondTransient = function (idx, transi) {
-        this.getBond(idx).transient = transi.slice(0);
-        if (transi.length > 0)
-            this.hasTransient = true;
-    };
-    Molecule.prototype.deleteAtomAndBonds = function (idx) {
-        for (var n = this.numBonds(); n >= 1; n--) {
-            if (this.bondFrom(n) == idx || this.bondTo(n) == idx)
-                this.deleteBond(n);
-            else {
-                if (this.bondFrom(n) > idx)
-                    this.setBondFrom(n, this.bondFrom(n) - 1);
-                if (this.bondTo(n) > idx)
-                    this.setBondTo(n, this.bondTo(n) - 1);
-            }
-        }
-        this.atoms.splice(idx - 1, 1);
-        this.trashTransient();
-        this.trashGraph();
-    };
-    Molecule.prototype.deleteBond = function (idx) {
-        this.bonds.splice(idx - 1, 1);
-        this.trashTransient();
-        this.trashGraph();
-    };
-    Molecule.prototype.atomHydrogens = function (idx) {
-        var HYVALENCE_EL = ['C', 'N', 'O', 'S', 'P'];
-        var HYVALENCE_VAL = [4, 3, 2, 2, 3];
-        var hy = this.atomHExplicit(idx);
-        if (hy != Molecule.HEXPLICIT_UNKNOWN)
-            return hy;
-        for (var n = 0; n < HYVALENCE_EL.length; n++)
-            if (HYVALENCE_EL[n] == this.atomElement(idx)) {
-                hy = HYVALENCE_VAL[n];
-                break;
-            }
-        if (hy == Molecule.HEXPLICIT_UNKNOWN)
-            return 0;
-        var ch = this.atomCharge(idx);
-        if (this.atomElement(idx) == 'C')
-            ch = -Math.abs(ch);
-        hy += ch - this.atomUnpaired(idx);
-        var adjBonds = this.atomAdjBonds(idx);
-        for (var n = 0; n < adjBonds.length; n++)
-            hy -= this.bondOrder(adjBonds[n]);
-        return hy < 0 ? 0 : hy;
-    };
-    Molecule.prototype.findBond = function (a1, a2) {
-        for (var n = 1; n <= this.numBonds(); n++) {
-            var b1 = this.bondFrom(n), b2 = this.bondTo(n);
-            if ((a1 == b1 && a2 == b2) || (a1 == b2 && a2 == b1))
-                return n;
-        }
-        return 0;
-    };
-    Molecule.prototype.bondOther = function (idx, ref) {
-        var b1 = this.bondFrom(idx), b2 = this.bondTo(idx);
-        if (b1 == ref)
-            return b2;
-        if (b2 == ref)
-            return b1;
-        return 0;
-    };
-    Molecule.prototype.atomExplicit = function (idx) {
-        var a = this.atoms[idx - 1];
-        if (a.isotope != Molecule.ISOTOPE_NATURAL)
-            return true;
-        if (a.element != 'C' || a.charge != 0 || a.unpaired != 0)
-            return true;
-        if (this.atomAdjCount(idx) == 0)
-            return true;
-        return false;
-    };
-    Molecule.prototype.atomRingBlock = function (idx) {
-        if (this.graph == null)
-            this.buildGraph();
-        if (this.ringID == null)
-            this.buildRingID();
-        return this.ringID[idx - 1];
-    };
-    Molecule.prototype.bondInRing = function (idx) {
-        var r1 = this.atomRingBlock(this.bondFrom(idx)), r2 = this.atomRingBlock(this.bondTo(idx));
-        return r1 > 0 && r1 == r2;
-    };
-    Molecule.prototype.atomConnComp = function (idx) {
-        if (this.graph == null)
-            this.buildGraph();
-        if (this.compID == null)
-            this.buildConnComp();
-        return this.compID[idx - 1];
-    };
-    Molecule.prototype.atomAdjCount = function (idx) {
-        this.buildGraph();
-        return this.graph[idx - 1].length;
-    };
-    Molecule.prototype.atomAdjList = function (idx) {
-        this.buildGraph();
-        var adj = this.graph[idx - 1].slice(0);
-        for (var n = adj.length - 1; n >= 0; n--)
-            adj[n]++;
-        return adj;
-    };
-    Molecule.prototype.atomAdjBonds = function (idx) {
-        this.buildGraph();
-        return this.graphBond[idx - 1].slice(0);
-    };
-    Molecule.prototype.boundary = function () {
-        if (this.atoms.length == 0)
-            return Box.zero();
-        var x1 = this.atoms[0].x, x2 = x1;
-        var y1 = this.atoms[0].y, y2 = y1;
-        for (var n = 1; n < this.atoms.length; n++) {
-            x1 = Math.min(x1, this.atoms[n].x);
-            y1 = Math.min(y1, this.atoms[n].y);
-            x2 = Math.max(x2, this.atoms[n].x);
-            y2 = Math.max(y2, this.atoms[n].y);
-        }
-        return new Box(x1, y1, x2 - x1, y2 - y1);
-    };
-    Molecule.prototype.compareTo = function (other) {
-        if (other == null || other.numAtoms() == 0)
-            return this.numAtoms() == 0 ? 0 : 1;
-        if (this.numAtoms() < other.numAtoms())
-            return -1;
-        if (this.numAtoms() > other.numAtoms())
-            return 1;
-        if (this.numBonds() < other.numBonds())
-            return -1;
-        if (this.numBonds() > other.numBonds())
-            return 1;
-        for (var n = 1; n <= this.numAtoms(); n++) {
-            if (this.atomElement(n) < other.atomElement(n))
-                return -1;
-            if (this.atomElement(n) > other.atomElement(n))
-                return 1;
-            if (this.atomX(n) < other.atomX(n))
-                return -1;
-            if (this.atomX(n) > other.atomX(n))
-                return 1;
-            if (this.atomY(n) < other.atomY(n))
-                return -1;
-            if (this.atomY(n) > other.atomY(n))
-                return 1;
-            if (this.atomCharge(n) < other.atomCharge(n))
-                return -1;
-            if (this.atomCharge(n) > other.atomCharge(n))
-                return 1;
-            if (this.atomUnpaired(n) < other.atomUnpaired(n))
-                return -1;
-            if (this.atomUnpaired(n) > other.atomUnpaired(n))
-                return 1;
-            if (this.atomHExplicit(n) < other.atomHExplicit(n))
-                return -1;
-            if (this.atomHExplicit(n) > other.atomHExplicit(n))
-                return 1;
-            if (this.atomIsotope(n) < other.atomIsotope(n))
-                return -1;
-            if (this.atomIsotope(n) > other.atomIsotope(n))
-                return 1;
-            if (this.atomMapNum(n) < other.atomMapNum(n))
-                return -1;
-            if (this.atomMapNum(n) > other.atomMapNum(n))
-                return 1;
-            var tx1 = this.atomExtra(n), tx2 = other.atomExtra(n);
-            if (tx1.length < tx2.length)
-                return -1;
-            if (tx1.length > tx2.length)
-                return 1;
-            for (var i = 0; i < tx1.length; i++)
-                if (tx1[i] < tx2[i])
-                    return -1;
-                else if (tx1[i] > tx2[i])
-                    return 1;
-            tx1 = this.atomTransient(n);
-            tx2 = other.atomTransient(n);
-            if (tx1.length < tx2.length)
-                return -1;
-            if (tx1.length > tx2.length)
-                return 1;
-            for (var i = 0; i < tx1.length; i++)
-                if (tx1[i] < tx2[i])
-                    return -1;
-                else if (tx1[i] > tx2[i])
-                    return 1;
-        }
-        for (var n = 1; n <= this.numBonds(); n++) {
-            if (this.bondFrom(n) < other.bondFrom(n))
-                return -1;
-            if (this.bondFrom(n) > other.bondFrom(n))
-                return 1;
-            if (this.bondTo(n) < other.bondTo(n))
-                return -1;
-            if (this.bondTo(n) > other.bondTo(n))
-                return 1;
-            if (this.bondOrder(n) < other.bondOrder(n))
-                return -1;
-            if (this.bondOrder(n) > other.bondOrder(n))
-                return 1;
-            if (this.bondType(n) < other.bondType(n))
-                return -1;
-            if (this.bondType(n) > other.bondType(n))
-                return 1;
-            var tx1 = this.bondExtra(n), tx2 = other.bondExtra(n);
-            if (tx1.length < tx2.length)
-                return -1;
-            if (tx1.length > tx2.length)
-                return 1;
-            for (var i = 0; i < tx1.length; i++)
-                if (tx1[i] < tx2[i])
-                    return -1;
-                else if (tx1[i] > tx2[i])
-                    return 1;
-            tx1 = this.bondTransient(n);
-            tx2 = other.bondTransient(n);
-            if (tx1.length < tx2.length)
-                return -1;
-            if (tx1.length > tx2.length)
-                return 1;
-            for (var i = 0; i < tx1.length; i++)
-                if (tx1[i] < tx2[i])
-                    return -1;
-                else if (tx1[i] > tx2[i])
-                    return 1;
-        }
-        return 0;
-    };
-    Molecule.prototype.trashGraph = function () {
-        this.graph = null;
-        this.graphBond = null;
-    };
-    Molecule.prototype.trashTransient = function () {
-        if (this.keepTransient || !this.hasTransient)
-            return;
-        for (var _i = 0, _a = this.atoms; _i < _a.length; _i++) {
-            var a = _a[_i];
-            a.transient = [];
-        }
-        for (var _b = 0, _c = this.bonds; _b < _c.length; _b++) {
-            var b = _c[_b];
-            b.transient = [];
-        }
-        this.hasTransient = false;
-    };
-    Molecule.prototype.buildGraph = function () {
-        if (this.graph != null && this.graphBond != null)
-            return;
-        var graph = [], graphBond = [];
-        var na = this.numAtoms(), nb = this.numBonds();
-        for (var n = 0; n < na; n++) {
-            graph.push([]);
-            graphBond.push([]);
-        }
-        for (var n = 1; n <= nb; n++) {
-            var b = this.getBond(n);
-            graph[b.from - 1].push(b.to - 1);
-            graph[b.to - 1].push(b.from - 1);
-            graphBond[b.from - 1].push(n);
-            graphBond[b.to - 1].push(n);
-        }
-        this.graph = graph;
-        this.graphBond = graphBond;
-    };
-    Molecule.prototype.buildConnComp = function () {
-        var numAtoms = this.atoms.length;
-        this.compID = Vec.numberArray(0, numAtoms);
-        for (var n = 0; n < numAtoms; n++)
-            this.compID[n] = 0;
-        var comp = 1;
-        this.compID[0] = comp;
-        while (true) {
-            var anything = false;
-            for (var n = 0; n < numAtoms; n++)
-                if (this.compID[n] == comp) {
-                    for (var i = 0; i < this.graph[n].length; i++) {
-                        if (this.compID[this.graph[n][i]] == 0) {
-                            this.compID[this.graph[n][i]] = comp;
-                            anything = true;
-                        }
-                    }
-                }
-            if (!anything) {
-                for (var n = 0; n < numAtoms; n++) {
-                    if (this.compID[n] == 0) {
-                        this.compID[n] = ++comp;
-                        anything = true;
-                        break;
-                    }
-                }
-                if (!anything)
-                    break;
-            }
-        }
-    };
-    Molecule.prototype.buildRingID = function () {
-        var numAtoms = this.atoms.length;
-        this.ringID = Vec.numberArray(0, numAtoms);
-        if (numAtoms == 0)
-            return;
-        var visited = Vec.booleanArray(false, numAtoms);
-        for (var n = 0; n < numAtoms; n++) {
-            this.ringID[n] = 0;
-            visited[n] = false;
-        }
-        var path = Vec.numberArray(0, numAtoms + 1), plen = 0, numVisited = 0;
-        while (true) {
-            var last = void 0, current = void 0;
-            if (plen == 0) {
-                last = -1;
-                for (current = 0; visited[current]; current++) { }
-            }
-            else {
-                last = path[plen - 1];
-                current = -1;
-                for (var n = 0; n < this.graph[last].length; n++) {
-                    if (!visited[this.graph[last][n]]) {
-                        current = this.graph[last][n];
-                        break;
-                    }
-                }
-            }
-            if (current >= 0 && plen >= 2) {
-                var back = path[plen - 1];
-                for (var n = 0; n < this.graph[current].length; n++) {
-                    var join = this.graph[current][n];
-                    if (join != back && visited[join]) {
-                        path[plen] = current;
-                        for (var i = plen; i == plen || path[i + 1] != join; i--) {
-                            var id = this.ringID[path[i]];
-                            if (id == 0)
-                                this.ringID[path[i]] = last;
-                            else if (id != last) {
-                                for (var j = 0; j < numAtoms; j++)
-                                    if (this.ringID[j] == id)
-                                        this.ringID[j] = last;
-                            }
-                        }
-                    }
-                }
-            }
-            if (current >= 0) {
-                visited[current] = true;
-                path[plen++] = current;
-                numVisited++;
-            }
-            else {
-                plen--;
-            }
-            if (numVisited == numAtoms)
-                break;
-        }
-        var nextID = 0;
-        for (var i = 0; i < numAtoms; i++) {
-            if (this.ringID[i] > 0) {
-                nextID--;
-                for (var j = numAtoms - 1; j >= i; j--)
-                    if (this.ringID[j] == this.ringID[i])
-                        this.ringID[j] = nextID;
-            }
-        }
-        for (var i = 0; i < numAtoms; i++)
-            this.ringID[i] = -this.ringID[i];
-    };
-    Molecule.prototype.recursiveRingFind = function (path, psize, capacity, rblk, rings) {
-        if (psize < capacity) {
-            var last_1 = path[psize - 1];
-            for (var n = 0; n < this.graph[last_1 - 1].length; n++) {
-                var adj = this.graph[last_1 - 1][n] + 1;
-                if (this.ringID[adj - 1] != rblk)
-                    continue;
-                var fnd_1 = false;
-                for (var i = 0; i < psize; i++) {
-                    if (path[i] == adj) {
-                        fnd_1 = true;
-                        break;
-                    }
-                }
-                if (!fnd_1) {
-                    var newPath = path.slice(0);
-                    newPath[psize] = adj;
-                    this.recursiveRingFind(newPath, psize + 1, capacity, rblk, rings);
-                }
-            }
-            return;
-        }
-        var last = path[psize - 1];
-        var fnd = false;
-        for (var n = 0; n < this.graph[last - 1].length; n++) {
-            if (this.graph[last - 1][n] + 1 == path[0]) {
-                fnd = true;
-                break;
-            }
-        }
-        if (!fnd)
-            return;
-        for (var n = 0; n < path.length; n++) {
-            var count = 0, p = path[n] - 1;
-            for (var i = 0; i < this.graph[p].length; i++)
-                if (path.indexOf(this.graph[p][i] + 1) >= 0)
-                    count++;
-            if (count != 2)
-                return;
-        }
-        var first = 0;
-        for (var n = 1; n < psize; n++)
-            if (path[n] < path[first])
-                first = n;
-        var fm = (first - 1 + psize) % psize, fp = (first + 1) % psize;
-        var flip = path[fm] < path[fp];
-        if (first != 0 || flip) {
-            var newPath = Vec.numberArray(0, psize);
-            for (var n = 0; n < psize; n++)
-                newPath[n] = path[(first + (flip ? psize - n : n)) % psize];
-            path = newPath;
-        }
-        for (var n = 0; n < rings.length; n++) {
-            var look = rings[n];
-            var same = true;
-            for (var i = 0; i < psize; i++) {
-                if (look[i] != path[i]) {
-                    same = false;
-                    break;
-                }
-            }
-            if (same)
-                return;
-        }
-        rings.push(path);
-    };
-    Molecule.IDEALBOND = 1.5;
-    Molecule.HEXPLICIT_UNKNOWN = -1;
-    Molecule.ISOTOPE_NATURAL = 0;
-    Molecule.BONDTYPE_NORMAL = 0;
-    Molecule.BONDTYPE_INCLINED = 1;
-    Molecule.BONDTYPE_DECLINED = 2;
-    Molecule.BONDTYPE_UNKNOWN = 3;
-    return Molecule;
-}());
-var MolUtil = (function () {
-    function MolUtil() {
-    }
-    MolUtil.isBlank = function (mol) {
-        return mol == null || mol.numAtoms() == 0;
-    };
-    MolUtil.notBlank = function (mol) {
-        return mol != null || mol.numAtoms() > 0;
-    };
-    MolUtil.TEMPLATE_ATTACHMENT = "X";
-    MolUtil.ABBREV_ATTACHMENT = "*";
-    return MolUtil;
-}());
-function newElement(parent, tag, attr) {
-    var el = $("<" + tag + ">");
-    if (attr)
-        el.attr(attr);
-    $(parent).append(el);
-    return el[0];
-}
-function addText(parent, text) {
-    var el = parent instanceof jQuery ? parent[0] : parent;
-    el.appendChild(document.createTextNode(text));
-}
-function setVisible(node, visible) {
-    if (visible)
-        $(node).show();
-    else
-        $(node).hide();
-}
-function plural(count) {
-    return count == 1 ? '' : 's';
-}
-function colourCode(col) {
-    var hex = (col & 0xFFFFFF).toString(16);
-    while (hex.length < 6)
-        hex = '0' + hex;
-    return '#' + hex;
-}
-function colourAlpha(col) {
-    var transp = (col >>> 24) & 0xFF;
-    return transp == 0 ? 1 : transp == 0xFF ? 0 : 1 - (transp * (1.0 / 255));
-}
-var ONE_OVER_255 = 1.0 / 255;
-function colourCanvas(col) {
-    if (col == 0xFFFFFF)
-        return 'white';
-    if (col == 0x000000)
-        return 'black';
-    if (col == -1)
-        return undefined;
-    if (col >= 0 && col <= 0xFFFFFF)
-        return colourCode(col);
-    var t = ((col >> 24) & 0xFF) * ONE_OVER_255;
-    var r = ((col >> 16) & 0xFF);
-    var g = ((col >> 8) & 0xFF);
-    var b = (col & 0xFF);
-    return 'rgba(' + r + ',' + g + ',' + b + ',' + (1 - t) + ')';
-}
-function nodeText(node) {
-    var ret = '';
-    if (!node)
-        return;
-    node = node.firstChild;
-    while (node) {
-        if (node.nodeType == 3 || node.nodeType == 4)
-            ret += node.nodeValue;
-        node = node.nextSibling;
-    }
-    return ret;
-}
-function isDef(v) {
-    return !(v === null || typeof v === 'undefined');
-}
-function notDef(v) {
-    return v === null || typeof v === 'undefined';
-}
-function eventCoords(event, container) {
-    var parentOffset = $(container).offset();
-    var relX = event.pageX - parentOffset.left;
-    var relY = event.pageY - parentOffset.top;
-    return [relX, relY];
-}
-function norm_xy(dx, dy) {
-    return Math.sqrt(dx * dx + dy * dy);
-}
-function norm_xyz(dx, dy, dz) {
-    return Math.sqrt(dx * dx + dy * dy + dz * dz);
-}
-function norm2_xy(dx, dy) {
-    return dx * dx + dy * dy;
-}
-function norm2_xyz(dx, dy, dz) {
-    return dx * dx + dy * dy + dz * dz;
-}
-function sqr(v) {
-    return v * v;
-}
-function realEqual(v1, v2) { return v1 == v2 || Math.abs(v1 - v2) <= 1E-14 * Math.max(v1, v2); }
-var TWOPI = 2 * Math.PI;
-var INV_TWOPI = 1.0 / TWOPI;
-var DEGRAD = Math.PI / 180;
-var RADDEG = 180 / Math.PI;
-function angleNorm(th) {
-    if (th == -Math.PI)
-        return Math.PI;
-    if (th < -Math.PI) {
-        var mod = Math.ceil((-th - Math.PI) * INV_TWOPI);
-        return th + mod * TWOPI;
-    }
-    if (th > Math.PI) {
-        var mod = Math.ceil((th - Math.PI) * INV_TWOPI);
-        return th - mod * TWOPI;
-    }
-    return th;
-}
-function angleDiff(th1, th2) {
-    var theta = angleNorm(th1) - angleNorm(th2);
-    return theta - (theta > Math.PI ? TWOPI : 0) + (theta <= -Math.PI ? TWOPI : 0);
-}
-function angleDiffPos(th1, th2) {
-    var theta = angleNorm(th1) - angleNorm(th2);
-    return theta + (theta < 0 ? TWOPI : 0);
-}
-function sortAngles(theta) {
-    if (theta == null || theta.length < 2)
-        return theta;
-    theta = theta.slice(0);
-    for (var n = 0; n < theta.length; n++)
-        theta[n] = angleNorm(theta[n]);
-    theta.sort();
-    while (true) {
-        var a = theta[theta.length - 1], b = theta[0], c = theta[1];
-        if (angleDiff(b, a) <= angleDiff(c, b))
-            break;
-        for (var n = theta.length - 1; n > 0; n--)
-            theta[n] = theta[n - 1];
-        theta[0] = a;
-    }
-    return theta;
-}
-function uniqueAngles(theta, threshold) {
-    theta = sortAngles(theta);
-    for (var n = 1; n < theta.length; n++) {
-        if (Math.abs(angleDiff(theta[n], theta[n - 1])) <= threshold) {
-            theta.splice(n, 1);
-            n--;
-        }
-    }
-    return theta;
-}
-function minArray(a) {
-    if (a == null || a.length == 0)
-        return 0;
-    var v = a[0];
-    for (var n = 1; n < a.length; n++)
-        v = Math.min(v, a[n]);
-    return v;
-}
-function maxArray(a) {
-    if (a == null || a.length == 0)
-        return 0;
-    var v = a[0];
-    for (var n = 1; n < a.length; n++)
-        v = Math.max(v, a[n]);
-    return v;
-}
-function findNode(parent, name) {
-    if (parent == null)
-        return null;
-    var node = parent.firstChild;
-    while (node) {
-        if (node.nodeType == Node.ELEMENT_NODE && node.nodeName == name)
-            return node;
-        node = node.nextSibling;
-    }
-    return null;
-}
-function findNodes(parent, name) {
-    if (parent == null)
-        return null;
-    var node = parent.firstChild;
-    var list = [];
-    while (node) {
-        if (node.nodeType == Node.ELEMENT_NODE && node.nodeName == name)
-            list.push(node);
-        node = node.nextSibling;
-    }
-    return list;
-}
-function pathRoundedRect(x1, y1, x2, y2, rad) {
-    var path = new Path2D();
-    path.moveTo(x2 - rad, y1);
-    path.quadraticCurveTo(x2, y1, x2, y1 + rad);
-    path.lineTo(x2, y2 - rad);
-    path.quadraticCurveTo(x2, y2, x2 - rad, y2);
-    path.lineTo(x1 + rad, y2);
-    path.quadraticCurveTo(x1, y2, x1, y2 - rad);
-    path.lineTo(x1, y1 + rad);
-    path.quadraticCurveTo(x1, y1, x1 + rad, y1);
-    path.closePath();
-    return path;
-}
-function drawLine(ctx, x1, y1, x2, y2) {
-    ctx.beginPath();
-    ctx.moveTo(x1, y1);
-    ctx.lineTo(x2, y2);
-    ctx.stroke();
-}
-var ASCENT_FUDGE = 1.4;
-function fontSansSerif(ascent) { return ascent * ASCENT_FUDGE + "px sans"; }
-function pixelDensity() {
-    if ('devicePixelRatio' in window && window.devicePixelRatio > 1)
-        return window.devicePixelRatio;
-    return 1;
-}
-function clone(obj) {
-    var dup = {};
-    for (var key in obj)
-        dup[key] = obj[key];
-    return dup;
-}
-function escapeHTML(text) {
-    if (!text)
-        return '';
-    var map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
-    return text.replace(/[&<>"']/g, function (m) { return map[m]; });
-}
 var SketchUtil = (function () {
     function SketchUtil() {
     }
@@ -2024,6 +2350,637 @@ var RenderEffects = (function () {
     }
     return RenderEffects;
 }());
+var GeomUtil = (function () {
+    function GeomUtil() {
+    }
+    GeomUtil.pointInPolygon = function (x, y, px, py) {
+        if (x < minArray(px) || x > maxArray(px) || y < minArray(py) || y > maxArray(py))
+            return false;
+        var sz = px.length;
+        for (var n = 0; n < sz; n++)
+            if (px[n] == x && py[n] == y)
+                return true;
+        var phase = false;
+        for (var n = 0; n < sz; n++) {
+            var x1 = px[n], y1 = py[n], x2 = px[n + 1 < sz ? n + 1 : 0], y2 = py[n + 1 < sz ? n + 1 : 0];
+            if (y > Math.min(y1, y2) && y <= Math.max(y1, y2) && x <= Math.max(x1, x2) && y1 != y2) {
+                var intr = (y - y1) * (x2 - x1) / (y2 - y1) + x1;
+                if (x1 == x2 || x <= intr)
+                    phase = !phase;
+            }
+        }
+        return phase;
+    };
+    GeomUtil.areLinesParallel = function (x1, y1, x2, y2, x3, y3, x4, y4) {
+        var dxa = x2 - x1, dxb = x4 - x3, dya = y2 - y1, dyb = y4 - y3;
+        return (realEqual(dxa, dxb) && realEqual(dya, dyb)) || (realEqual(dxa, -dxb) && realEqual(dya, -dyb));
+    };
+    GeomUtil.lineIntersect = function (x1, y1, x2, y2, x3, y3, x4, y4) {
+        var u = ((x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3)) / ((y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1));
+        return [x1 + u * (x2 - x1), y1 + u * (y2 - y1)];
+    };
+    GeomUtil.isPointOnLineSeg = function (px, py, x1, y1, x2, y2) {
+        if (px < Math.min(x1, x2) || px > Math.max(x1, x2) || py < Math.min(y1, y2) || py > Math.max(y1, y2))
+            return false;
+        if ((px == x1 && py == y1) || (px == x2 && py == y2))
+            return true;
+        var dx = x2 - x1, dy = y2 - y1;
+        if (Math.abs(dx) > Math.abs(dy))
+            return realEqual(py, (dy / dx) * (px - x1) + y1);
+        else
+            return realEqual(px, (dx / dy) * (py - y1) + x1);
+    };
+    GeomUtil.doLineSegsIntersect = function (x1, y1, x2, y2, x3, y3, x4, y4) {
+        if (Math.max(x1, x2) < Math.min(x3, x4) || Math.max(y1, y2) < Math.min(y3, y4))
+            return false;
+        if (Math.min(x1, x2) > Math.max(x3, x4) || Math.min(y1, y2) > Math.max(y3, y4))
+            return false;
+        if ((x1 == x3 && y1 == y3) || (x1 == x4 && y1 == y4) || (x2 == x3 && y2 == y3) || (x2 == x4 && y2 == y4))
+            return true;
+        if ((x1 == x2 || x3 == x4) && (x1 == x3 || x1 == x4 || x2 == x3 || x2 == x4))
+            return true;
+        if ((y1 == y2 || y3 == y4) && (y1 == y3 || y1 == y4 || y2 == y3 || y2 == y4))
+            return true;
+        var x4_x3 = x4 - x3, y4_y3 = y4 - y3, x2_x1 = x2 - x1, y2_y1 = y2 - y1, x1_x3 = x1 - x3, y1_y3 = y1 - y3;
+        var nx = x4_x3 * y1_y3 - y4_y3 * x1_x3;
+        var ny = x2_x1 * y1_y3 - y2_y1 * x1_x3;
+        var dn = y4_y3 * x2_x1 - x4_x3 * y2_y1;
+        if (dn == 0)
+            return false;
+        if (dn < 0) {
+            dn = -dn;
+            nx = -nx;
+            ny = -ny;
+        }
+        return nx >= 0 && nx <= dn && ny >= 0 && ny <= dn;
+    };
+    GeomUtil.rectsIntersect = function (x1, y1, w1, h1, x2, y2, w2, h2) {
+        if (x1 <= x2 && x1 + w1 >= x2 + w2 && y1 <= y2 && y1 + h1 >= y2 + h2)
+            return true;
+        if (x2 <= x1 && x2 + w2 >= x1 + w1 && y2 <= y1 && y2 + h2 >= y1 + h1)
+            return true;
+        if (x1 + w1 < x2 || x2 + w2 < x1 || y1 + h1 < y2 || y2 + h2 < y1)
+            return false;
+        return true;
+    };
+    return GeomUtil;
+}());
+var QuickHull = (function () {
+    function QuickHull(x, y, threshSq) {
+        this.x = x;
+        this.y = y;
+        this.threshSq = threshSq;
+        this.hsz = 0;
+        this.hullX = [];
+        this.hullY = [];
+        var sz = x.length;
+        var l = 0, r = 0;
+        for (var n = 0; n < sz; n++) {
+            if (x[r] > x[n] || (x[r] == x[n] && y[r] > y[n]))
+                r = n;
+            if (x[l] < x[n] || (x[l] == x[n] && y[l] < y[n]))
+                l = n;
+        }
+        var al1 = [], al2 = [];
+        for (var n = 0; n < sz; n++) {
+            if (n != l && n != r) {
+                if (this.right(r, l, n) > 0)
+                    al1.push(n);
+                else
+                    al2.push(n);
+            }
+        }
+        this.hullX = Vec.numberArray(0, sz);
+        this.hullY = Vec.numberArray(0, sz);
+        this.hullX.push(x[r]);
+        this.hullY.push(y[r]);
+        this.quickHull(r, l, al1);
+        this.hullX.push(x[l]);
+        this.hullY.push(y[l]);
+        this.quickHull(l, r, al2);
+        for (var n = 0; n < this.hullX.length - 1;) {
+            if (norm2_xy(this.hullX[n] - this.hullY[n + 1], this.hullY[n] - this.hullY[n + 1]) < threshSq) {
+                this.hullX.splice(n + 1, 1);
+                this.hullY.splice(n + 1, 1);
+            }
+            else
+                n++;
+        }
+    }
+    QuickHull.prototype.quickHull = function (a, b, al) {
+        if (al.length == 0)
+            return;
+        var c = this.furthestPoint(a, b, al);
+        var al1 = [], al2 = [];
+        for (var n = 0; n < al.length; n++) {
+            var p = al[n];
+            if (p == a || p == b)
+                continue;
+            if (this.right(a, c, p) > 0)
+                al1.push(p);
+            else if (this.right(c, b, p) > 0)
+                al2.push(p);
+        }
+        this.quickHull(a, c, al1);
+        this.hullX.push(this.x[c]);
+        this.hullY.push(this.y[c]);
+        this.quickHull(c, b, al2);
+    };
+    QuickHull.prototype.right = function (a, b, p) {
+        var x = this.x, y = this.y;
+        return (x[a] - x[b]) * (y[p] - y[b]) - (x[p] - x[b]) * (y[a] - y[b]);
+    };
+    QuickHull.prototype.distance = function (a, b, p) {
+        var x = this.x, y = this.y;
+        var u = ((x[p] - x[a]) * (x[b] - x[a]) + (y[p] - y[a]) * (y[b] - y[a])) / ((x[b] - x[a]) * (x[b] - x[a]) + (y[b] - y[a]) * (y[b] - y[a]));
+        var ux = x[a] + u * (x[b] - x[a]);
+        var uy = y[a] + u * (y[b] - y[a]);
+        return ((ux - x[p]) * (ux - x[p]) + (uy - y[p]) * (uy - y[p]));
+    };
+    QuickHull.prototype.furthestPoint = function (a, b, al) {
+        var maxDist = -1;
+        var maxPos = -1;
+        for (var n = 0; n < al.length; n++) {
+            var p = al[n];
+            if (p == a || p == b)
+                continue;
+            var dist = this.distance(a, b, p);
+            if (dist > maxDist) {
+                maxDist = dist;
+                maxPos = p;
+            }
+        }
+        return maxPos;
+    };
+    return QuickHull;
+}());
+var Pos = (function () {
+    function Pos(x, y) {
+        this.x = x == null ? 0 : x;
+        this.y = y == null ? 0 : y;
+    }
+    Pos.zero = function () { return new Pos(); };
+    Pos.prototype.clone = function () { return new Pos(this.x, this.y); };
+    Pos.prototype.scaleBy = function (mag) {
+        if (mag == 1)
+            return;
+        this.x *= mag;
+        this.y *= mag;
+    };
+    Pos.prototype.offsetBy = function (dx, dy) {
+        this.x += dx;
+        this.y += dy;
+    };
+    Pos.prototype.toString = function () { return '[' + this.x + ',' + this.y + ']'; };
+    return Pos;
+}());
+var Size = (function () {
+    function Size(w, h) {
+        this.w = w == null ? 0 : w;
+        this.h = h == null ? 0 : h;
+    }
+    Size.zero = function () { return new Size(); };
+    Size.prototype.clone = function () { return new Size(this.w, this.h); };
+    Size.prototype.scaleBy = function (mag) {
+        if (mag == 1)
+            return;
+        this.w *= mag;
+        this.h *= mag;
+    };
+    Size.prototype.fitInto = function (maxW, maxH) {
+        var scale = 1;
+        if (this.w > maxW)
+            scale = maxW / this.w;
+        if (this.h > maxH)
+            scale = Math.min(scale, maxH / this.h);
+        if (scale < 1)
+            this.scaleBy(scale);
+    };
+    Size.prototype.toString = function () { return '[' + this.w + ',' + this.h + ']'; };
+    return Size;
+}());
+var Box = (function () {
+    function Box(x, y, w, h) {
+        this.x = x == null ? 0 : x;
+        this.y = y == null ? 0 : y;
+        this.w = w == null ? 0 : w;
+        this.h = h == null ? 0 : h;
+    }
+    Box.zero = function () { return new Box(); };
+    Box.fromSize = function (sz) { return new Box(0, 0, sz.w, sz.h); };
+    Box.fromOval = function (oval) { return new Box(oval.cx - oval.rw, oval.cy - oval.rh, 2 * oval.rw, 2 * oval.rh); };
+    Box.prototype.clone = function () { return new Box(this.x, this.y, this.w, this.h); };
+    Box.prototype.setPos = function (pos) {
+        this.x = pos.x;
+        this.y = pos.y;
+    };
+    Box.prototype.setSize = function (sz) {
+        this.w = sz.w;
+        this.h = sz.h;
+    };
+    Box.prototype.minX = function () { return this.x; };
+    Box.prototype.minY = function () { return this.y; };
+    Box.prototype.maxX = function () { return this.x + this.w; };
+    Box.prototype.maxY = function () { return this.y + this.h; };
+    Box.prototype.scaleBy = function (mag) {
+        if (mag == 1)
+            return;
+        this.x *= mag;
+        this.y *= mag;
+        this.w *= mag;
+        this.h *= mag;
+    };
+    Box.prototype.offsetBy = function (dx, dy) {
+        this.x += dx;
+        this.y += dy;
+    };
+    Box.prototype.intersects = function (other) {
+        return GeomUtil.rectsIntersect(this.x, this.y, this.w, this.h, other.x, other.y, other.w, other.h);
+    };
+    Box.prototype.toString = function () { return '[' + this.x + ',' + this.y + ';' + this.w + ',' + this.h + ']'; };
+    return Box;
+}());
+var Oval = (function () {
+    function Oval(cx, cy, rw, rh) {
+        this.cx = cx == null ? 0 : cx;
+        this.cy = cy == null ? 0 : cy;
+        this.rw = rw == null ? 0 : rw;
+        this.rh = rh == null ? 0 : rh;
+    }
+    Oval.zero = function () { return new Oval(); };
+    Oval.fromBox = function (box) { return new Oval(box.x + 0.5 * box.w, box.y + 0.5 * box.h, 0.5 * box.w, 0.5 * box.h); };
+    Oval.prototype.clone = function () { return new Oval(this.cx, this.cy, this.rw, this.rh); };
+    Oval.prototype.setCentre = function (pos) {
+        this.cx = pos.x;
+        this.cy = pos.y;
+    };
+    Oval.prototype.setRadius = function (sz) {
+        this.rw = sz.w;
+        this.rh = sz.h;
+    };
+    Oval.prototype.minX = function () { return this.cx - this.rw; };
+    Oval.prototype.minY = function () { return this.cy - this.rh; };
+    Oval.prototype.maxX = function () { return this.cx + this.rw; };
+    Oval.prototype.maxY = function () { return this.cy + this.rh; };
+    Oval.prototype.scaleBy = function (mag) {
+        if (mag == 1)
+            return;
+        this.cx *= mag;
+        this.cy *= mag;
+        this.rw *= mag;
+        this.rh *= mag;
+    };
+    Oval.prototype.offsetBy = function (dx, dy) {
+        this.cx += dx;
+        this.cy += dy;
+    };
+    Oval.prototype.toString = function () { return '[' + this.cx + ',' + this.cy + ';' + this.rw + ',' + this.rh + ']'; };
+    return Oval;
+}());
+var Line = (function () {
+    function Line(x1, y1, x2, y2) {
+        this.x1 = x1 == null ? 0 : x1;
+        this.y1 = y1 == null ? 0 : y1;
+        this.x2 = x2 == null ? 0 : x2;
+        this.y2 = y2 == null ? 0 : y2;
+    }
+    Line.zero = function () { return new Line(); };
+    Line.prototype.clone = function () { return new Line(this.x1, this.y1, this.x2, this.y2); };
+    Line.prototype.setPos1 = function (pos) {
+        this.x1 = pos.x;
+        this.y1 = pos.y;
+    };
+    Line.prototype.setPos2 = function (pos) {
+        this.x2 = pos.x;
+        this.y2 = pos.y;
+    };
+    Line.prototype.minX = function () { return Math.min(this.x1, this.x2); };
+    Line.prototype.minY = function () { return Math.min(this.y1, this.y2); };
+    Line.prototype.maxX = function () { return Math.max(this.x1, this.x2); };
+    Line.prototype.maxY = function () { return Math.max(this.y1, this.y2); };
+    Line.prototype.scaleBy = function (mag) {
+        if (mag == 1)
+            return;
+        this.x1 *= mag;
+        this.y1 *= mag;
+        this.x2 *= mag;
+        this.y2 *= mag;
+    };
+    Line.prototype.offsetBy = function (dx, dy) {
+        this.x1 += dx;
+        this.y1 += dy;
+        this.x2 += dx;
+        this.y2 += dy;
+    };
+    Line.prototype.toString = function () { return '[' + this.x1 + ',' + this.y1 + ';' + this.x2 + ',' + this.y2 + ']'; };
+    return Line;
+}());
+var FontData = (function () {
+    function FontData() {
+        this.GLYPH_MIN = 32;
+        this.GLYPH_MAX = 127;
+        this.GLYPH_COUNT = 96;
+        this.FONT_ADV = 1041;
+        this.UNITS_PER_EM = 2048;
+        this.INV_UNITS_PER_EM = 1.0 / this.UNITS_PER_EM;
+        this.ASCENT = 2059;
+        this.DESCENT = -430;
+        this.MISSING_HORZ = 2048;
+        this.MISSING_DATA = "M256 0V1536H1792V0H256ZM384 128H1664V1408H384V128Z";
+        this.ASCENT_FUDGE = 0.75;
+        this.UNICODE = [
+            " ", "!", "&quot;", "#", "$", "%", "&amp;", "&apos;", "(", ")", "*", "+", ",", "-", ".", "/", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", ":", ";", "&lt;", "=", "&gt;", "?", "@",
+            "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "[", "\\", "]", "^", "_", "`", "a", "b", "c", "d", "e",
+            "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "{", "|", "}", "~", "&#x80;"
+        ];
+        this.GLYPH_NAME = [
+            "space", "exclam", "quotedbl", "numbersign", "dollar", "percent", "ampersand", "quotesingle", "parenleft", "parenright", "asterisk", "plus", "comma", "hyphen", "period", "slash", "zero",
+            "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "colon", "semicolon", "less", "equal", "greater", "question", "at", "A", "B", "C", "D", "E", "F", "G", "H", "I",
+            "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "bracketleft", "backslash", "bracketright", "asciicircum", "underscore", "grave", "a", "b", "c", "d",
+            "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "braceleft", "bar", "braceright", "asciitilde", "Adieresis"
+        ];
+        this.HORIZ_ADV_X = [
+            720, 806, 940, 1676, 1302, 2204, 1488, 550, 930, 930, 1302, 1676, 745, 930, 745, 930, 1302, 1302, 1302, 1302, 1302, 1302, 1302, 1302, 1302, 1302, 930, 930, 1676, 1676, 1676, 1117, 2048,
+            1400, 1404, 1430, 1578, 1295, 1177, 1588, 1539, 862, 931, 1419, 1140, 1726, 1532, 1612, 1235, 1612, 1424, 1400, 1262, 1499, 1400, 2025, 1403, 1260, 1403, 930, 930, 930, 1676, 1302, 1302,
+            1230, 1276, 1067, 1276, 1220, 720, 1276, 1296, 562, 705, 1212, 562, 1992, 1296, 1243, 1276, 1276, 874, 1067, 807, 1296, 1212, 1676, 1212, 1212, 1076, 1300, 930, 1300, 1676, 1400
+        ];
+        this.GLYPH_DATA = [
+            "",
+            "M515 1489L489 410H319L291 1489H515ZM505 0H301V211H505V0Z",
+            "M772 1556L729 977H597L554 1556H772ZM386 1556L343 977H211L168 1556H386Z",
+            "M1481 932H1148L1056 556H1364V421H1021L917 0H788L892 421H622L518 0H389L493 421H195V556H528L620 932H312V1067H655L760 1489H889L784 1067H1054L1159 1489H1288L1183 1067H1481V932ZM1022 "
+                + "934H748L654 554H928L1022 934Z",
+            "M1160 380Q1160 225 1039 123T722 1V-361H604V-4Q472 -3 356 21T155 85V283H171Q190 269 239 243T334 199Q386 180 455 164T604 144V577Q564 585 530 592T467 608Q304 649 233 731T162 935Q162 1083 "
+                + "278 1185T604 1304V1576H722V1306Q823 1304 929 1282T1107 1231V1035H1093Q1018 1081 937 1116T722 1161V730Q752 725 787 717T848 703Q997 671 1078 593T1160 380ZM604 747V1160Q497 1152 424 1102T351 961Q351 870 405 824T604 747ZM971 354Q971 448 913 491T722 "
+                + "560V146Q842 158 906 207T971 354Z",
+            "M884 1076Q884 852 790 743T517 634Q335 634 242 743T149 1075Q149 1299 244 1408T517 1517Q698 1517 791 1407T884 1076ZM1575 1489L795 0H630L1410 1489H1575ZM2055 413Q2055 189 1960 80T1687 "
+                + "-29Q1506 -29 1413 81T1320 412Q1320 636 1414 745T1687 854Q1869 854 1962 745T2055 413ZM706 1076Q706 1248 662 1316T517 1384Q415 1384 371 1316T327 1075Q327 902 371 835T517 767Q617 767 661 834T706 1076ZM1877 413Q1877 585 1833 653T1688 721Q1586 721 "
+                + "1542 653T1498 412Q1498 239 1542 172T1688 104Q1788 104 1832 171T1877 413Z",
+            "M792 1191Q792 1286 736 1340T591 1395Q499 1395 441 1334T383 1183Q383 1108 422 1050T593 913Q691 948 741 1015T792 1191ZM986 315L508 781Q477 766 446 742T384 675Q356 636 338 581T320 "
+                + "457Q320 311 405 222T648 132Q741 132 832 177T986 315ZM1287 909V813Q1287 717 1262 597T1177 368L1555 0H1309L1080 224Q965 82 845 26T598 -31Q390 -31 253 90T115 409Q115 501 141 568T202 684Q237 731 289 772T394 845Q284 917 236 990T187 1174Q187 1241 "
+                + "213 1301T293 1412Q343 1460 423 1490T601 1520Q774 1520 881 1433T988 1211Q988 1167 976 1112T935 1012Q903 963 844 918T691 841L1062 479Q1076 519 1083 567T1091 667Q1093 723 1093 792T1092 909H1287Z",
+            "M386 1556L343 977H207L164 1556H386Z",
+            "M783 -412H554Q377 -209 279 31T181 572Q181 873 279 1113T554 1556H783V1546Q702 1473 629 1378T492 1155Q432 1032 395 884T357 572Q357 401 393 259T492 -11Q552 -134 629 -233T783 -402V-412Z",
+            "M749 572Q749 271 651 31T376 -412H147V-402Q224 -333 301 -234T438 -11Q500 117 536 259T573 572Q573 736 536 884T438 1155Q375 1282 302 1377T147 1546V1556H376Q553 1353 651 1113T749 572Z",
+            "M1137 887L1073 777L711 990L717 630H588L593 990L232 776L167 886L548 1093L167 1300L232 1410L594 1197L588 1556H717L710 1197L1073 1409L1137 1299L757 1094L1137 887Z",
+            "M1466 572H921V27H755V572H210V732H755V1277H921V732H1466V572Z",
+            "M575 285L293 -370H147L321 285H575Z",
+            "M777 561H153V742H777V561Z",
+            "M492 0H253V285H492V0Z",
+            "M860 1556L143 -304H-30L684 1556H860Z",
+            "M1167 745Q1167 344 1042 157T652 -31Q384 -31 261 159T137 743Q137 1140 262 1329T652 1519Q920 1519 1043 1327T1167 745ZM904 291Q939 372 951 481T964 745Q964 897 952 1009T903 1199Q868 1276 "
+                + "808 1315T652 1354Q558 1354 497 1315T399 1197Q365 1123 353 1004T340 743Q340 587 351 482T398 294Q431 216 491 175T652 134Q746 134 808 173T904 291Z",
+            "M1084 0H278V152H588V1150H278V1286Q341 1286 413 1296T522 1327Q568 1352 594 1390T625 1494H780V152H1084V0Z",
+            "M1169 0H161V209Q266 299 371 389T568 568Q760 754 831 863T902 1100Q902 1216 826 1281T612 1347Q521 1347 415 1315T208 1217H198V1427Q269 1462 387 1491T617 1520Q846 1520 976 1410T1106 1110Q1106 "
+                + "1025 1085 952T1021 812Q982 750 930 690T802 557Q695 452 581 354T368 171H1169V0Z",
+            "M1038 717Q1086 674 1117 609T1148 441Q1148 339 1111 254T1007 106Q932 36 831 3T608 -31Q484 -31 364 -2T167 63V272H182Q267 216 382 179T604 142Q667 142 738 163T853 225Q899 269 921 322T944 "
+                + "456Q944 536 919 588T848 671Q803 702 739 713T601 725H511V891H581Q733 891 823 954T914 1140Q914 1194 891 1234T827 1301Q784 1327 735 1337T624 1347Q529 1347 422 1313T220 1217H210V1426Q281 1461 399 1490T629 1520Q738 1520 821 1500T971 1436Q1043 1388 "
+                + "1080 1320T1117 1161Q1117 1037 1030 945T823 828V814Q871 806 933 781T1038 717Z",
+            "M1203 419H982V0H790V419H77V649L798 1489H982V579H1203V419ZM790 579V1251L213 579H790Z",
+            "M1157 473Q1157 369 1119 274T1015 114Q943 44 844 7T613 -31Q491 -31 378 -6T187 56V267H201Q283 215 393 179T609 142Q680 142 746 162T865 232Q909 275 931 335T954 474Q954 551 928 604T854 689Q802 "
+                + "727 728 742T561 758Q473 758 392 746T251 722V1489H1147V1314H444V918Q487 922 532 924T610 926Q731 926 822 906T989 833Q1069 778 1113 691T1157 473Z",
+            "M1191 483Q1191 256 1042 113T675 -31Q565 -31 475 3T316 104Q230 187 184 324T137 654Q137 852 179 1005T315 1277Q403 1390 542 1453T866 1517Q925 1517 965 1512T1046 1494V1303H1036Q1008 1318 "
+                + "952 1331T836 1345Q621 1345 493 1211T344 847Q428 898 509 924T698 951Q793 951 865 934T1014 863Q1102 802 1146 709T1191 483ZM988 475Q988 568 961 629T870 735Q824 767 768 777T651 787Q566 787 493 767T343 705Q341 683 340 663T339 611Q339 453 371 362T461 "
+                + "217Q507 173 560 153T677 132Q822 132 905 220T988 475Z",
+            "M1173 1266L499 0H285L1002 1314H154V1489H1173V1266Z",
+            "M1180 415Q1180 222 1030 94T651 -34Q409 -34 266 91T122 411Q122 535 194 635T397 795V801Q277 865 220 941T162 1131Q162 1299 300 1411T651 1523Q874 1523 1007 1416T1140 1144Q1140 1043 1077 "
+                + "946T892 793V787Q1032 727 1106 639T1180 415ZM943 1142Q943 1249 861 1312T650 1376Q524 1376 444 1316T363 1154Q363 1082 403 1030T526 936Q563 918 632 889T768 841Q867 907 905 978T943 1142ZM974 396Q974 488 934 543T775 655Q728 677 672 696T523 749Q433 "
+                + "700 379 616T324 426Q324 291 417 203T653 115Q799 115 886 190T974 396Z",
+            "M1167 834Q1167 639 1123 480T988 209Q897 95 760 33T438 -29Q386 -29 340 -24T258 -6V185H268Q297 170 350 157T468 143Q689 143 814 275T960 641Q867 585 785 561T606 537Q514 537 440 555T290 625Q202 "
+                + "686 158 780T113 1005Q113 1233 263 1376T629 1519Q737 1519 829 1486T990 1385Q1075 1302 1121 1172T1167 834ZM965 877Q965 1032 933 1126T845 1272Q798 1317 744 1336T627 1356Q483 1356 400 1266T316 1013Q316 918 343 858T434 753Q479 722 533 712T653 701Q731 "
+                + "701 811 722T961 783Q962 804 963 824T965 877Z",
+            "M585 832H346V1117H585V832ZM585 0H346V285H585V0Z",
+            "M585 832H346V1117H585V832ZM658 285L376 -370H230L404 285H658Z",
+            "M1408 77L254 590V714L1408 1227V1047L498 652L1408 257V77Z",
+            "M1431 782H245V942H1431V782ZM1431 362H245V522H1431V362Z",
+            "M1422 590L268 77V257L1178 652L268 1047V1227L1422 714V590Z",
+            "M1005 1139Q1005 1041 970 965T878 829Q822 772 749 722T594 625V400H415V705Q480 742 555 786T679 875Q737 927 769 982T801 1124Q801 1237 725 1292T527 1348Q419 1348 323 1314T170 1245H160V1449Q230 "
+                + "1476 337 1497T541 1519Q756 1519 880 1415T1005 1139ZM610 0H406V211H610V0Z",
+            "M1870 663Q1870 524 1830 394T1714 157H1274L1247 273Q1173 213 1105 181T949 149Q781 149 681 276T580 631Q580 858 703 993T997 1128Q1070 1128 1126 1112T1247 1062V1110H1406V268H1649Q1691 343 "
+                + "1712 455T1734 657Q1734 821 1689 955T1555 1185Q1467 1281 1337 1332T1042 1384Q882 1384 750 1326T522 1170Q426 1072 372 936T317 645Q317 480 369 344T516 110Q615 9 748 -42T1038 -94Q1124 -94 1215 -83T1391 -48V-190Q1294 -211 1210 -218T1037 -226Q851 "
+                + "-226 692 -163T419 15Q304 130 240 291T176 647Q176 832 243 991T426 1268Q542 1385 701 1452T1041 1519Q1237 1519 1391 1457T1651 1283Q1757 1171 1813 1014T1870 663ZM1245 408V926Q1182 955 1132 967T1025 980Q896 980 823 890T750 634Q750 471 808 388T989 "
+                + "304Q1056 304 1123 335T1245 408Z",
+            "M1374 0H1163L1017 415H373L227 0H26L568 1489H832L1374 0ZM956 585L695 1316L433 585H956Z",
+            "M1323 458Q1323 347 1281 262T1168 122Q1084 56 984 28T728 0H200V1489H641Q804 1489 885 1477T1040 1427Q1122 1384 1159 1317T1196 1155Q1196 1049 1142 975T998 855V847Q1149 816 1236 715T1323 458ZM990 "
+                + "1129Q990 1183 972 1220T914 1280Q867 1307 800 1313T634 1320H398V890H654Q747 890 802 899T904 939Q951 969 970 1016T990 1129ZM1117 450Q1117 540 1090 593T992 683Q944 708 876 715T709 723H398V169H660Q790 169 873 182T1009 232Q1065 271 1091 321T1117 "
+                + "450Z",
+            "M1350 108Q1295 84 1251 63T1134 19Q1073 0 1002 -13T844 -27Q682 -27 550 18T319 161Q223 256 169 402T115 743Q115 927 167 1072T317 1317Q412 1414 546 1465T845 1516Q965 1516 1084 1487T1350 1385V1150H1335Q1212 "
+                + "1253 1091 1300T832 1347Q719 1347 629 1311T467 1197Q398 1122 360 1008T321 743Q321 586 363 473T473 289Q543 215 636 180T834 144Q977 144 1102 193T1336 340H1350V108Z",
+            "M1458 743Q1458 540 1370 375T1134 119Q1032 56 907 28T576 0H200V1489H572Q790 1489 918 1458T1136 1371Q1288 1276 1373 1118T1458 743ZM1251 746Q1251 921 1190 1041T1008 1230Q920 1280 821 1299T584 "
+                + "1319H398V170H584Q727 170 833 191T1029 269Q1140 340 1195 456T1251 746Z",
+            "M1181 0H200V1489H1181V1313H398V905H1181V729H398V176H1181V0Z",
+            "M1151 1313H398V893H1045V717H398V0H200V1489H1151V1313Z",
+            "M1442 110Q1320 54 1176 13T896 -29Q722 -29 577 19T330 163Q227 260 171 405T115 746Q115 1103 323 1309T896 1516Q1023 1516 1155 1486T1441 1382V1147H1423Q1392 1171 1333 1210T1217 1275Q1148 1306 "
+                + "1061 1326T862 1347Q612 1347 467 1187T321 752Q321 463 473 303T887 142Q983 142 1078 161T1246 210V575H847V749H1442V110Z",
+            "M1339 0H1141V729H398V0H200V1489H398V905H1141V1489H1339V0Z",
+            "M725 0H137V152H332V1337H137V1489H725V1337H530V152H725V0Z",
+            "M746 387Q746 191 627 85T306 -21Q258 -21 178 -13T44 8V193H55Q96 179 156 164T279 149Q371 149 425 170T506 230Q533 270 540 328T548 462V1331H233V1489H746V387Z",
+            "M1397 0H1140L551 663L403 505V0H205V1489H403V712L1126 1489H1366L701 789L1397 0Z",
+            "M1142 0H200V1489H398V176H1142V0Z",
+            "M1526 0H1328V1283L914 410H796L385 1283V0H200V1489H470L867 660L1251 1489H1526V0Z",
+            "M1336 0H1091L385 1332V0H200V1489H507L1151 273V1489H1336V0Z",
+            "M1310 1318Q1401 1218 1449 1073T1498 744Q1498 560 1449 415T1310 172Q1218 71 1093 20T806 -31Q649 -31 521 21T302 172Q212 271 164 415T115 744Q115 926 163 1070T303 1318Q391 1416 521 1468T806 "
+                + "1520Q966 1520 1093 1468T1310 1318ZM1292 744Q1292 1034 1162 1191T807 1349Q580 1349 451 1192T321 744Q321 451 453 296T807 140Q1029 140 1160 295T1292 744Z",
+            "M1174 1039Q1174 940 1140 856T1043 709Q966 632 861 594T596 555H398V0H200V1489H604Q738 1489 831 1467T996 1396Q1081 1339 1127 1254T1174 1039ZM968 1034Q968 1111 941 1168T859 1261Q811 1292 750 "
+                + "1305T594 1319H398V724H565Q685 724 760 745T882 814Q929 862 948 915T968 1034Z",
+            "M1528 -365Q1468 -380 1410 -386T1290 -393Q1116 -393 1011 -298T896 -24Q872 -28 850 -29T806 -31Q649 -31 521 21T302 172Q212 271 164 415T115 744Q115 926 163 1070T303 1318Q391 1416 521 1468T806 "
+                + "1520Q966 1520 1093 1468T1310 1318Q1401 1218 1449 1073T1498 744Q1498 471 1387 284T1087 22Q1091 -92 1141 -155T1323 -218Q1364 -218 1420 -206T1501 -183H1528V-365ZM1292 744Q1292 1034 1162 1191T807 1349Q580 1349 451 1192T321 744Q321 451 453 296T807 "
+                + "140Q1029 140 1160 295T1292 744Z",
+            "M1432 0H1175L677 592H398V0H200V1489H617Q752 1489 842 1472T1004 1409Q1085 1358 1130 1281T1176 1084Q1176 923 1095 815T872 651L1432 0ZM969 1070Q969 1134 947 1183T872 1267Q829 1296 770 1307T631 "
+                + "1319H398V757H598Q692 757 762 773T881 835Q926 877 947 931T969 1070Z",
+            "M1282 425Q1282 338 1242 253T1128 109Q1048 45 942 9T685 -27Q524 -27 396 3T134 92V340H148Q261 246 409 195T687 144Q871 144 973 213T1076 397Q1076 496 1028 543T880 616Q805 636 718 649T532 682Q334 "
+                + "724 239 825T143 1090Q143 1277 301 1396T702 1516Q859 1516 990 1486T1222 1412V1178H1208Q1123 1250 985 1297T701 1345Q542 1345 446 1279T349 1109Q349 1016 397 963T566 882Q630 868 748 848T948 807Q1114 763 1198 674T1282 425Z",
+            "M1262 1313H730V0H532V1313H0V1489H1262V1313Z",
+            "M1321 598Q1321 436 1286 316T1169 115Q1092 39 989 4T749 -31Q609 -31 505 6T330 115Q249 197 214 313T178 598V1489H376V588Q376 467 392 397T448 270Q492 205 567 172T749 139Q856 139 931 171T1051 "
+                + "270Q1090 327 1106 400T1123 583V1489H1321V598Z",
+            "M1374 1489L832 0H568L26 1489H238L705 179L1172 1489H1374Z",
+            "M1933 1489L1546 0H1323L1010 1236L704 0H486L92 1489H295L608 251L916 1489H1117L1428 239L1739 1489H1933Z",
+            "M1336 1489L822 753L1335 0H1106L700 613L284 0H68L587 744L80 1489H308L709 884L1119 1489H1336Z",
+            "M1254 1489L730 653V0H532V632L6 1489H225L632 823L1043 1489H1254Z",
+            "M1288 0H126V184L1039 1313H160V1489H1266V1310L344 176H1288V0Z",
+            "M759 -392H239V1556H759V1413H413V-249H759V-392Z",
+            "M960 -304H787L70 1556H246L960 -304Z",
+            "M691 -392H171V-249H517V1413H171V1556H691V-392Z",
+            "M1490 684H1292L837 1311L383 682H186L775 1489H901L1490 684Z",
+            "M1306 -300H-4V-180H1306V-300Z",
+            "M762 1302H613L340 1676H583L762 1302Z",
+            "M1053 0H866V119Q841 102 799 72T716 23Q669 0 608 -15T465 -31Q314 -31 209 69T104 324Q104 451 158 529T314 653Q416 698 559 714T866 738V767Q866 831 844 873T779 939Q739 962 683 970T566 978Q492 "
+                + "978 401 959T213 902H203V1093Q258 1108 362 1126T567 1144Q685 1144 772 1125T924 1058Q987 1012 1020 939T1053 758V0ZM866 275V586Q780 581 664 571T479 542Q398 519 348 471T298 337Q298 241 356 193T533 144Q632 144 714 182T866 275Z",
+            "M1168 567Q1168 427 1129 315T1022 127Q951 48 866 9T679 -31Q584 -31 513 -9T373 52L361 0H185V1556H373V1000Q452 1065 541 1106T741 1148Q939 1148 1053 996T1168 567ZM974 562Q974 762 908 865T695 "
+                + "969Q613 969 529 934T373 842V202Q453 166 510 152T641 138Q797 138 885 240T974 562Z",
+            "M1011 70Q917 25 833 0T653 -25Q532 -25 431 10T258 118Q185 190 145 300T105 557Q105 831 255 987T653 1143Q749 1143 841 1116T1011 1050V841H1001Q915 908 824 944T645 980Q485 980 393 873T300 557Q300 "
+                + "355 390 247T645 138Q702 138 761 153T867 192Q908 213 944 236T1001 277H1011V70Z",
+            "M1091 0H903V117Q822 47 734 8T543 -31Q343 -31 226 123T108 550Q108 692 148 803T258 992Q326 1068 416 1108T604 1148Q692 1148 760 1130T903 1072V1556H1091V0ZM903 275V916Q827 950 767 963T636 976Q478 "
+                + "976 390 866T302 554Q302 355 370 252T588 148Q668 148 750 183T903 275Z",
+            "M1120 539H297Q297 436 328 360T413 234Q465 186 536 162T694 138Q808 138 923 183T1088 273H1098V68Q1003 28 904 1T696 -26Q418 -26 262 124T106 552Q106 826 255 987T649 1148Q875 1148 997 1016T1120 "
+                + "641V539ZM937 683Q936 831 863 912T639 993Q488 993 399 904T297 683H937Z",
+            "M786 1374H776Q745 1383 695 1392T607 1402Q486 1402 432 1349T377 1155V1117H716V959H383V0H195V959H68V1117H195V1154Q195 1353 294 1459T580 1566Q643 1566 693 1560T786 1546V1374Z",
+            "M1091 127Q1091 -157 962 -290T565 -423Q476 -423 392 -411T225 -375V-183H235Q281 -201 381 -227T581 -254Q677 -254 740 -231T838 -167Q873 -128 888 -73T903 50V152Q818 84 741 51T543 17Q343 17 226 "
+                + "161T108 569Q108 713 148 817T259 998Q324 1069 417 1108T602 1148Q699 1148 764 1129T903 1069L915 1117H1091V127ZM903 307V916Q828 950 764 964T635 979Q480 979 391 875T302 573Q302 385 368 288T587 191Q669 191 751 222T903 307Z",
+            "M1119 0H931V636Q931 713 922 780T889 886Q864 928 817 948T695 969Q618 969 534 931T373 834V0H185V1556H373V993Q461 1066 555 1107T748 1148Q929 1148 1024 1039T1119 725V0Z",
+            "M387 1304H175V1499H387V1304ZM375 0H187V1117H375V0Z",
+            "M533 1304H321V1499H533V1304ZM521 -27Q521 -223 421 -323T153 -423Q113 -423 48 -415T-62 -395V-216H-52Q-24 -227 23 -241T116 -255Q188 -255 232 -235T298 -175Q320 -135 326 -79T333 59V959H100V1117H521V-27Z",
+            "M1199 0H951L503 489L381 373V0H193V1556H381V558L924 1117H1161L642 601L1199 0Z",
+            "M375 0H187V1556H375V0Z",
+            "M1815 0H1627V636Q1627 708 1621 775T1593 882Q1570 925 1527 947T1403 969Q1324 969 1245 930T1087 829Q1090 806 1092 776T1094 715V0H906V636Q906 710 900 776T872 883Q849 926 806 947T682 969Q605 "
+                + "969 528 931T373 834V0H185V1117H373V993Q461 1066 548 1107T735 1148Q849 1148 928 1100T1047 967Q1161 1063 1255 1105T1456 1148Q1640 1148 1727 1037T1815 725V0Z",
+            "M1119 0H931V636Q931 713 922 780T889 886Q864 928 817 948T695 969Q618 969 534 931T373 834V0H185V1117H373V993Q461 1066 555 1107T748 1148Q929 1148 1024 1039T1119 725V0Z",
+            "M1137 558Q1137 285 997 127T622 -31Q385 -31 246 127T106 558Q106 831 245 989T622 1148Q857 1148 997 990T1137 558ZM943 558Q943 775 858 880T622 986Q469 986 385 881T300 558Q300 348 385 240T622 "
+                + "131Q772 131 857 238T943 558Z",
+            "M1168 572Q1168 436 1129 324T1019 133Q953 59 864 19T674 -22Q587 -22 517 -3T373 56V-412H185V1117H373V1000Q448 1063 541 1105T741 1148Q943 1148 1055 996T1168 572ZM974 567Q974 769 905 869T693 "
+                + "969Q612 969 530 934T373 842V209Q453 173 510 160T641 147Q798 147 886 253T974 567Z",
+            "M1091 -412H903V126Q816 51 730 15T544 -22Q345 -22 227 131T108 555Q108 699 149 809T259 995Q325 1068 414 1108T602 1148Q692 1148 761 1128T903 1069L915 1117H1091V-412ZM903 284V916Q825 951 765 "
+                + "965T635 979Q472 979 387 869T302 564Q302 368 370 263T586 157Q668 157 750 192T903 284Z",
+            "M882 912H872Q830 922 791 926T697 931Q610 931 529 893T373 793V0H185V1117H373V952Q485 1042 570 1079T745 1117Q794 1117 816 1115T882 1105V912Z",
+            "M983 322Q983 169 857 71T511 -27Q387 -27 284 2T110 67V278H120Q209 211 318 172T527 132Q651 132 721 172T791 298Q791 364 753 398Q715 432 607 456Q567 465 503 477T385 503Q238 542 177 617T115 "
+                + "803Q115 872 143 933T230 1042Q286 1089 372 1116T566 1144Q666 1144 768 1120T939 1060V859H929Q857 912 754 948T552 985Q449 985 378 946T307 828Q307 759 350 724Q392 689 486 667Q538 655 602 643T710 621Q841 591 912 518Q983 444 983 322Z",
+            "M765 10Q712 -4 650 -13T538 -22Q367 -22 278 70T189 365V959H62V1117H189V1438H377V1117H765V959H377V450Q377 362 381 313T409 220Q431 180 469 162T587 143Q633 143 683 156T755 179H765V10Z",
+            "M1111 0H923V124Q828 49 741 9T549 -31Q373 -31 275 76T177 392V1117H365V481Q365 396 373 336T407 232Q434 188 477 168T602 148Q675 148 761 186T923 283V1117H1111V0Z",
+            "M1151 1117L699 0H510L61 1117H265L611 228L954 1117H1151Z",
+            "M1590 1117L1299 0H1125L838 861L553 0H380L86 1117H282L487 252L766 1117H921L1207 252L1401 1117H1590Z",
+            "M1152 0H915L598 429L279 0H60L496 557L64 1117H301L616 695L932 1117H1152L713 567L1152 0Z",
+            "M1151 1117L499 -412H298L506 54L61 1117H265L608 289L954 1117H1151Z",
+            "M995 0H93V139L744 960H107V1117H978V983L324 159H995V0Z",
+            "M1113 -392H963Q784 -392 673 -293T561 -5V144Q561 313 478 408T224 504H173V660H224Q395 660 478 755T561 1020V1169Q561 1357 672 1456T963 1556H1113V1418H999Q863 1418 802 1355T740 1152V977Q740 "
+                + "838 663 744T449 594V570Q586 515 663 421T740 187V12Q740 -128 801 -191T999 -254H1113V-392Z",
+            "M552 -392H378V1556H552V-392Z",
+            "M1127 504H1076Q905 504 822 409T739 144V-5Q739 -193 628 -292T337 -392H187V-254H301Q437 -254 498 -191T560 12V187Q560 326 637 420T851 570V594Q714 649 637 743T560 977V1152Q560 1292 "
+                + "499 1355T301 1418H187V1556H337Q516 1556 627 1457T739 1169V1020Q739 851 822 756T1076 660H1127V504Z",
+            "M1489 927Q1487 828 1467 732T1401 561Q1355 484 1290 440T1125 396Q1031 396 958 435T801 577Q699 702 653 734T557 766Q463 766 413 679T354 395H187Q189 495 209 589T274 761Q317 835 386 "
+                + "880T551 926Q644 926 717 888T876 745Q956 647 1007 602T1119 556Q1222 556 1270 657T1322 927H1489Z",
+            "M1374 0H1163L1017 415H373L227 0H26L568 1489H832L1374 0ZM956 585L695 1316L433 585H956ZM1005 1677H806V1872H1005V1677ZM592 1677H393V1872H592V1677Z"
+        ];
+        this.KERN_G1 = [
+            7, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 14, 14, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 34, 34, 34, 34, 35, 36, 36, 36, 36, 36, 36, 36, 38, 38, 38, 38,
+            38, 38, 38, 38, 38, 38, 41, 42, 42, 42, 43, 43, 43, 43, 43, 43, 43, 43, 43, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 47, 47, 47, 47, 47, 47, 48, 48, 48, 48, 48, 48, 48, 49, 49, 50,
+            50, 50, 50, 50, 50, 50, 50, 51, 51, 51, 51, 51, 51, 51, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 53, 53, 53, 54, 54, 54, 54, 54, 54,
+            54, 54, 54, 54, 54, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 56, 56, 56, 56, 56, 56, 56, 56, 56, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 58,
+            58, 58, 58, 58, 58, 58, 58, 58, 58, 65, 65, 65, 66, 66, 66, 67, 67, 69, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 72, 72, 72, 75, 75, 75, 77, 77, 77, 78, 78, 78, 79, 79, 79, 79, 79,
+            80, 80, 80, 82, 82, 82, 82, 84, 84, 86, 86, 86, 86, 86, 86, 87, 87, 87, 87, 88, 88, 88, 88, 88, 88, 89, 89, 89, 89, 89, 89, 89, 89, 89, 89, 90, 90, 90, 90, 90, 90, 90
+        ];
+        this.KERN_G2 = [
+            33, 33, 41, 42, 51, 52, 54, 55, 56, 57, 58, 65, 86, 87, 88, 89, 90, 12, 13, 13, 51, 52, 53, 54, 55, 57, 84, 85, 86, 87, 89, 12, 13, 14, 52, 13, 12, 14, 52, 55, 56, 57, 58, 12, 14, 26, 27,
+            31, 33, 52, 65, 69, 79, 13, 12, 14, 33, 13, 47, 65, 69, 79, 85, 86, 87, 89, 7, 13, 35, 39, 42, 47, 52, 54, 55, 57, 86, 89, 12, 14, 52, 56, 57, 58, 12, 14, 33, 57, 65, 69, 79, 12, 14, 13,
+            52, 57, 65, 69, 79, 85, 89, 12, 14, 33, 51, 86, 87, 89, 12, 13, 14, 26, 27, 31, 33, 35, 39, 47, 51, 52, 65, 67, 69, 71, 79, 82, 83, 85, 86, 87, 89, 90, 12, 14, 33, 12, 13, 14, 26, 27, 33,
+            65, 69, 79, 85, 89, 12, 13, 14, 26, 27, 33, 65, 69, 79, 82, 85, 89, 13, 35, 39, 47, 65, 69, 79, 85, 89, 12, 13, 14, 26, 27, 33, 47, 65, 68, 69, 71, 77, 78, 79, 80, 81, 82, 83, 85, 86, 13,
+            35, 39, 47, 58, 65, 69, 79, 87, 89, 86, 87, 89, 12, 14, 89, 13, 52, 52, 2, 7, 9, 10, 12, 13, 14, 31, 60, 61, 89, 93, 86, 87, 89, 13, 69, 79, 86, 87, 89, 86, 87, 89, 12, 14, 86, 88, 89,
+            12, 14, 89, 12, 13, 14, 65, 13, 89, 12, 13, 14, 65, 69, 79, 12, 13, 14, 65, 13, 67, 68, 69, 71, 79, 12, 13, 14, 65, 67, 68, 69, 71, 79, 81, 13, 67, 68, 69, 71, 79, 81
+        ];
+        this.KERN_K = [
+            100, 50, 30, 100, 20, 150, 50, 50, 80, 140, 30, 20, 40, 20, 50, 40, 40, 130, 160, 50, 10, 120, 10, 60, 50, 80, 20, 10, 50, 30, 50, 20, -10, 20, 60, 50, 50, 50, 50, 20, 10, 20, 20, 300,
+            300, 60, 60, -60, 100, -30, 100, 50, 50, 30, 20, 20, 10, 110, 20, 60, 70, 70, 50, 80, 70, 80, 120, 160, 20, 20, -100, 20, 170, 110, 100, 160, 110, 110, 30, 30, 50, 10, 20, 20, 300, 300,
+            50, -20, 50, 50, 50, 30, 30, 100, 60, 20, 40, 50, 50, 20, 55, 20, 20, 20, 22, 30, 20, 30, 290, 150, 290, 200, 200, -60, 120, 40, 40, 50, 12, 70, 240, 220, 220, 210, 220, 200, 180, 200,
+            200, 200, 200, 170, 20, 20, 10, 290, 50, 290, 80, 80, 60, 100, 100, 100, 60, 65, 290, 50, 220, 80, 80, 50, 100, 100, 100, 60, 60, 65, 80, 10, 10, 10, 50, 60, 60, 30, 80, 290, 140, 290,
+            200, 200, 80, 20, 140, 120, 130, 130, 100, 100, 130, 100, 130, 100, 110, 110, 100, 60, 20, 20, 20, 10, 50, 60, 60, 40, 65, 16, 10, 16, 30, 20, 5, 20, 60, 140, -60, -60, -100, -50, 130,
+            50, 120, -110, -100, -100, 10, -100, 20, 10, 20, 100, 20, 20, 20, 10, 20, 20, 10, 20, 30, 20, 15, 20, 15, 30, 20, 5, 290, 20, 290, 36, 40, 10, 180, 40, 180, 40, 18, 18, 70, 20, 70, 20,
+            50, 20, 10, 24, 10, 24, 190, 40, 190, 40, 18, 10, 18, 10, 18, 10, 20, 10, 10, 12, 10, 12, 10
+        ];
+        this.OUTLINE_X = [
+            [], [291, 301, 505, 515], [168, 211, 729, 772, 554], [195, 389, 917, 1364, 1481, 1481, 1288, 760, 312, 195], [155, 604, 722, 1129.75, 1160, 1107, 722, 604, 278, 191, 162, 155], [149, 172.25, 242, 630,
+                1687, 1844.25, 1960, 2031.25, 2055, 2031.75, 1962, 1575, 517, 359.75, 244, 172.75], [115, 150, 253, 407.75, 598, 1555, 1287, 961.25, 881, 757.5, 601, 423, 293, 213, 187], [164, 207, 343, 386], [181,
+                205.5, 279, 554, 783, 783, 554, 279, 205.5], [147, 376, 651, 724.5, 749, 724.5, 651, 376, 147], [167, 232, 588, 717, 1073, 1137, 1137, 1073, 717, 588, 232, 167], [210, 755, 921, 1466, 1466, 921, 755,
+                210], [147, 293, 575, 321], [153, 777, 777, 153], [253, 492, 492, 253], [-30, 143, 860, 684], [137, 168.5, 261, 420.25, 652, 882, 1042, 1135.75, 1167, 1135.5, 1043, 883.75, 652, 422, 262, 168.25],
+            [278, 1084, 1084, 780, 625, 278], [161, 1169, 1169, 1106, 1073.5, 976, 821.25, 617, 387, 198, 161], [167, 364, 608, 831, 1007, 1111, 1148, 1117, 1080, 971, 821, 629, 399, 210, 167], [77, 790, 982, 1203,
+                1203, 982, 798, 77], [187, 378, 613, 844, 1015, 1119, 1157, 1147, 251, 187], [137, 184, 316, 475, 675, 875.75, 1042, 1153.75, 1191, 1046, 965, 866, 542, 315, 179], [154, 285, 499, 1173, 1173, 154],
+            [122, 158.5, 266, 433.75, 651, 860.25, 1030, 1142.5, 1180, 1140, 1106.75, 1007, 851.5, 651, 456.75, 300, 196.5, 162], [113, 258, 340, 438, 760, 988, 1123, 1167, 1121, 990, 829, 629, 429.5, 263,
+                150.5], [346, 585, 585, 346], [230, 376, 658, 585, 346], [254, 1408, 1408, 254], [245, 1431, 1431, 245], [268, 1422, 1422, 268], [160, 406, 610, 970, 1005, 973.25, 880, 733.25, 541, 337, 160], [176,
+                240, 419, 692, 1037, 1210, 1391, 1714, 1830, 1870, 1813, 1651, 1391, 1041, 701, 426, 243], [26, 1374, 832, 568], [200, 728, 984, 1168, 1281, 1323, 1301.25, 1196, 1159, 1040, 885, 641, 200], [115, 169,
+                319, 550, 844, 1002, 1134, 1251, 1350, 1350, 1084, 845, 546, 317, 167], [200, 576, 907, 1134, 1370, 1458, 1373, 1136, 918, 572, 200], [200, 1181, 1181, 200], [200, 398, 1045, 1151, 1151, 200], [115,
+                171, 330, 577, 896, 1176, 1442, 1442, 1441, 1155, 896, 570.25, 323, 167], [200, 1339, 1339, 200], [137, 725, 725, 137], [44, 178, 306, 487.25, 627, 716.25, 746, 746, 233, 44], [205, 1397, 1366, 205],
+            [200, 1142, 1142, 398, 200], [200, 1526, 1526, 200], [200, 1336, 1336, 200], [115, 164, 302, 521, 806, 1093, 1310, 1449, 1498, 1449, 1310, 1093, 806, 521, 303, 163], [200, 398, 1043, 1140, 1174, 1127,
+                996, 831, 604, 200], [115, 164, 302, 521, 1011, 1133.25, 1290, 1410, 1528, 1528, 1498, 1449, 1310, 1093, 806, 521, 303, 163], [200, 1432, 1130, 1004, 842, 617, 200], [134, 396, 685, 942, 1128, 1242,
+                1282, 1222, 990, 702, 480.25, 301, 182.5, 143, 134], [0, 532, 730, 1262, 1262, 0], [178, 214, 330, 505, 749, 989, 1169, 1286, 1321, 1321, 178], [26, 568, 832, 1374, 238], [92, 486, 1546, 1933, 295],
+            [68, 1335, 1336, 80], [6, 532, 730, 1254, 225], [126, 1288, 1288, 1266, 160, 126], [239, 759, 759, 239], [70, 787, 960, 246], [171, 691, 691, 171], [186, 383, 1490, 901, 775], [-4, 1306, 1306, -4], [340,
+                613, 762, 583], [104, 130.25, 209, 325.5, 465, 1053, 1053, 1020, 924, 772, 567, 362, 203], [185, 679, 866, 1022, 1129, 1168, 1138.75, 1053, 918, 373, 185], [105, 145, 258, 431, 653, 833, 1011, 1011,
+                841, 653, 429.5, 255, 142.5], [108, 138, 226, 363.75, 543, 1091, 1091, 903, 258, 148], [106, 145, 262, 448.5, 696, 904, 1098, 1120, 1120, 1088.75, 997, 849, 649, 428, 255, 143.25], [68, 195, 383, 716,
+                786, 786, 693, 580, 415, 294, 68], [108, 225, 392, 565, 798.25, 962, 1058.75, 1091, 1091, 602, 417, 259, 148], [185, 1119, 1119, 1095.25, 1024, 373, 185], [175, 187, 375, 387, 387, 175], [-62, 48, 153,
+                304, 421, 496, 521, 533, 533, 321, 100, -62], [193, 1199, 1161, 381, 193], [187, 375, 375, 187], [185, 1815, 1815, 1792.5, 1727, 1615.75, 1456, 735, 185], [185, 1119, 1119, 1095.25, 1024, 907.5, 748,
+                185], [106, 141.5, 246, 409.5, 622, 833.25, 997, 1102, 1137, 1102, 997, 833.25, 622, 408.75, 245, 140.75], [185, 373, 1019, 1129, 1168, 1139.25, 1055, 920.5, 741, 185], [108, 138.25, 227, 365.25,
+                903, 1091, 1091, 602, 414, 259, 149], [185, 373, 882, 882, 816, 745, 185], [110, 284, 511, 707.5, 857, 951.5, 983, 939, 768, 566, 372, 230, 143, 115, 110], [62, 211.25, 278, 387.5, 538, 650, 765, 765,
+                377, 189, 62], [177, 201.5, 275, 392.5, 549, 1111, 1111, 177], [61, 510, 699, 1151, 265], [86, 380, 1299, 1590, 766], [60, 1152, 1152, 64], [61, 298, 499, 1151, 265], [93, 995, 995, 978, 107, 93], [173,
+                589.5, 673, 801, 963, 1113, 1113, 963, 800.25, 672, 588.75, 173], [378, 552, 552, 378], [187, 337, 499.75, 628, 711.25, 1127, 1127, 710.5, 627, 499, 337, 187], [187, 354, 1125, 1290, 1401, 1467, 1489,
+                1322, 551, 386, 274, 209], [26, 1374, 1005, 806, 393]
+        ];
+        this.OUTLINE_Y = [
+            [], [1489, 0, 0, 1489], [1556, 977, 977, 1556, 1556], [421, 0, 0, 421, 932, 1067, 1489, 1489, 1067, 556], [85, -361, -361, 238.25, 380, 1231, 1576, 1576, 1185, 1071.5, 935, 283], [1075, 880.5, 743, 0,
+                -29, -1.75, 80, 217.75, 413, 607.5, 745, 1489, 1517, 1489.75, 1408, 1270.25], [409, 230.25, 90, -0.75, -31, 0, 909, 1334, 1433, 1498.25, 1520, 1490, 1412, 1301, 1174], [1556, 977, 977, 1556], [572,
+                286.25, 31, -412, -412, 1556, 1556, 1113, 857.75], [-412, -412, 31, 286.25, 572, 857.75, 1113, 1556, 1556], [886, 776, 630, 630, 777, 887, 1299, 1409, 1556, 1556, 1410, 1300], [572, 27, 27, 572, 732,
+                1277, 1277, 732], [-370, -370, 285, 285], [561, 561, 742, 742], [0, 0, 285, 285], [-304, -304, 1556, 1556], [743, 400, 159, 16.5, -31, 16.5, 157, 397.5, 745, 1085.5, 1327, 1471, 1519, 1471, 1329, 1088],
+            [0, 0, 152, 1494, 1494, 1286], [0, 0, 171, 1110, 1280, 1410, 1492.5, 1520, 1491, 1427, 209], [63, -2, -31, 3, 106, 254, 441, 1161, 1320, 1436, 1500, 1520, 1490, 1426, 272], [419, 0, 0, 419, 579, 1489, 1489,
+                649], [56, -6, -31, 7, 114, 274, 473, 1489, 1489, 267], [654, 324, 104, 3, -31, 5.5, 113, 277, 483, 1494, 1512, 1517, 1453, 1277, 1005], [1314, 0, 0, 1266, 1489, 1489], [411, 233.5, 91, -2.75, -34, -2, 94,
+                238.25, 415, 1144, 1294.5, 1416, 1496.25, 1523, 1495, 1411, 1285, 1131], [1005, -6, -24, -29, 33, 209, 480, 834, 1172, 1385, 1486, 1519, 1483.25, 1376, 1211.75], [0, 0, 1117, 1117], [-370, -370, 285,
+                1117, 1117], [590, 77, 1227, 714], [362, 362, 942, 942], [77, 590, 714, 1227], [1245, 0, 0, 965, 1139, 1294, 1415, 1493, 1519, 1497, 1449], [647, 291, 15, -163, -226, -218, -190, 157, 394, 663, 1014,
+                1283, 1457, 1519, 1452, 1268, 991], [0, 0, 1489, 1489], [0, 0, 28, 122, 262, 458, 600.25, 1155, 1317, 1427, 1477, 1489, 1489], [743, 402, 161, 18, -27, -13, 19, 63, 108, 1385, 1487, 1516, 1465, 1317,
+                1072], [0, 0, 28, 119, 375, 743, 1118, 1371, 1458, 1489, 1489], [0, 0, 1489, 1489], [0, 0, 717, 1313, 1489, 1489], [746, 405, 163, 19, -29, 13, 110, 749, 1382, 1486, 1516, 1463.75, 1309, 1065.25], [0, 0,
+                1489, 1489], [0, 0, 1489, 1489], [8, -13, -21, 5.5, 85, 213.5, 387, 1489, 1489, 193], [0, 0, 1489, 1489], [0, 0, 176, 1489, 1489], [0, 0, 1489, 1489], [0, 0, 1489, 1489], [744, 415, 172, 21, -31, 20, 172,
+                415, 744, 1073, 1318, 1468, 1520, 1468, 1318, 1070], [0, 0, 709, 856, 1039, 1254, 1396, 1467, 1489, 1489], [744, 415, 172, 21, -298, -369.25, -393, -386, -365, -183, 744, 1073, 1318, 1468, 1520, 1468,
+                1318, 1070], [0, 0, 1281, 1409, 1472, 1489, 1489], [92, 3, -27, 9, 109, 253, 425, 1412, 1486, 1516, 1485.5, 1396, 1260, 1090, 340], [1313, 0, 0, 1313, 1489, 1489], [598, 313, 115, 6, -31, 4, 115, 316, 598,
+                1489, 1489], [1489, 0, 0, 1489, 1489], [1489, 0, 0, 1489, 1489], [0, 0, 1489, 1489], [1489, 0, 0, 1489, 1489], [0, 0, 176, 1489, 1489, 184], [-392, -392, 1556, 1556], [1556, -304, -304, 1556], [-392,
+                -392, 1556, 1556], [682, 682, 684, 1489, 1489], [-300, -300, -180, -180], [1676, 1302, 1302, 1676], [324, 182.75, 69, -6, -31, 0, 758, 939, 1058, 1125, 1144, 1126, 1093], [0, -31, 9, 127, 315, 567,
+                812.75, 996, 1110, 1556, 1556], [557, 300, 118, 10, -25, 0, 70, 1050, 1116, 1143, 1104, 987, 801.5], [550, 306.75, 123, 7.5, -31, 0, 1556, 1556, 992, 803], [552, 306, 124, 11.5, -26, 1, 68, 539, 641,
+                856.25, 1016, 1115, 1148, 1107.75, 987, 797.75], [959, 0, 0, 959, 1374, 1546, 1560, 1566, 1538.75, 1459, 1117], [569, -375, -411, -423, -389.75, -290, -119.25, 127, 1117, 1148, 1108, 998, 817],
+            [0, 0, 725, 906, 1039, 1556, 1556], [1304, 0, 0, 1304, 1499, 1499], [-395, -415, -423, -398, -323, -199, -27, 1304, 1499, 1499, 1117, -216], [0, 0, 1117, 1556, 1556], [0, 0, 1556, 1556], [0, 0, 725,
+                903.5, 1037, 1120.25, 1148, 1148, 1117], [0, 0, 725, 906, 1039, 1120.75, 1148, 1117], [558, 313.75, 127, 8.5, -31, 8.5, 127, 313.75, 558, 803, 990, 1108.5, 1148, 1107.75, 989, 802.25], [-412, -412,
+                133, 324, 572, 814, 996, 1110, 1148, 1117], [555, 313.5, 131, 16.25, -412, -412, 1117, 1148, 1108, 995, 809], [0, 0, 912, 1105, 1115, 1117, 1117], [67, 2, -27, -2.5, 71, 182.75, 322, 1060, 1120, 1144,
+                1116, 1042, 933, 803, 278], [959, 189.75, 70, 1, -22, -13, 10, 1117, 1438, 1438, 1117], [392, 208.5, 76, -4.25, -31, 0, 1117, 1117], [1117, 0, 0, 1117, 1117], [1117, 0, 0, 1117, 1117], [0, 0, 1117, 1117],
+            [1117, -412, -412, 1117, 1117], [0, 0, 159, 1117, 1117, 139], [504, -171.5, -293, -367.25, -392, -392, 1556, 1556, 1530.5, 1456, 1334.75, 660], [-392, -392, 1556, 1556], [-392, -392, -366.5, -292,
+                -170.75, 504, 660, 1335.5, 1457, 1531.25, 1556, 1556], [395, 395, 396, 440, 561, 732, 927, 927, 926, 880, 761, 589], [0, 0, 1872, 1872, 1872]
+        ];
+        this.pathCache = [];
+        for (var n = this.GLYPH_DATA.length - 1; n >= 0; n--)
+            this.pathCache[n] = null;
+    }
+    FontData.prototype.getKerning = function (g1, g2) {
+        for (var n = 0; n < this.GLYPH_COUNT; n++)
+            if (this.KERN_G1[n] == g1 && this.KERN_G2[n] == g2)
+                return this.KERN_K[n];
+        return 0;
+    };
+    FontData.prototype.measureText = function (txt, size) {
+        var font = FontData.main;
+        var scale = size / font.UNITS_PER_EM;
+        var dx = 0;
+        for (var n = 0; n < txt.length; n++) {
+            var i = txt.charCodeAt(n) - font.GLYPH_MIN;
+            if (i < 0 || i >= font.GLYPH_COUNT) {
+                dx += font.MISSING_HORZ;
+                continue;
+            }
+            dx += font.HORIZ_ADV_X[i];
+            if (n < txt.length - 1) {
+                var j = txt.charCodeAt(n + 1) - font.GLYPH_MIN;
+                dx += font.getKerning(i, j);
+            }
+        }
+        return [dx * scale, font.ASCENT * scale * font.ASCENT_FUDGE, -font.DESCENT * scale];
+    };
+    FontData.prototype.getRawGlyph = function (idx) {
+        return this.GLYPH_DATA[idx];
+    };
+    ;
+    FontData.prototype.getGlyphPath = function (idx) {
+        path = this.pathCache[idx];
+        if (path != null)
+            return path;
+        var path = new Path2D(this.GLYPH_DATA[idx]);
+        this.pathCache[idx] = path;
+        return path;
+    };
+    FontData.prototype.getOutlineX = function (idx) { return this.OUTLINE_X[idx].slice(0); };
+    FontData.prototype.getOutlineY = function (idx) { return this.OUTLINE_Y[idx].slice(0); };
+    FontData.main = new FontData();
+    return FontData;
+}());
+var TextAlign;
+(function (TextAlign) {
+    TextAlign[TextAlign["Centre"] = 0] = "Centre";
+    TextAlign[TextAlign["Left"] = 1] = "Left";
+    TextAlign[TextAlign["Right"] = 2] = "Right";
+    TextAlign[TextAlign["Baseline"] = 0] = "Baseline";
+    TextAlign[TextAlign["Middle"] = 4] = "Middle";
+    TextAlign[TextAlign["Top"] = 8] = "Top";
+    TextAlign[TextAlign["Bottom"] = 16] = "Bottom";
+})(TextAlign || (TextAlign = {}));
 var MetaVector = (function () {
     function MetaVector(vec) {
         this.PRIM_LINE = 1;
@@ -2036,6 +2993,10 @@ var MetaVector = (function () {
         this.offsetY = 0;
         this.scale = 1;
         this.density = 1;
+        this.lowX = null;
+        this.lowY = null;
+        this.highX = null;
+        this.highY = null;
         this.types = vec.types;
         this.prims = vec.prims;
         this.width = vec.size[0];
@@ -2044,6 +3005,7 @@ var MetaVector = (function () {
             this.types = [];
         if (this.prims == null)
             this.prims = [];
+        this.charMask = Vec.booleanArray(false, FontData.main.GLYPH_COUNT);
     }
     MetaVector.prototype.drawLine = function (x1, y1, x2, y2, thickness, colour) {
         if (!thickness)
@@ -2083,31 +3045,135 @@ var MetaVector = (function () {
         var typeidx = this.findOrCreateType([this.PRIM_PATH, edgeCol, fillCol, thickness, hardEdge]);
         this.prims.push([this.PRIM_PATH, typeidx, xpoints.length, xpoints, ypoints, ctrlFlags, isClosed]);
     };
-    MetaVector.prototype.drawText = function (x, y, txt, size, colour) {
+    MetaVector.prototype.drawPoly = function (xpoints, ypoints, edgeCol, fillCol, thickness, hardEdge) {
+        this.drawPath(xpoints, ypoints, null, true, edgeCol, fillCol, thickness, hardEdge);
+    };
+    MetaVector.prototype.drawText = function (x, y, txt, size, colour, align) {
+        if (align == null)
+            align = 0;
+        var font = FontData.main;
+        for (var n = 0; n < txt.length; n++) {
+            var i = txt.charCodeAt(n);
+            if (i >= font.GLYPH_MIN && i <= font.GLYPH_MAX)
+                this.charMask[i - font.GLYPH_MIN] = true;
+        }
+        var metrics = font.measureText(txt, size);
+        var bx = 0, by = 0;
+        if ((align & TextAlign.Left) != 0) { }
+        else if ((align & TextAlign.Right) != 0)
+            bx = -metrics[0];
+        else
+            bx = -0.5 * metrics[0];
+        if ((align & TextAlign.Middle) != 0)
+            by += 0.5 * metrics[1];
+        else if ((align & TextAlign.Top) != 0)
+            by += metrics[1];
+        else if ((align & TextAlign.Bottom) != 0)
+            by -= metrics[2];
+        var x1 = 0, y1 = 0, x2 = 0, y2 = 0;
+        var dx = 0;
+        for (var n = 0; n < txt.length; n++) {
+            var i = txt.charCodeAt(n) - font.GLYPH_MIN;
+            if (i >= 0 && i < font.GLYPH_COUNT) {
+                var outlineX = font.getOutlineX(i), outlineY = font.getOutlineY(i);
+                x1 = Math.min(x1, dx + Vec.min(outlineX));
+                x2 = Math.max(x2, dx + Vec.max(outlineX));
+                y1 = Math.min(y1, -Vec.max(outlineY));
+                y2 = Math.max(y2, -Vec.min(outlineY));
+                dx += font.HORIZ_ADV_X[i];
+                if (n < txt.length - 1) {
+                    var j = txt.charCodeAt(n + 1) - font.GLYPH_MIN;
+                    dx += font.getKerning(i, j);
+                }
+            }
+            else
+                dx += font.MISSING_HORZ;
+        }
+        var mscale = size * font.INV_UNITS_PER_EM;
+        this.updateBounds(x + bx + x1 * mscale, y + by + y1 * mscale);
+        this.updateBounds(x + bx + x2 * mscale, y + by + y2 * mscale);
         var typeidx = this.findOrCreateType([this.PRIM_TEXT, size, colour]);
         this.prims.push([this.PRIM_TEXT, typeidx, x, y, txt]);
     };
-    MetaVector.prototype.measureText = function (txt, size) {
-        var fd = FontData.main;
-        var scale = size / fd.UNITS_PER_EM;
-        var dx = 0;
-        for (var n = 0; n < txt.length; n++) {
-            var i = txt.charCodeAt(n) - 32;
-            if (i < 0 || i >= 96) {
-                dx += fd.MISSING_HORZ;
-                continue;
+    MetaVector.prototype.boundLowX = function () { return this.lowX; };
+    MetaVector.prototype.boundLowY = function () { return this.lowY; };
+    MetaVector.prototype.boundHighX = function () { return this.highX; };
+    MetaVector.prototype.boundHighY = function () { return this.highY; };
+    MetaVector.prototype.transformIntoBox = function (box) {
+        this.transformPrimitives(-this.lowX, -this.lowY, 1, 1);
+        var nw = Math.ceil(this.highX - this.lowX), nh = Math.ceil(this.highY - this.lowY);
+        var scale = 1;
+        if (nw > box.w) {
+            var mod = box.w / nw;
+            nw = box.w;
+            nh *= mod;
+            scale *= mod;
+        }
+        if (nh > box.h) {
+            var mod = box.h / nh;
+            nh = box.h;
+            nw *= mod;
+            scale *= mod;
+        }
+        var ox = 0.5 * (box.w - nw), oy = 0.5 * (box.h - nh);
+        this.transformPrimitives(box.x + ox, box.y + oy, scale, scale);
+    };
+    MetaVector.prototype.transformPrimitives = function (ox, oy, sw, sh) {
+        if (ox == 0 && oy == 0 && sw == 1 && sh == 1)
+            return;
+        for (var _i = 0, _a = this.prims; _i < _a.length; _i++) {
+            var a = _a[_i];
+            var type = a[0];
+            if (type == this.PRIM_LINE) {
+                a[2] = ox + ((a[2] - this.lowX) * sw + this.lowX);
+                a[3] = oy + ((a[3] - this.lowY) * sh + this.lowY);
+                a[4] = ox + ((a[4] - this.lowX) * sw + this.lowX);
+                a[5] = oy + ((a[5] - this.lowY) * sh + this.lowY);
             }
-            dx += fd.HORIZ_ADV_X[i];
-            if (n < txt.length - 1) {
-                var j = txt.charCodeAt(n + 1) - 32;
-                for (var k = 0; k < fd.KERN_K.length; k++)
-                    if ((fd.KERN_G1[k] == i && fd.KERN_G2[k] == j) || (fd.KERN_G1[k] == j && fd.KERN_G2[k] == i)) {
-                        dx += fd.KERN_K[k];
-                        break;
-                    }
+            else if (type == this.PRIM_RECT) {
+                a[2] = ox + ((a[2] - this.lowX) * sw + this.lowX);
+                a[3] = oy + ((a[3] - this.lowY) * sh + this.lowY);
+                a[4] = a[4] * sw;
+                a[5] = a[5] * sh;
+            }
+            else if (type == this.PRIM_OVAL) {
+                a[2] = ox + ((a[2] - this.lowX) * sw + this.lowX);
+                a[3] = oy + ((a[3] - this.lowY) * sh + this.lowY);
+                a[4] *= sw;
+                a[5] *= sh;
+            }
+            else if (type == this.PRIM_PATH) {
+                var sz = a[2], px = a[3], py = a[4];
+                for (var n = 0; n < sz; n++) {
+                    px[n] = ox + ((px[n] - this.lowX) * sw + this.lowX);
+                    py[n] = oy + ((py[n] - this.lowY) * sh + this.lowY);
+                }
+            }
+            else if (type == this.PRIM_TEXT) {
+                a[2] = ox + ((a[2] - this.lowX) * sw + this.lowX);
+                a[3] = oy + ((a[3] - this.lowY) * sh + this.lowY);
             }
         }
-        return [dx * scale, fd.ASCENT * scale * fd.ASCENT_FUDGE, -fd.DESCENT * scale];
+        var swsh = 0.5 * (sw + sh);
+        if (swsh != 1)
+            for (var _b = 0, _c = this.types; _b < _c.length; _b++) {
+                var t = _c[_b];
+                var type = t[0];
+                if (type == this.PRIM_LINE)
+                    t[1] *= swsh;
+                else if (type == this.PRIM_RECT)
+                    t[3] *= swsh;
+                else if (type == this.PRIM_OVAL)
+                    t[3] *= swsh;
+                else if (type == this.PRIM_PATH)
+                    t[3] *= swsh;
+                else if (type == this.PRIM_TEXT)
+                    t[1] *= swsh;
+            }
+        this.highX = ox + this.lowX + (this.highX - this.lowX) * sw;
+        this.highY = oy + this.lowY + (this.highY - this.lowY) * sh;
+        this.lowX += ox;
+        this.lowY += oy;
     };
     MetaVector.prototype.renderInto = function (parent) {
         var canvas = newElement(parent, 'canvas', { 'width': this.width, 'height': this.height });
@@ -2347,6 +3413,20 @@ var MetaVector = (function () {
         this.types.push(typeDef);
         return this.types.length - 1;
     };
+    MetaVector.prototype.updateBounds = function (x, y) {
+        if (this.lowX == null) {
+            this.lowX = x;
+            this.lowY = y;
+            this.highX = x;
+            this.highY = y;
+            return;
+        }
+        this.lowX = Math.min(this.lowX, x);
+        this.lowY = Math.min(this.lowY, y);
+        this.highX = Math.max(this.highX, x);
+        this.highY = Math.max(this.highY, y);
+    };
+    MetaVector.NOCOLOUR = -1;
     return MetaVector;
 }());
 var Download = (function (_super) {
@@ -5841,245 +6921,27 @@ var MapReaction = (function (_super) {
     };
     return MapReaction;
 }(Dialog));
-var GeomUtil = (function () {
-    function GeomUtil() {
-    }
-    GeomUtil.pointInPolygon = function (x, y, px, py) {
-        if (x < minArray(px) || x > maxArray(px) || y < minArray(py) || y > maxArray(py))
-            return false;
-        var sz = px.length;
-        for (var n = 0; n < sz; n++)
-            if (px[n] == x && py[n] == y)
-                return true;
-        var phase = false;
-        for (var n = 0; n < sz; n++) {
-            var x1 = px[n], y1 = py[n], x2 = px[n + 1 < sz ? n + 1 : 0], y2 = py[n + 1 < sz ? n + 1 : 0];
-            if (y > Math.min(y1, y2) && y <= Math.max(y1, y2) && x <= Math.max(x1, x2) && y1 != y2) {
-                var intr = (y - y1) * (x2 - x1) / (y2 - y1) + x1;
-                if (x1 == x2 || x <= intr)
-                    phase = !phase;
-            }
-        }
-        return phase;
-    };
-    GeomUtil.areLinesParallel = function (x1, y1, x2, y2, x3, y3, x4, y4) {
-        var dxa = x2 - x1, dxb = x4 - x3, dya = y2 - y1, dyb = y4 - y3;
-        return (realEqual(dxa, dxb) && realEqual(dya, dyb)) || (realEqual(dxa, -dxb) && realEqual(dya, -dyb));
-    };
-    GeomUtil.lineIntersect = function (x1, y1, x2, y2, x3, y3, x4, y4) {
-        var u = ((x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3)) / ((y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1));
-        return [x1 + u * (x2 - x1), y1 + u * (y2 - y1)];
-    };
-    GeomUtil.isPointOnLineSeg = function (px, py, x1, y1, x2, y2) {
-        if (px < Math.min(x1, x2) || px > Math.max(x1, x2) || py < Math.min(y1, y2) || py > Math.max(y1, y2))
-            return false;
-        if ((px == x1 && py == y1) || (px == x2 && py == y2))
-            return true;
-        var dx = x2 - x1, dy = y2 - y1;
-        if (Math.abs(dx) > Math.abs(dy))
-            return realEqual(py, (dy / dx) * (px - x1) + y1);
-        else
-            return realEqual(px, (dx / dy) * (py - y1) + x1);
-    };
-    GeomUtil.doLineSegsIntersect = function (x1, y1, x2, y2, x3, y3, x4, y4) {
-        if (Math.max(x1, x2) < Math.min(x3, x4) || Math.max(y1, y2) < Math.min(y3, y4))
-            return false;
-        if (Math.min(x1, x2) > Math.max(x3, x4) || Math.min(y1, y2) > Math.max(y3, y4))
-            return false;
-        if ((x1 == x3 && y1 == y3) || (x1 == x4 && y1 == y4) || (x2 == x3 && y2 == y3) || (x2 == x4 && y2 == y4))
-            return true;
-        if ((x1 == x2 || x3 == x4) && (x1 == x3 || x1 == x4 || x2 == x3 || x2 == x4))
-            return true;
-        if ((y1 == y2 || y3 == y4) && (y1 == y3 || y1 == y4 || y2 == y3 || y2 == y4))
-            return true;
-        var x4_x3 = x4 - x3, y4_y3 = y4 - y3, x2_x1 = x2 - x1, y2_y1 = y2 - y1, x1_x3 = x1 - x3, y1_y3 = y1 - y3;
-        var nx = x4_x3 * y1_y3 - y4_y3 * x1_x3;
-        var ny = x2_x1 * y1_y3 - y2_y1 * x1_x3;
-        var dn = y4_y3 * x2_x1 - x4_x3 * y2_y1;
-        if (dn == 0)
-            return false;
-        if (dn < 0) {
-            dn = -dn;
-            nx = -nx;
-            ny = -ny;
-        }
-        return nx >= 0 && nx <= dn && ny >= 0 && ny <= dn;
-    };
-    GeomUtil.rectsIntersect = function (x1, y1, w1, h1, x2, y2, w2, h2) {
-        if (x1 <= x2 && x1 + w1 >= x2 + w2 && y1 <= y2 && y1 + h1 >= y2 + h2)
-            return true;
-        if (x2 <= x1 && x2 + w2 >= x1 + w1 && y2 <= y1 && y2 + h2 >= y1 + h1)
-            return true;
-        if (x1 + w1 < x2 || x2 + w2 < x1 || y1 + h1 < y2 || y2 + h2 < y1)
-            return false;
-        return true;
-    };
-    return GeomUtil;
-}());
-var Pos = (function () {
-    function Pos(x, y) {
-        this.x = x == null ? 0 : x;
-        this.y = y == null ? 0 : y;
-    }
-    Pos.zero = function () { return new Pos(); };
-    Pos.prototype.clone = function () { return new Pos(this.x, this.y); };
-    Pos.prototype.scaleBy = function (mag) {
-        if (mag == 1)
-            return;
-        this.x *= mag;
-        this.y *= mag;
-    };
-    Pos.prototype.offsetBy = function (dx, dy) {
-        this.x += dx;
-        this.y += dy;
-    };
-    Pos.prototype.toString = function () { return '[' + this.x + ',' + this.y + ']'; };
-    return Pos;
-}());
-var Size = (function () {
-    function Size(w, h) {
-        this.w = w == null ? 0 : w;
-        this.h = h == null ? 0 : h;
-    }
-    Size.zero = function () { return new Size(); };
-    Size.prototype.clone = function () { return new Size(this.w, this.h); };
-    Size.prototype.scaleBy = function (mag) {
-        if (mag == 1)
-            return;
-        this.w *= mag;
-        this.h *= mag;
-    };
-    Size.prototype.fitInto = function (maxW, maxH) {
-        var scale = 1;
-        if (this.w > maxW)
-            scale = maxW / this.w;
-        if (this.h > maxH)
-            scale = Math.min(scale, maxH / this.h);
-        if (scale < 1)
-            this.scaleBy(scale);
-    };
-    Size.prototype.toString = function () { return '[' + this.w + ',' + this.h + ']'; };
-    return Size;
-}());
-var Box = (function () {
-    function Box(x, y, w, h) {
-        this.x = x == null ? 0 : x;
-        this.y = y == null ? 0 : y;
-        this.w = w == null ? 0 : w;
-        this.h = h == null ? 0 : h;
-    }
-    Box.zero = function () { return new Box(); };
-    Box.fromSize = function (sz) { return new Box(0, 0, sz.w, sz.h); };
-    Box.prototype.clone = function () { return new Box(this.x, this.y, this.w, this.h); };
-    Box.prototype.setPos = function (pos) {
-        this.x = pos.x;
-        this.y = pos.y;
-    };
-    Box.prototype.setSize = function (sz) {
-        this.w = sz.w;
-        this.h = sz.h;
-    };
-    Box.prototype.minX = function () { return this.x; };
-    Box.prototype.minY = function () { return this.y; };
-    Box.prototype.maxX = function () { return this.x + this.w; };
-    Box.prototype.maxY = function () { return this.y + this.h; };
-    Box.prototype.scaleBy = function (mag) {
-        if (mag == 1)
-            return;
-        this.x *= mag;
-        this.y *= mag;
-        this.w *= mag;
-        this.h *= mag;
-    };
-    Box.prototype.offsetBy = function (dx, dy) {
-        this.x += dx;
-        this.y += dy;
-    };
-    Box.prototype.intersects = function (other) {
-        return GeomUtil.rectsIntersect(this.x, this.y, this.w, this.h, other.x, other.y, other.w, other.h);
-    };
-    Box.prototype.toString = function () { return '[' + this.x + ',' + this.y + ';' + this.w + ',' + this.h + ']'; };
-    return Box;
-}());
-var Oval = (function () {
-    function Oval(cx, cy, rw, rh) {
-        this.cx = cx == null ? 0 : cx;
-        this.cy = cy == null ? 0 : cy;
-        this.rw = rw == null ? 0 : rw;
-        this.rh = rh == null ? 0 : rh;
-    }
-    Oval.zero = function () { return new Oval(); };
-    Oval.prototype.clone = function () { return new Oval(this.cx, this.cy, this.rw, this.rh); };
-    Oval.prototype.setCentre = function (pos) {
-        this.cx = pos.x;
-        this.cy = pos.y;
-    };
-    Oval.prototype.setRadius = function (sz) {
-        this.rw = sz.w;
-        this.rh = sz.h;
-    };
-    Oval.prototype.minX = function () { return this.cx - this.rw; };
-    Oval.prototype.minY = function () { return this.cy - this.rh; };
-    Oval.prototype.maxX = function () { return this.cx + this.rw; };
-    Oval.prototype.maxY = function () { return this.cy + this.rh; };
-    Oval.prototype.scaleBy = function (mag) {
-        if (mag == 1)
-            return;
-        this.cx *= mag;
-        this.cy *= mag;
-        this.rw *= mag;
-        this.rh *= mag;
-    };
-    Oval.prototype.offsetBy = function (dx, dy) {
-        this.cx += dx;
-        this.cy += dy;
-    };
-    Oval.prototype.toString = function () { return '[' + this.cx + ',' + this.cy + ';' + this.rw + ',' + this.rh + ']'; };
-    return Oval;
-}());
-var Line = (function () {
-    function Line(x1, y1, x2, y2) {
-        this.x1 = x1 == null ? 0 : x1;
-        this.y1 = y1 == null ? 0 : y1;
-        this.x2 = x2 == null ? 0 : x2;
-        this.y2 = y2 == null ? 0 : y2;
-    }
-    Line.zero = function () { return new Line(); };
-    Line.prototype.clone = function () { return new Line(this.x1, this.y1, this.x2, this.y2); };
-    Line.prototype.setPos1 = function (pos) {
-        this.x1 = pos.x;
-        this.y1 = pos.y;
-    };
-    Line.prototype.setPos2 = function (pos) {
-        this.x2 = pos.x;
-        this.y2 = pos.y;
-    };
-    Line.prototype.minX = function () { return Math.min(this.x1, this.x2); };
-    Line.prototype.minY = function () { return Math.min(this.y1, this.y2); };
-    Line.prototype.maxX = function () { return Math.max(this.x1, this.x2); };
-    Line.prototype.maxY = function () { return Math.max(this.y1, this.y2); };
-    Line.prototype.scaleBy = function (mag) {
-        if (mag == 1)
-            return;
-        this.x1 *= mag;
-        this.y1 *= mag;
-        this.x2 *= mag;
-        this.y2 *= mag;
-    };
-    Line.prototype.offsetBy = function (dx, dy) {
-        this.x1 += dx;
-        this.y1 += dy;
-        this.x2 += dx;
-        this.y2 += dy;
-    };
-    Line.prototype.toString = function () { return '[' + this.x1 + ',' + this.y1 + ';' + this.x2 + ',' + this.y2 + ']'; };
-    return Line;
-}());
 var ArrangeMeasurement = (function () {
     function ArrangeMeasurement() {
     }
     return ArrangeMeasurement;
 }());
+var OutlineMeasurement = (function (_super) {
+    __extends(OutlineMeasurement, _super);
+    function OutlineMeasurement(pointScale) {
+        _super.call(this);
+        this.pointScale = pointScale;
+        this.invScale = 1 / pointScale;
+    }
+    OutlineMeasurement.prototype.scale = function () { return this.pointScale; };
+    OutlineMeasurement.prototype.angToX = function (ax) { return ax * this.pointScale; };
+    OutlineMeasurement.prototype.angToY = function (ay) { return ay * -this.pointScale; };
+    OutlineMeasurement.prototype.xToAng = function (px) { return px * this.invScale; };
+    OutlineMeasurement.prototype.yToAng = function (py) { return py * -this.invScale; };
+    OutlineMeasurement.prototype.yIsUp = function () { return false; };
+    OutlineMeasurement.prototype.measureText = function (str, fontSize) { return FontData.main.measureText(str, fontSize); };
+    return OutlineMeasurement;
+}(ArrangeMeasurement));
 var BLineType;
 (function (BLineType) {
     BLineType[BLineType["Normal"] = 1] = "Normal";
@@ -6136,16 +6998,1032 @@ var ArrangeMolecule = (function () {
     ArrangeMolecule.prototype.getPolicy = function () { return this.policy; };
     ArrangeMolecule.prototype.getEffects = function () { return this.effects; };
     ArrangeMolecule.prototype.getScale = function () { return this.scale; };
+    ArrangeMolecule.prototype.arrange = function () {
+        this.scale = this.measure.scale();
+        this.bondSepPix = this.policy.data.bondSep * this.measure.scale();
+        this.lineSizePix = this.policy.data.lineSize * this.measure.scale();
+        this.fontSizePix = this.policy.data.fontSize * this.measure.scale() * ArrangeMolecule.FONT_CORRECT;
+        this.ymul = this.measure.yIsUp() ? -1 : 1;
+        for (var n = 1; n <= this.mol.numAtoms(); n++) {
+            if (this.mol.atomElement(n).length > 2 && this.mol.atomHydrogens(n) == 0) {
+                this.points.push(null);
+                this.space.push(null);
+                continue;
+            }
+            var a = {
+                'anum': n,
+                'text': this.mol.atomExplicit(n) || this.atomIsWeirdLinear(n) ? this.mol.atomElement(n) : null,
+                'fsz': this.fontSizePix,
+                'bold': this.mol.atomMapNum(n) > 0,
+                'col': this.policy.data.atomCols[this.mol.atomicNumber(n)],
+                'oval': new Oval(this.measure.angToX(this.mol.atomX(n)), this.measure.angToY(this.mol.atomY(n)), 0, 0)
+            };
+            if (a.text != null) {
+                var wad = this.measure.measureText(a.text, a.fsz);
+                var PADDING = 1.1;
+                a.oval.rw = 0.5 * wad[0] * PADDING;
+                a.oval.rh = 0.5 * wad[1] * PADDING;
+            }
+            this.points.push(a);
+            this.space.push(this.computeSpacePoint(a));
+        }
+        for (var n = 1; n <= this.mol.numAtoms(); n++)
+            if (this.points[n - 1] == null)
+                this.processLabel(n);
+        var bdbl = Vec.booleanArray(false, this.mol.numBonds());
+        for (var n = 1; n <= this.mol.numBonds(); n++) {
+            var bfr = this.mol.bondFrom(n), bto = this.mol.bondTo(n);
+            var bt = this.mol.bondType(n), bo = this.mol.bondOrder(n);
+            var col = this.policy.data.foreground;
+            bdbl[n - 1] = bo == 2 && (bt == Molecule.BONDTYPE_NORMAL || bt == Molecule.BONDTYPE_UNKNOWN);
+            var a1 = this.points[bfr - 1], a2 = this.points[bto - 1];
+            var x1 = a1.oval.cx, y1 = a1.oval.cy, x2 = a2.oval.cx, y2 = a2.oval.cy;
+            if (Math.abs(x2 - x1) <= 1 && Math.abs(y2 - y1) <= 1) {
+                bdbl[n - 1] = false;
+                continue;
+            }
+            if (bdbl[n - 1])
+                continue;
+            var minDist = (bo == 1 && bt == Molecule.BONDTYPE_NORMAL ? this.MINBOND_LINE : this.MINBOND_EXOTIC) * this.measure.scale();
+            var xy1 = this.backOffAtom(bfr, x1, y1, x2, y2, minDist);
+            var xy2 = this.backOffAtom(bto, x2, y2, x1, y1, minDist);
+            this.ensureMinimumBondLength(xy1, xy2, x1, y1, x2, y2, minDist);
+            var sz = this.lineSizePix, head = 0;
+            var ltype = BLineType.Normal;
+            if (bo == 1 && bt == Molecule.BONDTYPE_INCLINED) {
+                ltype = BLineType.Inclined;
+                head = 0.15 * this.measure.scale();
+            }
+            else if (bo == 1 && bt == Molecule.BONDTYPE_DECLINED) {
+                ltype = BLineType.Declined;
+                head = 0.15 * this.measure.scale();
+            }
+            else if (bt == Molecule.BONDTYPE_UNKNOWN) {
+                ltype = BLineType.Unknown;
+                head = 0.2 * this.measure.scale();
+            }
+            else if (bo == 0) {
+                if (bt == Molecule.BONDTYPE_INCLINED || bt == Molecule.BONDTYPE_DECLINED)
+                    ltype = BLineType.DotDir;
+                else
+                    ltype = BLineType.Dotted;
+            }
+            else if ((bo == 2 || bo == 3 || bo == 4) && (bt == Molecule.BONDTYPE_INCLINED || bt == Molecule.BONDTYPE_DECLINED)) {
+                ltype = bo == 2 ? BLineType.IncDouble : bo == 3 ? BLineType.IncTriple : BLineType.IncQuadruple;
+                head = (bo == 2 ? 0.20 : 0.25) * this.measure.scale();
+            }
+            if (bo == 0) {
+                var dx = xy2[0] - xy1[0], dy = xy2[1] - xy1[1];
+                var d = norm_xy(dx, dy), invD = 1 / d;
+                var ox = 0.5 * dx * invD * this.bondSepPix, oy = 0.5 * dy * invD * this.bondSepPix;
+                if (this.mol.atomAdjCount(bfr) > 1) {
+                    xy1[0] += ox;
+                    xy1[1] += oy;
+                }
+                if (this.mol.atomAdjCount(bto) > 1) {
+                    xy2[0] -= ox;
+                    xy2[1] -= oy;
+                }
+            }
+            if (bo != 1 && bt == Molecule.BONDTYPE_DECLINED) {
+                var tmp = xy1;
+                xy1 = xy2;
+                xy2 = tmp;
+            }
+            if (bo > 1 && (bt == Molecule.BONDTYPE_NORMAL || bt == Molecule.BONDTYPE_UNKNOWN)) {
+                var oxy = this.orthogonalDelta(xy1[0], xy1[1], xy2[0], xy2[1], this.bondSepPix);
+                var v = -0.5 * (bo - 1);
+                for (var i = 0; i < bo; i++, v++) {
+                    var lx1 = xy1[0] + v * oxy[0], ly1 = xy1[1] + v * oxy[1], lx2 = xy2[0] + v * oxy[0], ly2 = xy2[1] + v * oxy[1];
+                    var b = {
+                        'bnum': n,
+                        'bfr': bfr,
+                        'bto': bto,
+                        'type': ltype,
+                        'line': new Line(lx1, ly1, lx2, ly2),
+                        'size': sz,
+                        'head': 0,
+                        'col': col
+                    };
+                    this.lines.push(b);
+                    this.space.push(this.computeSpaceLine(b));
+                }
+            }
+            else {
+                var b = {
+                    'bnum': n,
+                    'bfr': bfr,
+                    'bto': bto,
+                    'type': ltype,
+                    'line': new Line(xy1[0], xy1[1], xy2[0], xy2[1]),
+                    'size': sz,
+                    'head': head,
+                    'col': col
+                };
+                this.lines.push(b);
+                this.space.push(this.computeSpaceLine(b));
+            }
+        }
+        var rings = this.orderedRingList();
+        for (var i = 0; i < rings.length; i++) {
+            for (var j = 0; j < rings[i].length; j++) {
+                var k = this.mol.findBond(rings[i][j], rings[i][j < rings[i].length - 1 ? j + 1 : 0]);
+                if (bdbl[k - 1]) {
+                    this.processDoubleBond(k, rings[i]);
+                    bdbl[k - 1] = false;
+                }
+            }
+        }
+        for (var i = 1; i <= this.mol.numBonds(); i++)
+            if (bdbl[i - 1])
+                this.processDoubleBond(i, this.priorityDoubleSubstit(i));
+        var hcount = Vec.numberArray(0, this.mol.numAtoms());
+        for (var n = 1; n <= this.mol.numAtoms(); n++)
+            hcount[n - 1] = this.points[n - 1].text == null ? 0 : this.mol.atomHydrogens(n);
+        for (var n = 0; n < this.mol.numAtoms(); n++)
+            if (hcount[n] > 0 && this.placeHydrogen(n, hcount[n], true))
+                hcount[n] = 0;
+        for (var n = 0; n < this.mol.numAtoms(); n++)
+            if (hcount[n] > 0)
+                this.placeHydrogen(n, hcount[n], false);
+        for (var n = 1; n <= this.mol.numAtoms(); n++)
+            if (this.mol.atomIsotope(n) != Molecule.ISOTOPE_NATURAL) {
+                var isostr = this.mol.atomIsotope(n).toString();
+                var col = this.policy.data.atomCols[this.mol.atomicNumber(n)];
+                this.placeAdjunct(n, isostr, this.fontSizePix * 0.6, col, 150 * DEGRAD);
+            }
+        for (var n = 1; n <= this.mol.numAtoms(); n++) {
+            var str = '';
+            var chg = this.mol.atomCharge(n);
+            if (chg == -1)
+                str = '-';
+            else if (chg == 1)
+                str = '+';
+            else if (chg < -1)
+                str = Math.abs(chg) + '-';
+            else if (chg > 1)
+                str = chg + '+';
+            for (var i = this.mol.atomUnpaired(n); i > 0; i--)
+                str += '.';
+            if (str.length == 0)
+                continue;
+            var col = this.policy.data.atomCols[this.mol.atomicNumber(n)];
+            this.placeAdjunct(n, str, str.length == 1 ? 0.8 * this.fontSizePix : 0.6 * this.fontSizePix, col, 30 * DEGRAD);
+        }
+    };
     ArrangeMolecule.prototype.numPoints = function () { return this.points.length; };
     ArrangeMolecule.prototype.getPoint = function (idx) { return this.points[idx]; };
     ArrangeMolecule.prototype.numLines = function () { return this.lines.length; };
     ArrangeMolecule.prototype.getLine = function (idx) { return this.lines[idx]; };
     ArrangeMolecule.prototype.numSpace = function () { return this.space.length; };
     ArrangeMolecule.prototype.getSpace = function (idx) { return this.space[idx]; };
+    ArrangeMolecule.prototype.offsetEverything = function (dx, dy) {
+        for (var _i = 0, _a = this.points; _i < _a.length; _i++) {
+            var a = _a[_i];
+            a.oval.offsetBy(dx, dy);
+        }
+        for (var _b = 0, _c = this.lines; _b < _c.length; _b++) {
+            var b = _c[_b];
+            b.line.offsetBy(dx, dy);
+        }
+        for (var _d = 0, _e = this.space; _d < _e.length; _d++) {
+            var spc = _e[_d];
+            spc.box.offsetBy(dx, dy);
+            Vec.addTo(spc.px, dx);
+            Vec.addTo(spc.py, dy);
+        }
+    };
+    ArrangeMolecule.prototype.scaleEverything = function (scaleBy) {
+        this.scale *= scaleBy;
+        for (var _i = 0, _a = this.points; _i < _a.length; _i++) {
+            var a = _a[_i];
+            a.oval.scaleBy(scaleBy);
+            a.fsz *= scaleBy;
+        }
+        for (var _b = 0, _c = this.lines; _b < _c.length; _b++) {
+            var b = _c[_b];
+            b.line.scaleBy(scaleBy);
+            b.size *= scaleBy;
+            b.head *= scaleBy;
+        }
+        for (var _d = 0, _e = this.space; _d < _e.length; _d++) {
+            var spc = _e[_d];
+            spc.box.scaleBy(scaleBy);
+            Vec.mulBy(spc.px, scaleBy);
+            Vec.mulBy(spc.py, scaleBy);
+        }
+    };
+    ArrangeMolecule.prototype.determineBoundary = function (padding) {
+        if (this.space.length == 0)
+            return [0, 0, 2 * padding, 2 * padding];
+        var bounds = Vec.numberArray(0, 4);
+        var spc = this.space[0];
+        bounds[0] = spc.box.x;
+        bounds[1] = spc.box.y;
+        bounds[2] = spc.box.x + spc.box.w;
+        bounds[3] = spc.box.y + spc.box.h;
+        for (var n = this.space.length - 1; n > 0; n--) {
+            spc = this.space[n];
+            bounds[0] = Math.min(bounds[0], spc.box.x);
+            bounds[1] = Math.min(bounds[1], spc.box.y);
+            bounds[2] = Math.max(bounds[2], spc.box.x + spc.box.w);
+            bounds[3] = Math.max(bounds[3], spc.box.y + spc.box.h);
+        }
+        return bounds;
+    };
+    ArrangeMolecule.prototype.squeezeInto = function (x, y, w, h, padding) {
+        if (padding > 0) {
+            x += padding;
+            y += padding;
+            w -= 2 * padding;
+            h -= 2 * padding;
+        }
+        var bounds = this.determineBoundary(0);
+        var bw = bounds[2] - bounds[0], bh = bounds[3] - bounds[1];
+        if (bw > w || bh > h) {
+            var downScale = 1;
+            if (bw > w)
+                downScale = w / bw;
+            if (bh > h)
+                downScale = Math.min(downScale, h / bh);
+            this.scaleEverything(downScale);
+            Vec.mulBy(bounds, downScale);
+        }
+        this.offsetEverything(x - bounds[0] + 0.5 * (w - bounds[2] + bounds[0]), y - bounds[1] + 0.5 * (h - bounds[3] + bounds[1]));
+    };
+    ArrangeMolecule.prototype.placeAdjunct = function (atom, str, fsz, col, angdir) {
+        var wad = this.measure.measureText(str, fsz);
+        var a = this.points[atom - 1];
+        var cx = a.oval.cx, cy = a.oval.cy, rw = 0.55 * wad[0], rh = 0.55 * wad[1];
+        var bestScore = 0, bestDX = 0, bestDY = 0;
+        var px = Vec.numberArray(0, 4), py = Vec.numberArray(0, 4);
+        var angThresh = 10;
+        var shorted = false;
+        for (var ext = 0.5 * (a.oval.rw + a.oval.rh); !shorted && ext < 1.5 * this.measure.scale(); ext += 0.1 * this.measure.scale()) {
+            var DELTA = 5 * DEGRAD;
+            for (var d = 0; !shorted && d < Math.PI - 0.0001; d += DELTA)
+                for (var s = -1; s <= 1; s += 2) {
+                    var dang = d * s + (s > 0 ? DELTA : 0), ang = angdir + dang;
+                    var dx = ext * Math.cos(ang), dy = ext * Math.sin(ang) * -this.ymul;
+                    var x1 = cx + dx - rw, x2 = cx + dx + rw, y1 = cy + dy - rh, y2 = cy + dy + rh;
+                    px[0] = x1;
+                    py[0] = y1;
+                    px[1] = x2;
+                    py[1] = y1;
+                    px[2] = x2;
+                    py[2] = y2;
+                    px[3] = x1;
+                    py[3] = y2;
+                    var viol = this.countPolyViolations(px, py, false);
+                    var score = 10 * viol + Math.abs(dang) + 10 * ext;
+                    var shortCircuit = viol == 0 && Math.abs(dang) < (angThresh + 1) * DEGRAD;
+                    if (bestScore == 0 || shortCircuit || score < bestScore) {
+                        bestScore = score;
+                        bestDX = dx;
+                        bestDY = dy;
+                    }
+                    if (shortCircuit) {
+                        shorted = true;
+                        break;
+                    }
+                }
+            angThresh += 5;
+        }
+        a =
+            {
+                'anum': 0,
+                'text': str,
+                'fsz': fsz,
+                'bold': false,
+                'col': col,
+                'oval': new Oval(cx + bestDX, cy + bestDY, rw, rh)
+            };
+        this.points.push(a);
+        var spc = {
+            'anum': 0,
+            'bnum': 0,
+            'box': new Box(a.oval.cx - rw, a.oval.cy - rh, 2 * rw, 2 * rh),
+            'px': [a.oval.cx - rw, a.oval.cx + rw, a.oval.cx + rw, a.oval.cx - rw],
+            'py': [a.oval.cy - rh, a.oval.cy - rh, a.oval.cy + rh, a.oval.cy + rh]
+        };
+        this.space.push(spc);
+    };
+    ArrangeMolecule.prototype.processLabel = function (anum) {
+        var ax = this.mol.atomX(anum), ay = this.mol.atomY(anum);
+        var left = 0, right = 0;
+        var adj = this.mol.atomAdjList(anum);
+        for (var n = 0; n < adj.length; n++) {
+            var theta = Math.atan2(this.mol.atomY(adj[n]) - ay, this.mol.atomX(adj[n]) - ax) * RADDEG;
+            if (theta >= -15 && theta <= 15)
+                right += 3;
+            else if (theta >= -85 && theta <= 85)
+                right++;
+            else if (theta > 85 && theta < 95) { }
+            else if (theta < -85 && theta > -95) { }
+            else if (theta > 165 || theta < -165)
+                left += 3;
+            else
+                left++;
+        }
+        var label = this.mol.atomElement(anum);
+        var ibar = label.indexOf('|'), ibrace = label.indexOf('{');
+        var side = 0;
+        if (left == 0 && right == 0 && ibar < 0 && ibrace < 0) { }
+        else if (left < right)
+            side = -1;
+        else if (right < left)
+            side = 1;
+        else {
+            var score1 = CoordUtil.congestionPoint(this.mol, ax - 1, ay);
+            var score2 = CoordUtil.congestionPoint(this.mol, ax + 1, ay);
+            if (score1 < 0.5 * score2)
+                side = -1;
+            else
+                side = 1;
+        }
+        var chunks = null;
+        var position = null;
+        var primary = null;
+        var refchunk = 0;
+        if (ibar < 0 && ibrace < 0) {
+            if (side == 0)
+                chunks = [label];
+            else if (side < 0) {
+                chunks = [label.substring(0, label.length - 1), label.substring(label.length - 1)];
+                refchunk = 1;
+            }
+            else
+                chunks = [label.substring(0, 1), label.substring(1)];
+        }
+        else {
+            var bits = [];
+            var bpos = [];
+            var bpri = [];
+            var blocks = label.split('|');
+            if (side < 0) {
+                var oldblk = blocks;
+                blocks = [];
+                for (var i = oldblk.length - 1; i >= 0; i--)
+                    blocks.push(oldblk[i]);
+            }
+            var buff = '';
+            for (var i = 0; i < blocks.length; i++) {
+                var isPrimary = (side >= 0 && i == 0) || (side < 0 && i == blocks.length - 1);
+                if (side < 0 && refchunk == 0 && i == blocks.length - 1)
+                    refchunk = bits.length;
+                var pos = 0;
+                buff = '';
+                for (var j = 0; j < blocks[i].length; j++) {
+                    var ch = blocks[i].charAt(j);
+                    if (ch == '{' || ch == '}') {
+                        if (buff.length > 0) {
+                            bits.push(buff.toString());
+                            bpos.push(pos);
+                            bpri.push(isPrimary);
+                        }
+                        buff = '';
+                        pos = ch == '{' ? -1 : 0;
+                    }
+                    else if (ch == '^' && pos == -1 && buff.length == 0)
+                        pos = 1;
+                    else
+                        buff += ch;
+                }
+                if (buff.length > 0) {
+                    bits.push(buff.toString());
+                    bpos.push(pos);
+                    bpri.push(isPrimary);
+                }
+            }
+            chunks = bits;
+            position = bpos;
+            primary = bpri;
+            while (refchunk < chunks.length - 1 && position[refchunk] != 0)
+                refchunk++;
+        }
+        var PADDING = 1.1;
+        var SSFRACT = 0.6;
+        var chunkw = Vec.numberArray(0, chunks.length);
+        var tw = 0;
+        for (var n = 0; n < chunks.length; n++) {
+            chunkw[n] = this.measure.measureText(chunks[n], this.fontSizePix)[0];
+            if (position != null && position[n] != 0)
+                chunkw[n] *= SSFRACT;
+            tw += chunkw[n];
+        }
+        var x = this.measure.angToX(ax), y = this.measure.angToY(ay);
+        if (side == 0)
+            x -= 0.5 * chunkw[0];
+        else if (side < 0) {
+            for (var n = 0; n < refchunk; n++)
+                x -= chunkw[n];
+            x -= 0.5 * chunkw[refchunk];
+        }
+        else {
+            x -= 0.5 * chunkw[0];
+        }
+        for (var n = 0; n < chunks.length; n++) {
+            var a = {
+                'anum': (n == refchunk || (primary != null && primary[n])) ? anum : 0,
+                'text': chunks[n],
+                'fsz': this.fontSizePix,
+                'bold': false,
+                'col': this.policy.data.atomCols[this.mol.atomicNumber(anum)],
+                'oval': new Oval(x + 0.5 * chunkw[n], y, 0.5 * chunkw[n] * PADDING, 0.5 * this.fontSizePix * PADDING)
+            };
+            if (position != null && position[n] != 0) {
+                a.fsz *= SSFRACT;
+                if (position[n] < 0)
+                    a.oval.cy += a.fsz * 0.7 * (this.measure.yIsUp() ? -1 : 1);
+                else
+                    a.oval.cy -= a.fsz * 0.3 * (this.measure.yIsUp() ? -1 : 1);
+            }
+            if (n == refchunk) {
+                this.points[anum - 1] = a;
+                this.space[anum - 1] = this.computeSpacePoint(a);
+            }
+            else {
+                this.points.push(a);
+                this.space.push(this.computeSpacePoint(a));
+            }
+            x += chunkw[n];
+        }
+    };
+    ArrangeMolecule.prototype.atomIsWeirdLinear = function (idx) {
+        var bonds = this.mol.atomAdjBonds(idx);
+        if (bonds.length != 2)
+            return false;
+        for (var n = 0; n < bonds.length; n++)
+            if (this.mol.bondOrder(bonds[n]) == 3)
+                return false;
+        var adj = this.mol.atomAdjList(idx);
+        var th1 = Math.atan2(this.mol.atomY(adj[0]) - this.mol.atomY(idx), this.mol.atomX(adj[0]) - this.mol.atomX(idx));
+        var th2 = Math.atan2(this.mol.atomY(adj[1]) - this.mol.atomY(idx), this.mol.atomX(adj[1]) - this.mol.atomX(idx));
+        return Math.abs(angleDiff(th1, th2)) >= 175 * DEGRAD;
+    };
+    ArrangeMolecule.prototype.backOffAtom = function (atom, x, y, fx, fy, minDist) {
+        if (x == fx && y == fy)
+            return [x, y];
+        var active = false;
+        var dx = 0, dy = 0, dst = 0, ext = 0;
+        for (var s = 0; s < this.space.length; s++) {
+            var spc = this.space[s];
+            if (spc.anum != atom)
+                continue;
+            var sz = spc.px.length;
+            if (sz == 0)
+                continue;
+            for (var n = 0; n < sz; n++) {
+                var nn = n < sz - 1 ? n + 1 : 0;
+                var x1 = spc.px[n], y1 = spc.py[n], x2 = spc.px[nn], y2 = spc.py[nn];
+                if (!GeomUtil.doLineSegsIntersect(x, y, fx, fy, x1, y1, x2, y2))
+                    continue;
+                var xy = GeomUtil.lineIntersect(x, y, fx, fy, x1, y1, x2, y2);
+                if (!active) {
+                    dx = x - fx;
+                    dy = y - fy;
+                    dst = norm_xy(dx, dy);
+                    ext = dst;
+                    active = true;
+                }
+                ext = Math.min(ext, norm_xy(xy[0] - fx, xy[1] - fy));
+            }
+        }
+        if (active) {
+            ext = Math.max(minDist, ext - 0.1 * this.measure.scale());
+            var idst = 1.0 / dst;
+            return [fx + ext * idst * dx, fy + ext * idst * dy];
+        }
+        else
+            return [x, y];
+    };
+    ArrangeMolecule.prototype.ensureMinimumBondLength = function (xy1, xy2, x1, y1, x2, y2, minDist) {
+        var dx = xy2[0] - xy1[0], dy = xy2[1] - xy1[1];
+        var dsq = norm2_xy(dx, dy);
+        minDist = Math.min(minDist, norm_xy(x2 - x1, y2 - y1));
+        if (dsq >= sqr(minDist - 0.0001))
+            return;
+        var d12 = Math.sqrt(dsq), d1 = norm_xy(xy1[0] - x1, xy1[1] - y1), d2 = norm_xy(x2 - xy2[0], y2 - xy2[1]);
+        var mag = 1 - minDist / d12, invD12 = 1.0 / (d1 + d2), mag1 = d1 * mag * invD12, mag2 = d2 * mag * invD12;
+        xy1[0] -= dx * mag1;
+        xy1[1] -= dy * mag1;
+        xy2[0] += dx * mag2;
+        xy2[1] += dy * mag2;
+    };
+    ArrangeMolecule.prototype.orderedRingList = function () {
+        var rings = [];
+        var SIZE_ORDER = [6, 5, 7, 4, 3];
+        for (var i = 0; i < SIZE_ORDER.length; i++) {
+            var nring = this.mol.findRingsOfSize(SIZE_ORDER[i]);
+            for (var j = 0; j < nring.length; j++)
+                rings.push(nring[j]);
+        }
+        var ringsz = rings.length;
+        var ringbusy = Vec.numberArray(0, this.mol.numAtoms());
+        for (var n = 0; n < ringsz; n++) {
+            var r = rings[n];
+            for (var i = 0; i < r.length; i++)
+                ringbusy[r[i] - 1]++;
+        }
+        var ringscore = Vec.numberArray(0, ringsz);
+        for (var n = 0; n < ringsz; n++) {
+            var r = rings[n];
+            for (var i = 0; i < r.length; i++)
+                ringscore[n] += ringbusy[r[i] - 1];
+        }
+        var ringorder = Vec.idxSort(ringscore);
+        var resbcount = Vec.numberArray(0, ringsz), maxbcount = 0;
+        for (var n = 0; n < ringsz; n++) {
+            var r = rings[ringorder[n]];
+            for (var i = 0; i < r.length; i++) {
+                var j = this.mol.findBond(r[i], r[i + 1 < r.length ? i + 1 : 0]);
+                if (this.mol.bondOrder(j) == 2)
+                    resbcount[n]++;
+            }
+            maxbcount = Math.max(maxbcount, resbcount[n]);
+        }
+        var pos = 0, ret = [];
+        for (var sz = maxbcount; sz >= 0; sz--) {
+            for (var n = 0; n < ringsz; n++)
+                if (resbcount[n] == sz)
+                    ret.push(rings[ringorder[n]]);
+        }
+        return ret;
+    };
     ArrangeMolecule.prototype.orthogonalDelta = function (x1, y1, x2, y2, d) {
         var ox = y1 - y2, oy = x2 - x1, dsq = norm2_xy(ox, oy);
         var sc = dsq > 0 ? d / Math.sqrt(dsq) : 1;
         return [ox * sc, oy * sc];
+    };
+    ArrangeMolecule.prototype.processDoubleBond = function (idx, priority) {
+        var bfr = this.mol.bondFrom(idx), bto = this.mol.bondTo(idx);
+        var nfr = this.mol.atomAdjList(bfr), nto = this.mol.atomAdjList(bto);
+        var a1 = this.points[bfr - 1], a2 = this.points[bto - 1];
+        var x1 = a1.oval.cx, y1 = a1.oval.cy, x2 = a2.oval.cx, y2 = a2.oval.cy;
+        var minDist = this.MINBOND_EXOTIC * this.measure.scale();
+        var xy1 = this.backOffAtom(bfr, x1, y1, x2, y2, minDist);
+        var xy2 = this.backOffAtom(bto, x2, y2, x1, y1, minDist);
+        this.ensureMinimumBondLength(xy1, xy2, x1, y1, x2, y2, minDist);
+        x1 = xy1[0];
+        y1 = xy1[1];
+        x2 = xy2[0];
+        y2 = xy2[1];
+        var dx = x2 - x1, dy = y2 - y1, btheta = Math.atan2(dy, dx);
+        var countFLeft = 0, countFRight = 0, countTLeft = 0, countTRight = 0;
+        var idxFLeft = 0, idxFRight = 0, idxTLeft = 0, idxTRight = 0;
+        var noshift = false;
+        for (var n = 0; n < nfr.length; n++)
+            if (nfr[n] != bto) {
+                var bo = this.mol.bondOrder(this.mol.findBond(bfr, nfr[n]));
+                if (bo == 0)
+                    continue;
+                if (bo > 1) {
+                    noshift = true;
+                    break;
+                }
+                var ispri = false;
+                for (var i = 0; i < (priority == null ? 0 : priority.length); i++)
+                    if (priority[i] == nfr[n])
+                        ispri = true;
+                var theta = angleDiff(Math.atan2(this.points[nfr[n] - 1].oval.cy - y1, this.points[nfr[n] - 1].oval.cx - x1), btheta);
+                if (Math.abs(theta) * RADDEG > 175) {
+                    noshift = true;
+                    break;
+                }
+                if (theta > 0) {
+                    if (ispri)
+                        countFLeft++;
+                    idxFLeft = nfr[n];
+                }
+                else {
+                    if (ispri)
+                        countFRight++;
+                    idxFRight = nfr[n];
+                }
+            }
+        for (var n = 0; n < nto.length; n++)
+            if (nto[n] != bfr) {
+                var bo = this.mol.bondOrder(this.mol.findBond(bto, nto[n]));
+                if (bo == 0)
+                    continue;
+                if (bo > 1) {
+                    noshift = true;
+                    break;
+                }
+                var ispri = false;
+                for (var i = 0; i < (priority == null ? 0 : priority.length); i++)
+                    if (priority[i] == nto[n])
+                        ispri = true;
+                var theta = angleDiff(Math.atan2(this.points[nto[n] - 1].oval.cy - y2, this.points[nto[n] - 1].oval.cx - x2), btheta);
+                if (Math.abs(theta) * RADDEG > 175) {
+                    noshift = true;
+                    break;
+                }
+                if (theta > 0) {
+                    if (ispri)
+                        countTLeft++;
+                    idxTLeft = nto[n];
+                }
+                else {
+                    if (ispri)
+                        countTRight++;
+                    idxTRight = nto[n];
+                }
+            }
+        var side = 0;
+        if (noshift || countFLeft > 1 || countFRight > 1 || countTLeft > 1 || countTRight > 1) { }
+        else if (countFLeft > 0 && countFRight > 0) { }
+        else if (countTLeft > 0 && countTRight > 0) { }
+        else if (countFLeft > 0 || countTLeft > 0)
+            side = 1;
+        else if (countFRight > 0 || countTRight > 0)
+            side = -1;
+        var sz = this.lineSizePix;
+        var oxy = this.orthogonalDelta(x1, y1, x2, y2, this.bondSepPix);
+        var ax1 = x1, ay1 = y1, ax2 = x2, ay2 = y2;
+        var bx1 = 0, by1 = 0, bx2 = 0, by2 = 0;
+        if (side == 0) {
+            ax1 = x1 + 0.5 * oxy[0];
+            ay1 = y1 + 0.5 * oxy[1];
+            ax2 = x2 + 0.5 * oxy[0];
+            ay2 = y2 + 0.5 * oxy[1];
+            bx1 = x1 - 0.5 * oxy[0];
+            by1 = y1 - 0.5 * oxy[1];
+            bx2 = x2 - 0.5 * oxy[0];
+            by2 = y2 - 0.5 * oxy[1];
+        }
+        else if (side > 0) {
+            bx1 = x1 + oxy[0];
+            by1 = y1 + oxy[1];
+            bx2 = x2 + oxy[0];
+            by2 = y2 + oxy[1];
+            if (nfr.length > 1 && this.points[bfr - 1].text == null) {
+                bx1 += oxy[1];
+                by1 -= oxy[0];
+            }
+            if (nto.length > 1 && this.points[bto - 1].text == null) {
+                bx2 -= oxy[1];
+                by2 += oxy[0];
+            }
+        }
+        else if (side < 0) {
+            bx1 = x1 - oxy[0];
+            by1 = y1 - oxy[1];
+            bx2 = x2 - oxy[0];
+            by2 = y2 - oxy[1];
+            if (nfr.length > 1 && this.points[bfr - 1].text == null) {
+                bx1 += oxy[1];
+                by1 -= oxy[0];
+            }
+            if (nto.length > 1 && this.points[bto - 1].text == null) {
+                bx2 -= oxy[1];
+                by2 += oxy[0];
+            }
+        }
+        if (side != 0) {
+            if (this.mol.atomElement(bfr).length <= 2 && this.mol.atomAdjCount(bfr) == 1 && this.points[bfr - 1].text != null) {
+                this.bumpAtomPosition(bfr, 0.5 * oxy[0] * side, 0.5 * oxy[1] * side);
+            }
+            if (this.mol.atomElement(bto).length <= 2 && this.mol.atomAdjCount(bto) == 1 && this.points[bto - 1].text != null) {
+                this.bumpAtomPosition(bto, 0.5 * oxy[0] * side, 0.5 * oxy[1] * side);
+            }
+        }
+        if (side == 0 && !noshift) {
+            var xy = null;
+            if (this.points[bfr - 1].text == null && !this.mol.bondInRing(idx)) {
+                xy = this.adjustBondPosition(idxFLeft, bfr, ax1, ay1, ax2, ay2);
+                if (xy != null) {
+                    ax1 = xy[0];
+                    ay1 = xy[1];
+                }
+                xy = this.adjustBondPosition(idxFRight, bfr, bx1, by1, bx2, by2);
+                if (xy != null) {
+                    bx1 = xy[0];
+                    by1 = xy[1];
+                }
+            }
+            if (this.points[bto - 1].text == null && !this.mol.bondInRing(idx)) {
+                xy = this.adjustBondPosition(idxTLeft, bto, ax2, ay2, ax1, ay1);
+                if (xy != null) {
+                    ax2 = xy[0];
+                    ay2 = xy[1];
+                }
+                xy = this.adjustBondPosition(idxTRight, bto, bx2, by2, bx1, by1);
+                if (xy != null) {
+                    bx2 = xy[0];
+                    by2 = xy[1];
+                }
+            }
+        }
+        var lt = this.mol.bondType(idx) == Molecule.BONDTYPE_UNKNOWN ? BLineType.Unknown : BLineType.Normal;
+        var col = this.policy.data.foreground;
+        var b1 = {
+            'bnum': idx,
+            'bfr': bfr,
+            'bto': bto,
+            'type': lt,
+            'line': new Line(ax1, ay1, ax2, ay2),
+            'size': sz,
+            'head': 0,
+            'col': col
+        };
+        var b2 = {
+            'bnum': idx,
+            'bfr': bfr,
+            'bto': bto,
+            'type': lt,
+            'line': new Line(bx1, by1, bx2, by2),
+            'size': sz,
+            'head': 0,
+            'col': col
+        };
+        this.lines.push(b1);
+        this.lines.push(b2);
+        this.space.push(this.computeSpaceLine(b1));
+        this.space.push(this.computeSpaceLine(b2));
+    };
+    ArrangeMolecule.prototype.placeHydrogen = function (idx, hcount, fussy) {
+        var font = FontData.main;
+        var SSFRACT = 0.6;
+        var GLYPH_H = 'H'.charCodeAt(0) - font.GLYPH_MIN;
+        var a = this.points[idx];
+        var emscale = a.fsz * font.INV_UNITS_PER_EM;
+        var sub = hcount >= 2 ? hcount.toString() : '';
+        var outlineX = font.getOutlineX(GLYPH_H), outlineY = font.getOutlineY(GLYPH_H);
+        var firstEMW = font.HORIZ_ADV_X[GLYPH_H], emw = firstEMW;
+        for (var n = 0; n < sub.length; n++) {
+            var g = sub.charCodeAt(n) - font.GLYPH_MIN;
+            if (n == 0) {
+                emw += font.getKerning(GLYPH_H, g);
+            }
+            else {
+                var gp = sub.charCodeAt(n - 1) - font.GLYPH_MIN;
+                emw += font.getKerning(gp, g) * SSFRACT;
+            }
+            var extraX = font.getOutlineX(g), extraY = font.getOutlineY(g);
+            Vec.mulBy(extraX, SSFRACT);
+            Vec.mulBy(extraY, SSFRACT);
+            Vec.addTo(extraX, emw / SSFRACT);
+            Vec.addTo(extraY, (SSFRACT - 1) * font.ASCENT);
+            outlineX = outlineX.concat(extraX);
+            outlineY = outlineY.concat(extraY);
+            emw += font.HORIZ_ADV_X[g] * SSFRACT;
+        }
+        if (sub.length > 0) {
+            var qh = new QuickHull(outlineX, outlineY, 0);
+            outlineX = qh.hullX;
+            outlineY = qh.hullY;
+        }
+        var emdx = -0.5 * firstEMW, emdy = 0.5 * (font.ASCENT + font.DESCENT);
+        for (var n = 0; n < outlineX.length; n++) {
+            outlineX[n] = a.oval.cx + (emdx + outlineX[n]) * emscale;
+            outlineY[n] = a.oval.cy + (emdy - outlineY[n]) * emscale * this.ymul;
+        }
+        var dx = 0, dy = 0;
+        var srcWAD = this.measure.measureText(a.text, a.fsz);
+        if (fussy) {
+            var RIGHTLEFT = [0, 1, 2, 3];
+            var LEFTRIGHT = [1, 0, 2, 3];
+            var UPDOWN = [2, 3, 0, 1];
+            var DOWNUP = [3, 2, 0, 1];
+            var quad = RIGHTLEFT, adj = this.mol.atomAdjList(a.anum);
+            if (adj.length == 0) {
+                var LEFTIES = ["O", "S", "F", "Cl", "Br", "I"];
+                if (this.mol.atomCharge(a.anum) == 0 && this.mol.atomUnpaired(a.anum) == 0 &&
+                    LEFTIES.indexOf(this.mol.atomElement(a.anum)) >= 0)
+                    quad = LEFTRIGHT;
+                else
+                    quad = RIGHTLEFT;
+            }
+            else {
+                var allLeft = true, allRight = true, allUp = true, allDown = true;
+                var ax = this.mol.atomX(a.anum), ay = this.mol.atomY(a.anum);
+                for (var n = 0; n < adj.length; n++) {
+                    var bx = this.mol.atomX(adj[n]), by = this.mol.atomY(adj[n]);
+                    if (bx > ax + 0.01)
+                        allLeft = false;
+                    if (bx < ax - 0.01)
+                        allRight = false;
+                    if (by < ay - 0.01)
+                        allUp = false;
+                    if (by > ay + 0.01)
+                        allDown = false;
+                }
+                if (allLeft) { }
+                else if (allRight)
+                    quad = LEFTRIGHT;
+                else if (allUp)
+                    quad = DOWNUP;
+                else if (allDown)
+                    quad = UPDOWN;
+            }
+            for (var n = 0; n < 4; n++) {
+                var tx = 0, ty = 0;
+                if (quad[n] == 0)
+                    tx = 0.5 * srcWAD[0] + 0.5 * firstEMW * emscale;
+                else if (quad[n] == 1)
+                    tx = -0.5 * srcWAD[0] - (emw - 0.5 * firstEMW) * emscale;
+                else if (quad[n] == 2)
+                    ty = (1.1 * srcWAD[1] + 0.5 * srcWAD[2]) * -this.ymul;
+                else if (quad[n] == 3)
+                    ty = (1.1 * srcWAD[1] + 0.5 * srcWAD[2]) * this.ymul;
+                Vec.addTo(outlineX, tx);
+                Vec.addTo(outlineX, ty);
+                var viol = this.countPolyViolations(outlineX, outlineY, true);
+                Vec.addTo(outlineX, -tx);
+                Vec.addTo(outlineY, -ty);
+                if (viol == 0) {
+                    dx = tx;
+                    dy = ty;
+                    break;
+                }
+            }
+            if (dx == 0 && dy == 0)
+                return false;
+        }
+        else {
+            var mx1 = Vec.min(outlineY), mx2 = Vec.max(outlineX), my1 = Vec.min(outlineY), my2 = Vec.max(outlineY), cx = 0.5 * (mx1 + mx2), cy = 0.5 * (my1 + my2);
+            var mag = 1 + this.measure.scale() * this.policy.data.fontSize * ArrangeMolecule.FONT_CORRECT * 0.1 / Math.max(mx2 - cx, my2 - cy);
+            var psz = outlineX.length;
+            var magPX = outlineX.slice(0), magPY = outlineY.slice(0);
+            for (var n = 0; n < psz; n++) {
+                magPX[n] = (magPX[n] - cx) * mag + cx;
+                magPY[n] = (magPY[n] - cy) * mag + cy;
+            }
+            var bestScore = 0, bestExt = 0, bestAng = 0;
+            for (var ext = 0.5 * (a.oval.rw + a.oval.rh); ext < 1.5 * this.measure.scale(); ext += 0.1 * this.measure.scale()) {
+                var anyNoClash = false;
+                for (var ang = 0; ang < 2 * Math.PI; ang += 5 * DEGRAD) {
+                    var tx = ext * Math.cos(ang), ty = ext * Math.sin(ang);
+                    Vec.addTo(magPX, tx);
+                    Vec.addTo(magPY, ty);
+                    var viol = this.countPolyViolations(magPX, magPY, false);
+                    Vec.addTo(magPX, -tx);
+                    Vec.addTo(magPY, -ty);
+                    if (viol == 0)
+                        anyNoClash = true;
+                    var score = 10 * viol + this.spatialCongestion(a.oval.cx + tx, a.oval.cy + ty, 0.5) + 2 * ext;
+                    if (bestScore == 0 || score < bestScore) {
+                        bestScore = score;
+                        bestExt = ext;
+                        bestAng = ang;
+                        dx = tx;
+                        dy = ty;
+                    }
+                }
+                if (anyNoClash)
+                    break;
+            }
+        }
+        var wad = this.measure.measureText("H", a.fsz);
+        var PADDING = 1.1;
+        var ah = {
+            'anum': 0,
+            'text': 'H',
+            'fsz': a.fsz,
+            'bold': a.bold,
+            'col': a.col,
+            'oval': new Oval(a.oval.cx + dx, a.oval.cy + dy, 0.5 * wad[0] * PADDING, 0.5 * wad[1] * PADDING)
+        };
+        this.points.push(ah);
+        if (sub.length > 0) {
+            var subFsz = SSFRACT * a.fsz;
+            wad = this.measure.measureText(sub, subFsz);
+            var an = {
+                'anum': 0,
+                'text': sub,
+                'fsz': subFsz,
+                'bold': a.bold,
+                'col': a.col,
+                'oval': new Oval(ah.oval.cx + 0.5 * firstEMW * a.fsz * font.INV_UNITS_PER_EM + 0.5 * wad[0], ah.oval.cy + (1 - SSFRACT) * a.fsz, 0.5 * wad[0] * PADDING, 0.5 * wad[1] * PADDING)
+            };
+            this.points.push(an);
+        }
+        Vec.addTo(outlineX, dx);
+        Vec.addTo(outlineY, dy);
+        var minX = Vec.min(outlineX), minY = Vec.min(outlineY);
+        var spc = {
+            'anum': 0,
+            'bnum': 0,
+            'box': new Box(minX, minY, Vec.max(outlineX) - minX, Vec.max(outlineY) - minY),
+            'px': outlineX,
+            'py': outlineY
+        };
+        return true;
+    };
+    ArrangeMolecule.prototype.computeSpacePoint = function (a) {
+        var s = {
+            'anum': a.anum,
+            'bnum': 0,
+            'box': new Box(),
+            'px': [],
+            'py': []
+        };
+        var font = FontData.main;
+        var outlineX = [], outlineY = [];
+        var emw = 0, nglyphs = 0;
+        if (a.text != null) {
+            for (var n = 0; n < a.text.length; n++) {
+                var i = a.text.charCodeAt(n) - font.GLYPH_MIN;
+                if (i >= 0 && i < font.GLYPH_COUNT) {
+                    if (emw == 0) {
+                        outlineX = font.getOutlineX(i);
+                        outlineY = font.getOutlineY(i);
+                        nglyphs = 1;
+                    }
+                    else {
+                        var extraX = font.getOutlineX(i), extraY = font.getOutlineY(i);
+                        if (extraX.length > 0) {
+                            Vec.addTo(extraX, emw);
+                            outlineX = outlineX.concat(extraX);
+                            outlineY = outlineY.concat(extraY);
+                            nglyphs++;
+                        }
+                    }
+                    emw += font.HORIZ_ADV_X[i];
+                }
+                else
+                    emw += font.MISSING_HORZ;
+                if (n < a.text.length - 1) {
+                    var j = a.text.charCodeAt(n + 1) - font.GLYPH_MIN;
+                    for (var k = 0; k < font.KERN_K.length; k++)
+                        if ((font.KERN_G1[k] == i && font.KERN_G2[k] == j) || (font.KERN_G1[k] == j && font.KERN_G2[k] == i)) {
+                            emw += font.KERN_K[k];
+                            break;
+                        }
+                }
+            }
+        }
+        if (outlineX.length > 0) {
+            if (nglyphs > 1) {
+                var qh = new QuickHull(outlineX, outlineY, 0);
+                outlineX = qh.hullX;
+                outlineY = qh.hullY;
+            }
+            var emdx = -0.5 * emw, emdy = 0.5 * (font.ASCENT + font.DESCENT);
+            var emscale = a.fsz * font.INV_UNITS_PER_EM;
+            for (var n = 0; n < outlineX.length; n++) {
+                outlineX[n] = a.oval.cx + (emdx + outlineX[n]) * emscale;
+                outlineY[n] = a.oval.cy + (emdy - outlineY[n]) * emscale * this.ymul;
+            }
+            s.px = outlineX;
+            s.py = outlineY;
+            var minX = Vec.min(outlineX), minY = Vec.min(outlineY);
+            s.box = new Box(minX, minY, Vec.max(outlineX) - minX, Vec.max(outlineY) - minY);
+        }
+        else {
+            s.box = Box.fromOval(a.oval);
+            if (s.box.w > 0 && s.box.h > 0) {
+                s.px = [s.box.minX(), s.box.maxX(), s.box.maxX(), s.box.minX()];
+                s.py = [s.box.minY(), s.box.minY(), s.box.maxY(), s.box.maxY()];
+            }
+        }
+        return s;
+    };
+    ArrangeMolecule.prototype.computeSpaceLine = function (b) {
+        var s = {
+            'anum': 0,
+            'bnum': b.bnum,
+            'box': new Box(),
+            'px': [],
+            'py': []
+        };
+        if (b.type == BLineType.Normal || b.type == BLineType.Dotted || b.type == BLineType.DotDir) {
+            s.px = [b.line.x1, b.line.x2];
+            s.py = [b.line.y1, b.line.y2];
+        }
+        else {
+            var dx = b.line.x2 - b.line.x1, dy = b.line.y2 - b.line.y1;
+            var norm = b.head / Math.sqrt(dx * dx + dy * dy);
+            var ox = norm * dy, oy = -norm * dx;
+            if (b.type == BLineType.Unknown) {
+                s.px = [b.line.x1 + ox, b.line.x1 - ox, b.line.x2 - ox, b.line.x2 + ox];
+                s.py = [b.line.y1 + oy, b.line.y1 - oy, b.line.y2 - oy, b.line.y2 + oy];
+            }
+            else {
+                s.px = [b.line.x1, b.line.x2 - ox, b.line.x2 + ox];
+                s.py = [b.line.y1, b.line.y2 - oy, b.line.y2 + oy];
+            }
+        }
+        s.box.x = Vec.min(s.px) - b.size;
+        s.box.y = Vec.min(s.py) - b.size;
+        s.box.w = Vec.max(s.px) - s.box.x + b.size;
+        s.box.h = Vec.max(s.py) - s.box.y + b.size;
+        return s;
+    };
+    ArrangeMolecule.prototype.bumpAtomPosition = function (atom, dx, dy) {
+        var p = this.points[atom - 1];
+        p.oval.cx += dx;
+        p.oval.cy += dy;
+        for (var n = this.space.length - 1; n >= 0; n--) {
+            var s = this.space[n - 1];
+            if (s.anum != atom)
+                continue;
+            s.box.x += dx;
+            s.box.y += dy;
+            Vec.addTo(s.px, dx);
+            Vec.addTo(s.py, dy);
+        }
     };
     ArrangeMolecule.prototype.countPolyViolations = function (px, py, shortCircuit) {
         var hits = 0;
@@ -6250,7 +8128,7 @@ var ArrangeMolecule = (function () {
     ArrangeMolecule.prototype.priorityDoubleSubstit = function (idx) {
         var bf = this.mol.bondFrom(idx), bt = this.mol.bondTo(idx);
         var nf = this.mol.atomAdjList(bf), nt = this.mol.atomAdjList(bt);
-        var a1 = this.points[bf - 1], a2 = this.getPoint[bt - 1];
+        var a1 = this.points[bf - 1], a2 = this.points[bt - 1];
         var x1 = a1.oval.cx, y1 = a1.oval.cy, x2 = a2.oval.cx, y2 = a2.oval.cy;
         var dx = x2 - x1, dy = y2 - y1, btheta = Math.atan2(dy, dx);
         var idxFLeft = 0, idxFRight = 0, idxTLeft = 0, idxTRight = 0;
@@ -6423,223 +8301,249 @@ var ArrangeMolecule = (function () {
     ArrangeMolecule.FONT_CORRECT = 1.5;
     return ArrangeMolecule;
 }());
-var FontData = (function () {
-    function FontData() {
-        this.FONT_ADV = 1041;
-        this.UNITS_PER_EM = 2048;
-        this.INV_UNITS_PER_EM = 1.0 / this.UNITS_PER_EM;
-        this.ASCENT = 2059;
-        this.DESCENT = -430;
-        this.MISSING_HORZ = 2048;
-        this.MISSING_DATA = "M256 0V1536H1792V0H256ZM384 128H1664V1408H384V128Z";
-        this.ASCENT_FUDGE = 0.75;
-        this.UNICODE = [
-            " ", "!", "&quot;", "#", "$", "%", "&amp;", "&apos;", "(", ")", "*", "+", ",", "-", ".", "/", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", ":", ";", "&lt;", "=", "&gt;", "?", "@",
-            "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "[", "\\", "]", "^", "_", "`", "a", "b", "c", "d", "e",
-            "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "{", "|", "}", "~", "&#x80;"
-        ];
-        this.GLYPH_NAME = [
-            "space", "exclam", "quotedbl", "numbersign", "dollar", "percent", "ampersand", "quotesingle", "parenleft", "parenright", "asterisk", "plus", "comma", "hyphen", "period", "slash", "zero",
-            "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "colon", "semicolon", "less", "equal", "greater", "question", "at", "A", "B", "C", "D", "E", "F", "G", "H", "I",
-            "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z", "bracketleft", "backslash", "bracketright", "asciicircum", "underscore", "grave", "a", "b", "c", "d",
-            "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "braceleft", "bar", "braceright", "asciitilde", "Adieresis"
-        ];
-        this.HORIZ_ADV_X = [
-            720, 806, 940, 1676, 1302, 2204, 1488, 550, 930, 930, 1302, 1676, 745, 930, 745, 930, 1302, 1302, 1302, 1302, 1302, 1302, 1302, 1302, 1302, 1302, 930, 930, 1676, 1676, 1676, 1117, 2048,
-            1400, 1404, 1430, 1578, 1295, 1177, 1588, 1539, 862, 931, 1419, 1140, 1726, 1532, 1612, 1235, 1612, 1424, 1400, 1262, 1499, 1400, 2025, 1403, 1260, 1403, 930, 930, 930, 1676, 1302, 1302,
-            1230, 1276, 1067, 1276, 1220, 720, 1276, 1296, 562, 705, 1212, 562, 1992, 1296, 1243, 1276, 1276, 874, 1067, 807, 1296, 1212, 1676, 1212, 1212, 1076, 1300, 930, 1300, 1676, 1400
-        ];
-        this.GLYPH_DATA = [
-            "",
-            "M515 1489L489 410H319L291 1489H515ZM505 0H301V211H505V0Z",
-            "M772 1556L729 977H597L554 1556H772ZM386 1556L343 977H211L168 1556H386Z",
-            "M1481 932H1148L1056 556H1364V421H1021L917 0H788L892 421H622L518 0H389L493 421H195V556H528L620 932H312V1067H655L760 1489H889L784 1067H1054L1159 1489H1288L1183 1067H1481V932ZM1022 "
-                + "934H748L654 554H928L1022 934Z",
-            "M1160 380Q1160 225 1039 123T722 1V-361H604V-4Q472 -3 356 21T155 85V283H171Q190 269 239 243T334 199Q386 180 455 164T604 144V577Q564 585 530 592T467 608Q304 649 233 731T162 935Q162 1083 "
-                + "278 1185T604 1304V1576H722V1306Q823 1304 929 1282T1107 1231V1035H1093Q1018 1081 937 1116T722 1161V730Q752 725 787 717T848 703Q997 671 1078 593T1160 380ZM604 747V1160Q497 1152 424 1102T351 961Q351 870 405 824T604 747ZM971 354Q971 448 913 491T722 "
-                + "560V146Q842 158 906 207T971 354Z",
-            "M884 1076Q884 852 790 743T517 634Q335 634 242 743T149 1075Q149 1299 244 1408T517 1517Q698 1517 791 1407T884 1076ZM1575 1489L795 0H630L1410 1489H1575ZM2055 413Q2055 189 1960 80T1687 "
-                + "-29Q1506 -29 1413 81T1320 412Q1320 636 1414 745T1687 854Q1869 854 1962 745T2055 413ZM706 1076Q706 1248 662 1316T517 1384Q415 1384 371 1316T327 1075Q327 902 371 835T517 767Q617 767 661 834T706 1076ZM1877 413Q1877 585 1833 653T1688 721Q1586 721 "
-                + "1542 653T1498 412Q1498 239 1542 172T1688 104Q1788 104 1832 171T1877 413Z",
-            "M792 1191Q792 1286 736 1340T591 1395Q499 1395 441 1334T383 1183Q383 1108 422 1050T593 913Q691 948 741 1015T792 1191ZM986 315L508 781Q477 766 446 742T384 675Q356 636 338 581T320 "
-                + "457Q320 311 405 222T648 132Q741 132 832 177T986 315ZM1287 909V813Q1287 717 1262 597T1177 368L1555 0H1309L1080 224Q965 82 845 26T598 -31Q390 -31 253 90T115 409Q115 501 141 568T202 684Q237 731 289 772T394 845Q284 917 236 990T187 1174Q187 1241 "
-                + "213 1301T293 1412Q343 1460 423 1490T601 1520Q774 1520 881 1433T988 1211Q988 1167 976 1112T935 1012Q903 963 844 918T691 841L1062 479Q1076 519 1083 567T1091 667Q1093 723 1093 792T1092 909H1287Z",
-            "M386 1556L343 977H207L164 1556H386Z",
-            "M783 -412H554Q377 -209 279 31T181 572Q181 873 279 1113T554 1556H783V1546Q702 1473 629 1378T492 1155Q432 1032 395 884T357 572Q357 401 393 259T492 -11Q552 -134 629 -233T783 -402V-412Z",
-            "M749 572Q749 271 651 31T376 -412H147V-402Q224 -333 301 -234T438 -11Q500 117 536 259T573 572Q573 736 536 884T438 1155Q375 1282 302 1377T147 1546V1556H376Q553 1353 651 1113T749 572Z",
-            "M1137 887L1073 777L711 990L717 630H588L593 990L232 776L167 886L548 1093L167 1300L232 1410L594 1197L588 1556H717L710 1197L1073 1409L1137 1299L757 1094L1137 887Z",
-            "M1466 572H921V27H755V572H210V732H755V1277H921V732H1466V572Z",
-            "M575 285L293 -370H147L321 285H575Z",
-            "M777 561H153V742H777V561Z",
-            "M492 0H253V285H492V0Z",
-            "M860 1556L143 -304H-30L684 1556H860Z",
-            "M1167 745Q1167 344 1042 157T652 -31Q384 -31 261 159T137 743Q137 1140 262 1329T652 1519Q920 1519 1043 1327T1167 745ZM904 291Q939 372 951 481T964 745Q964 897 952 1009T903 1199Q868 1276 "
-                + "808 1315T652 1354Q558 1354 497 1315T399 1197Q365 1123 353 1004T340 743Q340 587 351 482T398 294Q431 216 491 175T652 134Q746 134 808 173T904 291Z",
-            "M1084 0H278V152H588V1150H278V1286Q341 1286 413 1296T522 1327Q568 1352 594 1390T625 1494H780V152H1084V0Z",
-            "M1169 0H161V209Q266 299 371 389T568 568Q760 754 831 863T902 1100Q902 1216 826 1281T612 1347Q521 1347 415 1315T208 1217H198V1427Q269 1462 387 1491T617 1520Q846 1520 976 1410T1106 1110Q1106 "
-                + "1025 1085 952T1021 812Q982 750 930 690T802 557Q695 452 581 354T368 171H1169V0Z",
-            "M1038 717Q1086 674 1117 609T1148 441Q1148 339 1111 254T1007 106Q932 36 831 3T608 -31Q484 -31 364 -2T167 63V272H182Q267 216 382 179T604 142Q667 142 738 163T853 225Q899 269 921 322T944 "
-                + "456Q944 536 919 588T848 671Q803 702 739 713T601 725H511V891H581Q733 891 823 954T914 1140Q914 1194 891 1234T827 1301Q784 1327 735 1337T624 1347Q529 1347 422 1313T220 1217H210V1426Q281 1461 399 1490T629 1520Q738 1520 821 1500T971 1436Q1043 1388 "
-                + "1080 1320T1117 1161Q1117 1037 1030 945T823 828V814Q871 806 933 781T1038 717Z",
-            "M1203 419H982V0H790V419H77V649L798 1489H982V579H1203V419ZM790 579V1251L213 579H790Z",
-            "M1157 473Q1157 369 1119 274T1015 114Q943 44 844 7T613 -31Q491 -31 378 -6T187 56V267H201Q283 215 393 179T609 142Q680 142 746 162T865 232Q909 275 931 335T954 474Q954 551 928 604T854 689Q802 "
-                + "727 728 742T561 758Q473 758 392 746T251 722V1489H1147V1314H444V918Q487 922 532 924T610 926Q731 926 822 906T989 833Q1069 778 1113 691T1157 473Z",
-            "M1191 483Q1191 256 1042 113T675 -31Q565 -31 475 3T316 104Q230 187 184 324T137 654Q137 852 179 1005T315 1277Q403 1390 542 1453T866 1517Q925 1517 965 1512T1046 1494V1303H1036Q1008 1318 "
-                + "952 1331T836 1345Q621 1345 493 1211T344 847Q428 898 509 924T698 951Q793 951 865 934T1014 863Q1102 802 1146 709T1191 483ZM988 475Q988 568 961 629T870 735Q824 767 768 777T651 787Q566 787 493 767T343 705Q341 683 340 663T339 611Q339 453 371 362T461 "
-                + "217Q507 173 560 153T677 132Q822 132 905 220T988 475Z",
-            "M1173 1266L499 0H285L1002 1314H154V1489H1173V1266Z",
-            "M1180 415Q1180 222 1030 94T651 -34Q409 -34 266 91T122 411Q122 535 194 635T397 795V801Q277 865 220 941T162 1131Q162 1299 300 1411T651 1523Q874 1523 1007 1416T1140 1144Q1140 1043 1077 "
-                + "946T892 793V787Q1032 727 1106 639T1180 415ZM943 1142Q943 1249 861 1312T650 1376Q524 1376 444 1316T363 1154Q363 1082 403 1030T526 936Q563 918 632 889T768 841Q867 907 905 978T943 1142ZM974 396Q974 488 934 543T775 655Q728 677 672 696T523 749Q433 "
-                + "700 379 616T324 426Q324 291 417 203T653 115Q799 115 886 190T974 396Z",
-            "M1167 834Q1167 639 1123 480T988 209Q897 95 760 33T438 -29Q386 -29 340 -24T258 -6V185H268Q297 170 350 157T468 143Q689 143 814 275T960 641Q867 585 785 561T606 537Q514 537 440 555T290 625Q202 "
-                + "686 158 780T113 1005Q113 1233 263 1376T629 1519Q737 1519 829 1486T990 1385Q1075 1302 1121 1172T1167 834ZM965 877Q965 1032 933 1126T845 1272Q798 1317 744 1336T627 1356Q483 1356 400 1266T316 1013Q316 918 343 858T434 753Q479 722 533 712T653 701Q731 "
-                + "701 811 722T961 783Q962 804 963 824T965 877Z",
-            "M585 832H346V1117H585V832ZM585 0H346V285H585V0Z",
-            "M585 832H346V1117H585V832ZM658 285L376 -370H230L404 285H658Z",
-            "M1408 77L254 590V714L1408 1227V1047L498 652L1408 257V77Z",
-            "M1431 782H245V942H1431V782ZM1431 362H245V522H1431V362Z",
-            "M1422 590L268 77V257L1178 652L268 1047V1227L1422 714V590Z",
-            "M1005 1139Q1005 1041 970 965T878 829Q822 772 749 722T594 625V400H415V705Q480 742 555 786T679 875Q737 927 769 982T801 1124Q801 1237 725 1292T527 1348Q419 1348 323 1314T170 1245H160V1449Q230 "
-                + "1476 337 1497T541 1519Q756 1519 880 1415T1005 1139ZM610 0H406V211H610V0Z",
-            "M1870 663Q1870 524 1830 394T1714 157H1274L1247 273Q1173 213 1105 181T949 149Q781 149 681 276T580 631Q580 858 703 993T997 1128Q1070 1128 1126 1112T1247 1062V1110H1406V268H1649Q1691 343 "
-                + "1712 455T1734 657Q1734 821 1689 955T1555 1185Q1467 1281 1337 1332T1042 1384Q882 1384 750 1326T522 1170Q426 1072 372 936T317 645Q317 480 369 344T516 110Q615 9 748 -42T1038 -94Q1124 -94 1215 -83T1391 -48V-190Q1294 -211 1210 -218T1037 -226Q851 "
-                + "-226 692 -163T419 15Q304 130 240 291T176 647Q176 832 243 991T426 1268Q542 1385 701 1452T1041 1519Q1237 1519 1391 1457T1651 1283Q1757 1171 1813 1014T1870 663ZM1245 408V926Q1182 955 1132 967T1025 980Q896 980 823 890T750 634Q750 471 808 388T989 "
-                + "304Q1056 304 1123 335T1245 408Z",
-            "M1374 0H1163L1017 415H373L227 0H26L568 1489H832L1374 0ZM956 585L695 1316L433 585H956Z",
-            "M1323 458Q1323 347 1281 262T1168 122Q1084 56 984 28T728 0H200V1489H641Q804 1489 885 1477T1040 1427Q1122 1384 1159 1317T1196 1155Q1196 1049 1142 975T998 855V847Q1149 816 1236 715T1323 458ZM990 "
-                + "1129Q990 1183 972 1220T914 1280Q867 1307 800 1313T634 1320H398V890H654Q747 890 802 899T904 939Q951 969 970 1016T990 1129ZM1117 450Q1117 540 1090 593T992 683Q944 708 876 715T709 723H398V169H660Q790 169 873 182T1009 232Q1065 271 1091 321T1117 "
-                + "450Z",
-            "M1350 108Q1295 84 1251 63T1134 19Q1073 0 1002 -13T844 -27Q682 -27 550 18T319 161Q223 256 169 402T115 743Q115 927 167 1072T317 1317Q412 1414 546 1465T845 1516Q965 1516 1084 1487T1350 1385V1150H1335Q1212 "
-                + "1253 1091 1300T832 1347Q719 1347 629 1311T467 1197Q398 1122 360 1008T321 743Q321 586 363 473T473 289Q543 215 636 180T834 144Q977 144 1102 193T1336 340H1350V108Z",
-            "M1458 743Q1458 540 1370 375T1134 119Q1032 56 907 28T576 0H200V1489H572Q790 1489 918 1458T1136 1371Q1288 1276 1373 1118T1458 743ZM1251 746Q1251 921 1190 1041T1008 1230Q920 1280 821 1299T584 "
-                + "1319H398V170H584Q727 170 833 191T1029 269Q1140 340 1195 456T1251 746Z",
-            "M1181 0H200V1489H1181V1313H398V905H1181V729H398V176H1181V0Z",
-            "M1151 1313H398V893H1045V717H398V0H200V1489H1151V1313Z",
-            "M1442 110Q1320 54 1176 13T896 -29Q722 -29 577 19T330 163Q227 260 171 405T115 746Q115 1103 323 1309T896 1516Q1023 1516 1155 1486T1441 1382V1147H1423Q1392 1171 1333 1210T1217 1275Q1148 1306 "
-                + "1061 1326T862 1347Q612 1347 467 1187T321 752Q321 463 473 303T887 142Q983 142 1078 161T1246 210V575H847V749H1442V110Z",
-            "M1339 0H1141V729H398V0H200V1489H398V905H1141V1489H1339V0Z",
-            "M725 0H137V152H332V1337H137V1489H725V1337H530V152H725V0Z",
-            "M746 387Q746 191 627 85T306 -21Q258 -21 178 -13T44 8V193H55Q96 179 156 164T279 149Q371 149 425 170T506 230Q533 270 540 328T548 462V1331H233V1489H746V387Z",
-            "M1397 0H1140L551 663L403 505V0H205V1489H403V712L1126 1489H1366L701 789L1397 0Z",
-            "M1142 0H200V1489H398V176H1142V0Z",
-            "M1526 0H1328V1283L914 410H796L385 1283V0H200V1489H470L867 660L1251 1489H1526V0Z",
-            "M1336 0H1091L385 1332V0H200V1489H507L1151 273V1489H1336V0Z",
-            "M1310 1318Q1401 1218 1449 1073T1498 744Q1498 560 1449 415T1310 172Q1218 71 1093 20T806 -31Q649 -31 521 21T302 172Q212 271 164 415T115 744Q115 926 163 1070T303 1318Q391 1416 521 1468T806 "
-                + "1520Q966 1520 1093 1468T1310 1318ZM1292 744Q1292 1034 1162 1191T807 1349Q580 1349 451 1192T321 744Q321 451 453 296T807 140Q1029 140 1160 295T1292 744Z",
-            "M1174 1039Q1174 940 1140 856T1043 709Q966 632 861 594T596 555H398V0H200V1489H604Q738 1489 831 1467T996 1396Q1081 1339 1127 1254T1174 1039ZM968 1034Q968 1111 941 1168T859 1261Q811 1292 750 "
-                + "1305T594 1319H398V724H565Q685 724 760 745T882 814Q929 862 948 915T968 1034Z",
-            "M1528 -365Q1468 -380 1410 -386T1290 -393Q1116 -393 1011 -298T896 -24Q872 -28 850 -29T806 -31Q649 -31 521 21T302 172Q212 271 164 415T115 744Q115 926 163 1070T303 1318Q391 1416 521 1468T806 "
-                + "1520Q966 1520 1093 1468T1310 1318Q1401 1218 1449 1073T1498 744Q1498 471 1387 284T1087 22Q1091 -92 1141 -155T1323 -218Q1364 -218 1420 -206T1501 -183H1528V-365ZM1292 744Q1292 1034 1162 1191T807 1349Q580 1349 451 1192T321 744Q321 451 453 296T807 "
-                + "140Q1029 140 1160 295T1292 744Z",
-            "M1432 0H1175L677 592H398V0H200V1489H617Q752 1489 842 1472T1004 1409Q1085 1358 1130 1281T1176 1084Q1176 923 1095 815T872 651L1432 0ZM969 1070Q969 1134 947 1183T872 1267Q829 1296 770 1307T631 "
-                + "1319H398V757H598Q692 757 762 773T881 835Q926 877 947 931T969 1070Z",
-            "M1282 425Q1282 338 1242 253T1128 109Q1048 45 942 9T685 -27Q524 -27 396 3T134 92V340H148Q261 246 409 195T687 144Q871 144 973 213T1076 397Q1076 496 1028 543T880 616Q805 636 718 649T532 682Q334 "
-                + "724 239 825T143 1090Q143 1277 301 1396T702 1516Q859 1516 990 1486T1222 1412V1178H1208Q1123 1250 985 1297T701 1345Q542 1345 446 1279T349 1109Q349 1016 397 963T566 882Q630 868 748 848T948 807Q1114 763 1198 674T1282 425Z",
-            "M1262 1313H730V0H532V1313H0V1489H1262V1313Z",
-            "M1321 598Q1321 436 1286 316T1169 115Q1092 39 989 4T749 -31Q609 -31 505 6T330 115Q249 197 214 313T178 598V1489H376V588Q376 467 392 397T448 270Q492 205 567 172T749 139Q856 139 931 171T1051 "
-                + "270Q1090 327 1106 400T1123 583V1489H1321V598Z",
-            "M1374 1489L832 0H568L26 1489H238L705 179L1172 1489H1374Z",
-            "M1933 1489L1546 0H1323L1010 1236L704 0H486L92 1489H295L608 251L916 1489H1117L1428 239L1739 1489H1933Z",
-            "M1336 1489L822 753L1335 0H1106L700 613L284 0H68L587 744L80 1489H308L709 884L1119 1489H1336Z",
-            "M1254 1489L730 653V0H532V632L6 1489H225L632 823L1043 1489H1254Z",
-            "M1288 0H126V184L1039 1313H160V1489H1266V1310L344 176H1288V0Z",
-            "M759 -392H239V1556H759V1413H413V-249H759V-392Z",
-            "M960 -304H787L70 1556H246L960 -304Z",
-            "M691 -392H171V-249H517V1413H171V1556H691V-392Z",
-            "M1490 684H1292L837 1311L383 682H186L775 1489H901L1490 684Z",
-            "M1306 -300H-4V-180H1306V-300Z",
-            "M762 1302H613L340 1676H583L762 1302Z",
-            "M1053 0H866V119Q841 102 799 72T716 23Q669 0 608 -15T465 -31Q314 -31 209 69T104 324Q104 451 158 529T314 653Q416 698 559 714T866 738V767Q866 831 844 873T779 939Q739 962 683 970T566 978Q492 "
-                + "978 401 959T213 902H203V1093Q258 1108 362 1126T567 1144Q685 1144 772 1125T924 1058Q987 1012 1020 939T1053 758V0ZM866 275V586Q780 581 664 571T479 542Q398 519 348 471T298 337Q298 241 356 193T533 144Q632 144 714 182T866 275Z",
-            "M1168 567Q1168 427 1129 315T1022 127Q951 48 866 9T679 -31Q584 -31 513 -9T373 52L361 0H185V1556H373V1000Q452 1065 541 1106T741 1148Q939 1148 1053 996T1168 567ZM974 562Q974 762 908 865T695 "
-                + "969Q613 969 529 934T373 842V202Q453 166 510 152T641 138Q797 138 885 240T974 562Z",
-            "M1011 70Q917 25 833 0T653 -25Q532 -25 431 10T258 118Q185 190 145 300T105 557Q105 831 255 987T653 1143Q749 1143 841 1116T1011 1050V841H1001Q915 908 824 944T645 980Q485 980 393 873T300 557Q300 "
-                + "355 390 247T645 138Q702 138 761 153T867 192Q908 213 944 236T1001 277H1011V70Z",
-            "M1091 0H903V117Q822 47 734 8T543 -31Q343 -31 226 123T108 550Q108 692 148 803T258 992Q326 1068 416 1108T604 1148Q692 1148 760 1130T903 1072V1556H1091V0ZM903 275V916Q827 950 767 963T636 976Q478 "
-                + "976 390 866T302 554Q302 355 370 252T588 148Q668 148 750 183T903 275Z",
-            "M1120 539H297Q297 436 328 360T413 234Q465 186 536 162T694 138Q808 138 923 183T1088 273H1098V68Q1003 28 904 1T696 -26Q418 -26 262 124T106 552Q106 826 255 987T649 1148Q875 1148 997 1016T1120 "
-                + "641V539ZM937 683Q936 831 863 912T639 993Q488 993 399 904T297 683H937Z",
-            "M786 1374H776Q745 1383 695 1392T607 1402Q486 1402 432 1349T377 1155V1117H716V959H383V0H195V959H68V1117H195V1154Q195 1353 294 1459T580 1566Q643 1566 693 1560T786 1546V1374Z",
-            "M1091 127Q1091 -157 962 -290T565 -423Q476 -423 392 -411T225 -375V-183H235Q281 -201 381 -227T581 -254Q677 -254 740 -231T838 -167Q873 -128 888 -73T903 50V152Q818 84 741 51T543 17Q343 17 226 "
-                + "161T108 569Q108 713 148 817T259 998Q324 1069 417 1108T602 1148Q699 1148 764 1129T903 1069L915 1117H1091V127ZM903 307V916Q828 950 764 964T635 979Q480 979 391 875T302 573Q302 385 368 288T587 191Q669 191 751 222T903 307Z",
-            "M1119 0H931V636Q931 713 922 780T889 886Q864 928 817 948T695 969Q618 969 534 931T373 834V0H185V1556H373V993Q461 1066 555 1107T748 1148Q929 1148 1024 1039T1119 725V0Z",
-            "M387 1304H175V1499H387V1304ZM375 0H187V1117H375V0Z",
-            "M533 1304H321V1499H533V1304ZM521 -27Q521 -223 421 -323T153 -423Q113 -423 48 -415T-62 -395V-216H-52Q-24 -227 23 -241T116 -255Q188 -255 232 -235T298 -175Q320 -135 326 -79T333 59V959H100V1117H521V-27Z",
-            "M1199 0H951L503 489L381 373V0H193V1556H381V558L924 1117H1161L642 601L1199 0Z",
-            "M375 0H187V1556H375V0Z",
-            "M1815 0H1627V636Q1627 708 1621 775T1593 882Q1570 925 1527 947T1403 969Q1324 969 1245 930T1087 829Q1090 806 1092 776T1094 715V0H906V636Q906 710 900 776T872 883Q849 926 806 947T682 969Q605 "
-                + "969 528 931T373 834V0H185V1117H373V993Q461 1066 548 1107T735 1148Q849 1148 928 1100T1047 967Q1161 1063 1255 1105T1456 1148Q1640 1148 1727 1037T1815 725V0Z",
-            "M1119 0H931V636Q931 713 922 780T889 886Q864 928 817 948T695 969Q618 969 534 931T373 834V0H185V1117H373V993Q461 1066 555 1107T748 1148Q929 1148 1024 1039T1119 725V0Z",
-            "M1137 558Q1137 285 997 127T622 -31Q385 -31 246 127T106 558Q106 831 245 989T622 1148Q857 1148 997 990T1137 558ZM943 558Q943 775 858 880T622 986Q469 986 385 881T300 558Q300 348 385 240T622 "
-                + "131Q772 131 857 238T943 558Z",
-            "M1168 572Q1168 436 1129 324T1019 133Q953 59 864 19T674 -22Q587 -22 517 -3T373 56V-412H185V1117H373V1000Q448 1063 541 1105T741 1148Q943 1148 1055 996T1168 572ZM974 567Q974 769 905 869T693 "
-                + "969Q612 969 530 934T373 842V209Q453 173 510 160T641 147Q798 147 886 253T974 567Z",
-            "M1091 -412H903V126Q816 51 730 15T544 -22Q345 -22 227 131T108 555Q108 699 149 809T259 995Q325 1068 414 1108T602 1148Q692 1148 761 1128T903 1069L915 1117H1091V-412ZM903 284V916Q825 951 765 "
-                + "965T635 979Q472 979 387 869T302 564Q302 368 370 263T586 157Q668 157 750 192T903 284Z",
-            "M882 912H872Q830 922 791 926T697 931Q610 931 529 893T373 793V0H185V1117H373V952Q485 1042 570 1079T745 1117Q794 1117 816 1115T882 1105V912Z",
-            "M983 322Q983 169 857 71T511 -27Q387 -27 284 2T110 67V278H120Q209 211 318 172T527 132Q651 132 721 172T791 298Q791 364 753 398Q715 432 607 456Q567 465 503 477T385 503Q238 542 177 617T115 "
-                + "803Q115 872 143 933T230 1042Q286 1089 372 1116T566 1144Q666 1144 768 1120T939 1060V859H929Q857 912 754 948T552 985Q449 985 378 946T307 828Q307 759 350 724Q392 689 486 667Q538 655 602 643T710 621Q841 591 912 518Q983 444 983 322Z",
-            "M765 10Q712 -4 650 -13T538 -22Q367 -22 278 70T189 365V959H62V1117H189V1438H377V1117H765V959H377V450Q377 362 381 313T409 220Q431 180 469 162T587 143Q633 143 683 156T755 179H765V10Z",
-            "M1111 0H923V124Q828 49 741 9T549 -31Q373 -31 275 76T177 392V1117H365V481Q365 396 373 336T407 232Q434 188 477 168T602 148Q675 148 761 186T923 283V1117H1111V0Z",
-            "M1151 1117L699 0H510L61 1117H265L611 228L954 1117H1151Z",
-            "M1590 1117L1299 0H1125L838 861L553 0H380L86 1117H282L487 252L766 1117H921L1207 252L1401 1117H1590Z",
-            "M1152 0H915L598 429L279 0H60L496 557L64 1117H301L616 695L932 1117H1152L713 567L1152 0Z",
-            "M1151 1117L499 -412H298L506 54L61 1117H265L608 289L954 1117H1151Z",
-            "M995 0H93V139L744 960H107V1117H978V983L324 159H995V0Z",
-            "M1113 -392H963Q784 -392 673 -293T561 -5V144Q561 313 478 408T224 504H173V660H224Q395 660 478 755T561 1020V1169Q561 1357 672 1456T963 1556H1113V1418H999Q863 1418 802 1355T740 1152V977Q740 "
-                + "838 663 744T449 594V570Q586 515 663 421T740 187V12Q740 -128 801 -191T999 -254H1113V-392Z",
-            "M552 -392H378V1556H552V-392Z",
-            "M1127 504H1076Q905 504 822 409T739 144V-5Q739 -193 628 -292T337 -392H187V-254H301Q437 -254 498 -191T560 12V187Q560 326 637 420T851 570V594Q714 649 637 743T560 977V1152Q560 1292 "
-                + "499 1355T301 1418H187V1556H337Q516 1556 627 1457T739 1169V1020Q739 851 822 756T1076 660H1127V504Z",
-            "M1489 927Q1487 828 1467 732T1401 561Q1355 484 1290 440T1125 396Q1031 396 958 435T801 577Q699 702 653 734T557 766Q463 766 413 679T354 395H187Q189 495 209 589T274 761Q317 835 386 "
-                + "880T551 926Q644 926 717 888T876 745Q956 647 1007 602T1119 556Q1222 556 1270 657T1322 927H1489Z",
-            "M1374 0H1163L1017 415H373L227 0H26L568 1489H832L1374 0ZM956 585L695 1316L433 585H956ZM1005 1677H806V1872H1005V1677ZM592 1677H393V1872H592V1677Z"
-        ];
-        this.KERN_G1 = [
-            7, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 14, 14, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 34, 34, 34, 34, 35, 36, 36, 36, 36, 36, 36, 36, 38, 38, 38, 38,
-            38, 38, 38, 38, 38, 38, 41, 42, 42, 42, 43, 43, 43, 43, 43, 43, 43, 43, 43, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 44, 47, 47, 47, 47, 47, 47, 48, 48, 48, 48, 48, 48, 48, 49, 49, 50,
-            50, 50, 50, 50, 50, 50, 50, 51, 51, 51, 51, 51, 51, 51, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 52, 53, 53, 53, 54, 54, 54, 54, 54, 54,
-            54, 54, 54, 54, 54, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 55, 56, 56, 56, 56, 56, 56, 56, 56, 56, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 57, 58,
-            58, 58, 58, 58, 58, 58, 58, 58, 58, 65, 65, 65, 66, 66, 66, 67, 67, 69, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 70, 72, 72, 72, 75, 75, 75, 77, 77, 77, 78, 78, 78, 79, 79, 79, 79, 79,
-            80, 80, 80, 82, 82, 82, 82, 84, 84, 86, 86, 86, 86, 86, 86, 87, 87, 87, 87, 88, 88, 88, 88, 88, 88, 89, 89, 89, 89, 89, 89, 89, 89, 89, 89, 90, 90, 90, 90, 90, 90, 90
-        ];
-        this.KERN_G2 = [
-            33, 33, 41, 42, 51, 52, 54, 55, 56, 57, 58, 65, 86, 87, 88, 89, 90, 12, 13, 13, 51, 52, 53, 54, 55, 57, 84, 85, 86, 87, 89, 12, 13, 14, 52, 13, 12, 14, 52, 55, 56, 57, 58, 12, 14, 26, 27,
-            31, 33, 52, 65, 69, 79, 13, 12, 14, 33, 13, 47, 65, 69, 79, 85, 86, 87, 89, 7, 13, 35, 39, 42, 47, 52, 54, 55, 57, 86, 89, 12, 14, 52, 56, 57, 58, 12, 14, 33, 57, 65, 69, 79, 12, 14, 13,
-            52, 57, 65, 69, 79, 85, 89, 12, 14, 33, 51, 86, 87, 89, 12, 13, 14, 26, 27, 31, 33, 35, 39, 47, 51, 52, 65, 67, 69, 71, 79, 82, 83, 85, 86, 87, 89, 90, 12, 14, 33, 12, 13, 14, 26, 27, 33,
-            65, 69, 79, 85, 89, 12, 13, 14, 26, 27, 33, 65, 69, 79, 82, 85, 89, 13, 35, 39, 47, 65, 69, 79, 85, 89, 12, 13, 14, 26, 27, 33, 47, 65, 68, 69, 71, 77, 78, 79, 80, 81, 82, 83, 85, 86, 13,
-            35, 39, 47, 58, 65, 69, 79, 87, 89, 86, 87, 89, 12, 14, 89, 13, 52, 52, 2, 7, 9, 10, 12, 13, 14, 31, 60, 61, 89, 93, 86, 87, 89, 13, 69, 79, 86, 87, 89, 86, 87, 89, 12, 14, 86, 88, 89,
-            12, 14, 89, 12, 13, 14, 65, 13, 89, 12, 13, 14, 65, 69, 79, 12, 13, 14, 65, 13, 67, 68, 69, 71, 79, 12, 13, 14, 65, 67, 68, 69, 71, 79, 81, 13, 67, 68, 69, 71, 79, 81
-        ];
-        this.KERN_K = [
-            100, 50, 30, 100, 20, 150, 50, 50, 80, 140, 30, 20, 40, 20, 50, 40, 40, 130, 160, 50, 10, 120, 10, 60, 50, 80, 20, 10, 50, 30, 50, 20, -10, 20, 60, 50, 50, 50, 50, 20, 10, 20, 20, 300,
-            300, 60, 60, -60, 100, -30, 100, 50, 50, 30, 20, 20, 10, 110, 20, 60, 70, 70, 50, 80, 70, 80, 120, 160, 20, 20, -100, 20, 170, 110, 100, 160, 110, 110, 30, 30, 50, 10, 20, 20, 300, 300,
-            50, -20, 50, 50, 50, 30, 30, 100, 60, 20, 40, 50, 50, 20, 55, 20, 20, 20, 22, 30, 20, 30, 290, 150, 290, 200, 200, -60, 120, 40, 40, 50, 12, 70, 240, 220, 220, 210, 220, 200, 180, 200,
-            200, 200, 200, 170, 20, 20, 10, 290, 50, 290, 80, 80, 60, 100, 100, 100, 60, 65, 290, 50, 220, 80, 80, 50, 100, 100, 100, 60, 60, 65, 80, 10, 10, 10, 50, 60, 60, 30, 80, 290, 140, 290,
-            200, 200, 80, 20, 140, 120, 130, 130, 100, 100, 130, 100, 130, 100, 110, 110, 100, 60, 20, 20, 20, 10, 50, 60, 60, 40, 65, 16, 10, 16, 30, 20, 5, 20, 60, 140, -60, -60, -100, -50, 130,
-            50, 120, -110, -100, -100, 10, -100, 20, 10, 20, 100, 20, 20, 20, 10, 20, 20, 10, 20, 30, 20, 15, 20, 15, 30, 20, 5, 290, 20, 290, 36, 40, 10, 180, 40, 180, 40, 18, 18, 70, 20, 70, 20,
-            50, 20, 10, 24, 10, 24, 190, 40, 190, 40, 18, 10, 18, 10, 18, 10, 20, 10, 10, 12, 10, 12, 10
-        ];
-        this.pathCache = [];
-        for (var n = this.GLYPH_DATA.length - 1; n >= 0; n--)
-            this.pathCache[n] = undefined;
+var DrawMolecule = (function () {
+    function DrawMolecule(layout, vg) {
+        this.layout = layout;
+        this.vg = vg;
+        this.mol = layout.getMolecule();
+        this.policy = layout.getPolicy();
+        this.effects = layout.getEffects();
+        this.scale = layout.getScale();
+        this.invScale = 1.0 / this.scale;
     }
-    FontData.prototype.getRawGlyph = function (idx) {
-        return this.GLYPH_DATA[idx];
+    DrawMolecule.prototype.getMolecule = function () { return this.mol; };
+    DrawMolecule.prototype.getMetaVector = function () { return this.vg; };
+    DrawMolecule.prototype.getLayout = function () { return this.layout; };
+    DrawMolecule.prototype.getPolicy = function () { return this.policy; };
+    DrawMolecule.prototype.getEffects = function () { return this.effects; };
+    DrawMolecule.prototype.draw = function () {
+        for (var n = 0; n < this.layout.numLines(); n++) {
+            var b = this.layout.getLine(n);
+            if (b.type == BLineType.Normal) {
+                this.vg.drawLine(b.line.x1, b.line.y1, b.line.x2, b.line.y2, b.col, b.size);
+            }
+            else if (b.type == BLineType.Inclined)
+                this.drawBondInclined(b);
+            else if (b.type == BLineType.Declined)
+                this.drawBondDeclined(b);
+            else if (b.type == BLineType.Unknown)
+                this.drawBondUnknown(b);
+            else if (b.type == BLineType.Dotted || b.type == BLineType.DotDir)
+                this.drawBondDotted(b);
+            else if (b.type == BLineType.IncDouble || b.type == BLineType.IncTriple || b.type == BLineType.IncQuadruple)
+                this.drawBondIncMulti(b);
+        }
+        for (var n = 0; n < this.layout.numPoints(); n++) {
+            var p = this.layout.getPoint(n);
+            var txt = p.text;
+            if (txt == null)
+                continue;
+            var fsz = p.fsz;
+            var cx = p.oval.cx, cy = p.oval.cy, rw = p.oval.rw;
+            var col = p.col;
+            while (txt.endsWith(".")) {
+                var dw = rw / txt.length;
+                var r = fsz * 0.15;
+                this.vg.drawOval(cx + rw - dw, cy, r, r, MetaVector.NOCOLOUR, 0, col);
+                cx -= dw;
+                rw -= dw;
+                txt = txt.substring(0, txt.length - 1);
+            }
+            while (txt.startsWith("+")) {
+                var dw = rw / txt.length;
+                var x = cx - rw + dw, y = cy, r = fsz * 0.18, lsz = fsz * 0.1;
+                this.vg.drawLine(x - r, y, x + r, y, col, lsz);
+                this.vg.drawLine(x, y - r, x, y + r, col, lsz);
+                cx += dw;
+                rw -= dw;
+                txt = txt.substring(1, txt.length);
+            }
+            while (txt.startsWith("-")) {
+                var dw = rw / txt.length;
+                var x = cx - rw + dw, y = cy, r = fsz * 0.18, lsz = fsz * 0.1;
+                this.vg.drawLine(x - r, y, x + r, y, col, lsz);
+                cx += dw;
+                rw -= dw;
+                txt = txt.substring(1, txt.length);
+            }
+            if (txt.length > 0) {
+                this.vg.drawText(cx, cy, txt, fsz, col, TextAlign.Centre | TextAlign.Middle);
+            }
+        }
     };
-    ;
-    FontData.prototype.getGlyphPath = function (idx) {
-        path = this.pathCache[idx];
-        if (path != null)
-            return path;
-        var path = new Path2D(this.GLYPH_DATA[idx]);
-        this.pathCache[idx] = path;
-        return path;
+    DrawMolecule.prototype.drawBondInclined = function (b) {
+        var x1 = b.line.x1, y1 = b.line.y1, x2 = b.line.x2, y2 = b.line.y2;
+        var dx = x2 - x1, dy = y2 - y1;
+        var col = b.col;
+        var size = b.size, head = b.head;
+        var norm = head / Math.sqrt(dx * dx + dy * dy);
+        var ox = norm * dy, oy = -norm * dx;
+        var px = [x1, x2 - ox, x2 + ox], py = [y1, y2 - oy, y2 + oy];
+        if (this.layout.getPoint(b.bto - 1).text == null && this.mol.atomAdjCount(b.bto) == 2) {
+            var other = null;
+            for (var n = 0; n < this.layout.numLines(); n++) {
+                var o = this.layout.getLine(n);
+                if (o.type == BLineType.Normal && (o.bfr == b.bto || o.bto == b.bto)) {
+                    if (other != null) {
+                        other = null;
+                        break;
+                    }
+                    other = o;
+                }
+            }
+            if (other != null) {
+                var th1 = Math.atan2(y1 - y2, x1 - x2);
+                var th2 = Math.atan2(other.line.y1 - other.line.y2, other.line.x1 - other.line.x2);
+                if (b.bto == other.bfr)
+                    th2 += Math.PI;
+                var diff = Math.abs(angleDiff(th1, th2));
+                if (diff > 105 * DEGRAD && diff < 135 * DEGRAD) {
+                    var ixy1 = GeomUtil.lineIntersect(px[0], py[0], px[1], py[1], other.line.x1, other.line.y1, other.line.x2, other.line.y2);
+                    var ixy2 = GeomUtil.lineIntersect(px[0], py[0], px[2], py[2], other.line.x1, other.line.y1, other.line.x2, other.line.y2);
+                    px[1] = ixy1[0];
+                    py[1] = ixy1[1];
+                    px[2] = ixy2[0];
+                    py[2] = ixy2[1];
+                    var dx1 = px[1] - px[0], dy1 = py[1] - py[0], inv1 = 0.5 * other.size / norm_xy(dx1, dy1);
+                    px[1] += dx1 * inv1;
+                    py[1] += dy1 * inv1;
+                    var dx2 = px[2] - px[0], dy2 = py[2] - py[0], inv2 = 0.5 * other.size / norm_xy(dx2, dy2);
+                    px[2] += dx2 * inv1;
+                    py[2] += dy2 * inv1;
+                }
+            }
+        }
+        if (this.layout.getPoint(b.bto - 1).text == null && this.mol.atomAdjCount(b.bto) == 3) {
+            var other1 = null, other2 = null;
+            for (var n = 0; n < this.layout.numLines(); n++) {
+                var o = this.layout.getLine(n);
+                if (o.type == BLineType.Normal && (o.bfr == b.bto || o.bto == b.bto)) {
+                    if (other1 == null)
+                        other1 = o;
+                    else if (other2 == null)
+                        other2 = o;
+                    else {
+                        other1 = other2 = null;
+                        break;
+                    }
+                }
+            }
+            if (other1 != null && other2 != null) {
+                var th1 = Math.atan2(y1 - y2, x1 - x2);
+                var th2 = Math.atan2(other1.line.y1 - other1.line.y2, other1.line.x1 - other1.line.x2);
+                var th3 = Math.atan2(other2.line.y1 - other2.line.y2, other2.line.x1 - other2.line.x2);
+                if (b.bto == other1.bfr)
+                    th2 += Math.PI;
+                if (b.bto == other2.bfr)
+                    th3 += Math.PI;
+                var dth1 = angleDiff(th1, th2), diff1 = Math.abs(dth1);
+                var dth2 = angleDiff(th1, th3), diff2 = Math.abs(dth2);
+                var diff3 = Math.abs(angleDiff(th2, th3));
+                if (diff1 > 105 * DEGRAD && diff1 < 135 * DEGRAD ||
+                    diff2 > 105 * DEGRAD && diff2 < 135 * DEGRAD ||
+                    diff3 > 105 * DEGRAD && diff3 < 135 * DEGRAD) {
+                    if (dth1 < 0)
+                        _a = [other2, other1], other1 = _a[0], other2 = _a[1];
+                    var ixy1 = GeomUtil.lineIntersect(px[0], py[0], px[1], py[1], other1.line.x1, other1.line.y1, other1.line.x2, other1.line.y2);
+                    var ixy2 = GeomUtil.lineIntersect(px[0], py[0], px[2], py[2], other2.line.x1, other2.line.y1, other2.line.x2, other2.line.y2);
+                    px = [x1, ixy1[0], x2, ixy2[0]];
+                    py = [y1, ixy1[1], y2, ixy2[1]];
+                }
+            }
+        }
+        this.vg.drawPoly(px, py, MetaVector.NOCOLOUR, 0, col, true);
+        var _a;
     };
-    FontData.main = new FontData();
-    return FontData;
+    DrawMolecule.prototype.drawBondDeclined = function (b) {
+        var x1 = b.line.x1, y1 = b.line.y1, x2 = b.line.x2, y2 = b.line.y2;
+        var dx = x2 - x1, dy = y2 - y1;
+        var col = b.col;
+        var size = b.size, head = b.head;
+        var ext = Math.sqrt(dx * dx + dy * dy);
+        var nsteps = Math.ceil(ext * 2.5 * this.invScale);
+        var norm = head / ext;
+        var ox = norm * dy, oy = -norm * dx, invSteps = 1.0 / (nsteps + 1);
+        var holdout = this.mol.atomAdjCount(b.bto) == 1 && this.layout.getPoint(b.bto - 1).text == null ? 1 : 1 - (0.15 * this.scale) / ext;
+        for (var i = 0; i <= nsteps + 1; i++) {
+            var cx = x1 + i * dx * invSteps * holdout, cy = y1 + i * dy * invSteps * holdout;
+            var ix = ox * i * invSteps, iy = oy * i * invSteps;
+            this.vg.drawLine(cx - ix, cy - iy, cx + ix, cy + iy, col, size);
+        }
+    };
+    DrawMolecule.prototype.drawBondUnknown = function (b) {
+        var x1 = b.line.x1, y1 = b.line.y1, x2 = b.line.x2, y2 = b.line.y2;
+        var dx = x2 - x1, dy = y2 - y1;
+        var col = b.col;
+        var size = b.size, head = b.head;
+        var ext = Math.sqrt(dx * dx + dy * dy);
+        var nsteps = Math.ceil(ext * 3.5 * this.invScale);
+        var norm = head / ext;
+        var ox = norm * dy, oy = -norm * dx;
+        var sz = 1 + 3 * (nsteps + 1);
+        var x = Vec.numberArray(0, sz), y = Vec.numberArray(0, sz), ctrl = Vec.booleanArray(false, sz);
+        x[0] = x1;
+        y[0] = y1;
+        ctrl[0] = false;
+        for (var i = 0, j = 1; i <= nsteps; i++, j += 3) {
+            var ax = x1 + i * dx / (nsteps + 1), ay = y1 + i * dy / (nsteps + 1);
+            var cx = x1 + (i + 1) * dx / (nsteps + 1), cy = y1 + (i + 1) * dy / (nsteps + 1);
+            var bx = (ax + cx) / 2, by = (ay + cy) / 2;
+            var sign = i % 2 == 0 ? 1 : -1;
+            x[j] = ax;
+            x[j + 1] = bx + sign * ox;
+            x[j + 2] = cx;
+            y[j] = ay;
+            y[j + 1] = by + sign * oy;
+            y[j + 2] = cy;
+            ctrl[j] = true;
+            ctrl[j + 1] = true;
+            ctrl[j + 2] = false;
+        }
+        this.vg.drawPath(x, y, ctrl, true, col, size, MetaVector.NOCOLOUR, false);
+    };
+    DrawMolecule.prototype.drawBondDotted = function (b) {
+        var x1 = b.line.x1, y1 = b.line.y1, x2 = b.line.x2, y2 = b.line.y2;
+        var dx = x2 - x1, dy = y2 - y1;
+        var col = b.col;
+        var size = b.size;
+        var radius = size, dist = norm_xy(dx, dy);
+        if (dist < 0.01)
+            return;
+        var nudge = 0.5 * size / dist;
+        x1 += nudge * dx;
+        y1 += nudge * dy;
+        x2 -= nudge * dx;
+        y2 -= nudge * dy;
+        dx = x2 - x1;
+        dy = y2 - y1;
+        var nsteps = Math.ceil(0.2 * dist / radius);
+        var invSteps = 1.0 / (nsteps + 1);
+        for (var i = 0; i <= nsteps + 1; i++) {
+            var r = radius;
+            if (b.type == BLineType.DotDir)
+                r *= 1 + (i * (1.0 / (nsteps + 2)) - 0.5);
+            var cx = x1 + i * dx * invSteps, cy = y1 + i * dy * invSteps;
+            this.vg.drawOval(cx, cy, r, r, MetaVector.NOCOLOUR, 0, col);
+        }
+    };
+    DrawMolecule.prototype.drawBondIncMulti = function (b) {
+        var x1 = b.line.x1, y1 = b.line.y1, x2 = b.line.x2, y2 = b.line.y2;
+        var dx = x2 - x1, dy = y2 - y1;
+        var col = b.col;
+        var size = b.size, head = b.head;
+        var norm = head / Math.sqrt(dx * dx + dy * dy);
+        var ox = norm * dy, oy = -norm * dx;
+        this.vg.drawPoly([x1, x2 - ox, x2 + ox], [y1, y2 - oy, y2 + oy], col, this.scale * 0.05, MetaVector.NOCOLOUR, true);
+        if (b.type == BLineType.IncDouble) {
+            this.vg.drawLine(x1, y1, x2, y2, col, this.scale * 0.03);
+        }
+        else {
+            this.vg.drawLine(x1, y1, x2 + 0.33 * ox, y2 + 0.33 * oy, col, this.scale * 0.03);
+            this.vg.drawLine(x1, y1, x2 - 0.33 * ox, y2 - 0.33 * oy, col, this.scale * 0.03);
+        }
+    };
+    return DrawMolecule;
 }());
-;
 var Account = (function () {
     function Account() {
     }

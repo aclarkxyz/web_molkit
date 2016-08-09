@@ -146,7 +146,7 @@ class ArrangeMolecule
     	{
     	    // atom symbols which are more than 2 characters long are labels rather than elements, and get different treatment;
     	    // note we put in a null placeholder here, so that the points will be kept in their original atom order
-			if (this.mol.atomElement(n).length > 2 &&this. mol.atomHydrogens(n) == 0)
+			if (this.mol.atomElement(n).length > 2 && this.mol.atomHydrogens(n) == 0)
 			{
 				this.points.push(null);
 				this.space.push(null);
@@ -163,7 +163,6 @@ class ArrangeMolecule
 				'col': this.policy.data.atomCols[this.mol.atomicNumber(n)],
 				'oval': new Oval(this.measure.angToX(this.mol.atomX(n)), this.measure.angToY(this.mol.atomY(n)), 0, 0)
 			};
-
 			//if (policy.mappedColour >= 0 && mol.atomMapNum(n) > 0) a.col = policy.mappedColour;
     
     	    // decide whether this atom is to have a label
@@ -792,7 +791,7 @@ class ArrangeMolecule
 			for (let j = 0; j < nring.length; j++) rings.push(nring[j]);
     	}
 		let ringsz = rings.length;
-    	
+
     	// for each atom add up the number of times it occurs in a small ring
 		let ringbusy = Vec.numberArray(0, this.mol.numAtoms());
 		for (let n = 0; n < ringsz; n++)
@@ -1551,7 +1550,7 @@ class ArrangeMolecule
     {
 		let bf = this.mol.bondFrom(idx), bt = this.mol.bondTo(idx);
 		let nf = this.mol.atomAdjList(bf), nt = this.mol.atomAdjList(bt);
-		let a1 = this.points[bf - 1], a2 = this.getPoint[bt - 1];
+		let a1 = this.points[bf - 1], a2 = this.points[bt - 1];
 		let x1 = a1.oval.cx, y1 = a1.oval.cy, x2 = a2.oval.cx, y2 = a2.oval.cy;
 		let dx = x2 - x1, dy = y2 - y1, btheta = Math.atan2(dy, dx);
 

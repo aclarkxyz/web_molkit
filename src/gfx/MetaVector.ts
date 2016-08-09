@@ -134,7 +134,7 @@ class MetaVector
 			if (i >= font.GLYPH_MIN && i <= font.GLYPH_MAX) this.charMask[i - font.GLYPH_MIN] = true;
 		}
 
-		let metrics = this.measureText(txt, size);
+		let metrics = font.measureText(txt, size);
 		let bx = 0, by = 0;
 
 		if ((align & TextAlign.Left) != 0) {}
@@ -176,34 +176,6 @@ class MetaVector
 
 		let typeidx = this.findOrCreateType([this.PRIM_TEXT, size, colour]);
 		this.prims.push([this.PRIM_TEXT, typeidx, x, y, txt]);
-	}
-
-	// for text of a given size, returns [width,ascent,descent]; all of these numbers are positive; text drawing always uses
-	// the left/baseline as the reference position
-	public measureText(txt:string, size:number)
-	{
-		let font = FontData.main;
-		
-		let scale = size / font.UNITS_PER_EM;
-		let dx = 0;
-		for (let n = 0; n < txt.length; n++)
-		{
-			let i = txt.charCodeAt(n) - font.GLYPH_MIN;
-			if (i < 0 || i >= font.GLYPH_COUNT)
-			{
-				dx += font.MISSING_HORZ;
-				continue;
-			}
-			
-			dx += font.HORIZ_ADV_X[i];
-			if (n < txt.length - 1)
-			{
-				let j = txt.charCodeAt(n + 1) - font.GLYPH_MIN;
-				dx += font.getKerning(i, j);
-			}
-		}
-
-		return [dx * scale, font.ASCENT * scale * font.ASCENT_FUDGE, -font.DESCENT * scale];
 	}
 
 	// query the boundaries of the drawing, post factum
