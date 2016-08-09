@@ -133,9 +133,6 @@ class QuickHull
 			}
 		}
 
-		this.hullX = Vec.numberArray(0, sz);
-		this.hullY = Vec.numberArray(0, sz);
-
 		// recursively build part 1
 		this.hullX.push(x[r]);
 		this.hullY.push(y[r]);

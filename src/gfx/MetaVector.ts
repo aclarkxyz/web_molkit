@@ -92,32 +92,56 @@ class MetaVector
 	// methods for adding a primitive (and possibly a type to go with it)
 	public drawLine(x1:number, y1:number, x2:number, y2:number, colour:number, thickness:number)
 	{
-		if (!thickness) thickness = 1;
+		if (thickness == null) thickness = 1;
 		let typeidx = this.findOrCreateType([this.PRIM_LINE, thickness, colour]);
+
+		const bump = 0.5 * thickness;
+		this.updateBounds(x1 - bump, y1 - bump);
+		this.updateBounds(x2 + bump, y2 - bump);
+
 		this.prims.push([this.PRIM_LINE, typeidx, x1, y1, x2, y2]);
 	}
 	public drawRect(x:number, y:number, w:number, h:number, edgeCol:number, thickness:number, fillCol:number)
 	{
-		if (!edgeCol) edgeCol = -1;
-		if (!fillCol) fillCol = -1;
-		if (!thickness) thickness = 1;
+		if (edgeCol == null) edgeCol = -1;
+		if (fillCol == null) fillCol = -1;
+		if (thickness == null) thickness = 1;
 		let typeidx = this.findOrCreateType([this.PRIM_RECT, edgeCol, fillCol, thickness]);
+
+		const bump = 0.5 * thickness;
+		this.updateBounds(x - bump, y - bump);
+		this.updateBounds(x + w + bump, y + h + bump);
+
 		this.prims.push([this.PRIM_RECT, typeidx, x, y, w, h]);
 	}
-	public drawOval(x:number, y:number, w:number, h:number, edgeCol:number, thickness:number, fillCol:number)
+	public drawOval(cx:number, cy:number, rw:number, rh:number, edgeCol:number, thickness:number, fillCol:number)
 	{
-		if (!edgeCol) edgeCol = -1;
-		if (!fillCol) fillCol = -1;
-		if (!thickness) thickness = 1;
+		if (edgeCol == null) edgeCol = -1;
+		if (fillCol == null) fillCol = -1;
+		if (thickness == null) thickness = 1;
+
+		const bump = 0.5 * thickness;
+		this.updateBounds(cx - 0.5 * rw - bump, cy - 0.5 * rh - bump);
+		this.updateBounds(cx + 0.5 * rw + bump, cy + 0.5 * rh + bump);
+
 		let typeidx = this.findOrCreateType([this.PRIM_OVAL, edgeCol, fillCol, thickness]);
-		this.prims.push([this.PRIM_OVAL, typeidx, x, y, w, h]);
+		this.prims.push([this.PRIM_OVAL, typeidx, cx, cy, rw, rh]);
 	}
 	public drawPath(xpoints:number[], ypoints:number[], ctrlFlags:boolean[], isClosed:boolean, edgeCol:number, thickness:number, fillCol:number, hardEdge:boolean)
 	{
-		if (!edgeCol) edgeCol = -1;
-		if (!fillCol) fillCol = -1;
-		if (thickness) thickness = 1;
-		if (hardEdge) hardEdge = false;		
+		if (edgeCol == null) edgeCol = -1;
+		if (fillCol == null) fillCol = -1;
+		if (thickness == null) thickness = 1;
+		if (hardEdge == null) hardEdge = false;		
+
+		const bump = 0.5 * thickness;
+		for (let n = 0; n < xpoints.length; n++)
+		{
+			// NOTE: treats control points as literals; this could cause glitches, but hasn't yet
+			this.updateBounds(xpoints[n] - bump, ypoints[n] - bump);
+			if (bump != 0) this.updateBounds(xpoints[n] + bump, ypoints[n] + bump); 
+		}
+
 		let typeidx = this.findOrCreateType([this.PRIM_PATH, edgeCol, fillCol, thickness, hardEdge]);
 		this.prims.push([this.PRIM_PATH, typeidx, xpoints.length, xpoints, ypoints, ctrlFlags, isClosed]);
 	}
@@ -127,7 +151,6 @@ class MetaVector
 	}
 	public drawText(x:number, y:number, txt:string, size:number, colour:number, align?:number)
 	{
-console.log('TXT['+txt+'] align='+align);//zog		
 		if (align == null) align = 0;
 		const font = FontData.main;
 		for (let n = 0; n < txt.length; n++)
@@ -190,8 +213,8 @@ console.log('TXT['+txt+'] align='+align);//zog
 	public normalise()
 	{
 		if (this.lowX != 0 || this.lowY != 0) this.transformPrimitives(-this.lowX, -this.lowY, 1, 1);
-		this.width = this.highX - this.lowX;
-		this.height = this.highY - this.lowY;
+		this.width = Math.ceil(this.highX - this.lowX);
+		this.height = Math.ceil(this.highY - this.lowY);
 	}
 
 	// makes sure everything fits into the indicated box, scaling down if necessary (but not up)	
@@ -388,7 +411,7 @@ console.log('TXT['+txt+'] align='+align);//zog
 		y1 = this.offsetY + this.scale * y1;
 		x2 = this.offsetX + this.scale * x2;
 		y2 = this.offsetY + this.scale * y2;
-		if (type.colour)
+		if (type.colour != null)
 		{
 			ctx.beginPath();
 			ctx.moveTo(x1, y1);
@@ -410,12 +433,12 @@ console.log('TXT['+txt+'] align='+align);//zog
 		w *= this.scale;
 		h *= this.scale;
 
-		if (type.fillCol)
+		if (type.fillCol != null)
 		{
 			ctx.fillStyle = type.fillCol;
 			ctx.fillRect(x, y, w, h);
 		}
-		if (type.edgeCol)
+		if (type.edgeCol != null)
 		{
 			ctx.strokeStyle = type.edgeCol;
 			ctx.lineWidth = type.thickness;
@@ -434,14 +457,14 @@ console.log('TXT['+txt+'] align='+align);//zog
 		rw *= this.scale;
 		rh *= this.scale;
 		
-		if (type.fillCol)
+		if (type.fillCol != null)
 		{
 			ctx.fillStyle = type.fillCol;
 			ctx.beginPath();
 			ctx.ellipse(cx, cy, rw, rh, 0, 0, 2 * Math.PI, true);
 			ctx.fill();
 		}
-		if (type.edgeCol)
+		if (type.edgeCol != null)
 		{
 			ctx.strokeStyle = type.edgeCol;
 			ctx.lineWidth = type.thickness;
@@ -467,8 +490,8 @@ console.log('TXT['+txt+'] align='+align);//zog
 
 		for (let layer = 1; layer <= 2; layer++)
 		{
-			if (layer == 1 && !type.fillCol) continue;
-			if (layer == 2 && !type.edgeCol) continue;
+			if (layer == 1 && type.fillCol == null) continue;
+			if (layer == 2 && type.edgeCol == null) continue;
 				
 			ctx.beginPath();
 			ctx.moveTo(x[0], y[0]);

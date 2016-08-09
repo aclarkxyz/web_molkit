@@ -1151,7 +1151,7 @@ function colourCanvas(col) {
     if (col == 0x000000)
         return 'black';
     if (col == -1)
-        return undefined;
+        return null;
     if (col >= 0 && col <= 0xFFFFFF)
         return colourCode(col);
     var t = ((col >> 24) & 0xFF) * ONE_OVER_255;
@@ -2524,8 +2524,6 @@ var QuickHull = (function () {
                     al2.push(n);
             }
         }
-        this.hullX = Vec.numberArray(0, sz);
-        this.hullY = Vec.numberArray(0, sz);
         this.hullX.push(x[r]);
         this.hullY.push(y[r]);
         this.quickHull(r, l, al1);
@@ -3084,40 +3082,55 @@ var MetaVector = (function () {
         this.charMask = Vec.booleanArray(false, FontData.main.GLYPH_COUNT);
     }
     MetaVector.prototype.drawLine = function (x1, y1, x2, y2, colour, thickness) {
-        if (!thickness)
+        if (thickness == null)
             thickness = 1;
         var typeidx = this.findOrCreateType([this.PRIM_LINE, thickness, colour]);
+        var bump = 0.5 * thickness;
+        this.updateBounds(x1 - bump, y1 - bump);
+        this.updateBounds(x2 + bump, y2 - bump);
         this.prims.push([this.PRIM_LINE, typeidx, x1, y1, x2, y2]);
     };
     MetaVector.prototype.drawRect = function (x, y, w, h, edgeCol, thickness, fillCol) {
-        if (!edgeCol)
+        if (edgeCol == null)
             edgeCol = -1;
-        if (!fillCol)
+        if (fillCol == null)
             fillCol = -1;
-        if (!thickness)
+        if (thickness == null)
             thickness = 1;
         var typeidx = this.findOrCreateType([this.PRIM_RECT, edgeCol, fillCol, thickness]);
+        var bump = 0.5 * thickness;
+        this.updateBounds(x - bump, y - bump);
+        this.updateBounds(x + w + bump, y + h + bump);
         this.prims.push([this.PRIM_RECT, typeidx, x, y, w, h]);
     };
-    MetaVector.prototype.drawOval = function (x, y, w, h, edgeCol, thickness, fillCol) {
-        if (!edgeCol)
+    MetaVector.prototype.drawOval = function (cx, cy, rw, rh, edgeCol, thickness, fillCol) {
+        if (edgeCol == null)
             edgeCol = -1;
-        if (!fillCol)
+        if (fillCol == null)
             fillCol = -1;
-        if (!thickness)
+        if (thickness == null)
             thickness = 1;
+        var bump = 0.5 * thickness;
+        this.updateBounds(cx - 0.5 * rw - bump, cy - 0.5 * rh - bump);
+        this.updateBounds(cx + 0.5 * rw + bump, cy + 0.5 * rh + bump);
         var typeidx = this.findOrCreateType([this.PRIM_OVAL, edgeCol, fillCol, thickness]);
-        this.prims.push([this.PRIM_OVAL, typeidx, x, y, w, h]);
+        this.prims.push([this.PRIM_OVAL, typeidx, cx, cy, rw, rh]);
     };
     MetaVector.prototype.drawPath = function (xpoints, ypoints, ctrlFlags, isClosed, edgeCol, thickness, fillCol, hardEdge) {
-        if (!edgeCol)
+        if (edgeCol == null)
             edgeCol = -1;
-        if (!fillCol)
+        if (fillCol == null)
             fillCol = -1;
-        if (thickness)
+        if (thickness == null)
             thickness = 1;
-        if (hardEdge)
+        if (hardEdge == null)
             hardEdge = false;
+        var bump = 0.5 * thickness;
+        for (var n = 0; n < xpoints.length; n++) {
+            this.updateBounds(xpoints[n] - bump, ypoints[n] - bump);
+            if (bump != 0)
+                this.updateBounds(xpoints[n] + bump, ypoints[n] + bump);
+        }
         var typeidx = this.findOrCreateType([this.PRIM_PATH, edgeCol, fillCol, thickness, hardEdge]);
         this.prims.push([this.PRIM_PATH, typeidx, xpoints.length, xpoints, ypoints, ctrlFlags, isClosed]);
     };
@@ -3125,7 +3138,6 @@ var MetaVector = (function () {
         this.drawPath(xpoints, ypoints, null, true, edgeCol, thickness, fillCol, hardEdge);
     };
     MetaVector.prototype.drawText = function (x, y, txt, size, colour, align) {
-        console.log('TXT[' + txt + '] align=' + align);
         if (align == null)
             align = 0;
         var font = FontData.main;
@@ -3179,8 +3191,8 @@ var MetaVector = (function () {
     MetaVector.prototype.normalise = function () {
         if (this.lowX != 0 || this.lowY != 0)
             this.transformPrimitives(-this.lowX, -this.lowY, 1, 1);
-        this.width = this.highX - this.lowX;
-        this.height = this.highY - this.lowY;
+        this.width = Math.ceil(this.highX - this.lowX);
+        this.height = Math.ceil(this.highY - this.lowY);
     };
     MetaVector.prototype.transformIntoBox = function (box) {
         this.transformPrimitives(-this.lowX, -this.lowY, 1, 1);
@@ -3345,7 +3357,7 @@ var MetaVector = (function () {
         y1 = this.offsetY + this.scale * y1;
         x2 = this.offsetX + this.scale * x2;
         y2 = this.offsetY + this.scale * y2;
-        if (type.colour) {
+        if (type.colour != null) {
             ctx.beginPath();
             ctx.moveTo(x1, y1);
             ctx.lineTo(x2, y2);
@@ -3363,11 +3375,11 @@ var MetaVector = (function () {
         y = this.offsetY + this.scale * y;
         w *= this.scale;
         h *= this.scale;
-        if (type.fillCol) {
+        if (type.fillCol != null) {
             ctx.fillStyle = type.fillCol;
             ctx.fillRect(x, y, w, h);
         }
-        if (type.edgeCol) {
+        if (type.edgeCol != null) {
             ctx.strokeStyle = type.edgeCol;
             ctx.lineWidth = type.thickness;
             ctx.lineCap = 'square';
@@ -3382,13 +3394,13 @@ var MetaVector = (function () {
         cy = this.offsetY + this.scale * cy;
         rw *= this.scale;
         rh *= this.scale;
-        if (type.fillCol) {
+        if (type.fillCol != null) {
             ctx.fillStyle = type.fillCol;
             ctx.beginPath();
             ctx.ellipse(cx, cy, rw, rh, 0, 0, 2 * Math.PI, true);
             ctx.fill();
         }
-        if (type.edgeCol) {
+        if (type.edgeCol != null) {
             ctx.strokeStyle = type.edgeCol;
             ctx.lineWidth = type.thickness;
             ctx.beginPath();
@@ -3409,9 +3421,9 @@ var MetaVector = (function () {
             y[n] = this.offsetY + this.scale * y[n];
         }
         for (var layer = 1; layer <= 2; layer++) {
-            if (layer == 1 && !type.fillCol)
+            if (layer == 1 && type.fillCol == null)
                 continue;
-            if (layer == 2 && !type.edgeCol)
+            if (layer == 2 && type.edgeCol == null)
                 continue;
             ctx.beginPath();
             ctx.moveTo(x[0], y[0]);
@@ -8563,13 +8575,12 @@ var ArrangeMolecule = (function () {
                 emw += font.getKerning(gp, g) * SSFRACT;
             }
             var extraX = font.getOutlineX(g), extraY = font.getOutlineY(g);
-            Vec.mulBy(extraX, SSFRACT);
-            Vec.mulBy(extraY, SSFRACT);
             Vec.addTo(extraX, emw / SSFRACT);
             Vec.addTo(extraY, (SSFRACT - 1) * font.ASCENT);
+            Vec.mulBy(extraX, SSFRACT);
+            Vec.mulBy(extraY, SSFRACT);
             outlineX = outlineX.concat(extraX);
             outlineY = outlineY.concat(extraY);
-            emw += font.HORIZ_ADV_X[g] * SSFRACT;
         }
         if (sub.length > 0) {
             var qh = new QuickHull(outlineX, outlineY, 0);
@@ -8711,6 +8722,7 @@ var ArrangeMolecule = (function () {
             'px': outlineX,
             'py': outlineY
         };
+        this.space.push(spc);
         return true;
     };
     ArrangeMolecule.prototype.computeSpacePoint = function (a) {
@@ -9123,8 +9135,9 @@ var DrawMolecule = (function () {
         if (DRAW_SPACE)
             for (var n = 0; n < this.layout.numSpace(); n++) {
                 var spc = this.layout.getSpace(n);
+                this.vg.drawRect(spc.box.x, spc.box.y, spc.box.w, spc.box.h, MetaVector.NOCOLOUR, 0, 0xE0E0E0);
                 if (spc.px != null && spc.py != null && spc.px.length > 2)
-                    this.vg.drawPoly(spc.px, spc.py, MetaVector.NOCOLOUR, 0, 0x8080FF, true);
+                    this.vg.drawPoly(spc.px, spc.py, 0x000000, 1, 0x808080FF, true);
             }
         for (var n = 0; n < this.layout.numLines(); n++) {
             var b = this.layout.getLine(n);

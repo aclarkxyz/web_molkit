@@ -1048,13 +1048,12 @@ class ArrangeMolecule
 	    	}
 
 			let extraX = font.getOutlineX(g), extraY = font.getOutlineY(g);
-			Vec.mulBy(extraX, SSFRACT);
-			Vec.mulBy(extraY, SSFRACT);
 			Vec.addTo(extraX, emw / SSFRACT);
 			Vec.addTo(extraY, (SSFRACT - 1) * font.ASCENT);
+			Vec.mulBy(extraX, SSFRACT);
+			Vec.mulBy(extraY, SSFRACT);
 			outlineX = outlineX.concat(extraX);
 			outlineY = outlineY.concat(extraY);
-			emw += font.HORIZ_ADV_X[g] * SSFRACT;
     	}
 
 		// if multiple, take the convex hull of all of the above
@@ -1244,6 +1243,7 @@ class ArrangeMolecule
 			'px': outlineX,
 			'py': outlineY
 		};
+		this.space.push(spc);
 
     	return true;
     }

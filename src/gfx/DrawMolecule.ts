@@ -60,8 +60,8 @@ class DrawMolecule
 		if (DRAW_SPACE) for (let n = 0; n < this.layout.numSpace(); n++)
 		{
 			let spc = this.layout.getSpace(n);
-			//this.vg.drawRect(spc.box.x, spc.box.y, spc.box.w, spc.box.h, MetaVector.NOCOLOUR, 0, 0xE0E0E0);
-			if (spc.px != null && spc.py != null && spc.px.length > 2) this.vg.drawPoly(spc.px, spc.py, MetaVector.NOCOLOUR, 0, 0x8080FF, true);
+			this.vg.drawRect(spc.box.x, spc.box.y, spc.box.w, spc.box.h, MetaVector.NOCOLOUR, 0, 0xE0E0E0);
+			if (spc.px != null && spc.py != null && spc.px.length > 2) this.vg.drawPoly(spc.px, spc.py, 0x000000, 1, 0x808080FF, true);
 		}
 
 		// emit the drawing elements as vector primitives

@@ -75,7 +75,7 @@ function colourCanvas(col:number):string
 	// simple cases first
 	if (col == 0xFFFFFF) return 'white';
 	if (col == 0x000000) return 'black';
-	if (col == -1) return undefined; //return 'rgba(0,0,0,0)';
+	if (col == -1) return null; //return 'rgba(0,0,0,0)';
 	if (col >= 0 && col <= 0xFFFFFF) return colourCode(col);
 	
 	// if there's transparency, use the long-winded syntax
