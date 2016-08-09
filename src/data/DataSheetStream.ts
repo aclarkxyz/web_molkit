@@ -10,6 +10,10 @@
 	[PKG=webmolkit]
 */
 
+///<reference path='../decl/jquery.d.ts'/>
+///<reference path='../util/util.ts'/>
+///<reference path='DataSheet.ts'/>
+
 /*
 	Serialisation and deserialisation utilities for the DataSheet object.
 

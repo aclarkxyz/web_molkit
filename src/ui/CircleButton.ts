@@ -10,6 +10,8 @@
 	[PKG=webmolkit]
 */
 
+///<reference path='../rpc/RPC.ts'/>
+///<reference path='../decl/corrections.d.ts'/>
 ///<reference path='Widget.ts'/>
 
 /*

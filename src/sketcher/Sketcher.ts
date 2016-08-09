@@ -16,11 +16,16 @@
 ///<reference path='../dialog/PickRecent.ts'/>
 ///<reference path='../ui/ButtonView.ts'/>
 ///<reference path='../data/Molecule.ts'/>
-///<reference path='../data/Rendering.ts'/>
+///<reference path='../data/MolUtil.ts'/>
+///<reference path='../data/SketchUtil.ts'/>
 ///<reference path='../rpc/Func.ts'/>
+///<reference path='../gfx/Rendering.ts'/>
 ///<reference path='../gfx/MetaVector.ts'/>
-///<reference path='../gfx/Geom.ts'/>
+///<reference path='../util/Geom.ts'/>
 ///<reference path='MoleculeActivity.ts'/>
+///<reference path='CommandBank.ts'/>
+///<reference path='TemplateBank.ts'/>
+///<reference path='ToolBank.ts'/>
 
 /*
 	Sketcher: a very heavyweight widget that provides 2D structure editing for a molecule.
@@ -42,6 +47,7 @@ enum DraggingTool
 	Ring
 }
 
+// !!!!!!!!!!!!!!!!!!!!!!!! TO BE DEPRECATED
 interface ArrMolPoint
 {
 	anum:number;
@@ -68,7 +74,7 @@ interface ArrMolLine
 	col:number;
 }
 
-interface ArrangeMolecule
+interface PreArrangeMolecule
 {
 	scale:number;
 	points:ArrMolPoint[];
@@ -115,7 +121,7 @@ class Sketcher extends Widget
 	private fadeWatermark = 0;
 	private rawvec:any = null; // raw metavector direct from the webservice
 	private metavec:MetaVector = null; // instantiated version of above
-	private arrmol:ArrangeMolecule = null;
+	private arrmol:PreArrangeMolecule = null;
 	private guidelines:GuidelineSprout[] = null;
 	private transform:number[] = null;
 	private toolView:ButtonView = null;
@@ -1240,7 +1246,7 @@ class Sketcher extends Widget
 			if (p.anum == 0) continue;
 			let x = p.cx * this.scale + this.offsetX, y = p.cy * this.scale + this.offsetY;
 
-			this.lassoMask[p.anum - 1] = Geom.pointInPolygon(x, y, this.lassoX, this.lassoY);
+			this.lassoMask[p.anum - 1] = GeomUtil.pointInPolygon(x, y, this.lassoX, this.lassoY);
 		}
 	}
 
@@ -1595,7 +1601,7 @@ class Sketcher extends Widget
 				{
 					if (clickAtom == 0 && clickBond == 0)
 					{
-						if (anyTrue(this.selectedMask)) this.selectedMask = null;
+						if (Vec.anyTrue(this.selectedMask)) this.selectedMask = null;
 						else if (this.currentAtom > 0) this.currentAtom = 0;
 						else if (this.currentBond > 0) this.currentBond = 0;
 					}

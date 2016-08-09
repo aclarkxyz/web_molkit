@@ -10,6 +10,9 @@
 	[PKG=webmolkit]
 */
 
+///<reference path='../decl/jquery.d.ts'/>
+///<reference path='../util/util.ts'/>
+
 /*
 	Dialog: base class for popup dialogs.
 */

@@ -10,6 +10,8 @@
 	[PKG=webmolkit]
 */
 
+///<reference path='../decl/jquery.d.ts'/>
+
 /*
 	RPC: remote procedure calls to the MolSync server, using its RESTful interface.
 

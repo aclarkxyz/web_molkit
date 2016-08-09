@@ -10,8 +10,9 @@
 	[PKG=webmolkit]
 */
 
-///<reference path='Dialog.ts'/>
 ///<reference path='../util/Cookies.ts'/>
+///<reference path='../ui/ViewStructure.ts'/>
+///<reference path='Dialog.ts'/>
 
 /*
 	Provides a list of recent molecules (from the cookies) to pick from.

@@ -10,6 +10,8 @@
 	[PKG=webmolkit]
 */
 
+///<reference path='../rpc/Func.ts'/>
+///<reference path='../gfx/MetaVector.ts'/>
 ///<reference path='Widget.ts'/>
 
 /*

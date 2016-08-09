@@ -2032,6 +2032,80 @@ var Dialog = (function () {
     };
     return Dialog;
 }());
+var globalPopover = null;
+var globalTooltip = null;
+var globalPopWatermark = 0;
+function addTooltip(parent, bodyHTML, titleHTML) {
+    var widget = $(parent);
+    if (globalPopover == null) {
+        globalPopover = $(document.createElement('div'));
+        globalPopover.css('position', 'absolute');
+        globalPopover.css('background-color', '#F0F0FF');
+        globalPopover.css('color', 'black');
+        globalPopover.css('border', '1px solid black');
+        globalPopover.css('padding', '0.3em');
+        globalPopover.hide();
+        globalPopover.appendTo(document.body);
+    }
+    var tooltip = new Tooltip(widget, bodyHTML, titleHTML);
+    var prevEnter = widget.attr('onmouseenter'), prevLeave = widget.attr('onmouseleave');
+    widget.mouseenter(function (e) { tooltip.start(); if (prevEnter)
+        prevEnter(e); });
+    widget.mouseleave(function (e) { tooltip.stop(); if (prevLeave)
+        prevLeave(e); });
+}
+function clearTooltip() {
+    if (globalTooltip == null)
+        return;
+    globalPopWatermark++;
+    globalTooltip.lower();
+}
+var Tooltip = (function () {
+    function Tooltip(widget, bodyHTML, titleHTML) {
+        this.widget = widget;
+        this.bodyHTML = bodyHTML;
+        this.titleHTML = titleHTML;
+    }
+    Tooltip.prototype.start = function () {
+        globalPopover.hide();
+        this.watermark = ++globalPopWatermark;
+        var self = this;
+        window.setTimeout(function () {
+            if (self.watermark == globalPopWatermark)
+                self.raise();
+        }, 1000);
+    };
+    Tooltip.prototype.stop = function () {
+        if (this.watermark == globalPopWatermark)
+            this.lower();
+        globalPopWatermark++;
+    };
+    Tooltip.prototype.raise = function () {
+        globalTooltip = this;
+        var pop = globalPopover;
+        pop.css('max-width', '20em');
+        pop.empty();
+        var hasTitle = this.titleHTML != null && this.titleHTML.length > 0, hasBody = this.bodyHTML != null && this.bodyHTML.length > 0;
+        if (hasTitle)
+            ($('<div></div>').appendTo(pop)).html('<b>' + this.titleHTML + '</b>');
+        if (hasTitle && hasBody)
+            pop.append('<hr>');
+        if (hasBody)
+            ($('<div></div>').appendTo(pop)).html(this.bodyHTML);
+        var popW = pop.width(), popH = pop.height();
+        var wpos = this.widget.offset(), width = this.widget.width(), height = this.widget.height();
+        var posX = wpos.left;
+        var posY = wpos.top + height + 2;
+        pop.css('left', posX + "px");
+        pop.css('top', posY + "px");
+        pop.show();
+    };
+    Tooltip.prototype.lower = function () {
+        var pop = globalPopover;
+        pop.hide();
+    };
+    return Tooltip;
+}());
 var Widget = (function () {
     function Widget() {
         this.content = null;
@@ -2989,6 +3063,10 @@ var MetaVector = (function () {
         this.PRIM_PATH = 4;
         this.PRIM_TEXT = 5;
         this.ONE_THIRD = 1.0 / 3;
+        this.types = [];
+        this.prims = [];
+        this.width = 0;
+        this.height = 0;
         this.offsetX = 0;
         this.offsetY = 0;
         this.scale = 1;
@@ -2997,23 +3075,21 @@ var MetaVector = (function () {
         this.lowY = null;
         this.highX = null;
         this.highY = null;
-        this.types = vec.types;
-        this.prims = vec.prims;
-        this.width = vec.size[0];
-        this.height = vec.size[1];
-        if (this.types == null)
-            this.types = [];
-        if (this.prims == null)
-            this.prims = [];
+        if (vec != null) {
+            this.types = vec.types;
+            this.prims = vec.prims;
+            this.width = vec.size[0];
+            this.height = vec.size[1];
+        }
         this.charMask = Vec.booleanArray(false, FontData.main.GLYPH_COUNT);
     }
-    MetaVector.prototype.drawLine = function (x1, y1, x2, y2, thickness, colour) {
+    MetaVector.prototype.drawLine = function (x1, y1, x2, y2, colour, thickness) {
         if (!thickness)
             thickness = 1;
         var typeidx = this.findOrCreateType([this.PRIM_LINE, thickness, colour]);
         this.prims.push([this.PRIM_LINE, typeidx, x1, y1, x2, y2]);
     };
-    MetaVector.prototype.drawRect = function (x, y, w, h, edgeCol, fillCol, thickness) {
+    MetaVector.prototype.drawRect = function (x, y, w, h, edgeCol, thickness, fillCol) {
         if (!edgeCol)
             edgeCol = -1;
         if (!fillCol)
@@ -3023,7 +3099,7 @@ var MetaVector = (function () {
         var typeidx = this.findOrCreateType([this.PRIM_RECT, edgeCol, fillCol, thickness]);
         this.prims.push([this.PRIM_RECT, typeidx, x, y, w, h]);
     };
-    MetaVector.prototype.drawOval = function (x, y, w, h, edgeCol, fillCol, thickness) {
+    MetaVector.prototype.drawOval = function (x, y, w, h, edgeCol, thickness, fillCol) {
         if (!edgeCol)
             edgeCol = -1;
         if (!fillCol)
@@ -3033,10 +3109,10 @@ var MetaVector = (function () {
         var typeidx = this.findOrCreateType([this.PRIM_OVAL, edgeCol, fillCol, thickness]);
         this.prims.push([this.PRIM_OVAL, typeidx, x, y, w, h]);
     };
-    MetaVector.prototype.drawPath = function (xpoints, ypoints, ctrlFlags, isClosed, edgeCol, fillCol, thickness, hardEdge) {
-        if (edgeCol)
+    MetaVector.prototype.drawPath = function (xpoints, ypoints, ctrlFlags, isClosed, edgeCol, thickness, fillCol, hardEdge) {
+        if (!edgeCol)
             edgeCol = -1;
-        if (fillCol)
+        if (!fillCol)
             fillCol = -1;
         if (thickness)
             thickness = 1;
@@ -3045,10 +3121,11 @@ var MetaVector = (function () {
         var typeidx = this.findOrCreateType([this.PRIM_PATH, edgeCol, fillCol, thickness, hardEdge]);
         this.prims.push([this.PRIM_PATH, typeidx, xpoints.length, xpoints, ypoints, ctrlFlags, isClosed]);
     };
-    MetaVector.prototype.drawPoly = function (xpoints, ypoints, edgeCol, fillCol, thickness, hardEdge) {
-        this.drawPath(xpoints, ypoints, null, true, edgeCol, fillCol, thickness, hardEdge);
+    MetaVector.prototype.drawPoly = function (xpoints, ypoints, edgeCol, thickness, fillCol, hardEdge) {
+        this.drawPath(xpoints, ypoints, null, true, edgeCol, thickness, fillCol, hardEdge);
     };
     MetaVector.prototype.drawText = function (x, y, txt, size, colour, align) {
+        console.log('TXT[' + txt + '] align=' + align);
         if (align == null)
             align = 0;
         var font = FontData.main;
@@ -3093,12 +3170,18 @@ var MetaVector = (function () {
         this.updateBounds(x + bx + x1 * mscale, y + by + y1 * mscale);
         this.updateBounds(x + bx + x2 * mscale, y + by + y2 * mscale);
         var typeidx = this.findOrCreateType([this.PRIM_TEXT, size, colour]);
-        this.prims.push([this.PRIM_TEXT, typeidx, x, y, txt]);
+        this.prims.push([this.PRIM_TEXT, typeidx, x + bx, y + by, txt]);
     };
     MetaVector.prototype.boundLowX = function () { return this.lowX; };
     MetaVector.prototype.boundLowY = function () { return this.lowY; };
     MetaVector.prototype.boundHighX = function () { return this.highX; };
     MetaVector.prototype.boundHighY = function () { return this.highY; };
+    MetaVector.prototype.normalise = function () {
+        if (this.lowX != 0 || this.lowY != 0)
+            this.transformPrimitives(-this.lowX, -this.lowY, 1, 1);
+        this.width = this.highX - this.lowX;
+        this.height = this.highY - this.lowY;
+    };
     MetaVector.prototype.transformIntoBox = function (box) {
         this.transformPrimitives(-this.lowX, -this.lowY, 1, 1);
         var nw = Math.ceil(this.highX - this.lowX), nh = Math.ceil(this.highY - this.lowY);
@@ -3333,7 +3416,7 @@ var MetaVector = (function () {
             ctx.beginPath();
             ctx.moveTo(x[0], y[0]);
             for (var i = 1; i < npts; i++) {
-                if (!ctrl[i]) {
+                if (!ctrl || !ctrl[i]) {
                     ctx.lineTo(x[i], y[i]);
                 }
                 else if (i < npts - 1 && !ctrl[i + 1]) {
@@ -3880,6 +3963,128 @@ var Cookies = (function () {
     };
     return Cookies;
 }());
+var ViewStructure = (function (_super) {
+    __extends(ViewStructure, _super);
+    function ViewStructure(tokenID) {
+        _super.call(this);
+        this.tokenID = tokenID;
+        this.naturalWidth = 0;
+        this.naturalHeight = 0;
+        this.width = 0;
+        this.height = 0;
+        this.padding = 2;
+        this.borderCol = 0x000000;
+        this.borderRadius = 8;
+        this.backgroundCol1 = 0xFFFFFF;
+        this.backgroundCol2 = 0xE0E0E0;
+        this.molstr = null;
+        this.datastr = null;
+        this.datarow = 0;
+        this.policy = null;
+    }
+    ViewStructure.prototype.defineMolecule = function (mol) {
+        this.molstr = mol.toString();
+    };
+    ViewStructure.prototype.defineMoleculeString = function (molsk) {
+        this.molstr = molsk;
+    };
+    ViewStructure.prototype.defineDataSheetString = function (dsxml, rowidx) {
+        this.datastr = dsxml;
+        this.datarow = rowidx != null ? rowidx : 0;
+    };
+    ViewStructure.prototype.defineRenderPolicy = function (policy) {
+        this.policy = policy;
+    };
+    ViewStructure.prototype.setup = function (callback, master) {
+        if (this.molstr == null && this.datastr == null)
+            throw 'molsync.ui.ViewStructure.setup called without specifying a molecule or datasheet';
+        var input = { 'tokenID': this.tokenID };
+        if (this.policy != null)
+            input.policy = this.policy.data;
+        if (this.molstr != null)
+            input.molNative = this.molstr;
+        else if (this.datastr != null) {
+            input.dataXML = this.datastr;
+            input.dataRow = this.datarow;
+        }
+        var fcn = function (result, error) {
+            if (!result) {
+                alert('Setup of ViewStructure failed: ' + error.message);
+                return;
+            }
+            this.metavec = result.metavec;
+            this.naturalWidth = this.metavec.size[0];
+            this.naturalHeight = this.metavec.size[1];
+            if (this.width == 0)
+                this.width = this.naturalWidth + 2 * this.padding;
+            if (this.height == 0)
+                this.height = this.naturalHeight + 2 * this.padding;
+            if (callback)
+                callback.call(master);
+        };
+        Func.renderStructure(input, fcn, this);
+    };
+    ViewStructure.prototype.render = function (parent) {
+        if (!this.metavec)
+            throw 'molsync.ui.ViewStructure.render must be preceded by a call to setup';
+        _super.prototype.render.call(this, parent);
+        var canvas = newElement(this.content, 'canvas', { 'width': this.width, 'height': this.height });
+        var density = pixelDensity();
+        canvas.width = this.width * density;
+        canvas.height = this.height * density;
+        canvas.style.width = this.width + 'px';
+        canvas.style.height = this.height + 'px';
+        var ctx = canvas.getContext('2d');
+        ctx.save();
+        ctx.scale(density, density);
+        var path;
+        if (this.borderRadius == 0) {
+            path = new Path2D();
+            path.rect(1.5, 1.5, this.width - 3, this.height - 3);
+        }
+        else
+            path = pathRoundedRect(1.5, 1.5, this.width - 1.5, this.height - 1.5, this.borderRadius);
+        if (this.backgroundCol1 != null) {
+            if (this.backgroundCol2 == null) {
+                ctx.fillStyle = colourCanvas(this.backgroundCol1);
+            }
+            else {
+                var grad = ctx.createLinearGradient(0, 0, this.width, this.height);
+                grad.addColorStop(0, colourCanvas(this.backgroundCol1));
+                grad.addColorStop(1, colourCanvas(this.backgroundCol2));
+                ctx.fillStyle = grad;
+            }
+            ctx.fill(path);
+        }
+        if (this.borderCol != -1) {
+            ctx.strokeStyle = colourCanvas(this.borderCol);
+            ctx.lineWidth = 1;
+            ctx.stroke(path);
+        }
+        var limW = this.width - 2 * this.padding, limH = this.height - 2 * this.padding;
+        var natW = this.naturalWidth, natH = this.naturalHeight;
+        var scale = 1;
+        if (natW > limW) {
+            var down = limW / natW;
+            scale *= down;
+            natW *= down;
+            natH *= down;
+        }
+        if (natH > limH) {
+            var down = limH / natH;
+            scale *= down;
+            natW *= down;
+            natH *= down;
+        }
+        var draw = new MetaVector(this.metavec);
+        draw.offsetX = 0.5 * (this.width - natW);
+        draw.offsetY = 0.5 * (this.height - natH);
+        draw.scale = scale;
+        draw.renderContext(ctx);
+        ctx.restore();
+    };
+    return ViewStructure;
+}(Widget));
 var PickRecent = (function (_super) {
     __extends(PickRecent, _super);
     function PickRecent(cookies, sides) {
@@ -4406,14 +4611,14 @@ var ButtonView = (function (_super) {
                 var sz = this.idealSize;
                 var draw = new MetaVector({ 'size': [sz, sz] });
                 var fsz = sz * 0.6;
-                var wad = draw.measureText(b.text, fsz);
+                var wad = FontData.main.measureText(b.text, fsz);
                 if (wad[1] + wad[2] > sz) {
                     fsz *= sz / (wad[1] + wad[2]);
-                    wad = draw.measureText(b.text, fsz);
+                    wad = FontData.main.measureText(b.text, fsz);
                 }
                 if (wad[0] > sz) {
                     fsz *= sz / wad[0];
-                    wad = draw.measureText(b.text, fsz);
+                    wad = FontData.main.measureText(b.text, fsz);
                 }
                 var x = 0.5 * (sz - wad[0]), y = 0.5 * (sz + wad[1]);
                 draw.drawText(x - 1, y, b.text, fsz, 0x000000);
@@ -4995,6 +5200,603 @@ var MoleculeActivity = (function () {
     };
     return MoleculeActivity;
 }());
+var ButtonBank = (function () {
+    function ButtonBank() {
+        this.isSubLevel = false;
+        this.buttons = [];
+    }
+    ButtonBank.prototype.init = function () { };
+    ButtonBank.prototype.bankClosed = function () { };
+    return ButtonBank;
+}());
+var ELEMENTS_NOBLE = [
+    "He", "Ar", "Kr", "Xe", "Rn"
+];
+var ELEMENTS_S_BLOCK = [
+    "Li", "Na", "K", "Rb", "Cs", "Fr", "Sc",
+    "Be", "Mg", "Ca", "Sr", "Ba", "Ra", "Y"
+];
+var ELEMENTS_P_BLOCK = [
+    "B", "Al", "Si", "Ga", "Ge", "As", "Se",
+    "In", "Sn", "Sb", "Te", "Tl", "Pb", "Bi", "Po", "At"
+];
+var ELEMENTS_D_BLOCK = [
+    "Ti", "V", "Cr", "Mn", "Fe", "Co", "Ni", "Cu", "Zn",
+    "Zr", "Nb", "Mo", "Tc", "Ru", "Rh", "Pd", "Ag", "Cd",
+    "Hf", "Ta", "W", "Re", "Os", "Ir", "Pt", "Au", "Hg"
+];
+var ELEMENTS_F_BLOCK = [
+    "La", "Ce", "Pr", "Nd", "Sm", "Eu", "Gd", "Tb", "Dy",
+    "Ho", "Er", "Tm", "Yb", "Lu", "Ac", "Th", "Pa", "U"
+];
+var ELEMENTS_ABBREV = [
+    "X", "Y", "Z", "Q", "M", "L", "E", "A", "R",
+    "R0", "R1", "R2", "R3", "R4", "R5", "R6", "R7", "R8"
+];
+var CommandType;
+(function (CommandType) {
+    CommandType[CommandType["Main"] = 0] = "Main";
+    CommandType[CommandType["Atom"] = 1] = "Atom";
+    CommandType[CommandType["Bond"] = 2] = "Bond";
+    CommandType[CommandType["Select"] = 3] = "Select";
+    CommandType[CommandType["Move"] = 4] = "Move";
+    CommandType[CommandType["Abbrev"] = 5] = "Abbrev";
+    CommandType[CommandType["SBlock"] = 6] = "SBlock";
+    CommandType[CommandType["PBlock"] = 7] = "PBlock";
+    CommandType[CommandType["DBlock"] = 8] = "DBlock";
+    CommandType[CommandType["FBlock"] = 9] = "FBlock";
+    CommandType[CommandType["Noble"] = 10] = "Noble";
+})(CommandType || (CommandType = {}));
+var CommandBank = (function (_super) {
+    __extends(CommandBank, _super);
+    function CommandBank(owner, cmdType) {
+        if (cmdType === void 0) { cmdType = CommandType.Main; }
+        _super.call(this);
+        this.owner = owner;
+        this.cmdType = cmdType;
+    }
+    CommandBank.prototype.update = function () {
+        if (this.cmdType == CommandType.Main) {
+            this.buttons.push({ 'id': 'undo', 'imageFN': 'MainUndo', 'helpText': 'Undo last change.' });
+            this.buttons.push({ 'id': 'redo', 'imageFN': 'MainRedo', 'helpText': 'Cancel last undo.' });
+            this.buttons.push({ 'id': 'zoomin', 'imageFN': 'MainZoomIn', 'helpText': 'Zoom in.' });
+            this.buttons.push({ 'id': 'zoomout', 'imageFN': 'MainZoomOut', 'helpText': 'Zoom out.' });
+            this.buttons.push({ 'id': 'zoomfit', 'imageFN': 'MainZoomFit', 'helpText': 'Show whole diagram onscreen.' });
+            this.buttons.push({ 'id': 'selside', 'imageFN': 'MainSelSide', 'helpText': 'Select alternate side of current atom or bond.' });
+            this.buttons.push({ 'id': 'selall', 'imageFN': 'MainSelAll', 'helpText': 'Select all atoms.' });
+            this.buttons.push({ 'id': 'selnone', 'imageFN': 'MainSelNone', 'helpText': 'Clear selection.' });
+            this.buttons.push({ 'id': 'delete', 'imageFN': 'MainDelete', 'helpText': 'Delete selected atoms and bonds.' });
+            this.buttons.push({ 'id': 'cut', 'imageFN': 'MainCut', 'helpText': 'Copy selection to clipboard, and remove.' });
+            this.buttons.push({ 'id': 'copy', 'imageFN': 'MainCopy', 'helpText': 'Copy selection to clipboard.' });
+            this.buttons.push({ 'id': 'paste', 'imageFN': 'MainPaste', 'helpText': 'Paste clipboard contents.' });
+            this.buttons.push({ 'id': 'atom', 'imageFN': 'MainAtom', 'helpText': 'Open the Atom submenu.', 'isSubMenu': true });
+            this.buttons.push({ 'id': 'bond', 'imageFN': 'MainBond', 'helpText': 'Open the Bond submenu.', 'isSubMenu': true });
+            this.buttons.push({ 'id': 'select', 'imageFN': 'MainSelect', 'helpText': 'Open the Selection submenu.', 'isSubMenu': true });
+            this.buttons.push({ 'id': 'move', 'imageFN': 'MainMove', 'helpText': 'Open the Move submenu.', 'isSubMenu': true });
+        }
+        else if (this.cmdType == CommandType.Atom) {
+            this.buttons.push({ 'id': 'element:C', 'text': 'C', 'helpText': 'Change elements to Carbon.' });
+            this.buttons.push({ 'id': 'element:N', 'text': 'N', 'helpText': 'Change elements to Nitrogen.' });
+            this.buttons.push({ 'id': 'element:O', 'text': 'O', 'helpText': 'Change elements to Oxygen.' });
+            this.buttons.push({ 'id': 'element:S', 'text': 'S', 'helpText': 'Change elements to Sulfur.' });
+            this.buttons.push({ 'id': 'element:P', 'text': 'P', 'helpText': 'Change elements to Phosphorus.' });
+            this.buttons.push({ 'id': 'element:H', 'text': 'H', 'helpText': 'Change elements to Hydrogen.' });
+            this.buttons.push({ 'id': 'element:F', 'text': 'F', 'helpText': 'Change elements to Fluorine.' });
+            this.buttons.push({ 'id': 'element:Cl', 'text': 'Cl', 'helpText': 'Change elements to Chlorine.' });
+            this.buttons.push({ 'id': 'element:Br', 'text': 'Br', 'helpText': 'Change elements to Bromine.' });
+            this.buttons.push({ 'id': 'element:I', 'text': 'I', 'helpText': 'Change elements to Iodine.' });
+            this.buttons.push({ 'id': 'plus', 'imageFN': 'AtomPlus', 'helpText': 'Increase the atom charge.' });
+            this.buttons.push({ 'id': 'minus', 'imageFN': 'AtomMinus', 'helpText': 'Decrease the atom charge.' });
+            this.buttons.push({ 'id': 'abbrev', 'imageFN': 'AtomAbbrev', 'helpText': 'Open list of common labels.', 'isSubMenu': true });
+            this.buttons.push({ 'id': 'sblock', 'imageFN': 'AtomSBlock', 'helpText': 'Open list of s-block elements.', 'isSubMenu': true });
+            this.buttons.push({ 'id': 'pblock', 'imageFN': 'AtomPBlock', 'helpText': 'Open list of p-block elements.', 'isSubMenu': true });
+            this.buttons.push({ 'id': 'dblock', 'imageFN': 'AtomDBlock', 'helpText': 'Open list of d-block elements.', 'isSubMenu': true });
+            this.buttons.push({ 'id': 'fblock', 'imageFN': 'AtomFBlock', 'helpText': 'Open list of f-block elements.', 'isSubMenu': true });
+            this.buttons.push({ 'id': 'noble', 'imageFN': 'AtomNoble', 'helpText': 'Open list of noble elements.', 'isSubMenu': true });
+        }
+        else if (this.cmdType == CommandType.Bond) {
+            this.buttons.push({ 'id': 'one', 'imageFN': 'BondOne', 'helpText': 'Create or set bonds to single.' });
+            this.buttons.push({ 'id': 'two', 'imageFN': 'BondTwo', 'helpText': 'Create or set bonds to double.' });
+            this.buttons.push({ 'id': 'three', 'imageFN': 'BondThree', 'helpText': 'Create or set bonds to triple.' });
+            this.buttons.push({ 'id': 'four', 'imageFN': 'BondFour', 'helpText': 'Create or set bonds to quadruple.' });
+            this.buttons.push({ 'id': 'zero', 'imageFN': 'BondZero', 'helpText': 'Create or set bonds to zero-order.' });
+            this.buttons.push({ 'id': 'inclined', 'imageFN': 'BondUp', 'helpText': 'Create or set bonds to inclined.' });
+            this.buttons.push({ 'id': 'declined', 'imageFN': 'BondDown', 'helpText': 'Create or set bonds to declined.' });
+            this.buttons.push({ 'id': 'squig', 'imageFN': 'BondSquig', 'helpText': 'Create or set bonds to unknown stereochemistry.' });
+            this.buttons.push({ 'id': 'addtwo', 'imageFN': 'BondAddTwo', 'helpText': 'Add two new bonds to the subject atom.' });
+            this.buttons.push({ 'id': 'insert', 'imageFN': 'BondInsert', 'helpText': 'Insert a methylene into the subject bond.' });
+            this.buttons.push({ 'id': 'switch', 'imageFN': 'BondSwitch', 'helpText': 'Cycle through likely bond geometries.' });
+            this.buttons.push({ 'id': 'linear', 'imageFN': 'BondLinear', 'helpText': 'Apply linear geometry.' });
+            this.buttons.push({ 'id': 'trigonal', 'imageFN': 'BondTrigonal', 'helpText': 'Apply trigonal geometry.' });
+            this.buttons.push({ 'id': 'tetra1', 'imageFN': 'BondTetra1', 'helpText': 'Apply tetrahedral geometry #1.' });
+            this.buttons.push({ 'id': 'tetra2', 'imageFN': 'BondTetra2', 'helpText': 'Apply tetrahedral geometry #2.' });
+            this.buttons.push({ 'id': 'sqplan', 'imageFN': 'BondSqPlan', 'helpText': 'Apply square planar geometry.' });
+            this.buttons.push({ 'id': 'octa1', 'imageFN': 'BondOcta1', 'helpText': 'Apply octahedral geometry #1.' });
+            this.buttons.push({ 'id': 'octa2', 'imageFN': 'BondOcta2', 'helpText': 'Apply octahedral geometry #2.' });
+            this.buttons.push({ 'id': 'connect', 'imageFN': 'BondConnect', 'helpText': 'Connect selected atoms, by proximity.' });
+            this.buttons.push({ 'id': 'disconnect', 'imageFN': 'BondDisconnect', 'helpText': 'Disconnect selected atoms.' });
+        }
+        else if (this.cmdType == CommandType.Select) {
+            this.buttons.push({ 'id': 'selgrow', 'imageFN': 'SelectionGrow', 'helpText': 'Add adjacent atoms to selection.' });
+            this.buttons.push({ 'id': 'selshrink', 'imageFN': 'SelectionShrink', 'helpText': 'Unselect exterior atoms.' });
+            this.buttons.push({ 'id': 'selchain', 'imageFN': 'SelectionChain', 'helpText': 'Extend selection to non-ring atoms.' });
+            this.buttons.push({ 'id': 'smallring', 'imageFN': 'SelectionSmRing', 'helpText': 'Extend selection to small rings.' });
+            this.buttons.push({ 'id': 'ringblock', 'imageFN': 'SelectionRingBlk', 'helpText': 'Extend selection to ring blocks.' });
+            this.buttons.push({ 'id': 'curelement', 'imageFN': 'SelectionCurElement', 'helpText': 'Select all atoms of current element type.' });
+            this.buttons.push({ 'id': 'selprev', 'imageFN': 'MainSelPrev', 'helpText': 'Select previous connected component.' });
+            this.buttons.push({ 'id': 'selnext', 'imageFN': 'MainSelNext', 'helpText': 'Select next connected component.' });
+            this.buttons.push({ 'id': 'toggle', 'imageFN': 'SelectionToggle', 'helpText': 'Toggle selection of current.' });
+            this.buttons.push({ 'id': 'uncurrent', 'imageFN': 'SelectionUncurrent', 'helpText': 'Undefine current object.' });
+            this.buttons.push({ 'id': 'join', 'imageFN': 'MoveJoin', 'helpText': 'Overlapping atoms will be joined as one.' });
+            this.buttons.push({ 'id': 'new', 'imageFN': 'MainNew', 'helpText': 'Clear the molecular structure..' });
+            this.buttons.push({ 'id': 'inline', 'imageFN': 'AtomInline', 'helpText': 'Make selected atoms into an inline abbreviation.' });
+            this.buttons.push({ 'id': 'formula', 'imageFN': 'AtomFormula', 'helpText': 'Make selected atoms into their molecule formula.' });
+            this.buttons.push({ 'id': 'clearabbrev', 'imageFN': 'AtomClearAbbrev', 'helpText': 'Remove inline abbreviation.' });
+            this.buttons.push({ 'id': 'expandabbrev', 'imageFN': 'AtomExpandAbbrev', 'helpText': 'Expand out the inline abbreviation.' });
+        }
+        else if (this.cmdType == CommandType.Move) {
+            this.buttons.push({ 'id': 'up', 'imageFN': 'MoveUp', 'helpText': 'Move subject atoms up slightly.' });
+            this.buttons.push({ 'id': 'down', 'imageFN': 'MoveDown', 'helpText': 'Move subject atoms down slightly.' });
+            this.buttons.push({ 'id': 'left', 'imageFN': 'MoveLeft', 'helpText': 'Move subject atoms slightly to the left.' });
+            this.buttons.push({ 'id': 'right', 'imageFN': 'MoveRight', 'helpText': 'Move subject atoms slightly to the right.' });
+            this.buttons.push({ 'id': 'uplots', 'imageFN': 'MoveUpLots', 'helpText': 'Move subject atoms up somewhat.' });
+            this.buttons.push({ 'id': 'downlots', 'imageFN': 'MoveDownLots', 'helpText': 'Move subject atoms down somewhat.' });
+            this.buttons.push({ 'id': 'leftlots', 'imageFN': 'MoveLeftLots', 'helpText': 'Move subject atoms somewhat to the left.' });
+            this.buttons.push({ 'id': 'rightlots', 'imageFN': 'MoveRightLots', 'helpText': 'Move subject atoms somewhat to the right.' });
+            this.buttons.push({ 'id': 'upfar', 'imageFN': 'MoveUpFar', 'helpText': 'Move subject atoms far up.' });
+            this.buttons.push({ 'id': 'downfar', 'imageFN': 'MoveDownFar', 'helpText': 'Move subject atoms far down.' });
+            this.buttons.push({ 'id': 'leftfar', 'imageFN': 'MoveLeftFar', 'helpText': 'Move subject atoms far to the left.' });
+            this.buttons.push({ 'id': 'rightfar', 'imageFN': 'MoveRightFar', 'helpText': 'Move subject atoms far to the right.' });
+            this.buttons.push({ 'id': 'rotp01', 'imageFN': 'MoveRotP01', 'helpText': 'Rotate 1\u00B0 counter-clockwise.' });
+            this.buttons.push({ 'id': 'rotm01', 'imageFN': 'MoveRotM01', 'helpText': 'Rotate 1\u00B0 clockwise.' });
+            this.buttons.push({ 'id': 'rotp05', 'imageFN': 'MoveRotP05', 'helpText': 'Rotate 5\u00B0 counter-clockwise.' });
+            this.buttons.push({ 'id': 'rotm05', 'imageFN': 'MoveRotM05', 'helpText': 'Rotate 5\u00B0 clockwise.' });
+            this.buttons.push({ 'id': 'rotp15', 'imageFN': 'MoveRotP15', 'helpText': 'Rotate 15\u00B0 counter-clockwise.' });
+            this.buttons.push({ 'id': 'rotm15', 'imageFN': 'MoveRotM15', 'helpText': 'Rotate 15\u00B0 clockwise.' });
+            this.buttons.push({ 'id': 'rotp30', 'imageFN': 'MoveRotP30', 'helpText': 'Rotate 30\u00B0 counter-clockwise.' });
+            this.buttons.push({ 'id': 'rotm30', 'imageFN': 'MoveRotM30', 'helpText': 'Rotate 30\u00B0 clockwise.' });
+            this.buttons.push({ 'id': 'hflip', 'imageFN': 'MoveHFlip', 'helpText': 'Flip subject atoms horizontally.' });
+            this.buttons.push({ 'id': 'vflip', 'imageFN': 'MoveVFlip', 'helpText': 'Flip subject atoms vertically.' });
+            this.buttons.push({ 'id': 'shrink', 'imageFN': 'MoveShrink', 'helpText': 'Decrease subject bond distances.' });
+            this.buttons.push({ 'id': 'grow', 'imageFN': 'MoveGrow', 'helpText': 'Increase subject bond distances.' });
+        }
+        else if (this.cmdType == CommandType.Abbrev)
+            this.populateElements(ELEMENTS_NOBLE);
+        else if (this.cmdType == CommandType.SBlock)
+            this.populateElements(ELEMENTS_S_BLOCK);
+        else if (this.cmdType == CommandType.PBlock)
+            this.populateElements(ELEMENTS_P_BLOCK);
+        else if (this.cmdType == CommandType.DBlock)
+            this.populateElements(ELEMENTS_D_BLOCK);
+        else if (this.cmdType == CommandType.FBlock)
+            this.populateElements(ELEMENTS_F_BLOCK);
+        else if (this.cmdType == CommandType.Noble)
+            this.populateElements(ELEMENTS_ABBREV);
+    };
+    CommandBank.prototype.populateElements = function (elements) {
+        for (var _i = 0, elements_1 = elements; _i < elements_1.length; _i++) {
+            var el = elements_1[_i];
+            this.buttons.push({ 'id': "element:" + el, 'text': el, 'helpText': "Change elements to " + el + "." });
+        }
+    };
+    CommandBank.prototype.hitButton = function (id) {
+        var actv = 0, param = null;
+        if (id.startsWith('element:')) {
+            var el = id.substring(8);
+            actv = ActivityType.Element;
+            param = { 'element': el };
+        }
+        else if (id == 'delete')
+            actv = ActivityType.Delete;
+        else if (id == 'undo') {
+            if (this.owner.canUndo())
+                this.owner.performUndo();
+            else
+                this.owner.showMessage('Nothing to undo.');
+        }
+        else if (id == 'redo') {
+            if (this.owner.canRedo())
+                this.owner.performRedo();
+            else
+                this.owner.showMessage('Nothing to redo.');
+        }
+        else if (id == 'cut')
+            actv = ActivityType.Cut;
+        else if (id == 'copy')
+            actv = ActivityType.Copy;
+        else if (id == 'paste')
+            this.owner.performPaste();
+        else if (id == 'new')
+            actv = ActivityType.Clear;
+        else if (id == 'zoomfit')
+            this.owner.autoScale();
+        else if (id == 'zoomout')
+            this.owner.zoom(0.8);
+        else if (id == 'zoomin')
+            this.owner.zoom(1.25);
+        else if (id == 'selall')
+            actv = ActivityType.SelectAll;
+        else if (id == 'selnone')
+            actv = ActivityType.SelectNone;
+        else if (id == 'selprev')
+            actv = ActivityType.SelectPrevComp;
+        else if (id == 'selnext')
+            actv = ActivityType.SelectNextComp;
+        else if (id == 'selside')
+            actv = ActivityType.SelectSide;
+        else if (id == 'plus') {
+            actv = ActivityType.Charge;
+            param = { 'delta': 1 };
+        }
+        else if (id == 'minus') {
+            actv = ActivityType.Charge;
+            param = { 'delta': -1 };
+        }
+        else if (id == 'one') {
+            actv = ActivityType.BondOrder;
+            param = { 'order': 1 };
+        }
+        else if (id == 'two') {
+            actv = ActivityType.BondOrder;
+            param = { 'order': 2 };
+        }
+        else if (id == 'three') {
+            actv = ActivityType.BondOrder;
+            param = { 'order': 3 };
+        }
+        else if (id == 'four') {
+            actv = ActivityType.BondOrder;
+            param = { 'order': 4 };
+        }
+        else if (id == 'zero') {
+            actv = ActivityType.BondOrder;
+            param = { 'order': 0 };
+        }
+        else if (id == 'inclined') {
+            actv = ActivityType.BondType;
+            param = { 'type': Molecule.BONDTYPE_INCLINED };
+        }
+        else if (id == 'declined') {
+            actv = ActivityType.BondType;
+            param = { 'type': Molecule.BONDTYPE_DECLINED };
+        }
+        else if (id == 'squig') {
+            actv = ActivityType.BondType;
+            param = { 'type': Molecule.BONDTYPE_UNKNOWN };
+        }
+        else if (id == 'linear') {
+            actv = ActivityType.BondGeom;
+            param = { 'geom': 'linear' };
+        }
+        else if (id == 'trigonal') {
+            actv = ActivityType.BondGeom;
+            param = { 'geom': 'trigonal' };
+        }
+        else if (id == 'tetra1') {
+            actv = ActivityType.BondGeom;
+            param = { 'geom': 'tetra1' };
+        }
+        else if (id == 'tetra2') {
+            actv = ActivityType.BondGeom;
+            param = { 'geom': 'tetra2' };
+        }
+        else if (id == 'sqplan') {
+            actv = ActivityType.BondGeom;
+            param = { 'geom': 'sqplan' };
+        }
+        else if (id == 'octa1') {
+            actv = ActivityType.BondGeom;
+            param = { 'geom': 'octa1' };
+        }
+        else if (id == 'octa2') {
+            actv = ActivityType.BondGeom;
+            param = { 'geom': 'octa2' };
+        }
+        else if (id == 'switch')
+            actv = ActivityType.BondSwitch;
+        else if (id == 'connect')
+            actv = ActivityType.Connect;
+        else if (id == 'disconnect')
+            actv = ActivityType.Disconnect;
+        else if (id == 'addtwo')
+            actv = ActivityType.BondAddTwo;
+        else if (id == 'insert')
+            actv = ActivityType.BondInsert;
+        else if (id == 'curelement')
+            actv = ActivityType.SelectCurElement;
+        else if (id == 'selgrow')
+            actv = ActivityType.SelectGrow;
+        else if (id == 'selshrink')
+            actv = ActivityType.SelectShrink;
+        else if (id == 'selprev')
+            actv = ActivityType.SelectPrevComp;
+        else if (id == 'selnext')
+            actv = ActivityType.SelectNextComp;
+        else if (id == 'selchain')
+            actv = ActivityType.SelectChain;
+        else if (id == 'smallring')
+            actv = ActivityType.SelectSmRing;
+        else if (id == 'ringblock')
+            actv = ActivityType.SelectRingBlk;
+        else if (id == 'toggle')
+            actv = ActivityType.SelectToggle;
+        else if (id == 'uncurrent')
+            actv = ActivityType.SelectUnCurrent;
+        else if (id == 'join')
+            actv = ActivityType.Join;
+        else if (id == 'inline')
+            actv = ActivityType.AbbrevInline;
+        else if (id == 'formula')
+            actv = ActivityType.AbbrevFormula;
+        else if (id == 'clearabbrev')
+            actv = ActivityType.AbbrevClear;
+        else if (id == 'expandabbrev')
+            actv = ActivityType.AbbrevExpand;
+        else if (id == 'up') {
+            actv = ActivityType.Nudge;
+            param = { 'dir': 'up' };
+        }
+        else if (id == 'down') {
+            actv = ActivityType.Nudge;
+            param = { 'dir': 'down' };
+        }
+        else if (id == 'left') {
+            actv = ActivityType.Nudge;
+            param = { 'dir': 'left' };
+        }
+        else if (id == 'right') {
+            actv = ActivityType.Nudge;
+            param = { 'dir': 'right' };
+        }
+        else if (id == 'uplots') {
+            actv = ActivityType.NudgeLots;
+            param = { 'dir': 'up' };
+        }
+        else if (id == 'downlots') {
+            actv = ActivityType.NudgeLots;
+            param = { 'dir': 'down' };
+        }
+        else if (id == 'leftlots') {
+            actv = ActivityType.NudgeLots;
+            param = { 'dir': 'left' };
+        }
+        else if (id == 'rightlots') {
+            actv = ActivityType.NudgeLots;
+            param = { 'dir': 'right' };
+        }
+        else if (id == 'upfar') {
+            actv = ActivityType.NudgeFar;
+            param = { 'dir': 'up' };
+        }
+        else if (id == 'downfar') {
+            actv = ActivityType.NudgeFar;
+            param = { 'dir': 'down' };
+        }
+        else if (id == 'leftfar') {
+            actv = ActivityType.NudgeFar;
+            param = { 'dir': 'left' };
+        }
+        else if (id == 'rightfar') {
+            actv = ActivityType.NudgeFar;
+            param = { 'dir': 'right' };
+        }
+        else if (id == 'rotp01') {
+            actv = ActivityType.Rotate;
+            param = { 'theta': 1 };
+        }
+        else if (id == 'rotm01') {
+            actv = ActivityType.Rotate;
+            param = { 'theta': -1 };
+        }
+        else if (id == 'rotp05') {
+            actv = ActivityType.Rotate;
+            param = { 'theta': 5 };
+        }
+        else if (id == 'rotm05') {
+            actv = ActivityType.Rotate;
+            param = { 'theta': -5 };
+        }
+        else if (id == 'rotp15') {
+            actv = ActivityType.Rotate;
+            param = { 'theta': 15 };
+        }
+        else if (id == 'rotm15') {
+            actv = ActivityType.Rotate;
+            param = { 'theta': -15 };
+        }
+        else if (id == 'rotp30') {
+            actv = ActivityType.Rotate;
+            param = { 'theta': 30 };
+        }
+        else if (id == 'rotm30') {
+            actv = ActivityType.Rotate;
+            param = { 'theta': -30 };
+        }
+        else if (id == 'hflip') {
+            actv = ActivityType.Flip;
+            param = { 'axis': 'hor' };
+        }
+        else if (id == 'vflip') {
+            actv = ActivityType.Flip;
+            param = { 'axis': 'ver' };
+        }
+        else if (id == 'shrink') {
+            actv = ActivityType.Scale;
+            param = { 'mag': 1 / 1.1 };
+        }
+        else if (id == 'grow') {
+            actv = ActivityType.Scale;
+            param = { 'mag': 1.1 };
+        }
+        else if (id == 'atom')
+            this.buttonView.pushBank(new CommandBank(this.owner, CommandType.Atom));
+        else if (id == 'bond')
+            this.buttonView.pushBank(new CommandBank(this.owner, CommandType.Bond));
+        else if (id == 'select')
+            this.buttonView.pushBank(new CommandBank(this.owner, CommandType.Select));
+        else if (id == 'move')
+            this.buttonView.pushBank(new CommandBank(this.owner, CommandType.Move));
+        else if (id == 'abbrev')
+            this.buttonView.pushBank(new CommandBank(this.owner, CommandType.Abbrev));
+        else if (id == 'sblock')
+            this.buttonView.pushBank(new CommandBank(this.owner, CommandType.SBlock));
+        else if (id == 'pblock')
+            this.buttonView.pushBank(new CommandBank(this.owner, CommandType.PBlock));
+        else if (id == 'dblock')
+            this.buttonView.pushBank(new CommandBank(this.owner, CommandType.DBlock));
+        else if (id == 'fblock')
+            this.buttonView.pushBank(new CommandBank(this.owner, CommandType.FBlock));
+        else if (id == 'noble')
+            this.buttonView.pushBank(new CommandBank(this.owner, CommandType.Noble));
+        else
+            alert('Unhandled command: "' + id + '"');
+        if (actv > 0) {
+            new MoleculeActivity(this.owner, actv, param).execute();
+        }
+    };
+    return CommandBank;
+}(ButtonBank));
+var TemplateBank = (function (_super) {
+    __extends(TemplateBank, _super);
+    function TemplateBank(owner, group) {
+        _super.call(this);
+        this.owner = owner;
+        this.group = group;
+        this.subgroups = null;
+        this.templates = null;
+    }
+    TemplateBank.prototype.init = function () {
+        var policy = RenderPolicy.defaultBlackOnWhite();
+        policy.data.pointScale = 10;
+        policy.data.lineSize *= 1.5;
+        policy.data.bondSep *= 1.5;
+        var sz = this.buttonView.idealSize;
+        if (this.group == null) {
+            var input = { 'tokenID': this.owner.tokenID, 'policy': policy.data, 'size': [sz - 4, sz - 4] };
+            var fcn = function (result, error) {
+                if (!result) {
+                    alert('Setup of TemplateBank failed: ' + error.message);
+                    return;
+                }
+                this.subgroups = result;
+                this.buttonView.refreshBank();
+            };
+            Func.getDefaultTemplateGroups(input, fcn, this);
+        }
+        else {
+            var input = { 'tokenID': this.owner.tokenID, 'policy': policy.data, 'size': [sz - 4, sz - 4], 'group': this.group };
+            var fcn = function (result, error) {
+                if (!result) {
+                    alert('Setup of TemplateBank failed: ' + error.message);
+                    return;
+                }
+                this.templates = result;
+                this.buttonView.refreshBank();
+            };
+            Func.getDefaultTemplateStructs(input, fcn, this);
+        }
+    };
+    TemplateBank.prototype.update = function () {
+        if (this.subgroups == null && this.templates == null)
+            return;
+        this.buttons = [];
+        if (this.group == null)
+            this.populateGroups();
+        else
+            this.populateTemplates();
+    };
+    TemplateBank.prototype.populateGroups = function () {
+        var groups = this.subgroups.groups, titles = this.subgroups.titles, preview = this.subgroups.preview;
+        for (var n = 0; n < groups.length; n++) {
+            this.buttons.push({ 'id': groups[n], 'metavec': preview[n], 'helpText': titles[n] });
+        }
+    };
+    TemplateBank.prototype.populateTemplates = function () {
+        var names = this.templates.names, abbrev = this.templates.abbrev, mnemonic = this.templates.mnemonic, preview = this.templates.preview;
+        for (var n = 0; n < names.length; n++) {
+            this.buttons.push({ 'id': n.toString(), 'metavec': preview[n], 'helpText': names[n] });
+        }
+    };
+    TemplateBank.prototype.hitButton = function (id) {
+        if (this.group == null) {
+            this.buttonView.pushBank(new TemplateBank(this.owner, id));
+        }
+        else {
+            var idx = parseInt(id);
+            var param = { 'fragNative': this.templates.molecules[idx] };
+            new MoleculeActivity(this.owner, ActivityType.TemplateFusion, param).execute();
+        }
+    };
+    return TemplateBank;
+}(ButtonBank));
+var FusionBank = (function (_super) {
+    __extends(FusionBank, _super);
+    function FusionBank(owner) {
+        _super.call(this);
+        this.owner = owner;
+    }
+    FusionBank.prototype.update = function () {
+        this.buttons = [];
+        this.buttons.push({ 'id': 'accept', 'imageFN': 'GenericAccept', 'helpText': 'Apply this template.' });
+        this.buttons.push({ 'id': 'prev', 'imageFN': 'TemplatePrev', 'helpText': 'Show previous fusion option.' });
+        this.buttons.push({ 'id': 'next', 'imageFN': 'TemplateNext', 'helpText': 'Show next fusion option.' });
+    };
+    FusionBank.prototype.hitButton = function (id) {
+        if (id == 'accept')
+            this.owner.templateAccept();
+        else if (id == 'prev')
+            this.owner.templateRotate(-1);
+        else if (id == 'next')
+            this.owner.templateRotate(1);
+    };
+    FusionBank.prototype.bankClosed = function () {
+        this.owner.clearPermutations();
+    };
+    return FusionBank;
+}(ButtonBank));
+var ToolBank = (function (_super) {
+    __extends(ToolBank, _super);
+    function ToolBank(owner) {
+        _super.call(this);
+        this.owner = owner;
+        this.initiallySelected = 'arrow';
+    }
+    ToolBank.prototype.update = function () {
+        this.buttons = [];
+        this.buttons.push({ 'id': 'arrow', 'imageFN': 'ToolSelect', 'helpText': 'Selection tool.' });
+        this.buttons.push({ 'id': 'rotate', 'imageFN': 'ToolRotate', 'helpText': 'Rotate subject atoms.' });
+        this.buttons.push({ 'id': 'pan', 'imageFN': 'ToolPan', 'helpText': 'Pan the viewport around the screen.' });
+        this.buttons.push({ 'id': 'drag', 'imageFN': 'ToolDrag', 'helpText': 'Drag selected atoms to new positions.' });
+        this.buttons.push({ 'id': 'erasor', 'imageFN': 'ToolErasor', 'helpText': 'Delete atoms or bonds by selecting.' });
+        this.buttons.push({ 'id': 'bondOrder0', 'imageFN': 'BondZero', 'helpText': 'Create or change a bond to zero order.' });
+        this.buttons.push({ 'id': 'bondOrder1', 'imageFN': 'BondOne', 'helpText': 'Create or change a bond to single.' });
+        this.buttons.push({ 'id': 'bondOrder2', 'imageFN': 'BondTwo', 'helpText': 'Create or change a bond to double.' });
+        this.buttons.push({ 'id': 'bondOrder3', 'imageFN': 'BondThree', 'helpText': 'Create or change a bond to triple.' });
+        this.buttons.push({ 'id': 'bondUnknown', 'imageFN': 'BondSquig', 'helpText': 'Create or change a bond to down-wedge.' });
+        this.buttons.push({ 'id': 'bondInclined', 'imageFN': 'BondUp', 'helpText': 'Create or change a bond to up-wedge.' });
+        this.buttons.push({ 'id': 'bondDeclined', 'imageFN': 'BondDown', 'helpText': 'Create or change a bond to down-wedge.' });
+        this.buttons.push({ 'id': 'ringAliph', 'imageFN': 'ToolRing', 'helpText': 'Create plain ring.' });
+        this.buttons.push({ 'id': 'ringArom', 'imageFN': 'ToolArom', 'helpText': 'Create aromatic ring.' });
+        this.buttons.push({ 'id': 'atomPlus', 'imageFN': 'AtomPlus', 'helpText': 'Increase charge on atom.' });
+        this.buttons.push({ 'id': 'atomMinus', 'imageFN': 'AtomMinus', 'helpText': 'Decrease charge on atom.' });
+        this.buttons.push({ 'id': 'elementC', 'text': 'C', 'helpText': 'Change elements to Carbon.' });
+        this.buttons.push({ 'id': 'elementN', 'text': 'N', 'helpText': 'Change elements to Nitrogen.' });
+        this.buttons.push({ 'id': 'elementO', 'text': 'O', 'helpText': 'Change elements to Oxygen.' });
+        this.buttons.push({ 'id': 'elementS', 'text': 'S', 'helpText': 'Change elements to Sulfur.' });
+        this.buttons.push({ 'id': 'elementP', 'text': 'P', 'helpText': 'Change elements to Phosphorus.' });
+        this.buttons.push({ 'id': 'elementH', 'text': 'H', 'helpText': 'Change elements to Hydrogen.' });
+        this.buttons.push({ 'id': 'elementF', 'text': 'F', 'helpText': 'Change elements to Fluorine.' });
+        this.buttons.push({ 'id': 'elementCl', 'text': 'Cl', 'helpText': 'Change elements to Chlorine.' });
+        this.buttons.push({ 'id': 'elementBr', 'text': 'Br', 'helpText': 'Change elements to Bromine.' });
+        this.buttons.push({ 'id': 'elementA', 'text': 'A', 'helpText': 'Pick other element.' });
+        this.buttonView.setSelectedButton('arrow');
+    };
+    ;
+    ToolBank.prototype.hitButton = function (id) {
+        this.buttonView.setSelectedButton(id);
+    };
+    return ToolBank;
+}(ButtonBank));
 var DraggingTool;
 (function (DraggingTool) {
     DraggingTool[DraggingTool["None"] = 0] = "None";
@@ -5889,7 +6691,7 @@ var Sketcher = (function (_super) {
             if (p.anum == 0)
                 continue;
             var x = p.cx * this.scale + this.offsetX, y = p.cy * this.scale + this.offsetY;
-            this.lassoMask[p.anum - 1] = Geom.pointInPolygon(x, y, this.lassoX, this.lassoY);
+            this.lassoMask[p.anum - 1] = GeomUtil.pointInPolygon(x, y, this.lassoX, this.lassoY);
         }
     };
     Sketcher.prototype.determineDragGuide = function (order) {
@@ -6189,7 +6991,7 @@ var Sketcher = (function (_super) {
             if (this.dragType == DraggingTool.Press) {
                 if (!this.opShift && !this.opCtrl && !this.opAlt) {
                     if (clickAtom == 0 && clickBond == 0) {
-                        if (anyTrue(this.selectedMask))
+                        if (Vec.anyTrue(this.selectedMask))
                             this.selectedMask = null;
                         else if (this.currentAtom > 0)
                             this.currentAtom = 0;
@@ -8317,6 +9119,13 @@ var DrawMolecule = (function () {
     DrawMolecule.prototype.getPolicy = function () { return this.policy; };
     DrawMolecule.prototype.getEffects = function () { return this.effects; };
     DrawMolecule.prototype.draw = function () {
+        var DRAW_SPACE = false;
+        if (DRAW_SPACE)
+            for (var n = 0; n < this.layout.numSpace(); n++) {
+                var spc = this.layout.getSpace(n);
+                if (spc.px != null && spc.py != null && spc.px.length > 2)
+                    this.vg.drawPoly(spc.px, spc.py, MetaVector.NOCOLOUR, 0, 0x8080FF, true);
+            }
         for (var n = 0; n < this.layout.numLines(); n++) {
             var b = this.layout.getLine(n);
             if (b.type == BLineType.Normal) {
@@ -8595,603 +9404,6 @@ var Search = (function () {
     };
     return Search;
 }());
-var ButtonBank = (function () {
-    function ButtonBank() {
-        this.isSubLevel = false;
-        this.buttons = [];
-    }
-    ButtonBank.prototype.init = function () { };
-    ButtonBank.prototype.bankClosed = function () { };
-    return ButtonBank;
-}());
-var ELEMENTS_NOBLE = [
-    "He", "Ar", "Kr", "Xe", "Rn"
-];
-var ELEMENTS_S_BLOCK = [
-    "Li", "Na", "K", "Rb", "Cs", "Fr", "Sc",
-    "Be", "Mg", "Ca", "Sr", "Ba", "Ra", "Y"
-];
-var ELEMENTS_P_BLOCK = [
-    "B", "Al", "Si", "Ga", "Ge", "As", "Se",
-    "In", "Sn", "Sb", "Te", "Tl", "Pb", "Bi", "Po", "At"
-];
-var ELEMENTS_D_BLOCK = [
-    "Ti", "V", "Cr", "Mn", "Fe", "Co", "Ni", "Cu", "Zn",
-    "Zr", "Nb", "Mo", "Tc", "Ru", "Rh", "Pd", "Ag", "Cd",
-    "Hf", "Ta", "W", "Re", "Os", "Ir", "Pt", "Au", "Hg"
-];
-var ELEMENTS_F_BLOCK = [
-    "La", "Ce", "Pr", "Nd", "Sm", "Eu", "Gd", "Tb", "Dy",
-    "Ho", "Er", "Tm", "Yb", "Lu", "Ac", "Th", "Pa", "U"
-];
-var ELEMENTS_ABBREV = [
-    "X", "Y", "Z", "Q", "M", "L", "E", "A", "R",
-    "R0", "R1", "R2", "R3", "R4", "R5", "R6", "R7", "R8"
-];
-var CommandType;
-(function (CommandType) {
-    CommandType[CommandType["Main"] = 0] = "Main";
-    CommandType[CommandType["Atom"] = 1] = "Atom";
-    CommandType[CommandType["Bond"] = 2] = "Bond";
-    CommandType[CommandType["Select"] = 3] = "Select";
-    CommandType[CommandType["Move"] = 4] = "Move";
-    CommandType[CommandType["Abbrev"] = 5] = "Abbrev";
-    CommandType[CommandType["SBlock"] = 6] = "SBlock";
-    CommandType[CommandType["PBlock"] = 7] = "PBlock";
-    CommandType[CommandType["DBlock"] = 8] = "DBlock";
-    CommandType[CommandType["FBlock"] = 9] = "FBlock";
-    CommandType[CommandType["Noble"] = 10] = "Noble";
-})(CommandType || (CommandType = {}));
-var CommandBank = (function (_super) {
-    __extends(CommandBank, _super);
-    function CommandBank(owner, cmdType) {
-        if (cmdType === void 0) { cmdType = CommandType.Main; }
-        _super.call(this);
-        this.owner = owner;
-        this.cmdType = cmdType;
-    }
-    CommandBank.prototype.update = function () {
-        if (this.cmdType == CommandType.Main) {
-            this.buttons.push({ 'id': 'undo', 'imageFN': 'MainUndo', 'helpText': 'Undo last change.' });
-            this.buttons.push({ 'id': 'redo', 'imageFN': 'MainRedo', 'helpText': 'Cancel last undo.' });
-            this.buttons.push({ 'id': 'zoomin', 'imageFN': 'MainZoomIn', 'helpText': 'Zoom in.' });
-            this.buttons.push({ 'id': 'zoomout', 'imageFN': 'MainZoomOut', 'helpText': 'Zoom out.' });
-            this.buttons.push({ 'id': 'zoomfit', 'imageFN': 'MainZoomFit', 'helpText': 'Show whole diagram onscreen.' });
-            this.buttons.push({ 'id': 'selside', 'imageFN': 'MainSelSide', 'helpText': 'Select alternate side of current atom or bond.' });
-            this.buttons.push({ 'id': 'selall', 'imageFN': 'MainSelAll', 'helpText': 'Select all atoms.' });
-            this.buttons.push({ 'id': 'selnone', 'imageFN': 'MainSelNone', 'helpText': 'Clear selection.' });
-            this.buttons.push({ 'id': 'delete', 'imageFN': 'MainDelete', 'helpText': 'Delete selected atoms and bonds.' });
-            this.buttons.push({ 'id': 'cut', 'imageFN': 'MainCut', 'helpText': 'Copy selection to clipboard, and remove.' });
-            this.buttons.push({ 'id': 'copy', 'imageFN': 'MainCopy', 'helpText': 'Copy selection to clipboard.' });
-            this.buttons.push({ 'id': 'paste', 'imageFN': 'MainPaste', 'helpText': 'Paste clipboard contents.' });
-            this.buttons.push({ 'id': 'atom', 'imageFN': 'MainAtom', 'helpText': 'Open the Atom submenu.', 'isSubMenu': true });
-            this.buttons.push({ 'id': 'bond', 'imageFN': 'MainBond', 'helpText': 'Open the Bond submenu.', 'isSubMenu': true });
-            this.buttons.push({ 'id': 'select', 'imageFN': 'MainSelect', 'helpText': 'Open the Selection submenu.', 'isSubMenu': true });
-            this.buttons.push({ 'id': 'move', 'imageFN': 'MainMove', 'helpText': 'Open the Move submenu.', 'isSubMenu': true });
-        }
-        else if (this.cmdType == CommandType.Atom) {
-            this.buttons.push({ 'id': 'element:C', 'text': 'C', 'helpText': 'Change elements to Carbon.' });
-            this.buttons.push({ 'id': 'element:N', 'text': 'N', 'helpText': 'Change elements to Nitrogen.' });
-            this.buttons.push({ 'id': 'element:O', 'text': 'O', 'helpText': 'Change elements to Oxygen.' });
-            this.buttons.push({ 'id': 'element:S', 'text': 'S', 'helpText': 'Change elements to Sulfur.' });
-            this.buttons.push({ 'id': 'element:P', 'text': 'P', 'helpText': 'Change elements to Phosphorus.' });
-            this.buttons.push({ 'id': 'element:H', 'text': 'H', 'helpText': 'Change elements to Hydrogen.' });
-            this.buttons.push({ 'id': 'element:F', 'text': 'F', 'helpText': 'Change elements to Fluorine.' });
-            this.buttons.push({ 'id': 'element:Cl', 'text': 'Cl', 'helpText': 'Change elements to Chlorine.' });
-            this.buttons.push({ 'id': 'element:Br', 'text': 'Br', 'helpText': 'Change elements to Bromine.' });
-            this.buttons.push({ 'id': 'element:I', 'text': 'I', 'helpText': 'Change elements to Iodine.' });
-            this.buttons.push({ 'id': 'plus', 'imageFN': 'AtomPlus', 'helpText': 'Increase the atom charge.' });
-            this.buttons.push({ 'id': 'minus', 'imageFN': 'AtomMinus', 'helpText': 'Decrease the atom charge.' });
-            this.buttons.push({ 'id': 'abbrev', 'imageFN': 'AtomAbbrev', 'helpText': 'Open list of common labels.', 'isSubMenu': true });
-            this.buttons.push({ 'id': 'sblock', 'imageFN': 'AtomSBlock', 'helpText': 'Open list of s-block elements.', 'isSubMenu': true });
-            this.buttons.push({ 'id': 'pblock', 'imageFN': 'AtomPBlock', 'helpText': 'Open list of p-block elements.', 'isSubMenu': true });
-            this.buttons.push({ 'id': 'dblock', 'imageFN': 'AtomDBlock', 'helpText': 'Open list of d-block elements.', 'isSubMenu': true });
-            this.buttons.push({ 'id': 'fblock', 'imageFN': 'AtomFBlock', 'helpText': 'Open list of f-block elements.', 'isSubMenu': true });
-            this.buttons.push({ 'id': 'noble', 'imageFN': 'AtomNoble', 'helpText': 'Open list of noble elements.', 'isSubMenu': true });
-        }
-        else if (this.cmdType == CommandType.Bond) {
-            this.buttons.push({ 'id': 'one', 'imageFN': 'BondOne', 'helpText': 'Create or set bonds to single.' });
-            this.buttons.push({ 'id': 'two', 'imageFN': 'BondTwo', 'helpText': 'Create or set bonds to double.' });
-            this.buttons.push({ 'id': 'three', 'imageFN': 'BondThree', 'helpText': 'Create or set bonds to triple.' });
-            this.buttons.push({ 'id': 'four', 'imageFN': 'BondFour', 'helpText': 'Create or set bonds to quadruple.' });
-            this.buttons.push({ 'id': 'zero', 'imageFN': 'BondZero', 'helpText': 'Create or set bonds to zero-order.' });
-            this.buttons.push({ 'id': 'inclined', 'imageFN': 'BondUp', 'helpText': 'Create or set bonds to inclined.' });
-            this.buttons.push({ 'id': 'declined', 'imageFN': 'BondDown', 'helpText': 'Create or set bonds to declined.' });
-            this.buttons.push({ 'id': 'squig', 'imageFN': 'BondSquig', 'helpText': 'Create or set bonds to unknown stereochemistry.' });
-            this.buttons.push({ 'id': 'addtwo', 'imageFN': 'BondAddTwo', 'helpText': 'Add two new bonds to the subject atom.' });
-            this.buttons.push({ 'id': 'insert', 'imageFN': 'BondInsert', 'helpText': 'Insert a methylene into the subject bond.' });
-            this.buttons.push({ 'id': 'switch', 'imageFN': 'BondSwitch', 'helpText': 'Cycle through likely bond geometries.' });
-            this.buttons.push({ 'id': 'linear', 'imageFN': 'BondLinear', 'helpText': 'Apply linear geometry.' });
-            this.buttons.push({ 'id': 'trigonal', 'imageFN': 'BondTrigonal', 'helpText': 'Apply trigonal geometry.' });
-            this.buttons.push({ 'id': 'tetra1', 'imageFN': 'BondTetra1', 'helpText': 'Apply tetrahedral geometry #1.' });
-            this.buttons.push({ 'id': 'tetra2', 'imageFN': 'BondTetra2', 'helpText': 'Apply tetrahedral geometry #2.' });
-            this.buttons.push({ 'id': 'sqplan', 'imageFN': 'BondSqPlan', 'helpText': 'Apply square planar geometry.' });
-            this.buttons.push({ 'id': 'octa1', 'imageFN': 'BondOcta1', 'helpText': 'Apply octahedral geometry #1.' });
-            this.buttons.push({ 'id': 'octa2', 'imageFN': 'BondOcta2', 'helpText': 'Apply octahedral geometry #2.' });
-            this.buttons.push({ 'id': 'connect', 'imageFN': 'BondConnect', 'helpText': 'Connect selected atoms, by proximity.' });
-            this.buttons.push({ 'id': 'disconnect', 'imageFN': 'BondDisconnect', 'helpText': 'Disconnect selected atoms.' });
-        }
-        else if (this.cmdType == CommandType.Select) {
-            this.buttons.push({ 'id': 'selgrow', 'imageFN': 'SelectionGrow', 'helpText': 'Add adjacent atoms to selection.' });
-            this.buttons.push({ 'id': 'selshrink', 'imageFN': 'SelectionShrink', 'helpText': 'Unselect exterior atoms.' });
-            this.buttons.push({ 'id': 'selchain', 'imageFN': 'SelectionChain', 'helpText': 'Extend selection to non-ring atoms.' });
-            this.buttons.push({ 'id': 'smallring', 'imageFN': 'SelectionSmRing', 'helpText': 'Extend selection to small rings.' });
-            this.buttons.push({ 'id': 'ringblock', 'imageFN': 'SelectionRingBlk', 'helpText': 'Extend selection to ring blocks.' });
-            this.buttons.push({ 'id': 'curelement', 'imageFN': 'SelectionCurElement', 'helpText': 'Select all atoms of current element type.' });
-            this.buttons.push({ 'id': 'selprev', 'imageFN': 'MainSelPrev', 'helpText': 'Select previous connected component.' });
-            this.buttons.push({ 'id': 'selnext', 'imageFN': 'MainSelNext', 'helpText': 'Select next connected component.' });
-            this.buttons.push({ 'id': 'toggle', 'imageFN': 'SelectionToggle', 'helpText': 'Toggle selection of current.' });
-            this.buttons.push({ 'id': 'uncurrent', 'imageFN': 'SelectionUncurrent', 'helpText': 'Undefine current object.' });
-            this.buttons.push({ 'id': 'join', 'imageFN': 'MoveJoin', 'helpText': 'Overlapping atoms will be joined as one.' });
-            this.buttons.push({ 'id': 'new', 'imageFN': 'MainNew', 'helpText': 'Clear the molecular structure..' });
-            this.buttons.push({ 'id': 'inline', 'imageFN': 'AtomInline', 'helpText': 'Make selected atoms into an inline abbreviation.' });
-            this.buttons.push({ 'id': 'formula', 'imageFN': 'AtomFormula', 'helpText': 'Make selected atoms into their molecule formula.' });
-            this.buttons.push({ 'id': 'clearabbrev', 'imageFN': 'AtomClearAbbrev', 'helpText': 'Remove inline abbreviation.' });
-            this.buttons.push({ 'id': 'expandabbrev', 'imageFN': 'AtomExpandAbbrev', 'helpText': 'Expand out the inline abbreviation.' });
-        }
-        else if (this.cmdType == CommandType.Move) {
-            this.buttons.push({ 'id': 'up', 'imageFN': 'MoveUp', 'helpText': 'Move subject atoms up slightly.' });
-            this.buttons.push({ 'id': 'down', 'imageFN': 'MoveDown', 'helpText': 'Move subject atoms down slightly.' });
-            this.buttons.push({ 'id': 'left', 'imageFN': 'MoveLeft', 'helpText': 'Move subject atoms slightly to the left.' });
-            this.buttons.push({ 'id': 'right', 'imageFN': 'MoveRight', 'helpText': 'Move subject atoms slightly to the right.' });
-            this.buttons.push({ 'id': 'uplots', 'imageFN': 'MoveUpLots', 'helpText': 'Move subject atoms up somewhat.' });
-            this.buttons.push({ 'id': 'downlots', 'imageFN': 'MoveDownLots', 'helpText': 'Move subject atoms down somewhat.' });
-            this.buttons.push({ 'id': 'leftlots', 'imageFN': 'MoveLeftLots', 'helpText': 'Move subject atoms somewhat to the left.' });
-            this.buttons.push({ 'id': 'rightlots', 'imageFN': 'MoveRightLots', 'helpText': 'Move subject atoms somewhat to the right.' });
-            this.buttons.push({ 'id': 'upfar', 'imageFN': 'MoveUpFar', 'helpText': 'Move subject atoms far up.' });
-            this.buttons.push({ 'id': 'downfar', 'imageFN': 'MoveDownFar', 'helpText': 'Move subject atoms far down.' });
-            this.buttons.push({ 'id': 'leftfar', 'imageFN': 'MoveLeftFar', 'helpText': 'Move subject atoms far to the left.' });
-            this.buttons.push({ 'id': 'rightfar', 'imageFN': 'MoveRightFar', 'helpText': 'Move subject atoms far to the right.' });
-            this.buttons.push({ 'id': 'rotp01', 'imageFN': 'MoveRotP01', 'helpText': 'Rotate 1\u00B0 counter-clockwise.' });
-            this.buttons.push({ 'id': 'rotm01', 'imageFN': 'MoveRotM01', 'helpText': 'Rotate 1\u00B0 clockwise.' });
-            this.buttons.push({ 'id': 'rotp05', 'imageFN': 'MoveRotP05', 'helpText': 'Rotate 5\u00B0 counter-clockwise.' });
-            this.buttons.push({ 'id': 'rotm05', 'imageFN': 'MoveRotM05', 'helpText': 'Rotate 5\u00B0 clockwise.' });
-            this.buttons.push({ 'id': 'rotp15', 'imageFN': 'MoveRotP15', 'helpText': 'Rotate 15\u00B0 counter-clockwise.' });
-            this.buttons.push({ 'id': 'rotm15', 'imageFN': 'MoveRotM15', 'helpText': 'Rotate 15\u00B0 clockwise.' });
-            this.buttons.push({ 'id': 'rotp30', 'imageFN': 'MoveRotP30', 'helpText': 'Rotate 30\u00B0 counter-clockwise.' });
-            this.buttons.push({ 'id': 'rotm30', 'imageFN': 'MoveRotM30', 'helpText': 'Rotate 30\u00B0 clockwise.' });
-            this.buttons.push({ 'id': 'hflip', 'imageFN': 'MoveHFlip', 'helpText': 'Flip subject atoms horizontally.' });
-            this.buttons.push({ 'id': 'vflip', 'imageFN': 'MoveVFlip', 'helpText': 'Flip subject atoms vertically.' });
-            this.buttons.push({ 'id': 'shrink', 'imageFN': 'MoveShrink', 'helpText': 'Decrease subject bond distances.' });
-            this.buttons.push({ 'id': 'grow', 'imageFN': 'MoveGrow', 'helpText': 'Increase subject bond distances.' });
-        }
-        else if (this.cmdType == CommandType.Abbrev)
-            this.populateElements(ELEMENTS_NOBLE);
-        else if (this.cmdType == CommandType.SBlock)
-            this.populateElements(ELEMENTS_S_BLOCK);
-        else if (this.cmdType == CommandType.PBlock)
-            this.populateElements(ELEMENTS_P_BLOCK);
-        else if (this.cmdType == CommandType.DBlock)
-            this.populateElements(ELEMENTS_D_BLOCK);
-        else if (this.cmdType == CommandType.FBlock)
-            this.populateElements(ELEMENTS_F_BLOCK);
-        else if (this.cmdType == CommandType.Noble)
-            this.populateElements(ELEMENTS_ABBREV);
-    };
-    CommandBank.prototype.populateElements = function (elements) {
-        for (var _i = 0, elements_1 = elements; _i < elements_1.length; _i++) {
-            var el = elements_1[_i];
-            this.buttons.push({ 'id': "element:" + el, 'text': el, 'helpText': "Change elements to " + el + "." });
-        }
-    };
-    CommandBank.prototype.hitButton = function (id) {
-        var actv = 0, param = null;
-        if (id.startsWith('element:')) {
-            var el = id.substring(8);
-            actv = ActivityType.Element;
-            param = { 'element': el };
-        }
-        else if (id == 'delete')
-            actv = ActivityType.Delete;
-        else if (id == 'undo') {
-            if (this.owner.canUndo())
-                this.owner.performUndo();
-            else
-                this.owner.showMessage('Nothing to undo.');
-        }
-        else if (id == 'redo') {
-            if (this.owner.canRedo())
-                this.owner.performRedo();
-            else
-                this.owner.showMessage('Nothing to redo.');
-        }
-        else if (id == 'cut')
-            actv = ActivityType.Cut;
-        else if (id == 'copy')
-            actv = ActivityType.Copy;
-        else if (id == 'paste')
-            this.owner.performPaste();
-        else if (id == 'new')
-            actv = ActivityType.Clear;
-        else if (id == 'zoomfit')
-            this.owner.autoScale();
-        else if (id == 'zoomout')
-            this.owner.zoom(0.8);
-        else if (id == 'zoomin')
-            this.owner.zoom(1.25);
-        else if (id == 'selall')
-            actv = ActivityType.SelectAll;
-        else if (id == 'selnone')
-            actv = ActivityType.SelectNone;
-        else if (id == 'selprev')
-            actv = ActivityType.SelectPrevComp;
-        else if (id == 'selnext')
-            actv = ActivityType.SelectNextComp;
-        else if (id == 'selside')
-            actv = ActivityType.SelectSide;
-        else if (id == 'plus') {
-            actv = ActivityType.Charge;
-            param = { 'delta': 1 };
-        }
-        else if (id == 'minus') {
-            actv = ActivityType.Charge;
-            param = { 'delta': -1 };
-        }
-        else if (id == 'one') {
-            actv = ActivityType.BondOrder;
-            param = { 'order': 1 };
-        }
-        else if (id == 'two') {
-            actv = ActivityType.BondOrder;
-            param = { 'order': 2 };
-        }
-        else if (id == 'three') {
-            actv = ActivityType.BondOrder;
-            param = { 'order': 3 };
-        }
-        else if (id == 'four') {
-            actv = ActivityType.BondOrder;
-            param = { 'order': 4 };
-        }
-        else if (id == 'zero') {
-            actv = ActivityType.BondOrder;
-            param = { 'order': 0 };
-        }
-        else if (id == 'inclined') {
-            actv = ActivityType.BondType;
-            param = { 'type': Molecule.BONDTYPE_INCLINED };
-        }
-        else if (id == 'declined') {
-            actv = ActivityType.BondType;
-            param = { 'type': Molecule.BONDTYPE_DECLINED };
-        }
-        else if (id == 'squig') {
-            actv = ActivityType.BondType;
-            param = { 'type': Molecule.BONDTYPE_UNKNOWN };
-        }
-        else if (id == 'linear') {
-            actv = ActivityType.BondGeom;
-            param = { 'geom': 'linear' };
-        }
-        else if (id == 'trigonal') {
-            actv = ActivityType.BondGeom;
-            param = { 'geom': 'trigonal' };
-        }
-        else if (id == 'tetra1') {
-            actv = ActivityType.BondGeom;
-            param = { 'geom': 'tetra1' };
-        }
-        else if (id == 'tetra2') {
-            actv = ActivityType.BondGeom;
-            param = { 'geom': 'tetra2' };
-        }
-        else if (id == 'sqplan') {
-            actv = ActivityType.BondGeom;
-            param = { 'geom': 'sqplan' };
-        }
-        else if (id == 'octa1') {
-            actv = ActivityType.BondGeom;
-            param = { 'geom': 'octa1' };
-        }
-        else if (id == 'octa2') {
-            actv = ActivityType.BondGeom;
-            param = { 'geom': 'octa2' };
-        }
-        else if (id == 'switch')
-            actv = ActivityType.BondSwitch;
-        else if (id == 'connect')
-            actv = ActivityType.Connect;
-        else if (id == 'disconnect')
-            actv = ActivityType.Disconnect;
-        else if (id == 'addtwo')
-            actv = ActivityType.BondAddTwo;
-        else if (id == 'insert')
-            actv = ActivityType.BondInsert;
-        else if (id == 'curelement')
-            actv = ActivityType.SelectCurElement;
-        else if (id == 'selgrow')
-            actv = ActivityType.SelectGrow;
-        else if (id == 'selshrink')
-            actv = ActivityType.SelectShrink;
-        else if (id == 'selprev')
-            actv = ActivityType.SelectPrevComp;
-        else if (id == 'selnext')
-            actv = ActivityType.SelectNextComp;
-        else if (id == 'selchain')
-            actv = ActivityType.SelectChain;
-        else if (id == 'smallring')
-            actv = ActivityType.SelectSmRing;
-        else if (id == 'ringblock')
-            actv = ActivityType.SelectRingBlk;
-        else if (id == 'toggle')
-            actv = ActivityType.SelectToggle;
-        else if (id == 'uncurrent')
-            actv = ActivityType.SelectUnCurrent;
-        else if (id == 'join')
-            actv = ActivityType.Join;
-        else if (id == 'inline')
-            actv = ActivityType.AbbrevInline;
-        else if (id == 'formula')
-            actv = ActivityType.AbbrevFormula;
-        else if (id == 'clearabbrev')
-            actv = ActivityType.AbbrevClear;
-        else if (id == 'expandabbrev')
-            actv = ActivityType.AbbrevExpand;
-        else if (id == 'up') {
-            actv = ActivityType.Nudge;
-            param = { 'dir': 'up' };
-        }
-        else if (id == 'down') {
-            actv = ActivityType.Nudge;
-            param = { 'dir': 'down' };
-        }
-        else if (id == 'left') {
-            actv = ActivityType.Nudge;
-            param = { 'dir': 'left' };
-        }
-        else if (id == 'right') {
-            actv = ActivityType.Nudge;
-            param = { 'dir': 'right' };
-        }
-        else if (id == 'uplots') {
-            actv = ActivityType.NudgeLots;
-            param = { 'dir': 'up' };
-        }
-        else if (id == 'downlots') {
-            actv = ActivityType.NudgeLots;
-            param = { 'dir': 'down' };
-        }
-        else if (id == 'leftlots') {
-            actv = ActivityType.NudgeLots;
-            param = { 'dir': 'left' };
-        }
-        else if (id == 'rightlots') {
-            actv = ActivityType.NudgeLots;
-            param = { 'dir': 'right' };
-        }
-        else if (id == 'upfar') {
-            actv = ActivityType.NudgeFar;
-            param = { 'dir': 'up' };
-        }
-        else if (id == 'downfar') {
-            actv = ActivityType.NudgeFar;
-            param = { 'dir': 'down' };
-        }
-        else if (id == 'leftfar') {
-            actv = ActivityType.NudgeFar;
-            param = { 'dir': 'left' };
-        }
-        else if (id == 'rightfar') {
-            actv = ActivityType.NudgeFar;
-            param = { 'dir': 'right' };
-        }
-        else if (id == 'rotp01') {
-            actv = ActivityType.Rotate;
-            param = { 'theta': 1 };
-        }
-        else if (id == 'rotm01') {
-            actv = ActivityType.Rotate;
-            param = { 'theta': -1 };
-        }
-        else if (id == 'rotp05') {
-            actv = ActivityType.Rotate;
-            param = { 'theta': 5 };
-        }
-        else if (id == 'rotm05') {
-            actv = ActivityType.Rotate;
-            param = { 'theta': -5 };
-        }
-        else if (id == 'rotp15') {
-            actv = ActivityType.Rotate;
-            param = { 'theta': 15 };
-        }
-        else if (id == 'rotm15') {
-            actv = ActivityType.Rotate;
-            param = { 'theta': -15 };
-        }
-        else if (id == 'rotp30') {
-            actv = ActivityType.Rotate;
-            param = { 'theta': 30 };
-        }
-        else if (id == 'rotm30') {
-            actv = ActivityType.Rotate;
-            param = { 'theta': -30 };
-        }
-        else if (id == 'hflip') {
-            actv = ActivityType.Flip;
-            param = { 'axis': 'hor' };
-        }
-        else if (id == 'vflip') {
-            actv = ActivityType.Flip;
-            param = { 'axis': 'ver' };
-        }
-        else if (id == 'shrink') {
-            actv = ActivityType.Scale;
-            param = { 'mag': 1 / 1.1 };
-        }
-        else if (id == 'grow') {
-            actv = ActivityType.Scale;
-            param = { 'mag': 1.1 };
-        }
-        else if (id == 'atom')
-            this.buttonView.pushBank(new CommandBank(this.owner, CommandType.Atom));
-        else if (id == 'bond')
-            this.buttonView.pushBank(new CommandBank(this.owner, CommandType.Bond));
-        else if (id == 'select')
-            this.buttonView.pushBank(new CommandBank(this.owner, CommandType.Select));
-        else if (id == 'move')
-            this.buttonView.pushBank(new CommandBank(this.owner, CommandType.Move));
-        else if (id == 'abbrev')
-            this.buttonView.pushBank(new CommandBank(this.owner, CommandType.Abbrev));
-        else if (id == 'sblock')
-            this.buttonView.pushBank(new CommandBank(this.owner, CommandType.SBlock));
-        else if (id == 'pblock')
-            this.buttonView.pushBank(new CommandBank(this.owner, CommandType.PBlock));
-        else if (id == 'dblock')
-            this.buttonView.pushBank(new CommandBank(this.owner, CommandType.DBlock));
-        else if (id == 'fblock')
-            this.buttonView.pushBank(new CommandBank(this.owner, CommandType.FBlock));
-        else if (id == 'noble')
-            this.buttonView.pushBank(new CommandBank(this.owner, CommandType.Noble));
-        else
-            alert('Unhandled command: "' + id + '"');
-        if (actv > 0) {
-            new MoleculeActivity(this.owner, actv, param).execute();
-        }
-    };
-    return CommandBank;
-}(ButtonBank));
-var TemplateBank = (function (_super) {
-    __extends(TemplateBank, _super);
-    function TemplateBank(owner, group) {
-        _super.call(this);
-        this.owner = owner;
-        this.group = group;
-        this.subgroups = null;
-        this.templates = null;
-    }
-    TemplateBank.prototype.init = function () {
-        var policy = RenderPolicy.defaultBlackOnWhite();
-        policy.data.pointScale = 10;
-        policy.data.lineSize *= 1.5;
-        policy.data.bondSep *= 1.5;
-        var sz = this.buttonView.idealSize;
-        if (this.group == null) {
-            var input = { 'tokenID': this.owner.tokenID, 'policy': policy.data, 'size': [sz - 4, sz - 4] };
-            var fcn = function (result, error) {
-                if (!result) {
-                    alert('Setup of TemplateBank failed: ' + error.message);
-                    return;
-                }
-                this.subgroups = result;
-                this.buttonView.refreshBank();
-            };
-            Func.getDefaultTemplateGroups(input, fcn, this);
-        }
-        else {
-            var input = { 'tokenID': this.owner.tokenID, 'policy': policy.data, 'size': [sz - 4, sz - 4], 'group': this.group };
-            var fcn = function (result, error) {
-                if (!result) {
-                    alert('Setup of TemplateBank failed: ' + error.message);
-                    return;
-                }
-                this.templates = result;
-                this.buttonView.refreshBank();
-            };
-            Func.getDefaultTemplateStructs(input, fcn, this);
-        }
-    };
-    TemplateBank.prototype.update = function () {
-        if (this.subgroups == null && this.templates == null)
-            return;
-        this.buttons = [];
-        if (this.group == null)
-            this.populateGroups();
-        else
-            this.populateTemplates();
-    };
-    TemplateBank.prototype.populateGroups = function () {
-        var groups = this.subgroups.groups, titles = this.subgroups.titles, preview = this.subgroups.preview;
-        for (var n = 0; n < groups.length; n++) {
-            this.buttons.push({ 'id': groups[n], 'metavec': preview[n], 'helpText': titles[n] });
-        }
-    };
-    TemplateBank.prototype.populateTemplates = function () {
-        var names = this.templates.names, abbrev = this.templates.abbrev, mnemonic = this.templates.mnemonic, preview = this.templates.preview;
-        for (var n = 0; n < names.length; n++) {
-            this.buttons.push({ 'id': n.toString(), 'metavec': preview[n], 'helpText': names[n] });
-        }
-    };
-    TemplateBank.prototype.hitButton = function (id) {
-        if (this.group == null) {
-            this.buttonView.pushBank(new TemplateBank(this.owner, id));
-        }
-        else {
-            var idx = parseInt(id);
-            var param = { 'fragNative': this.templates.molecules[idx] };
-            new MoleculeActivity(this.owner, ActivityType.TemplateFusion, param).execute();
-        }
-    };
-    return TemplateBank;
-}(ButtonBank));
-var FusionBank = (function (_super) {
-    __extends(FusionBank, _super);
-    function FusionBank(owner) {
-        _super.call(this);
-        this.owner = owner;
-    }
-    FusionBank.prototype.update = function () {
-        this.buttons = [];
-        this.buttons.push({ 'id': 'accept', 'imageFN': 'GenericAccept', 'helpText': 'Apply this template.' });
-        this.buttons.push({ 'id': 'prev', 'imageFN': 'TemplatePrev', 'helpText': 'Show previous fusion option.' });
-        this.buttons.push({ 'id': 'next', 'imageFN': 'TemplateNext', 'helpText': 'Show next fusion option.' });
-    };
-    FusionBank.prototype.hitButton = function (id) {
-        if (id == 'accept')
-            this.owner.templateAccept();
-        else if (id == 'prev')
-            this.owner.templateRotate(-1);
-        else if (id == 'next')
-            this.owner.templateRotate(1);
-    };
-    FusionBank.prototype.bankClosed = function () {
-        this.owner.clearPermutations();
-    };
-    return FusionBank;
-}(ButtonBank));
-var ToolBank = (function (_super) {
-    __extends(ToolBank, _super);
-    function ToolBank(owner) {
-        _super.call(this);
-        this.owner = owner;
-        this.initiallySelected = 'arrow';
-    }
-    ToolBank.prototype.update = function () {
-        this.buttons = [];
-        this.buttons.push({ 'id': 'arrow', 'imageFN': 'ToolSelect', 'helpText': 'Selection tool.' });
-        this.buttons.push({ 'id': 'rotate', 'imageFN': 'ToolRotate', 'helpText': 'Rotate subject atoms.' });
-        this.buttons.push({ 'id': 'pan', 'imageFN': 'ToolPan', 'helpText': 'Pan the viewport around the screen.' });
-        this.buttons.push({ 'id': 'drag', 'imageFN': 'ToolDrag', 'helpText': 'Drag selected atoms to new positions.' });
-        this.buttons.push({ 'id': 'erasor', 'imageFN': 'ToolErasor', 'helpText': 'Delete atoms or bonds by selecting.' });
-        this.buttons.push({ 'id': 'bondOrder0', 'imageFN': 'BondZero', 'helpText': 'Create or change a bond to zero order.' });
-        this.buttons.push({ 'id': 'bondOrder1', 'imageFN': 'BondOne', 'helpText': 'Create or change a bond to single.' });
-        this.buttons.push({ 'id': 'bondOrder2', 'imageFN': 'BondTwo', 'helpText': 'Create or change a bond to double.' });
-        this.buttons.push({ 'id': 'bondOrder3', 'imageFN': 'BondThree', 'helpText': 'Create or change a bond to triple.' });
-        this.buttons.push({ 'id': 'bondUnknown', 'imageFN': 'BondSquig', 'helpText': 'Create or change a bond to down-wedge.' });
-        this.buttons.push({ 'id': 'bondInclined', 'imageFN': 'BondUp', 'helpText': 'Create or change a bond to up-wedge.' });
-        this.buttons.push({ 'id': 'bondDeclined', 'imageFN': 'BondDown', 'helpText': 'Create or change a bond to down-wedge.' });
-        this.buttons.push({ 'id': 'ringAliph', 'imageFN': 'ToolRing', 'helpText': 'Create plain ring.' });
-        this.buttons.push({ 'id': 'ringArom', 'imageFN': 'ToolArom', 'helpText': 'Create aromatic ring.' });
-        this.buttons.push({ 'id': 'atomPlus', 'imageFN': 'AtomPlus', 'helpText': 'Increase charge on atom.' });
-        this.buttons.push({ 'id': 'atomMinus', 'imageFN': 'AtomMinus', 'helpText': 'Decrease charge on atom.' });
-        this.buttons.push({ 'id': 'elementC', 'text': 'C', 'helpText': 'Change elements to Carbon.' });
-        this.buttons.push({ 'id': 'elementN', 'text': 'N', 'helpText': 'Change elements to Nitrogen.' });
-        this.buttons.push({ 'id': 'elementO', 'text': 'O', 'helpText': 'Change elements to Oxygen.' });
-        this.buttons.push({ 'id': 'elementS', 'text': 'S', 'helpText': 'Change elements to Sulfur.' });
-        this.buttons.push({ 'id': 'elementP', 'text': 'P', 'helpText': 'Change elements to Phosphorus.' });
-        this.buttons.push({ 'id': 'elementH', 'text': 'H', 'helpText': 'Change elements to Hydrogen.' });
-        this.buttons.push({ 'id': 'elementF', 'text': 'F', 'helpText': 'Change elements to Fluorine.' });
-        this.buttons.push({ 'id': 'elementCl', 'text': 'Cl', 'helpText': 'Change elements to Chlorine.' });
-        this.buttons.push({ 'id': 'elementBr', 'text': 'Br', 'helpText': 'Change elements to Bromine.' });
-        this.buttons.push({ 'id': 'elementA', 'text': 'A', 'helpText': 'Pick other element.' });
-        this.buttonView.setSelectedButton('arrow');
-    };
-    ;
-    ToolBank.prototype.hitButton = function (id) {
-        this.buttonView.setSelectedButton(id);
-    };
-    return ToolBank;
-}(ButtonBank));
 var CircleButton = (function (_super) {
     __extends(CircleButton, _super);
     function CircleButton(icon) {
@@ -9874,202 +10086,6 @@ var SearchPanel = (function (_super) {
     SearchPanel.TYPE_REACTION = 'reaction';
     return SearchPanel;
 }(Widget));
-var ViewStructure = (function (_super) {
-    __extends(ViewStructure, _super);
-    function ViewStructure(tokenID) {
-        _super.call(this);
-        this.tokenID = tokenID;
-        this.naturalWidth = 0;
-        this.naturalHeight = 0;
-        this.width = 0;
-        this.height = 0;
-        this.padding = 2;
-        this.borderCol = 0x000000;
-        this.borderRadius = 8;
-        this.backgroundCol1 = 0xFFFFFF;
-        this.backgroundCol2 = 0xE0E0E0;
-        this.molstr = null;
-        this.datastr = null;
-        this.datarow = 0;
-        this.policy = null;
-    }
-    ViewStructure.prototype.defineMolecule = function (mol) {
-        this.molstr = mol.toString();
-    };
-    ViewStructure.prototype.defineMoleculeString = function (molsk) {
-        this.molstr = molsk;
-    };
-    ViewStructure.prototype.defineDataSheetString = function (dsxml, rowidx) {
-        this.datastr = dsxml;
-        this.datarow = rowidx != null ? rowidx : 0;
-    };
-    ViewStructure.prototype.defineRenderPolicy = function (policy) {
-        this.policy = policy;
-    };
-    ViewStructure.prototype.setup = function (callback, master) {
-        if (this.molstr == null && this.datastr == null)
-            throw 'molsync.ui.ViewStructure.setup called without specifying a molecule or datasheet';
-        var input = { 'tokenID': this.tokenID };
-        if (this.policy != null)
-            input.policy = this.policy.data;
-        if (this.molstr != null)
-            input.molNative = this.molstr;
-        else if (this.datastr != null) {
-            input.dataXML = this.datastr;
-            input.dataRow = this.datarow;
-        }
-        var fcn = function (result, error) {
-            if (!result) {
-                alert('Setup of ViewStructure failed: ' + error.message);
-                return;
-            }
-            this.metavec = result.metavec;
-            this.naturalWidth = this.metavec.size[0];
-            this.naturalHeight = this.metavec.size[1];
-            if (this.width == 0)
-                this.width = this.naturalWidth + 2 * this.padding;
-            if (this.height == 0)
-                this.height = this.naturalHeight + 2 * this.padding;
-            if (callback)
-                callback.call(master);
-        };
-        Func.renderStructure(input, fcn, this);
-    };
-    ViewStructure.prototype.render = function (parent) {
-        if (!this.metavec)
-            throw 'molsync.ui.ViewStructure.render must be preceded by a call to setup';
-        _super.prototype.render.call(this, parent);
-        var canvas = newElement(this.content, 'canvas', { 'width': this.width, 'height': this.height });
-        var density = pixelDensity();
-        canvas.width = this.width * density;
-        canvas.height = this.height * density;
-        canvas.style.width = this.width + 'px';
-        canvas.style.height = this.height + 'px';
-        var ctx = canvas.getContext('2d');
-        ctx.save();
-        ctx.scale(density, density);
-        var path;
-        if (this.borderRadius == 0) {
-            path = new Path2D();
-            path.rect(1.5, 1.5, this.width - 3, this.height - 3);
-        }
-        else
-            path = pathRoundedRect(1.5, 1.5, this.width - 1.5, this.height - 1.5, this.borderRadius);
-        if (this.backgroundCol1 != null) {
-            if (this.backgroundCol2 == null) {
-                ctx.fillStyle = colourCanvas(this.backgroundCol1);
-            }
-            else {
-                var grad = ctx.createLinearGradient(0, 0, this.width, this.height);
-                grad.addColorStop(0, colourCanvas(this.backgroundCol1));
-                grad.addColorStop(1, colourCanvas(this.backgroundCol2));
-                ctx.fillStyle = grad;
-            }
-            ctx.fill(path);
-        }
-        if (this.borderCol != -1) {
-            ctx.strokeStyle = colourCanvas(this.borderCol);
-            ctx.lineWidth = 1;
-            ctx.stroke(path);
-        }
-        var limW = this.width - 2 * this.padding, limH = this.height - 2 * this.padding;
-        var natW = this.naturalWidth, natH = this.naturalHeight;
-        var scale = 1;
-        if (natW > limW) {
-            var down = limW / natW;
-            scale *= down;
-            natW *= down;
-            natH *= down;
-        }
-        if (natH > limH) {
-            var down = limH / natH;
-            scale *= down;
-            natW *= down;
-            natH *= down;
-        }
-        var draw = new MetaVector(this.metavec);
-        draw.offsetX = 0.5 * (this.width - natW);
-        draw.offsetY = 0.5 * (this.height - natH);
-        draw.scale = scale;
-        draw.renderContext(ctx);
-        ctx.restore();
-    };
-    return ViewStructure;
-}(Widget));
-var globalPopover = null;
-var globalTooltip = null;
-var globalPopWatermark = 0;
-function addTooltip(parent, bodyHTML, titleHTML) {
-    var widget = $(parent);
-    if (globalPopover == null) {
-        globalPopover = $(document.createElement('div'));
-        globalPopover.css('position', 'absolute');
-        globalPopover.css('background-color', '#F0F0FF');
-        globalPopover.css('color', 'black');
-        globalPopover.css('border', '1px solid black');
-        globalPopover.css('padding', '0.3em');
-        globalPopover.hide();
-        globalPopover.appendTo(document.body);
-    }
-    var tooltip = new Tooltip(widget, bodyHTML, titleHTML);
-    var prevEnter = widget.attr('onmouseenter'), prevLeave = widget.attr('onmouseleave');
-    widget.mouseenter(function (e) { tooltip.start(); if (prevEnter)
-        prevEnter(e); });
-    widget.mouseleave(function (e) { tooltip.stop(); if (prevLeave)
-        prevLeave(e); });
-}
-function clearTooltip() {
-    if (globalTooltip == null)
-        return;
-    globalPopWatermark++;
-    globalTooltip.lower();
-}
-var Tooltip = (function () {
-    function Tooltip(widget, bodyHTML, titleHTML) {
-        this.widget = widget;
-        this.bodyHTML = bodyHTML;
-        this.titleHTML = titleHTML;
-    }
-    Tooltip.prototype.start = function () {
-        globalPopover.hide();
-        this.watermark = ++globalPopWatermark;
-        var self = this;
-        window.setTimeout(function () {
-            if (self.watermark == globalPopWatermark)
-                self.raise();
-        }, 1000);
-    };
-    Tooltip.prototype.stop = function () {
-        if (this.watermark == globalPopWatermark)
-            this.lower();
-        globalPopWatermark++;
-    };
-    Tooltip.prototype.raise = function () {
-        globalTooltip = this;
-        var pop = globalPopover;
-        pop.css('max-width', '20em');
-        pop.empty();
-        var hasTitle = this.titleHTML != null && this.titleHTML.length > 0, hasBody = this.bodyHTML != null && this.bodyHTML.length > 0;
-        if (hasTitle)
-            ($('<div></div>').appendTo(pop)).html('<b>' + this.titleHTML + '</b>');
-        if (hasTitle && hasBody)
-            pop.append('<hr>');
-        if (hasBody)
-            ($('<div></div>').appendTo(pop)).html(this.bodyHTML);
-        var popW = pop.width(), popH = pop.height();
-        var wpos = this.widget.offset(), width = this.widget.width(), height = this.widget.height();
-        var posX = wpos.left;
-        var posY = wpos.top + height + 2;
-        pop.css('left', posX + "px");
-        pop.css('top', posY + "px");
-        pop.show();
-    };
-    Tooltip.prototype.lower = function () {
-        var pop = globalPopover;
-        pop.hide();
-    };
-    return Tooltip;
-}());
 var SearchMolecules = (function (_super) {
     __extends(SearchMolecules, _super);
     function SearchMolecules(tokenID) {

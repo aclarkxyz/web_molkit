@@ -607,17 +607,17 @@ class ButtonView extends Widget
 				let sz = this.idealSize;
 				let draw = new MetaVector({'size': [sz,sz]});
 				let fsz = sz * 0.6;
-				let wad = draw.measureText(b.text, fsz);
+				let wad = FontData.main.measureText(b.text, fsz);
 
 				if (wad[1] + wad[2] > sz)
 				{
 					fsz *= sz / (wad[1] + wad[2]);
-					wad = draw.measureText(b.text, fsz);
+					wad = FontData.main.measureText(b.text, fsz);
 				}
 				if (wad[0] > sz)
 				{
 					fsz *= sz / wad[0];
-					wad = draw.measureText(b.text, fsz);
+					wad = FontData.main.measureText(b.text, fsz);
 				}
 				let x = 0.5 * (sz - wad[0]), y = 0.5 * (sz + wad[1]);
 				draw.drawText(x - 1, y, b.text, fsz, 0x000000);

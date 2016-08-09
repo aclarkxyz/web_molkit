@@ -57,11 +57,11 @@ class MetaVector
 	
 	public static NOCOLOUR = -1;
 
-	types:any[];
-	prims:any[];
+	types:any[] = [];
+	prims:any[] = [];
 	typeObj:any[];
-	public width:number;
-	public height:number;
+	public width:number = 0;
+	public height:number = 0;
 	public offsetX = 0;
 	public offsetY = 0;
 	public scale = 1;
@@ -75,27 +75,28 @@ class MetaVector
 
 	// ------------ public methods ------------
 
-	constructor(vec:any)
+	constructor(vec?:any)
 	{
-		this.types = vec.types;
-		this.prims = vec.prims;
-		this.width = vec.size[0];
-		this.height = vec.size[1];
-		
-		if (this.types == null) this.types = [];
-		if (this.prims == null) this.prims = [];
+		if (vec != null)
+		{
+			this.types = vec.types;
+			this.prims = vec.prims;
+			this.width = vec.size[0];
+			this.height = vec.size[1];
+		}
 
 		this.charMask = Vec.booleanArray(false, FontData.main.GLYPH_COUNT);
+		// !! TODO: if vec, rebuild the charMask...
 	}
 
 	// methods for adding a primitive (and possibly a type to go with it)
-	public drawLine(x1:number, y1:number, x2:number, y2:number, thickness:number, colour:number)
+	public drawLine(x1:number, y1:number, x2:number, y2:number, colour:number, thickness:number)
 	{
 		if (!thickness) thickness = 1;
 		let typeidx = this.findOrCreateType([this.PRIM_LINE, thickness, colour]);
 		this.prims.push([this.PRIM_LINE, typeidx, x1, y1, x2, y2]);
 	}
-	public drawRect(x:number, y:number, w:number, h:number, edgeCol:number, fillCol:number, thickness:number)
+	public drawRect(x:number, y:number, w:number, h:number, edgeCol:number, thickness:number, fillCol:number)
 	{
 		if (!edgeCol) edgeCol = -1;
 		if (!fillCol) fillCol = -1;
@@ -103,7 +104,7 @@ class MetaVector
 		let typeidx = this.findOrCreateType([this.PRIM_RECT, edgeCol, fillCol, thickness]);
 		this.prims.push([this.PRIM_RECT, typeidx, x, y, w, h]);
 	}
-	public drawOval(x:number, y:number, w:number, h:number, edgeCol:number, fillCol:number, thickness:number)
+	public drawOval(x:number, y:number, w:number, h:number, edgeCol:number, thickness:number, fillCol:number)
 	{
 		if (!edgeCol) edgeCol = -1;
 		if (!fillCol) fillCol = -1;
@@ -111,21 +112,22 @@ class MetaVector
 		let typeidx = this.findOrCreateType([this.PRIM_OVAL, edgeCol, fillCol, thickness]);
 		this.prims.push([this.PRIM_OVAL, typeidx, x, y, w, h]);
 	}
-	public drawPath(xpoints:number[], ypoints:number[], ctrlFlags:boolean[], isClosed:boolean, edgeCol:number, fillCol:number, thickness:number, hardEdge:boolean)
+	public drawPath(xpoints:number[], ypoints:number[], ctrlFlags:boolean[], isClosed:boolean, edgeCol:number, thickness:number, fillCol:number, hardEdge:boolean)
 	{
-		if (edgeCol) edgeCol = -1;
-		if (fillCol) fillCol = -1;
+		if (!edgeCol) edgeCol = -1;
+		if (!fillCol) fillCol = -1;
 		if (thickness) thickness = 1;
-		if (hardEdge) hardEdge = false;
+		if (hardEdge) hardEdge = false;		
 		let typeidx = this.findOrCreateType([this.PRIM_PATH, edgeCol, fillCol, thickness, hardEdge]);
 		this.prims.push([this.PRIM_PATH, typeidx, xpoints.length, xpoints, ypoints, ctrlFlags, isClosed]);
 	}
-	public drawPoly(xpoints:number[], ypoints:number[], edgeCol:number, fillCol:number, thickness:number, hardEdge:boolean)
+	public drawPoly(xpoints:number[], ypoints:number[], edgeCol:number, thickness:number, fillCol:number, hardEdge:boolean)
 	{
-		this.drawPath(xpoints, ypoints, null, true, edgeCol, fillCol, thickness, hardEdge);
+		this.drawPath(xpoints, ypoints, null, true, edgeCol, thickness, fillCol, hardEdge);
 	}
 	public drawText(x:number, y:number, txt:string, size:number, colour:number, align?:number)
 	{
+console.log('TXT['+txt+'] align='+align);//zog		
 		if (align == null) align = 0;
 		const font = FontData.main;
 		for (let n = 0; n < txt.length; n++)
@@ -139,7 +141,7 @@ class MetaVector
 
 		if ((align & TextAlign.Left) != 0) {}
 		else if ((align & TextAlign.Right) != 0) bx = -metrics[0];
-		else bx = -0.5 * metrics[0];
+		else /* centre */ bx = -0.5 * metrics[0];
 
 		if ((align & TextAlign.Middle) != 0) by += 0.5 * metrics[1];
 		else if ((align & TextAlign.Top) != 0) by += metrics[1];
@@ -175,7 +177,7 @@ class MetaVector
 		this.updateBounds(x + bx + x2 * mscale, y + by + y2 * mscale);
 
 		let typeidx = this.findOrCreateType([this.PRIM_TEXT, size, colour]);
-		this.prims.push([this.PRIM_TEXT, typeidx, x, y, txt]);
+		this.prims.push([this.PRIM_TEXT, typeidx, x + bx, y + by, txt]);
 	}
 
 	// query the boundaries of the drawing, post factum
@@ -183,6 +185,14 @@ class MetaVector
 	public boundLowY():number {return this.lowY;}
 	public boundHighX():number {return this.highX;}
 	public boundHighY():number {return this.highY;}
+
+	// for a metavector that has been drawn programmatically, makes sure that origin is (0,0) and that the size is set
+	public normalise()
+	{
+		if (this.lowX != 0 || this.lowY != 0) this.transformPrimitives(-this.lowX, -this.lowY, 1, 1);
+		this.width = this.highX - this.lowX;
+		this.height = this.highY - this.lowY;
+	}
 
 	// makes sure everything fits into the indicated box, scaling down if necessary (but not up)	
 	public transformIntoBox(box:Box):void
@@ -378,7 +388,6 @@ class MetaVector
 		y1 = this.offsetY + this.scale * y1;
 		x2 = this.offsetX + this.scale * x2;
 		y2 = this.offsetY + this.scale * y2;
-
 		if (type.colour)
 		{
 			ctx.beginPath();
@@ -465,7 +474,7 @@ class MetaVector
 			ctx.moveTo(x[0], y[0]);
 			for (let i = 1; i < npts; i++)
 			{
-				if (!ctrl[i])
+				if (!ctrl || !ctrl[i])
 				{
 					ctx.lineTo(x[i], y[i]);
 				}

@@ -10,8 +10,14 @@
 	[PKG=webmolkit]
 */
 
-///<reference path='Dialog.ts'/>
+///<reference path='../util/util.ts'/>
 ///<reference path='../rpc/Func.ts'/>
+///<reference path='../gfx/Rendering.ts'/>
+///<reference path='../gfx/MetaVector.ts'/>
+///<reference path='../data/Molecule.ts'/>
+///<reference path='Dialog.ts'/>
+///<reference path='../sketcher/Sketcher.ts'/> 
+	// !! above is temporary...
 
 /*
 	Given two sketched out molecules, allows the user to 
@@ -33,11 +39,11 @@ class MapReaction extends Dialog
 	// layout information about both molecules, and how to position them
 	private rawvec1:any = null;
 	private metavec1:MetaVector = null;
-	private arrmol1:ArrangeMolecule = null;
+	private arrmol1:PreArrangeMolecule = null;
 	private transform1:number[] = null;
 	private rawvec2:any = null;
 	private metavec2:MetaVector = null;
-	private arrmol2:ArrangeMolecule = null;
+	private arrmol2:PreArrangeMolecule = null;
 	private transform2:number[] = null;
 	private padding:number;
 	private scale = 1;

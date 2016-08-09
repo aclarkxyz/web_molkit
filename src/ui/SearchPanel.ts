@@ -10,9 +10,10 @@
 	[PKG=webmolkit]
 */
 
-///<reference path='Widget.ts'/>
 ///<reference path='../dialog/EditCompound.ts'/>
 ///<reference path='../dialog/MapReaction.ts'/>
+///<reference path='../rpc/Account.ts'/>
+///<reference path='Widget.ts'/>
 
 /*
 	SearchPanel: a concise button-height search preparation area that can be used for molecules & reactions.
@@ -336,7 +337,7 @@ class SearchPanel extends Widget
 			canvas.width = width * metavec.density;
 			canvas.height = height * metavec.density;
 
-			let arrmol = <ArrangeMolecule>result.arrmol;
+			let arrmol = <PreArrangeMolecule>result.arrmol;
 			for (let n = 1; n <= mol.numAtoms(); n++) if (mol.atomMapNum(n) > 0)
 			{
 				let col = this.COLCYCLE[(mol.atomMapNum(n) - 1) % this.COLCYCLE.length];

@@ -56,13 +56,13 @@ class DrawMolecule
 	public draw():void
 	{
 		// debugging: draw the "space filling" areas-to-avoid
-		/*final boolean DRAW_SPACE = false;
-		if (DRAW_SPACE) for (int n = 0; n < layout.numSpace(); n++)
+		let DRAW_SPACE = false;
+		if (DRAW_SPACE) for (let n = 0; n < this.layout.numSpace(); n++)
 		{
-			ArrangeMolecule.SpaceFiller spc = layout.getSpace(n);
-			vg.drawRect(spc.bx, spc.by, spc.bw, spc.bh, VectorGfxBuilder.NOCOLOUR, 0, 0xE0E0E0);
-			if (spc.px != null && spc.py != null) vg.drawPoly(spc.px, spc.py, VectorGfxBuilder.NOCOLOUR, 0, 0x8080FF, true);
-		}*/
+			let spc = this.layout.getSpace(n);
+			//this.vg.drawRect(spc.box.x, spc.box.y, spc.box.w, spc.box.h, MetaVector.NOCOLOUR, 0, 0xE0E0E0);
+			if (spc.px != null && spc.py != null && spc.px.length > 2) this.vg.drawPoly(spc.px, spc.py, MetaVector.NOCOLOUR, 0, 0x8080FF, true);
+		}
 
 		// emit the drawing elements as vector primitives
 		

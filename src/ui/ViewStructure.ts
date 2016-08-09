@@ -11,6 +11,10 @@
 */
 
 ///<reference path='Widget.ts'/>
+///<reference path='../gfx/Rendering.ts'/>
+///<reference path='../gfx/MetaVector.ts'/>
+///<reference path='../data/Molecule.ts'/>
+///<reference path='../rpc/Func.ts'/>
 
 /*
 	ViewStructure: a middleweight widget that renders a 2D structure non-interactively.

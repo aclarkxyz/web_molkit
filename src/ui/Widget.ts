@@ -10,6 +10,10 @@
 	[PKG=webmolkit]
 */
 
+///<reference path='../decl/jquery.d.ts'/>
+///<reference path='../util/util.ts'/>
+///<reference path='Tooltip.ts'/>
+
 /*
 	Base class for widgets. Maintains the wrapping <div> element into which everything is rendered.
 */
