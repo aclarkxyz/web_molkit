@@ -178,7 +178,7 @@ class ViewStructure extends Widget
 	{
 		let mol = Molecule.fromString(this.molstr); // note: not very efficient if mol was passed in...
 		let effects = new RenderEffects();
-		let measure = new OutlineMeasurement(this.policy.data.pointScale);
+		let measure = new OutlineMeasurement(0, 0, this.policy.data.pointScale);
 		let layout = new ArrangeMolecule(mol, measure, this.policy, effects);
 		layout.arrange();
 

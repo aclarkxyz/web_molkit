@@ -13,15 +13,16 @@
 ///<reference path='../decl/corrections.d.ts'/>
 ///<reference path='../util/util.ts'/>
 ///<reference path='../util/Cookies.ts'/>
+///<reference path='../util/Geom.ts'/>
 ///<reference path='../dialog/PickRecent.ts'/>
-///<reference path='../ui/ButtonView.ts'/>
 ///<reference path='../data/Molecule.ts'/>
 ///<reference path='../data/MolUtil.ts'/>
 ///<reference path='../data/SketchUtil.ts'/>
 ///<reference path='../rpc/Func.ts'/>
 ///<reference path='../gfx/Rendering.ts'/>
 ///<reference path='../gfx/MetaVector.ts'/>
-///<reference path='../util/Geom.ts'/>
+///<reference path='../gfx/ArrangeMolecule.ts'/>
+///<reference path='../ui/ButtonView.ts'/>
 ///<reference path='MoleculeActivity.ts'/>
 ///<reference path='CommandBank.ts'/>
 ///<reference path='TemplateBank.ts'/>
@@ -47,6 +48,7 @@ enum DraggingTool
 	Ring
 }
 
+/*
 // !!!!!!!!!!!!!!!!!!!!!!!! TO BE DEPRECATED
 interface ArrMolPoint
 {
@@ -79,7 +81,7 @@ interface PreArrangeMolecule
 	scale:number;
 	points:ArrMolPoint[];
 	lines:ArrMolLine[];
-}
+}*/
 
 interface GuidelineSprout
 {
@@ -96,7 +98,7 @@ interface GuidelineSprout
 // used as a transient backup in case of access to the clipboard being problematic
 var globalMoleculeClipboard:Molecule = null;
 
-class Sketcher extends Widget
+class Sketcher extends Widget implements ArrangeMeasurement
 {
 	private mol:Molecule = null;
 	private policy:RenderPolicy = null;
@@ -119,17 +121,15 @@ class Sketcher extends Widget
 	private canvasOver:HTMLCanvasElement = null;
 	private divMessage:JQuery = null;
 	private fadeWatermark = 0;
-	private rawvec:any = null; // raw metavector direct from the webservice
+	private layout:ArrangeMolecule = null;
 	private metavec:MetaVector = null; // instantiated version of above
-	private arrmol:PreArrangeMolecule = null;
 	private guidelines:GuidelineSprout[] = null;
-	private transform:number[] = null;
 	private toolView:ButtonView = null;
 	private commandView:ButtonView = null;
 	private templateView:ButtonView = null;
 	private offsetX = 0;
 	private offsetY = 0;
-	private scale = 0;
+	private pointScale = 1;
 	private currentAtom = 0;
 	private currentBond = 0;
 	private hoverAtom = 0;
@@ -191,12 +191,12 @@ class Sketcher extends Widget
 
 		if (!this.beenSetup) return;
 		
-		this.arrmol = null;
-		this.rawvec = null;
+		this.layout = null;
 		this.metavec = null;
 		this.hoverAtom = 0;
 		this.hoverBond = 0;
 		
+		/*
 		// replace the arrangement before redrawing
 		let input:any =
 		{
@@ -232,7 +232,9 @@ class Sketcher extends Widget
 			if (withAutoScale) this.autoScale();
 			this.delayedRedraw();
 		};
-		Func.arrangeMolecule(input, fcn, this);
+		Func.arrangeMolecule(input, fcn, this);*/
+
+		this.autoScale();
 	}
 
 	// define the molecule as a SketchEl-formatted string
@@ -245,6 +247,7 @@ class Sketcher extends Widget
 	public defineRenderPolicy(policy:RenderPolicy):void
 	{
 		this.policy = policy;
+		this.pointScale = policy.data.pointScale;
 	}
 	
 	// zappy zap
@@ -259,10 +262,15 @@ class Sketcher extends Widget
 		let fcnPrep = function()
 		{
 			this.beenSetup = true;
-		
-			//if ([not init?]) throw 'molsync.ui.ViewStructure.setup called without specifying a molecule';
 			if (this.mol == null) this.mol = new Molecule();
-			if (this.policy == null) this.policy = RenderPolicy.defaultColourOnWhite();
+			if (this.policy == null) 
+			{
+				this.policy = RenderPolicy.defaultColourOnWhite();
+				this.pointScale = this.policy.data.pointScale;
+			}
+		
+/* !! zap
+			//if ([not init?]) throw 'molsync.ui.ViewStructure.setup called without specifying a molecule';
 			let input:any =
 			{
 				'tokenID': this.tokenID,
@@ -286,7 +294,19 @@ class Sketcher extends Widget
 				
 				if (callback) callback.call(master);
 			};
-			Func.arrangeMolecule(input, fcnArrange, this);
+			Func.arrangeMolecule(input, fcnArrange, this);*/
+
+			let effects = new RenderEffects();
+			//let measure = new OutlineMeasurement(0, 0, this.policy.data.pointScale);
+			this.layout = new ArrangeMolecule(this.mol, this, this.policy, effects);
+			this.layout.arrange();
+
+			this.centreAndShrink();
+
+			this.metavec = new MetaVector();
+			new DrawMolecule(this.layout, this.metavec).draw();
+
+			if (callback) callback.call(master);
 		}
 		ButtonView.prepare(fcnPrep, this);
 	}
@@ -324,7 +344,7 @@ class Sketcher extends Widget
 		this.divMessage.css('font-weight', 'bold');
 		this.divMessage.css('font-size', '120%');
 		
-		this.autoScale();
+		this.centreAndShrink();
 		this.redraw();
 		
 		// create the buttonviews
@@ -428,30 +448,22 @@ class Sketcher extends Widget
 		this.divMessage.text('');
 	}
 
-	// redetermines the offset and scale so that the molecular structure fits cleanly 
-	public autoScale():void
+	// rescales and aligns to the middle of the screen
+	public autoScale()
 	{
-		if (this.metavec == null) return;
-		let limW = this.width - 6, limH = this.height - 6;
-		let natW = this.metavec.width, natH = this.metavec.height;
-		let scale = 1;
-		if (natW > limW)
-		{
-			let down = limW / natW;
-			scale *= down;
-			natW *= down;
-			natH *= down;
-		}
-		if (natH > limH)
-		{
-			let down = limH / natH;
-			scale *= down;
-			natW *= down;
-			natH *= down;
-		}
-		this.offsetX = 0.5 * (this.width - natW);
-		this.offsetY = 0.5 * (this.height - natH);
-		this.scale = scale;
+		// note: this is inefficient; can just scale the primitives...
+
+		this.pointScale = this.policy.data.pointScale;
+
+		let effects = new RenderEffects();
+		this.layout = new ArrangeMolecule(this.mol, this, this.policy, effects);
+		this.layout.arrange();
+
+		this.centreAndShrink();
+
+		this.metavec = new MetaVector();
+		new DrawMolecule(this.layout, this.metavec).draw();
+
 		this.delayedRedraw();
 	}
 
@@ -617,11 +629,21 @@ class Sketcher extends Widget
 	public zoom(mag:number)
 	{
 		let cx = 0.5 * this.width, cy = 0.5 * this.height;
-		let newScale = Math.min(10, Math.max(0.1, this.scale * mag));
-		this.offsetX = cx - (newScale / this.scale) * (cx - this.offsetX);
-		this.offsetY = cy - (newScale / this.scale) * (cy - this.offsetY);
-		this.scale = newScale;
+		let newScale = Math.min(10 * this.policy.data.pointScale, Math.max(0.1 * this.policy.data.pointScale, this.pointScale * mag));
+		if (newScale == this.pointScale) return;
+
+		this.offsetX = cx - (newScale / this.pointScale) * (cx - this.offsetX);
+		this.offsetY = cy - (newScale / this.pointScale) * (cy - this.offsetY);
+		this.pointScale = newScale;
 				
+		// --- begin inefficient: rewrite this to just transform the constituents...
+		let effects = new RenderEffects();
+		this.layout = new ArrangeMolecule(this.mol, this, this.policy, effects);
+		this.layout.arrange();
+		this.metavec = new MetaVector();
+		new DrawMolecule(this.layout, this.metavec).draw();
+		// --- end inefficient
+
 		this.delayedRedraw();
 	}
 
@@ -649,6 +671,7 @@ class Sketcher extends Widget
 	{
 		let perm = this.templatePerms[idx];
 		
+/* !!! fnord... replace...		
 		// if not rendered yet, defer to the service to make that happen
 		if (perm.metavec == null)
 		{
@@ -685,9 +708,77 @@ class Sketcher extends Widget
 		
 		this.currentPerm = idx;
 		this.delayedRedraw();
+*/		
 	}
 
+   // functions for converting between coordinates within the widget (pixels) & molecular position (Angstroms)
+	public scale() {return this.pointScale;}
+    public angToX(ax:number):number 
+	{
+		//if (this.layout == null || this.layout.numPoints() == 0) return 0.5 * this.width + ax * this.pointScale;
+		return ax * this.pointScale + this.offsetX;
+	}
+    public angToY(ay:number):number 
+	{
+		//if (this.layout == null || this.layout.numPoints() == 0) return 0.5 * this.height - ay * this.pointScale;
+		return ay * -this.pointScale + this.offsetY;
+	}
+    public xToAng(px:number):number 
+	{
+		//if (this.layout == null || this.layout.numPoints() == 0) return (px - 0.5 * this.width) / this.pointScale;
+		return (px - this.offsetX) / this.pointScale;
+	}
+    public yToAng(py:number):number 
+	{
+		//if (this.layout == null || this.layout.numPoints() == 0) return (0.5 * this.height - py) / this.pointScale;
+		return (py - this.offsetY) / -this.pointScale;
+	}
+	public scaleToAng(scale:number):number {return scale / this.pointScale;}
+	public angToScale(ang:number):number {return ang * this.pointScale;}
+    public yIsUp():boolean {return false;}
+	public measureText(str:string, fontSize:number):number[] {return FontData.main.measureText(str, fontSize);}
+
 	// --------------------------------------- private methods ---------------------------------------
+
+	// redetermines the offset and scale so that the molecular structure fits cleanly 
+	private centreAndShrink():void
+	{
+		if (this.layout == null) return;
+
+		let bounds = this.layout.determineBoundary(0);
+
+		let limW = this.width - 6, limH = this.height - 6;
+		let natW = bounds[2] - bounds[0], natH = bounds[3] - bounds[1];
+
+		let scale = 1;
+		if (natW > limW)
+		{
+			let down = limW / natW;
+			scale *= down;
+			natW *= down;
+			natH *= down;
+		}
+		if (natH > limH)
+		{
+			let down = limH / natH;
+			scale *= down;
+			natW *= down;
+			natH *= down;
+		}
+
+		if (scale < 1)
+		{
+			this.pointScale *= scale;
+			this.layout.offsetEverything(this.offsetX * scale, this.offsetY * scale);
+			this.layout.scaleEverything(scale);
+			bounds = this.layout.determineBoundary(0);
+		}
+
+		let dx = 0.5 * (limW - natW) - bounds[0], dy = 0.5 * (limH - natH) - bounds[1];
+		this.offsetX += dx;
+		this.offsetY += dy;
+		this.layout.offsetEverything(dx, dy);
+	}
 
 	// rebuilds the canvas content
 	private redraw():void
@@ -766,11 +857,9 @@ class Sketcher extends Widget
 		{
 			if (this.dragGuides != null && this.dragGuides.length > 0)
 			{
-				let scale = this.scale * this.policy.data.pointScale;
-			
 				for (let g of this.dragGuides) for (let n = 0; n < g.x.length; n++)
 				{
-					let lw = this.policy.data.lineSize * scale;
+					let lw = this.policy.data.lineSize * this.pointScale;
 					ctx.strokeStyle = '#C0C0C0';
 					ctx.lineWidth = lw;
 					drawLine(ctx, g.sourceX, g.sourceY, g.destX[n], g.destY[n]);
@@ -789,7 +878,7 @@ class Sketcher extends Widget
 			let rsz = ringX == null ? 0 : ringX.length;
 			if (rsz > 0)
 			{
-				let scale = this.scale * this.policy.data.pointScale;
+				let scale = this.pointScale;
 				let lw = this.policy.data.lineSize * scale;
 				ctx.strokeStyle = '#C0C0C0';
 				ctx.lineWidth = lw;
@@ -832,25 +921,44 @@ class Sketcher extends Widget
 		ctx.scale(density, density);
 		ctx.clearRect(0, 0, this.width, this.height);
 		
+console.log('fnord:drawmol...');//fnord
+console.log('  metavec:'+JSON.stringify(this.metavec));
+console.log('  transform:'+this.offsetX+','+this.offsetY+','+this.pointScale);		
 		if (this.metavec != null)
 		{
-			let draw = new MetaVector(this.rawvec);
+			/*let draw = new MetaVector(this.rawvec);
 			draw.offsetX = this.offsetX;
 			draw.offsetY = this.offsetY;
 			draw.scale = this.scale;
-			draw.renderContext(ctx);
+			draw.renderContext(ctx);*/
+			this.metavec.renderContext(ctx);
+		}
+
+		// debugging only
+//zog
+		for (let n = 1; n <= this.mol.numBonds(); n++)
+		{
+			let bfr = this.mol.bondFrom(n), bto = this.mol.bondTo(n);
+			let x1 = this.angToX(this.mol.atomX(bfr)), y1 = this.angToY(this.mol.atomY(bfr));
+			let x2 = this.angToX(this.mol.atomX(bto)), y2 = this.angToY(this.mol.atomY(bto));
+			ctx.strokeStyle = 'red';
+			ctx.lineWidth = 1;
+			ctx.moveTo(x1, y1);
+			ctx.lineTo(x2, y2);
+			ctx.stroke();
 		}
 		
 		if (this.templatePerms != null)
 		{
 			let perm = this.templatePerms[this.currentPerm];
+			/* !! fnord: update...
 			if (perm.metavec != null)
 			{
 				perm.metavec.offsetX = this.offsetX;
 				perm.metavec.offsetY = this.offsetY;
 				perm.metavec.scale = this.scale;
 				perm.metavec.renderContext(ctx);
-			}
+			}*/
 		}		
 		
 		ctx.restore();
@@ -913,7 +1021,7 @@ class Sketcher extends Widget
 		if (this.dragType == DraggingTool.Rotate)
 		{
 			let [x0, y0, theta, magnitude] = this.determineDragTheta();
-			let scale = this.scale * this.policy.data.pointScale;
+			let scale = this.pointScale;
 			let lw = this.policy.data.lineSize * scale;
 			ctx.strokeStyle = '#E0E0E0';
 			ctx.lineWidth = 0.5 * lw;
@@ -945,7 +1053,7 @@ class Sketcher extends Widget
 		if (this.dragType == DraggingTool.Move)
 		{
 			let [dx, dy] = this.determineMoveDelta();
-			let scale = this.scale * this.policy.data.pointScale;
+			let scale = this.pointScale;
 			let lw = this.policy.data.lineSize * scale;
 			for (let atom of this.subjectAtoms(false, true))
 			{
@@ -988,7 +1096,7 @@ class Sketcher extends Widget
 	// locates a molecular object at the given position: returns N for atom, -N for bond, or 0 for nothing
 	private pickObject(x:number, y:number):number
 	{
-		if (this.arrmol == null) return 0;
+		if (this.layout == null) return 0;
 		
 		// if the position is over a buttonview, return zero (yes, this does happen)
 		if (this.toolView != null) 
@@ -1009,16 +1117,16 @@ class Sketcher extends Widget
 		
 		// proceed with atoms & bonds
 		
-		let limitDSQ = sqr(0.5 * this.scale * this.policy.data.pointScale);
+		let limitDSQ = sqr(0.5 * this.pointScale);
 		let bestItem = 0, bestDSQ:number;
 
 		// look for close atoms
-		for (let n = 0; n < this.arrmol.points.length; n++)
+		for (let n = 0; n < this.layout.numPoints(); n++)
 		{
-			let p = this.arrmol.points[n];
+			let p = this.layout.getPoint(n);
 			if (p.anum == 0) continue;
 			
-			let dx = Math.abs(x - (p.cx * this.scale + this.offsetX)), dy = Math.abs(y - (p.cy * this.scale + this.offsetY));
+			let dx = Math.abs(x - p.oval.cx), dy = Math.abs(y - p.oval.cy);
 			let dsq = norm2_xy(dx, dy);
 			if (dsq > limitDSQ) continue;
 			if (bestItem == 0 || dsq < bestDSQ)
@@ -1030,13 +1138,13 @@ class Sketcher extends Widget
 		//if (bestItem!=0) return bestItem; // give priority to atoms (!! but not for touch-style...)
 		
 		// look for close bonds
-		for (let n = 0; n < this.arrmol.lines.length; n++)
+		for (let n = 0; n < this.layout.numLines(); n++)
 		{
-			let l = this.arrmol.lines[n];
+			let l = this.layout.getLine(n);
 			if (l.bnum == 0) continue;
 			
-			let x1 = l.x1 * this.scale + this.offsetX, y1 = l.y1 * this.scale + this.offsetY;
-			let x2 = l.x2 * this.scale + this.offsetX, y2 = l.y2 * this.scale + this.offsetY;
+			let x1 = l.line.x1, y1 = l.line.y1;
+			let x2 = l.line.x2, y2 = l.line.y2;
 			let bondDSQ = norm2_xy(x2 - x1, y2 - y1) * 0.25;
 			let dsq = norm2_xy(x - 0.5 * (x1 + x2), y - 0.5 * (y1 + y2));
 			
@@ -1060,19 +1168,19 @@ class Sketcher extends Widget
 	// draws an ellipse around an atom/bond, for highlighting purposes
 	private drawAtomShade(ctx:CanvasRenderingContext2D, atom:number, fillCol:number, borderCol:number, anghalo:number):void
 	{
-		if (this.arrmol == null) return;
+		if (this.layout == null) return;
 		
 		let p:any = undefined;
-		for (let n = 0; n < this.arrmol.points.length; n++) if (this.arrmol.points[n].anum == atom)
+		for (let n = 0; n < this.layout.numPoints(); n++) if (this.layout.getPoint(n).anum == atom)
 		{
-			p = this.arrmol.points[n];
+			p = this.layout.getPoint(n);
 			break;
 		}
 		if (p == null) return;
 		
-		let minRad = 0.2 * this.scale * this.policy.data.pointScale, minRadSq = sqr(minRad);
-		let cx = p.cx * this.scale + this.offsetX, cy = p.cy * this.scale + this.offsetY;
-		let rad = Math.max(minRad, Math.max(p.rw, p.rh) * this.scale) + (0.1 + anghalo) * this.scale * this.policy.data.pointScale;
+		let minRad = 0.2 * this.pointScale, minRadSq = sqr(minRad);
+		let cx = p.cx * this.pointScale + this.offsetX, cy = p.cy * this.pointScale + this.offsetY;
+		let rad = Math.max(minRad, Math.max(p.rw, p.rh) * this.pointScale) + (0.1 + anghalo) * this.pointScale;
 		
 		if (fillCol != -1)
 		{
@@ -1092,25 +1200,25 @@ class Sketcher extends Widget
 	}
 	private drawBondShade(ctx:CanvasRenderingContext2D, bond:number, fillCol:number, borderCol:number, anghalo:number):void
 	{
-		if (this.arrmol == null) return;
+		if (this.layout == null) return;
 
 		let x1 = 0, y1 = 0, x2 = 0, y2 = 0, nb = 0, sz = 0;
-		for (let n = 0; n < this.arrmol.lines.length; n++) 
+		for (let n = 0; n < this.layout.numLines(); n++) 
 		{
-			let l = this.arrmol.lines[n];
+			let l = this.layout.getLine(n);
 			if (l.bnum != bond) continue;
-			x1 += l.x1; y1 += l.y1; x2 += l.x2; y2 += l.y2;
+			x1 += l.line.x1; y1 += l.line.y1; x2 += l.line.x2; y2 += l.line.y2;
 			nb++;
-			sz += l.size + (0.2 + anghalo) * this.policy.data.pointScale;
+			sz += l.size + (0.2 + anghalo) * this.pointScale;
 		}
 		if (nb == 0) return;
 		
 		let invNB = 1 / nb;
-		sz *= this.scale * invNB;
-		x1 = x1 * this.scale * invNB + this.offsetX;
-		y1 = y1 * this.scale * invNB + this.offsetY;
-		x2 = x2 * this.scale * invNB + this.offsetX;
-		y2 = y2 * this.scale * invNB + this.offsetY;
+		sz *= this.pointScale * invNB;
+		x1 = x1 * this.pointScale * invNB + this.offsetX;
+		y1 = y1 * this.pointScale * invNB + this.offsetY;
+		x2 = x2 * this.pointScale * invNB + this.offsetX;
+		y2 = y2 * this.pointScale * invNB + this.offsetY;
 
 		let dx = x2 - x1, dy = y2 - y1, invDist = 1 / norm_xy(dx, dy);
 		dx *= invDist; 
@@ -1160,15 +1268,16 @@ class Sketcher extends Widget
 		let x1 = this.clickX, y1 = this.clickY;
 		if (this.opAtom > 0)
 		{
-			x1 = this.arrmol.points[this.opAtom - 1].cx * this.scale + this.offsetX;
-			y1 = this.arrmol.points[this.opAtom - 1].cy * this.scale + this.offsetY;
+			let p = this.layout.getPoint(this.opAtom - 1);
+			x1 = p.oval.cx + this.offsetX;
+			y1 = p.oval.cy + this.offsetY;
 		}
 		let x2 = this.mouseX, y2 = this.mouseY;
 		
 		let snapTo = this.snapToGuide(x2, y2);
 		if (snapTo != null) {x2 = snapTo[0]; y2 = snapTo[1];}
 		
-		let scale = this.scale * this.policy.data.pointScale;
+		let scale = this.pointScale;
 		
 		ctx.strokeStyle = '#808080';
 		ctx.lineWidth = this.policy.data.lineSize * scale;
@@ -1240,13 +1349,11 @@ class Sketcher extends Widget
 		this.lassoMask = new Array(this.mol.numAtoms());
 		for (let n = 0; n < this.mol.numAtoms(); n++) this.lassoMask[n] = false;
 
-		for (let n = 0; n < this.arrmol.points.length; n++)
+		for (let n = 0; n < this.layout.numPoints(); n++)
 		{
-			let p = this.arrmol.points[n];
+			let p = this.layout.getPoint(n);
 			if (p.anum == 0) continue;
-			let x = p.cx * this.scale + this.offsetX, y = p.cy * this.scale + this.offsetY;
-
-			this.lassoMask[p.anum - 1] = GeomUtil.pointInPolygon(x, y, this.lassoX, this.lassoY);
+			this.lassoMask[p.anum - 1] = GeomUtil.pointInPolygon(p.oval.cx, p.oval.cy, this.lassoX, this.lassoY);
 		}
 	}
 
@@ -1275,8 +1382,8 @@ class Sketcher extends Widget
 				let dx = Molecule.IDEALBOND * Math.cos(theta), dy = Molecule.IDEALBOND * Math.sin(theta); 
 				g.x.push(mx + dx);
 				g.y.push(my + dy);
-				g.destX.push(this.clickX + dx * this.scale * this.arrmol.scale);
-				g.destY.push(this.clickY - dy * this.scale * this.arrmol.scale);
+				g.destX.push(this.clickX + dx * this.pointScale);
+				g.destY.push(this.clickY - dy * this.pointScale);
 			}
 			
 			return [g];
@@ -1383,7 +1490,7 @@ class Sketcher extends Widget
 		//if (this.dragGuides == null) return null;
 		
 		let bestDSQ = Number.POSITIVE_INFINITY, bestX = 0, bestY = 0;
-		const APPROACH = sqr(0.5 * this.scale * this.policy.data.pointScale)
+		const APPROACH = sqr(0.5 * this.pointScale);
 		if (this.dragGuides != null) for (let i = 0; i < this.dragGuides.length; i++) for (let j = 0; j < this.dragGuides[i].x.length; j++)
 		{
 			let px = this.dragGuides[i].destX[j], py = this.dragGuides[i].destY[j];
@@ -1400,30 +1507,6 @@ class Sketcher extends Widget
 		
 		return null;
 	}
-
-    // functions for converting between coordinates within the widget (pixels) & molecular position (Angstroms)
-    private angToX(ax:number):number 
-	{
-		if (this.arrmol == null || this.arrmol.points.length == 0) return 0.5 * this.width + ax * this.scale * this.policy.data.pointScale;
-		return this.offsetX + this.scale * (this.transform[0] + this.transform[2] * ax);
-	}
-    private angToY(ay:number):number 
-	{
-		if (this.arrmol == null || this.arrmol.points.length == 0) return 0.5 * this.height - ay * this.scale * this.policy.data.pointScale;
-		return this.offsetY + this.scale * (this.transform[1] - this.transform[2] * ay);
-	}
-    private xToAng(px:number):number 
-	{
-		if (this.arrmol == null || this.arrmol.points.length == 0) return (px - 0.5 * this.width) / (this.scale * this.policy.data.pointScale);
-		return ((px - this.offsetX) / this.scale - this.transform[0]) / this.transform[2];
-	}
-    private yToAng(py:number):number 
-	{
-		if (this.arrmol == null || this.arrmol.points.length == 0) return (0.5 * this.height - py) / (this.scale * this.policy.data.pointScale);
-		return (this.transform[1] - (py - this.offsetY) / this.scale) / this.transform[2];
-	}
-	private scaleToAng(scale:number):number {return scale / (this.scale * this.transform[2]);}
-	private angToScale(ang:number):number {return ang * this.scale * this.transform[2];}
 
 	// returns an array of atom indices that make up the selection/current, or empty if nothing; if the "allIfNone" flag
 	// is set, all of the atoms will be returned if otherwise would have been none; if "useOpAtom" is true, an empty
@@ -1725,7 +1808,7 @@ class Sketcher extends Widget
 			else if (this.dragType == DraggingTool.Move)
 			{
 				let [dx, dy] = this.determineMoveDelta();
-				let scale = this.scale * this.policy.data.pointScale;
+				let scale = this.pointScale;
 				// note: in a future iteration, make the 'Move' action do rotate-snap-rebond, and call it during the mousemove, to give dynamic feedback
 				let molact:MoleculeActivity = new MoleculeActivity(this, ActivityType.Move, {'refAtom': this.opAtom, 'deltaX': dx / scale, 'deltaY': -dy / scale});
 				molact.execute();
@@ -1845,6 +1928,8 @@ class Sketcher extends Widget
 			{
 				this.offsetX += dx;
 				this.offsetY += dy;
+				this.layout.offsetEverything(dx, dy);
+				this.metavec.transformPrimitives(dx, dy, 1, 1);
 				this.delayedRedraw();
 			}
 
@@ -1859,12 +1944,12 @@ class Sketcher extends Widget
 			if (dy != 0)
 			{
 				dy = Math.min(50, Math.max(-50, dy));
-				let newScale = this.scale * (1 - dy * 0.01);
+				let newScale = this.pointScale * (1 - dy * 0.01);
 				newScale = Math.min(10, Math.max(0.1, newScale));
-				let newOX = this.clickX - (newScale / this.scale) * (this.clickX - this.offsetX);
-				let newOY = this.clickY - (newScale / this.scale) * (this.clickY - this.offsetY);
+				let newOX = this.clickX - (newScale / this.pointScale) * (this.clickX - this.offsetX);
+				let newOY = this.clickY - (newScale / this.pointScale) * (this.clickY - this.offsetY);
 				
-				this.scale = newScale;
+				this.pointScale = newScale;
 				this.offsetX = newOX;
 				this.offsetY = newOY;
 				

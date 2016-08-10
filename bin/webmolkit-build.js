@@ -3076,10 +3076,14 @@ var MetaVector = (function () {
         var font = FontData.main;
         this.charMask = Vec.booleanArray(false, font.GLYPH_COUNT);
         if (vec != null) {
-            this.types = vec.types;
-            this.prims = vec.prims;
-            this.width = vec.size[0];
-            this.height = vec.size[1];
+            if (vec.size != null) {
+                this.width = vec.size[0];
+                this.height = vec.size[1];
+            }
+            if (vec.types != null)
+                this.types = vec.types;
+            if (vec.prims != null)
+                this.prims = vec.prims;
             for (var _i = 0, _a = this.prims; _i < _a.length; _i++) {
                 var p = _a[_i];
                 if (p[0] == this.PRIM_TEXT) {
@@ -3151,7 +3155,7 @@ var MetaVector = (function () {
     };
     MetaVector.prototype.drawText = function (x, y, txt, size, colour, align) {
         if (align == null)
-            align = 0;
+            align = TextAlign.Left | TextAlign.Baseline;
         var font = FontData.main;
         for (var n = 0; n < txt.length; n++) {
             var i = txt.charCodeAt(n);
@@ -4265,27 +4269,22 @@ var Cookies = (function () {
     };
     return Cookies;
 }());
-var ArrangeMeasurement = (function () {
-    function ArrangeMeasurement() {
-    }
-    return ArrangeMeasurement;
-}());
-var OutlineMeasurement = (function (_super) {
-    __extends(OutlineMeasurement, _super);
-    function OutlineMeasurement(pointScale) {
-        _super.call(this);
+var OutlineMeasurement = (function () {
+    function OutlineMeasurement(offsetX, offsetY, pointScale) {
+        this.offsetX = offsetX;
+        this.offsetY = offsetY;
         this.pointScale = pointScale;
         this.invScale = 1 / pointScale;
     }
     OutlineMeasurement.prototype.scale = function () { return this.pointScale; };
-    OutlineMeasurement.prototype.angToX = function (ax) { return ax * this.pointScale; };
-    OutlineMeasurement.prototype.angToY = function (ay) { return ay * -this.pointScale; };
-    OutlineMeasurement.prototype.xToAng = function (px) { return px * this.invScale; };
-    OutlineMeasurement.prototype.yToAng = function (py) { return py * -this.invScale; };
+    OutlineMeasurement.prototype.angToX = function (ax) { return ax * this.pointScale + this.offsetX; };
+    OutlineMeasurement.prototype.angToY = function (ay) { return ay * -this.pointScale + this.offsetY; };
+    OutlineMeasurement.prototype.xToAng = function (px) { return (px - this.offsetX) * this.invScale; };
+    OutlineMeasurement.prototype.yToAng = function (py) { return (py - this.offsetY) * -this.invScale; };
     OutlineMeasurement.prototype.yIsUp = function () { return false; };
     OutlineMeasurement.prototype.measureText = function (str, fontSize) { return FontData.main.measureText(str, fontSize); };
     return OutlineMeasurement;
-}(ArrangeMeasurement));
+}());
 var BLineType;
 (function (BLineType) {
     BLineType[BLineType["Normal"] = 1] = "Normal";
@@ -5999,7 +5998,7 @@ var ViewStructure = (function (_super) {
     ViewStructure.prototype.setupMolecule = function (callback, master) {
         var mol = Molecule.fromString(this.molstr);
         var effects = new RenderEffects();
-        var measure = new OutlineMeasurement(this.policy.data.pointScale);
+        var measure = new OutlineMeasurement(0, 0, this.policy.data.pointScale);
         var layout = new ArrangeMolecule(mol, measure, this.policy, effects);
         layout.arrange();
         this.metavec = new MetaVector();
@@ -7790,17 +7789,15 @@ var Sketcher = (function (_super) {
         this.canvasOver = null;
         this.divMessage = null;
         this.fadeWatermark = 0;
-        this.rawvec = null;
+        this.layout = null;
         this.metavec = null;
-        this.arrmol = null;
         this.guidelines = null;
-        this.transform = null;
         this.toolView = null;
         this.commandView = null;
         this.templateView = null;
         this.offsetX = 0;
         this.offsetY = 0;
-        this.scale = 0;
+        this.pointScale = 1;
         this.currentAtom = 0;
         this.currentBond = 0;
         this.hoverAtom = 0;
@@ -7846,44 +7843,18 @@ var Sketcher = (function (_super) {
         this.mol = mol.clone();
         if (!this.beenSetup)
             return;
-        this.arrmol = null;
-        this.rawvec = null;
+        this.layout = null;
         this.metavec = null;
         this.hoverAtom = 0;
         this.hoverBond = 0;
-        var input = {
-            'tokenID': this.tokenID,
-            'policy': this.policy.data,
-            'molNative': this.mol.toString(),
-            'withGuidelines': true
-        };
-        var fcn = function (result, error) {
-            if (!result) {
-                alert('Arrangement of structure failed: ' + error.message);
-                return;
-            }
-            if (this.transform != null) {
-                var dx = result.transform[0] - this.transform[0];
-                var dy = result.transform[1] - this.transform[1];
-                this.offsetX -= dx * this.scale;
-                this.offsetY -= dy * this.scale;
-            }
-            this.arrmol = result.arrmol;
-            this.rawvec = result.metavec;
-            this.metavec = new MetaVector(result.metavec);
-            this.transform = result.transform;
-            this.guidelines = result.guidelines;
-            if (withAutoScale)
-                this.autoScale();
-            this.delayedRedraw();
-        };
-        Func.arrangeMolecule(input, fcn, this);
+        this.autoScale();
     };
     Sketcher.prototype.defineMoleculeString = function (molsk, withAutoScale, withStashUndo) {
         this.defineMolecule(Molecule.fromString(molsk), withAutoScale, withStashUndo);
     };
     Sketcher.prototype.defineRenderPolicy = function (policy) {
         this.policy = policy;
+        this.pointScale = policy.data.pointScale;
     };
     Sketcher.prototype.clearMolecule = function () { this.defineMolecule(new Molecule(), true, true); };
     Sketcher.prototype.getMolecule = function () { return this.mol.clone(); };
@@ -7892,28 +7863,18 @@ var Sketcher = (function (_super) {
             this.beenSetup = true;
             if (this.mol == null)
                 this.mol = new Molecule();
-            if (this.policy == null)
+            if (this.policy == null) {
                 this.policy = RenderPolicy.defaultColourOnWhite();
-            var input = {
-                'tokenID': this.tokenID,
-                'policy': this.policy.data,
-                'molNative': this.mol.toString(),
-                'withGuidelines': true
-            };
-            var fcnArrange = function (result, error) {
-                if (!result) {
-                    alert('Setup of EditMolecule failed: ' + error.message);
-                    return;
-                }
-                this.arrmol = result.arrmol;
-                this.rawvec = result.metavec;
-                this.metavec = new MetaVector(result.metavec);
-                this.transform = result.transform;
-                this.guidelines = result.guidelines;
-                if (callback)
-                    callback.call(master);
-            };
-            Func.arrangeMolecule(input, fcnArrange, this);
+                this.pointScale = this.policy.data.pointScale;
+            }
+            var effects = new RenderEffects();
+            this.layout = new ArrangeMolecule(this.mol, this, this.policy, effects);
+            this.layout.arrange();
+            this.centreAndShrink();
+            this.metavec = new MetaVector();
+            new DrawMolecule(this.layout, this.metavec).draw();
+            if (callback)
+                callback.call(master);
         };
         ButtonView.prepare(fcnPrep, this);
     };
@@ -7939,7 +7900,7 @@ var Sketcher = (function (_super) {
         this.divMessage.css('vertical-align', 'middle');
         this.divMessage.css('font-weight', 'bold');
         this.divMessage.css('font-size', '120%');
-        this.autoScale();
+        this.centreAndShrink();
         this.redraw();
         var reserveHeight = 0;
         if (this.useCommandBank) {
@@ -8015,26 +7976,13 @@ var Sketcher = (function (_super) {
         this.divMessage.text('');
     };
     Sketcher.prototype.autoScale = function () {
-        if (this.metavec == null)
-            return;
-        var limW = this.width - 6, limH = this.height - 6;
-        var natW = this.metavec.width, natH = this.metavec.height;
-        var scale = 1;
-        if (natW > limW) {
-            var down = limW / natW;
-            scale *= down;
-            natW *= down;
-            natH *= down;
-        }
-        if (natH > limH) {
-            var down = limH / natH;
-            scale *= down;
-            natW *= down;
-            natH *= down;
-        }
-        this.offsetX = 0.5 * (this.width - natW);
-        this.offsetY = 0.5 * (this.height - natH);
-        this.scale = scale;
+        this.pointScale = this.policy.data.pointScale;
+        var effects = new RenderEffects();
+        this.layout = new ArrangeMolecule(this.mol, this, this.policy, effects);
+        this.layout.arrange();
+        this.centreAndShrink();
+        this.metavec = new MetaVector();
+        new DrawMolecule(this.layout, this.metavec).draw();
         this.delayedRedraw();
     };
     Sketcher.prototype.anySelected = function () {
@@ -8163,10 +8111,17 @@ var Sketcher = (function (_super) {
     };
     Sketcher.prototype.zoom = function (mag) {
         var cx = 0.5 * this.width, cy = 0.5 * this.height;
-        var newScale = Math.min(10, Math.max(0.1, this.scale * mag));
-        this.offsetX = cx - (newScale / this.scale) * (cx - this.offsetX);
-        this.offsetY = cy - (newScale / this.scale) * (cy - this.offsetY);
-        this.scale = newScale;
+        var newScale = Math.min(10 * this.policy.data.pointScale, Math.max(0.1 * this.policy.data.pointScale, this.pointScale * mag));
+        if (newScale == this.pointScale)
+            return;
+        this.offsetX = cx - (newScale / this.pointScale) * (cx - this.offsetX);
+        this.offsetY = cy - (newScale / this.pointScale) * (cy - this.offsetY);
+        this.pointScale = newScale;
+        var effects = new RenderEffects();
+        this.layout = new ArrangeMolecule(this.mol, this, this.policy, effects);
+        this.layout.arrange();
+        this.metavec = new MetaVector();
+        new DrawMolecule(this.layout, this.metavec).draw();
         this.delayedRedraw();
     };
     Sketcher.prototype.pasteText = function (str) {
@@ -8186,31 +8141,53 @@ var Sketcher = (function (_super) {
     };
     Sketcher.prototype.pickTemplatePermutation = function (idx) {
         var perm = this.templatePerms[idx];
-        if (perm.metavec == null) {
-            var tpolicy = new RenderPolicy(this.policy.data);
-            tpolicy.data.foreground = 0x808080;
-            tpolicy.data.atomCols = tpolicy.data.atomCols.slice(0);
-            for (var n in tpolicy.data.atomCols)
-                tpolicy.data.atomCols[n] = 0x808080;
-            var input = {
-                'tokenID': this.tokenID,
-                'policy': tpolicy.data,
-                'molNative': perm.display,
-                'transform': this.transform
-            };
-            Func.arrangeMolecule(input, function (result, error) {
-                if (!result) {
-                    alert('Arrangement of template overlay failed: ' + error.message);
-                    return;
-                }
-                perm.metavec = new MetaVector(result.metavec);
-                this.currentPerm = idx;
-                this.delayedRedraw();
-            }, this);
+    };
+    Sketcher.prototype.scale = function () { return this.pointScale; };
+    Sketcher.prototype.angToX = function (ax) {
+        return ax * this.pointScale + this.offsetX;
+    };
+    Sketcher.prototype.angToY = function (ay) {
+        return ay * -this.pointScale + this.offsetY;
+    };
+    Sketcher.prototype.xToAng = function (px) {
+        return (px - this.offsetX) / this.pointScale;
+    };
+    Sketcher.prototype.yToAng = function (py) {
+        return (py - this.offsetY) / -this.pointScale;
+    };
+    Sketcher.prototype.scaleToAng = function (scale) { return scale / this.pointScale; };
+    Sketcher.prototype.angToScale = function (ang) { return ang * this.pointScale; };
+    Sketcher.prototype.yIsUp = function () { return false; };
+    Sketcher.prototype.measureText = function (str, fontSize) { return FontData.main.measureText(str, fontSize); };
+    Sketcher.prototype.centreAndShrink = function () {
+        if (this.layout == null)
             return;
+        var bounds = this.layout.determineBoundary(0);
+        var limW = this.width - 6, limH = this.height - 6;
+        var natW = bounds[2] - bounds[0], natH = bounds[3] - bounds[1];
+        var scale = 1;
+        if (natW > limW) {
+            var down = limW / natW;
+            scale *= down;
+            natW *= down;
+            natH *= down;
         }
-        this.currentPerm = idx;
-        this.delayedRedraw();
+        if (natH > limH) {
+            var down = limH / natH;
+            scale *= down;
+            natW *= down;
+            natH *= down;
+        }
+        if (scale < 1) {
+            this.pointScale *= scale;
+            this.layout.offsetEverything(this.offsetX * scale, this.offsetY * scale);
+            this.layout.scaleEverything(scale);
+            bounds = this.layout.determineBoundary(0);
+        }
+        var dx = 0.5 * (limW - natW) - bounds[0], dy = 0.5 * (limH - natH) - bounds[1];
+        this.offsetX += dx;
+        this.offsetY += dy;
+        this.layout.offsetEverything(dx, dy);
     };
     Sketcher.prototype.redraw = function () {
         this.filthy = false;
@@ -8275,11 +8252,10 @@ var Sketcher = (function (_super) {
         }
         if (this.dragType == DraggingTool.Move || (this.dragType == DraggingTool.Atom && this.opAtom > 0) || this.dragType == DraggingTool.Bond) {
             if (this.dragGuides != null && this.dragGuides.length > 0) {
-                var scale = this.scale * this.policy.data.pointScale;
                 for (var _i = 0, _a = this.dragGuides; _i < _a.length; _i++) {
                     var g = _a[_i];
                     for (var n = 0; n < g.x.length; n++) {
-                        var lw = this.policy.data.lineSize * scale;
+                        var lw = this.policy.data.lineSize * this.pointScale;
                         ctx.strokeStyle = '#C0C0C0';
                         ctx.lineWidth = lw;
                         drawLine(ctx, g.sourceX, g.sourceY, g.destX[n], g.destY[n]);
@@ -8295,7 +8271,7 @@ var Sketcher = (function (_super) {
             var _b = this.determineFauxRing(), ringX = _b[0], ringY = _b[1];
             var rsz = ringX == null ? 0 : ringX.length;
             if (rsz > 0) {
-                var scale = this.scale * this.policy.data.pointScale;
+                var scale = this.pointScale;
                 var lw = this.policy.data.lineSize * scale;
                 ctx.strokeStyle = '#C0C0C0';
                 ctx.lineWidth = lw;
@@ -8335,21 +8311,24 @@ var Sketcher = (function (_super) {
         ctx.save();
         ctx.scale(density, density);
         ctx.clearRect(0, 0, this.width, this.height);
+        console.log('fnord:drawmol...');
+        console.log('  metavec:' + JSON.stringify(this.metavec));
+        console.log('  transform:' + this.offsetX + ',' + this.offsetY + ',' + this.pointScale);
         if (this.metavec != null) {
-            var draw = new MetaVector(this.rawvec);
-            draw.offsetX = this.offsetX;
-            draw.offsetY = this.offsetY;
-            draw.scale = this.scale;
-            draw.renderContext(ctx);
+            this.metavec.renderContext(ctx);
+        }
+        for (var n = 1; n <= this.mol.numBonds(); n++) {
+            var bfr = this.mol.bondFrom(n), bto = this.mol.bondTo(n);
+            var x1 = this.angToX(this.mol.atomX(bfr)), y1 = this.angToY(this.mol.atomY(bfr));
+            var x2 = this.angToX(this.mol.atomX(bto)), y2 = this.angToY(this.mol.atomY(bto));
+            ctx.strokeStyle = 'red';
+            ctx.lineWidth = 1;
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.stroke();
         }
         if (this.templatePerms != null) {
             var perm = this.templatePerms[this.currentPerm];
-            if (perm.metavec != null) {
-                perm.metavec.offsetX = this.offsetX;
-                perm.metavec.offsetY = this.offsetY;
-                perm.metavec.scale = this.scale;
-                perm.metavec.renderContext(ctx);
-            }
         }
         ctx.restore();
     };
@@ -8378,7 +8357,7 @@ var Sketcher = (function (_super) {
         }
         if (this.dragType == DraggingTool.Rotate) {
             var _a = this.determineDragTheta(), x0 = _a[0], y0 = _a[1], theta = _a[2], magnitude = _a[3];
-            var scale = this.scale * this.policy.data.pointScale;
+            var scale = this.pointScale;
             var lw = this.policy.data.lineSize * scale;
             ctx.strokeStyle = '#E0E0E0';
             ctx.lineWidth = 0.5 * lw;
@@ -8404,7 +8383,7 @@ var Sketcher = (function (_super) {
         }
         if (this.dragType == DraggingTool.Move) {
             var _c = this.determineMoveDelta(), dx = _c[0], dy = _c[1];
-            var scale = this.scale * this.policy.data.pointScale;
+            var scale = this.pointScale;
             var lw = this.policy.data.lineSize * scale;
             for (var _d = 0, _e = this.subjectAtoms(false, true); _d < _e.length; _d++) {
                 var atom = _e[_d];
@@ -8436,7 +8415,7 @@ var Sketcher = (function (_super) {
         window.setTimeout(redrawAction, 10);
     };
     Sketcher.prototype.pickObject = function (x, y) {
-        if (this.arrmol == null)
+        if (this.layout == null)
             return 0;
         if (this.toolView != null) {
             var pos1 = this.container.position(), pos2 = this.toolView.content.position();
@@ -8453,13 +8432,13 @@ var Sketcher = (function (_super) {
             if (this.toolView.withinOutline(x + pos1.left - pos2.left, y + pos1.top - pos2.top))
                 return 0;
         }
-        var limitDSQ = sqr(0.5 * this.scale * this.policy.data.pointScale);
+        var limitDSQ = sqr(0.5 * this.pointScale);
         var bestItem = 0, bestDSQ;
-        for (var n = 0; n < this.arrmol.points.length; n++) {
-            var p = this.arrmol.points[n];
+        for (var n = 0; n < this.layout.numPoints(); n++) {
+            var p = this.layout.getPoint(n);
             if (p.anum == 0)
                 continue;
-            var dx = Math.abs(x - (p.cx * this.scale + this.offsetX)), dy = Math.abs(y - (p.cy * this.scale + this.offsetY));
+            var dx = Math.abs(x - p.oval.cx), dy = Math.abs(y - p.oval.cy);
             var dsq = norm2_xy(dx, dy);
             if (dsq > limitDSQ)
                 continue;
@@ -8468,12 +8447,12 @@ var Sketcher = (function (_super) {
                 bestDSQ = dsq;
             }
         }
-        for (var n = 0; n < this.arrmol.lines.length; n++) {
-            var l = this.arrmol.lines[n];
+        for (var n = 0; n < this.layout.numLines(); n++) {
+            var l = this.layout.getLine(n);
             if (l.bnum == 0)
                 continue;
-            var x1 = l.x1 * this.scale + this.offsetX, y1 = l.y1 * this.scale + this.offsetY;
-            var x2 = l.x2 * this.scale + this.offsetX, y2 = l.y2 * this.scale + this.offsetY;
+            var x1 = l.line.x1, y1 = l.line.y1;
+            var x2 = l.line.x2, y2 = l.line.y2;
             var bondDSQ = norm2_xy(x2 - x1, y2 - y1) * 0.25;
             var dsq = norm2_xy(x - 0.5 * (x1 + x2), y - 0.5 * (y1 + y2));
             if (dsq > bondDSQ)
@@ -8493,19 +8472,19 @@ var Sketcher = (function (_super) {
         }
     };
     Sketcher.prototype.drawAtomShade = function (ctx, atom, fillCol, borderCol, anghalo) {
-        if (this.arrmol == null)
+        if (this.layout == null)
             return;
         var p = undefined;
-        for (var n = 0; n < this.arrmol.points.length; n++)
-            if (this.arrmol.points[n].anum == atom) {
-                p = this.arrmol.points[n];
+        for (var n = 0; n < this.layout.numPoints(); n++)
+            if (this.layout.getPoint(n).anum == atom) {
+                p = this.layout.getPoint(n);
                 break;
             }
         if (p == null)
             return;
-        var minRad = 0.2 * this.scale * this.policy.data.pointScale, minRadSq = sqr(minRad);
-        var cx = p.cx * this.scale + this.offsetX, cy = p.cy * this.scale + this.offsetY;
-        var rad = Math.max(minRad, Math.max(p.rw, p.rh) * this.scale) + (0.1 + anghalo) * this.scale * this.policy.data.pointScale;
+        var minRad = 0.2 * this.pointScale, minRadSq = sqr(minRad);
+        var cx = p.cx * this.pointScale + this.offsetX, cy = p.cy * this.pointScale + this.offsetY;
+        var rad = Math.max(minRad, Math.max(p.rw, p.rh) * this.pointScale) + (0.1 + anghalo) * this.pointScale;
         if (fillCol != -1) {
             ctx.beginPath();
             ctx.ellipse(cx, cy, rad, rad, 0, 0, TWOPI, true);
@@ -8521,28 +8500,28 @@ var Sketcher = (function (_super) {
         }
     };
     Sketcher.prototype.drawBondShade = function (ctx, bond, fillCol, borderCol, anghalo) {
-        if (this.arrmol == null)
+        if (this.layout == null)
             return;
         var x1 = 0, y1 = 0, x2 = 0, y2 = 0, nb = 0, sz = 0;
-        for (var n = 0; n < this.arrmol.lines.length; n++) {
-            var l = this.arrmol.lines[n];
+        for (var n = 0; n < this.layout.numLines(); n++) {
+            var l = this.layout.getLine(n);
             if (l.bnum != bond)
                 continue;
-            x1 += l.x1;
-            y1 += l.y1;
-            x2 += l.x2;
-            y2 += l.y2;
+            x1 += l.line.x1;
+            y1 += l.line.y1;
+            x2 += l.line.x2;
+            y2 += l.line.y2;
             nb++;
-            sz += l.size + (0.2 + anghalo) * this.policy.data.pointScale;
+            sz += l.size + (0.2 + anghalo) * this.pointScale;
         }
         if (nb == 0)
             return;
         var invNB = 1 / nb;
-        sz *= this.scale * invNB;
-        x1 = x1 * this.scale * invNB + this.offsetX;
-        y1 = y1 * this.scale * invNB + this.offsetY;
-        x2 = x2 * this.scale * invNB + this.offsetX;
-        y2 = y2 * this.scale * invNB + this.offsetY;
+        sz *= this.pointScale * invNB;
+        x1 = x1 * this.pointScale * invNB + this.offsetX;
+        y1 = y1 * this.pointScale * invNB + this.offsetY;
+        x2 = x2 * this.pointScale * invNB + this.offsetX;
+        y2 = y2 * this.pointScale * invNB + this.offsetY;
         var dx = x2 - x1, dy = y2 - y1, invDist = 1 / norm_xy(dx, dy);
         dx *= invDist;
         dy *= invDist;
@@ -8578,8 +8557,9 @@ var Sketcher = (function (_super) {
     Sketcher.prototype.drawOriginatingBond = function (ctx, element, order, type) {
         var x1 = this.clickX, y1 = this.clickY;
         if (this.opAtom > 0) {
-            x1 = this.arrmol.points[this.opAtom - 1].cx * this.scale + this.offsetX;
-            y1 = this.arrmol.points[this.opAtom - 1].cy * this.scale + this.offsetY;
+            var p = this.layout.getPoint(this.opAtom - 1);
+            x1 = p.oval.cx + this.offsetX;
+            y1 = p.oval.cy + this.offsetY;
         }
         var x2 = this.mouseX, y2 = this.mouseY;
         var snapTo = this.snapToGuide(x2, y2);
@@ -8587,7 +8567,7 @@ var Sketcher = (function (_super) {
             x2 = snapTo[0];
             y2 = snapTo[1];
         }
-        var scale = this.scale * this.policy.data.pointScale;
+        var scale = this.pointScale;
         ctx.strokeStyle = '#808080';
         ctx.lineWidth = this.policy.data.lineSize * scale;
         drawLine(ctx, x1, y1, x2, y2);
@@ -8639,12 +8619,11 @@ var Sketcher = (function (_super) {
         this.lassoMask = new Array(this.mol.numAtoms());
         for (var n = 0; n < this.mol.numAtoms(); n++)
             this.lassoMask[n] = false;
-        for (var n = 0; n < this.arrmol.points.length; n++) {
-            var p = this.arrmol.points[n];
+        for (var n = 0; n < this.layout.numPoints(); n++) {
+            var p = this.layout.getPoint(n);
             if (p.anum == 0)
                 continue;
-            var x = p.cx * this.scale + this.offsetX, y = p.cy * this.scale + this.offsetY;
-            this.lassoMask[p.anum - 1] = GeomUtil.pointInPolygon(x, y, this.lassoX, this.lassoY);
+            this.lassoMask[p.anum - 1] = GeomUtil.pointInPolygon(p.oval.cx, p.oval.cy, this.lassoX, this.lassoY);
         }
     };
     Sketcher.prototype.determineDragGuide = function (order) {
@@ -8665,8 +8644,8 @@ var Sketcher = (function (_super) {
                 var dx = Molecule.IDEALBOND * Math.cos(theta), dy = Molecule.IDEALBOND * Math.sin(theta);
                 g_1.x.push(mx + dx);
                 g_1.y.push(my + dy);
-                g_1.destX.push(this.clickX + dx * this.scale * this.arrmol.scale);
-                g_1.destY.push(this.clickY - dy * this.scale * this.arrmol.scale);
+                g_1.destX.push(this.clickX + dx * this.pointScale);
+                g_1.destY.push(this.clickY - dy * this.pointScale);
             }
             return [g_1];
         }
@@ -8766,7 +8745,7 @@ var Sketcher = (function (_super) {
     };
     Sketcher.prototype.snapToGuide = function (x, y) {
         var bestDSQ = Number.POSITIVE_INFINITY, bestX = 0, bestY = 0;
-        var APPROACH = sqr(0.5 * this.scale * this.policy.data.pointScale);
+        var APPROACH = sqr(0.5 * this.pointScale);
         if (this.dragGuides != null)
             for (var i = 0; i < this.dragGuides.length; i++)
                 for (var j = 0; j < this.dragGuides[i].x.length; j++) {
@@ -8791,28 +8770,6 @@ var Sketcher = (function (_super) {
             return [bestX, bestY];
         return null;
     };
-    Sketcher.prototype.angToX = function (ax) {
-        if (this.arrmol == null || this.arrmol.points.length == 0)
-            return 0.5 * this.width + ax * this.scale * this.policy.data.pointScale;
-        return this.offsetX + this.scale * (this.transform[0] + this.transform[2] * ax);
-    };
-    Sketcher.prototype.angToY = function (ay) {
-        if (this.arrmol == null || this.arrmol.points.length == 0)
-            return 0.5 * this.height - ay * this.scale * this.policy.data.pointScale;
-        return this.offsetY + this.scale * (this.transform[1] - this.transform[2] * ay);
-    };
-    Sketcher.prototype.xToAng = function (px) {
-        if (this.arrmol == null || this.arrmol.points.length == 0)
-            return (px - 0.5 * this.width) / (this.scale * this.policy.data.pointScale);
-        return ((px - this.offsetX) / this.scale - this.transform[0]) / this.transform[2];
-    };
-    Sketcher.prototype.yToAng = function (py) {
-        if (this.arrmol == null || this.arrmol.points.length == 0)
-            return (0.5 * this.height - py) / (this.scale * this.policy.data.pointScale);
-        return (this.transform[1] - (py - this.offsetY) / this.scale) / this.transform[2];
-    };
-    Sketcher.prototype.scaleToAng = function (scale) { return scale / (this.scale * this.transform[2]); };
-    Sketcher.prototype.angToScale = function (ang) { return ang * this.scale * this.transform[2]; };
     Sketcher.prototype.subjectAtoms = function (allIfNone, useOpAtom) {
         if (allIfNone === void 0) { allIfNone = false; }
         if (useOpAtom === void 0) { useOpAtom = false; }
@@ -9055,7 +9012,7 @@ var Sketcher = (function (_super) {
             }
             else if (this.dragType == DraggingTool.Move) {
                 var _b = this.determineMoveDelta(), dx = _b[0], dy = _b[1];
-                var scale = this.scale * this.policy.data.pointScale;
+                var scale = this.pointScale;
                 var molact = new MoleculeActivity(this, ActivityType.Move, { 'refAtom': this.opAtom, 'deltaX': dx / scale, 'deltaY': -dy / scale });
                 molact.execute();
             }
@@ -9154,6 +9111,8 @@ var Sketcher = (function (_super) {
             if (dx != 0 || dy != 0) {
                 this.offsetX += dx;
                 this.offsetY += dy;
+                this.layout.offsetEverything(dx, dy);
+                this.metavec.transformPrimitives(dx, dy, 1, 1);
                 this.delayedRedraw();
             }
             this.mouseX = xy_2[0];
@@ -9164,11 +9123,11 @@ var Sketcher = (function (_super) {
             var dy = xy_3[1] - this.mouseY;
             if (dy != 0) {
                 dy = Math.min(50, Math.max(-50, dy));
-                var newScale = this.scale * (1 - dy * 0.01);
+                var newScale = this.pointScale * (1 - dy * 0.01);
                 newScale = Math.min(10, Math.max(0.1, newScale));
-                var newOX = this.clickX - (newScale / this.scale) * (this.clickX - this.offsetX);
-                var newOY = this.clickY - (newScale / this.scale) * (this.clickY - this.offsetY);
-                this.scale = newScale;
+                var newOX = this.clickX - (newScale / this.pointScale) * (this.clickX - this.offsetX);
+                var newOY = this.clickY - (newScale / this.pointScale) * (this.clickY - this.offsetY);
+                this.pointScale = newScale;
                 this.offsetX = newOX;
                 this.offsetY = newOY;
                 this.delayedRedraw();

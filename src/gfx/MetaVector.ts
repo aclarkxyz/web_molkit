@@ -83,10 +83,13 @@ class MetaVector
 
 		if (vec != null)
 		{
-			this.types = vec.types;
-			this.prims = vec.prims;
-			this.width = vec.size[0];
-			this.height = vec.size[1];
+			if (vec.size != null) 
+			{
+				this.width = vec.size[0]; 
+				this.height = vec.size[1];
+			}
+			if (vec.types != null) this.types = vec.types;
+			if (vec.prims != null) this.prims = vec.prims;
 
 			// extract char-mask
 			for (let p of this.prims) if (p[0] == this.PRIM_TEXT)
@@ -163,7 +166,7 @@ class MetaVector
 	}
 	public drawText(x:number, y:number, txt:string, size:number, colour:number, align?:number)
 	{
-		if (align == null) align = 0;
+		if (align == null) align = TextAlign.Left | TextAlign.Baseline;
 		const font = FontData.main;
 		for (let n = 0; n < txt.length; n++)
 		{
