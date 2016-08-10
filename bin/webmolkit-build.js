@@ -8186,7 +8186,16 @@ var Sketcher = (function (_super) {
         this.metavec = null;
         this.hoverAtom = 0;
         this.hoverBond = 0;
-        this.autoScale();
+        if (!withAutoScale) {
+            var effects = new RenderEffects();
+            this.layout = new ArrangeMolecule(this.mol, this, this.policy, effects);
+            this.layout.arrange();
+            this.metavec = new MetaVector();
+            new DrawMolecule(this.layout, this.metavec).draw();
+            this.delayedRedraw();
+        }
+        else
+            this.autoScale();
     };
     Sketcher.prototype.defineMoleculeString = function (molsk, withAutoScale, withStashUndo) {
         this.defineMolecule(Molecule.fromString(molsk), withAutoScale, withStashUndo);
@@ -8322,6 +8331,7 @@ var Sketcher = (function (_super) {
         this.centreAndShrink();
         this.metavec = new MetaVector();
         new DrawMolecule(this.layout, this.metavec).draw();
+        this.layoutTemplatePerm();
         this.delayedRedraw();
     };
     Sketcher.prototype.anySelected = function () {
@@ -8461,6 +8471,7 @@ var Sketcher = (function (_super) {
         this.layout.arrange();
         this.metavec = new MetaVector();
         new DrawMolecule(this.layout, this.metavec).draw();
+        this.layoutTemplatePerm();
         this.delayedRedraw();
     };
     Sketcher.prototype.pasteText = function (str) {
@@ -8480,6 +8491,9 @@ var Sketcher = (function (_super) {
     };
     Sketcher.prototype.pickTemplatePermutation = function (idx) {
         var perm = this.templatePerms[idx];
+        this.currentPerm = idx;
+        this.layoutTemplatePerm();
+        this.delayedRedraw();
     };
     Sketcher.prototype.scale = function () { return this.pointScale; };
     Sketcher.prototype.angToX = function (ax) {
@@ -8527,6 +8541,21 @@ var Sketcher = (function (_super) {
         this.offsetX += dx;
         this.offsetY += dy;
         this.layout.offsetEverything(dx, dy);
+    };
+    Sketcher.prototype.layoutTemplatePerm = function () {
+        if (this.currentPerm < 0 || this.templatePerms == null)
+            return;
+        var perm = this.templatePerms[this.currentPerm];
+        var tpolicy = new RenderPolicy(this.policy.data);
+        tpolicy.data.foreground = 0x808080;
+        tpolicy.data.atomCols = tpolicy.data.atomCols.slice(0);
+        for (var n in tpolicy.data.atomCols)
+            tpolicy.data.atomCols[n] = 0x808080;
+        var effects = new RenderEffects();
+        var layout = new ArrangeMolecule(Molecule.fromString(perm.display), this, tpolicy, effects);
+        layout.arrange();
+        perm.metavec = new MetaVector();
+        new DrawMolecule(layout, perm.metavec).draw();
     };
     Sketcher.prototype.redraw = function () {
         this.filthy = false;
@@ -8650,11 +8679,12 @@ var Sketcher = (function (_super) {
         ctx.save();
         ctx.scale(density, density);
         ctx.clearRect(0, 0, this.width, this.height);
-        if (this.metavec != null) {
+        if (this.metavec != null)
             this.metavec.renderContext(ctx);
-        }
         if (this.templatePerms != null) {
             var perm = this.templatePerms[this.currentPerm];
+            if (perm.metavec != null)
+                perm.metavec.renderContext(ctx);
         }
         ctx.restore();
     };
@@ -9438,6 +9468,10 @@ var Sketcher = (function (_super) {
                 this.offsetY += dy;
                 this.layout.offsetEverything(dx, dy);
                 this.metavec.transformPrimitives(dx, dy, 1, 1);
+                if (this.currentPerm >= 0 && this.templatePerms != null) {
+                    var perm = this.templatePerms[this.currentPerm];
+                    perm.metavec.transformPrimitives(dx, dy, 1, 1);
+                }
                 this.delayedRedraw();
             }
             this.mouseX = xy_2[0];

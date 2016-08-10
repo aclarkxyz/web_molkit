@@ -191,6 +191,17 @@ class Sketcher extends Widget implements ArrangeMeasurement
 		this.metavec = null;
 		this.hoverAtom = 0;
 		this.hoverBond = 0;
+
+		if (!withAutoScale) 
+		{
+			let effects = new RenderEffects();
+			this.layout = new ArrangeMolecule(this.mol, this, this.policy, effects);
+			this.layout.arrange();
+			this.metavec = new MetaVector();
+			new DrawMolecule(this.layout, this.metavec).draw();
+			this.delayedRedraw();
+		}
+		else this.autoScale();
 		
 		/*
 		// replace the arrangement before redrawing
@@ -229,8 +240,6 @@ class Sketcher extends Widget implements ArrangeMeasurement
 			this.delayedRedraw();
 		};
 		Func.arrangeMolecule(input, fcn, this);*/
-
-		this.autoScale();
 	}
 
 	// define the molecule as a SketchEl-formatted string
@@ -265,7 +274,7 @@ class Sketcher extends Widget implements ArrangeMeasurement
 				this.pointScale = this.policy.data.pointScale;
 			}
 		
-/* !! zap
+			/* deprecated
 			//if ([not init?]) throw 'molsync.ui.ViewStructure.setup called without specifying a molecule';
 			let input:any =
 			{
@@ -460,6 +469,8 @@ class Sketcher extends Widget implements ArrangeMeasurement
 		this.metavec = new MetaVector();
 		new DrawMolecule(this.layout, this.metavec).draw();
 
+		this.layoutTemplatePerm();
+
 		this.delayedRedraw();
 	}
 
@@ -638,6 +649,7 @@ class Sketcher extends Widget implements ArrangeMeasurement
 		this.layout.arrange();
 		this.metavec = new MetaVector();
 		new DrawMolecule(this.layout, this.metavec).draw();
+		this.layoutTemplatePerm();		
 		// --- end inefficient
 
 		this.delayedRedraw();
@@ -666,7 +678,8 @@ class Sketcher extends Widget implements ArrangeMeasurement
 	public pickTemplatePermutation(idx:number)
 	{
 		let perm = this.templatePerms[idx];
-		
+		this.currentPerm = idx;
+
 /* !!! fnord... replace...		
 		// if not rendered yet, defer to the service to make that happen
 		if (perm.metavec == null)
@@ -702,9 +715,9 @@ class Sketcher extends Widget implements ArrangeMeasurement
 			return;
 		}
 		
-		this.currentPerm = idx;
+*/
+		this.layoutTemplatePerm();
 		this.delayedRedraw();
-*/		
 	}
 
    // functions for converting between coordinates within the widget (pixels) & molecular position (Angstroms)
@@ -775,6 +788,25 @@ class Sketcher extends Widget implements ArrangeMeasurement
 		this.offsetY += dy;
 		this.layout.offsetEverything(dx, dy);
 	}
+
+	// creates the template permutation rendering object using the same transform as the main molecule
+	private layoutTemplatePerm()
+	{
+		if (this.currentPerm < 0 || this.templatePerms == null) return;
+		let perm = this.templatePerms[this.currentPerm];
+		
+		let tpolicy = new RenderPolicy(this.policy.data);
+		tpolicy.data.foreground = 0x808080;
+		tpolicy.data.atomCols = tpolicy.data.atomCols.slice(0);
+		for (let n in tpolicy.data.atomCols) tpolicy.data.atomCols[n] = 0x808080;
+
+		let effects = new RenderEffects();
+		let layout = new ArrangeMolecule(Molecule.fromString(perm.display), this, tpolicy, effects);
+		layout.arrange();
+		perm.metavec = new MetaVector();
+		new DrawMolecule(layout, perm.metavec).draw();
+	}
+	
 
 	// rebuilds the canvas content
 	private redraw():void
@@ -917,15 +949,7 @@ class Sketcher extends Widget implements ArrangeMeasurement
 		ctx.scale(density, density);
 		ctx.clearRect(0, 0, this.width, this.height);
 		
-		if (this.metavec != null)
-		{
-			/*let draw = new MetaVector(this.rawvec);
-			draw.offsetX = this.offsetX;
-			draw.offsetY = this.offsetY;
-			draw.scale = this.scale;
-			draw.renderContext(ctx);*/
-			this.metavec.renderContext(ctx);
-		}
+		if (this.metavec != null) this.metavec.renderContext(ctx);
 
 		// debugging only
 		/*for (let n = 1; n <= this.mol.numBonds(); n++)
@@ -943,14 +967,7 @@ class Sketcher extends Widget implements ArrangeMeasurement
 		if (this.templatePerms != null)
 		{
 			let perm = this.templatePerms[this.currentPerm];
-			/* !! fnord: update...
-			if (perm.metavec != null)
-			{
-				perm.metavec.offsetX = this.offsetX;
-				perm.metavec.offsetY = this.offsetY;
-				perm.metavec.scale = this.scale;
-				perm.metavec.renderContext(ctx);
-			}*/
+			if (perm.metavec != null) perm.metavec.renderContext(ctx);
 		}		
 		
 		ctx.restore();
@@ -1237,9 +1254,6 @@ class Sketcher extends Widget implements ArrangeMeasurement
 		let x1 = this.clickX, y1 = this.clickY;
 		if (this.opAtom > 0)
 		{
-			/*let p = this.layout.getPoint(this.opAtom - 1);
-			x1 = p.oval.cx + this.offsetX;
-			y1 = p.oval.cy + this.offsetY;*/
 			x1 = this.angToX(this.mol.atomX(this.opAtom));
 			y1 = this.angToY(this.mol.atomY(this.opAtom));
 		}
@@ -1901,6 +1915,14 @@ class Sketcher extends Widget implements ArrangeMeasurement
 				this.offsetY += dy;
 				this.layout.offsetEverything(dx, dy);
 				this.metavec.transformPrimitives(dx, dy, 1, 1);
+
+				if (this.currentPerm >= 0 && this.templatePerms != null)
+				{
+					let perm = this.templatePerms[this.currentPerm];
+					//perm.layout.offsetEverything(dx, dy);
+					perm.metavec.transformPrimitives(dx, dy, 1, 1);
+				}
+
 				this.delayedRedraw();
 			}
 
