@@ -425,10 +425,10 @@ class Molecule
 	// lookup the atomic number for the element, or return 0 if not in the periodic table
 	public atomicNumber(idx:number):number
 	{
-		return Molecule.atomicNumber(this.atomElement(idx));
+		return Molecule.elementAtomicNumber(this.atomElement(idx));
 	}
 
-	public static atomicNumber(element:string):number
+	public static elementAtomicNumber(element:string):number
 	{
 		return Math.max(0, Chemistry.ELEMENTS.indexOf(element));
 	}

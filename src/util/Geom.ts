@@ -101,6 +101,82 @@ class GeomUtil
 		if (x1 + w1 < x2 || x2 + w2 < x1 || y1 + h1 < y2 || y2 + h2 < y1) return false;
 		return true;
 	}
+
+	// for an array of angles (in radians), sorts them in order; then, rotates the array around as many times as is necessary
+	// so that the difference between the first & last angles is >= than the difference between the first & second
+	public static sortAngles(theta:number[]):number[]
+	{
+		if (theta == null || theta.length < 2) return theta;
+		theta = theta.slice(0);
+		for (let n = 0; n < theta.length; n++) theta[n] = angleNorm(theta[n]);
+		theta.sort();
+		if (theta.length == 2) return theta;
+		while (true)
+		{
+			let a = theta[theta.length - 1], b = theta[0], c = theta[1];
+			if (angleDiff(b, a) <= angleDiff(c, b)) break;
+			for (let n = theta.length - 1; n > 0; n--) theta[n] = theta[n - 1];
+			theta[0] = a;
+		}
+		return theta;
+	}
+
+	// calculates a list of unique angles (based on the threshold parameter, in radians), and returns it; the returned list of 
+	// angles will be sorted in order, as described by sortAngles(..); note that there is no fancy clustering, so a sequence of 
+	// angles which are a bit below the threshold is not guaranteed to be stable; there is also a boundary case which bumps the 
+	// sort rotation status slightly out of whack
+	public static uniqueAngles(theta:number[], threshold:number):number[]
+	{
+		let ang = GeomUtil.sortAngles(theta), ret:number[] = [];
+		ret.push(ang[0]);
+		for (let n = 1; n < ang.length; n++)
+		{
+			if (Math.abs(angleDiff(ang[n], ang[n - 1])) > threshold) ret.push(ang[n]);
+		}
+		return ret;
+	}
+
+	// returns the angle maximally equidistant from Th1 and Th2
+	public static thetaObtuse(th1:number, th2:number):number
+	{
+		let dth = th2 - th1;
+		while (dth < -Math.PI) dth += 2 * Math.PI;
+		while (dth > Math.PI) dth -= 2 * Math.PI;
+		return dth > 0 ? th1 - 0.5 * (2 * Math.PI - dth) : th1 + 0.5 * (2 * Math.PI + dth);
+	}
+	
+	// for a group of angles, returns a single dominant angle that represents the "average" of all of them; this takes into account boundary
+	// issues for multiple cases, e.g. +/- 180; note that the array may be modified
+	public static emergentAngle(theta:number[]):number
+	{
+		let len = theta.length;
+		if (len == 1) return theta[0];
+		if (len == 2) return 0.5 * (theta[0] + theta[1]);
+
+		theta.sort();
+
+		let bottom = 0;
+		let behind = angleDiffPos(theta[0], theta[len - 1]);
+		for (let n = 1; n < len; n++)
+		{
+			let delta = angleDiffPos(theta[n], theta[n - 1]);
+			if (delta > behind)
+			{
+				bottom = n;
+				behind = delta;
+			}
+		}
+
+		let sum = 0;
+		for (let n = 0; n < len; n++)
+		{
+			let delta = theta[n] - theta[bottom];
+			if (delta < 0) delta += TWOPI;
+			sum += delta;
+		}
+
+		return sum / len + theta[bottom];
+	}
 }
 
 // implementation of the "Quick Hull" algorithm

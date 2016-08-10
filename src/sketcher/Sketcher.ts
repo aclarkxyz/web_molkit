@@ -83,17 +83,6 @@ interface PreArrangeMolecule
 	lines:ArrMolLine[];
 }*/
 
-interface GuidelineSprout
-{
-	atom:number; // source atom (0 if free-drawing)
-	orders:number[]; // applicable bond orders
-	x:number[]; // destination in molecular coordinates
-	y:number[]; // "
-	sourceX?:number; // source position in screen coordinates 
-	sourceY?:number; // "
-	destX?:number[]; // destination positions in screen coordinates
-	destY?:number[];
-}
 
 // used as a transient backup in case of access to the clipboard being problematic
 var globalMoleculeClipboard:Molecule = null;
@@ -188,6 +177,13 @@ class Sketcher extends Widget implements ArrangeMeasurement
 		this.stopTemplateFusion();
 
 		this.mol = mol.clone();
+
+		// note: inefficient; make it compute on demand
+		this.guidelines = [];
+		for (let n = 1; n <= this.mol.numAtoms(); n++) 
+		{
+			for (let sprout of SketchUtil.guidelineSprouts(this.mol, n)) this.guidelines.push(sprout);
+		}
 
 		if (!this.beenSetup) return;
 		
@@ -921,9 +917,6 @@ class Sketcher extends Widget implements ArrangeMeasurement
 		ctx.scale(density, density);
 		ctx.clearRect(0, 0, this.width, this.height);
 		
-console.log('fnord:drawmol...');//fnord
-console.log('  metavec:'+JSON.stringify(this.metavec));
-console.log('  transform:'+this.offsetX+','+this.offsetY+','+this.pointScale);		
 		if (this.metavec != null)
 		{
 			/*let draw = new MetaVector(this.rawvec);
@@ -935,8 +928,7 @@ console.log('  transform:'+this.offsetX+','+this.offsetY+','+this.pointScale);
 		}
 
 		// debugging only
-//zog
-		for (let n = 1; n <= this.mol.numBonds(); n++)
+		/*for (let n = 1; n <= this.mol.numBonds(); n++)
 		{
 			let bfr = this.mol.bondFrom(n), bto = this.mol.bondTo(n);
 			let x1 = this.angToX(this.mol.atomX(bfr)), y1 = this.angToY(this.mol.atomY(bfr));
@@ -946,7 +938,7 @@ console.log('  transform:'+this.offsetX+','+this.offsetY+','+this.pointScale);
 			ctx.moveTo(x1, y1);
 			ctx.lineTo(x2, y2);
 			ctx.stroke();
-		}
+		}*/
 		
 		if (this.templatePerms != null)
 		{
@@ -962,29 +954,6 @@ console.log('  transform:'+this.offsetX+','+this.offsetY+','+this.pointScale);
 		}		
 		
 		ctx.restore();
-
-		
-		// render the molecule
-		/*if (this.metavec != null)
-		{
-			let draw = new MetaVector(this.rawvec);
-			draw.offsetX = this.offsetX;
-			draw.offsetY = this.offsetY;
-			draw.scale = this.scale;
-			draw.renderCanvas(this.canvasMolecule, true);
-		}
-		
-		if (this.templatePerms != null)
-		{
-			let perm = this.templatePerms[this.currentPerm];
-			if (perm.metavec != null)
-			{
-				perm.metavec.offsetX = this.offsetX;
-				perm.metavec.offsetY = this.offsetY;
-				perm.metavec.scale = this.scale;
-				perm.metavec.renderCanvas(this.canvasMolecule, false);
-			}
-		}*/
 	}
 	private redrawOver():void
 	{
@@ -1170,18 +1139,18 @@ console.log('  transform:'+this.offsetX+','+this.offsetY+','+this.pointScale);
 	{
 		if (this.layout == null) return;
 		
-		let p:any = undefined;
+		let p:APoint = undefined;
 		for (let n = 0; n < this.layout.numPoints(); n++) if (this.layout.getPoint(n).anum == atom)
 		{
 			p = this.layout.getPoint(n);
 			break;
 		}
 		if (p == null) return;
-		
+
 		let minRad = 0.2 * this.pointScale, minRadSq = sqr(minRad);
-		let cx = p.cx * this.pointScale + this.offsetX, cy = p.cy * this.pointScale + this.offsetY;
-		let rad = Math.max(minRad, Math.max(p.rw, p.rh) * this.pointScale) + (0.1 + anghalo) * this.pointScale;
-		
+		let cx = p.oval.cx, cy = p.oval.cy;
+		let rad = Math.max(minRad, Math.max(p.oval.rw, p.oval.rh)) + (0.1 + anghalo) * this.pointScale;
+
 		if (fillCol != -1)
 		{
 			ctx.beginPath();
@@ -1214,11 +1183,11 @@ console.log('  transform:'+this.offsetX+','+this.offsetY+','+this.pointScale);
 		if (nb == 0) return;
 		
 		let invNB = 1 / nb;
-		sz *= this.pointScale * invNB;
-		x1 = x1 * this.pointScale * invNB + this.offsetX;
-		y1 = y1 * this.pointScale * invNB + this.offsetY;
-		x2 = x2 * this.pointScale * invNB + this.offsetX;
-		y2 = y2 * this.pointScale * invNB + this.offsetY;
+		sz *= invNB;
+		x1 *= invNB;
+		y1 *= invNB;
+		x2 *= invNB;
+		y2 *= invNB;
 
 		let dx = x2 - x1, dy = y2 - y1, invDist = 1 / norm_xy(dx, dy);
 		dx *= invDist; 
@@ -1268,9 +1237,11 @@ console.log('  transform:'+this.offsetX+','+this.offsetY+','+this.pointScale);
 		let x1 = this.clickX, y1 = this.clickY;
 		if (this.opAtom > 0)
 		{
-			let p = this.layout.getPoint(this.opAtom - 1);
+			/*let p = this.layout.getPoint(this.opAtom - 1);
 			x1 = p.oval.cx + this.offsetX;
-			y1 = p.oval.cy + this.offsetY;
+			y1 = p.oval.cy + this.offsetY;*/
+			x1 = this.angToX(this.mol.atomX(this.opAtom));
+			y1 = this.angToY(this.mol.atomY(this.opAtom));
 		}
 		let x2 = this.mouseX, y2 = this.mouseY;
 		

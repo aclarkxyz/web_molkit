@@ -397,6 +397,19 @@ var Vec = (function () {
         }
         return true;
     };
+    Vec.swap = function (arr, idx1, idx2) {
+        var v = arr[idx1];
+        arr[idx1] = arr[idx2];
+        arr[idx2] = v;
+    };
+    Vec.equals = function (arr1, arr2) {
+        if (arr1.length != arr2.length)
+            return false;
+        for (var n = 0; n < arr1.length; n++)
+            if (arr1[n] != arr2[n])
+                return false;
+        return true;
+    };
     Vec.booleanArray = function (val, sz) {
         var arr = new Array(sz);
         for (var n = sz - 1; n >= 0; n--)
@@ -766,9 +779,9 @@ var Molecule = (function () {
         return new Box(x1, y1, x2 - x1, y2 - y1);
     };
     Molecule.prototype.atomicNumber = function (idx) {
-        return Molecule.atomicNumber(this.atomElement(idx));
+        return Molecule.elementAtomicNumber(this.atomElement(idx));
     };
-    Molecule.atomicNumber = function (element) {
+    Molecule.elementAtomicNumber = function (element) {
         return Math.max(0, Chemistry.ELEMENTS.indexOf(element));
     };
     Molecule.prototype.compareTo = function (other) {
@@ -1332,6 +1345,17 @@ function escapeHTML(text) {
 var CoordUtil = (function () {
     function CoordUtil() {
     }
+    CoordUtil.atomBondAngles = function (mol, atom, adj) {
+        if (adj == null)
+            adj = mol.atomAdjList(atom);
+        var bndang = [];
+        var cx = mol.atomX(atom), cy = mol.atomY(atom);
+        for (var _i = 0, adj_1 = adj; _i < adj_1.length; _i++) {
+            var a = adj_1[_i];
+            bndang.push(Math.atan2(mol.atomY(a) - cy, mol.atomX(a) - cx));
+        }
+        return bndang;
+    };
     CoordUtil.congestionPoint = function (mol, x, y, approach) {
         if (approach == null)
             approach = 1E-5;
@@ -1876,9 +1900,215 @@ var FormatList = (function () {
     };
     return FormatList;
 }());
+var Geometry;
+(function (Geometry) {
+    Geometry[Geometry["Linear"] = 0] = "Linear";
+    Geometry[Geometry["Bent"] = 1] = "Bent";
+    Geometry[Geometry["Trigonal"] = 2] = "Trigonal";
+    Geometry[Geometry["Tetra1"] = 3] = "Tetra1";
+    Geometry[Geometry["Tetra2"] = 4] = "Tetra2";
+    Geometry[Geometry["SqPlan"] = 5] = "SqPlan";
+    Geometry[Geometry["BasePyram"] = 6] = "BasePyram";
+    Geometry[Geometry["TrigBip"] = 7] = "TrigBip";
+    Geometry[Geometry["Octa1"] = 8] = "Octa1";
+    Geometry[Geometry["Octa2"] = 9] = "Octa2";
+})(Geometry || (Geometry = {}));
 var SketchUtil = (function () {
     function SketchUtil() {
     }
+    SketchUtil.matchAngleGeometry = function (geom, theta) {
+        if (theta.length <= 1)
+            return true;
+        var match = SketchUtil.GEOM_ANGLES[geom], mtheta = Vec.numberArray(0, theta.length);
+        var hit = Vec.booleanArray(false, match.length);
+        for (var n = 0; n < theta.length; n++)
+            for (var s = 1; s >= -1; s -= 2) {
+                for (var i = 0; i < theta.length; i++)
+                    mtheta[i] = (theta[i] - theta[0]) * s;
+                Vec.setTo(hit, false);
+                var gotall = true;
+                for (var i = 0; i < mtheta.length; i++) {
+                    var got = false;
+                    for (var j = 0; j < match.length; j++)
+                        if (!hit[j] && Math.abs(angleDiff(mtheta[i], match[j])) < 3 * DEGRAD) {
+                            hit[j] = true;
+                            got = true;
+                            break;
+                        }
+                    if (!got) {
+                        gotall = false;
+                        break;
+                    }
+                }
+                if (gotall)
+                    return true;
+            }
+        return false;
+    };
+    SketchUtil.exitVectors = function (mol, atom) {
+        var adj = mol.atomAdjList(atom), sz = adj.length;
+        if (sz == 0)
+            return [0, 90 * DEGRAD, 180 * DEGRAD, -90 * DEGRAD];
+        if (sz == 1)
+            return [];
+        var ret = [];
+        var ang = GeomUtil.sortAngles(CoordUtil.atomBondAngles(mol, atom, adj));
+        for (var n = 0; n < sz; n++) {
+            var nn = n < sz - 1 ? n + 1 : 0;
+            ret.push(angleNorm(ang[n] + 0.5 * (ang[nn] - ang[n])));
+        }
+        return ret;
+    };
+    SketchUtil.guessAtomGeometry = function (mol, atom, order) {
+        var adj = mol.atomAdjList(atom);
+        var sz = adj.length, atno = mol.atomicNumber(atom);
+        var atblk = Chemistry.ELEMENT_BLOCKS[atno], elrow = Chemistry.ELEMENT_ROWS[atno];
+        var el = mol.atomElement(atom);
+        var adjBO = [], adjAN = [], pri = [];
+        var allSingle = true;
+        for (var n = 0; n < sz; n++) {
+            adjBO.push(mol.bondOrder(mol.findBond(atom, adj[n])));
+            adjAN.push(mol.atomicNumber(adj[n]));
+            pri.push(adjBO[n] * 200 + adjAN[n]);
+            if (adjBO[n] != 1)
+                allSingle = true;
+        }
+        for (var p = 0; p < sz - 1;) {
+            if (pri[p] > pri[p + 1]) {
+                Vec.swap(adj, p, p + 1);
+                Vec.swap(adjBO, p, p + 1);
+                Vec.swap(adjAN, p, p + 1);
+                Vec.swap(pri, p, p + 1);
+                if (p > 0)
+                    p--;
+            }
+            else
+                p++;
+        }
+        var ang = CoordUtil.atomBondAngles(mol, atom, adj);
+        if (sz == 1) {
+            if (el == 'C' || el == 'N') {
+                if (adjBO[0] == 2 && order == 2)
+                    return [Geometry.Linear];
+                if ((adjBO[0] == 3 && order == 1) || (adjBO[0] == 1 && order == 3))
+                    return [Geometry.Linear];
+            }
+            if (atblk > 2)
+                return [Geometry.Octa1, Geometry.Octa2];
+            if (order != 0 && (el == 'C' || el == 'N' || el == 'O'))
+                return [Geometry.Trigonal];
+            return [Geometry.Trigonal, Geometry.Linear];
+        }
+        if (sz == 2 && Math.abs(angleDiff(ang[0], ang[1])) >= 175 * DEGRAD) {
+            if (atblk <= 2)
+                return [Geometry.SqPlan];
+            else
+                return [Geometry.Octa1, Geometry.Octa2];
+        }
+        var geom = [];
+        if (atblk == 0)
+            geom = [Geometry.Trigonal, Geometry.SqPlan];
+        else if (atblk == 1)
+            geom = [Geometry.Trigonal, Geometry.SqPlan, Geometry.Octa1, Geometry.Octa2];
+        else if (atblk == 2) {
+            geom.push(Geometry.Trigonal);
+            if (el == 'C' && allSingle) {
+                geom.push(Geometry.Tetra1);
+                geom.push(Geometry.Tetra2);
+                geom.push(Geometry.SqPlan);
+            }
+            else if (el == 'C' && !allSingle) {
+            }
+            else if (elrow <= 3) {
+                geom.push(Geometry.Tetra1);
+                geom.push(Geometry.Tetra2);
+                geom.push(Geometry.SqPlan);
+            }
+            else {
+                geom.push(Geometry.Tetra1);
+                geom.push(Geometry.Tetra2);
+                geom.push(Geometry.SqPlan);
+                geom.push(Geometry.Octa1);
+                geom.push(Geometry.Octa2);
+            }
+        }
+        else {
+            geom.push(Geometry.Octa1);
+            geom.push(Geometry.Octa2);
+        }
+        for (var n = geom.length - 1; n >= 0; n--) {
+            if (!SketchUtil.matchAngleGeometry(geom[n], ang))
+                geom.splice(n, 1);
+        }
+        return geom;
+    };
+    SketchUtil.mapAngleSubstituent = function (geom, ang) {
+        var gtheta = SketchUtil.GEOM_ANGLES[geom];
+        var asz = ang.length, gsz = gtheta.length;
+        if (asz >= gsz)
+            return null;
+        if (asz == 0)
+            return gtheta.slice(0);
+        var vac = [];
+        for (var n = 0; n < asz; n++)
+            for (var k = 0; k < gsz; k++)
+                for (var s = 1; s >= -1; s -= 2) {
+                    var gang = [];
+                    for (var i = 0; i < gsz; i++)
+                        gang.push(angleNorm(ang[n] + s * (gtheta[i] - gtheta[k])));
+                    var mask = Vec.booleanArray(false, gsz);
+                    var mcount = 0;
+                    for (var i = 0; i < gsz; i++)
+                        if (!mask[i])
+                            for (var j = 0; j < asz; j++)
+                                if (Math.abs(angleDiff(gang[i], ang[j])) < 3 * DEGRAD) {
+                                    mask[i] = true;
+                                    mcount++;
+                                    break;
+                                }
+                    if (mcount != asz)
+                        continue;
+                    for (var i = 0; i < gsz; i++)
+                        if (!mask[i])
+                            vac.push(gang[i]);
+                }
+        if (vac.length == 0)
+            return null;
+        vac = GeomUtil.sortAngles(vac);
+        for (var n = 0; n < vac.length - 1; n++) {
+            var th1 = vac[n], th2 = vac[n + 1], dth = angleDiff(th2, th1);
+            if (Math.abs(dth) < 5 * DEGRAD) {
+                vac[n] = th1 + 0.5 * dth;
+                vac.splice(n + 1, 1);
+                n--;
+            }
+        }
+        return vac;
+    };
+    SketchUtil.allViableDirections = function (mol, atom, order) {
+        if (mol.atomAdjCount(atom) == 0) {
+            var angles_1 = [];
+            for (var n = 0; n < 12; n++)
+                angles_1.push(30 * DEGRAD);
+            return angles_1;
+        }
+        var adj = mol.atomAdjList(atom);
+        var angles = SketchUtil.exitVectors(mol, atom);
+        var geom = SketchUtil.guessAtomGeometry(mol, atom, order);
+        if (adj.length == 1 && geom.indexOf(Geometry.Linear) < 0)
+            geom.push(Geometry.Linear);
+        var bndang = CoordUtil.atomBondAngles(mol, atom, adj);
+        for (var _i = 0, geom_1 = geom; _i < geom_1.length; _i++) {
+            var g = geom_1[_i];
+            var map = SketchUtil.mapAngleSubstituent(g, bndang);
+            if (map != null)
+                for (var _a = 0, map_1 = map; _a < map_1.length; _a++) {
+                    var th = map_1[_a];
+                    angles.push(th);
+                }
+        }
+        return GeomUtil.uniqueAngles(angles, 2 * DEGRAD);
+    };
     SketchUtil.proposeNewRing = function (mol, rsz, x, y, dx, dy, snap) {
         var theta = Math.atan2(dy, dx);
         if (snap) {
@@ -1957,6 +2187,47 @@ var SketchUtil = (function () {
         }
         return [rx, ry];
     };
+    SketchUtil.guidelineSprouts = function (mol, atom) {
+        var sprouts = [];
+        var angs = [], ords = [];
+        for (var n = 0; n < 3; n++) {
+            angs.push(SketchUtil.allViableDirections(mol, atom, n + 1));
+            ords.push([n + 1]);
+            for (var i = 0; i < n; i++)
+                if (angs[i] != null && Vec.equals(angs[n], angs[i])) {
+                    angs[n] = null;
+                    ords[i].push(n + 1);
+                }
+        }
+        var cx = mol.atomX(atom), cy = mol.atomY(atom);
+        for (var n = 0; n < 3; n++)
+            if (angs[n] != null) {
+                var sprout = {
+                    'atom': atom,
+                    'orders': ords[n],
+                    'x': [],
+                    'y': []
+                };
+                for (var i = 0; i < angs[n].length; i++) {
+                    sprout.x[i] = cx + Math.cos(angs[n][i]) * Molecule.IDEALBOND;
+                    sprout.y[i] = cy + Math.sin(angs[n][i]) * Molecule.IDEALBOND;
+                }
+                sprouts.push(sprout);
+            }
+        return sprouts;
+    };
+    SketchUtil.GEOM_ANGLES = [
+        [0, 180 * DEGRAD],
+        [0, 120 * DEGRAD],
+        [0, 120 * DEGRAD, 240 * DEGRAD],
+        [0, 90 * DEGRAD, 150 * DEGRAD, 240 * DEGRAD],
+        [0, 120 * DEGRAD, 180 * DEGRAD, 240 * DEGRAD],
+        [0, 90 * DEGRAD, 180 * DEGRAD, 270 * DEGRAD],
+        [0, 90 * DEGRAD, 150 * DEGRAD, 210 * DEGRAD, 270 * DEGRAD],
+        [0, 60 * DEGRAD, 90 * DEGRAD, 180 * DEGRAD, 210 * DEGRAD],
+        [0, 60 * DEGRAD, 120 * DEGRAD, 180 * DEGRAD, 240 * DEGRAD, 300 * DEGRAD],
+        [0, 45 * DEGRAD, 90 * DEGRAD, 180 * DEGRAD, 225 * DEGRAD, 270 * DEGRAD]
+    ];
     return SketchUtil;
 }());
 var Dialog = (function () {
@@ -2496,6 +2767,67 @@ var GeomUtil = (function () {
         if (x1 + w1 < x2 || x2 + w2 < x1 || y1 + h1 < y2 || y2 + h2 < y1)
             return false;
         return true;
+    };
+    GeomUtil.sortAngles = function (theta) {
+        if (theta == null || theta.length < 2)
+            return theta;
+        theta = theta.slice(0);
+        for (var n = 0; n < theta.length; n++)
+            theta[n] = angleNorm(theta[n]);
+        theta.sort();
+        if (theta.length == 2)
+            return theta;
+        while (true) {
+            var a = theta[theta.length - 1], b = theta[0], c = theta[1];
+            if (angleDiff(b, a) <= angleDiff(c, b))
+                break;
+            for (var n = theta.length - 1; n > 0; n--)
+                theta[n] = theta[n - 1];
+            theta[0] = a;
+        }
+        return theta;
+    };
+    GeomUtil.uniqueAngles = function (theta, threshold) {
+        var ang = GeomUtil.sortAngles(theta), ret = [];
+        ret.push(ang[0]);
+        for (var n = 1; n < ang.length; n++) {
+            if (Math.abs(angleDiff(ang[n], ang[n - 1])) > threshold)
+                ret.push(ang[n]);
+        }
+        return ret;
+    };
+    GeomUtil.thetaObtuse = function (th1, th2) {
+        var dth = th2 - th1;
+        while (dth < -Math.PI)
+            dth += 2 * Math.PI;
+        while (dth > Math.PI)
+            dth -= 2 * Math.PI;
+        return dth > 0 ? th1 - 0.5 * (2 * Math.PI - dth) : th1 + 0.5 * (2 * Math.PI + dth);
+    };
+    GeomUtil.emergentAngle = function (theta) {
+        var len = theta.length;
+        if (len == 1)
+            return theta[0];
+        if (len == 2)
+            return 0.5 * (theta[0] + theta[1]);
+        theta.sort();
+        var bottom = 0;
+        var behind = angleDiffPos(theta[0], theta[len - 1]);
+        for (var n = 1; n < len; n++) {
+            var delta = angleDiffPos(theta[n], theta[n - 1]);
+            if (delta > behind) {
+                bottom = n;
+                behind = delta;
+            }
+        }
+        var sum = 0;
+        for (var n = 0; n < len; n++) {
+            var delta = theta[n] - theta[bottom];
+            if (delta < 0)
+                delta += TWOPI;
+            sum += delta;
+        }
+        return sum / len + theta[bottom];
     };
     return GeomUtil;
 }());
@@ -7841,6 +8173,13 @@ var Sketcher = (function (_super) {
             this.stashUndo();
         this.stopTemplateFusion();
         this.mol = mol.clone();
+        this.guidelines = [];
+        for (var n = 1; n <= this.mol.numAtoms(); n++) {
+            for (var _i = 0, _a = SketchUtil.guidelineSprouts(this.mol, n); _i < _a.length; _i++) {
+                var sprout = _a[_i];
+                this.guidelines.push(sprout);
+            }
+        }
         if (!this.beenSetup)
             return;
         this.layout = null;
@@ -8311,21 +8650,8 @@ var Sketcher = (function (_super) {
         ctx.save();
         ctx.scale(density, density);
         ctx.clearRect(0, 0, this.width, this.height);
-        console.log('fnord:drawmol...');
-        console.log('  metavec:' + JSON.stringify(this.metavec));
-        console.log('  transform:' + this.offsetX + ',' + this.offsetY + ',' + this.pointScale);
         if (this.metavec != null) {
             this.metavec.renderContext(ctx);
-        }
-        for (var n = 1; n <= this.mol.numBonds(); n++) {
-            var bfr = this.mol.bondFrom(n), bto = this.mol.bondTo(n);
-            var x1 = this.angToX(this.mol.atomX(bfr)), y1 = this.angToY(this.mol.atomY(bfr));
-            var x2 = this.angToX(this.mol.atomX(bto)), y2 = this.angToY(this.mol.atomY(bto));
-            ctx.strokeStyle = 'red';
-            ctx.lineWidth = 1;
-            ctx.moveTo(x1, y1);
-            ctx.lineTo(x2, y2);
-            ctx.stroke();
         }
         if (this.templatePerms != null) {
             var perm = this.templatePerms[this.currentPerm];
@@ -8483,8 +8809,8 @@ var Sketcher = (function (_super) {
         if (p == null)
             return;
         var minRad = 0.2 * this.pointScale, minRadSq = sqr(minRad);
-        var cx = p.cx * this.pointScale + this.offsetX, cy = p.cy * this.pointScale + this.offsetY;
-        var rad = Math.max(minRad, Math.max(p.rw, p.rh) * this.pointScale) + (0.1 + anghalo) * this.pointScale;
+        var cx = p.oval.cx, cy = p.oval.cy;
+        var rad = Math.max(minRad, Math.max(p.oval.rw, p.oval.rh)) + (0.1 + anghalo) * this.pointScale;
         if (fillCol != -1) {
             ctx.beginPath();
             ctx.ellipse(cx, cy, rad, rad, 0, 0, TWOPI, true);
@@ -8517,11 +8843,11 @@ var Sketcher = (function (_super) {
         if (nb == 0)
             return;
         var invNB = 1 / nb;
-        sz *= this.pointScale * invNB;
-        x1 = x1 * this.pointScale * invNB + this.offsetX;
-        y1 = y1 * this.pointScale * invNB + this.offsetY;
-        x2 = x2 * this.pointScale * invNB + this.offsetX;
-        y2 = y2 * this.pointScale * invNB + this.offsetY;
+        sz *= invNB;
+        x1 *= invNB;
+        y1 *= invNB;
+        x2 *= invNB;
+        y2 *= invNB;
         var dx = x2 - x1, dy = y2 - y1, invDist = 1 / norm_xy(dx, dy);
         dx *= invDist;
         dy *= invDist;
@@ -8557,9 +8883,8 @@ var Sketcher = (function (_super) {
     Sketcher.prototype.drawOriginatingBond = function (ctx, element, order, type) {
         var x1 = this.clickX, y1 = this.clickY;
         if (this.opAtom > 0) {
-            var p = this.layout.getPoint(this.opAtom - 1);
-            x1 = p.oval.cx + this.offsetX;
-            y1 = p.oval.cy + this.offsetY;
+            x1 = this.angToX(this.mol.atomX(this.opAtom));
+            y1 = this.angToY(this.mol.atomY(this.opAtom));
         }
         var x2 = this.mouseX, y2 = this.mouseY;
         var snapTo = this.snapToGuide(x2, y2);

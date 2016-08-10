@@ -44,6 +44,20 @@ class Vec
 		return true;
 	}
 
+	public static swap(arr:any[], idx1:number, idx2:number)
+	{
+		let v = arr[idx1];
+		arr[idx1] = arr[idx2];
+		arr[idx2] = v;
+	}
+
+	public static equals(arr1:any[], arr2:any[]):boolean
+	{
+		if (arr1.length != arr2.length) return false;
+		for (let n = 0; n < arr1.length; n++) if (arr1[n] != arr2[n]) return false;
+		return true;
+	}
+
 	public static booleanArray(val:boolean, sz:number):boolean[]
 	{
 		let arr:boolean[] = new Array(sz);

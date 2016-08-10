@@ -133,19 +133,20 @@ class CoordUtil
 		}
 
 		return sketchEquivalent(mol1, mol2, tolerance);
-    }
+    }*/
         
 	// returns a list of the angles of the bonds emanating from the given atom; the order of the angles returned is guaranteed to
 	// correspond to the order found in mol.atomAdjList(N)
-	public static float[] atomBondAngles(Molecule mol, int N, int[] adj)
+	public static atomBondAngles(mol:Molecule, atom:number, adj?:number[]):number[]
 	{
-		float[] bndang = new float[adj.length];
-		float cx = mol.atomX(N), cy = mol.atomY(N);
-		for (int n = 0; n < adj.length; n++) bndang[n] = Util.atan2(mol.atomY(adj[n]) - cy, mol.atomX(adj[n]) - cx);
+		if (adj == null) adj = mol.atomAdjList(atom);
+		let bndang:number[] = [];
+		let cx = mol.atomX(atom), cy = mol.atomY(atom);
+		for (let a of adj) bndang.push(Math.atan2(mol.atomY(a) - cy, mol.atomX(a) - cx));
 		return bndang;
 	}
-	public static float[] atomBondAngles(Molecule mol, int N) {return atomBondAngles(mol, N, mol.atomAdjList(N));}
 
+/*
     // returns true if the indicated position happens to be on top of an atom, within the given radial tolerance
 	public static boolean overlapsAtom(Molecule mol, float x, float y, float tol)
     {
