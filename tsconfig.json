@@ -16,6 +16,7 @@
         "src/data/DataSheet.ts",
         "src/data/DataSheetStream.ts",
         "src/data/FormatList.ts",
+        "src/data/Graph.ts",
         "src/data/Molecule.ts",
         "src/data/MoleculeStream.ts",
         "src/data/MolUtil.ts",

@@ -82,6 +82,27 @@ class Molecule
 	public static fromString(strData:string):Molecule {return MoleculeStream.readNative(strData);}
 	public toString():string {return MoleculeStream.writeNative(this);}
 	
+	// takes the indicated molecular fragment and appends it to the end of the current molecule, with order preserved
+	public append(frag:Molecule):void
+	{
+		let base = this.atoms.length;
+		for (let n = 1; n <= frag.numAtoms(); n++)
+		{
+			let num = this.addAtom(frag.atomElement(n), frag.atomX(n), frag.atomY(n), frag.atomCharge(n), frag.atomUnpaired(n));
+			this.setAtomIsotope(num, frag.atomIsotope(n));
+			this.setAtomHExplicit(num, frag.atomHExplicit(n));
+			this.setAtomMapNum(num, frag.atomMapNum(n));
+			this.setAtomExtra(num, frag.atomExtra(n));
+		}
+		for (let n = 1; n <= frag.numBonds(); n++)
+		{
+			let num = this.addBond(frag.bondFrom(n) + base, frag.bondTo(n) + base, frag.bondOrder(n), frag.bondType(n));
+			this.setBondExtra(num, frag.bondExtra(n));
+		}
+		this.trashTransient();
+	}
+
+
 	public numAtoms():number {return this.atoms.length;}
 	public getAtom(idx:number):Atom 
 	{

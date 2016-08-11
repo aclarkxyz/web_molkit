@@ -18,9 +18,6 @@
 
 class MolUtil
 {
-    public static TEMPLATE_ATTACHMENT = "X";
-    public static ABBREV_ATTACHMENT = "*";
-    
     public static isBlank(mol:Molecule):boolean
     {
         return mol == null || mol.numAtoms() == 0;
@@ -30,28 +27,28 @@ class MolUtil
         return mol != null || mol.numAtoms() > 0;
     }
 
-    /*	// substitutes an empty molecule for null
-	public static Molecule orBlank(Molecule mol) {return mol == null ? new Molecule() : mol;}
+    // substitutes an empty molecule for null
+	public static orBlank(mol:Molecule):Molecule {return mol == null ? new Molecule() : mol;}
 
 	// conventions for special-atoms
-	public static final String TEMPLATE_ATTACHMENT = "X"; // use the label 'X' to denote attachments when defining templates
-	public static final String ABBREV_ATTACHMENT = "*"; // within abbreviations, use '*' to denote the placeholder superimposition
+	public static TEMPLATE_ATTACHMENT = 'X'; // use the label 'X' to denote attachments when defining templates
+	public static ABBREV_ATTACHMENT = '*'; // within abbreviations, use '*' to denote the placeholder superimposition
 
 	// returns true if there are any abbreviations
-	public static boolean hasAnyAbbrev(Molecule mol)
+	public static hasAnyAbbrev(mol:Molecule):boolean
 	{
-		for (int n = 1; n <= mol.numAtoms(); n++) if (hasAbbrev(mol, n)) return true;
+		for (let n = 1; n <= mol.numAtoms(); n++) if (MolUtil.hasAbbrev(mol, n)) return true;
 		return false;
 	}
 
 	// returns true if the atom index is an inline abbreviation
-	public static boolean hasAbbrev(Molecule mol, int atom)
+	public static hasAbbrev(mol:Molecule, atom:number):boolean
 	{
-		String[] extra = mol.atomExtra(atom);
-		for (int n = 0; n < (extra == null ? 0 : extra.length); n++) if (extra[n].startsWith("a")) return true;
+		let extra = mol.atomExtra(atom);
+		for (let n = 0; n < (extra == null ? 0 : extra.length); n++) if (extra[n].startsWith('a')) return true;
 		return false;
 	}
-
+/*
     // if the molecule has a template abbreviation encoded at the given atom, it will be parsed into a fragment instance and
     // returned; for the embedded fragment, atom#1 is considered to be the site of attachment
     public static Molecule getAbbrev(Molecule mol, int N)
@@ -279,35 +276,35 @@ class MolUtil
 		if (b > 0) mol.deleteBond(b);
 		return mol.addBond(bfr, bto, order, type);
 	}
-
+*/
    	// returns a molecule which is smaller than the current one, according to the mask (which must be of size #atoms); boundary cases
     // are a null molecule or cloned copy
-	public static Molecule subgraph(Molecule mol, boolean[] mask)
+	public static subgraphMask(mol:Molecule, mask:boolean[]):Molecule
 	{
-		int[] invidx = new int[mol.numAtoms()];
-		int sum = 0;
-		for (int n = 0; n < mol.numAtoms(); n++) 
+		let invidx:number[] = [];
+		let sum = 0;
+		for (let n = 0; n < mol.numAtoms(); n++) 
 		{
-			if (mask[n]) invidx[n] = ++sum; else invidx[n] = 0;
+			if (mask[n]) invidx.push(++sum); else invidx.push(0);
 		}
 		if (sum == 0) return new Molecule();
 		if (sum == mol.numAtoms()) return mol.clone();
     	
-		Molecule frag = new Molecule();
-		for (int n = 1; n <= mol.numAtoms(); n++) if (mask[n - 1])
+		let frag = new Molecule();
+		for (let n = 1; n <= mol.numAtoms(); n++) if (mask[n - 1])
 		{
-			int num = frag.addAtom(mol.atomElement(n), mol.atomX(n), mol.atomY(n), mol.atomCharge(n), mol.atomUnpaired(n));
+			let num = frag.addAtom(mol.atomElement(n), mol.atomX(n), mol.atomY(n), mol.atomCharge(n), mol.atomUnpaired(n));
 			frag.setAtomIsotope(num, mol.atomIsotope(n));
 			frag.setAtomHExplicit(num, mol.atomHExplicit(n));
 			frag.setAtomMapNum(num, mol.atomMapNum(n));
 			frag.setAtomExtra(num, mol.atomExtra(n));
 		}
-		for (int n = 1; n <= mol.numBonds(); n++)
+		for (let n = 1; n <= mol.numBonds(); n++)
 		{
-			int from = invidx[mol.bondFrom(n) - 1], to = invidx[mol.bondTo(n) - 1];
-			if (from > 0 && to > 0)
+			let bfr = invidx[mol.bondFrom(n) - 1], bto = invidx[mol.bondTo(n) - 1];
+			if (bfr > 0 && bto > 0)
 			{
-				int num = frag.addBond(from, to, mol.bondOrder(n), mol.bondType(n));
+				let num = frag.addBond(bfr, bto, mol.bondOrder(n), mol.bondType(n));
 				frag.setBondExtra(num, mol.bondExtra(n));
 			}
 		}
@@ -320,27 +317,27 @@ class MolUtil
     // atoms [C,O,N,H], reordered by indices of [3,2,4,1], will produce a new molecule with atoms [N,O,H,C]; the bonds will also
     // be correctly remapped; idx.length must be equal to or less than the number of atoms; each index must be unique and 
     // in the range {1..#atoms}, otherwise the result is undefined
-	public static Molecule subgraph(Molecule mol, int[] idx)
+	public static subgraphIndex(mol:Molecule, idx:number[]):Molecule
 	{
-		int[] invidx = new int[mol.numAtoms()];
-		for (int n = 0; n < invidx.length; n++) invidx[n] = 0;
-		for (int n = 0; n < idx.length; n++) invidx[idx[n] - 1] = n + 1;
+		let invidx = Vec.numberArray(0, mol.numAtoms());
+		for (let n = 0; n < invidx.length; n++) invidx[n] = 0;
+		for (let n = 0; n < idx.length; n++) invidx[idx[n] - 1] = n + 1;
     	
-		Molecule frag = new Molecule();
-		for (int n = 0; n < idx.length; n++)
+		let frag = new Molecule();
+		for (let n = 0; n < idx.length; n++)
 		{
-			int num = frag.addAtom(mol.atomElement(idx[n]), mol.atomX(idx[n]), mol.atomY(idx[n]), mol.atomCharge(idx[n]), mol.atomUnpaired(idx[n]));
+			let num = frag.addAtom(mol.atomElement(idx[n]), mol.atomX(idx[n]), mol.atomY(idx[n]), mol.atomCharge(idx[n]), mol.atomUnpaired(idx[n]));
 			frag.setAtomIsotope(num, mol.atomIsotope(idx[n]));
 			frag.setAtomHExplicit(num, mol.atomHExplicit(idx[n]));
 			frag.setAtomMapNum(num, mol.atomMapNum(idx[n]));
 			frag.setAtomExtra(num, mol.atomExtra(idx[n]));
 		}
-		for (int n = 1; n <= mol.numBonds(); n++)
+		for (let n = 1; n <= mol.numBonds(); n++)
 		{
-			int from = invidx[mol.bondFrom(n) - 1], to = invidx[mol.bondTo(n) - 1];
-			if (from > 0 && to > 0)
+			let bfr = invidx[mol.bondFrom(n) - 1], bto = invidx[mol.bondTo(n) - 1];
+			if (bfr > 0 && bto > 0)
 			{
-				int num = frag.addBond(from, to, mol.bondOrder(n), mol.bondType(n));
+				let num = frag.addBond(bfr, bto, mol.bondOrder(n), mol.bondType(n));
 				frag.setBondExtra(num, mol.bondExtra(n));
 			}
 		}
@@ -348,6 +345,7 @@ class MolUtil
 		return frag;
     }
     
+/*	
     // a specialised version of mask subgraph: any atoms which are not in the mask, but are bonded to atoms which are in the
     // mask, are converted to the element "X" and included in the result; this makes them potentially more useful as template fragments
 	public static Molecule subgraphWithAttachments(Molecule mol, boolean[] mask)
@@ -595,51 +593,54 @@ class MolUtil
 		}
 		
 		return mw;
-	}
+	}*/
 
     // looks for all cases where a bond {a1,a2} has duplicate(s), either of the {a1,a2} or {a2,a1} flavours; when this happens,
     // the duplicates are removed; if one of the bond violates maximum Lewis octet rule for (C/N/O), it gets zapped;
     // otherwise, keeps the bond with the highest order (second priority); or the most exotic type (third priority); or 
     // failing that, first in first served
-    public static void removeDuplicateBonds(Molecule mol)
+    public static removeDuplicateBonds(mol:Molecule):void
     {
-		int[] bpri = new int[mol.numBonds()];
-		for (int n = 1; n <= mol.numBonds(); n++)
-			bpri[n - 1] = Math.min(mol.bondFrom(n), mol.bondTo(n)) * mol.numAtoms() + Math.max(mol.bondFrom(n), mol.bondTo(n));
-		int[] bidx = Vec.idxSort(bpri);
+		let bpri:number[] = [];
+		for (let n = 1; n <= mol.numBonds(); n++)
+		{
+			let p = Math.min(mol.bondFrom(n), mol.bondTo(n)) * mol.numAtoms() + Math.max(mol.bondFrom(n), mol.bondTo(n));
+			bpri.push(p);
+		}
+		let bidx = Vec.idxSort(bpri);
     	
-		boolean[] keepmask = Vec.booleanArray(false, bidx.length);
-		int p = 0;
+		let keepmask = Vec.booleanArray(false, bidx.length);
+		let p = 0;
 		while (p < bidx.length)
     	{
-			int sz = 1;
+			let sz = 1;
 			while (p + sz < bidx.length && bpri[bidx[p]] == bpri[bidx[p + sz]]) sz++;
     	    
-			int best = p;
-			for (int n = p + 1; n < p + sz; n++) // (does nothing if not degenerate)
+			let best = p;
+			for (let n = p + 1; n < p + sz; n++) // (does nothing if not degenerate)
     	    {
-				int b1 = bidx[best] + 1, b2 = bidx[n] + 1;
+				let b1 = bidx[best] + 1, b2 = bidx[n] + 1;
         	    
         		// see if just one of the bonds assures Lewis violation on C/N/O
-				int a1 = mol.bondFrom(b1), a2 = mol.bondTo(b1);
-				String el1 = mol.atomElement(a1), el2 = mol.atomElement(a2);
-				int limit1 = 0, limit2 = 0;
-        		if (el1.equals("C") || el1.equals("N")) limit1 = 4;
-        		else if (el1.equals("O")) limit1 = 3;
-        		if (el2.equals("C") || el2.equals("N")) limit2 = 4;
-        		else if (el2.equals("O")) limit2 = 3;
+				let a1 = mol.bondFrom(b1), a2 = mol.bondTo(b1);
+				let el1 = mol.atomElement(a1), el2 = mol.atomElement(a2);
+				let limit1 = 0, limit2 = 0;
+        		if (el1 == 'C' || el1 == 'N') limit1 = 4;
+        		else if (el1 == 'O') limit1 = 3;
+        		if (el2 == 'C' || el2 == 'N') limit2 = 4;
+        		else if (el2 == 'O') limit2 = 3;
         		
         		if (limit1 > 0 || limit2 > 0)
         		{
-        		    int boB1A1 = 0, boB1A2 = 0, boB2A1 = 0, boB2A2 = 0;
-					for (int i = 1; i <= mol.numBonds(); i++)
+        		    let boB1A1 = 0, boB1A2 = 0, boB2A1 = 0, boB2A2 = 0;
+					for (let i = 1; i <= mol.numBonds(); i++)
         		    {
 						if (i != b2 && (mol.bondFrom(i) == a1 || mol.bondTo(i) == a1)) boB1A1 += mol.bondOrder(i);
 						if (i != b2 && (mol.bondFrom(i) == a2 || mol.bondTo(i) == a2)) boB1A2 += mol.bondOrder(i);
 						if (i != b1 && (mol.bondFrom(i) == a1 || mol.bondTo(i) == a1)) boB2A1 += mol.bondOrder(i);
 						if (i != b1 && (mol.bondFrom(i) == a2 || mol.bondTo(i) == a2)) boB2A2 += mol.bondOrder(i);
         		    }
-					int bad1 = 0, bad2 = 0;
+					let bad1 = 0, bad2 = 0;
 					if (limit1 > 0 && boB1A1 > limit1) bad1++;
 					if (limit2 > 0 && boB1A2 > limit2) bad1++;
 					if (limit1 > 0 && boB2A1 > limit1) bad2++;
@@ -650,7 +651,7 @@ class MolUtil
         		}
         	    
         		// otherwise pick the most interesting
-				int exotic1 = 2 * mol.bondOrder(b1), exotic2 = 2 * mol.bondOrder(b2);
+				let exotic1 = 2 * mol.bondOrder(b1), exotic2 = 2 * mol.bondOrder(b2);
 				exotic1 += (exotic1 == 0 ? 4 : 0) + (mol.bondType(b1) != Molecule.BONDTYPE_NORMAL ? 1 : 0);
 				exotic2 += (exotic2 == 0 ? 4 : 0) + (mol.bondType(b2) != Molecule.BONDTYPE_NORMAL ? 1 : 0);
         		
@@ -660,34 +661,35 @@ class MolUtil
     	    
 			p += sz;
     	}
-		for (int n = mol.numBonds(); n >= 1; n--)
+		for (let n = mol.numBonds(); n >= 1; n--)
 			if (!keepmask[n - 1] || mol.bondFrom(n) == mol.bondTo(n)) mol.deleteBond(n);
     }
 
     // calculates a weight for each atom relative to a starting atom, N; this is useful when deciding which atoms to move around,
     // i.e. those with higher weight should probably stay where they are; the algorithm is Morgan-like, in that atom values are
     // sequentially added to their neighbours, with the exception of atom N, which is a separating point
-    public static float[] calculateWalkWeight(Molecule mol, int N)
+    public static calculateWalkWeight(mol:Molecule, atom:number):number[]
     {
-		int ccsz = 0, cc[] = new Graph(mol).calculateComponents();
-		for (int n = 0; n < cc.length; n++) if (cc[n] == cc[N - 1]) ccsz++;
+		let ccsz = 0, cc = Graph.fromMolecule(mol).calculateComponents();
+		for (let n = 0; n < cc.length; n++) if (cc[n] == cc[atom - 1]) ccsz++;
 
-		float[] w = Vec.floatArray(1, mol.numAtoms()), wn = new float[mol.numAtoms()];
-		w[N - 1] = 0;
+		let w = Vec.numberArray(1, mol.numAtoms()), wn = Vec.numberArray(0, mol.numAtoms());
+		w[atom - 1] = 0;
 		for (; ccsz > 0; ccsz--)
     	{
-			for (int n = 0; n < mol.numAtoms(); n++) wn[n] = w[n];
-			for (int n = 1; n <= mol.numBonds(); n++)
+			for (let n = 0; n < mol.numAtoms(); n++) wn[n] = w[n];
+			for (let n = 1; n <= mol.numBonds(); n++)
     	    {
-				int a1 = mol.bondFrom(n) - 1, a2 = mol.bondTo(n) - 1;
-				w[a1] += wn[a2] * 0.1f;
-				w[a2] += wn[a1] * 0.1f;
+				let a1 = mol.bondFrom(n) - 1, a2 = mol.bondTo(n) - 1;
+				w[a1] += wn[a2] * 0.1;
+				w[a2] += wn[a1] * 0.1;
     	    }
-			w[N - 1] = 0;
+			w[atom - 1] = 0;
     	}
     	return w;
     }
 
+/*
 	// returns the electron count of an atom: this is the sum of natural electron count, neighbouring bonds, 
 	// explicit hydrogens, unpaired electrons and -charge; hydrogens inferred by the valence are included
 	// only if the countImplicit parameter is true; 

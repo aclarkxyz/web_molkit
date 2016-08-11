@@ -389,6 +389,8 @@ class Box
 	
 	public minX():number {return this.x;}
 	public minY():number {return this.y;}
+	public midX():number {return this.x + 0.5 * this.w;}
+	public midY():number {return this.y + 0.5 * this.h;}
 	public maxX():number {return this.x + this.w;}
 	public maxY():number {return this.y + this.h;}
 
