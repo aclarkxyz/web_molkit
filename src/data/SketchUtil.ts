@@ -289,7 +289,6 @@ class SketchUtil
     	return false;
     }
 
-/*
 	// for a particular atom, figures out the outgoing angles that are most likely to be good for placing a new atom+bond; these
 	// are found by postulating where a single bond might be drawn based on common geometries for the hybridisation, and using
 	// simple geometric median-cut angles; the results are not ordered with any kind of preference
@@ -297,9 +296,8 @@ class SketchUtil
 	{
 		let angles = SketchUtil.calculateNewBondAngles(mol, atom, 1);
 		let exits = SketchUtil.exitVectors(mol, atom);
-		return GeomUtil.uniqueAngles(Vec.concat(angles, exits), 2 * DEGRAD);
+		return GeomUtil.uniqueAngles(angles.concat(exits), 2 * DEGRAD);
 	}
-*/
 
 	// for a given atom, calculates a set of angles that protude outward based on positions between existing bond angles; this
 	// is primarily used for proposing new bond positions when the hybridisation does not match one of the common sketch geometries
@@ -762,18 +760,17 @@ class SketchUtil
 		return mol;
 	}
 
-/*	
 	// for the group of atoms defined by the mask, moves them all out to the far edge, as defined by dx/dy (should be 0/1/-1);
 	// returns null if the operation is invalid for any reason, e.g. the atoms are already along the specified edge
-	public static Molecule moveToEdge(Molecule mol, boolean[] mask, int dx, int dy)
+	public static moveToEdge(mol:Molecule, mask:boolean, dx:number, dy:number):Molecule
 	{
-		boolean gotS = false, gotN = false;
-		float sx1 = 0, sy1 = 0, sx2 = 0, sy2 = 0;
-		float nx1 = 0, ny1 = 0, nx2 = 0, ny2 = 0;
+		let gotS = false, gotN = false;
+		let sx1 = 0, sy1 = 0, sx2 = 0, sy2 = 0;
+		let nx1 = 0, ny1 = 0, nx2 = 0, ny2 = 0;
 
-		for (int n = 1; n <= mol.numAtoms(); n++)
+		for (let n = 1; n <= mol.numAtoms(); n++)
 		{
-			float x = mol.atomX(n), y = mol.atomY(n);
+			let x = mol.atomX(n), y = mol.atomY(n);
 			if (mask[n - 1])
 			{
 				if (!gotS || x < sx1) sx1 = x;
@@ -793,7 +790,7 @@ class SketchUtil
 		}
 
 		// check to see if it's already at the farthest extent
-		final float SEPARATE = 1.0f, SEPTEST = 0.9f;
+		const SEPARATE = 1.0, SEPTEST = 0.9;
 		if ((dx < 0 && dy == 0 && sx2 <= nx1 - SEPTEST) ||
 			(dx > 0 && dy == 0 && sx1 >= nx2 + SEPTEST) ||
 			(dx == 0 && dy < 0 && sy2 <= ny1 - SEPTEST) ||
@@ -804,36 +801,36 @@ class SketchUtil
 
 		// apply the move
 		mol = mol.clone();
-		float ox = 0, oy = 0;
+		let ox = 0, oy = 0;
 		if (dx < 0) ox = nx1 - sx2 - SEPARATE;
 		if (dx > 0) ox = nx2 - sx1 + SEPARATE;
 		if (dy < 0) oy = ny1 - sy2 - SEPARATE;
 		if (dy > 0) oy = ny2 - sy1 + SEPARATE;
-		for (int n = 1; n <= mol.numAtoms(); n++) if (mask[n - 1]) mol.setAtomPos(n, mol.atomX(n) + ox, mol.atomY(n) + oy);
+		for (let n = 1; n <= mol.numAtoms(); n++) if (mask[n - 1]) mol.setAtomPos(n, mol.atomX(n) + ox, mol.atomY(n) + oy);
 		
 		return mol;
 	}
 	
 	// adds some number of additional hydrogen atoms to a parent atom, and selects reasonable position coordinates for them
-	public static void placeAdditionalHydrogens(Molecule mol, int atom, int numH)
+	public static placeAdditionalHydrogens(mol:Molecule, atom:number, numH:number):void
 	{
-		final int base = mol.numAtoms();
-		final float x0 = mol.atomX(atom), y0 = mol.atomY(atom);
+		let base = mol.numAtoms();
+		const x0 = mol.atomX(atom), y0 = mol.atomY(atom);
     
-		int[] adj = mol.atomAdjList(atom);
+		let adj = mol.atomAdjList(atom);
 
 		// special deal: adding 2 hydrogens to a divalent atom in bent form
 		if (adj.length == 2 && numH == 2)
     	{
-			final float th1 = Util.atan2(mol.atomY(adj[0]) - y0, mol.atomX(adj[0]) - x0);
-			final float th2 = Util.atan2(mol.atomY(adj[1]) - y0, mol.atomX(adj[1]) - x0);
-			if (Math.abs(Util.angleDiff(th1, th2)) < 170 * Util.DEGRAD_F)
+			const th1 = Math.atan2(mol.atomY(adj[0]) - y0, mol.atomX(adj[0]) - x0);
+			const th2 = Math.atan2(mol.atomY(adj[1]) - y0, mol.atomX(adj[1]) - x0);
+			if (Math.abs(angleDiff(th1, th2)) < 170 * DEGRAD)
 			{
 				//float theta=GeomUtil.emergentAngle(new float[]{th1,th2})+Util.PI_F;
-				final float theta = 0.5f * (th1 + th2) + Util.PI_F;
-				final float th3 = theta - 30 * Util.DEGRAD_F, th4 = theta + 30 * Util.DEGRAD_F;
-				mol.addAtom("H", x0 + Molecule.IDEALBOND * Util.cos(th3), y0 + Molecule.IDEALBOND * Util.sin(th3));
-				mol.addAtom("H", x0 + Molecule.IDEALBOND * Util.cos(th4), y0 + Molecule.IDEALBOND * Util.sin(th4));
+				let theta = 0.5 * (th1 + th2) + Math.PI;
+				let th3 = theta - 30 * DEGRAD, th4 = theta + 30 * DEGRAD;
+				mol.addAtom("H", x0 + Molecule.IDEALBOND * Math.cos(th3), y0 + Molecule.IDEALBOND * Math.sin(th3));
+				mol.addAtom("H", x0 + Molecule.IDEALBOND * Math.cos(th4), y0 + Molecule.IDEALBOND * Math.sin(th4));
 				mol.addBond(atom, base + 1, 1);
 				mol.addBond(atom, base + 2, 1);
 				return;
@@ -843,11 +840,11 @@ class SketchUtil
     	// special deal: adding 3 hydrogens to a terminal atom
 		if (adj.length == 1 && numH == 3)
 		{
-			final float th1 = Util.atan2(mol.atomY(adj[0]) - y0, mol.atomX(adj[0]) - x0);
-			final float th2 = th1 + 90 * Util.DEGRAD_F, th3 = th1 + 180 * Util.DEGRAD_F, th4 = th1 + 270 * Util.DEGRAD_F;
-			mol.addAtom("H", x0 + Molecule.IDEALBOND * Util.cos(th2), y0 + Molecule.IDEALBOND * Util.sin(th2));
-			mol.addAtom("H", x0 + Molecule.IDEALBOND * Util.cos(th3), y0 + Molecule.IDEALBOND * Util.sin(th3));
-			mol.addAtom("H", x0 + Molecule.IDEALBOND * Util.cos(th4), y0 + Molecule.IDEALBOND * Util.sin(th4));
+			let th1 = Math.atan2(mol.atomY(adj[0]) - y0, mol.atomX(adj[0]) - x0);
+			let th2 = th1 + 90 * DEGRAD, th3 = th1 + 180 * DEGRAD, th4 = th1 + 270 * DEGRAD;
+			mol.addAtom("H", x0 + Molecule.IDEALBOND * Math.cos(th2), y0 + Molecule.IDEALBOND * Math.sin(th2));
+			mol.addAtom("H", x0 + Molecule.IDEALBOND * Math.cos(th3), y0 + Molecule.IDEALBOND * Math.sin(th3));
+			mol.addAtom("H", x0 + Molecule.IDEALBOND * Math.cos(th4), y0 + Molecule.IDEALBOND * Math.sin(th4));
 			mol.addBond(atom, base + 1, 1);
 			mol.addBond(atom, base + 2, 1);
 			mol.addBond(atom, base + 3, 1);
@@ -855,12 +852,11 @@ class SketchUtil
 		}
     	
 		// otherwise: add one, then recurse
-		float theta = pickNewAtomDirection(mol, atom, primeDirections(mol, atom));
-		mol.addAtom("H", x0 + Molecule.IDEALBOND * Util.cos(theta), y0 + Molecule.IDEALBOND * Util.sin(theta));
+		let theta = SketchUtil.pickNewAtomDirection(mol, atom, SketchUtil.primeDirections(mol, atom));
+		mol.addAtom("H", x0 + Molecule.IDEALBOND * Math.cos(theta), y0 + Molecule.IDEALBOND * Math.sin(theta));
 		mol.addBond(atom, base + 1, 1);
-		if (numH > 1) placeAdditionalHydrogens(mol, atom, numH - 1);
+		if (numH > 1) SketchUtil.placeAdditionalHydrogens(mol, atom, numH - 1);
     }
-*/
 
     // returns a list of outgoing angles; unlike primeDirections, which tries to narrow the list as much as possible, this function
     // tries to be generous and include anything remotely plausible: the intent is for helping out an interactive session where a precise

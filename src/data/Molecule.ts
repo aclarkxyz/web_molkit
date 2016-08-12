@@ -71,6 +71,9 @@ class Molecule
 	public static BONDTYPE_DECLINED = 2;
 	public static BONDTYPE_UNKNOWN = 3;
 
+	public static HYVALENCE_EL = ['C','N','O','S','P'];
+	public static HYVALENCE_VAL =[ 4,  3,  2,  2,  3 ];
+
 	// ------------ public methods ------------
 
 	constructor()
@@ -211,6 +214,23 @@ class Molecule
 		if (transi.length > 0) this.hasTransient = true;
 	}
 
+	public swapAtoms(a1:number, a2:number):void
+	{
+		let a = this.atoms[a1 - 1];
+		this.atoms[a1 - 1] = this.atoms[a2 - 1];
+		this.atoms[a2 - 1] = a;
+
+		for (let n = 0; n < this.bonds.length; n++)
+		{
+			let b = this.bonds[n];
+			if (b.from == a2) b.from = a1; else if (b.from == a1) b.from = a2;
+			if (b.to == a2) b.to = a1; else if (b.to == a1) b.to = a2;
+		}
+
+		this.trashGraph();
+		this.trashTransient();
+	}
+
 	public addBond(from:number, to:number, order:number, type:number = Molecule.BONDTYPE_NORMAL)
 	{
 		let b = new Bond();
@@ -289,15 +309,12 @@ class Molecule
 	// (note: returns "implicit"+"explicit", but does NOT count "actual" hydrogens, i.e. those which have their own atom nodes)
 	public atomHydrogens(idx:number):number
 	{
-		const HYVALENCE_EL = ['C','N','O','S','P'];
-		const HYVALENCE_VAL =[ 4,  3,  2,  2,  3 ];
-
 		let hy = this.atomHExplicit(idx);
 		if (hy != Molecule.HEXPLICIT_UNKNOWN) return hy;
 
-		for (let n = 0; n < HYVALENCE_EL.length; n++) if (HYVALENCE_EL[n] == this.atomElement(idx))
+		for (let n = 0; n < Molecule.HYVALENCE_EL.length; n++) if (Molecule.HYVALENCE_EL[n] == this.atomElement(idx))
 		{
-			hy = HYVALENCE_VAL[n];
+			hy = Molecule.HYVALENCE_VAL[n];
 			break;
 		}
 		if (hy == Molecule.HEXPLICIT_UNKNOWN) return 0;

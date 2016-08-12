@@ -155,33 +155,35 @@ class Graph
 		this.nbrs[N] = [];
     }
 
-/*
-    public keepNodes(mask:boolean[]):void
+    public keepNodesMask(mask:boolean[]):void
     {
-		final int oldsz = nbrs.length, newsz = Vec.maskCount(mask);
+		const oldsz = this.nbrs.length, newsz = Vec.maskCount(mask);
 		if (newsz == oldsz) return;
-    	if (newsz == 0) {nbrs = new int[0][]; indices = null; props = null; return;}
+    	if (newsz == 0) 
+		{
+			this.nbrs = []; 
+			this.indices = null; 
+			this.labels = null; 
+			this.props = null; 
+			return;
+		}
 
-		int[] newmap = Vec.maskMap(mask);
-		int[][] newnbrs = new int[newsz][];
-		for (int n = 0, pos = 0; n < oldsz; n++) if (mask[n])
+		let newmap = Vec.maskMap(mask);
+		let newnbrs:number[][] = Vec.anyArray([], newsz);
+		for (let n = 0, pos = 0; n < oldsz; n++) if (mask[n])
     	{
-			int sz = 0;
-			for (int i = 0; i < nbrs[n].length; i++) if (mask[nbrs[n][i]]) sz++;
-			newnbrs[pos] = new int[sz];
-			sz = 0;
-			for (int i = 0; i < nbrs[n].length; i++) if (mask[nbrs[n][i]]) newnbrs[pos][sz++] = newmap[nbrs[n][i]];
+			for (let i of this.nbrs[n]) if (mask[i]) newnbrs[pos].push(newmap[i]);
 			pos++;
     	}
-		nbrs = newnbrs;
+		this.nbrs = newnbrs;
     	
-		if (indices != null) indices = Vec.maskGet(indices, mask);
-		if (labels != null) labels = Vec.maskGet(labels, mask);
-		if (props != null) props = Vec.maskGet(props, mask);
+		if (this.indices != null) this.indices = Vec.maskGet(this.indices, mask);
+		if (this.labels != null) this.labels = Vec.maskGet(this.labels, mask);
+		if (this.props != null) this.props = Vec.maskGet(this.props, mask);
     }
 
-
-    public void keepNodes(int[] idx) {keepNodes(Vec.idxMask(idx, numNodes()));}
+/*
+    public void keepNodesIndex(int[] idx) {keepNodes(Vec.idxMask(idx, numNodes()));}
 
     public void removeNodes(boolean[] mask) {keepNodes(Vec.not(mask));}
 
