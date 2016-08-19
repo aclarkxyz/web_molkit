@@ -1727,10 +1727,13 @@ class Sketcher extends Widget implements ArrangeMeasurement
 						param.positionX = x;
 						param.positionY = y;
 					}
-					let molact:MoleculeActivity = new MoleculeActivity(this, ActivityType.Element, param);
-					molact.input.currentAtom = this.opAtom;
-					molact.input.currentBond = 0;
-					molact.input.selectedMask = null;
+					let override =
+					{
+						'currentAtom': this.opAtom,
+						'currentBond': 0,
+						'selectedMask': null
+					};
+					let molact:MoleculeActivity = new MoleculeActivity(this, ActivityType.Element, param, override);
 					molact.execute();
 				}
 			}
@@ -1738,23 +1741,29 @@ class Sketcher extends Widget implements ArrangeMeasurement
 			{
 				if (this.opAtom > 0 || this.opBond > 0)
 				{
-					let molact:MoleculeActivity = new MoleculeActivity(this, ActivityType.Charge, {'delta': this.toolChargeDelta});
-					molact.input.currentAtom = this.opAtom;
-					molact.input.currentBond = this.opBond;
-					molact.input.selectedMask = null;
+					let override =
+					{
+						'currentAtom': this.opAtom,
+						'currentBond': this.opBond,
+						'selectedMask': null
+					};
+					let molact:MoleculeActivity = new MoleculeActivity(this, ActivityType.Charge, {'delta': this.toolChargeDelta}, override);
 					molact.execute();
 				}
 			}
 			else if (this.dragType == DraggingTool.Bond)
 			{
+				let override =
+				{
+					'currentAtom': this.opAtom,
+					'currentBond': this.opBond,
+					'selectedMask': null
+				};
 				let molact:MoleculeActivity;
 				if (this.toolBondType == Molecule.BONDTYPE_NORMAL) 
-					molact = new MoleculeActivity(this, ActivityType.BondOrder, {'order': this.toolBondOrder});
+					molact = new MoleculeActivity(this, ActivityType.BondOrder, {'order': this.toolBondOrder}, override);
 				else
-					molact = new MoleculeActivity(this, ActivityType.BondType, {'type': this.toolBondType});
-				molact.input.currentAtom = this.opAtom;
-				molact.input.currentBond = this.opBond;
-				molact.input.selectedMask = null;
+					molact = new MoleculeActivity(this, ActivityType.BondType, {'type': this.toolBondType}, override);
 				molact.execute();
 			}
 		}

@@ -1002,6 +1002,7 @@ class MoleculeActivity
 		if (this.input.mol.atomAdjCount(atom) < 2)
 		{
 			this.errmsg = 'Subject atom must already have at least 2 bonds.';
+			return;
 		}
 		
 		var ang = SketchUtil.calculateNewBondAngles(this.input.mol, atom, 1);
@@ -1009,6 +1010,7 @@ class MoleculeActivity
 		if (ang.length == 0)
 		{
 			this.errmsg = 'Could not find a suitable geometry for new substituents.';
+			return;
 		}
 
 		var baseAng = ang[0];

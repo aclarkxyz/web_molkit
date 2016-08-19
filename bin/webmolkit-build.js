@@ -9517,12 +9517,14 @@ var MoleculeActivity = (function () {
         var atom = this.subjectIndex[0];
         if (this.input.mol.atomAdjCount(atom) < 2) {
             this.errmsg = 'Subject atom must already have at least 2 bonds.';
+            return;
         }
         var ang = SketchUtil.calculateNewBondAngles(this.input.mol, atom, 1);
         if (ang.length == 0)
             ang = SketchUtil.exitVectors(this.input.mol, atom);
         if (ang.length == 0) {
             this.errmsg = 'Could not find a suitable geometry for new substituents.';
+            return;
         }
         var baseAng = ang[0];
         var cx = this.input.mol.atomX(atom), cy = this.input.mol.atomY(atom);
@@ -11834,31 +11836,37 @@ var Sketcher = (function (_super) {
                         param.positionX = x;
                         param.positionY = y;
                     }
-                    var molact = new MoleculeActivity(this, ActivityType.Element, param);
-                    molact.input.currentAtom = this.opAtom;
-                    molact.input.currentBond = 0;
-                    molact.input.selectedMask = null;
+                    var override = {
+                        'currentAtom': this.opAtom,
+                        'currentBond': 0,
+                        'selectedMask': null
+                    };
+                    var molact = new MoleculeActivity(this, ActivityType.Element, param, override);
                     molact.execute();
                 }
             }
             else if (this.dragType == DraggingTool.Charge) {
                 if (this.opAtom > 0 || this.opBond > 0) {
-                    var molact = new MoleculeActivity(this, ActivityType.Charge, { 'delta': this.toolChargeDelta });
-                    molact.input.currentAtom = this.opAtom;
-                    molact.input.currentBond = this.opBond;
-                    molact.input.selectedMask = null;
+                    var override = {
+                        'currentAtom': this.opAtom,
+                        'currentBond': this.opBond,
+                        'selectedMask': null
+                    };
+                    var molact = new MoleculeActivity(this, ActivityType.Charge, { 'delta': this.toolChargeDelta }, override);
                     molact.execute();
                 }
             }
             else if (this.dragType == DraggingTool.Bond) {
+                var override = {
+                    'currentAtom': this.opAtom,
+                    'currentBond': this.opBond,
+                    'selectedMask': null
+                };
                 var molact = void 0;
                 if (this.toolBondType == Molecule.BONDTYPE_NORMAL)
-                    molact = new MoleculeActivity(this, ActivityType.BondOrder, { 'order': this.toolBondOrder });
+                    molact = new MoleculeActivity(this, ActivityType.BondOrder, { 'order': this.toolBondOrder }, override);
                 else
-                    molact = new MoleculeActivity(this, ActivityType.BondType, { 'type': this.toolBondType });
-                molact.input.currentAtom = this.opAtom;
-                molact.input.currentBond = this.opBond;
-                molact.input.selectedMask = null;
+                    molact = new MoleculeActivity(this, ActivityType.BondType, { 'type': this.toolBondType }, override);
                 molact.execute();
             }
         }
