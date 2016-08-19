@@ -55,6 +55,8 @@ class Vec
 
 	public static equals(arr1:any[], arr2:any[]):boolean
 	{
+		if (arr1 == null && arr2 == null) return true;
+		if (arr1 == null || arr2 == null) return false;
 		if (arr1.length != arr2.length) return false;
 		for (let n = 0; n < arr1.length; n++) if (arr1[n] != arr2[n]) return false;
 		return true;

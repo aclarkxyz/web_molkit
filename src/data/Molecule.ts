@@ -78,7 +78,6 @@ class Molecule
 
 	constructor()
 	{
-		
 	}
 	
 	public clone():Molecule {return Molecule.fromString(this.toString());}
@@ -246,15 +245,22 @@ class Molecule
 		return this.bonds.length;
 	}
 
-	public setBondFrom(idx:number, from:number)
+	public setBondFrom(idx:number, bfr:number)
 	{
-		this.getBond(idx).from = from;
+		this.getBond(idx).from = bfr;
 		this.trashTransient();
 		this.trashGraph();
 	}
 	public setBondTo(idx:number, to:number)
 	{
 		this.getBond(idx).to = to;
+		this.trashTransient();
+		this.trashGraph();
+	}
+	public setBondFromTo(idx:number, bfr:number, bto:number)
+	{
+		this.getBond(idx).from = bfr;
+		this.getBond(idx).to = bto;
 		this.trashTransient();
 		this.trashGraph();
 	}

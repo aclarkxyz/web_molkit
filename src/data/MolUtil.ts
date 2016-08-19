@@ -400,36 +400,18 @@ class MolUtil
 		return MolUtil.subgraphMask(mol, mask);
 	}
 	
-	/*
 	// produces a list of connected components for the molecule; the immediate size of the return value is the number of components;
 	// each of the sub arrays is a list of indices for that component; the return value has 1-based indices
-	public static int[][] componentList(Molecule mol)
+	public static componentList(mol:Molecule):number[][]
 	{
-		final int sz = mol.numAtoms();
+		let sz = mol.numAtoms();
 		if (sz == 0) return null;
-		Graph g = new Graph(mol);
+		let g = Graph.fromMolecule(mol);
 		
-		int[] cc = g.calculateComponents();
-		final int ccmax = Vec.max(cc);
-
-		int[] ccsz = Vec.intArray(0, ccmax);
-		for (int n = 0; n < sz; n++) ccsz[cc[n] - 1]++;
-
-		int[][] cclist = new int[ccmax][];
-		for (int n = 0; n < ccmax; n++)
-		{
-			cclist[n] = new int[ccsz[n]];
-			ccsz[n] = 0;
-		}
-
-		for (int n = 0; n < sz; n++)
-		{
-			final int i = cc[n] - 1;
-			cclist[i][ccsz[i]++] = n + 1;
-		}
-
-		return cclist;
-	}*/
+		let groups = g.calculateComponentGroups();
+		for (let grp of groups) Vec.addTo(grp, 1); // 1-based rather than zero
+		return groups;
+	}
 	
 	// obtain groups of atom indices, each of which represents a "side" of atoms which are hanging "off" a central atom; if the central
 	// atom has N neighbors and is not in a ring, then there will be N groups of atoms returned; if the atom is part of a ring block,

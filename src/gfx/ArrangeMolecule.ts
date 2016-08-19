@@ -1389,7 +1389,7 @@ class ArrangeMolecule
 		for (let n = this.space.length - 1; n >= 0; n--)
 		{
 			let s = this.space[n - 1];
-			if (s.anum != atom) continue;
+			if (s == null || s.anum != atom) continue;
 			s.box.x += dx;
 			s.box.y += dy;
 			Vec.addTo(s.px, dx);

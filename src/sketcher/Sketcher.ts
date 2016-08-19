@@ -1694,10 +1694,13 @@ class Sketcher extends Widget implements ArrangeMeasurement
 			{
 				if (this.opAtom > 0 || this.opBond > 0)
 				{
-					let molact:MoleculeActivity = new MoleculeActivity(this, ActivityType.Delete, {});
-					molact.input.currentAtom = this.opAtom;
-					molact.input.currentBond = this.opBond;
-					molact.input.selectedMask = null;
+					let override =
+					{
+						'currentAtom': this.opAtom,
+						'currentBond': this.opBond,
+						'selectedMask': []
+					};
+					let molact:MoleculeActivity = new MoleculeActivity(this, ActivityType.Delete, {}, override);
 					molact.execute();
 				}
 			}
@@ -1721,7 +1724,8 @@ class Sketcher extends Widget implements ArrangeMeasurement
 							x = 0;
 							y = 0;
 						}
-						param.position = [x, y];
+						param.positionX = x;
+						param.positionY = y;
 					}
 					let molact:MoleculeActivity = new MoleculeActivity(this, ActivityType.Element, param);
 					molact.input.currentAtom = this.opAtom;
@@ -1775,10 +1779,13 @@ class Sketcher extends Widget implements ArrangeMeasurement
 				for (let n = 0; n < this.lassoMask.length; n++) if (this.lassoMask[n]) {any = true; break;}
 				if (any)
 				{
-					let molact:MoleculeActivity = new MoleculeActivity(this, ActivityType.Delete, {});
-					molact.input.currentAtom = 0;
-					molact.input.currentBond = 0;
-					molact.input.selectedMask = this.lassoMask;
+					let override =
+					{
+						'currentAtom': 0,
+						'currentBond': 0,
+						'selectedMask': this.lassoMask
+					};
+					let molact:MoleculeActivity = new MoleculeActivity(this, ActivityType.Delete, {}, override);
 					molact.execute();
 				}
 			}

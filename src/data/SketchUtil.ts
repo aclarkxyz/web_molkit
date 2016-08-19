@@ -762,7 +762,7 @@ class SketchUtil
 
 	// for the group of atoms defined by the mask, moves them all out to the far edge, as defined by dx/dy (should be 0/1/-1);
 	// returns null if the operation is invalid for any reason, e.g. the atoms are already along the specified edge
-	public static moveToEdge(mol:Molecule, mask:boolean, dx:number, dy:number):Molecule
+	public static moveToEdge(mol:Molecule, mask:boolean[], dx:number, dy:number):Molecule
 	{
 		let gotS = false, gotN = false;
 		let sx1 = 0, sy1 = 0, sx2 = 0, sy2 = 0;
