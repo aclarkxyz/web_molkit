@@ -11,6 +11,7 @@
 */
 
 ///<reference path='../decl/corrections.d.ts'/>
+///<reference path='MDLMOLReader.ts'/>
 
 /*
 	Serialisation and deserialisation utilities for the Molecule object.
@@ -111,7 +112,16 @@ class MoleculeStream
 
 		ret += '!End\n';
 		return ret;
-	};
+	}
+
+	// parses a string that is expected to be using MDL Molfile format, and turns it into a molecule; or null if 
+	public static readMDLMOL(strData:string):Molecule
+	{
+		let src = new MDLMOLReader(strData);
+		src.parseHeader = true;
+		src.parse();
+		return src.mol;
+	}
 
 	// static method: decodes a string from a sketchel field
 	public static sk_unescape(str:string):string
@@ -123,7 +133,7 @@ class MoleculeStream
 			str = match[3];
 		}
 		return ret + str;
-	};
+	}
 
 	// static method: makes a string safe for inclusion as a SketchEl field
 	public static sk_escape(str:string):string
@@ -142,7 +152,7 @@ class MoleculeStream
 			else ret += ch;
 		}
 		return ret;
-	};
+	}
 
 	// internal utility for writing SketchEl extra/transient content
 	public static sk_encodeExtra(extra:string[]):string
@@ -150,7 +160,7 @@ class MoleculeStream
 		let ret = '';
 		for (let n = 0; n < extra.length; n++) ret += ',' + MoleculeStream.sk_escape(extra[n]);
 		return ret;
-	};	
+	};
 }
 
 

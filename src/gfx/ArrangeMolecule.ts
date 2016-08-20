@@ -163,6 +163,7 @@ class ArrangeMolecule
 				'col': this.policy.data.atomCols[this.mol.atomicNumber(n)],
 				'oval': new Oval(this.measure.angToX(this.mol.atomX(n)), this.measure.angToY(this.mol.atomY(n)), 0, 0)
 			};
+
 			//if (policy.mappedColour >= 0 && mol.atomMapNum(n) > 0) a.col = policy.mappedColour;
     
     	    // decide whether this atom is to have a label
@@ -416,8 +417,9 @@ class ArrangeMolecule
     }
     
     // goes through all of the primitives and works out {minX,minY,maxX,maxY}
-    public determineBoundary(padding:number):number[]
+    public determineBoundary(padding?:number):number[]
     {
+		if (padding == null) padding = 0;
 		if (this.space.length == 0) return [0, 0, 2 * padding, 2 * padding];
 
 		let bounds = Vec.numberArray(0, 4);
@@ -426,7 +428,7 @@ class ArrangeMolecule
 		bounds[1] = spc.box.y;
 		bounds[2] = spc.box.x + spc.box.w;
 		bounds[3] = spc.box.y + spc.box.h;
-    	
+
 		for (let n = this.space.length - 1; n > 0; n--)
 		{
 			spc = this.space[n];
@@ -1289,26 +1291,6 @@ class ArrangeMolecule
 				outlineX = qh.hullX;
 				outlineY = qh.hullY;
 			}
-
-			/*FloatVector gx = new FloatVector(), gy = new FloatVector();
-			float emdx = -0.5f * emw, emdy = 0.5f * (VectorGfxFont.ASCENT + VectorGfxFont.DESCENT);
-			float emscale = a.fsz * VectorGfxFont.INV_UNITS_PER_EM;
-			float[] seg = new float[6];
-			for (PathIterator pi = outline.getPathIterator(null); !pi.isDone(); pi.next())
-			{
-				int type = pi.currentSegment(seg);
-				if (type == PathIterator.SEG_MOVETO || type == PathIterator.SEG_LINETO)
-				{
-					final float x = a.cx + (emdx + seg[0]) * emscale;
-					final float y = a.cy + (emdy - seg[1]) * emscale * ymul;
-
-					final int nn = gx.size() - 1;
-					if (nn >= 0 && Util.norm2(x - gx.get(nn), y - gy.get(nn)) < 1) continue;
-
-					gx.add(x);
-					gy.add(y);
-				}
-			}*/
 
 			let emdx = -0.5 * emw, emdy = 0.5 * (font.ASCENT + font.DESCENT);
 			let emscale = a.fsz * font.INV_UNITS_PER_EM;

@@ -3,6 +3,514 @@ var __extends = (this && this.__extends) || function (d, b) {
     function __() { this.constructor = d; }
     d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 };
+function newElement(parent, tag, attr) {
+    var el = $("<" + tag + ">");
+    if (attr)
+        el.attr(attr);
+    $(parent).append(el);
+    return el[0];
+}
+function addText(parent, text) {
+    var el = parent instanceof jQuery ? parent[0] : parent;
+    el.appendChild(document.createTextNode(text));
+}
+function setVisible(node, visible) {
+    if (visible)
+        $(node).show();
+    else
+        $(node).hide();
+}
+function plural(count) {
+    return count == 1 ? '' : 's';
+}
+function colourCode(col) {
+    var hex = (col & 0xFFFFFF).toString(16);
+    while (hex.length < 6)
+        hex = '0' + hex;
+    return '#' + hex;
+}
+function colourAlpha(col) {
+    var transp = (col >>> 24) & 0xFF;
+    return transp == 0 ? 1 : transp == 0xFF ? 0 : 1 - (transp * (1.0 / 255));
+}
+var ONE_OVER_255 = 1.0 / 255;
+function colourCanvas(col) {
+    if (col == 0xFFFFFF)
+        return 'white';
+    if (col == 0x000000)
+        return 'black';
+    if (col == -1)
+        return null;
+    if (col >= 0 && col <= 0xFFFFFF)
+        return colourCode(col);
+    var t = ((col >> 24) & 0xFF) * ONE_OVER_255;
+    var r = ((col >> 16) & 0xFF);
+    var g = ((col >> 8) & 0xFF);
+    var b = (col & 0xFF);
+    return 'rgba(' + r + ',' + g + ',' + b + ',' + (1 - t) + ')';
+}
+function nodeText(node) {
+    var ret = '';
+    if (!node)
+        return;
+    node = node.firstChild;
+    while (node) {
+        if (node.nodeType == 3 || node.nodeType == 4)
+            ret += node.nodeValue;
+        node = node.nextSibling;
+    }
+    return ret;
+}
+function isDef(v) {
+    return !(v === null || typeof v === 'undefined');
+}
+function notDef(v) {
+    return v === null || typeof v === 'undefined';
+}
+function eventCoords(event, container) {
+    var parentOffset = $(container).offset();
+    var relX = event.pageX - parentOffset.left;
+    var relY = event.pageY - parentOffset.top;
+    return [relX, relY];
+}
+function norm_xy(dx, dy) {
+    return Math.sqrt(dx * dx + dy * dy);
+}
+function norm_xyz(dx, dy, dz) {
+    return Math.sqrt(dx * dx + dy * dy + dz * dz);
+}
+function norm2_xy(dx, dy) {
+    return dx * dx + dy * dy;
+}
+function norm2_xyz(dx, dy, dz) {
+    return dx * dx + dy * dy + dz * dz;
+}
+function sqr(v) {
+    return v * v;
+}
+function realEqual(v1, v2) { return v1 == v2 || Math.abs(v1 - v2) <= 1E-14 * Math.max(v1, v2); }
+var TWOPI = 2 * Math.PI;
+var INV_TWOPI = 1.0 / TWOPI;
+var DEGRAD = Math.PI / 180;
+var RADDEG = 180 / Math.PI;
+function angleNorm(th) {
+    if (th == -Math.PI)
+        return Math.PI;
+    if (th < -Math.PI) {
+        var mod = Math.ceil((-th - Math.PI) * INV_TWOPI);
+        return th + mod * TWOPI;
+    }
+    if (th > Math.PI) {
+        var mod = Math.ceil((th - Math.PI) * INV_TWOPI);
+        return th - mod * TWOPI;
+    }
+    return th;
+}
+function angleDiff(th1, th2) {
+    var theta = angleNorm(th1) - angleNorm(th2);
+    return theta - (theta > Math.PI ? TWOPI : 0) + (theta <= -Math.PI ? TWOPI : 0);
+}
+function angleDiffPos(th1, th2) {
+    var theta = angleNorm(th1) - angleNorm(th2);
+    return theta + (theta < 0 ? TWOPI : 0);
+}
+function sortAngles(theta) {
+    if (theta == null || theta.length < 2)
+        return theta;
+    theta = theta.slice(0);
+    for (var n = 0; n < theta.length; n++)
+        theta[n] = angleNorm(theta[n]);
+    theta.sort();
+    while (true) {
+        var a = theta[theta.length - 1], b = theta[0], c = theta[1];
+        if (angleDiff(b, a) <= angleDiff(c, b))
+            break;
+        for (var n = theta.length - 1; n > 0; n--)
+            theta[n] = theta[n - 1];
+        theta[0] = a;
+    }
+    return theta;
+}
+function uniqueAngles(theta, threshold) {
+    theta = sortAngles(theta);
+    for (var n = 1; n < theta.length; n++) {
+        if (Math.abs(angleDiff(theta[n], theta[n - 1])) <= threshold) {
+            theta.splice(n, 1);
+            n--;
+        }
+    }
+    return theta;
+}
+function minArray(a) {
+    if (a == null || a.length == 0)
+        return 0;
+    var v = a[0];
+    for (var n = 1; n < a.length; n++)
+        v = Math.min(v, a[n]);
+    return v;
+}
+function maxArray(a) {
+    if (a == null || a.length == 0)
+        return 0;
+    var v = a[0];
+    for (var n = 1; n < a.length; n++)
+        v = Math.max(v, a[n]);
+    return v;
+}
+function findNode(parent, name) {
+    if (parent == null)
+        return null;
+    var node = parent.firstChild;
+    while (node) {
+        if (node.nodeType == Node.ELEMENT_NODE && node.nodeName == name)
+            return node;
+        node = node.nextSibling;
+    }
+    return null;
+}
+function findNodes(parent, name) {
+    if (parent == null)
+        return null;
+    var node = parent.firstChild;
+    var list = [];
+    while (node) {
+        if (node.nodeType == Node.ELEMENT_NODE && node.nodeName == name)
+            list.push(node);
+        node = node.nextSibling;
+    }
+    return list;
+}
+function pathRoundedRect(x1, y1, x2, y2, rad) {
+    var path = new Path2D();
+    path.moveTo(x2 - rad, y1);
+    path.quadraticCurveTo(x2, y1, x2, y1 + rad);
+    path.lineTo(x2, y2 - rad);
+    path.quadraticCurveTo(x2, y2, x2 - rad, y2);
+    path.lineTo(x1 + rad, y2);
+    path.quadraticCurveTo(x1, y2, x1, y2 - rad);
+    path.lineTo(x1, y1 + rad);
+    path.quadraticCurveTo(x1, y1, x1 + rad, y1);
+    path.closePath();
+    return path;
+}
+function drawLine(ctx, x1, y1, x2, y2) {
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.stroke();
+}
+var ASCENT_FUDGE = 1.4;
+function fontSansSerif(ascent) { return ascent * ASCENT_FUDGE + "px sans"; }
+function pixelDensity() {
+    if ('devicePixelRatio' in window && window.devicePixelRatio > 1)
+        return window.devicePixelRatio;
+    return 1;
+}
+function clone(obj) {
+    var dup = {};
+    for (var key in obj)
+        dup[key] = obj[key];
+    return dup;
+}
+function escapeHTML(text) {
+    if (!text)
+        return '';
+    var map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+    return text.replace(/[&<>"']/g, function (m) { return map[m]; });
+}
+var MDLMOLReader = (function () {
+    function MDLMOLReader(strData) {
+        this.parseHeader = true;
+        this.parseExtended = true;
+        this.allowV3000 = true;
+        this.considerRescale = true;
+        this.relaxed = false;
+        this.keepAromatic = false;
+        this.keepParity = false;
+        this.mol = null;
+        this.molName = "";
+        this.atomHyd = null;
+        this.resBonds = null;
+        this.pos = 0;
+        this.lines = strData.split(/\r?\n/);
+    }
+    MDLMOLReader.prototype.parse = function () {
+        if (this.parseHeader) {
+            this.molName = this.lines[0];
+            this.pos = 3;
+        }
+        this.parseCTAB();
+    };
+    MDLMOLReader.prototype.nextLine = function () {
+        if (this.pos >= this.lines.length)
+            throw 'MDL Molfile parser: premature end, at line ' + (this.pos + 1);
+        return this.lines[this.pos++];
+    };
+    MDLMOLReader.prototype.parseCTAB = function () {
+        this.mol = new Molecule();
+        this.mol.keepTransient = true;
+        var line = this.nextLine();
+        if (!this.relaxed) {
+            var version = line.length >= 39 ? line.substring(34, 39) : '';
+            if (this.allowV3000 && version == 'V3000') {
+                this.parseV3000();
+                return;
+            }
+            if (version != 'V2000')
+                throw 'Invalid MDL MOL: no Vx000 tag.';
+        }
+        var numAtoms = parseInt(line.substring(0, 3).trim());
+        var numBonds = parseInt(line.substring(3, 6).trim());
+        for (var n = 0; n < numAtoms; n++) {
+            line = this.nextLine();
+            if (line.length < 39)
+                throw 'Invalid MDL MOL: atom line' + (n + 1);
+            var x = parseFloat(line.substring(0, 10).trim());
+            var y = parseFloat(line.substring(10, 20).trim());
+            var z = parseFloat(line.substring(20, 30).trim());
+            var el = line.substring(31, 34).trim();
+            var chg = parseInt(line.substring(36, 39).trim()), rad = 0;
+            var stereo = line.length < 42 ? 0 : parseInt(line.substring(39, 42).trim());
+            var hyd = line.length < 45 ? 0 : parseInt(line.substring(42, 45).trim());
+            var mapnum = line.length < 63 ? 0 : parseInt(line.substring(60, 63).trim());
+            if (chg >= 1 && chg <= 3)
+                chg = 4 - chg;
+            else if (chg == 4) {
+                chg = 0;
+                rad = 2;
+            }
+            else if (chg >= 5 && chg <= 7)
+                chg = 4 - chg;
+            else
+                chg = 0;
+            var a = this.mol.addAtom(el, x, y, chg, rad);
+            this.mol.setAtomMapNum(a, mapnum);
+            if (hyd > 0) {
+                if (this.atomHyd == null)
+                    this.atomHyd = Vec.numberArray(Molecule.HEXPLICIT_UNKNOWN, numAtoms);
+                this.atomHyd[n] = hyd - 1;
+            }
+            if (stereo > 0 && this.keepParity) {
+            }
+        }
+        for (var n = 0; n < numBonds; n++) {
+            line = this.nextLine();
+            if (line.length < 12)
+                throw 'Invalid MDL MOL: bond line' + (n + 1);
+            var bfr = parseInt(line.substring(0, 3).trim()), bto = parseInt(line.substring(3, 6).trim());
+            var type = parseInt(line.substring(6, 9).trim()), stereo = parseInt(line.substring(9, 12).trim());
+            if (bfr == bto || bfr < 1 || bfr > numAtoms || bto < 1 || bto > numAtoms)
+                throw 'Invalid MDL MOL: bond line' + (n + 1);
+            var order = type >= 1 && type <= 3 ? type : 1;
+            var style = Molecule.BONDTYPE_NORMAL;
+            if (stereo == 1)
+                style = Molecule.BONDTYPE_INCLINED;
+            else if (stereo == 6)
+                style = Molecule.BONDTYPE_DECLINED;
+            var b = this.mol.addBond(bfr, bto, order, style);
+            if (type == 4) {
+            }
+        }
+        var MBLK_CHG = 1, MBLK_RAD = 2, MBLK_ISO = 3, MBLK_RGP = 4, MBLK_HYD = 5, MBLK_ZCH = 6, MBLK_ZBO = 7;
+        while (true) {
+            line = this.nextLine();
+            if (line.startsWith("M  END"))
+                break;
+            var type = 0;
+            if (line.startsWith("M  CHG"))
+                type = MBLK_CHG;
+            else if (line.startsWith("M  RAD"))
+                type = MBLK_RAD;
+            else if (line.startsWith("M  ISO"))
+                type = MBLK_ISO;
+            else if (line.startsWith("M  RGP"))
+                type = MBLK_RGP;
+            else if (this.parseExtended && line.startsWith("M  HYD"))
+                type = MBLK_HYD;
+            else if (this.parseExtended && line.startsWith("M  ZCH"))
+                type = MBLK_ZCH;
+            else if (this.parseExtended && line.startsWith("M  ZBO"))
+                type = MBLK_ZBO;
+            else if (line.startsWith("A  ") && line.length >= 6) {
+                var anum = parseInt(line.substring(3, 6).trim());
+                if (anum >= 1 && anum <= this.mol.numAtoms()) {
+                    line = this.nextLine();
+                    if (line == null)
+                        break;
+                    this.mol.setAtomElement(anum, line);
+                    continue;
+                }
+            }
+            if (type > 0) {
+                var len = parseInt(line.substring(6, 9).trim());
+                for (var n = 0; n < len; n++) {
+                    var pos = parseInt(line.substring(9 + 8 * n, 13 + 8 * n).trim());
+                    var val = parseInt(line.substring(13 + 8 * n, 17 + 8 * n).trim());
+                    if (pos < 1)
+                        throw 'Invalid MDL MOL: M-block';
+                    if (type == MBLK_CHG)
+                        this.mol.setAtomCharge(pos, val);
+                    else if (type == MBLK_RAD)
+                        this.mol.setAtomUnpaired(pos, val);
+                    else if (type == MBLK_ISO)
+                        this.mol.setAtomIsotope(pos, val);
+                    else if (type == MBLK_RGP)
+                        this.mol.setAtomElement(pos, "R" + val);
+                    else if (type == MBLK_HYD)
+                        this.mol.setAtomHExplicit(pos, val);
+                    else if (type == MBLK_ZCH)
+                        this.mol.setAtomCharge(pos, val);
+                    else if (type == MBLK_ZBO)
+                        this.mol.setBondOrder(pos, val);
+                }
+            }
+        }
+        this.postFix();
+    };
+    MDLMOLReader.prototype.postFix = function () {
+        for (var n = 1; n <= this.mol.numAtoms(); n++) {
+            var el = this.mol.atomElement(n);
+            if (el == 'D') {
+                this.mol.setAtomElement(n, 'H');
+                this.mol.setAtomIsotope(n, 2);
+            }
+            else if (el == 'T') {
+                this.mol.setAtomElement(n, 'H');
+                this.mol.setAtomIsotope(n, 3);
+            }
+        }
+        if (this.considerRescale)
+            CoordUtil.normaliseBondDistances(this.mol);
+        this.mol.keepTransient = false;
+    };
+    MDLMOLReader.prototype.parseV3000 = function () {
+        var inCTAB = false, inAtom = false, inBond = false;
+        var lineCounts = null;
+        var lineAtoms = [], lineBonds = [];
+        var ERRPFX = 'Invalid MDL MOL V3000: ';
+        while (true) {
+            var line = this.nextLine();
+            if (line == 'M  END')
+                break;
+            if (!line.startsWith('M  V30 '))
+                continue;
+            line = line.substring(7);
+            if (line.startsWith('COUNTS '))
+                lineCounts = line.substring(7);
+            else if (line.startsWith('BEGIN CTAB'))
+                inCTAB = true;
+            else if (line.startsWith('END CTAB'))
+                inCTAB = false;
+            else if (line.startsWith('BEGIN ATOM'))
+                inAtom = true;
+            else if (line.startsWith('END ATOM'))
+                inAtom = false;
+            else if (line.startsWith('BEGIN BOND'))
+                inBond = true;
+            else if (line.startsWith('END BOND'))
+                inBond = false;
+            else if (inCTAB && inAtom && !inBond)
+                lineAtoms.push(line);
+            else if (inCTAB && inBond && !inAtom)
+                lineBonds.push(line);
+        }
+        var counts = lineCounts.split("\\s+");
+        if (counts.length < 2)
+            throw ERRPFX + 'counts line malformatted';
+        var numAtoms = parseInt(counts[0]), numBonds = parseInt(counts[1]);
+        if (numAtoms < 0 || numAtoms > lineAtoms.length)
+            throw ERRPFX + 'unreasonable atom count: ' + numAtoms;
+        if (numBonds < 0 || numBonds > lineBonds.length)
+            throw ERRPFX + 'unreasonable bond count: ' + numBonds;
+        var atomBits = [], bondBits = [];
+        for (var n = 0; n < lineAtoms.length; n++) {
+            var line = lineAtoms[n];
+            while (n < lineAtoms.length - 1 && line.endsWith('-')) {
+                n++;
+                line = line.substring(0, line.length - 1) + lineAtoms[n];
+            }
+            var bits = this.splitWithQuotes(line);
+            if (bits.length < 6)
+                throw ERRPFX + 'atom line has too few components: ' + line;
+            var idx = parseInt(bits[0], 0);
+            if (idx < 1 || idx > numAtoms)
+                throw ERRPFX + 'invalid atom index: ' + bits[0];
+            if (atomBits[idx - 1] != null)
+                throw ERRPFX + 'duplicate atom index: ' + idx;
+            atomBits[idx - 1] = bits;
+        }
+        for (var n = 0; n < lineBonds.length; n++) {
+            var line = lineBonds[n];
+            while (n < lineBonds.length - 1 && line.endsWith("-")) {
+                n++;
+                line = line.substring(0, line.length - 1) + lineBonds[n];
+            }
+            var bits = this.splitWithQuotes(line);
+            if (bits.length < 4)
+                throw ERRPFX + 'bond line has too few components: ' + line;
+            var idx = parseInt(bits[0], 0);
+            if (idx < 1 || idx > numBonds)
+                throw ERRPFX + 'invalid bond index: ' + bits[0];
+            if (bondBits[idx - 1] != null)
+                throw ERRPFX + 'duplicate bond index: ' + idx;
+            bondBits[idx - 1] = bits;
+        }
+        for (var n = 1; n <= numAtoms; n++) {
+            var bits = atomBits[n - 1];
+            if (bits == null)
+                throw ERRPFX + 'atom definition missing for #' + n;
+            var type = bits[1];
+            var x = parseFloat(bits[2]), y = parseFloat(bits[3]), z = parseFloat(bits[4]);
+            var map = parseInt(bits[5]);
+            this.mol.addAtom(type, x, y);
+            this.mol.setAtomMapNum(n, map);
+            for (var i = 6; i < bits.length; i++) {
+                var eq = bits[i].indexOf('=');
+                if (eq < 0)
+                    continue;
+                var key = bits[i].substring(0, eq), val = bits[i].substring(eq + 1);
+                if (key == 'CHG')
+                    this.mol.setAtomCharge(n, parseInt(val));
+                else if (key == 'RAD')
+                    this.mol.setAtomUnpaired(n, parseInt(val));
+                else if (key == 'MASS')
+                    this.mol.setAtomIsotope(n, parseInt(val));
+                else if (key == 'CFG') {
+                    var stereo = parseInt(val);
+                    if (stereo > 0 && this.keepParity) {
+                    }
+                }
+            }
+        }
+        for (var n = 1; n <= numBonds; n++) {
+            var bits = bondBits[n - 1];
+            if (bits == null)
+                throw ERRPFX + 'bond definition missing for #' + n;
+            var type = parseInt(bits[1]), bfr = parseInt(bits[2]), bto = parseInt(bits[3]);
+            var order = type >= 1 && type <= 3 ? type : 1;
+            this.mol.addBond(bfr, bto, order);
+            if (type == 4) {
+            }
+            for (var i = 4; i < bits.length; i++) {
+                var eq = bits[i].indexOf('=');
+                if (eq < 0)
+                    continue;
+                var key = bits[i].substring(0, eq), val = bits[i].substring(eq + 1);
+                if (key == 'CFG') {
+                    var dir = parseInt(val);
+                    this.mol.setBondType(n, dir == 1 ? Molecule.BONDTYPE_INCLINED :
+                        dir == 2 ? Molecule.BONDTYPE_UNKNOWN :
+                            dir == 3 ? Molecule.BONDTYPE_DECLINED : Molecule.BONDTYPE_NORMAL);
+                }
+            }
+        }
+        this.postFix();
+    };
+    MDLMOLReader.prototype.splitWithQuotes = function (line) {
+        return line.split('\\s+');
+    };
+    return MDLMOLReader;
+}());
 var MoleculeStream = (function () {
     function MoleculeStream() {
     }
@@ -91,7 +599,12 @@ var MoleculeStream = (function () {
         ret += '!End\n';
         return ret;
     };
-    ;
+    MoleculeStream.readMDLMOL = function (strData) {
+        var src = new MDLMOLReader(strData);
+        src.parseHeader = true;
+        src.parse();
+        return src.mol;
+    };
     MoleculeStream.sk_unescape = function (str) {
         var ret = '', match;
         while (match = str.match(/^(.*?)\\([0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f])(.*)/)) {
@@ -100,7 +613,6 @@ var MoleculeStream = (function () {
         }
         return ret + str;
     };
-    ;
     MoleculeStream.sk_escape = function (str) {
         var ret = '';
         for (var n = 0; n < str.length; n++) {
@@ -117,7 +629,6 @@ var MoleculeStream = (function () {
         }
         return ret;
     };
-    ;
     MoleculeStream.sk_encodeExtra = function (extra) {
         var ret = '';
         for (var n = 0; n < extra.length; n++)
@@ -1772,221 +2283,6 @@ var MolUtil = (function () {
     MolUtil.ABBREV_ATTACHMENT = '*';
     return MolUtil;
 }());
-function newElement(parent, tag, attr) {
-    var el = $("<" + tag + ">");
-    if (attr)
-        el.attr(attr);
-    $(parent).append(el);
-    return el[0];
-}
-function addText(parent, text) {
-    var el = parent instanceof jQuery ? parent[0] : parent;
-    el.appendChild(document.createTextNode(text));
-}
-function setVisible(node, visible) {
-    if (visible)
-        $(node).show();
-    else
-        $(node).hide();
-}
-function plural(count) {
-    return count == 1 ? '' : 's';
-}
-function colourCode(col) {
-    var hex = (col & 0xFFFFFF).toString(16);
-    while (hex.length < 6)
-        hex = '0' + hex;
-    return '#' + hex;
-}
-function colourAlpha(col) {
-    var transp = (col >>> 24) & 0xFF;
-    return transp == 0 ? 1 : transp == 0xFF ? 0 : 1 - (transp * (1.0 / 255));
-}
-var ONE_OVER_255 = 1.0 / 255;
-function colourCanvas(col) {
-    if (col == 0xFFFFFF)
-        return 'white';
-    if (col == 0x000000)
-        return 'black';
-    if (col == -1)
-        return null;
-    if (col >= 0 && col <= 0xFFFFFF)
-        return colourCode(col);
-    var t = ((col >> 24) & 0xFF) * ONE_OVER_255;
-    var r = ((col >> 16) & 0xFF);
-    var g = ((col >> 8) & 0xFF);
-    var b = (col & 0xFF);
-    return 'rgba(' + r + ',' + g + ',' + b + ',' + (1 - t) + ')';
-}
-function nodeText(node) {
-    var ret = '';
-    if (!node)
-        return;
-    node = node.firstChild;
-    while (node) {
-        if (node.nodeType == 3 || node.nodeType == 4)
-            ret += node.nodeValue;
-        node = node.nextSibling;
-    }
-    return ret;
-}
-function isDef(v) {
-    return !(v === null || typeof v === 'undefined');
-}
-function notDef(v) {
-    return v === null || typeof v === 'undefined';
-}
-function eventCoords(event, container) {
-    var parentOffset = $(container).offset();
-    var relX = event.pageX - parentOffset.left;
-    var relY = event.pageY - parentOffset.top;
-    return [relX, relY];
-}
-function norm_xy(dx, dy) {
-    return Math.sqrt(dx * dx + dy * dy);
-}
-function norm_xyz(dx, dy, dz) {
-    return Math.sqrt(dx * dx + dy * dy + dz * dz);
-}
-function norm2_xy(dx, dy) {
-    return dx * dx + dy * dy;
-}
-function norm2_xyz(dx, dy, dz) {
-    return dx * dx + dy * dy + dz * dz;
-}
-function sqr(v) {
-    return v * v;
-}
-function realEqual(v1, v2) { return v1 == v2 || Math.abs(v1 - v2) <= 1E-14 * Math.max(v1, v2); }
-var TWOPI = 2 * Math.PI;
-var INV_TWOPI = 1.0 / TWOPI;
-var DEGRAD = Math.PI / 180;
-var RADDEG = 180 / Math.PI;
-function angleNorm(th) {
-    if (th == -Math.PI)
-        return Math.PI;
-    if (th < -Math.PI) {
-        var mod = Math.ceil((-th - Math.PI) * INV_TWOPI);
-        return th + mod * TWOPI;
-    }
-    if (th > Math.PI) {
-        var mod = Math.ceil((th - Math.PI) * INV_TWOPI);
-        return th - mod * TWOPI;
-    }
-    return th;
-}
-function angleDiff(th1, th2) {
-    var theta = angleNorm(th1) - angleNorm(th2);
-    return theta - (theta > Math.PI ? TWOPI : 0) + (theta <= -Math.PI ? TWOPI : 0);
-}
-function angleDiffPos(th1, th2) {
-    var theta = angleNorm(th1) - angleNorm(th2);
-    return theta + (theta < 0 ? TWOPI : 0);
-}
-function sortAngles(theta) {
-    if (theta == null || theta.length < 2)
-        return theta;
-    theta = theta.slice(0);
-    for (var n = 0; n < theta.length; n++)
-        theta[n] = angleNorm(theta[n]);
-    theta.sort();
-    while (true) {
-        var a = theta[theta.length - 1], b = theta[0], c = theta[1];
-        if (angleDiff(b, a) <= angleDiff(c, b))
-            break;
-        for (var n = theta.length - 1; n > 0; n--)
-            theta[n] = theta[n - 1];
-        theta[0] = a;
-    }
-    return theta;
-}
-function uniqueAngles(theta, threshold) {
-    theta = sortAngles(theta);
-    for (var n = 1; n < theta.length; n++) {
-        if (Math.abs(angleDiff(theta[n], theta[n - 1])) <= threshold) {
-            theta.splice(n, 1);
-            n--;
-        }
-    }
-    return theta;
-}
-function minArray(a) {
-    if (a == null || a.length == 0)
-        return 0;
-    var v = a[0];
-    for (var n = 1; n < a.length; n++)
-        v = Math.min(v, a[n]);
-    return v;
-}
-function maxArray(a) {
-    if (a == null || a.length == 0)
-        return 0;
-    var v = a[0];
-    for (var n = 1; n < a.length; n++)
-        v = Math.max(v, a[n]);
-    return v;
-}
-function findNode(parent, name) {
-    if (parent == null)
-        return null;
-    var node = parent.firstChild;
-    while (node) {
-        if (node.nodeType == Node.ELEMENT_NODE && node.nodeName == name)
-            return node;
-        node = node.nextSibling;
-    }
-    return null;
-}
-function findNodes(parent, name) {
-    if (parent == null)
-        return null;
-    var node = parent.firstChild;
-    var list = [];
-    while (node) {
-        if (node.nodeType == Node.ELEMENT_NODE && node.nodeName == name)
-            list.push(node);
-        node = node.nextSibling;
-    }
-    return list;
-}
-function pathRoundedRect(x1, y1, x2, y2, rad) {
-    var path = new Path2D();
-    path.moveTo(x2 - rad, y1);
-    path.quadraticCurveTo(x2, y1, x2, y1 + rad);
-    path.lineTo(x2, y2 - rad);
-    path.quadraticCurveTo(x2, y2, x2 - rad, y2);
-    path.lineTo(x1 + rad, y2);
-    path.quadraticCurveTo(x1, y2, x1, y2 - rad);
-    path.lineTo(x1, y1 + rad);
-    path.quadraticCurveTo(x1, y1, x1 + rad, y1);
-    path.closePath();
-    return path;
-}
-function drawLine(ctx, x1, y1, x2, y2) {
-    ctx.beginPath();
-    ctx.moveTo(x1, y1);
-    ctx.lineTo(x2, y2);
-    ctx.stroke();
-}
-var ASCENT_FUDGE = 1.4;
-function fontSansSerif(ascent) { return ascent * ASCENT_FUDGE + "px sans"; }
-function pixelDensity() {
-    if ('devicePixelRatio' in window && window.devicePixelRatio > 1)
-        return window.devicePixelRatio;
-    return 1;
-}
-function clone(obj) {
-    var dup = {};
-    for (var key in obj)
-        dup[key] = obj[key];
-    return dup;
-}
-function escapeHTML(text) {
-    if (!text)
-        return '';
-    var map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
-    return text.replace(/[&<>"']/g, function (m) { return map[m]; });
-}
 var Graph = (function () {
     function Graph(sz, edge1, edge2) {
         this.nbrs = [];
@@ -6491,6 +6787,8 @@ var ArrangeMolecule = (function () {
         }
     };
     ArrangeMolecule.prototype.determineBoundary = function (padding) {
+        if (padding == null)
+            padding = 0;
         if (this.space.length == 0)
             return [0, 0, 2 * padding, 2 * padding];
         var bounds = Vec.numberArray(0, 4);
