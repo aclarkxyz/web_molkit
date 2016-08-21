@@ -172,6 +172,14 @@ class Vec
 		return ret;
 	}
 
+	public static sum(arr:number[]):number
+	{
+		if (arr == null || arr.length == 0) return 0;
+		let t = arr[0];
+		for (let n = 1; n < arr.length; n++) t += arr[n];
+		return t;
+	}
+
 	public static add(arr1:any[], val:any):any[]
 	{
 		let ret:any[] = [];
