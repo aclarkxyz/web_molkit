@@ -379,7 +379,8 @@ var MDLMOLReader = (function () {
                 mol.setAtomElement(n, 'H');
                 mol.setAtomIsotope(n, 3);
             }
-            if ((el == 'F' || el == 'Cl' || el == 'Br' || el == 'I' || el == 'At') && mol.atomCharge(n) == 0 && mol.atomHExplicit(n) == Molecule.HEXPLICIT_UNKNOWN) {
+            if ((el == 'F' || el == 'Cl' || el == 'Br' || el == 'I' || el == 'At') &&
+                mol.atomCharge(n) == 0 && mol.atomHExplicit(n) == Molecule.HEXPLICIT_UNKNOWN && mol.atomAdjCount(n) == 0) {
                 mol.setAtomHExplicit(n, 1);
             }
         }
