@@ -220,15 +220,28 @@ class MDLMOLReader
 	// performs some intrinsic post-parse fixing
 	private postFix():void
 	{
+		const mol = this.mol;
+
 	    // post-fixing
-		for (let n = 1; n <= this.mol.numAtoms(); n++)
+		for (let n = 1; n <= mol.numAtoms(); n++)
 		{
-			let el = this.mol.atomElement(n);
-	    	if (el == 'D') {this.mol.setAtomElement(n, 'H'); this.mol.setAtomIsotope(n, 2);}
-	    	else if (el == 'T') {this.mol.setAtomElement(n, 'H'); this.mol.setAtomIsotope(n, 3);}
+			let el = mol.atomElement(n);
+
+			// shortcuts for isotope "elements"
+	    	if (el == 'D') {mol.setAtomElement(n, 'H'); mol.setAtomIsotope(n, 2);}
+	    	else if (el == 'T') {mol.setAtomElement(n, 'H'); mol.setAtomIsotope(n, 3);}
+
+			// special deal for neutral halogens: these are presumed to have an implicit hydrogen
+			if ((el == 'F' || el == 'Cl' || el == 'Br' || el == 'I' || el == 'At') && mol.atomCharge(n) == 0 && mol.atomHExplicit(n) == Molecule.HEXPLICIT_UNKNOWN)
+			{
+				// (maybe other checks, e.g. inline abbrevs, if implemented)
+				mol.setAtomHExplicit(n, 1);
+			}
 	    }
 	    
-		if (this.considerRescale) CoordUtil.normaliseBondDistances(this.mol);
+
+
+		if (this.considerRescale) CoordUtil.normaliseBondDistances(mol);
 		
 		/* ... to be done...
 		if (resBonds != null)
@@ -240,7 +253,7 @@ class MDLMOLReader
 			for (let n = 0; n < nb; n++) mol.setBondOrder(n + 1, bo[n]);
 		}*/
 		
-		this.mol.keepTransient = false;
+		mol.keepTransient = false;
 	}
 	
 	// alternate track: only look at the specially marked V3000 tags

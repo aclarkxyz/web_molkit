@@ -1057,6 +1057,7 @@ class ArrangeMolecule
 			Vec.mulBy(extraY, SSFRACT);
 			outlineX = outlineX.concat(extraX);
 			outlineY = outlineY.concat(extraY);
+			emw += font.HORIZ_ADV_X[g] * SSFRACT;
     	}
 
 		// if multiple, take the convex hull of all of the above
@@ -1111,7 +1112,6 @@ class ArrangeMolecule
 				else if (allUp) quad = DOWNUP;
 				else if (allDown) quad = UPDOWN;
 			}
-
 			for (let n = 0; n < 4; n++)
 			{
 				let tx = 0, ty = 0;
@@ -1122,10 +1122,11 @@ class ArrangeMolecule
 				
 				// if it can be placed without overlap, we'll take it
 				Vec.addTo(outlineX, tx);
-				Vec.addTo(outlineX, ty);
+				Vec.addTo(outlineY, ty);
 				let viol = this.countPolyViolations(outlineX, outlineY, true);
 				Vec.addTo(outlineX, -tx);
 				Vec.addTo(outlineY, -ty);
+
 				if (viol == 0)
 				{
 					dx = tx;

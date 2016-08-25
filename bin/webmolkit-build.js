@@ -368,20 +368,24 @@ var MDLMOLReader = (function () {
         this.postFix();
     };
     MDLMOLReader.prototype.postFix = function () {
-        for (var n = 1; n <= this.mol.numAtoms(); n++) {
-            var el = this.mol.atomElement(n);
+        var mol = this.mol;
+        for (var n = 1; n <= mol.numAtoms(); n++) {
+            var el = mol.atomElement(n);
             if (el == 'D') {
-                this.mol.setAtomElement(n, 'H');
-                this.mol.setAtomIsotope(n, 2);
+                mol.setAtomElement(n, 'H');
+                mol.setAtomIsotope(n, 2);
             }
             else if (el == 'T') {
-                this.mol.setAtomElement(n, 'H');
-                this.mol.setAtomIsotope(n, 3);
+                mol.setAtomElement(n, 'H');
+                mol.setAtomIsotope(n, 3);
+            }
+            if ((el == 'F' || el == 'Cl' || el == 'Br' || el == 'I' || el == 'At') && mol.atomCharge(n) == 0 && mol.atomHExplicit(n) == Molecule.HEXPLICIT_UNKNOWN) {
+                mol.setAtomHExplicit(n, 1);
             }
         }
         if (this.considerRescale)
-            CoordUtil.normaliseBondDistances(this.mol);
-        this.mol.keepTransient = false;
+            CoordUtil.normaliseBondDistances(mol);
+        mol.keepTransient = false;
     };
     MDLMOLReader.prototype.parseV3000 = function () {
         var inCTAB = false, inAtom = false, inBond = false;
@@ -1025,6 +1029,14 @@ var Vec = (function () {
                 ret.push(arr1[n] == val);
         }
         return ret;
+    };
+    Vec.sum = function (arr) {
+        if (arr == null || arr.length == 0)
+            return 0;
+        var t = arr[0];
+        for (var n = 1; n < arr.length; n++)
+            t += arr[n];
+        return t;
     };
     Vec.add = function (arr1, val) {
         var ret = [];
@@ -5578,6 +5590,7 @@ var MetaVector = (function () {
         return tmp.html();
     };
     MetaVector.prototype.renderSVG = function (svg) {
+        this.typeObj = [];
         var font = FontData.main;
         var defs = $('<defs></defs>').appendTo(svg);
         for (var n = 0; n < font.GLYPH_COUNT; n++)
@@ -7342,6 +7355,7 @@ var ArrangeMolecule = (function () {
             Vec.mulBy(extraY, SSFRACT);
             outlineX = outlineX.concat(extraX);
             outlineY = outlineY.concat(extraY);
+            emw += font.HORIZ_ADV_X[g] * SSFRACT;
         }
         if (sub.length > 0) {
             var qh = new QuickHull(outlineX, outlineY, 0);
@@ -7402,7 +7416,7 @@ var ArrangeMolecule = (function () {
                 else if (quad[n] == 3)
                     ty = (1.1 * srcWAD[1] + 0.5 * srcWAD[2]) * this.ymul;
                 Vec.addTo(outlineX, tx);
-                Vec.addTo(outlineX, ty);
+                Vec.addTo(outlineY, ty);
                 var viol = this.countPolyViolations(outlineX, outlineY, true);
                 Vec.addTo(outlineX, -tx);
                 Vec.addTo(outlineY, -ty);
