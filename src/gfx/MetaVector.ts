@@ -398,6 +398,8 @@ class MetaVector
 	// content from the graphic
 	public renderSVG(svg:JQuery):void
 	{
+		this.typeObj = [];
+
 		// !! todo: alternate destination for embeddables, and check if they already exist?
 
 		const font = FontData.main;
@@ -443,7 +445,6 @@ class MetaVector
 
 			n += num;
 		}
-		
 	}
 
 	// ------------ private methods ------------
