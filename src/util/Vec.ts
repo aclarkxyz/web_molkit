@@ -107,8 +107,22 @@ class Vec
 		let ret:any[] = [];
 		for (let n = arr.length - 1; n >= 0; n--) ret.push(arr[n]);
 		return ret;
-	} 
+	}
+
+	public static identity0(sz:number):number[]
+	{
+		let ret:number[] = new Array(sz);
+		for (let n = 0; n < sz; n++) ret[n] = n;
+		return ret;
+	}
     
+	public static identity1(sz:number):number[]
+	{
+		let ret:number[] = new Array(sz);
+		for (let n = 0; n < sz; n++) ret[n] = n + 1;
+		return ret;
+	}
+
     public static idxGet(arr:any[], idx:number[]):any[]
     {
 		let ret:any[] = [];
