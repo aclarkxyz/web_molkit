@@ -11,6 +11,7 @@
 */
 
 ///<reference path='../rpc/RPC.ts'/>
+///<reference path='../gfx/MetaVector.ts'/>
 
 /*
 	MoleculeActivity: command-oriented modifications of the current molecular state.

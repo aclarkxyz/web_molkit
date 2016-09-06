@@ -239,8 +239,6 @@ class MDLMOLReader
 				mol.setAtomHExplicit(n, 1);
 			}
 	    }
-	    
-
 
 		if (this.considerRescale) CoordUtil.normaliseBondDistances(mol);
 		

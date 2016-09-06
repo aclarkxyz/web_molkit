@@ -1,0 +1,25 @@
+<html>
+<head>
+
+<title>WebMolKit - Headless Validation</title>
+<script src="../../bin/jquery.js" type="text/javascript"></script>
+<script src="../../bin/webmolkit-build.js" type="text/javascript"></script>
+
+</head>
+<body>
+
+<h1>WebMolKit - Headless Validation</h1>
+
+<h2>Basic Functions</h2>
+<div id="basic"></div>
+
+<div id="final"></div>
+
+<script>
+	new WebValExec(new ValidationHeadlessBasic()).runTests($('#basic'));
+
+	$('#final').html('<p><b>Finished.</b></p>');
+</script>
+
+</body>
+</html>

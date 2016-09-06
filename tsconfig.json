@@ -62,6 +62,10 @@
         "src/util/Cookies.ts",
         "src/util/Geom.ts",
         "src/util/util.ts",
-        "src/util/Vec.ts"
+        "src/util/Vec.ts",
+
+        "val/src/Validation.ts",
+        "val/src/ValidationHeadlessBasic.ts",
+        "val/src/WebValExec.ts"
     ]
 }

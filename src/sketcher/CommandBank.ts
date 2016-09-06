@@ -10,7 +10,11 @@
 	[PKG=webmolkit]
 */
 
+///<reference path='../decl/corrections.d.ts'/>
 ///<reference path='../ui/ButtonBank.ts'/>
+///<reference path='../data/Molecule.ts'/>
+///<reference path='../data/SketchUtil.ts'/>
+///<reference path='MoleculeActivity.ts'/>
 
 /*
 	CommandBank: the various bank styles that correspond to actions (select-then-do, as opposed to toolbank style which

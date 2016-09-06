@@ -977,6 +977,18 @@ var Vec = (function () {
             ret.push(arr[n]);
         return ret;
     };
+    Vec.identity0 = function (sz) {
+        var ret = new Array(sz);
+        for (var n = 0; n < sz; n++)
+            ret[n] = n;
+        return ret;
+    };
+    Vec.identity1 = function (sz) {
+        var ret = new Array(sz);
+        for (var n = 0; n < sz; n++)
+            ret[n] = n + 1;
+        return ret;
+    };
     Vec.idxGet = function (arr, idx) {
         var ret = [];
         for (var n = 0; n < idx.length; n++)
@@ -13954,4 +13966,123 @@ var SearchReactions = (function (_super) {
     SearchReactions.TYPE_RANDOM = 'random';
     return SearchReactions;
 }(Widget));
+var Validation = (function () {
+    function Validation() {
+        this.rec = {};
+        this.tests = [];
+    }
+    Validation.prototype.add = function (title, func) {
+        this.tests.push({ 'title': title, 'func': func });
+    };
+    Object.defineProperty(Validation.prototype, "count", {
+        get: function () { return this.tests.length; },
+        enumerable: true,
+        configurable: true
+    });
+    Validation.prototype.getTitle = function (idx) { return this.tests[idx].title; };
+    Validation.prototype.runTest = function (idx) {
+        this.recentSuccess = true;
+        this.recentError = null;
+        var timeStarted = new Date().getTime();
+        try {
+            this.tests[idx].func.call(this);
+        }
+        catch (e) {
+            this.recentSuccess = false;
+            if (this.recentError == null) {
+                var error = e;
+                this.recentError = 'Exception: ' + e.message;
+                if (e.fileName)
+                    this.recentError += ', file: ' + e.fileName;
+                if (e.lineNumber)
+                    this.recentError += ', line: ' + e.lineNumber;
+                console.log('Unhandled exception in validation:\n' + e);
+            }
+        }
+        var timeFinished = new Date().getTime();
+        this.recentTimeTaken = (timeFinished - timeStarted) / 1000;
+        return [this.recentSuccess, this.recentError, this.recentTimeTaken];
+    };
+    Validation.prototype.assert = function (condition, message) {
+        if (!condition)
+            return;
+        this.recentError = message;
+        throw '!';
+    };
+    Validation.prototype.assertEqual = function (thing1, thing2, message) {
+        if (thing1 == thing2)
+            return;
+        this.recentError = message;
+        throw '!';
+    };
+    Validation.prototype.assertNull = function (thing, message) {
+        if (thing == null)
+            return;
+        this.recentError = message;
+        throw '!';
+    };
+    Validation.prototype.assertNotNull = function (thing, message) {
+        if (thing != null)
+            return;
+        this.recentError = message;
+        throw '!';
+    };
+    Validation.prototype.fail = function (message) {
+        this.recentError = message;
+        throw '!';
+    };
+    return Validation;
+}());
+var ValidationHeadlessBasic = (function (_super) {
+    __extends(ValidationHeadlessBasic, _super);
+    function ValidationHeadlessBasic() {
+        _super.call(this);
+        this.add('Vector index sort', this.vectorIndexSort);
+        this.add('fubar', this.fubar);
+    }
+    ValidationHeadlessBasic.prototype.vectorIndexSort = function () {
+        var array = ['b', 'c', 'a'];
+        var idx = Vec.idxSort(array);
+        this.assert(Vec.equals(idx, [1, 2, 0]));
+    };
+    ValidationHeadlessBasic.prototype.fubar = function () { var thing = 'zog'; thing.length(); };
+    return ValidationHeadlessBasic;
+}(Validation));
+var WebValExec = (function () {
+    function WebValExec(validation) {
+        this.validation = validation;
+    }
+    WebValExec.prototype.runTests = function (domParent) {
+        domParent.empty();
+        var table = $('<table></table>').appendTo(domParent);
+        var tdStatus = [], tdInfo = [];
+        for (var n = 0; n < this.validation.count; n++) {
+            var tr = $('<tr></tr>').appendTo(table);
+            var td = $('<td valign="top"></td>').appendTo(tr);
+            tdStatus.push(td);
+            td = $('<td valign="top"></td>').appendTo(tr);
+            td.text(this.validation.getTitle(n));
+            tdInfo.push(td);
+        }
+        for (var n = 0; n < this.validation.count; n++) {
+            tdStatus[n].html('&#9744;');
+            var _a = this.validation.runTest(n), success = _a[0], message = _a[1], time = _a[2];
+            if (success) {
+                tdStatus[n].html('&#9745;');
+                if (time >= 0.001) {
+                    var span = $('<span style="color: #909090;"></span>').appendTo(tdInfo[n]);
+                    span.text(' (' + time.toFixed(3) + ' sec)');
+                }
+            }
+            else {
+                tdStatus[n].html('<span style="color: red;">&#9746;</span>');
+                var para = $('<p style="color: purple; margin-top: 0;"></p>').appendTo(tdInfo[n]);
+                para.text(message);
+                tdStatus[n].css('background-color', '#FFF0F0');
+                tdInfo[n].css('background-color', '#FFF0F0');
+            }
+        }
+    };
+    return WebValExec;
+}());
 //# sourceMappingURL=webmolkit-build.js.map
