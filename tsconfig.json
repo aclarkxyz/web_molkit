@@ -66,6 +66,7 @@
 
         "val/src/Validation.ts",
         "val/src/ValidationHeadlessBasic.ts",
+        "val/src/ValidationHeadlessMolecule.ts",
         "val/src/WebValExec.ts"
     ]
 }

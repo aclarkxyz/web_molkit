@@ -88,7 +88,7 @@ class Molecule
 	public append(frag:Molecule):void
 	{
 		let base = this.atoms.length;
-		for (let n = 1; n <= frag.numAtoms(); n++)
+		for (let n = 1; n <= frag.numAtoms; n++)
 		{
 			let num = this.addAtom(frag.atomElement(n), frag.atomX(n), frag.atomY(n), frag.atomCharge(n), frag.atomUnpaired(n));
 			this.setAtomIsotope(num, frag.atomIsotope(n));
@@ -96,7 +96,7 @@ class Molecule
 			this.setAtomMapNum(num, frag.atomMapNum(n));
 			this.setAtomExtra(num, frag.atomExtra(n));
 		}
-		for (let n = 1; n <= frag.numBonds(); n++)
+		for (let n = 1; n <= frag.numBonds; n++)
 		{
 			let num = this.addBond(frag.bondFrom(n) + base, frag.bondTo(n) + base, frag.bondOrder(n), frag.bondType(n));
 			this.setBondExtra(num, frag.bondExtra(n));
@@ -105,7 +105,7 @@ class Molecule
 	}
 
 
-	public numAtoms():number {return this.atoms.length;}
+	public get numAtoms():number {return this.atoms.length;}
 	public getAtom(idx:number):Atom 
 	{
 		if (idx < 1 || idx > this.atoms.length) throw `Molecule.getAtom: index ${idx} out of range (#atoms=${this.atoms.length})`;;
@@ -123,7 +123,7 @@ class Molecule
 	public atomExtra(idx:number):string[] {return this.getAtom(idx).extra.slice(0);}
 	public atomTransient(idx:number):string[] {return this.getAtom(idx).transient.slice(0);}
 		
-	public numBonds():number {return this.bonds.length;}
+	public get numBonds():number {return this.bonds.length;}
 	public getBond(idx:number):Bond 
 	{
 		if (idx < 1 || idx > this.bonds.length) throw `Molecule.getBond: index ${idx} out of range (#bonds=${this.bonds.length})`;;
@@ -286,7 +286,7 @@ class Molecule
 
 	public deleteAtomAndBonds(idx:number)
 	{
-		for (let n = this.numBonds(); n >= 1; n--)
+		for (let n = this.numBonds; n >= 1; n--)
 		{
 			if (this.bondFrom(n) == idx || this.bondTo(n) == idx)
 				this.deleteBond(n);
@@ -336,7 +336,7 @@ class Molecule
 	// NOTE: uncached==>slow
 	public findBond(a1:number, a2:number):number
 	{
-		for (let n = 1; n <= this.numBonds(); n++)
+		for (let n = 1; n <= this.numBonds; n++)
 		{
 			let b1 = this.bondFrom(n), b2 = this.bondTo(n);
 			if ((a1 == b1 && a2 == b2) || (a1 == b2 && a2 == b1)) return n;
@@ -480,13 +480,13 @@ class Molecule
 	// literal comparison to another molecule, which can be used for ordering purposes: returns -1/0/1
 	public compareTo(other:Molecule):number
 	{
-		if (other == null || other.numAtoms() == 0) return this.numAtoms() == 0 ? 0 : 1; // null is equivalent to empty
-		if (this.numAtoms() < other.numAtoms()) return -1;
-		if (this.numAtoms() > other.numAtoms()) return 1;
-		if (this.numBonds() < other.numBonds()) return -1;
-		if (this.numBonds() > other.numBonds()) return 1;
+		if (other == null || other.numAtoms == 0) return this.numAtoms == 0 ? 0 : 1; // null is equivalent to empty
+		if (this.numAtoms < other.numAtoms) return -1;
+		if (this.numAtoms > other.numAtoms) return 1;
+		if (this.numBonds < other.numBonds) return -1;
+		if (this.numBonds > other.numBonds) return 1;
 		
-		for (let n = 1;n <= this.numAtoms(); n++)
+		for (let n = 1;n <= this.numAtoms; n++)
 		{
 			if (this.atomElement(n) < other.atomElement(n)) return -1;
 			if (this.atomElement(n) > other.atomElement(n)) return 1;
@@ -506,7 +506,7 @@ class Molecule
 			if (tx1.length < tx2.length) return -1; if (tx1.length > tx2.length) return 1;
 			for (let i = 0; i < tx1.length; i++) if (tx1[i] < tx2[i]) return -1; else if (tx1[i] > tx2[i]) return 1;
 		}
-		for (let n = 1; n <= this.numBonds(); n++)
+		for (let n = 1; n <= this.numBonds; n++)
 		{
 			if (this.bondFrom(n) < other.bondFrom(n)) return -1; if (this.bondFrom(n) > other.bondFrom(n)) return 1;
 			if (this.bondTo(n) < other.bondTo(n)) return -1; if (this.bondTo(n) > other.bondTo(n)) return 1;
@@ -549,7 +549,7 @@ class Molecule
 		if (this.graph != null && this.graphBond != null) return;
 		
 		let graph:number[][] = [], graphBond:number[][] = [];
-		let na = this.numAtoms(), nb = this.numBonds();
+		let na = this.numAtoms, nb = this.numBonds;
 
 		for (let n = 0; n < na; n++)
 		{

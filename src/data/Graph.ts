@@ -63,12 +63,12 @@ class Graph
 	{
 		let g = new Graph();
 		g.indices = [];
-		for (let n = 0; n < mol.numAtoms(); n++) 
+		for (let n = 0; n < mol.numAtoms; n++) 
 		{
 			g.nbrs.push([]);
 			g.indices.push(n + 1);
 		}
-		for (let n = 1; n <= mol.numBonds(); n++)
+		for (let n = 1; n <= mol.numBonds; n++)
 		{
 			let bfr = mol.bondFrom(n) - 1, bto = mol.bondTo(n) - 1;
 			g.nbrs[bfr].push(bto);

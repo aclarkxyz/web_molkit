@@ -172,7 +172,7 @@ class SearchPanel extends Widget
 		this.pressedMol1 = renderSolid('#00CA59', '#008650', styleMol1);
 		this.drawnMol1 = <HTMLCanvasElement>newElement(div, 'canvas', {'width': molw, 'height': height, 'style': styleMol1Pos});
 		this.drawnMol1.style.cursor = 'pointer';
-		if (this.mol1.numAtoms() > 0) this.renderMolecule(1);
+		if (this.mol1.numAtoms > 0) this.renderMolecule(1);
 		this.thinMol1 = renderBorder(1, styleMol1);
 		this.thickMol1 = renderBorder(2, styleMol1);
 		
@@ -192,7 +192,7 @@ class SearchPanel extends Widget
 			this.pressedMol2 = renderSolid('#00CA59', '#008650', styleMol2);
 			this.drawnMol2 = <HTMLCanvasElement>newElement(div, 'canvas', {'width': molw, 'height': height, 'style': styleMol2Pos});
 			this.drawnMol2.style.cursor = 'pointer';
-			if (this.mol2.numAtoms() > 0) this.renderMolecule(2);
+			if (this.mol2.numAtoms > 0) this.renderMolecule(2);
 			this.thinMol2 = renderBorder(1, styleMol2);
 			this.thickMol2 = renderBorder(2, styleMol2);
 		}
@@ -288,14 +288,14 @@ class SearchPanel extends Widget
 	private renderMolecule(which:number)
 	{
 		let mol = which == 1 ? this.mol1 : this.mol2, canvas = which == 1 ? this.drawnMol1 : this.drawnMol2;
-		if (mol.numAtoms() == 0)
+		if (mol.numAtoms == 0)
 		{
 			canvas.width = canvas.width; // this is rubric for 'clear'
 			return;
 		}
 		
 		let withMapping = false;
-		if (this.type == SearchPanel.TYPE_REACTION) for (let n = 1; n <= mol.numAtoms(); n++) if (mol.atomMapNum(n) > 0) {withMapping = true; break;} 
+		if (this.type == SearchPanel.TYPE_REACTION) for (let n = 1; n <= mol.numAtoms; n++) if (mol.atomMapNum(n) > 0) {withMapping = true; break;} 
 		
 		let policy = withMapping ? RenderPolicy.defaultBlackOnWhite() : RenderPolicy.defaultColourOnWhite();
 		let input = {'molNative': mol.toString(), 'policy': policy.data};
@@ -337,8 +337,8 @@ class SearchPanel extends Widget
 			canvas.width = width * metavec.density;
 			canvas.height = height * metavec.density;
 
-			let arrmol = <PreArrangeMolecule>result.arrmol;
-			for (let n = 1; n <= mol.numAtoms(); n++) if (mol.atomMapNum(n) > 0)
+			let arrmol = /*<PreArrangeMolecule>*/result.arrmol;
+			for (let n = 1; n <= mol.numAtoms; n++) if (mol.atomMapNum(n) > 0)
 			{
 				let col = this.COLCYCLE[(mol.atomMapNum(n) - 1) % this.COLCYCLE.length];
 				let pt = arrmol.points[n - 1];
@@ -405,7 +405,7 @@ class SearchPanel extends Widget
 	}
 	private editMapping()
 	{
-		if (this.mol1.numAtoms() == 0 || this.mol2.numAtoms() == 0)
+		if (this.mol1.numAtoms == 0 || this.mol2.numAtoms == 0)
 		{
 			alert('Draw structures on both sides of the arrow before mapping.');
 			return;

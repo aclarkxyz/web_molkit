@@ -31,7 +31,7 @@ class ValidationHeadlessBasic extends Validation
 	{
 		let array = ['b', 'c', 'a'];
 		let idx = Vec.idxSort(array);
-		this.assert(Vec.equals(idx, [1, 2, 0]));
+		this.assert(Vec.equals(idx, [2, 0, 1]));
 	}
 
 	//public fubar() {/*this.fail('hardwired to fubar');*/ let thing:any = 'zog'; thing.length();}

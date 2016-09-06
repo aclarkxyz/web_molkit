@@ -33,7 +33,7 @@ class CoordUtil
 	{
 		if (tolerance == null) tolerance = CoordUtil.OVERLAP_THRESHOLD;
 		const tolsq = tolerance * tolerance;
-		for (let n = 1; n <= mol.numAtoms(); n++) if (norm2_xy(mol.atomX(n) - x, mol.atomY(n) - y) < tolsq) return n;
+		for (let n = 1; n <= mol.numAtoms; n++) if (norm2_xy(mol.atomX(n) - x, mol.atomY(n) - y) < tolsq) return n;
 		return 0;
 	}
 
@@ -47,8 +47,8 @@ class CoordUtil
     {
 		if (tolerance == null) tolerance = CoordUtil.DEFAULT_EQUIV_TOLERANCE;
 
-		const na = mol1.numAtoms(), nb = mol1.numBonds();
-		if (na != mol2.numAtoms() || nb != mol2.numBonds()) return false;
+		const na = mol1.numAtoms, nb = mol1.numBonds;
+		if (na != mol2.numAtoms || nb != mol2.numBonds) return false;
     	
 		const tolsq = tolerance * tolerance;
     	
@@ -134,7 +134,7 @@ class CoordUtil
 		if (Math.abs(dx) > tolerance * 0.1 || Math.abs(dy) > tolerance * 0.1)
 		{
 			mol2 = mol2.clone();
-			for (let n = 1; n <= mol2.numAtoms(); n++) mol2.setAtomPos(n, mol2.atomX(n) + dx, mol2.atomY(n) + dy);
+			for (let n = 1; n <= mol2.numAtoms; n++) mol2.setAtomPos(n, mol2.atomX(n) + dx, mol2.atomY(n) + dy);
 		}
 
 		return CoordUtil.sketchEquivalent(mol1, mol2, tolerance);
@@ -155,7 +155,7 @@ class CoordUtil
 	public static overlapsAtom(mol:Molecule, x:number, y:number, tol:number):boolean
     {
 		const tolsq = tol * tol;
-		for (let n = 1; n <= mol.numAtoms(); n++) if (norm2_xy(mol.atomX(n) - x, mol.atomY(n) - y) < tolsq) return true;
+		for (let n = 1; n <= mol.numAtoms; n++) if (norm2_xy(mol.atomX(n) - x, mol.atomY(n) - y) < tolsq) return true;
 		return false;
     }
 
@@ -165,7 +165,7 @@ class CoordUtil
 	{
 		if (thresh == null) thresh = CoordUtil.OVERLAP_THRESHOLD;
 
-		const sz = mol.numAtoms();
+		const sz = mol.numAtoms;
 		let box = mol.boundary();
 		let p1:number[], p2:number[];
 		if (box.w > box.h)
@@ -213,7 +213,7 @@ class CoordUtil
     {
 		if (approach == null) approach = 1E-5;
 		let score = 0;
-		let na = mol.numAtoms();
+		let na = mol.numAtoms;
 		for (let n = 1; n <= na; n++) 
 			score += 1.0 / (approach + norm2_xy(mol.atomX(n) - x, mol.atomY(n) - y));
 		return score;
@@ -225,7 +225,7 @@ class CoordUtil
     {
 		if (approach == null) approach = 1E-5;
 		let score = 0;
-		const na = mol.numAtoms();
+		const na = mol.numAtoms;
 		let mx = MolUtil.arrayAtomX(mol), my = MolUtil.arrayAtomY(mol);
 		for (let i = 0; i < na - 1; i++) for (let j = i + 1; j < na; j++)
 			score += 1.0 / (approach + norm2_xy(mx[i] - mx[j], my[i] - my[j]));
@@ -235,7 +235,7 @@ class CoordUtil
     // translates all atoms in the molecule by the indicated amount
 	public static translateMolecule(mol:Molecule, ox:number, oy:number):void
 	{
-		for (let n = 1; n <= mol.numAtoms(); n++) mol.setAtomPos(n, mol.atomX(n) + ox, mol.atomY(n) + oy);
+		for (let n = 1; n <= mol.numAtoms; n++) mol.setAtomPos(n, mol.atomX(n) + ox, mol.atomY(n) + oy);
 	}
     
     // rotates the molecule about geographic centre
@@ -249,7 +249,7 @@ class CoordUtil
 		}
 
 		let cosTheta = Math.cos(theta), sinTheta = Math.sin(theta);
-		for (let n = 1; n <= mol.numAtoms(); n++)
+		for (let n = 1; n <= mol.numAtoms; n++)
 		{
 			let x = mol.atomX(n) - cx, y = mol.atomY(n) - cy;
 			mol.setAtomPos(n, cx + x * cosTheta - y * sinTheta, cy + x * sinTheta + y * cosTheta);
@@ -269,7 +269,7 @@ class CoordUtil
 		let cx = mol.atomX(centre), cy = mol.atomY(centre);
 		let cosTheta = Math.cos(theta), sinTheta = Math.sin(theta);
 
-		for (let n = 1; n <= mol.numAtoms(); n++) if (cc[n - 1] == cc[atom - 1])
+		for (let n = 1; n <= mol.numAtoms; n++) if (cc[n - 1] == cc[atom - 1])
 		{
 			let x = mol.atomX(n) - cx, y = mol.atomY(n) - cy;
 			mol.setAtomPos(n, cx + x * cosTheta - y * sinTheta, cy + x * sinTheta + y * cosTheta);
@@ -280,7 +280,7 @@ class CoordUtil
 	public static rotateAtoms(mol:Molecule, mask:boolean[], cx:number, cy:number, theta:number):void
 	{
 		let cosTheta = Math.cos(theta), sinTheta = Math.sin(theta);
-		for (let n = 1; n <= mol.numAtoms(); n++) if (mask[n - 1])
+		for (let n = 1; n <= mol.numAtoms; n++) if (mask[n - 1])
 		{
 			let x = mol.atomX(n) - cx, y = mol.atomY(n) - cy;
 			mol.setAtomPos(n, cx + x * cosTheta - y * sinTheta, cy + x * sinTheta + y * cosTheta);
@@ -310,7 +310,7 @@ class CoordUtil
     // assimilates two atoms together; the "old" atom has its bonds reassigned to the "new" atom, then gets deleted
 	public static mergeAtoms(mol:Molecule, oldN:number, newN:number):void
 	{
-		for (let n = 1; n <= mol.numBonds(); n++)
+		for (let n = 1; n <= mol.numBonds; n++)
 		{
 			if (mol.bondFrom(n) == oldN) mol.setBondFrom(n, newN);
 			if (mol.bondTo(n) == oldN) mol.setBondTo(n, newN);
@@ -323,7 +323,7 @@ class CoordUtil
     // realistic Angstrom-like units
     public static normaliseBondDistances(mol:Molecule):void
     {
-		const nb = mol.numBonds();
+		const nb = mol.numBonds;
 		if (nb == 0) return;
 
 		let dsq:number[] = [];
@@ -339,7 +339,7 @@ class CoordUtil
 		let box = mol.boundary();
 		let cx = box.midX(), cy = box.midY();
 		let scale = Molecule.IDEALBOND / median;
-		for (let n = mol.numAtoms(); n >= 1; n--)
+		for (let n = mol.numAtoms; n >= 1; n--)
 		{
 			let x = (mol.atomX(n) - cx) * scale + cx;
 			let y = (mol.atomY(n) - cy) * scale + cy;
@@ -353,8 +353,8 @@ class CoordUtil
     {
 		mol = mol.clone();
 
-		for (let n = 1; n <= mol.numAtoms(); n++) mol.setAtomX(n, -mol.atomX(n));
-		for (let n = 1; n <= mol.numBonds(); n++)
+		for (let n = 1; n <= mol.numAtoms; n++) mol.setAtomX(n, -mol.atomX(n));
+		for (let n = 1; n <= mol.numBonds; n++)
 		{
 			if (mol.bondType(n) == Molecule.BONDTYPE_DECLINED) mol.setBondType(n, Molecule.BONDTYPE_INCLINED);
 			else if (mol.bondType(n) == Molecule.BONDTYPE_INCLINED) mol.setBondType(n, Molecule.BONDTYPE_DECLINED);
@@ -403,8 +403,8 @@ class CoordUtil
 		}
 		if (scoreB < scoreA)
 		{
-			for (let n = 1; n <= mol2.numAtoms(); n++) mol2.setAtomY(n, 2 * y0 - mol2.atomY(n));
-			for (let n = 1; n <= mol2.numBonds(); n++)
+			for (let n = 1; n <= mol2.numAtoms; n++) mol2.setAtomY(n, 2 * y0 - mol2.atomY(n));
+			for (let n = 1; n <= mol2.numBonds; n++)
 			{
 				if (mol2.bondType(n) == Molecule.BONDTYPE_DECLINED) mol2.setBondType(n, Molecule.BONDTYPE_INCLINED);
 				else if (mol2.bondType(n) == Molecule.BONDTYPE_INCLINED) mol2.setBondType(n, Molecule.BONDTYPE_DECLINED);

@@ -185,7 +185,7 @@ class MDLMOLReader
 			else if (line.startsWith("A  ") && line.length >= 6)
     		{
 				let anum = parseInt(line.substring(3, 6).trim());
-				if (anum >= 1 && anum <= this.mol.numAtoms())
+				if (anum >= 1 && anum <= this.mol.numAtoms)
 				{
 					line = this.nextLine();
 					if (line == null) break;
@@ -223,7 +223,7 @@ class MDLMOLReader
 		const mol = this.mol;
 
 	    // post-fixing
-		for (let n = 1; n <= mol.numAtoms(); n++)
+		for (let n = 1; n <= mol.numAtoms; n++)
 		{
 			let el = mol.atomElement(n);
 
@@ -248,7 +248,7 @@ class MDLMOLReader
 			ResonanceRemover derez = new ResonanceRemover(mol, resBonds, atomHyd);
 			try {derez.perform();} catch (GraphFaultException ex) {throw new MoleculeIOException(ex);}
 			int[] bo = derez.getBondOrders();
-			final int nb = mol.numBonds();
+			final int nb = mol.numBonds;
 			for (let n = 0; n < nb; n++) mol.setBondOrder(n + 1, bo[n]);
 		}*/
 		

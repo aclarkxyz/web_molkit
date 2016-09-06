@@ -39,11 +39,11 @@ class MapReaction extends Dialog
 	// layout information about both molecules, and how to position them
 	private rawvec1:any = null;
 	private metavec1:MetaVector = null;
-	private arrmol1:PreArrangeMolecule = null;
+	private arrmol1:any/*PreArrangeMolecule*/ = null;
 	private transform1:number[] = null;
 	private rawvec2:any = null;
 	private metavec2:MetaVector = null;
-	private arrmol2:PreArrangeMolecule = null;
+	private arrmol2:any/*PreArrangeMolecule*/ = null;
 	private transform2:number[] = null;
 	private padding:number;
 	private scale = 1;
@@ -227,7 +227,7 @@ class MapReaction extends Dialog
 			ctx.lineWidth = 1;
 			if (this.pressed[0] == 1)
 			{
-				for (let n = 1; n <= this.mol2.numAtoms(); n++) if (compatMask[n - 1])
+				for (let n = 1; n <= this.mol2.numAtoms; n++) if (compatMask[n - 1])
 				{
 					let [cx, cy, rw, rh] = this.getAtomPos(2, n);
 					ctx.beginPath();
@@ -237,7 +237,7 @@ class MapReaction extends Dialog
 			}
 			else
 			{
-				for (let n = 1; n <= this.mol1.numAtoms(); n++) if (compatMask[n - 1])
+				for (let n = 1; n <= this.mol1.numAtoms; n++) if (compatMask[n - 1])
 				{
 					let [cx, cy, rw, rh] = this.getAtomPos(1, n);
 					ctx.beginPath();
@@ -285,7 +285,7 @@ class MapReaction extends Dialog
 		const offsetY = side == 1 ? this.offsetY1 : this.offsetY2;
 		const scale = this.scale;
 		
-		for (let n = 1; n <= mol.numAtoms(); n++)
+		for (let n = 1; n <= mol.numAtoms; n++)
 		{
 			let mapnum = mol.atomMapNum(n);
 			if (mapnum == 0 && n != highlight) continue;
@@ -303,7 +303,7 @@ class MapReaction extends Dialog
 				if (n == highlight)
 				{
 					let oside = 3 - side, omol = side == 1 ? this.mol2 : this.mol1;
-					for (let i = 1; i <= omol.numAtoms(); i++) if (omol.atomMapNum(i) == mapnum)
+					for (let i = 1; i <= omol.numAtoms; i++) if (omol.atomMapNum(i) == mapnum)
 					{
 						let [dx, dy] = this.getAtomPos(oside, i);
 						ctx.beginPath();
@@ -333,7 +333,7 @@ class MapReaction extends Dialog
 		
 		const scale = this.scale, thresh2 = sqr(this.scale * 1.0 * this.policy.data.pointScale);
 		let bestDist = Number.POSITIVE_INFINITY;
-		for (let n = 1; n <= this.mol1.numAtoms(); n++)
+		for (let n = 1; n <= this.mol1.numAtoms; n++)
 		{
 			if (mask1 != null && !mask1[n - 1]) continue;
 			let pt = this.arrmol1.points[n - 1];
@@ -341,7 +341,7 @@ class MapReaction extends Dialog
 			let dsq = norm2_xy(x - cx, y - cy);
 			if (dsq < thresh2 && dsq < bestDist) {ret = [1, n]; bestDist = dsq;}
 		}
-		for (let n = 1; n <= this.mol2.numAtoms(); n++)
+		for (let n = 1; n <= this.mol2.numAtoms; n++)
 		{
 			if (mask2 != null && !mask2[n - 1]) continue;
 			let pt = this.arrmol2.points[n - 1];
@@ -371,7 +371,7 @@ class MapReaction extends Dialog
 		let mol1 = side == 1 ? this.mol1 : this.mol2, mol2 = side == 1 ? this.mol2 : this.mol1;
 
 		let el = mol1.atomElement(atom), iso = mol1.atomIsotope(atom), map = mol1.atomMapNum(atom);
-		for (let n = 1; n <= mol2.numAtoms(); n++)
+		for (let n = 1; n <= mol2.numAtoms; n++)
 		{
 			let match = el == mol2.atomElement(n) && iso == mol2.atomIsotope(n);
 			match = match && (map == 0 || mol2.atomMapNum(n) == 0);
@@ -393,8 +393,8 @@ class MapReaction extends Dialog
 		if (map == 0)
 		{
 			let allnums = new Set<number>();
-			for (let n = 1; n <= mol1.numAtoms(); n++) allnums.add(mol1.atomMapNum(n));
-			for (let n = 1; n <= mol2.numAtoms(); n++) allnums.add(mol2.atomMapNum(n));
+			for (let n = 1; n <= mol1.numAtoms; n++) allnums.add(mol1.atomMapNum(n));
+			for (let n = 1; n <= mol2.numAtoms; n++) allnums.add(mol2.atomMapNum(n));
 			for (map = 1; allnums.has(map); map++) ;
 		}
 		mol1.setAtomMapNum(atom1, map);
@@ -415,12 +415,12 @@ class MapReaction extends Dialog
 			if (map1 == null || map2 == null) return;
 			
 			let modified = false;
-			for (let n = 1; n <= this.mol1.numAtoms() && n <= map1.length; n++) if (map1[n - 1] > 0 && this.mol1.atomMapNum(n) == 0)
+			for (let n = 1; n <= this.mol1.numAtoms && n <= map1.length; n++) if (map1[n - 1] > 0 && this.mol1.atomMapNum(n) == 0)
 			{
 				this.mol1.setAtomMapNum(n, map1[n - 1]);
 				modified = true;
 			} 
-			for (let n = 1; n <= this.mol2.numAtoms() && n <= map2.length; n++) if (map2[n - 1] > 0 && this.mol2.atomMapNum(n) == 0)
+			for (let n = 1; n <= this.mol2.numAtoms && n <= map2.length; n++) if (map2[n - 1] > 0 && this.mol2.atomMapNum(n) == 0)
 			{
 				this.mol2.setAtomMapNum(n, map2[n - 1]);
 				modified = true;
@@ -434,8 +434,8 @@ class MapReaction extends Dialog
 	private clearAllMappings():void
 	{
 		let anything = false;
-		for (let n = 1; n <= this.mol1.numAtoms(); n++) if (this.mol1.atomMapNum(n) > 0) {this.mol1.setAtomMapNum(n, 0); anything = true;}
-		for (let n = 1; n <= this.mol2.numAtoms(); n++) if (this.mol2.atomMapNum(n) > 0) {this.mol2.setAtomMapNum(n, 0); anything = true;}
+		for (let n = 1; n <= this.mol1.numAtoms; n++) if (this.mol1.atomMapNum(n) > 0) {this.mol1.setAtomMapNum(n, 0); anything = true;}
+		for (let n = 1; n <= this.mol2.numAtoms; n++) if (this.mol2.atomMapNum(n) > 0) {this.mol2.setAtomMapNum(n, 0); anything = true;}
 		if (anything) this.redrawCanvas();
 	}
 
@@ -444,8 +444,8 @@ class MapReaction extends Dialog
 	{
 		let map = side == 1 ? this.mol1.atomMapNum(atom) : this.mol2.atomMapNum(atom);
 		if (map == 0) return;
-		for (let n = 1; n <= this.mol1.numAtoms(); n++) if (this.mol1.atomMapNum(n) == map) this.mol1.setAtomMapNum(n, 0);
-		for (let n = 1; n <= this.mol2.numAtoms(); n++) if (this.mol2.atomMapNum(n) == map) this.mol2.setAtomMapNum(n, 0);
+		for (let n = 1; n <= this.mol1.numAtoms; n++) if (this.mol1.atomMapNum(n) == map) this.mol1.setAtomMapNum(n, 0);
+		for (let n = 1; n <= this.mol2.numAtoms; n++) if (this.mol2.atomMapNum(n) == map) this.mol2.setAtomMapNum(n, 0);
 	}
 
 	// --------------------------------------- toolkit events ---------------------------------------

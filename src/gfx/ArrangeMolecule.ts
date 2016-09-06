@@ -101,7 +101,7 @@ class ArrangeMolecule
 		let minX = box.minX(), minY = box.minY(), maxX = box.maxX(), maxY = box.maxY(); 
 		let fontSize = policy.data.fontSize * this.FONT_CORRECT;
 
-		for (let n = 1; n <= mol.numAtoms(); n++) if (mol.atomExplicit(n))
+		for (let n = 1; n <= mol.numAtoms; n++) if (mol.atomExplicit(n))
 		{
 			let plusH = mol.atomHydrogens(n) > 0 ? 1 : 0;
 			const aw = 0.5 * 0.7 * fontSize * (mol.atomElement(n).length + plusH);
@@ -142,7 +142,7 @@ class ArrangeMolecule
 		this.ymul = this.measure.yIsUp() ? -1 : 1;
 
     	// fill in each of the atom centres
-		for (let n = 1; n <= this.mol.numAtoms(); n++)
+		for (let n = 1; n <= this.mol.numAtoms; n++)
     	{
     	    // atom symbols which are more than 2 characters long are labels rather than elements, and get different treatment;
     	    // note we put in a null placeholder here, so that the points will be kept in their original atom order
@@ -189,12 +189,12 @@ class ArrangeMolecule
 		}
 
     	// pick up the label-style elements, and deal with them
-		for (let n = 1; n <= this.mol.numAtoms(); n++) if (this.points[n - 1] == null) this.processLabel(n);
+		for (let n = 1; n <= this.mol.numAtoms; n++) if (this.points[n - 1] == null) this.processLabel(n);
 
     	// resolve the bonds which can be analyzed immediately
-		let bdbl = Vec.booleanArray(false, this.mol.numBonds()); // gets set to true if bond is awaiting a double bond assignment
+		let bdbl = Vec.booleanArray(false, this.mol.numBonds); // gets set to true if bond is awaiting a double bond assignment
 
-		for (let n = 1; n <= this.mol.numBonds(); n++)
+		for (let n = 1; n <= this.mol.numBonds; n++)
 		{
 			let bfr = this.mol.bondFrom(n), bto = this.mol.bondTo(n);
 			let bt = this.mol.bondType(n), bo = this.mol.bondOrder(n);
@@ -324,16 +324,16 @@ class ArrangeMolecule
 		}
 
     	// process all remaining double bonds
-		for (let i = 1; i <= this.mol.numBonds(); i++) if (bdbl[i - 1]) this.processDoubleBond(i, this.priorityDoubleSubstit(i));
+		for (let i = 1; i <= this.mol.numBonds; i++) if (bdbl[i - 1]) this.processDoubleBond(i, this.priorityDoubleSubstit(i));
 
     	// place hydrogen labels as explicit "atom centres"
-		let hcount = Vec.numberArray(0, this.mol.numAtoms());
-		for (let n = 1; n <= this.mol.numAtoms(); n++) hcount[n - 1] = /*!effects.showHydrogen ||*/ this.points[n - 1].text == null ? 0 : this.mol.atomHydrogens(n);
-		for (let n = 0; n < this.mol.numAtoms(); n++) if (hcount[n] > 0 && this.placeHydrogen(n, hcount[n], true)) hcount[n] = 0;
-		for (let n = 0; n < this.mol.numAtoms(); n++) if (hcount[n] > 0) this.placeHydrogen(n, hcount[n], false);
+		let hcount = Vec.numberArray(0, this.mol.numAtoms);
+		for (let n = 1; n <= this.mol.numAtoms; n++) hcount[n - 1] = /*!effects.showHydrogen ||*/ this.points[n - 1].text == null ? 0 : this.mol.atomHydrogens(n);
+		for (let n = 0; n < this.mol.numAtoms; n++) if (hcount[n] > 0 && this.placeHydrogen(n, hcount[n], true)) hcount[n] = 0;
+		for (let n = 0; n < this.mol.numAtoms; n++) if (hcount[n] > 0) this.placeHydrogen(n, hcount[n], false);
 
         // look for atoms with isotope labels, and place them
-		for (let n = 1; n <= this.mol.numAtoms(); n++) if (this.mol.atomIsotope(n) != Molecule.ISOTOPE_NATURAL)
+		for (let n = 1; n <= this.mol.numAtoms; n++) if (this.mol.atomIsotope(n) != Molecule.ISOTOPE_NATURAL)
 		{
 			let isostr = this.mol.atomIsotope(n).toString();
 			let col = this.policy.data.atomCols[this.mol.atomicNumber(n)];
@@ -341,7 +341,7 @@ class ArrangeMolecule
 		}
 
     	// do atomic charges/radical notation
-		for (let n = 1; n <= this.mol.numAtoms(); n++)
+		for (let n = 1; n <= this.mol.numAtoms; n++)
 		{
 			let str = '';
 			let chg = this.mol.atomCharge(n);
@@ -368,7 +368,7 @@ class ArrangeMolecule
 */		
     }
 
-   	// access to atom information; it is valid to assume that {atomcentre}[N-1] matches {moleculeatom}[N], if N<=mol.numAtoms()
+   	// access to atom information; it is valid to assume that {atomcentre}[N-1] matches {moleculeatom}[N], if N<=mol.numAtoms
     public numPoints():number {return this.points.length;}
     public getPoint(idx:number):APoint {return this.points[idx];}
     
@@ -796,7 +796,7 @@ class ArrangeMolecule
 		let ringsz = rings.length;
 
     	// for each atom add up the number of times it occurs in a small ring
-		let ringbusy = Vec.numberArray(0, this.mol.numAtoms());
+		let ringbusy = Vec.numberArray(0, this.mol.numAtoms);
 		for (let n = 0; n < ringsz; n++)
 		{
 			let r = rings[n];

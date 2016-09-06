@@ -62,7 +62,7 @@ class WebValExec
 			{
 				tdStatus[n].html('<span style="color: red;">&#9746;</span>');
 				let para = $('<p style="color: purple; margin-top: 0;"></p>').appendTo(tdInfo[n]);
-				para.text(message);
+				para.text(message ? message : 'failed');
 				tdStatus[n].css('background-color', '#FFF0F0');
 				tdInfo[n].css('background-color', '#FFF0F0');
 			} 

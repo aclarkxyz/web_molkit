@@ -73,7 +73,7 @@ class SketchUtil
     // the mol parameter
 	public static placeNewFragment(mol:Molecule, frag:Molecule):void
 	{
-		if (frag.numAtoms() == 0) return;
+		if (frag.numAtoms == 0) return;
 
 		let dirX = [1, 0, -1, 1, -1, 1, 0, -1], dirY = [1, 1, 1, 0, 0, -1, -1, -1];
 		let dx = Vec.numberArray(0, 8), dy = Vec.numberArray(0, 8), score = Vec.numberArray(0, 8);
@@ -121,7 +121,7 @@ class SketchUtil
 		for (let n = 1; n < 8; n++) if (score[n] > score[best]) best = n;
 
 		frag = frag.clone();
-		for (let n = 1; n <= frag.numAtoms(); n++) frag.setAtomPos(n, frag.atomX(n) + dx[best], frag.atomY(n) + dy[best]);
+		for (let n = 1; n <= frag.numAtoms; n++) frag.setAtomPos(n, frag.atomX(n) + dx[best], frag.atomY(n) + dy[best]);
     	
     	mol.append(frag);
     }
@@ -131,7 +131,7 @@ class SketchUtil
 	private static fragPosScore(mol:Molecule, frag:Molecule, dx:number, dy:number):number
 	{
 		let score = 0;
-		for (let i = 1; i <= mol.numAtoms(); i++) for (let j = 1; j <= frag.numAtoms(); j++)
+		for (let i = 1; i <= mol.numAtoms; i++) for (let j = 1; j <= frag.numAtoms; j++)
 		{
 			let ox = frag.atomX(j) + dx - mol.atomX(i), oy = frag.atomY(j) + dy - mol.atomY(i);
 			let dist2 = ox * ox + oy * oy;
@@ -162,7 +162,7 @@ class SketchUtil
     // NOTE: special case where div==0, which makes all atoms fair game, i.e. there is no partition
     public static mergeFragmentsDiv(mol:Molecule, div:number):number[]
     {
-		const na = mol.numAtoms();
+		const na = mol.numAtoms;
 		let omask = CoordUtil.overlappingAtomMask(mol);
 
 		let chopmask = Vec.booleanArray(false, na);
@@ -200,7 +200,7 @@ class SketchUtil
         		
         		if (exotic[1] > exotic[0]) {oldN = i; newN = j;}
         	    
-				for (let n = 1; n <= mol.numBonds(); n++)
+				for (let n = 1; n <= mol.numBonds; n++)
 				{
 					if (mol.bondFrom(n) == oldN) mol.setBondFrom(n, newN);
 					if (mol.bondTo(n) == oldN) mol.setBondTo(n, newN);
@@ -217,7 +217,7 @@ class SketchUtil
 			mol.deleteAtomAndBonds(n);
 			for (let i = 0; i < na; i++) if (remap[i] > n) remap[i]--;
 		}
-		for (let n = mol.numAtoms(); n > div; n--) if (mol.atomElement(n) == 'X')
+		for (let n = mol.numAtoms; n > div; n--) if (mol.atomElement(n) == 'X')
 		{
 			mol.deleteAtomAndBonds(n);
 			for (let i = 0; i < na; i++) if (remap[i] > n) remap[i]--;
@@ -232,8 +232,8 @@ class SketchUtil
     // of the molecule
     public static mergeFragmentsMask(mol:Molecule, mask:boolean[]):void
     {
-		let chopmask = Vec.booleanArray(false, mol.numAtoms());
-		let na = mol.numAtoms();
+		let chopmask = Vec.booleanArray(false, mol.numAtoms);
+		let na = mol.numAtoms;
 		let mx = MolUtil.arrayAtomX(mol), my = MolUtil.arrayAtomY(mol);
     	
 		for (let i = 1; i <= na; i++)
@@ -248,7 +248,7 @@ class SketchUtil
 			} // switch
 			// (any other criteria? [if so, then sync. with above])
 
-			for (let n = 1; n <= mol.numBonds(); n++)
+			for (let n = 1; n <= mol.numBonds; n++)
 			{
 				if (mol.bondFrom(n) == oldN) mol.setBondFrom(n, newN);
 				if (mol.bondTo(n) == oldN) mol.setBondTo(n, newN);
@@ -712,7 +712,7 @@ class SketchUtil
 		mol = mol.clone();
 		mask = mask.slice(0);
 
-		const na = mol.numAtoms();
+		const na = mol.numAtoms;
 		let mx = MolUtil.arrayAtomX(mol), my = MolUtil.arrayAtomY(mol);
 
 		let groups:number[][] = [];
@@ -768,7 +768,7 @@ class SketchUtil
 		let sx1 = 0, sy1 = 0, sx2 = 0, sy2 = 0;
 		let nx1 = 0, ny1 = 0, nx2 = 0, ny2 = 0;
 
-		for (let n = 1; n <= mol.numAtoms(); n++)
+		for (let n = 1; n <= mol.numAtoms; n++)
 		{
 			let x = mol.atomX(n), y = mol.atomY(n);
 			if (mask[n - 1])
@@ -806,7 +806,7 @@ class SketchUtil
 		if (dx > 0) ox = nx2 - sx1 + SEPARATE;
 		if (dy < 0) oy = ny1 - sy2 - SEPARATE;
 		if (dy > 0) oy = ny2 - sy1 + SEPARATE;
-		for (let n = 1; n <= mol.numAtoms(); n++) if (mask[n - 1]) mol.setAtomPos(n, mol.atomX(n) + ox, mol.atomY(n) + oy);
+		for (let n = 1; n <= mol.numAtoms; n++) if (mask[n - 1]) mol.setAtomPos(n, mol.atomX(n) + ox, mol.atomY(n) + oy);
 		
 		return mol;
 	}
@@ -814,7 +814,7 @@ class SketchUtil
 	// adds some number of additional hydrogen atoms to a parent atom, and selects reasonable position coordinates for them
 	public static placeAdditionalHydrogens(mol:Molecule, atom:number, numH:number):void
 	{
-		let base = mol.numAtoms();
+		let base = mol.numAtoms;
 		const x0 = mol.atomX(atom), y0 = mol.atomY(atom);
     
 		let adj = mol.atomAdjList(atom);

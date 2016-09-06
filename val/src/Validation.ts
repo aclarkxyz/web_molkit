@@ -13,8 +13,8 @@
 ///<reference path='../../src/util/util.ts'/>
 
 /*
-    Storage class for a sequence of tests. Use pattern: instantiate the class, then add each of the tests (callback functions); hand over the instance of
-    this class to an execution environment that calls each of them in turn.
+    Storage class for a sequence of tests. Use pattern: inherit the class, and add each of the tests (callback functions) in the constructor; hand over the 
+    instance to an execution environment that calls each of them in turn.
 */
 
 interface ValidationTest
@@ -30,6 +30,13 @@ class Validation
 
     constructor()
     {
+    }
+
+    // override this to perform initialisation tasks; these can include asynchronous calls, such as loading files; be sure to call
+    // the completion function once it's ready
+    public init(donefunc:() => void):void
+    {
+        donefunc.call(this);
     }
 
     // adds a test to the list; note that when it gets called, 'this' will be set to the object instance
@@ -76,7 +83,7 @@ class Validation
     // fail conditions: these methods should be called to make sure some condition is met
     public assert(condition:boolean, message?:string):void
     {
-        if (!condition) return;
+        if (condition) return;
         this.recentError = message;
         throw '!';
     }

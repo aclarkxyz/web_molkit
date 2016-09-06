@@ -89,8 +89,8 @@ class MoleculeStream
 	// static method: converts a molecule into a string which represents it using the SketchEl format
 	public static writeNative(mol:Molecule):string
 	{
-		let ret = 'SketchEl!(' + mol.numAtoms() + ',' + mol.numBonds() + ')\n';
-		for (let n = 1; n <= mol.numAtoms(); n++)
+		let ret = 'SketchEl!(' + mol.numAtoms + ',' + mol.numBonds + ')\n';
+		for (let n = 1; n <= mol.numAtoms; n++)
 		{
 			let el = mol.atomElement(n), x = mol.atomX(n), y = mol.atomY(n), charge = mol.atomCharge(n), unpaired = mol.atomUnpaired(n);
 			let hy = mol.atomHExplicit(n) != Molecule.HEXPLICIT_UNKNOWN ? ('e' + mol.atomHExplicit(n)) : ('i' + mol.atomHydrogens(n));
@@ -102,7 +102,7 @@ class MoleculeStream
 			ret += '\n';
 		}
 
-		for (let n = 1; n <= mol.numBonds(); n++)
+		for (let n = 1; n <= mol.numBonds; n++)
 		{
 			ret += mol.bondFrom(n) + '-' + mol.bondTo(n) + '=' + mol.bondOrder(n) + ',' + mol.bondType(n);
 			ret += MoleculeStream.sk_encodeExtra(mol.bondExtra(n));

@@ -180,7 +180,7 @@ class Sketcher extends Widget implements ArrangeMeasurement
 
 		// note: inefficient; make it compute on demand
 		this.guidelines = [];
-		for (let n = 1; n <= this.mol.numAtoms(); n++) 
+		for (let n = 1; n <= this.mol.numAtoms; n++) 
 		{
 			for (let sprout of SketchUtil.guidelineSprouts(this.mol, n)) this.guidelines.push(sprout);
 		}
@@ -492,10 +492,10 @@ class Sketcher extends Widget implements ArrangeMeasurement
 	{
 		if (this.selectedMask == null) 
 		{
-			this.selectedMask = new Array(this.mol.numAtoms());
+			this.selectedMask = new Array(this.mol.numAtoms);
 			for (let n = this.selectedMask.length - 1; n >= 0; n--) this.selectedMask[n] = false;
 		}
-		while (this.selectedMask.length < this.mol.numAtoms()) {this.selectedMask.push(false);}
+		while (this.selectedMask.length < this.mol.numAtoms) {this.selectedMask.push(false);}
 		this.selectedMask[N - 1] = sel;
 	}
 	// returns true if atom N is grabbed by the lasso, if any (1-based)
@@ -537,7 +537,7 @@ class Sketcher extends Widget implements ArrangeMeasurement
 	// appends the current state to the undo-stack
 	public stashUndo():void
 	{
-		if (this.undoStack.length == 0 && this.mol.numAtoms() == 0) return; // don't put empty stuff at the beginning
+		if (this.undoStack.length == 0 && this.mol.numAtoms == 0) return; // don't put empty stuff at the beginning
 		let state = this.getState();
 		this.undoStack.push(state);
 		while (this.undoStack.length > Sketcher.UNDO_SIZE)
@@ -664,7 +664,7 @@ class Sketcher extends Widget implements ArrangeMeasurement
 	}
 	public pasteMolecule(mol:Molecule):void
 	{
-		if (this.mol.numAtoms() == 0)
+		if (this.mol.numAtoms == 0)
 		{
 			this.defineMolecule(mol, true, true);
 			return;
@@ -854,7 +854,7 @@ class Sketcher extends Widget implements ArrangeMeasurement
 		}
 
 		// draw selection and lasso preselection
-		for (let n = 1; n <= this.mol.numBonds(); n++)
+		for (let n = 1; n <= this.mol.numBonds; n++)
 		{
 			let sz = n == this.currentBond ? 0.1 : 0;
 			let bfr = this.mol.bondFrom(n), bto = this.mol.bondTo(n);
@@ -862,7 +862,7 @@ class Sketcher extends Widget implements ArrangeMeasurement
 			if (sfr && sto) this.drawBondShade(ctx, n, SELECT_COL, -1, sz);
 			else if ((sfr || lfr) && (sto || lto)) this.drawBondShade(ctx, n, LASSO_COL, -1, sz);
 		}
-		for (let n = 1; n <= this.mol.numAtoms(); n++)
+		for (let n = 1; n <= this.mol.numAtoms; n++)
 		{
 			let sz = this.currentAtom == n ? 0.1 : 0;
 			if (this.getSelected(n)) this.drawAtomShade(ctx, n, SELECT_COL, -1, sz);
@@ -952,7 +952,7 @@ class Sketcher extends Widget implements ArrangeMeasurement
 		if (this.metavec != null) this.metavec.renderContext(ctx);
 
 		// debugging only
-		/*for (let n = 1; n <= this.mol.numBonds(); n++)
+		/*for (let n = 1; n <= this.mol.numBonds; n++)
 		{
 			let bfr = this.mol.bondFrom(n), bto = this.mol.bondTo(n);
 			let x1 = this.angToX(this.mol.atomX(bfr)), y1 = this.angToY(this.mol.atomY(bfr));
@@ -1331,8 +1331,8 @@ class Sketcher extends Widget implements ArrangeMeasurement
 	// sets up the lasso mask to include any atom that is within the lasso polygon
 	private calculateLassoMask():void
 	{
-		this.lassoMask = new Array(this.mol.numAtoms());
-		for (let n = 0; n < this.mol.numAtoms(); n++) this.lassoMask[n] = false;
+		this.lassoMask = new Array(this.mol.numAtoms);
+		for (let n = 0; n < this.mol.numAtoms; n++) this.lassoMask[n] = false;
 
 		for (let n = 0; n < this.layout.numPoints(); n++)
 		{
@@ -1404,7 +1404,7 @@ class Sketcher extends Widget implements ArrangeMeasurement
 	private determineMoveGuide():GuidelineSprout[]
 	{
 		let subj = this.subjectAtoms(false, true);
-		if (subj.length == 0 || subj.length == this.mol.numAtoms()) return null;
+		if (subj.length == 0 || subj.length == this.mol.numAtoms) return null;
 		
 		let guides:GuidelineSprout[] = [];
 		for (let n = 0; n < this.guidelines.length; n++) 
@@ -1482,7 +1482,7 @@ class Sketcher extends Widget implements ArrangeMeasurement
 			let dsq = norm2_xy(px - x, py - y);
 			if (dsq < APPROACH && dsq < bestDSQ) {bestDSQ = dsq; bestX = px; bestY = py;}
 		}
-		for (let n = 1; n <= this.mol.numAtoms(); n++)
+		for (let n = 1; n <= this.mol.numAtoms; n++)
 		{
 			let px = this.angToX(this.mol.atomX(n)), py = this.angToY(this.mol.atomY(n));
 			let dsq = norm2_xy(px - x, py - y);
@@ -1513,7 +1513,7 @@ class Sketcher extends Widget implements ArrangeMeasurement
 		if (useOpAtom && atoms.length == 0 && this.opAtom > 0) atoms.push(this.opAtom);
 		if (allIfNone && atoms.length == 0)
 		{
-			for (let n = 1; n <= this.mol.numAtoms(); n++) atoms.push(n);
+			for (let n = 1; n <= this.mol.numAtoms; n++) atoms.push(n);
 		}
 		return atoms;
 	}
@@ -1717,7 +1717,7 @@ class Sketcher extends Widget implements ArrangeMeasurement
 					if (this.opAtom == 0)
 					{
 						let x = this.xToAng(this.clickX), y = this.yToAng(this.clickY);
-						if (this.mol.numAtoms() == 0)
+						if (this.mol.numAtoms == 0)
 						{
 							this.offsetX = this.clickX;
 							this.offsetY = this.clickY;
@@ -1774,7 +1774,7 @@ class Sketcher extends Widget implements ArrangeMeasurement
 				if (this.lassoX.length >= 2)
 				{
 					this.calculateLassoMask();
-					for (let n = 1; n <= this.mol.numAtoms(); n++) if (this.getLassoed(n) && !this.getSelected(n)) this.setSelected(n, true);
+					for (let n = 1; n <= this.mol.numAtoms; n++) if (this.getLassoed(n) && !this.getSelected(n)) this.setSelected(n, true);
 				}
 				
 				this.lassoX = null;

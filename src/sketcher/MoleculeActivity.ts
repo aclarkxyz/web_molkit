@@ -119,7 +119,7 @@ class MoleculeActivity
 
 		for (let k in override) this.input[k] = override[k];
 
-		let na = this.input.mol.numAtoms();
+		let na = this.input.mol.numAtoms;
 		if (this.input.selectedMask == null) this.input.selectedMask = Vec.booleanArray(false, na);
 		while (this.input.selectedMask.length < na) this.input.selectedMask.push(false);
 		this.subjectMask = this.input.selectedMask.slice(0);
@@ -586,7 +586,7 @@ class MoleculeActivity
 	public execSelectAll(all:boolean):void
 	{
 		let same = true;
-		for (let n = 0; n < this.input.mol.numAtoms(); n++) if (this.subjectMask[n] != all)
+		for (let n = 0; n < this.input.mol.numAtoms; n++) if (this.subjectMask[n] != all)
 		{
 			same = false;
 			break;
@@ -596,19 +596,19 @@ class MoleculeActivity
 			this.errmsg = all ? "All atoms already selected." : "All atoms already deselected.";
 			return;
 		}
-		this.output.selectedMask = Vec.booleanArray(all, this.input.mol.numAtoms());
+		this.output.selectedMask = Vec.booleanArray(all, this.input.mol.numAtoms);
 	}
 
 	public execSelectComp(dir:number):void
 	{
 		let cclist = MolUtil.componentList(this.input.mol);
-		if (cclist.length == 1 && this.hasSelected && this.subjectLength == this.input.mol.numAtoms())
+		if (cclist.length == 1 && this.hasSelected && this.subjectLength == this.input.mol.numAtoms)
 		{
 			this.errmsg = 'All atoms already selected.';
 			return;
 		}
 		let sel = this.pickSelectedGroup(cclist, dir);
-		this.output.selectedMask = Vec.booleanArray(false, this.input.mol.numAtoms());
+		this.output.selectedMask = Vec.booleanArray(false, this.input.mol.numAtoms);
 		for (let n = 0; n < cclist[sel].length; n++) this.output.selectedMask[cclist[sel][n] - 1] = true;
 	}
 
@@ -631,7 +631,7 @@ class MoleculeActivity
 
 		let sides = currentAtom > 0 ? MolUtil.getAtomSides(mol, currentAtom) : MolUtil.getBondSides(mol, currentBond);
 		let sel = this.pickSelectedGroup(sides, 1);
-		this.output.selectedMask = Vec.booleanArray(false, mol.numAtoms());
+		this.output.selectedMask = Vec.booleanArray(false, mol.numAtoms);
 		for (let n = 0; n < sides[sel].length; n++) this.output.selectedMask[sides[sel][n] - 1] = true;
 	}
 
@@ -656,7 +656,7 @@ class MoleculeActivity
 		}
 		else
 		{
-			for (let n = 1; n <= mol.numBonds(); n++)
+			for (let n = 1; n <= mol.numBonds; n++)
 			{
 				let bfr = mol.bondFrom(n) - 1, bto = mol.bondTo(n) - 1;
 				if (this.input.selectedMask[bfr] && !this.input.selectedMask[bto]) this.output.selectedMask[bto] = true;
@@ -670,9 +670,9 @@ class MoleculeActivity
 		if (!this.requireSelected()) return;
 
 		let mol = this.input.mol;
-		let count = Vec.numberArray(0, mol.numAtoms());
+		let count = Vec.numberArray(0, mol.numAtoms);
 
-		for (let n = 1; n <= mol.numBonds(); n++)
+		for (let n = 1; n <= mol.numBonds; n++)
 		{
 			let bfr = mol.bondFrom(n) - 1, bto = mol.bondTo(n) - 1;
 			if (!this.input.selectedMask[bfr] || !this.input.selectedMask[bto]) continue;
@@ -681,7 +681,7 @@ class MoleculeActivity
 		}
 
 		this.output.selectedMask = this.input.selectedMask.slice(0);
-		for (let n = 0; n < mol.numAtoms(); n++) this.output.selectedMask[n] = this.input.selectedMask[n] && count[n] >= 2;
+		for (let n = 0; n < mol.numAtoms; n++) this.output.selectedMask[n] = this.input.selectedMask[n] && count[n] >= 2;
 	}
 
 	public execSelectChain():void
@@ -691,7 +691,7 @@ class MoleculeActivity
 		let mol = this.input.mol;
 		this.output.selectedMask = this.input.selectedMask.slice(0);
 
-		for (let n = 1; n <= mol.numBonds(); n++)
+		for (let n = 1; n <= mol.numBonds; n++)
 		{
 			let bfr = mol.bondFrom(n) - 1, bto = mol.bondTo(n) - 1;
 			if (this.input.selectedMask[bfr] && !this.input.selectedMask[bto] && mol.atomRingBlock(bto + 1) == 0) this.output.selectedMask[bto] = true;
@@ -729,16 +729,16 @@ class MoleculeActivity
 		this.output.selectedMask = this.input.selectedMask.slice(0);
 
 		let maxRB = 0;
-		for (let n = 1; n <= mol.numAtoms(); n++) maxRB = Math.max(maxRB, mol.atomRingBlock(n));
+		for (let n = 1; n <= mol.numAtoms; n++) maxRB = Math.max(maxRB, mol.atomRingBlock(n));
 		if (maxRB == 0) return;
 
 		let gotRB = Vec.booleanArray(false, maxRB);
-		for (let n = 1; n <= mol.numAtoms(); n++)
+		for (let n = 1; n <= mol.numAtoms; n++)
 		{
 			let rb = mol.atomRingBlock(n);
 			if (rb > 0 && this.subjectMask[n - 1]) gotRB[rb - 1] = true;
 		}
-		for (let n = 1; n <= mol.numAtoms(); n++)
+		for (let n = 1; n <= mol.numAtoms; n++)
 		{
 			let rb = mol.atomRingBlock(n);
 			if (rb > 0 && gotRB[rb - 1]) this.output.selectedMask[n - 1] = true;
@@ -762,7 +762,7 @@ class MoleculeActivity
 			el1 = mol.atomElement(mol.bondFrom(this.input.currentBond));
 			el2 = mol.atomElement(mol.bondTo(this.input.currentBond));
 		}
-		for (let n = 1; n <= mol.numAtoms(); n++)
+		for (let n = 1; n <= mol.numAtoms; n++)
 			if (mol.atomElement(n) == el1 || mol.atomElement(n) == el2) this.output.selectedMask[n - 1] = true;
 	}
 
@@ -870,7 +870,7 @@ class MoleculeActivity
 
 		if (this.hasSelected)
 		{
-			for (let n = 1; n <= mol.numBonds(); n++) if (this.subjectMask[mol.bondFrom(n) - 1] && this.subjectMask[mol.bondTo(n) - 1]) zap.push(n);
+			for (let n = 1; n <= mol.numBonds; n++) if (this.subjectMask[mol.bondFrom(n) - 1] && this.subjectMask[mol.bondTo(n) - 1]) zap.push(n);
 		}
 		else if (this.input.currentAtom > 0)
 		{
@@ -886,11 +886,11 @@ class MoleculeActivity
 			return;
 		}
 
-		let killmask = Vec.booleanArray(false, mol.numBonds());
+		let killmask = Vec.booleanArray(false, mol.numBonds);
 		for (let b of zap) killmask[b - 1] = true;
 
 		this.output.mol = this.input.mol.clone();
-		for (let n = mol.numBonds(); n >= 1; n--) if (killmask[n - 1]) this.output.mol.deleteBond(n);
+		for (let n = mol.numBonds; n >= 1; n--) if (killmask[n - 1]) this.output.mol.deleteBond(n);
 	}
 
 	public execBond(order:number, type:number):void
@@ -908,7 +908,7 @@ class MoleculeActivity
 		// or a connect operation
 		let ccmol = MolUtil.subgraphMask(this.input.mol, this.subjectMask);
 		let oneComp = true;
-		for (let n = ccmol.numAtoms(); n >= 1; n--) if (ccmol.atomConnComp(n) != 1) {oneComp = false; break;}
+		for (let n = ccmol.numAtoms; n >= 1; n--) if (ccmol.atomConnComp(n) != 1) {oneComp = false; break;}
 		if (oneComp)
 			this.performBondChange(order, type);
 		else
@@ -1074,7 +1074,7 @@ class MoleculeActivity
 	public execNudgeFar(dir:string):void
 	{
 		if (!this.requireSubject()) return;
-		if (this.subjectLength == this.input.mol.numAtoms())
+		if (this.subjectLength == this.input.mol.numAtoms)
 		{
 			this.errmsg = 'Cannot apply to entire molecule.';
 			return;
@@ -1092,7 +1092,7 @@ class MoleculeActivity
 	
 	public execFlip(axis:string):void
 	{
-		if (this.input.mol.numAtoms() < 2)
+		if (this.input.mol.numAtoms < 2)
 		{
 			this.errmsg = 'At least 2 atoms are required.';
 			return;
@@ -1108,9 +1108,9 @@ class MoleculeActivity
 			cy = mol.atomY(this.input.currentAtom);
 			if (!this.hasSelected)
 			{
-				mask = Vec.booleanArray(false, mol.numAtoms());
+				mask = Vec.booleanArray(false, mol.numAtoms);
 				let cc = mol.atomConnComp(this.input.currentAtom);
-				for (let n = 1; n <= mol.numAtoms(); n++) mask[n - 1] = mol.atomConnComp(n) == cc;
+				for (let n = 1; n <= mol.numAtoms; n++) mask[n - 1] = mol.atomConnComp(n) == cc;
 			}
 		}
 		else if (this.input.currentBond > 0)
@@ -1120,9 +1120,9 @@ class MoleculeActivity
 			cy = 0.5 * (mol.atomY(bfr) + mol.atomY(bto));
 			if (!this.hasSelected)
 			{
-				mask = Vec.booleanArray(false, mol.numAtoms());
+				mask = Vec.booleanArray(false, mol.numAtoms);
 				let cc = mol.atomConnComp(bfr);
-				for (let n = 1; n <= mol.numAtoms(); n++) mask[n - 1] = mol.atomConnComp(n) == cc;
+				for (let n = 1; n <= mol.numAtoms; n++) mask[n - 1] = mol.atomConnComp(n) == cc;
 			}
 		}
 		else if (this.subjectLength == 0)
@@ -1130,7 +1130,7 @@ class MoleculeActivity
 			let box = mol.boundary();
 			cx = 0.5 * (box.minX() + box.maxX());
 			cy = 0.5 * (box.minY() + box.maxY());
-			mask = Vec.booleanArray(true, mol.numAtoms());
+			mask = Vec.booleanArray(true, mol.numAtoms);
 		}
 		else
 		{
@@ -1146,7 +1146,7 @@ class MoleculeActivity
 
 		// perform the flip
 		this.output.mol = mol.clone();
-		for (let n = 1; n <= mol.numAtoms(); n++) if (mask[n - 1])
+		for (let n = 1; n <= mol.numAtoms; n++) if (mask[n - 1])
 		{
 			if (!isVertical) 
 				this.output.mol.setAtomX(n, 2 * cx - this.output.mol.atomX(n));
@@ -1157,7 +1157,7 @@ class MoleculeActivity
 	
 	public execScale(mag:number):void
 	{
-		if (this.input.mol.numAtoms() < 2)
+		if (this.input.mol.numAtoms < 2)
 		{
 			this.errmsg = 'At least 2 atoms are required.';
 			return;
@@ -1172,7 +1172,7 @@ class MoleculeActivity
 			let ccmol = mol.clone();
 			ccmol.deleteBond(b);
 			let idx1:number[] = [], idx2:number[] = [];
-			for (let n = 1; n <= ccmol.numAtoms(); n++)
+			for (let n = 1; n <= ccmol.numAtoms; n++)
 			{
 				if (ccmol.atomConnComp(n) == ccmol.atomConnComp(a1)) idx1.push(n);
 				else if (ccmol.atomConnComp(n) == ccmol.atomConnComp(a2)) idx2.push(n);
@@ -1241,12 +1241,12 @@ class MoleculeActivity
 		if (centreX != null && centreY != null)
 		{
 			this.output.mol = mol.clone();
-			let mask = this.subjectLength == 0 ? Vec.booleanArray(true, mol.numAtoms()) : this.subjectMask;
+			let mask = this.subjectLength == 0 ? Vec.booleanArray(true, mol.numAtoms) : this.subjectMask;
 			CoordUtil.rotateAtoms(this.output.mol, mask, centreX, centreY, theta);
 			return;
 		}
 
-		if (mol.numAtoms() < 2)
+		if (mol.numAtoms < 2)
 		{
 			this.errmsg = 'At least 2 atoms are required.';
 			return;
@@ -1261,9 +1261,9 @@ class MoleculeActivity
 			cy = mol.atomY(this.input.currentAtom);
 			if (!this.hasSelected)
 			{
-				mask = Vec.booleanArray(false, mol.numAtoms());
+				mask = Vec.booleanArray(false, mol.numAtoms);
 				let cc = mol.atomConnComp(this.input.currentAtom);
-				for (let n = 1; n <= mol.numAtoms(); n++) mask[n - 1] = mol.atomConnComp(n) == cc;
+				for (let n = 1; n <= mol.numAtoms; n++) mask[n - 1] = mol.atomConnComp(n) == cc;
 			}
 		}
 		else if (this.input.currentBond > 0)
@@ -1273,9 +1273,9 @@ class MoleculeActivity
 			cy = 0.5 * (mol.atomY(bfr) + mol.atomY(bto));
 			if (!this.hasSelected)
 			{
-				mask = Vec.booleanArray(false, mol.numAtoms());
+				mask = Vec.booleanArray(false, mol.numAtoms);
 				let cc = mol.atomConnComp(bfr);
-				for (let n = 1; n <= mol.numAtoms(); n++) mask[n - 1] = mol.atomConnComp(n) == cc;
+				for (let n = 1; n <= mol.numAtoms; n++) mask[n - 1] = mol.atomConnComp(n) == cc;
 			}
 		}
 		else if (this.subjectLength == 0)
@@ -1283,7 +1283,7 @@ class MoleculeActivity
 			let box = mol.boundary();
 			cx = 0.5 * (box.minX() + box.maxX());
 			cy = 0.5 * (box.minY() + box.maxY());
-			mask = Vec.booleanArray(true, mol.numAtoms());
+			mask = Vec.booleanArray(true, mol.numAtoms);
 		}
 		else
 		{
@@ -1401,11 +1401,11 @@ class MoleculeActivity
 		outmol = mol.clone();
 		outmol.setBondOrder(currentBond, 1);
 
-		boolean[] fragmask = Vec.booleanArray(false, mol.numAtoms());
+		boolean[] fragmask = Vec.booleanArray(false, mol.numAtoms);
 		for (int n = 0; n < atoms.length; n++) fragmask[atoms[n] - 1] = true;
 		Molecule frag = MolUtil.subgraphWithAttachments(outmol, fragmask);
 
-		for (int n = outmol.numAtoms(); n >= 1; n--) if (fragmask[n - 1] && n != alink)
+		for (int n = outmol.numAtoms; n >= 1; n--) if (fragmask[n - 1] && n != alink)
 		{
 			outmol.deleteAtomAndBonds(n);
 			if (n < alink) alink--;
@@ -1472,7 +1472,7 @@ class MoleculeActivity
 	{
 		if (!requireAtoms()) return;
 		
-		boolean[] mask = subjectLength == 0 ? Vec.booleanArray(true, mol.numAtoms()) : subjectMask;
+		boolean[] mask = subjectLength == 0 ? Vec.booleanArray(true, mol.numAtoms) : subjectMask;
 		Molecule clipmol = MolUtil.subgraphWithAttachments(mol, mask);
 		output.put("clipNative", clipmol.toString());
 		
@@ -1491,8 +1491,8 @@ class MoleculeActivity
 	// complains if there aren't any atoms
 	private requireAtoms():boolean
 	{
-		if (this.input.mol.numAtoms() == 0) this.errmsg = 'There are no atoms.';
-		return this.input.mol.numAtoms() > 0;
+		if (this.input.mol.numAtoms == 0) this.errmsg = 'There are no atoms.';
+		return this.input.mol.numAtoms > 0;
 	}
 
 	// complains if there's no current atom/bond
@@ -1551,7 +1551,7 @@ class MoleculeActivity
 	{
 		this.output.currentAtom = 0;
 		this.output.currentBond = 0;
-		this.output.selectedMask = Vec.booleanArray(false, this.input.mol.numAtoms());
+		this.output.selectedMask = Vec.booleanArray(false, this.input.mol.numAtoms);
 	}
 
 	// support for bond addition
@@ -1589,7 +1589,7 @@ class MoleculeActivity
 		let mol = this.input.mol;
 
 		let bonds:number[] = [];
-		for (let n = 1; n <= mol.numBonds(); n++)
+		for (let n = 1; n <= mol.numBonds; n++)
 			if (this.subjectMask[mol.bondFrom(n) - 1] && this.subjectMask[mol.bondTo(n) - 1]) bonds.push(n);
 
 		let switchType = type == Molecule.BONDTYPE_DECLINED || type == Molecule.BONDTYPE_INCLINED;

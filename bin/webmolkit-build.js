@@ -333,7 +333,7 @@ var MDLMOLReader = (function () {
                 type = MBLK_ZBO;
             else if (line.startsWith("A  ") && line.length >= 6) {
                 var anum = parseInt(line.substring(3, 6).trim());
-                if (anum >= 1 && anum <= this.mol.numAtoms()) {
+                if (anum >= 1 && anum <= this.mol.numAtoms) {
                     line = this.nextLine();
                     if (line == null)
                         break;
@@ -369,7 +369,7 @@ var MDLMOLReader = (function () {
     };
     MDLMOLReader.prototype.postFix = function () {
         var mol = this.mol;
-        for (var n = 1; n <= mol.numAtoms(); n++) {
+        for (var n = 1; n <= mol.numAtoms; n++) {
             var el = mol.atomElement(n);
             if (el == 'D') {
                 mol.setAtomElement(n, 'H');
@@ -582,8 +582,8 @@ var MoleculeStream = (function () {
         return mol;
     };
     MoleculeStream.writeNative = function (mol) {
-        var ret = 'SketchEl!(' + mol.numAtoms() + ',' + mol.numBonds() + ')\n';
-        for (var n = 1; n <= mol.numAtoms(); n++) {
+        var ret = 'SketchEl!(' + mol.numAtoms + ',' + mol.numBonds + ')\n';
+        for (var n = 1; n <= mol.numAtoms; n++) {
             var el = mol.atomElement(n), x = mol.atomX(n), y = mol.atomY(n), charge = mol.atomCharge(n), unpaired = mol.atomUnpaired(n);
             var hy = mol.atomHExplicit(n) != Molecule.HEXPLICIT_UNKNOWN ? ('e' + mol.atomHExplicit(n)) : ('i' + mol.atomHydrogens(n));
             ret += MoleculeStream.sk_escape(el) + '=' + x.toFixed(4) + ',' + y.toFixed(4) + ';' + charge + ',' + unpaired + ',' + hy;
@@ -595,7 +595,7 @@ var MoleculeStream = (function () {
             ret += MoleculeStream.sk_encodeExtra(mol.atomTransient(n));
             ret += '\n';
         }
-        for (var n = 1; n <= mol.numBonds(); n++) {
+        for (var n = 1; n <= mol.numBonds; n++) {
             ret += mol.bondFrom(n) + '-' + mol.bondTo(n) + '=' + mol.bondOrder(n) + ',' + mol.bondType(n);
             ret += MoleculeStream.sk_encodeExtra(mol.bondExtra(n));
             ret += MoleculeStream.sk_encodeExtra(mol.bondTransient(n));
@@ -1182,20 +1182,24 @@ var Molecule = (function () {
     Molecule.prototype.toString = function () { return MoleculeStream.writeNative(this); };
     Molecule.prototype.append = function (frag) {
         var base = this.atoms.length;
-        for (var n = 1; n <= frag.numAtoms(); n++) {
+        for (var n = 1; n <= frag.numAtoms; n++) {
             var num = this.addAtom(frag.atomElement(n), frag.atomX(n), frag.atomY(n), frag.atomCharge(n), frag.atomUnpaired(n));
             this.setAtomIsotope(num, frag.atomIsotope(n));
             this.setAtomHExplicit(num, frag.atomHExplicit(n));
             this.setAtomMapNum(num, frag.atomMapNum(n));
             this.setAtomExtra(num, frag.atomExtra(n));
         }
-        for (var n = 1; n <= frag.numBonds(); n++) {
+        for (var n = 1; n <= frag.numBonds; n++) {
             var num = this.addBond(frag.bondFrom(n) + base, frag.bondTo(n) + base, frag.bondOrder(n), frag.bondType(n));
             this.setBondExtra(num, frag.bondExtra(n));
         }
         this.trashTransient();
     };
-    Molecule.prototype.numAtoms = function () { return this.atoms.length; };
+    Object.defineProperty(Molecule.prototype, "numAtoms", {
+        get: function () { return this.atoms.length; },
+        enumerable: true,
+        configurable: true
+    });
     Molecule.prototype.getAtom = function (idx) {
         if (idx < 1 || idx > this.atoms.length)
             throw "Molecule.getAtom: index " + idx + " out of range (#atoms=" + this.atoms.length + ")";
@@ -1212,7 +1216,11 @@ var Molecule = (function () {
     Molecule.prototype.atomMapNum = function (idx) { return this.getAtom(idx).mapNum; };
     Molecule.prototype.atomExtra = function (idx) { return this.getAtom(idx).extra.slice(0); };
     Molecule.prototype.atomTransient = function (idx) { return this.getAtom(idx).transient.slice(0); };
-    Molecule.prototype.numBonds = function () { return this.bonds.length; };
+    Object.defineProperty(Molecule.prototype, "numBonds", {
+        get: function () { return this.bonds.length; },
+        enumerable: true,
+        configurable: true
+    });
     Molecule.prototype.getBond = function (idx) {
         if (idx < 1 || idx > this.bonds.length)
             throw "Molecule.getBond: index " + idx + " out of range (#bonds=" + this.bonds.length + ")";
@@ -1309,7 +1317,7 @@ var Molecule = (function () {
             this.hasTransient = true;
     };
     Molecule.prototype.deleteAtomAndBonds = function (idx) {
-        for (var n = this.numBonds(); n >= 1; n--) {
+        for (var n = this.numBonds; n >= 1; n--) {
             if (this.bondFrom(n) == idx || this.bondTo(n) == idx)
                 this.deleteBond(n);
             else {
@@ -1349,7 +1357,7 @@ var Molecule = (function () {
         return hy < 0 ? 0 : hy;
     };
     Molecule.prototype.findBond = function (a1, a2) {
-        for (var n = 1; n <= this.numBonds(); n++) {
+        for (var n = 1; n <= this.numBonds; n++) {
             var b1 = this.bondFrom(n), b2 = this.bondTo(n);
             if ((a1 == b1 && a2 == b2) || (a1 == b2 && a2 == b1))
                 return n;
@@ -1468,17 +1476,17 @@ var Molecule = (function () {
         return Math.max(0, Chemistry.ELEMENTS.indexOf(element));
     };
     Molecule.prototype.compareTo = function (other) {
-        if (other == null || other.numAtoms() == 0)
-            return this.numAtoms() == 0 ? 0 : 1;
-        if (this.numAtoms() < other.numAtoms())
+        if (other == null || other.numAtoms == 0)
+            return this.numAtoms == 0 ? 0 : 1;
+        if (this.numAtoms < other.numAtoms)
             return -1;
-        if (this.numAtoms() > other.numAtoms())
+        if (this.numAtoms > other.numAtoms)
             return 1;
-        if (this.numBonds() < other.numBonds())
+        if (this.numBonds < other.numBonds)
             return -1;
-        if (this.numBonds() > other.numBonds())
+        if (this.numBonds > other.numBonds)
             return 1;
-        for (var n = 1; n <= this.numAtoms(); n++) {
+        for (var n = 1; n <= this.numAtoms; n++) {
             if (this.atomElement(n) < other.atomElement(n))
                 return -1;
             if (this.atomElement(n) > other.atomElement(n))
@@ -1533,7 +1541,7 @@ var Molecule = (function () {
                 else if (tx1[i] > tx2[i])
                     return 1;
         }
-        for (var n = 1; n <= this.numBonds(); n++) {
+        for (var n = 1; n <= this.numBonds; n++) {
             if (this.bondFrom(n) < other.bondFrom(n))
                 return -1;
             if (this.bondFrom(n) > other.bondFrom(n))
@@ -1595,7 +1603,7 @@ var Molecule = (function () {
         if (this.graph != null && this.graphBond != null)
             return;
         var graph = [], graphBond = [];
-        var na = this.numAtoms(), nb = this.numBonds();
+        var na = this.numAtoms, nb = this.numBonds;
         for (var n = 0; n < na; n++) {
             graph.push([]);
             graphBond.push([]);
@@ -1791,14 +1799,14 @@ var MolUtil = (function () {
     function MolUtil() {
     }
     MolUtil.isBlank = function (mol) {
-        return mol == null || mol.numAtoms() == 0;
+        return mol == null || mol.numAtoms == 0;
     };
     MolUtil.notBlank = function (mol) {
-        return mol != null || mol.numAtoms() > 0;
+        return mol != null || mol.numAtoms > 0;
     };
     MolUtil.orBlank = function (mol) { return mol == null ? new Molecule() : mol; };
     MolUtil.hasAnyAbbrev = function (mol) {
-        for (var n = 1; n <= mol.numAtoms(); n++)
+        for (var n = 1; n <= mol.numAtoms; n++)
             if (MolUtil.hasAbbrev(mol, n))
                 return true;
         return false;
@@ -1820,7 +1828,7 @@ var MolUtil = (function () {
     };
     MolUtil.setAbbrev = function (mol, atom, frag) {
         var attidx = 0;
-        for (var n = 1; n <= frag.numAtoms(); n++)
+        for (var n = 1; n <= frag.numAtoms; n++)
             if (frag.atomElement(n) == MolUtil.ABBREV_ATTACHMENT) {
                 if (attidx > 0)
                     throw 'Multiple attachment points indicated: invalid.';
@@ -1853,7 +1861,7 @@ var MolUtil = (function () {
         mol.setAtomExtra(atom, extra);
     };
     MolUtil.validateAbbrevs = function (mol) {
-        for (var n = 1; n <= mol.numAtoms(); n++)
+        for (var n = 1; n <= mol.numAtoms; n++)
             if (MolUtil.hasAbbrev(mol, n)) {
                 if (mol.atomAdjCount(n) > 1)
                     MolUtil.clearAbbrev(mol, n);
@@ -1870,7 +1878,7 @@ var MolUtil = (function () {
     MolUtil.expandAbbrevs = function (mol, alignCoords) {
         while (true) {
             var anything = false;
-            for (var n = 1; n <= mol.numAtoms(); n++)
+            for (var n = 1; n <= mol.numAtoms; n++)
                 if (MolUtil.hasAbbrev(mol, n)) {
                     if (MolUtil.expandOneAbbrev(mol, n, alignCoords))
                         anything = true;
@@ -1884,7 +1892,7 @@ var MolUtil = (function () {
         var frag = MolUtil.getAbbrev(mol, atom);
         if (frag == null)
             return false;
-        if (mol.atomAdjCount(atom) != 1 || frag.numAtoms() == 0) {
+        if (mol.atomAdjCount(atom) != 1 || frag.numAtoms == 0) {
             MolUtil.clearAbbrev(mol, atom);
             return false;
         }
@@ -1913,9 +1921,9 @@ var MolUtil = (function () {
             CoordUtil.rotateMolecule(frag, th1 - th2);
             CoordUtil.translateMolecule(frag, mol.atomX(nbr) - frag.atomX(1), mol.atomY(nbr) - frag.atomY(1));
         }
-        var join = mol.numAtoms() + 1;
+        var join = mol.numAtoms + 1;
         mol.append(frag);
-        for (var n = 1; n <= mol.numBonds(); n++) {
+        for (var n = 1; n <= mol.numBonds; n++) {
             if (mol.bondFrom(n) == join)
                 mol.setBondFrom(n, nbr);
             if (mol.bondTo(n) == join)
@@ -1955,7 +1963,7 @@ var MolUtil = (function () {
     MolUtil.subgraphMask = function (mol, mask) {
         var invidx = [];
         var sum = 0;
-        for (var n = 0; n < mol.numAtoms(); n++) {
+        for (var n = 0; n < mol.numAtoms; n++) {
             if (mask[n])
                 invidx.push(++sum);
             else
@@ -1963,10 +1971,10 @@ var MolUtil = (function () {
         }
         if (sum == 0)
             return new Molecule();
-        if (sum == mol.numAtoms())
+        if (sum == mol.numAtoms)
             return mol.clone();
         var frag = new Molecule();
-        for (var n = 1; n <= mol.numAtoms(); n++)
+        for (var n = 1; n <= mol.numAtoms; n++)
             if (mask[n - 1]) {
                 var num = frag.addAtom(mol.atomElement(n), mol.atomX(n), mol.atomY(n), mol.atomCharge(n), mol.atomUnpaired(n));
                 frag.setAtomIsotope(num, mol.atomIsotope(n));
@@ -1974,7 +1982,7 @@ var MolUtil = (function () {
                 frag.setAtomMapNum(num, mol.atomMapNum(n));
                 frag.setAtomExtra(num, mol.atomExtra(n));
             }
-        for (var n = 1; n <= mol.numBonds(); n++) {
+        for (var n = 1; n <= mol.numBonds; n++) {
             var bfr = invidx[mol.bondFrom(n) - 1], bto = invidx[mol.bondTo(n) - 1];
             if (bfr > 0 && bto > 0) {
                 var num = frag.addBond(bfr, bto, mol.bondOrder(n), mol.bondType(n));
@@ -1984,7 +1992,7 @@ var MolUtil = (function () {
         return frag;
     };
     MolUtil.subgraphIndex = function (mol, idx) {
-        var invidx = Vec.numberArray(0, mol.numAtoms());
+        var invidx = Vec.numberArray(0, mol.numAtoms);
         for (var n = 0; n < invidx.length; n++)
             invidx[n] = 0;
         for (var n = 0; n < idx.length; n++)
@@ -1997,7 +2005,7 @@ var MolUtil = (function () {
             frag.setAtomMapNum(num, mol.atomMapNum(idx[n]));
             frag.setAtomExtra(num, mol.atomExtra(idx[n]));
         }
-        for (var n = 1; n <= mol.numBonds(); n++) {
+        for (var n = 1; n <= mol.numBonds; n++) {
             var bfr = invidx[mol.bondFrom(n) - 1], bto = invidx[mol.bondTo(n) - 1];
             if (bfr > 0 && bto > 0) {
                 var num = frag.addBond(bfr, bto, mol.bondOrder(n), mol.bondType(n));
@@ -2007,13 +2015,13 @@ var MolUtil = (function () {
         return frag;
     };
     MolUtil.deleteAtoms = function (mol, idx) {
-        var mask = Vec.booleanArray(true, mol.numAtoms());
+        var mask = Vec.booleanArray(true, mol.numAtoms);
         for (var n = 0; n < idx.length; n++)
             mask[idx[n] - 1] = false;
         return MolUtil.subgraphMask(mol, mask);
     };
     MolUtil.componentList = function (mol) {
-        var sz = mol.numAtoms();
+        var sz = mol.numAtoms;
         if (sz == 0)
             return null;
         var g = Graph.fromMolecule(mol);
@@ -2072,27 +2080,27 @@ var MolUtil = (function () {
         return grps;
     };
     MolUtil.arrayAtomX = function (mol) {
-        var x = Vec.numberArray(0, mol.numAtoms());
+        var x = Vec.numberArray(0, mol.numAtoms);
         for (var n = x.length - 1; n >= 0; n--)
             x[n] = mol.atomX(n + 1);
         return x;
     };
     MolUtil.arrayAtomY = function (mol) {
-        var y = Vec.numberArray(0, mol.numAtoms());
+        var y = Vec.numberArray(0, mol.numAtoms);
         for (var n = y.length - 1; n >= 0; n--)
             y[n] = mol.atomY(n + 1);
         return y;
     };
     MolUtil.molecularFormula = function (mol, punctuation) {
-        for (var n = 1; n <= mol.numAtoms(); n++)
+        for (var n = 1; n <= mol.numAtoms; n++)
             if (MolUtil.hasAbbrev(mol, n)) {
                 mol = mol.clone();
                 MolUtil.expandAbbrevs(mol, false);
                 break;
             }
         var countC = 0, countH = 0;
-        var elements = Vec.stringArray('', mol.numAtoms());
-        for (var n = 1; n <= mol.numAtoms(); n++) {
+        var elements = Vec.stringArray('', mol.numAtoms);
+        for (var n = 1; n <= mol.numAtoms; n++) {
             countH += mol.atomHydrogens(n);
             var el = mol.atomElement(n);
             if (el == 'C')
@@ -2139,14 +2147,14 @@ var MolUtil = (function () {
         return formula.toString();
     };
     MolUtil.molecularWeight = function (mol) {
-        for (var n = 1; n <= mol.numAtoms(); n++)
+        for (var n = 1; n <= mol.numAtoms; n++)
             if (MolUtil.hasAbbrev(mol, n)) {
                 mol = mol.clone();
                 MolUtil.expandAbbrevs(mol, false);
                 break;
             }
         var mw = 0;
-        for (var n = 1; n <= mol.numAtoms(); n++) {
+        for (var n = 1; n <= mol.numAtoms; n++) {
             mw += mol.atomHydrogens(n) * Chemistry.NATURAL_ATOMIC_WEIGHTS[1];
             var iso = mol.atomIsotope(n);
             if (iso != Molecule.ISOTOPE_NATURAL) {
@@ -2161,8 +2169,8 @@ var MolUtil = (function () {
     };
     MolUtil.removeDuplicateBonds = function (mol) {
         var bpri = [];
-        for (var n = 1; n <= mol.numBonds(); n++) {
-            var p_1 = Math.min(mol.bondFrom(n), mol.bondTo(n)) * mol.numAtoms() + Math.max(mol.bondFrom(n), mol.bondTo(n));
+        for (var n = 1; n <= mol.numBonds; n++) {
+            var p_1 = Math.min(mol.bondFrom(n), mol.bondTo(n)) * mol.numAtoms + Math.max(mol.bondFrom(n), mol.bondTo(n));
             bpri.push(p_1);
         }
         var bidx = Vec.idxSort(bpri);
@@ -2188,7 +2196,7 @@ var MolUtil = (function () {
                     limit2 = 3;
                 if (limit1 > 0 || limit2 > 0) {
                     var boB1A1 = 0, boB1A2 = 0, boB2A1 = 0, boB2A2 = 0;
-                    for (var i = 1; i <= mol.numBonds(); i++) {
+                    for (var i = 1; i <= mol.numBonds; i++) {
                         if (i != b2 && (mol.bondFrom(i) == a1 || mol.bondTo(i) == a1))
                             boB1A1 += mol.bondOrder(i);
                         if (i != b2 && (mol.bondFrom(i) == a2 || mol.bondTo(i) == a2))
@@ -2223,7 +2231,7 @@ var MolUtil = (function () {
             keepmask[bidx[best]] = true;
             p += sz;
         }
-        for (var n = mol.numBonds(); n >= 1; n--)
+        for (var n = mol.numBonds; n >= 1; n--)
             if (!keepmask[n - 1] || mol.bondFrom(n) == mol.bondTo(n))
                 mol.deleteBond(n);
     };
@@ -2232,12 +2240,12 @@ var MolUtil = (function () {
         for (var n = 0; n < cc.length; n++)
             if (cc[n] == cc[atom - 1])
                 ccsz++;
-        var w = Vec.numberArray(1, mol.numAtoms()), wn = Vec.numberArray(0, mol.numAtoms());
+        var w = Vec.numberArray(1, mol.numAtoms), wn = Vec.numberArray(0, mol.numAtoms);
         w[atom - 1] = 0;
         for (; ccsz > 0; ccsz--) {
-            for (var n = 0; n < mol.numAtoms(); n++)
+            for (var n = 0; n < mol.numAtoms; n++)
                 wn[n] = w[n];
-            for (var n = 1; n <= mol.numBonds(); n++) {
+            for (var n = 1; n <= mol.numBonds; n++) {
                 var a1 = mol.bondFrom(n) - 1, a2 = mol.bondTo(n) - 1;
                 w[a1] += wn[a2] * 0.1;
                 w[a2] += wn[a1] * 0.1;
@@ -2257,7 +2265,7 @@ var MolUtil = (function () {
     MolUtil.stripHydrogens = function (mol, force) {
         if (force == null)
             force = false;
-        for (var n = mol.numAtoms(); n >= 1; n--) {
+        for (var n = mol.numAtoms; n >= 1; n--) {
             if (mol.atomElement(n) != 'H')
                 continue;
             if (!force) {
@@ -2286,7 +2294,7 @@ var MolUtil = (function () {
     MolUtil.createHydrogens = function (mol, position) {
         if (position == null)
             position = false;
-        var na = mol.numAtoms();
+        var na = mol.numAtoms;
         for (var n = 1; n <= na; n++) {
             var hc = mol.atomHydrogens(n);
             if (hc == 0)
@@ -2302,7 +2310,7 @@ var MolUtil = (function () {
             else
                 SketchUtil.placeAdditionalHydrogens(mol, n, hc);
         }
-        return mol.numAtoms() - na;
+        return mol.numAtoms - na;
     };
     MolUtil.TEMPLATE_ATTACHMENT = 'X';
     MolUtil.ABBREV_ATTACHMENT = '*';
@@ -2338,11 +2346,11 @@ var Graph = (function () {
     Graph.fromMolecule = function (mol) {
         var g = new Graph();
         g.indices = [];
-        for (var n = 0; n < mol.numAtoms(); n++) {
+        for (var n = 0; n < mol.numAtoms; n++) {
             g.nbrs.push([]);
             g.indices.push(n + 1);
         }
-        for (var n = 1; n <= mol.numBonds(); n++) {
+        for (var n = 1; n <= mol.numBonds; n++) {
             var bfr = mol.bondFrom(n) - 1, bto = mol.bondTo(n) - 1;
             g.nbrs[bfr].push(bto);
             g.nbrs[bto].push(bfr);
@@ -2495,7 +2503,7 @@ var CoordUtil = (function () {
         if (tolerance == null)
             tolerance = CoordUtil.OVERLAP_THRESHOLD;
         var tolsq = tolerance * tolerance;
-        for (var n = 1; n <= mol.numAtoms(); n++)
+        for (var n = 1; n <= mol.numAtoms; n++)
             if (norm2_xy(mol.atomX(n) - x, mol.atomY(n) - y) < tolsq)
                 return n;
         return 0;
@@ -2503,8 +2511,8 @@ var CoordUtil = (function () {
     CoordUtil.sketchEquivalent = function (mol1, mol2, tolerance) {
         if (tolerance == null)
             tolerance = CoordUtil.DEFAULT_EQUIV_TOLERANCE;
-        var na = mol1.numAtoms(), nb = mol1.numBonds();
-        if (na != mol2.numAtoms() || nb != mol2.numBonds())
+        var na = mol1.numAtoms, nb = mol1.numBonds;
+        if (na != mol2.numAtoms || nb != mol2.numBonds)
             return false;
         var tolsq = tolerance * tolerance;
         var box1 = mol1.boundary(), box2 = mol2.boundary();
@@ -2573,7 +2581,7 @@ var CoordUtil = (function () {
         var dx = box1.minX() - box2.minX(), dy = box1.minY() - box2.minY();
         if (Math.abs(dx) > tolerance * 0.1 || Math.abs(dy) > tolerance * 0.1) {
             mol2 = mol2.clone();
-            for (var n = 1; n <= mol2.numAtoms(); n++)
+            for (var n = 1; n <= mol2.numAtoms; n++)
                 mol2.setAtomPos(n, mol2.atomX(n) + dx, mol2.atomY(n) + dy);
         }
         return CoordUtil.sketchEquivalent(mol1, mol2, tolerance);
@@ -2591,7 +2599,7 @@ var CoordUtil = (function () {
     };
     CoordUtil.overlapsAtom = function (mol, x, y, tol) {
         var tolsq = tol * tol;
-        for (var n = 1; n <= mol.numAtoms(); n++)
+        for (var n = 1; n <= mol.numAtoms; n++)
             if (norm2_xy(mol.atomX(n) - x, mol.atomY(n) - y) < tolsq)
                 return true;
         return false;
@@ -2599,7 +2607,7 @@ var CoordUtil = (function () {
     CoordUtil.overlappingAtomMask = function (mol, thresh) {
         if (thresh == null)
             thresh = CoordUtil.OVERLAP_THRESHOLD;
-        var sz = mol.numAtoms();
+        var sz = mol.numAtoms;
         var box = mol.boundary();
         var p1, p2;
         if (box.w > box.h) {
@@ -2644,7 +2652,7 @@ var CoordUtil = (function () {
         if (approach == null)
             approach = 1E-5;
         var score = 0;
-        var na = mol.numAtoms();
+        var na = mol.numAtoms;
         for (var n = 1; n <= na; n++)
             score += 1.0 / (approach + norm2_xy(mol.atomX(n) - x, mol.atomY(n) - y));
         return score;
@@ -2653,7 +2661,7 @@ var CoordUtil = (function () {
         if (approach == null)
             approach = 1E-5;
         var score = 0;
-        var na = mol.numAtoms();
+        var na = mol.numAtoms;
         var mx = MolUtil.arrayAtomX(mol), my = MolUtil.arrayAtomY(mol);
         for (var i = 0; i < na - 1; i++)
             for (var j = i + 1; j < na; j++)
@@ -2661,7 +2669,7 @@ var CoordUtil = (function () {
         return score;
     };
     CoordUtil.translateMolecule = function (mol, ox, oy) {
-        for (var n = 1; n <= mol.numAtoms(); n++)
+        for (var n = 1; n <= mol.numAtoms; n++)
             mol.setAtomPos(n, mol.atomX(n) + ox, mol.atomY(n) + oy);
     };
     CoordUtil.rotateMolecule = function (mol, theta, cx, cy) {
@@ -2671,7 +2679,7 @@ var CoordUtil = (function () {
             cy = box.midY();
         }
         var cosTheta = Math.cos(theta), sinTheta = Math.sin(theta);
-        for (var n = 1; n <= mol.numAtoms(); n++) {
+        for (var n = 1; n <= mol.numAtoms; n++) {
             var x = mol.atomX(n) - cx, y = mol.atomY(n) - cy;
             mol.setAtomPos(n, cx + x * cosTheta - y * sinTheta, cy + x * sinTheta + y * cosTheta);
         }
@@ -2685,7 +2693,7 @@ var CoordUtil = (function () {
         var cc = g.calculateComponents();
         var cx = mol.atomX(centre), cy = mol.atomY(centre);
         var cosTheta = Math.cos(theta), sinTheta = Math.sin(theta);
-        for (var n = 1; n <= mol.numAtoms(); n++)
+        for (var n = 1; n <= mol.numAtoms; n++)
             if (cc[n - 1] == cc[atom - 1]) {
                 var x = mol.atomX(n) - cx, y = mol.atomY(n) - cy;
                 mol.setAtomPos(n, cx + x * cosTheta - y * sinTheta, cy + x * sinTheta + y * cosTheta);
@@ -2693,7 +2701,7 @@ var CoordUtil = (function () {
     };
     CoordUtil.rotateAtoms = function (mol, mask, cx, cy, theta) {
         var cosTheta = Math.cos(theta), sinTheta = Math.sin(theta);
-        for (var n = 1; n <= mol.numAtoms(); n++)
+        for (var n = 1; n <= mol.numAtoms; n++)
             if (mask[n - 1]) {
                 var x = mol.atomX(n) - cx, y = mol.atomY(n) - cy;
                 mol.setAtomPos(n, cx + x * cosTheta - y * sinTheta, cy + x * sinTheta + y * cosTheta);
@@ -2715,7 +2723,7 @@ var CoordUtil = (function () {
         return Vec.idxGet(adj, idx);
     };
     CoordUtil.mergeAtoms = function (mol, oldN, newN) {
-        for (var n = 1; n <= mol.numBonds(); n++) {
+        for (var n = 1; n <= mol.numBonds; n++) {
             if (mol.bondFrom(n) == oldN)
                 mol.setBondFrom(n, newN);
             if (mol.bondTo(n) == oldN)
@@ -2724,7 +2732,7 @@ var CoordUtil = (function () {
         mol.deleteAtomAndBonds(oldN);
     };
     CoordUtil.normaliseBondDistances = function (mol) {
-        var nb = mol.numBonds();
+        var nb = mol.numBonds;
         if (nb == 0)
             return;
         var dsq = [];
@@ -2739,7 +2747,7 @@ var CoordUtil = (function () {
         var box = mol.boundary();
         var cx = box.midX(), cy = box.midY();
         var scale = Molecule.IDEALBOND / median;
-        for (var n = mol.numAtoms(); n >= 1; n--) {
+        for (var n = mol.numAtoms; n >= 1; n--) {
             var x = (mol.atomX(n) - cx) * scale + cx;
             var y = (mol.atomY(n) - cy) * scale + cy;
             mol.setAtomPos(n, x, y);
@@ -2747,9 +2755,9 @@ var CoordUtil = (function () {
     };
     CoordUtil.mirrorImage = function (mol) {
         mol = mol.clone();
-        for (var n = 1; n <= mol.numAtoms(); n++)
+        for (var n = 1; n <= mol.numAtoms; n++)
             mol.setAtomX(n, -mol.atomX(n));
-        for (var n = 1; n <= mol.numBonds(); n++) {
+        for (var n = 1; n <= mol.numBonds; n++) {
             if (mol.bondType(n) == Molecule.BONDTYPE_DECLINED)
                 mol.setBondType(n, Molecule.BONDTYPE_INCLINED);
             else if (mol.bondType(n) == Molecule.BONDTYPE_INCLINED)
@@ -2791,9 +2799,9 @@ var CoordUtil = (function () {
             scoreB += Math.abs(angleDiff(th1[n], -th2[n] + deltaB));
         }
         if (scoreB < scoreA) {
-            for (var n = 1; n <= mol2.numAtoms(); n++)
+            for (var n = 1; n <= mol2.numAtoms; n++)
                 mol2.setAtomY(n, 2 * y0 - mol2.atomY(n));
-            for (var n = 1; n <= mol2.numBonds(); n++) {
+            for (var n = 1; n <= mol2.numBonds; n++) {
                 if (mol2.bondType(n) == Molecule.BONDTYPE_DECLINED)
                     mol2.setBondType(n, Molecule.BONDTYPE_INCLINED);
                 else if (mol2.bondType(n) == Molecule.BONDTYPE_INCLINED)
@@ -3351,7 +3359,7 @@ var SketchUtil = (function () {
         return mol.addAtom(el, x, y);
     };
     SketchUtil.placeNewFragment = function (mol, frag) {
-        if (frag.numAtoms() == 0)
+        if (frag.numAtoms == 0)
             return;
         var dirX = [1, 0, -1, 1, -1, 1, 0, -1], dirY = [1, 1, 1, 0, 0, -1, -1, -1];
         var dx = Vec.numberArray(0, 8), dy = Vec.numberArray(0, 8), score = Vec.numberArray(0, 8);
@@ -3400,14 +3408,14 @@ var SketchUtil = (function () {
             if (score[n] > score[best])
                 best = n;
         frag = frag.clone();
-        for (var n = 1; n <= frag.numAtoms(); n++)
+        for (var n = 1; n <= frag.numAtoms; n++)
             frag.setAtomPos(n, frag.atomX(n) + dx[best], frag.atomY(n) + dy[best]);
         mol.append(frag);
     };
     SketchUtil.fragPosScore = function (mol, frag, dx, dy) {
         var score = 0;
-        for (var i = 1; i <= mol.numAtoms(); i++)
-            for (var j = 1; j <= frag.numAtoms(); j++) {
+        for (var i = 1; i <= mol.numAtoms; i++)
+            for (var j = 1; j <= frag.numAtoms; j++) {
                 var ox = frag.atomX(j) + dx - mol.atomX(i), oy = frag.atomY(j) + dy - mol.atomY(i);
                 var dist2 = ox * ox + oy * oy;
                 if (dist2 < 1)
@@ -3425,7 +3433,7 @@ var SketchUtil = (function () {
         return SketchUtil.mergeFragmentsDiv(mol, 0);
     };
     SketchUtil.mergeFragmentsDiv = function (mol, div) {
-        var na = mol.numAtoms();
+        var na = mol.numAtoms;
         var omask = CoordUtil.overlappingAtomMask(mol);
         var chopmask = Vec.booleanArray(false, na);
         var mx = MolUtil.arrayAtomX(mol), my = MolUtil.arrayAtomY(mol);
@@ -3459,7 +3467,7 @@ var SketchUtil = (function () {
                             oldN = i;
                             newN = j;
                         }
-                        for (var n = 1; n <= mol.numBonds(); n++) {
+                        for (var n = 1; n <= mol.numBonds; n++) {
                             if (mol.bondFrom(n) == oldN)
                                 mol.setBondFrom(n, newN);
                             if (mol.bondTo(n) == oldN)
@@ -3478,7 +3486,7 @@ var SketchUtil = (function () {
                     if (remap[i] > n)
                         remap[i]--;
             }
-        for (var n = mol.numAtoms(); n > div; n--)
+        for (var n = mol.numAtoms; n > div; n--)
             if (mol.atomElement(n) == 'X') {
                 mol.deleteAtomAndBonds(n);
                 for (var i = 0; i < na; i++)
@@ -3489,8 +3497,8 @@ var SketchUtil = (function () {
         return remap;
     };
     SketchUtil.mergeFragmentsMask = function (mol, mask) {
-        var chopmask = Vec.booleanArray(false, mol.numAtoms());
-        var na = mol.numAtoms();
+        var chopmask = Vec.booleanArray(false, mol.numAtoms);
+        var na = mol.numAtoms;
         var mx = MolUtil.arrayAtomX(mol), my = MolUtil.arrayAtomY(mol);
         for (var i = 1; i <= na; i++)
             if (mask[i - 1])
@@ -3502,7 +3510,7 @@ var SketchUtil = (function () {
                                 oldN = i;
                                 newN = j;
                             }
-                            for (var n = 1; n <= mol.numBonds(); n++) {
+                            for (var n = 1; n <= mol.numBonds; n++) {
                                 if (mol.bondFrom(n) == oldN)
                                     mol.setBondFrom(n, newN);
                                 if (mol.bondTo(n) == oldN)
@@ -3879,7 +3887,7 @@ var SketchUtil = (function () {
     SketchUtil.joinOverlappingAtoms = function (mol, mask) {
         mol = mol.clone();
         mask = mask.slice(0);
-        var na = mol.numAtoms();
+        var na = mol.numAtoms;
         var mx = MolUtil.arrayAtomX(mol), my = MolUtil.arrayAtomY(mol);
         var groups = [];
         var groupX = [], groupY = [];
@@ -3925,7 +3933,7 @@ var SketchUtil = (function () {
         var gotS = false, gotN = false;
         var sx1 = 0, sy1 = 0, sx2 = 0, sy2 = 0;
         var nx1 = 0, ny1 = 0, nx2 = 0, ny2 = 0;
-        for (var n = 1; n <= mol.numAtoms(); n++) {
+        for (var n = 1; n <= mol.numAtoms; n++) {
             var x = mol.atomX(n), y = mol.atomY(n);
             if (mask[n - 1]) {
                 if (!gotS || x < sx1)
@@ -3967,13 +3975,13 @@ var SketchUtil = (function () {
             oy = ny1 - sy2 - SEPARATE;
         if (dy > 0)
             oy = ny2 - sy1 + SEPARATE;
-        for (var n = 1; n <= mol.numAtoms(); n++)
+        for (var n = 1; n <= mol.numAtoms; n++)
             if (mask[n - 1])
                 mol.setAtomPos(n, mol.atomX(n) + ox, mol.atomY(n) + oy);
         return mol;
     };
     SketchUtil.placeAdditionalHydrogens = function (mol, atom, numH) {
-        var base = mol.numAtoms();
+        var base = mol.numAtoms;
         var x0 = mol.atomX(atom), y0 = mol.atomY(atom);
         var adj = mol.atomAdjList(atom);
         if (adj.length == 2 && numH == 2) {
@@ -6569,7 +6577,7 @@ var ArrangeMolecule = (function () {
         var box = mol.boundary();
         var minX = box.minX(), minY = box.minY(), maxX = box.maxX(), maxY = box.maxY();
         var fontSize = policy.data.fontSize * this.FONT_CORRECT;
-        for (var n = 1; n <= mol.numAtoms(); n++)
+        for (var n = 1; n <= mol.numAtoms; n++)
             if (mol.atomExplicit(n)) {
                 var plusH = mol.atomHydrogens(n) > 0 ? 1 : 0;
                 var aw = 0.5 * 0.7 * fontSize * (mol.atomElement(n).length + plusH);
@@ -6603,7 +6611,7 @@ var ArrangeMolecule = (function () {
         this.lineSizePix = this.policy.data.lineSize * this.measure.scale();
         this.fontSizePix = this.policy.data.fontSize * this.measure.scale() * ArrangeMolecule.FONT_CORRECT;
         this.ymul = this.measure.yIsUp() ? -1 : 1;
-        for (var n = 1; n <= this.mol.numAtoms(); n++) {
+        for (var n = 1; n <= this.mol.numAtoms; n++) {
             if (this.mol.atomElement(n).length > 2 && this.mol.atomHydrogens(n) == 0) {
                 this.points.push(null);
                 this.space.push(null);
@@ -6626,11 +6634,11 @@ var ArrangeMolecule = (function () {
             this.points.push(a);
             this.space.push(this.computeSpacePoint(a));
         }
-        for (var n = 1; n <= this.mol.numAtoms(); n++)
+        for (var n = 1; n <= this.mol.numAtoms; n++)
             if (this.points[n - 1] == null)
                 this.processLabel(n);
-        var bdbl = Vec.booleanArray(false, this.mol.numBonds());
-        for (var n = 1; n <= this.mol.numBonds(); n++) {
+        var bdbl = Vec.booleanArray(false, this.mol.numBonds);
+        for (var n = 1; n <= this.mol.numBonds; n++) {
             var bfr = this.mol.bondFrom(n), bto = this.mol.bondTo(n);
             var bt = this.mol.bondType(n), bo = this.mol.bondOrder(n);
             var col = this.policy.data.foreground;
@@ -6733,25 +6741,25 @@ var ArrangeMolecule = (function () {
                 }
             }
         }
-        for (var i = 1; i <= this.mol.numBonds(); i++)
+        for (var i = 1; i <= this.mol.numBonds; i++)
             if (bdbl[i - 1])
                 this.processDoubleBond(i, this.priorityDoubleSubstit(i));
-        var hcount = Vec.numberArray(0, this.mol.numAtoms());
-        for (var n = 1; n <= this.mol.numAtoms(); n++)
+        var hcount = Vec.numberArray(0, this.mol.numAtoms);
+        for (var n = 1; n <= this.mol.numAtoms; n++)
             hcount[n - 1] = this.points[n - 1].text == null ? 0 : this.mol.atomHydrogens(n);
-        for (var n = 0; n < this.mol.numAtoms(); n++)
+        for (var n = 0; n < this.mol.numAtoms; n++)
             if (hcount[n] > 0 && this.placeHydrogen(n, hcount[n], true))
                 hcount[n] = 0;
-        for (var n = 0; n < this.mol.numAtoms(); n++)
+        for (var n = 0; n < this.mol.numAtoms; n++)
             if (hcount[n] > 0)
                 this.placeHydrogen(n, hcount[n], false);
-        for (var n = 1; n <= this.mol.numAtoms(); n++)
+        for (var n = 1; n <= this.mol.numAtoms; n++)
             if (this.mol.atomIsotope(n) != Molecule.ISOTOPE_NATURAL) {
                 var isostr = this.mol.atomIsotope(n).toString();
                 var col = this.policy.data.atomCols[this.mol.atomicNumber(n)];
                 this.placeAdjunct(n, isostr, this.fontSizePix * 0.6, col, 150 * DEGRAD);
             }
-        for (var n = 1; n <= this.mol.numAtoms(); n++) {
+        for (var n = 1; n <= this.mol.numAtoms; n++) {
             var str = '';
             var chg = this.mol.atomCharge(n);
             if (chg == -1)
@@ -7120,7 +7128,7 @@ var ArrangeMolecule = (function () {
                 rings.push(nring[j]);
         }
         var ringsz = rings.length;
-        var ringbusy = Vec.numberArray(0, this.mol.numAtoms());
+        var ringbusy = Vec.numberArray(0, this.mol.numAtoms);
         for (var n = 0; n < ringsz; n++) {
             var r = rings[n];
             for (var i = 0; i < r.length; i++)
@@ -9225,7 +9233,7 @@ var MoleculeActivity = (function () {
             };
         for (var k in override)
             this.input[k] = override[k];
-        var na = this.input.mol.numAtoms();
+        var na = this.input.mol.numAtoms;
         if (this.input.selectedMask == null)
             this.input.selectedMask = Vec.booleanArray(false, na);
         while (this.input.selectedMask.length < na)
@@ -9501,7 +9509,7 @@ var MoleculeActivity = (function () {
     };
     MoleculeActivity.prototype.execSelectAll = function (all) {
         var same = true;
-        for (var n = 0; n < this.input.mol.numAtoms(); n++)
+        for (var n = 0; n < this.input.mol.numAtoms; n++)
             if (this.subjectMask[n] != all) {
                 same = false;
                 break;
@@ -9510,16 +9518,16 @@ var MoleculeActivity = (function () {
             this.errmsg = all ? "All atoms already selected." : "All atoms already deselected.";
             return;
         }
-        this.output.selectedMask = Vec.booleanArray(all, this.input.mol.numAtoms());
+        this.output.selectedMask = Vec.booleanArray(all, this.input.mol.numAtoms);
     };
     MoleculeActivity.prototype.execSelectComp = function (dir) {
         var cclist = MolUtil.componentList(this.input.mol);
-        if (cclist.length == 1 && this.hasSelected && this.subjectLength == this.input.mol.numAtoms()) {
+        if (cclist.length == 1 && this.hasSelected && this.subjectLength == this.input.mol.numAtoms) {
             this.errmsg = 'All atoms already selected.';
             return;
         }
         var sel = this.pickSelectedGroup(cclist, dir);
-        this.output.selectedMask = Vec.booleanArray(false, this.input.mol.numAtoms());
+        this.output.selectedMask = Vec.booleanArray(false, this.input.mol.numAtoms);
         for (var n = 0; n < cclist[sel].length; n++)
             this.output.selectedMask[cclist[sel][n] - 1] = true;
     };
@@ -9537,7 +9545,7 @@ var MoleculeActivity = (function () {
         }
         var sides = currentAtom > 0 ? MolUtil.getAtomSides(mol, currentAtom) : MolUtil.getBondSides(mol, currentBond);
         var sel = this.pickSelectedGroup(sides, 1);
-        this.output.selectedMask = Vec.booleanArray(false, mol.numAtoms());
+        this.output.selectedMask = Vec.booleanArray(false, mol.numAtoms);
         for (var n = 0; n < sides[sel].length; n++)
             this.output.selectedMask[sides[sel][n] - 1] = true;
     };
@@ -9556,7 +9564,7 @@ var MoleculeActivity = (function () {
             }
         }
         else {
-            for (var n = 1; n <= mol.numBonds(); n++) {
+            for (var n = 1; n <= mol.numBonds; n++) {
                 var bfr = mol.bondFrom(n) - 1, bto = mol.bondTo(n) - 1;
                 if (this.input.selectedMask[bfr] && !this.input.selectedMask[bto])
                     this.output.selectedMask[bto] = true;
@@ -9569,8 +9577,8 @@ var MoleculeActivity = (function () {
         if (!this.requireSelected())
             return;
         var mol = this.input.mol;
-        var count = Vec.numberArray(0, mol.numAtoms());
-        for (var n = 1; n <= mol.numBonds(); n++) {
+        var count = Vec.numberArray(0, mol.numAtoms);
+        for (var n = 1; n <= mol.numBonds; n++) {
             var bfr = mol.bondFrom(n) - 1, bto = mol.bondTo(n) - 1;
             if (!this.input.selectedMask[bfr] || !this.input.selectedMask[bto])
                 continue;
@@ -9578,7 +9586,7 @@ var MoleculeActivity = (function () {
             count[bto]++;
         }
         this.output.selectedMask = this.input.selectedMask.slice(0);
-        for (var n = 0; n < mol.numAtoms(); n++)
+        for (var n = 0; n < mol.numAtoms; n++)
             this.output.selectedMask[n] = this.input.selectedMask[n] && count[n] >= 2;
     };
     MoleculeActivity.prototype.execSelectChain = function () {
@@ -9586,7 +9594,7 @@ var MoleculeActivity = (function () {
             return;
         var mol = this.input.mol;
         this.output.selectedMask = this.input.selectedMask.slice(0);
-        for (var n = 1; n <= mol.numBonds(); n++) {
+        for (var n = 1; n <= mol.numBonds; n++) {
             var bfr = mol.bondFrom(n) - 1, bto = mol.bondTo(n) - 1;
             if (this.input.selectedMask[bfr] && !this.input.selectedMask[bto] && mol.atomRingBlock(bto + 1) == 0)
                 this.output.selectedMask[bto] = true;
@@ -9619,17 +9627,17 @@ var MoleculeActivity = (function () {
         var mol = this.input.mol;
         this.output.selectedMask = this.input.selectedMask.slice(0);
         var maxRB = 0;
-        for (var n = 1; n <= mol.numAtoms(); n++)
+        for (var n = 1; n <= mol.numAtoms; n++)
             maxRB = Math.max(maxRB, mol.atomRingBlock(n));
         if (maxRB == 0)
             return;
         var gotRB = Vec.booleanArray(false, maxRB);
-        for (var n = 1; n <= mol.numAtoms(); n++) {
+        for (var n = 1; n <= mol.numAtoms; n++) {
             var rb = mol.atomRingBlock(n);
             if (rb > 0 && this.subjectMask[n - 1])
                 gotRB[rb - 1] = true;
         }
-        for (var n = 1; n <= mol.numAtoms(); n++) {
+        for (var n = 1; n <= mol.numAtoms; n++) {
             var rb = mol.atomRingBlock(n);
             if (rb > 0 && gotRB[rb - 1])
                 this.output.selectedMask[n - 1] = true;
@@ -9648,7 +9656,7 @@ var MoleculeActivity = (function () {
             el1 = mol.atomElement(mol.bondFrom(this.input.currentBond));
             el2 = mol.atomElement(mol.bondTo(this.input.currentBond));
         }
-        for (var n = 1; n <= mol.numAtoms(); n++)
+        for (var n = 1; n <= mol.numAtoms; n++)
             if (mol.atomElement(n) == el1 || mol.atomElement(n) == el2)
                 this.output.selectedMask[n - 1] = true;
     };
@@ -9728,7 +9736,7 @@ var MoleculeActivity = (function () {
         var zap = [];
         var mol = this.input.mol;
         if (this.hasSelected) {
-            for (var n = 1; n <= mol.numBonds(); n++)
+            for (var n = 1; n <= mol.numBonds; n++)
                 if (this.subjectMask[mol.bondFrom(n) - 1] && this.subjectMask[mol.bondTo(n) - 1])
                     zap.push(n);
         }
@@ -9745,13 +9753,13 @@ var MoleculeActivity = (function () {
             this.errmsg = 'Subject atoms contain no bonds suitable for disconnection.';
             return;
         }
-        var killmask = Vec.booleanArray(false, mol.numBonds());
+        var killmask = Vec.booleanArray(false, mol.numBonds);
         for (var _b = 0, zap_1 = zap; _b < zap_1.length; _b++) {
             var b = zap_1[_b];
             killmask[b - 1] = true;
         }
         this.output.mol = this.input.mol.clone();
-        for (var n = mol.numBonds(); n >= 1; n--)
+        for (var n = mol.numBonds; n >= 1; n--)
             if (killmask[n - 1])
                 this.output.mol.deleteBond(n);
     };
@@ -9764,7 +9772,7 @@ var MoleculeActivity = (function () {
         }
         var ccmol = MolUtil.subgraphMask(this.input.mol, this.subjectMask);
         var oneComp = true;
-        for (var n = ccmol.numAtoms(); n >= 1; n--)
+        for (var n = ccmol.numAtoms; n >= 1; n--)
             if (ccmol.atomConnComp(n) != 1) {
                 oneComp = false;
                 break;
@@ -9898,7 +9906,7 @@ var MoleculeActivity = (function () {
     MoleculeActivity.prototype.execNudgeFar = function (dir) {
         if (!this.requireSubject())
             return;
-        if (this.subjectLength == this.input.mol.numAtoms()) {
+        if (this.subjectLength == this.input.mol.numAtoms) {
             this.errmsg = 'Cannot apply to entire molecule.';
             return;
         }
@@ -9910,7 +9918,7 @@ var MoleculeActivity = (function () {
         }
     };
     MoleculeActivity.prototype.execFlip = function (axis) {
-        if (this.input.mol.numAtoms() < 2) {
+        if (this.input.mol.numAtoms < 2) {
             this.errmsg = 'At least 2 atoms are required.';
             return;
         }
@@ -9921,9 +9929,9 @@ var MoleculeActivity = (function () {
             cx = mol.atomX(this.input.currentAtom);
             cy = mol.atomY(this.input.currentAtom);
             if (!this.hasSelected) {
-                mask = Vec.booleanArray(false, mol.numAtoms());
+                mask = Vec.booleanArray(false, mol.numAtoms);
                 var cc = mol.atomConnComp(this.input.currentAtom);
-                for (var n = 1; n <= mol.numAtoms(); n++)
+                for (var n = 1; n <= mol.numAtoms; n++)
                     mask[n - 1] = mol.atomConnComp(n) == cc;
             }
         }
@@ -9932,9 +9940,9 @@ var MoleculeActivity = (function () {
             cx = 0.5 * (mol.atomX(bfr) + mol.atomX(bto));
             cy = 0.5 * (mol.atomY(bfr) + mol.atomY(bto));
             if (!this.hasSelected) {
-                mask = Vec.booleanArray(false, mol.numAtoms());
+                mask = Vec.booleanArray(false, mol.numAtoms);
                 var cc = mol.atomConnComp(bfr);
-                for (var n = 1; n <= mol.numAtoms(); n++)
+                for (var n = 1; n <= mol.numAtoms; n++)
                     mask[n - 1] = mol.atomConnComp(n) == cc;
             }
         }
@@ -9942,7 +9950,7 @@ var MoleculeActivity = (function () {
             var box = mol.boundary();
             cx = 0.5 * (box.minX() + box.maxX());
             cy = 0.5 * (box.minY() + box.maxY());
-            mask = Vec.booleanArray(true, mol.numAtoms());
+            mask = Vec.booleanArray(true, mol.numAtoms);
         }
         else {
             for (var n = 0; n < this.subjectLength; n++) {
@@ -9954,7 +9962,7 @@ var MoleculeActivity = (function () {
             cy *= invSz;
         }
         this.output.mol = mol.clone();
-        for (var n = 1; n <= mol.numAtoms(); n++)
+        for (var n = 1; n <= mol.numAtoms; n++)
             if (mask[n - 1]) {
                 if (!isVertical)
                     this.output.mol.setAtomX(n, 2 * cx - this.output.mol.atomX(n));
@@ -9963,7 +9971,7 @@ var MoleculeActivity = (function () {
             }
     };
     MoleculeActivity.prototype.execScale = function (mag) {
-        if (this.input.mol.numAtoms() < 2) {
+        if (this.input.mol.numAtoms < 2) {
             this.errmsg = 'At least 2 atoms are required.';
             return;
         }
@@ -9974,7 +9982,7 @@ var MoleculeActivity = (function () {
             var ccmol = mol.clone();
             ccmol.deleteBond(b);
             var idx1 = [], idx2 = [];
-            for (var n = 1; n <= ccmol.numAtoms(); n++) {
+            for (var n = 1; n <= ccmol.numAtoms; n++) {
                 if (ccmol.atomConnComp(n) == ccmol.atomConnComp(a1))
                     idx1.push(n);
                 else if (ccmol.atomConnComp(n) == ccmol.atomConnComp(a2))
@@ -10030,11 +10038,11 @@ var MoleculeActivity = (function () {
         var mol = this.input.mol;
         if (centreX != null && centreY != null) {
             this.output.mol = mol.clone();
-            var mask_1 = this.subjectLength == 0 ? Vec.booleanArray(true, mol.numAtoms()) : this.subjectMask;
+            var mask_1 = this.subjectLength == 0 ? Vec.booleanArray(true, mol.numAtoms) : this.subjectMask;
             CoordUtil.rotateAtoms(this.output.mol, mask_1, centreX, centreY, theta);
             return;
         }
-        if (mol.numAtoms() < 2) {
+        if (mol.numAtoms < 2) {
             this.errmsg = 'At least 2 atoms are required.';
             return;
         }
@@ -10044,9 +10052,9 @@ var MoleculeActivity = (function () {
             cx = mol.atomX(this.input.currentAtom);
             cy = mol.atomY(this.input.currentAtom);
             if (!this.hasSelected) {
-                mask = Vec.booleanArray(false, mol.numAtoms());
+                mask = Vec.booleanArray(false, mol.numAtoms);
                 var cc = mol.atomConnComp(this.input.currentAtom);
-                for (var n = 1; n <= mol.numAtoms(); n++)
+                for (var n = 1; n <= mol.numAtoms; n++)
                     mask[n - 1] = mol.atomConnComp(n) == cc;
             }
         }
@@ -10055,9 +10063,9 @@ var MoleculeActivity = (function () {
             cx = 0.5 * (mol.atomX(bfr) + mol.atomX(bto));
             cy = 0.5 * (mol.atomY(bfr) + mol.atomY(bto));
             if (!this.hasSelected) {
-                mask = Vec.booleanArray(false, mol.numAtoms());
+                mask = Vec.booleanArray(false, mol.numAtoms);
                 var cc = mol.atomConnComp(bfr);
-                for (var n = 1; n <= mol.numAtoms(); n++)
+                for (var n = 1; n <= mol.numAtoms; n++)
                     mask[n - 1] = mol.atomConnComp(n) == cc;
             }
         }
@@ -10065,7 +10073,7 @@ var MoleculeActivity = (function () {
             var box = mol.boundary();
             cx = 0.5 * (box.minX() + box.maxX());
             cy = 0.5 * (box.minY() + box.maxY());
-            mask = Vec.booleanArray(true, mol.numAtoms());
+            mask = Vec.booleanArray(true, mol.numAtoms);
         }
         else {
             for (var n = 0; n < this.subjectLength; n++) {
@@ -10146,9 +10154,9 @@ var MoleculeActivity = (function () {
         return this.subjectLength > 0;
     };
     MoleculeActivity.prototype.requireAtoms = function () {
-        if (this.input.mol.numAtoms() == 0)
+        if (this.input.mol.numAtoms == 0)
             this.errmsg = 'There are no atoms.';
-        return this.input.mol.numAtoms() > 0;
+        return this.input.mol.numAtoms > 0;
     };
     MoleculeActivity.prototype.requireCurrent = function () {
         if (this.input.currentAtom == 0 && this.input.currentBond == 0) {
@@ -10189,7 +10197,7 @@ var MoleculeActivity = (function () {
     MoleculeActivity.prototype.zapSubject = function () {
         this.output.currentAtom = 0;
         this.output.currentBond = 0;
-        this.output.selectedMask = Vec.booleanArray(false, this.input.mol.numAtoms());
+        this.output.selectedMask = Vec.booleanArray(false, this.input.mol.numAtoms);
     };
     MoleculeActivity.prototype.performBondNew = function (atom, order, type) {
         var mol = this.input.mol;
@@ -10220,7 +10228,7 @@ var MoleculeActivity = (function () {
     MoleculeActivity.prototype.performBondChange = function (order, type) {
         var mol = this.input.mol;
         var bonds = [];
-        for (var n = 1; n <= mol.numBonds(); n++)
+        for (var n = 1; n <= mol.numBonds; n++)
             if (this.subjectMask[mol.bondFrom(n) - 1] && this.subjectMask[mol.bondTo(n) - 1])
                 bonds.push(n);
         var switchType = type == Molecule.BONDTYPE_DECLINED || type == Molecule.BONDTYPE_INCLINED;
@@ -11030,7 +11038,7 @@ var Sketcher = (function (_super) {
         this.stopTemplateFusion();
         this.mol = mol.clone();
         this.guidelines = [];
-        for (var n = 1; n <= this.mol.numAtoms(); n++) {
+        for (var n = 1; n <= this.mol.numAtoms; n++) {
             for (var _i = 0, _a = SketchUtil.guidelineSprouts(this.mol, n); _i < _a.length; _i++) {
                 var sprout = _a[_i];
                 this.guidelines.push(sprout);
@@ -11205,11 +11213,11 @@ var Sketcher = (function (_super) {
     };
     Sketcher.prototype.setSelected = function (N, sel) {
         if (this.selectedMask == null) {
-            this.selectedMask = new Array(this.mol.numAtoms());
+            this.selectedMask = new Array(this.mol.numAtoms);
             for (var n = this.selectedMask.length - 1; n >= 0; n--)
                 this.selectedMask[n] = false;
         }
-        while (this.selectedMask.length < this.mol.numAtoms()) {
+        while (this.selectedMask.length < this.mol.numAtoms) {
             this.selectedMask.push(false);
         }
         this.selectedMask[N - 1] = sel;
@@ -11244,7 +11252,7 @@ var Sketcher = (function (_super) {
         this.delayedRedraw();
     };
     Sketcher.prototype.stashUndo = function () {
-        if (this.undoStack.length == 0 && this.mol.numAtoms() == 0)
+        if (this.undoStack.length == 0 && this.mol.numAtoms == 0)
             return;
         var state = this.getState();
         this.undoStack.push(state);
@@ -11338,7 +11346,7 @@ var Sketcher = (function (_super) {
             alert('Text from clipboard is not a valid molecule.');
     };
     Sketcher.prototype.pasteMolecule = function (mol) {
-        if (this.mol.numAtoms() == 0) {
+        if (this.mol.numAtoms == 0) {
             this.defineMolecule(mol, true, true);
             return;
         }
@@ -11451,7 +11459,7 @@ var Sketcher = (function (_super) {
                 sz += 0.1;
             this.drawBondShade(ctx, this.hoverBond, HOVER_COL, -1, sz);
         }
-        for (var n = 1; n <= this.mol.numBonds(); n++) {
+        for (var n = 1; n <= this.mol.numBonds; n++) {
             var sz = n == this.currentBond ? 0.1 : 0;
             var bfr = this.mol.bondFrom(n), bto = this.mol.bondTo(n);
             var sfr = this.getSelected(bfr), sto = this.getSelected(bto), lfr = this.getLassoed(bfr), lto = this.getLassoed(bto);
@@ -11460,7 +11468,7 @@ var Sketcher = (function (_super) {
             else if ((sfr || lfr) && (sto || lto))
                 this.drawBondShade(ctx, n, LASSO_COL, -1, sz);
         }
-        for (var n = 1; n <= this.mol.numAtoms(); n++) {
+        for (var n = 1; n <= this.mol.numAtoms; n++) {
             var sz = this.currentAtom == n ? 0.1 : 0;
             if (this.getSelected(n))
                 this.drawAtomShade(ctx, n, SELECT_COL, -1, sz);
@@ -11827,8 +11835,8 @@ var Sketcher = (function (_super) {
         this.delayedRedraw();
     };
     Sketcher.prototype.calculateLassoMask = function () {
-        this.lassoMask = new Array(this.mol.numAtoms());
-        for (var n = 0; n < this.mol.numAtoms(); n++)
+        this.lassoMask = new Array(this.mol.numAtoms);
+        for (var n = 0; n < this.mol.numAtoms; n++)
             this.lassoMask[n] = false;
         for (var n = 0; n < this.layout.numPoints(); n++) {
             var p = this.layout.getPoint(n);
@@ -11891,7 +11899,7 @@ var Sketcher = (function (_super) {
     };
     Sketcher.prototype.determineMoveGuide = function () {
         var subj = this.subjectAtoms(false, true);
-        if (subj.length == 0 || subj.length == this.mol.numAtoms())
+        if (subj.length == 0 || subj.length == this.mol.numAtoms)
             return null;
         var guides = [];
         for (var n = 0; n < this.guidelines.length; n++) {
@@ -11968,7 +11976,7 @@ var Sketcher = (function (_super) {
                         bestY = py;
                     }
                 }
-        for (var n = 1; n <= this.mol.numAtoms(); n++) {
+        for (var n = 1; n <= this.mol.numAtoms; n++) {
             var px = this.angToX(this.mol.atomX(n)), py = this.angToY(this.mol.atomY(n));
             var dsq = norm2_xy(px - x, py - y);
             if (dsq < APPROACH && dsq < bestDSQ) {
@@ -12001,7 +12009,7 @@ var Sketcher = (function (_super) {
         if (useOpAtom && atoms.length == 0 && this.opAtom > 0)
             atoms.push(this.opAtom);
         if (allIfNone && atoms.length == 0) {
-            for (var n = 1; n <= this.mol.numAtoms(); n++)
+            for (var n = 1; n <= this.mol.numAtoms; n++)
                 atoms.push(n);
         }
         return atoms;
@@ -12152,7 +12160,7 @@ var Sketcher = (function (_super) {
                     var param = { 'element': element };
                     if (this.opAtom == 0) {
                         var x = this.xToAng(this.clickX), y = this.yToAng(this.clickY);
-                        if (this.mol.numAtoms() == 0) {
+                        if (this.mol.numAtoms == 0) {
                             this.offsetX = this.clickX;
                             this.offsetY = this.clickY;
                             x = 0;
@@ -12199,7 +12207,7 @@ var Sketcher = (function (_super) {
             if (this.dragType == DraggingTool.Lasso) {
                 if (this.lassoX.length >= 2) {
                     this.calculateLassoMask();
-                    for (var n = 1; n <= this.mol.numAtoms(); n++)
+                    for (var n = 1; n <= this.mol.numAtoms; n++)
                         if (this.getLassoed(n) && !this.getSelected(n))
                             this.setSelected(n, true);
                 }
@@ -12613,7 +12621,7 @@ var MapReaction = (function (_super) {
             ctx.strokeStyle = '#808080';
             ctx.lineWidth = 1;
             if (this.pressed[0] == 1) {
-                for (var n = 1; n <= this.mol2.numAtoms(); n++)
+                for (var n = 1; n <= this.mol2.numAtoms; n++)
                     if (compatMask[n - 1]) {
                         var _a = this.getAtomPos(2, n), cx = _a[0], cy = _a[1], rw = _a[2], rh = _a[3];
                         ctx.beginPath();
@@ -12622,7 +12630,7 @@ var MapReaction = (function (_super) {
                     }
             }
             else {
-                for (var n = 1; n <= this.mol1.numAtoms(); n++)
+                for (var n = 1; n <= this.mol1.numAtoms; n++)
                     if (compatMask[n - 1]) {
                         var _b = this.getAtomPos(1, n), cx = _b[0], cy = _b[1], rw = _b[2], rh = _b[3];
                         ctx.beginPath();
@@ -12660,7 +12668,7 @@ var MapReaction = (function (_super) {
         var offsetX = side == 1 ? this.offsetX1 : this.offsetX2;
         var offsetY = side == 1 ? this.offsetY1 : this.offsetY2;
         var scale = this.scale;
-        for (var n = 1; n <= mol.numAtoms(); n++) {
+        for (var n = 1; n <= mol.numAtoms; n++) {
             var mapnum = mol.atomMapNum(n);
             if (mapnum == 0 && n != highlight)
                 continue;
@@ -12675,7 +12683,7 @@ var MapReaction = (function (_super) {
                 ctx.fill();
                 if (n == highlight) {
                     var oside = 3 - side, omol = side == 1 ? this.mol2 : this.mol1;
-                    for (var i = 1; i <= omol.numAtoms(); i++)
+                    for (var i = 1; i <= omol.numAtoms; i++)
                         if (omol.atomMapNum(i) == mapnum) {
                             var _a = this.getAtomPos(oside, i), dx = _a[0], dy = _a[1];
                             ctx.beginPath();
@@ -12700,7 +12708,7 @@ var MapReaction = (function (_super) {
         var ret = [0, 0];
         var scale = this.scale, thresh2 = sqr(this.scale * 1.0 * this.policy.data.pointScale);
         var bestDist = Number.POSITIVE_INFINITY;
-        for (var n = 1; n <= this.mol1.numAtoms(); n++) {
+        for (var n = 1; n <= this.mol1.numAtoms; n++) {
             if (mask1 != null && !mask1[n - 1])
                 continue;
             var pt = this.arrmol1.points[n - 1];
@@ -12711,7 +12719,7 @@ var MapReaction = (function (_super) {
                 bestDist = dsq;
             }
         }
-        for (var n = 1; n <= this.mol2.numAtoms(); n++) {
+        for (var n = 1; n <= this.mol2.numAtoms; n++) {
             if (mask2 != null && !mask2[n - 1])
                 continue;
             var pt = this.arrmol2.points[n - 1];
@@ -12736,7 +12744,7 @@ var MapReaction = (function (_super) {
         var mask = [];
         var mol1 = side == 1 ? this.mol1 : this.mol2, mol2 = side == 1 ? this.mol2 : this.mol1;
         var el = mol1.atomElement(atom), iso = mol1.atomIsotope(atom), map = mol1.atomMapNum(atom);
-        for (var n = 1; n <= mol2.numAtoms(); n++) {
+        for (var n = 1; n <= mol2.numAtoms; n++) {
             var match = el == mol2.atomElement(n) && iso == mol2.atomIsotope(n);
             match = match && (map == 0 || mol2.atomMapNum(n) == 0);
             mask.push(match);
@@ -12750,9 +12758,9 @@ var MapReaction = (function (_super) {
             map = mol2.atomMapNum(atom2);
         if (map == 0) {
             var allnums = new Set();
-            for (var n = 1; n <= mol1.numAtoms(); n++)
+            for (var n = 1; n <= mol1.numAtoms; n++)
                 allnums.add(mol1.atomMapNum(n));
-            for (var n = 1; n <= mol2.numAtoms(); n++)
+            for (var n = 1; n <= mol2.numAtoms; n++)
                 allnums.add(mol2.atomMapNum(n));
             for (map = 1; allnums.has(map); map++)
                 ;
@@ -12768,12 +12776,12 @@ var MapReaction = (function (_super) {
             if (map1 == null || map2 == null)
                 return;
             var modified = false;
-            for (var n = 1; n <= this.mol1.numAtoms() && n <= map1.length; n++)
+            for (var n = 1; n <= this.mol1.numAtoms && n <= map1.length; n++)
                 if (map1[n - 1] > 0 && this.mol1.atomMapNum(n) == 0) {
                     this.mol1.setAtomMapNum(n, map1[n - 1]);
                     modified = true;
                 }
-            for (var n = 1; n <= this.mol2.numAtoms() && n <= map2.length; n++)
+            for (var n = 1; n <= this.mol2.numAtoms && n <= map2.length; n++)
                 if (map2[n - 1] > 0 && this.mol2.atomMapNum(n) == 0) {
                     this.mol2.setAtomMapNum(n, map2[n - 1]);
                     modified = true;
@@ -12784,12 +12792,12 @@ var MapReaction = (function (_super) {
     };
     MapReaction.prototype.clearAllMappings = function () {
         var anything = false;
-        for (var n = 1; n <= this.mol1.numAtoms(); n++)
+        for (var n = 1; n <= this.mol1.numAtoms; n++)
             if (this.mol1.atomMapNum(n) > 0) {
                 this.mol1.setAtomMapNum(n, 0);
                 anything = true;
             }
-        for (var n = 1; n <= this.mol2.numAtoms(); n++)
+        for (var n = 1; n <= this.mol2.numAtoms; n++)
             if (this.mol2.atomMapNum(n) > 0) {
                 this.mol2.setAtomMapNum(n, 0);
                 anything = true;
@@ -12801,10 +12809,10 @@ var MapReaction = (function (_super) {
         var map = side == 1 ? this.mol1.atomMapNum(atom) : this.mol2.atomMapNum(atom);
         if (map == 0)
             return;
-        for (var n = 1; n <= this.mol1.numAtoms(); n++)
+        for (var n = 1; n <= this.mol1.numAtoms; n++)
             if (this.mol1.atomMapNum(n) == map)
                 this.mol1.setAtomMapNum(n, 0);
-        for (var n = 1; n <= this.mol2.numAtoms(); n++)
+        for (var n = 1; n <= this.mol2.numAtoms; n++)
             if (this.mol2.atomMapNum(n) == map)
                 this.mol2.setAtomMapNum(n, 0);
     };
@@ -13334,7 +13342,7 @@ var SearchPanel = (function (_super) {
         this.pressedMol1 = renderSolid('#00CA59', '#008650', styleMol1);
         this.drawnMol1 = newElement(div, 'canvas', { 'width': molw, 'height': height, 'style': styleMol1Pos });
         this.drawnMol1.style.cursor = 'pointer';
-        if (this.mol1.numAtoms() > 0)
+        if (this.mol1.numAtoms > 0)
             this.renderMolecule(1);
         this.thinMol1 = renderBorder(1, styleMol1);
         this.thickMol1 = renderBorder(2, styleMol1);
@@ -13350,7 +13358,7 @@ var SearchPanel = (function (_super) {
             this.pressedMol2 = renderSolid('#00CA59', '#008650', styleMol2);
             this.drawnMol2 = newElement(div, 'canvas', { 'width': molw, 'height': height, 'style': styleMol2Pos });
             this.drawnMol2.style.cursor = 'pointer';
-            if (this.mol2.numAtoms() > 0)
+            if (this.mol2.numAtoms > 0)
                 this.renderMolecule(2);
             this.thinMol2 = renderBorder(1, styleMol2);
             this.thickMol2 = renderBorder(2, styleMol2);
@@ -13423,13 +13431,13 @@ var SearchPanel = (function (_super) {
     };
     SearchPanel.prototype.renderMolecule = function (which) {
         var mol = which == 1 ? this.mol1 : this.mol2, canvas = which == 1 ? this.drawnMol1 : this.drawnMol2;
-        if (mol.numAtoms() == 0) {
+        if (mol.numAtoms == 0) {
             canvas.width = canvas.width;
             return;
         }
         var withMapping = false;
         if (this.type == SearchPanel.TYPE_REACTION)
-            for (var n = 1; n <= mol.numAtoms(); n++)
+            for (var n = 1; n <= mol.numAtoms; n++)
                 if (mol.atomMapNum(n) > 0) {
                     withMapping = true;
                     break;
@@ -13465,7 +13473,7 @@ var SearchPanel = (function (_super) {
             canvas.width = width * metavec.density;
             canvas.height = height * metavec.density;
             var arrmol = result.arrmol;
-            for (var n = 1; n <= mol.numAtoms(); n++)
+            for (var n = 1; n <= mol.numAtoms; n++)
                 if (mol.atomMapNum(n) > 0) {
                     var col = this.COLCYCLE[(mol.atomMapNum(n) - 1) % this.COLCYCLE.length];
                     var pt = arrmol.points[n - 1];
@@ -13516,7 +13524,7 @@ var SearchPanel = (function (_super) {
         }, this);
     };
     SearchPanel.prototype.editMapping = function () {
-        if (this.mol1.numAtoms() == 0 || this.mol2.numAtoms() == 0) {
+        if (this.mol1.numAtoms == 0 || this.mol2.numAtoms == 0) {
             alert('Draw structures on both sides of the arrow before mapping.');
             return;
         }
@@ -13971,6 +13979,9 @@ var Validation = (function () {
         this.rec = {};
         this.tests = [];
     }
+    Validation.prototype.init = function (donefunc) {
+        donefunc.call(this);
+    };
     Validation.prototype.add = function (title, func) {
         this.tests.push({ 'title': title, 'func': func });
     };
@@ -14004,7 +14015,7 @@ var Validation = (function () {
         return [this.recentSuccess, this.recentError, this.recentTimeTaken];
     };
     Validation.prototype.assert = function (condition, message) {
-        if (!condition)
+        if (condition)
             return;
         this.recentError = message;
         throw '!';
@@ -14038,15 +14049,45 @@ var ValidationHeadlessBasic = (function (_super) {
     function ValidationHeadlessBasic() {
         _super.call(this);
         this.add('Vector index sort', this.vectorIndexSort);
-        this.add('fubar', this.fubar);
     }
     ValidationHeadlessBasic.prototype.vectorIndexSort = function () {
         var array = ['b', 'c', 'a'];
         var idx = Vec.idxSort(array);
-        this.assert(Vec.equals(idx, [1, 2, 0]));
+        this.assert(Vec.equals(idx, [2, 0, 1]));
     };
-    ValidationHeadlessBasic.prototype.fubar = function () { var thing = 'zog'; thing.length(); };
     return ValidationHeadlessBasic;
+}(Validation));
+var ValidationHeadlessMolecule = (function (_super) {
+    __extends(ValidationHeadlessMolecule, _super);
+    function ValidationHeadlessMolecule(urlBase) {
+        _super.call(this);
+        this.urlBase = urlBase;
+        this.add('Parse SketchEl molecule (native format)', this.parseSketchEl);
+        this.add('Parse MDL Molfile', this.parseMolfile);
+    }
+    ValidationHeadlessMolecule.prototype.init = function (donefunc) {
+        var self = this;
+        $.get(self.urlBase + 'molecule.el', function (data) {
+            self.strSketchEl = data;
+            $.get(self.urlBase + 'molecule.mol', function (data) {
+                self.strMolfile = data;
+                donefunc.call(self);
+            });
+        });
+    };
+    ValidationHeadlessMolecule.prototype.parseSketchEl = function () {
+        this.assert(!!this.strSketchEl, 'molecule not loaded');
+        var mol = MoleculeStream.readNative(this.strSketchEl);
+        this.assert(mol != null, 'parsing failed');
+        this.assert(mol.numAtoms == 10 && mol.numBonds == 10, 'wrong atom/bond count');
+    };
+    ValidationHeadlessMolecule.prototype.parseMolfile = function () {
+        this.assert(!!this.strMolfile, 'molecule not loaded');
+        var mol = MoleculeStream.readMDLMOL(this.strMolfile);
+        this.assert(mol != null, 'parsing failed');
+        this.assert(mol.numAtoms == 10 && mol.numBonds == 10, 'wrong atom/bond count');
+    };
+    return ValidationHeadlessMolecule;
 }(Validation));
 var WebValExec = (function () {
     function WebValExec(validation) {
@@ -14077,7 +14118,7 @@ var WebValExec = (function () {
             else {
                 tdStatus[n].html('<span style="color: red;">&#9746;</span>');
                 var para = $('<p style="color: purple; margin-top: 0;"></p>').appendTo(tdInfo[n]);
-                para.text(message);
+                para.text(message ? message : 'failed');
                 tdStatus[n].css('background-color', '#FFF0F0');
                 tdInfo[n].css('background-color', '#FFF0F0');
             }

@@ -13,10 +13,32 @@
 <h2>Basic Functions</h2>
 <div id="basic"></div>
 
+<h2>Molecule Functions</h2>
+<div id="molecule"></div>
+
 <div id="final"></div>
 
 <script>
-	new WebValExec(new ValidationHeadlessBasic()).runTests($('#basic'));
+	runBasic();
+
+	function runBasic()
+	{
+		new ValidationHeadlessBasic().init(function()
+		{
+			new WebValExec(this).runTests($('#basic'));
+			runMolecule();
+		});
+	}
+
+	function runMolecule()
+	{
+		new ValidationHeadlessMolecule('../data/').init(function()
+		{
+			new WebValExec(this).runTests($('#molecule'));
+			//run...();
+		});
+	}
+
 
 	$('#final').html('<p><b>Finished.</b></p>');
 </script>

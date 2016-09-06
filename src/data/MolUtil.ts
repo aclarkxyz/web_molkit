@@ -20,11 +20,11 @@ class MolUtil
 {
     public static isBlank(mol:Molecule):boolean
     {
-        return mol == null || mol.numAtoms() == 0;
+        return mol == null || mol.numAtoms == 0;
     }
     public static notBlank(mol:Molecule):boolean
     {
-        return mol != null || mol.numAtoms() > 0;
+        return mol != null || mol.numAtoms > 0;
     }
 
     // substitutes an empty molecule for null
@@ -37,7 +37,7 @@ class MolUtil
 	// returns true if there are any abbreviations
 	public static hasAnyAbbrev(mol:Molecule):boolean
 	{
-		for (let n = 1; n <= mol.numAtoms(); n++) if (MolUtil.hasAbbrev(mol, n)) return true;
+		for (let n = 1; n <= mol.numAtoms; n++) if (MolUtil.hasAbbrev(mol, n)) return true;
 		return false;
 	}
 
@@ -65,7 +65,7 @@ class MolUtil
 	public static setAbbrev(mol:Molecule, atom:number, frag:Molecule):void
 	{
 		let attidx = 0;
-		for (let n = 1; n <= frag.numAtoms(); n++) if (frag.atomElement(n) == MolUtil.ABBREV_ATTACHMENT)
+		for (let n = 1; n <= frag.numAtoms; n++) if (frag.atomElement(n) == MolUtil.ABBREV_ATTACHMENT)
     	{
 			if (attidx > 0) throw 'Multiple attachment points indicated: invalid.';
 			attidx = n;
@@ -100,7 +100,7 @@ class MolUtil
     // any invalid abbreviations will be cleared out
     public static validateAbbrevs(mol:Molecule):void
     {
-		for (let n = 1; n <= mol.numAtoms(); n++) if (MolUtil.hasAbbrev(mol, n))
+		for (let n = 1; n <= mol.numAtoms; n++) if (MolUtil.hasAbbrev(mol, n))
     	{
 			if (mol.atomAdjCount(n) > 1) MolUtil.clearAbbrev(mol, n);
 			if (mol.atomCharge(n) != 0) mol.setAtomCharge(n, 0);
@@ -118,7 +118,7 @@ class MolUtil
 	public static Molecule convertToAbbrev(Molecule mol, boolean[] srcmask, String abbrevName)
 	{
 		int junction = 0;
-		for (int n = 1; n <= mol.numBonds(); n++)
+		for (int n = 1; n <= mol.numBonds; n++)
 		{
 			int b1 = mol.bondFrom(n), b2 = mol.bondTo(n), atom = 0;
 			if (srcmask[b1 - 1] && !srcmask[b2 - 1]) atom = b1;
@@ -131,7 +131,7 @@ class MolUtil
 		if (junction == 0) return null;
     	
 		// refine the partition based on the junction, and derive reference indices
-		int na = mol.numAtoms(), molidx = 0, fragidx = 0;
+		int na = mol.numAtoms, molidx = 0, fragidx = 0;
 		boolean[] maskmol = new boolean[na], maskfrag = new boolean[na];
 		for (int n = 0; n < na; n++)
 		{
@@ -181,7 +181,7 @@ class MolUtil
 		while (true)
 		{
 			let anything = false;
-			for (let n = 1; n <= mol.numAtoms(); n++) if (MolUtil.hasAbbrev(mol, n))
+			for (let n = 1; n <= mol.numAtoms; n++) if (MolUtil.hasAbbrev(mol, n))
 			{
 				if (MolUtil.expandOneAbbrev(mol, n, alignCoords)) anything = true;
 				n--;
@@ -197,7 +197,7 @@ class MolUtil
 	{
 		let frag = MolUtil.getAbbrev(mol, atom);
 		if (frag == null) return false;
-		if (mol.atomAdjCount(atom) != 1 || frag.numAtoms() == 0)
+		if (mol.atomAdjCount(atom) != 1 || frag.numAtoms == 0)
 		{
 			MolUtil.clearAbbrev(mol, atom);
 			return false;
@@ -230,9 +230,9 @@ class MolUtil
 			CoordUtil.translateMolecule(frag, mol.atomX(nbr) - frag.atomX(1), mol.atomY(nbr) - frag.atomY(1));
 		}
     	
-		let join = mol.numAtoms() + 1;
+		let join = mol.numAtoms + 1;
 		mol.append(frag);
-		for (let n = 1; n <= mol.numBonds(); n++)
+		for (let n = 1; n <= mol.numBonds; n++)
 		{
 			if (mol.bondFrom(n) == join) mol.setBondFrom(n, nbr);
 			if (mol.bondTo(n) == join) mol.setBondTo(n, nbr);
@@ -281,15 +281,15 @@ class MolUtil
 	{
 		let invidx:number[] = [];
 		let sum = 0;
-		for (let n = 0; n < mol.numAtoms(); n++) 
+		for (let n = 0; n < mol.numAtoms; n++) 
 		{
 			if (mask[n]) invidx.push(++sum); else invidx.push(0);
 		}
 		if (sum == 0) return new Molecule();
-		if (sum == mol.numAtoms()) return mol.clone();
+		if (sum == mol.numAtoms) return mol.clone();
     	
 		let frag = new Molecule();
-		for (let n = 1; n <= mol.numAtoms(); n++) if (mask[n - 1])
+		for (let n = 1; n <= mol.numAtoms; n++) if (mask[n - 1])
 		{
 			let num = frag.addAtom(mol.atomElement(n), mol.atomX(n), mol.atomY(n), mol.atomCharge(n), mol.atomUnpaired(n));
 			frag.setAtomIsotope(num, mol.atomIsotope(n));
@@ -297,7 +297,7 @@ class MolUtil
 			frag.setAtomMapNum(num, mol.atomMapNum(n));
 			frag.setAtomExtra(num, mol.atomExtra(n));
 		}
-		for (let n = 1; n <= mol.numBonds(); n++)
+		for (let n = 1; n <= mol.numBonds; n++)
 		{
 			let bfr = invidx[mol.bondFrom(n) - 1], bto = invidx[mol.bondTo(n) - 1];
 			if (bfr > 0 && bto > 0)
@@ -317,7 +317,7 @@ class MolUtil
     // in the range {1..#atoms}, otherwise the result is undefined
 	public static subgraphIndex(mol:Molecule, idx:number[]):Molecule
 	{
-		let invidx = Vec.numberArray(0, mol.numAtoms());
+		let invidx = Vec.numberArray(0, mol.numAtoms);
 		for (let n = 0; n < invidx.length; n++) invidx[n] = 0;
 		for (let n = 0; n < idx.length; n++) invidx[idx[n] - 1] = n + 1;
     	
@@ -330,7 +330,7 @@ class MolUtil
 			frag.setAtomMapNum(num, mol.atomMapNum(idx[n]));
 			frag.setAtomExtra(num, mol.atomExtra(idx[n]));
 		}
-		for (let n = 1; n <= mol.numBonds(); n++)
+		for (let n = 1; n <= mol.numBonds; n++)
 		{
 			let bfr = invidx[mol.bondFrom(n) - 1], bto = invidx[mol.bondTo(n) - 1];
 			if (bfr > 0 && bto > 0)
@@ -349,14 +349,14 @@ class MolUtil
 	public static Molecule subgraphWithAttachments(Molecule mol, boolean[] mask)
 	{
 		boolean[] xmask = Vec.duplicate(mask);
-		for (int n = 1; n <= mol.numBonds(); n++)
+		for (int n = 1; n <= mol.numBonds; n++)
 		{
 			int bfr = mol.bondFrom(n) - 1, bto = mol.bondTo(n) - 1;
 			if (mask[bfr] && !mask[bto]) xmask[bto] = true;
 			else if (mask[bto] && !mask[bfr]) xmask[bfr] = true;
 		}
 		Molecule xmol = mol.clone();
-		for (int n = 1; n <= xmol.numAtoms(); n++) if (xmask[n - 1] && !mask[n - 1]) xmol.setAtomElement(n, "X");
+		for (int n = 1; n <= xmol.numAtoms; n++) if (xmask[n - 1] && !mask[n - 1]) xmol.setAtomElement(n, "X");
 		return subgraph(xmol, xmask);
     }
     
@@ -365,9 +365,9 @@ class MolUtil
     {
     	float dx = mol.maxX() + Molecule.IDEALBOND - frag.minX();
     	float dy = 0.5f * (mol.minY() + mol.maxY() - frag.minY() - frag.maxY());
-    	int top = mol.numAtoms();
+    	int top = mol.numAtoms;
     	mol.append(frag);
-    	for (int n = top + 1; n <= mol.numAtoms(); n++) mol.setAtomPos(n, mol.atomX(n) + dx, mol.atomY(n) + dy);
+    	for (int n = top + 1; n <= mol.numAtoms; n++) mol.setAtomPos(n, mol.atomX(n) + dx, mol.atomY(n) + dy);
     }*/
     
 	/*
@@ -375,7 +375,7 @@ class MolUtil
 	public Molecule reorderedBonds(Molecule mol, int[] idx)
 	{
 		Molecule newmol = new Molecule();
-		for (int n = 1; n <= mol.numAtoms(); n++)
+		for (int n = 1; n <= mol.numAtoms; n++)
 		{
 			int num = newmol.addAtom(mol.atomElement(n), mol.atomX(n), mol.atomY(n), mol.atomCharge(n), mol.atomUnpaired(n));
 			newmol.setAtomHExplicit(num, mol.atomHExplicit(n));
@@ -395,7 +395,7 @@ class MolUtil
     // duplicates are OK
 	public static deleteAtoms(mol:Molecule, idx:number[]):Molecule
 	{
-		let mask = Vec.booleanArray(true, mol.numAtoms());
+		let mask = Vec.booleanArray(true, mol.numAtoms);
 		for (let n = 0; n < idx.length; n++) mask[idx[n] - 1] = false;
 		return MolUtil.subgraphMask(mol, mask);
 	}
@@ -404,7 +404,7 @@ class MolUtil
 	// each of the sub arrays is a list of indices for that component; the return value has 1-based indices
 	public static componentList(mol:Molecule):number[][]
 	{
-		let sz = mol.numAtoms();
+		let sz = mol.numAtoms;
 		if (sz == 0) return null;
 		let g = Graph.fromMolecule(mol);
 		
@@ -473,13 +473,13 @@ class MolUtil
 	// returning flat arrays of atom properties: doing this before a geometry operation can boost performance considerably
 	public static arrayAtomX(mol:Molecule):number[] 
 	{
-        let x = Vec.numberArray(0, mol.numAtoms());
+        let x = Vec.numberArray(0, mol.numAtoms);
         for (let n = x.length - 1; n >= 0; n--) x[n] = mol.atomX(n + 1);
         return x;
 	}
 	public static arrayAtomY(mol:Molecule):number[]
 	{
-        let y = Vec.numberArray(0, mol.numAtoms());
+        let y = Vec.numberArray(0, mol.numAtoms);
         for (let n = y.length - 1; n >= 0; n--) y[n] = mol.atomY(n + 1);
         return y;
 	}
@@ -487,7 +487,7 @@ class MolUtil
 	// calculates the molecular formula
 	public static molecularFormula(mol:Molecule, punctuation?:boolean):string
 	{
-		for (let n = 1; n <= mol.numAtoms(); n++) if (MolUtil.hasAbbrev(mol, n))
+		for (let n = 1; n <= mol.numAtoms; n++) if (MolUtil.hasAbbrev(mol, n))
 		{
 			mol = mol.clone();
 			MolUtil.expandAbbrevs(mol, false);
@@ -495,8 +495,8 @@ class MolUtil
 		}
 
 		let countC = 0, countH = 0;
-		let elements = Vec.stringArray('', mol.numAtoms());
-		for (let n = 1; n <= mol.numAtoms(); n++)
+		let elements = Vec.stringArray('', mol.numAtoms);
+		for (let n = 1; n <= mol.numAtoms; n++)
 		{
 			countH += mol.atomHydrogens(n);
 			let el = mol.atomElement(n);
@@ -543,7 +543,7 @@ class MolUtil
 	// calculates the molecular weight, using natural abundance as the default, or specific isotope otherwise
 	public static molecularWeight(mol:Molecule):number
 	{
-		for (let n = 1; n <= mol.numAtoms(); n++) if (MolUtil.hasAbbrev(mol, n))
+		for (let n = 1; n <= mol.numAtoms; n++) if (MolUtil.hasAbbrev(mol, n))
     	{
     		mol = mol.clone();
     		MolUtil.expandAbbrevs(mol, false);
@@ -552,7 +552,7 @@ class MolUtil
 
 		let mw = 0;
 		
-		for (let n = 1; n <= mol.numAtoms(); n++)
+		for (let n = 1; n <= mol.numAtoms; n++)
 		{
 			mw += mol.atomHydrogens(n) * Chemistry.NATURAL_ATOMIC_WEIGHTS[1];
 		
@@ -573,9 +573,9 @@ class MolUtil
     public static removeDuplicateBonds(mol:Molecule):void
     {
 		let bpri:number[] = [];
-		for (let n = 1; n <= mol.numBonds(); n++)
+		for (let n = 1; n <= mol.numBonds; n++)
 		{
-			let p = Math.min(mol.bondFrom(n), mol.bondTo(n)) * mol.numAtoms() + Math.max(mol.bondFrom(n), mol.bondTo(n));
+			let p = Math.min(mol.bondFrom(n), mol.bondTo(n)) * mol.numAtoms + Math.max(mol.bondFrom(n), mol.bondTo(n));
 			bpri.push(p);
 		}
 		let bidx = Vec.idxSort(bpri);
@@ -604,7 +604,7 @@ class MolUtil
         		if (limit1 > 0 || limit2 > 0)
         		{
         		    let boB1A1 = 0, boB1A2 = 0, boB2A1 = 0, boB2A2 = 0;
-					for (let i = 1; i <= mol.numBonds(); i++)
+					for (let i = 1; i <= mol.numBonds; i++)
         		    {
 						if (i != b2 && (mol.bondFrom(i) == a1 || mol.bondTo(i) == a1)) boB1A1 += mol.bondOrder(i);
 						if (i != b2 && (mol.bondFrom(i) == a2 || mol.bondTo(i) == a2)) boB1A2 += mol.bondOrder(i);
@@ -632,7 +632,7 @@ class MolUtil
     	    
 			p += sz;
     	}
-		for (let n = mol.numBonds(); n >= 1; n--)
+		for (let n = mol.numBonds; n >= 1; n--)
 			if (!keepmask[n - 1] || mol.bondFrom(n) == mol.bondTo(n)) mol.deleteBond(n);
     }
 
@@ -644,12 +644,12 @@ class MolUtil
 		let ccsz = 0, cc = Graph.fromMolecule(mol).calculateComponents();
 		for (let n = 0; n < cc.length; n++) if (cc[n] == cc[atom - 1]) ccsz++;
 
-		let w = Vec.numberArray(1, mol.numAtoms()), wn = Vec.numberArray(0, mol.numAtoms());
+		let w = Vec.numberArray(1, mol.numAtoms), wn = Vec.numberArray(0, mol.numAtoms);
 		w[atom - 1] = 0;
 		for (; ccsz > 0; ccsz--)
     	{
-			for (let n = 0; n < mol.numAtoms(); n++) wn[n] = w[n];
-			for (let n = 1; n <= mol.numBonds(); n++)
+			for (let n = 0; n < mol.numAtoms; n++) wn[n] = w[n];
+			for (let n = 1; n <= mol.numBonds; n++)
     	    {
 				let a1 = mol.bondFrom(n) - 1, a2 = mol.bondTo(n) - 1;
 				w[a1] += wn[a2] * 0.1;
@@ -693,7 +693,7 @@ class MolUtil
     // double bonds or charge-separated single bonds
     public static Molecule reduceBondTypes(Molecule mol)
     {
-		final int nb = mol.numBonds();
+		final int nb = mol.numBonds;
 		boolean any = false;
 		for (int n = 1; n <= nb; n++) if (mol.bondOrder(n) < 1 || mol.bondOrder(n) > 3) {any = true; break;}
 		if (!any) return null;
@@ -766,7 +766,7 @@ class MolUtil
     {
 		if (force == null) force = false;
 
-		for (let n = mol.numAtoms(); n >= 1; n--)
+		for (let n = mol.numAtoms; n >= 1; n--)
 		{
 			if (mol.atomElement(n) != 'H') continue;
 			if (!force)
@@ -796,7 +796,7 @@ class MolUtil
     {
 		if (position == null) position = false;
 
-		let na = mol.numAtoms();
+		let na = mol.numAtoms;
 		for (let n = 1; n <= na; n++)
     	{
 			let hc = mol.atomHydrogens(n);
@@ -813,7 +813,7 @@ class MolUtil
 			}
 			else SketchUtil.placeAdditionalHydrogens(mol, n, hc);
 		}
-		return mol.numAtoms() - na;
+		return mol.numAtoms - na;
     }
     
 	/*

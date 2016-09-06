@@ -1,0 +1,6 @@
+#!/bin/sh
+# using a 'localhost' server allows files to be accessed cross-domain, which is not the case
+# when viewing them from the local filesystem
+# the server is from nodejs:
+#      npm install -g http-server
+http-server -c-1
