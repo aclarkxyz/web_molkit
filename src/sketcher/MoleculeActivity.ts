@@ -12,6 +12,8 @@
 
 ///<reference path='../rpc/RPC.ts'/>
 ///<reference path='../gfx/MetaVector.ts'/>
+///<reference path='../data/CoordUtil.ts'/>
+///<reference path='../data/SketchUtil.ts'/>
 
 /*
 	MoleculeActivity: command-oriented modifications of the current molecular state.
@@ -1305,7 +1307,7 @@ class MoleculeActivity
 	public execMove(refAtom:number, deltaX:number, deltaY:number):void
 	{
 		let subj = this.subjectIndex;
-		if (Vec.length(subj) == 0) subj = [refAtom];
+		if (Vec.arrayLength(subj) == 0) subj = [refAtom];
 		
 		this.output.mol = this.input.mol.clone();
 		for (let a of subj) this.output.mol.setAtomPos(a, this.output.mol.atomX(a) + deltaX, this.output.mol.atomY(a) + deltaY);

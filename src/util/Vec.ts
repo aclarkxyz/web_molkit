@@ -18,7 +18,7 @@
 
 class Vec
 {
-	public static length(arr:any[]) {return arr == null ? 0 : arr.length;}
+	public static arrayLength(arr:any[]) {return arr == null ? 0 : arr.length;}
 
 	public static anyTrue(arr:boolean[]):boolean
 	{
