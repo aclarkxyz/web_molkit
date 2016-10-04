@@ -18,7 +18,11 @@
 
 class Vec
 {
-	public static arrayLength(arr:any[]) {return arr == null ? 0 : arr.length;}
+	public static arrayLength(arr:any[]):number {return arr == null ? 0 : arr.length;}
+	public static arrayNumber(arr:number[]):number[] {return arr == null ? [] : arr;}
+	public static arrayString(arr:string[]):string[] {return arr == null ? [] : arr;}
+	public static arrayBoolean(arr:boolean[]):boolean[] {return arr == null ? [] : arr;}
+	public static arrayAny(arr:any[]):any[] {return arr == null ? [] : arr;}
 
 	public static anyTrue(arr:boolean[]):boolean
 	{

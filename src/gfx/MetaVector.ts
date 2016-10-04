@@ -111,10 +111,6 @@ class MetaVector
 		let typeidx = this.findOrCreateType([this.PRIM_LINE, thickness, colour]);
 
 		const bump = 0.5 * thickness;
-		/*this.updateBounds(x1 - bump, y1 - bump);
-		this.updateBounds(x1 + bump, y1 + bump);
-		this.updateBounds(x2 - bump, y2 - bump);
-		this.updateBounds(x2 + bump, y2 + bump);*/
 		this.updateBounds(Math.min(x1, x2) - bump, Math.min(y1, y2) - bump);
 		this.updateBounds(Math.max(x1, x2) + bump, Math.max(y1, y2) + bump);
 
