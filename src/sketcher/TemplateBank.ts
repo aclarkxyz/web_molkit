@@ -11,6 +11,10 @@
 */
 
 ///<reference path='../ui/ButtonBank.ts'/>
+///<reference path='../gfx/Rendering.ts'/>
+///<reference path='../rpc/RPC.ts'/>
+///<reference path='../rpc/Func.ts'/>
+///<reference path='../sketcher/MoleculeActivity.ts'/>
 
 /*
 	TemplateBank: template list... either the top-level list of template groups, or a single folder full of templates.

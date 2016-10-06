@@ -873,7 +873,11 @@ var Chemistry = (function () {
 var Vec = (function () {
     function Vec() {
     }
-    Vec.length = function (arr) { return arr == null ? 0 : arr.length; };
+    Vec.arrayLength = function (arr) { return arr == null ? 0 : arr.length; };
+    Vec.arrayNumber = function (arr) { return arr == null ? [] : arr; };
+    Vec.arrayString = function (arr) { return arr == null ? [] : arr; };
+    Vec.arrayBoolean = function (arr) { return arr == null ? [] : arr; };
+    Vec.arrayAny = function (arr) { return arr == null ? [] : arr; };
     Vec.anyTrue = function (arr) {
         if (arr == null)
             return false;
@@ -2361,9 +2365,9 @@ var Graph = (function () {
         var buff = '#nodes=' + this.nbrs.length;
         for (var n = 0; n < this.nbrs.length; n++) {
             buff += ' ' + n + ':{' + this.nbrs[n] + '}';
-            if (n < Vec.length(this.indices))
+            if (n < Vec.arrayLength(this.indices))
                 buff += '[i=' + this.indices[n] + ']';
-            if (n < Vec.length(this.labels))
+            if (n < Vec.arrayLength(this.labels))
                 buff += '[l=' + this.labels[n] + ']';
         }
         return buff;
@@ -5365,8 +5369,8 @@ var MetaVector = (function () {
             thickness = 1;
         var typeidx = this.findOrCreateType([this.PRIM_LINE, thickness, colour]);
         var bump = 0.5 * thickness;
-        this.updateBounds(x1 - bump, y1 - bump);
-        this.updateBounds(x2 + bump, y2 - bump);
+        this.updateBounds(Math.min(x1, x2) - bump, Math.min(y1, y2) - bump);
+        this.updateBounds(Math.max(x1, x2) + bump, Math.max(y1, y2) + bump);
         this.prims.push([this.PRIM_LINE, typeidx, x1, y1, x2, y2]);
     };
     MetaVector.prototype.drawRect = function (x, y, w, h, edgeCol, thickness, fillCol) {
@@ -10089,7 +10093,7 @@ var MoleculeActivity = (function () {
     };
     MoleculeActivity.prototype.execMove = function (refAtom, deltaX, deltaY) {
         var subj = this.subjectIndex;
-        if (Vec.length(subj) == 0)
+        if (Vec.arrayLength(subj) == 0)
             subj = [refAtom];
         this.output.mol = this.input.mol.clone();
         for (var _i = 0, subj_1 = subj; _i < subj_1.length; _i++) {

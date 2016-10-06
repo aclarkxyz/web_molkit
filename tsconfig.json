@@ -10,6 +10,8 @@
     },
     "files": 
     [
+        "src/**.ts"
+        /*
         "src/decl/jquery.d.ts",
         
         "src/data/CoordUtil.ts",
@@ -67,6 +69,6 @@
         "val/src/Validation.ts",
         "val/src/ValidationHeadlessBasic.ts",
         "val/src/ValidationHeadlessMolecule.ts",
-        "val/src/WebValExec.ts"
+        "val/src/WebValExec.ts"*/
     ]
 }
