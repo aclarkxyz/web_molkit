@@ -119,7 +119,8 @@ class MoleculeActivity
 			'selectedMask': null
 		};
 
-		for (let k in override) this.input[k] = override[k];
+		let altInput = <{[id:string] : any}>this.input;
+		for (let k in override) altInput = override[k];
 
 		let na = this.input.mol.numAtoms;
 		if (this.input.selectedMask == null) this.input.selectedMask = Vec.booleanArray(false, na);
@@ -1167,7 +1168,7 @@ class MoleculeActivity
 
 		// special case: subject indicates a non-ring bond, so magnify the bond distance, and shift the component of one/both sides
 		let mol = this.input.mol;
-		let b;
+		let b:number;
 		if (this.subjectLength == 2 && (b = mol.findBond(this.subjectIndex[0], this.subjectIndex[1])) > 0 && !mol.bondInRing(b))
 		{
 			let a1 = this.subjectIndex[0], a2 = this.subjectIndex[1];

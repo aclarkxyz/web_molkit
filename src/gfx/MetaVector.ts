@@ -1008,7 +1008,7 @@ class MetaVector
 	}
 
 	// ensures boundaries move whenever something out of range is added
-	private updateBounds(x:number, y):void
+	private updateBounds(x:number, y:number):void
 	{
 		if (this.lowX == null)
 		{

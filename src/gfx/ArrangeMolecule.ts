@@ -1241,7 +1241,7 @@ class ArrangeMolecule
 		};
 
 		const font = FontData.main;
-		let outlineX = [], outlineY = [];
+		let outlineX:number[] = [], outlineY:number[] = [];
 		let emw = 0, nglyphs = 0;
 		if (a.text != null)
 		{

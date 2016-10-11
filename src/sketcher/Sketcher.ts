@@ -1698,7 +1698,7 @@ class Sketcher extends Widget implements ArrangeMeasurement
 					{
 						'currentAtom': this.opAtom,
 						'currentBond': this.opBond,
-						'selectedMask': []
+						'selectedMask': <boolean[]>[]
 					};
 					let molact:MoleculeActivity = new MoleculeActivity(this, ActivityType.Delete, {}, override);
 					molact.execute();
@@ -1731,7 +1731,7 @@ class Sketcher extends Widget implements ArrangeMeasurement
 					{
 						'currentAtom': this.opAtom,
 						'currentBond': 0,
-						'selectedMask': null
+						'selectedMask': <boolean[]>null
 					};
 					let molact:MoleculeActivity = new MoleculeActivity(this, ActivityType.Element, param, override);
 					molact.execute();
@@ -1745,7 +1745,7 @@ class Sketcher extends Widget implements ArrangeMeasurement
 					{
 						'currentAtom': this.opAtom,
 						'currentBond': this.opBond,
-						'selectedMask': null
+						'selectedMask': <boolean[]>null
 					};
 					let molact:MoleculeActivity = new MoleculeActivity(this, ActivityType.Charge, {'delta': this.toolChargeDelta}, override);
 					molact.execute();
@@ -1757,7 +1757,7 @@ class Sketcher extends Widget implements ArrangeMeasurement
 				{
 					'currentAtom': this.opAtom,
 					'currentBond': this.opBond,
-					'selectedMask': null
+					'selectedMask': <boolean[]>null
 				};
 				let molact:MoleculeActivity;
 				if (this.toolBondType == Molecule.BONDTYPE_NORMAL) 

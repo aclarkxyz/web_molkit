@@ -8,9 +8,9 @@
         "outFile": "bin/webmolkit-build.js",
         "sourceMap": true
     },
-    "files": 
+    "include": 
     [
-        "src/**.ts"
+        "src/**/*.ts"
         /*
         "src/decl/jquery.d.ts",
         
