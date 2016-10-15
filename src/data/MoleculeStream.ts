@@ -12,6 +12,7 @@
 
 ///<reference path='../decl/corrections.d.ts'/>
 ///<reference path='MDLMOLReader.ts'/>
+///<reference path='MDLMOLWriter.ts'/>
 
 /*
 	Serialisation and deserialisation utilities for the Molecule object.
@@ -121,6 +122,12 @@ class MoleculeStream
 		src.parseHeader = true;
 		src.parse();
 		return src.mol;
+	}
+
+	// converts the molecule to MDL Molfile format, using default options; see the MDLMOLWriter class for finer control
+	public static writeMDLMOL(mol:Molecule):string
+	{
+		return new MDLMOLWriter(mol).write();
 	}
 
 	// static method: decodes a string from a sketchel field
