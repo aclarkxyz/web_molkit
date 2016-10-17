@@ -6,11 +6,14 @@
         "removeComments": true,
         "preserveConstEnums": true,
         "outFile": "bin/webmolkit-build.js",
-        "sourceMap": true
+        "sourceMap": true,
+        "target": "ES6"
     },
     "include": 
     [
-        "src/**/*.ts"
+        "src/**/*.ts",
+        "val/**/*.ts"
+        
         /*
         "src/decl/jquery.d.ts",
         

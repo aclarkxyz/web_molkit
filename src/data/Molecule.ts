@@ -26,6 +26,7 @@ class Atom
 	element:string;
 	x:number;
 	y:number;
+	z:number;
 	charge:number;
 	unpaired:number;
 	isotope:number;
@@ -49,6 +50,7 @@ class Molecule
 {
 	private atoms:Atom[] = [];
 	private bonds:Bond[] = [];
+	private hasZCoord = false;
 
 	public keepTransient = false;
 	private hasTransient = false;
@@ -161,11 +163,12 @@ class Molecule
 		this.getAtom(idx).element = element;
 		this.trashTransient();
 	}
-	public setAtomPos = function(idx:number, x:number, y:number)
+	public setAtomPos = function(idx:number, x:number, y:number, z?:number)
 	{
 		let a = this.getAtom(idx);
 		a.x = x;
 		a.y = y;
+		a.z = z == null ? 0 : z;
 		this.trashTransient();
 	}
 	public setAtomX = function(idx:number, x:number)
@@ -476,6 +479,12 @@ class Molecule
 	{
 		return Math.max(0, Chemistry.ELEMENTS.indexOf(element));
 	}
+
+	// Z coordinate: somewhat aloof from the (X,Y) coordinates, because the container is oriented toward 2D molecules
+	public is3D():boolean {return this.hasZCoord;}
+	public setIs3D(v:boolean):void {this.hasZCoord = v;}
+	public atomZ(idx:number):number {return this.getAtom(idx).z;}
+	public setAtomZ(idx:number, z:number) {this.getAtom(idx).z = z;}
 
 	// literal comparison to another molecule, which can be used for ordering purposes: returns -1/0/1
 	public compareTo(other:Molecule):number

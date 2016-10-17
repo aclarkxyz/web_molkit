@@ -109,6 +109,11 @@ class MDLMOLReader
 			else chg = 0;
 
 			let a = this.mol.addAtom(el, x, y, chg, rad);
+			if (z != 0)
+			{
+				this.mol.setAtomZ(a, z);
+				this.mol.setIs3D(true);
+			}
 			this.mol.setAtomMapNum(a, mapnum);
     		
 			/* todo: add in Z-support to molecule class

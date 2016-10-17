@@ -62,6 +62,7 @@ class MoleculeStream
 				else if (bits[i].charAt(0) == 'n') mol.setAtomMapNum(num, parseInt(bits[i].substring(1)));
 				else if (bits[i].charAt(0) == 'x') extra.push(MoleculeStream.sk_unescape(bits[i]));
 				else if (bits[i].charAt(0) == 'y') trans.push(MoleculeStream.sk_unescape(bits[i]));
+				else if (bits[i].charAt(0) == 'z') {mol.setAtomZ(num, parseFloat(bits[i].substring(1))); mol.setIs3D(true);}
 				else extra.push(MoleculeStream.sk_unescape(bits[i])); // preserve unrecognised
 			}
 			mol.setAtomExtra(num, extra);
@@ -96,6 +97,7 @@ class MoleculeStream
 			let el = mol.atomElement(n), x = mol.atomX(n), y = mol.atomY(n), charge = mol.atomCharge(n), unpaired = mol.atomUnpaired(n);
 			let hy = mol.atomHExplicit(n) != Molecule.HEXPLICIT_UNKNOWN ? ('e' + mol.atomHExplicit(n)) : ('i' + mol.atomHydrogens(n));
 			ret += MoleculeStream.sk_escape(el) + '=' + x.toFixed(4) + ',' + y.toFixed(4) + ';' + charge + ',' + unpaired + ',' + hy;
+			if (mol.is3D()) ret += ',z' + mol.atomZ(n);
 			if (mol.atomIsotope(n) != Molecule.ISOTOPE_NATURAL) ret += ',m' + mol.atomIsotope(n);
 			if (mol.atomMapNum(n) > 0) ret += ',n' + mol.atomMapNum(n);
 			ret += MoleculeStream.sk_encodeExtra(mol.atomExtra(n));

@@ -50,7 +50,7 @@ interface String
    endsWith(str:string):boolean;
 }
 
-interface Set<T> 
+/*interface Set<T> 
 {
     add(value:T):Set<T>;
     clear():void;
@@ -68,4 +68,4 @@ interface SetConstructor
     new <T>(iterable:Array<T>):Set<T>;
     prototype:Set<any>;
 }
-declare var Set:SetConstructor;
+declare var Set:SetConstructor;*/

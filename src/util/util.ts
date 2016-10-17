@@ -211,7 +211,7 @@ function sortAngles(theta:number[]):number[]
 	if (theta == null || theta.length < 2) return theta;
 	theta = theta.slice(0);
 	for (let n = 0; n < theta.length; n++) theta[n] = angleNorm(theta[n]);
-	theta.sort();
+	Vec.sort(theta);
 	while (true)
 	{
 		let a = theta[theta.length - 1], b = theta[0], c = theta[1];

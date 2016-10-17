@@ -109,7 +109,7 @@ class GeomUtil
 		if (theta == null || theta.length < 2) return theta;
 		theta = theta.slice(0);
 		for (let n = 0; n < theta.length; n++) theta[n] = angleNorm(theta[n]);
-		theta.sort();
+		Vec.sort(theta);
 		if (theta.length == 2) return theta;
 		while (true)
 		{
@@ -153,7 +153,7 @@ class GeomUtil
 		if (len == 1) return theta[0];
 		if (len == 2) return 0.5 * (theta[0] + theta[1]);
 
-		theta.sort();
+		Vec.sort(theta);
 
 		let bottom = 0;
 		let behind = angleDiffPos(theta[0], theta[len - 1]);
@@ -177,6 +177,71 @@ class GeomUtil
 
 		return sum / len + theta[bottom];
 	}
+
+	// core 3D vector calculations; observe that even though the parameters are vectors, these functions do assume that they are of size 3
+
+	public static dotProduct(v1:number[], v2:number[]):number
+	{
+		return v1[0] * v2[0] + v1[1] * v2[1] + v1[2] * v2[2];
+	}
+
+	public static crossProduct(v1:number[], v2:number[]):number[]
+	{
+		const x = v1[1] * v2[2] - v1[2] * v2[1];
+		const y = v1[2] * v2[0] - v1[0] * v2[2];
+		const z = v1[0] * v2[1] - v1[1] * v2[0];
+		return [x, y, z];
+	}
+
+	public static magnitude2(v:number[]):number
+	{
+		return v[0] * v[0] + v[1] * v[1] + v[2] * v[2];
+	}
+
+	public static magnitude(v:number[]):number
+	{
+		return Math.sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
+	}
+
+	public static dist2(v1:number[], v2:number[]):number
+	{
+		let dx = v1[0] - v2[0], dy = v1[1] - v2[1], dz = v1[2] - v2[2];
+		return dx * dx + dy * dy + dz * dz;
+	}
+
+	public static dist(v1:number[], v2:number[]):number
+	{
+		let dx = v1[0] - v2[0], dy = v1[1] - v2[1], dz = v1[2] - v2[2];
+		return Math.sqrt(dx * dx + dy * dy + dz * dz);
+	}
+
+	public static normalise(v:number[]):number
+	{
+		const dsq = v[0] * v[0] + v[1] * v[1] + v[2] * v[2];
+		if (dsq == 0) return;
+		const inv = 1.0 / Math.sqrt(dsq);
+		v[0] *= inv;
+		v[1] *= inv;
+		v[2] *= inv;
+	}
+
+	public static normalised(v:number[]):number[]
+	{
+		let ret = v.slice(0);
+		this.normalise(ret);
+		return ret;
+	}
+
+	// returns the unsigned angle between two vectors
+	public static acuteAngle(v1:number[], v2:number[]):number
+	{
+		let mag1 = this.magnitude(v1), mag2 = this.magnitude(v2);
+		if (mag1 == 0 || mag2 == 0) return 0;
+		let dot = this.dotProduct(v1, v2);
+		let cosTheta = dot / (mag1 * mag2);
+		cosTheta = Math.max(-1, Math.min(1, cosTheta)); // numeric error can bump it slightly out of -1 .. +1
+		return Math.acos(cosTheta);
+	}	
 }
 
 // implementation of the "Quick Hull" algorithm

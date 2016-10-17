@@ -816,14 +816,12 @@ class MolUtil
 		return mol.numAtoms - na;
     }
     
-	/*
     // returns atom position as a 3D vector
-    public static float[] atomVec3(Molecule mol, int atom)
+    public static atomVec3(mol:Molecule, atom:number):number[]
     {
     	if (mol.is3D())
-    		return new float[]{mol.atomX(atom), mol.atomY(atom), mol.atomZ(atom)};
+    		return [mol.atomX(atom), mol.atomY(atom), mol.atomZ(atom)];
     	else
-    		return new float[]{mol.atomX(atom), mol.atomY(atom), 0};
+    		return [mol.atomX(atom), mol.atomY(atom), 0];
     }
-*/    
 }

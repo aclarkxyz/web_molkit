@@ -1,17 +1,12 @@
-var __extends = (this && this.__extends) || function (d, b) {
-    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
-    function __() { this.constructor = d; }
-    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
-};
 function newElement(parent, tag, attr) {
-    var el = $("<" + tag + ">");
+    let el = $(`<${tag}>`);
     if (attr)
         el.attr(attr);
     $(parent).append(el);
     return el[0];
 }
 function addText(parent, text) {
-    var el = parent instanceof jQuery ? parent[0] : parent;
+    let el = parent instanceof jQuery ? parent[0] : parent;
     el.appendChild(document.createTextNode(text));
 }
 function setVisible(node, visible) {
@@ -33,7 +28,7 @@ function colourAlpha(col) {
     var transp = (col >>> 24) & 0xFF;
     return transp == 0 ? 1 : transp == 0xFF ? 0 : 1 - (transp * (1.0 / 255));
 }
-var ONE_OVER_255 = 1.0 / 255;
+const ONE_OVER_255 = 1.0 / 255;
 function colourCanvas(col) {
     if (col == 0xFFFFFF)
         return 'white';
@@ -43,10 +38,10 @@ function colourCanvas(col) {
         return null;
     if (col >= 0 && col <= 0xFFFFFF)
         return colourCode(col);
-    var t = ((col >> 24) & 0xFF) * ONE_OVER_255;
-    var r = ((col >> 16) & 0xFF);
-    var g = ((col >> 8) & 0xFF);
-    var b = (col & 0xFF);
+    const t = ((col >> 24) & 0xFF) * ONE_OVER_255;
+    const r = ((col >> 16) & 0xFF);
+    const g = ((col >> 8) & 0xFF);
+    const b = (col & 0xFF);
     return 'rgba(' + r + ',' + g + ',' + b + ',' + (1 - t) + ')';
 }
 function nodeText(node) {
@@ -89,43 +84,43 @@ function sqr(v) {
     return v * v;
 }
 function realEqual(v1, v2) { return v1 == v2 || Math.abs(v1 - v2) <= 1E-14 * Math.max(v1, v2); }
-var TWOPI = 2 * Math.PI;
-var INV_TWOPI = 1.0 / TWOPI;
-var DEGRAD = Math.PI / 180;
-var RADDEG = 180 / Math.PI;
+const TWOPI = 2 * Math.PI;
+const INV_TWOPI = 1.0 / TWOPI;
+const DEGRAD = Math.PI / 180;
+const RADDEG = 180 / Math.PI;
 function angleNorm(th) {
     if (th == -Math.PI)
         return Math.PI;
     if (th < -Math.PI) {
-        var mod = Math.ceil((-th - Math.PI) * INV_TWOPI);
+        let mod = Math.ceil((-th - Math.PI) * INV_TWOPI);
         return th + mod * TWOPI;
     }
     if (th > Math.PI) {
-        var mod = Math.ceil((th - Math.PI) * INV_TWOPI);
+        let mod = Math.ceil((th - Math.PI) * INV_TWOPI);
         return th - mod * TWOPI;
     }
     return th;
 }
 function angleDiff(th1, th2) {
-    var theta = angleNorm(th1) - angleNorm(th2);
+    let theta = angleNorm(th1) - angleNorm(th2);
     return theta - (theta > Math.PI ? TWOPI : 0) + (theta <= -Math.PI ? TWOPI : 0);
 }
 function angleDiffPos(th1, th2) {
-    var theta = angleNorm(th1) - angleNorm(th2);
+    let theta = angleNorm(th1) - angleNorm(th2);
     return theta + (theta < 0 ? TWOPI : 0);
 }
 function sortAngles(theta) {
     if (theta == null || theta.length < 2)
         return theta;
     theta = theta.slice(0);
-    for (var n = 0; n < theta.length; n++)
+    for (let n = 0; n < theta.length; n++)
         theta[n] = angleNorm(theta[n]);
-    theta.sort();
+    Vec.sort(theta);
     while (true) {
-        var a = theta[theta.length - 1], b = theta[0], c = theta[1];
+        let a = theta[theta.length - 1], b = theta[0], c = theta[1];
         if (angleDiff(b, a) <= angleDiff(c, b))
             break;
-        for (var n = theta.length - 1; n > 0; n--)
+        for (let n = theta.length - 1; n > 0; n--)
             theta[n] = theta[n - 1];
         theta[0] = a;
     }
@@ -133,7 +128,7 @@ function sortAngles(theta) {
 }
 function uniqueAngles(theta, threshold) {
     theta = sortAngles(theta);
-    for (var n = 1; n < theta.length; n++) {
+    for (let n = 1; n < theta.length; n++) {
         if (Math.abs(angleDiff(theta[n], theta[n - 1])) <= threshold) {
             theta.splice(n, 1);
             n--;
@@ -199,27 +194,27 @@ function drawLine(ctx, x1, y1, x2, y2) {
     ctx.lineTo(x2, y2);
     ctx.stroke();
 }
-var ASCENT_FUDGE = 1.4;
-function fontSansSerif(ascent) { return ascent * ASCENT_FUDGE + "px sans"; }
+const ASCENT_FUDGE = 1.4;
+function fontSansSerif(ascent) { return `${ascent * ASCENT_FUDGE}px sans`; }
 function pixelDensity() {
     if ('devicePixelRatio' in window && window.devicePixelRatio > 1)
         return window.devicePixelRatio;
     return 1;
 }
 function clone(obj) {
-    var dup = {};
-    for (var key in obj)
+    let dup = {};
+    for (let key in obj)
         dup[key] = obj[key];
     return dup;
 }
 function escapeHTML(text) {
     if (!text)
         return '';
-    var map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+    const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
     return text.replace(/[&<>"']/g, function (m) { return map[m]; });
 }
-var MDLMOLReader = (function () {
-    function MDLMOLReader(strData) {
+class MDLMOLReader {
+    constructor(strData) {
         this.parseHeader = true;
         this.parseExtended = true;
         this.allowV3000 = true;
@@ -234,24 +229,24 @@ var MDLMOLReader = (function () {
         this.pos = 0;
         this.lines = strData.split(/\r?\n/);
     }
-    MDLMOLReader.prototype.parse = function () {
+    parse() {
         if (this.parseHeader) {
             this.molName = this.lines[0];
             this.pos = 3;
         }
         this.parseCTAB();
-    };
-    MDLMOLReader.prototype.nextLine = function () {
+    }
+    nextLine() {
         if (this.pos >= this.lines.length)
             throw 'MDL Molfile parser: premature end, at line ' + (this.pos + 1);
         return this.lines[this.pos++];
-    };
-    MDLMOLReader.prototype.parseCTAB = function () {
+    }
+    parseCTAB() {
         this.mol = new Molecule();
         this.mol.keepTransient = true;
-        var line = this.nextLine();
+        let line = this.nextLine();
         if (!this.relaxed) {
-            var version = line.length >= 39 ? line.substring(34, 39) : '';
+            let version = line.length >= 39 ? line.substring(34, 39) : '';
             if (this.allowV3000 && version == 'V3000') {
                 this.parseV3000();
                 return;
@@ -259,20 +254,20 @@ var MDLMOLReader = (function () {
             if (version != 'V2000')
                 throw 'Invalid MDL MOL: no Vx000 tag.';
         }
-        var numAtoms = parseInt(line.substring(0, 3).trim());
-        var numBonds = parseInt(line.substring(3, 6).trim());
-        for (var n = 0; n < numAtoms; n++) {
+        let numAtoms = parseInt(line.substring(0, 3).trim());
+        let numBonds = parseInt(line.substring(3, 6).trim());
+        for (let n = 0; n < numAtoms; n++) {
             line = this.nextLine();
             if (line.length < 39)
                 throw 'Invalid MDL MOL: atom line' + (n + 1);
-            var x = parseFloat(line.substring(0, 10).trim());
-            var y = parseFloat(line.substring(10, 20).trim());
-            var z = parseFloat(line.substring(20, 30).trim());
-            var el = line.substring(31, 34).trim();
-            var chg = parseInt(line.substring(36, 39).trim()), rad = 0;
-            var stereo = line.length < 42 ? 0 : parseInt(line.substring(39, 42).trim());
-            var hyd = line.length < 45 ? 0 : parseInt(line.substring(42, 45).trim());
-            var mapnum = line.length < 63 ? 0 : parseInt(line.substring(60, 63).trim());
+            let x = parseFloat(line.substring(0, 10).trim());
+            let y = parseFloat(line.substring(10, 20).trim());
+            let z = parseFloat(line.substring(20, 30).trim());
+            let el = line.substring(31, 34).trim();
+            let chg = parseInt(line.substring(36, 39).trim()), rad = 0;
+            let stereo = line.length < 42 ? 0 : parseInt(line.substring(39, 42).trim());
+            let hyd = line.length < 45 ? 0 : parseInt(line.substring(42, 45).trim());
+            let mapnum = line.length < 63 ? 0 : parseInt(line.substring(60, 63).trim());
             if (chg >= 1 && chg <= 3)
                 chg = 4 - chg;
             else if (chg == 4) {
@@ -283,7 +278,11 @@ var MDLMOLReader = (function () {
                 chg = 4 - chg;
             else
                 chg = 0;
-            var a = this.mol.addAtom(el, x, y, chg, rad);
+            let a = this.mol.addAtom(el, x, y, chg, rad);
+            if (z != 0) {
+                this.mol.setAtomZ(a, z);
+                this.mol.setIs3D(true);
+            }
             this.mol.setAtomMapNum(a, mapnum);
             if (hyd > 0) {
                 if (this.atomHyd == null)
@@ -293,30 +292,30 @@ var MDLMOLReader = (function () {
             if (stereo > 0 && this.keepParity) {
             }
         }
-        for (var n = 0; n < numBonds; n++) {
+        for (let n = 0; n < numBonds; n++) {
             line = this.nextLine();
             if (line.length < 12)
                 throw 'Invalid MDL MOL: bond line' + (n + 1);
-            var bfr = parseInt(line.substring(0, 3).trim()), bto = parseInt(line.substring(3, 6).trim());
-            var type = parseInt(line.substring(6, 9).trim()), stereo = parseInt(line.substring(9, 12).trim());
+            let bfr = parseInt(line.substring(0, 3).trim()), bto = parseInt(line.substring(3, 6).trim());
+            let type = parseInt(line.substring(6, 9).trim()), stereo = parseInt(line.substring(9, 12).trim());
             if (bfr == bto || bfr < 1 || bfr > numAtoms || bto < 1 || bto > numAtoms)
                 throw 'Invalid MDL MOL: bond line' + (n + 1);
-            var order = type >= 1 && type <= 3 ? type : 1;
-            var style = Molecule.BONDTYPE_NORMAL;
+            let order = type >= 1 && type <= 3 ? type : 1;
+            let style = Molecule.BONDTYPE_NORMAL;
             if (stereo == 1)
                 style = Molecule.BONDTYPE_INCLINED;
             else if (stereo == 6)
                 style = Molecule.BONDTYPE_DECLINED;
-            var b = this.mol.addBond(bfr, bto, order, style);
+            let b = this.mol.addBond(bfr, bto, order, style);
             if (type == 4) {
             }
         }
-        var MBLK_CHG = 1, MBLK_RAD = 2, MBLK_ISO = 3, MBLK_RGP = 4, MBLK_HYD = 5, MBLK_ZCH = 6, MBLK_ZBO = 7;
+        const MBLK_CHG = 1, MBLK_RAD = 2, MBLK_ISO = 3, MBLK_RGP = 4, MBLK_HYD = 5, MBLK_ZCH = 6, MBLK_ZBO = 7;
         while (true) {
             line = this.nextLine();
             if (line.startsWith("M  END"))
                 break;
-            var type = 0;
+            let type = 0;
             if (line.startsWith("M  CHG"))
                 type = MBLK_CHG;
             else if (line.startsWith("M  RAD"))
@@ -332,7 +331,7 @@ var MDLMOLReader = (function () {
             else if (this.parseExtended && line.startsWith("M  ZBO"))
                 type = MBLK_ZBO;
             else if (line.startsWith("A  ") && line.length >= 6) {
-                var anum = parseInt(line.substring(3, 6).trim());
+                let anum = parseInt(line.substring(3, 6).trim());
                 if (anum >= 1 && anum <= this.mol.numAtoms) {
                     line = this.nextLine();
                     if (line == null)
@@ -342,10 +341,10 @@ var MDLMOLReader = (function () {
                 }
             }
             if (type > 0) {
-                var len = parseInt(line.substring(6, 9).trim());
-                for (var n = 0; n < len; n++) {
-                    var pos = parseInt(line.substring(9 + 8 * n, 13 + 8 * n).trim());
-                    var val = parseInt(line.substring(13 + 8 * n, 17 + 8 * n).trim());
+                let len = parseInt(line.substring(6, 9).trim());
+                for (let n = 0; n < len; n++) {
+                    let pos = parseInt(line.substring(9 + 8 * n, 13 + 8 * n).trim());
+                    let val = parseInt(line.substring(13 + 8 * n, 17 + 8 * n).trim());
                     if (pos < 1)
                         throw 'Invalid MDL MOL: M-block';
                     if (type == MBLK_CHG)
@@ -366,11 +365,11 @@ var MDLMOLReader = (function () {
             }
         }
         this.postFix();
-    };
-    MDLMOLReader.prototype.postFix = function () {
-        var mol = this.mol;
-        for (var n = 1; n <= mol.numAtoms; n++) {
-            var el = mol.atomElement(n);
+    }
+    postFix() {
+        const mol = this.mol;
+        for (let n = 1; n <= mol.numAtoms; n++) {
+            let el = mol.atomElement(n);
             if (el == 'D') {
                 mol.setAtomElement(n, 'H');
                 mol.setAtomIsotope(n, 2);
@@ -387,14 +386,14 @@ var MDLMOLReader = (function () {
         if (this.considerRescale)
             CoordUtil.normaliseBondDistances(mol);
         mol.keepTransient = false;
-    };
-    MDLMOLReader.prototype.parseV3000 = function () {
-        var inCTAB = false, inAtom = false, inBond = false;
-        var lineCounts = null;
-        var lineAtoms = [], lineBonds = [];
-        var ERRPFX = 'Invalid MDL MOL V3000: ';
+    }
+    parseV3000() {
+        let inCTAB = false, inAtom = false, inBond = false;
+        let lineCounts = null;
+        let lineAtoms = [], lineBonds = [];
+        const ERRPFX = 'Invalid MDL MOL V3000: ';
         while (true) {
-            var line = this.nextLine();
+            let line = this.nextLine();
             if (line == 'M  END')
                 break;
             if (!line.startsWith('M  V30 '))
@@ -419,61 +418,61 @@ var MDLMOLReader = (function () {
             else if (inCTAB && inBond && !inAtom)
                 lineBonds.push(line);
         }
-        var counts = lineCounts.split("\\s+");
+        let counts = lineCounts.split("\\s+");
         if (counts.length < 2)
             throw ERRPFX + 'counts line malformatted';
-        var numAtoms = parseInt(counts[0]), numBonds = parseInt(counts[1]);
+        let numAtoms = parseInt(counts[0]), numBonds = parseInt(counts[1]);
         if (numAtoms < 0 || numAtoms > lineAtoms.length)
             throw ERRPFX + 'unreasonable atom count: ' + numAtoms;
         if (numBonds < 0 || numBonds > lineBonds.length)
             throw ERRPFX + 'unreasonable bond count: ' + numBonds;
-        var atomBits = [], bondBits = [];
-        for (var n = 0; n < lineAtoms.length; n++) {
-            var line = lineAtoms[n];
+        let atomBits = [], bondBits = [];
+        for (let n = 0; n < lineAtoms.length; n++) {
+            let line = lineAtoms[n];
             while (n < lineAtoms.length - 1 && line.endsWith('-')) {
                 n++;
                 line = line.substring(0, line.length - 1) + lineAtoms[n];
             }
-            var bits = this.splitWithQuotes(line);
+            let bits = this.splitWithQuotes(line);
             if (bits.length < 6)
                 throw ERRPFX + 'atom line has too few components: ' + line;
-            var idx = parseInt(bits[0], 0);
+            let idx = parseInt(bits[0], 0);
             if (idx < 1 || idx > numAtoms)
                 throw ERRPFX + 'invalid atom index: ' + bits[0];
             if (atomBits[idx - 1] != null)
                 throw ERRPFX + 'duplicate atom index: ' + idx;
             atomBits[idx - 1] = bits;
         }
-        for (var n = 0; n < lineBonds.length; n++) {
-            var line = lineBonds[n];
+        for (let n = 0; n < lineBonds.length; n++) {
+            let line = lineBonds[n];
             while (n < lineBonds.length - 1 && line.endsWith("-")) {
                 n++;
                 line = line.substring(0, line.length - 1) + lineBonds[n];
             }
-            var bits = this.splitWithQuotes(line);
+            let bits = this.splitWithQuotes(line);
             if (bits.length < 4)
                 throw ERRPFX + 'bond line has too few components: ' + line;
-            var idx = parseInt(bits[0], 0);
+            let idx = parseInt(bits[0], 0);
             if (idx < 1 || idx > numBonds)
                 throw ERRPFX + 'invalid bond index: ' + bits[0];
             if (bondBits[idx - 1] != null)
                 throw ERRPFX + 'duplicate bond index: ' + idx;
             bondBits[idx - 1] = bits;
         }
-        for (var n = 1; n <= numAtoms; n++) {
-            var bits = atomBits[n - 1];
+        for (let n = 1; n <= numAtoms; n++) {
+            let bits = atomBits[n - 1];
             if (bits == null)
                 throw ERRPFX + 'atom definition missing for #' + n;
-            var type = bits[1];
-            var x = parseFloat(bits[2]), y = parseFloat(bits[3]), z = parseFloat(bits[4]);
-            var map = parseInt(bits[5]);
+            let type = bits[1];
+            let x = parseFloat(bits[2]), y = parseFloat(bits[3]), z = parseFloat(bits[4]);
+            let map = parseInt(bits[5]);
             this.mol.addAtom(type, x, y);
             this.mol.setAtomMapNum(n, map);
-            for (var i = 6; i < bits.length; i++) {
-                var eq = bits[i].indexOf('=');
+            for (let i = 6; i < bits.length; i++) {
+                let eq = bits[i].indexOf('=');
                 if (eq < 0)
                     continue;
-                var key = bits[i].substring(0, eq), val = bits[i].substring(eq + 1);
+                let key = bits[i].substring(0, eq), val = bits[i].substring(eq + 1);
                 if (key == 'CHG')
                     this.mol.setAtomCharge(n, parseInt(val));
                 else if (key == 'RAD')
@@ -481,28 +480,28 @@ var MDLMOLReader = (function () {
                 else if (key == 'MASS')
                     this.mol.setAtomIsotope(n, parseInt(val));
                 else if (key == 'CFG') {
-                    var stereo = parseInt(val);
+                    let stereo = parseInt(val);
                     if (stereo > 0 && this.keepParity) {
                     }
                 }
             }
         }
-        for (var n = 1; n <= numBonds; n++) {
-            var bits = bondBits[n - 1];
+        for (let n = 1; n <= numBonds; n++) {
+            let bits = bondBits[n - 1];
             if (bits == null)
                 throw ERRPFX + 'bond definition missing for #' + n;
-            var type = parseInt(bits[1]), bfr = parseInt(bits[2]), bto = parseInt(bits[3]);
-            var order = type >= 1 && type <= 3 ? type : 1;
+            let type = parseInt(bits[1]), bfr = parseInt(bits[2]), bto = parseInt(bits[3]);
+            let order = type >= 1 && type <= 3 ? type : 1;
             this.mol.addBond(bfr, bto, order);
             if (type == 4) {
             }
-            for (var i = 4; i < bits.length; i++) {
-                var eq = bits[i].indexOf('=');
+            for (let i = 4; i < bits.length; i++) {
+                let eq = bits[i].indexOf('=');
                 if (eq < 0)
                     continue;
-                var key = bits[i].substring(0, eq), val = bits[i].substring(eq + 1);
+                let key = bits[i].substring(0, eq), val = bits[i].substring(eq + 1);
                 if (key == 'CFG') {
-                    var dir = parseInt(val);
+                    let dir = parseInt(val);
                     this.mol.setBondType(n, dir == 1 ? Molecule.BONDTYPE_INCLINED :
                         dir == 2 ? Molecule.BONDTYPE_UNKNOWN :
                             dir == 3 ? Molecule.BONDTYPE_DECLINED : Molecule.BONDTYPE_NORMAL);
@@ -510,41 +509,168 @@ var MDLMOLReader = (function () {
             }
         }
         this.postFix();
-    };
-    MDLMOLReader.prototype.splitWithQuotes = function (line) {
-        return line.split('\\s+');
-    };
-    return MDLMOLReader;
-}());
-var MoleculeStream = (function () {
-    function MoleculeStream() {
     }
-    MoleculeStream.readNative = function (strData) {
-        var mol = new Molecule();
+    splitWithQuotes(line) {
+        return line.split('\\s+');
+    }
+}
+class MDLMOLWriter {
+    constructor(mol) {
+        this.mol = mol;
+        this.includeHeader = true;
+        this.enhancedFields = true;
+        this.chargeSeparate = true;
+        this.molName = '';
+        this.lines = [];
+    }
+    write() {
+        if (this.includeHeader) {
+            this.lines.push(this.molName);
+            this.lines.push('Generated by WebMolKit');
+            this.lines.push('');
+            this.writeCTAB();
+        }
+        return this.lines.join('\n');
+    }
+    getResult() {
+        return this.lines.join('\n');
+    }
+    writeCTAB() {
+        let mol = this.mol;
+        for (let n = 1; n <= mol.numAtoms; n++)
+            if (MolUtil.hasAbbrev(mol, n)) {
+                mol = mol.clone();
+                MolUtil.expandAbbrevs(mol, true);
+                break;
+            }
+        this.lines.push(this.intrpad(mol.numAtoms, 3) + this.intrpad(mol.numBonds, 3) + '  0  0  0  0  0  0  0  0999 V2000');
+        let chgidx = [], chgval = [];
+        let radidx = [], radval = [];
+        let isoidx = [], isoval = [];
+        let rgpidx = [], rgpval = [];
+        let hydidx = [], hydval = [];
+        let zchidx = [], zchval = [];
+        let zboidx = [], zboval = [];
+        for (let n = 1; n <= mol.numAtoms; n++) {
+            let x = mol.atomX(n), y = mol.atomY(n), z = 0;
+            let line = this.rpad(x.toFixed(4), 10) + this.rpad(y.toFixed(4), 10) + this.rpad(z.toFixed(4), 10);
+            let str = mol.atomElement(n);
+            if (str.length > 3)
+                str = str.substring(0, 3);
+            if (str.length > 1 && str.charAt(0) == 'R' && str.charAt(1) >= '0' && str.charAt(1) <= '9') {
+                rgpidx.push(n);
+                rgpval.push(parseInt(str.substring(1)));
+                str = 'R#';
+            }
+            while (str.length < 4)
+                str += ' ';
+            line += ' ' + str + '0';
+            let chg = mol.atomCharge(n), rad = mol.atomUnpaired(n), mapnum = mol.atomMapNum(n);
+            if (chg >= -3 && chg <= -1)
+                chg = 4 - chg;
+            else if (chg == 0 && rad == 2)
+                chg = 4;
+            else if (chg >= 1 && chg <= 3)
+                chg = 4 - chg;
+            else
+                chg = 0;
+            line += this.intrpad(chg, 3) + '  0  0  0  0  0  0  0' + this.intrpad(mapnum, 3) + '  0  0';
+            this.lines.push(line);
+            if (mol.atomCharge(n) != 0) {
+                chgidx.push(n);
+                chgval.push(mol.atomCharge(n));
+            }
+            if (mol.atomUnpaired(n) != 0) {
+                radidx.push(n);
+                radval.push(mol.atomUnpaired(n));
+            }
+            if (mol.atomIsotope(n) != Molecule.ISOTOPE_NATURAL) {
+                isoidx.push(n);
+                isoval.push(mol.atomIsotope(n));
+            }
+        }
+        for (let n = 1; n <= mol.numBonds; n++) {
+            let type = mol.bondOrder(n);
+            let stereo = mol.bondType(n);
+            if (stereo == Molecule.BONDTYPE_NORMAL) { }
+            else if (stereo == Molecule.BONDTYPE_INCLINED) {
+                stereo = 1;
+                type = 1;
+            }
+            else if (stereo == Molecule.BONDTYPE_DECLINED) {
+                stereo = 6;
+                type = 1;
+            }
+            else if (stereo == Molecule.BONDTYPE_UNKNOWN) {
+                stereo = 4;
+                type = 1;
+            }
+            else
+                stereo = 0;
+            let line = this.intrpad(mol.bondFrom(n), 3) + this.intrpad(mol.bondTo(n), 3) +
+                this.intrpad(type, 3) + this.intrpad(stereo, 3) + '  0  0  0';
+            this.lines.push(line);
+        }
+        this.writeMBlock('CHG', chgidx, chgval);
+        this.writeMBlock('RAD', radidx, radval);
+        this.writeMBlock('ISO', isoidx, isoval);
+        this.writeMBlock('RGP', rgpidx, rgpval);
+        this.writeMBlock('HYD', hydidx, hydval);
+        this.writeMBlock('ZCH', zchidx, zchval);
+        this.writeMBlock('ZBO', zboidx, zboval);
+        for (let n = 1; n <= mol.numAtoms; n++)
+            if (mol.atomElement(n).length > 2) {
+                this.lines.push('A  ' + this.intrpad(n, 3));
+                this.lines.push(mol.atomElement(n));
+            }
+        this.lines.push('M  END');
+    }
+    writeMBlock(token, idx, val) {
+        const sz = idx.length;
+        for (let i = 0; i < sz; i += 8) {
+            let count = Math.min(8, sz - i);
+            let line = "M  " + token + this.intrpad(count, 3);
+            for (let j = 0; j < count; j++)
+                line += this.intrpad(idx[i + j], 4) + this.intrpad(val[i + j], 4);
+            this.lines.push(line);
+        }
+    }
+    intrpad(num, sz) {
+        return this.rpad(num.toString(), sz);
+    }
+    rpad(str, sz) {
+        while (str.length < sz)
+            str = ' ' + str;
+        return str;
+    }
+}
+class MoleculeStream {
+    static readNative(strData) {
+        let mol = new Molecule();
         mol.keepTransient = true;
-        var lines = strData.split(/\r?\n/);
+        let lines = strData.split(/\r?\n/);
         if (lines.length < 2)
             return null;
         if (!lines[0].startsWith('SketchEl!') && lines.length >= 4 && lines[3].indexOf('V2000') >= 0) {
-            var i = strData.indexOf('SketchEl!');
+            let i = strData.indexOf('SketchEl!');
             if (i < 0)
                 return null;
             lines = strData.substring(i).split(/r?\n/);
         }
-        var bits = lines[0].match(/^SketchEl\!\((\d+)\,(\d+)\)/);
+        let bits = lines[0].match(/^SketchEl\!\((\d+)\,(\d+)\)/);
         if (!bits)
             return null;
-        var numAtoms = parseInt(bits[1]), numBonds = parseInt(bits[2]);
+        let numAtoms = parseInt(bits[1]), numBonds = parseInt(bits[2]);
         if (lines.length < 2 + numAtoms + numBonds)
             return null;
         if (!lines[1 + numAtoms + numBonds].match(/^!End/))
             return null;
-        for (var n = 0; n < numAtoms; n++) {
+        for (let n = 0; n < numAtoms; n++) {
             bits = lines[1 + n].split(/[=,;]/);
-            var num = mol.addAtom(bits[0], parseFloat(bits[1]), parseFloat(bits[2]), parseInt(bits[3]), parseInt(bits[4]));
-            var extra = [], trans = [];
-            for (var i = 5; i < bits.length; i++) {
-                var ch = bits[i].charAt(0);
+            let num = mol.addAtom(bits[0], parseFloat(bits[1]), parseFloat(bits[2]), parseInt(bits[3]), parseInt(bits[4]));
+            let extra = [], trans = [];
+            for (let i = 5; i < bits.length; i++) {
+                let ch = bits[i].charAt(0);
                 if (bits[i].charAt(0) == 'i') { }
                 else if (bits[i].charAt(0) == 'e')
                     mol.setAtomHExplicit(num, parseInt(bits[i].substring(1)));
@@ -556,18 +682,22 @@ var MoleculeStream = (function () {
                     extra.push(MoleculeStream.sk_unescape(bits[i]));
                 else if (bits[i].charAt(0) == 'y')
                     trans.push(MoleculeStream.sk_unescape(bits[i]));
+                else if (bits[i].charAt(0) == 'z') {
+                    mol.setAtomZ(num, parseFloat(bits[i].substring(1)));
+                    mol.setIs3D(true);
+                }
                 else
                     extra.push(MoleculeStream.sk_unescape(bits[i]));
             }
             mol.setAtomExtra(num, extra);
             mol.setAtomTransient(num, trans);
         }
-        for (var n = 0; n < numBonds; n++) {
+        for (let n = 0; n < numBonds; n++) {
             bits = lines[1 + numAtoms + n].split(/[-=,]/);
-            var num = mol.addBond(parseInt(bits[0]), parseInt(bits[1]), parseInt(bits[2]), parseInt(bits[3]));
-            var extra = new Array(), trans = new Array();
-            for (var i = 4; i < bits.length; i++) {
-                var ch = bits[i].charAt(0);
+            let num = mol.addBond(parseInt(bits[0]), parseInt(bits[1]), parseInt(bits[2]), parseInt(bits[3]));
+            let extra = new Array(), trans = new Array();
+            for (let i = 4; i < bits.length; i++) {
+                let ch = bits[i].charAt(0);
                 if (bits[i].charAt(0) == 'x')
                     extra.push(MoleculeStream.sk_unescape(bits[i]));
                 else if (bits[i].charAt(0) == 'y')
@@ -580,13 +710,15 @@ var MoleculeStream = (function () {
         }
         mol.keepTransient = false;
         return mol;
-    };
-    MoleculeStream.writeNative = function (mol) {
-        var ret = 'SketchEl!(' + mol.numAtoms + ',' + mol.numBonds + ')\n';
-        for (var n = 1; n <= mol.numAtoms; n++) {
-            var el = mol.atomElement(n), x = mol.atomX(n), y = mol.atomY(n), charge = mol.atomCharge(n), unpaired = mol.atomUnpaired(n);
-            var hy = mol.atomHExplicit(n) != Molecule.HEXPLICIT_UNKNOWN ? ('e' + mol.atomHExplicit(n)) : ('i' + mol.atomHydrogens(n));
+    }
+    static writeNative(mol) {
+        let ret = 'SketchEl!(' + mol.numAtoms + ',' + mol.numBonds + ')\n';
+        for (let n = 1; n <= mol.numAtoms; n++) {
+            let el = mol.atomElement(n), x = mol.atomX(n), y = mol.atomY(n), charge = mol.atomCharge(n), unpaired = mol.atomUnpaired(n);
+            let hy = mol.atomHExplicit(n) != Molecule.HEXPLICIT_UNKNOWN ? ('e' + mol.atomHExplicit(n)) : ('i' + mol.atomHydrogens(n));
             ret += MoleculeStream.sk_escape(el) + '=' + x.toFixed(4) + ',' + y.toFixed(4) + ';' + charge + ',' + unpaired + ',' + hy;
+            if (mol.is3D())
+                ret += ',z' + mol.atomZ(n);
             if (mol.atomIsotope(n) != Molecule.ISOTOPE_NATURAL)
                 ret += ',m' + mol.atomIsotope(n);
             if (mol.atomMapNum(n) > 0)
@@ -595,7 +727,7 @@ var MoleculeStream = (function () {
             ret += MoleculeStream.sk_encodeExtra(mol.atomTransient(n));
             ret += '\n';
         }
-        for (var n = 1; n <= mol.numBonds; n++) {
+        for (let n = 1; n <= mol.numBonds; n++) {
             ret += mol.bondFrom(n) + '-' + mol.bondTo(n) + '=' + mol.bondOrder(n) + ',' + mol.bondType(n);
             ret += MoleculeStream.sk_encodeExtra(mol.bondExtra(n));
             ret += MoleculeStream.sk_encodeExtra(mol.bondTransient(n));
@@ -603,29 +735,32 @@ var MoleculeStream = (function () {
         }
         ret += '!End\n';
         return ret;
-    };
-    MoleculeStream.readMDLMOL = function (strData) {
-        var src = new MDLMOLReader(strData);
+    }
+    static readMDLMOL(strData) {
+        let src = new MDLMOLReader(strData);
         src.parseHeader = true;
         src.parse();
         return src.mol;
-    };
-    MoleculeStream.sk_unescape = function (str) {
-        var ret = '', match;
+    }
+    static writeMDLMOL(mol) {
+        return new MDLMOLWriter(mol).write();
+    }
+    static sk_unescape(str) {
+        let ret = '', match;
         while (match = str.match(/^(.*?)\\([0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f])(.*)/)) {
             ret += match[1] + String.fromCharCode(parseInt("0x" + match[2]));
             str = match[3];
         }
         return ret + str;
-    };
-    MoleculeStream.sk_escape = function (str) {
-        var ret = '';
-        for (var n = 0; n < str.length; n++) {
-            var ch = str.charAt(n), code = str.charCodeAt(n);
+    }
+    static sk_escape(str) {
+        let ret = '';
+        for (let n = 0; n < str.length; n++) {
+            let ch = str.charAt(n), code = str.charCodeAt(n);
             if (code <= 32 || code > 127 || ch == '\\' || ch == ',' || ch == ';' || ch == '=') {
-                var hex = (code & 0xFFFF).toString(16).toUpperCase();
+                let hex = (code & 0xFFFF).toString(16).toUpperCase();
                 ret += '\\';
-                for (var i = 4 - hex.length; i > 0; i--)
+                for (let i = 4 - hex.length; i > 0; i--)
                     ret += '0';
                 ret += hex;
             }
@@ -633,496 +768,615 @@ var MoleculeStream = (function () {
                 ret += ch;
         }
         return ret;
-    };
-    MoleculeStream.sk_encodeExtra = function (extra) {
-        var ret = '';
-        for (var n = 0; n < extra.length; n++)
+    }
+    static sk_encodeExtra(extra) {
+        let ret = '';
+        for (let n = 0; n < extra.length; n++)
             ret += ',' + MoleculeStream.sk_escape(extra[n]);
         return ret;
-    };
+    }
     ;
-    return MoleculeStream;
-}());
-var Chemistry = (function () {
-    function Chemistry() {
-    }
-    Chemistry.ELEMENTS = [
-        null,
-        "H", "He",
-        "Li", "Be", "B", "C", "N", "O", "F", "Ne",
-        "Na", "Mg", "Al", "Si", "P", "S", "Cl", "Ar",
-        "K", "Ca", "Sc", "Ti", "V", "Cr", "Mn", "Fe", "Co", "Ni", "Cu", "Zn", "Ga", "Ge", "As", "Se", "Br", "Kr",
-        "Rb", "Sr", "Y", "Zr", "Nb", "Mo", "Tc", "Ru", "Rh", "Pd", "Ag", "Cd", "In", "Sn", "Sb", "Te", "I", "Xe",
-        "Cs", "Ba",
-        "La", "Ce", "Pr", "Nd", "Pm", "Sm", "Eu", "Gd", "Tb", "Dy", "Ho", "Er", "Tm", "Yb",
-        "Lu", "Hf", "Ta", "W", "Re", "Os", "Ir", "Pt", "Au", "Hg", "Tl", "Pb", "Bi", "Po", "At", "Rn",
-        "Fr", "Ra",
-        "Ac", "Th", "Pa", "U", "Np", "Pu", "Am", "Cm", "Bk", "Cf", "Es", "Fm", "Md", "No",
-        "Lr", "Rf", "Db", "Sg", "Bh", "Hs", "Mt", "Ds", "Rg", "Cn"
-    ];
-    Chemistry.ELEMENT_GROUPS = [
-        0,
-        1, 18,
-        1, 2, 13, 14, 15, 16, 17, 18,
-        1, 2, 13, 14, 15, 16, 17, 18,
-        1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18,
-        1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18,
-        1, 2,
-        3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
-        3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18,
-        1, 2,
-        3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
-        3, 4, 5, 6, 7, 8, 9, 10, 11, 12
-    ];
-    Chemistry.ELEMENT_ROWS = [
-        0,
-        1, 1,
-        2, 2, 2, 2, 2, 2, 2, 2,
-        3, 3, 3, 3, 3, 3, 3, 3,
-        4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
-        5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
-        6, 6,
-        6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
-        6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
-        7, 7,
-        7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
-        7, 7, 7, 7, 7, 7, 7, 7, 7, 7
-    ];
-    Chemistry.ELEMENT_BLOCKS = [
-        0,
-        1, 2,
-        1, 1, 2, 2, 2, 2, 2, 2,
-        1, 1, 2, 2, 2, 2, 2, 2,
-        1, 1, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2,
-        1, 1, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2,
-        1, 1,
-        4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
-        3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2,
-        1, 1,
-        4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
-        3, 3, 3, 3, 3, 3, 3, 3, 3, 3
-    ];
-    Chemistry.ELEMENT_VALENCE = [
-        0,
-        1, 2,
-        1, 2, 3, 4, 5, 6, 7, 8,
-        1, 2, 3, 4, 5, 6, 7, 8,
-        1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 3, 4, 5, 6, 7, 8,
-        1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 3, 4, 5, 6, 7, 8,
-        1, 2,
-        4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
-        3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 3, 4, 5, 6, 7, 8,
-        1, 1,
-        4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
-        3, 4, 5, 6, 7, 8, 9, 10, 11, 12
-    ];
-    Chemistry.ELEMENT_BONDING = [
-        0,
-        1, 0,
-        1, 2, 3, 4, 3, 2, 1, 0,
-        1, 2, 3, 4, 3, 2, 1, 0,
-        1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 3, 4, 3, 2, 1, 0,
-        1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 3, 4, 3, 2, 1, 0,
-        1, 2,
-        4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
-        3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 3, 4, 3, 2, 1, 0,
-        1, 1,
-        4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
-        3, 4, 5, 6, 7, 8, 9, 10, 11, 12
-    ];
-    Chemistry.ELEMENT_SHELL = [
-        0,
-        2, 2,
-        8, 8, 8, 8, 8, 8, 8, 8,
-        8, 8, 8, 8, 8, 8, 8, 8,
-        8, 8, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 8, 8, 8, 8, 8, 8,
-        8, 8, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 8, 8, 8, 8, 8, 8,
-        8, 8,
-        18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18,
-        18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18,
-        8, 8,
-        18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18,
-        18, 18, 18, 18, 18, 18, 18, 18, 18, 18
-    ];
-    Chemistry.NATURAL_ATOMIC_WEIGHTS = [
-        0, 1.00794, 4.002602, 6.941, 9.012182, 10.811, 12.0107, 14.0067, 15.9994, 18.9984032, 20.1797,
-        22.989770, 24.3050, 26.981538, 28.0855, 30.973761, 32.065, 35.453, 39.948, 39.0983, 40.078,
-        44.955910, 47.867, 50.9415, 51.9961, 54.938049, 55.845, 58.933200, 58.6934, 63.546, 65.409,
-        69.723, 72.64, 74.92160, 78.96, 79.904, 83.798, 85.4678, 87.62, 88.90585, 91.224, 92.90638,
-        95.94, 98, 101.07, 102.90550, 106.42, 107.8682, 112.411, 114.818, 118.710, 121.760, 127.60,
-        126.90447, 131.293, 132.90545, 137.327, 138.9055, 140.116, 140.90765, 144.24, 145, 150.36,
-        151.964, 157.25, 158.92534, 162.500, 164.93032, 167.259, 168.93421, 173.04, 174.967, 178.49,
-        180.9479, 183.84, 186.207, 190.23, 192.217, 195.078, 196.96655, 200.59, 204.3833, 207.2, 208.98038,
-        209, 210, 222, 223, 226, 227, 230.0331266, 231.03588, 233.039628, 237, 244, 243, 247, 247, 251, 252, 257,
-        258, 259, 262, 261, 262, 266, 264, 277, 268, 271, 272, 285
-    ];
-    Chemistry.ELEMENT_H = 1;
-    Chemistry.ELEMENT_He = 2;
-    Chemistry.ELEMENT_Li = 3;
-    Chemistry.ELEMENT_Be = 4;
-    Chemistry.ELEMENT_B = 5;
-    Chemistry.ELEMENT_C = 6;
-    Chemistry.ELEMENT_N = 7;
-    Chemistry.ELEMENT_O = 8;
-    Chemistry.ELEMENT_F = 9;
-    Chemistry.ELEMENT_Ne = 10;
-    Chemistry.ELEMENT_Na = 11;
-    Chemistry.ELEMENT_Mg = 12;
-    Chemistry.ELEMENT_Al = 13;
-    Chemistry.ELEMENT_Si = 14;
-    Chemistry.ELEMENT_P = 15;
-    Chemistry.ELEMENT_S = 16;
-    Chemistry.ELEMENT_Cl = 17;
-    Chemistry.ELEMENT_Ar = 18;
-    Chemistry.ELEMENT_K = 19;
-    Chemistry.ELEMENT_Ca = 20;
-    Chemistry.ELEMENT_Sc = 21;
-    Chemistry.ELEMENT_Ti = 22;
-    Chemistry.ELEMENT_V = 23;
-    Chemistry.ELEMENT_Cr = 24;
-    Chemistry.ELEMENT_Mn = 25;
-    Chemistry.ELEMENT_Fe = 26;
-    Chemistry.ELEMENT_Co = 27;
-    Chemistry.ELEMENT_Ni = 28;
-    Chemistry.ELEMENT_Cu = 29;
-    Chemistry.ELEMENT_Zn = 30;
-    Chemistry.ELEMENT_Ga = 31;
-    Chemistry.ELEMENT_Ge = 32;
-    Chemistry.ELEMENT_As = 33;
-    Chemistry.ELEMENT_Se = 34;
-    Chemistry.ELEMENT_Br = 35;
-    Chemistry.ELEMENT_Kr = 36;
-    Chemistry.ELEMENT_Rb = 37;
-    Chemistry.ELEMENT_Sr = 38;
-    Chemistry.ELEMENT_Y = 39;
-    Chemistry.ELEMENT_Zr = 40;
-    Chemistry.ELEMENT_Nb = 41;
-    Chemistry.ELEMENT_Mo = 42;
-    Chemistry.ELEMENT_Tc = 43;
-    Chemistry.ELEMENT_Ru = 44;
-    Chemistry.ELEMENT_Rh = 45;
-    Chemistry.ELEMENT_Pd = 46;
-    Chemistry.ELEMENT_Ag = 47;
-    Chemistry.ELEMENT_Cd = 48;
-    Chemistry.ELEMENT_In = 49;
-    Chemistry.ELEMENT_Sn = 50;
-    Chemistry.ELEMENT_Sb = 51;
-    Chemistry.ELEMENT_Te = 52;
-    Chemistry.ELEMENT_I = 53;
-    Chemistry.ELEMENT_Xe = 54;
-    Chemistry.ELEMENT_Cs = 55;
-    Chemistry.ELEMENT_Ba = 56;
-    Chemistry.ELEMENT_La = 57;
-    Chemistry.ELEMENT_Ce = 58;
-    Chemistry.ELEMENT_Pr = 59;
-    Chemistry.ELEMENT_Nd = 60;
-    Chemistry.ELEMENT_Pm = 61;
-    Chemistry.ELEMENT_Sm = 62;
-    Chemistry.ELEMENT_Eu = 63;
-    Chemistry.ELEMENT_Gd = 64;
-    Chemistry.ELEMENT_Tb = 65;
-    Chemistry.ELEMENT_Dy = 66;
-    Chemistry.ELEMENT_Ho = 67;
-    Chemistry.ELEMENT_Er = 68;
-    Chemistry.ELEMENT_Tm = 69;
-    Chemistry.ELEMENT_Yb = 70;
-    Chemistry.ELEMENT_Lu = 71;
-    Chemistry.ELEMENT_Hf = 72;
-    Chemistry.ELEMENT_Ta = 73;
-    Chemistry.ELEMENT_W = 74;
-    Chemistry.ELEMENT_Re = 75;
-    Chemistry.ELEMENT_Os = 76;
-    Chemistry.ELEMENT_Ir = 77;
-    Chemistry.ELEMENT_Pt = 78;
-    Chemistry.ELEMENT_Au = 79;
-    Chemistry.ELEMENT_Hg = 80;
-    Chemistry.ELEMENT_Tl = 81;
-    Chemistry.ELEMENT_Pb = 82;
-    Chemistry.ELEMENT_Bi = 83;
-    Chemistry.ELEMENT_Po = 84;
-    Chemistry.ELEMENT_At = 85;
-    Chemistry.ELEMENT_Rn = 86;
-    Chemistry.ELEMENT_Fr = 87;
-    Chemistry.ELEMENT_Ra = 88;
-    Chemistry.ELEMENT_Ac = 89;
-    Chemistry.ELEMENT_Th = 90;
-    Chemistry.ELEMENT_Pa = 91;
-    Chemistry.ELEMENT_U = 92;
-    Chemistry.ELEMENT_Np = 93;
-    Chemistry.ELEMENT_Pu = 94;
-    Chemistry.ELEMENT_Am = 95;
-    Chemistry.ELEMENT_Cm = 96;
-    Chemistry.ELEMENT_Bk = 97;
-    Chemistry.ELEMENT_Cf = 98;
-    Chemistry.ELEMENT_Es = 99;
-    Chemistry.ELEMENT_Fm = 100;
-    Chemistry.ELEMENT_Md = 101;
-    Chemistry.ELEMENT_No = 102;
-    Chemistry.ELEMENT_Lr = 103;
-    Chemistry.ELEMENT_Rf = 104;
-    Chemistry.ELEMENT_Db = 105;
-    Chemistry.ELEMENT_Sg = 106;
-    Chemistry.ELEMENT_Bh = 107;
-    Chemistry.ELEMENT_Hs = 108;
-    Chemistry.ELEMENT_Mt = 109;
-    Chemistry.ELEMENT_Ds = 110;
-    Chemistry.ELEMENT_Rg = 111;
-    Chemistry.ELEMENT_Cn = 112;
-    return Chemistry;
-}());
-var Vec = (function () {
-    function Vec() {
-    }
-    Vec.arrayLength = function (arr) { return arr == null ? 0 : arr.length; };
-    Vec.arrayNumber = function (arr) { return arr == null ? [] : arr; };
-    Vec.arrayString = function (arr) { return arr == null ? [] : arr; };
-    Vec.arrayBoolean = function (arr) { return arr == null ? [] : arr; };
-    Vec.arrayAny = function (arr) { return arr == null ? [] : arr; };
-    Vec.anyTrue = function (arr) {
+}
+class Chemistry {
+}
+Chemistry.ELEMENTS = [
+    null,
+    "H", "He",
+    "Li", "Be", "B", "C", "N", "O", "F", "Ne",
+    "Na", "Mg", "Al", "Si", "P", "S", "Cl", "Ar",
+    "K", "Ca", "Sc", "Ti", "V", "Cr", "Mn", "Fe", "Co", "Ni", "Cu", "Zn", "Ga", "Ge", "As", "Se", "Br", "Kr",
+    "Rb", "Sr", "Y", "Zr", "Nb", "Mo", "Tc", "Ru", "Rh", "Pd", "Ag", "Cd", "In", "Sn", "Sb", "Te", "I", "Xe",
+    "Cs", "Ba",
+    "La", "Ce", "Pr", "Nd", "Pm", "Sm", "Eu", "Gd", "Tb", "Dy", "Ho", "Er", "Tm", "Yb",
+    "Lu", "Hf", "Ta", "W", "Re", "Os", "Ir", "Pt", "Au", "Hg", "Tl", "Pb", "Bi", "Po", "At", "Rn",
+    "Fr", "Ra",
+    "Ac", "Th", "Pa", "U", "Np", "Pu", "Am", "Cm", "Bk", "Cf", "Es", "Fm", "Md", "No",
+    "Lr", "Rf", "Db", "Sg", "Bh", "Hs", "Mt", "Ds", "Rg", "Cn"
+];
+Chemistry.ELEMENT_GROUPS = [
+    0,
+    1, 18,
+    1, 2, 13, 14, 15, 16, 17, 18,
+    1, 2, 13, 14, 15, 16, 17, 18,
+    1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18,
+    1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18,
+    1, 2,
+    3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+    3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18,
+    1, 2,
+    3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+    3, 4, 5, 6, 7, 8, 9, 10, 11, 12
+];
+Chemistry.ELEMENT_ROWS = [
+    0,
+    1, 1,
+    2, 2, 2, 2, 2, 2, 2, 2,
+    3, 3, 3, 3, 3, 3, 3, 3,
+    4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
+    5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+    6, 6,
+    6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
+    6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
+    7, 7,
+    7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
+    7, 7, 7, 7, 7, 7, 7, 7, 7, 7
+];
+Chemistry.ELEMENT_BLOCKS = [
+    0,
+    1, 2,
+    1, 1, 2, 2, 2, 2, 2, 2,
+    1, 1, 2, 2, 2, 2, 2, 2,
+    1, 1, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2,
+    1, 1, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2,
+    1, 1,
+    4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
+    3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 2, 2, 2, 2, 2, 2,
+    1, 1,
+    4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
+    3, 3, 3, 3, 3, 3, 3, 3, 3, 3
+];
+Chemistry.ELEMENT_VALENCE = [
+    0,
+    1, 2,
+    1, 2, 3, 4, 5, 6, 7, 8,
+    1, 2, 3, 4, 5, 6, 7, 8,
+    1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 3, 4, 5, 6, 7, 8,
+    1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 3, 4, 5, 6, 7, 8,
+    1, 2,
+    4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
+    3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 3, 4, 5, 6, 7, 8,
+    1, 1,
+    4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
+    3, 4, 5, 6, 7, 8, 9, 10, 11, 12
+];
+Chemistry.ELEMENT_BONDING = [
+    0,
+    1, 0,
+    1, 2, 3, 4, 3, 2, 1, 0,
+    1, 2, 3, 4, 3, 2, 1, 0,
+    1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 3, 4, 3, 2, 1, 0,
+    1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 3, 4, 3, 2, 1, 0,
+    1, 2,
+    4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
+    3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 3, 4, 3, 2, 1, 0,
+    1, 1,
+    4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
+    3, 4, 5, 6, 7, 8, 9, 10, 11, 12
+];
+Chemistry.ELEMENT_SHELL = [
+    0,
+    2, 2,
+    8, 8, 8, 8, 8, 8, 8, 8,
+    8, 8, 8, 8, 8, 8, 8, 8,
+    8, 8, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 8, 8, 8, 8, 8, 8,
+    8, 8, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 8, 8, 8, 8, 8, 8,
+    8, 8,
+    18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18,
+    18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18,
+    8, 8,
+    18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18,
+    18, 18, 18, 18, 18, 18, 18, 18, 18, 18
+];
+Chemistry.NATURAL_ATOMIC_WEIGHTS = [
+    0, 1.00794, 4.002602, 6.941, 9.012182, 10.811, 12.0107, 14.0067, 15.9994, 18.9984032, 20.1797,
+    22.989770, 24.3050, 26.981538, 28.0855, 30.973761, 32.065, 35.453, 39.948, 39.0983, 40.078,
+    44.955910, 47.867, 50.9415, 51.9961, 54.938049, 55.845, 58.933200, 58.6934, 63.546, 65.409,
+    69.723, 72.64, 74.92160, 78.96, 79.904, 83.798, 85.4678, 87.62, 88.90585, 91.224, 92.90638,
+    95.94, 98, 101.07, 102.90550, 106.42, 107.8682, 112.411, 114.818, 118.710, 121.760, 127.60,
+    126.90447, 131.293, 132.90545, 137.327, 138.9055, 140.116, 140.90765, 144.24, 145, 150.36,
+    151.964, 157.25, 158.92534, 162.500, 164.93032, 167.259, 168.93421, 173.04, 174.967, 178.49,
+    180.9479, 183.84, 186.207, 190.23, 192.217, 195.078, 196.96655, 200.59, 204.3833, 207.2, 208.98038,
+    209, 210, 222, 223, 226, 227, 230.0331266, 231.03588, 233.039628, 237, 244, 243, 247, 247, 251, 252, 257,
+    258, 259, 262, 261, 262, 266, 264, 277, 268, 271, 272, 285
+];
+Chemistry.ELEMENT_H = 1;
+Chemistry.ELEMENT_He = 2;
+Chemistry.ELEMENT_Li = 3;
+Chemistry.ELEMENT_Be = 4;
+Chemistry.ELEMENT_B = 5;
+Chemistry.ELEMENT_C = 6;
+Chemistry.ELEMENT_N = 7;
+Chemistry.ELEMENT_O = 8;
+Chemistry.ELEMENT_F = 9;
+Chemistry.ELEMENT_Ne = 10;
+Chemistry.ELEMENT_Na = 11;
+Chemistry.ELEMENT_Mg = 12;
+Chemistry.ELEMENT_Al = 13;
+Chemistry.ELEMENT_Si = 14;
+Chemistry.ELEMENT_P = 15;
+Chemistry.ELEMENT_S = 16;
+Chemistry.ELEMENT_Cl = 17;
+Chemistry.ELEMENT_Ar = 18;
+Chemistry.ELEMENT_K = 19;
+Chemistry.ELEMENT_Ca = 20;
+Chemistry.ELEMENT_Sc = 21;
+Chemistry.ELEMENT_Ti = 22;
+Chemistry.ELEMENT_V = 23;
+Chemistry.ELEMENT_Cr = 24;
+Chemistry.ELEMENT_Mn = 25;
+Chemistry.ELEMENT_Fe = 26;
+Chemistry.ELEMENT_Co = 27;
+Chemistry.ELEMENT_Ni = 28;
+Chemistry.ELEMENT_Cu = 29;
+Chemistry.ELEMENT_Zn = 30;
+Chemistry.ELEMENT_Ga = 31;
+Chemistry.ELEMENT_Ge = 32;
+Chemistry.ELEMENT_As = 33;
+Chemistry.ELEMENT_Se = 34;
+Chemistry.ELEMENT_Br = 35;
+Chemistry.ELEMENT_Kr = 36;
+Chemistry.ELEMENT_Rb = 37;
+Chemistry.ELEMENT_Sr = 38;
+Chemistry.ELEMENT_Y = 39;
+Chemistry.ELEMENT_Zr = 40;
+Chemistry.ELEMENT_Nb = 41;
+Chemistry.ELEMENT_Mo = 42;
+Chemistry.ELEMENT_Tc = 43;
+Chemistry.ELEMENT_Ru = 44;
+Chemistry.ELEMENT_Rh = 45;
+Chemistry.ELEMENT_Pd = 46;
+Chemistry.ELEMENT_Ag = 47;
+Chemistry.ELEMENT_Cd = 48;
+Chemistry.ELEMENT_In = 49;
+Chemistry.ELEMENT_Sn = 50;
+Chemistry.ELEMENT_Sb = 51;
+Chemistry.ELEMENT_Te = 52;
+Chemistry.ELEMENT_I = 53;
+Chemistry.ELEMENT_Xe = 54;
+Chemistry.ELEMENT_Cs = 55;
+Chemistry.ELEMENT_Ba = 56;
+Chemistry.ELEMENT_La = 57;
+Chemistry.ELEMENT_Ce = 58;
+Chemistry.ELEMENT_Pr = 59;
+Chemistry.ELEMENT_Nd = 60;
+Chemistry.ELEMENT_Pm = 61;
+Chemistry.ELEMENT_Sm = 62;
+Chemistry.ELEMENT_Eu = 63;
+Chemistry.ELEMENT_Gd = 64;
+Chemistry.ELEMENT_Tb = 65;
+Chemistry.ELEMENT_Dy = 66;
+Chemistry.ELEMENT_Ho = 67;
+Chemistry.ELEMENT_Er = 68;
+Chemistry.ELEMENT_Tm = 69;
+Chemistry.ELEMENT_Yb = 70;
+Chemistry.ELEMENT_Lu = 71;
+Chemistry.ELEMENT_Hf = 72;
+Chemistry.ELEMENT_Ta = 73;
+Chemistry.ELEMENT_W = 74;
+Chemistry.ELEMENT_Re = 75;
+Chemistry.ELEMENT_Os = 76;
+Chemistry.ELEMENT_Ir = 77;
+Chemistry.ELEMENT_Pt = 78;
+Chemistry.ELEMENT_Au = 79;
+Chemistry.ELEMENT_Hg = 80;
+Chemistry.ELEMENT_Tl = 81;
+Chemistry.ELEMENT_Pb = 82;
+Chemistry.ELEMENT_Bi = 83;
+Chemistry.ELEMENT_Po = 84;
+Chemistry.ELEMENT_At = 85;
+Chemistry.ELEMENT_Rn = 86;
+Chemistry.ELEMENT_Fr = 87;
+Chemistry.ELEMENT_Ra = 88;
+Chemistry.ELEMENT_Ac = 89;
+Chemistry.ELEMENT_Th = 90;
+Chemistry.ELEMENT_Pa = 91;
+Chemistry.ELEMENT_U = 92;
+Chemistry.ELEMENT_Np = 93;
+Chemistry.ELEMENT_Pu = 94;
+Chemistry.ELEMENT_Am = 95;
+Chemistry.ELEMENT_Cm = 96;
+Chemistry.ELEMENT_Bk = 97;
+Chemistry.ELEMENT_Cf = 98;
+Chemistry.ELEMENT_Es = 99;
+Chemistry.ELEMENT_Fm = 100;
+Chemistry.ELEMENT_Md = 101;
+Chemistry.ELEMENT_No = 102;
+Chemistry.ELEMENT_Lr = 103;
+Chemistry.ELEMENT_Rf = 104;
+Chemistry.ELEMENT_Db = 105;
+Chemistry.ELEMENT_Sg = 106;
+Chemistry.ELEMENT_Bh = 107;
+Chemistry.ELEMENT_Hs = 108;
+Chemistry.ELEMENT_Mt = 109;
+Chemistry.ELEMENT_Ds = 110;
+Chemistry.ELEMENT_Rg = 111;
+Chemistry.ELEMENT_Cn = 112;
+class Vec {
+    static arrayLength(arr) { return arr == null ? 0 : arr.length; }
+    static arrayNumber(arr) { return arr == null ? [] : arr; }
+    static arrayString(arr) { return arr == null ? [] : arr; }
+    static arrayBoolean(arr) { return arr == null ? [] : arr; }
+    static arrayAny(arr) { return arr == null ? [] : arr; }
+    static anyTrue(arr) {
         if (arr == null)
             return false;
-        for (var _i = 0, arr_1 = arr; _i < arr_1.length; _i++) {
-            var v = arr_1[_i];
+        for (let v of arr)
             if (v)
                 return true;
-        }
         return false;
-    };
-    Vec.allTrue = function (arr) {
+    }
+    static allTrue(arr) {
         if (arr == null)
             return true;
-        for (var _i = 0, arr_2 = arr; _i < arr_2.length; _i++) {
-            var v = arr_2[_i];
+        for (let v of arr)
             if (!v)
                 return false;
-        }
         return true;
-    };
-    Vec.anyFalse = function (arr) {
+    }
+    static anyFalse(arr) {
         if (arr == null)
             return false;
-        for (var _i = 0, arr_3 = arr; _i < arr_3.length; _i++) {
-            var v = arr_3[_i];
+        for (let v of arr)
             if (!v)
                 return true;
-        }
         return false;
-    };
-    Vec.allFalse = function (arr) {
+    }
+    static allFalse(arr) {
         if (arr == null)
             return true;
-        for (var _i = 0, arr_4 = arr; _i < arr_4.length; _i++) {
-            var v = arr_4[_i];
+        for (let v of arr)
             if (v)
                 return false;
-        }
         return true;
-    };
-    Vec.swap = function (arr, idx1, idx2) {
-        var v = arr[idx1];
+    }
+    static swap(arr, idx1, idx2) {
+        let v = arr[idx1];
         arr[idx1] = arr[idx2];
         arr[idx2] = v;
-    };
-    Vec.equals = function (arr1, arr2) {
+    }
+    static equals(arr1, arr2) {
         if (arr1 == null && arr2 == null)
             return true;
         if (arr1 == null || arr2 == null)
             return false;
         if (arr1.length != arr2.length)
             return false;
-        for (var n = 0; n < arr1.length; n++)
+        for (let n = 0; n < arr1.length; n++)
             if (arr1[n] != arr2[n])
                 return false;
         return true;
-    };
-    Vec.booleanArray = function (val, sz) {
-        var arr = new Array(sz);
-        for (var n = sz - 1; n >= 0; n--)
+    }
+    static booleanArray(val, sz) {
+        let arr = new Array(sz);
+        for (let n = sz - 1; n >= 0; n--)
             arr[n] = val;
         return arr;
-    };
-    Vec.numberArray = function (val, sz) {
-        var arr = new Array(sz);
-        for (var n = sz - 1; n >= 0; n--)
+    }
+    static numberArray(val, sz) {
+        let arr = new Array(sz);
+        for (let n = sz - 1; n >= 0; n--)
             arr[n] = val;
         return arr;
-    };
-    Vec.stringArray = function (val, sz) {
-        var arr = new Array(sz);
-        for (var n = sz - 1; n >= 0; n--)
+    }
+    static stringArray(val, sz) {
+        let arr = new Array(sz);
+        for (let n = sz - 1; n >= 0; n--)
             arr[n] = val;
         return arr;
-    };
-    Vec.anyArray = function (val, sz) {
-        var arr = new Array(sz);
-        for (var n = sz - 1; n >= 0; n--)
+    }
+    static anyArray(val, sz) {
+        let arr = new Array(sz);
+        for (let n = sz - 1; n >= 0; n--)
             arr[n] = val;
         return arr;
-    };
-    Vec.min = function (arr) {
+    }
+    static min(arr) {
         if (arr == null || arr.length == 0)
             return Number.MAX_VALUE;
-        var v = arr[0];
-        for (var n = 1; n < arr.length; n++)
+        let v = arr[0];
+        for (let n = 1; n < arr.length; n++)
             v = Math.min(v, arr[n]);
         return v;
-    };
-    Vec.max = function (arr) {
+    }
+    static max(arr) {
         if (arr == null || arr.length == 0)
             return Number.MIN_VALUE;
-        var v = arr[0];
-        for (var n = 1; n < arr.length; n++)
+        let v = arr[0];
+        for (let n = 1; n < arr.length; n++)
             v = Math.max(v, arr[n]);
         return v;
-    };
-    Vec.reverse = function (arr) {
-        var ret = [];
-        for (var n = arr.length - 1; n >= 0; n--)
+    }
+    static reverse(arr) {
+        let ret = [];
+        for (let n = arr.length - 1; n >= 0; n--)
             ret.push(arr[n]);
         return ret;
-    };
-    Vec.identity0 = function (sz) {
-        var ret = new Array(sz);
-        for (var n = 0; n < sz; n++)
+    }
+    static identity0(sz) {
+        let ret = new Array(sz);
+        for (let n = 0; n < sz; n++)
             ret[n] = n;
         return ret;
-    };
-    Vec.identity1 = function (sz) {
-        var ret = new Array(sz);
-        for (var n = 0; n < sz; n++)
+    }
+    static identity1(sz) {
+        let ret = new Array(sz);
+        for (let n = 0; n < sz; n++)
             ret[n] = n + 1;
         return ret;
-    };
-    Vec.idxGet = function (arr, idx) {
-        var ret = [];
-        for (var n = 0; n < idx.length; n++)
+    }
+    static idxGet(arr, idx) {
+        let ret = [];
+        for (let n = 0; n < idx.length; n++)
             ret.push(arr[idx[n]]);
         return ret;
-    };
-    Vec.maskCount = function (mask) {
-        var c = 0;
-        for (var n = mask.length - 1; n >= 0; n--)
+    }
+    static maskCount(mask) {
+        let c = 0;
+        for (let n = mask.length - 1; n >= 0; n--)
             if (mask[n])
                 c++;
         return c;
-    };
-    Vec.maskIdx = function (mask) {
-        var idx = [];
-        for (var n = 0; n < mask.length; n++)
+    }
+    static maskIdx(mask) {
+        let idx = [];
+        for (let n = 0; n < mask.length; n++)
             if (mask[n])
                 idx.push(n);
         return idx;
-    };
-    Vec.idxMask = function (idx, sz) {
-        var mask = Vec.booleanArray(false, sz);
-        for (var _i = 0, idx_1 = idx; _i < idx_1.length; _i++) {
-            var n = idx_1[_i];
+    }
+    static idxMask(idx, sz) {
+        let mask = Vec.booleanArray(false, sz);
+        for (let n of idx)
             mask[n] = true;
-        }
         return mask;
-    };
-    Vec.maskMap = function (mask) {
-        var ret = [];
-        for (var n = 0, pos = 0; n < mask.length; n++)
+    }
+    static maskMap(mask) {
+        let ret = [];
+        for (let n = 0, pos = 0; n < mask.length; n++)
             ret.push(mask[n] ? pos++ : -1);
         return ret;
-    };
-    Vec.maskGet = function (arr, mask) {
-        var ret = [];
-        for (var n = 0, p = 0; n < arr.length; n++)
+    }
+    static maskGet(arr, mask) {
+        let ret = [];
+        for (let n = 0, p = 0; n < arr.length; n++)
             if (mask[n])
                 ret.push(arr[n]);
         return ret;
-    };
-    Vec.maskEqual = function (arr1, val) {
-        var ret = [];
+    }
+    static maskEqual(arr1, val) {
+        let ret = [];
         if (val.constructor === Array) {
-            var arr2 = val;
-            for (var n = 0; n < arr1.length; n++)
+            let arr2 = val;
+            for (let n = 0; n < arr1.length; n++)
                 ret.push(arr1[n] == arr2[n]);
         }
         else {
-            for (var n = 0; n < arr1.length; n++)
+            for (let n = 0; n < arr1.length; n++)
                 ret.push(arr1[n] == val);
         }
         return ret;
-    };
-    Vec.sum = function (arr) {
+    }
+    static sum(arr) {
         if (arr == null || arr.length == 0)
             return 0;
-        var t = arr[0];
-        for (var n = 1; n < arr.length; n++)
+        let t = arr[0];
+        for (let n = 1; n < arr.length; n++)
             t += arr[n];
         return t;
-    };
-    Vec.add = function (arr1, val) {
-        var ret = [];
+    }
+    static add(arr1, val) {
+        let ret = [];
         if (val.constructor === Array) {
-            var arr2 = val;
-            for (var n = 0; n < arr1.length; n++)
+            let arr2 = val;
+            for (let n = 0; n < arr1.length; n++)
                 ret.push(arr1[n] + arr2[n]);
         }
         else {
-            for (var n = 0; n < arr1.length; n++)
+            for (let n = 0; n < arr1.length; n++)
                 ret.push(arr1[n] + val);
         }
         return ret;
-    };
-    Vec.sub = function (arr1, val) {
-        var ret = [];
+    }
+    static sub(arr1, val) {
+        let ret = [];
         if (val.constructor === Array) {
-            var arr2 = val;
-            for (var n = 0; n < arr1.length; n++)
+            let arr2 = val;
+            for (let n = 0; n < arr1.length; n++)
                 ret.push(arr1[n] - arr2[n]);
         }
         else {
-            for (var n = 0; n < arr1.length; n++)
+            for (let n = 0; n < arr1.length; n++)
                 ret.push(arr1[n] - val);
         }
         return ret;
-    };
-    Vec.mul = function (arr1, val) {
-        var ret = [];
+    }
+    static mul(arr1, val) {
+        let ret = [];
         if (val.constructor === Array) {
-            var arr2 = val;
-            for (var n = 0; n < arr1.length; n++)
+            let arr2 = val;
+            for (let n = 0; n < arr1.length; n++)
                 ret.push(arr1[n] * arr2[n]);
         }
         else {
-            for (var n = 0; n < arr1.length; n++)
+            for (let n = 0; n < arr1.length; n++)
                 ret.push(arr1[n] * val);
         }
         return ret;
-    };
-    Vec.setTo = function (arr, val) { for (var n = arr == null ? -1 : arr.length - 1; n >= 0; n--)
-        arr[n] = val; };
-    Vec.addTo = function (arr, val) { for (var n = arr == null ? -1 : arr.length - 1; n >= 0; n--)
-        arr[n] += val; };
-    Vec.mulBy = function (arr, val) { for (var n = arr == null ? -1 : arr.length - 1; n >= 0; n--)
-        arr[n] *= val; };
-    Vec.idxSort = function (arr) {
-        var idx = new Array(arr.length);
-        for (var n = 0; n < arr.length; n++)
+    }
+    static neg(arr) {
+        let ret = arr.slice(0);
+        for (let n = ret.length - 1; n >= 0; n--)
+            ret[n] *= -1;
+        return ret;
+    }
+    static setTo(arr, val) { for (let n = arr == null ? -1 : arr.length - 1; n >= 0; n--)
+        arr[n] = val; }
+    static addTo(arr, val) { for (let n = arr == null ? -1 : arr.length - 1; n >= 0; n--)
+        arr[n] += val; }
+    static mulBy(arr, val) { for (let n = arr == null ? -1 : arr.length - 1; n >= 0; n--)
+        arr[n] *= val; }
+    static addToArray(arr, val) { for (let n = arr == null ? -1 : arr.length - 1; n >= 0; n--)
+        arr[n] += val[n]; }
+    static subFromArray(arr, val) { for (let n = arr == null ? -1 : arr.length - 1; n >= 0; n--)
+        arr[n] -= val[n]; }
+    static mulByArray(arr, val) { for (let n = arr == null ? -1 : arr.length - 1; n >= 0; n--)
+        arr[n] *= val[n]; }
+    static divByArray(arr, val) { for (let n = arr == null ? -1 : arr.length - 1; n >= 0; n--)
+        arr[n] /= val[n]; }
+    static idxSort(arr) {
+        let idx = new Array(arr.length);
+        for (let n = 0; n < arr.length; n++)
             idx[n] = n;
         idx.sort(function (a, b) { return arr[a] < arr[b] ? -1 : arr[a] > arr[b] ? 1 : 0; });
         return idx;
-    };
-    return Vec;
-}());
-var Atom = (function () {
-    function Atom() {
     }
-    return Atom;
-}());
-var Bond = (function () {
-    function Bond() {
+    static sort(arr) {
+        arr.sort(function (v1, v2) { return v1 - v2; });
     }
-    return Bond;
-}());
-var Molecule = (function () {
-    function Molecule() {
+    static sorted(arr) {
+        arr = arr.slice(0);
+        this.sort(arr);
+        return arr;
+    }
+}
+class Permutation {
+    static parityPerms(idx) {
+        let v = Vec.booleanArray(false, idx.length);
+        let p = 0;
+        for (let i = idx.length - 1; i >= 0; i--) {
+            if (v[i])
+                p++;
+            else {
+                let j = i;
+                do {
+                    j = idx[j];
+                    v[j] = true;
+                } while (j != i);
+            }
+        }
+        return p;
+    }
+    static parityIdentity(idx) {
+        return this.parityPerms(idx) & 1;
+    }
+    static parityOrder(src) {
+        if (src.length <= 1)
+            return 0;
+        else if (src.length == 2)
+            return src[0] < src[1] ? 0 : 1;
+        else if (src.length == 3) {
+            let p = 1;
+            if (src[0] < src[1])
+                p++;
+            if (src[0] < src[2])
+                p++;
+            if (src[1] < src[2])
+                p++;
+            return p & 1;
+        }
+        else if (src.length == 4) {
+            let p = 0;
+            if (src[0] < src[1])
+                p++;
+            if (src[0] < src[2])
+                p++;
+            if (src[0] < src[3])
+                p++;
+            if (src[1] < src[2])
+                p++;
+            if (src[1] < src[3])
+                p++;
+            if (src[2] < src[3])
+                p++;
+            return p & 1;
+        }
+        let idx = [], sorted = src.slice(0);
+        sorted.sort();
+        for (let n = 0; n < src.length; n++)
+            idx.push(sorted.indexOf(src[n]));
+        return this.parityIdentity(idx);
+    }
+    static smallPermutation(sz) {
+        if (sz == 1)
+            return this.PERM1;
+        else if (sz == 2)
+            return this.PERM2;
+        else if (sz == 3)
+            return this.PERM3;
+        else if (sz == 4)
+            return this.PERM4;
+        else
+            return null;
+    }
+    static allPermutations(sz) {
+        if (sz <= this.SMALL_PERMS)
+            return this.smallPermutation(sz);
+        while (this.PERM_CACHE.length < this.MAX_CACHE - this.SMALL_PERMS)
+            this.PERM_CACHE.push(null);
+        if (sz < this.MAX_CACHE && this.PERM_CACHE[sz - this.SMALL_PERMS] != null)
+            return this.PERM_CACHE[sz - this.SMALL_PERMS];
+        let nperms = 1;
+        for (let n = 2; n <= sz; n++)
+            nperms *= n;
+        let perms = [];
+        let idx = Vec.identity0(sz);
+        perms.push(idx.slice(0));
+        let mask = Vec.booleanArray(false, sz);
+        for (let n = 1; n < nperms; n++) {
+            nonunique: while (idx[0] < sz) {
+                idx[sz - 1]++;
+                for (let i = sz - 1; i > 0; i--) {
+                    if (idx[i] < sz)
+                        break;
+                    idx[i] = 0;
+                    idx[i - 1]++;
+                }
+                Vec.setTo(mask, false);
+                for (let i of idx) {
+                    if (mask[i])
+                        continue nonunique;
+                    mask[i] = true;
+                }
+                perms[n] = idx.slice(0);
+                break;
+            }
+        }
+        if (sz < this.MAX_CACHE)
+            this.PERM_CACHE[sz - this.SMALL_PERMS] = perms;
+        return perms;
+    }
+}
+Permutation.PERM1 = [[0]];
+Permutation.PERM2 = [[0, 1], [1, 0]];
+Permutation.PERM3 = [[0, 1, 2], [0, 2, 1], [1, 0, 2], [1, 2, 0], [2, 0, 1], [2, 1, 0]];
+Permutation.PERM4 = [
+    [0, 1, 2, 3], [0, 1, 3, 2], [0, 2, 1, 3], [0, 2, 3, 1], [0, 3, 1, 2], [0, 3, 2, 1],
+    [1, 0, 2, 3], [1, 0, 3, 2], [1, 2, 0, 3], [1, 2, 3, 0], [1, 3, 0, 2], [1, 3, 2, 0],
+    [2, 0, 1, 3], [2, 0, 3, 1], [2, 1, 0, 3], [2, 1, 3, 0], [2, 3, 0, 1], [2, 3, 1, 0],
+    [3, 0, 1, 2], [3, 0, 2, 1], [3, 1, 0, 2], [3, 1, 2, 0], [3, 2, 0, 1], [3, 2, 1, 0]
+];
+Permutation.SMALL_PERMS = 4;
+Permutation.MAX_CACHE = 8;
+Permutation.PERM_CACHE = [];
+class Atom {
+}
+class Bond {
+}
+class Molecule {
+    constructor() {
         this.atoms = [];
         this.bonds = [];
+        this.hasZCoord = false;
         this.keepTransient = false;
         this.hasTransient = false;
         this.graph = null;
@@ -1138,10 +1392,11 @@ var Molecule = (function () {
             this.getAtom(idx).element = element;
             this.trashTransient();
         };
-        this.setAtomPos = function (idx, x, y) {
-            var a = this.getAtom(idx);
+        this.setAtomPos = function (idx, x, y, z) {
+            let a = this.getAtom(idx);
             a.x = x;
             a.y = y;
+            a.z = z == null ? 0 : z;
             this.trashTransient();
         };
         this.setAtomX = function (idx, x) {
@@ -1181,66 +1436,56 @@ var Molecule = (function () {
                 this.hasTransient = true;
         };
     }
-    Molecule.prototype.clone = function () { return Molecule.fromString(this.toString()); };
-    Molecule.fromString = function (strData) { return MoleculeStream.readNative(strData); };
-    Molecule.prototype.toString = function () { return MoleculeStream.writeNative(this); };
-    Molecule.prototype.append = function (frag) {
-        var base = this.atoms.length;
-        for (var n = 1; n <= frag.numAtoms; n++) {
-            var num = this.addAtom(frag.atomElement(n), frag.atomX(n), frag.atomY(n), frag.atomCharge(n), frag.atomUnpaired(n));
+    clone() { return Molecule.fromString(this.toString()); }
+    static fromString(strData) { return MoleculeStream.readNative(strData); }
+    toString() { return MoleculeStream.writeNative(this); }
+    append(frag) {
+        let base = this.atoms.length;
+        for (let n = 1; n <= frag.numAtoms; n++) {
+            let num = this.addAtom(frag.atomElement(n), frag.atomX(n), frag.atomY(n), frag.atomCharge(n), frag.atomUnpaired(n));
             this.setAtomIsotope(num, frag.atomIsotope(n));
             this.setAtomHExplicit(num, frag.atomHExplicit(n));
             this.setAtomMapNum(num, frag.atomMapNum(n));
             this.setAtomExtra(num, frag.atomExtra(n));
         }
-        for (var n = 1; n <= frag.numBonds; n++) {
-            var num = this.addBond(frag.bondFrom(n) + base, frag.bondTo(n) + base, frag.bondOrder(n), frag.bondType(n));
+        for (let n = 1; n <= frag.numBonds; n++) {
+            let num = this.addBond(frag.bondFrom(n) + base, frag.bondTo(n) + base, frag.bondOrder(n), frag.bondType(n));
             this.setBondExtra(num, frag.bondExtra(n));
         }
         this.trashTransient();
-    };
-    Object.defineProperty(Molecule.prototype, "numAtoms", {
-        get: function () { return this.atoms.length; },
-        enumerable: true,
-        configurable: true
-    });
-    Molecule.prototype.getAtom = function (idx) {
+    }
+    get numAtoms() { return this.atoms.length; }
+    getAtom(idx) {
         if (idx < 1 || idx > this.atoms.length)
-            throw "Molecule.getAtom: index " + idx + " out of range (#atoms=" + this.atoms.length + ")";
+            throw `Molecule.getAtom: index ${idx} out of range (#atoms=${this.atoms.length})`;
         ;
         return this.atoms[idx - 1];
-    };
-    Molecule.prototype.atomElement = function (idx) { return this.getAtom(idx).element; };
-    Molecule.prototype.atomX = function (idx) { return this.getAtom(idx).x; };
-    Molecule.prototype.atomY = function (idx) { return this.getAtom(idx).y; };
-    Molecule.prototype.atomCharge = function (idx) { return this.getAtom(idx).charge; };
-    Molecule.prototype.atomUnpaired = function (idx) { return this.getAtom(idx).unpaired; };
-    Molecule.prototype.atomIsotope = function (idx) { return this.getAtom(idx).isotope; };
-    Molecule.prototype.atomHExplicit = function (idx) { return this.getAtom(idx).hExplicit; };
-    Molecule.prototype.atomMapNum = function (idx) { return this.getAtom(idx).mapNum; };
-    Molecule.prototype.atomExtra = function (idx) { return this.getAtom(idx).extra.slice(0); };
-    Molecule.prototype.atomTransient = function (idx) { return this.getAtom(idx).transient.slice(0); };
-    Object.defineProperty(Molecule.prototype, "numBonds", {
-        get: function () { return this.bonds.length; },
-        enumerable: true,
-        configurable: true
-    });
-    Molecule.prototype.getBond = function (idx) {
+    }
+    atomElement(idx) { return this.getAtom(idx).element; }
+    atomX(idx) { return this.getAtom(idx).x; }
+    atomY(idx) { return this.getAtom(idx).y; }
+    atomCharge(idx) { return this.getAtom(idx).charge; }
+    atomUnpaired(idx) { return this.getAtom(idx).unpaired; }
+    atomIsotope(idx) { return this.getAtom(idx).isotope; }
+    atomHExplicit(idx) { return this.getAtom(idx).hExplicit; }
+    atomMapNum(idx) { return this.getAtom(idx).mapNum; }
+    atomExtra(idx) { return this.getAtom(idx).extra.slice(0); }
+    atomTransient(idx) { return this.getAtom(idx).transient.slice(0); }
+    get numBonds() { return this.bonds.length; }
+    getBond(idx) {
         if (idx < 1 || idx > this.bonds.length)
-            throw "Molecule.getBond: index " + idx + " out of range (#bonds=" + this.bonds.length + ")";
+            throw `Molecule.getBond: index ${idx} out of range (#bonds=${this.bonds.length})`;
         ;
         return this.bonds[idx - 1];
-    };
-    Molecule.prototype.bondFrom = function (idx) { return this.getBond(idx).from; };
-    Molecule.prototype.bondTo = function (idx) { return this.getBond(idx).to; };
-    Molecule.prototype.bondOrder = function (idx) { return this.getBond(idx).order; };
-    Molecule.prototype.bondType = function (idx) { return this.getBond(idx).type; };
-    Molecule.prototype.bondExtra = function (idx) { return this.getBond(idx).extra.slice(0); };
-    Molecule.prototype.bondTransient = function (idx) { return this.getBond(idx).transient.slice(0); };
-    Molecule.prototype.addAtom = function (element, x, y, charge, unpaired) {
-        if (charge === void 0) { charge = 0; }
-        if (unpaired === void 0) { unpaired = 0; }
-        var a = new Atom();
+    }
+    bondFrom(idx) { return this.getBond(idx).from; }
+    bondTo(idx) { return this.getBond(idx).to; }
+    bondOrder(idx) { return this.getBond(idx).order; }
+    bondType(idx) { return this.getBond(idx).type; }
+    bondExtra(idx) { return this.getBond(idx).extra.slice(0); }
+    bondTransient(idx) { return this.getBond(idx).transient.slice(0); }
+    addAtom(element, x, y, charge = 0, unpaired = 0) {
+        let a = new Atom();
         a.element = element;
         a.x = x;
         a.y = y;
@@ -1255,13 +1500,13 @@ var Molecule = (function () {
         this.trashTransient();
         this.trashGraph();
         return this.atoms.length;
-    };
-    Molecule.prototype.swapAtoms = function (a1, a2) {
-        var a = this.atoms[a1 - 1];
+    }
+    swapAtoms(a1, a2) {
+        let a = this.atoms[a1 - 1];
         this.atoms[a1 - 1] = this.atoms[a2 - 1];
         this.atoms[a2 - 1] = a;
-        for (var n = 0; n < this.bonds.length; n++) {
-            var b = this.bonds[n];
+        for (let n = 0; n < this.bonds.length; n++) {
+            let b = this.bonds[n];
             if (b.from == a2)
                 b.from = a1;
             else if (b.from == a1)
@@ -1273,10 +1518,9 @@ var Molecule = (function () {
         }
         this.trashGraph();
         this.trashTransient();
-    };
-    Molecule.prototype.addBond = function (from, to, order, type) {
-        if (type === void 0) { type = Molecule.BONDTYPE_NORMAL; }
-        var b = new Bond();
+    }
+    addBond(from, to, order, type = Molecule.BONDTYPE_NORMAL) {
+        let b = new Bond();
         b.from = from;
         b.to = to;
         b.order = order;
@@ -1287,41 +1531,41 @@ var Molecule = (function () {
         this.trashTransient();
         this.trashGraph();
         return this.bonds.length;
-    };
-    Molecule.prototype.setBondFrom = function (idx, bfr) {
+    }
+    setBondFrom(idx, bfr) {
         this.getBond(idx).from = bfr;
         this.trashTransient();
         this.trashGraph();
-    };
-    Molecule.prototype.setBondTo = function (idx, to) {
+    }
+    setBondTo(idx, to) {
         this.getBond(idx).to = to;
         this.trashTransient();
         this.trashGraph();
-    };
-    Molecule.prototype.setBondFromTo = function (idx, bfr, bto) {
+    }
+    setBondFromTo(idx, bfr, bto) {
         this.getBond(idx).from = bfr;
         this.getBond(idx).to = bto;
         this.trashTransient();
         this.trashGraph();
-    };
-    Molecule.prototype.setBondOrder = function (idx, order) {
+    }
+    setBondOrder(idx, order) {
         this.getBond(idx).order = order;
         this.trashTransient();
-    };
-    Molecule.prototype.setBondType = function (idx, type) {
+    }
+    setBondType(idx, type) {
         this.getBond(idx).type = type;
         this.trashTransient();
-    };
-    Molecule.prototype.setBondExtra = function (idx, extra) {
+    }
+    setBondExtra(idx, extra) {
         this.getBond(idx).extra = extra.slice(0);
-    };
-    Molecule.prototype.setBondTransient = function (idx, transi) {
+    }
+    setBondTransient(idx, transi) {
         this.getBond(idx).transient = transi.slice(0);
         if (transi.length > 0)
             this.hasTransient = true;
-    };
-    Molecule.prototype.deleteAtomAndBonds = function (idx) {
-        for (var n = this.numBonds; n >= 1; n--) {
+    }
+    deleteAtomAndBonds(idx) {
+        for (let n = this.numBonds; n >= 1; n--) {
             if (this.bondFrom(n) == idx || this.bondTo(n) == idx)
                 this.deleteBond(n);
             else {
@@ -1334,50 +1578,50 @@ var Molecule = (function () {
         this.atoms.splice(idx - 1, 1);
         this.trashTransient();
         this.trashGraph();
-    };
-    Molecule.prototype.deleteBond = function (idx) {
+    }
+    deleteBond(idx) {
         this.bonds.splice(idx - 1, 1);
         this.trashTransient();
         this.trashGraph();
-    };
-    Molecule.prototype.atomHydrogens = function (idx) {
-        var hy = this.atomHExplicit(idx);
+    }
+    atomHydrogens(idx) {
+        let hy = this.atomHExplicit(idx);
         if (hy != Molecule.HEXPLICIT_UNKNOWN)
             return hy;
-        for (var n = 0; n < Molecule.HYVALENCE_EL.length; n++)
+        for (let n = 0; n < Molecule.HYVALENCE_EL.length; n++)
             if (Molecule.HYVALENCE_EL[n] == this.atomElement(idx)) {
                 hy = Molecule.HYVALENCE_VAL[n];
                 break;
             }
         if (hy == Molecule.HEXPLICIT_UNKNOWN)
             return 0;
-        var ch = this.atomCharge(idx);
+        let ch = this.atomCharge(idx);
         if (this.atomElement(idx) == 'C')
             ch = -Math.abs(ch);
         hy += ch - this.atomUnpaired(idx);
-        var adjBonds = this.atomAdjBonds(idx);
-        for (var n = 0; n < adjBonds.length; n++)
+        let adjBonds = this.atomAdjBonds(idx);
+        for (let n = 0; n < adjBonds.length; n++)
             hy -= this.bondOrder(adjBonds[n]);
         return hy < 0 ? 0 : hy;
-    };
-    Molecule.prototype.findBond = function (a1, a2) {
-        for (var n = 1; n <= this.numBonds; n++) {
-            var b1 = this.bondFrom(n), b2 = this.bondTo(n);
+    }
+    findBond(a1, a2) {
+        for (let n = 1; n <= this.numBonds; n++) {
+            let b1 = this.bondFrom(n), b2 = this.bondTo(n);
             if ((a1 == b1 && a2 == b2) || (a1 == b2 && a2 == b1))
                 return n;
         }
         return 0;
-    };
-    Molecule.prototype.bondOther = function (idx, ref) {
-        var b1 = this.bondFrom(idx), b2 = this.bondTo(idx);
+    }
+    bondOther(idx, ref) {
+        let b1 = this.bondFrom(idx), b2 = this.bondTo(idx);
         if (b1 == ref)
             return b2;
         if (b2 == ref)
             return b1;
         return 0;
-    };
-    Molecule.prototype.atomExplicit = function (idx) {
-        var a = this.atoms[idx - 1];
+    }
+    atomExplicit(idx) {
+        let a = this.atoms[idx - 1];
         if (a.isotope != Molecule.ISOTOPE_NATURAL)
             return true;
         if (a.element != 'C' || a.charge != 0 || a.unpaired != 0)
@@ -1385,42 +1629,42 @@ var Molecule = (function () {
         if (this.atomAdjCount(idx) == 0)
             return true;
         return false;
-    };
-    Molecule.prototype.atomRingBlock = function (idx) {
+    }
+    atomRingBlock(idx) {
         if (this.graph == null)
             this.buildGraph();
         if (this.ringID == null)
             this.buildRingID();
         return this.ringID[idx - 1];
-    };
-    Molecule.prototype.bondInRing = function (idx) {
-        var r1 = this.atomRingBlock(this.bondFrom(idx)), r2 = this.atomRingBlock(this.bondTo(idx));
+    }
+    bondInRing(idx) {
+        let r1 = this.atomRingBlock(this.bondFrom(idx)), r2 = this.atomRingBlock(this.bondTo(idx));
         return r1 > 0 && r1 == r2;
-    };
-    Molecule.prototype.atomConnComp = function (idx) {
+    }
+    atomConnComp(idx) {
         if (this.graph == null)
             this.buildGraph();
         if (this.compID == null)
             this.buildConnComp();
         return this.compID[idx - 1];
-    };
-    Molecule.prototype.atomAdjCount = function (idx) {
+    }
+    atomAdjCount(idx) {
         this.buildGraph();
         return this.graph[idx - 1].length;
-    };
-    Molecule.prototype.atomAdjList = function (idx) {
+    }
+    atomAdjList(idx) {
         this.buildGraph();
-        var adj = this.graph[idx - 1].slice(0);
-        for (var n = adj.length - 1; n >= 0; n--)
+        let adj = this.graph[idx - 1].slice(0);
+        for (let n = adj.length - 1; n >= 0; n--)
             adj[n]++;
         return adj;
-    };
-    Molecule.prototype.atomAdjBonds = function (idx) {
+    }
+    atomAdjBonds(idx) {
         this.buildGraph();
         return this.graphBond[idx - 1].slice(0);
-    };
-    Molecule.prototype.findRingsOfSize = function (size) {
-        var rings = null;
+    }
+    findRingsOfSize(size) {
+        let rings = null;
         if (size == 3 && this.ring3 != null)
             rings = this.ring3;
         if (size == 4 && this.ring4 != null)
@@ -1437,9 +1681,9 @@ var Molecule = (function () {
             if (this.ringID == null)
                 this.buildRingID();
             rings = [];
-            for (var n = 1; n <= this.atoms.length; n++) {
+            for (let n = 1; n <= this.atoms.length; n++) {
                 if (this.ringID[n - 1] > 0) {
-                    var path = Vec.numberArray(0, size);
+                    let path = Vec.numberArray(0, size);
                     path[0] = n;
                     this.recursiveRingFind(path, 1, size, this.ringID[n - 1], rings);
                 }
@@ -1455,31 +1699,35 @@ var Molecule = (function () {
             if (size == 7)
                 this.ring7 = rings;
         }
-        var ret = [];
-        for (var n = 0; n < rings.length; n++)
+        let ret = [];
+        for (let n = 0; n < rings.length; n++)
             ret.push(rings[n].slice(0));
         return ret;
-    };
-    Molecule.prototype.boundary = function () {
+    }
+    boundary() {
         if (this.atoms.length == 0)
             return Box.zero();
-        var x1 = this.atoms[0].x, x2 = x1;
-        var y1 = this.atoms[0].y, y2 = y1;
-        for (var n = 1; n < this.atoms.length; n++) {
+        let x1 = this.atoms[0].x, x2 = x1;
+        let y1 = this.atoms[0].y, y2 = y1;
+        for (let n = 1; n < this.atoms.length; n++) {
             x1 = Math.min(x1, this.atoms[n].x);
             y1 = Math.min(y1, this.atoms[n].y);
             x2 = Math.max(x2, this.atoms[n].x);
             y2 = Math.max(y2, this.atoms[n].y);
         }
         return new Box(x1, y1, x2 - x1, y2 - y1);
-    };
-    Molecule.prototype.atomicNumber = function (idx) {
+    }
+    atomicNumber(idx) {
         return Molecule.elementAtomicNumber(this.atomElement(idx));
-    };
-    Molecule.elementAtomicNumber = function (element) {
+    }
+    static elementAtomicNumber(element) {
         return Math.max(0, Chemistry.ELEMENTS.indexOf(element));
-    };
-    Molecule.prototype.compareTo = function (other) {
+    }
+    is3D() { return this.hasZCoord; }
+    setIs3D(v) { this.hasZCoord = v; }
+    atomZ(idx) { return this.getAtom(idx).z; }
+    setAtomZ(idx, z) { this.getAtom(idx).z = z; }
+    compareTo(other) {
         if (other == null || other.numAtoms == 0)
             return this.numAtoms == 0 ? 0 : 1;
         if (this.numAtoms < other.numAtoms)
@@ -1490,7 +1738,7 @@ var Molecule = (function () {
             return -1;
         if (this.numBonds > other.numBonds)
             return 1;
-        for (var n = 1; n <= this.numAtoms; n++) {
+        for (let n = 1; n <= this.numAtoms; n++) {
             if (this.atomElement(n) < other.atomElement(n))
                 return -1;
             if (this.atomElement(n) > other.atomElement(n))
@@ -1523,12 +1771,12 @@ var Molecule = (function () {
                 return -1;
             if (this.atomMapNum(n) > other.atomMapNum(n))
                 return 1;
-            var tx1 = this.atomExtra(n), tx2 = other.atomExtra(n);
+            let tx1 = this.atomExtra(n), tx2 = other.atomExtra(n);
             if (tx1.length < tx2.length)
                 return -1;
             if (tx1.length > tx2.length)
                 return 1;
-            for (var i = 0; i < tx1.length; i++)
+            for (let i = 0; i < tx1.length; i++)
                 if (tx1[i] < tx2[i])
                     return -1;
                 else if (tx1[i] > tx2[i])
@@ -1539,13 +1787,13 @@ var Molecule = (function () {
                 return -1;
             if (tx1.length > tx2.length)
                 return 1;
-            for (var i = 0; i < tx1.length; i++)
+            for (let i = 0; i < tx1.length; i++)
                 if (tx1[i] < tx2[i])
                     return -1;
                 else if (tx1[i] > tx2[i])
                     return 1;
         }
-        for (var n = 1; n <= this.numBonds; n++) {
+        for (let n = 1; n <= this.numBonds; n++) {
             if (this.bondFrom(n) < other.bondFrom(n))
                 return -1;
             if (this.bondFrom(n) > other.bondFrom(n))
@@ -1562,12 +1810,12 @@ var Molecule = (function () {
                 return -1;
             if (this.bondType(n) > other.bondType(n))
                 return 1;
-            var tx1 = this.bondExtra(n), tx2 = other.bondExtra(n);
+            let tx1 = this.bondExtra(n), tx2 = other.bondExtra(n);
             if (tx1.length < tx2.length)
                 return -1;
             if (tx1.length > tx2.length)
                 return 1;
-            for (var i = 0; i < tx1.length; i++)
+            for (let i = 0; i < tx1.length; i++)
                 if (tx1[i] < tx2[i])
                     return -1;
                 else if (tx1[i] > tx2[i])
@@ -1578,42 +1826,38 @@ var Molecule = (function () {
                 return -1;
             if (tx1.length > tx2.length)
                 return 1;
-            for (var i = 0; i < tx1.length; i++)
+            for (let i = 0; i < tx1.length; i++)
                 if (tx1[i] < tx2[i])
                     return -1;
                 else if (tx1[i] > tx2[i])
                     return 1;
         }
         return 0;
-    };
-    Molecule.prototype.trashGraph = function () {
+    }
+    trashGraph() {
         this.graph = null;
         this.graphBond = null;
-    };
-    Molecule.prototype.trashTransient = function () {
+    }
+    trashTransient() {
         if (this.keepTransient || !this.hasTransient)
             return;
-        for (var _i = 0, _a = this.atoms; _i < _a.length; _i++) {
-            var a = _a[_i];
+        for (let a of this.atoms)
             a.transient = [];
-        }
-        for (var _b = 0, _c = this.bonds; _b < _c.length; _b++) {
-            var b = _c[_b];
+        for (let b of this.bonds)
             b.transient = [];
-        }
         this.hasTransient = false;
-    };
-    Molecule.prototype.buildGraph = function () {
+    }
+    buildGraph() {
         if (this.graph != null && this.graphBond != null)
             return;
-        var graph = [], graphBond = [];
-        var na = this.numAtoms, nb = this.numBonds;
-        for (var n = 0; n < na; n++) {
+        let graph = [], graphBond = [];
+        let na = this.numAtoms, nb = this.numBonds;
+        for (let n = 0; n < na; n++) {
             graph.push([]);
             graphBond.push([]);
         }
-        for (var n = 1; n <= nb; n++) {
-            var b = this.getBond(n);
+        for (let n = 1; n <= nb; n++) {
+            let b = this.getBond(n);
             graph[b.from - 1].push(b.to - 1);
             graph[b.to - 1].push(b.from - 1);
             graphBond[b.from - 1].push(n);
@@ -1621,19 +1865,19 @@ var Molecule = (function () {
         }
         this.graph = graph;
         this.graphBond = graphBond;
-    };
-    Molecule.prototype.buildConnComp = function () {
-        var numAtoms = this.atoms.length;
+    }
+    buildConnComp() {
+        const numAtoms = this.atoms.length;
         this.compID = Vec.numberArray(0, numAtoms);
-        for (var n = 0; n < numAtoms; n++)
+        for (let n = 0; n < numAtoms; n++)
             this.compID[n] = 0;
-        var comp = 1;
+        let comp = 1;
         this.compID[0] = comp;
         while (true) {
-            var anything = false;
-            for (var n = 0; n < numAtoms; n++)
+            let anything = false;
+            for (let n = 0; n < numAtoms; n++)
                 if (this.compID[n] == comp) {
-                    for (var i = 0; i < this.graph[n].length; i++) {
+                    for (let i = 0; i < this.graph[n].length; i++) {
                         if (this.compID[this.graph[n][i]] == 0) {
                             this.compID[this.graph[n][i]] = comp;
                             anything = true;
@@ -1641,7 +1885,7 @@ var Molecule = (function () {
                     }
                 }
             if (!anything) {
-                for (var n = 0; n < numAtoms; n++) {
+                for (let n = 0; n < numAtoms; n++) {
                     if (this.compID[n] == 0) {
                         this.compID[n] = ++comp;
                         anything = true;
@@ -1652,20 +1896,20 @@ var Molecule = (function () {
                     break;
             }
         }
-    };
-    Molecule.prototype.buildRingID = function () {
-        var numAtoms = this.atoms.length;
+    }
+    buildRingID() {
+        const numAtoms = this.atoms.length;
         this.ringID = Vec.numberArray(0, numAtoms);
         if (numAtoms == 0)
             return;
-        var visited = Vec.booleanArray(false, numAtoms);
-        for (var n = 0; n < numAtoms; n++) {
+        let visited = Vec.booleanArray(false, numAtoms);
+        for (let n = 0; n < numAtoms; n++) {
             this.ringID[n] = 0;
             visited[n] = false;
         }
-        var path = Vec.numberArray(0, numAtoms + 1), plen = 0, numVisited = 0;
+        let path = Vec.numberArray(0, numAtoms + 1), plen = 0, numVisited = 0;
         while (true) {
-            var last = void 0, current = void 0;
+            let last, current;
             if (plen == 0) {
                 last = -1;
                 for (current = 0; visited[current]; current++) { }
@@ -1673,7 +1917,7 @@ var Molecule = (function () {
             else {
                 last = path[plen - 1];
                 current = -1;
-                for (var n = 0; n < this.graph[last].length; n++) {
+                for (let n = 0; n < this.graph[last].length; n++) {
                     if (!visited[this.graph[last][n]]) {
                         current = this.graph[last][n];
                         break;
@@ -1681,17 +1925,17 @@ var Molecule = (function () {
                 }
             }
             if (current >= 0 && plen >= 2) {
-                var back = path[plen - 1];
-                for (var n = 0; n < this.graph[current].length; n++) {
-                    var join = this.graph[current][n];
+                let back = path[plen - 1];
+                for (let n = 0; n < this.graph[current].length; n++) {
+                    let join = this.graph[current][n];
                     if (join != back && visited[join]) {
                         path[plen] = current;
-                        for (var i = plen; i == plen || path[i + 1] != join; i--) {
-                            var id = this.ringID[path[i]];
+                        for (let i = plen; i == plen || path[i + 1] != join; i--) {
+                            let id = this.ringID[path[i]];
                             if (id == 0)
                                 this.ringID[path[i]] = last;
                             else if (id != last) {
-                                for (var j = 0; j < numAtoms; j++)
+                                for (let j = 0; j < numAtoms; j++)
                                     if (this.ringID[j] == id)
                                         this.ringID[j] = last;
                             }
@@ -1710,43 +1954,43 @@ var Molecule = (function () {
             if (numVisited == numAtoms)
                 break;
         }
-        var nextID = 0;
-        for (var i = 0; i < numAtoms; i++) {
+        let nextID = 0;
+        for (let i = 0; i < numAtoms; i++) {
             if (this.ringID[i] > 0) {
                 nextID--;
-                for (var j = numAtoms - 1; j >= i; j--)
+                for (let j = numAtoms - 1; j >= i; j--)
                     if (this.ringID[j] == this.ringID[i])
                         this.ringID[j] = nextID;
             }
         }
-        for (var i = 0; i < numAtoms; i++)
+        for (let i = 0; i < numAtoms; i++)
             this.ringID[i] = -this.ringID[i];
-    };
-    Molecule.prototype.recursiveRingFind = function (path, psize, capacity, rblk, rings) {
+    }
+    recursiveRingFind(path, psize, capacity, rblk, rings) {
         if (psize < capacity) {
-            var last_1 = path[psize - 1];
-            for (var n = 0; n < this.graph[last_1 - 1].length; n++) {
-                var adj = this.graph[last_1 - 1][n] + 1;
+            let last = path[psize - 1];
+            for (let n = 0; n < this.graph[last - 1].length; n++) {
+                let adj = this.graph[last - 1][n] + 1;
                 if (this.ringID[adj - 1] != rblk)
                     continue;
-                var fnd_1 = false;
-                for (var i = 0; i < psize; i++) {
+                let fnd = false;
+                for (let i = 0; i < psize; i++) {
                     if (path[i] == adj) {
-                        fnd_1 = true;
+                        fnd = true;
                         break;
                     }
                 }
-                if (!fnd_1) {
-                    var newPath = path.slice(0);
+                if (!fnd) {
+                    let newPath = path.slice(0);
                     newPath[psize] = adj;
                     this.recursiveRingFind(newPath, psize + 1, capacity, rblk, rings);
                 }
             }
             return;
         }
-        var last = path[psize - 1];
-        var fnd = false;
-        for (var n = 0; n < this.graph[last - 1].length; n++) {
+        let last = path[psize - 1];
+        let fnd = false;
+        for (let n = 0; n < this.graph[last - 1].length; n++) {
             if (this.graph[last - 1][n] + 1 == path[0]) {
                 fnd = true;
                 break;
@@ -1754,30 +1998,30 @@ var Molecule = (function () {
         }
         if (!fnd)
             return;
-        for (var n = 0; n < path.length; n++) {
-            var count = 0, p = path[n] - 1;
-            for (var i = 0; i < this.graph[p].length; i++)
+        for (let n = 0; n < path.length; n++) {
+            let count = 0, p = path[n] - 1;
+            for (let i = 0; i < this.graph[p].length; i++)
                 if (path.indexOf(this.graph[p][i] + 1) >= 0)
                     count++;
             if (count != 2)
                 return;
         }
-        var first = 0;
-        for (var n = 1; n < psize; n++)
+        let first = 0;
+        for (let n = 1; n < psize; n++)
             if (path[n] < path[first])
                 first = n;
-        var fm = (first - 1 + psize) % psize, fp = (first + 1) % psize;
-        var flip = path[fm] < path[fp];
+        let fm = (first - 1 + psize) % psize, fp = (first + 1) % psize;
+        let flip = path[fm] < path[fp];
         if (first != 0 || flip) {
-            var newPath = Vec.numberArray(0, psize);
-            for (var n = 0; n < psize; n++)
+            let newPath = Vec.numberArray(0, psize);
+            for (let n = 0; n < psize; n++)
                 newPath[n] = path[(first + (flip ? psize - n : n)) % psize];
             path = newPath;
         }
-        for (var n = 0; n < rings.length; n++) {
-            var look = rings[n];
-            var same = true;
-            for (var i = 0; i < psize; i++) {
+        for (let n = 0; n < rings.length; n++) {
+            let look = rings[n];
+            let same = true;
+            for (let i = 0; i < psize; i++) {
                 if (look[i] != path[i]) {
                     same = false;
                     break;
@@ -1787,52 +2031,214 @@ var Molecule = (function () {
                 return;
         }
         rings.push(path);
-    };
-    Molecule.IDEALBOND = 1.5;
-    Molecule.HEXPLICIT_UNKNOWN = -1;
-    Molecule.ISOTOPE_NATURAL = 0;
-    Molecule.BONDTYPE_NORMAL = 0;
-    Molecule.BONDTYPE_INCLINED = 1;
-    Molecule.BONDTYPE_DECLINED = 2;
-    Molecule.BONDTYPE_UNKNOWN = 3;
-    Molecule.HYVALENCE_EL = ['C', 'N', 'O', 'S', 'P'];
-    Molecule.HYVALENCE_VAL = [4, 3, 2, 2, 3];
-    return Molecule;
-}());
-var MolUtil = (function () {
-    function MolUtil() {
     }
-    MolUtil.isBlank = function (mol) {
+}
+Molecule.IDEALBOND = 1.5;
+Molecule.HEXPLICIT_UNKNOWN = -1;
+Molecule.ISOTOPE_NATURAL = 0;
+Molecule.BONDTYPE_NORMAL = 0;
+Molecule.BONDTYPE_INCLINED = 1;
+Molecule.BONDTYPE_DECLINED = 2;
+Molecule.BONDTYPE_UNKNOWN = 3;
+Molecule.HYVALENCE_EL = ['C', 'N', 'O', 'S', 'P'];
+Molecule.HYVALENCE_VAL = [4, 3, 2, 2, 3];
+let crc_table = [];
+function make_crc_table() {
+    if (crc_table.length > 0)
+        return;
+    for (let n = 0; n < 256; n++) {
+        let c = n;
+        for (let i = 0; i < 8; i++)
+            if ((c & 1) != 0)
+                c = 0xEDB88320 ^ (c >> 1);
+            else
+                c >>= 1;
+        crc_table.push(c);
+    }
+}
+const BOOT_CRC = 0xFFFFFFFF;
+function start_crc() { return BOOT_CRC; }
+function feed_crc(crc, byte) {
+    let idx = (crc ^ byte) & 0xFF;
+    return crc_table[idx] ^ (crc >> 8);
+}
+function end_crc(crc) { return crc ^ BOOT_CRC; }
+class CircularFingerprints {
+    constructor(meta, kind) {
+        this.meta = meta;
+        this.kind = kind;
+        this.identity = [];
+        this.resolvedChiral = [];
+        this.atomGroup = [];
+        this.fplist = [];
+        this.amask = [];
+        this.atomAdj = [];
+        this.bondAdj = [];
+        make_crc_table();
+    }
+    static tanimoto(hash1, hash2) {
+        let shared = 0, total = 0;
+        let sz1 = hash1.length, sz2 = hash2.length;
+        if (sz1 == 0 && sz2 == 0)
+            return 0;
+        let i1 = 0, i2 = 0;
+        while (i1 < sz1 || i2 < sz2) {
+            if (i1 == sz1) {
+                total += sz2 - i2;
+                break;
+            }
+            if (i2 == sz2) {
+                total += sz1 - i1;
+                break;
+            }
+            let v1 = hash1[i1], v2 = hash2[i2];
+            if (v1 == v2) {
+                shared += 1;
+                i1 += 1;
+                i2 += 1;
+            }
+            else if (v1 < v2)
+                i1 += 1;
+            else
+                i2 += 1;
+            total += 1;
+        }
+        return shared / total;
+    }
+    initialIdentityECFP(atom) {
+        const mol = this.meta.mol;
+        let adj = mol.atomAdjList(atom);
+        let nheavy = 0, nhydr = mol.atomHydrogens(atom);
+        for (let n = 0; n < adj.length; n++) {
+            if (mol.atomElement(adj[n]) == 'H')
+                nhydr++;
+            else
+                nheavy++;
+        }
+        let atno = mol.atomicNumber(atom);
+        let degree = Math.max(0, Chemistry.ELEMENT_BONDING[atno] - nhydr);
+        let chg = mol.atomCharge(atom);
+        let inring = mol.atomRingBlock(atom) > 0 ? 1 : 0;
+        let crc = start_crc();
+        crc = feed_crc(crc, (nheavy << 4) | degree);
+        crc = feed_crc(crc, atno);
+        crc = feed_crc(crc, chg + 0x80);
+        crc = feed_crc(crc, (nhydr << 4) | inring);
+        return end_crc(crc);
+    }
+    circularIterate(iter, atom) {
+        let adj = this.atomAdj[atom - 1], adjb = this.bondAdj[atom - 1];
+        var seq = Vec.numberArray(0, 2 + 2 * adj.length);
+        seq[0] = iter;
+        seq[1] = this.identity[atom - 1];
+        for (let n = 0; n < adj.length; n++) {
+            seq[2 * n + 2] = this.meta.isBondAromatic(adjb[n]) ? 0xF : this.meta.mol.bondOrder(adjb[n]);
+            seq[2 * n + 3] = this.identity[adj[n] - 1];
+        }
+        let p = 0;
+        while (p < adj.length - 1) {
+            let i = 2 + 2 * p;
+            if (seq[i] > seq[i + 2] || (seq[i] == seq[i + 2] && seq[i + 1] > seq[i + 3])) {
+                Vec.swap(seq, i, i + 2);
+                Vec.swap(seq, i + 1, i + 3);
+                if (p > 0)
+                    p--;
+            }
+            else
+                p++;
+        }
+        var crc = start_crc();
+        for (let n = 0; n < seq.length; n += 2) {
+            crc = feed_crc(crc, seq[n]);
+            let v = seq[n + 1];
+            crc = feed_crc(crc, v >> 24);
+            crc = feed_crc(crc, (v >> 16) & 0xFF);
+            crc = feed_crc(crc, (v >> 8) & 0xFF);
+            crc = feed_crc(crc, v & 0xFF);
+        }
+        if (!this.resolvedChiral[atom - 1] && Vec.arrayLength(this.meta.rubricTetra) > 0) {
+            let ru = this.meta.rubricTetra[atom - 1];
+            let par = [
+                ru[0] == 0 ? 0 : this.identity[ru[0] - 1],
+                ru[1] == 0 ? 0 : this.identity[ru[1] - 1],
+                ru[2] == 0 ? 0 : this.identity[ru[2] - 1],
+                ru[3] == 0 ? 0 : this.identity[ru[3] - 1]
+            ];
+            if (par[0] != par[1] && par[0] != par[2] && par[0] != par[3] && par[1] != par[2] && par[1] != par[3] && par[2] != par[3]) {
+                crc = feed_crc(crc, Permutation.parityOrder(par) + 1);
+                this.resolvedChiral[atom - 1] = true;
+            }
+        }
+        return end_crc(crc);
+    }
+    growAtoms(atoms) {
+        let mask = Vec.booleanArray(false, this.meta.mol.numAtoms);
+        for (let n = 0; n < atoms.length; n++) {
+            mask[atoms[n] - 1] = true;
+            for (let a of this.atomAdj[atoms[n] - 1])
+                mask[a - 1] = true;
+        }
+        return Vec.add(Vec.maskIdx(mask), 1);
+    }
+    applyNewFP(newFP) {
+        this.fplist.push(newFP);
+    }
+    considerNewFP(newFP) {
+        let hit = -1;
+        let fp = null;
+        for (let n = 0; n < this.fplist.length; n++) {
+            let lookFP = this.fplist[n];
+            if (Vec.equals(lookFP.atoms, newFP.atoms)) {
+                fp = lookFP;
+                hit = n;
+                break;
+            }
+        }
+        if (hit < 0) {
+            this.fplist.push(newFP);
+            return;
+        }
+        if (fp.iteration < newFP.iteration || fp.hashCode < newFP.hashCode)
+            return;
+        this.fplist[hit] = newFP;
+    }
+}
+CircularFingerprints.CLASS_ECFP0 = 1;
+CircularFingerprints.CLASS_ECFP2 = 2;
+CircularFingerprints.CLASS_ECFP4 = 3;
+CircularFingerprints.CLASS_ECFP6 = 4;
+class MolUtil {
+    static isBlank(mol) {
         return mol == null || mol.numAtoms == 0;
-    };
-    MolUtil.notBlank = function (mol) {
+    }
+    static notBlank(mol) {
         return mol != null || mol.numAtoms > 0;
-    };
-    MolUtil.orBlank = function (mol) { return mol == null ? new Molecule() : mol; };
-    MolUtil.hasAnyAbbrev = function (mol) {
-        for (var n = 1; n <= mol.numAtoms; n++)
+    }
+    static orBlank(mol) { return mol == null ? new Molecule() : mol; }
+    static hasAnyAbbrev(mol) {
+        for (let n = 1; n <= mol.numAtoms; n++)
             if (MolUtil.hasAbbrev(mol, n))
                 return true;
         return false;
-    };
-    MolUtil.hasAbbrev = function (mol, atom) {
-        var extra = mol.atomExtra(atom);
-        for (var n = 0; n < (extra == null ? 0 : extra.length); n++)
+    }
+    static hasAbbrev(mol, atom) {
+        let extra = mol.atomExtra(atom);
+        for (let n = 0; n < (extra == null ? 0 : extra.length); n++)
             if (extra[n].startsWith('a'))
                 return true;
         return false;
-    };
-    MolUtil.getAbbrev = function (mol, atom) {
-        var extra = mol.atomExtra(atom);
-        for (var n = 0; n < (extra != null ? extra.length : 0); n++)
+    }
+    static getAbbrev(mol, atom) {
+        let extra = mol.atomExtra(atom);
+        for (let n = 0; n < (extra != null ? extra.length : 0); n++)
             if (extra[n].startsWith("a")) {
                 return Molecule.fromString(extra[n].substring(1));
             }
         return null;
-    };
-    MolUtil.setAbbrev = function (mol, atom, frag) {
-        var attidx = 0;
-        for (var n = 1; n <= frag.numAtoms; n++)
+    }
+    static setAbbrev(mol, atom, frag) {
+        let attidx = 0;
+        for (let n = 1; n <= frag.numAtoms; n++)
             if (frag.atomElement(n) == MolUtil.ABBREV_ATTACHMENT) {
                 if (attidx > 0)
                     throw 'Multiple attachment points indicated: invalid.';
@@ -1844,17 +2250,17 @@ var MolUtil = (function () {
             frag = frag.clone();
             frag.swapAtoms(attidx, 1);
         }
-        var adj = mol.atomAdjList(atom);
+        let adj = mol.atomAdjList(atom);
         if (adj.length > 1)
             throw 'Setting abbreviation for non-terminal atom.';
         if (frag.atomAdjCount(1) == 1 && mol.atomAdjCount(atom) > 0) {
-            var b1 = mol.findBond(atom, mol.atomAdjList(atom)[0]);
-            var b2 = frag.findBond(1, frag.atomAdjList(1)[0]);
+            let b1 = mol.findBond(atom, mol.atomAdjList(atom)[0]);
+            let b2 = frag.findBond(1, frag.atomAdjList(1)[0]);
             mol.setBondOrder(b1, frag.bondOrder(b2));
         }
-        var extra = mol.atomExtra(atom);
-        var idx = -1;
-        for (var n = 0; n < (extra != null ? extra.length : 0); n++)
+        let extra = mol.atomExtra(atom);
+        let idx = -1;
+        for (let n = 0; n < (extra != null ? extra.length : 0); n++)
             if (extra[n].startsWith("a")) {
                 idx = n;
                 break;
@@ -1863,9 +2269,9 @@ var MolUtil = (function () {
             idx = extra.push(null) - 1;
         extra[idx] = "a" + frag.toString();
         mol.setAtomExtra(atom, extra);
-    };
-    MolUtil.validateAbbrevs = function (mol) {
-        for (var n = 1; n <= mol.numAtoms; n++)
+    }
+    static validateAbbrevs(mol) {
+        for (let n = 1; n <= mol.numAtoms; n++)
             if (MolUtil.hasAbbrev(mol, n)) {
                 if (mol.atomAdjCount(n) > 1)
                     MolUtil.clearAbbrev(mol, n);
@@ -1878,11 +2284,11 @@ var MolUtil = (function () {
                 if (mol.atomHExplicit(n) != Molecule.HEXPLICIT_UNKNOWN)
                     mol.setAtomHExplicit(n, Molecule.HEXPLICIT_UNKNOWN);
             }
-    };
-    MolUtil.expandAbbrevs = function (mol, alignCoords) {
+    }
+    static expandAbbrevs(mol, alignCoords) {
         while (true) {
-            var anything = false;
-            for (var n = 1; n <= mol.numAtoms; n++)
+            let anything = false;
+            for (let n = 1; n <= mol.numAtoms; n++)
                 if (MolUtil.hasAbbrev(mol, n)) {
                     if (MolUtil.expandOneAbbrev(mol, n, alignCoords))
                         anything = true;
@@ -1891,43 +2297,41 @@ var MolUtil = (function () {
             if (!anything)
                 break;
         }
-    };
-    MolUtil.expandOneAbbrev = function (mol, atom, alignCoords) {
-        var frag = MolUtil.getAbbrev(mol, atom);
+    }
+    static expandOneAbbrev(mol, atom, alignCoords) {
+        let frag = MolUtil.getAbbrev(mol, atom);
         if (frag == null)
             return false;
         if (mol.atomAdjCount(atom) != 1 || frag.numAtoms == 0) {
             MolUtil.clearAbbrev(mol, atom);
             return false;
         }
-        var m = mol.atomMapNum(atom);
+        let m = mol.atomMapNum(atom);
         if (m > 0)
-            for (var _i = 0, _a = frag.atomAdjList(1); _i < _a.length; _i++) {
-                var n = _a[_i];
+            for (let n of frag.atomAdjList(1))
                 frag.setAtomMapNum(n, m);
-            }
         MolUtil.expandOneAbbrevFrag(mol, atom, frag, alignCoords);
         return true;
-    };
-    MolUtil.expandOneAbbrevFrag = function (mol, atom, frag, alignCoords) {
-        var nbr = mol.atomAdjCount(atom) == 1 ? mol.atomAdjList(atom)[0] : 0;
+    }
+    static expandOneAbbrevFrag(mol, atom, frag, alignCoords) {
+        let nbr = mol.atomAdjCount(atom) == 1 ? mol.atomAdjList(atom)[0] : 0;
         if (alignCoords) {
-            var vx1 = mol.atomX(atom) - mol.atomX(nbr), vy1 = mol.atomY(atom) - mol.atomY(nbr);
-            var adj = frag.atomAdjList(1);
-            var vx2 = 0, vy2 = 0, inv = 1.0 / adj.length;
-            for (var n = 0; n < adj.length; n++) {
+            let vx1 = mol.atomX(atom) - mol.atomX(nbr), vy1 = mol.atomY(atom) - mol.atomY(nbr);
+            let adj = frag.atomAdjList(1);
+            let vx2 = 0, vy2 = 0, inv = 1.0 / adj.length;
+            for (let n = 0; n < adj.length; n++) {
                 vx2 += frag.atomX(adj[n]) - frag.atomX(1);
                 vy2 += frag.atomY(adj[n]) - frag.atomY(1);
             }
             vx2 *= inv;
             vy2 *= inv;
-            var th1 = Math.atan2(vy1, vx1), th2 = Math.atan2(vy2, vx2);
+            let th1 = Math.atan2(vy1, vx1), th2 = Math.atan2(vy2, vx2);
             CoordUtil.rotateMolecule(frag, th1 - th2);
             CoordUtil.translateMolecule(frag, mol.atomX(nbr) - frag.atomX(1), mol.atomY(nbr) - frag.atomY(1));
         }
-        var join = mol.numAtoms + 1;
+        let join = mol.numAtoms + 1;
         mol.append(frag);
-        for (var n = 1; n <= mol.numBonds; n++) {
+        for (let n = 1; n <= mol.numBonds; n++) {
             if (mol.bondFrom(n) == join)
                 mol.setBondFrom(n, nbr);
             if (mol.bondTo(n) == join)
@@ -1935,39 +2339,39 @@ var MolUtil = (function () {
         }
         mol.deleteAtomAndBonds(join);
         mol.deleteAtomAndBonds(atom);
-    };
-    MolUtil.clearAbbrev = function (mol, atom) {
-        var extra = mol.atomExtra(atom);
-        for (var n = 0; n < (extra != null ? extra.length : 0); n++)
+    }
+    static clearAbbrev(mol, atom) {
+        let extra = mol.atomExtra(atom);
+        for (let n = 0; n < (extra != null ? extra.length : 0); n++)
             if (extra[n].startsWith("a")) {
                 extra.splice(n, 1);
                 mol.setAtomExtra(atom, extra);
                 mol.setAtomElement(atom, 'C');
                 return;
             }
-    };
-    MolUtil.setAtomElement = function (mol, atom, el) {
+    }
+    static setAtomElement(mol, atom, el) {
         if (mol.atomElement(atom) == el)
             return;
         this.clearAbbrev(mol, atom);
         mol.setAtomElement(atom, el);
-    };
-    MolUtil.addBond = function (mol, bfr, bto, order, type) {
+    }
+    static addBond(mol, bfr, bto, order, type) {
         if (type == null)
             type = Molecule.BONDTYPE_NORMAL;
         if (mol.atomAdjCount(bfr) >= 1)
             this.clearAbbrev(mol, bfr);
         if (mol.atomAdjCount(bto) >= 1)
             this.clearAbbrev(mol, bto);
-        var b = mol.findBond(bfr, bto);
+        let b = mol.findBond(bfr, bto);
         if (b > 0)
             mol.deleteBond(b);
         return mol.addBond(bfr, bto, order, type);
-    };
-    MolUtil.subgraphMask = function (mol, mask) {
-        var invidx = [];
-        var sum = 0;
-        for (var n = 0; n < mol.numAtoms; n++) {
+    }
+    static subgraphMask(mol, mask) {
+        let invidx = [];
+        let sum = 0;
+        for (let n = 0; n < mol.numAtoms; n++) {
             if (mask[n])
                 invidx.push(++sum);
             else
@@ -1977,90 +2381,88 @@ var MolUtil = (function () {
             return new Molecule();
         if (sum == mol.numAtoms)
             return mol.clone();
-        var frag = new Molecule();
-        for (var n = 1; n <= mol.numAtoms; n++)
+        let frag = new Molecule();
+        for (let n = 1; n <= mol.numAtoms; n++)
             if (mask[n - 1]) {
-                var num = frag.addAtom(mol.atomElement(n), mol.atomX(n), mol.atomY(n), mol.atomCharge(n), mol.atomUnpaired(n));
+                let num = frag.addAtom(mol.atomElement(n), mol.atomX(n), mol.atomY(n), mol.atomCharge(n), mol.atomUnpaired(n));
                 frag.setAtomIsotope(num, mol.atomIsotope(n));
                 frag.setAtomHExplicit(num, mol.atomHExplicit(n));
                 frag.setAtomMapNum(num, mol.atomMapNum(n));
                 frag.setAtomExtra(num, mol.atomExtra(n));
             }
-        for (var n = 1; n <= mol.numBonds; n++) {
-            var bfr = invidx[mol.bondFrom(n) - 1], bto = invidx[mol.bondTo(n) - 1];
+        for (let n = 1; n <= mol.numBonds; n++) {
+            let bfr = invidx[mol.bondFrom(n) - 1], bto = invidx[mol.bondTo(n) - 1];
             if (bfr > 0 && bto > 0) {
-                var num = frag.addBond(bfr, bto, mol.bondOrder(n), mol.bondType(n));
+                let num = frag.addBond(bfr, bto, mol.bondOrder(n), mol.bondType(n));
                 frag.setBondExtra(num, mol.bondExtra(n));
             }
         }
         return frag;
-    };
-    MolUtil.subgraphIndex = function (mol, idx) {
-        var invidx = Vec.numberArray(0, mol.numAtoms);
-        for (var n = 0; n < invidx.length; n++)
+    }
+    static subgraphIndex(mol, idx) {
+        let invidx = Vec.numberArray(0, mol.numAtoms);
+        for (let n = 0; n < invidx.length; n++)
             invidx[n] = 0;
-        for (var n = 0; n < idx.length; n++)
+        for (let n = 0; n < idx.length; n++)
             invidx[idx[n] - 1] = n + 1;
-        var frag = new Molecule();
-        for (var n = 0; n < idx.length; n++) {
-            var num = frag.addAtom(mol.atomElement(idx[n]), mol.atomX(idx[n]), mol.atomY(idx[n]), mol.atomCharge(idx[n]), mol.atomUnpaired(idx[n]));
+        let frag = new Molecule();
+        for (let n = 0; n < idx.length; n++) {
+            let num = frag.addAtom(mol.atomElement(idx[n]), mol.atomX(idx[n]), mol.atomY(idx[n]), mol.atomCharge(idx[n]), mol.atomUnpaired(idx[n]));
             frag.setAtomIsotope(num, mol.atomIsotope(idx[n]));
             frag.setAtomHExplicit(num, mol.atomHExplicit(idx[n]));
             frag.setAtomMapNum(num, mol.atomMapNum(idx[n]));
             frag.setAtomExtra(num, mol.atomExtra(idx[n]));
         }
-        for (var n = 1; n <= mol.numBonds; n++) {
-            var bfr = invidx[mol.bondFrom(n) - 1], bto = invidx[mol.bondTo(n) - 1];
+        for (let n = 1; n <= mol.numBonds; n++) {
+            let bfr = invidx[mol.bondFrom(n) - 1], bto = invidx[mol.bondTo(n) - 1];
             if (bfr > 0 && bto > 0) {
-                var num = frag.addBond(bfr, bto, mol.bondOrder(n), mol.bondType(n));
+                let num = frag.addBond(bfr, bto, mol.bondOrder(n), mol.bondType(n));
                 frag.setBondExtra(num, mol.bondExtra(n));
             }
         }
         return frag;
-    };
-    MolUtil.deleteAtoms = function (mol, idx) {
-        var mask = Vec.booleanArray(true, mol.numAtoms);
-        for (var n = 0; n < idx.length; n++)
+    }
+    static deleteAtoms(mol, idx) {
+        let mask = Vec.booleanArray(true, mol.numAtoms);
+        for (let n = 0; n < idx.length; n++)
             mask[idx[n] - 1] = false;
         return MolUtil.subgraphMask(mol, mask);
-    };
-    MolUtil.componentList = function (mol) {
-        var sz = mol.numAtoms;
+    }
+    static componentList(mol) {
+        let sz = mol.numAtoms;
         if (sz == 0)
             return null;
-        var g = Graph.fromMolecule(mol);
-        var groups = g.calculateComponentGroups();
-        for (var _i = 0, groups_1 = groups; _i < groups_1.length; _i++) {
-            var grp = groups_1[_i];
+        let g = Graph.fromMolecule(mol);
+        let groups = g.calculateComponentGroups();
+        for (let grp of groups)
             Vec.addTo(grp, 1);
-        }
         return groups;
-    };
-    MolUtil.getAtomSides = function (mol, atom) {
-        var g = Graph.fromMolecule(mol);
-        var cc = g.calculateComponents();
-        var mask = [];
-        for (var n = 0; n < cc.length; n++)
+    }
+    static getAtomSides(mol, atom) {
+        let g = Graph.fromMolecule(mol);
+        let cc = g.calculateComponents();
+        let mask = [];
+        for (let n = 0; n < cc.length; n++)
             mask.push(cc[n] == cc[atom - 1]);
         mask[atom - 1] = false;
-        var oldmap = Vec.maskIdx(mask);
+        let oldmap = Vec.maskIdx(mask);
         g.keepNodesMask(mask);
         cc = g.calculateComponents();
-        var ccmax = Vec.max(cc);
-        var grps = [];
-        for (var n = 0; n < ccmax; n++)
+        let ccmax = Vec.max(cc);
+        let grps = [];
+        for (let n = 0; n < ccmax; n++)
             grps.push([atom]);
-        for (var n = 0; n < cc.length; n++)
+        for (let n = 0; n < cc.length; n++)
             grps[cc[n] - 1].push(oldmap[n] + 1);
         return grps;
-    };
-    MolUtil.getBondSides = function (mol, bond) {
-        var bf = mol.bondFrom(bond), bt = mol.bondTo(bond);
-        var inRing = mol.bondInRing(bond);
-        var g = Graph.fromMolecule(mol);
-        var cc = g.calculateComponents();
-        var mask = [];
-        for (var n = 0; n < cc.length; n++)
+    }
+    static getBondSides(mol, bond) {
+        let bf = mol.bondFrom(bond), bt = mol.bondTo(bond);
+        let inRing = mol.bondInRing(bond);
+        let g = Graph.fromMolecule(mol);
+        let cc = g.calculateComponents();
+        let mask = [];
+        for (let n = 0; n < cc.length; n++)
             mask.push(cc[n] == cc[bf - 1]);
         if (!inRing)
             g.removeEdge(bf - 1, bt - 1);
@@ -2068,45 +2470,45 @@ var MolUtil = (function () {
             mask[bf - 1] = false;
             mask[bt - 1] = false;
         }
-        var oldmap = Vec.maskIdx(mask);
+        let oldmap = Vec.maskIdx(mask);
         g.keepNodesMask(mask);
         cc = g.calculateComponents();
-        var ccmax = Vec.max(cc);
-        var grps = Vec.anyArray([], ccmax);
-        for (var n = 0; n < ccmax; n++) {
+        let ccmax = Vec.max(cc);
+        let grps = Vec.anyArray([], ccmax);
+        for (let n = 0; n < ccmax; n++) {
             if (inRing) {
                 grps[n].push(bf);
                 grps[n].push(bt);
             }
         }
-        for (var n = 0; n < cc.length; n++)
+        for (let n = 0; n < cc.length; n++)
             grps[cc[n] - 1].push(oldmap[n] + 1);
         return grps;
-    };
-    MolUtil.arrayAtomX = function (mol) {
-        var x = Vec.numberArray(0, mol.numAtoms);
-        for (var n = x.length - 1; n >= 0; n--)
+    }
+    static arrayAtomX(mol) {
+        let x = Vec.numberArray(0, mol.numAtoms);
+        for (let n = x.length - 1; n >= 0; n--)
             x[n] = mol.atomX(n + 1);
         return x;
-    };
-    MolUtil.arrayAtomY = function (mol) {
-        var y = Vec.numberArray(0, mol.numAtoms);
-        for (var n = y.length - 1; n >= 0; n--)
+    }
+    static arrayAtomY(mol) {
+        let y = Vec.numberArray(0, mol.numAtoms);
+        for (let n = y.length - 1; n >= 0; n--)
             y[n] = mol.atomY(n + 1);
         return y;
-    };
-    MolUtil.molecularFormula = function (mol, punctuation) {
-        for (var n = 1; n <= mol.numAtoms; n++)
+    }
+    static molecularFormula(mol, punctuation) {
+        for (let n = 1; n <= mol.numAtoms; n++)
             if (MolUtil.hasAbbrev(mol, n)) {
                 mol = mol.clone();
                 MolUtil.expandAbbrevs(mol, false);
                 break;
             }
-        var countC = 0, countH = 0;
-        var elements = Vec.stringArray('', mol.numAtoms);
-        for (var n = 1; n <= mol.numAtoms; n++) {
+        let countC = 0, countH = 0;
+        let elements = Vec.stringArray('', mol.numAtoms);
+        for (let n = 1; n <= mol.numAtoms; n++) {
             countH += mol.atomHydrogens(n);
-            var el = mol.atomElement(n);
+            let el = mol.atomElement(n);
             if (el == 'C')
                 countC++;
             else if (el == 'H')
@@ -2115,7 +2517,7 @@ var MolUtil = (function () {
                 elements[n - 1] = el;
         }
         elements.sort();
-        var formula = '';
+        let formula = '';
         if (countC > 0)
             formula += 'C';
         if (countC > 1) {
@@ -2134,9 +2536,9 @@ var MolUtil = (function () {
             if (punctuation)
                 formula += '}';
         }
-        for (var n = 0; n < elements.length; n++)
+        for (let n = 0; n < elements.length; n++)
             if (elements[n].length > 0) {
-                var count = 1;
+                let count = 1;
                 for (; n + 1 < elements.length && elements[n] == elements[n + 1]; n++)
                     count++;
                 formula += elements[n];
@@ -2149,47 +2551,47 @@ var MolUtil = (function () {
                 }
             }
         return formula.toString();
-    };
-    MolUtil.molecularWeight = function (mol) {
-        for (var n = 1; n <= mol.numAtoms; n++)
+    }
+    static molecularWeight(mol) {
+        for (let n = 1; n <= mol.numAtoms; n++)
             if (MolUtil.hasAbbrev(mol, n)) {
                 mol = mol.clone();
                 MolUtil.expandAbbrevs(mol, false);
                 break;
             }
-        var mw = 0;
-        for (var n = 1; n <= mol.numAtoms; n++) {
+        let mw = 0;
+        for (let n = 1; n <= mol.numAtoms; n++) {
             mw += mol.atomHydrogens(n) * Chemistry.NATURAL_ATOMIC_WEIGHTS[1];
-            var iso = mol.atomIsotope(n);
+            let iso = mol.atomIsotope(n);
             if (iso != Molecule.ISOTOPE_NATURAL) {
                 mw += iso;
                 continue;
             }
-            var an = Molecule.elementAtomicNumber(mol.atomElement(n));
+            let an = Molecule.elementAtomicNumber(mol.atomElement(n));
             if (an > 0 && an < Chemistry.NATURAL_ATOMIC_WEIGHTS.length)
                 mw += Chemistry.NATURAL_ATOMIC_WEIGHTS[an];
         }
         return mw;
-    };
-    MolUtil.removeDuplicateBonds = function (mol) {
-        var bpri = [];
-        for (var n = 1; n <= mol.numBonds; n++) {
-            var p_1 = Math.min(mol.bondFrom(n), mol.bondTo(n)) * mol.numAtoms + Math.max(mol.bondFrom(n), mol.bondTo(n));
-            bpri.push(p_1);
+    }
+    static removeDuplicateBonds(mol) {
+        let bpri = [];
+        for (let n = 1; n <= mol.numBonds; n++) {
+            let p = Math.min(mol.bondFrom(n), mol.bondTo(n)) * mol.numAtoms + Math.max(mol.bondFrom(n), mol.bondTo(n));
+            bpri.push(p);
         }
-        var bidx = Vec.idxSort(bpri);
-        var keepmask = Vec.booleanArray(false, bidx.length);
-        var p = 0;
+        let bidx = Vec.idxSort(bpri);
+        let keepmask = Vec.booleanArray(false, bidx.length);
+        let p = 0;
         while (p < bidx.length) {
-            var sz = 1;
+            let sz = 1;
             while (p + sz < bidx.length && bpri[bidx[p]] == bpri[bidx[p + sz]])
                 sz++;
-            var best = p;
-            for (var n = p + 1; n < p + sz; n++) {
-                var b1 = bidx[best] + 1, b2 = bidx[n] + 1;
-                var a1 = mol.bondFrom(b1), a2 = mol.bondTo(b1);
-                var el1 = mol.atomElement(a1), el2 = mol.atomElement(a2);
-                var limit1 = 0, limit2 = 0;
+            let best = p;
+            for (let n = p + 1; n < p + sz; n++) {
+                let b1 = bidx[best] + 1, b2 = bidx[n] + 1;
+                let a1 = mol.bondFrom(b1), a2 = mol.bondTo(b1);
+                let el1 = mol.atomElement(a1), el2 = mol.atomElement(a2);
+                let limit1 = 0, limit2 = 0;
                 if (el1 == 'C' || el1 == 'N')
                     limit1 = 4;
                 else if (el1 == 'O')
@@ -2199,8 +2601,8 @@ var MolUtil = (function () {
                 else if (el2 == 'O')
                     limit2 = 3;
                 if (limit1 > 0 || limit2 > 0) {
-                    var boB1A1 = 0, boB1A2 = 0, boB2A1 = 0, boB2A2 = 0;
-                    for (var i = 1; i <= mol.numBonds; i++) {
+                    let boB1A1 = 0, boB1A2 = 0, boB2A1 = 0, boB2A2 = 0;
+                    for (let i = 1; i <= mol.numBonds; i++) {
                         if (i != b2 && (mol.bondFrom(i) == a1 || mol.bondTo(i) == a1))
                             boB1A1 += mol.bondOrder(i);
                         if (i != b2 && (mol.bondFrom(i) == a2 || mol.bondTo(i) == a2))
@@ -2210,7 +2612,7 @@ var MolUtil = (function () {
                         if (i != b1 && (mol.bondFrom(i) == a2 || mol.bondTo(i) == a2))
                             boB2A2 += mol.bondOrder(i);
                     }
-                    var bad1 = 0, bad2 = 0;
+                    let bad1 = 0, bad2 = 0;
                     if (limit1 > 0 && boB1A1 > limit1)
                         bad1++;
                     if (limit2 > 0 && boB1A2 > limit2)
@@ -2226,7 +2628,7 @@ var MolUtil = (function () {
                         continue;
                     }
                 }
-                var exotic1 = 2 * mol.bondOrder(b1), exotic2 = 2 * mol.bondOrder(b2);
+                let exotic1 = 2 * mol.bondOrder(b1), exotic2 = 2 * mol.bondOrder(b2);
                 exotic1 += (exotic1 == 0 ? 4 : 0) + (mol.bondType(b1) != Molecule.BONDTYPE_NORMAL ? 1 : 0);
                 exotic2 += (exotic2 == 0 ? 4 : 0) + (mol.bondType(b2) != Molecule.BONDTYPE_NORMAL ? 1 : 0);
                 if (exotic2 > exotic1)
@@ -2235,41 +2637,41 @@ var MolUtil = (function () {
             keepmask[bidx[best]] = true;
             p += sz;
         }
-        for (var n = mol.numBonds; n >= 1; n--)
+        for (let n = mol.numBonds; n >= 1; n--)
             if (!keepmask[n - 1] || mol.bondFrom(n) == mol.bondTo(n))
                 mol.deleteBond(n);
-    };
-    MolUtil.calculateWalkWeight = function (mol, atom) {
-        var ccsz = 0, cc = Graph.fromMolecule(mol).calculateComponents();
-        for (var n = 0; n < cc.length; n++)
+    }
+    static calculateWalkWeight(mol, atom) {
+        let ccsz = 0, cc = Graph.fromMolecule(mol).calculateComponents();
+        for (let n = 0; n < cc.length; n++)
             if (cc[n] == cc[atom - 1])
                 ccsz++;
-        var w = Vec.numberArray(1, mol.numAtoms), wn = Vec.numberArray(0, mol.numAtoms);
+        let w = Vec.numberArray(1, mol.numAtoms), wn = Vec.numberArray(0, mol.numAtoms);
         w[atom - 1] = 0;
         for (; ccsz > 0; ccsz--) {
-            for (var n = 0; n < mol.numAtoms; n++)
+            for (let n = 0; n < mol.numAtoms; n++)
                 wn[n] = w[n];
-            for (var n = 1; n <= mol.numBonds; n++) {
-                var a1 = mol.bondFrom(n) - 1, a2 = mol.bondTo(n) - 1;
+            for (let n = 1; n <= mol.numBonds; n++) {
+                let a1 = mol.bondFrom(n) - 1, a2 = mol.bondTo(n) - 1;
                 w[a1] += wn[a2] * 0.1;
                 w[a2] += wn[a1] * 0.1;
             }
             w[atom - 1] = 0;
         }
         return w;
-    };
-    MolUtil.totalHydrogens = function (mol, atom) {
-        var hc = mol.atomHydrogens(atom);
-        var adj = mol.atomAdjList(atom);
-        for (var n = 0; n < adj.length; n++)
+    }
+    static totalHydrogens(mol, atom) {
+        let hc = mol.atomHydrogens(atom);
+        let adj = mol.atomAdjList(atom);
+        for (let n = 0; n < adj.length; n++)
             if (mol.atomElement(adj[n]) == 'H')
                 hc++;
         return hc;
-    };
-    MolUtil.stripHydrogens = function (mol, force) {
+    }
+    static stripHydrogens(mol, force) {
         if (force == null)
             force = false;
-        for (var n = mol.numAtoms; n >= 1; n--) {
+        for (let n = mol.numAtoms; n >= 1; n--) {
             if (mol.atomElement(n) != 'H')
                 continue;
             if (!force) {
@@ -2281,10 +2683,10 @@ var MolUtil = (function () {
                     continue;
                 if (mol.atomAdjCount(n) != 1)
                     continue;
-                var other = mol.atomAdjList(n)[0];
+                let other = mol.atomAdjList(n)[0];
                 if (mol.atomElement(other) == 'H')
                     continue;
-                var bond = mol.atomAdjBonds(n)[0];
+                let bond = mol.atomAdjBonds(n)[0];
                 if (mol.bondOrder(bond) != 1 || mol.bondType(bond) != Molecule.BONDTYPE_NORMAL)
                     continue;
                 if (mol.atomHExplicit(other) != Molecule.HEXPLICIT_UNKNOWN)
@@ -2294,20 +2696,20 @@ var MolUtil = (function () {
             }
             mol.deleteAtomAndBonds(n);
         }
-    };
-    MolUtil.createHydrogens = function (mol, position) {
+    }
+    static createHydrogens(mol, position) {
         if (position == null)
             position = false;
-        var na = mol.numAtoms;
-        for (var n = 1; n <= na; n++) {
-            var hc = mol.atomHydrogens(n);
+        let na = mol.numAtoms;
+        for (let n = 1; n <= na; n++) {
+            let hc = mol.atomHydrogens(n);
             if (hc == 0)
                 continue;
             if (mol.atomHExplicit(n) != Molecule.HEXPLICIT_UNKNOWN)
                 mol.setAtomHExplicit(n, 0);
             if (!position) {
                 for (; hc > 0; hc--) {
-                    var a = mol.addAtom("H", mol.atomX(n), mol.atomY(n));
+                    let a = mol.addAtom("H", mol.atomX(n), mol.atomY(n));
                     mol.addBond(n, a, 1);
                 }
             }
@@ -2315,55 +2717,58 @@ var MolUtil = (function () {
                 SketchUtil.placeAdditionalHydrogens(mol, n, hc);
         }
         return mol.numAtoms - na;
-    };
-    MolUtil.TEMPLATE_ATTACHMENT = 'X';
-    MolUtil.ABBREV_ATTACHMENT = '*';
-    return MolUtil;
-}());
-var Graph = (function () {
-    function Graph(sz, edge1, edge2) {
+    }
+    static atomVec3(mol, atom) {
+        if (mol.is3D())
+            return [mol.atomX(atom), mol.atomY(atom), mol.atomZ(atom)];
+        else
+            return [mol.atomX(atom), mol.atomY(atom), 0];
+    }
+}
+MolUtil.TEMPLATE_ATTACHMENT = 'X';
+MolUtil.ABBREV_ATTACHMENT = '*';
+class Graph {
+    constructor(sz, edge1, edge2) {
         this.nbrs = [];
         this.indices = null;
         this.labels = null;
         this.props = null;
         if (sz != null)
-            for (var n = 0; n < sz; n++)
+            for (let n = 0; n < sz; n++)
                 this.nbrs.push([]);
         if (edge1 != null && edge2 != null) {
-            for (var n = 0; n < edge1.length; n++) {
+            for (let n = 0; n < edge1.length; n++) {
                 this.nbrs[edge1[n]].push(edge2[n]);
                 this.nbrs[edge2[n]].push(edge1[n]);
             }
         }
     }
-    Graph.prototype.clone = function () {
-        var g = new Graph();
-        for (var _i = 0, _a = this.nbrs; _i < _a.length; _i++) {
-            var nbr = _a[_i];
+    clone() {
+        let g = new Graph();
+        for (let nbr of this.nbrs)
             g.nbrs.push(nbr.slice(0));
-        }
         g.indices = this.indices == null ? null : this.indices.slice(0);
         g.labels = this.labels == null ? null : this.labels.slice(0);
         g.props = this.props == null ? null : this.props.slice(0);
         return g;
-    };
-    Graph.fromMolecule = function (mol) {
-        var g = new Graph();
+    }
+    static fromMolecule(mol) {
+        let g = new Graph();
         g.indices = [];
-        for (var n = 0; n < mol.numAtoms; n++) {
+        for (let n = 0; n < mol.numAtoms; n++) {
             g.nbrs.push([]);
             g.indices.push(n + 1);
         }
-        for (var n = 1; n <= mol.numBonds; n++) {
-            var bfr = mol.bondFrom(n) - 1, bto = mol.bondTo(n) - 1;
+        for (let n = 1; n <= mol.numBonds; n++) {
+            let bfr = mol.bondFrom(n) - 1, bto = mol.bondTo(n) - 1;
             g.nbrs[bfr].push(bto);
             g.nbrs[bto].push(bfr);
         }
         return g;
-    };
-    Graph.prototype.toString = function () {
-        var buff = '#nodes=' + this.nbrs.length;
-        for (var n = 0; n < this.nbrs.length; n++) {
+    }
+    toString() {
+        let buff = '#nodes=' + this.nbrs.length;
+        for (let n = 0; n < this.nbrs.length; n++) {
             buff += ' ' + n + ':{' + this.nbrs[n] + '}';
             if (n < Vec.arrayLength(this.indices))
                 buff += '[i=' + this.indices[n] + ']';
@@ -2371,30 +2776,30 @@ var Graph = (function () {
                 buff += '[l=' + this.labels[n] + ']';
         }
         return buff;
-    };
-    Graph.prototype.numNodes = function () { return this.nbrs.length; };
-    Graph.prototype.numEdges = function (N) { return this.nbrs[N].length; };
-    Graph.prototype.getEdge = function (N, E) { return this.nbrs[N][E]; };
-    Graph.prototype.getAdj = function (N) { return this.nbrs[N]; };
-    Graph.prototype.getIndex = function (N) { return this.indices == null ? 0 : this.indices[N]; };
-    Graph.prototype.setIndex = function (N, idx) {
+    }
+    numNodes() { return this.nbrs.length; }
+    numEdges(N) { return this.nbrs[N].length; }
+    getEdge(N, E) { return this.nbrs[N][E]; }
+    getAdj(N) { return this.nbrs[N]; }
+    getIndex(N) { return this.indices == null ? 0 : this.indices[N]; }
+    setIndex(N, idx) {
         if (this.indices == null)
             this.indices = Vec.numberArray(0, this.nbrs.length);
         this.indices[N] = idx;
-    };
-    Graph.prototype.getLabel = function (N) { return this.labels == null ? null : this.labels[N]; };
-    Graph.prototype.setLabel = function (N, lbl) {
+    }
+    getLabel(N) { return this.labels == null ? null : this.labels[N]; }
+    setLabel(N, lbl) {
         if (this.labels == null)
             this.labels = Vec.stringArray('', this.nbrs.length);
         this.labels[N] = lbl;
-    };
-    Graph.prototype.getProperty = function (N) { return this.props == null ? null : this.props[N]; };
-    Graph.prototype.setProperty = function (N, prp) {
+    }
+    getProperty(N) { return this.props == null ? null : this.props[N]; }
+    setProperty(N, prp) {
         if (this.props == null)
             this.props = new Array(this.nbrs.length);
         this.props[N] = prp;
-    };
-    Graph.prototype.addNode = function () {
+    }
+    addNode() {
         this.nbrs.push([]);
         if (this.indices != null)
             this.indices.push(0);
@@ -2403,35 +2808,34 @@ var Graph = (function () {
         if (this.props != null)
             this.props.push(null);
         return this.nbrs.length - 1;
-    };
-    Graph.prototype.hasEdge = function (N1, N2) {
+    }
+    hasEdge(N1, N2) {
         if (this.nbrs[N1].length <= this.nbrs[N2].length)
             return this.nbrs[N1].indexOf(N2) >= 0;
         else
             return this.nbrs[N2].indexOf(N1) >= 0;
-    };
-    Graph.prototype.addEdge = function (N1, N2) {
+    }
+    addEdge(N1, N2) {
         this.nbrs[N1].push(N2);
         this.nbrs[N2].push(N1);
-    };
-    Graph.prototype.removeEdge = function (N1, N2) {
-        var i1 = this.nbrs[N1].indexOf(N2), i2 = this.nbrs[N2].indexOf(N1);
+    }
+    removeEdge(N1, N2) {
+        let i1 = this.nbrs[N1].indexOf(N2), i2 = this.nbrs[N2].indexOf(N1);
         if (i1 >= 0)
             this.nbrs[N1].splice(i1, 1);
         if (i2 >= 0)
             this.nbrs[N2].splice(i2, 1);
-    };
-    Graph.prototype.isolateNode = function (N) {
-        for (var _i = 0, _a = this.nbrs[N]; _i < _a.length; _i++) {
-            var o = _a[_i];
-            var i = this.nbrs[o].indexOf(N);
+    }
+    isolateNode(N) {
+        for (let o of this.nbrs[N]) {
+            let i = this.nbrs[o].indexOf(N);
             if (i >= 0)
                 this.nbrs[o].splice(i, 1);
         }
         this.nbrs[N] = [];
-    };
-    Graph.prototype.keepNodesMask = function (mask) {
-        var oldsz = this.nbrs.length, newsz = Vec.maskCount(mask);
+    }
+    keepNodesMask(mask) {
+        const oldsz = this.nbrs.length, newsz = Vec.maskCount(mask);
         if (newsz == oldsz)
             return;
         if (newsz == 0) {
@@ -2441,15 +2845,13 @@ var Graph = (function () {
             this.props = null;
             return;
         }
-        var newmap = Vec.maskMap(mask);
-        var newnbrs = Vec.anyArray([], newsz);
-        for (var n = 0, pos = 0; n < oldsz; n++)
+        let newmap = Vec.maskMap(mask);
+        let newnbrs = Vec.anyArray([], newsz);
+        for (let n = 0, pos = 0; n < oldsz; n++)
             if (mask[n]) {
-                for (var _i = 0, _a = this.nbrs[n]; _i < _a.length; _i++) {
-                    var i = _a[_i];
+                for (let i of this.nbrs[n])
                     if (mask[i])
                         newnbrs[pos].push(newmap[i]);
-                }
                 pos++;
             }
         this.nbrs = newnbrs;
@@ -2459,24 +2861,24 @@ var Graph = (function () {
             this.labels = Vec.maskGet(this.labels, mask);
         if (this.props != null)
             this.props = Vec.maskGet(this.props, mask);
-    };
-    Graph.prototype.calculateComponents = function () {
-        var sz = this.nbrs.length;
+    }
+    calculateComponents() {
+        const sz = this.nbrs.length;
         if (sz == 0)
             return [];
-        var cc = Vec.numberArray(0, sz);
+        let cc = Vec.numberArray(0, sz);
         cc[0] = 1;
-        var first = 1, high = 1;
+        let first = 1, high = 1;
         while (true) {
             while (first < sz && cc[first] > 0) {
                 first++;
             }
             if (first >= sz)
                 break;
-            var anything = false;
-            for (var i = first; i < sz; i++)
+            let anything = false;
+            for (let i = first; i < sz; i++)
                 if (cc[i] == 0) {
-                    for (var j = 0; j < this.nbrs[i].length; j++) {
+                    for (let j = 0; j < this.nbrs[i].length; j++) {
                         if (cc[this.nbrs[i][j]] != 0) {
                             cc[i] = cc[this.nbrs[i][j]];
                             anything = true;
@@ -2487,39 +2889,36 @@ var Graph = (function () {
                 cc[first] = ++high;
         }
         return cc;
-    };
-    Graph.prototype.calculateComponentGroups = function () {
+    }
+    calculateComponentGroups() {
         if (this.nbrs.length == 0)
             return [];
-        var cc = this.calculateComponents();
-        var sz = Vec.max(cc);
-        var grp = Vec.anyArray([], sz);
-        for (var n = 0; n < cc.length; n++)
+        let cc = this.calculateComponents();
+        let sz = Vec.max(cc);
+        let grp = Vec.anyArray([], sz);
+        for (let n = 0; n < cc.length; n++)
             grp[cc[n]].push(n);
         return grp;
-    };
-    return Graph;
-}());
-var CoordUtil = (function () {
-    function CoordUtil() {
     }
-    CoordUtil.atomAtPoint = function (mol, x, y, tolerance) {
+}
+class CoordUtil {
+    static atomAtPoint(mol, x, y, tolerance) {
         if (tolerance == null)
             tolerance = CoordUtil.OVERLAP_THRESHOLD;
-        var tolsq = tolerance * tolerance;
-        for (var n = 1; n <= mol.numAtoms; n++)
+        const tolsq = tolerance * tolerance;
+        for (let n = 1; n <= mol.numAtoms; n++)
             if (norm2_xy(mol.atomX(n) - x, mol.atomY(n) - y) < tolsq)
                 return n;
         return 0;
-    };
-    CoordUtil.sketchEquivalent = function (mol1, mol2, tolerance) {
+    }
+    static sketchEquivalent(mol1, mol2, tolerance) {
         if (tolerance == null)
             tolerance = CoordUtil.DEFAULT_EQUIV_TOLERANCE;
-        var na = mol1.numAtoms, nb = mol1.numBonds;
+        const na = mol1.numAtoms, nb = mol1.numBonds;
         if (na != mol2.numAtoms || nb != mol2.numBonds)
             return false;
-        var tolsq = tolerance * tolerance;
-        var box1 = mol1.boundary(), box2 = mol2.boundary();
+        const tolsq = tolerance * tolerance;
+        let box1 = mol1.boundary(), box2 = mol2.boundary();
         if (Math.abs(box1.minX() - box2.minX()) > tolerance)
             return false;
         if (Math.abs(box1.minY() - box2.minY()) > tolerance)
@@ -2528,19 +2927,19 @@ var CoordUtil = (function () {
             return false;
         if (Math.abs(box1.maxY() - box2.maxY()) > tolerance)
             return false;
-        var mx1 = MolUtil.arrayAtomX(mol1), my1 = MolUtil.arrayAtomY(mol1);
-        var mx2 = MolUtil.arrayAtomX(mol2), my2 = MolUtil.arrayAtomY(mol2);
-        var map = Vec.numberArray(0, na);
-        var mask = Vec.booleanArray(false, na);
-        for (var i = 0; i < na; i++) {
-            var j = -1;
+        let mx1 = MolUtil.arrayAtomX(mol1), my1 = MolUtil.arrayAtomY(mol1);
+        let mx2 = MolUtil.arrayAtomX(mol2), my2 = MolUtil.arrayAtomY(mol2);
+        let map = Vec.numberArray(0, na);
+        let mask = Vec.booleanArray(false, na);
+        for (let i = 0; i < na; i++) {
+            let j = -1;
             if (norm2_xy(mx1[i] - mx2[i], my1[i] - my2[i]) < tolsq)
                 j = i;
             if (j < 0) {
-                var bestdsq = Number.MAX_VALUE;
-                for (var n = 0; n < na; n++)
+                let bestdsq = Number.MAX_VALUE;
+                for (let n = 0; n < na; n++)
                     if (!mask[n]) {
-                        var dsq = norm2_xy(mx1[i] - mx2[n], my1[i] - my2[n]);
+                        let dsq = norm2_xy(mx1[i] - mx2[n], my1[i] - my2[n]);
                         if (dsq < bestdsq) {
                             bestdsq = dsq;
                             j = n;
@@ -2562,9 +2961,9 @@ var CoordUtil = (function () {
                 mol2.atomHExplicit(j + 1) != Molecule.HEXPLICIT_UNKNOWN)
                 return false;
         }
-        for (var i = 1; i <= nb; i++) {
-            var i1 = mol1.bondFrom(i), i2 = mol1.bondTo(i), j1 = map[i1 - 1], j2 = map[i2 - 1];
-            var j = mol2.findBond(j1, j2);
+        for (let i = 1; i <= nb; i++) {
+            let i1 = mol1.bondFrom(i), i2 = mol1.bondTo(i), j1 = map[i1 - 1], j2 = map[i2 - 1];
+            let j = mol2.findBond(j1, j2);
             if (j == 0)
                 return false;
             if (mol1.bondOrder(i) != mol2.bondOrder(j) || mol1.bondType(i) != mol2.bondType(j))
@@ -2577,43 +2976,41 @@ var CoordUtil = (function () {
                 return false;
         }
         return true;
-    };
-    CoordUtil.sketchMappable = function (mol1, mol2, tolerance) {
+    }
+    static sketchMappable(mol1, mol2, tolerance) {
         if (tolerance == null)
             tolerance = CoordUtil.DEFAULT_EQUIV_TOLERANCE;
-        var box1 = mol1.boundary(), box2 = mol2.boundary();
-        var dx = box1.minX() - box2.minX(), dy = box1.minY() - box2.minY();
+        let box1 = mol1.boundary(), box2 = mol2.boundary();
+        let dx = box1.minX() - box2.minX(), dy = box1.minY() - box2.minY();
         if (Math.abs(dx) > tolerance * 0.1 || Math.abs(dy) > tolerance * 0.1) {
             mol2 = mol2.clone();
-            for (var n = 1; n <= mol2.numAtoms; n++)
+            for (let n = 1; n <= mol2.numAtoms; n++)
                 mol2.setAtomPos(n, mol2.atomX(n) + dx, mol2.atomY(n) + dy);
         }
         return CoordUtil.sketchEquivalent(mol1, mol2, tolerance);
-    };
-    CoordUtil.atomBondAngles = function (mol, atom, adj) {
+    }
+    static atomBondAngles(mol, atom, adj) {
         if (adj == null)
             adj = mol.atomAdjList(atom);
-        var bndang = [];
-        var cx = mol.atomX(atom), cy = mol.atomY(atom);
-        for (var _i = 0, adj_1 = adj; _i < adj_1.length; _i++) {
-            var a = adj_1[_i];
+        let bndang = [];
+        let cx = mol.atomX(atom), cy = mol.atomY(atom);
+        for (let a of adj)
             bndang.push(Math.atan2(mol.atomY(a) - cy, mol.atomX(a) - cx));
-        }
         return bndang;
-    };
-    CoordUtil.overlapsAtom = function (mol, x, y, tol) {
-        var tolsq = tol * tol;
-        for (var n = 1; n <= mol.numAtoms; n++)
+    }
+    static overlapsAtom(mol, x, y, tol) {
+        const tolsq = tol * tol;
+        for (let n = 1; n <= mol.numAtoms; n++)
             if (norm2_xy(mol.atomX(n) - x, mol.atomY(n) - y) < tolsq)
                 return true;
         return false;
-    };
-    CoordUtil.overlappingAtomMask = function (mol, thresh) {
+    }
+    static overlappingAtomMask(mol, thresh) {
         if (thresh == null)
             thresh = CoordUtil.OVERLAP_THRESHOLD;
-        var sz = mol.numAtoms;
-        var box = mol.boundary();
-        var p1, p2;
+        const sz = mol.numAtoms;
+        let box = mol.boundary();
+        let p1, p2;
         if (box.w > box.h) {
             p1 = MolUtil.arrayAtomX(mol);
             p2 = MolUtil.arrayAtomY(mol);
@@ -2622,12 +3019,12 @@ var CoordUtil = (function () {
             p1 = MolUtil.arrayAtomY(mol);
             p2 = MolUtil.arrayAtomX(mol);
         }
-        var omask = Vec.booleanArray(false, sz);
-        var idx = Vec.idxSort(p1);
-        var threshSQ = thresh * thresh;
-        for (var i = 1; i < sz - 1; i++) {
-            for (var j = i - 1; j >= 0; j--) {
-                var d1 = p1[idx[i]] - p1[idx[j]];
+        let omask = Vec.booleanArray(false, sz);
+        let idx = Vec.idxSort(p1);
+        const threshSQ = thresh * thresh;
+        for (let i = 1; i < sz - 1; i++) {
+            for (let j = i - 1; j >= 0; j--) {
+                let d1 = p1[idx[i]] - p1[idx[j]];
                 if (d1 > thresh)
                     break;
                 if (norm2_xy(d1, p2[idx[i]] - p2[idx[j]]) < threshSQ) {
@@ -2635,8 +3032,8 @@ var CoordUtil = (function () {
                     omask[idx[j]] = true;
                 }
             }
-            for (var j = i + 1; j < sz; j++) {
-                var d1 = p1[idx[j]] - p1[idx[i]];
+            for (let j = i + 1; j < sz; j++) {
+                let d1 = p1[idx[j]] - p1[idx[i]];
                 if (d1 > thresh)
                     break;
                 if (norm2_xy(d1, p2[idx[j]] - p2[idx[i]]) < threshSQ) {
@@ -2646,141 +3043,141 @@ var CoordUtil = (function () {
             }
         }
         return omask;
-    };
-    CoordUtil.overlappingAtomList = function (mol, thresh) {
+    }
+    static overlappingAtomList(mol, thresh) {
         if (thresh == null)
             thresh = CoordUtil.OVERLAP_THRESHOLD;
         return Vec.add(Vec.maskIdx(CoordUtil.overlappingAtomMask(mol, thresh)), 1);
-    };
-    CoordUtil.congestionPoint = function (mol, x, y, approach) {
+    }
+    static congestionPoint(mol, x, y, approach) {
         if (approach == null)
             approach = 1E-5;
-        var score = 0;
-        var na = mol.numAtoms;
-        for (var n = 1; n <= na; n++)
+        let score = 0;
+        let na = mol.numAtoms;
+        for (let n = 1; n <= na; n++)
             score += 1.0 / (approach + norm2_xy(mol.atomX(n) - x, mol.atomY(n) - y));
         return score;
-    };
-    CoordUtil.congestionMolecule = function (mol, approach) {
+    }
+    static congestionMolecule(mol, approach) {
         if (approach == null)
             approach = 1E-5;
-        var score = 0;
-        var na = mol.numAtoms;
-        var mx = MolUtil.arrayAtomX(mol), my = MolUtil.arrayAtomY(mol);
-        for (var i = 0; i < na - 1; i++)
-            for (var j = i + 1; j < na; j++)
+        let score = 0;
+        const na = mol.numAtoms;
+        let mx = MolUtil.arrayAtomX(mol), my = MolUtil.arrayAtomY(mol);
+        for (let i = 0; i < na - 1; i++)
+            for (let j = i + 1; j < na; j++)
                 score += 1.0 / (approach + norm2_xy(mx[i] - mx[j], my[i] - my[j]));
         return score;
-    };
-    CoordUtil.translateMolecule = function (mol, ox, oy) {
-        for (var n = 1; n <= mol.numAtoms; n++)
+    }
+    static translateMolecule(mol, ox, oy) {
+        for (let n = 1; n <= mol.numAtoms; n++)
             mol.setAtomPos(n, mol.atomX(n) + ox, mol.atomY(n) + oy);
-    };
-    CoordUtil.rotateMolecule = function (mol, theta, cx, cy) {
+    }
+    static rotateMolecule(mol, theta, cx, cy) {
         if (cx == null || cy == null) {
-            var box = mol.boundary();
+            let box = mol.boundary();
             cx = box.midX();
             cy = box.midY();
         }
-        var cosTheta = Math.cos(theta), sinTheta = Math.sin(theta);
-        for (var n = 1; n <= mol.numAtoms; n++) {
-            var x = mol.atomX(n) - cx, y = mol.atomY(n) - cy;
+        let cosTheta = Math.cos(theta), sinTheta = Math.sin(theta);
+        for (let n = 1; n <= mol.numAtoms; n++) {
+            let x = mol.atomX(n) - cx, y = mol.atomY(n) - cy;
             mol.setAtomPos(n, cx + x * cosTheta - y * sinTheta, cy + x * sinTheta + y * cosTheta);
         }
-    };
-    CoordUtil.rotateBond = function (mol, centre, atom, theta) {
+    }
+    static rotateBond(mol, centre, atom, theta) {
         theta = angleNorm(theta);
         if (Math.abs(theta) < 0.1 * DEGRAD)
             return;
-        var g = Graph.fromMolecule(mol);
+        let g = Graph.fromMolecule(mol);
         g.isolateNode(centre - 1);
-        var cc = g.calculateComponents();
-        var cx = mol.atomX(centre), cy = mol.atomY(centre);
-        var cosTheta = Math.cos(theta), sinTheta = Math.sin(theta);
-        for (var n = 1; n <= mol.numAtoms; n++)
+        let cc = g.calculateComponents();
+        let cx = mol.atomX(centre), cy = mol.atomY(centre);
+        let cosTheta = Math.cos(theta), sinTheta = Math.sin(theta);
+        for (let n = 1; n <= mol.numAtoms; n++)
             if (cc[n - 1] == cc[atom - 1]) {
-                var x = mol.atomX(n) - cx, y = mol.atomY(n) - cy;
+                let x = mol.atomX(n) - cx, y = mol.atomY(n) - cy;
                 mol.setAtomPos(n, cx + x * cosTheta - y * sinTheta, cy + x * sinTheta + y * cosTheta);
             }
-    };
-    CoordUtil.rotateAtoms = function (mol, mask, cx, cy, theta) {
-        var cosTheta = Math.cos(theta), sinTheta = Math.sin(theta);
-        for (var n = 1; n <= mol.numAtoms; n++)
+    }
+    static rotateAtoms(mol, mask, cx, cy, theta) {
+        let cosTheta = Math.cos(theta), sinTheta = Math.sin(theta);
+        for (let n = 1; n <= mol.numAtoms; n++)
             if (mask[n - 1]) {
-                var x = mol.atomX(n) - cx, y = mol.atomY(n) - cy;
+                let x = mol.atomX(n) - cx, y = mol.atomY(n) - cy;
                 mol.setAtomPos(n, cx + x * cosTheta - y * sinTheta, cy + x * sinTheta + y * cosTheta);
             }
-    };
-    CoordUtil.angleNeighbours = function (mol, atom) {
-        var adj = mol.atomAdjList(atom);
+    }
+    static angleNeighbours(mol, atom) {
+        let adj = mol.atomAdjList(atom);
         if (adj.length <= 1)
             return null;
-        var th = [];
-        for (var n = 0; n < adj.length; n++)
+        let th = [];
+        for (let n = 0; n < adj.length; n++)
             th.push(Math.atan2(mol.atomY(adj[n]) - mol.atomY(atom), mol.atomX(adj[n]) - mol.atomX(atom)));
         if (adj.length == 2) {
             if (angleDiff(th[1], th[0]) > 0)
                 return adj;
             return [adj[1], adj[0]];
         }
-        var idx = Vec.idxSort(th);
+        let idx = Vec.idxSort(th);
         return Vec.idxGet(adj, idx);
-    };
-    CoordUtil.mergeAtoms = function (mol, oldN, newN) {
-        for (var n = 1; n <= mol.numBonds; n++) {
+    }
+    static mergeAtoms(mol, oldN, newN) {
+        for (let n = 1; n <= mol.numBonds; n++) {
             if (mol.bondFrom(n) == oldN)
                 mol.setBondFrom(n, newN);
             if (mol.bondTo(n) == oldN)
                 mol.setBondTo(n, newN);
         }
         mol.deleteAtomAndBonds(oldN);
-    };
-    CoordUtil.normaliseBondDistances = function (mol) {
-        var nb = mol.numBonds;
+    }
+    static normaliseBondDistances(mol) {
+        const nb = mol.numBonds;
         if (nb == 0)
             return;
-        var dsq = [];
-        for (var n = 1; n <= nb; n++) {
-            var bfr = mol.bondFrom(n), bto = mol.bondTo(n);
+        let dsq = [];
+        for (let n = 1; n <= nb; n++) {
+            let bfr = mol.bondFrom(n), bto = mol.bondTo(n);
             dsq.push(norm2_xy(mol.atomX(bto) - mol.atomX(bfr), mol.atomY(bto) - mol.atomY(bfr)));
         }
-        dsq.sort();
-        var median = (nb & 1) == 1 ? Math.sqrt(dsq[nb >> 1]) : 0.5 * (Math.sqrt(dsq[nb >> 1]) + Math.sqrt(dsq[(nb >> 1) - 1]));
+        Vec.sort(dsq);
+        let median = (nb & 1) == 1 ? Math.sqrt(dsq[nb >> 1]) : 0.5 * (Math.sqrt(dsq[nb >> 1]) + Math.sqrt(dsq[(nb >> 1) - 1]));
         if (median < 0.1 || (median > Molecule.IDEALBOND * 0.9 && median < Molecule.IDEALBOND * 1.1))
             return;
-        var box = mol.boundary();
-        var cx = box.midX(), cy = box.midY();
-        var scale = Molecule.IDEALBOND / median;
-        for (var n = mol.numAtoms; n >= 1; n--) {
-            var x = (mol.atomX(n) - cx) * scale + cx;
-            var y = (mol.atomY(n) - cy) * scale + cy;
+        let box = mol.boundary();
+        let cx = box.midX(), cy = box.midY();
+        let scale = Molecule.IDEALBOND / median;
+        for (let n = mol.numAtoms; n >= 1; n--) {
+            let x = (mol.atomX(n) - cx) * scale + cx;
+            let y = (mol.atomY(n) - cy) * scale + cy;
             mol.setAtomPos(n, x, y);
         }
-    };
-    CoordUtil.mirrorImage = function (mol) {
+    }
+    static mirrorImage(mol) {
         mol = mol.clone();
-        for (var n = 1; n <= mol.numAtoms; n++)
+        for (let n = 1; n <= mol.numAtoms; n++)
             mol.setAtomX(n, -mol.atomX(n));
-        for (var n = 1; n <= mol.numBonds; n++) {
+        for (let n = 1; n <= mol.numBonds; n++) {
             if (mol.bondType(n) == Molecule.BONDTYPE_DECLINED)
                 mol.setBondType(n, Molecule.BONDTYPE_INCLINED);
             else if (mol.bondType(n) == Molecule.BONDTYPE_INCLINED)
                 mol.setBondType(n, Molecule.BONDTYPE_DECLINED);
         }
         return mol;
-    };
-    CoordUtil.alignOrientFlip = function (mol1, idx1, mol2, idx2) {
+    }
+    static alignOrientFlip(mol1, idx1, mol2, idx2) {
         if (idx1.length < 2 || idx1.length != idx2.length)
             throw 'Invalid mapping indices.';
-        var x0 = mol1.atomX(idx1[0]), y0 = mol1.atomY(idx1[0]);
+        let x0 = mol1.atomX(idx1[0]), y0 = mol1.atomY(idx1[0]);
         CoordUtil.translateMolecule(mol2, x0 - mol2.atomX(idx2[0]), y0 - mol2.atomY(idx2[0]));
-        var sz = idx1.length - 1;
-        var th1 = [], th2 = [];
-        var deltaA = 0, deltaB = 0;
-        for (var n = 0; n < sz; n++) {
+        const sz = idx1.length - 1;
+        let th1 = [], th2 = [];
+        let deltaA = 0, deltaB = 0;
+        for (let n = 0; n < sz; n++) {
             th1.push(Math.atan2(mol1.atomY(idx1[n + 1]) - y0, mol1.atomX(idx1[n + 1]) - x0));
             th2.push(Math.atan2(mol2.atomY(idx2[n + 1]) - y0, mol2.atomX(idx2[n + 1]) - x0));
-            var dthA = angleDiff(th1[n], th2[n]), dthB = angleDiff(th1[n], -th2[n]);
+            let dthA = angleDiff(th1[n], th2[n]), dthB = angleDiff(th1[n], -th2[n]);
             if (dthA < -175 * DEGRAD && deltaA > 0)
                 dthA += TWOPI;
             else if (dthA > 175 * DEGRAD && deltaA < 0)
@@ -2793,19 +3190,19 @@ var CoordUtil = (function () {
             deltaB += dthB;
         }
         if (sz > 1) {
-            var inv = 1.0 / sz;
+            let inv = 1.0 / sz;
             deltaA *= inv;
             deltaB *= inv;
         }
-        var scoreA = 0, scoreB = 0;
-        for (var n = 0; n < sz; n++) {
+        let scoreA = 0, scoreB = 0;
+        for (let n = 0; n < sz; n++) {
             scoreA += Math.abs(angleDiff(th1[n], th2[n] + deltaA));
             scoreB += Math.abs(angleDiff(th1[n], -th2[n] + deltaB));
         }
         if (scoreB < scoreA) {
-            for (var n = 1; n <= mol2.numAtoms; n++)
+            for (let n = 1; n <= mol2.numAtoms; n++)
                 mol2.setAtomY(n, 2 * y0 - mol2.atomY(n));
-            for (var n = 1; n <= mol2.numBonds; n++) {
+            for (let n = 1; n <= mol2.numBonds; n++) {
                 if (mol2.bondType(n) == Molecule.BONDTYPE_DECLINED)
                     mol2.setBondType(n, Molecule.BONDTYPE_INCLINED);
                 else if (mol2.bondType(n) == Molecule.BONDTYPE_INCLINED)
@@ -2815,14 +3212,13 @@ var CoordUtil = (function () {
         }
         else
             CoordUtil.rotateMolecule(mol2, x0, y0, deltaA);
-    };
-    CoordUtil.OVERLAP_THRESHOLD = 0.2;
-    CoordUtil.OVERLAP_THRESHOLD_SQ = CoordUtil.OVERLAP_THRESHOLD * CoordUtil.OVERLAP_THRESHOLD;
-    CoordUtil.DEFAULT_EQUIV_TOLERANCE = 0.2;
-    return CoordUtil;
-}());
-var DataSheet = (function () {
-    function DataSheet(data) {
+    }
+}
+CoordUtil.OVERLAP_THRESHOLD = 0.2;
+CoordUtil.OVERLAP_THRESHOLD_SQ = CoordUtil.OVERLAP_THRESHOLD * CoordUtil.OVERLAP_THRESHOLD;
+CoordUtil.DEFAULT_EQUIV_TOLERANCE = 0.2;
+class DataSheet {
+    constructor(data) {
         if (!data)
             data = {};
         if (!data.title)
@@ -2844,245 +3240,245 @@ var DataSheet = (function () {
         this.data = data;
     }
     ;
-    DataSheet.prototype.getData = function () {
+    getData() {
         return this.data;
-    };
+    }
     ;
-    DataSheet.prototype.numCols = function () {
+    numCols() {
         return this.data.numCols;
-    };
+    }
     ;
-    DataSheet.prototype.numRows = function () {
+    numRows() {
         return this.data.numRows;
-    };
+    }
     ;
-    DataSheet.prototype.getTitle = function () {
+    getTitle() {
         return this.data.title;
-    };
+    }
     ;
-    DataSheet.prototype.getDescription = function () {
+    getDescription() {
         return this.data.description;
-    };
+    }
     ;
-    DataSheet.prototype.setTitle = function (val) {
+    setTitle(val) {
         this.data.title = val;
-    };
+    }
     ;
-    DataSheet.prototype.setDescription = function (val) {
+    setDescription(val) {
         this.data.description = val;
-    };
+    }
     ;
-    DataSheet.prototype.numExtensions = function () {
+    numExtensions() {
         return this.data.numExtens;
-    };
+    }
     ;
-    DataSheet.prototype.getExtName = function (N) {
+    getExtName(N) {
         return this.data.extData[N].name;
-    };
+    }
     ;
-    DataSheet.prototype.getExtType = function (N) {
+    getExtType(N) {
         return this.data.extData[N].type;
-    };
+    }
     ;
-    DataSheet.prototype.getExtData = function (N) {
+    getExtData(N) {
         return this.data.extData[N].data;
-    };
+    }
     ;
-    DataSheet.prototype.setExtName = function (N, val) {
+    setExtName(N, val) {
         this.data.extData[N].name = val;
-    };
+    }
     ;
-    DataSheet.prototype.setExtType = function (N, val) {
+    setExtType(N, val) {
         this.data.extData[N].type = val;
-    };
+    }
     ;
-    DataSheet.prototype.setExtData = function (N, val) {
+    setExtData(N, val) {
         this.data.extData[N].data = val;
-    };
+    }
     ;
-    DataSheet.prototype.appendExtension = function (name, type, data) {
+    appendExtension(name, type, data) {
         this.data.numExtens++;
         this.data.extData.push({ 'name': name, 'type': type, 'data': data });
         return this.data.numExtens - 1;
-    };
+    }
     ;
-    DataSheet.prototype.deleteExtension = function (N) {
+    deleteExtension(N) {
         this.data.extData.splice(N, 1);
-    };
+    }
     ;
-    DataSheet.prototype.colName = function (N) {
+    colName(N) {
         return this.data.colData[N].name;
-    };
+    }
     ;
-    DataSheet.prototype.colType = function (N) {
+    colType(N) {
         return this.data.colData[N].type;
-    };
+    }
     ;
-    DataSheet.prototype.colDescr = function (N) {
+    colDescr(N) {
         return this.data.colData[N].descr;
-    };
+    }
     ;
-    DataSheet.prototype.isNull = function (RN, CN) {
+    isNull(RN, CN) {
         return this.data.rowData[RN][CN] == null;
-    };
+    }
     ;
-    DataSheet.prototype.getMolecule = function (RN, CN) {
+    getMolecule(RN, CN) {
         return this.data.rowData[RN][CN];
-    };
+    }
     ;
-    DataSheet.prototype.getString = function (RN, CN) {
+    getString(RN, CN) {
         return this.data.rowData[RN][CN];
-    };
+    }
     ;
-    DataSheet.prototype.getInteger = function (RN, CN) {
+    getInteger(RN, CN) {
         return this.data.rowData[RN][CN];
-    };
+    }
     ;
-    DataSheet.prototype.getReal = function (RN, CN) {
+    getReal(RN, CN) {
         return this.data.rowData[RN][CN];
-    };
+    }
     ;
-    DataSheet.prototype.getBoolean = function (RN, CN) {
+    getBoolean(RN, CN) {
         return this.data.rowData[RN][CN];
-    };
+    }
     ;
-    DataSheet.prototype.getExtend = function (RN, CN) {
+    getExtend(RN, CN) {
         return this.data.rowData[RN][CN];
-    };
+    }
     ;
-    DataSheet.prototype.setToNull = function (RN, CN) {
+    setToNull(RN, CN) {
         this.data.rowData[RN][CN] = null;
-    };
+    }
     ;
-    DataSheet.prototype.setMolecule = function (RN, CN, val) {
+    setMolecule(RN, CN, val) {
         this.data.rowData[RN][CN] = val;
-    };
+    }
     ;
-    DataSheet.prototype.setString = function (RN, CN, val) {
+    setString(RN, CN, val) {
         this.data.rowData[RN][CN] = val;
-    };
+    }
     ;
-    DataSheet.prototype.setInteger = function (RN, CN, val) {
+    setInteger(RN, CN, val) {
         this.data.rowData[RN][CN] = val;
-    };
+    }
     ;
-    DataSheet.prototype.setReal = function (RN, CN, val) {
+    setReal(RN, CN, val) {
         this.data.rowData[RN][CN] = val;
-    };
+    }
     ;
-    DataSheet.prototype.setBoolean = function (RN, CN, val) {
+    setBoolean(RN, CN, val) {
         this.data.rowData[RN][CN] = val;
-    };
+    }
     ;
-    DataSheet.prototype.setExtend = function (RN, CN, val) {
+    setExtend(RN, CN, val) {
         this.data.rowData[RN][CN] = val;
-    };
+    }
     ;
-    DataSheet.prototype.isEqualMolecule = function (RN, CN, val) {
+    isEqualMolecule(RN, CN, val) {
         if (this.isNull(RN, CN) != (val == null))
             return false;
         if (val == null)
             return true;
         return this.getMolecule(RN, CN) == val;
-    };
+    }
     ;
-    DataSheet.prototype.isEqualString = function (RN, CN, val) {
+    isEqualString(RN, CN, val) {
         if (this.isNull(RN, CN) != (val == null || val == ''))
             return false;
         if (val == null || val == '')
             return true;
         return this.getString(RN, CN) == val;
-    };
+    }
     ;
-    DataSheet.prototype.isEqualInteger = function (RN, CN, val) {
+    isEqualInteger(RN, CN, val) {
         if (this.isNull(RN, CN) != (val == null))
             return false;
         if (val == null)
             return true;
         return this.getInteger(RN, CN) == val;
-    };
+    }
     ;
-    DataSheet.prototype.isEqualReal = function (RN, CN, val) {
+    isEqualReal(RN, CN, val) {
         if (this.isNull(RN, CN) != (val == null))
             return false;
         if (val == null)
             return true;
         return this.getReal(RN, CN) == val;
-    };
+    }
     ;
-    DataSheet.prototype.isEqualBoolean = function (RN, CN, val) {
+    isEqualBoolean(RN, CN, val) {
         if (this.isNull(RN, CN) != (val == null))
             return false;
         if (val == null)
             return true;
         return this.getBoolean(RN, CN) == val;
-    };
+    }
     ;
-    DataSheet.prototype.appendColumn = function (name, type, descr) {
+    appendColumn(name, type, descr) {
         this.data.numCols++;
         this.data.colData.push({ 'name': name, 'type': type, 'descr': descr });
         for (var n = 0; n < this.data.numRows; n++)
             this.data.rowData[n].push(null);
         return this.data.numCols - 1;
-    };
+    }
     ;
-    DataSheet.prototype.deleteColumn = function (N) {
+    deleteColumn(N) {
         this.data.numCols--;
         this.data.colData.splice(N, 1);
         for (var n = 0; n < this.data.numRows; n++)
             this.data.rowData[n].splice(N, 1);
-    };
+    }
     ;
-    DataSheet.prototype.changeColumnName = function (N, name, descr) {
+    changeColumnName(N, name, descr) {
         this.data.colData[N].name = N;
         this.data.colData[N].descr = descr;
-    };
+    }
     ;
-    DataSheet.prototype.changeColumnType = function (N, newType) {
+    changeColumnType(N, newType) {
         this.data.colData[N].type = newType;
-    };
+    }
     ;
-    DataSheet.prototype.appendRow = function () {
+    appendRow() {
         this.data.numRows++;
         var row = new Array();
         for (var n = 0; n < this.data.numCols; n++)
             row.push(null);
         this.data.rowData.push(row);
         return this.data.numRows - 1;
-    };
+    }
     ;
-    DataSheet.prototype.appendRowFrom = function (srcDS, RN) {
+    appendRowFrom(srcDS, RN) {
         this.data.numRows++;
         this.data.rowData.push(srcDS.data.rowData[RN].slice(0));
         return this.data.numRows - 1;
-    };
+    }
     ;
-    DataSheet.prototype.insertRow = function (N) {
+    insertRow(N) {
         this.data.numRows++;
         var row = new Array();
         for (var n = 0; n < this.data.numCols; n++)
             row.push(null);
         this.data.rowData.splice(N, 0, row);
-    };
+    }
     ;
-    DataSheet.prototype.deleteAllRows = function () {
+    deleteAllRows() {
         this.data.numRows = 0;
         this.data.rowData = new Array();
-    };
+    }
     ;
-    DataSheet.prototype.moveRowUp = function (N) {
+    moveRowUp(N) {
         var row = this.data.rowData[N];
         this.data.rowData[N] = this.data.rowData[N - 1];
         this.data.rowData[N - 1] = row;
-    };
+    }
     ;
-    DataSheet.prototype.moveRowDown = function (N) {
+    moveRowDown(N) {
         var row = this.data.rowData[N];
         this.data.rowData[N] = this.data.rowData[N + 1];
         this.data.rowData[N + 1] = row;
-    };
+    }
     ;
-    DataSheet.prototype.exciseSingleRow = function (N) {
+    exciseSingleRow(N) {
         var newData = {
             'title': this.data.title,
             'description': this.data.description,
@@ -3094,39 +3490,36 @@ var DataSheet = (function () {
             'extData': this.data.extData.slice(0)
         };
         return new DataSheet(newData);
-    };
+    }
     ;
-    DataSheet.prototype.colIsPrimitive = function (N) {
+    colIsPrimitive(N) {
         var ct = this.data.colData[N].type;
         return ct == 'string' || ct == 'real' || ct == 'integer' || ct == 'boolean';
-    };
+    }
     ;
-    DataSheet.prototype.findColByName = function (name) {
+    findColByName(name) {
         for (var n = 0; n < this.data.numCols; n++)
             if (this.data.colData[n].name == name)
                 return n;
         return -1;
-    };
+    }
     ;
-    DataSheet.prototype.firstColOfType = function (type) {
+    firstColOfType(type) {
         for (var n = 0; n < this.data.numCols; n++)
             if (this.data.colData[n].type == type)
                 return n;
         return -1;
-    };
-    ;
-    DataSheet.COLTYPE_MOLECULE = 'molecule';
-    DataSheet.COLTYPE_STRING = 'string';
-    DataSheet.COLTYPE_REAL = 'real';
-    DataSheet.COLTYPE_INTEGER = 'integer';
-    DataSheet.COLTYPE_BOOLEAN = 'boolean';
-    DataSheet.COLTYPE_EXTEND = 'extend';
-    return DataSheet;
-}());
-var DataSheetStream = (function () {
-    function DataSheetStream() {
     }
-    DataSheetStream.readXML = function (strXML) {
+    ;
+}
+DataSheet.COLTYPE_MOLECULE = 'molecule';
+DataSheet.COLTYPE_STRING = 'string';
+DataSheet.COLTYPE_REAL = 'real';
+DataSheet.COLTYPE_INTEGER = 'integer';
+DataSheet.COLTYPE_BOOLEAN = 'boolean';
+DataSheet.COLTYPE_EXTEND = 'extend';
+class DataSheetStream {
+    static readXML(strXML) {
         var xmlDoc = jQuery.parseXML(strXML);
         if (xmlDoc == null)
             return null;
@@ -3189,8 +3582,8 @@ var DataSheetStream = (function () {
             rowidx++;
         }
         return ds;
-    };
-    DataSheetStream.writeXML = function (ds) {
+    }
+    static writeXML(ds) {
         var xml = new DOMParser().parseFromString('<DataSheet/>', 'text/xml');
         var summary = xml.createElement('Summary');
         xml.documentElement.appendChild(summary);
@@ -3250,97 +3643,256 @@ var DataSheetStream = (function () {
             }
         }
         return new XMLSerializer().serializeToString(xml.documentElement);
-    };
-    ;
-    return DataSheetStream;
-}());
-var FormatList = (function () {
-    function FormatList() {
     }
-    FormatList.FMT_NATIVE = 'native';
-    FormatList.FMT_XMLDS = 'xmlds';
-    FormatList.FMT_MDLMOL = 'mdlmol';
-    FormatList.FMT_MDLSDF = 'mdlsdf';
-    FormatList.FMT_MDLRDF = 'mdlrdf';
-    FormatList.FMT_MDLRXN = 'mdlrxn';
-    FormatList.GFX_PNG = 'png';
-    FormatList.GFX_PNGZIP = 'pngzip';
-    FormatList.GFX_SVG = 'svg';
-    FormatList.GFX_SVGZIP = 'svgzip';
-    FormatList.GFX_PDF = 'pdf';
-    FormatList.GFX_PDFZIP = 'pdfzip';
-    FormatList.GFX_EPS = 'eps';
-    FormatList.GFX_HTML = 'html';
-    FormatList.GFX_OPENDOC_ODG = 'odg';
-    FormatList.GFX_OPENDOC_ODT = 'odt';
-    FormatList.GFX_OPENDOC_ODS = 'ods';
-    FormatList.GFX_OOXML_DOCX = 'docx';
-    FormatList.GFX_OOXML_XLSX = 'xlsx';
-    FormatList.FORMAT_DESCR = {
-        'native': 'SketchEl Molecule',
-        'xmlds': 'DataSheet XML',
-        'mdlmol': 'MDL MOL (single molecule)',
-        'mdlsdf': 'MDL SDF (molecules + data)',
-        'mdlrdf': 'MDL RDF (reactions + data)',
-        'mdlrxn': 'MDL RXN (single reaction)',
-        'png': 'PNG image (raster)',
-        'pngzip': 'ZIP (multiple PNG files)',
-        'svg': 'SVG picture (vector)',
-        'svgzip': 'ZIP (multiple SVG files)',
-        'pdf': 'PDF diagram (vector)',
-        'pdfzip': 'ZIP (multiple PDF files)',
-        'eps': 'Encapsulated PostScript (vector)',
-        'html': 'HTML with embedded SVG',
-        'odg': 'OpenDocument Graphic',
-        'odt': 'OpenDocument Text',
-        'ods': 'OpenDocument SpreadSheet',
-        'docx': 'Microsoft Word',
-        'xlsx': 'Microsoft Excel'
-    };
-    FormatList.FORMAT_EXTN = {
-        'native': '.el',
-        'xmlds': '.ds',
-        'mdlmol': '.mol',
-        'mdlsdf': '.sdf',
-        'mdlrdf': '.rdf',
-        'mdlrxn': '.rxn',
-        'png': '.png',
-        'pngzip': '_png.zip',
-        'svg': '.svg',
-        'svgzip': '_svg.zip',
-        'pdf': '.pdf',
-        'pdfzip': '_pdf.zip',
-        'eps': '.eps',
-        'html': '.html',
-        'odg': '.odg',
-        'odt': '.odt',
-        'ods': '.ods',
-        'docx': '.docx',
-        'xlsx': '.xlsx'
-    };
-    FormatList.FORMAT_MIMETYPE = {
-        'native': 'chemical/x-sketchel',
-        'xmlds': 'chemical/x-datasheet',
-        'mdlmol': 'chemical/x-mdl-molfile',
-        'mdlsdf': 'chemical/x-mdl-sdfile',
-        'mdlrdf': 'chemical/x-mdl-rdfile',
-        'mdlrxn': 'chemical/x-mdl-rxnfile',
-        'png': 'image/png',
-        'pngzip': 'application/zip',
-        'svg': 'image/png',
-        'svgzip': 'application/zip',
-        'pdf': 'application/pdf',
-        'pdfzip': 'application/zip',
-        'eps': 'image/eps',
-        'html': 'text/html',
-        'odg': 'application/vnd.oasis.opendocument.graphics',
-        'odt': 'application/vnd.oasis.opendocument.text',
-        'ods': 'application/vnd.oasis.opendocument.spreadsheet',
-        'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-    };
-    return FormatList;
-}());
+    ;
+}
+class FormatList {
+}
+FormatList.FMT_NATIVE = 'native';
+FormatList.FMT_XMLDS = 'xmlds';
+FormatList.FMT_MDLMOL = 'mdlmol';
+FormatList.FMT_MDLSDF = 'mdlsdf';
+FormatList.FMT_MDLRDF = 'mdlrdf';
+FormatList.FMT_MDLRXN = 'mdlrxn';
+FormatList.GFX_PNG = 'png';
+FormatList.GFX_PNGZIP = 'pngzip';
+FormatList.GFX_SVG = 'svg';
+FormatList.GFX_SVGZIP = 'svgzip';
+FormatList.GFX_PDF = 'pdf';
+FormatList.GFX_PDFZIP = 'pdfzip';
+FormatList.GFX_EPS = 'eps';
+FormatList.GFX_HTML = 'html';
+FormatList.GFX_OPENDOC_ODG = 'odg';
+FormatList.GFX_OPENDOC_ODT = 'odt';
+FormatList.GFX_OPENDOC_ODS = 'ods';
+FormatList.GFX_OOXML_DOCX = 'docx';
+FormatList.GFX_OOXML_XLSX = 'xlsx';
+FormatList.FORMAT_DESCR = {
+    'native': 'SketchEl Molecule',
+    'xmlds': 'DataSheet XML',
+    'mdlmol': 'MDL MOL (single molecule)',
+    'mdlsdf': 'MDL SDF (molecules + data)',
+    'mdlrdf': 'MDL RDF (reactions + data)',
+    'mdlrxn': 'MDL RXN (single reaction)',
+    'png': 'PNG image (raster)',
+    'pngzip': 'ZIP (multiple PNG files)',
+    'svg': 'SVG picture (vector)',
+    'svgzip': 'ZIP (multiple SVG files)',
+    'pdf': 'PDF diagram (vector)',
+    'pdfzip': 'ZIP (multiple PDF files)',
+    'eps': 'Encapsulated PostScript (vector)',
+    'html': 'HTML with embedded SVG',
+    'odg': 'OpenDocument Graphic',
+    'odt': 'OpenDocument Text',
+    'ods': 'OpenDocument SpreadSheet',
+    'docx': 'Microsoft Word',
+    'xlsx': 'Microsoft Excel'
+};
+FormatList.FORMAT_EXTN = {
+    'native': '.el',
+    'xmlds': '.ds',
+    'mdlmol': '.mol',
+    'mdlsdf': '.sdf',
+    'mdlrdf': '.rdf',
+    'mdlrxn': '.rxn',
+    'png': '.png',
+    'pngzip': '_png.zip',
+    'svg': '.svg',
+    'svgzip': '_svg.zip',
+    'pdf': '.pdf',
+    'pdfzip': '_pdf.zip',
+    'eps': '.eps',
+    'html': '.html',
+    'odg': '.odg',
+    'odt': '.odt',
+    'ods': '.ods',
+    'docx': '.docx',
+    'xlsx': '.xlsx'
+};
+FormatList.FORMAT_MIMETYPE = {
+    'native': 'chemical/x-sketchel',
+    'xmlds': 'chemical/x-datasheet',
+    'mdlmol': 'chemical/x-mdl-molfile',
+    'mdlsdf': 'chemical/x-mdl-sdfile',
+    'mdlrdf': 'chemical/x-mdl-rdfile',
+    'mdlrxn': 'chemical/x-mdl-rxnfile',
+    'png': 'image/png',
+    'pngzip': 'application/zip',
+    'svg': 'image/png',
+    'svgzip': 'application/zip',
+    'pdf': 'application/pdf',
+    'pdfzip': 'application/zip',
+    'eps': 'image/eps',
+    'html': 'text/html',
+    'odg': 'application/vnd.oasis.opendocument.graphics',
+    'odt': 'application/vnd.oasis.opendocument.text',
+    'ods': 'application/vnd.oasis.opendocument.spreadsheet',
+    'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+};
+class MetaMolecule {
+    constructor(mol) {
+        this.mol = mol;
+        this.atomArom = null;
+        this.bondArom = null;
+        this.rubricTetra = null;
+        this.rubricSquare = null;
+        this.rubricOcta = null;
+        this.rubricSides = null;
+        this.hash = null;
+        this.heavyHash = null;
+        this.uniqueElements = null;
+        this.piAtom = null;
+    }
+    calculateStrictAromaticity() {
+        let mol = this.mol;
+        this.atomArom = Vec.booleanArray(false, mol.numAtoms);
+        this.bondArom = Vec.booleanArray(false, mol.numBonds);
+        let rings = mol.findRingsOfSize(6);
+        const nr = rings.length;
+        if (nr == 0)
+            return;
+        this.ensurePiAtoms();
+        let mask = Vec.booleanArray(false, nr);
+        for (let n = 0; n < nr; n++) {
+            for (let i = 0; i < rings[n].length; i++) {
+                let a = rings[n][i];
+                if (!this.piAtom[a - 1]) {
+                    mask[n] = true;
+                    break;
+                }
+                let b = mol.findBond(a, rings[n][i == rings[n].length - 1 ? 0 : i + 1]);
+                let bo = mol.bondOrder(b);
+                if (bo != 1 && bo != 2) {
+                    mask[n] = true;
+                    break;
+                }
+            }
+        }
+        while (true) {
+            let anyChange = false;
+            for (let n = 0; n < nr; n++)
+                if (!mask[n]) {
+                    let phase1 = true, phase2 = true;
+                    for (let i = 0; i < rings[n].length; i++) {
+                        let b = mol.findBond(rings[n][i], rings[n][i == rings[n].length - 1 ? 0 : i + 1]);
+                        if (this.bondArom[b - 1])
+                            continue;
+                        let bo = mol.bondOrder(b);
+                        phase1 = phase1 && bo == (2 - (i & 1));
+                        phase2 = phase2 && bo == (1 + (i & 1));
+                    }
+                    if (!phase1 && !phase2)
+                        continue;
+                    for (let i = 0; i < rings[n].length; i++) {
+                        let b = mol.findBond(rings[n][i], rings[n][i == rings[n].length - 1 ? 0 : i + 1]);
+                        this.bondArom[b - 1] = true;
+                    }
+                    mask[n] = true;
+                    anyChange = true;
+                }
+            if (!anyChange)
+                break;
+        }
+        for (let n = 0; n < this.bondArom.length; n++)
+            if (this.bondArom[n]) {
+                this.atomArom[mol.bondFrom(n + 1) - 1] = true;
+                this.atomArom[mol.bondTo(n + 1) - 1] = true;
+            }
+    }
+    calculateStereoRubric() {
+        const mol = this.mol, na = mol.numAtoms, nb = mol.numBonds;
+        this.rubricTetra = new Array(na);
+        this.rubricSquare = new Array(na);
+        this.rubricOcta = new Array(na);
+        this.rubricSides = new Array(nb);
+        for (let n = 1; n <= na; n++) {
+            let blk = Chemistry.ELEMENT_BLOCKS[mol.atomicNumber(n)];
+            let adjc = mol.atomAdjCount(n), hc = mol.atomHydrogens(n);
+            if (blk == 2 && ((adjc == 3 && hc == 1) || (adjc == 4 && hc == 0))) {
+                this.rubricTetra[n - 1] = Stereochemistry.rubricTetrahedral(mol, n);
+            }
+            if (blk >= 3 && adjc == 4 && hc == 0) {
+                this.rubricSquare[n - 1] = Stereochemistry.rubricSquarePlanar(mol, n);
+            }
+            if (blk >= 3 && (adjc == 5 || adjc == 6) && hc == 0) {
+                this.rubricOcta[n - 1] = Stereochemistry.rubricOctahedral(mol, n);
+            }
+        }
+        for (let n = 1; n <= mol.numBonds; n++) {
+            if (mol.bondOrder(n) != 2 || this.isBondAromatic(n))
+                continue;
+            let bfr = mol.bondFrom(n), bto = mol.bondTo(n);
+            let blk1 = Chemistry.ELEMENT_BLOCKS[mol.atomicNumber(bfr)];
+            let blk2 = Chemistry.ELEMENT_BLOCKS[mol.atomicNumber(bto)];
+            let adjc1 = mol.atomAdjCount(bfr), hc1 = mol.atomHydrogens(bfr);
+            let adjc2 = mol.atomAdjCount(bto), hc2 = mol.atomHydrogens(bto);
+            if (blk1 == 2 && blk2 == 2 && (adjc1 + hc1 == 3 && hc1 <= 1) && (adjc2 + hc2 == 3 && hc2 <= 1)) {
+                this.rubricSides[n - 1] = Stereochemistry.rubricBondSides(mol, n);
+            }
+        }
+    }
+    isAtomAromatic(atom) {
+        return this.atomArom == null ? false : this.atomArom[atom - 1];
+    }
+    isBondAromatic(bond) {
+        return this.bondArom == null ? false : this.bondArom[bond - 1];
+    }
+    bondOrderArom(bond) {
+        return this.bondArom != null && this.bondArom[bond - 1] ? -1 : this.mol.bondOrder(bond);
+    }
+    getAtomAromaticity() {
+        return this.atomArom == null ? null : this.atomArom.slice(0);
+    }
+    getBondAromaticity() {
+        return this.bondArom == null ? null : this.bondArom.slice(0);
+    }
+    getUniqueElements() {
+        if (this.uniqueElements == null) {
+            this.uniqueElements = [];
+            for (let n = 1; n <= this.mol.numAtoms; n++) {
+                let el = this.mol.atomElement(n);
+                if (this.uniqueElements.indexOf(el) < 0)
+                    this.uniqueElements.push(el);
+            }
+        }
+        return this.uniqueElements;
+    }
+    static createRubric(mol) {
+        if (mol == null)
+            return null;
+        let meta = new MetaMolecule(mol);
+        meta.calculateStereoRubric();
+        return meta;
+    }
+    static createStrict(mol) {
+        if (mol == null)
+            return null;
+        let meta = new MetaMolecule(mol);
+        meta.calculateStrictAromaticity();
+        return meta;
+    }
+    static createStrictRubric(mol) {
+        if (mol == null)
+            return null;
+        let meta = new MetaMolecule(mol);
+        meta.calculateStrictAromaticity();
+        meta.calculateStereoRubric();
+        return meta;
+    }
+    ensurePiAtoms() {
+        if (this.piAtom != null)
+            return;
+        this.piAtom = Vec.booleanArray(false, this.mol.numAtoms);
+        for (let n = 1; n <= this.mol.numBonds; n++)
+            if (this.mol.bondOrder(n) == 2) {
+                {
+                    this.piAtom[this.mol.bondFrom(n) - 1] = true;
+                    this.piAtom[this.mol.bondTo(n) - 1] = true;
+                }
+            }
+    }
+}
 var Geometry;
 (function (Geometry) {
     Geometry[Geometry["Linear"] = 0] = "Linear";
@@ -3354,22 +3906,20 @@ var Geometry;
     Geometry[Geometry["Octa1"] = 8] = "Octa1";
     Geometry[Geometry["Octa2"] = 9] = "Octa2";
 })(Geometry || (Geometry = {}));
-var SketchUtil = (function () {
-    function SketchUtil() {
-    }
-    SketchUtil.placeNewAtom = function (mol, el) {
-        var box = mol.boundary();
-        var x = box.maxX() + Molecule.IDEALBOND, y = box.maxY();
+class SketchUtil {
+    static placeNewAtom(mol, el) {
+        let box = mol.boundary();
+        let x = box.maxX() + Molecule.IDEALBOND, y = box.maxY();
         return mol.addAtom(el, x, y);
-    };
-    SketchUtil.placeNewFragment = function (mol, frag) {
+    }
+    static placeNewFragment(mol, frag) {
         if (frag.numAtoms == 0)
             return;
-        var dirX = [1, 0, -1, 1, -1, 1, 0, -1], dirY = [1, 1, 1, 0, 0, -1, -1, -1];
-        var dx = Vec.numberArray(0, 8), dy = Vec.numberArray(0, 8), score = Vec.numberArray(0, 8);
-        var mbox = mol.boundary(), fbox = frag.boundary();
-        for (var n = 0; n < 8; n++) {
-            var vx = dirX[n], vy = dirY[n];
+        let dirX = [1, 0, -1, 1, -1, 1, 0, -1], dirY = [1, 1, 1, 0, 0, -1, -1, -1];
+        let dx = Vec.numberArray(0, 8), dy = Vec.numberArray(0, 8), score = Vec.numberArray(0, 8);
+        let mbox = mol.boundary(), fbox = frag.boundary();
+        for (let n = 0; n < 8; n++) {
+            let vx = dirX[n], vy = dirY[n];
             if (n == 0 || n == 3 || n == 5)
                 dx[n] = mbox.minX() - fbox.maxX();
             else if (n == 2 || n == 4 || n == 7)
@@ -3387,19 +3937,19 @@ var SketchUtil = (function () {
             score[n] = SketchUtil.fragPosScore(mol, frag, dx[n], dy[n]);
             vx *= 0.25;
             vy *= 0.25;
-            for (var iter = 100; iter > 0; iter--) {
-                var iscore = SketchUtil.fragPosScore(mol, frag, dx[n] + vx, dy[n] + vy);
+            for (let iter = 100; iter > 0; iter--) {
+                let iscore = SketchUtil.fragPosScore(mol, frag, dx[n] + vx, dy[n] + vy);
                 if (iscore <= score[n])
                     break;
                 score[n] = iscore;
                 dx[n] += vx;
                 dy[n] += vy;
             }
-            for (var iter = 100; iter > 0; iter--)
-                for (var d = 0; d < 8; d++) {
+            for (let iter = 100; iter > 0; iter--)
+                for (let d = 0; d < 8; d++) {
                     vx = dirX[d] * 0.1;
                     vy = dirY[d] * 0.1;
-                    var iscore = SketchUtil.fragPosScore(mol, frag, dx[n] + vx, dy[n] + vy);
+                    let iscore = SketchUtil.fragPosScore(mol, frag, dx[n] + vx, dy[n] + vy);
                     if (iscore <= score[n])
                         break;
                     score[n] = iscore;
@@ -3407,58 +3957,58 @@ var SketchUtil = (function () {
                     dy[n] += vy;
                 }
         }
-        var best = 0;
-        for (var n = 1; n < 8; n++)
+        let best = 0;
+        for (let n = 1; n < 8; n++)
             if (score[n] > score[best])
                 best = n;
         frag = frag.clone();
-        for (var n = 1; n <= frag.numAtoms; n++)
+        for (let n = 1; n <= frag.numAtoms; n++)
             frag.setAtomPos(n, frag.atomX(n) + dx[best], frag.atomY(n) + dy[best]);
         mol.append(frag);
-    };
-    SketchUtil.fragPosScore = function (mol, frag, dx, dy) {
-        var score = 0;
-        for (var i = 1; i <= mol.numAtoms; i++)
-            for (var j = 1; j <= frag.numAtoms; j++) {
-                var ox = frag.atomX(j) + dx - mol.atomX(i), oy = frag.atomY(j) + dy - mol.atomY(i);
-                var dist2 = ox * ox + oy * oy;
+    }
+    static fragPosScore(mol, frag, dx, dy) {
+        let score = 0;
+        for (let i = 1; i <= mol.numAtoms; i++)
+            for (let j = 1; j <= frag.numAtoms; j++) {
+                let ox = frag.atomX(j) + dx - mol.atomX(i), oy = frag.atomY(j) + dy - mol.atomY(i);
+                let dist2 = ox * ox + oy * oy;
                 if (dist2 < 1)
                     return 0;
                 score += 1 / dist2;
             }
-        var mbox = mol.boundary(), fbox = frag.boundary();
-        var minX = Math.min(fbox.minX() + dx, mbox.minX()), maxX = Math.max(fbox.maxX() + dx, mbox.maxX());
-        var minY = Math.min(fbox.minY() + dy, mbox.minY()), maxY = Math.max(fbox.maxY() + dy, mbox.maxY());
-        var rangeX = Math.max(1, maxX - minX), rangeY = Math.max(1, maxY - minY);
-        var ratio = Math.max(rangeX / rangeY, rangeY / rangeX);
+        let mbox = mol.boundary(), fbox = frag.boundary();
+        let minX = Math.min(fbox.minX() + dx, mbox.minX()), maxX = Math.max(fbox.maxX() + dx, mbox.maxX());
+        let minY = Math.min(fbox.minY() + dy, mbox.minY()), maxY = Math.max(fbox.maxY() + dy, mbox.maxY());
+        let rangeX = Math.max(1, maxX - minX), rangeY = Math.max(1, maxY - minY);
+        let ratio = Math.max(rangeX / rangeY, rangeY / rangeX);
         return score / ratio;
-    };
-    SketchUtil.mergeOverlappingAtoms = function (mol) {
+    }
+    static mergeOverlappingAtoms(mol) {
         return SketchUtil.mergeFragmentsDiv(mol, 0);
-    };
-    SketchUtil.mergeFragmentsDiv = function (mol, div) {
-        var na = mol.numAtoms;
-        var omask = CoordUtil.overlappingAtomMask(mol);
-        var chopmask = Vec.booleanArray(false, na);
-        var mx = MolUtil.arrayAtomX(mol), my = MolUtil.arrayAtomY(mol);
-        var remap = [];
-        for (var n = 0; n < na; n++)
+    }
+    static mergeFragmentsDiv(mol, div) {
+        const na = mol.numAtoms;
+        let omask = CoordUtil.overlappingAtomMask(mol);
+        let chopmask = Vec.booleanArray(false, na);
+        let mx = MolUtil.arrayAtomX(mol), my = MolUtil.arrayAtomY(mol);
+        let remap = [];
+        for (let n = 0; n < na; n++)
             remap.push(n + 1);
-        var div1 = div, div2 = div + 1;
+        let div1 = div, div2 = div + 1;
         if (div == 0)
             div1 = na;
-        for (var i = 1; i <= div1; i++)
+        for (let i = 1; i <= div1; i++)
             if (omask[i - 1] && !chopmask[i - 1]) {
                 if (div == 0)
                     div2 = i + 1;
-                for (var j = div2; j <= na; j++)
+                for (let j = div2; j <= na; j++)
                     if (omask[j - 1] && !chopmask[j - 1]) {
                         if (norm2_xy(mx[i - 1] - mx[j - 1], my[i - 1] - my[j - 1]) > CoordUtil.OVERLAP_THRESHOLD_SQ)
                             continue;
-                        var oldN = j, newN = i;
-                        var exotic = [0, 0];
-                        for (var k = 0; k < 2; k++) {
-                            var a = k == 0 ? i : j;
+                        let oldN = j, newN = i;
+                        let exotic = [0, 0];
+                        for (let k = 0; k < 2; k++) {
+                            let a = k == 0 ? i : j;
                             exotic[k] = (mol.atomElement(a) == 'C' ? 0 : 1)
                                 + (mol.atomElement(a) == 'X' ? -100 : 0)
                                 + (mol.atomCharge(a) != 0 ? 1 : 0)
@@ -3471,7 +4021,7 @@ var SketchUtil = (function () {
                             oldN = i;
                             newN = j;
                         }
-                        for (var n = 1; n <= mol.numBonds; n++) {
+                        for (let n = 1; n <= mol.numBonds; n++) {
                             if (mol.bondFrom(n) == oldN)
                                 mol.setBondFrom(n, newN);
                             if (mol.bondTo(n) == oldN)
@@ -3481,40 +4031,40 @@ var SketchUtil = (function () {
                         remap[oldN - 1] = newN;
                     }
             }
-        for (var n = na; n >= 1; n--)
+        for (let n = na; n >= 1; n--)
             if (chopmask[n - 1]) {
                 if (n <= div)
                     div--;
                 mol.deleteAtomAndBonds(n);
-                for (var i = 0; i < na; i++)
+                for (let i = 0; i < na; i++)
                     if (remap[i] > n)
                         remap[i]--;
             }
-        for (var n = mol.numAtoms; n > div; n--)
+        for (let n = mol.numAtoms; n > div; n--)
             if (mol.atomElement(n) == 'X') {
                 mol.deleteAtomAndBonds(n);
-                for (var i = 0; i < na; i++)
+                for (let i = 0; i < na; i++)
                     if (remap[i] > n)
                         remap[i]--;
             }
         MolUtil.removeDuplicateBonds(mol);
         return remap;
-    };
-    SketchUtil.mergeFragmentsMask = function (mol, mask) {
-        var chopmask = Vec.booleanArray(false, mol.numAtoms);
-        var na = mol.numAtoms;
-        var mx = MolUtil.arrayAtomX(mol), my = MolUtil.arrayAtomY(mol);
-        for (var i = 1; i <= na; i++)
+    }
+    static mergeFragmentsMask(mol, mask) {
+        let chopmask = Vec.booleanArray(false, mol.numAtoms);
+        let na = mol.numAtoms;
+        let mx = MolUtil.arrayAtomX(mol), my = MolUtil.arrayAtomY(mol);
+        for (let i = 1; i <= na; i++)
             if (mask[i - 1])
-                for (var j = 1; j <= na; j++)
+                for (let j = 1; j <= na; j++)
                     if (!mask[j - 1] && !chopmask[j - 1])
                         if (norm2_xy(mx[i - 1] - mx[j - 1], my[i - 1] - my[j - 1]) < CoordUtil.OVERLAP_THRESHOLD_SQ) {
-                            var oldN = j, newN = i;
+                            let oldN = j, newN = i;
                             if (mol.atomElement(i) == 'C' && mol.atomElement(j) != 'C' && mol.atomElement(j) != 'X') {
                                 oldN = i;
                                 newN = j;
                             }
-                            for (var n = 1; n <= mol.numBonds; n++) {
+                            for (let n = 1; n <= mol.numBonds; n++) {
                                 if (mol.bondFrom(n) == oldN)
                                     mol.setBondFrom(n, newN);
                                 if (mol.bondTo(n) == oldN)
@@ -3522,25 +4072,25 @@ var SketchUtil = (function () {
                             }
                             chopmask[oldN - 1] = true;
                         }
-        for (var n = chopmask.length; n >= 1; n--)
+        for (let n = chopmask.length; n >= 1; n--)
             if (chopmask[n - 1])
                 mol.deleteAtomAndBonds(n);
         MolUtil.removeDuplicateBonds(mol);
-    };
-    SketchUtil.matchAngleGeometry = function (geom, theta) {
+    }
+    static matchAngleGeometry(geom, theta) {
         if (theta.length <= 1)
             return true;
-        var match = SketchUtil.GEOM_ANGLES[geom], mtheta = Vec.numberArray(0, theta.length);
-        var hit = Vec.booleanArray(false, match.length);
-        for (var n = 0; n < theta.length; n++)
-            for (var s = 1; s >= -1; s -= 2) {
-                for (var i = 0; i < theta.length; i++)
+        let match = SketchUtil.GEOM_ANGLES[geom], mtheta = Vec.numberArray(0, theta.length);
+        let hit = Vec.booleanArray(false, match.length);
+        for (let n = 0; n < theta.length; n++)
+            for (let s = 1; s >= -1; s -= 2) {
+                for (let i = 0; i < theta.length; i++)
                     mtheta[i] = (theta[i] - theta[0]) * s;
                 Vec.setTo(hit, false);
-                var gotall = true;
-                for (var i = 0; i < mtheta.length; i++) {
-                    var got = false;
-                    for (var j = 0; j < match.length; j++)
+                let gotall = true;
+                for (let i = 0; i < mtheta.length; i++) {
+                    let got = false;
+                    for (let j = 0; j < match.length; j++)
                         if (!hit[j] && Math.abs(angleDiff(mtheta[i], match[j])) < 3 * DEGRAD) {
                             hit[j] = true;
                             got = true;
@@ -3555,60 +4105,60 @@ var SketchUtil = (function () {
                     return true;
             }
         return false;
-    };
-    SketchUtil.primeDirections = function (mol, atom) {
-        var angles = SketchUtil.calculateNewBondAngles(mol, atom, 1);
-        var exits = SketchUtil.exitVectors(mol, atom);
+    }
+    static primeDirections(mol, atom) {
+        let angles = SketchUtil.calculateNewBondAngles(mol, atom, 1);
+        let exits = SketchUtil.exitVectors(mol, atom);
         return GeomUtil.uniqueAngles(angles.concat(exits), 2 * DEGRAD);
-    };
-    SketchUtil.exitVectors = function (mol, atom) {
-        var adj = mol.atomAdjList(atom), sz = adj.length;
+    }
+    static exitVectors(mol, atom) {
+        let adj = mol.atomAdjList(atom), sz = adj.length;
         if (sz == 0)
             return [0, 90 * DEGRAD, 180 * DEGRAD, -90 * DEGRAD];
         if (sz == 1)
             return [];
-        var ret = [];
-        var ang = GeomUtil.sortAngles(CoordUtil.atomBondAngles(mol, atom, adj));
-        for (var n = 0; n < sz; n++) {
-            var nn = n < sz - 1 ? n + 1 : 0;
+        let ret = [];
+        let ang = GeomUtil.sortAngles(CoordUtil.atomBondAngles(mol, atom, adj));
+        for (let n = 0; n < sz; n++) {
+            let nn = n < sz - 1 ? n + 1 : 0;
             ret.push(angleNorm(ang[n] + 0.5 * (ang[nn] - ang[n])));
         }
         return ret;
-    };
-    SketchUtil.calculateNewBondAngles = function (mol, atom, order) {
-        var adj = mol.atomAdjList(atom);
-        var sz = adj.length;
+    }
+    static calculateNewBondAngles(mol, atom, order) {
+        let adj = mol.atomAdjList(atom);
+        const sz = adj.length;
         if (sz == 0) {
-            var atno = mol.atomicNumber(atom), atblk = Chemistry.ELEMENT_BLOCKS[atno];
+            let atno = mol.atomicNumber(atom), atblk = Chemistry.ELEMENT_BLOCKS[atno];
             if (atblk <= 2)
                 return [0, 90 * DEGRAD, 180 * DEGRAD, -90 * DEGRAD];
             else
                 return [90 * DEGRAD, -90 * DEGRAD, 30 * DEGRAD, 150 * DEGRAD, 210 * DEGRAD, -30 * DEGRAD, 180 * DEGRAD, 0 * DEGRAD];
         }
-        var geom = SketchUtil.guessAtomGeometry(mol, atom, order);
-        var ang = CoordUtil.atomBondAngles(mol, atom, adj);
-        for (var n = 0; n < geom.length; n++) {
-            var ret = SketchUtil.mapAngleSubstituent(geom[n], ang);
+        let geom = SketchUtil.guessAtomGeometry(mol, atom, order);
+        let ang = CoordUtil.atomBondAngles(mol, atom, adj);
+        for (let n = 0; n < geom.length; n++) {
+            let ret = SketchUtil.mapAngleSubstituent(geom[n], ang);
             if (ret != null)
                 return ret;
         }
         return [];
-    };
-    SketchUtil.guessAtomGeometry = function (mol, atom, order) {
-        var adj = mol.atomAdjList(atom);
-        var sz = adj.length, atno = mol.atomicNumber(atom);
-        var atblk = Chemistry.ELEMENT_BLOCKS[atno], elrow = Chemistry.ELEMENT_ROWS[atno];
-        var el = mol.atomElement(atom);
-        var adjBO = [], adjAN = [], pri = [];
-        var allSingle = true;
-        for (var n = 0; n < sz; n++) {
+    }
+    static guessAtomGeometry(mol, atom, order) {
+        let adj = mol.atomAdjList(atom);
+        let sz = adj.length, atno = mol.atomicNumber(atom);
+        let atblk = Chemistry.ELEMENT_BLOCKS[atno], elrow = Chemistry.ELEMENT_ROWS[atno];
+        let el = mol.atomElement(atom);
+        let adjBO = [], adjAN = [], pri = [];
+        let allSingle = true;
+        for (let n = 0; n < sz; n++) {
             adjBO.push(mol.bondOrder(mol.findBond(atom, adj[n])));
             adjAN.push(mol.atomicNumber(adj[n]));
             pri.push(adjBO[n] * 200 + adjAN[n]);
             if (adjBO[n] != 1)
                 allSingle = true;
         }
-        for (var p = 0; p < sz - 1;) {
+        for (let p = 0; p < sz - 1;) {
             if (pri[p] > pri[p + 1]) {
                 Vec.swap(adj, p, p + 1);
                 Vec.swap(adjBO, p, p + 1);
@@ -3620,7 +4170,7 @@ var SketchUtil = (function () {
             else
                 p++;
         }
-        var ang = CoordUtil.atomBondAngles(mol, atom, adj);
+        let ang = CoordUtil.atomBondAngles(mol, atom, adj);
         if (sz == 1) {
             if (el == 'C' || el == 'N') {
                 if (adjBO[0] == 2 && order == 2)
@@ -3640,7 +4190,7 @@ var SketchUtil = (function () {
             else
                 return [Geometry.Octa1, Geometry.Octa2];
         }
-        var geom = [];
+        let geom = [];
         if (atblk == 0)
             geom = [Geometry.Trigonal, Geometry.SqPlan];
         else if (atblk == 1)
@@ -3671,31 +4221,31 @@ var SketchUtil = (function () {
             geom.push(Geometry.Octa1);
             geom.push(Geometry.Octa2);
         }
-        for (var n = geom.length - 1; n >= 0; n--) {
+        for (let n = geom.length - 1; n >= 0; n--) {
             if (!SketchUtil.matchAngleGeometry(geom[n], ang))
                 geom.splice(n, 1);
         }
         return geom;
-    };
-    SketchUtil.mapAngleSubstituent = function (geom, ang) {
-        var gtheta = SketchUtil.GEOM_ANGLES[geom];
-        var asz = ang.length, gsz = gtheta.length;
+    }
+    static mapAngleSubstituent(geom, ang) {
+        let gtheta = SketchUtil.GEOM_ANGLES[geom];
+        const asz = ang.length, gsz = gtheta.length;
         if (asz >= gsz)
             return null;
         if (asz == 0)
             return gtheta.slice(0);
-        var vac = [];
-        for (var n = 0; n < asz; n++)
-            for (var k = 0; k < gsz; k++)
-                for (var s = 1; s >= -1; s -= 2) {
-                    var gang = [];
-                    for (var i = 0; i < gsz; i++)
+        let vac = [];
+        for (let n = 0; n < asz; n++)
+            for (let k = 0; k < gsz; k++)
+                for (let s = 1; s >= -1; s -= 2) {
+                    let gang = [];
+                    for (let i = 0; i < gsz; i++)
                         gang.push(angleNorm(ang[n] + s * (gtheta[i] - gtheta[k])));
-                    var mask = Vec.booleanArray(false, gsz);
-                    var mcount = 0;
-                    for (var i = 0; i < gsz; i++)
+                    let mask = Vec.booleanArray(false, gsz);
+                    let mcount = 0;
+                    for (let i = 0; i < gsz; i++)
                         if (!mask[i])
-                            for (var j = 0; j < asz; j++)
+                            for (let j = 0; j < asz; j++)
                                 if (Math.abs(angleDiff(gang[i], ang[j])) < 3 * DEGRAD) {
                                     mask[i] = true;
                                     mcount++;
@@ -3703,15 +4253,15 @@ var SketchUtil = (function () {
                                 }
                     if (mcount != asz)
                         continue;
-                    for (var i = 0; i < gsz; i++)
+                    for (let i = 0; i < gsz; i++)
                         if (!mask[i])
                             vac.push(gang[i]);
                 }
         if (vac.length == 0)
             return null;
         vac = GeomUtil.sortAngles(vac);
-        for (var n = 0; n < vac.length - 1; n++) {
-            var th1 = vac[n], th2 = vac[n + 1], dth = angleDiff(th2, th1);
+        for (let n = 0; n < vac.length - 1; n++) {
+            let th1 = vac[n], th2 = vac[n + 1], dth = angleDiff(th2, th1);
             if (Math.abs(dth) < 5 * DEGRAD) {
                 vac[n] = th1 + 0.5 * dth;
                 vac.splice(n + 1, 1);
@@ -3719,39 +4269,39 @@ var SketchUtil = (function () {
             }
         }
         return vac;
-    };
-    SketchUtil.refitAtomGeometry = function (mol, atom, geom) {
-        var gtheta = SketchUtil.GEOM_ANGLES[geom];
-        var gsz = gtheta.length;
-        var adj = mol.atomAdjList(atom);
-        var asz = adj.length;
+    }
+    static refitAtomGeometry(mol, atom, geom) {
+        let gtheta = SketchUtil.GEOM_ANGLES[geom];
+        let gsz = gtheta.length;
+        let adj = mol.atomAdjList(atom);
+        let asz = adj.length;
         if (asz <= 1 || asz > gsz)
             return null;
-        var ang = CoordUtil.atomBondAngles(mol, atom, adj);
-        var inRing = Vec.booleanArray(false, asz);
-        var allInRing = true;
-        for (var n = 0; n < asz; n++) {
+        let ang = CoordUtil.atomBondAngles(mol, atom, adj);
+        let inRing = Vec.booleanArray(false, asz);
+        let allInRing = true;
+        for (let n = 0; n < asz; n++) {
             inRing[n] = mol.bondInRing(mol.findBond(atom, adj[n]));
             if (!inRing[n])
                 allInRing = false;
         }
         if (allInRing)
             return null;
-        var bestAng = null;
-        var bestScore = 0;
-        var ww = MolUtil.calculateWalkWeight(mol, atom);
-        for (var i = 0; i < gsz; i++)
-            for (var j = 0; j < asz; j++)
-                for (var s = 1; s >= -1; s -= 2) {
-                    var newAng = Vec.numberArray(0, asz);
-                    var mask = Vec.booleanArray(false, gsz);
-                    for (var n1 = 0; n1 < asz; n1++) {
-                        var best = -1;
-                        var bdiff = 0;
-                        for (var n2 = 0; n2 < gsz; n2++)
+        let bestAng = null;
+        let bestScore = 0;
+        let ww = MolUtil.calculateWalkWeight(mol, atom);
+        for (let i = 0; i < gsz; i++)
+            for (let j = 0; j < asz; j++)
+                for (let s = 1; s >= -1; s -= 2) {
+                    let newAng = Vec.numberArray(0, asz);
+                    let mask = Vec.booleanArray(false, gsz);
+                    for (let n1 = 0; n1 < asz; n1++) {
+                        let best = -1;
+                        let bdiff = 0;
+                        for (let n2 = 0; n2 < gsz; n2++)
                             if (!mask[n2]) {
-                                var th = angleNorm(gtheta[n2] * s - gtheta[i] + ang[j]);
-                                var diff = Math.abs(angleDiff(th, ang[n1]));
+                                let th = angleNorm(gtheta[n2] * s - gtheta[i] + ang[j]);
+                                let diff = Math.abs(angleDiff(th, ang[n1]));
                                 if (best < 0 || diff < bdiff) {
                                     best = n2;
                                     bdiff = diff;
@@ -3760,16 +4310,16 @@ var SketchUtil = (function () {
                             }
                         mask[best] = true;
                     }
-                    var ringClash = false;
-                    for (var n = 0; n < asz; n++)
+                    let ringClash = false;
+                    for (let n = 0; n < asz; n++)
                         if (inRing[n] && Math.abs(angleDiff(newAng[n], ang[n])) > 2 * DEGRAD) {
                             ringClash = true;
                             break;
                         }
                     if (ringClash)
                         continue;
-                    var score = 0;
-                    for (var n = 0; n < asz; n++)
+                    let score = 0;
+                    for (let n = 0; n < asz; n++)
                         score += ww[adj[n] - 1] * Math.abs(angleDiff(newAng[n], ang[n]));
                     if (bestAng == null || score < bestScore) {
                         bestAng = newAng;
@@ -3778,8 +4328,8 @@ var SketchUtil = (function () {
                 }
         if (bestAng == null)
             return null;
-        var same = true;
-        for (var n = 0; n < asz; n++)
+        let same = true;
+        for (let n = 0; n < asz; n++)
             if (Math.abs(angleDiff(bestAng[n], ang[n])) > 2 * DEGRAD) {
                 same = false;
                 break;
@@ -3787,38 +4337,38 @@ var SketchUtil = (function () {
         if (same)
             return null;
         mol = mol.clone();
-        for (var n = 0; n < asz; n++)
+        for (let n = 0; n < asz; n++)
             if (!inRing[n])
                 CoordUtil.rotateBond(mol, atom, adj[n], bestAng[n] - ang[n]);
         return mol;
-    };
-    SketchUtil.switchAtomGeometry = function (mol, src, dst, geoms) {
-        var bestAtom = 0;
-        var bestAng = 0, bestX = 0, bestY = 0;
-        var adj = mol.atomAdjList(src);
-        var ang = CoordUtil.atomBondAngles(mol, src, adj), theta = Vec.numberArray(0, ang.length - 1);
-        var cx = mol.atomX(src), cy = mol.atomY(src);
-        for (var i = 0; i < dst.length; i++) {
-            var a = adj.indexOf(dst[i]);
-            var curth = ang[a];
-            for (var n = 0, p = 0; n < adj.length; n++)
+    }
+    static switchAtomGeometry(mol, src, dst, geoms) {
+        let bestAtom = 0;
+        let bestAng = 0, bestX = 0, bestY = 0;
+        let adj = mol.atomAdjList(src);
+        let ang = CoordUtil.atomBondAngles(mol, src, adj), theta = Vec.numberArray(0, ang.length - 1);
+        let cx = mol.atomX(src), cy = mol.atomY(src);
+        for (let i = 0; i < dst.length; i++) {
+            let a = adj.indexOf(dst[i]);
+            let curth = ang[a];
+            for (let n = 0, p = 0; n < adj.length; n++)
                 if (n != a)
                     theta[p++] = ang[n];
-            var r = norm_xy(mol.atomX(dst[i]) - cx, mol.atomY(dst[i]) - cy);
-            for (var j = 0; j < geoms.length; j++) {
+            let r = norm_xy(mol.atomX(dst[i]) - cx, mol.atomY(dst[i]) - cy);
+            for (let j = 0; j < geoms.length; j++) {
                 if (adj.length >= SketchUtil.GEOM_ANGLES[geoms[j]].length)
                     continue;
-                var newAng = SketchUtil.mapAngleSubstituent(geoms[j], theta);
+                let newAng = SketchUtil.mapAngleSubstituent(geoms[j], theta);
                 if (newAng != null)
-                    for (var n = 0; n < newAng.length; n++) {
-                        var dth = angleDiff(newAng[n], curth);
+                    for (let n = 0; n < newAng.length; n++) {
+                        let dth = angleDiff(newAng[n], curth);
                         if (Math.abs(dth) < 3 * DEGRAD)
                             continue;
                         if (dth < 0)
                             dth += TWOPI;
                         if (bestAtom == 0 || dth < bestAng - 2 * DEGRAD || (dth < bestAng + 2 * DEGRAD && dst[i] < bestAtom)) {
-                            var x = cx + r * Math.cos(newAng[n]);
-                            var y = cy + r * Math.sin(newAng[n]);
+                            let x = cx + r * Math.cos(newAng[n]);
+                            let y = cy + r * Math.sin(newAng[n]);
                             if (CoordUtil.atomAtPoint(mol, x, y) != 0)
                                 continue;
                             bestAtom = dst[i];
@@ -3835,8 +4385,8 @@ var SketchUtil = (function () {
         mol = mol.clone();
         mol.setAtomPos(bestAtom, bestX, bestY);
         return mol;
-    };
-    SketchUtil.pickAtomsToConnect = function (mol, aidx) {
+    }
+    static pickAtomsToConnect(mol, aidx) {
         if (aidx.length < 2)
             return null;
         if (aidx.length == 2) {
@@ -3844,15 +4394,15 @@ var SketchUtil = (function () {
                 return null;
             return aidx;
         }
-        var AUTO_DSQ = sqr(Molecule.IDEALBOND + 0.1);
-        var bestDSQ = Number.MAX_VALUE;
-        var bestA1 = 0, bestA2 = 0;
-        var conn = [];
-        for (var i = 0; i < aidx.length - 1; i++)
-            for (var j = i + 1; j < aidx.length; j++) {
+        const AUTO_DSQ = sqr(Molecule.IDEALBOND + 0.1);
+        let bestDSQ = Number.MAX_VALUE;
+        let bestA1 = 0, bestA2 = 0;
+        let conn = [];
+        for (let i = 0; i < aidx.length - 1; i++)
+            for (let j = i + 1; j < aidx.length; j++) {
                 if (mol.findBond(aidx[i], aidx[j]) > 0)
                     continue;
-                var dsq = norm2_xy(mol.atomX(aidx[i]) - mol.atomX(aidx[j]), mol.atomY(aidx[i]) - mol.atomY(aidx[j]));
+                let dsq = norm2_xy(mol.atomX(aidx[i]) - mol.atomX(aidx[j]), mol.atomY(aidx[i]) - mol.atomY(aidx[j]));
                 if (dsq < AUTO_DSQ) {
                     conn.push(aidx[i]);
                     conn.push(aidx[j]);
@@ -3868,15 +4418,15 @@ var SketchUtil = (function () {
             conn.push(bestA2);
         }
         return conn.length == 0 ? null : conn;
-    };
-    SketchUtil.pickNewAtomDirection = function (mol, atom, theta) {
+    }
+    static pickNewAtomDirection(mol, atom, theta) {
         if (theta.length == 1)
             return theta[0];
-        var bestTheta = theta[0], bestScore = Number.MAX_VALUE;
-        for (var n = 0; n < theta.length; n++) {
-            var px = mol.atomX(atom) + Molecule.IDEALBOND * Math.cos(theta[n]);
-            var py = mol.atomY(atom) + Molecule.IDEALBOND * Math.sin(theta[n]);
-            var score = CoordUtil.congestionPoint(mol, px, py);
+        let bestTheta = theta[0], bestScore = Number.MAX_VALUE;
+        for (let n = 0; n < theta.length; n++) {
+            let px = mol.atomX(atom) + Molecule.IDEALBOND * Math.cos(theta[n]);
+            let py = mol.atomY(atom) + Molecule.IDEALBOND * Math.sin(theta[n]);
+            let score = CoordUtil.congestionPoint(mol, px, py);
             if (score > bestScore)
                 continue;
             if (CoordUtil.overlapsAtom(mol, px, py, 0.2))
@@ -3887,27 +4437,27 @@ var SketchUtil = (function () {
             }
         }
         return bestTheta;
-    };
-    SketchUtil.joinOverlappingAtoms = function (mol, mask) {
+    }
+    static joinOverlappingAtoms(mol, mask) {
         mol = mol.clone();
         mask = mask.slice(0);
-        var na = mol.numAtoms;
-        var mx = MolUtil.arrayAtomX(mol), my = MolUtil.arrayAtomY(mol);
-        var groups = [];
-        var groupX = [], groupY = [];
-        for (var i = 0; i < na - 1; i++)
+        const na = mol.numAtoms;
+        let mx = MolUtil.arrayAtomX(mol), my = MolUtil.arrayAtomY(mol);
+        let groups = [];
+        let groupX = [], groupY = [];
+        for (let i = 0; i < na - 1; i++)
             if (mask[i]) {
-                var g = [i + 1];
-                var x = mx[i], y = my[i];
-                for (var j = i + 1; j < na; j++)
+                let g = [i + 1];
+                let x = mx[i], y = my[i];
+                for (let j = i + 1; j < na; j++)
                     if (mask[j]) {
                         if (norm2_xy(mx[j] - mx[i], my[j] - my[i]) > CoordUtil.OVERLAP_THRESHOLD_SQ)
                             continue;
                         g.push(j + 1);
                         x += mx[j];
                         y += my[j];
-                        var adjb = mol.atomAdjBonds(j + 1);
-                        for (var n = 0; n < adjb.length; n++) {
+                        let adjb = mol.atomAdjBonds(j + 1);
+                        for (let n = 0; n < adjb.length; n++) {
                             if (mol.bondFrom(adjb[n]) == j + 1)
                                 mol.setBondFrom(adjb[n], i + 1);
                             else if (mol.bondTo(adjb[n]) == j + 1)
@@ -3922,23 +4472,23 @@ var SketchUtil = (function () {
             }
         if (groups.length == 0)
             return null;
-        var keepmask = Vec.booleanArray(true, na);
-        for (var n = 0; n < groups.length; n++) {
-            var g = groups[n];
+        let keepmask = Vec.booleanArray(true, na);
+        for (let n = 0; n < groups.length; n++) {
+            let g = groups[n];
             mol.setAtomPos(g[0], groupX[n], groupY[n]);
-            for (var i = 1; i < g.length; i++)
+            for (let i = 1; i < g.length; i++)
                 keepmask[g[i] - 1] = false;
         }
         mol = MolUtil.subgraphMask(mol, keepmask);
         MolUtil.removeDuplicateBonds(mol);
         return mol;
-    };
-    SketchUtil.moveToEdge = function (mol, mask, dx, dy) {
-        var gotS = false, gotN = false;
-        var sx1 = 0, sy1 = 0, sx2 = 0, sy2 = 0;
-        var nx1 = 0, ny1 = 0, nx2 = 0, ny2 = 0;
-        for (var n = 1; n <= mol.numAtoms; n++) {
-            var x = mol.atomX(n), y = mol.atomY(n);
+    }
+    static moveToEdge(mol, mask, dx, dy) {
+        let gotS = false, gotN = false;
+        let sx1 = 0, sy1 = 0, sx2 = 0, sy2 = 0;
+        let nx1 = 0, ny1 = 0, nx2 = 0, ny2 = 0;
+        for (let n = 1; n <= mol.numAtoms; n++) {
+            let x = mol.atomX(n), y = mol.atomY(n);
             if (mask[n - 1]) {
                 if (!gotS || x < sx1)
                     sx1 = x;
@@ -3962,7 +4512,7 @@ var SketchUtil = (function () {
                 gotN = true;
             }
         }
-        var SEPARATE = 1.0, SEPTEST = 0.9;
+        const SEPARATE = 1.0, SEPTEST = 0.9;
         if ((dx < 0 && dy == 0 && sx2 <= nx1 - SEPTEST) ||
             (dx > 0 && dy == 0 && sx1 >= nx2 + SEPTEST) ||
             (dx == 0 && dy < 0 && sy2 <= ny1 - SEPTEST) ||
@@ -3970,7 +4520,7 @@ var SketchUtil = (function () {
             return null;
         }
         mol = mol.clone();
-        var ox = 0, oy = 0;
+        let ox = 0, oy = 0;
         if (dx < 0)
             ox = nx1 - sx2 - SEPARATE;
         if (dx > 0)
@@ -3979,21 +4529,21 @@ var SketchUtil = (function () {
             oy = ny1 - sy2 - SEPARATE;
         if (dy > 0)
             oy = ny2 - sy1 + SEPARATE;
-        for (var n = 1; n <= mol.numAtoms; n++)
+        for (let n = 1; n <= mol.numAtoms; n++)
             if (mask[n - 1])
                 mol.setAtomPos(n, mol.atomX(n) + ox, mol.atomY(n) + oy);
         return mol;
-    };
-    SketchUtil.placeAdditionalHydrogens = function (mol, atom, numH) {
-        var base = mol.numAtoms;
-        var x0 = mol.atomX(atom), y0 = mol.atomY(atom);
-        var adj = mol.atomAdjList(atom);
+    }
+    static placeAdditionalHydrogens(mol, atom, numH) {
+        let base = mol.numAtoms;
+        const x0 = mol.atomX(atom), y0 = mol.atomY(atom);
+        let adj = mol.atomAdjList(atom);
         if (adj.length == 2 && numH == 2) {
-            var th1 = Math.atan2(mol.atomY(adj[0]) - y0, mol.atomX(adj[0]) - x0);
-            var th2 = Math.atan2(mol.atomY(adj[1]) - y0, mol.atomX(adj[1]) - x0);
+            const th1 = Math.atan2(mol.atomY(adj[0]) - y0, mol.atomX(adj[0]) - x0);
+            const th2 = Math.atan2(mol.atomY(adj[1]) - y0, mol.atomX(adj[1]) - x0);
             if (Math.abs(angleDiff(th1, th2)) < 170 * DEGRAD) {
-                var theta_1 = 0.5 * (th1 + th2) + Math.PI;
-                var th3 = theta_1 - 30 * DEGRAD, th4 = theta_1 + 30 * DEGRAD;
+                let theta = 0.5 * (th1 + th2) + Math.PI;
+                let th3 = theta - 30 * DEGRAD, th4 = theta + 30 * DEGRAD;
                 mol.addAtom("H", x0 + Molecule.IDEALBOND * Math.cos(th3), y0 + Molecule.IDEALBOND * Math.sin(th3));
                 mol.addAtom("H", x0 + Molecule.IDEALBOND * Math.cos(th4), y0 + Molecule.IDEALBOND * Math.sin(th4));
                 mol.addBond(atom, base + 1, 1);
@@ -4002,8 +4552,8 @@ var SketchUtil = (function () {
             }
         }
         if (adj.length == 1 && numH == 3) {
-            var th1 = Math.atan2(mol.atomY(adj[0]) - y0, mol.atomX(adj[0]) - x0);
-            var th2 = th1 + 90 * DEGRAD, th3 = th1 + 180 * DEGRAD, th4 = th1 + 270 * DEGRAD;
+            let th1 = Math.atan2(mol.atomY(adj[0]) - y0, mol.atomX(adj[0]) - x0);
+            let th2 = th1 + 90 * DEGRAD, th3 = th1 + 180 * DEGRAD, th4 = th1 + 270 * DEGRAD;
             mol.addAtom("H", x0 + Molecule.IDEALBOND * Math.cos(th2), y0 + Molecule.IDEALBOND * Math.sin(th2));
             mol.addAtom("H", x0 + Molecule.IDEALBOND * Math.cos(th3), y0 + Molecule.IDEALBOND * Math.sin(th3));
             mol.addAtom("H", x0 + Molecule.IDEALBOND * Math.cos(th4), y0 + Molecule.IDEALBOND * Math.sin(th4));
@@ -4012,165 +4562,769 @@ var SketchUtil = (function () {
             mol.addBond(atom, base + 3, 1);
             return;
         }
-        var theta = SketchUtil.pickNewAtomDirection(mol, atom, SketchUtil.primeDirections(mol, atom));
+        let theta = SketchUtil.pickNewAtomDirection(mol, atom, SketchUtil.primeDirections(mol, atom));
         mol.addAtom("H", x0 + Molecule.IDEALBOND * Math.cos(theta), y0 + Molecule.IDEALBOND * Math.sin(theta));
         mol.addBond(atom, base + 1, 1);
         if (numH > 1)
             SketchUtil.placeAdditionalHydrogens(mol, atom, numH - 1);
-    };
-    SketchUtil.allViableDirections = function (mol, atom, order) {
+    }
+    static allViableDirections(mol, atom, order) {
         if (mol.atomAdjCount(atom) == 0) {
-            var angles_1 = [];
-            for (var n = 0; n < 12; n++)
-                angles_1.push(30 * DEGRAD);
-            return angles_1;
+            let angles = [];
+            for (let n = 0; n < 12; n++)
+                angles.push(30 * DEGRAD);
+            return angles;
         }
-        var adj = mol.atomAdjList(atom);
-        var angles = SketchUtil.exitVectors(mol, atom);
-        var geom = SketchUtil.guessAtomGeometry(mol, atom, order);
+        let adj = mol.atomAdjList(atom);
+        let angles = SketchUtil.exitVectors(mol, atom);
+        let geom = SketchUtil.guessAtomGeometry(mol, atom, order);
         if (adj.length == 1 && geom.indexOf(Geometry.Linear) < 0)
             geom.push(Geometry.Linear);
-        var bndang = CoordUtil.atomBondAngles(mol, atom, adj);
-        for (var _i = 0, geom_1 = geom; _i < geom_1.length; _i++) {
-            var g = geom_1[_i];
-            var map = SketchUtil.mapAngleSubstituent(g, bndang);
+        let bndang = CoordUtil.atomBondAngles(mol, atom, adj);
+        for (let g of geom) {
+            let map = SketchUtil.mapAngleSubstituent(g, bndang);
             if (map != null)
-                for (var _a = 0, map_1 = map; _a < map_1.length; _a++) {
-                    var th = map_1[_a];
+                for (let th of map)
                     angles.push(th);
-                }
         }
         return GeomUtil.uniqueAngles(angles, 2 * DEGRAD);
-    };
-    SketchUtil.proposeNewRing = function (mol, rsz, x, y, dx, dy, snap) {
-        var theta = Math.atan2(dy, dx);
+    }
+    static proposeNewRing(mol, rsz, x, y, dx, dy, snap) {
+        let theta = Math.atan2(dy, dx);
         if (snap) {
-            var chunk = 30 * DEGRAD;
+            const chunk = 30 * DEGRAD;
             theta = Math.round(theta / chunk) * chunk;
         }
         return SketchUtil.positionSimpleRing(mol, rsz, x, y, theta);
-    };
-    SketchUtil.proposeAtomRing = function (mol, rsz, atom, dx, dy) {
-        var thsnap = [];
-        var cx = mol.atomX(atom), cy = mol.atomY(atom);
+    }
+    static proposeAtomRing(mol, rsz, atom, dx, dy) {
+        let thsnap = [];
+        let cx = mol.atomX(atom), cy = mol.atomY(atom);
         if (mol.atomAdjCount(atom) == 0) {
-            for (var n = 0; n < 12; n++)
+            for (let n = 0; n < 12; n++)
                 thsnap.push(TWOPI * n / 12);
         }
         else if (mol.atomAdjCount(atom) == 1) {
-            var nbr = mol.atomAdjList(atom)[0];
+            let nbr = mol.atomAdjList(atom)[0];
             thsnap.push(angleNorm(Math.atan2(mol.atomY(nbr) - cy, mol.atomX(nbr) - cx) + Math.PI));
         }
         else {
-            var angs = [];
-            for (var _i = 0, _a = mol.atomAdjList(atom); _i < _a.length; _i++) {
-                var nbr = _a[_i];
+            let angs = [];
+            for (let nbr of mol.atomAdjList(atom))
                 angs.push(Math.atan2(mol.atomY(nbr) - cy, mol.atomX(nbr) - cx));
-            }
             angs = sortAngles(angs);
-            for (var n = 0; n < angs.length; n++) {
-                var th1 = angs[n], th2 = angs[n < angs.length - 1 ? n + 1 : 0];
+            for (let n = 0; n < angs.length; n++) {
+                let th1 = angs[n], th2 = angs[n < angs.length - 1 ? n + 1 : 0];
                 thsnap.push(th1 + 0.5 * angleDiffPos(th2, th1));
             }
         }
-        var theta = Math.atan2(dy, dx);
+        let theta = Math.atan2(dy, dx);
         var bestTheta = 0, bestDelta = Number.MAX_VALUE;
-        for (var _b = 0, thsnap_1 = thsnap; _b < thsnap_1.length; _b++) {
-            var th = thsnap_1[_b];
-            var delta = Math.abs(angleDiff(th, theta));
+        for (let th of thsnap) {
+            let delta = Math.abs(angleDiff(th, theta));
             if (delta < bestDelta) {
                 bestTheta = th;
                 bestDelta = delta;
             }
         }
         return SketchUtil.positionSimpleRing(mol, rsz, mol.atomX(atom), mol.atomY(atom), bestTheta);
-    };
-    SketchUtil.proposeBondRing = function (mol, rsz, bond, dx, dy) {
-        var bfr = mol.bondFrom(bond), bto = mol.bondTo(bond);
-        var bx = mol.atomX(bto) - mol.atomX(bfr), by = mol.atomY(bto) - mol.atomY(bfr);
-        var sign = dx * by - dy * bx;
-        var delta = sign > 0 ? -90 * DEGRAD : 90 * DEGRAD;
-        var theta = Math.atan2(by, bx) + delta;
-        var dth = TWOPI / rsz;
-        var rad = Molecule.IDEALBOND / (2.0 * Math.sin(0.5 * dth)), brad = rad * Math.cos(0.5 * dth);
-        var cx = 0.5 * (mol.atomX(bfr) + mol.atomX(bto)) + brad * Math.cos(theta);
-        var cy = 0.5 * (mol.atomY(bfr) + mol.atomY(bto)) + brad * Math.sin(theta);
-        var rx = [], ry = [];
-        for (var n = 0; n < rsz; n++) {
-            var th = theta - Math.PI + (n - 0.5) * dth;
+    }
+    static proposeBondRing(mol, rsz, bond, dx, dy) {
+        let bfr = mol.bondFrom(bond), bto = mol.bondTo(bond);
+        let bx = mol.atomX(bto) - mol.atomX(bfr), by = mol.atomY(bto) - mol.atomY(bfr);
+        let sign = dx * by - dy * bx;
+        let delta = sign > 0 ? -90 * DEGRAD : 90 * DEGRAD;
+        let theta = Math.atan2(by, bx) + delta;
+        let dth = TWOPI / rsz;
+        let rad = Molecule.IDEALBOND / (2.0 * Math.sin(0.5 * dth)), brad = rad * Math.cos(0.5 * dth);
+        let cx = 0.5 * (mol.atomX(bfr) + mol.atomX(bto)) + brad * Math.cos(theta);
+        let cy = 0.5 * (mol.atomY(bfr) + mol.atomY(bto)) + brad * Math.sin(theta);
+        let rx = [], ry = [];
+        for (let n = 0; n < rsz; n++) {
+            let th = theta - Math.PI + (n - 0.5) * dth;
             rx.push(cx + Math.cos(th) * rad);
             ry.push(cy + Math.sin(th) * rad);
         }
-        var _a = sign < 0 ? [bfr, bto] : [bto, bfr], i1 = _a[0], i2 = _a[1];
+        let [i1, i2] = sign < 0 ? [bfr, bto] : [bto, bfr];
         rx[0] = mol.atomX(i1);
         ry[0] = mol.atomY(i1);
         rx[1] = mol.atomX(i2);
         ry[1] = mol.atomY(i2);
         return [rx, ry];
-    };
-    SketchUtil.positionSimpleRing = function (mol, rsz, x, y, theta) {
-        var dth = TWOPI / rsz;
-        var rad = Molecule.IDEALBOND / (2 * Math.sin(0.5 * dth));
-        var cx = x + rad * Math.cos(theta), cy = y + rad * Math.sin(theta);
-        var rx = [], ry = [];
-        for (var n = 0; n < rsz; n++) {
-            var th = theta - Math.PI + n * dth;
+    }
+    static positionSimpleRing(mol, rsz, x, y, theta) {
+        let dth = TWOPI / rsz;
+        let rad = Molecule.IDEALBOND / (2 * Math.sin(0.5 * dth));
+        let cx = x + rad * Math.cos(theta), cy = y + rad * Math.sin(theta);
+        let rx = [], ry = [];
+        for (let n = 0; n < rsz; n++) {
+            let th = theta - Math.PI + n * dth;
             rx.push(cx + Math.cos(th) * rad);
             ry.push(cy + Math.sin(th) * rad);
         }
         return [rx, ry];
-    };
-    SketchUtil.guidelineSprouts = function (mol, atom) {
-        var sprouts = [];
-        var angs = [], ords = [];
-        for (var n = 0; n < 3; n++) {
+    }
+    static guidelineSprouts(mol, atom) {
+        let sprouts = [];
+        let angs = [], ords = [];
+        for (let n = 0; n < 3; n++) {
             angs.push(SketchUtil.allViableDirections(mol, atom, n + 1));
             ords.push([n + 1]);
-            for (var i = 0; i < n; i++)
+            for (let i = 0; i < n; i++)
                 if (angs[i] != null && Vec.equals(angs[n], angs[i])) {
                     angs[n] = null;
                     ords[i].push(n + 1);
                 }
         }
-        var cx = mol.atomX(atom), cy = mol.atomY(atom);
-        for (var n = 0; n < 3; n++)
+        const cx = mol.atomX(atom), cy = mol.atomY(atom);
+        for (let n = 0; n < 3; n++)
             if (angs[n] != null) {
-                var sprout = {
+                let sprout = {
                     'atom': atom,
                     'orders': ords[n],
                     'x': [],
-                    'y': []
+                    'y': [],
                 };
-                for (var i = 0; i < angs[n].length; i++) {
+                for (let i = 0; i < angs[n].length; i++) {
                     sprout.x[i] = cx + Math.cos(angs[n][i]) * Molecule.IDEALBOND;
                     sprout.y[i] = cy + Math.sin(angs[n][i]) * Molecule.IDEALBOND;
                 }
                 sprouts.push(sprout);
             }
         return sprouts;
-    };
-    SketchUtil.GEOM_ANGLES = [
-        [0, 180 * DEGRAD],
-        [0, 120 * DEGRAD],
-        [0, 120 * DEGRAD, 240 * DEGRAD],
-        [0, 90 * DEGRAD, 150 * DEGRAD, 240 * DEGRAD],
-        [0, 120 * DEGRAD, 180 * DEGRAD, 240 * DEGRAD],
-        [0, 90 * DEGRAD, 180 * DEGRAD, 270 * DEGRAD],
-        [0, 90 * DEGRAD, 150 * DEGRAD, 210 * DEGRAD, 270 * DEGRAD],
-        [0, 60 * DEGRAD, 90 * DEGRAD, 180 * DEGRAD, 210 * DEGRAD],
-        [0, 60 * DEGRAD, 120 * DEGRAD, 180 * DEGRAD, 240 * DEGRAD, 300 * DEGRAD],
-        [0, 45 * DEGRAD, 90 * DEGRAD, 180 * DEGRAD, 225 * DEGRAD, 270 * DEGRAD]
-    ];
-    return SketchUtil;
-}());
-var Dialog = (function () {
-    function Dialog() {
+    }
+}
+SketchUtil.GEOM_ANGLES = [
+    [0, 180 * DEGRAD],
+    [0, 120 * DEGRAD],
+    [0, 120 * DEGRAD, 240 * DEGRAD],
+    [0, 90 * DEGRAD, 150 * DEGRAD, 240 * DEGRAD],
+    [0, 120 * DEGRAD, 180 * DEGRAD, 240 * DEGRAD],
+    [0, 90 * DEGRAD, 180 * DEGRAD, 270 * DEGRAD],
+    [0, 90 * DEGRAD, 150 * DEGRAD, 210 * DEGRAD, 270 * DEGRAD],
+    [0, 60 * DEGRAD, 90 * DEGRAD, 180 * DEGRAD, 210 * DEGRAD],
+    [0, 60 * DEGRAD, 120 * DEGRAD, 180 * DEGRAD, 240 * DEGRAD, 300 * DEGRAD],
+    [0, 45 * DEGRAD, 90 * DEGRAD, 180 * DEGRAD, 225 * DEGRAD, 270 * DEGRAD]
+];
+class Stereochemistry {
+    constructor(meta) {
+        this.meta = meta;
+        this.mol = meta.mol;
+        this.priority = Vec.numberArray(0, this.mol.numAtoms);
+        this.chiralTetra = Vec.numberArray(Stereochemistry.STEREO_NONE, this.mol.numAtoms);
+        this.cistransBond = Vec.numberArray(Stereochemistry.STEREO_NONE, this.mol.numBonds);
+        this.cistransPlanar = Vec.numberArray(Stereochemistry.STEREO_NONE, this.mol.numAtoms);
+        this.chiralOcta = Vec.numberArray(Stereochemistry.STEREO_NONE, this.mol.numAtoms);
+    }
+    calculate() {
+        this.isH = Vec.booleanArray(false, this.mol.numAtoms);
+        for (let n = this.mol.numAtoms; n >= 1; n--)
+            this.isH[n - 1] = this.mol.atomElement(n) == 'H';
+        this.buildPriority();
+        this.buildTetraChirality();
+        this.buildBondCisTrans();
+        this.buildPlanarCisTrans();
+        this.buildOctaChirality();
+    }
+    atomPriority(atom) { return this.priority[atom - 1]; }
+    atomTetraChirality(atom) { return this.chiralTetra[atom - 1]; }
+    bondSideStereo(bond) { return this.cistransBond[bond - 1]; }
+    atomPlanarStereo(atom) { return this.cistransPlanar[atom - 1]; }
+    atomOctaChirality(atom) { return this.chiralOcta[atom - 1]; }
+    getPriorities() { return this.priority.slice(0); }
+    getAtomTetraChiral() { return this.chiralTetra.slice(0); }
+    getBondSideStereo() { return this.cistransBond.slice(0); }
+    static create(meta) {
+        let stereo = new Stereochemistry(meta);
+        stereo.calculate();
+        return stereo;
+    }
+    static rubricTetrahedral(mol, atom) {
+        if (mol.atomAdjCount(atom) < 3 || mol.atomAdjCount(atom) + mol.atomHydrogens(atom) != 4)
+            return null;
+        let adjBonds = mol.atomAdjBonds(atom);
+        let hasWedge = false;
+        for (let n = 0; n < adjBonds.length; n++) {
+            let bt = mol.bondType(adjBonds[n]);
+            if (bt == Molecule.BONDTYPE_UNKNOWN)
+                return null;
+            if (mol.bondFrom(adjBonds[n]) != atom)
+                continue;
+            if (bt == Molecule.BONDTYPE_INCLINED || bt == Molecule.BONDTYPE_DECLINED)
+                hasWedge = true;
+        }
+        if (!hasWedge && !mol.is3D())
+            return null;
+        let adj = mol.atomAdjList(atom);
+        let x = [0, 0, 0, 0];
+        let y = [0, 0, 0, 0];
+        let z = [0, 0, 0, 0];
+        let numShort = 0, numWedges = 0;
+        for (let n = 0; n < adjBonds.length; n++) {
+            const bfr = mol.bondFrom(adjBonds[n]), bt = mol.bondType(adjBonds[n]);
+            x[n] = mol.atomX(adj[n]) - mol.atomX(atom);
+            y[n] = mol.atomY(adj[n]) - mol.atomY(atom);
+            if (mol.is3D()) {
+                z[n] = mol.atomZ(adj[n]) - mol.atomZ(atom);
+            }
+            else if (bfr == atom) {
+                if (bt == Molecule.BONDTYPE_INCLINED) {
+                    z[n] = 1;
+                    numWedges++;
+                }
+                else if (bt == Molecule.BONDTYPE_DECLINED) {
+                    z[n] = -1;
+                    numWedges++;
+                }
+            }
+            let dsq = norm_xyz(x[n], y[n], z[n]);
+            if (dsq < 0.01 * 0.01) {
+                numShort++;
+                if (numShort > 1)
+                    return null;
+            }
+        }
+        if (adjBonds.length == 3) {
+            adj.push(0);
+            if (!mol.is3D() && numWedges == 1) {
+                let th0 = Math.atan2(y[0], x[0]), th1 = Math.atan2(y[1], x[1]), th2 = Math.atan2(y[2], x[2]);
+                let i1 = 1, i2 = 2;
+                if (angleDiffPos(th1, th0) > angleDiffPos(th2, th0)) {
+                    i2 = 1;
+                    i1 = 2;
+                }
+                x[0] = 1.5;
+                y[0] = 0;
+                x[1] = -0.75;
+                y[i1] = 1.3;
+                x[2] = -0.75;
+                y[i2] = -1.3;
+            }
+            else {
+                x[3] = -(x[0] + x[1] + x[2]);
+                y[3] = -(y[0] + y[1] + y[2]);
+                z[3] = -(z[0] + z[1] + z[2]);
+                let dsq = norm_xyz(x[3], y[3], z[3]);
+                if (dsq < 0.01 * 0.01)
+                    return null;
+                let inv = 1.0 / Math.sqrt(dsq);
+                x[3] *= inv;
+                y[3] *= inv;
+                z[3] *= inv;
+            }
+        }
+        let one = 0, two = 0;
+        for (let i = 1; i <= 6; i++) {
+            let a = 0, b = 0;
+            if (i == 1) {
+                a = 1;
+                b = 2;
+            }
+            else if (i == 2) {
+                a = 2;
+                b = 3;
+            }
+            else if (i == 3) {
+                a = 3;
+                b = 1;
+            }
+            else if (i == 4) {
+                a = 2;
+                b = 1;
+            }
+            else if (i == 5) {
+                a = 3;
+                b = 2;
+            }
+            else if (i == 6) {
+                a = 1;
+                b = 3;
+            }
+            let xx = y[a] * z[b] - y[b] * z[a] - x[0];
+            let yy = z[a] * x[b] - z[b] * x[a] - y[0];
+            let zz = x[a] * y[b] - x[b] * y[a] - z[0];
+            if (i <= 3)
+                one += xx * xx + yy * yy + zz * zz;
+            else
+                two += xx * xx + yy * yy + zz * zz;
+        }
+        if (two > one)
+            Vec.swap(adj, 2, 3);
+        return adj;
+    }
+    static rubricSquarePlanar(mol, atom) {
+        if (mol.atomAdjCount(atom) != 4)
+            return null;
+        let adj = mol.atomAdjList(atom);
+        let v0 = MolUtil.atomVec3(mol, atom);
+        let v1 = MolUtil.atomVec3(mol, adj[0]);
+        Vec.subFromArray(v1, v0);
+        let v2 = MolUtil.atomVec3(mol, adj[1]);
+        Vec.subFromArray(v2, v0);
+        let v3 = MolUtil.atomVec3(mol, adj[2]);
+        Vec.subFromArray(v3, v0);
+        let v4 = MolUtil.atomVec3(mol, adj[3]);
+        Vec.subFromArray(v4, v0);
+        let d2 = GeomUtil.dist2(v1, v2), d3 = GeomUtil.dist2(v1, v3), d4 = GeomUtil.dist2(v1, v4);
+        if (d2 > d3 && d2 >= d4) {
+            Vec.swap(adj, 1, 2);
+            let tmp = v2;
+            v2 = v3;
+            v3 = tmp;
+        }
+        else if (d4 > d3) {
+            Vec.swap(adj, 3, 2);
+            let tmp = v4;
+            v4 = v3;
+            v3 = tmp;
+        }
+        const MIN_ANGLE = 45 * DEGRAD, MAX_ANGLE = 135 * DEGRAD;
+        let th12 = GeomUtil.acuteAngle(v1, v2);
+        if (th12 < MIN_ANGLE || th12 > MAX_ANGLE)
+            return null;
+        let th23 = GeomUtil.acuteAngle(v2, v3);
+        if (th23 < MIN_ANGLE || th23 > MAX_ANGLE)
+            return null;
+        let th34 = GeomUtil.acuteAngle(v3, v4);
+        if (th34 < MIN_ANGLE || th34 > MAX_ANGLE)
+            return null;
+        let th41 = GeomUtil.acuteAngle(v4, v1);
+        if (th41 < MIN_ANGLE || th41 > MAX_ANGLE)
+            return null;
+        return adj;
+    }
+    static rubricOctahedral(mol, atom) {
+        const nadj = mol.atomAdjCount(atom);
+        if (nadj != 5 && nadj != 6)
+            return null;
+        let adj = mol.atomAdjList(atom), bonds = mol.atomAdjBonds(atom);
+        if (nadj == 5) {
+            adj.push(0);
+            bonds.push(0);
+        }
+        if (!mol.is3D()) {
+            let numWedges = 0;
+            for (let b of bonds)
+                if (b > 0) {
+                    const bt = mol.bondType(b);
+                    if (bt == Molecule.BONDTYPE_INCLINED || bt == Molecule.BONDTYPE_DECLINED)
+                        numWedges++;
+                }
+            if ((nadj == 5 && numWedges < 1) || (nadj == 6 && numWedges < 2))
+                return null;
+        }
+        const THRESH = 0.1, THRESHSQ = THRESH * THRESH;
+        let v0 = MolUtil.atomVec3(mol, atom);
+        let v = [[], [], [], [], [], []];
+        for (let n = 0; n < nadj; n++) {
+            v[n] = MolUtil.atomVec3(mol, adj[n]);
+            Vec.subFromArray(v[n], v0);
+            let mag = GeomUtil.magnitude(v[n]);
+            if (mag < THRESH)
+                return null;
+            Vec.mulBy(v[n], 1 / mag);
+            let bt = mol.bondType(bonds[n]);
+            if (bt == Molecule.BONDTYPE_INCLINED) {
+                if (mol.bondFrom(bonds[n]) == atom)
+                    v[n][2] += 1;
+                else
+                    v[n][2] -= 1;
+            }
+            else if (bt == Molecule.BONDTYPE_DECLINED) {
+                if (mol.bondFrom(bonds[n]) == atom)
+                    v[n][2] -= 1;
+                else
+                    v[n][2] += 1;
+            }
+        }
+        if (nadj == 5) {
+            v[5] = [0, 0, 0];
+            for (let n = 0; n < 5; n++)
+                Vec.subFromArray(v[5], v[n]);
+            let mag = GeomUtil.magnitude(v[5]);
+            if (mag < THRESH)
+                return null;
+            Vec.mulBy(v[5], 1 / mag);
+        }
+        let slots = [-1, -1, -1, -1, 0, 1];
+        let bestOpposite = GeomUtil.acuteAngle(v[0], v[1]);
+        for (let i = 0; i < 5; i++)
+            for (let j = (i == 0 ? 2 : i + 1); j < 6; j++) {
+                let theta = GeomUtil.acuteAngle(v[i], v[j]);
+                if (theta > bestOpposite) {
+                    slots[4] = i;
+                    slots[5] = j;
+                    bestOpposite = theta;
+                }
+            }
+        let axial = Vec.sub(v[slots[5]], v[slots[4]]);
+        let bestOrthogonal = Number.POSITIVE_INFINITY;
+        for (let n = 0; n < 6; n++)
+            if (n != slots[4] && n != slots[5]) {
+                let delta = Math.abs((90 * DEGRAD) - GeomUtil.acuteAngle(v[n], axial));
+                if (delta < bestOrthogonal) {
+                    slots[0] = n;
+                    bestOrthogonal = delta;
+                }
+            }
+        for (let s = 1; s <= 2; s++) {
+            let cross = GeomUtil.crossProduct(axial, v[slots[s - 1]]);
+            let bestOrient = Number.POSITIVE_INFINITY;
+            for (let n = 0; n < 6; n++) {
+                if (n == slots[4] || n == slots[5] || n == slots[0] || n == slots[1])
+                    continue;
+                let delta = GeomUtil.acuteAngle(v[n], cross);
+                if (delta < bestOrient) {
+                    slots[s] = n;
+                    bestOrient = delta;
+                }
+            }
+        }
+        for (let n = 0; n < 6; n++)
+            if (slots.indexOf(n) < 0) {
+                slots[3] = n;
+                break;
+            }
+        let rubric = [0, 0, 0, 0, 0, 0];
+        for (let n = 0; n < 6; n++)
+            rubric[n] = slots[n] < 0 ? 0 : adj[slots[n]];
+        return rubric;
+    }
+    static rubricBondSides(mol, bond) {
+        const bfr = mol.bondFrom(bond), bto = mol.bondTo(bond);
+        const nfr = mol.atomAdjCount(bfr), nto = mol.atomAdjCount(bto);
+        if (nfr < 2 || nfr > 3 || nto < 2 || nto > 3)
+            return null;
+        let adj1 = mol.atomAdjList(bfr), adj2 = mol.atomAdjList(bto);
+        let f1 = 0, f2 = 0, t1 = 0, t2 = 0;
+        for (let i = 0; i < adj1.length; i++) {
+            if (adj1[i] != bto) {
+                if (f1 == 0)
+                    f1 = adj1[i];
+                else
+                    f2 = adj1[i];
+            }
+        }
+        for (let i = 0; i < adj2.length; i++) {
+            if (adj2[i] != bfr) {
+                if (t1 == 0)
+                    t1 = adj2[i];
+                else
+                    t2 = adj2[i];
+            }
+        }
+        if (f1 > 0 && f2 > 0 && mol.atomElement(f1) == 'H') {
+            let f = f1;
+            f1 = f2;
+            f2 = f;
+        }
+        if (t1 > 0 && t2 > 0 && mol.atomElement(t1) == 'H') {
+            let t = t1;
+            t1 = t2;
+            t2 = t;
+        }
+        let vfr = MolUtil.atomVec3(mol, bfr), vto = MolUtil.atomVec3(mol, bto);
+        let vbond = Vec.sub(vto, vfr);
+        let vf1 = Vec.sub(MolUtil.atomVec3(mol, f1), vfr), vt1 = Vec.sub(MolUtil.atomVec3(mol, t1), vto);
+        const THRESHSQ = 0.1 * 0.1;
+        let xf1 = GeomUtil.crossProduct(vf1, vbond);
+        if (GeomUtil.magnitude2(xf1) < THRESHSQ)
+            return null;
+        let xt1 = GeomUtil.crossProduct(vt1, vbond);
+        if (GeomUtil.magnitude2(xt1) < THRESHSQ)
+            return null;
+        let xf1N = Vec.neg(xf1);
+        let keepF1T1 = GeomUtil.dist2(xf1, xt1) < GeomUtil.dist2(xf1N, xt1);
+        let keepF2T1 = keepF1T1, keepF1T2 = keepF1T1, keepF2T2 = keepF1T1;
+        let vf2 = null, vt2 = null, xf2 = null, xt2 = null, xf2N = null;
+        if (f2 > 0) {
+            vf2 = Vec.sub(MolUtil.atomVec3(mol, f2), vfr);
+            if (GeomUtil.magnitude2(vf2) < THRESHSQ) {
+                if (mol.atomElement(f2) != 'H')
+                    return null;
+            }
+            else {
+                xf2 = GeomUtil.crossProduct(vf2, vbond);
+                if (GeomUtil.magnitude2(xf2) < THRESHSQ)
+                    return null;
+                xf2N = Vec.neg(xf2);
+                keepF2T1 = GeomUtil.dist2(xf2, xt1) > GeomUtil.dist2(xf2N, xt1);
+            }
+        }
+        if (t2 > 0) {
+            vt2 = Vec.sub(MolUtil.atomVec3(mol, t2), vto);
+            if (GeomUtil.magnitude2(vt2) < THRESHSQ) {
+                if (mol.atomElement(t2) != 'H')
+                    return null;
+            }
+            else {
+                xt2 = GeomUtil.crossProduct(vt2, vbond);
+                if (GeomUtil.magnitude2(xt2) < THRESHSQ)
+                    return null;
+                keepF1T2 = GeomUtil.dist2(xf1, xt2) > GeomUtil.dist2(xf1N, xt2);
+            }
+        }
+        if (xf2 != null && xt2 != null) {
+            keepF2T2 = GeomUtil.dist2(xf2, xt2) < GeomUtil.dist2(xf2N, xt2);
+        }
+        if (keepF1T1 && keepF2T1 && keepF1T2 && keepF2T2)
+            return [f1, f2, t1, t2];
+        if (!keepF1T1 && !keepF2T1 && !keepF1T2 && !keepF2T2)
+            return [f1, f2, t2, t1];
+        return null;
+    }
+    buildTetraChirality() {
+        const mol = this.mol, na = mol.numAtoms, nb = mol.numBonds;
+        let haswedge = Vec.booleanArray(false, na);
+        for (let n = 1; n <= nb; n++) {
+            if (mol.bondType(n) == Molecule.BONDTYPE_INCLINED || mol.bondType(n) == Molecule.BONDTYPE_DECLINED)
+                haswedge[mol.bondFrom(n) - 1] = true;
+        }
+        skip_atom: for (let n = 1; n <= na; n++) {
+            this.chiralTetra[n - 1] = Stereochemistry.STEREO_NONE;
+            let adj = mol.atomAdjList(n);
+            if (!(adj.length == 4 || (adj.length == 3 && mol.atomHydrogens(n) == 1)))
+                continue;
+            if (adj.length == 3 && (this.isH[adj[0] - 1] || this.isH[adj[1] - 1] || this.isH[adj[2] - 1]))
+                continue;
+            for (let i = 0; i < adj.length - 1; i++) {
+                for (let j = i + 1; j < adj.length; j++) {
+                    if (this.priority[adj[i] - 1] == this.priority[adj[j] - 1])
+                        continue skip_atom;
+                }
+            }
+            if (!haswedge[n - 1] && !mol.is3D()) {
+                this.chiralTetra[n - 1] = Stereochemistry.STEREO_UNKNOWN;
+                continue;
+            }
+            let rubric = Stereochemistry.rubricTetrahedral(mol, n);
+            if (rubric == null)
+                continue;
+            let pri = [
+                rubric[0] == 0 ? 0 : this.priority[rubric[0] - 1],
+                rubric[1] == 0 ? 0 : this.priority[rubric[1] - 1],
+                rubric[2] == 0 ? 0 : this.priority[rubric[2] - 1],
+                rubric[3] == 0 ? 0 : this.priority[rubric[3] - 1]
+            ];
+            pri = Vec.idxSort(pri);
+            let parity = Permutation.parityIdentity(pri);
+            this.chiralTetra[n - 1] = (parity & 1) == 0 ? Stereochemistry.STEREO_POS : Stereochemistry.STEREO_NEG;
+        }
+    }
+    buildBondCisTrans() {
+        const mol = this.mol, na = mol.numAtoms, nb = mol.numBonds;
+        let sf = [0, 0], st = [0, 0];
+        let ringMask = Vec.booleanArray(false, nb);
+        for (let rsz = 3; rsz <= 7; rsz++) {
+            for (let r of mol.findRingsOfSize(rsz)) {
+                for (let n = 0; n < r.length; n++) {
+                    let b = mol.findBond(r[n], r[n < r.length - 1 ? n + 1 : 0]);
+                    ringMask[b - 1] = true;
+                }
+            }
+        }
+        skip_bond: for (let n = 1; n <= nb; n++) {
+            this.cistransBond[n - 1] = Stereochemistry.STEREO_NONE;
+            if (mol.bondOrder(n) != 2 || this.meta.isBondAromatic(n) || ringMask[n - 1])
+                continue;
+            let bfr = mol.bondFrom(n), bto = mol.bondTo(n);
+            let adj1 = mol.atomAdjList(bfr), adj2 = mol.atomAdjList(bto);
+            if (adj1.length <= 1 || adj2.length <= 1 || adj1.length > 3 || adj2.length > 3)
+                continue;
+            if (adj1.length == 2 && (this.isH[adj1[0] - 1] || this.isH[adj1[1] - 1]))
+                continue;
+            if (adj2.length == 2 && (this.isH[adj2[0] - 1] || this.isH[adj2[1] - 1]))
+                continue;
+            for (let i = 0; i < adj1.length - 1; i++)
+                if (adj1[i] != bfr)
+                    for (let j = i + 1; j < adj1.length; j++)
+                        if (adj1[j] != bfr)
+                            if (this.priority[adj1[i] - 1] == this.priority[adj1[j] - 1])
+                                continue skip_bond;
+            for (let i = 0; i < adj2.length - 1; i++)
+                if (adj2[i] != bto)
+                    for (let j = i + 1; j < adj2.length; j++)
+                        if (adj2[j] != bto)
+                            if (this.priority[adj2[i] - 1] == this.priority[adj2[j] - 1])
+                                continue skip_bond;
+            if (mol.bondType(n) == Molecule.BONDTYPE_UNKNOWN) {
+                this.cistransBond[n - 1] = Stereochemistry.STEREO_UNKNOWN;
+                continue;
+            }
+            let rubric = Stereochemistry.rubricBondSides(mol, n);
+            if (rubric == null)
+                continue;
+            let pf1 = rubric[0] == 0 ? 0 : this.priority[rubric[0] - 1];
+            let pf2 = rubric[1] == 0 ? 0 : this.priority[rubric[1] - 1];
+            let pt1 = rubric[2] == 0 ? 0 : this.priority[rubric[2] - 1];
+            let pt2 = rubric[3] == 0 ? 0 : this.priority[rubric[3] - 1];
+            this.cistransBond[n - 1] = ((pf1 < pf2) == (pt1 < pt2)) ? Stereochemistry.STEREO_POS : Stereochemistry.STEREO_NEG;
+        }
+    }
+    buildPlanarCisTrans() {
+        const mol = this.mol, na = mol.numAtoms, nb = mol.numBonds;
+        skip_atom: for (let n = 1; n <= na; n++) {
+            this.cistransPlanar[n - 1] = Stereochemistry.STEREO_NONE;
+            if (mol.atomAdjCount(n) != 4)
+                continue;
+            if (Chemistry.ELEMENT_BLOCKS[mol.atomicNumber(n)] < 3)
+                continue;
+            let adj = mol.atomAdjList(n);
+            for (let i = 0; i < adj.length; i++) {
+                let count = 0;
+                for (let j = 0; j < adj.length; j++) {
+                    if (this.priority[adj[i] - 1] == this.priority[adj[j] - 1])
+                        count++;
+                }
+                if (count >= 3)
+                    continue skip_atom;
+            }
+            let rubric = Stereochemistry.rubricSquarePlanar(mol, n);
+            if (rubric == null)
+                continue;
+            let pri = [
+                rubric[0] == 0 ? 0 : this.priority[rubric[0] - 1],
+                rubric[1] == 0 ? 0 : this.priority[rubric[1] - 1],
+                rubric[2] == 0 ? 0 : this.priority[rubric[2] - 1],
+                rubric[3] == 0 ? 0 : this.priority[rubric[3] - 1]
+            ];
+            let parity = Permutation.parityOrder(pri);
+            this.cistransPlanar[n - 1] = (parity & 1) == 0 ? Stereochemistry.STEREO_POS : Stereochemistry.STEREO_NEG;
+        }
+    }
+    buildOctaChirality() {
+    }
+    buildPriority() {
+        const mol = this.mol, na = mol.numAtoms, nb = mol.numBonds;
+        let cipgr = [];
+        for (let n = 0; n < na; n++)
+            cipgr.push(Vec.numberArray(-1, mol.atomHydrogens(n + 1)));
+        for (let n = 1; n <= nb; n++) {
+            let bf = mol.bondFrom(n) - 1, bt = mol.bondTo(n) - 1, bo = mol.bondOrder(n);
+            if (this.meta.isBondAromatic(n))
+                bo = 2;
+            if (bf != bt)
+                for (let i = 0; i < bo; i++) {
+                    cipgr[bf].push(bt);
+                    cipgr[bt].push(bf);
+                }
+        }
+        this.priority = Vec.numberArray(0, na);
+        let anyActualH = false;
+        for (let n = 0; n < na; n++) {
+            this.priority[n] = mol.atomicNumber(n + 1);
+            if (this.priority[n] == 1)
+                anyActualH = true;
+        }
+        let prigr = [];
+        for (let n = 0; n < na; n++)
+            prigr.push([]);
+        while (true) {
+            for (let n = 0; n < na; n++) {
+                let cip = cipgr[n], pri = [];
+                for (let i = 0; i < cip.length; i++)
+                    pri.push(cip[i] < 0 ? 1 : this.priority[cip[i]]);
+                Vec.sort(pri);
+                prigr[n] = pri;
+            }
+            let groups = this.sortAndGroup(this.priority);
+            let nextpri = anyActualH ? 0 : 1;
+            let repartitioned = false;
+            for (let n = 0; n < groups.length; n++) {
+                let g = groups[n];
+                for (let p = 0; p < g.length - 1;) {
+                    const i1 = g[p], i2 = g[p + 1];
+                    let cmp = 0, sz = Math.max(prigr[i1].length, prigr[i2].length);
+                    for (let i = 0; i < sz; i++) {
+                        let v1 = i < prigr[i1].length ? prigr[i1][i] : 0, v2 = i < prigr[i2].length ? prigr[i2][i] : 0;
+                        if (v1 < v2) {
+                            cmp = -1;
+                            break;
+                        }
+                        if (v1 > v2) {
+                            cmp = 1;
+                            break;
+                        }
+                    }
+                    if (cmp > 0) {
+                        g[p] = i2;
+                        g[p + 1] = i1;
+                        if (p > 0)
+                            p--;
+                    }
+                    else
+                        p++;
+                }
+                for (let i = 0; i < g.length; i++) {
+                    if (i == 0)
+                        nextpri++;
+                    else if (prigr[g[i]].length != prigr[g[i - 1]].length) {
+                        nextpri++;
+                        repartitioned = true;
+                    }
+                    else {
+                        for (let j = 0; j < prigr[g[i]].length; j++)
+                            if (prigr[g[i]][j] != prigr[g[i - 1]][j]) {
+                                nextpri++;
+                                repartitioned = true;
+                                break;
+                            }
+                    }
+                    this.priority[g[i]] = nextpri;
+                }
+            }
+            if (!repartitioned)
+                break;
+        }
+    }
+    sortAndGroup(val) {
+        let uset = new Set();
+        for (let v of val)
+            uset.add(v);
+        let unique = Array.from(uset);
+        Vec.sort(unique);
+        let ret = [];
+        for (let n = 0; n < unique.length; n++)
+            ret.push([]);
+        for (let n = 0; n < val.length; n++) {
+            let grp = unique.indexOf(val[n]);
+            ret[grp].push(n);
+        }
+        return ret;
+    }
+}
+Stereochemistry.STEREO_NONE = 0;
+Stereochemistry.STEREO_POS = 1;
+Stereochemistry.STEREO_NEG = 2;
+Stereochemistry.STEREO_UNKNOWN = 3;
+Stereochemistry.STEREO_BROKEN = 4;
+Stereochemistry.RUBRIC_EQUIV_TETRA = [
+    [0, 1, 2, 3], [0, 2, 3, 1], [0, 3, 1, 2], [1, 0, 3, 2], [1, 2, 0, 3], [1, 3, 2, 0],
+    [2, 0, 1, 3], [2, 1, 3, 0], [2, 3, 0, 1], [3, 0, 2, 1], [3, 1, 0, 2], [3, 2, 1, 0]
+];
+Stereochemistry.RUBRIC_EQUIV_SIDES = [
+    [0, 1, 2, 3], [1, 0, 3, 2], [2, 3, 0, 1], [3, 2, 1, 0]
+];
+Stereochemistry.RUBRIC_EQUIV_SQUARE = [
+    [0, 1, 2, 3], [0, 3, 2, 1], [1, 2, 3, 0], [1, 0, 3, 2],
+    [2, 1, 0, 3], [2, 3, 0, 1], [3, 2, 1, 0], [3, 0, 1, 2]
+];
+Stereochemistry.RUBRIC_EQUIV_OCTA = [
+    [0, 1, 2, 3, 4, 5], [0, 3, 2, 1, 5, 4], [0, 4, 2, 5, 3, 1], [0, 5, 2, 4, 1, 3],
+    [1, 0, 3, 2, 5, 4], [1, 2, 3, 0, 4, 5], [1, 4, 3, 5, 0, 2], [1, 5, 3, 4, 2, 0],
+    [2, 1, 0, 3, 5, 4], [2, 3, 0, 1, 4, 5], [2, 4, 0, 5, 1, 3], [2, 5, 0, 4, 3, 1],
+    [3, 0, 1, 2, 4, 5], [3, 2, 1, 0, 5, 4], [3, 4, 1, 5, 2, 0], [3, 5, 1, 4, 0, 2],
+    [4, 0, 5, 2, 1, 3], [4, 1, 5, 3, 2, 0], [4, 2, 5, 0, 3, 1], [4, 3, 5, 1, 0, 2],
+    [5, 0, 4, 2, 3, 1], [5, 1, 4, 3, 0, 2], [5, 2, 4, 0, 1, 3], [5, 3, 4, 1, 2, 0]
+];
+class Dialog {
+    constructor() {
         this.minPortionWidth = 80;
         this.maxPortionWidth = 80;
         this.title = 'Dialog';
     }
-    Dialog.prototype.open = function () {
-        var bg = $('<div></div>').appendTo(document.body);
+    open() {
+        let bg = $('<div></div>').appendTo(document.body);
         bg.css('width', '100%');
         bg.css('height', document.documentElement.clientHeight + 'px');
         bg.css('background-color', 'black');
@@ -4179,7 +5333,7 @@ var Dialog = (function () {
         bg.css('left', 0);
         bg.css('top', 0);
         this.obscureBackground = bg;
-        var pb = $('<div></div>').appendTo(document.body);
+        let pb = $('<div></div>').appendTo(document.body);
         pb.css('min-width', this.minPortionWidth + '%');
         if (this.maxPortionWidth != null)
             pb.css('max-width', this.maxPortionWidth + '%');
@@ -4191,7 +5345,7 @@ var Dialog = (function () {
         pb.css('top', (document.body.scrollTop + 50) + 'px');
         pb.css('min-height', '50%');
         this.panelBoundary = pb;
-        var tdiv = $('<div></div>').appendTo(pb);
+        let tdiv = $('<div></div>').appendTo(pb);
         tdiv.css('width', '100%');
         tdiv.css('background-color', '#F0F0F0');
         tdiv.css('background-image', 'linear-gradient(to right bottom, #FFFFFF, #E0E0E0)');
@@ -4200,47 +5354,46 @@ var Dialog = (function () {
         tdiv.css('margin', 0);
         tdiv.css('padding', 0);
         this.titleDiv = tdiv;
-        var bdiv = $('<div"></div>').appendTo(pb);
+        let bdiv = $('<div"></div>').appendTo(pb);
         bdiv.css('width', '100%');
         this.bodyDiv = $('<div style="padding: 0.5em;"></div>').appendTo(bdiv);
-        var ttlTable = $('<table></table>').appendTo(tdiv), tr = $('<tr></tr>').appendTo(ttlTable);
+        let ttlTable = $('<table></table>').appendTo(tdiv), tr = $('<tr></tr>').appendTo(ttlTable);
         ttlTable.attr('width', '100%');
         ttlTable.css('padding', '0.5em');
-        var tdTitle = $('<td valign="center"></td>').appendTo(tr);
+        let tdTitle = $('<td valign="center"></td>').appendTo(tr);
         tdTitle.append('<b><big>' + escapeHTML(this.title) + '</big></b>');
-        var tdButtons = $('<td align="right" valign="center"></td>').appendTo(tr);
+        let tdButtons = $('<td align="right" valign="center"></td>').appendTo(tr);
         this.btnClose = $('<button class="button button-default">Close</button>').appendTo(tdButtons);
-        var self = this;
+        const self = this;
         this.btnClose.click(function () { self.close(); });
         this.titleButtons = tdButtons;
         this.populate();
         this.repositionSize();
         bg.show();
         pb.show();
-    };
-    Dialog.prototype.close = function () {
+    }
+    close() {
         this.panelBoundary.remove();
         this.obscureBackground.remove();
-    };
-    Dialog.prototype.bump = function () {
+    }
+    bump() {
         this.repositionSize();
-    };
-    Dialog.prototype.body = function () { return this.bodyDiv; };
-    Dialog.prototype.buttons = function () { return this.titleButtons; };
-    Dialog.prototype.populate = function () {
+    }
+    body() { return this.bodyDiv; }
+    buttons() { return this.titleButtons; }
+    populate() {
         this.body().text('Empty dialog box.');
-    };
-    Dialog.prototype.repositionSize = function () {
-        var docW = $(window).width(), dlgW = this.panelBoundary.width();
+    }
+    repositionSize() {
+        let docW = $(window).width(), dlgW = this.panelBoundary.width();
         this.panelBoundary.css('left', (0.5 * (docW - dlgW)) + 'px');
-    };
-    return Dialog;
-}());
+    }
+}
 var globalPopover = null;
 var globalTooltip = null;
 var globalPopWatermark = 0;
 function addTooltip(parent, bodyHTML, titleHTML) {
-    var widget = $(parent);
+    let widget = $(parent);
     if (globalPopover == null) {
         globalPopover = $(document.createElement('div'));
         globalPopover.css('position', 'absolute');
@@ -4251,8 +5404,8 @@ function addTooltip(parent, bodyHTML, titleHTML) {
         globalPopover.hide();
         globalPopover.appendTo(document.body);
     }
-    var tooltip = new Tooltip(widget, bodyHTML, titleHTML);
-    var prevEnter = widget.attr('onmouseenter'), prevLeave = widget.attr('onmouseleave');
+    const tooltip = new Tooltip(widget, bodyHTML, titleHTML);
+    let prevEnter = widget.attr('onmouseenter'), prevLeave = widget.attr('onmouseleave');
     widget.mouseenter(function (e) { tooltip.start(); if (prevEnter)
         prevEnter(e); });
     widget.mouseleave(function (e) { tooltip.stop(); if (prevLeave)
@@ -4264,69 +5417,65 @@ function clearTooltip() {
     globalPopWatermark++;
     globalTooltip.lower();
 }
-var Tooltip = (function () {
-    function Tooltip(widget, bodyHTML, titleHTML) {
+class Tooltip {
+    constructor(widget, bodyHTML, titleHTML) {
         this.widget = widget;
         this.bodyHTML = bodyHTML;
         this.titleHTML = titleHTML;
     }
-    Tooltip.prototype.start = function () {
+    start() {
         globalPopover.hide();
         this.watermark = ++globalPopWatermark;
-        var self = this;
+        let self = this;
         window.setTimeout(function () {
             if (self.watermark == globalPopWatermark)
                 self.raise();
         }, 1000);
-    };
-    Tooltip.prototype.stop = function () {
+    }
+    stop() {
         if (this.watermark == globalPopWatermark)
             this.lower();
         globalPopWatermark++;
-    };
-    Tooltip.prototype.raise = function () {
+    }
+    raise() {
         globalTooltip = this;
-        var pop = globalPopover;
+        let pop = globalPopover;
         pop.css('max-width', '20em');
         pop.empty();
-        var hasTitle = this.titleHTML != null && this.titleHTML.length > 0, hasBody = this.bodyHTML != null && this.bodyHTML.length > 0;
+        let hasTitle = this.titleHTML != null && this.titleHTML.length > 0, hasBody = this.bodyHTML != null && this.bodyHTML.length > 0;
         if (hasTitle)
             ($('<div></div>').appendTo(pop)).html('<b>' + this.titleHTML + '</b>');
         if (hasTitle && hasBody)
             pop.append('<hr>');
         if (hasBody)
             ($('<div></div>').appendTo(pop)).html(this.bodyHTML);
-        var popW = pop.width(), popH = pop.height();
-        var wpos = this.widget.offset(), width = this.widget.width(), height = this.widget.height();
-        var posX = wpos.left;
-        var posY = wpos.top + height + 2;
-        pop.css('left', posX + "px");
-        pop.css('top', posY + "px");
+        let popW = pop.width(), popH = pop.height();
+        let wpos = this.widget.offset(), width = this.widget.width(), height = this.widget.height();
+        let posX = wpos.left;
+        let posY = wpos.top + height + 2;
+        pop.css('left', `${posX}px`);
+        pop.css('top', `${posY}px`);
         pop.show();
-    };
-    Tooltip.prototype.lower = function () {
-        var pop = globalPopover;
+    }
+    lower() {
+        let pop = globalPopover;
         pop.hide();
-    };
-    return Tooltip;
-}());
-var Widget = (function () {
-    function Widget() {
+    }
+}
+class Widget {
+    constructor() {
         this.content = null;
     }
-    Widget.prototype.render = function (parent) {
+    render(parent) {
         this.content = $('<div></div>').appendTo($(parent));
-    };
-    Widget.prototype.addTooltip = function (bodyHTML, titleHTML) {
+    }
+    addTooltip(bodyHTML, titleHTML) {
         addTooltip(this.content, bodyHTML, titleHTML);
-    };
-    return Widget;
-}());
-var OptionList = (function (_super) {
-    __extends(OptionList, _super);
-    function OptionList(options, isVertical) {
-        if (isVertical === void 0) { isVertical = false; }
-        _super.call(this);
+    }
+}
+class OptionList extends Widget {
+    constructor(options, isVertical = false) {
+        super();
         this.options = options;
         this.isVertical = isVertical;
         this.selidx = 0;
@@ -4336,76 +5485,72 @@ var OptionList = (function (_super) {
         if (options.length == 0)
             throw 'molsync.ui.OptionList: must provide a list of option labels.';
     }
-    OptionList.prototype.onSelect = function (callback, master) {
+    onSelect(callback, master) {
         this.callback = callback;
         this.master = master;
-    };
-    OptionList.prototype.getSelectedIndex = function () {
+    }
+    getSelectedIndex() {
         return this.selidx;
-    };
+    }
     ;
-    OptionList.prototype.getSelectedValue = function () {
+    getSelectedValue() {
         return this.options[this.selidx];
-    };
+    }
     ;
-    OptionList.prototype.getAuxiliaryCell = function (idx) {
+    getAuxiliaryCell(idx) {
         return this.auxCell[idx];
-    };
+    }
     ;
-    OptionList.prototype.render = function (parent) {
-        _super.prototype.render.call(this, parent);
-        var table = $('<table class="option-table"></table>').appendTo(this.content);
-        var tr = this.isVertical ? null : $('<tr></tr>').appendTo(table);
-        var _loop_1 = function() {
-            if (this_1.isVertical)
+    render(parent) {
+        super.render(parent);
+        let table = $('<table class="option-table"></table>').appendTo(this.content);
+        let tr = this.isVertical ? null : $('<tr></tr>').appendTo(table);
+        for (var n = 0; n < this.options.length; n++) {
+            if (this.isVertical)
                 tr = $('<tr></tr>').appendTo(table);
-            var td = $('<td class="option-cell"></td>').appendTo(tr);
-            var div = $('<div class="option"></div>').appendTo(td);
-            if (n != this_1.selidx)
+            let td = $('<td class="option-cell"></td>').appendTo(tr);
+            let div = $('<div class="option"></div>').appendTo(td);
+            if (n != this.selidx)
                 div.addClass('option-unselected');
             else
                 div.addClass('option-selected');
-            var txt = this_1.options[n];
-            if (txt.length == 0 && n == this_1.selidx)
+            let txt = this.options[n];
+            if (txt.length == 0 && n == this.selidx)
                 div.append('\u00A0\u2716\u00A0');
             else if (txt.length == 0)
                 div.append('\u00A0\u00A0\u00A0');
             else
                 div.append(txt);
-            if (n != this_1.selidx) {
+            if (n != this.selidx) {
                 div.mouseover(function () { $(this).addClass('option-hover'); });
                 div.mouseout(function () { $(this).removeClass('option-hover option-active'); });
                 div.mousedown(function () { $(this).addClass('option-active'); });
                 div.mouseup(function () { $(this).removeClass('option-active'); });
                 div.mouseleave(function () { $(this).removeClass('option-hover option-active'); });
                 div.mousemove(function () { return false; });
-                var idx_2 = n, self_1 = this_1;
-                div.click(function () { self_1.clickButton(idx_2); });
+                const idx = n, self = this;
+                div.click(function () { self.clickButton(idx); });
             }
-            this_1.buttonDiv.push(div);
-            if (this_1.isVertical) {
+            this.buttonDiv.push(div);
+            if (this.isVertical) {
                 td = $('<td style="vertical-align: middle;"></td>').appendTo(tr);
-                this_1.auxCell.push(td);
+                this.auxCell.push(td);
             }
-        };
-        var this_1 = this;
-        for (var n = 0; n < this.options.length; n++) {
-            _loop_1();
         }
-    };
+    }
     ;
-    OptionList.prototype.clickButton = function (idx) {
+    clickButton(idx) {
         if (idx == this.selidx)
             return;
         this.setSelectedIndex(idx);
         if (this.callback)
             this.callback.call(this.master, idx, this);
-    };
+    }
     ;
-    OptionList.prototype.setSelectedIndex = function (idx) {
+    setSelectedIndex(idx) {
         if (this.selidx == idx)
             return;
-        var div = this.buttonDiv[this.selidx];
+        let div = this.buttonDiv[this.selidx];
         div.attr('class', 'option option-unselected');
         if (this.options[this.selidx].length == 0)
             div.text('\u00A0\u00A0\u00A0');
@@ -4415,7 +5560,7 @@ var OptionList = (function (_super) {
         div.mouseup(function () { $(this).removeClass('option-active'); });
         div.mouseleave(function () { $(this).removeClass('option-hover option-active'); });
         div.mousemove(function () { return false; });
-        var clickidx = this.selidx, self = this;
+        const clickidx = this.selidx, self = this;
         div.click(function () { self.clickButton(clickidx); });
         this.selidx = idx;
         div = this.buttonDiv[this.selidx];
@@ -4429,23 +5574,22 @@ var OptionList = (function (_super) {
         div.off('mouseleave');
         div.off('mousemove');
         div.off('click');
-    };
+    }
     ;
-    return OptionList;
-}(Widget));
-var RPC = (function () {
-    function RPC(request, parameter, callback, master) {
+}
+class RPC {
+    constructor(request, parameter, callback, master) {
         this.request = request;
         this.parameter = parameter;
         this.callback = callback;
         this.master = master;
     }
-    RPC.prototype.invoke = function () {
-        var data = this.parameter;
+    invoke() {
+        let data = this.parameter;
         if (data == null)
             data = {};
-        var url = RPC.BASE_URL + "/REST/" + this.request;
-        var self = this;
+        let url = RPC.BASE_URL + "/REST/" + this.request;
+        const self = this;
         $.ajax({
             'url': url,
             'type': 'POST',
@@ -4485,70 +5629,66 @@ var RPC = (function () {
                     'message': 'connection failure',
                     'code': RPC.ERRCODE_NONSPECIFIC,
                     type: 0,
-                    'detail': "unable to obtain result from service: {$url}"
+                    'detail': `unable to obtain result from service: {$url}`
                 };
                 self.callback.call(self.master, {}, error);
             }
         });
-    };
-    RPC.BASE_URL = null;
-    RPC.ERRCODE_CLIENT_ABORTED = -3;
-    RPC.ERRCODE_CLIENT_TIMEOUT = -1;
-    RPC.ERRCODE_CLIENT_OTHER = -1;
-    RPC.ERRCODE_NONSPECIFIC = 0;
-    RPC.ERRCODE_UNKNOWN = 1;
-    RPC.ERRCODE_NOSUCHUSER = 2;
-    RPC.ERRCODE_INVALIDLOGIN = 3;
-    RPC.ERRCODE_INVALIDTOKEN = 4;
-    RPC.ERRCODE_DATASHEETUNAVAIL = 5;
-    RPC.ERRCODE_INVALIDCOMMAND = 6;
-    RPC.ERRCODE_ROWDATAUNAVAIL = 7;
-    RPC.ERRCODE_MISSINGPARAM = 8;
-    return RPC;
-}());
-var Func = (function () {
-    function Func() {
     }
-    Func.renderStructure = function (input, callback, master) {
+}
+RPC.BASE_URL = null;
+RPC.ERRCODE_CLIENT_ABORTED = -3;
+RPC.ERRCODE_CLIENT_TIMEOUT = -1;
+RPC.ERRCODE_CLIENT_OTHER = -1;
+RPC.ERRCODE_NONSPECIFIC = 0;
+RPC.ERRCODE_UNKNOWN = 1;
+RPC.ERRCODE_NOSUCHUSER = 2;
+RPC.ERRCODE_INVALIDLOGIN = 3;
+RPC.ERRCODE_INVALIDTOKEN = 4;
+RPC.ERRCODE_DATASHEETUNAVAIL = 5;
+RPC.ERRCODE_INVALIDCOMMAND = 6;
+RPC.ERRCODE_ROWDATAUNAVAIL = 7;
+RPC.ERRCODE_MISSINGPARAM = 8;
+class Func {
+    static renderStructure(input, callback, master) {
         new RPC('func.renderStructure', input, callback, master).invoke();
-    };
-    Func.arrangeMolecule = function (input, callback, master) {
+    }
+    static arrangeMolecule(input, callback, master) {
         new RPC('func.arrangeMolecule', input, callback, master).invoke();
-    };
-    Func.renderRowDetail = function (input, callback, master) {
+    }
+    static renderRowDetail(input, callback, master) {
         new RPC('func.renderRowDetail', input, callback, master).invoke();
-    };
-    Func.renderYieldDetail = function (input, callback, master) {
+    }
+    static renderYieldDetail(input, callback, master) {
         new RPC('func.renderYieldDetail', input, callback, master).invoke();
-    };
-    Func.composeDocument = function (input, callback, master) {
+    }
+    static composeDocument(input, callback, master) {
         new RPC('func.composeDocument', input, callback, master).invoke();
-    };
-    Func.getMoleculeProperties = function (input, callback, master) {
+    }
+    static getMoleculeProperties(input, callback, master) {
         new RPC('func.getMoleculeProperties', input, callback, master).invoke();
-    };
-    Func.atomMapping = function (input, callback, master) {
+    }
+    static atomMapping(input, callback, master) {
         new RPC('func.atomMapping', input, callback, master).invoke();
-    };
-    Func.prepareDownloadable = function (input, callback, master) {
+    }
+    static prepareDownloadable(input, callback, master) {
         new RPC('func.prepareDownloadable', input, callback, master).invoke();
-    };
-    Func.downloadFromSource = function (input, callback, master) {
+    }
+    static downloadFromSource(input, callback, master) {
         new RPC('func.downloadFromSource', input, callback, master).invoke();
-    };
-    Func.getDefaultTemplateGroups = function (input, callback, master) {
+    }
+    static getDefaultTemplateGroups(input, callback, master) {
         new RPC('func.getDefaultTemplateGroups', input, callback, master).invoke();
-    };
-    Func.getDefaultTemplateStructs = function (input, callback, master) {
+    }
+    static getDefaultTemplateStructs(input, callback, master) {
         new RPC('func.getDefaultTemplateStructs', input, callback, master).invoke();
-    };
-    Func.getActionIcons = function (input, callback, master) {
+    }
+    static getActionIcons(input, callback, master) {
         new RPC('func.getActionIcons', input, callback, master).invoke();
-    };
-    return Func;
-}());
-var RenderPolicy = (function () {
-    function RenderPolicy(data) {
+    }
+}
+class RenderPolicy {
+    constructor(data) {
         if (!data) {
             data =
                 {
@@ -4572,103 +5712,97 @@ var RenderPolicy = (function () {
         }
     }
     ;
-    RenderPolicy.defaultBlackOnWhite = function () {
-        var policy = new RenderPolicy();
-        return policy;
-    };
-    RenderPolicy.defaultWhiteOnBlack = function () {
-        var policy = new RenderPolicy();
-        policy.data.foreground = 0xFFFFFF;
-        policy.data.background = 0x000000;
-        for (var n = 0; n <= 111; n++)
-            policy.data.atomCols[n] = 0xFFFFFF;
-        return policy;
-    };
-    RenderPolicy.defaultColourOnWhite = function () {
-        var policy = RenderPolicy.defaultBlackOnWhite();
-        policy.data.atomCols[0] = 0x404040;
-        policy.data.atomCols[1] = 0x808080;
-        policy.data.atomCols[6] = 0x000000;
-        policy.data.atomCols[7] = 0x0000FF;
-        policy.data.atomCols[8] = 0xFF0000;
-        policy.data.atomCols[9] = 0xFF8080;
-        policy.data.atomCols[15] = 0xFF8000;
-        policy.data.atomCols[16] = 0x808000;
-        policy.data.atomCols[17] = 0x00C000;
-        policy.data.atomCols[35] = 0xC04000;
-        return policy;
-    };
-    RenderPolicy.defaultColourOnBlack = function () {
-        var policy = RenderPolicy.defaultWhiteOnBlack();
-        policy.data.atomCols[0] = 0xA0A0A0;
-        policy.data.atomCols[1] = 0x808080;
-        policy.data.atomCols[6] = 0xFFFFFF;
-        policy.data.atomCols[7] = 0x4040FF;
-        policy.data.atomCols[8] = 0xFF4040;
-        policy.data.atomCols[9] = 0xFF8080;
-        policy.data.atomCols[15] = 0xFF8000;
-        policy.data.atomCols[16] = 0xFFFF00;
-        policy.data.atomCols[17] = 0x40FF40;
-        policy.data.atomCols[35] = 0xFF8040;
-        return policy;
-    };
-    RenderPolicy.defaultPrintedPublication = function () {
-        var policy = RenderPolicy.defaultBlackOnWhite();
-        policy.data.pointScale = 9.6;
-        policy.data.resolutionDPI = 600;
-        policy.data.fontSize = 0.80;
-        policy.data.bondSep = 0.27;
-        policy.data.lineSize = 0.0625;
-        return policy;
-    };
-    return RenderPolicy;
-}());
-var RenderEffects = (function () {
-    function RenderEffects() {
-    }
-    return RenderEffects;
-}());
-var GeomUtil = (function () {
-    function GeomUtil() {
-    }
-    GeomUtil.pointInPolygon = function (x, y, px, py) {
+}
+RenderPolicy.defaultBlackOnWhite = function () {
+    var policy = new RenderPolicy();
+    return policy;
+};
+RenderPolicy.defaultWhiteOnBlack = function () {
+    var policy = new RenderPolicy();
+    policy.data.foreground = 0xFFFFFF;
+    policy.data.background = 0x000000;
+    for (var n = 0; n <= 111; n++)
+        policy.data.atomCols[n] = 0xFFFFFF;
+    return policy;
+};
+RenderPolicy.defaultColourOnWhite = function () {
+    var policy = RenderPolicy.defaultBlackOnWhite();
+    policy.data.atomCols[0] = 0x404040;
+    policy.data.atomCols[1] = 0x808080;
+    policy.data.atomCols[6] = 0x000000;
+    policy.data.atomCols[7] = 0x0000FF;
+    policy.data.atomCols[8] = 0xFF0000;
+    policy.data.atomCols[9] = 0xFF8080;
+    policy.data.atomCols[15] = 0xFF8000;
+    policy.data.atomCols[16] = 0x808000;
+    policy.data.atomCols[17] = 0x00C000;
+    policy.data.atomCols[35] = 0xC04000;
+    return policy;
+};
+RenderPolicy.defaultColourOnBlack = function () {
+    var policy = RenderPolicy.defaultWhiteOnBlack();
+    policy.data.atomCols[0] = 0xA0A0A0;
+    policy.data.atomCols[1] = 0x808080;
+    policy.data.atomCols[6] = 0xFFFFFF;
+    policy.data.atomCols[7] = 0x4040FF;
+    policy.data.atomCols[8] = 0xFF4040;
+    policy.data.atomCols[9] = 0xFF8080;
+    policy.data.atomCols[15] = 0xFF8000;
+    policy.data.atomCols[16] = 0xFFFF00;
+    policy.data.atomCols[17] = 0x40FF40;
+    policy.data.atomCols[35] = 0xFF8040;
+    return policy;
+};
+RenderPolicy.defaultPrintedPublication = function () {
+    var policy = RenderPolicy.defaultBlackOnWhite();
+    policy.data.pointScale = 9.6;
+    policy.data.resolutionDPI = 600;
+    policy.data.fontSize = 0.80;
+    policy.data.bondSep = 0.27;
+    policy.data.lineSize = 0.0625;
+    return policy;
+};
+class RenderEffects {
+}
+class GeomUtil {
+    static pointInPolygon(x, y, px, py) {
         if (x < minArray(px) || x > maxArray(px) || y < minArray(py) || y > maxArray(py))
             return false;
-        var sz = px.length;
-        for (var n = 0; n < sz; n++)
+        let sz = px.length;
+        for (let n = 0; n < sz; n++)
             if (px[n] == x && py[n] == y)
                 return true;
-        var phase = false;
-        for (var n = 0; n < sz; n++) {
-            var x1 = px[n], y1 = py[n], x2 = px[n + 1 < sz ? n + 1 : 0], y2 = py[n + 1 < sz ? n + 1 : 0];
+        let phase = false;
+        for (let n = 0; n < sz; n++) {
+            let x1 = px[n], y1 = py[n], x2 = px[n + 1 < sz ? n + 1 : 0], y2 = py[n + 1 < sz ? n + 1 : 0];
             if (y > Math.min(y1, y2) && y <= Math.max(y1, y2) && x <= Math.max(x1, x2) && y1 != y2) {
-                var intr = (y - y1) * (x2 - x1) / (y2 - y1) + x1;
+                let intr = (y - y1) * (x2 - x1) / (y2 - y1) + x1;
                 if (x1 == x2 || x <= intr)
                     phase = !phase;
             }
         }
         return phase;
-    };
-    GeomUtil.areLinesParallel = function (x1, y1, x2, y2, x3, y3, x4, y4) {
-        var dxa = x2 - x1, dxb = x4 - x3, dya = y2 - y1, dyb = y4 - y3;
+    }
+    static areLinesParallel(x1, y1, x2, y2, x3, y3, x4, y4) {
+        let dxa = x2 - x1, dxb = x4 - x3, dya = y2 - y1, dyb = y4 - y3;
         return (realEqual(dxa, dxb) && realEqual(dya, dyb)) || (realEqual(dxa, -dxb) && realEqual(dya, -dyb));
-    };
-    GeomUtil.lineIntersect = function (x1, y1, x2, y2, x3, y3, x4, y4) {
-        var u = ((x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3)) / ((y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1));
+    }
+    static lineIntersect(x1, y1, x2, y2, x3, y3, x4, y4) {
+        let u = ((x4 - x3) * (y1 - y3) - (y4 - y3) * (x1 - x3)) / ((y4 - y3) * (x2 - x1) - (x4 - x3) * (y2 - y1));
         return [x1 + u * (x2 - x1), y1 + u * (y2 - y1)];
-    };
-    GeomUtil.isPointOnLineSeg = function (px, py, x1, y1, x2, y2) {
+    }
+    static isPointOnLineSeg(px, py, x1, y1, x2, y2) {
         if (px < Math.min(x1, x2) || px > Math.max(x1, x2) || py < Math.min(y1, y2) || py > Math.max(y1, y2))
             return false;
         if ((px == x1 && py == y1) || (px == x2 && py == y2))
             return true;
-        var dx = x2 - x1, dy = y2 - y1;
+        let dx = x2 - x1, dy = y2 - y1;
         if (Math.abs(dx) > Math.abs(dy))
             return realEqual(py, (dy / dx) * (px - x1) + y1);
         else
             return realEqual(px, (dx / dy) * (py - y1) + x1);
-    };
-    GeomUtil.doLineSegsIntersect = function (x1, y1, x2, y2, x3, y3, x4, y4) {
+    }
+    static doLineSegsIntersect(x1, y1, x2, y2, x3, y3, x4, y4) {
         if (Math.max(x1, x2) < Math.min(x3, x4) || Math.max(y1, y2) < Math.min(y3, y4))
             return false;
         if (Math.min(x1, x2) > Math.max(x3, x4) || Math.min(y1, y2) > Math.max(y3, y4))
@@ -4679,10 +5813,10 @@ var GeomUtil = (function () {
             return true;
         if ((y1 == y2 || y3 == y4) && (y1 == y3 || y1 == y4 || y2 == y3 || y2 == y4))
             return true;
-        var x4_x3 = x4 - x3, y4_y3 = y4 - y3, x2_x1 = x2 - x1, y2_y1 = y2 - y1, x1_x3 = x1 - x3, y1_y3 = y1 - y3;
-        var nx = x4_x3 * y1_y3 - y4_y3 * x1_x3;
-        var ny = x2_x1 * y1_y3 - y2_y1 * x1_x3;
-        var dn = y4_y3 * x2_x1 - x4_x3 * y2_y1;
+        let x4_x3 = x4 - x3, y4_y3 = y4 - y3, x2_x1 = x2 - x1, y2_y1 = y2 - y1, x1_x3 = x1 - x3, y1_y3 = y1 - y3;
+        let nx = x4_x3 * y1_y3 - y4_y3 * x1_x3;
+        let ny = x2_x1 * y1_y3 - y2_y1 * x1_x3;
+        let dn = y4_y3 * x2_x1 - x4_x3 * y2_y1;
         if (dn == 0)
             return false;
         if (dn < 0) {
@@ -4691,8 +5825,8 @@ var GeomUtil = (function () {
             ny = -ny;
         }
         return nx >= 0 && nx <= dn && ny >= 0 && ny <= dn;
-    };
-    GeomUtil.rectsIntersect = function (x1, y1, w1, h1, x2, y2, w2, h2) {
+    }
+    static rectsIntersect(x1, y1, w1, h1, x2, y2, w2, h2) {
         if (x1 <= x2 && x1 + w1 >= x2 + w2 && y1 <= y2 && y1 + h1 >= y2 + h2)
             return true;
         if (x2 <= x1 && x2 + w2 >= x1 + w1 && y2 <= y1 && y2 + h2 >= y1 + h1)
@@ -4700,88 +5834,133 @@ var GeomUtil = (function () {
         if (x1 + w1 < x2 || x2 + w2 < x1 || y1 + h1 < y2 || y2 + h2 < y1)
             return false;
         return true;
-    };
-    GeomUtil.sortAngles = function (theta) {
+    }
+    static sortAngles(theta) {
         if (theta == null || theta.length < 2)
             return theta;
         theta = theta.slice(0);
-        for (var n = 0; n < theta.length; n++)
+        for (let n = 0; n < theta.length; n++)
             theta[n] = angleNorm(theta[n]);
-        theta.sort();
+        Vec.sort(theta);
         if (theta.length == 2)
             return theta;
         while (true) {
-            var a = theta[theta.length - 1], b = theta[0], c = theta[1];
+            let a = theta[theta.length - 1], b = theta[0], c = theta[1];
             if (angleDiff(b, a) <= angleDiff(c, b))
                 break;
-            for (var n = theta.length - 1; n > 0; n--)
+            for (let n = theta.length - 1; n > 0; n--)
                 theta[n] = theta[n - 1];
             theta[0] = a;
         }
         return theta;
-    };
-    GeomUtil.uniqueAngles = function (theta, threshold) {
-        var ang = GeomUtil.sortAngles(theta), ret = [];
+    }
+    static uniqueAngles(theta, threshold) {
+        let ang = GeomUtil.sortAngles(theta), ret = [];
         ret.push(ang[0]);
-        for (var n = 1; n < ang.length; n++) {
+        for (let n = 1; n < ang.length; n++) {
             if (Math.abs(angleDiff(ang[n], ang[n - 1])) > threshold)
                 ret.push(ang[n]);
         }
         return ret;
-    };
-    GeomUtil.thetaObtuse = function (th1, th2) {
-        var dth = th2 - th1;
+    }
+    static thetaObtuse(th1, th2) {
+        let dth = th2 - th1;
         while (dth < -Math.PI)
             dth += 2 * Math.PI;
         while (dth > Math.PI)
             dth -= 2 * Math.PI;
         return dth > 0 ? th1 - 0.5 * (2 * Math.PI - dth) : th1 + 0.5 * (2 * Math.PI + dth);
-    };
-    GeomUtil.emergentAngle = function (theta) {
-        var len = theta.length;
+    }
+    static emergentAngle(theta) {
+        let len = theta.length;
         if (len == 1)
             return theta[0];
         if (len == 2)
             return 0.5 * (theta[0] + theta[1]);
-        theta.sort();
-        var bottom = 0;
-        var behind = angleDiffPos(theta[0], theta[len - 1]);
-        for (var n = 1; n < len; n++) {
-            var delta = angleDiffPos(theta[n], theta[n - 1]);
+        Vec.sort(theta);
+        let bottom = 0;
+        let behind = angleDiffPos(theta[0], theta[len - 1]);
+        for (let n = 1; n < len; n++) {
+            let delta = angleDiffPos(theta[n], theta[n - 1]);
             if (delta > behind) {
                 bottom = n;
                 behind = delta;
             }
         }
-        var sum = 0;
-        for (var n = 0; n < len; n++) {
-            var delta = theta[n] - theta[bottom];
+        let sum = 0;
+        for (let n = 0; n < len; n++) {
+            let delta = theta[n] - theta[bottom];
             if (delta < 0)
                 delta += TWOPI;
             sum += delta;
         }
         return sum / len + theta[bottom];
-    };
-    return GeomUtil;
-}());
-var QuickHull = (function () {
-    function QuickHull(x, y, threshSq) {
+    }
+    static dotProduct(v1, v2) {
+        return v1[0] * v2[0] + v1[1] * v2[1] + v1[2] * v2[2];
+    }
+    static crossProduct(v1, v2) {
+        const x = v1[1] * v2[2] - v1[2] * v2[1];
+        const y = v1[2] * v2[0] - v1[0] * v2[2];
+        const z = v1[0] * v2[1] - v1[1] * v2[0];
+        return [x, y, z];
+    }
+    static magnitude2(v) {
+        return v[0] * v[0] + v[1] * v[1] + v[2] * v[2];
+    }
+    static magnitude(v) {
+        return Math.sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
+    }
+    static dist2(v1, v2) {
+        let dx = v1[0] - v2[0], dy = v1[1] - v2[1], dz = v1[2] - v2[2];
+        return dx * dx + dy * dy + dz * dz;
+    }
+    static dist(v1, v2) {
+        let dx = v1[0] - v2[0], dy = v1[1] - v2[1], dz = v1[2] - v2[2];
+        return Math.sqrt(dx * dx + dy * dy + dz * dz);
+    }
+    static normalise(v) {
+        const dsq = v[0] * v[0] + v[1] * v[1] + v[2] * v[2];
+        if (dsq == 0)
+            return;
+        const inv = 1.0 / Math.sqrt(dsq);
+        v[0] *= inv;
+        v[1] *= inv;
+        v[2] *= inv;
+    }
+    static normalised(v) {
+        let ret = v.slice(0);
+        this.normalise(ret);
+        return ret;
+    }
+    static acuteAngle(v1, v2) {
+        let mag1 = this.magnitude(v1), mag2 = this.magnitude(v2);
+        if (mag1 == 0 || mag2 == 0)
+            return 0;
+        let dot = this.dotProduct(v1, v2);
+        let cosTheta = dot / (mag1 * mag2);
+        cosTheta = Math.max(-1, Math.min(1, cosTheta));
+        return Math.acos(cosTheta);
+    }
+}
+class QuickHull {
+    constructor(x, y, threshSq) {
         this.x = x;
         this.y = y;
         this.threshSq = threshSq;
         this.hsz = 0;
         this.hullX = [];
         this.hullY = [];
-        var sz = x.length;
-        var l = 0, r = 0;
-        for (var n = 0; n < sz; n++) {
+        const sz = x.length;
+        let l = 0, r = 0;
+        for (let n = 0; n < sz; n++) {
             if (x[r] > x[n] || (x[r] == x[n] && y[r] > y[n]))
                 r = n;
             if (x[l] < x[n] || (x[l] == x[n] && y[l] < y[n]))
                 l = n;
         }
-        var al1 = [], al2 = [];
-        for (var n = 0; n < sz; n++) {
+        let al1 = [], al2 = [];
+        for (let n = 0; n < sz; n++) {
             if (n != l && n != r) {
                 if (this.right(r, l, n) > 0)
                     al1.push(n);
@@ -4795,7 +5974,7 @@ var QuickHull = (function () {
         this.hullX.push(x[l]);
         this.hullY.push(y[l]);
         this.quickHull(l, r, al2);
-        for (var n = 0; n < this.hullX.length - 1;) {
+        for (let n = 0; n < this.hullX.length - 1;) {
             if (norm2_xy(this.hullX[n] - this.hullY[n + 1], this.hullY[n] - this.hullY[n + 1]) < threshSq) {
                 this.hullX.splice(n + 1, 1);
                 this.hullY.splice(n + 1, 1);
@@ -4804,13 +5983,13 @@ var QuickHull = (function () {
                 n++;
         }
     }
-    QuickHull.prototype.quickHull = function (a, b, al) {
+    quickHull(a, b, al) {
         if (al.length == 0)
             return;
-        var c = this.furthestPoint(a, b, al);
-        var al1 = [], al2 = [];
-        for (var n = 0; n < al.length; n++) {
-            var p = al[n];
+        let c = this.furthestPoint(a, b, al);
+        let al1 = [], al2 = [];
+        for (let n = 0; n < al.length; n++) {
+            let p = al[n];
             if (p == a || p == b)
                 continue;
             if (this.right(a, c, p) > 0)
@@ -4822,200 +6001,194 @@ var QuickHull = (function () {
         this.hullX.push(this.x[c]);
         this.hullY.push(this.y[c]);
         this.quickHull(c, b, al2);
-    };
-    QuickHull.prototype.right = function (a, b, p) {
-        var x = this.x, y = this.y;
+    }
+    right(a, b, p) {
+        const x = this.x, y = this.y;
         return (x[a] - x[b]) * (y[p] - y[b]) - (x[p] - x[b]) * (y[a] - y[b]);
-    };
-    QuickHull.prototype.distance = function (a, b, p) {
-        var x = this.x, y = this.y;
-        var u = ((x[p] - x[a]) * (x[b] - x[a]) + (y[p] - y[a]) * (y[b] - y[a])) / ((x[b] - x[a]) * (x[b] - x[a]) + (y[b] - y[a]) * (y[b] - y[a]));
-        var ux = x[a] + u * (x[b] - x[a]);
-        var uy = y[a] + u * (y[b] - y[a]);
+    }
+    distance(a, b, p) {
+        const x = this.x, y = this.y;
+        let u = ((x[p] - x[a]) * (x[b] - x[a]) + (y[p] - y[a]) * (y[b] - y[a])) / ((x[b] - x[a]) * (x[b] - x[a]) + (y[b] - y[a]) * (y[b] - y[a]));
+        let ux = x[a] + u * (x[b] - x[a]);
+        let uy = y[a] + u * (y[b] - y[a]);
         return ((ux - x[p]) * (ux - x[p]) + (uy - y[p]) * (uy - y[p]));
-    };
-    QuickHull.prototype.furthestPoint = function (a, b, al) {
-        var maxDist = -1;
-        var maxPos = -1;
-        for (var n = 0; n < al.length; n++) {
-            var p = al[n];
+    }
+    furthestPoint(a, b, al) {
+        let maxDist = -1;
+        let maxPos = -1;
+        for (let n = 0; n < al.length; n++) {
+            let p = al[n];
             if (p == a || p == b)
                 continue;
-            var dist = this.distance(a, b, p);
+            let dist = this.distance(a, b, p);
             if (dist > maxDist) {
                 maxDist = dist;
                 maxPos = p;
             }
         }
         return maxPos;
-    };
-    return QuickHull;
-}());
-var Pos = (function () {
-    function Pos(x, y) {
+    }
+}
+class Pos {
+    constructor(x, y) {
         this.x = x == null ? 0 : x;
         this.y = y == null ? 0 : y;
     }
-    Pos.zero = function () { return new Pos(); };
-    Pos.prototype.clone = function () { return new Pos(this.x, this.y); };
-    Pos.prototype.scaleBy = function (mag) {
+    static zero() { return new Pos(); }
+    clone() { return new Pos(this.x, this.y); }
+    scaleBy(mag) {
         if (mag == 1)
             return;
         this.x *= mag;
         this.y *= mag;
-    };
-    Pos.prototype.offsetBy = function (dx, dy) {
+    }
+    offsetBy(dx, dy) {
         this.x += dx;
         this.y += dy;
-    };
-    Pos.prototype.toString = function () { return '[' + this.x + ',' + this.y + ']'; };
-    return Pos;
-}());
-var Size = (function () {
-    function Size(w, h) {
+    }
+    toString() { return '[' + this.x + ',' + this.y + ']'; }
+}
+class Size {
+    constructor(w, h) {
         this.w = w == null ? 0 : w;
         this.h = h == null ? 0 : h;
     }
-    Size.zero = function () { return new Size(); };
-    Size.prototype.clone = function () { return new Size(this.w, this.h); };
-    Size.prototype.scaleBy = function (mag) {
+    static zero() { return new Size(); }
+    clone() { return new Size(this.w, this.h); }
+    scaleBy(mag) {
         if (mag == 1)
             return;
         this.w *= mag;
         this.h *= mag;
-    };
-    Size.prototype.fitInto = function (maxW, maxH) {
-        var scale = 1;
+    }
+    fitInto(maxW, maxH) {
+        let scale = 1;
         if (this.w > maxW)
             scale = maxW / this.w;
         if (this.h > maxH)
             scale = Math.min(scale, maxH / this.h);
         if (scale < 1)
             this.scaleBy(scale);
-    };
-    Size.prototype.toString = function () { return '[' + this.w + ',' + this.h + ']'; };
-    return Size;
-}());
-var Box = (function () {
-    function Box(x, y, w, h) {
+    }
+    toString() { return '[' + this.w + ',' + this.h + ']'; }
+}
+class Box {
+    constructor(x, y, w, h) {
         this.x = x == null ? 0 : x;
         this.y = y == null ? 0 : y;
         this.w = w == null ? 0 : w;
         this.h = h == null ? 0 : h;
     }
-    Box.zero = function () { return new Box(); };
-    Box.fromSize = function (sz) { return new Box(0, 0, sz.w, sz.h); };
-    Box.fromOval = function (oval) { return new Box(oval.cx - oval.rw, oval.cy - oval.rh, 2 * oval.rw, 2 * oval.rh); };
-    Box.prototype.clone = function () { return new Box(this.x, this.y, this.w, this.h); };
-    Box.prototype.setPos = function (pos) {
+    static zero() { return new Box(); }
+    static fromSize(sz) { return new Box(0, 0, sz.w, sz.h); }
+    static fromOval(oval) { return new Box(oval.cx - oval.rw, oval.cy - oval.rh, 2 * oval.rw, 2 * oval.rh); }
+    clone() { return new Box(this.x, this.y, this.w, this.h); }
+    setPos(pos) {
         this.x = pos.x;
         this.y = pos.y;
-    };
-    Box.prototype.setSize = function (sz) {
+    }
+    setSize(sz) {
         this.w = sz.w;
         this.h = sz.h;
-    };
-    Box.prototype.minX = function () { return this.x; };
-    Box.prototype.minY = function () { return this.y; };
-    Box.prototype.midX = function () { return this.x + 0.5 * this.w; };
-    Box.prototype.midY = function () { return this.y + 0.5 * this.h; };
-    Box.prototype.maxX = function () { return this.x + this.w; };
-    Box.prototype.maxY = function () { return this.y + this.h; };
-    Box.prototype.scaleBy = function (mag) {
+    }
+    minX() { return this.x; }
+    minY() { return this.y; }
+    midX() { return this.x + 0.5 * this.w; }
+    midY() { return this.y + 0.5 * this.h; }
+    maxX() { return this.x + this.w; }
+    maxY() { return this.y + this.h; }
+    scaleBy(mag) {
         if (mag == 1)
             return;
         this.x *= mag;
         this.y *= mag;
         this.w *= mag;
         this.h *= mag;
-    };
-    Box.prototype.offsetBy = function (dx, dy) {
+    }
+    offsetBy(dx, dy) {
         this.x += dx;
         this.y += dy;
-    };
-    Box.prototype.intersects = function (other) {
+    }
+    intersects(other) {
         return GeomUtil.rectsIntersect(this.x, this.y, this.w, this.h, other.x, other.y, other.w, other.h);
-    };
-    Box.prototype.toString = function () { return '[' + this.x + ',' + this.y + ';' + this.w + ',' + this.h + ']'; };
-    return Box;
-}());
-var Oval = (function () {
-    function Oval(cx, cy, rw, rh) {
+    }
+    toString() { return '[' + this.x + ',' + this.y + ';' + this.w + ',' + this.h + ']'; }
+}
+class Oval {
+    constructor(cx, cy, rw, rh) {
         this.cx = cx == null ? 0 : cx;
         this.cy = cy == null ? 0 : cy;
         this.rw = rw == null ? 0 : rw;
         this.rh = rh == null ? 0 : rh;
     }
-    Oval.zero = function () { return new Oval(); };
-    Oval.fromBox = function (box) { return new Oval(box.x + 0.5 * box.w, box.y + 0.5 * box.h, 0.5 * box.w, 0.5 * box.h); };
-    Oval.prototype.clone = function () { return new Oval(this.cx, this.cy, this.rw, this.rh); };
-    Oval.prototype.setCentre = function (pos) {
+    static zero() { return new Oval(); }
+    static fromBox(box) { return new Oval(box.x + 0.5 * box.w, box.y + 0.5 * box.h, 0.5 * box.w, 0.5 * box.h); }
+    clone() { return new Oval(this.cx, this.cy, this.rw, this.rh); }
+    setCentre(pos) {
         this.cx = pos.x;
         this.cy = pos.y;
-    };
-    Oval.prototype.setRadius = function (sz) {
+    }
+    setRadius(sz) {
         this.rw = sz.w;
         this.rh = sz.h;
-    };
-    Oval.prototype.minX = function () { return this.cx - this.rw; };
-    Oval.prototype.minY = function () { return this.cy - this.rh; };
-    Oval.prototype.maxX = function () { return this.cx + this.rw; };
-    Oval.prototype.maxY = function () { return this.cy + this.rh; };
-    Oval.prototype.scaleBy = function (mag) {
+    }
+    minX() { return this.cx - this.rw; }
+    minY() { return this.cy - this.rh; }
+    maxX() { return this.cx + this.rw; }
+    maxY() { return this.cy + this.rh; }
+    scaleBy(mag) {
         if (mag == 1)
             return;
         this.cx *= mag;
         this.cy *= mag;
         this.rw *= mag;
         this.rh *= mag;
-    };
-    Oval.prototype.offsetBy = function (dx, dy) {
+    }
+    offsetBy(dx, dy) {
         this.cx += dx;
         this.cy += dy;
-    };
-    Oval.prototype.toString = function () { return '[' + this.cx + ',' + this.cy + ';' + this.rw + ',' + this.rh + ']'; };
-    return Oval;
-}());
-var Line = (function () {
-    function Line(x1, y1, x2, y2) {
+    }
+    toString() { return '[' + this.cx + ',' + this.cy + ';' + this.rw + ',' + this.rh + ']'; }
+}
+class Line {
+    constructor(x1, y1, x2, y2) {
         this.x1 = x1 == null ? 0 : x1;
         this.y1 = y1 == null ? 0 : y1;
         this.x2 = x2 == null ? 0 : x2;
         this.y2 = y2 == null ? 0 : y2;
     }
-    Line.zero = function () { return new Line(); };
-    Line.prototype.clone = function () { return new Line(this.x1, this.y1, this.x2, this.y2); };
-    Line.prototype.setPos1 = function (pos) {
+    static zero() { return new Line(); }
+    clone() { return new Line(this.x1, this.y1, this.x2, this.y2); }
+    setPos1(pos) {
         this.x1 = pos.x;
         this.y1 = pos.y;
-    };
-    Line.prototype.setPos2 = function (pos) {
+    }
+    setPos2(pos) {
         this.x2 = pos.x;
         this.y2 = pos.y;
-    };
-    Line.prototype.minX = function () { return Math.min(this.x1, this.x2); };
-    Line.prototype.minY = function () { return Math.min(this.y1, this.y2); };
-    Line.prototype.maxX = function () { return Math.max(this.x1, this.x2); };
-    Line.prototype.maxY = function () { return Math.max(this.y1, this.y2); };
-    Line.prototype.scaleBy = function (mag) {
+    }
+    minX() { return Math.min(this.x1, this.x2); }
+    minY() { return Math.min(this.y1, this.y2); }
+    maxX() { return Math.max(this.x1, this.x2); }
+    maxY() { return Math.max(this.y1, this.y2); }
+    scaleBy(mag) {
         if (mag == 1)
             return;
         this.x1 *= mag;
         this.y1 *= mag;
         this.x2 *= mag;
         this.y2 *= mag;
-    };
-    Line.prototype.offsetBy = function (dx, dy) {
+    }
+    offsetBy(dx, dy) {
         this.x1 += dx;
         this.y1 += dy;
         this.x2 += dx;
         this.y2 += dy;
-    };
-    Line.prototype.toString = function () { return '[' + this.x1 + ',' + this.y1 + ';' + this.x2 + ',' + this.y2 + ']'; };
-    return Line;
-}());
-var FontData = (function () {
-    function FontData() {
+    }
+    toString() { return '[' + this.x1 + ',' + this.y1 + ';' + this.x2 + ',' + this.y2 + ']'; }
+}
+class FontData {
+    constructor() {
         this.GLYPH_MIN = 32;
         this.GLYPH_MAX = 127;
         this.GLYPH_COUNT = 96;
@@ -5269,47 +6442,46 @@ var FontData = (function () {
         for (var n = this.GLYPH_DATA.length - 1; n >= 0; n--)
             this.pathCache[n] = null;
     }
-    FontData.prototype.getKerning = function (g1, g2) {
-        for (var n = 0; n < this.GLYPH_COUNT; n++)
+    getKerning(g1, g2) {
+        for (let n = 0; n < this.GLYPH_COUNT; n++)
             if (this.KERN_G1[n] == g1 && this.KERN_G2[n] == g2)
                 return this.KERN_K[n];
         return 0;
-    };
-    FontData.prototype.measureText = function (txt, size) {
-        var font = FontData.main;
-        var scale = size / font.UNITS_PER_EM;
-        var dx = 0;
-        for (var n = 0; n < txt.length; n++) {
-            var i = txt.charCodeAt(n) - font.GLYPH_MIN;
+    }
+    measureText(txt, size) {
+        let font = FontData.main;
+        let scale = size / font.UNITS_PER_EM;
+        let dx = 0;
+        for (let n = 0; n < txt.length; n++) {
+            let i = txt.charCodeAt(n) - font.GLYPH_MIN;
             if (i < 0 || i >= font.GLYPH_COUNT) {
                 dx += font.MISSING_HORZ;
                 continue;
             }
             dx += font.HORIZ_ADV_X[i];
             if (n < txt.length - 1) {
-                var j = txt.charCodeAt(n + 1) - font.GLYPH_MIN;
+                let j = txt.charCodeAt(n + 1) - font.GLYPH_MIN;
                 dx += font.getKerning(i, j);
             }
         }
         return [dx * scale, font.ASCENT * scale * font.ASCENT_FUDGE, -font.DESCENT * scale];
-    };
-    FontData.prototype.getRawGlyph = function (idx) {
+    }
+    getRawGlyph(idx) {
         return this.GLYPH_DATA[idx];
-    };
+    }
     ;
-    FontData.prototype.getGlyphPath = function (idx) {
+    getGlyphPath(idx) {
         path = this.pathCache[idx];
         if (path != null)
             return path;
         var path = new Path2D(this.GLYPH_DATA[idx]);
         this.pathCache[idx] = path;
         return path;
-    };
-    FontData.prototype.getOutlineX = function (idx) { return this.OUTLINE_X[idx].slice(0); };
-    FontData.prototype.getOutlineY = function (idx) { return this.OUTLINE_Y[idx].slice(0); };
-    FontData.main = new FontData();
-    return FontData;
-}());
+    }
+    getOutlineX(idx) { return this.OUTLINE_X[idx].slice(0); }
+    getOutlineY(idx) { return this.OUTLINE_Y[idx].slice(0); }
+}
+FontData.main = new FontData();
 var TextAlign;
 (function (TextAlign) {
     TextAlign[TextAlign["Centre"] = 0] = "Centre";
@@ -5320,8 +6492,8 @@ var TextAlign;
     TextAlign[TextAlign["Top"] = 8] = "Top";
     TextAlign[TextAlign["Bottom"] = 16] = "Bottom";
 })(TextAlign || (TextAlign = {}));
-var MetaVector = (function () {
-    function MetaVector(vec) {
+class MetaVector {
+    constructor(vec) {
         this.PRIM_LINE = 1;
         this.PRIM_RECT = 2;
         this.PRIM_OVAL = 3;
@@ -5340,7 +6512,7 @@ var MetaVector = (function () {
         this.lowY = null;
         this.highX = null;
         this.highY = null;
-        var font = FontData.main;
+        const font = FontData.main;
         this.charMask = Vec.booleanArray(false, font.GLYPH_COUNT);
         if (vec != null) {
             if (vec.size != null) {
@@ -5351,55 +6523,53 @@ var MetaVector = (function () {
                 this.types = vec.types;
             if (vec.prims != null)
                 this.prims = vec.prims;
-            for (var _i = 0, _a = this.prims; _i < _a.length; _i++) {
-                var p = _a[_i];
+            for (let p of this.prims)
                 if (p[0] == this.PRIM_TEXT) {
-                    var txt = p[4];
-                    for (var n = 0; n < txt.length; n++) {
-                        var i = txt.charCodeAt(n) - font.GLYPH_MIN;
+                    let txt = p[4];
+                    for (let n = 0; n < txt.length; n++) {
+                        let i = txt.charCodeAt(n) - font.GLYPH_MIN;
                         if (i >= 0 && i < font.GLYPH_COUNT)
                             this.charMask[i] = true;
                     }
                 }
-            }
         }
     }
-    MetaVector.prototype.drawLine = function (x1, y1, x2, y2, colour, thickness) {
+    drawLine(x1, y1, x2, y2, colour, thickness) {
         if (thickness == null)
             thickness = 1;
-        var typeidx = this.findOrCreateType([this.PRIM_LINE, thickness, colour]);
-        var bump = 0.5 * thickness;
+        let typeidx = this.findOrCreateType([this.PRIM_LINE, thickness, colour]);
+        const bump = 0.5 * thickness;
         this.updateBounds(Math.min(x1, x2) - bump, Math.min(y1, y2) - bump);
         this.updateBounds(Math.max(x1, x2) + bump, Math.max(y1, y2) + bump);
         this.prims.push([this.PRIM_LINE, typeidx, x1, y1, x2, y2]);
-    };
-    MetaVector.prototype.drawRect = function (x, y, w, h, edgeCol, thickness, fillCol) {
+    }
+    drawRect(x, y, w, h, edgeCol, thickness, fillCol) {
         if (edgeCol == null)
             edgeCol = -1;
         if (fillCol == null)
             fillCol = -1;
         if (thickness == null)
             thickness = 1;
-        var typeidx = this.findOrCreateType([this.PRIM_RECT, edgeCol, fillCol, thickness]);
-        var bump = 0.5 * thickness;
+        let typeidx = this.findOrCreateType([this.PRIM_RECT, edgeCol, fillCol, thickness]);
+        const bump = 0.5 * thickness;
         this.updateBounds(x - bump, y - bump);
         this.updateBounds(x + w + bump, y + h + bump);
         this.prims.push([this.PRIM_RECT, typeidx, x, y, w, h]);
-    };
-    MetaVector.prototype.drawOval = function (cx, cy, rw, rh, edgeCol, thickness, fillCol) {
+    }
+    drawOval(cx, cy, rw, rh, edgeCol, thickness, fillCol) {
         if (edgeCol == null)
             edgeCol = -1;
         if (fillCol == null)
             fillCol = -1;
         if (thickness == null)
             thickness = 1;
-        var bump = 0.5 * thickness;
+        const bump = 0.5 * thickness;
         this.updateBounds(cx - 0.5 * rw - bump, cy - 0.5 * rh - bump);
         this.updateBounds(cx + 0.5 * rw + bump, cy + 0.5 * rh + bump);
-        var typeidx = this.findOrCreateType([this.PRIM_OVAL, edgeCol, fillCol, thickness]);
+        let typeidx = this.findOrCreateType([this.PRIM_OVAL, edgeCol, fillCol, thickness]);
         this.prims.push([this.PRIM_OVAL, typeidx, cx, cy, rw, rh]);
-    };
-    MetaVector.prototype.drawPath = function (xpoints, ypoints, ctrlFlags, isClosed, edgeCol, thickness, fillCol, hardEdge) {
+    }
+    drawPath(xpoints, ypoints, ctrlFlags, isClosed, edgeCol, thickness, fillCol, hardEdge) {
         if (edgeCol == null)
             edgeCol = -1;
         if (fillCol == null)
@@ -5408,29 +6578,29 @@ var MetaVector = (function () {
             thickness = 1;
         if (hardEdge == null)
             hardEdge = false;
-        var bump = 0.5 * thickness;
-        for (var n = 0; n < xpoints.length; n++) {
+        const bump = 0.5 * thickness;
+        for (let n = 0; n < xpoints.length; n++) {
             this.updateBounds(xpoints[n] - bump, ypoints[n] - bump);
             if (bump != 0)
                 this.updateBounds(xpoints[n] + bump, ypoints[n] + bump);
         }
-        var typeidx = this.findOrCreateType([this.PRIM_PATH, edgeCol, fillCol, thickness, hardEdge]);
+        let typeidx = this.findOrCreateType([this.PRIM_PATH, edgeCol, fillCol, thickness, hardEdge]);
         this.prims.push([this.PRIM_PATH, typeidx, xpoints.length, xpoints, ypoints, ctrlFlags, isClosed]);
-    };
-    MetaVector.prototype.drawPoly = function (xpoints, ypoints, edgeCol, thickness, fillCol, hardEdge) {
+    }
+    drawPoly(xpoints, ypoints, edgeCol, thickness, fillCol, hardEdge) {
         this.drawPath(xpoints, ypoints, null, true, edgeCol, thickness, fillCol, hardEdge);
-    };
-    MetaVector.prototype.drawText = function (x, y, txt, size, colour, align) {
+    }
+    drawText(x, y, txt, size, colour, align) {
         if (align == null)
             align = TextAlign.Left | TextAlign.Baseline;
-        var font = FontData.main;
-        for (var n = 0; n < txt.length; n++) {
-            var i = txt.charCodeAt(n);
+        const font = FontData.main;
+        for (let n = 0; n < txt.length; n++) {
+            let i = txt.charCodeAt(n);
             if (i >= font.GLYPH_MIN && i <= font.GLYPH_MAX)
                 this.charMask[i - font.GLYPH_MIN] = true;
         }
-        var metrics = font.measureText(txt, size);
-        var bx = 0, by = 0;
+        let metrics = font.measureText(txt, size);
+        let bx = 0, by = 0;
         if ((align & TextAlign.Left) != 0) { }
         else if ((align & TextAlign.Right) != 0)
             bx = -metrics[0];
@@ -5442,66 +6612,65 @@ var MetaVector = (function () {
             by += metrics[1];
         else if ((align & TextAlign.Bottom) != 0)
             by -= metrics[2];
-        var x1 = 0, y1 = 0, x2 = 0, y2 = 0;
-        var dx = 0;
-        for (var n = 0; n < txt.length; n++) {
-            var i = txt.charCodeAt(n) - font.GLYPH_MIN;
+        let x1 = 0, y1 = 0, x2 = 0, y2 = 0;
+        let dx = 0;
+        for (let n = 0; n < txt.length; n++) {
+            let i = txt.charCodeAt(n) - font.GLYPH_MIN;
             if (i >= 0 && i < font.GLYPH_COUNT) {
-                var outlineX = font.getOutlineX(i), outlineY = font.getOutlineY(i);
+                let outlineX = font.getOutlineX(i), outlineY = font.getOutlineY(i);
                 x1 = Math.min(x1, dx + Vec.min(outlineX));
                 x2 = Math.max(x2, dx + Vec.max(outlineX));
                 y1 = Math.min(y1, -Vec.max(outlineY));
                 y2 = Math.max(y2, -Vec.min(outlineY));
                 dx += font.HORIZ_ADV_X[i];
                 if (n < txt.length - 1) {
-                    var j = txt.charCodeAt(n + 1) - font.GLYPH_MIN;
+                    let j = txt.charCodeAt(n + 1) - font.GLYPH_MIN;
                     dx += font.getKerning(i, j);
                 }
             }
             else
                 dx += font.MISSING_HORZ;
         }
-        var mscale = size * font.INV_UNITS_PER_EM;
+        const mscale = size * font.INV_UNITS_PER_EM;
         this.updateBounds(x + bx + x1 * mscale, y + by + y1 * mscale);
         this.updateBounds(x + bx + x2 * mscale, y + by + y2 * mscale);
-        var typeidx = this.findOrCreateType([this.PRIM_TEXT, size, colour]);
+        let typeidx = this.findOrCreateType([this.PRIM_TEXT, size, colour]);
         this.prims.push([this.PRIM_TEXT, typeidx, x + bx, y + by, txt]);
-    };
-    MetaVector.prototype.boundLowX = function () { return this.lowX; };
-    MetaVector.prototype.boundLowY = function () { return this.lowY; };
-    MetaVector.prototype.boundHighX = function () { return this.highX; };
-    MetaVector.prototype.boundHighY = function () { return this.highY; };
-    MetaVector.prototype.normalise = function () {
+    }
+    boundLowX() { return this.lowX; }
+    boundLowY() { return this.lowY; }
+    boundHighX() { return this.highX; }
+    boundHighY() { return this.highY; }
+    normalise() {
         if (this.lowX != 0 || this.lowY != 0)
             this.transformPrimitives(-this.lowX, -this.lowY, 1, 1);
         this.width = Math.ceil(this.highX - this.lowX);
         this.height = Math.ceil(this.highY - this.lowY);
-    };
-    MetaVector.prototype.transformIntoBox = function (box) {
+    }
+    transformIntoBox(box) {
         this.transformPrimitives(-this.lowX, -this.lowY, 1, 1);
-        var nw = Math.ceil(this.highX - this.lowX), nh = Math.ceil(this.highY - this.lowY);
-        var scale = 1;
+        let nw = Math.ceil(this.highX - this.lowX), nh = Math.ceil(this.highY - this.lowY);
+        let scale = 1;
         if (nw > box.w) {
-            var mod = box.w / nw;
+            let mod = box.w / nw;
             nw = box.w;
             nh *= mod;
             scale *= mod;
         }
         if (nh > box.h) {
-            var mod = box.h / nh;
+            let mod = box.h / nh;
             nh = box.h;
             nw *= mod;
             scale *= mod;
         }
-        var ox = 0.5 * (box.w - nw), oy = 0.5 * (box.h - nh);
+        let ox = 0.5 * (box.w - nw), oy = 0.5 * (box.h - nh);
         this.transformPrimitives(box.x + ox, box.y + oy, scale, scale);
-    };
-    MetaVector.prototype.transformPrimitives = function (ox, oy, sw, sh) {
+    }
+    transformPrimitives(ox, oy, sw, sh) {
         if (ox == 0 && oy == 0 && sw == 1 && sh == 1)
             return;
-        for (var _i = 0, _a = this.prims; _i < _a.length; _i++) {
-            var a = _a[_i];
-            var type = a[0];
+        for (let a of this.prims) {
+            const type = a[0];
             if (type == this.PRIM_LINE) {
                 a[2] = ox + ((a[2] - this.lowX) * sw + this.lowX);
                 a[3] = oy + ((a[3] - this.lowY) * sh + this.lowY);
@@ -5521,8 +6690,8 @@ var MetaVector = (function () {
                 a[5] *= sh;
             }
             else if (type == this.PRIM_PATH) {
-                var sz = a[2], px = a[3], py = a[4];
-                for (var n = 0; n < sz; n++) {
+                let sz = a[2], px = a[3], py = a[4];
+                for (let n = 0; n < sz; n++) {
                     px[n] = ox + ((px[n] - this.lowX) * sw + this.lowX);
                     py[n] = oy + ((py[n] - this.lowY) * sh + this.lowY);
                 }
@@ -5532,11 +6701,10 @@ var MetaVector = (function () {
                 a[3] = oy + ((a[3] - this.lowY) * sh + this.lowY);
             }
         }
-        var swsh = 0.5 * (sw + sh);
+        let swsh = 0.5 * (sw + sh);
         if (swsh != 1)
-            for (var _b = 0, _c = this.types; _b < _c.length; _b++) {
-                var t = _c[_b];
-                var type = t[0];
+            for (let t of this.types) {
+                const type = t[0];
                 if (type == this.PRIM_LINE)
                     t[1] *= swsh;
                 else if (type == this.PRIM_RECT)
@@ -5552,31 +6720,31 @@ var MetaVector = (function () {
         this.highY = oy + this.lowY + (this.highY - this.lowY) * sh;
         this.lowX += ox;
         this.lowY += oy;
-    };
-    MetaVector.prototype.renderInto = function (parent) {
-        var canvas = newElement(parent, 'canvas', { 'width': this.width, 'height': this.height });
+    }
+    renderInto(parent) {
+        let canvas = newElement(parent, 'canvas', { 'width': this.width, 'height': this.height });
         this.renderCanvas(canvas);
         return canvas;
-    };
-    MetaVector.prototype.renderCanvas = function (canvas, clearFirst) {
-        var ctx = canvas.getContext('2d');
+    }
+    renderCanvas(canvas, clearFirst) {
+        let ctx = canvas.getContext('2d');
         if (clearFirst)
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-        var w = canvas.style.width ? parseInt(canvas.style.width) : canvas.width / this.density;
-        var h = canvas.style.height ? parseInt(canvas.style.height) : canvas.height / this.density;
+        let w = canvas.style.width ? parseInt(canvas.style.width) : canvas.width / this.density;
+        let h = canvas.style.height ? parseInt(canvas.style.height) : canvas.height / this.density;
         this.density = pixelDensity();
         canvas.style.width = w + 'px';
         canvas.style.height = h + 'px';
         canvas.width = w * this.density;
         canvas.height = h * this.density;
         this.renderContext(ctx);
-    };
-    MetaVector.prototype.renderContext = function (ctx) {
+    }
+    renderContext(ctx) {
         ctx.save();
         ctx.scale(this.density, this.density);
         this.typeObj = [];
-        for (var n = 0; n < this.types.length; n++) {
-            var t = this.types[n];
+        for (let n = 0; n < this.types.length; n++) {
+            let t = this.types[n];
             if (t[0] == this.PRIM_LINE)
                 this.typeObj[n] = this.setupTypeLine(t);
             else if (t[0] == this.PRIM_RECT)
@@ -5588,8 +6756,8 @@ var MetaVector = (function () {
             else if (t[0] == this.PRIM_TEXT)
                 this.typeObj[n] = this.setupTypeText(t);
         }
-        for (var n = 0; n < this.prims.length; n++) {
-            var p = this.prims[n];
+        for (let n = 0; n < this.prims.length; n++) {
+            let p = this.prims[n];
             if (p[0] == this.PRIM_LINE)
                 this.renderLine(ctx, p);
             else if (p[0] == this.PRIM_RECT)
@@ -5602,31 +6770,31 @@ var MetaVector = (function () {
                 this.renderText(ctx, p);
         }
         ctx.restore();
-    };
-    MetaVector.prototype.createSVG = function () {
-        var svg = $('<svg></svg>');
+    }
+    createSVG() {
+        let svg = $('<svg></svg>');
         svg.attr('xmlns', 'http://www.w3.org/2000/svg');
         svg.attr('width', this.width);
         svg.attr('height', this.height);
         svg.attr('viewBox', '0 0 ' + this.width + ' ' + this.height);
         this.renderSVG(svg);
-        var tmp = $('<tmp></tmp>');
+        let tmp = $('<tmp></tmp>');
         tmp.append(svg);
         return tmp.html();
-    };
-    MetaVector.prototype.renderSVG = function (svg) {
+    }
+    renderSVG(svg) {
         this.typeObj = [];
-        var font = FontData.main;
-        var defs = $('<defs></defs>').appendTo(svg);
-        for (var n = 0; n < font.GLYPH_COUNT; n++)
+        const font = FontData.main;
+        let defs = $('<defs></defs>').appendTo(svg);
+        for (let n = 0; n < font.GLYPH_COUNT; n++)
             if (this.charMask[n]) {
-                var path = $('<path></path>').appendTo(defs);
+                let path = $('<path></path>').appendTo(defs);
                 path.attr('id', 'char' + n);
                 path.attr('d', font.GLYPH_DATA[n]);
                 path.attr('edge', 'none');
             }
-        for (var n = 0; n < this.types.length; n++) {
-            var t = this.types[n];
+        for (let n = 0; n < this.types.length; n++) {
+            let t = this.types[n];
             if (t[0] == this.PRIM_LINE)
                 this.typeObj[n] = this.setupTypeLine(t);
             else if (t[0] == this.PRIM_RECT)
@@ -5638,8 +6806,8 @@ var MetaVector = (function () {
             else if (t[0] == this.PRIM_TEXT)
                 this.typeObj[n] = this.setupTypeText(t);
         }
-        for (var n = 0; n < this.prims.length;) {
-            var p = this.prims[n], num = 1;
+        for (let n = 0; n < this.prims.length;) {
+            let p = this.prims[n], num = 1;
             if (p[0] != this.PRIM_PATH && p[0] != this.PRIM_TEXT) {
                 for (; n + num < this.prims.length; num++)
                     if (this.prims[n + num][0] != p[0] || this.prims[n + num][1] != p[1])
@@ -5669,40 +6837,40 @@ var MetaVector = (function () {
                 this.svgText(svg, p);
             n += num;
         }
-    };
-    MetaVector.prototype.setupTypeLine = function (t) {
-        var thickness = t[1] * this.scale;
-        var colour = t[2];
+    }
+    setupTypeLine(t) {
+        let thickness = t[1] * this.scale;
+        let colour = t[2];
         return { 'thickness': thickness, 'colour': colourCanvas(colour) };
-    };
-    MetaVector.prototype.setupTypeRect = function (t) {
-        var edgeCol = t[1];
-        var fillCol = t[2];
-        var thickness = t[3] * this.scale;
+    }
+    setupTypeRect(t) {
+        let edgeCol = t[1];
+        let fillCol = t[2];
+        let thickness = t[3] * this.scale;
         return { 'edgeCol': colourCanvas(edgeCol), 'fillCol': colourCanvas(fillCol), 'thickness': thickness };
-    };
-    MetaVector.prototype.setupTypeOval = function (t) {
-        var edgeCol = t[1];
-        var fillCol = t[2];
-        var thickness = t[3] * this.scale;
+    }
+    setupTypeOval(t) {
+        let edgeCol = t[1];
+        let fillCol = t[2];
+        let thickness = t[3] * this.scale;
         return { 'edgeCol': colourCanvas(edgeCol), 'fillCol': colourCanvas(fillCol), 'thickness': thickness };
-    };
-    MetaVector.prototype.setupTypePath = function (t) {
-        var edgeCol = t[1];
-        var fillCol = t[2];
-        var thickness = t[3] * this.scale;
-        var hardEdge = t[4];
+    }
+    setupTypePath(t) {
+        let edgeCol = t[1];
+        let fillCol = t[2];
+        let thickness = t[3] * this.scale;
+        let hardEdge = t[4];
         return { 'edgeCol': colourCanvas(edgeCol), 'fillCol': colourCanvas(fillCol), 'thickness': thickness, 'hardEdge': hardEdge };
-    };
-    MetaVector.prototype.setupTypeText = function (t) {
-        var sz = t[1] * this.scale;
-        var colour = t[2];
+    }
+    setupTypeText(t) {
+        let sz = t[1] * this.scale;
+        let colour = t[2];
         return { 'colour': colourCanvas(colour), 'size': sz };
-    };
-    MetaVector.prototype.renderLine = function (ctx, p) {
-        var type = this.typeObj[p[1]];
-        var x1 = p[2], y1 = p[3];
-        var x2 = p[4], y2 = p[5];
+    }
+    renderLine(ctx, p) {
+        let type = this.typeObj[p[1]];
+        let x1 = p[2], y1 = p[3];
+        let x2 = p[4], y2 = p[5];
         x1 = this.offsetX + this.scale * x1;
         y1 = this.offsetY + this.scale * y1;
         x2 = this.offsetX + this.scale * x2;
@@ -5716,11 +6884,11 @@ var MetaVector = (function () {
             ctx.lineCap = 'round';
             ctx.stroke();
         }
-    };
-    MetaVector.prototype.renderRect = function (ctx, p) {
-        var type = this.typeObj[p[1]];
-        var x = p[2], y = p[3];
-        var w = p[4], h = p[5];
+    }
+    renderRect(ctx, p) {
+        let type = this.typeObj[p[1]];
+        let x = p[2], y = p[3];
+        let w = p[4], h = p[5];
         x = this.offsetX + this.scale * x;
         y = this.offsetY + this.scale * y;
         w *= this.scale;
@@ -5735,11 +6903,11 @@ var MetaVector = (function () {
             ctx.lineCap = 'square';
             ctx.strokeRect(x, y, w, h);
         }
-    };
-    MetaVector.prototype.renderOval = function (ctx, p) {
-        var type = this.typeObj[p[1]];
-        var cx = p[2], cy = p[3];
-        var rw = p[4], rh = p[5];
+    }
+    renderOval(ctx, p) {
+        let type = this.typeObj[p[1]];
+        let cx = p[2], cy = p[3];
+        let rw = p[4], rh = p[5];
         cx = this.offsetX + this.scale * cx;
         cy = this.offsetY + this.scale * cy;
         rw *= this.scale;
@@ -5757,27 +6925,27 @@ var MetaVector = (function () {
             ctx.ellipse(cx, cy, rw, rh, 0, 0, 2 * Math.PI, true);
             ctx.stroke();
         }
-    };
-    MetaVector.prototype.renderPath = function (ctx, p) {
-        var type = this.typeObj[p[1]];
-        var npts = p[2];
+    }
+    renderPath(ctx, p) {
+        let type = this.typeObj[p[1]];
+        let npts = p[2];
         if (npts == 0)
             return;
-        var x = p[3], y = p[4];
-        var ctrl = p[5];
-        var isClosed = p[6];
-        for (var n = 0; n < npts; n++) {
+        let x = p[3], y = p[4];
+        let ctrl = p[5];
+        let isClosed = p[6];
+        for (let n = 0; n < npts; n++) {
             x[n] = this.offsetX + this.scale * x[n];
             y[n] = this.offsetY + this.scale * y[n];
         }
-        for (var layer = 1; layer <= 2; layer++) {
+        for (let layer = 1; layer <= 2; layer++) {
             if (layer == 1 && type.fillCol == null)
                 continue;
             if (layer == 2 && type.edgeCol == null)
                 continue;
             ctx.beginPath();
             ctx.moveTo(x[0], y[0]);
-            for (var i = 1; i < npts; i++) {
+            for (let i = 1; i < npts; i++) {
                 if (!ctrl || !ctrl[i]) {
                     ctx.lineTo(x[i], y[i]);
                 }
@@ -5804,25 +6972,25 @@ var MetaVector = (function () {
                 ctx.stroke();
             }
         }
-    };
-    MetaVector.prototype.renderText = function (ctx, p) {
-        var type = this.typeObj[p[1]];
-        var x = p[2], y = p[3];
-        var txt = p[4];
-        var sz = type.size;
-        var fill = type.colour;
+    }
+    renderText(ctx, p) {
+        let type = this.typeObj[p[1]];
+        let x = p[2], y = p[3];
+        let txt = p[4];
+        let sz = type.size;
+        let fill = type.colour;
         x = this.offsetX + this.scale * x;
         y = this.offsetY + this.scale * y;
-        var font = FontData.main;
-        var scale = sz / font.UNITS_PER_EM;
-        var dx = 0;
-        for (var n = 0; n < txt.length; n++) {
-            var i = txt.charCodeAt(n) - 32;
+        let font = FontData.main;
+        let scale = sz / font.UNITS_PER_EM;
+        let dx = 0;
+        for (let n = 0; n < txt.length; n++) {
+            let i = txt.charCodeAt(n) - 32;
             if (i < 0 || i >= 96) {
                 dx += font.MISSING_HORZ;
                 continue;
             }
-            var path = font.getGlyphPath(i);
+            let path = font.getGlyphPath(i);
             if (path) {
                 ctx.save();
                 ctx.translate(x + dx * scale, y);
@@ -5833,21 +7001,21 @@ var MetaVector = (function () {
             }
             dx += font.HORIZ_ADV_X[i];
             if (n < txt.length - 1) {
-                var j = txt.charCodeAt(n + 1) - 32;
+                let j = txt.charCodeAt(n + 1) - 32;
                 dx += font.getKerning(i, j);
             }
         }
-    };
-    MetaVector.prototype.svgLine1 = function (svg, p) {
-        var type = this.typeObj[p[1]];
-        var x1 = p[2], y1 = p[3];
-        var x2 = p[4], y2 = p[5];
+    }
+    svgLine1(svg, p) {
+        let type = this.typeObj[p[1]];
+        let x1 = p[2], y1 = p[3];
+        let x2 = p[4], y2 = p[5];
         x1 = this.offsetX + this.scale * x1;
         y1 = this.offsetY + this.scale * y1;
         x2 = this.offsetX + this.scale * x2;
         y2 = this.offsetY + this.scale * y2;
         if (type.colour != null) {
-            var line = $('<line></line>').appendTo(svg);
+            let line = $('<line></line>').appendTo(svg);
             line.attr('x1', x1);
             line.attr('y1', y1);
             line.attr('x2', x2);
@@ -5856,39 +7024,39 @@ var MetaVector = (function () {
             line.attr('stroke-width', type.thickness);
             line.attr('stroke-linecap', 'round');
         }
-    };
-    MetaVector.prototype.svgLineN = function (svg, p, pos, sz) {
-        var type = this.typeObj[p[1]];
+    }
+    svgLineN(svg, p, pos, sz) {
+        let type = this.typeObj[p[1]];
         if (type.colour == null)
             return;
-        var g = $('<g></g>').appendTo(svg);
+        let g = $('<g></g>').appendTo(svg);
         g.attr('stroke', type.colour);
         g.attr('stroke-width', type.thickness);
         g.attr('stroke-linecap', 'round');
-        for (var n = 0; n < sz; n++) {
-            var p_2 = this.prims[pos + n];
-            var x1 = p_2[2], y1 = p_2[3];
-            var x2 = p_2[4], y2 = p_2[5];
+        for (let n = 0; n < sz; n++) {
+            let p = this.prims[pos + n];
+            let x1 = p[2], y1 = p[3];
+            let x2 = p[4], y2 = p[5];
             x1 = this.offsetX + this.scale * x1;
             y1 = this.offsetY + this.scale * y1;
             x2 = this.offsetX + this.scale * x2;
             y2 = this.offsetY + this.scale * y2;
-            var line = $('<line></line>').appendTo(g);
+            let line = $('<line></line>').appendTo(g);
             line.attr('x1', x1);
             line.attr('y1', y1);
             line.attr('x2', x2);
             line.attr('y2', y2);
         }
-    };
-    MetaVector.prototype.svgRect1 = function (svg, p) {
-        var type = this.typeObj[p[1]];
-        var x = p[2], y = p[3];
-        var w = p[4], h = p[5];
+    }
+    svgRect1(svg, p) {
+        let type = this.typeObj[p[1]];
+        let x = p[2], y = p[3];
+        let w = p[4], h = p[5];
         x = this.offsetX + this.scale * x;
         y = this.offsetY + this.scale * y;
         w *= this.scale;
         h *= this.scale;
-        var rect = $('<rect></rect>').appendTo(svg);
+        let rect = $('<rect></rect>').appendTo(svg);
         rect.attr('x', x);
         rect.attr('y', y);
         rect.attr('width', w);
@@ -5901,10 +7069,10 @@ var MetaVector = (function () {
         else
             rect.attr('stroke', 'none');
         rect.attr('fill', type.fillCol == null ? 'none' : type.fillCol);
-    };
-    MetaVector.prototype.svgRectN = function (svg, p, pos, sz) {
-        var type = this.typeObj[p[1]];
-        var g = $('<g></g>').appendTo(svg);
+    }
+    svgRectN(svg, p, pos, sz) {
+        let type = this.typeObj[p[1]];
+        let g = $('<g></g>').appendTo(svg);
         if (type.edgeCol != null) {
             g.attr('stroke', type.edgeCol);
             g.attr('stroke-width', type.thickness);
@@ -5913,30 +7081,30 @@ var MetaVector = (function () {
         else
             g.attr('stroke', 'none');
         g.attr('fill', type.fillCol == null ? 'none' : type.fillCol);
-        for (var n = 0; n < sz; n++) {
-            var p_3 = this.prims[pos + n];
-            var x = p_3[2], y = p_3[3];
-            var w = p_3[4], h = p_3[5];
+        for (let n = 0; n < sz; n++) {
+            let p = this.prims[pos + n];
+            let x = p[2], y = p[3];
+            let w = p[4], h = p[5];
             x = this.offsetX + this.scale * x;
             y = this.offsetY + this.scale * y;
             w *= this.scale;
             h *= this.scale;
-            var rect = $('<rect></rect>').appendTo(g);
+            let rect = $('<rect></rect>').appendTo(g);
             rect.attr('x', x);
             rect.attr('y', y);
             rect.attr('width', w);
             rect.attr('height', h);
         }
-    };
-    MetaVector.prototype.svgOval1 = function (svg, p) {
-        var type = this.typeObj[p[1]];
-        var cx = p[2], cy = p[3];
-        var rw = p[4], rh = p[5];
+    }
+    svgOval1(svg, p) {
+        let type = this.typeObj[p[1]];
+        let cx = p[2], cy = p[3];
+        let rw = p[4], rh = p[5];
         cx = this.offsetX + this.scale * cx;
         cy = this.offsetY + this.scale * cy;
         rw *= this.scale;
         rh *= this.scale;
-        var oval = $('<ellipse></ellipse>').appendTo(svg);
+        let oval = $('<ellipse></ellipse>').appendTo(svg);
         oval.attr('cx', cx);
         oval.attr('cy', cy);
         oval.attr('rw', rw);
@@ -5949,12 +7117,12 @@ var MetaVector = (function () {
         else
             oval.attr('stroke', 'none');
         oval.attr('fill', type.fillCol == null ? 'none' : type.fillCol);
-    };
-    MetaVector.prototype.svgOvalN = function (svg, p, pos, sz) {
-        var type = this.typeObj[p[1]];
-        var x = p[2], y = p[3];
-        var w = p[4], h = p[5];
-        var g = $('<g></g>').appendTo(svg);
+    }
+    svgOvalN(svg, p, pos, sz) {
+        let type = this.typeObj[p[1]];
+        let x = p[2], y = p[3];
+        let w = p[4], h = p[5];
+        let g = $('<g></g>').appendTo(svg);
         if (type.edgeCol != null) {
             g.attr('stroke', type.edgeCol);
             g.attr('stroke-width', type.thickness);
@@ -5963,35 +7131,35 @@ var MetaVector = (function () {
         else
             g.attr('stroke', 'none');
         g.attr('fill', type.fillCol == null ? 'none' : type.fillCol);
-        for (var n = 0; n < sz; n++) {
-            var p_4 = this.prims[pos + n];
-            var cx = p_4[2], cy = p_4[3];
-            var rw = p_4[4], rh = p_4[5];
+        for (let n = 0; n < sz; n++) {
+            let p = this.prims[pos + n];
+            let cx = p[2], cy = p[3];
+            let rw = p[4], rh = p[5];
             cx = this.offsetX + this.scale * cx;
             cy = this.offsetY + this.scale * cy;
             rw *= this.scale;
             rh *= this.scale;
-            var oval = $('<ellipse></ellipse>').appendTo(svg);
+            let oval = $('<ellipse></ellipse>').appendTo(svg);
             oval.attr('cx', cx);
             oval.attr('cy', cy);
             oval.attr('rw', rw);
             oval.attr('rw', rh);
         }
-    };
-    MetaVector.prototype.svgPath = function (svg, p) {
-        var type = this.typeObj[p[1]];
-        var npts = p[2];
+    }
+    svgPath(svg, p) {
+        let type = this.typeObj[p[1]];
+        let npts = p[2];
         if (npts == 0)
             return;
-        var x = p[3].slice(0), y = p[4].slice(0);
-        var ctrl = p[5];
-        var isClosed = p[6];
-        for (var n_1 = 0; n_1 < npts; n_1++) {
-            x[n_1] = this.offsetX + this.scale * x[n_1];
-            y[n_1] = this.offsetY + this.scale * y[n_1];
+        let x = p[3].slice(0), y = p[4].slice(0);
+        let ctrl = p[5];
+        let isClosed = p[6];
+        for (let n = 0; n < npts; n++) {
+            x[n] = this.offsetX + this.scale * x[n];
+            y[n] = this.offsetY + this.scale * y[n];
         }
-        var shape = 'M ' + x[0] + ' ' + y[0];
-        var n = 1;
+        let shape = 'M ' + x[0] + ' ' + y[0];
+        let n = 1;
         while (n < npts) {
             if (!ctrl || !ctrl[n]) {
                 shape += ' L ' + x[n] + ' ' + y[n];
@@ -6010,7 +7178,7 @@ var MetaVector = (function () {
         }
         if (isClosed)
             shape += ' Z';
-        var path = $('<path></path>').appendTo(svg);
+        let path = $('<path></path>').appendTo(svg);
         path.attr('d', shape);
         if (type.edgeCol != null) {
             path.attr('stroke', type.edgeCol);
@@ -6021,45 +7189,45 @@ var MetaVector = (function () {
         else
             path.attr('stroke', 'none');
         path.attr('fill', type.fillCol == null ? 'none' : type.fillCol);
-    };
-    MetaVector.prototype.svgText = function (svg, p) {
-        var type = this.typeObj[p[1]];
-        var x = p[2], y = p[3];
-        var txt = p[4];
-        var sz = type.size;
-        var fill = type.colour;
+    }
+    svgText(svg, p) {
+        let type = this.typeObj[p[1]];
+        let x = p[2], y = p[3];
+        let txt = p[4];
+        let sz = type.size;
+        let fill = type.colour;
         x = this.offsetX + this.scale * x;
         y = this.offsetY + this.scale * y;
-        var font = FontData.main;
-        var scale = sz / font.UNITS_PER_EM;
-        var gdelta = $('<g></g>').appendTo(svg);
+        let font = FontData.main;
+        let scale = sz / font.UNITS_PER_EM;
+        let gdelta = $('<g></g>').appendTo(svg);
         gdelta.attr('transform', 'translate(' + x + ',' + y + ')');
         gdelta.attr('fill', fill);
-        var gscale = $('<g></g>').appendTo(gdelta);
+        let gscale = $('<g></g>').appendTo(gdelta);
         gscale.attr('transform', 'scale(' + scale + ',' + (-scale) + ')');
-        var dx = 0;
-        for (var n = 0; n < txt.length; n++) {
-            var i = txt.charCodeAt(n) - font.GLYPH_MIN;
+        let dx = 0;
+        for (let n = 0; n < txt.length; n++) {
+            let i = txt.charCodeAt(n) - font.GLYPH_MIN;
             if (i >= 0 && i < font.GLYPH_COUNT) {
-                var use = $('<use></use>').appendTo(gscale);
+                let use = $('<use></use>').appendTo(gscale);
                 use.attr('xlink:href', '#char' + i);
                 use.attr('x', dx);
                 dx += font.HORIZ_ADV_X[i];
                 if (n < txt.length - 1) {
-                    var j = txt.charAt(n + 1) - font.GLYPH_MIN;
+                    let j = txt.charAt(n + 1) - font.GLYPH_MIN;
                     dx += font.getKerning(i, j);
                 }
             }
             else
                 dx += font.MISSING_HORZ;
         }
-    };
-    MetaVector.prototype.findOrCreateType = function (typeDef) {
-        for (var i = 0; i < this.types.length; i++) {
+    }
+    findOrCreateType(typeDef) {
+        for (let i = 0; i < this.types.length; i++) {
             if (this.types[i].length != typeDef.length)
                 continue;
-            var match = true;
-            for (var j = 0; j < typeDef.length; j++)
+            let match = true;
+            for (let j = 0; j < typeDef.length; j++)
                 if (typeDef[j] != this.types[i][j]) {
                     match = false;
                     break;
@@ -6069,8 +7237,8 @@ var MetaVector = (function () {
         }
         this.types.push(typeDef);
         return this.types.length - 1;
-    };
-    MetaVector.prototype.updateBounds = function (x, y) {
+    }
+    updateBounds(x, y) {
         if (this.lowX == null) {
             this.lowX = x;
             this.lowY = y;
@@ -6082,14 +7250,12 @@ var MetaVector = (function () {
         this.lowY = Math.min(this.lowY, y);
         this.highX = Math.max(this.highX, x);
         this.highY = Math.max(this.highY, y);
-    };
-    MetaVector.NOCOLOUR = -1;
-    return MetaVector;
-}());
-var Download = (function (_super) {
-    __extends(Download, _super);
-    function Download(tokenID) {
-        _super.call(this);
+    }
+}
+MetaVector.NOCOLOUR = -1;
+class Download extends Dialog {
+    constructor(tokenID) {
+        super();
         this.tokenID = tokenID;
         this.mol = null;
         this.ds = null;
@@ -6098,19 +7264,19 @@ var Download = (function (_super) {
         this.formatGfx = [];
     }
     ;
-    Download.openTransientMolecule = function (tokenID, mol) {
-        var dlg = new Download(tokenID);
+    static openTransientMolecule(tokenID, mol) {
+        let dlg = new Download(tokenID);
         dlg.mol = mol;
         dlg.title = 'Download Molecule';
         dlg.open();
         return dlg;
-    };
+    }
     ;
-    Download.prototype.populate = function () {
-        var body = this.body();
-        var self = this;
+    populate() {
+        let body = this.body();
+        const self = this;
         this.mainArea = $('<p>Setting up...</p>').appendTo(body);
-        var paraBtn = $('<p align="right"></p>').appendTo(body);
+        let paraBtn = $('<p align="right"></p>').appendTo(body);
         this.downloadArea = $('<span style="padding-right: 2em;"></span>').appendTo(paraBtn);
         this.btnPrepare = $('<button class="button button-primary">Prepare</button>').appendTo(paraBtn);
         this.btnPrepare.click(function () { self.clickPrepare(); });
@@ -6129,8 +7295,8 @@ var Download = (function (_super) {
             this.formatGfx.push(true);
         }
         else if (this.ds != null) {
-            var isReaction = false, isExperiment = false;
-            for (var n = 0; n < this.ds.numExtensions(); n++) {
+            let isReaction = false, isExperiment = false;
+            for (let n = 0; n < this.ds.numExtensions(); n++) {
                 if (this.ds.getExtType(n) == 'org.mmi.aspect.Reaction')
                     isReaction = true;
                 if (this.ds.getExtType(n) == 'org.mmi.aspect.Experiment')
@@ -6180,12 +7346,12 @@ var Download = (function (_super) {
         this.formatKey.push(FormatList.GFX_OOXML_XLSX);
         this.formatGfx.push(true);
         this.fillContent();
-    };
-    Download.prototype.clickPrepare = function () {
-        var input = { 'tokenID': this.tokenID };
+    }
+    clickPrepare() {
+        let input = { 'tokenID': this.tokenID };
         input.format = this.formatKey[this.optFormatList.getSelectedIndex()];
         input.policy = clone(this.policy.data);
-        var sizeType = this.optSizeType.getSelectedValue();
+        let sizeType = this.optSizeType.getSelectedValue();
         if (sizeType == 'Scale') {
             input.policy.pointScale = this.lineScale.val();
         }
@@ -6201,9 +7367,9 @@ var Download = (function (_super) {
             input.dataXML = DataSheetStream.writeXML(this.ds);
         }
         Func.prepareDownloadable(input, this.downloadContent, this);
-    };
-    Download.prototype.fillContent = function () {
-        var input = { 'tokenID': this.tokenID };
+    }
+    fillContent() {
+        let input = { 'tokenID': this.tokenID };
         input.policy = this.policy.data;
         if (this.mol != null) {
             input.molNative = this.mol.toString();
@@ -6213,40 +7379,40 @@ var Download = (function (_super) {
             input.dataRow = 0;
         }
         Func.renderStructure(input, this.updateStructure, this);
-    };
-    Download.prototype.updateStructure = function (result, error) {
+    }
+    updateStructure(result, error) {
         if (!result) {
             alert('Request failed: ' + error.message);
             return;
         }
-        var metavec = result.metavec;
+        let metavec = result.metavec;
         if (this.pictureArea == null)
             this.buildDisplay();
         this.pictureArea.empty();
-        var w = metavec.size[0], h = metavec.size[1], padding = 2, scale = 1;
+        let w = metavec.size[0], h = metavec.size[1], padding = 2, scale = 1;
         if (w > 700) {
-            var mod = 700 / w;
+            let mod = 700 / w;
             scale *= mod;
             w *= mod;
             h *= mod;
         }
         if (h > 500) {
-            var mod = 500 / h;
+            let mod = 500 / h;
             scale *= mod;
             w *= mod;
             h *= mod;
         }
-        var cw = Math.ceil(w) + 2 * padding, ch = Math.ceil(h) + 2 * padding;
-        var canvas = newElement(this.pictureArea, 'canvas', { 'width': cw, 'height': ch });
-        var density = pixelDensity();
+        let cw = Math.ceil(w) + 2 * padding, ch = Math.ceil(h) + 2 * padding;
+        let canvas = newElement(this.pictureArea, 'canvas', { 'width': cw, 'height': ch });
+        let density = pixelDensity();
         canvas.width = cw * density;
         canvas.height = ch * density;
         canvas.style.width = cw + 'px';
         canvas.style.height = ch + 'px';
-        var ctx = canvas.getContext('2d');
+        let ctx = canvas.getContext('2d');
         ctx.save();
         ctx.scale(density, density);
-        var grad = ctx.createLinearGradient(0, 0, cw, ch);
+        let grad = ctx.createLinearGradient(0, 0, cw, ch);
         if (this.policy.data.background != 0x000000) {
             grad.addColorStop(0, colourCode(0xF8F8F8));
             grad.addColorStop(1, colourCode(0xE0E0E0));
@@ -6260,69 +7426,69 @@ var Download = (function (_super) {
         ctx.strokeStyle = 'black';
         ctx.lineWidth = 1;
         ctx.strokeRect(0.5, 0.5, cw - 1, ch - 1);
-        var draw = new MetaVector(metavec);
+        let draw = new MetaVector(metavec);
         draw.offsetX = padding;
         draw.offsetY = padding;
         draw.scale = scale;
         draw.renderContext(ctx);
-        var isExperiment = false;
+        let isExperiment = false;
         if (this.ds != null) {
-            for (var n = 0; n < this.ds.numExtensions(); n++)
+            for (let n = 0; n < this.ds.numExtensions(); n++)
                 if (this.ds.getExtType(n) == 'org.mmi.aspect.Experiment')
                     isExperiment = true;
         }
         if (this.ds != null && this.ds.numRows() > 1 && !isExperiment) {
-            var dstxt = '... and ' + (this.ds.numRows() - 1) + ' more row' + (this.ds.numRows() == 2 ? '' : 's') + '.';
+            let dstxt = '... and ' + (this.ds.numRows() - 1) + ' more row' + (this.ds.numRows() == 2 ? '' : 's') + '.';
             addText(newElement(this.pictureArea, 'p'), dstxt);
         }
         ctx.restore();
-    };
+    }
     ;
-    Download.prototype.buildDisplay = function () {
-        var self = this;
+    buildDisplay() {
+        const self = this;
         this.mainArea.empty();
         this.pictureArea = $('<p align="center"></p>').appendTo(this.mainArea);
         this.formatArea = $('<div style="text-align: left;"></div>').appendTo(this.mainArea);
         this.graphicArea = $('<div style="text-align: left;"></div>').appendTo(this.mainArea);
         this.formatArea.append($('<h2 class="tight">Choose Format</h2>'));
         this.formatArea.append($('<hr class="thin"></hr>'));
-        var optList = [];
-        for (var n = 0; n < this.formatKey.length; n++)
+        let optList = [];
+        for (let n = 0; n < this.formatKey.length; n++)
             optList.push('');
-        var optFormatList = new OptionList(optList, true);
+        let optFormatList = new OptionList(optList, true);
         optFormatList.render(this.formatArea);
-        for (var n = 0; n < this.formatKey.length; n++) {
-            var k = this.formatKey[n];
+        for (let n = 0; n < this.formatKey.length; n++) {
+            let k = this.formatKey[n];
             $(optFormatList.getAuxiliaryCell(n)).append('\u00A0' + FormatList.FORMAT_DESCR[k]);
         }
         optFormatList.onSelect(function (idx) { this.changeFormat(idx); }, this);
         this.graphicArea.append($('<h2 class="tight">Graphic Options</h2>'));
         this.graphicArea.append($('<hr class="thin"></hr>'));
-        var paraSizeType = $('<p></p>').appendTo(this.graphicArea);
-        var paraSizeSpec = $('<p></p>').appendTo(this.graphicArea);
-        var paraRender = $('<p></p>').appendTo(this.graphicArea);
-        var trSize = $('<table><tr></tr></table>').appendTo(paraSizeType).find('tr');
+        let paraSizeType = $('<p></p>').appendTo(this.graphicArea);
+        let paraSizeSpec = $('<p></p>').appendTo(this.graphicArea);
+        let paraRender = $('<p></p>').appendTo(this.graphicArea);
+        let trSize = $('<table><tr></tr></table>').appendTo(paraSizeType).find('tr');
         trSize.append('<td style="vertical-align: middle; font-weight: bold;">Sizing: </td>');
-        var optSizeType = new OptionList(['Scale', 'Box'], false);
+        let optSizeType = new OptionList(['Scale', 'Box'], false);
         optSizeType.setSelectedIndex(0);
         optSizeType.render($('<td style="vertical-align: middle;"></td>').appendTo(trSize));
         optSizeType.onSelect(function (idx) { this.changeSizeType(idx); }, this);
-        var divSizeScale = $('<div></div>').appendTo(paraSizeSpec);
+        let divSizeScale = $('<div></div>').appendTo(paraSizeSpec);
         divSizeScale.append('<b>Angstroms-to-Points: </b>');
-        var lineScale = $('<input type="text" size="6"></input>"').appendTo(divSizeScale);
+        let lineScale = $('<input type="text" size="6"></input>"').appendTo(divSizeScale);
         lineScale.val('30');
-        var divSizeBox = $('<div style="display: none;"></div>').appendTo(paraSizeSpec);
+        let divSizeBox = $('<div style="display: none;"></div>').appendTo(paraSizeSpec);
         divSizeBox.append('<b>Width: </b>');
-        var lineBoxWidth = $('<input type="text" size="6"></input>"').appendTo(divSizeBox);
+        let lineBoxWidth = $('<input type="text" size="6"></input>"').appendTo(divSizeBox);
         lineBoxWidth.val('400');
         divSizeBox.append('<b> Height: </b>');
-        var lineBoxHeight = $('<input type="text" size="6"></input>"').appendTo(divSizeBox);
+        let lineBoxHeight = $('<input type="text" size="6"></input>"').appendTo(divSizeBox);
         lineBoxHeight.val('300');
         divSizeBox.append(' <b>Max Scale: </b>');
-        var lineBoxMaxScale = $('<input type="text" size="6"></input>"').appendTo(divSizeBox);
+        let lineBoxMaxScale = $('<input type="text" size="6"></input>"').appendTo(divSizeBox);
         lineBoxMaxScale.val('30');
         paraRender.append('<b>Rendering: </b>');
-        var selectRender = $('<select></select>').appendTo(paraRender);
+        let selectRender = $('<select></select>').appendTo(paraRender);
         selectRender.append('<option>Black-on-White</option>');
         selectRender.append('<option>Colour-on-White</option>');
         selectRender.append('<option>White-on-Black</option>');
@@ -6339,16 +7505,16 @@ var Download = (function (_super) {
         this.lineBoxHeight = lineBoxHeight;
         this.lineBoxMaxScale = lineBoxMaxScale;
         this.selectRender = selectRender;
-    };
-    Download.prototype.changeFormat = function () {
-        var ftype = this.formatKey[this.optFormatList.getSelectedIndex()];
-        var psz = 30;
+    }
+    changeFormat() {
+        let ftype = this.formatKey[this.optFormatList.getSelectedIndex()];
+        let psz = 30;
         if (ftype == FormatList.GFX_OOXML_DOCX || ftype == FormatList.GFX_OOXML_XLSX)
             psz = 10;
         this.lineScale.val(psz.toString());
-    };
+    }
     ;
-    Download.prototype.changeSizeType = function (idx) {
+    changeSizeType(idx) {
         if (idx == 0) {
             this.divSizeScale.css('display', 'block');
             this.divSizeBox.css('display', 'none');
@@ -6357,9 +7523,9 @@ var Download = (function (_super) {
             this.divSizeScale.css('display', 'none');
             this.divSizeBox.css('display', 'block');
         }
-    };
-    Download.prototype.changeRender = function () {
-        var t = this.selectRender.prop('selectedIndex');
+    }
+    changeRender() {
+        let t = this.selectRender.prop('selectedIndex');
         if (t == 0)
             this.policy = RenderPolicy.defaultBlackOnWhite();
         else if (t == 1)
@@ -6370,7 +7536,7 @@ var Download = (function (_super) {
             this.policy = RenderPolicy.defaultColourOnBlack();
         else if (t == 4)
             this.policy = RenderPolicy.defaultPrintedPublication();
-        var input = { 'tokenID': this.tokenID };
+        let input = { 'tokenID': this.tokenID };
         input.policy = this.policy.data;
         if (this.mol != null) {
             input.molNative = this.mol.toString();
@@ -6380,32 +7546,31 @@ var Download = (function (_super) {
             input.dataRow = 0;
         }
         Func.renderStructure(input, this.updateStructure, this);
-    };
-    Download.prototype.downloadContent = function (result, error) {
+    }
+    downloadContent(result, error) {
         this.btnPrepare.prop('disabled', false);
         if (!result) {
             alert('Request failed: ' + error.message);
             return;
         }
-        var format = this.formatKey[this.optFormatList.getSelectedIndex()];
-        var id = result.transientID;
-        var fn = 'download' + FormatList.FORMAT_EXTN[format];
-        var url = RPC.BASE_URL + '/Download/' + fn + '?transientID=' + id;
+        let format = this.formatKey[this.optFormatList.getSelectedIndex()];
+        let id = result.transientID;
+        let fn = 'download' + FormatList.FORMAT_EXTN[format];
+        let url = RPC.BASE_URL + '/Download/' + fn + '?transientID=' + id;
         this.downloadArea.empty();
         addText(this.downloadArea, 'Temporary download link: ');
         addText(newElement(this.downloadArea, 'a', { 'href': url, 'target': '_blank' }), fn);
-    };
-    Download.openTransientDataSheet = function (tokenID, ds) {
-        var dlg = new Download(tokenID);
-        dlg.ds = ds;
-        dlg.title = 'Download DataSheet';
-        dlg.open();
-        return dlg;
-    };
-    return Download;
-}(Dialog));
-var Cookies = (function () {
-    function Cookies() {
+    }
+}
+Download.openTransientDataSheet = function (tokenID, ds) {
+    let dlg = new Download(tokenID);
+    dlg.ds = ds;
+    dlg.title = 'Download DataSheet';
+    dlg.open();
+    return dlg;
+};
+class Cookies {
+    constructor() {
         this.molecules = [];
         this.ASPIRIN = 'SketchEl!(13,13)\n' +
             'C=-1.6010,4.3000;0,0,i0\n' +
@@ -6468,29 +7633,29 @@ var Cookies = (function () {
             '!End';
         this.MAX_MOL_STASH = 20;
         for (var idx = 0;; idx++) {
-            var str = this.get('mol' + idx);
+            let str = this.get('mol' + idx);
             if (str == null)
                 break;
-            var mol = Molecule.fromString(str);
+            let mol = Molecule.fromString(str);
             if (mol == null)
                 break;
             this.molecules.push(mol);
         }
     }
-    Cookies.prototype.numMolecules = function () {
+    numMolecules() {
         return this.molecules.length;
-    };
-    Cookies.prototype.getMolecule = function (idx) {
+    }
+    getMolecule(idx) {
         return this.molecules[idx];
-    };
-    Cookies.prototype.deleteMolecule = function (idx) {
+    }
+    deleteMolecule(idx) {
         this.molecules.splice(idx, 1);
         this.setMolecules();
-    };
-    Cookies.prototype.stashMolecule = function (mol) {
+    }
+    stashMolecule(mol) {
         if (MolUtil.isBlank(mol))
             return;
-        for (var n = 0; n < this.molecules.length; n++)
+        for (let n = 0; n < this.molecules.length; n++)
             if (mol.compareTo(this.molecules[n]) == 0) {
                 if (n > 0) {
                     this.molecules.splice(n, 1);
@@ -6503,56 +7668,54 @@ var Cookies = (function () {
         while (this.molecules.length > this.MAX_MOL_STASH)
             this.molecules.pop();
         this.setMolecules();
-    };
-    Cookies.prototype.promoteToTop = function (idx) {
+    }
+    promoteToTop(idx) {
         if (idx == 0)
             return;
-        var mol = this.molecules.splice(idx, 1)[0];
+        let mol = this.molecules.splice(idx, 1)[0];
         this.molecules.splice(0, 0, mol);
         this.setMolecules();
-    };
-    Cookies.prototype.seedMolecules = function () {
+    }
+    seedMolecules() {
         this.molecules = [];
         this.molecules.push(Molecule.fromString(this.CAFFEINE));
         this.molecules.push(Molecule.fromString(this.ASPIRIN));
         this.setMolecules();
-    };
-    Cookies.prototype.setMolecules = function () {
-        for (var n = 0; n < this.molecules.length; n++)
+    }
+    setMolecules() {
+        for (let n = 0; n < this.molecules.length; n++)
             this.set('mol' + n, this.molecules[n].toString());
         this.remove('mol' + this.molecules.length);
-    };
-    Cookies.prototype.get = function (key) {
-        var value = "; " + document.cookie;
-        var parts = value.split("; " + key + "=");
+    }
+    get(key) {
+        let value = "; " + document.cookie;
+        let parts = value.split("; " + key + "=");
         if (parts.length == 2)
             return decodeURIComponent(parts.pop().split(";").shift());
         return null;
-    };
-    Cookies.prototype.set = function (key, val) {
+    }
+    set(key, val) {
         document.cookie = key + '=' + encodeURIComponent(val);
-    };
-    Cookies.prototype.remove = function (key) {
+    }
+    remove(key) {
         document.cookie = key + '=; expires=Thu, 01 Jan 1970 00:00:00 GMT';
-    };
-    return Cookies;
-}());
-var OutlineMeasurement = (function () {
-    function OutlineMeasurement(offsetX, offsetY, pointScale) {
+    }
+}
+class OutlineMeasurement {
+    constructor(offsetX, offsetY, pointScale) {
         this.offsetX = offsetX;
         this.offsetY = offsetY;
         this.pointScale = pointScale;
         this.invScale = 1 / pointScale;
     }
-    OutlineMeasurement.prototype.scale = function () { return this.pointScale; };
-    OutlineMeasurement.prototype.angToX = function (ax) { return ax * this.pointScale + this.offsetX; };
-    OutlineMeasurement.prototype.angToY = function (ay) { return ay * -this.pointScale + this.offsetY; };
-    OutlineMeasurement.prototype.xToAng = function (px) { return (px - this.offsetX) * this.invScale; };
-    OutlineMeasurement.prototype.yToAng = function (py) { return (py - this.offsetY) * -this.invScale; };
-    OutlineMeasurement.prototype.yIsUp = function () { return false; };
-    OutlineMeasurement.prototype.measureText = function (str, fontSize) { return FontData.main.measureText(str, fontSize); };
-    return OutlineMeasurement;
-}());
+    scale() { return this.pointScale; }
+    angToX(ax) { return ax * this.pointScale + this.offsetX; }
+    angToY(ay) { return ay * -this.pointScale + this.offsetY; }
+    xToAng(px) { return (px - this.offsetX) * this.invScale; }
+    yToAng(py) { return (py - this.offsetY) * -this.invScale; }
+    yIsUp() { return false; }
+    measureText(str, fontSize) { return FontData.main.measureText(str, fontSize); }
+}
 var BLineType;
 (function (BLineType) {
     BLineType[BLineType["Normal"] = 1] = "Normal";
@@ -6565,8 +7728,8 @@ var BLineType;
     BLineType[BLineType["IncTriple"] = 8] = "IncTriple";
     BLineType[BLineType["IncQuadruple"] = 9] = "IncQuadruple";
 })(BLineType || (BLineType = {}));
-var ArrangeMolecule = (function () {
-    function ArrangeMolecule(mol, measure, policy, effects) {
+class ArrangeMolecule {
+    constructor(mol, measure, policy, effects) {
         this.mol = mol;
         this.measure = measure;
         this.policy = policy;
@@ -6577,23 +7740,23 @@ var ArrangeMolecule = (function () {
         this.lines = [];
         this.space = [];
     }
-    ArrangeMolecule.guestimateSize = function (mol, policy, maxW, maxH) {
-        var box = mol.boundary();
-        var minX = box.minX(), minY = box.minY(), maxX = box.maxX(), maxY = box.maxY();
-        var fontSize = policy.data.fontSize * this.FONT_CORRECT;
-        for (var n = 1; n <= mol.numAtoms; n++)
+    static guestimateSize(mol, policy, maxW, maxH) {
+        let box = mol.boundary();
+        let minX = box.minX(), minY = box.minY(), maxX = box.maxX(), maxY = box.maxY();
+        let fontSize = policy.data.fontSize * this.FONT_CORRECT;
+        for (let n = 1; n <= mol.numAtoms; n++)
             if (mol.atomExplicit(n)) {
-                var plusH = mol.atomHydrogens(n) > 0 ? 1 : 0;
-                var aw = 0.5 * 0.7 * fontSize * (mol.atomElement(n).length + plusH);
-                var ah = 0.5 * fontSize * (1 + plusH);
-                var ax = mol.atomX(n), ay = mol.atomY(n);
+                let plusH = mol.atomHydrogens(n) > 0 ? 1 : 0;
+                const aw = 0.5 * 0.7 * fontSize * (mol.atomElement(n).length + plusH);
+                const ah = 0.5 * fontSize * (1 + plusH);
+                const ax = mol.atomX(n), ay = mol.atomY(n);
                 minX = Math.min(minX, ax - aw);
                 maxX = Math.max(maxX, ax + aw);
                 minY = Math.min(minY, ay - ah);
                 maxY = Math.max(maxY, ay + ah);
             }
-        var w = Math.max(1, (maxX - minX)) * policy.data.pointScale;
-        var h = Math.max(1, (maxY - minY)) * policy.data.pointScale;
+        let w = Math.max(1, (maxX - minX)) * policy.data.pointScale;
+        let h = Math.max(1, (maxY - minY)) * policy.data.pointScale;
         if (maxW > 0 && w > maxW) {
             h *= maxW / w;
             w = maxW;
@@ -6603,25 +7766,25 @@ var ArrangeMolecule = (function () {
             h = maxH;
         }
         return [w, h];
-    };
-    ArrangeMolecule.prototype.getMolecule = function () { return this.mol; };
-    ArrangeMolecule.prototype.getMeasure = function () { return this.measure; };
-    ArrangeMolecule.prototype.getPolicy = function () { return this.policy; };
-    ArrangeMolecule.prototype.getEffects = function () { return this.effects; };
-    ArrangeMolecule.prototype.getScale = function () { return this.scale; };
-    ArrangeMolecule.prototype.arrange = function () {
+    }
+    getMolecule() { return this.mol; }
+    getMeasure() { return this.measure; }
+    getPolicy() { return this.policy; }
+    getEffects() { return this.effects; }
+    getScale() { return this.scale; }
+    arrange() {
         this.scale = this.measure.scale();
         this.bondSepPix = this.policy.data.bondSep * this.measure.scale();
         this.lineSizePix = this.policy.data.lineSize * this.measure.scale();
         this.fontSizePix = this.policy.data.fontSize * this.measure.scale() * ArrangeMolecule.FONT_CORRECT;
         this.ymul = this.measure.yIsUp() ? -1 : 1;
-        for (var n = 1; n <= this.mol.numAtoms; n++) {
+        for (let n = 1; n <= this.mol.numAtoms; n++) {
             if (this.mol.atomElement(n).length > 2 && this.mol.atomHydrogens(n) == 0) {
                 this.points.push(null);
                 this.space.push(null);
                 continue;
             }
-            var a = {
+            let a = {
                 'anum': n,
                 'text': this.mol.atomExplicit(n) || this.atomIsWeirdLinear(n) ? this.mol.atomElement(n) : null,
                 'fsz': this.fontSizePix,
@@ -6630,37 +7793,37 @@ var ArrangeMolecule = (function () {
                 'oval': new Oval(this.measure.angToX(this.mol.atomX(n)), this.measure.angToY(this.mol.atomY(n)), 0, 0)
             };
             if (a.text != null) {
-                var wad = this.measure.measureText(a.text, a.fsz);
-                var PADDING = 1.1;
+                let wad = this.measure.measureText(a.text, a.fsz);
+                const PADDING = 1.1;
                 a.oval.rw = 0.5 * wad[0] * PADDING;
                 a.oval.rh = 0.5 * wad[1] * PADDING;
             }
             this.points.push(a);
             this.space.push(this.computeSpacePoint(a));
         }
-        for (var n = 1; n <= this.mol.numAtoms; n++)
+        for (let n = 1; n <= this.mol.numAtoms; n++)
             if (this.points[n - 1] == null)
                 this.processLabel(n);
-        var bdbl = Vec.booleanArray(false, this.mol.numBonds);
-        for (var n = 1; n <= this.mol.numBonds; n++) {
-            var bfr = this.mol.bondFrom(n), bto = this.mol.bondTo(n);
-            var bt = this.mol.bondType(n), bo = this.mol.bondOrder(n);
-            var col = this.policy.data.foreground;
+        let bdbl = Vec.booleanArray(false, this.mol.numBonds);
+        for (let n = 1; n <= this.mol.numBonds; n++) {
+            let bfr = this.mol.bondFrom(n), bto = this.mol.bondTo(n);
+            let bt = this.mol.bondType(n), bo = this.mol.bondOrder(n);
+            let col = this.policy.data.foreground;
             bdbl[n - 1] = bo == 2 && (bt == Molecule.BONDTYPE_NORMAL || bt == Molecule.BONDTYPE_UNKNOWN);
-            var a1 = this.points[bfr - 1], a2 = this.points[bto - 1];
-            var x1 = a1.oval.cx, y1 = a1.oval.cy, x2 = a2.oval.cx, y2 = a2.oval.cy;
+            let a1 = this.points[bfr - 1], a2 = this.points[bto - 1];
+            let x1 = a1.oval.cx, y1 = a1.oval.cy, x2 = a2.oval.cx, y2 = a2.oval.cy;
             if (Math.abs(x2 - x1) <= 1 && Math.abs(y2 - y1) <= 1) {
                 bdbl[n - 1] = false;
                 continue;
             }
             if (bdbl[n - 1])
                 continue;
-            var minDist = (bo == 1 && bt == Molecule.BONDTYPE_NORMAL ? this.MINBOND_LINE : this.MINBOND_EXOTIC) * this.measure.scale();
-            var xy1 = this.backOffAtom(bfr, x1, y1, x2, y2, minDist);
-            var xy2 = this.backOffAtom(bto, x2, y2, x1, y1, minDist);
+            let minDist = (bo == 1 && bt == Molecule.BONDTYPE_NORMAL ? this.MINBOND_LINE : this.MINBOND_EXOTIC) * this.measure.scale();
+            let xy1 = this.backOffAtom(bfr, x1, y1, x2, y2, minDist);
+            let xy2 = this.backOffAtom(bto, x2, y2, x1, y1, minDist);
             this.ensureMinimumBondLength(xy1, xy2, x1, y1, x2, y2, minDist);
-            var sz = this.lineSizePix, head = 0;
-            var ltype = BLineType.Normal;
+            let sz = this.lineSizePix, head = 0;
+            let ltype = BLineType.Normal;
             if (bo == 1 && bt == Molecule.BONDTYPE_INCLINED) {
                 ltype = BLineType.Inclined;
                 head = 0.15 * this.measure.scale();
@@ -6684,9 +7847,9 @@ var ArrangeMolecule = (function () {
                 head = (bo == 2 ? 0.20 : 0.25) * this.measure.scale();
             }
             if (bo == 0) {
-                var dx = xy2[0] - xy1[0], dy = xy2[1] - xy1[1];
-                var d = norm_xy(dx, dy), invD = 1 / d;
-                var ox = 0.5 * dx * invD * this.bondSepPix, oy = 0.5 * dy * invD * this.bondSepPix;
+                let dx = xy2[0] - xy1[0], dy = xy2[1] - xy1[1];
+                let d = norm_xy(dx, dy), invD = 1 / d;
+                let ox = 0.5 * dx * invD * this.bondSepPix, oy = 0.5 * dy * invD * this.bondSepPix;
                 if (this.mol.atomAdjCount(bfr) > 1) {
                     xy1[0] += ox;
                     xy1[1] += oy;
@@ -6697,16 +7860,16 @@ var ArrangeMolecule = (function () {
                 }
             }
             if (bo != 1 && bt == Molecule.BONDTYPE_DECLINED) {
-                var tmp = xy1;
+                let tmp = xy1;
                 xy1 = xy2;
                 xy2 = tmp;
             }
             if (bo > 1 && (bt == Molecule.BONDTYPE_NORMAL || bt == Molecule.BONDTYPE_UNKNOWN)) {
-                var oxy = this.orthogonalDelta(xy1[0], xy1[1], xy2[0], xy2[1], this.bondSepPix);
-                var v = -0.5 * (bo - 1);
-                for (var i = 0; i < bo; i++, v++) {
-                    var lx1 = xy1[0] + v * oxy[0], ly1 = xy1[1] + v * oxy[1], lx2 = xy2[0] + v * oxy[0], ly2 = xy2[1] + v * oxy[1];
-                    var b = {
+                let oxy = this.orthogonalDelta(xy1[0], xy1[1], xy2[0], xy2[1], this.bondSepPix);
+                let v = -0.5 * (bo - 1);
+                for (let i = 0; i < bo; i++, v++) {
+                    let lx1 = xy1[0] + v * oxy[0], ly1 = xy1[1] + v * oxy[1], lx2 = xy2[0] + v * oxy[0], ly2 = xy2[1] + v * oxy[1];
+                    let b = {
                         'bnum': n,
                         'bfr': bfr,
                         'bto': bto,
@@ -6721,7 +7884,7 @@ var ArrangeMolecule = (function () {
                 }
             }
             else {
-                var b = {
+                let b = {
                     'bnum': n,
                     'bfr': bfr,
                     'bto': bto,
@@ -6735,37 +7898,37 @@ var ArrangeMolecule = (function () {
                 this.space.push(this.computeSpaceLine(b));
             }
         }
-        var rings = this.orderedRingList();
-        for (var i = 0; i < rings.length; i++) {
-            for (var j = 0; j < rings[i].length; j++) {
-                var k = this.mol.findBond(rings[i][j], rings[i][j < rings[i].length - 1 ? j + 1 : 0]);
+        let rings = this.orderedRingList();
+        for (let i = 0; i < rings.length; i++) {
+            for (let j = 0; j < rings[i].length; j++) {
+                let k = this.mol.findBond(rings[i][j], rings[i][j < rings[i].length - 1 ? j + 1 : 0]);
                 if (bdbl[k - 1]) {
                     this.processDoubleBond(k, rings[i]);
                     bdbl[k - 1] = false;
                 }
             }
         }
-        for (var i = 1; i <= this.mol.numBonds; i++)
+        for (let i = 1; i <= this.mol.numBonds; i++)
             if (bdbl[i - 1])
                 this.processDoubleBond(i, this.priorityDoubleSubstit(i));
-        var hcount = Vec.numberArray(0, this.mol.numAtoms);
-        for (var n = 1; n <= this.mol.numAtoms; n++)
+        let hcount = Vec.numberArray(0, this.mol.numAtoms);
+        for (let n = 1; n <= this.mol.numAtoms; n++)
             hcount[n - 1] = this.points[n - 1].text == null ? 0 : this.mol.atomHydrogens(n);
-        for (var n = 0; n < this.mol.numAtoms; n++)
+        for (let n = 0; n < this.mol.numAtoms; n++)
             if (hcount[n] > 0 && this.placeHydrogen(n, hcount[n], true))
                 hcount[n] = 0;
-        for (var n = 0; n < this.mol.numAtoms; n++)
+        for (let n = 0; n < this.mol.numAtoms; n++)
             if (hcount[n] > 0)
                 this.placeHydrogen(n, hcount[n], false);
-        for (var n = 1; n <= this.mol.numAtoms; n++)
+        for (let n = 1; n <= this.mol.numAtoms; n++)
             if (this.mol.atomIsotope(n) != Molecule.ISOTOPE_NATURAL) {
-                var isostr = this.mol.atomIsotope(n).toString();
-                var col = this.policy.data.atomCols[this.mol.atomicNumber(n)];
+                let isostr = this.mol.atomIsotope(n).toString();
+                let col = this.policy.data.atomCols[this.mol.atomicNumber(n)];
                 this.placeAdjunct(n, isostr, this.fontSizePix * 0.6, col, 150 * DEGRAD);
             }
-        for (var n = 1; n <= this.mol.numAtoms; n++) {
-            var str = '';
-            var chg = this.mol.atomCharge(n);
+        for (let n = 1; n <= this.mol.numAtoms; n++) {
+            let str = '';
+            let chg = this.mol.atomCharge(n);
             if (chg == -1)
                 str = '-';
             else if (chg == 1)
@@ -6774,68 +7937,60 @@ var ArrangeMolecule = (function () {
                 str = Math.abs(chg) + '-';
             else if (chg > 1)
                 str = chg + '+';
-            for (var i = this.mol.atomUnpaired(n); i > 0; i--)
+            for (let i = this.mol.atomUnpaired(n); i > 0; i--)
                 str += '.';
             if (str.length == 0)
                 continue;
-            var col = this.policy.data.atomCols[this.mol.atomicNumber(n)];
+            let col = this.policy.data.atomCols[this.mol.atomicNumber(n)];
             this.placeAdjunct(n, str, str.length == 1 ? 0.8 * this.fontSizePix : 0.6 * this.fontSizePix, col, 30 * DEGRAD);
         }
-    };
-    ArrangeMolecule.prototype.numPoints = function () { return this.points.length; };
-    ArrangeMolecule.prototype.getPoint = function (idx) { return this.points[idx]; };
-    ArrangeMolecule.prototype.numLines = function () { return this.lines.length; };
-    ArrangeMolecule.prototype.getLine = function (idx) { return this.lines[idx]; };
-    ArrangeMolecule.prototype.numSpace = function () { return this.space.length; };
-    ArrangeMolecule.prototype.getSpace = function (idx) { return this.space[idx]; };
-    ArrangeMolecule.prototype.offsetEverything = function (dx, dy) {
-        for (var _i = 0, _a = this.points; _i < _a.length; _i++) {
-            var a = _a[_i];
+    }
+    numPoints() { return this.points.length; }
+    getPoint(idx) { return this.points[idx]; }
+    numLines() { return this.lines.length; }
+    getLine(idx) { return this.lines[idx]; }
+    numSpace() { return this.space.length; }
+    getSpace(idx) { return this.space[idx]; }
+    offsetEverything(dx, dy) {
+        for (let a of this.points)
             a.oval.offsetBy(dx, dy);
-        }
-        for (var _b = 0, _c = this.lines; _b < _c.length; _b++) {
-            var b = _c[_b];
+        for (let b of this.lines)
             b.line.offsetBy(dx, dy);
-        }
-        for (var _d = 0, _e = this.space; _d < _e.length; _d++) {
-            var spc = _e[_d];
+        for (let spc of this.space) {
             spc.box.offsetBy(dx, dy);
             Vec.addTo(spc.px, dx);
             Vec.addTo(spc.py, dy);
         }
-    };
-    ArrangeMolecule.prototype.scaleEverything = function (scaleBy) {
+    }
+    scaleEverything(scaleBy) {
         this.scale *= scaleBy;
-        for (var _i = 0, _a = this.points; _i < _a.length; _i++) {
-            var a = _a[_i];
+        for (let a of this.points) {
             a.oval.scaleBy(scaleBy);
             a.fsz *= scaleBy;
         }
-        for (var _b = 0, _c = this.lines; _b < _c.length; _b++) {
-            var b = _c[_b];
+        for (let b of this.lines) {
             b.line.scaleBy(scaleBy);
             b.size *= scaleBy;
             b.head *= scaleBy;
         }
-        for (var _d = 0, _e = this.space; _d < _e.length; _d++) {
-            var spc = _e[_d];
+        for (let spc of this.space) {
             spc.box.scaleBy(scaleBy);
             Vec.mulBy(spc.px, scaleBy);
             Vec.mulBy(spc.py, scaleBy);
         }
-    };
-    ArrangeMolecule.prototype.determineBoundary = function (padding) {
+    }
+    determineBoundary(padding) {
         if (padding == null)
             padding = 0;
         if (this.space.length == 0)
             return [0, 0, 2 * padding, 2 * padding];
-        var bounds = Vec.numberArray(0, 4);
-        var spc = this.space[0];
+        let bounds = Vec.numberArray(0, 4);
+        let spc = this.space[0];
         bounds[0] = spc.box.x;
         bounds[1] = spc.box.y;
         bounds[2] = spc.box.x + spc.box.w;
         bounds[3] = spc.box.y + spc.box.h;
-        for (var n = this.space.length - 1; n > 0; n--) {
+        for (let n = this.space.length - 1; n > 0; n--) {
             spc = this.space[n];
             bounds[0] = Math.min(bounds[0], spc.box.x);
             bounds[1] = Math.min(bounds[1], spc.box.y);
@@ -6843,18 +7998,18 @@ var ArrangeMolecule = (function () {
             bounds[3] = Math.max(bounds[3], spc.box.y + spc.box.h);
         }
         return bounds;
-    };
-    ArrangeMolecule.prototype.squeezeInto = function (x, y, w, h, padding) {
+    }
+    squeezeInto(x, y, w, h, padding) {
         if (padding > 0) {
             x += padding;
             y += padding;
             w -= 2 * padding;
             h -= 2 * padding;
         }
-        var bounds = this.determineBoundary(0);
-        var bw = bounds[2] - bounds[0], bh = bounds[3] - bounds[1];
+        let bounds = this.determineBoundary(0);
+        let bw = bounds[2] - bounds[0], bh = bounds[3] - bounds[1];
         if (bw > w || bh > h) {
-            var downScale = 1;
+            let downScale = 1;
             if (bw > w)
                 downScale = w / bw;
             if (bh > h)
@@ -6863,22 +8018,22 @@ var ArrangeMolecule = (function () {
             Vec.mulBy(bounds, downScale);
         }
         this.offsetEverything(x - bounds[0] + 0.5 * (w - bounds[2] + bounds[0]), y - bounds[1] + 0.5 * (h - bounds[3] + bounds[1]));
-    };
-    ArrangeMolecule.prototype.placeAdjunct = function (atom, str, fsz, col, angdir) {
-        var wad = this.measure.measureText(str, fsz);
-        var a = this.points[atom - 1];
-        var cx = a.oval.cx, cy = a.oval.cy, rw = 0.55 * wad[0], rh = 0.55 * wad[1];
-        var bestScore = 0, bestDX = 0, bestDY = 0;
-        var px = Vec.numberArray(0, 4), py = Vec.numberArray(0, 4);
-        var angThresh = 10;
-        var shorted = false;
-        for (var ext = 0.5 * (a.oval.rw + a.oval.rh); !shorted && ext < 1.5 * this.measure.scale(); ext += 0.1 * this.measure.scale()) {
-            var DELTA = 5 * DEGRAD;
-            for (var d = 0; !shorted && d < Math.PI - 0.0001; d += DELTA)
-                for (var s = -1; s <= 1; s += 2) {
-                    var dang = d * s + (s > 0 ? DELTA : 0), ang = angdir + dang;
-                    var dx = ext * Math.cos(ang), dy = ext * Math.sin(ang) * -this.ymul;
-                    var x1 = cx + dx - rw, x2 = cx + dx + rw, y1 = cy + dy - rh, y2 = cy + dy + rh;
+    }
+    placeAdjunct(atom, str, fsz, col, angdir) {
+        let wad = this.measure.measureText(str, fsz);
+        let a = this.points[atom - 1];
+        let cx = a.oval.cx, cy = a.oval.cy, rw = 0.55 * wad[0], rh = 0.55 * wad[1];
+        let bestScore = 0, bestDX = 0, bestDY = 0;
+        let px = Vec.numberArray(0, 4), py = Vec.numberArray(0, 4);
+        let angThresh = 10;
+        let shorted = false;
+        for (let ext = 0.5 * (a.oval.rw + a.oval.rh); !shorted && ext < 1.5 * this.measure.scale(); ext += 0.1 * this.measure.scale()) {
+            const DELTA = 5 * DEGRAD;
+            for (let d = 0; !shorted && d < Math.PI - 0.0001; d += DELTA)
+                for (let s = -1; s <= 1; s += 2) {
+                    let dang = d * s + (s > 0 ? DELTA : 0), ang = angdir + dang;
+                    let dx = ext * Math.cos(ang), dy = ext * Math.sin(ang) * -this.ymul;
+                    let x1 = cx + dx - rw, x2 = cx + dx + rw, y1 = cy + dy - rh, y2 = cy + dy + rh;
                     px[0] = x1;
                     py[0] = y1;
                     px[1] = x2;
@@ -6887,9 +8042,9 @@ var ArrangeMolecule = (function () {
                     py[2] = y2;
                     px[3] = x1;
                     py[3] = y2;
-                    var viol = this.countPolyViolations(px, py, false);
-                    var score = 10 * viol + Math.abs(dang) + 10 * ext;
-                    var shortCircuit = viol == 0 && Math.abs(dang) < (angThresh + 1) * DEGRAD;
+                    let viol = this.countPolyViolations(px, py, false);
+                    let score = 10 * viol + Math.abs(dang) + 10 * ext;
+                    let shortCircuit = viol == 0 && Math.abs(dang) < (angThresh + 1) * DEGRAD;
                     if (bestScore == 0 || shortCircuit || score < bestScore) {
                         bestScore = score;
                         bestDX = dx;
@@ -6912,7 +8067,7 @@ var ArrangeMolecule = (function () {
                 'oval': new Oval(cx + bestDX, cy + bestDY, rw, rh)
             };
         this.points.push(a);
-        var spc = {
+        let spc = {
             'anum': 0,
             'bnum': 0,
             'box': new Box(a.oval.cx - rw, a.oval.cy - rh, 2 * rw, 2 * rh),
@@ -6920,13 +8075,13 @@ var ArrangeMolecule = (function () {
             'py': [a.oval.cy - rh, a.oval.cy - rh, a.oval.cy + rh, a.oval.cy + rh]
         };
         this.space.push(spc);
-    };
-    ArrangeMolecule.prototype.processLabel = function (anum) {
-        var ax = this.mol.atomX(anum), ay = this.mol.atomY(anum);
-        var left = 0, right = 0;
-        var adj = this.mol.atomAdjList(anum);
-        for (var n = 0; n < adj.length; n++) {
-            var theta = Math.atan2(this.mol.atomY(adj[n]) - ay, this.mol.atomX(adj[n]) - ax) * RADDEG;
+    }
+    processLabel(anum) {
+        let ax = this.mol.atomX(anum), ay = this.mol.atomY(anum);
+        let left = 0, right = 0;
+        let adj = this.mol.atomAdjList(anum);
+        for (let n = 0; n < adj.length; n++) {
+            let theta = Math.atan2(this.mol.atomY(adj[n]) - ay, this.mol.atomX(adj[n]) - ax) * RADDEG;
             if (theta >= -15 && theta <= 15)
                 right += 3;
             else if (theta >= -85 && theta <= 85)
@@ -6938,26 +8093,26 @@ var ArrangeMolecule = (function () {
             else
                 left++;
         }
-        var label = this.mol.atomElement(anum);
-        var ibar = label.indexOf('|'), ibrace = label.indexOf('{');
-        var side = 0;
+        let label = this.mol.atomElement(anum);
+        let ibar = label.indexOf('|'), ibrace = label.indexOf('{');
+        let side = 0;
         if (left == 0 && right == 0 && ibar < 0 && ibrace < 0) { }
         else if (left < right)
             side = -1;
         else if (right < left)
             side = 1;
         else {
-            var score1 = CoordUtil.congestionPoint(this.mol, ax - 1, ay);
-            var score2 = CoordUtil.congestionPoint(this.mol, ax + 1, ay);
+            let score1 = CoordUtil.congestionPoint(this.mol, ax - 1, ay);
+            let score2 = CoordUtil.congestionPoint(this.mol, ax + 1, ay);
             if (score1 < 0.5 * score2)
                 side = -1;
             else
                 side = 1;
         }
-        var chunks = null;
-        var position = null;
-        var primary = null;
-        var refchunk = 0;
+        let chunks = null;
+        let position = null;
+        let primary = null;
+        let refchunk = 0;
         if (ibar < 0 && ibrace < 0) {
             if (side == 0)
                 chunks = [label];
@@ -6969,25 +8124,25 @@ var ArrangeMolecule = (function () {
                 chunks = [label.substring(0, 1), label.substring(1)];
         }
         else {
-            var bits = [];
-            var bpos = [];
-            var bpri = [];
-            var blocks = label.split('|');
+            let bits = [];
+            let bpos = [];
+            let bpri = [];
+            let blocks = label.split('|');
             if (side < 0) {
-                var oldblk = blocks;
+                let oldblk = blocks;
                 blocks = [];
-                for (var i = oldblk.length - 1; i >= 0; i--)
+                for (let i = oldblk.length - 1; i >= 0; i--)
                     blocks.push(oldblk[i]);
             }
-            var buff = '';
-            for (var i = 0; i < blocks.length; i++) {
-                var isPrimary = (side >= 0 && i == 0) || (side < 0 && i == blocks.length - 1);
+            let buff = '';
+            for (let i = 0; i < blocks.length; i++) {
+                let isPrimary = (side >= 0 && i == 0) || (side < 0 && i == blocks.length - 1);
                 if (side < 0 && refchunk == 0 && i == blocks.length - 1)
                     refchunk = bits.length;
-                var pos = 0;
+                let pos = 0;
                 buff = '';
-                for (var j = 0; j < blocks[i].length; j++) {
-                    var ch = blocks[i].charAt(j);
+                for (let j = 0; j < blocks[i].length; j++) {
+                    let ch = blocks[i].charAt(j);
                     if (ch == '{' || ch == '}') {
                         if (buff.length > 0) {
                             bits.push(buff.toString());
@@ -7014,29 +8169,29 @@ var ArrangeMolecule = (function () {
             while (refchunk < chunks.length - 1 && position[refchunk] != 0)
                 refchunk++;
         }
-        var PADDING = 1.1;
-        var SSFRACT = 0.6;
-        var chunkw = Vec.numberArray(0, chunks.length);
-        var tw = 0;
-        for (var n = 0; n < chunks.length; n++) {
+        let PADDING = 1.1;
+        let SSFRACT = 0.6;
+        let chunkw = Vec.numberArray(0, chunks.length);
+        let tw = 0;
+        for (let n = 0; n < chunks.length; n++) {
             chunkw[n] = this.measure.measureText(chunks[n], this.fontSizePix)[0];
             if (position != null && position[n] != 0)
                 chunkw[n] *= SSFRACT;
             tw += chunkw[n];
         }
-        var x = this.measure.angToX(ax), y = this.measure.angToY(ay);
+        let x = this.measure.angToX(ax), y = this.measure.angToY(ay);
         if (side == 0)
             x -= 0.5 * chunkw[0];
         else if (side < 0) {
-            for (var n = 0; n < refchunk; n++)
+            for (let n = 0; n < refchunk; n++)
                 x -= chunkw[n];
             x -= 0.5 * chunkw[refchunk];
         }
         else {
             x -= 0.5 * chunkw[0];
         }
-        for (var n = 0; n < chunks.length; n++) {
-            var a = {
+        for (let n = 0; n < chunks.length; n++) {
+            let a = {
                 'anum': (n == refchunk || (primary != null && primary[n])) ? anum : 0,
                 'text': chunks[n],
                 'fsz': this.fontSizePix,
@@ -7061,37 +8216,37 @@ var ArrangeMolecule = (function () {
             }
             x += chunkw[n];
         }
-    };
-    ArrangeMolecule.prototype.atomIsWeirdLinear = function (idx) {
-        var bonds = this.mol.atomAdjBonds(idx);
+    }
+    atomIsWeirdLinear(idx) {
+        let bonds = this.mol.atomAdjBonds(idx);
         if (bonds.length != 2)
             return false;
-        for (var n = 0; n < bonds.length; n++)
+        for (let n = 0; n < bonds.length; n++)
             if (this.mol.bondOrder(bonds[n]) == 3)
                 return false;
-        var adj = this.mol.atomAdjList(idx);
-        var th1 = Math.atan2(this.mol.atomY(adj[0]) - this.mol.atomY(idx), this.mol.atomX(adj[0]) - this.mol.atomX(idx));
-        var th2 = Math.atan2(this.mol.atomY(adj[1]) - this.mol.atomY(idx), this.mol.atomX(adj[1]) - this.mol.atomX(idx));
+        let adj = this.mol.atomAdjList(idx);
+        let th1 = Math.atan2(this.mol.atomY(adj[0]) - this.mol.atomY(idx), this.mol.atomX(adj[0]) - this.mol.atomX(idx));
+        let th2 = Math.atan2(this.mol.atomY(adj[1]) - this.mol.atomY(idx), this.mol.atomX(adj[1]) - this.mol.atomX(idx));
         return Math.abs(angleDiff(th1, th2)) >= 175 * DEGRAD;
-    };
-    ArrangeMolecule.prototype.backOffAtom = function (atom, x, y, fx, fy, minDist) {
+    }
+    backOffAtom(atom, x, y, fx, fy, minDist) {
         if (x == fx && y == fy)
             return [x, y];
-        var active = false;
-        var dx = 0, dy = 0, dst = 0, ext = 0;
-        for (var s = 0; s < this.space.length; s++) {
-            var spc = this.space[s];
+        let active = false;
+        let dx = 0, dy = 0, dst = 0, ext = 0;
+        for (let s = 0; s < this.space.length; s++) {
+            let spc = this.space[s];
             if (spc.anum != atom)
                 continue;
-            var sz = spc.px.length;
+            const sz = spc.px.length;
             if (sz == 0)
                 continue;
-            for (var n = 0; n < sz; n++) {
-                var nn = n < sz - 1 ? n + 1 : 0;
-                var x1 = spc.px[n], y1 = spc.py[n], x2 = spc.px[nn], y2 = spc.py[nn];
+            for (let n = 0; n < sz; n++) {
+                let nn = n < sz - 1 ? n + 1 : 0;
+                let x1 = spc.px[n], y1 = spc.py[n], x2 = spc.px[nn], y2 = spc.py[nn];
                 if (!GeomUtil.doLineSegsIntersect(x, y, fx, fy, x1, y1, x2, y2))
                     continue;
-                var xy = GeomUtil.lineIntersect(x, y, fx, fy, x1, y1, x2, y2);
+                let xy = GeomUtil.lineIntersect(x, y, fx, fy, x1, y1, x2, y2);
                 if (!active) {
                     dx = x - fx;
                     dy = y - fy;
@@ -7104,101 +8259,101 @@ var ArrangeMolecule = (function () {
         }
         if (active) {
             ext = Math.max(minDist, ext - 0.1 * this.measure.scale());
-            var idst = 1.0 / dst;
+            let idst = 1.0 / dst;
             return [fx + ext * idst * dx, fy + ext * idst * dy];
         }
         else
             return [x, y];
-    };
-    ArrangeMolecule.prototype.ensureMinimumBondLength = function (xy1, xy2, x1, y1, x2, y2, minDist) {
-        var dx = xy2[0] - xy1[0], dy = xy2[1] - xy1[1];
-        var dsq = norm2_xy(dx, dy);
+    }
+    ensureMinimumBondLength(xy1, xy2, x1, y1, x2, y2, minDist) {
+        let dx = xy2[0] - xy1[0], dy = xy2[1] - xy1[1];
+        let dsq = norm2_xy(dx, dy);
         minDist = Math.min(minDist, norm_xy(x2 - x1, y2 - y1));
         if (dsq >= sqr(minDist - 0.0001))
             return;
-        var d12 = Math.sqrt(dsq), d1 = norm_xy(xy1[0] - x1, xy1[1] - y1), d2 = norm_xy(x2 - xy2[0], y2 - xy2[1]);
-        var mag = 1 - minDist / d12, invD12 = 1.0 / (d1 + d2), mag1 = d1 * mag * invD12, mag2 = d2 * mag * invD12;
+        let d12 = Math.sqrt(dsq), d1 = norm_xy(xy1[0] - x1, xy1[1] - y1), d2 = norm_xy(x2 - xy2[0], y2 - xy2[1]);
+        let mag = 1 - minDist / d12, invD12 = 1.0 / (d1 + d2), mag1 = d1 * mag * invD12, mag2 = d2 * mag * invD12;
         xy1[0] -= dx * mag1;
         xy1[1] -= dy * mag1;
         xy2[0] += dx * mag2;
         xy2[1] += dy * mag2;
-    };
-    ArrangeMolecule.prototype.orderedRingList = function () {
-        var rings = [];
-        var SIZE_ORDER = [6, 5, 7, 4, 3];
-        for (var i = 0; i < SIZE_ORDER.length; i++) {
-            var nring = this.mol.findRingsOfSize(SIZE_ORDER[i]);
-            for (var j = 0; j < nring.length; j++)
+    }
+    orderedRingList() {
+        let rings = [];
+        let SIZE_ORDER = [6, 5, 7, 4, 3];
+        for (let i = 0; i < SIZE_ORDER.length; i++) {
+            let nring = this.mol.findRingsOfSize(SIZE_ORDER[i]);
+            for (let j = 0; j < nring.length; j++)
                 rings.push(nring[j]);
         }
-        var ringsz = rings.length;
-        var ringbusy = Vec.numberArray(0, this.mol.numAtoms);
-        for (var n = 0; n < ringsz; n++) {
-            var r = rings[n];
-            for (var i = 0; i < r.length; i++)
+        let ringsz = rings.length;
+        let ringbusy = Vec.numberArray(0, this.mol.numAtoms);
+        for (let n = 0; n < ringsz; n++) {
+            let r = rings[n];
+            for (let i = 0; i < r.length; i++)
                 ringbusy[r[i] - 1]++;
         }
-        var ringscore = Vec.numberArray(0, ringsz);
-        for (var n = 0; n < ringsz; n++) {
-            var r = rings[n];
-            for (var i = 0; i < r.length; i++)
+        let ringscore = Vec.numberArray(0, ringsz);
+        for (let n = 0; n < ringsz; n++) {
+            let r = rings[n];
+            for (let i = 0; i < r.length; i++)
                 ringscore[n] += ringbusy[r[i] - 1];
         }
-        var ringorder = Vec.idxSort(ringscore);
-        var resbcount = Vec.numberArray(0, ringsz), maxbcount = 0;
-        for (var n = 0; n < ringsz; n++) {
-            var r = rings[ringorder[n]];
-            for (var i = 0; i < r.length; i++) {
-                var j = this.mol.findBond(r[i], r[i + 1 < r.length ? i + 1 : 0]);
+        let ringorder = Vec.idxSort(ringscore);
+        let resbcount = Vec.numberArray(0, ringsz), maxbcount = 0;
+        for (let n = 0; n < ringsz; n++) {
+            let r = rings[ringorder[n]];
+            for (let i = 0; i < r.length; i++) {
+                let j = this.mol.findBond(r[i], r[i + 1 < r.length ? i + 1 : 0]);
                 if (this.mol.bondOrder(j) == 2)
                     resbcount[n]++;
             }
             maxbcount = Math.max(maxbcount, resbcount[n]);
         }
-        var pos = 0, ret = [];
-        for (var sz = maxbcount; sz >= 0; sz--) {
-            for (var n = 0; n < ringsz; n++)
+        let pos = 0, ret = [];
+        for (let sz = maxbcount; sz >= 0; sz--) {
+            for (let n = 0; n < ringsz; n++)
                 if (resbcount[n] == sz)
                     ret.push(rings[ringorder[n]]);
         }
         return ret;
-    };
-    ArrangeMolecule.prototype.orthogonalDelta = function (x1, y1, x2, y2, d) {
-        var ox = y1 - y2, oy = x2 - x1, dsq = norm2_xy(ox, oy);
-        var sc = dsq > 0 ? d / Math.sqrt(dsq) : 1;
+    }
+    orthogonalDelta(x1, y1, x2, y2, d) {
+        let ox = y1 - y2, oy = x2 - x1, dsq = norm2_xy(ox, oy);
+        let sc = dsq > 0 ? d / Math.sqrt(dsq) : 1;
         return [ox * sc, oy * sc];
-    };
-    ArrangeMolecule.prototype.processDoubleBond = function (idx, priority) {
-        var bfr = this.mol.bondFrom(idx), bto = this.mol.bondTo(idx);
-        var nfr = this.mol.atomAdjList(bfr), nto = this.mol.atomAdjList(bto);
-        var a1 = this.points[bfr - 1], a2 = this.points[bto - 1];
-        var x1 = a1.oval.cx, y1 = a1.oval.cy, x2 = a2.oval.cx, y2 = a2.oval.cy;
-        var minDist = this.MINBOND_EXOTIC * this.measure.scale();
-        var xy1 = this.backOffAtom(bfr, x1, y1, x2, y2, minDist);
-        var xy2 = this.backOffAtom(bto, x2, y2, x1, y1, minDist);
+    }
+    processDoubleBond(idx, priority) {
+        let bfr = this.mol.bondFrom(idx), bto = this.mol.bondTo(idx);
+        let nfr = this.mol.atomAdjList(bfr), nto = this.mol.atomAdjList(bto);
+        let a1 = this.points[bfr - 1], a2 = this.points[bto - 1];
+        let x1 = a1.oval.cx, y1 = a1.oval.cy, x2 = a2.oval.cx, y2 = a2.oval.cy;
+        const minDist = this.MINBOND_EXOTIC * this.measure.scale();
+        let xy1 = this.backOffAtom(bfr, x1, y1, x2, y2, minDist);
+        let xy2 = this.backOffAtom(bto, x2, y2, x1, y1, minDist);
         this.ensureMinimumBondLength(xy1, xy2, x1, y1, x2, y2, minDist);
         x1 = xy1[0];
         y1 = xy1[1];
         x2 = xy2[0];
         y2 = xy2[1];
-        var dx = x2 - x1, dy = y2 - y1, btheta = Math.atan2(dy, dx);
-        var countFLeft = 0, countFRight = 0, countTLeft = 0, countTRight = 0;
-        var idxFLeft = 0, idxFRight = 0, idxTLeft = 0, idxTRight = 0;
-        var noshift = false;
-        for (var n = 0; n < nfr.length; n++)
+        let dx = x2 - x1, dy = y2 - y1, btheta = Math.atan2(dy, dx);
+        let countFLeft = 0, countFRight = 0, countTLeft = 0, countTRight = 0;
+        let idxFLeft = 0, idxFRight = 0, idxTLeft = 0, idxTRight = 0;
+        let noshift = false;
+        for (let n = 0; n < nfr.length; n++)
             if (nfr[n] != bto) {
-                var bo = this.mol.bondOrder(this.mol.findBond(bfr, nfr[n]));
+                let bo = this.mol.bondOrder(this.mol.findBond(bfr, nfr[n]));
                 if (bo == 0)
                     continue;
                 if (bo > 1) {
                     noshift = true;
                     break;
                 }
-                var ispri = false;
-                for (var i = 0; i < (priority == null ? 0 : priority.length); i++)
+                let ispri = false;
+                for (let i = 0; i < (priority == null ? 0 : priority.length); i++)
                     if (priority[i] == nfr[n])
                         ispri = true;
-                var theta = angleDiff(Math.atan2(this.points[nfr[n] - 1].oval.cy - y1, this.points[nfr[n] - 1].oval.cx - x1), btheta);
+                let theta = angleDiff(Math.atan2(this.points[nfr[n] - 1].oval.cy - y1, this.points[nfr[n] - 1].oval.cx - x1), btheta);
                 if (Math.abs(theta) * RADDEG > 175) {
                     noshift = true;
                     break;
@@ -7214,20 +8369,20 @@ var ArrangeMolecule = (function () {
                     idxFRight = nfr[n];
                 }
             }
-        for (var n = 0; n < nto.length; n++)
+        for (let n = 0; n < nto.length; n++)
             if (nto[n] != bfr) {
-                var bo = this.mol.bondOrder(this.mol.findBond(bto, nto[n]));
+                let bo = this.mol.bondOrder(this.mol.findBond(bto, nto[n]));
                 if (bo == 0)
                     continue;
                 if (bo > 1) {
                     noshift = true;
                     break;
                 }
-                var ispri = false;
-                for (var i = 0; i < (priority == null ? 0 : priority.length); i++)
+                let ispri = false;
+                for (let i = 0; i < (priority == null ? 0 : priority.length); i++)
                     if (priority[i] == nto[n])
                         ispri = true;
-                var theta = angleDiff(Math.atan2(this.points[nto[n] - 1].oval.cy - y2, this.points[nto[n] - 1].oval.cx - x2), btheta);
+                let theta = angleDiff(Math.atan2(this.points[nto[n] - 1].oval.cy - y2, this.points[nto[n] - 1].oval.cx - x2), btheta);
                 if (Math.abs(theta) * RADDEG > 175) {
                     noshift = true;
                     break;
@@ -7243,7 +8398,7 @@ var ArrangeMolecule = (function () {
                     idxTRight = nto[n];
                 }
             }
-        var side = 0;
+        let side = 0;
         if (noshift || countFLeft > 1 || countFRight > 1 || countTLeft > 1 || countTRight > 1) { }
         else if (countFLeft > 0 && countFRight > 0) { }
         else if (countTLeft > 0 && countTRight > 0) { }
@@ -7251,10 +8406,10 @@ var ArrangeMolecule = (function () {
             side = 1;
         else if (countFRight > 0 || countTRight > 0)
             side = -1;
-        var sz = this.lineSizePix;
-        var oxy = this.orthogonalDelta(x1, y1, x2, y2, this.bondSepPix);
-        var ax1 = x1, ay1 = y1, ax2 = x2, ay2 = y2;
-        var bx1 = 0, by1 = 0, bx2 = 0, by2 = 0;
+        let sz = this.lineSizePix;
+        let oxy = this.orthogonalDelta(x1, y1, x2, y2, this.bondSepPix);
+        let ax1 = x1, ay1 = y1, ax2 = x2, ay2 = y2;
+        let bx1 = 0, by1 = 0, bx2 = 0, by2 = 0;
         if (side == 0) {
             ax1 = x1 + 0.5 * oxy[0];
             ay1 = y1 + 0.5 * oxy[1];
@@ -7302,7 +8457,7 @@ var ArrangeMolecule = (function () {
             }
         }
         if (side == 0 && !noshift) {
-            var xy = null;
+            let xy = null;
             if (this.points[bfr - 1].text == null && !this.mol.bondInRing(idx)) {
                 xy = this.adjustBondPosition(idxFLeft, bfr, ax1, ay1, ax2, ay2);
                 if (xy != null) {
@@ -7328,9 +8483,9 @@ var ArrangeMolecule = (function () {
                 }
             }
         }
-        var lt = this.mol.bondType(idx) == Molecule.BONDTYPE_UNKNOWN ? BLineType.Unknown : BLineType.Normal;
-        var col = this.policy.data.foreground;
-        var b1 = {
+        let lt = this.mol.bondType(idx) == Molecule.BONDTYPE_UNKNOWN ? BLineType.Unknown : BLineType.Normal;
+        let col = this.policy.data.foreground;
+        let b1 = {
             'bnum': idx,
             'bfr': bfr,
             'bto': bto,
@@ -7340,7 +8495,7 @@ var ArrangeMolecule = (function () {
             'head': 0,
             'col': col
         };
-        var b2 = {
+        let b2 = {
             'bnum': idx,
             'bfr': bfr,
             'bto': bto,
@@ -7354,26 +8509,26 @@ var ArrangeMolecule = (function () {
         this.lines.push(b2);
         this.space.push(this.computeSpaceLine(b1));
         this.space.push(this.computeSpaceLine(b2));
-    };
-    ArrangeMolecule.prototype.placeHydrogen = function (idx, hcount, fussy) {
-        var font = FontData.main;
-        var SSFRACT = 0.6;
-        var GLYPH_H = 'H'.charCodeAt(0) - font.GLYPH_MIN;
-        var a = this.points[idx];
-        var emscale = a.fsz * font.INV_UNITS_PER_EM;
-        var sub = hcount >= 2 ? hcount.toString() : '';
-        var outlineX = font.getOutlineX(GLYPH_H), outlineY = font.getOutlineY(GLYPH_H);
-        var firstEMW = font.HORIZ_ADV_X[GLYPH_H], emw = firstEMW;
-        for (var n = 0; n < sub.length; n++) {
-            var g = sub.charCodeAt(n) - font.GLYPH_MIN;
+    }
+    placeHydrogen(idx, hcount, fussy) {
+        let font = FontData.main;
+        const SSFRACT = 0.6;
+        const GLYPH_H = 'H'.charCodeAt(0) - font.GLYPH_MIN;
+        let a = this.points[idx];
+        let emscale = a.fsz * font.INV_UNITS_PER_EM;
+        let sub = hcount >= 2 ? hcount.toString() : '';
+        let outlineX = font.getOutlineX(GLYPH_H), outlineY = font.getOutlineY(GLYPH_H);
+        let firstEMW = font.HORIZ_ADV_X[GLYPH_H], emw = firstEMW;
+        for (let n = 0; n < sub.length; n++) {
+            let g = sub.charCodeAt(n) - font.GLYPH_MIN;
             if (n == 0) {
                 emw += font.getKerning(GLYPH_H, g);
             }
             else {
-                var gp = sub.charCodeAt(n - 1) - font.GLYPH_MIN;
+                let gp = sub.charCodeAt(n - 1) - font.GLYPH_MIN;
                 emw += font.getKerning(gp, g) * SSFRACT;
             }
-            var extraX = font.getOutlineX(g), extraY = font.getOutlineY(g);
+            let extraX = font.getOutlineX(g), extraY = font.getOutlineY(g);
             Vec.addTo(extraX, emw / SSFRACT);
             Vec.addTo(extraY, (SSFRACT - 1) * font.ASCENT);
             Vec.mulBy(extraX, SSFRACT);
@@ -7383,25 +8538,25 @@ var ArrangeMolecule = (function () {
             emw += font.HORIZ_ADV_X[g] * SSFRACT;
         }
         if (sub.length > 0) {
-            var qh = new QuickHull(outlineX, outlineY, 0);
+            let qh = new QuickHull(outlineX, outlineY, 0);
             outlineX = qh.hullX;
             outlineY = qh.hullY;
         }
-        var emdx = -0.5 * firstEMW, emdy = 0.5 * (font.ASCENT + font.DESCENT);
-        for (var n = 0; n < outlineX.length; n++) {
+        let emdx = -0.5 * firstEMW, emdy = 0.5 * (font.ASCENT + font.DESCENT);
+        for (let n = 0; n < outlineX.length; n++) {
             outlineX[n] = a.oval.cx + (emdx + outlineX[n]) * emscale;
             outlineY[n] = a.oval.cy + (emdy - outlineY[n]) * emscale * this.ymul;
         }
-        var dx = 0, dy = 0;
-        var srcWAD = this.measure.measureText(a.text, a.fsz);
+        let dx = 0, dy = 0;
+        let srcWAD = this.measure.measureText(a.text, a.fsz);
         if (fussy) {
-            var RIGHTLEFT = [0, 1, 2, 3];
-            var LEFTRIGHT = [1, 0, 2, 3];
-            var UPDOWN = [2, 3, 0, 1];
-            var DOWNUP = [3, 2, 0, 1];
-            var quad = RIGHTLEFT, adj = this.mol.atomAdjList(a.anum);
+            let RIGHTLEFT = [0, 1, 2, 3];
+            let LEFTRIGHT = [1, 0, 2, 3];
+            let UPDOWN = [2, 3, 0, 1];
+            let DOWNUP = [3, 2, 0, 1];
+            let quad = RIGHTLEFT, adj = this.mol.atomAdjList(a.anum);
             if (adj.length == 0) {
-                var LEFTIES = ["O", "S", "F", "Cl", "Br", "I"];
+                let LEFTIES = ["O", "S", "F", "Cl", "Br", "I"];
                 if (this.mol.atomCharge(a.anum) == 0 && this.mol.atomUnpaired(a.anum) == 0 &&
                     LEFTIES.indexOf(this.mol.atomElement(a.anum)) >= 0)
                     quad = LEFTRIGHT;
@@ -7409,10 +8564,10 @@ var ArrangeMolecule = (function () {
                     quad = RIGHTLEFT;
             }
             else {
-                var allLeft = true, allRight = true, allUp = true, allDown = true;
-                var ax = this.mol.atomX(a.anum), ay = this.mol.atomY(a.anum);
-                for (var n = 0; n < adj.length; n++) {
-                    var bx = this.mol.atomX(adj[n]), by = this.mol.atomY(adj[n]);
+                let allLeft = true, allRight = true, allUp = true, allDown = true;
+                const ax = this.mol.atomX(a.anum), ay = this.mol.atomY(a.anum);
+                for (let n = 0; n < adj.length; n++) {
+                    const bx = this.mol.atomX(adj[n]), by = this.mol.atomY(adj[n]);
                     if (bx > ax + 0.01)
                         allLeft = false;
                     if (bx < ax - 0.01)
@@ -7430,8 +8585,8 @@ var ArrangeMolecule = (function () {
                 else if (allDown)
                     quad = UPDOWN;
             }
-            for (var n = 0; n < 4; n++) {
-                var tx = 0, ty = 0;
+            for (let n = 0; n < 4; n++) {
+                let tx = 0, ty = 0;
                 if (quad[n] == 0)
                     tx = 0.5 * srcWAD[0] + 0.5 * firstEMW * emscale;
                 else if (quad[n] == 1)
@@ -7442,7 +8597,7 @@ var ArrangeMolecule = (function () {
                     ty = (1.1 * srcWAD[1] + 0.5 * srcWAD[2]) * this.ymul;
                 Vec.addTo(outlineX, tx);
                 Vec.addTo(outlineY, ty);
-                var viol = this.countPolyViolations(outlineX, outlineY, true);
+                let viol = this.countPolyViolations(outlineX, outlineY, true);
                 Vec.addTo(outlineX, -tx);
                 Vec.addTo(outlineY, -ty);
                 if (viol == 0) {
@@ -7455,27 +8610,27 @@ var ArrangeMolecule = (function () {
                 return false;
         }
         else {
-            var mx1 = Vec.min(outlineY), mx2 = Vec.max(outlineX), my1 = Vec.min(outlineY), my2 = Vec.max(outlineY), cx = 0.5 * (mx1 + mx2), cy = 0.5 * (my1 + my2);
-            var mag = 1 + this.measure.scale() * this.policy.data.fontSize * ArrangeMolecule.FONT_CORRECT * 0.1 / Math.max(mx2 - cx, my2 - cy);
-            var psz = outlineX.length;
-            var magPX = outlineX.slice(0), magPY = outlineY.slice(0);
-            for (var n = 0; n < psz; n++) {
+            const mx1 = Vec.min(outlineY), mx2 = Vec.max(outlineX), my1 = Vec.min(outlineY), my2 = Vec.max(outlineY), cx = 0.5 * (mx1 + mx2), cy = 0.5 * (my1 + my2);
+            const mag = 1 + this.measure.scale() * this.policy.data.fontSize * ArrangeMolecule.FONT_CORRECT * 0.1 / Math.max(mx2 - cx, my2 - cy);
+            const psz = outlineX.length;
+            let magPX = outlineX.slice(0), magPY = outlineY.slice(0);
+            for (let n = 0; n < psz; n++) {
                 magPX[n] = (magPX[n] - cx) * mag + cx;
                 magPY[n] = (magPY[n] - cy) * mag + cy;
             }
-            var bestScore = 0, bestExt = 0, bestAng = 0;
-            for (var ext = 0.5 * (a.oval.rw + a.oval.rh); ext < 1.5 * this.measure.scale(); ext += 0.1 * this.measure.scale()) {
-                var anyNoClash = false;
-                for (var ang = 0; ang < 2 * Math.PI; ang += 5 * DEGRAD) {
-                    var tx = ext * Math.cos(ang), ty = ext * Math.sin(ang);
+            let bestScore = 0, bestExt = 0, bestAng = 0;
+            for (let ext = 0.5 * (a.oval.rw + a.oval.rh); ext < 1.5 * this.measure.scale(); ext += 0.1 * this.measure.scale()) {
+                let anyNoClash = false;
+                for (let ang = 0; ang < 2 * Math.PI; ang += 5 * DEGRAD) {
+                    let tx = ext * Math.cos(ang), ty = ext * Math.sin(ang);
                     Vec.addTo(magPX, tx);
                     Vec.addTo(magPY, ty);
-                    var viol = this.countPolyViolations(magPX, magPY, false);
+                    let viol = this.countPolyViolations(magPX, magPY, false);
                     Vec.addTo(magPX, -tx);
                     Vec.addTo(magPY, -ty);
                     if (viol == 0)
                         anyNoClash = true;
-                    var score = 10 * viol + this.spatialCongestion(a.oval.cx + tx, a.oval.cy + ty, 0.5) + 2 * ext;
+                    let score = 10 * viol + this.spatialCongestion(a.oval.cx + tx, a.oval.cy + ty, 0.5) + 2 * ext;
                     if (bestScore == 0 || score < bestScore) {
                         bestScore = score;
                         bestExt = ext;
@@ -7488,9 +8643,9 @@ var ArrangeMolecule = (function () {
                     break;
             }
         }
-        var wad = this.measure.measureText("H", a.fsz);
-        var PADDING = 1.1;
-        var ah = {
+        let wad = this.measure.measureText("H", a.fsz);
+        const PADDING = 1.1;
+        let ah = {
             'anum': 0,
             'text': 'H',
             'fsz': a.fsz,
@@ -7500,9 +8655,9 @@ var ArrangeMolecule = (function () {
         };
         this.points.push(ah);
         if (sub.length > 0) {
-            var subFsz = SSFRACT * a.fsz;
+            const subFsz = SSFRACT * a.fsz;
             wad = this.measure.measureText(sub, subFsz);
-            var an = {
+            let an = {
                 'anum': 0,
                 'text': sub,
                 'fsz': subFsz,
@@ -7514,8 +8669,8 @@ var ArrangeMolecule = (function () {
         }
         Vec.addTo(outlineX, dx);
         Vec.addTo(outlineY, dy);
-        var minX = Vec.min(outlineX), minY = Vec.min(outlineY);
-        var spc = {
+        let minX = Vec.min(outlineX), minY = Vec.min(outlineY);
+        let spc = {
             'anum': 0,
             'bnum': 0,
             'box': new Box(minX, minY, Vec.max(outlineX) - minX, Vec.max(outlineY) - minY),
@@ -7524,21 +8679,21 @@ var ArrangeMolecule = (function () {
         };
         this.space.push(spc);
         return true;
-    };
-    ArrangeMolecule.prototype.computeSpacePoint = function (a) {
-        var s = {
+    }
+    computeSpacePoint(a) {
+        let s = {
             'anum': a.anum,
             'bnum': 0,
             'box': new Box(),
             'px': [],
             'py': []
         };
-        var font = FontData.main;
-        var outlineX = [], outlineY = [];
-        var emw = 0, nglyphs = 0;
+        const font = FontData.main;
+        let outlineX = [], outlineY = [];
+        let emw = 0, nglyphs = 0;
         if (a.text != null) {
-            for (var n = 0; n < a.text.length; n++) {
-                var i = a.text.charCodeAt(n) - font.GLYPH_MIN;
+            for (let n = 0; n < a.text.length; n++) {
+                let i = a.text.charCodeAt(n) - font.GLYPH_MIN;
                 if (i >= 0 && i < font.GLYPH_COUNT) {
                     if (emw == 0) {
                         outlineX = font.getOutlineX(i);
@@ -7546,7 +8701,7 @@ var ArrangeMolecule = (function () {
                         nglyphs = 1;
                     }
                     else {
-                        var extraX = font.getOutlineX(i), extraY = font.getOutlineY(i);
+                        let extraX = font.getOutlineX(i), extraY = font.getOutlineY(i);
                         if (extraX.length > 0) {
                             Vec.addTo(extraX, emw);
                             outlineX = outlineX.concat(extraX);
@@ -7559,8 +8714,8 @@ var ArrangeMolecule = (function () {
                 else
                     emw += font.MISSING_HORZ;
                 if (n < a.text.length - 1) {
-                    var j = a.text.charCodeAt(n + 1) - font.GLYPH_MIN;
-                    for (var k = 0; k < font.KERN_K.length; k++)
+                    let j = a.text.charCodeAt(n + 1) - font.GLYPH_MIN;
+                    for (let k = 0; k < font.KERN_K.length; k++)
                         if ((font.KERN_G1[k] == i && font.KERN_G2[k] == j) || (font.KERN_G1[k] == j && font.KERN_G2[k] == i)) {
                             emw += font.KERN_K[k];
                             break;
@@ -7570,19 +8725,19 @@ var ArrangeMolecule = (function () {
         }
         if (outlineX.length > 0) {
             if (nglyphs > 1) {
-                var qh = new QuickHull(outlineX, outlineY, 0);
+                let qh = new QuickHull(outlineX, outlineY, 0);
                 outlineX = qh.hullX;
                 outlineY = qh.hullY;
             }
-            var emdx = -0.5 * emw, emdy = 0.5 * (font.ASCENT + font.DESCENT);
-            var emscale = a.fsz * font.INV_UNITS_PER_EM;
-            for (var n = 0; n < outlineX.length; n++) {
+            let emdx = -0.5 * emw, emdy = 0.5 * (font.ASCENT + font.DESCENT);
+            let emscale = a.fsz * font.INV_UNITS_PER_EM;
+            for (let n = 0; n < outlineX.length; n++) {
                 outlineX[n] = a.oval.cx + (emdx + outlineX[n]) * emscale;
                 outlineY[n] = a.oval.cy + (emdy - outlineY[n]) * emscale * this.ymul;
             }
             s.px = outlineX;
             s.py = outlineY;
-            var minX = Vec.min(outlineX), minY = Vec.min(outlineY);
+            let minX = Vec.min(outlineX), minY = Vec.min(outlineY);
             s.box = new Box(minX, minY, Vec.max(outlineX) - minX, Vec.max(outlineY) - minY);
         }
         else {
@@ -7593,9 +8748,9 @@ var ArrangeMolecule = (function () {
             }
         }
         return s;
-    };
-    ArrangeMolecule.prototype.computeSpaceLine = function (b) {
-        var s = {
+    }
+    computeSpaceLine(b) {
+        let s = {
             'anum': 0,
             'bnum': b.bnum,
             'box': new Box(),
@@ -7607,9 +8762,9 @@ var ArrangeMolecule = (function () {
             s.py = [b.line.y1, b.line.y2];
         }
         else {
-            var dx = b.line.x2 - b.line.x1, dy = b.line.y2 - b.line.y1;
-            var norm = b.head / Math.sqrt(dx * dx + dy * dy);
-            var ox = norm * dy, oy = -norm * dx;
+            const dx = b.line.x2 - b.line.x1, dy = b.line.y2 - b.line.y1;
+            const norm = b.head / Math.sqrt(dx * dx + dy * dy);
+            const ox = norm * dy, oy = -norm * dx;
             if (b.type == BLineType.Unknown) {
                 s.px = [b.line.x1 + ox, b.line.x1 - ox, b.line.x2 - ox, b.line.x2 + ox];
                 s.py = [b.line.y1 + oy, b.line.y1 - oy, b.line.y2 - oy, b.line.y2 + oy];
@@ -7624,13 +8779,13 @@ var ArrangeMolecule = (function () {
         s.box.w = Vec.max(s.px) - s.box.x + b.size;
         s.box.h = Vec.max(s.py) - s.box.y + b.size;
         return s;
-    };
-    ArrangeMolecule.prototype.bumpAtomPosition = function (atom, dx, dy) {
-        var p = this.points[atom - 1];
+    }
+    bumpAtomPosition(atom, dx, dy) {
+        let p = this.points[atom - 1];
         p.oval.cx += dx;
         p.oval.cy += dy;
-        for (var n = this.space.length - 1; n >= 0; n--) {
-            var s = this.space[n - 1];
+        for (let n = this.space.length - 1; n >= 0; n--) {
+            let s = this.space[n - 1];
             if (s == null || s.anum != atom)
                 continue;
             s.box.x += dx;
@@ -7638,19 +8793,19 @@ var ArrangeMolecule = (function () {
             Vec.addTo(s.px, dx);
             Vec.addTo(s.py, dy);
         }
-    };
-    ArrangeMolecule.prototype.countPolyViolations = function (px, py, shortCircuit) {
-        var hits = 0;
-        var psz = px.length, nspc = this.space.length;
-        var pr = new Box(), sr = new Box();
-        for (var i1 = 0; i1 < psz; i1++) {
-            var i2 = i1 < psz - 1 ? i1 + 1 : 0;
+    }
+    countPolyViolations(px, py, shortCircuit) {
+        let hits = 0;
+        const psz = px.length, nspc = this.space.length;
+        let pr = new Box(), sr = new Box();
+        for (let i1 = 0; i1 < psz; i1++) {
+            let i2 = i1 < psz - 1 ? i1 + 1 : 0;
             pr.x = Math.min(px[i1], px[i2]) - 1;
             pr.y = Math.min(py[i1], py[i2]) - 1;
             pr.w = Math.max(px[i1], px[i2]) - pr.x + 2;
             pr.h = Math.max(py[i1], py[i2]) - pr.y + 2;
-            for (var j = 0; j < nspc; j++) {
-                var spc = this.space[j];
+            for (let j = 0; j < nspc; j++) {
+                let spc = this.space[j];
                 if (spc.px == null)
                     continue;
                 sr.x = spc.box.x - 1;
@@ -7659,9 +8814,9 @@ var ArrangeMolecule = (function () {
                 sr.h = spc.box.h + 1;
                 if (!pr.intersects(sr))
                     continue;
-                var ssz = spc.px.length;
-                for (var j1 = 0; j1 < ssz; j1++) {
-                    var j2 = j1 < ssz - 1 ? j1 + 1 : 0;
+                let ssz = spc.px.length;
+                for (let j1 = 0; j1 < ssz; j1++) {
+                    let j2 = j1 < ssz - 1 ? j1 + 1 : 0;
                     sr.x = Math.min(spc.px[j1], spc.px[j2]) - 1;
                     sr.y = Math.min(spc.py[j1], spc.py[j2]) - 1;
                     sr.w = Math.max(spc.px[j1], spc.px[j2]) - sr.x + 2;
@@ -7683,22 +8838,22 @@ var ArrangeMolecule = (function () {
         pr.y = Vec.min(py);
         pr.w = Vec.max(px) - pr.x;
         pr.h = Vec.max(py) - pr.y;
-        for (var n = nspc - 1; n >= 0; n--) {
-            var spc = this.space[n];
+        for (let n = nspc - 1; n >= 0; n--) {
+            let spc = this.space[n];
             sr.x = spc.box.x;
             sr.y = spc.box.y;
             sr.w = spc.box.w;
             sr.h = spc.box.h;
             if (!pr.intersects(sr))
                 continue;
-            for (var i = spc.px.length - 1; i >= 0; i--)
+            for (let i = spc.px.length - 1; i >= 0; i--)
                 if (GeomUtil.pointInPolygon(spc.px[i], spc.py[i], px, py)) {
                     if (shortCircuit)
                         return 1;
                     hits++;
                     break;
                 }
-            for (var i = 0; i < psz; i++)
+            for (let i = 0; i < psz; i++)
                 if (GeomUtil.pointInPolygon(px[i], py[i], spc.px, spc.py)) {
                     if (shortCircuit)
                         return 1;
@@ -7707,24 +8862,24 @@ var ArrangeMolecule = (function () {
                 }
         }
         return hits;
-    };
-    ArrangeMolecule.prototype.adjustBondPosition = function (bf, bt, x1, y1, x2, y2) {
+    }
+    adjustBondPosition(bf, bt, x1, y1, x2, y2) {
         if (bf == 0 || bt == 0)
             return null;
-        for (var n = 0; n < this.lines.length; n++) {
-            var b = this.lines[n];
+        for (let n = 0; n < this.lines.length; n++) {
+            let b = this.lines[n];
             if (this.mol.bondOrder(b.bnum) != 1 || this.mol.bondType(b.bnum) != Molecule.BONDTYPE_NORMAL)
                 continue;
-            var alt = false;
+            let alt = false;
             if (this.mol.bondFrom(b.bnum) == bf && this.mol.bondTo(b.bnum) == bt) { }
             else if (this.mol.bondFrom(b.bnum) == bt && this.mol.bondTo(b.bnum) == bf)
                 alt = true;
             else
                 continue;
-            var th = angleDiff(Math.atan2(b.line.y2 - b.line.y1, b.line.x2 - b.line.x1), Math.atan2(y2 - y1, x2 - x1)) * RADDEG;
+            let th = angleDiff(Math.atan2(b.line.y2 - b.line.y1, b.line.x2 - b.line.x1), Math.atan2(y2 - y1, x2 - x1)) * RADDEG;
             if ((th > -5 && th < -5) || th > 175 || th < -175)
                 continue;
-            var xy = GeomUtil.lineIntersect(b.line.x1, b.line.y1, b.line.x2, b.line.y2, x1, y1, x2, y2);
+            let xy = GeomUtil.lineIntersect(b.line.x1, b.line.y1, b.line.x2, b.line.y2, x1, y1, x2, y2);
             if (this.mol.atomRingBlock(bt) == 0) {
                 if (alt) {
                     b.line.x1 = xy[0];
@@ -7738,17 +8893,17 @@ var ArrangeMolecule = (function () {
             return xy;
         }
         return null;
-    };
-    ArrangeMolecule.prototype.priorityDoubleSubstit = function (idx) {
-        var bf = this.mol.bondFrom(idx), bt = this.mol.bondTo(idx);
-        var nf = this.mol.atomAdjList(bf), nt = this.mol.atomAdjList(bt);
-        var a1 = this.points[bf - 1], a2 = this.points[bt - 1];
-        var x1 = a1.oval.cx, y1 = a1.oval.cy, x2 = a2.oval.cx, y2 = a2.oval.cy;
-        var dx = x2 - x1, dy = y2 - y1, btheta = Math.atan2(dy, dx);
-        var idxFLeft = 0, idxFRight = 0, idxTLeft = 0, idxTRight = 0;
-        for (var n = 0; n < nf.length; n++)
+    }
+    priorityDoubleSubstit(idx) {
+        let bf = this.mol.bondFrom(idx), bt = this.mol.bondTo(idx);
+        let nf = this.mol.atomAdjList(bf), nt = this.mol.atomAdjList(bt);
+        let a1 = this.points[bf - 1], a2 = this.points[bt - 1];
+        let x1 = a1.oval.cx, y1 = a1.oval.cy, x2 = a2.oval.cx, y2 = a2.oval.cy;
+        let dx = x2 - x1, dy = y2 - y1, btheta = Math.atan2(dy, dx);
+        let idxFLeft = 0, idxFRight = 0, idxTLeft = 0, idxTRight = 0;
+        for (let n = 0; n < nf.length; n++)
             if (nf[n] != bt) {
-                var theta = angleDiff(Math.atan2(this.points[nf[n] - 1].oval.cy - y1, this.points[nf[n] - 1].oval.cx - x1), btheta);
+                let theta = angleDiff(Math.atan2(this.points[nf[n] - 1].oval.cy - y1, this.points[nf[n] - 1].oval.cx - x1), btheta);
                 if (theta > 0) {
                     if (idxFLeft != 0)
                         return null;
@@ -7760,9 +8915,9 @@ var ArrangeMolecule = (function () {
                     idxFRight = nf[n];
                 }
             }
-        for (var n = 0; n < nt.length; n++)
+        for (let n = 0; n < nt.length; n++)
             if (nt[n] != bf) {
-                var theta = angleDiff(Math.atan2(this.points[nt[n] - 1].oval.cy - y2, this.points[nt[n] - 1].oval.cx - x2), btheta);
+                let theta = angleDiff(Math.atan2(this.points[nt[n] - 1].oval.cy - y2, this.points[nt[n] - 1].oval.cx - x2), btheta);
                 if (theta > 0) {
                     if (idxTLeft != 0)
                         return null;
@@ -7774,7 +8929,7 @@ var ArrangeMolecule = (function () {
                     idxTRight = nt[n];
                 }
             }
-        var sumFrom = (idxFLeft > 0 ? 1 : 0) + (idxFRight > 0 ? 1 : 0), sumTo = (idxTLeft > 0 ? 1 : 0) + (idxTRight > 0 ? 1 : 0);
+        let sumFrom = (idxFLeft > 0 ? 1 : 0) + (idxFRight > 0 ? 1 : 0), sumTo = (idxTLeft > 0 ? 1 : 0) + (idxTRight > 0 ? 1 : 0);
         if (sumFrom == 1 && sumTo == 0)
             return [idxFLeft > 0 ? idxFLeft : idxFRight];
         if (sumFrom == 0 && sumTo == 1)
@@ -7784,9 +8939,9 @@ var ArrangeMolecule = (function () {
                 return [idxFLeft, idxTLeft];
             if (idxFRight > 0 && idxTRight > 0)
                 return [idxFRight, idxTRight];
-            var oxy = this.orthogonalDelta(x1, y1, x2, y2, this.bondSepPix);
-            var congestLeft = this.spatialCongestion(0.5 * (x1 + x2) + oxy[0], 0.5 * (y1 + y2) + oxy[1]);
-            var congestRight = this.spatialCongestion(0.5 * (x1 + x2) - oxy[0], 0.5 * (y1 + y2) - oxy[1]);
+            let oxy = this.orthogonalDelta(x1, y1, x2, y2, this.bondSepPix);
+            let congestLeft = this.spatialCongestion(0.5 * (x1 + x2) + oxy[0], 0.5 * (y1 + y2) + oxy[1]);
+            let congestRight = this.spatialCongestion(0.5 * (x1 + x2) - oxy[0], 0.5 * (y1 + y2) - oxy[1]);
             if (congestLeft < congestRight)
                 return [idxFLeft > 0 ? idxFLeft : idxTLeft];
             else
@@ -7805,36 +8960,36 @@ var ArrangeMolecule = (function () {
                 return [idxFLeft, idxTLeft];
         }
         return null;
-    };
-    ArrangeMolecule.prototype.spatialCongestion = function (x, y, thresh) {
+    }
+    spatialCongestion(x, y, thresh) {
         if (thresh == null)
             thresh = 0.001;
-        var congest = 0;
-        for (var n = 0; n < this.points.length; n++) {
-            var a = this.points[n];
+        let congest = 0;
+        for (let n = 0; n < this.points.length; n++) {
+            let a = this.points[n];
             if (a == null)
                 continue;
-            var dx = a.oval.cx - x, dy = a.oval.cy - y;
+            let dx = a.oval.cx - x, dy = a.oval.cy - y;
             congest += 1 / (dx * dx + dy * dy + thresh);
         }
         return congest;
-    };
-    ArrangeMolecule.prototype.boxOverlaps = function (x, y, w, h, pointmask, linemask) {
-        var vx1 = x, vy1 = y, vx2 = x + w, vy2 = y + h;
-        for (var n = 0; n < this.points.length; n++) {
+    }
+    boxOverlaps(x, y, w, h, pointmask, linemask) {
+        let vx1 = x, vy1 = y, vx2 = x + w, vy2 = y + h;
+        for (let n = 0; n < this.points.length; n++) {
             if (pointmask != null && !pointmask[n])
                 continue;
-            var a = this.points[n];
-            var wx1 = a.oval.cx - a.oval.rw, wy1 = a.oval.cy - a.oval.rh, wx2 = a.oval.cx + a.oval.rw, wy2 = a.oval.cy + a.oval.rh;
+            let a = this.points[n];
+            let wx1 = a.oval.cx - a.oval.rw, wy1 = a.oval.cy - a.oval.rh, wx2 = a.oval.cx + a.oval.rw, wy2 = a.oval.cy + a.oval.rh;
             if (vx2 < wx1 || vx1 > wx2 || vy2 < wy1 || vy1 > wy2)
                 continue;
             return true;
         }
-        for (var n = 0; n < this.lines.length; n++) {
+        for (let n = 0; n < this.lines.length; n++) {
             if (linemask != null && !linemask[n])
                 continue;
-            var b = this.lines[n];
-            var wx1 = b.line.x1, wy1 = b.line.y1, wx2 = b.line.x2, wy2 = b.line.y2;
+            let b = this.lines[n];
+            let wx1 = b.line.x1, wy1 = b.line.y1, wx2 = b.line.x2, wy2 = b.line.y2;
             if (vx2 < Math.min(wx1, wx2) || vx1 > Math.max(wx1, wx2) || vy2 < Math.min(wy1, wy2) || vy1 > Math.max(wy1, wy2))
                 continue;
             if (wx1 >= vx1 && wx1 <= vx2 && wy1 >= vy1 && wy1 <= vy2)
@@ -7851,18 +9006,18 @@ var ArrangeMolecule = (function () {
                 return true;
         }
         return false;
-    };
-    ArrangeMolecule.prototype.resolveLineCrossings = function (bondHigher, bondLower) {
+    }
+    resolveLineCrossings(bondHigher, bondLower) {
         while (true) {
-            var anything = false;
-            for (var i1 = 0; i1 < this.lines.length; i1++) {
-                var b1 = this.lines[i1];
+            let anything = false;
+            for (let i1 = 0; i1 < this.lines.length; i1++) {
+                let b1 = this.lines[i1];
                 if (b1.bnum != bondHigher)
                     continue;
                 if (b1.type != BLineType.Normal && b1.type != BLineType.Dotted && b1.type != BLineType.DotDir)
                     continue;
-                for (var i2 = 0; i2 < this.lines.length; i2++) {
-                    var b2 = this.lines[i2];
+                for (let i2 = 0; i2 < this.lines.length; i2++) {
+                    let b2 = this.lines[i2];
                     if (b2.bnum != bondLower)
                         continue;
                     if (b2.type == BLineType.DotDir)
@@ -7873,13 +9028,13 @@ var ArrangeMolecule = (function () {
                         continue;
                     if (!GeomUtil.doLineSegsIntersect(b1.line.x1, b1.line.y1, b1.line.x2, b1.line.y2, b2.line.x1, b2.line.y1, b2.line.x2, b2.line.y2))
                         continue;
-                    var xy = GeomUtil.lineIntersect(b1.line.x1, b1.line.y1, b1.line.x2, b1.line.y2, b2.line.x1, b2.line.y1, b2.line.x2, b2.line.y2);
-                    var dx = b2.line.x2 - b2.line.x1, dy = b2.line.y2 - b2.line.y1;
-                    var ext = Math.abs(dx) > Math.abs(dy) ? (xy[0] - b2.line.x1) / dx : (xy[1] - b2.line.y1) / dy;
-                    var dist = norm_xy(dx, dy);
-                    var delta = b2.size / dist * (b2.type == BLineType.Normal ? 2 : 4);
+                    let xy = GeomUtil.lineIntersect(b1.line.x1, b1.line.y1, b1.line.x2, b1.line.y2, b2.line.x1, b2.line.y1, b2.line.x2, b2.line.y2);
+                    let dx = b2.line.x2 - b2.line.x1, dy = b2.line.y2 - b2.line.y1;
+                    let ext = Math.abs(dx) > Math.abs(dy) ? (xy[0] - b2.line.x1) / dx : (xy[1] - b2.line.y1) / dy;
+                    let dist = norm_xy(dx, dy);
+                    let delta = b2.size / dist * (b2.type == BLineType.Normal ? 2 : 4);
                     if (ext > delta && ext < 1 - delta) {
-                        var b3 = {
+                        let b3 = {
                             'bnum': b2.bnum,
                             'bfr': b2.bfr,
                             'bto': b2.bto,
@@ -7911,12 +9066,11 @@ var ArrangeMolecule = (function () {
             if (!anything)
                 break;
         }
-    };
-    ArrangeMolecule.FONT_CORRECT = 1.5;
-    return ArrangeMolecule;
-}());
-var DrawMolecule = (function () {
-    function DrawMolecule(layout, vg) {
+    }
+}
+ArrangeMolecule.FONT_CORRECT = 1.5;
+class DrawMolecule {
+    constructor(layout, vg) {
         this.layout = layout;
         this.vg = vg;
         this.mol = layout.getMolecule();
@@ -7925,22 +9079,22 @@ var DrawMolecule = (function () {
         this.scale = layout.getScale();
         this.invScale = 1.0 / this.scale;
     }
-    DrawMolecule.prototype.getMolecule = function () { return this.mol; };
-    DrawMolecule.prototype.getMetaVector = function () { return this.vg; };
-    DrawMolecule.prototype.getLayout = function () { return this.layout; };
-    DrawMolecule.prototype.getPolicy = function () { return this.policy; };
-    DrawMolecule.prototype.getEffects = function () { return this.effects; };
-    DrawMolecule.prototype.draw = function () {
-        var DRAW_SPACE = false;
+    getMolecule() { return this.mol; }
+    getMetaVector() { return this.vg; }
+    getLayout() { return this.layout; }
+    getPolicy() { return this.policy; }
+    getEffects() { return this.effects; }
+    draw() {
+        let DRAW_SPACE = false;
         if (DRAW_SPACE)
-            for (var n = 0; n < this.layout.numSpace(); n++) {
-                var spc = this.layout.getSpace(n);
+            for (let n = 0; n < this.layout.numSpace(); n++) {
+                let spc = this.layout.getSpace(n);
                 this.vg.drawRect(spc.box.x, spc.box.y, spc.box.w, spc.box.h, MetaVector.NOCOLOUR, 0, 0xE0E0E0);
                 if (spc.px != null && spc.py != null && spc.px.length > 2)
                     this.vg.drawPoly(spc.px, spc.py, 0x000000, 1, 0x808080FF, true);
             }
-        for (var n = 0; n < this.layout.numLines(); n++) {
-            var b = this.layout.getLine(n);
+        for (let n = 0; n < this.layout.numLines(); n++) {
+            let b = this.layout.getLine(n);
             if (b.type == BLineType.Normal) {
                 this.vg.drawLine(b.line.x1, b.line.y1, b.line.x2, b.line.y2, b.col, b.size);
             }
@@ -7955,25 +9109,25 @@ var DrawMolecule = (function () {
             else if (b.type == BLineType.IncDouble || b.type == BLineType.IncTriple || b.type == BLineType.IncQuadruple)
                 this.drawBondIncMulti(b);
         }
-        for (var n = 0; n < this.layout.numPoints(); n++) {
-            var p = this.layout.getPoint(n);
-            var txt = p.text;
+        for (let n = 0; n < this.layout.numPoints(); n++) {
+            let p = this.layout.getPoint(n);
+            let txt = p.text;
             if (txt == null)
                 continue;
-            var fsz = p.fsz;
-            var cx = p.oval.cx, cy = p.oval.cy, rw = p.oval.rw;
-            var col = p.col;
+            let fsz = p.fsz;
+            let cx = p.oval.cx, cy = p.oval.cy, rw = p.oval.rw;
+            let col = p.col;
             while (txt.endsWith(".")) {
-                var dw = rw / txt.length;
-                var r = fsz * 0.15;
+                let dw = rw / txt.length;
+                let r = fsz * 0.15;
                 this.vg.drawOval(cx + rw - dw, cy, r, r, MetaVector.NOCOLOUR, 0, col);
                 cx -= dw;
                 rw -= dw;
                 txt = txt.substring(0, txt.length - 1);
             }
             while (txt.startsWith("+")) {
-                var dw = rw / txt.length;
-                var x = cx - rw + dw, y = cy, r = fsz * 0.18, lsz = fsz * 0.1;
+                let dw = rw / txt.length;
+                let x = cx - rw + dw, y = cy, r = fsz * 0.18, lsz = fsz * 0.1;
                 this.vg.drawLine(x - r, y, x + r, y, col, lsz);
                 this.vg.drawLine(x, y - r, x, y + r, col, lsz);
                 cx += dw;
@@ -7981,8 +9135,8 @@ var DrawMolecule = (function () {
                 txt = txt.substring(1, txt.length);
             }
             while (txt.startsWith("-")) {
-                var dw = rw / txt.length;
-                var x = cx - rw + dw, y = cy, r = fsz * 0.18, lsz = fsz * 0.1;
+                let dw = rw / txt.length;
+                let x = cx - rw + dw, y = cy, r = fsz * 0.18, lsz = fsz * 0.1;
                 this.vg.drawLine(x - r, y, x + r, y, col, lsz);
                 cx += dw;
                 rw -= dw;
@@ -7992,19 +9146,19 @@ var DrawMolecule = (function () {
                 this.vg.drawText(cx, cy, txt, fsz, col, TextAlign.Centre | TextAlign.Middle);
             }
         }
-    };
-    DrawMolecule.prototype.drawBondInclined = function (b) {
-        var x1 = b.line.x1, y1 = b.line.y1, x2 = b.line.x2, y2 = b.line.y2;
-        var dx = x2 - x1, dy = y2 - y1;
-        var col = b.col;
-        var size = b.size, head = b.head;
-        var norm = head / Math.sqrt(dx * dx + dy * dy);
-        var ox = norm * dy, oy = -norm * dx;
-        var px = [x1, x2 - ox, x2 + ox], py = [y1, y2 - oy, y2 + oy];
+    }
+    drawBondInclined(b) {
+        let x1 = b.line.x1, y1 = b.line.y1, x2 = b.line.x2, y2 = b.line.y2;
+        let dx = x2 - x1, dy = y2 - y1;
+        let col = b.col;
+        let size = b.size, head = b.head;
+        let norm = head / Math.sqrt(dx * dx + dy * dy);
+        let ox = norm * dy, oy = -norm * dx;
+        let px = [x1, x2 - ox, x2 + ox], py = [y1, y2 - oy, y2 + oy];
         if (this.layout.getPoint(b.bto - 1).text == null && this.mol.atomAdjCount(b.bto) == 2) {
-            var other = null;
-            for (var n = 0; n < this.layout.numLines(); n++) {
-                var o = this.layout.getLine(n);
+            let other = null;
+            for (let n = 0; n < this.layout.numLines(); n++) {
+                let o = this.layout.getLine(n);
                 if (o.type == BLineType.Normal && (o.bfr == b.bto || o.bto == b.bto)) {
                     if (other != null) {
                         other = null;
@@ -8014,31 +9168,31 @@ var DrawMolecule = (function () {
                 }
             }
             if (other != null) {
-                var th1 = Math.atan2(y1 - y2, x1 - x2);
-                var th2 = Math.atan2(other.line.y1 - other.line.y2, other.line.x1 - other.line.x2);
+                let th1 = Math.atan2(y1 - y2, x1 - x2);
+                let th2 = Math.atan2(other.line.y1 - other.line.y2, other.line.x1 - other.line.x2);
                 if (b.bto == other.bfr)
                     th2 += Math.PI;
-                var diff = Math.abs(angleDiff(th1, th2));
+                let diff = Math.abs(angleDiff(th1, th2));
                 if (diff > 105 * DEGRAD && diff < 135 * DEGRAD) {
-                    var ixy1 = GeomUtil.lineIntersect(px[0], py[0], px[1], py[1], other.line.x1, other.line.y1, other.line.x2, other.line.y2);
-                    var ixy2 = GeomUtil.lineIntersect(px[0], py[0], px[2], py[2], other.line.x1, other.line.y1, other.line.x2, other.line.y2);
+                    let ixy1 = GeomUtil.lineIntersect(px[0], py[0], px[1], py[1], other.line.x1, other.line.y1, other.line.x2, other.line.y2);
+                    let ixy2 = GeomUtil.lineIntersect(px[0], py[0], px[2], py[2], other.line.x1, other.line.y1, other.line.x2, other.line.y2);
                     px[1] = ixy1[0];
                     py[1] = ixy1[1];
                     px[2] = ixy2[0];
                     py[2] = ixy2[1];
-                    var dx1 = px[1] - px[0], dy1 = py[1] - py[0], inv1 = 0.5 * other.size / norm_xy(dx1, dy1);
+                    let dx1 = px[1] - px[0], dy1 = py[1] - py[0], inv1 = 0.5 * other.size / norm_xy(dx1, dy1);
                     px[1] += dx1 * inv1;
                     py[1] += dy1 * inv1;
-                    var dx2 = px[2] - px[0], dy2 = py[2] - py[0], inv2 = 0.5 * other.size / norm_xy(dx2, dy2);
+                    let dx2 = px[2] - px[0], dy2 = py[2] - py[0], inv2 = 0.5 * other.size / norm_xy(dx2, dy2);
                     px[2] += dx2 * inv1;
                     py[2] += dy2 * inv1;
                 }
             }
         }
         if (this.layout.getPoint(b.bto - 1).text == null && this.mol.atomAdjCount(b.bto) == 3) {
-            var other1 = null, other2 = null;
-            for (var n = 0; n < this.layout.numLines(); n++) {
-                var o = this.layout.getLine(n);
+            let other1 = null, other2 = null;
+            for (let n = 0; n < this.layout.numLines(); n++) {
+                let o = this.layout.getLine(n);
                 if (o.type == BLineType.Normal && (o.bfr == b.bto || o.bto == b.bto)) {
                     if (other1 == null)
                         other1 = o;
@@ -8051,66 +9205,65 @@ var DrawMolecule = (function () {
                 }
             }
             if (other1 != null && other2 != null) {
-                var th1 = Math.atan2(y1 - y2, x1 - x2);
-                var th2 = Math.atan2(other1.line.y1 - other1.line.y2, other1.line.x1 - other1.line.x2);
-                var th3 = Math.atan2(other2.line.y1 - other2.line.y2, other2.line.x1 - other2.line.x2);
+                let th1 = Math.atan2(y1 - y2, x1 - x2);
+                let th2 = Math.atan2(other1.line.y1 - other1.line.y2, other1.line.x1 - other1.line.x2);
+                let th3 = Math.atan2(other2.line.y1 - other2.line.y2, other2.line.x1 - other2.line.x2);
                 if (b.bto == other1.bfr)
                     th2 += Math.PI;
                 if (b.bto == other2.bfr)
                     th3 += Math.PI;
-                var dth1 = angleDiff(th1, th2), diff1 = Math.abs(dth1);
-                var dth2 = angleDiff(th1, th3), diff2 = Math.abs(dth2);
-                var diff3 = Math.abs(angleDiff(th2, th3));
+                let dth1 = angleDiff(th1, th2), diff1 = Math.abs(dth1);
+                let dth2 = angleDiff(th1, th3), diff2 = Math.abs(dth2);
+                let diff3 = Math.abs(angleDiff(th2, th3));
                 if (diff1 > 105 * DEGRAD && diff1 < 135 * DEGRAD ||
                     diff2 > 105 * DEGRAD && diff2 < 135 * DEGRAD ||
                     diff3 > 105 * DEGRAD && diff3 < 135 * DEGRAD) {
                     if (dth1 < 0)
-                        _a = [other2, other1], other1 = _a[0], other2 = _a[1];
-                    var ixy1 = GeomUtil.lineIntersect(px[0], py[0], px[1], py[1], other1.line.x1, other1.line.y1, other1.line.x2, other1.line.y2);
-                    var ixy2 = GeomUtil.lineIntersect(px[0], py[0], px[2], py[2], other2.line.x1, other2.line.y1, other2.line.x2, other2.line.y2);
+                        [other1, other2] = [other2, other1];
+                    let ixy1 = GeomUtil.lineIntersect(px[0], py[0], px[1], py[1], other1.line.x1, other1.line.y1, other1.line.x2, other1.line.y2);
+                    let ixy2 = GeomUtil.lineIntersect(px[0], py[0], px[2], py[2], other2.line.x1, other2.line.y1, other2.line.x2, other2.line.y2);
                     px = [x1, ixy1[0], x2, ixy2[0]];
                     py = [y1, ixy1[1], y2, ixy2[1]];
                 }
             }
         }
         this.vg.drawPoly(px, py, MetaVector.NOCOLOUR, 0, col, true);
-        var _a;
-    };
-    DrawMolecule.prototype.drawBondDeclined = function (b) {
-        var x1 = b.line.x1, y1 = b.line.y1, x2 = b.line.x2, y2 = b.line.y2;
-        var dx = x2 - x1, dy = y2 - y1;
-        var col = b.col;
-        var size = b.size, head = b.head;
-        var ext = Math.sqrt(dx * dx + dy * dy);
-        var nsteps = Math.ceil(ext * 2.5 * this.invScale);
-        var norm = head / ext;
-        var ox = norm * dy, oy = -norm * dx, invSteps = 1.0 / (nsteps + 1);
-        var holdout = this.mol.atomAdjCount(b.bto) == 1 && this.layout.getPoint(b.bto - 1).text == null ? 1 : 1 - (0.15 * this.scale) / ext;
-        for (var i = 0; i <= nsteps + 1; i++) {
-            var cx = x1 + i * dx * invSteps * holdout, cy = y1 + i * dy * invSteps * holdout;
-            var ix = ox * i * invSteps, iy = oy * i * invSteps;
+    }
+    drawBondDeclined(b) {
+        let x1 = b.line.x1, y1 = b.line.y1, x2 = b.line.x2, y2 = b.line.y2;
+        let dx = x2 - x1, dy = y2 - y1;
+        let col = b.col;
+        let size = b.size, head = b.head;
+        let ext = Math.sqrt(dx * dx + dy * dy);
+        let nsteps = Math.ceil(ext * 2.5 * this.invScale);
+        let norm = head / ext;
+        let ox = norm * dy, oy = -norm * dx, invSteps = 1.0 / (nsteps + 1);
+        let holdout = this.mol.atomAdjCount(b.bto) == 1 && this.layout.getPoint(b.bto - 1).text == null ? 1 : 1 - (0.15 * this.scale) / ext;
+        for (let i = 0; i <= nsteps + 1; i++) {
+            let cx = x1 + i * dx * invSteps * holdout, cy = y1 + i * dy * invSteps * holdout;
+            let ix = ox * i * invSteps, iy = oy * i * invSteps;
             this.vg.drawLine(cx - ix, cy - iy, cx + ix, cy + iy, col, size);
         }
-    };
-    DrawMolecule.prototype.drawBondUnknown = function (b) {
-        var x1 = b.line.x1, y1 = b.line.y1, x2 = b.line.x2, y2 = b.line.y2;
-        var dx = x2 - x1, dy = y2 - y1;
-        var col = b.col;
-        var size = b.size, head = b.head;
-        var ext = Math.sqrt(dx * dx + dy * dy);
-        var nsteps = Math.ceil(ext * 3.5 * this.invScale);
-        var norm = head / ext;
-        var ox = norm * dy, oy = -norm * dx;
-        var sz = 1 + 3 * (nsteps + 1);
-        var x = Vec.numberArray(0, sz), y = Vec.numberArray(0, sz), ctrl = Vec.booleanArray(false, sz);
+    }
+    drawBondUnknown(b) {
+        let x1 = b.line.x1, y1 = b.line.y1, x2 = b.line.x2, y2 = b.line.y2;
+        let dx = x2 - x1, dy = y2 - y1;
+        let col = b.col;
+        let size = b.size, head = b.head;
+        let ext = Math.sqrt(dx * dx + dy * dy);
+        let nsteps = Math.ceil(ext * 3.5 * this.invScale);
+        let norm = head / ext;
+        let ox = norm * dy, oy = -norm * dx;
+        let sz = 1 + 3 * (nsteps + 1);
+        let x = Vec.numberArray(0, sz), y = Vec.numberArray(0, sz), ctrl = Vec.booleanArray(false, sz);
         x[0] = x1;
         y[0] = y1;
         ctrl[0] = false;
-        for (var i = 0, j = 1; i <= nsteps; i++, j += 3) {
-            var ax = x1 + i * dx / (nsteps + 1), ay = y1 + i * dy / (nsteps + 1);
-            var cx = x1 + (i + 1) * dx / (nsteps + 1), cy = y1 + (i + 1) * dy / (nsteps + 1);
-            var bx = (ax + cx) / 2, by = (ay + cy) / 2;
-            var sign = i % 2 == 0 ? 1 : -1;
+        for (let i = 0, j = 1; i <= nsteps; i++, j += 3) {
+            let ax = x1 + i * dx / (nsteps + 1), ay = y1 + i * dy / (nsteps + 1);
+            let cx = x1 + (i + 1) * dx / (nsteps + 1), cy = y1 + (i + 1) * dy / (nsteps + 1);
+            let bx = (ax + cx) / 2, by = (ay + cy) / 2;
+            let sign = i % 2 == 0 ? 1 : -1;
             x[j] = ax;
             x[j + 1] = bx + sign * ox;
             x[j + 2] = cx;
@@ -8122,39 +9275,39 @@ var DrawMolecule = (function () {
             ctrl[j + 2] = false;
         }
         this.vg.drawPath(x, y, ctrl, true, col, size, MetaVector.NOCOLOUR, false);
-    };
-    DrawMolecule.prototype.drawBondDotted = function (b) {
-        var x1 = b.line.x1, y1 = b.line.y1, x2 = b.line.x2, y2 = b.line.y2;
-        var dx = x2 - x1, dy = y2 - y1;
-        var col = b.col;
-        var size = b.size;
-        var radius = size, dist = norm_xy(dx, dy);
+    }
+    drawBondDotted(b) {
+        let x1 = b.line.x1, y1 = b.line.y1, x2 = b.line.x2, y2 = b.line.y2;
+        let dx = x2 - x1, dy = y2 - y1;
+        let col = b.col;
+        let size = b.size;
+        let radius = size, dist = norm_xy(dx, dy);
         if (dist < 0.01)
             return;
-        var nudge = 0.5 * size / dist;
+        let nudge = 0.5 * size / dist;
         x1 += nudge * dx;
         y1 += nudge * dy;
         x2 -= nudge * dx;
         y2 -= nudge * dy;
         dx = x2 - x1;
         dy = y2 - y1;
-        var nsteps = Math.ceil(0.2 * dist / radius);
-        var invSteps = 1.0 / (nsteps + 1);
-        for (var i = 0; i <= nsteps + 1; i++) {
-            var r = radius;
+        let nsteps = Math.ceil(0.2 * dist / radius);
+        let invSteps = 1.0 / (nsteps + 1);
+        for (let i = 0; i <= nsteps + 1; i++) {
+            let r = radius;
             if (b.type == BLineType.DotDir)
                 r *= 1 + (i * (1.0 / (nsteps + 2)) - 0.5);
-            var cx = x1 + i * dx * invSteps, cy = y1 + i * dy * invSteps;
+            let cx = x1 + i * dx * invSteps, cy = y1 + i * dy * invSteps;
             this.vg.drawOval(cx, cy, r, r, MetaVector.NOCOLOUR, 0, col);
         }
-    };
-    DrawMolecule.prototype.drawBondIncMulti = function (b) {
-        var x1 = b.line.x1, y1 = b.line.y1, x2 = b.line.x2, y2 = b.line.y2;
-        var dx = x2 - x1, dy = y2 - y1;
-        var col = b.col;
-        var size = b.size, head = b.head;
-        var norm = head / Math.sqrt(dx * dx + dy * dy);
-        var ox = norm * dy, oy = -norm * dx;
+    }
+    drawBondIncMulti(b) {
+        let x1 = b.line.x1, y1 = b.line.y1, x2 = b.line.x2, y2 = b.line.y2;
+        let dx = x2 - x1, dy = y2 - y1;
+        let col = b.col;
+        let size = b.size, head = b.head;
+        let norm = head / Math.sqrt(dx * dx + dy * dy);
+        let ox = norm * dy, oy = -norm * dx;
         this.vg.drawPoly([x1, x2 - ox, x2 + ox], [y1, y2 - oy, y2 + oy], col, this.scale * 0.05, MetaVector.NOCOLOUR, true);
         if (b.type == BLineType.IncDouble) {
             this.vg.drawLine(x1, y1, x2, y2, col, this.scale * 0.03);
@@ -8163,13 +9316,11 @@ var DrawMolecule = (function () {
             this.vg.drawLine(x1, y1, x2 + 0.33 * ox, y2 + 0.33 * oy, col, this.scale * 0.03);
             this.vg.drawLine(x1, y1, x2 - 0.33 * ox, y2 - 0.33 * oy, col, this.scale * 0.03);
         }
-    };
-    return DrawMolecule;
-}());
-var ViewStructure = (function (_super) {
-    __extends(ViewStructure, _super);
-    function ViewStructure(tokenID) {
-        _super.call(this);
+    }
+}
+class ViewStructure extends Widget {
+    constructor(tokenID) {
+        super();
         this.tokenID = tokenID;
         this.naturalWidth = 0;
         this.naturalHeight = 0;
@@ -8185,20 +9336,20 @@ var ViewStructure = (function (_super) {
         this.datarow = 0;
         this.policy = null;
     }
-    ViewStructure.prototype.defineMolecule = function (mol) {
+    defineMolecule(mol) {
         this.molstr = mol.toString();
-    };
-    ViewStructure.prototype.defineMoleculeString = function (molsk) {
+    }
+    defineMoleculeString(molsk) {
         this.molstr = molsk;
-    };
-    ViewStructure.prototype.defineDataSheetString = function (dsxml, rowidx) {
+    }
+    defineDataSheetString(dsxml, rowidx) {
         this.datastr = dsxml;
         this.datarow = rowidx != null ? rowidx : 0;
-    };
-    ViewStructure.prototype.defineRenderPolicy = function (policy) {
+    }
+    defineRenderPolicy(policy) {
         this.policy = policy;
-    };
-    ViewStructure.prototype.setup = function (callback, master) {
+    }
+    setup(callback, master) {
         if (this.molstr == null && this.datastr == null)
             throw 'molsync.ui.ViewStructure.setup called without specifying a molecule or datasheet';
         if (this.policy == null)
@@ -8207,21 +9358,21 @@ var ViewStructure = (function (_super) {
             this.setupMolecule(callback, master);
         else
             this.setupData(callback, master);
-    };
-    ViewStructure.prototype.render = function (parent) {
+    }
+    render(parent) {
         if (!this.metavec)
             throw 'molsync.ui.ViewStructure.render must be preceded by a call to setup';
-        _super.prototype.render.call(this, parent);
-        var canvas = newElement(this.content, 'canvas', { 'width': this.width, 'height': this.height });
-        var density = pixelDensity();
+        super.render(parent);
+        let canvas = newElement(this.content, 'canvas', { 'width': this.width, 'height': this.height });
+        let density = pixelDensity();
         canvas.width = this.width * density;
         canvas.height = this.height * density;
         canvas.style.width = this.width + 'px';
         canvas.style.height = this.height + 'px';
-        var ctx = canvas.getContext('2d');
+        let ctx = canvas.getContext('2d');
         ctx.save();
         ctx.scale(density, density);
-        var path;
+        let path;
         if (this.borderRadius == 0) {
             path = new Path2D();
             path.rect(1.5, 1.5, this.width - 3, this.height - 3);
@@ -8245,17 +9396,17 @@ var ViewStructure = (function (_super) {
             ctx.lineWidth = 1;
             ctx.stroke(path);
         }
-        var limW = this.width - 2 * this.padding, limH = this.height - 2 * this.padding;
-        var natW = this.naturalWidth, natH = this.naturalHeight;
-        var scale = 1;
+        let limW = this.width - 2 * this.padding, limH = this.height - 2 * this.padding;
+        let natW = this.naturalWidth, natH = this.naturalHeight;
+        let scale = 1;
         if (natW > limW) {
-            var down = limW / natW;
+            let down = limW / natW;
             scale *= down;
             natW *= down;
             natH *= down;
         }
         if (natH > limH) {
-            var down = limH / natH;
+            let down = limH / natH;
             scale *= down;
             natW *= down;
             natH *= down;
@@ -8265,12 +9416,12 @@ var ViewStructure = (function (_super) {
         this.metavec.scale = scale;
         this.metavec.renderContext(ctx);
         ctx.restore();
-    };
-    ViewStructure.prototype.setupMolecule = function (callback, master) {
-        var mol = Molecule.fromString(this.molstr);
-        var effects = new RenderEffects();
-        var measure = new OutlineMeasurement(0, 0, this.policy.data.pointScale);
-        var layout = new ArrangeMolecule(mol, measure, this.policy, effects);
+    }
+    setupMolecule(callback, master) {
+        let mol = Molecule.fromString(this.molstr);
+        let effects = new RenderEffects();
+        let measure = new OutlineMeasurement(0, 0, this.policy.data.pointScale);
+        let layout = new ArrangeMolecule(mol, measure, this.policy, effects);
         layout.arrange();
         this.metavec = new MetaVector();
         new DrawMolecule(layout, this.metavec).draw();
@@ -8283,13 +9434,13 @@ var ViewStructure = (function (_super) {
             this.height = this.naturalHeight + 2 * this.padding;
         if (callback)
             callback.call(master);
-    };
-    ViewStructure.prototype.setupData = function (callback, master) {
-        var input = { 'tokenID': this.tokenID };
+    }
+    setupData(callback, master) {
+        let input = { 'tokenID': this.tokenID };
         input.policy = this.policy.data;
         input.dataXML = this.datastr;
         input.dataRow = this.datarow;
-        var fcn = function (result, error) {
+        let fcn = function (result, error) {
             if (!result) {
                 alert('Setup of ViewStructure failed: ' + error.message);
                 return;
@@ -8305,13 +9456,11 @@ var ViewStructure = (function (_super) {
                 callback.call(master);
         };
         Func.renderStructure(input, fcn, this);
-    };
-    return ViewStructure;
-}(Widget));
-var PickRecent = (function (_super) {
-    __extends(PickRecent, _super);
-    function PickRecent(cookies, sides) {
-        _super.call(this);
+    }
+}
+class PickRecent extends Dialog {
+    constructor(cookies, sides) {
+        super();
         this.cookies = cookies;
         this.sides = sides;
         this.callbackPick1 = null;
@@ -8324,74 +9473,68 @@ var PickRecent = (function (_super) {
         this.minPortionWidth = 20;
         this.maxPortionWidth = 95;
     }
-    PickRecent.prototype.onPick1 = function (callback, master) {
+    onPick1(callback, master) {
         this.callbackPick1 = callback;
         this.masterPick1 = master;
-    };
-    PickRecent.prototype.onPick2 = function (callback, master) {
+    }
+    onPick2(callback, master) {
         this.callbackPick2 = callback;
         this.masterPick2 = master;
-    };
-    PickRecent.prototype.populate = function () {
-        var table = $('<table></table>').appendTo(this.body());
-        var self = this;
-        var _loop_2 = function(n) {
-            var idx = n;
-            var tr = $('<tr></tr>').appendTo(table);
-            this_2.tableRows.push(tr);
-            var tdHTML = '<td style="text-align: center; vertical-align: middle; padding: 0.5em;"></td>';
-            var tdMol = $(tdHTML).appendTo(tr);
-            var mol = this_2.cookies.getMolecule(n);
-            var vs = new ViewStructure();
-            this_2.views[n] = vs;
+    }
+    populate() {
+        let table = $('<table></table>').appendTo(this.body());
+        const self = this;
+        for (let n = 0; n < this.cookies.numMolecules(); n++) {
+            const idx = n;
+            let tr = $('<tr></tr>').appendTo(table);
+            this.tableRows.push(tr);
+            let tdHTML = '<td style="text-align: center; vertical-align: middle; padding: 0.5em;"></td>';
+            const tdMol = $(tdHTML).appendTo(tr);
+            let mol = this.cookies.getMolecule(n);
+            const vs = new ViewStructure();
+            this.views[n] = vs;
             vs.content = tdMol;
             vs.defineMolecule(mol);
             vs.borderCol = -1;
             vs.backgroundCol1 = 0xF8F8F8;
             vs.backgroundCol2 = 0xE0E0E0;
             vs.padding = 4;
-            vs.setup(function () { vs.render(tdMol); this.bump(); }, this_2);
-            var tdPick = $(tdHTML).appendTo(tr);
-            if (this_2.sides == 1) {
-                var btnPick = $('<button class="button button-primary">Pick</button>').appendTo(tdPick);
+            vs.setup(function () { vs.render(tdMol); this.bump(); }, this);
+            let tdPick = $(tdHTML).appendTo(tr);
+            if (this.sides == 1) {
+                let btnPick = $('<button class="button button-primary">Pick</button>').appendTo(tdPick);
                 btnPick.click(function () { self.pickMolecule(idx, 1); });
             }
             else {
-                var btnPick1 = $('<button class="button button-primary">Reactant</button>').appendTo(tdPick);
+                let btnPick1 = $('<button class="button button-primary">Reactant</button>').appendTo(tdPick);
                 tdPick.append('&nbsp;');
-                var btnPick2 = $('<button class="button button-primary">Product</button>').appendTo(tdPick);
+                let btnPick2 = $('<button class="button button-primary">Product</button>').appendTo(tdPick);
                 btnPick1.click(function () { self.pickMolecule(idx, 1); });
                 btnPick2.click(function () { self.pickMolecule(idx, 2); });
             }
             tdPick.append('&nbsp;');
-            var btnDelete = $('<button class="button button-default">Delete</button>').appendTo(tdPick);
+            let btnDelete = $('<button class="button button-default">Delete</button>').appendTo(tdPick);
             btnDelete.click(function () { self.deleteMolecule(idx); });
-        };
-        var this_2 = this;
-        for (var n = 0; n < this.cookies.numMolecules(); n++) {
-            _loop_2(n);
         }
-    };
-    PickRecent.prototype.pickMolecule = function (idx, which) {
-        var mol = this.cookies.getMolecule(idx);
+    }
+    pickMolecule(idx, which) {
+        let mol = this.cookies.getMolecule(idx);
         this.cookies.promoteToTop(idx);
         if (which == 1 && this.callbackPick1)
             this.callbackPick1.call(this.masterPick1, mol);
         if (which == 2 && this.callbackPick2)
             this.callbackPick2.call(this.masterPick2, mol);
         this.close();
-    };
-    PickRecent.prototype.deleteMolecule = function (idx) {
+    }
+    deleteMolecule(idx) {
         this.cookies.deleteMolecule(idx);
         this.tableRows[idx].remove();
         this.bump();
-    };
-    return PickRecent;
-}(Dialog));
-var ButtonView = (function (_super) {
-    __extends(ButtonView, _super);
-    function ButtonView(position, parentX, parentY, parentWidth, parentHeight) {
-        _super.call(this);
+    }
+}
+class ButtonView extends Widget {
+    constructor(position, parentX, parentY, parentWidth, parentHeight) {
+        super();
         this.position = position;
         this.parentX = parentX;
         this.parentY = parentY;
@@ -8423,12 +9566,12 @@ var ButtonView = (function (_super) {
         this.width = 0;
         this.height = 0;
     }
-    ButtonView.prepare = function (callback, master) {
+    static prepare(callback, master) {
         if (ButtonView.ACTION_ICONS) {
             callback.call(master);
             return;
         }
-        var fcn = function (result, error) {
+        let fcn = function (result, error) {
             if (!result.actions) {
                 alert('Fetching action icons failed: ' + error.message);
                 return;
@@ -8437,22 +9580,22 @@ var ButtonView = (function (_super) {
             callback.call(master);
         };
         Func.getActionIcons({}, fcn, this);
-    };
-    ButtonView.prototype.render = function (parent) {
-        _super.prototype.render.call(this, parent);
+    }
+    render(parent) {
+        super.render(parent);
         this.content.css('position', 'absolute');
-        this.content.css('width', this.width + "px");
-        this.content.css('height', this.height + "px");
+        this.content.css('width', `${this.width}px`);
+        this.content.css('height', `${this.height}px`);
         this.content.addClass('no_selection');
         this.layoutButtons();
-        var canvasStyle = 'position: absolute; left: 0; top: 0;';
+        let canvasStyle = 'position: absolute; left: 0; top: 0;';
         canvasStyle += 'pointer-events: none;';
         this.canvas = newElement(this.content, 'canvas', { 'width': this.width, 'height': this.height, 'style': canvasStyle });
         this.canvas.style.width = this.width + 'px';
         this.canvas.style.height = this.height + 'px';
         this.applyOffset();
         this.redraw();
-        var self = this;
+        const self = this;
         this.content.click(function (event) { self.mouseClick(event); });
         this.content.dblclick(function (event) { self.mouseDoubleClick(event); });
         this.content.mousedown(function (event) { self.mouseDown(event); });
@@ -8463,8 +9606,8 @@ var ButtonView = (function (_super) {
         this.content.keypress(function (event) { self.keyPressed(event); });
         this.content.keydown(function (event) { self.keyDown(event); });
         this.content.keyup(function (event) { self.keyUp(event); });
-    };
-    ButtonView.prototype.pushBank = function (bank) {
+    }
+    pushBank(bank) {
         bank.buttonView = this;
         bank.isSubLevel = this.stack.length > 0;
         bank.init();
@@ -8475,8 +9618,8 @@ var ButtonView = (function (_super) {
             this.applyOffset();
             this.redraw();
         }
-    };
-    ButtonView.prototype.popBank = function () {
+    }
+    popBank() {
         if (this.stack.length == 0)
             return;
         this.stack[this.stack.length - 1].bankClosed();
@@ -8487,25 +9630,25 @@ var ButtonView = (function (_super) {
             this.applyOffset();
             this.redraw();
         }
-    };
-    ButtonView.prototype.refreshBank = function () {
+    }
+    refreshBank() {
         if (this.canvas != null) {
             this.layoutButtons();
             this.replaceCanvas();
             this.applyOffset();
             this.redraw();
         }
-    };
-    ButtonView.prototype.getSelectedButton = function () {
+    }
+    getSelectedButton() {
         return this.selectedButton;
-    };
-    ButtonView.prototype.setSelectedButton = function (id) {
+    }
+    setSelectedButton(id) {
         if (id != this.selectedButton) {
             this.selectedButton = id;
             this.redraw();
         }
-    };
-    ButtonView.prototype.raiseBank = function () {
+    }
+    raiseBank() {
         if (this.isRaised)
             return;
         this.isRaised = true;
@@ -8515,8 +9658,8 @@ var ButtonView = (function (_super) {
             this.applyOffset();
             this.redraw();
         }
-    };
-    ButtonView.prototype.lowerBank = function () {
+    }
+    lowerBank() {
         if (!this.isRaised)
             return;
         this.isRaised = false;
@@ -8526,46 +9669,46 @@ var ButtonView = (function (_super) {
             this.applyOffset();
             this.redraw();
         }
-    };
-    ButtonView.prototype.getHasBigButtons = function () {
+    }
+    getHasBigButtons() {
         return this.hasBigButtons;
-    };
+    }
     ;
-    ButtonView.prototype.setHasBigButtons = function (flag) {
+    setHasBigButtons(flag) {
         this.hasBigButtons = flag;
         this.prefabImgSize = flag ? 44 : 36;
         this.idealSize = flag ? 50 : 40;
-    };
+    }
     ;
-    ButtonView.prototype.withinOutline = function (x, y) {
-        var w = this.width, h = this.height;
+    withinOutline(x, y) {
+        let w = this.width, h = this.height;
         if (x < 0 || x > w || y < 0 || y > h)
             return false;
         if (this.position == 'centre' || this.stack.length == 0)
             return true;
         if (this.position == 'left') {
-            var my = 0.5 * h - 1, gw = this.gripHeight, hg = 0.5 * this.gripWidth;
+            let my = 0.5 * h - 1, gw = this.gripHeight, hg = 0.5 * this.gripWidth;
             return x < w - gw || (y > my - hg && y < my + hg);
         }
         else if (this.position == 'right') {
-            var my = 0.5 * h - 1, gw = this.gripHeight, hg = 0.5 * this.gripWidth;
+            let my = 0.5 * h - 1, gw = this.gripHeight, hg = 0.5 * this.gripWidth;
             return x > gw || (y > my - hg && y < my + hg);
         }
         else if (this.position == 'top') {
-            var mx = 0.5 * w - 1, gh = this.gripHeight, hg = 0.5 * this.gripWidth;
+            let mx = 0.5 * w - 1, gh = this.gripHeight, hg = 0.5 * this.gripWidth;
             return y < h - gh || (x > mx - hg && x < mx + hg);
         }
         else if (this.position == 'bottom') {
-            var mx = 0.5 * w - 1, gh = this.gripHeight, hg = 0.5 * this.gripWidth;
+            let mx = 0.5 * w - 1, gh = this.gripHeight, hg = 0.5 * this.gripWidth;
             return y > gh || (x > mx - hg && x < mx + hg);
         }
         return true;
-    };
+    }
     ;
-    ButtonView.prototype.layoutButtons = function () {
+    layoutButtons() {
         if (this.content == null)
             return;
-        var outPadding = this.outPadding, inPadding = this.inPadding;
+        let outPadding = this.outPadding, inPadding = this.inPadding;
         this.removeDisplayButtons();
         if (this.stack.length == 0) {
             this.width = 10;
@@ -8588,24 +9731,24 @@ var ButtonView = (function (_super) {
             this.addGripButton();
             return;
         }
-        var bank = this.stack[this.stack.length - 1];
+        let bank = this.stack[this.stack.length - 1];
         bank.buttons = [];
         bank.update();
-        var popWidth = 0, popHeight = 0;
+        let popWidth = 0, popHeight = 0;
         if (this.stack.length == 1) { }
         else if (this.position == 'left' || this.position == 'right')
             popHeight = this.gripHeight + inPadding;
         else if (this.position == 'top' || this.position == 'bottom')
             popWidth = this.gripHeight + inPadding;
-        var bestLayout = null, bestScore = null;
+        let bestLayout = null, bestScore = null;
         if (this.position == 'left' || this.position == 'right') {
-            var maxSlotHeight = Math.floor((this.parentHeight - 2 * outPadding - inPadding) / (this.idealSize + inPadding));
-            var minSlotHeight = Math.ceil(0.5 * maxSlotHeight);
-            for (var i = maxSlotHeight; i >= minSlotHeight; i--) {
-                var slotWidth = Math.ceil(bank.buttons.length / i);
-                for (var j = slotWidth; j <= slotWidth + 1; j++) {
-                    var layout = this.layoutMaxHeight(bank, i, j);
-                    var score = this.scoreLayout(layout) + 1 * layout[0].length;
+            let maxSlotHeight = Math.floor((this.parentHeight - 2 * outPadding - inPadding) / (this.idealSize + inPadding));
+            let minSlotHeight = Math.ceil(0.5 * maxSlotHeight);
+            for (let i = maxSlotHeight; i >= minSlotHeight; i--) {
+                let slotWidth = Math.ceil(bank.buttons.length / i);
+                for (let j = slotWidth; j <= slotWidth + 1; j++) {
+                    let layout = this.layoutMaxHeight(bank, i, j);
+                    let score = this.scoreLayout(layout) + 1 * layout[0].length;
                     if (bestLayout == null || score < bestScore) {
                         bestLayout = layout;
                         bestScore = score;
@@ -8614,11 +9757,11 @@ var ButtonView = (function (_super) {
             }
         }
         else if (this.position == 'top' || this.position == 'bottom') {
-            var maxSlotWidth = Math.floor((this.parentWidth - 2 * outPadding - inPadding - popWidth) / (this.idealSize + inPadding));
-            var minSlotWidth = Math.ceil(0.5 * maxSlotWidth);
-            for (var n = maxSlotWidth; n >= minSlotWidth; n--) {
-                var layout = this.layoutMaxWidth(bank, n);
-                var score = this.scoreLayout(layout) + 1 * layout.length;
+            let maxSlotWidth = Math.floor((this.parentWidth - 2 * outPadding - inPadding - popWidth) / (this.idealSize + inPadding));
+            let minSlotWidth = Math.ceil(0.5 * maxSlotWidth);
+            for (let n = maxSlotWidth; n >= minSlotWidth; n--) {
+                let layout = this.layoutMaxWidth(bank, n);
+                let score = this.scoreLayout(layout) + 1 * layout.length;
                 if (bestLayout == null || score < bestScore) {
                     bestLayout = layout;
                     bestScore = score;
@@ -8627,7 +9770,7 @@ var ButtonView = (function (_super) {
         }
         else {
         }
-        var ncols = bestLayout[0].length, nrows = bestLayout.length;
+        let ncols = bestLayout[0].length, nrows = bestLayout.length;
         this.width = 2 * outPadding + inPadding + (this.idealSize + inPadding) * ncols + popWidth;
         this.height = 2 * outPadding + inPadding + (this.idealSize + inPadding) * nrows + popHeight;
         if (this.position == 'left' || this.position == 'right')
@@ -8636,7 +9779,7 @@ var ButtonView = (function (_super) {
             this.height += this.gripHeight;
         this.addGripButton();
         if (popWidth > 0 || popHeight > 0) {
-            var d = {
+            let d = {
                 'id': '!',
                 'x': outPadding + inPadding,
                 'y': outPadding + inPadding,
@@ -8653,11 +9796,11 @@ var ButtonView = (function (_super) {
                 d.height = nrows * this.idealSize + inPadding * (nrows - 1);
             this.display.push(d);
         }
-        for (var y = 0; y < nrows; y++)
-            for (var x = 0; x < ncols; x++) {
-                for (var n = 0; n < bank.buttons.length; n++)
+        for (let y = 0; y < nrows; y++)
+            for (let x = 0; x < ncols; x++) {
+                for (let n = 0; n < bank.buttons.length; n++)
                     if (bestLayout[y][x] == bank.buttons[n].id) {
-                        var b = bank.buttons[n], d = { 'id': b.id };
+                        let b = bank.buttons[n], d = { 'id': b.id };
                         d.x = outPadding + inPadding + popWidth + (this.idealSize + inPadding) * x;
                         d.y = outPadding + inPadding + popHeight + (this.idealSize + inPadding) * y;
                         if (this.position == 'right')
@@ -8669,11 +9812,11 @@ var ButtonView = (function (_super) {
                         this.display.push(d);
                     }
             }
-    };
-    ButtonView.prototype.addGripButton = function () {
+    }
+    addGripButton() {
         if (this.position == 'centre')
             return;
-        var d = { 'id': '*' }, spc = 3;
+        let d = { 'id': '*' }, spc = 3;
         if (this.position == 'left') {
             d.width = this.gripHeight - spc;
             d.height = this.gripWidth - 2 * spc;
@@ -8699,23 +9842,23 @@ var ButtonView = (function (_super) {
             d.y = spc + 1;
         }
         this.display.push(d);
-    };
-    ButtonView.prototype.replaceCanvas = function () {
+    }
+    replaceCanvas() {
         this.content.empty();
-        for (var n = 0; n < this.display.length; n++) {
+        for (let n = 0; n < this.display.length; n++) {
             this.display[n].svgDOM = null;
             this.display[n].helpSpan = null;
         }
-        var canvasStyle = 'position: absolute; left: 0; top: 0;';
+        let canvasStyle = 'position: absolute; left: 0; top: 0;';
         canvasStyle += 'pointer-events: none;';
         this.canvas = newElement(this.content, 'canvas', { 'width': this.width, 'height': this.height, 'style': canvasStyle });
-    };
-    ButtonView.prototype.removeDisplayButtons = function () {
+    }
+    removeDisplayButtons() {
         this.content.empty();
         this.display = [];
-    };
-    ButtonView.prototype.applyOffset = function () {
-        var x, y;
+    }
+    applyOffset() {
+        let x, y;
         if (this.position == 'left') {
             x = 0;
             y = 0.5 * (this.parentHeight - this.height);
@@ -8743,31 +9886,31 @@ var ButtonView = (function (_super) {
         this.content.css('height', this.height + 'px');
         this.content.css('left', this.x + 'px');
         this.content.css('top', this.y + 'px');
-    };
-    ButtonView.prototype.redraw = function () {
+    }
+    redraw() {
         if (!this.content || !this.canvas)
             return;
-        var density = pixelDensity();
+        let density = pixelDensity();
         this.canvas.width = this.width * density;
         this.canvas.height = this.height * density;
         this.canvas.style.width = this.width + 'px';
         this.canvas.style.height = this.height + 'px';
-        var ctx = this.canvas.getContext('2d');
+        let ctx = this.canvas.getContext('2d');
         ctx.save();
         ctx.scale(density, density);
         ctx.clearRect(0, 0, this.width, this.height);
-        var path = this.traceOutline();
+        let path = this.traceOutline();
         ctx.fillStyle = colourCanvas(this.background);
         ctx.fill(path);
         ctx.strokeStyle = colourCanvas(this.border);
         ctx.lineWidth = 1;
         ctx.stroke(path);
-        var bank = this.stack.length > 0 ? this.stack[this.stack.length - 1] : null;
+        let bank = this.stack.length > 0 ? this.stack[this.stack.length - 1] : null;
         this.content.css('width', this.width + 'px');
         this.content.css('height', this.height + 'px');
-        for (var n = 0; n < this.display.length; n++) {
-            var d = this.display[n], b = this.buttonFromID(d.id);
-            var col1 = void 0, col2 = void 0;
+        for (let n = 0; n < this.display.length; n++) {
+            let d = this.display[n], b = this.buttonFromID(d.id);
+            let col1, col2;
             if (this.highlightButton != null && d.id == this.highlightButton) {
                 col1 = this.buttonColActv1;
                 col2 = this.buttonColActv2;
@@ -8783,7 +9926,7 @@ var ButtonView = (function (_super) {
             ctx.save();
             path = pathRoundedRect(d.x + 0.5, d.y + 0.5, d.x + d.width - 1, d.y + d.height - 1, 5);
             if (col2 != null) {
-                var grad = ctx.createLinearGradient(d.x, d.y, d.x + d.width, d.y + d.height);
+                let grad = ctx.createLinearGradient(d.x, d.y, d.x + d.width, d.y + d.height);
                 grad.addColorStop(0, colourCanvas(col1));
                 grad.addColorStop(1, colourCanvas(col2));
                 ctx.fillStyle = grad;
@@ -8811,12 +9954,12 @@ var ButtonView = (function (_super) {
             }
             if (b == null) { }
             else if (b.imageFN != null && d.svgDOM == null) {
-                var sz = this.prefabImgSize;
-                var bx = d.x + Math.floor(0.5 * (d.width - sz));
-                var by = d.y + Math.floor(0.5 * (d.height - sz));
-                var svg = ButtonView.ACTION_ICONS[b.imageFN];
+                let sz = this.prefabImgSize;
+                let bx = d.x + Math.floor(0.5 * (d.width - sz));
+                let by = d.y + Math.floor(0.5 * (d.height - sz));
+                let svg = ButtonView.ACTION_ICONS[b.imageFN];
                 if (svg) {
-                    var extra = 'style="position: absolute; left: ' + bx + 'px; top: ' + by + 'px; width: ' + sz + 'px; height: ' + sz + 'px; pointer-events: none;"';
+                    let extra = 'style="position: absolute; left: ' + bx + 'px; top: ' + by + 'px; width: ' + sz + 'px; height: ' + sz + 'px; pointer-events: none;"';
                     svg = svg.substring(0, 4) + ' ' + extra + svg.substring(4);
                     d.svgDOM = $(svg)[0];
                     this.content.append(d.svgDOM);
@@ -8825,16 +9968,16 @@ var ButtonView = (function (_super) {
                     console.log('Action button "' + b.imageFN + '" not found.');
             }
             else if (b.metavec != null) {
-                var draw = new MetaVector(b.metavec);
+                let draw = new MetaVector(b.metavec);
                 draw.offsetX = d.x + Math.floor(0.5 * (d.width - draw.width));
                 draw.offsetY = d.y + Math.floor(0.5 * (d.height - draw.height));
                 draw.renderContext(ctx);
             }
             else if (b.text != null) {
-                var sz = this.idealSize;
-                var draw = new MetaVector({ 'size': [sz, sz] });
-                var fsz = sz * 0.6;
-                var wad = FontData.main.measureText(b.text, fsz);
+                let sz = this.idealSize;
+                let draw = new MetaVector({ 'size': [sz, sz] });
+                let fsz = sz * 0.6;
+                let wad = FontData.main.measureText(b.text, fsz);
                 if (wad[1] + wad[2] > sz) {
                     fsz *= sz / (wad[1] + wad[2]);
                     wad = FontData.main.measureText(b.text, fsz);
@@ -8843,7 +9986,7 @@ var ButtonView = (function (_super) {
                     fsz *= sz / wad[0];
                     wad = FontData.main.measureText(b.text, fsz);
                 }
-                var x = 0.5 * (sz - wad[0]), y = 0.5 * (sz + wad[1]);
+                let x = 0.5 * (sz - wad[0]), y = 0.5 * (sz + wad[1]);
                 draw.drawText(x - 1, y, b.text, fsz, 0x000000);
                 draw.drawText(x + 1, y, b.text, fsz, 0x000000);
                 draw.drawText(x, y - 1, b.text, fsz, 0x000000);
@@ -8855,7 +9998,7 @@ var ButtonView = (function (_super) {
             }
             if (b != null && b.isSubMenu) {
                 ctx.save();
-                var sx = d.x + d.width - 3, sy = d.y + d.height - 3;
+                let sx = d.x + d.width - 3, sy = d.y + d.height - 3;
                 ctx.beginPath();
                 ctx.moveTo(sx, sy);
                 ctx.lineTo(sx - 6, sy);
@@ -8868,7 +10011,7 @@ var ButtonView = (function (_super) {
             if (d.id == '*') {
                 ctx.save();
                 path = new Path2D();
-                var px = void 0, py = void 0, flip = this.isRaised;
+                let px, py, flip = this.isRaised;
                 if (this.position == 'left' || this.position == 'right') {
                     px = [0.2, 0.7, 0.7];
                     py = [0.5, 0.3, 0.7];
@@ -8898,18 +10041,18 @@ var ButtonView = (function (_super) {
             }
             else if (d.id == '!') {
                 ctx.save();
-                var path1 = new Path2D(), path2 = new Path2D();
-                var inset = 5;
-                var w = d.width - inset * 2, h = d.height - inset * 2;
-                for (var z = 5; z < w + h - 1; z += 12) {
-                    var x1 = 0, y1 = z, x2 = z, y2 = 0;
+                let path1 = new Path2D(), path2 = new Path2D();
+                let inset = 5;
+                let w = d.width - inset * 2, h = d.height - inset * 2;
+                for (let z = 5; z < w + h - 1; z += 12) {
+                    let x1 = 0, y1 = z, x2 = z, y2 = 0;
                     if (y1 > h) {
-                        var delta = y1 - h;
+                        let delta = y1 - h;
                         x1 += delta;
                         y1 -= delta;
                     }
                     if (x2 > w) {
-                        var delta = x2 - w;
+                        let delta = x2 - w;
                         x2 -= delta;
                         y2 += delta;
                     }
@@ -8927,33 +10070,33 @@ var ButtonView = (function (_super) {
             }
         }
         ctx.restore();
-    };
+    }
     ;
-    ButtonView.prototype.delayedRedraw = function () {
-        var self = this;
+    delayedRedraw() {
+        const self = this;
         window.setTimeout(function () { self.redraw(); }, 100);
-    };
+    }
     ;
-    ButtonView.prototype.buttonFromID = function (id) {
-        var bank = this.stack[this.stack.length - 1];
-        for (var n = 0; n < bank.buttons.length; n++)
+    buttonFromID(id) {
+        let bank = this.stack[this.stack.length - 1];
+        for (let n = 0; n < bank.buttons.length; n++)
             if (bank.buttons[n].id == id)
                 return bank.buttons[n];
         return null;
-    };
-    ButtonView.prototype.displayFromID = function (id) {
-        for (var n = 0; n < this.display.length; n++)
+    }
+    displayFromID(id) {
+        for (let n = 0; n < this.display.length; n++)
             if (this.display[n].id == id)
                 return this.display[n];
         return null;
-    };
-    ButtonView.prototype.traceOutline = function () {
-        var w = this.width, h = this.height, uw = w - 1, uh = h - 1, r = 8;
+    }
+    traceOutline() {
+        let w = this.width, h = this.height, uw = w - 1, uh = h - 1, r = 8;
         if (this.position == 'centre' || this.stack.length == 0)
             return pathRoundedRect(0.5, 0.5, w - 0.5, h - 0.5, r);
-        var path = new Path2D();
+        let path = new Path2D();
         if (this.position == 'left') {
-            var my = 0.5 * h - 1, gw = this.gripHeight, hg = 0.5 * this.gripWidth;
+            let my = 0.5 * h - 1, gw = this.gripHeight, hg = 0.5 * this.gripWidth;
             path.moveTo(0.5, 0.5);
             path.lineTo(0.5 + uw - gw - r, 0.5);
             path.bezierCurveTo(0.5 + uw - gw, 0.5, 0.5 + uw - gw, 0.5, 0.5 + uw - gw, 0.5 + r);
@@ -8968,7 +10111,7 @@ var ButtonView = (function (_super) {
             path.lineTo(0.5, 0.5 + uh);
         }
         else if (this.position == 'right') {
-            var my = 0.5 * h - 1, gw = this.gripHeight, hg = 0.5 * this.gripWidth;
+            let my = 0.5 * h - 1, gw = this.gripHeight, hg = 0.5 * this.gripWidth;
             path.moveTo(w - 0.5, 0.5);
             path.lineTo(w - (0.5 + uw - gw - r), 0.5);
             path.bezierCurveTo(w - (0.5 + uw - gw), 0.5, w - (0.5 + uw - gw), 0.5, w - (0.5 + uw - gw), 0.5 + r);
@@ -8983,7 +10126,7 @@ var ButtonView = (function (_super) {
             path.lineTo(w - 0.5, 0.5 + uh);
         }
         else if (this.position == 'top') {
-            var mx = 0.5 * w - 1, gh = this.gripHeight, hg = 0.5 * this.gripWidth;
+            let mx = 0.5 * w - 1, gh = this.gripHeight, hg = 0.5 * this.gripWidth;
             path.moveTo(0.5, h - (0.5 + uh));
             path.lineTo(0.5, h - (0.5 + gh + r));
             path.bezierCurveTo(0.5, h - (0.5 + gh), 0.5, h - (0.5 + gh), 0.5 + r, h - (0.5 + gh));
@@ -8998,7 +10141,7 @@ var ButtonView = (function (_super) {
             path.lineTo(0.5 + uw, h - (0.5 + uh));
         }
         else if (this.position == 'bottom') {
-            var mx = 0.5 * w - 1, gh = this.gripHeight, hg = 0.5 * this.gripWidth;
+            let mx = 0.5 * w - 1, gh = this.gripHeight, hg = 0.5 * this.gripWidth;
             path.moveTo(0.5, 0.5 + uh);
             path.lineTo(0.5, 0.5 + gh + r);
             path.bezierCurveTo(0.5, 0.5 + gh, 0.5, 0.5 + gh, 0.5 + r, 0.5 + gh);
@@ -9013,13 +10156,13 @@ var ButtonView = (function (_super) {
             path.lineTo(0.5 + uw, 0.5 + uh);
         }
         return path;
-    };
-    ButtonView.prototype.layoutMaxWidth = function (bank, slotWidth) {
+    }
+    layoutMaxWidth(bank, slotWidth) {
         if (bank.buttons.length == 0)
             return [[null]];
-        var bx = new Array(bank.buttons.length), by = new Array(bank.buttons.length);
-        var x = 0, y = 0, w = 0, h = 0;
-        for (var n = 0; n < bank.buttons.length; n++) {
+        let bx = new Array(bank.buttons.length), by = new Array(bank.buttons.length);
+        let x = 0, y = 0, w = 0, h = 0;
+        for (let n = 0; n < bank.buttons.length; n++) {
             w = Math.max(x + 1, w);
             h = Math.max(y + 1, h);
             bx[n] = x;
@@ -9030,20 +10173,20 @@ var ButtonView = (function (_super) {
                 y++;
             }
         }
-        var slot = new Array(h);
-        for (var n = 0; n < h; n++)
+        let slot = new Array(h);
+        for (let n = 0; n < h; n++)
             slot[n] = new Array(w);
-        for (var n = 0; n < bank.buttons.length; n++) {
+        for (let n = 0; n < bank.buttons.length; n++) {
             slot[by[n]][bx[n]] = bank.buttons[n].id;
         }
         return slot;
-    };
-    ButtonView.prototype.layoutMaxHeight = function (bank, slotHeight, slotWidth) {
+    }
+    layoutMaxHeight(bank, slotHeight, slotWidth) {
         if (bank.buttons.length == 0)
             return [[null]];
-        var bx = new Array(bank.buttons.length), by = new Array(bank.buttons.length);
-        var x = 0, y = 0, w = 0, h = 0;
-        for (var n = 0; n < bank.buttons.length; n++) {
+        let bx = new Array(bank.buttons.length), by = new Array(bank.buttons.length);
+        let x = 0, y = 0, w = 0, h = 0;
+        for (let n = 0; n < bank.buttons.length; n++) {
             w = Math.max(x + 1, w);
             h = Math.max(y + 1, h);
             bx[n] = x;
@@ -9054,38 +10197,38 @@ var ButtonView = (function (_super) {
                 y++;
             }
         }
-        var slot = new Array(h);
-        for (var n = 0; n < h; n++)
+        let slot = new Array(h);
+        for (let n = 0; n < h; n++)
             slot[n] = new Array(w);
-        for (var n = 0; n < bank.buttons.length; n++) {
+        for (let n = 0; n < bank.buttons.length; n++) {
             slot[by[n]][bx[n]] = bank.buttons[n].id;
         }
         return slot;
-    };
-    ButtonView.prototype.scoreLayout = function (slots) {
-        var score = 0;
-        for (var y = 0; y < slots.length; y++)
-            for (var x = 0; x < slots[y].length; x++) {
+    }
+    scoreLayout(slots) {
+        let score = 0;
+        for (let y = 0; y < slots.length; y++)
+            for (let x = 0; x < slots[y].length; x++) {
                 if (slots[y][x] == null)
                     score++;
             }
         return score;
-    };
-    ButtonView.prototype.pickButtonIndex = function (x, y) {
-        for (var n = 0; n < this.display.length; n++) {
-            var d = this.display[n];
+    }
+    pickButtonIndex(x, y) {
+        for (let n = 0; n < this.display.length; n++) {
+            let d = this.display[n];
             if (x >= d.x && y >= d.y && x < d.x + d.width && y < d.y + d.height)
                 return n;
         }
         return -1;
-    };
-    ButtonView.prototype.pickButtonID = function (x, y) {
-        var idx = this.pickButtonIndex(x, y);
+    }
+    pickButtonID(x, y) {
+        let idx = this.pickButtonIndex(x, y);
         if (idx < 0)
             return undefined;
         return this.display[idx].id;
-    };
-    ButtonView.prototype.triggerButton = function (id) {
+    }
+    triggerButton(id) {
         if (id == '*') {
             if (this.isRaised)
                 this.lowerBank();
@@ -9097,30 +10240,30 @@ var ButtonView = (function (_super) {
             this.popBank();
             return;
         }
-        var bank = this.stack[this.stack.length - 1];
+        let bank = this.stack[this.stack.length - 1];
         bank.hitButton(id);
-    };
-    ButtonView.prototype.mouseClick = function (event) {
-    };
-    ButtonView.prototype.mouseDoubleClick = function (event) {
+    }
+    mouseClick(event) {
+    }
+    mouseDoubleClick(event) {
         event.stopImmediatePropagation();
-    };
-    ButtonView.prototype.mouseDown = function (event) {
-        var xy = eventCoords(event, this.content);
+    }
+    mouseDown(event) {
+        let xy = eventCoords(event, this.content);
         if (!this.withinOutline(xy[0], xy[1]))
             return;
-        var id = this.pickButtonID(xy[0], xy[1]);
+        let id = this.pickButtonID(xy[0], xy[1]);
         if (id != this.highlightButton) {
             this.highlightButton = id;
             this.redraw();
         }
         event.stopPropagation();
-    };
-    ButtonView.prototype.mouseUp = function (event) {
-        var xy = eventCoords(event, this.content);
+    }
+    mouseUp(event) {
+        let xy = eventCoords(event, this.content);
         if (!this.withinOutline(xy[0], xy[1]))
             return;
-        var id = this.pickButtonID(xy[0], xy[1]);
+        let id = this.pickButtonID(xy[0], xy[1]);
         if (id != null && this.highlightButton == id) {
             this.highlightButton = undefined;
             this.triggerButton(id);
@@ -9131,15 +10274,15 @@ var ButtonView = (function (_super) {
             this.delayedRedraw();
         }
         event.stopPropagation();
-    };
-    ButtonView.prototype.mouseOver = function (event) {
-        var xy = eventCoords(event, this.content);
+    }
+    mouseOver(event) {
+        let xy = eventCoords(event, this.content);
         if (!this.withinOutline(xy[0], xy[1]))
             return;
         event.stopPropagation();
-    };
-    ButtonView.prototype.mouseOut = function (event) {
-        var xy = eventCoords(event, this.content);
+    }
+    mouseOut(event) {
+        let xy = eventCoords(event, this.content);
         if (!this.withinOutline(xy[0], xy[1])) {
             if (this.highlightButton != null) {
                 this.highlightButton = null;
@@ -9148,29 +10291,28 @@ var ButtonView = (function (_super) {
             return;
         }
         if (this.highlightButton != null) {
-            var xy_1 = eventCoords(event, this.content);
-            var id = this.pickButtonID(xy_1[0], xy_1[1]);
+            let xy = eventCoords(event, this.content);
+            let id = this.pickButtonID(xy[0], xy[1]);
             if (id != this.highlightButton) {
                 this.highlightButton = null;
                 this.delayedRedraw();
             }
         }
         event.stopPropagation();
-    };
-    ButtonView.prototype.mouseMove = function (event) {
-        var xy = eventCoords(event, this.content);
+    }
+    mouseMove(event) {
+        let xy = eventCoords(event, this.content);
         if (!this.withinOutline(xy[0], xy[1]))
             return;
-    };
-    ButtonView.prototype.keyPressed = function (event) {
-    };
-    ButtonView.prototype.keyDown = function (event) {
-    };
-    ButtonView.prototype.keyUp = function (event) {
-    };
-    ButtonView.ACTION_ICONS = null;
-    return ButtonView;
-}(Widget));
+    }
+    keyPressed(event) {
+    }
+    keyDown(event) {
+    }
+    keyUp(event) {
+    }
+}
+ButtonView.ACTION_ICONS = null;
 var ActivityType;
 (function (ActivityType) {
     ActivityType[ActivityType["Delete"] = 1] = "Delete";
@@ -9222,8 +10364,8 @@ var ActivityType;
     ActivityType[ActivityType["AbbrevClear"] = 47] = "AbbrevClear";
     ActivityType[ActivityType["AbbrevExpand"] = 48] = "AbbrevExpand";
 })(ActivityType || (ActivityType = {}));
-var MoleculeActivity = (function () {
-    function MoleculeActivity(owner, activity, param, override) {
+class MoleculeActivity {
+    constructor(owner, activity, param, override) {
         this.owner = owner;
         this.activity = activity;
         this.param = param;
@@ -9235,9 +10377,10 @@ var MoleculeActivity = (function () {
                 'currentBond': -1,
                 'selectedMask': null
             };
-        for (var k in override)
-            this.input[k] = override[k];
-        var na = this.input.mol.numAtoms;
+        let altInput = this.input;
+        for (let k in override)
+            altInput = override[k];
+        let na = this.input.mol.numAtoms;
         if (this.input.selectedMask == null)
             this.input.selectedMask = Vec.booleanArray(false, na);
         while (this.input.selectedMask.length < na)
@@ -9253,8 +10396,8 @@ var MoleculeActivity = (function () {
                 this.subjectIndex = [this.input.currentAtom];
             }
             else if (this.input.currentBond > 0) {
-                var bfr = this.input.mol.bondFrom(this.input.currentBond), bto = this.input.mol.bondTo(this.input.currentBond);
-                var b1 = Math.min(bfr, bto), b2 = Math.max(bfr, bto);
+                let bfr = this.input.mol.bondFrom(this.input.currentBond), bto = this.input.mol.bondTo(this.input.currentBond);
+                let b1 = Math.min(bfr, bto), b2 = Math.max(bfr, bto);
                 this.subjectLength = 2;
                 this.subjectMask[b1 - 1] = true;
                 this.subjectMask[b2 - 1] = true;
@@ -9266,11 +10409,11 @@ var MoleculeActivity = (function () {
             Vec.addTo(this.subjectIndex, 1);
         }
     }
-    MoleculeActivity.prototype.evaluate = function () {
+    evaluate() {
         return true;
-    };
-    MoleculeActivity.prototype.execute = function () {
-        var param = this.param;
+    }
+    execute() {
+        let param = this.param;
         if (this.activity == ActivityType.Delete) {
             this.execDelete();
             this.finish();
@@ -9437,19 +10580,18 @@ var MoleculeActivity = (function () {
         }
         else if (this.activity == ActivityType.AbbrevExpand) {
         }
-    };
-    MoleculeActivity.prototype.executeRPC = function (optype, xparam) {
-        if (xparam === void 0) { xparam = {}; }
-        var param = {
+    }
+    executeRPC(optype, xparam = {}) {
+        let param = {
             'tokenID': this.owner.tokenID
         };
         param.molNative = this.input.mol.toString();
         param.currentAtom = this.input.currentAtom;
         param.currentBond = this.input.currentBond;
         param.selectedMask = this.input.selectedMask;
-        for (var xp in xparam)
+        for (let xp in xparam)
             param[xp] = xparam[xp];
-        var fcn = function (result, error) {
+        let fcn = function (result, error) {
             if (!result) {
                 alert('Sketching operation failed: ' + error.message);
                 return;
@@ -9473,8 +10615,8 @@ var MoleculeActivity = (function () {
             }
         };
         new RPC('sketch.' + optype, param, fcn, this).invoke();
-    };
-    MoleculeActivity.prototype.finish = function () {
+    }
+    finish() {
         if (this.output.mol != null || this.output.currentAtom >= 0 || this.output.currentBond >= 0 || this.output.selectedMask != null) {
             this.owner.setState(this.output, true);
             if (this.errmsg != null)
@@ -9484,11 +10626,11 @@ var MoleculeActivity = (function () {
             if (this.errmsg != null)
                 this.owner.showMessage(this.errmsg, true);
         }
-    };
-    MoleculeActivity.prototype.execDelete = function () {
+    }
+    execDelete() {
         if (!this.requireSubject())
             return;
-        var mol = this.input.mol;
+        let mol = this.input.mol;
         this.output.mol = mol.clone();
         this.zapSubject();
         if (this.input.currentBond > 0 && !this.hasSelected) {
@@ -9497,23 +10639,23 @@ var MoleculeActivity = (function () {
             return;
         }
         if (this.subjectLength == 1 && this.subjectIndex[0] == this.input.currentAtom) {
-            var adj = mol.atomAdjList(this.input.currentAtom);
+            let adj = mol.atomAdjList(this.input.currentAtom);
             if (adj.length == 1) {
                 this.output.currentAtom = adj[0];
                 if (this.output.currentAtom > this.input.currentAtom)
                     this.output.currentAtom--;
             }
         }
-        for (var n = this.subjectLength - 1; n >= 0; n--)
+        for (let n = this.subjectLength - 1; n >= 0; n--)
             this.output.mol.deleteAtomAndBonds(this.subjectIndex[n]);
-    };
-    MoleculeActivity.prototype.execClear = function () {
+    }
+    execClear() {
         this.output.mol = new Molecule();
         this.zapSubject();
-    };
-    MoleculeActivity.prototype.execSelectAll = function (all) {
-        var same = true;
-        for (var n = 0; n < this.input.mol.numAtoms; n++)
+    }
+    execSelectAll(all) {
+        let same = true;
+        for (let n = 0; n < this.input.mol.numAtoms; n++)
             if (this.subjectMask[n] != all) {
                 same = false;
                 break;
@@ -9523,22 +10665,22 @@ var MoleculeActivity = (function () {
             return;
         }
         this.output.selectedMask = Vec.booleanArray(all, this.input.mol.numAtoms);
-    };
-    MoleculeActivity.prototype.execSelectComp = function (dir) {
-        var cclist = MolUtil.componentList(this.input.mol);
+    }
+    execSelectComp(dir) {
+        let cclist = MolUtil.componentList(this.input.mol);
         if (cclist.length == 1 && this.hasSelected && this.subjectLength == this.input.mol.numAtoms) {
             this.errmsg = 'All atoms already selected.';
             return;
         }
-        var sel = this.pickSelectedGroup(cclist, dir);
+        let sel = this.pickSelectedGroup(cclist, dir);
         this.output.selectedMask = Vec.booleanArray(false, this.input.mol.numAtoms);
-        for (var n = 0; n < cclist[sel].length; n++)
+        for (let n = 0; n < cclist[sel].length; n++)
             this.output.selectedMask[cclist[sel][n] - 1] = true;
-    };
-    MoleculeActivity.prototype.execSelectSide = function () {
+    }
+    execSelectSide() {
         if (!this.requireCurrent())
             return;
-        var mol = this.input.mol, currentAtom = this.input.currentAtom, currentBond = this.input.currentBond;
+        let mol = this.input.mol, currentAtom = this.input.currentAtom, currentBond = this.input.currentBond;
         if (currentAtom > 0 && mol.atomAdjCount(currentAtom) == 0) {
             this.errmsg = 'Current atom has no neighbours.';
             return;
@@ -9547,16 +10689,16 @@ var MoleculeActivity = (function () {
             this.errmsg = 'Current bond has no neighbours.';
             return;
         }
-        var sides = currentAtom > 0 ? MolUtil.getAtomSides(mol, currentAtom) : MolUtil.getBondSides(mol, currentBond);
-        var sel = this.pickSelectedGroup(sides, 1);
+        let sides = currentAtom > 0 ? MolUtil.getAtomSides(mol, currentAtom) : MolUtil.getBondSides(mol, currentBond);
+        let sel = this.pickSelectedGroup(sides, 1);
         this.output.selectedMask = Vec.booleanArray(false, mol.numAtoms);
-        for (var n = 0; n < sides[sel].length; n++)
+        for (let n = 0; n < sides[sel].length; n++)
             this.output.selectedMask[sides[sel][n] - 1] = true;
-    };
-    MoleculeActivity.prototype.execSelectGrow = function () {
+    }
+    execSelectGrow() {
         if (!this.requireSubject())
             return;
-        var mol = this.input.mol, currentAtom = this.input.currentAtom, currentBond = this.input.currentBond;
+        let mol = this.input.mol, currentAtom = this.input.currentAtom, currentBond = this.input.currentBond;
         this.output.selectedMask = this.input.selectedMask.slice(0);
         if (!this.hasSelected) {
             if (currentAtom > 0) {
@@ -9568,91 +10710,91 @@ var MoleculeActivity = (function () {
             }
         }
         else {
-            for (var n = 1; n <= mol.numBonds; n++) {
-                var bfr = mol.bondFrom(n) - 1, bto = mol.bondTo(n) - 1;
+            for (let n = 1; n <= mol.numBonds; n++) {
+                let bfr = mol.bondFrom(n) - 1, bto = mol.bondTo(n) - 1;
                 if (this.input.selectedMask[bfr] && !this.input.selectedMask[bto])
                     this.output.selectedMask[bto] = true;
                 else if (this.input.selectedMask && !this.input.selectedMask[bfr])
                     this.output.selectedMask[bfr] = true;
             }
         }
-    };
-    MoleculeActivity.prototype.execSelectShrink = function () {
+    }
+    execSelectShrink() {
         if (!this.requireSelected())
             return;
-        var mol = this.input.mol;
-        var count = Vec.numberArray(0, mol.numAtoms);
-        for (var n = 1; n <= mol.numBonds; n++) {
-            var bfr = mol.bondFrom(n) - 1, bto = mol.bondTo(n) - 1;
+        let mol = this.input.mol;
+        let count = Vec.numberArray(0, mol.numAtoms);
+        for (let n = 1; n <= mol.numBonds; n++) {
+            let bfr = mol.bondFrom(n) - 1, bto = mol.bondTo(n) - 1;
             if (!this.input.selectedMask[bfr] || !this.input.selectedMask[bto])
                 continue;
             count[bfr]++;
             count[bto]++;
         }
         this.output.selectedMask = this.input.selectedMask.slice(0);
-        for (var n = 0; n < mol.numAtoms; n++)
+        for (let n = 0; n < mol.numAtoms; n++)
             this.output.selectedMask[n] = this.input.selectedMask[n] && count[n] >= 2;
-    };
-    MoleculeActivity.prototype.execSelectChain = function () {
+    }
+    execSelectChain() {
         if (!this.requireSubject())
             return;
-        var mol = this.input.mol;
+        let mol = this.input.mol;
         this.output.selectedMask = this.input.selectedMask.slice(0);
-        for (var n = 1; n <= mol.numBonds; n++) {
-            var bfr = mol.bondFrom(n) - 1, bto = mol.bondTo(n) - 1;
+        for (let n = 1; n <= mol.numBonds; n++) {
+            let bfr = mol.bondFrom(n) - 1, bto = mol.bondTo(n) - 1;
             if (this.input.selectedMask[bfr] && !this.input.selectedMask[bto] && mol.atomRingBlock(bto + 1) == 0)
                 this.output.selectedMask[bto] = true;
             else if (this.input.selectedMask[bto] && !this.input.selectedMask[bfr] && mol.atomRingBlock(bfr + 1) == 0)
                 this.output.selectedMask[bfr] = true;
         }
-    };
-    MoleculeActivity.prototype.execSelectSmRing = function () {
+    }
+    execSelectSmRing() {
         if (!this.requireSubject())
             return;
         this.output.selectedMask = this.input.selectedMask.slice(0);
-        for (var r = 3; r <= 8; r++) {
-            var rings = this.input.mol.findRingsOfSize(r);
-            for (var i = 0; i < rings.length; i++) {
-                var any = false;
-                for (var j = 0; j < rings[i].length; j++)
+        for (let r = 3; r <= 8; r++) {
+            let rings = this.input.mol.findRingsOfSize(r);
+            for (let i = 0; i < rings.length; i++) {
+                let any = false;
+                for (let j = 0; j < rings[i].length; j++)
                     if (this.subjectMask[rings[i][j] - 1]) {
                         any = true;
                         break;
                     }
                 if (any)
-                    for (var j = 0; j < rings[i].length; j++)
+                    for (let j = 0; j < rings[i].length; j++)
                         this.output.selectedMask[rings[i][j] - 1] = true;
             }
         }
-    };
-    MoleculeActivity.prototype.execSelectRingBlk = function () {
+    }
+    execSelectRingBlk() {
         if (!this.requireSubject())
             return;
-        var mol = this.input.mol;
+        let mol = this.input.mol;
         this.output.selectedMask = this.input.selectedMask.slice(0);
-        var maxRB = 0;
-        for (var n = 1; n <= mol.numAtoms; n++)
+        let maxRB = 0;
+        for (let n = 1; n <= mol.numAtoms; n++)
             maxRB = Math.max(maxRB, mol.atomRingBlock(n));
         if (maxRB == 0)
             return;
-        var gotRB = Vec.booleanArray(false, maxRB);
-        for (var n = 1; n <= mol.numAtoms; n++) {
-            var rb = mol.atomRingBlock(n);
+        let gotRB = Vec.booleanArray(false, maxRB);
+        for (let n = 1; n <= mol.numAtoms; n++) {
+            let rb = mol.atomRingBlock(n);
             if (rb > 0 && this.subjectMask[n - 1])
                 gotRB[rb - 1] = true;
         }
-        for (var n = 1; n <= mol.numAtoms; n++) {
-            var rb = mol.atomRingBlock(n);
+        for (let n = 1; n <= mol.numAtoms; n++) {
+            let rb = mol.atomRingBlock(n);
             if (rb > 0 && gotRB[rb - 1])
                 this.output.selectedMask[n - 1] = true;
         }
-    };
-    MoleculeActivity.prototype.execSelectCurElement = function () {
+    }
+    execSelectCurElement() {
         if (!this.requireCurrent())
             return;
-        var mol = this.input.mol;
+        let mol = this.input.mol;
         this.output.selectedMask = this.input.selectedMask.slice(0);
-        var el1 = '', el2 = '';
+        let el1 = '', el2 = '';
         if (this.input.currentAtom > 0) {
             el1 = mol.atomElement(this.input.currentAtom);
         }
@@ -9660,11 +10802,11 @@ var MoleculeActivity = (function () {
             el1 = mol.atomElement(mol.bondFrom(this.input.currentBond));
             el2 = mol.atomElement(mol.bondTo(this.input.currentBond));
         }
-        for (var n = 1; n <= mol.numAtoms; n++)
+        for (let n = 1; n <= mol.numAtoms; n++)
             if (mol.atomElement(n) == el1 || mol.atomElement(n) == el2)
                 this.output.selectedMask[n - 1] = true;
-    };
-    MoleculeActivity.prototype.execSelectToggle = function () {
+    }
+    execSelectToggle() {
         if (!this.requireCurrent())
             return;
         this.output.selectedMask = this.input.selectedMask.slice(0);
@@ -9672,13 +10814,13 @@ var MoleculeActivity = (function () {
             this.output.selectedMask[this.input.currentAtom - 1] = !this.output.selectedMask[this.input.currentAtom - 1];
         }
         else {
-            var bfr = this.input.mol.bondFrom(this.input.currentBond), bto = this.input.mol.bondTo(this.input.currentBond);
-            var sel = !this.input.selectedMask[bfr - 1] || !this.input.selectedMask[bto - 1];
+            let bfr = this.input.mol.bondFrom(this.input.currentBond), bto = this.input.mol.bondTo(this.input.currentBond);
+            let sel = !this.input.selectedMask[bfr - 1] || !this.input.selectedMask[bto - 1];
             this.output.selectedMask[bfr - 1] = sel;
             this.output.selectedMask[bto - 1] = sel;
         }
-    };
-    MoleculeActivity.prototype.execSelectUnCurrent = function () {
+    }
+    execSelectUnCurrent() {
         if (!this.requireCurrent())
             return;
         this.output.selectedMask = this.input.selectedMask.slice(0);
@@ -9689,11 +10831,11 @@ var MoleculeActivity = (function () {
             this.output.selectedMask[this.input.mol.bondFrom(this.input.currentBond) - 1] = false;
             this.output.selectedMask[this.input.mol.bondTo(this.input.currentBond) - 1] = false;
         }
-    };
-    MoleculeActivity.prototype.execElement = function (element, positionX, positionY) {
+    }
+    execElement(element, positionX, positionY) {
         if (this.subjectLength > 0) {
-            var anyChange = false;
-            for (var n = 0; n < this.subjectLength; n++)
+            let anyChange = false;
+            for (let n = 0; n < this.subjectLength; n++)
                 if (this.input.mol.atomElement(this.subjectIndex[n]) != element) {
                     anyChange = true;
                     break;
@@ -9711,44 +10853,42 @@ var MoleculeActivity = (function () {
                 SketchUtil.placeNewAtom(this.output.mol, element);
         }
         else {
-            for (var n = 0; n < this.subjectLength; n++)
+            for (let n = 0; n < this.subjectLength; n++)
                 MolUtil.setAtomElement(this.output.mol, this.subjectIndex[n], element);
         }
-    };
-    MoleculeActivity.prototype.execCharge = function (delta) {
+    }
+    execCharge(delta) {
         if (!this.requireSubject())
             return;
         this.output.mol = this.input.mol.clone();
-        for (var n = 0; n < this.subjectLength; n++) {
-            var chg = Math.max(-20, Math.min(20, this.input.mol.atomCharge(this.subjectIndex[n]) + delta));
+        for (let n = 0; n < this.subjectLength; n++) {
+            let chg = Math.max(-20, Math.min(20, this.input.mol.atomCharge(this.subjectIndex[n]) + delta));
             this.output.mol.setAtomCharge(this.subjectIndex[n], chg);
         }
-    };
-    MoleculeActivity.prototype.execConnect = function (order, type) {
+    }
+    execConnect(order, type) {
         if (!this.requireSubject())
             return;
-        var conn = SketchUtil.pickAtomsToConnect(this.input.mol, this.subjectIndex);
+        let conn = SketchUtil.pickAtomsToConnect(this.input.mol, this.subjectIndex);
         if (conn == null) {
             this.errmsg = 'Subject atoms contain no bonds suitable for connection.';
             return;
         }
         this.output.mol = this.input.mol.clone();
-        for (var n = 0; n < conn.length; n += 2)
+        for (let n = 0; n < conn.length; n += 2)
             MolUtil.addBond(this.output.mol, conn[n], conn[n + 1], order, type);
-    };
-    MoleculeActivity.prototype.execDisconnect = function () {
-        var zap = [];
-        var mol = this.input.mol;
+    }
+    execDisconnect() {
+        let zap = [];
+        let mol = this.input.mol;
         if (this.hasSelected) {
-            for (var n = 1; n <= mol.numBonds; n++)
+            for (let n = 1; n <= mol.numBonds; n++)
                 if (this.subjectMask[mol.bondFrom(n) - 1] && this.subjectMask[mol.bondTo(n) - 1])
                     zap.push(n);
         }
         else if (this.input.currentAtom > 0) {
-            for (var _i = 0, _a = mol.atomAdjBonds(this.input.currentAtom); _i < _a.length; _i++) {
-                var a = _a[_i];
+            for (let a of mol.atomAdjBonds(this.input.currentAtom))
                 zap.push(a);
-            }
         }
         else if (this.input.currentBond > 0) {
             zap.push(this.input.currentBond);
@@ -9757,26 +10897,24 @@ var MoleculeActivity = (function () {
             this.errmsg = 'Subject atoms contain no bonds suitable for disconnection.';
             return;
         }
-        var killmask = Vec.booleanArray(false, mol.numBonds);
-        for (var _b = 0, zap_1 = zap; _b < zap_1.length; _b++) {
-            var b = zap_1[_b];
+        let killmask = Vec.booleanArray(false, mol.numBonds);
+        for (let b of zap)
             killmask[b - 1] = true;
-        }
         this.output.mol = this.input.mol.clone();
-        for (var n = mol.numBonds; n >= 1; n--)
+        for (let n = mol.numBonds; n >= 1; n--)
             if (killmask[n - 1])
                 this.output.mol.deleteBond(n);
-    };
-    MoleculeActivity.prototype.execBond = function (order, type) {
+    }
+    execBond(order, type) {
         if (!this.requireSubject())
             return;
         if (this.subjectLength == 1) {
             this.performBondNew(this.subjectIndex[0], order, type);
             return;
         }
-        var ccmol = MolUtil.subgraphMask(this.input.mol, this.subjectMask);
-        var oneComp = true;
-        for (var n = ccmol.numAtoms; n >= 1; n--)
+        let ccmol = MolUtil.subgraphMask(this.input.mol, this.subjectMask);
+        let oneComp = true;
+        for (let n = ccmol.numAtoms; n >= 1; n--)
             if (ccmol.atomConnComp(n) != 1) {
                 oneComp = false;
                 break;
@@ -9785,9 +10923,9 @@ var MoleculeActivity = (function () {
             this.performBondChange(order, type);
         else
             this.execConnect(order, type);
-    };
-    MoleculeActivity.prototype.execBondGeom = function (geom) {
-        var bond = this.subjectLength == 2 ? this.input.mol.findBond(this.subjectIndex[0], this.subjectIndex[1]) : 0;
+    }
+    execBondGeom(geom) {
+        let bond = this.subjectLength == 2 ? this.input.mol.findBond(this.subjectIndex[0], this.subjectIndex[1]) : 0;
         if (this.subjectLength == 0 || this.subjectLength > 2 || (this.subjectLength == 2 && bond == 0)) {
             this.errmsg = 'The subject must be a single atom or bond.';
             return;
@@ -9796,10 +10934,10 @@ var MoleculeActivity = (function () {
             this.performBondGeomAtom(geom, this.subjectIndex[0]);
         else
             this.performBondGeomBond(geom, bond);
-    };
-    MoleculeActivity.prototype.execBondAtom = function (order, type, element, x1, y1, x2, y2) {
-        var mol = this.input.mol;
-        var a1 = CoordUtil.atomAtPoint(mol, x1, y1, 0.01), a2 = CoordUtil.atomAtPoint(mol, x2, y2, 0.01);
+    }
+    execBondAtom(order, type, element, x1, y1, x2, y2) {
+        let mol = this.input.mol;
+        let a1 = CoordUtil.atomAtPoint(mol, x1, y1, 0.01), a2 = CoordUtil.atomAtPoint(mol, x2, y2, 0.01);
         if (a1 > 0 && a2 > 0 && mol.findBond(a1, a2) > 0)
             return;
         this.output.mol = mol.clone();
@@ -9808,21 +10946,21 @@ var MoleculeActivity = (function () {
         if (a2 == 0)
             a2 = this.output.mol.addAtom(element, x2, y2);
         this.output.mol.addBond(a1, a2, order, type);
-    };
-    MoleculeActivity.prototype.execBondSwitch = function () {
+    }
+    execBondSwitch() {
         if (!this.requireSubject())
             return;
-        var mol = this.input.mol;
-        var src = 0, dst = [];
+        let mol = this.input.mol;
+        let src = 0, dst = [];
         if (this.subjectLength == 1) {
             src = this.subjectIndex[0];
-            var adj = mol.atomAdjList(src);
-            for (var n = 0; n < adj.length; n++)
+            let adj = mol.atomAdjList(src);
+            for (let n = 0; n < adj.length; n++)
                 if (mol.atomAdjCount(adj[n]) == 1)
                     dst.push(adj[n]);
         }
         else if (this.subjectLength == 2 && mol.findBond(this.subjectIndex[0], this.subjectIndex[1]) > 0) {
-            var ac1 = mol.atomAdjCount(this.subjectIndex[0]), ac2 = mol.atomAdjCount(this.subjectIndex[1]);
+            let ac1 = mol.atomAdjCount(this.subjectIndex[0]), ac2 = mol.atomAdjCount(this.subjectIndex[1]);
             if (ac1 > 1 && ac2 == 1) {
                 src = this.subjectIndex[0];
                 dst.push(this.subjectIndex[1]);
@@ -9836,7 +10974,7 @@ var MoleculeActivity = (function () {
             this.errmsg = 'Subject must include a terminal bond.';
             return;
         }
-        var geoms = SketchUtil.guessAtomGeometry(mol, src, 1);
+        let geoms = SketchUtil.guessAtomGeometry(mol, src, 1);
         if (geoms.length == 0) {
             this.errmsg = 'No alternative geometries identified.';
             return;
@@ -9845,13 +10983,13 @@ var MoleculeActivity = (function () {
         if (this.output.mol == null) {
             this.errmsg = 'No alternative geometries identified.';
         }
-    };
-    MoleculeActivity.prototype.execBondAddTwo = function () {
+    }
+    execBondAddTwo() {
         if (this.subjectLength != 1) {
             this.errmsg = 'Subject must be a single atom.';
             return;
         }
-        var atom = this.subjectIndex[0];
+        let atom = this.subjectIndex[0];
         if (this.input.mol.atomAdjCount(atom) < 2) {
             this.errmsg = 'Subject atom must already have at least 2 bonds.';
             return;
@@ -9864,28 +11002,28 @@ var MoleculeActivity = (function () {
             return;
         }
         var baseAng = ang[0];
-        var cx = this.input.mol.atomX(atom), cy = this.input.mol.atomY(atom);
+        let cx = this.input.mol.atomX(atom), cy = this.input.mol.atomY(atom);
         if (ang.length > 1) {
-            var best = 0;
-            for (var n = 0; n < ang.length; n++) {
-                var x = cx + Molecule.IDEALBOND * Math.cos(ang[n]);
-                var y = cy + Molecule.IDEALBOND * Math.sin(ang[n]);
-                var score = CoordUtil.congestionPoint(this.input.mol, x, y);
+            let best = 0;
+            for (let n = 0; n < ang.length; n++) {
+                let x = cx + Molecule.IDEALBOND * Math.cos(ang[n]);
+                let y = cy + Molecule.IDEALBOND * Math.sin(ang[n]);
+                let score = CoordUtil.congestionPoint(this.input.mol, x, y);
                 if (n == 0 || score < best) {
                     best = score;
                     baseAng = ang[n];
                 }
             }
         }
-        var ang1 = baseAng - 30.0 * DEGRAD, ang2 = baseAng + 30.0 * DEGRAD;
-        var mol = this.input.mol.clone();
-        var a1 = mol.addAtom('C', cx + Molecule.IDEALBOND * Math.cos(ang1), cy + Molecule.IDEALBOND * Math.sin(ang1));
-        var a2 = mol.addAtom('C', cx + Molecule.IDEALBOND * Math.cos(ang2), cy + Molecule.IDEALBOND * Math.sin(ang2));
+        let ang1 = baseAng - 30.0 * DEGRAD, ang2 = baseAng + 30.0 * DEGRAD;
+        let mol = this.input.mol.clone();
+        let a1 = mol.addAtom('C', cx + Molecule.IDEALBOND * Math.cos(ang1), cy + Molecule.IDEALBOND * Math.sin(ang1));
+        let a2 = mol.addAtom('C', cx + Molecule.IDEALBOND * Math.cos(ang2), cy + Molecule.IDEALBOND * Math.sin(ang2));
         mol.addBond(atom, a1, 1);
         mol.addBond(atom, a2, 1);
         this.output.mol = mol;
-    };
-    MoleculeActivity.prototype.execJoin = function () {
+    }
+    execJoin() {
         if (!this.requireSubject())
             return;
         this.output.mol = SketchUtil.joinOverlappingAtoms(this.input.mol, this.subjectMask);
@@ -9895,238 +11033,234 @@ var MoleculeActivity = (function () {
         else {
             this.zapSubject();
         }
-    };
-    MoleculeActivity.prototype.execNudge = function (dir, extent) {
+    }
+    execNudge(dir, extent) {
         if (!this.requireSubject())
             return;
-        var dx = extent * (dir == 'left' ? -1 : dir == 'right' ? 1 : 0);
-        var dy = extent * (dir == 'down' ? -1 : dir == 'up' ? 1 : 0);
+        let dx = extent * (dir == 'left' ? -1 : dir == 'right' ? 1 : 0);
+        let dy = extent * (dir == 'down' ? -1 : dir == 'up' ? 1 : 0);
         this.output.mol = this.input.mol.clone();
-        for (var n = 0; n < this.subjectLength; n++) {
-            var x = this.output.mol.atomX(this.subjectIndex[n]), y = this.output.mol.atomY(this.subjectIndex[n]);
+        for (let n = 0; n < this.subjectLength; n++) {
+            let x = this.output.mol.atomX(this.subjectIndex[n]), y = this.output.mol.atomY(this.subjectIndex[n]);
             this.output.mol.setAtomPos(this.subjectIndex[n], x + dx, y + dy);
         }
-    };
-    MoleculeActivity.prototype.execNudgeFar = function (dir) {
+    }
+    execNudgeFar(dir) {
         if (!this.requireSubject())
             return;
         if (this.subjectLength == this.input.mol.numAtoms) {
             this.errmsg = 'Cannot apply to entire molecule.';
             return;
         }
-        var dx = dir == 'left' ? -1 : dir == 'right' ? 1 : 0;
-        var dy = dir == 'down' ? -1 : dir == 'up' ? 1 : 0;
+        let dx = dir == 'left' ? -1 : dir == 'right' ? 1 : 0;
+        let dy = dir == 'down' ? -1 : dir == 'up' ? 1 : 0;
         this.output.mol = SketchUtil.moveToEdge(this.input.mol, this.subjectMask, dx, dy);
         if (this.output.mol == null) {
             this.execNudge(dir, 1);
         }
-    };
-    MoleculeActivity.prototype.execFlip = function (axis) {
+    }
+    execFlip(axis) {
         if (this.input.mol.numAtoms < 2) {
             this.errmsg = 'At least 2 atoms are required.';
             return;
         }
-        var isVertical = axis == 'ver';
-        var cx = 0, cy = 0;
-        var mask = this.subjectMask, mol = this.input.mol;
+        let isVertical = axis == 'ver';
+        let cx = 0, cy = 0;
+        let mask = this.subjectMask, mol = this.input.mol;
         if (this.input.currentAtom > 0) {
             cx = mol.atomX(this.input.currentAtom);
             cy = mol.atomY(this.input.currentAtom);
             if (!this.hasSelected) {
                 mask = Vec.booleanArray(false, mol.numAtoms);
-                var cc = mol.atomConnComp(this.input.currentAtom);
-                for (var n = 1; n <= mol.numAtoms; n++)
+                let cc = mol.atomConnComp(this.input.currentAtom);
+                for (let n = 1; n <= mol.numAtoms; n++)
                     mask[n - 1] = mol.atomConnComp(n) == cc;
             }
         }
         else if (this.input.currentBond > 0) {
-            var bfr = mol.bondFrom(this.input.currentBond), bto = mol.bondTo(this.input.currentBond);
+            let bfr = mol.bondFrom(this.input.currentBond), bto = mol.bondTo(this.input.currentBond);
             cx = 0.5 * (mol.atomX(bfr) + mol.atomX(bto));
             cy = 0.5 * (mol.atomY(bfr) + mol.atomY(bto));
             if (!this.hasSelected) {
                 mask = Vec.booleanArray(false, mol.numAtoms);
-                var cc = mol.atomConnComp(bfr);
-                for (var n = 1; n <= mol.numAtoms; n++)
+                let cc = mol.atomConnComp(bfr);
+                for (let n = 1; n <= mol.numAtoms; n++)
                     mask[n - 1] = mol.atomConnComp(n) == cc;
             }
         }
         else if (this.subjectLength == 0) {
-            var box = mol.boundary();
+            let box = mol.boundary();
             cx = 0.5 * (box.minX() + box.maxX());
             cy = 0.5 * (box.minY() + box.maxY());
             mask = Vec.booleanArray(true, mol.numAtoms);
         }
         else {
-            for (var n = 0; n < this.subjectLength; n++) {
+            for (let n = 0; n < this.subjectLength; n++) {
                 cx += mol.atomX(this.subjectIndex[n]);
                 cy += mol.atomY(this.subjectIndex[n]);
             }
-            var invSz = 1.0 / this.subjectLength;
+            let invSz = 1.0 / this.subjectLength;
             cx *= invSz;
             cy *= invSz;
         }
         this.output.mol = mol.clone();
-        for (var n = 1; n <= mol.numAtoms; n++)
+        for (let n = 1; n <= mol.numAtoms; n++)
             if (mask[n - 1]) {
                 if (!isVertical)
                     this.output.mol.setAtomX(n, 2 * cx - this.output.mol.atomX(n));
                 else
                     this.output.mol.setAtomY(n, 2 * cy - this.output.mol.atomY(n));
             }
-    };
-    MoleculeActivity.prototype.execScale = function (mag) {
+    }
+    execScale(mag) {
         if (this.input.mol.numAtoms < 2) {
             this.errmsg = 'At least 2 atoms are required.';
             return;
         }
-        var mol = this.input.mol;
-        var b;
+        let mol = this.input.mol;
+        let b;
         if (this.subjectLength == 2 && (b = mol.findBond(this.subjectIndex[0], this.subjectIndex[1])) > 0 && !mol.bondInRing(b)) {
-            var a1 = this.subjectIndex[0], a2 = this.subjectIndex[1];
-            var ccmol = mol.clone();
+            let a1 = this.subjectIndex[0], a2 = this.subjectIndex[1];
+            let ccmol = mol.clone();
             ccmol.deleteBond(b);
-            var idx1 = [], idx2 = [];
-            for (var n = 1; n <= ccmol.numAtoms; n++) {
+            let idx1 = [], idx2 = [];
+            for (let n = 1; n <= ccmol.numAtoms; n++) {
                 if (ccmol.atomConnComp(n) == ccmol.atomConnComp(a1))
                     idx1.push(n);
                 else if (ccmol.atomConnComp(n) == ccmol.atomConnComp(a2))
                     idx2.push(n);
             }
-            var dx = (mol.atomX(a2) - mol.atomX(a1)) * (mag - 1);
-            var dy = (mol.atomY(a2) - mol.atomY(a1)) * (mag - 1);
+            let dx = (mol.atomX(a2) - mol.atomX(a1)) * (mag - 1);
+            let dy = (mol.atomY(a2) - mol.atomY(a1)) * (mag - 1);
             if (idx1.length == idx2.length) {
                 dx *= 0.5;
                 dy *= 0.5;
             }
             this.output.mol = mol.clone();
             if (idx1.length <= idx2.length)
-                for (var n = 0; n < idx1.length; n++) {
-                    var a = idx1[n];
+                for (let n = 0; n < idx1.length; n++) {
+                    let a = idx1[n];
                     this.output.mol.setAtomPos(a, this.output.mol.atomX(a) - dx, this.output.mol.atomY(a) - dy);
                 }
             if (idx2.length <= idx1.length)
-                for (var n = 0; n < idx2.length; n++) {
-                    var a = idx2[n];
+                for (let n = 0; n < idx2.length; n++) {
+                    let a = idx2[n];
                     this.output.mol.setAtomPos(a, this.output.mol.atomX(a) + dx, this.output.mol.atomY(a) + dy);
                 }
             return;
         }
-        var cx = 0, cy = 0;
+        let cx = 0, cy = 0;
         if (this.input.currentAtom > 0) {
             cx = mol.atomX(this.input.currentAtom);
             cy = mol.atomY(this.input.currentAtom);
         }
         else if (this.input.currentBond > 0) {
-            var bfr = mol.bondFrom(this.input.currentBond), bto = mol.bondTo(this.input.currentBond);
+            let bfr = mol.bondFrom(this.input.currentBond), bto = mol.bondTo(this.input.currentBond);
             cx = 0.5 * (mol.atomX(bfr) + mol.atomX(bto));
             cy = 0.5 * (mol.atomY(bfr) + mol.atomY(bto));
         }
         else {
-            for (var n = 0; n < this.subjectLength; n++) {
+            for (let n = 0; n < this.subjectLength; n++) {
                 cx += mol.atomX(this.subjectIndex[n]);
                 cy += mol.atomY(this.subjectIndex[n]);
             }
-            var invSz = 1.0 / this.subjectLength;
+            let invSz = 1.0 / this.subjectLength;
             cx *= invSz;
             cy *= invSz;
         }
         this.output.mol = mol.clone();
-        for (var n = 0; n < this.subjectLength; n++) {
-            var x = this.output.mol.atomX(this.subjectIndex[n]);
-            var y = this.output.mol.atomY(this.subjectIndex[n]);
+        for (let n = 0; n < this.subjectLength; n++) {
+            let x = this.output.mol.atomX(this.subjectIndex[n]);
+            let y = this.output.mol.atomY(this.subjectIndex[n]);
             this.output.mol.setAtomPos(this.subjectIndex[n], (x - cx) * mag + cx, (y - cy) * mag + cy);
         }
-    };
-    MoleculeActivity.prototype.execRotate = function (theta, centreX, centreY) {
+    }
+    execRotate(theta, centreX, centreY) {
         theta *= DEGRAD;
-        var mol = this.input.mol;
+        let mol = this.input.mol;
         if (centreX != null && centreY != null) {
             this.output.mol = mol.clone();
-            var mask_1 = this.subjectLength == 0 ? Vec.booleanArray(true, mol.numAtoms) : this.subjectMask;
-            CoordUtil.rotateAtoms(this.output.mol, mask_1, centreX, centreY, theta);
+            let mask = this.subjectLength == 0 ? Vec.booleanArray(true, mol.numAtoms) : this.subjectMask;
+            CoordUtil.rotateAtoms(this.output.mol, mask, centreX, centreY, theta);
             return;
         }
         if (mol.numAtoms < 2) {
             this.errmsg = 'At least 2 atoms are required.';
             return;
         }
-        var cx = 0, cy = 0;
-        var mask = this.subjectMask;
+        let cx = 0, cy = 0;
+        let mask = this.subjectMask;
         if (this.input.currentAtom > 0) {
             cx = mol.atomX(this.input.currentAtom);
             cy = mol.atomY(this.input.currentAtom);
             if (!this.hasSelected) {
                 mask = Vec.booleanArray(false, mol.numAtoms);
-                var cc = mol.atomConnComp(this.input.currentAtom);
-                for (var n = 1; n <= mol.numAtoms; n++)
+                let cc = mol.atomConnComp(this.input.currentAtom);
+                for (let n = 1; n <= mol.numAtoms; n++)
                     mask[n - 1] = mol.atomConnComp(n) == cc;
             }
         }
         else if (this.input.currentBond > 0) {
-            var bfr = mol.bondFrom(this.input.currentBond), bto = mol.bondTo(this.input.currentBond);
+            let bfr = mol.bondFrom(this.input.currentBond), bto = mol.bondTo(this.input.currentBond);
             cx = 0.5 * (mol.atomX(bfr) + mol.atomX(bto));
             cy = 0.5 * (mol.atomY(bfr) + mol.atomY(bto));
             if (!this.hasSelected) {
                 mask = Vec.booleanArray(false, mol.numAtoms);
-                var cc = mol.atomConnComp(bfr);
-                for (var n = 1; n <= mol.numAtoms; n++)
+                let cc = mol.atomConnComp(bfr);
+                for (let n = 1; n <= mol.numAtoms; n++)
                     mask[n - 1] = mol.atomConnComp(n) == cc;
             }
         }
         else if (this.subjectLength == 0) {
-            var box = mol.boundary();
+            let box = mol.boundary();
             cx = 0.5 * (box.minX() + box.maxX());
             cy = 0.5 * (box.minY() + box.maxY());
             mask = Vec.booleanArray(true, mol.numAtoms);
         }
         else {
-            for (var n = 0; n < this.subjectLength; n++) {
+            for (let n = 0; n < this.subjectLength; n++) {
                 cx += mol.atomX(this.subjectIndex[n]);
                 cy += mol.atomY(this.subjectIndex[n]);
             }
-            var invSz = 1.0 / this.subjectLength;
+            let invSz = 1.0 / this.subjectLength;
             cx *= invSz;
             cy *= invSz;
         }
         this.output.mol = mol.clone();
         CoordUtil.rotateAtoms(this.output.mol, mask, cx, cy, theta);
-    };
-    MoleculeActivity.prototype.execMove = function (refAtom, deltaX, deltaY) {
-        var subj = this.subjectIndex;
+    }
+    execMove(refAtom, deltaX, deltaY) {
+        let subj = this.subjectIndex;
         if (Vec.arrayLength(subj) == 0)
             subj = [refAtom];
         this.output.mol = this.input.mol.clone();
-        for (var _i = 0, subj_1 = subj; _i < subj_1.length; _i++) {
-            var a = subj_1[_i];
+        for (let a of subj)
             this.output.mol.setAtomPos(a, this.output.mol.atomX(a) + deltaX, this.output.mol.atomY(a) + deltaY);
-        }
-    };
-    MoleculeActivity.prototype.execRing = function (ringX, ringY, aromatic) {
-        var rsz = ringX.length;
-        var atoms = Vec.numberArray(0, rsz), bonds = Vec.numberArray(0, rsz);
-        var outmol = this.input.mol.clone();
-        for (var n = 0; n < rsz; n++) {
+    }
+    execRing(ringX, ringY, aromatic) {
+        let rsz = ringX.length;
+        let atoms = Vec.numberArray(0, rsz), bonds = Vec.numberArray(0, rsz);
+        let outmol = this.input.mol.clone();
+        for (let n = 0; n < rsz; n++) {
             atoms[n] = CoordUtil.atomAtPoint(outmol, ringX[n], ringY[n]);
             if (atoms[n] == 0)
                 atoms[n] = outmol.addAtom('C', ringX[n], ringY[n]);
         }
-        for (var n = 0; n < rsz; n++) {
-            var nn = n < rsz - 1 ? n + 1 : 0;
+        for (let n = 0; n < rsz; n++) {
+            let nn = n < rsz - 1 ? n + 1 : 0;
             bonds[n] = outmol.findBond(atoms[n], atoms[nn]);
             if (bonds[n] == 0)
                 bonds[n] = outmol.addBond(atoms[n], atoms[nn], 1);
         }
         if (aromatic) {
-            var valence = Vec.numberArray(0, rsz);
-            var pi = Vec.booleanArray(false, rsz);
-            for (var n = 0; n < rsz; n++) {
+            let valence = Vec.numberArray(0, rsz);
+            let pi = Vec.booleanArray(false, rsz);
+            for (let n = 0; n < rsz; n++) {
                 valence[n] = Chemistry.ELEMENT_BONDING[outmol.atomicNumber(atoms[n])] + outmol.atomCharge(atoms[n]);
                 if (outmol.atomHExplicit(atoms[n]) != Molecule.HEXPLICIT_UNKNOWN)
                     valence[n] -= outmol.atomHExplicit(atoms[n]);
-                for (var _i = 0, _a = outmol.atomAdjBonds(atoms[n]); _i < _a.length; _i++) {
-                    var b = _a[_i];
+                for (let b of outmol.atomAdjBonds(atoms[n]))
                     valence[n] -= outmol.bondOrder(b);
-                }
                 if (outmol.bondOrder(bonds[n]) >= 2) {
                     pi[n] = true;
                     if (n < rsz - 1) {
@@ -10137,8 +11271,8 @@ var MoleculeActivity = (function () {
                         pi[0] = true;
                 }
             }
-            for (var n = 0; n < rsz; n++) {
-                var nn = n < rsz - 1 ? n + 1 : 0;
+            for (let n = 0; n < rsz; n++) {
+                let nn = n < rsz - 1 ? n + 1 : 0;
                 if (pi[n] || pi[nn])
                     continue;
                 if (valence[n] > 0 && valence[nn] > 0) {
@@ -10151,36 +11285,36 @@ var MoleculeActivity = (function () {
             }
         }
         this.output.mol = outmol;
-    };
-    MoleculeActivity.prototype.requireSubject = function () {
+    }
+    requireSubject() {
         if (this.subjectLength == 0)
             this.errmsg = 'Subject required: current atom/bond or selected atoms.';
         return this.subjectLength > 0;
-    };
-    MoleculeActivity.prototype.requireAtoms = function () {
+    }
+    requireAtoms() {
         if (this.input.mol.numAtoms == 0)
             this.errmsg = 'There are no atoms.';
         return this.input.mol.numAtoms > 0;
-    };
-    MoleculeActivity.prototype.requireCurrent = function () {
+    }
+    requireCurrent() {
         if (this.input.currentAtom == 0 && this.input.currentBond == 0) {
             this.errmsg = 'There must be a current atom or bond.';
             return false;
         }
         return true;
-    };
-    MoleculeActivity.prototype.requireSelected = function () {
+    }
+    requireSelected() {
         if (!this.hasSelected)
             this.errmsg = 'No atoms are selected.';
         return this.hasSelected;
-    };
-    MoleculeActivity.prototype.pickSelectedGroup = function (groups, dir) {
+    }
+    pickSelectedGroup(groups, dir) {
         if (this.subjectLength == 0)
             return 0;
-        for (var i = 0; i < groups.length; i++) {
-            var g = groups[i];
-            var all = true;
-            for (var j = 0; j < g.length; j++)
+        for (let i = 0; i < groups.length; i++) {
+            let g = groups[i];
+            let all = true;
+            for (let j = 0; j < g.length; j++)
                 if (!this.subjectMask[g[j] - 1]) {
                     all = false;
                     break;
@@ -10190,33 +11324,33 @@ var MoleculeActivity = (function () {
                 return i < 0 ? i + groups.length : i >= groups.length ? i - groups.length : i;
             }
         }
-        for (var i = 0; i < groups.length; i++) {
-            var g = groups[i];
-            for (var j = 0; j < g.length; j++)
+        for (let i = 0; i < groups.length; i++) {
+            let g = groups[i];
+            for (let j = 0; j < g.length; j++)
                 if (this.subjectMask[g[j] - 1])
                     return i;
         }
         return 0;
-    };
-    MoleculeActivity.prototype.zapSubject = function () {
+    }
+    zapSubject() {
         this.output.currentAtom = 0;
         this.output.currentBond = 0;
         this.output.selectedMask = Vec.booleanArray(false, this.input.mol.numAtoms);
-    };
-    MoleculeActivity.prototype.performBondNew = function (atom, order, type) {
-        var mol = this.input.mol;
-        var ang = SketchUtil.calculateNewBondAngles(mol, atom, order);
+    }
+    performBondNew(atom, order, type) {
+        let mol = this.input.mol;
+        let ang = SketchUtil.calculateNewBondAngles(mol, atom, order);
         if (ang.length == 0)
             ang = SketchUtil.exitVectors(mol, atom);
         if (ang.length == 0) {
             this.errmsg = 'Could not find a suitable geometry for a new substituent.';
             return;
         }
-        var bx = 0, by = 0, best = 0;
-        for (var n = 0; n < ang.length; n++) {
-            var x = mol.atomX(atom) + Molecule.IDEALBOND * Math.cos(ang[n]);
-            var y = mol.atomY(atom) + Molecule.IDEALBOND * Math.sin(ang[n]);
-            var score = CoordUtil.congestionPoint(mol, x, y);
+        let bx = 0, by = 0, best = 0;
+        for (let n = 0; n < ang.length; n++) {
+            let x = mol.atomX(atom) + Molecule.IDEALBOND * Math.cos(ang[n]);
+            let y = mol.atomY(atom) + Molecule.IDEALBOND * Math.sin(ang[n]);
+            let score = CoordUtil.congestionPoint(mol, x, y);
             if (n == 0 || score < best) {
                 best = score;
                 bx = x;
@@ -10224,22 +11358,22 @@ var MoleculeActivity = (function () {
             }
         }
         this.output.mol = mol.clone();
-        var anum = CoordUtil.atomAtPoint(this.output.mol, bx, by);
+        let anum = CoordUtil.atomAtPoint(this.output.mol, bx, by);
         if (anum == 0)
             anum = this.output.mol.addAtom('C', bx, by);
         MolUtil.addBond(this.output.mol, atom, anum, order, type);
-    };
-    MoleculeActivity.prototype.performBondChange = function (order, type) {
-        var mol = this.input.mol;
-        var bonds = [];
-        for (var n = 1; n <= mol.numBonds; n++)
+    }
+    performBondChange(order, type) {
+        let mol = this.input.mol;
+        let bonds = [];
+        for (let n = 1; n <= mol.numBonds; n++)
             if (this.subjectMask[mol.bondFrom(n) - 1] && this.subjectMask[mol.bondTo(n) - 1])
                 bonds.push(n);
-        var switchType = type == Molecule.BONDTYPE_DECLINED || type == Molecule.BONDTYPE_INCLINED;
-        var stereoType = switchType || type == Molecule.BONDTYPE_UNKNOWN;
-        var anyChange = switchType;
-        for (var n = 0; n < bonds.length && !anyChange; n++) {
-            var b = bonds[n];
+        let switchType = type == Molecule.BONDTYPE_DECLINED || type == Molecule.BONDTYPE_INCLINED;
+        let stereoType = switchType || type == Molecule.BONDTYPE_UNKNOWN;
+        let anyChange = switchType;
+        for (let n = 0; n < bonds.length && !anyChange; n++) {
+            let b = bonds[n];
             if (mol.bondOrder(b) != order && type == Molecule.BONDTYPE_NORMAL)
                 anyChange = true;
             else if (mol.bondType(b) != type)
@@ -10250,8 +11384,8 @@ var MoleculeActivity = (function () {
             return;
         }
         this.output.mol = mol.clone();
-        for (var n = 0; n < bonds.length; n++) {
-            var b = bonds[n], bfr = this.output.mol.bondFrom(b), bto = this.output.mol.bondTo(b);
+        for (let n = 0; n < bonds.length; n++) {
+            let b = bonds[n], bfr = this.output.mol.bondFrom(b), bto = this.output.mol.bondTo(b);
             if (switchType && this.output.mol.bondType(b) == type) {
                 this.output.mol.setBondFromTo(b, bto, bfr);
             }
@@ -10264,11 +11398,11 @@ var MoleculeActivity = (function () {
                 this.output.mol.setBondFromTo(b, bto, bfr);
             }
         }
-    };
-    MoleculeActivity.prototype.performBondGeomAtom = function (geom, atom) {
-        var mol = this.input.mol;
-        var adj = mol.atomAdjList(atom);
-        var asz = adj.length, gsz = SketchUtil.GEOM_ANGLES[geom].length;
+    }
+    performBondGeomAtom(geom, atom) {
+        let mol = this.input.mol;
+        let adj = mol.atomAdjList(atom);
+        let asz = adj.length, gsz = SketchUtil.GEOM_ANGLES[geom].length;
         if (asz > gsz) {
             this.errmsg = 'The current atom has more bonds than does the selected geometry.';
             return;
@@ -10283,8 +11417,8 @@ var MoleculeActivity = (function () {
                 this.errmsg = 'Could not re-fit the atom geometry.';
             return;
         }
-        var ang = CoordUtil.atomBondAngles(mol, atom);
-        var newang = SketchUtil.mapAngleSubstituent(geom, ang);
+        let ang = CoordUtil.atomBondAngles(mol, atom);
+        let newang = SketchUtil.mapAngleSubstituent(geom, ang);
         if (newang == null) {
             this.output.mol = SketchUtil.refitAtomGeometry(mol, atom, geom);
             if (this.output.mol == null)
@@ -10292,21 +11426,21 @@ var MoleculeActivity = (function () {
             return;
         }
         this.output.mol = mol.clone();
-        var theta = SketchUtil.pickNewAtomDirection(mol, atom, newang);
-        var x = this.output.mol.atomX(atom) + Molecule.IDEALBOND * Math.cos(theta);
-        var y = this.output.mol.atomY(atom) + Molecule.IDEALBOND * Math.sin(theta);
-        var anum = CoordUtil.atomAtPoint(this.output.mol, x, y);
+        let theta = SketchUtil.pickNewAtomDirection(mol, atom, newang);
+        let x = this.output.mol.atomX(atom) + Molecule.IDEALBOND * Math.cos(theta);
+        let y = this.output.mol.atomY(atom) + Molecule.IDEALBOND * Math.sin(theta);
+        let anum = CoordUtil.atomAtPoint(this.output.mol, x, y);
         if (anum == 0)
             anum = this.output.mol.addAtom('C', x, y);
         MolUtil.addBond(this.output.mol, atom, anum, 1);
-    };
-    MoleculeActivity.prototype.performBondGeomBond = function (geom, bond) {
-        var mol = this.input.mol;
-        var bfr = mol.bondFrom(bond), bto = mol.bondTo(bond);
-        var ac1 = mol.atomAdjCount(bfr), ac2 = mol.atomAdjCount(bto);
+    }
+    performBondGeomBond(geom, bond) {
+        let mol = this.input.mol;
+        let bfr = mol.bondFrom(bond), bto = mol.bondTo(bond);
+        let ac1 = mol.atomAdjCount(bfr), ac2 = mol.atomAdjCount(bto);
         if (ac1 > 1 && ac2 == 1) { }
         else if (ac1 == 1 && ac2 > 1) {
-            var t = ac1;
+            let t = ac1;
             ac1 = ac2;
             ac2 = t;
         }
@@ -10314,29 +11448,29 @@ var MoleculeActivity = (function () {
             this.errmsg = 'One end of the bond must be terminal.';
             return;
         }
-        var adj = mol.atomAdjList(bfr);
-        var x1 = mol.atomX(bfr), y1 = mol.atomY(bfr);
-        var x2 = mol.atomX(bto), y2 = mol.atomY(bto);
-        var ang = [];
-        for (var n = 0, p = 0; n < adj.length; n++)
+        let adj = mol.atomAdjList(bfr);
+        let x1 = mol.atomX(bfr), y1 = mol.atomY(bfr);
+        let x2 = mol.atomX(bto), y2 = mol.atomY(bto);
+        let ang = [];
+        for (let n = 0, p = 0; n < adj.length; n++)
             if (adj[n] != bto) {
                 ang.push(Math.atan2(mol.atomY(adj[n]) - y1, mol.atomX(adj[n]) - x1));
             }
-        var newang = SketchUtil.mapAngleSubstituent(geom, ang);
+        let newang = SketchUtil.mapAngleSubstituent(geom, ang);
         if (newang == null) {
             this.errmsg = 'No alternative geometries identified.';
             return;
         }
-        var bestAng = TWOPI + 1, bestX = 0, bestY = 0;
-        var curth = Math.atan2(y2 - y1, x2 - x1), r = norm_xy(x2 - x1, y2 - y1);
-        for (var n = 0; n < newang.length; n++) {
-            var th = angleDiff(newang[n], curth);
+        let bestAng = TWOPI + 1, bestX = 0, bestY = 0;
+        let curth = Math.atan2(y2 - y1, x2 - x1), r = norm_xy(x2 - x1, y2 - y1);
+        for (let n = 0; n < newang.length; n++) {
+            let th = angleDiff(newang[n], curth);
             if (th < 0)
                 th += TWOPI;
             if (n > 0 && th > bestAng)
                 continue;
-            var x = x1 + r * Math.cos(th + curth);
-            var y = y1 + r * Math.sin(th + curth);
+            let x = x1 + r * Math.cos(th + curth);
+            let y = y1 + r * Math.sin(th + curth);
             if (CoordUtil.atomAtPoint(mol, x, y) > 0)
                 continue;
             bestAng = th;
@@ -10349,39 +11483,37 @@ var MoleculeActivity = (function () {
         }
         this.output.mol = mol.clone();
         this.output.mol.setAtomPos(bto, bestX, bestY);
-    };
-    return MoleculeActivity;
-}());
-var ButtonBank = (function () {
-    function ButtonBank() {
+    }
+}
+class ButtonBank {
+    constructor() {
         this.isSubLevel = false;
         this.buttons = [];
     }
-    ButtonBank.prototype.init = function () { };
-    ButtonBank.prototype.bankClosed = function () { };
-    return ButtonBank;
-}());
-var ELEMENTS_NOBLE = [
+    init() { }
+    bankClosed() { }
+}
+const ELEMENTS_NOBLE = [
     "He", "Ar", "Kr", "Xe", "Rn"
 ];
-var ELEMENTS_S_BLOCK = [
+const ELEMENTS_S_BLOCK = [
     "Li", "Na", "K", "Rb", "Cs", "Fr", "Sc",
     "Be", "Mg", "Ca", "Sr", "Ba", "Ra", "Y"
 ];
-var ELEMENTS_P_BLOCK = [
+const ELEMENTS_P_BLOCK = [
     "B", "Al", "Si", "Ga", "Ge", "As", "Se",
     "In", "Sn", "Sb", "Te", "Tl", "Pb", "Bi", "Po", "At"
 ];
-var ELEMENTS_D_BLOCK = [
+const ELEMENTS_D_BLOCK = [
     "Ti", "V", "Cr", "Mn", "Fe", "Co", "Ni", "Cu", "Zn",
     "Zr", "Nb", "Mo", "Tc", "Ru", "Rh", "Pd", "Ag", "Cd",
     "Hf", "Ta", "W", "Re", "Os", "Ir", "Pt", "Au", "Hg"
 ];
-var ELEMENTS_F_BLOCK = [
+const ELEMENTS_F_BLOCK = [
     "La", "Ce", "Pr", "Nd", "Sm", "Eu", "Gd", "Tb", "Dy",
     "Ho", "Er", "Tm", "Yb", "Lu", "Ac", "Th", "Pa", "U"
 ];
-var ELEMENTS_ABBREV = [
+const ELEMENTS_ABBREV = [
     "X", "Y", "Z", "Q", "M", "L", "E", "A", "R",
     "R0", "R1", "R2", "R3", "R4", "R5", "R6", "R7", "R8"
 ];
@@ -10399,15 +11531,13 @@ var CommandType;
     CommandType[CommandType["FBlock"] = 9] = "FBlock";
     CommandType[CommandType["Noble"] = 10] = "Noble";
 })(CommandType || (CommandType = {}));
-var CommandBank = (function (_super) {
-    __extends(CommandBank, _super);
-    function CommandBank(owner, cmdType) {
-        if (cmdType === void 0) { cmdType = CommandType.Main; }
-        _super.call(this);
+class CommandBank extends ButtonBank {
+    constructor(owner, cmdType = CommandType.Main) {
+        super();
         this.owner = owner;
         this.cmdType = cmdType;
     }
-    CommandBank.prototype.update = function () {
+    update() {
         if (this.cmdType == CommandType.Main) {
             this.buttons.push({ 'id': 'undo', 'imageFN': 'MainUndo', 'helpText': 'Undo last change.' });
             this.buttons.push({ 'id': 'redo', 'imageFN': 'MainRedo', 'helpText': 'Cancel last undo.' });
@@ -10524,17 +11654,16 @@ var CommandBank = (function (_super) {
             this.populateElements(ELEMENTS_F_BLOCK);
         else if (this.cmdType == CommandType.Noble)
             this.populateElements(ELEMENTS_ABBREV);
-    };
-    CommandBank.prototype.populateElements = function (elements) {
-        for (var _i = 0, elements_1 = elements; _i < elements_1.length; _i++) {
-            var el = elements_1[_i];
-            this.buttons.push({ 'id': "element:" + el, 'text': el, 'helpText': "Change elements to " + el + "." });
+    }
+    populateElements(elements) {
+        for (let el of elements) {
+            this.buttons.push({ 'id': `element:${el}`, 'text': el, 'helpText': `Change elements to ${el}.` });
         }
-    };
-    CommandBank.prototype.hitButton = function (id) {
-        var actv = 0, param = null;
+    }
+    hitButton(id) {
+        let actv = 0, param = null;
         if (id.startsWith('element:')) {
-            var el = id.substring(8);
+            let el = id.substring(8);
             actv = ActivityType.Element;
             param = { 'element': el };
         }
@@ -10805,27 +11934,25 @@ var CommandBank = (function (_super) {
         if (actv > 0) {
             new MoleculeActivity(this.owner, actv, param).execute();
         }
-    };
-    return CommandBank;
-}(ButtonBank));
-var TemplateBank = (function (_super) {
-    __extends(TemplateBank, _super);
-    function TemplateBank(owner, group) {
-        _super.call(this);
+    }
+}
+class TemplateBank extends ButtonBank {
+    constructor(owner, group) {
+        super();
         this.owner = owner;
         this.group = group;
         this.subgroups = null;
         this.templates = null;
     }
-    TemplateBank.prototype.init = function () {
-        var policy = RenderPolicy.defaultBlackOnWhite();
+    init() {
+        let policy = RenderPolicy.defaultBlackOnWhite();
         policy.data.pointScale = 10;
         policy.data.lineSize *= 1.5;
         policy.data.bondSep *= 1.5;
-        var sz = this.buttonView.idealSize;
+        let sz = this.buttonView.idealSize;
         if (this.group == null) {
-            var input = { 'tokenID': this.owner.tokenID, 'policy': policy.data, 'size': [sz - 4, sz - 4] };
-            var fcn = function (result, error) {
+            let input = { 'tokenID': this.owner.tokenID, 'policy': policy.data, 'size': [sz - 4, sz - 4] };
+            let fcn = function (result, error) {
                 if (!result) {
                     alert('Setup of TemplateBank failed: ' + error.message);
                     return;
@@ -10836,8 +11963,8 @@ var TemplateBank = (function (_super) {
             Func.getDefaultTemplateGroups(input, fcn, this);
         }
         else {
-            var input = { 'tokenID': this.owner.tokenID, 'policy': policy.data, 'size': [sz - 4, sz - 4], 'group': this.group };
-            var fcn = function (result, error) {
+            let input = { 'tokenID': this.owner.tokenID, 'policy': policy.data, 'size': [sz - 4, sz - 4], 'group': this.group };
+            let fcn = function (result, error) {
                 if (!result) {
                     alert('Setup of TemplateBank failed: ' + error.message);
                     return;
@@ -10847,8 +11974,8 @@ var TemplateBank = (function (_super) {
             };
             Func.getDefaultTemplateStructs(input, fcn, this);
         }
-    };
-    TemplateBank.prototype.update = function () {
+    }
+    update() {
         if (this.subgroups == null && this.templates == null)
             return;
         this.buttons = [];
@@ -10856,64 +11983,60 @@ var TemplateBank = (function (_super) {
             this.populateGroups();
         else
             this.populateTemplates();
-    };
-    TemplateBank.prototype.populateGroups = function () {
-        var groups = this.subgroups.groups, titles = this.subgroups.titles, preview = this.subgroups.preview;
-        for (var n = 0; n < groups.length; n++) {
+    }
+    populateGroups() {
+        let groups = this.subgroups.groups, titles = this.subgroups.titles, preview = this.subgroups.preview;
+        for (let n = 0; n < groups.length; n++) {
             this.buttons.push({ 'id': groups[n], 'metavec': preview[n], 'helpText': titles[n] });
         }
-    };
-    TemplateBank.prototype.populateTemplates = function () {
-        var names = this.templates.names, abbrev = this.templates.abbrev, mnemonic = this.templates.mnemonic, preview = this.templates.preview;
-        for (var n = 0; n < names.length; n++) {
+    }
+    populateTemplates() {
+        let names = this.templates.names, abbrev = this.templates.abbrev, mnemonic = this.templates.mnemonic, preview = this.templates.preview;
+        for (let n = 0; n < names.length; n++) {
             this.buttons.push({ 'id': n.toString(), 'metavec': preview[n], 'helpText': names[n] });
         }
-    };
-    TemplateBank.prototype.hitButton = function (id) {
+    }
+    hitButton(id) {
         if (this.group == null) {
             this.buttonView.pushBank(new TemplateBank(this.owner, id));
         }
         else {
-            var idx = parseInt(id);
-            var param = { 'fragNative': this.templates.molecules[idx] };
+            let idx = parseInt(id);
+            let param = { 'fragNative': this.templates.molecules[idx] };
             new MoleculeActivity(this.owner, ActivityType.TemplateFusion, param).execute();
         }
-    };
-    return TemplateBank;
-}(ButtonBank));
-var FusionBank = (function (_super) {
-    __extends(FusionBank, _super);
-    function FusionBank(owner) {
-        _super.call(this);
+    }
+}
+class FusionBank extends ButtonBank {
+    constructor(owner) {
+        super();
         this.owner = owner;
     }
-    FusionBank.prototype.update = function () {
+    update() {
         this.buttons = [];
         this.buttons.push({ 'id': 'accept', 'imageFN': 'GenericAccept', 'helpText': 'Apply this template.' });
         this.buttons.push({ 'id': 'prev', 'imageFN': 'TemplatePrev', 'helpText': 'Show previous fusion option.' });
         this.buttons.push({ 'id': 'next', 'imageFN': 'TemplateNext', 'helpText': 'Show next fusion option.' });
-    };
-    FusionBank.prototype.hitButton = function (id) {
+    }
+    hitButton(id) {
         if (id == 'accept')
             this.owner.templateAccept();
         else if (id == 'prev')
             this.owner.templateRotate(-1);
         else if (id == 'next')
             this.owner.templateRotate(1);
-    };
-    FusionBank.prototype.bankClosed = function () {
+    }
+    bankClosed() {
         this.owner.clearPermutations();
-    };
-    return FusionBank;
-}(ButtonBank));
-var ToolBank = (function (_super) {
-    __extends(ToolBank, _super);
-    function ToolBank(owner) {
-        _super.call(this);
+    }
+}
+class ToolBank extends ButtonBank {
+    constructor(owner) {
+        super();
         this.owner = owner;
         this.initiallySelected = 'arrow';
     }
-    ToolBank.prototype.update = function () {
+    update() {
         this.buttons = [];
         this.buttons.push({ 'id': 'arrow', 'imageFN': 'ToolSelect', 'helpText': 'Selection tool.' });
         this.buttons.push({ 'id': 'rotate', 'imageFN': 'ToolRotate', 'helpText': 'Rotate subject atoms.' });
@@ -10942,13 +12065,12 @@ var ToolBank = (function (_super) {
         this.buttons.push({ 'id': 'elementBr', 'text': 'Br', 'helpText': 'Change elements to Bromine.' });
         this.buttons.push({ 'id': 'elementA', 'text': 'A', 'helpText': 'Pick other element.' });
         this.buttonView.setSelectedButton('arrow');
-    };
+    }
     ;
-    ToolBank.prototype.hitButton = function (id) {
+    hitButton(id) {
         this.buttonView.setSelectedButton(id);
-    };
-    return ToolBank;
-}(ButtonBank));
+    }
+}
 var DraggingTool;
 (function (DraggingTool) {
     DraggingTool[DraggingTool["None"] = 0] = "None";
@@ -10965,10 +12087,9 @@ var DraggingTool;
     DraggingTool[DraggingTool["Ring"] = 11] = "Ring";
 })(DraggingTool || (DraggingTool = {}));
 var globalMoleculeClipboard = null;
-var Sketcher = (function (_super) {
-    __extends(Sketcher, _super);
-    function Sketcher(tokenID) {
-        _super.call(this);
+class Sketcher extends Widget {
+    constructor(tokenID) {
+        super();
         this.tokenID = tokenID;
         this.mol = null;
         this.policy = null;
@@ -11030,23 +12151,19 @@ var Sketcher = (function (_super) {
         this.currentPerm = 0;
         this.fusionBank = null;
     }
-    Sketcher.prototype.setSize = function (width, height) {
+    setSize(width, height) {
         this.width = width;
         this.height = height;
-    };
-    Sketcher.prototype.defineMolecule = function (mol, withAutoScale, withStashUndo) {
-        if (withAutoScale === void 0) { withAutoScale = true; }
-        if (withStashUndo === void 0) { withStashUndo = false; }
+    }
+    defineMolecule(mol, withAutoScale = true, withStashUndo = false) {
         if (withStashUndo)
             this.stashUndo();
         this.stopTemplateFusion();
         this.mol = mol.clone();
         this.guidelines = [];
-        for (var n = 1; n <= this.mol.numAtoms; n++) {
-            for (var _i = 0, _a = SketchUtil.guidelineSprouts(this.mol, n); _i < _a.length; _i++) {
-                var sprout = _a[_i];
+        for (let n = 1; n <= this.mol.numAtoms; n++) {
+            for (let sprout of SketchUtil.guidelineSprouts(this.mol, n))
                 this.guidelines.push(sprout);
-            }
         }
         if (!this.beenSetup)
             return;
@@ -11055,7 +12172,7 @@ var Sketcher = (function (_super) {
         this.hoverAtom = 0;
         this.hoverBond = 0;
         if (!withAutoScale) {
-            var effects = new RenderEffects();
+            let effects = new RenderEffects();
             this.layout = new ArrangeMolecule(this.mol, this, this.policy, effects);
             this.layout.arrange();
             this.metavec = new MetaVector();
@@ -11064,18 +12181,18 @@ var Sketcher = (function (_super) {
         }
         else
             this.autoScale();
-    };
-    Sketcher.prototype.defineMoleculeString = function (molsk, withAutoScale, withStashUndo) {
+    }
+    defineMoleculeString(molsk, withAutoScale, withStashUndo) {
         this.defineMolecule(Molecule.fromString(molsk), withAutoScale, withStashUndo);
-    };
-    Sketcher.prototype.defineRenderPolicy = function (policy) {
+    }
+    defineRenderPolicy(policy) {
         this.policy = policy;
         this.pointScale = policy.data.pointScale;
-    };
-    Sketcher.prototype.clearMolecule = function () { this.defineMolecule(new Molecule(), true, true); };
-    Sketcher.prototype.getMolecule = function () { return this.mol.clone(); };
-    Sketcher.prototype.setup = function (callback, master) {
-        var fcnPrep = function () {
+    }
+    clearMolecule() { this.defineMolecule(new Molecule(), true, true); }
+    getMolecule() { return this.mol.clone(); }
+    setup(callback, master) {
+        let fcnPrep = function () {
             this.beenSetup = true;
             if (this.mol == null)
                 this.mol = new Molecule();
@@ -11083,7 +12200,7 @@ var Sketcher = (function (_super) {
                 this.policy = RenderPolicy.defaultColourOnWhite();
                 this.pointScale = this.policy.data.pointScale;
             }
-            var effects = new RenderEffects();
+            let effects = new RenderEffects();
             this.layout = new ArrangeMolecule(this.mol, this, this.policy, effects);
             this.layout.arrange();
             this.centreAndShrink();
@@ -11093,17 +12210,17 @@ var Sketcher = (function (_super) {
                 callback.call(master);
         };
         ButtonView.prepare(fcnPrep, this);
-    };
-    Sketcher.prototype.render = function (parent) {
+    }
+    render(parent) {
         if (!this.width || !this.height)
             throw 'Sketcher.render called without width and height';
-        _super.prototype.render.call(this, parent);
+        super.render(parent);
         this.container = $('<div></div>').appendTo(this.content);
         this.container.attr('style', 'position: relative; width: ' + this.width + 'px; height: ' + this.height + 'px;');
         this.container.css('background-color', colourCanvas(this.background));
         this.container.css('border', '1px solid ' + colourCanvas(this.border));
         this.container.css('border-radius', '4px');
-        var canvasStyle = 'position: absolute; left: 0; top: 0;';
+        let canvasStyle = 'position: absolute; left: 0; top: 0;';
         canvasStyle += ' pointer-events: none;';
         this.canvasUnder = newElement(this.container, 'canvas', { 'width': this.width, 'height': this.height, 'style': canvasStyle });
         this.canvasMolecule = newElement(this.container, 'canvas', { 'width': this.width, 'height': this.height, 'style': canvasStyle });
@@ -11118,7 +12235,7 @@ var Sketcher = (function (_super) {
         this.divMessage.css('font-size', '120%');
         this.centreAndShrink();
         this.redraw();
-        var reserveHeight = 0;
+        let reserveHeight = 0;
         if (this.useCommandBank) {
             this.commandView = new ButtonView('bottom', 0, 0, this.width, this.height);
             this.commandView.setHasBigButtons(false);
@@ -11138,7 +12255,7 @@ var Sketcher = (function (_super) {
             this.templateView.pushBank(new TemplateBank(this, null));
             this.templateView.render(this.container);
         }
-        var self = this;
+        const self = this;
         this.container.click(function (event) { self.mouseClick(event); });
         this.container.dblclick(function (event) { self.mouseDoubleClick(event); });
         this.container.mousedown(function (event) { event.preventDefault(); self.mouseDown(event); });
@@ -11160,7 +12277,7 @@ var Sketcher = (function (_super) {
             self.dropInto(event.dataTransfer);
         });
         document.addEventListener('paste', function (e) {
-            var wnd = window;
+            let wnd = window;
             if (wnd.clipboardData && wnd.clipboardData.getData)
                 self.pasteText(wnd.clipboardData.getData('Text'));
             else if (e.clipboardData && e.clipboardData.getData)
@@ -11168,32 +12285,32 @@ var Sketcher = (function (_super) {
             e.preventDefault();
             return false;
         });
-    };
-    Sketcher.prototype.showMessage = function (msg, isError) {
-        var watermark = ++this.fadeWatermark;
+    }
+    showMessage(msg, isError) {
+        let watermark = ++this.fadeWatermark;
         this.divMessage.css('color', isError ? '#FF0000' : '#008000');
         this.divMessage.text(msg);
-        var szLeft = (this.toolView == null ? 0 : this.toolView.width) + 2;
-        var szRight = (this.templateView == null ? 0 : this.templateView.width) + 2;
-        var szBottom = (this.commandView == null ? 0 : this.commandView.height) + 2;
+        let szLeft = (this.toolView == null ? 0 : this.toolView.width) + 2;
+        let szRight = (this.templateView == null ? 0 : this.templateView.width) + 2;
+        let szBottom = (this.commandView == null ? 0 : this.commandView.height) + 2;
         this.divMessage.css('left', szLeft + 'px');
         this.divMessage.css('width', (this.width - szLeft - szRight) + 'px');
         this.divMessage.css('height', (this.height - szBottom) + 'px');
-        var self = this;
+        const self = this;
         window.setTimeout(function () {
             if (watermark == self.fadeWatermark)
                 self.divMessage.text('');
         }, 5000);
-    };
-    Sketcher.prototype.clearMessage = function () {
+    }
+    clearMessage() {
         if (this.divMessage.text() == '')
             return;
         this.fadeWatermark++;
         this.divMessage.text('');
-    };
-    Sketcher.prototype.autoScale = function () {
+    }
+    autoScale() {
         this.pointScale = this.policy.data.pointScale;
-        var effects = new RenderEffects();
+        let effects = new RenderEffects();
         this.layout = new ArrangeMolecule(this.mol, this, this.policy, effects);
         this.layout.arrange();
         this.centreAndShrink();
@@ -11201,47 +12318,46 @@ var Sketcher = (function (_super) {
         new DrawMolecule(this.layout, this.metavec).draw();
         this.layoutTemplatePerm();
         this.delayedRedraw();
-    };
-    Sketcher.prototype.anySelected = function () {
+    }
+    anySelected() {
         if (this.selectedMask == null)
             return false;
-        for (var n = 0; n < this.selectedMask.length; n++)
+        for (let n = 0; n < this.selectedMask.length; n++)
             if (this.selectedMask[n])
                 return true;
         return false;
-    };
-    Sketcher.prototype.getSelected = function (N) {
+    }
+    getSelected(N) {
         if (this.selectedMask == null || N > this.selectedMask.length)
             return false;
         return this.selectedMask[N - 1];
-    };
-    Sketcher.prototype.setSelected = function (N, sel) {
+    }
+    setSelected(N, sel) {
         if (this.selectedMask == null) {
             this.selectedMask = new Array(this.mol.numAtoms);
-            for (var n = this.selectedMask.length - 1; n >= 0; n--)
+            for (let n = this.selectedMask.length - 1; n >= 0; n--)
                 this.selectedMask[n] = false;
         }
         while (this.selectedMask.length < this.mol.numAtoms) {
             this.selectedMask.push(false);
         }
         this.selectedMask[N - 1] = sel;
-    };
-    Sketcher.prototype.getLassoed = function (N) {
+    }
+    getLassoed(N) {
         if (this.lassoMask == null || N > this.lassoMask.length)
             return false;
         return this.lassoMask[N - 1];
-    };
-    Sketcher.prototype.getState = function () {
-        var state = {
+    }
+    getState() {
+        let state = {
             'mol': this.mol.clone(),
             'currentAtom': this.currentAtom,
             'currentBond': this.currentBond,
             'selectedMask': this.selectedMask == null ? null : this.selectedMask.slice(0)
         };
         return state;
-    };
-    Sketcher.prototype.setState = function (state, withStashUndo) {
-        if (withStashUndo === void 0) { withStashUndo = true; }
+    }
+    setState(state, withStashUndo = true) {
         if (withStashUndo)
             this.stashUndo();
         this.stopTemplateFusion();
@@ -11254,147 +12370,147 @@ var Sketcher = (function (_super) {
         if (state.selectedMask != null)
             this.selectedMask = state.selectedMask == null ? null : state.selectedMask.slice(0);
         this.delayedRedraw();
-    };
-    Sketcher.prototype.stashUndo = function () {
+    }
+    stashUndo() {
         if (this.undoStack.length == 0 && this.mol.numAtoms == 0)
             return;
-        var state = this.getState();
+        let state = this.getState();
         this.undoStack.push(state);
         while (this.undoStack.length > Sketcher.UNDO_SIZE) {
             this.undoStack.splice(0, 1);
         }
         this.redoStack = [];
-    };
-    Sketcher.prototype.setPermutations = function (perms) {
+    }
+    setPermutations(perms) {
         this.templatePerms = perms;
         this.pickTemplatePermutation(0);
         this.fusionBank = new FusionBank(this);
         this.templateView.pushBank(this.fusionBank);
-    };
-    Sketcher.prototype.stopTemplateFusion = function () {
+    }
+    stopTemplateFusion() {
         if (this.fusionBank != null)
             this.templateView.popBank();
-    };
-    Sketcher.prototype.clearPermutations = function () {
+    }
+    clearPermutations() {
         if (this.templatePerms == null)
             return;
         this.templatePerms = null;
         this.delayedRedraw();
         this.fusionBank = null;
-    };
-    Sketcher.prototype.templateAccept = function () {
-        var mol = Molecule.fromString(this.templatePerms[this.currentPerm].mol);
+    }
+    templateAccept() {
+        let mol = Molecule.fromString(this.templatePerms[this.currentPerm].mol);
         this.templateView.popBank();
         this.defineMolecule(mol, false, true);
-    };
-    Sketcher.prototype.templateRotate = function (dir) {
-        var idx = (this.currentPerm + dir) % this.templatePerms.length;
+    }
+    templateRotate(dir) {
+        let idx = (this.currentPerm + dir) % this.templatePerms.length;
         if (idx < 0)
             idx += this.templatePerms.length;
         this.pickTemplatePermutation(idx);
-    };
-    Sketcher.prototype.canUndo = function () { return this.undoStack.length > 0; };
-    Sketcher.prototype.canRedo = function () { return this.redoStack.length > 0; };
-    Sketcher.prototype.performUndo = function () {
+    }
+    canUndo() { return this.undoStack.length > 0; }
+    canRedo() { return this.redoStack.length > 0; }
+    performUndo() {
         if (this.undoStack.length == 0)
             return;
-        var state = this.getState();
+        let state = this.getState();
         this.redoStack.push(state);
         this.setState(this.undoStack.pop(), false);
-    };
-    Sketcher.prototype.performRedo = function () {
+    }
+    performRedo() {
         if (this.redoStack.length == 0)
             return;
-        var state = this.getState();
+        let state = this.getState();
         this.undoStack.push(state);
         this.setState(this.redoStack.pop(), false);
-    };
-    Sketcher.prototype.performCopy = function (mol) {
+    }
+    performCopy(mol) {
         globalMoleculeClipboard = mol.clone();
-        var cookies = new Cookies();
+        let cookies = new Cookies();
         if (cookies.numMolecules() > 0)
             cookies.stashMolecule(mol);
-    };
-    Sketcher.prototype.performPaste = function () {
-        var cookies = new Cookies();
+    }
+    performPaste() {
+        let cookies = new Cookies();
         if (cookies.numMolecules() == 0) {
             if (MolUtil.notBlank(globalMoleculeClipboard))
                 this.pasteMolecule(globalMoleculeClipboard);
             return;
         }
-        var dlg = new PickRecent(cookies, 1);
+        let dlg = new PickRecent(cookies, 1);
         dlg.onPick1(function (mol) { this.pasteMolecule(mol); }, this);
         dlg.open();
-    };
-    Sketcher.prototype.zoom = function (mag) {
-        var cx = 0.5 * this.width, cy = 0.5 * this.height;
-        var newScale = Math.min(10 * this.policy.data.pointScale, Math.max(0.1 * this.policy.data.pointScale, this.pointScale * mag));
+    }
+    zoom(mag) {
+        let cx = 0.5 * this.width, cy = 0.5 * this.height;
+        let newScale = Math.min(10 * this.policy.data.pointScale, Math.max(0.1 * this.policy.data.pointScale, this.pointScale * mag));
         if (newScale == this.pointScale)
             return;
         this.offsetX = cx - (newScale / this.pointScale) * (cx - this.offsetX);
         this.offsetY = cy - (newScale / this.pointScale) * (cy - this.offsetY);
         this.pointScale = newScale;
-        var effects = new RenderEffects();
+        let effects = new RenderEffects();
         this.layout = new ArrangeMolecule(this.mol, this, this.policy, effects);
         this.layout.arrange();
         this.metavec = new MetaVector();
         new DrawMolecule(this.layout, this.metavec).draw();
         this.layoutTemplatePerm();
         this.delayedRedraw();
-    };
-    Sketcher.prototype.pasteText = function (str) {
-        var mol = Molecule.fromString(str);
+    }
+    pasteText(str) {
+        let mol = Molecule.fromString(str);
         if (mol != null)
             this.pasteMolecule(mol);
         else
             alert('Text from clipboard is not a valid molecule.');
-    };
-    Sketcher.prototype.pasteMolecule = function (mol) {
+    }
+    pasteMolecule(mol) {
         if (this.mol.numAtoms == 0) {
             this.defineMolecule(mol, true, true);
             return;
         }
-        var param = { 'fragNative': mol.toString() };
+        let param = { 'fragNative': mol.toString() };
         new MoleculeActivity(this, ActivityType.TemplateFusion, param).execute();
-    };
-    Sketcher.prototype.pickTemplatePermutation = function (idx) {
-        var perm = this.templatePerms[idx];
+    }
+    pickTemplatePermutation(idx) {
+        let perm = this.templatePerms[idx];
         this.currentPerm = idx;
         this.layoutTemplatePerm();
         this.delayedRedraw();
-    };
-    Sketcher.prototype.scale = function () { return this.pointScale; };
-    Sketcher.prototype.angToX = function (ax) {
+    }
+    scale() { return this.pointScale; }
+    angToX(ax) {
         return ax * this.pointScale + this.offsetX;
-    };
-    Sketcher.prototype.angToY = function (ay) {
+    }
+    angToY(ay) {
         return ay * -this.pointScale + this.offsetY;
-    };
-    Sketcher.prototype.xToAng = function (px) {
+    }
+    xToAng(px) {
         return (px - this.offsetX) / this.pointScale;
-    };
-    Sketcher.prototype.yToAng = function (py) {
+    }
+    yToAng(py) {
         return (py - this.offsetY) / -this.pointScale;
-    };
-    Sketcher.prototype.scaleToAng = function (scale) { return scale / this.pointScale; };
-    Sketcher.prototype.angToScale = function (ang) { return ang * this.pointScale; };
-    Sketcher.prototype.yIsUp = function () { return false; };
-    Sketcher.prototype.measureText = function (str, fontSize) { return FontData.main.measureText(str, fontSize); };
-    Sketcher.prototype.centreAndShrink = function () {
+    }
+    scaleToAng(scale) { return scale / this.pointScale; }
+    angToScale(ang) { return ang * this.pointScale; }
+    yIsUp() { return false; }
+    measureText(str, fontSize) { return FontData.main.measureText(str, fontSize); }
+    centreAndShrink() {
         if (this.layout == null)
             return;
-        var bounds = this.layout.determineBoundary(0);
-        var limW = this.width - 6, limH = this.height - 6;
-        var natW = bounds[2] - bounds[0], natH = bounds[3] - bounds[1];
-        var scale = 1;
+        let bounds = this.layout.determineBoundary(0);
+        let limW = this.width - 6, limH = this.height - 6;
+        let natW = bounds[2] - bounds[0], natH = bounds[3] - bounds[1];
+        let scale = 1;
         if (natW > limW) {
-            var down = limW / natW;
+            let down = limW / natW;
             scale *= down;
             natW *= down;
             natH *= down;
         }
         if (natH > limH) {
-            var down = limH / natH;
+            let down = limH / natH;
             scale *= down;
             natW *= down;
             natH *= down;
@@ -11405,48 +12521,48 @@ var Sketcher = (function (_super) {
             this.layout.scaleEverything(scale);
             bounds = this.layout.determineBoundary(0);
         }
-        var dx = 0.5 * (limW - natW) - bounds[0], dy = 0.5 * (limH - natH) - bounds[1];
+        let dx = 0.5 * (limW - natW) - bounds[0], dy = 0.5 * (limH - natH) - bounds[1];
         this.offsetX += dx;
         this.offsetY += dy;
         this.layout.offsetEverything(dx, dy);
-    };
-    Sketcher.prototype.layoutTemplatePerm = function () {
+    }
+    layoutTemplatePerm() {
         if (this.currentPerm < 0 || this.templatePerms == null)
             return;
-        var perm = this.templatePerms[this.currentPerm];
-        var tpolicy = new RenderPolicy(this.policy.data);
+        let perm = this.templatePerms[this.currentPerm];
+        let tpolicy = new RenderPolicy(this.policy.data);
         tpolicy.data.foreground = 0x808080;
         tpolicy.data.atomCols = tpolicy.data.atomCols.slice(0);
-        for (var n in tpolicy.data.atomCols)
+        for (let n in tpolicy.data.atomCols)
             tpolicy.data.atomCols[n] = 0x808080;
-        var effects = new RenderEffects();
-        var layout = new ArrangeMolecule(Molecule.fromString(perm.display), this, tpolicy, effects);
+        let effects = new RenderEffects();
+        let layout = new ArrangeMolecule(Molecule.fromString(perm.display), this, tpolicy, effects);
         layout.arrange();
         perm.metavec = new MetaVector();
         new DrawMolecule(layout, perm.metavec).draw();
-    };
-    Sketcher.prototype.redraw = function () {
+    }
+    redraw() {
         this.filthy = false;
         this.redrawUnder();
         this.redrawMolecule();
         this.redrawOver();
-    };
-    Sketcher.prototype.redrawUnder = function () {
-        var HOVER_COL = 0x80808080;
-        var CURRENT_COL = 0x40FFC0, CURRENT_BORD = 0x00A43C;
-        var SELECT_COL = 0x40C4A8;
-        var LASSO_COL = 0xA0D4C8;
-        var density = pixelDensity();
+    }
+    redrawUnder() {
+        let HOVER_COL = 0x80808080;
+        let CURRENT_COL = 0x40FFC0, CURRENT_BORD = 0x00A43C;
+        let SELECT_COL = 0x40C4A8;
+        let LASSO_COL = 0xA0D4C8;
+        let density = pixelDensity();
         this.canvasUnder.width = this.width * density;
         this.canvasUnder.height = this.height * density;
         this.canvasUnder.style.width = this.width + 'px';
         this.canvasUnder.style.height = this.height + 'px';
-        var ctx = this.canvasUnder.getContext('2d');
+        let ctx = this.canvasUnder.getContext('2d');
         ctx.save();
         ctx.scale(density, density);
         ctx.clearRect(0, 0, this.width, this.height);
         if (this.hoverAtom > 0) {
-            var sz = 0;
+            let sz = 0;
             if (this.hoverAtom == this.currentAtom)
                 sz += 0.1;
             if (this.getSelected(this.hoverAtom))
@@ -11456,24 +12572,24 @@ var Sketcher = (function (_super) {
             this.drawAtomShade(ctx, this.hoverAtom, HOVER_COL, -1, sz);
         }
         if (this.hoverBond > 0) {
-            var sz = 0, bfr = this.mol.bondFrom(this.hoverBond), bto = this.mol.bondTo(this.hoverBond);
+            let sz = 0, bfr = this.mol.bondFrom(this.hoverBond), bto = this.mol.bondTo(this.hoverBond);
             if (this.hoverBond == this.currentBond)
                 sz += 0.1;
             if (this.getSelected(bfr) && this.getSelected(bto))
                 sz += 0.1;
             this.drawBondShade(ctx, this.hoverBond, HOVER_COL, -1, sz);
         }
-        for (var n = 1; n <= this.mol.numBonds; n++) {
-            var sz = n == this.currentBond ? 0.1 : 0;
-            var bfr = this.mol.bondFrom(n), bto = this.mol.bondTo(n);
-            var sfr = this.getSelected(bfr), sto = this.getSelected(bto), lfr = this.getLassoed(bfr), lto = this.getLassoed(bto);
+        for (let n = 1; n <= this.mol.numBonds; n++) {
+            let sz = n == this.currentBond ? 0.1 : 0;
+            let bfr = this.mol.bondFrom(n), bto = this.mol.bondTo(n);
+            let sfr = this.getSelected(bfr), sto = this.getSelected(bto), lfr = this.getLassoed(bfr), lto = this.getLassoed(bto);
             if (sfr && sto)
                 this.drawBondShade(ctx, n, SELECT_COL, -1, sz);
             else if ((sfr || lfr) && (sto || lto))
                 this.drawBondShade(ctx, n, LASSO_COL, -1, sz);
         }
-        for (var n = 1; n <= this.mol.numAtoms; n++) {
-            var sz = this.currentAtom == n ? 0.1 : 0;
+        for (let n = 1; n <= this.mol.numAtoms; n++) {
+            let sz = this.currentAtom == n ? 0.1 : 0;
             if (this.getSelected(n))
                 this.drawAtomShade(ctx, n, SELECT_COL, -1, sz);
             else if (this.getLassoed(n))
@@ -11483,15 +12599,14 @@ var Sketcher = (function (_super) {
             this.drawAtomShade(ctx, this.currentAtom, CURRENT_COL, CURRENT_BORD, 0);
         }
         if (this.currentBond > 0) {
-            var bfr = this.mol.bondFrom(this.currentBond), bto = this.mol.bondTo(this.currentBond);
+            let bfr = this.mol.bondFrom(this.currentBond), bto = this.mol.bondTo(this.currentBond);
             this.drawBondShade(ctx, this.currentBond, CURRENT_COL, CURRENT_BORD, 0);
         }
         if (this.dragType == DraggingTool.Move || (this.dragType == DraggingTool.Atom && this.opAtom > 0) || this.dragType == DraggingTool.Bond) {
             if (this.dragGuides != null && this.dragGuides.length > 0) {
-                for (var _i = 0, _a = this.dragGuides; _i < _a.length; _i++) {
-                    var g = _a[_i];
-                    for (var n = 0; n < g.x.length; n++) {
-                        var lw = this.policy.data.lineSize * this.pointScale;
+                for (let g of this.dragGuides)
+                    for (let n = 0; n < g.x.length; n++) {
+                        let lw = this.policy.data.lineSize * this.pointScale;
                         ctx.strokeStyle = '#C0C0C0';
                         ctx.lineWidth = lw;
                         drawLine(ctx, g.sourceX, g.sourceY, g.destX[n], g.destY[n]);
@@ -11500,33 +12615,32 @@ var Sketcher = (function (_super) {
                         ctx.fillStyle = '#C0C0C0';
                         ctx.fill();
                     }
-                }
             }
         }
         if (this.dragType == DraggingTool.Ring) {
-            var _b = this.determineFauxRing(), ringX = _b[0], ringY = _b[1];
-            var rsz = ringX == null ? 0 : ringX.length;
+            let [ringX, ringY] = this.determineFauxRing();
+            let rsz = ringX == null ? 0 : ringX.length;
             if (rsz > 0) {
-                var scale = this.pointScale;
-                var lw = this.policy.data.lineSize * scale;
+                let scale = this.pointScale;
+                let lw = this.policy.data.lineSize * scale;
                 ctx.strokeStyle = '#C0C0C0';
                 ctx.lineWidth = lw;
-                for (var n = 0; n < rsz; n++) {
-                    var nn = n < rsz - 1 ? n + 1 : 0;
-                    var x1 = this.angToX(ringX[n]), y1 = this.angToY(ringY[n]);
-                    var x2 = this.angToX(ringX[nn]), y2 = this.angToY(ringY[nn]);
+                for (let n = 0; n < rsz; n++) {
+                    let nn = n < rsz - 1 ? n + 1 : 0;
+                    let x1 = this.angToX(ringX[n]), y1 = this.angToY(ringY[n]);
+                    let x2 = this.angToX(ringX[nn]), y2 = this.angToY(ringY[nn]);
                     drawLine(ctx, x1, y1, x2, y2);
                 }
                 if (this.toolRingArom) {
-                    var cx = 0, cy = 0;
-                    for (var n = 0; n < rsz; n++) {
+                    let cx = 0, cy = 0;
+                    for (let n = 0; n < rsz; n++) {
                         cx += ringX[n];
                         cy += ringY[n];
                     }
                     cx /= rsz;
                     cy /= rsz;
-                    var rad = 0;
-                    for (var n = 0; n < rsz; n++)
+                    let rad = 0;
+                    for (let n = 0; n < rsz; n++)
                         rad += norm_xy(ringX[n] - cx, ringY[n] - cy);
                     rad = this.angToScale(rad * 0.5 / rsz);
                     ctx.beginPath();
@@ -11536,41 +12650,41 @@ var Sketcher = (function (_super) {
             }
         }
         ctx.restore();
-    };
-    Sketcher.prototype.redrawMolecule = function () {
-        var density = pixelDensity();
+    }
+    redrawMolecule() {
+        let density = pixelDensity();
         this.canvasMolecule.width = this.width * density;
         this.canvasMolecule.height = this.height * density;
         this.canvasMolecule.style.width = this.width + 'px';
         this.canvasMolecule.style.height = this.height + 'px';
-        var ctx = this.canvasMolecule.getContext('2d');
+        let ctx = this.canvasMolecule.getContext('2d');
         ctx.save();
         ctx.scale(density, density);
         ctx.clearRect(0, 0, this.width, this.height);
         if (this.metavec != null)
             this.metavec.renderContext(ctx);
         if (this.templatePerms != null) {
-            var perm = this.templatePerms[this.currentPerm];
+            let perm = this.templatePerms[this.currentPerm];
             if (perm.metavec != null)
                 perm.metavec.renderContext(ctx);
         }
         ctx.restore();
-    };
-    Sketcher.prototype.redrawOver = function () {
-        var density = pixelDensity();
+    }
+    redrawOver() {
+        let density = pixelDensity();
         this.canvasOver.width = this.width * density;
         this.canvasOver.height = this.height * density;
         this.canvasOver.style.width = this.width + 'px';
         this.canvasOver.style.height = this.height + 'px';
-        var ctx = this.canvasOver.getContext('2d');
+        let ctx = this.canvasOver.getContext('2d');
         ctx.save();
         ctx.scale(density, density);
         ctx.clearRect(0, 0, this.width, this.height);
         if ((this.dragType == DraggingTool.Lasso || this.dragType == DraggingTool.Erasor) && this.lassoX.length > 1) {
-            var erasing = this.dragType == DraggingTool.Erasor;
-            var path = new Path2D();
+            let erasing = this.dragType == DraggingTool.Erasor;
+            let path = new Path2D();
             path.moveTo(this.lassoX[0], this.lassoY[0]);
-            for (var n = 1; n < this.lassoX.length; n++)
+            for (let n = 1; n < this.lassoX.length; n++)
                 path.lineTo(this.lassoX[n], this.lassoY[n]);
             path.closePath();
             ctx.fillStyle = colourCanvas(erasing ? 0xD0FF0000 : 0xD00000FF);
@@ -11580,9 +12694,9 @@ var Sketcher = (function (_super) {
             ctx.stroke(path);
         }
         if (this.dragType == DraggingTool.Rotate) {
-            var _a = this.determineDragTheta(), x0 = _a[0], y0 = _a[1], theta = _a[2], magnitude = _a[3];
-            var scale = this.pointScale;
-            var lw = this.policy.data.lineSize * scale;
+            let [x0, y0, theta, magnitude] = this.determineDragTheta();
+            let scale = this.pointScale;
+            let lw = this.policy.data.lineSize * scale;
             ctx.strokeStyle = '#E0E0E0';
             ctx.lineWidth = 0.5 * lw;
             drawLine(ctx, x0, y0, x0 + magnitude, y0);
@@ -11593,11 +12707,10 @@ var Sketcher = (function (_super) {
             ctx.ellipse(x0, y0, 2 * lw, 2 * lw, 0, 0, TWOPI, false);
             ctx.fillStyle = '#808080';
             ctx.fill();
-            for (var _i = 0, _b = this.subjectAtoms(true, false); _i < _b.length; _i++) {
-                var atom = _b[_i];
-                var ax = this.angToX(this.mol.atomX(atom)), ay = this.angToY(this.mol.atomY(atom));
-                var ang = Math.atan2(ay - y0, ax - x0), dist = norm_xy(ax - x0, ay - y0);
-                var nx = x0 + dist * Math.cos(ang + theta), ny = y0 + dist * Math.sin(ang + theta);
+            for (let atom of this.subjectAtoms(true, false)) {
+                let ax = this.angToX(this.mol.atomX(atom)), ay = this.angToY(this.mol.atomY(atom));
+                let ang = Math.atan2(ay - y0, ax - x0), dist = norm_xy(ax - x0, ay - y0);
+                let nx = x0 + dist * Math.cos(ang + theta), ny = y0 + dist * Math.sin(ang + theta);
                 ctx.beginPath();
                 ctx.ellipse(nx, ny, 2 * lw, 2 * lw, 0, 0, TWOPI, false);
                 ctx.strokeStyle = 'black';
@@ -11606,12 +12719,11 @@ var Sketcher = (function (_super) {
             }
         }
         if (this.dragType == DraggingTool.Move) {
-            var _c = this.determineMoveDelta(), dx = _c[0], dy = _c[1];
-            var scale = this.pointScale;
-            var lw = this.policy.data.lineSize * scale;
-            for (var _d = 0, _e = this.subjectAtoms(false, true); _d < _e.length; _d++) {
-                var atom = _e[_d];
-                var ax = this.angToX(this.mol.atomX(atom)), ay = this.angToY(this.mol.atomY(atom));
+            let [dx, dy] = this.determineMoveDelta();
+            let scale = this.pointScale;
+            let lw = this.policy.data.lineSize * scale;
+            for (let atom of this.subjectAtoms(false, true)) {
+                let ax = this.angToX(this.mol.atomX(atom)), ay = this.angToY(this.mol.atomY(atom));
                 ctx.beginPath();
                 ctx.ellipse(ax + dx, ay + dy, 2 * lw, 2 * lw, 0, 0, TWOPI, false);
                 ctx.strokeStyle = 'black';
@@ -11620,50 +12732,50 @@ var Sketcher = (function (_super) {
             }
         }
         if ((this.dragType == DraggingTool.Atom && this.opAtom > 0) || this.dragType == DraggingTool.Bond) {
-            var element = this.dragType == DraggingTool.Atom ? this.toolAtomSymbol : 'C';
-            var order = this.dragType == DraggingTool.Bond ? this.toolBondOrder : 1;
-            var type = this.dragType == DraggingTool.Bond ? this.toolBondType : Molecule.BONDTYPE_NORMAL;
+            let element = this.dragType == DraggingTool.Atom ? this.toolAtomSymbol : 'C';
+            let order = this.dragType == DraggingTool.Bond ? this.toolBondOrder : 1;
+            let type = this.dragType == DraggingTool.Bond ? this.toolBondType : Molecule.BONDTYPE_NORMAL;
             this.drawOriginatingBond(ctx, element, order, type);
         }
         ctx.restore();
-    };
-    Sketcher.prototype.delayedRedraw = function () {
+    }
+    delayedRedraw() {
         if (this.canvasMolecule == null)
             return;
         this.filthy = true;
-        var self = this;
-        var redrawAction = function () {
+        let self = this;
+        let redrawAction = function () {
             if (self.filthy)
                 self.redraw();
         };
         window.setTimeout(redrawAction, 10);
-    };
-    Sketcher.prototype.pickObject = function (x, y) {
+    }
+    pickObject(x, y) {
         if (this.layout == null)
             return 0;
         if (this.toolView != null) {
-            var pos1 = this.container.position(), pos2 = this.toolView.content.position();
+            let pos1 = this.container.position(), pos2 = this.toolView.content.position();
             if (this.toolView.withinOutline(x + pos1.left - pos2.left, y + pos1.top - pos2.top))
                 return 0;
         }
         if (this.commandView != null) {
-            var pos1 = this.container.position(), pos2 = this.commandView.content.position();
+            let pos1 = this.container.position(), pos2 = this.commandView.content.position();
             if (this.toolView.withinOutline(x + pos1.left - pos2.left, y + pos1.top - pos2.top))
                 return 0;
         }
         if (this.templateView != null) {
-            var pos1 = this.container.position(), pos2 = this.templateView.content.position();
+            let pos1 = this.container.position(), pos2 = this.templateView.content.position();
             if (this.toolView.withinOutline(x + pos1.left - pos2.left, y + pos1.top - pos2.top))
                 return 0;
         }
-        var limitDSQ = sqr(0.5 * this.pointScale);
-        var bestItem = 0, bestDSQ;
-        for (var n = 0; n < this.layout.numPoints(); n++) {
-            var p = this.layout.getPoint(n);
+        let limitDSQ = sqr(0.5 * this.pointScale);
+        let bestItem = 0, bestDSQ;
+        for (let n = 0; n < this.layout.numPoints(); n++) {
+            let p = this.layout.getPoint(n);
             if (p.anum == 0)
                 continue;
-            var dx = Math.abs(x - p.oval.cx), dy = Math.abs(y - p.oval.cy);
-            var dsq = norm2_xy(dx, dy);
+            let dx = Math.abs(x - p.oval.cx), dy = Math.abs(y - p.oval.cy);
+            let dsq = norm2_xy(dx, dy);
             if (dsq > limitDSQ)
                 continue;
             if (bestItem == 0 || dsq < bestDSQ) {
@@ -11671,14 +12783,14 @@ var Sketcher = (function (_super) {
                 bestDSQ = dsq;
             }
         }
-        for (var n = 0; n < this.layout.numLines(); n++) {
-            var l = this.layout.getLine(n);
+        for (let n = 0; n < this.layout.numLines(); n++) {
+            let l = this.layout.getLine(n);
             if (l.bnum == 0)
                 continue;
-            var x1 = l.line.x1, y1 = l.line.y1;
-            var x2 = l.line.x2, y2 = l.line.y2;
-            var bondDSQ = norm2_xy(x2 - x1, y2 - y1) * 0.25;
-            var dsq = norm2_xy(x - 0.5 * (x1 + x2), y - 0.5 * (y1 + y2));
+            let x1 = l.line.x1, y1 = l.line.y1;
+            let x2 = l.line.x2, y2 = l.line.y2;
+            let bondDSQ = norm2_xy(x2 - x1, y2 - y1) * 0.25;
+            let dsq = norm2_xy(x - 0.5 * (x1 + x2), y - 0.5 * (y1 + y2));
             if (dsq > bondDSQ)
                 continue;
             if (bestItem == 0 || dsq < bestDSQ) {
@@ -11687,28 +12799,28 @@ var Sketcher = (function (_super) {
             }
         }
         return bestItem;
-    };
-    Sketcher.prototype.log = function (str, zap) {
+    }
+    log(str, zap) {
         if (this.debugOutput) {
             if (zap)
                 this.debugOutput.value = '';
             this.debugOutput.value = this.debugOutput.value + '' + str + '\n';
         }
-    };
-    Sketcher.prototype.drawAtomShade = function (ctx, atom, fillCol, borderCol, anghalo) {
+    }
+    drawAtomShade(ctx, atom, fillCol, borderCol, anghalo) {
         if (this.layout == null)
             return;
-        var p = undefined;
-        for (var n = 0; n < this.layout.numPoints(); n++)
+        let p = undefined;
+        for (let n = 0; n < this.layout.numPoints(); n++)
             if (this.layout.getPoint(n).anum == atom) {
                 p = this.layout.getPoint(n);
                 break;
             }
         if (p == null)
             return;
-        var minRad = 0.2 * this.pointScale, minRadSq = sqr(minRad);
-        var cx = p.oval.cx, cy = p.oval.cy;
-        var rad = Math.max(minRad, Math.max(p.oval.rw, p.oval.rh)) + (0.1 + anghalo) * this.pointScale;
+        let minRad = 0.2 * this.pointScale, minRadSq = sqr(minRad);
+        let cx = p.oval.cx, cy = p.oval.cy;
+        let rad = Math.max(minRad, Math.max(p.oval.rw, p.oval.rh)) + (0.1 + anghalo) * this.pointScale;
         if (fillCol != -1) {
             ctx.beginPath();
             ctx.ellipse(cx, cy, rad, rad, 0, 0, TWOPI, true);
@@ -11722,13 +12834,13 @@ var Sketcher = (function (_super) {
             ctx.lineWidth = 1;
             ctx.stroke();
         }
-    };
-    Sketcher.prototype.drawBondShade = function (ctx, bond, fillCol, borderCol, anghalo) {
+    }
+    drawBondShade(ctx, bond, fillCol, borderCol, anghalo) {
         if (this.layout == null)
             return;
-        var x1 = 0, y1 = 0, x2 = 0, y2 = 0, nb = 0, sz = 0;
-        for (var n = 0; n < this.layout.numLines(); n++) {
-            var l = this.layout.getLine(n);
+        let x1 = 0, y1 = 0, x2 = 0, y2 = 0, nb = 0, sz = 0;
+        for (let n = 0; n < this.layout.numLines(); n++) {
+            let l = this.layout.getLine(n);
             if (l.bnum != bond)
                 continue;
             x1 += l.line.x1;
@@ -11740,17 +12852,17 @@ var Sketcher = (function (_super) {
         }
         if (nb == 0)
             return;
-        var invNB = 1 / nb;
+        let invNB = 1 / nb;
         sz *= invNB;
         x1 *= invNB;
         y1 *= invNB;
         x2 *= invNB;
         y2 *= invNB;
-        var dx = x2 - x1, dy = y2 - y1, invDist = 1 / norm_xy(dx, dy);
+        let dx = x2 - x1, dy = y2 - y1, invDist = 1 / norm_xy(dx, dy);
         dx *= invDist;
         dy *= invDist;
-        var ox = dy, oy = -dx;
-        var path = new Path2D(), mx, my, CIRC = 0.8;
+        let ox = dy, oy = -dx;
+        let path = new Path2D(), mx, my, CIRC = 0.8;
         path.moveTo(x1 + ox * sz, y1 + oy * sz);
         mx = x1 + (ox * sz - dx * sz) * CIRC;
         my = y1 + (oy * sz - dy * sz) * CIRC;
@@ -11777,52 +12889,52 @@ var Sketcher = (function (_super) {
             ctx.lineWidth = 1;
             ctx.stroke(path);
         }
-    };
-    Sketcher.prototype.drawOriginatingBond = function (ctx, element, order, type) {
-        var x1 = this.clickX, y1 = this.clickY;
+    }
+    drawOriginatingBond(ctx, element, order, type) {
+        let x1 = this.clickX, y1 = this.clickY;
         if (this.opAtom > 0) {
             x1 = this.angToX(this.mol.atomX(this.opAtom));
             y1 = this.angToY(this.mol.atomY(this.opAtom));
         }
-        var x2 = this.mouseX, y2 = this.mouseY;
-        var snapTo = this.snapToGuide(x2, y2);
+        let x2 = this.mouseX, y2 = this.mouseY;
+        let snapTo = this.snapToGuide(x2, y2);
         if (snapTo != null) {
             x2 = snapTo[0];
             y2 = snapTo[1];
         }
-        var scale = this.pointScale;
+        let scale = this.pointScale;
         ctx.strokeStyle = '#808080';
         ctx.lineWidth = this.policy.data.lineSize * scale;
         drawLine(ctx, x1, y1, x2, y2);
         if (element != 'C') {
-            var fh = this.policy.data.fontSize * scale;
+            let fh = this.policy.data.fontSize * scale;
             ctx.font = fontSansSerif(fh);
-            var metrics = ctx.measureText(element);
+            let metrics = ctx.measureText(element);
             ctx.fillStyle = '#808080';
             ctx.fillText(element, x2 - 0.5 * metrics.width, y2 + 0.5 * fh);
         }
-    };
-    Sketcher.prototype.updateHoverCursor = function (event) {
-        var tool = 'finger';
+    }
+    updateHoverCursor(event) {
+        let tool = 'finger';
         if (this.toolView != null)
             tool = this.toolView.selectedButton;
-        var toolApplies = tool != 'finger' && tool != 'pan' && tool != 'zoom' && tool != 'rotate';
-        var mouseObj = 0;
+        let toolApplies = tool != 'finger' && tool != 'pan' && tool != 'zoom' && tool != 'rotate';
+        let mouseObj = 0;
         if (this.dragType == DraggingTool.None && toolApplies) {
-            var xy = eventCoords(event, this.container);
+            let xy = eventCoords(event, this.container);
             mouseObj = this.pickObject(xy[0], xy[1]);
         }
-        var mouseAtom = mouseObj > 0 ? mouseObj : 0, mouseBond = mouseObj < 0 ? -mouseObj : 0;
+        let mouseAtom = mouseObj > 0 ? mouseObj : 0, mouseBond = mouseObj < 0 ? -mouseObj : 0;
         if (mouseAtom != this.hoverAtom || mouseBond != this.hoverBond) {
             this.hoverAtom = mouseAtom;
             this.hoverBond = mouseBond;
             this.delayedRedraw();
         }
-    };
-    Sketcher.prototype.updateLasso = function (event) {
+    }
+    updateLasso(event) {
         if (this.dragType != DraggingTool.Lasso && this.dragType != DraggingTool.Erasor)
             return;
-        var xy = eventCoords(event, this.container);
+        let xy = eventCoords(event, this.container);
         if (xy[0] < 0 || xy[1] < 0 || xy[0] > this.width || xy[1] > this.height) {
             this.dragType = DraggingTool.None;
             this.lassoX = null;
@@ -11830,28 +12942,28 @@ var Sketcher = (function (_super) {
             this.lassoMask = null;
             this.delayedRedraw();
         }
-        var len = this.lassoX.length;
+        let len = this.lassoX.length;
         if (len > 0 && this.lassoX[len - 1] == xy[0] && this.lassoY[len - 1] == xy[1])
             return;
         this.lassoX.push(xy[0]);
         this.lassoY.push(xy[1]);
         this.calculateLassoMask();
         this.delayedRedraw();
-    };
-    Sketcher.prototype.calculateLassoMask = function () {
+    }
+    calculateLassoMask() {
         this.lassoMask = new Array(this.mol.numAtoms);
-        for (var n = 0; n < this.mol.numAtoms; n++)
+        for (let n = 0; n < this.mol.numAtoms; n++)
             this.lassoMask[n] = false;
-        for (var n = 0; n < this.layout.numPoints(); n++) {
-            var p = this.layout.getPoint(n);
+        for (let n = 0; n < this.layout.numPoints(); n++) {
+            let p = this.layout.getPoint(n);
             if (p.anum == 0)
                 continue;
             this.lassoMask[p.anum - 1] = GeomUtil.pointInPolygon(p.oval.cx, p.oval.cy, this.lassoX, this.lassoY);
         }
-    };
-    Sketcher.prototype.determineDragGuide = function (order) {
+    }
+    determineDragGuide(order) {
         if (this.opAtom == 0) {
-            var g_1 = {
+            let g = {
                 'atom': 0,
                 'orders': [order],
                 'x': [],
@@ -11861,53 +12973,53 @@ var Sketcher = (function (_super) {
                 'destX': [],
                 'destY': []
             };
-            var mx = this.xToAng(this.clickX), my = this.yToAng(this.clickY);
-            for (var n = 0; n < 12; n++) {
-                var theta = TWOPI * n / 12;
-                var dx = Molecule.IDEALBOND * Math.cos(theta), dy = Molecule.IDEALBOND * Math.sin(theta);
-                g_1.x.push(mx + dx);
-                g_1.y.push(my + dy);
-                g_1.destX.push(this.clickX + dx * this.pointScale);
-                g_1.destY.push(this.clickY - dy * this.pointScale);
+            let mx = this.xToAng(this.clickX), my = this.yToAng(this.clickY);
+            for (let n = 0; n < 12; n++) {
+                let theta = TWOPI * n / 12;
+                let dx = Molecule.IDEALBOND * Math.cos(theta), dy = Molecule.IDEALBOND * Math.sin(theta);
+                g.x.push(mx + dx);
+                g.y.push(my + dy);
+                g.destX.push(this.clickX + dx * this.pointScale);
+                g.destY.push(this.clickY - dy * this.pointScale);
             }
-            return [g_1];
+            return [g];
         }
         if (this.guidelines == null)
             return null;
-        var best = null, single = null;
-        for (var n = 0; n < this.guidelines.length; n++) {
-            var g_2 = this.guidelines[n];
-            if (g_2.atom != this.opAtom)
+        let best = null, single = null;
+        for (let n = 0; n < this.guidelines.length; n++) {
+            let g = this.guidelines[n];
+            if (g.atom != this.opAtom)
                 continue;
-            if (g_2.orders.indexOf(order) >= 0) {
-                best = g_2;
+            if (g.orders.indexOf(order) >= 0) {
+                best = g;
                 break;
             }
-            if (g_2.orders.indexOf(1) >= 0)
-                single = g_2;
+            if (g.orders.indexOf(1) >= 0)
+                single = g;
         }
         if (best == null)
             best = single;
         if (best == null)
             return;
-        var g = clone(best);
+        let g = clone(best);
         g.sourceX = this.angToX(this.mol.atomX(g.atom));
         g.sourceY = this.angToY(this.mol.atomY(g.atom));
         g.destX = [];
         g.destY = [];
-        for (var n = 0; n < g.x.length; n++) {
+        for (let n = 0; n < g.x.length; n++) {
             g.destX.push(this.angToX(g.x[n]));
             g.destY.push(this.angToY(g.y[n]));
         }
         return [g];
-    };
-    Sketcher.prototype.determineMoveGuide = function () {
-        var subj = this.subjectAtoms(false, true);
+    }
+    determineMoveGuide() {
+        let subj = this.subjectAtoms(false, true);
         if (subj.length == 0 || subj.length == this.mol.numAtoms)
             return null;
-        var guides = [];
-        for (var n = 0; n < this.guidelines.length; n++) {
-            var g = this.guidelines[n];
+        let guides = [];
+        for (let n = 0; n < this.guidelines.length; n++) {
+            let g = this.guidelines[n];
             if (g.orders.indexOf(1) < 0 || subj.indexOf(g.atom) >= 0)
                 continue;
             g = clone(g);
@@ -11915,45 +13027,45 @@ var Sketcher = (function (_super) {
             g.sourceY = this.angToY(this.mol.atomY(g.atom));
             g.destX = [];
             g.destY = [];
-            for (var i = 0; i < g.x.length; i++) {
+            for (let i = 0; i < g.x.length; i++) {
                 g.destX.push(this.angToX(g.x[i]));
                 g.destY.push(this.angToY(g.y[i]));
             }
             guides.push(g);
         }
         return guides;
-    };
-    Sketcher.prototype.determineDragTheta = function () {
-        var x0 = this.clickX, y0 = this.clickY;
-        var snap = this.snapToGuide(x0, y0);
+    }
+    determineDragTheta() {
+        let x0 = this.clickX, y0 = this.clickY;
+        let snap = this.snapToGuide(x0, y0);
         if (snap != null) {
             x0 = snap[0];
             y0 = snap[1];
         }
-        var theta = Math.atan2(this.mouseY - y0, this.mouseX - x0), magnitude = norm_xy(this.mouseX - x0, this.mouseY - y0);
+        let theta = Math.atan2(this.mouseY - y0, this.mouseX - x0), magnitude = norm_xy(this.mouseX - x0, this.mouseY - y0);
         if (this.toolRotateIncr > 0)
             theta = Math.round(theta / this.toolRotateIncr) * this.toolRotateIncr;
         return [x0, y0, theta, magnitude];
-    };
-    Sketcher.prototype.determineMoveDelta = function () {
-        var x1 = this.clickX, y1 = this.clickY, x2 = this.mouseX, y2 = this.mouseY;
+    }
+    determineMoveDelta() {
+        let x1 = this.clickX, y1 = this.clickY, x2 = this.mouseX, y2 = this.mouseY;
         if (this.opAtom > 0) {
             x1 = this.angToX(this.mol.atomX(this.opAtom));
             y1 = this.angToY(this.mol.atomY(this.opAtom));
-            var snap = this.snapToGuide(x2, y2);
+            let snap = this.snapToGuide(x2, y2);
             if (snap != null) {
                 x2 = snap[0];
                 y2 = snap[1];
             }
         }
         return [x2 - x1, y2 - y1];
-    };
-    Sketcher.prototype.determineFauxRing = function () {
-        var atom = this.opAtom, bond = this.opBond, mol = this.mol;
-        var x1 = atom > 0 ? mol.atomX(atom) : bond > 0 ? 0.5 * (mol.atomX(mol.bondFrom(bond)) + mol.atomX(mol.bondTo(bond))) : this.xToAng(this.clickX);
-        var y1 = atom > 0 ? mol.atomY(atom) : bond > 0 ? 0.5 * (mol.atomY(mol.bondFrom(bond)) + mol.atomY(mol.bondTo(bond))) : this.yToAng(this.clickY);
-        var x2 = this.xToAng(this.mouseX), y2 = this.yToAng(this.mouseY), dx = x2 - x1, dy = y2 - y1;
-        var rsz = Math.min(9, Math.round(norm_xy(dx, dy) * 2 / Molecule.IDEALBOND) + 2);
+    }
+    determineFauxRing() {
+        let atom = this.opAtom, bond = this.opBond, mol = this.mol;
+        let x1 = atom > 0 ? mol.atomX(atom) : bond > 0 ? 0.5 * (mol.atomX(mol.bondFrom(bond)) + mol.atomX(mol.bondTo(bond))) : this.xToAng(this.clickX);
+        let y1 = atom > 0 ? mol.atomY(atom) : bond > 0 ? 0.5 * (mol.atomY(mol.bondFrom(bond)) + mol.atomY(mol.bondTo(bond))) : this.yToAng(this.clickY);
+        let x2 = this.xToAng(this.mouseX), y2 = this.yToAng(this.mouseY), dx = x2 - x1, dy = y2 - y1;
+        let rsz = Math.min(9, Math.round(norm_xy(dx, dy) * 2 / Molecule.IDEALBOND) + 2);
         if (rsz < 3) { }
         else if (bond > 0) {
             return SketchUtil.proposeBondRing(mol, rsz, bond, dx, dy);
@@ -11965,24 +13077,24 @@ var Sketcher = (function (_super) {
             return SketchUtil.proposeNewRing(mol, rsz, x1, y1, dx, dy, !this.toolRingFreeform);
         }
         return [null, null];
-    };
-    Sketcher.prototype.snapToGuide = function (x, y) {
-        var bestDSQ = Number.POSITIVE_INFINITY, bestX = 0, bestY = 0;
-        var APPROACH = sqr(0.5 * this.pointScale);
+    }
+    snapToGuide(x, y) {
+        let bestDSQ = Number.POSITIVE_INFINITY, bestX = 0, bestY = 0;
+        const APPROACH = sqr(0.5 * this.pointScale);
         if (this.dragGuides != null)
-            for (var i = 0; i < this.dragGuides.length; i++)
-                for (var j = 0; j < this.dragGuides[i].x.length; j++) {
-                    var px = this.dragGuides[i].destX[j], py = this.dragGuides[i].destY[j];
-                    var dsq = norm2_xy(px - x, py - y);
+            for (let i = 0; i < this.dragGuides.length; i++)
+                for (let j = 0; j < this.dragGuides[i].x.length; j++) {
+                    let px = this.dragGuides[i].destX[j], py = this.dragGuides[i].destY[j];
+                    let dsq = norm2_xy(px - x, py - y);
                     if (dsq < APPROACH && dsq < bestDSQ) {
                         bestDSQ = dsq;
                         bestX = px;
                         bestY = py;
                     }
                 }
-        for (var n = 1; n <= this.mol.numAtoms; n++) {
-            var px = this.angToX(this.mol.atomX(n)), py = this.angToY(this.mol.atomY(n));
-            var dsq = norm2_xy(px - x, py - y);
+        for (let n = 1; n <= this.mol.numAtoms; n++) {
+            let px = this.angToX(this.mol.atomX(n)), py = this.angToY(this.mol.atomY(n));
+            let dsq = norm2_xy(px - x, py - y);
             if (dsq < APPROACH && dsq < bestDSQ) {
                 bestDSQ = dsq;
                 bestX = px;
@@ -11992,13 +13104,11 @@ var Sketcher = (function (_super) {
         if (isFinite(bestDSQ))
             return [bestX, bestY];
         return null;
-    };
-    Sketcher.prototype.subjectAtoms = function (allIfNone, useOpAtom) {
-        if (allIfNone === void 0) { allIfNone = false; }
-        if (useOpAtom === void 0) { useOpAtom = false; }
-        var atoms = [];
+    }
+    subjectAtoms(allIfNone = false, useOpAtom = false) {
+        let atoms = [];
         if (this.selectedMask != null) {
-            for (var n = 0; n < this.selectedMask.length; n++)
+            for (let n = 0; n < this.selectedMask.length; n++)
                 if (this.selectedMask[n])
                     atoms.push(n + 1);
             if (atoms.length > 0)
@@ -12013,33 +13123,33 @@ var Sketcher = (function (_super) {
         if (useOpAtom && atoms.length == 0 && this.opAtom > 0)
             atoms.push(this.opAtom);
         if (allIfNone && atoms.length == 0) {
-            for (var n = 1; n <= this.mol.numAtoms; n++)
+            for (let n = 1; n <= this.mol.numAtoms; n++)
                 atoms.push(n);
         }
         return atoms;
-    };
-    Sketcher.prototype.mouseClick = function (event) {
-    };
-    Sketcher.prototype.mouseDoubleClick = function (event) {
+    }
+    mouseClick(event) {
+    }
+    mouseDoubleClick(event) {
         event.stopImmediatePropagation();
-    };
-    Sketcher.prototype.mouseDown = function (event) {
+    }
+    mouseDown(event) {
         this.clearMessage();
         this.dragType = DraggingTool.Press;
         this.opBudged = false;
         this.dragGuides = null;
-        var xy = eventCoords(event, this.container);
+        let xy = eventCoords(event, this.container);
         this.mouseX = xy[0];
         this.mouseY = xy[1];
         this.clickX = xy[0];
         this.clickY = xy[1];
-        var clickObj = this.pickObject(xy[0], xy[1]);
+        let clickObj = this.pickObject(xy[0], xy[1]);
         this.opAtom = clickObj > 0 ? clickObj : 0;
         this.opBond = clickObj < 0 ? -clickObj : 0;
         this.opShift = event.shiftKey;
         this.opCtrl = event.ctrlKey;
         this.opAlt = event.altKey;
-        var tool = 'finger';
+        let tool = 'finger';
         if (this.toolView != null)
             tool = this.toolView.selectedButton;
         if (tool == 'arrow') {
@@ -12115,12 +13225,12 @@ var Sketcher = (function (_super) {
             this.toolAtomSymbol = tool.substring(7);
             this.dragGuides = this.determineDragGuide(1);
         }
-    };
-    Sketcher.prototype.mouseUp = function (event) {
+    }
+    mouseUp(event) {
         if (!this.opBudged) {
-            var xy = eventCoords(event, this.container);
-            var clickObj = this.pickObject(xy[0], xy[1]);
-            var clickAtom = clickObj > 0 ? clickObj : 0, clickBond = clickObj < 0 ? -clickObj : 0;
+            let xy = eventCoords(event, this.container);
+            let clickObj = this.pickObject(xy[0], xy[1]);
+            let clickAtom = clickObj > 0 ? clickObj : 0, clickBond = clickObj < 0 ? -clickObj : 0;
             if (this.dragType == DraggingTool.Press) {
                 if (!this.opShift && !this.opCtrl && !this.opAlt) {
                     if (clickAtom == 0 && clickBond == 0) {
@@ -12146,24 +13256,24 @@ var Sketcher = (function (_super) {
             }
             else if (this.dragType == DraggingTool.Erasor) {
                 if (this.opAtom > 0 || this.opBond > 0) {
-                    var override = {
+                    let override = {
                         'currentAtom': this.opAtom,
                         'currentBond': this.opBond,
                         'selectedMask': []
                     };
-                    var molact = new MoleculeActivity(this, ActivityType.Delete, {}, override);
+                    let molact = new MoleculeActivity(this, ActivityType.Delete, {}, override);
                     molact.execute();
                 }
             }
             else if (this.dragType == DraggingTool.Atom) {
-                var element = this.toolAtomSymbol;
+                let element = this.toolAtomSymbol;
                 if (element == 'A') {
                     element = window.prompt('Enter element symbol:', this.opAtom == 0 ? '' : this.mol.atomElement(this.opAtom));
                 }
                 if (element != '') {
-                    var param = { 'element': element };
+                    let param = { 'element': element };
                     if (this.opAtom == 0) {
-                        var x = this.xToAng(this.clickX), y = this.yToAng(this.clickY);
+                        let x = this.xToAng(this.clickX), y = this.yToAng(this.clickY);
                         if (this.mol.numAtoms == 0) {
                             this.offsetX = this.clickX;
                             this.offsetY = this.clickY;
@@ -12173,33 +13283,33 @@ var Sketcher = (function (_super) {
                         param.positionX = x;
                         param.positionY = y;
                     }
-                    var override = {
+                    let override = {
                         'currentAtom': this.opAtom,
                         'currentBond': 0,
                         'selectedMask': null
                     };
-                    var molact = new MoleculeActivity(this, ActivityType.Element, param, override);
+                    let molact = new MoleculeActivity(this, ActivityType.Element, param, override);
                     molact.execute();
                 }
             }
             else if (this.dragType == DraggingTool.Charge) {
                 if (this.opAtom > 0 || this.opBond > 0) {
-                    var override = {
+                    let override = {
                         'currentAtom': this.opAtom,
                         'currentBond': this.opBond,
                         'selectedMask': null
                     };
-                    var molact = new MoleculeActivity(this, ActivityType.Charge, { 'delta': this.toolChargeDelta }, override);
+                    let molact = new MoleculeActivity(this, ActivityType.Charge, { 'delta': this.toolChargeDelta }, override);
                     molact.execute();
                 }
             }
             else if (this.dragType == DraggingTool.Bond) {
-                var override = {
+                let override = {
                     'currentAtom': this.opAtom,
                     'currentBond': this.opBond,
                     'selectedMask': null
                 };
-                var molact = void 0;
+                let molact;
                 if (this.toolBondType == Molecule.BONDTYPE_NORMAL)
                     molact = new MoleculeActivity(this, ActivityType.BondOrder, { 'order': this.toolBondOrder }, override);
                 else
@@ -12211,7 +13321,7 @@ var Sketcher = (function (_super) {
             if (this.dragType == DraggingTool.Lasso) {
                 if (this.lassoX.length >= 2) {
                     this.calculateLassoMask();
-                    for (var n = 1; n <= this.mol.numAtoms; n++)
+                    for (let n = 1; n <= this.mol.numAtoms; n++)
                         if (this.getLassoed(n) && !this.getSelected(n))
                             this.setSelected(n, true);
                 }
@@ -12221,55 +13331,55 @@ var Sketcher = (function (_super) {
                 this.delayedRedraw();
             }
             else if (this.dragType == DraggingTool.Erasor) {
-                var any = false;
-                for (var n = 0; n < this.lassoMask.length; n++)
+                let any = false;
+                for (let n = 0; n < this.lassoMask.length; n++)
                     if (this.lassoMask[n]) {
                         any = true;
                         break;
                     }
                 if (any) {
-                    var override = {
+                    let override = {
                         'currentAtom': 0,
                         'currentBond': 0,
                         'selectedMask': this.lassoMask
                     };
-                    var molact = new MoleculeActivity(this, ActivityType.Delete, {}, override);
+                    let molact = new MoleculeActivity(this, ActivityType.Delete, {}, override);
                     molact.execute();
                 }
             }
             else if (this.dragType == DraggingTool.Rotate) {
-                var _a = this.determineDragTheta(), x0 = _a[0], y0 = _a[1], theta = _a[2], magnitude = _a[3];
-                var degrees = -theta * DEGRAD;
-                var mx = this.xToAng(x0), my = this.yToAng(y0);
-                var molact = new MoleculeActivity(this, ActivityType.Rotate, { 'theta': degrees, 'centreX': mx, 'centreY': my });
+                let [x0, y0, theta, magnitude] = this.determineDragTheta();
+                let degrees = -theta * DEGRAD;
+                let mx = this.xToAng(x0), my = this.yToAng(y0);
+                let molact = new MoleculeActivity(this, ActivityType.Rotate, { 'theta': degrees, 'centreX': mx, 'centreY': my });
                 molact.execute();
             }
             else if (this.dragType == DraggingTool.Move) {
-                var _b = this.determineMoveDelta(), dx = _b[0], dy = _b[1];
-                var scale = this.pointScale;
-                var molact = new MoleculeActivity(this, ActivityType.Move, { 'refAtom': this.opAtom, 'deltaX': dx / scale, 'deltaY': -dy / scale });
+                let [dx, dy] = this.determineMoveDelta();
+                let scale = this.pointScale;
+                let molact = new MoleculeActivity(this, ActivityType.Move, { 'refAtom': this.opAtom, 'deltaX': dx / scale, 'deltaY': -dy / scale });
                 molact.execute();
             }
             else if (this.dragType == DraggingTool.Ring) {
-                var _c = this.determineFauxRing(), ringX = _c[0], ringY = _c[1];
+                let [ringX, ringY] = this.determineFauxRing();
                 if (ringX != null) {
-                    var param = {
+                    let param = {
                         'ringX': ringX,
                         'ringY': ringY,
                         'aromatic': this.toolRingArom
                     };
-                    var molact = new MoleculeActivity(this, ActivityType.Ring, param);
+                    let molact = new MoleculeActivity(this, ActivityType.Ring, param);
                     molact.execute();
                 }
             }
             else if (this.dragType == DraggingTool.Atom && this.opAtom > 0) {
-                var x2 = this.mouseX, y2 = this.mouseY;
-                var snapTo = this.snapToGuide(x2, y2);
+                let x2 = this.mouseX, y2 = this.mouseY;
+                let snapTo = this.snapToGuide(x2, y2);
                 if (snapTo != null) {
                     x2 = snapTo[0];
                     y2 = snapTo[1];
                 }
-                var param = {
+                let param = {
                     'order': 1,
                     'type': Molecule.BONDTYPE_NORMAL,
                     'element': this.toolAtomSymbol,
@@ -12281,18 +13391,18 @@ var Sketcher = (function (_super) {
                 if (this.toolAtomSymbol == 'A')
                     param.element = window.prompt('Enter element symbol:', '');
                 if (param.element != '') {
-                    var molact = new MoleculeActivity(this, ActivityType.BondAtom, param);
+                    let molact = new MoleculeActivity(this, ActivityType.BondAtom, param);
                     molact.execute();
                 }
             }
             else if (this.dragType == DraggingTool.Bond) {
-                var x2 = this.mouseX, y2 = this.mouseY;
-                var snapTo = this.snapToGuide(x2, y2);
+                let x2 = this.mouseX, y2 = this.mouseY;
+                let snapTo = this.snapToGuide(x2, y2);
                 if (snapTo != null) {
                     x2 = snapTo[0];
                     y2 = snapTo[1];
                 }
-                var param = {
+                let param = {
                     'order': this.toolBondOrder,
                     'type': this.toolBondType,
                     'element': "C",
@@ -12301,7 +13411,7 @@ var Sketcher = (function (_super) {
                     'x2': this.xToAng(x2),
                     'y2': this.yToAng(y2)
                 };
-                var molact = new MoleculeActivity(this, ActivityType.BondAtom, param);
+                let molact = new MoleculeActivity(this, ActivityType.BondAtom, param);
                 molact.execute();
             }
         }
@@ -12311,22 +13421,22 @@ var Sketcher = (function (_super) {
         this.lassoMask = null;
         this.dragGuides = null;
         this.delayedRedraw();
-    };
-    Sketcher.prototype.mouseOver = function (event) {
+    }
+    mouseOver(event) {
         this.updateHoverCursor(event);
         this.updateLasso(event);
-    };
-    Sketcher.prototype.mouseOut = function (event) {
+    }
+    mouseOut(event) {
         this.updateHoverCursor(event);
         this.updateLasso(event);
-    };
-    Sketcher.prototype.mouseMove = function (event) {
+    }
+    mouseMove(event) {
         this.updateHoverCursor(event);
         if (this.dragType == DraggingTool.None)
             return;
-        var xy = eventCoords(event, this.container);
+        let xy = eventCoords(event, this.container);
         if (!this.opBudged) {
-            var dx = xy[0] - this.clickX, dy = xy[1] - this.clickY;
+            let dx = xy[0] - this.clickX, dy = xy[1] - this.clickY;
             if (dx * dx + dy * dy > 2 * 2)
                 this.opBudged = true;
         }
@@ -12340,38 +13450,38 @@ var Sketcher = (function (_super) {
             this.updateLasso(event);
         }
         else if (this.dragType == DraggingTool.Pan) {
-            var xy_2 = eventCoords(event, this.container);
-            var dx = xy_2[0] - this.mouseX, dy = xy_2[1] - this.mouseY;
+            let xy = eventCoords(event, this.container);
+            let dx = xy[0] - this.mouseX, dy = xy[1] - this.mouseY;
             if (dx != 0 || dy != 0) {
                 this.offsetX += dx;
                 this.offsetY += dy;
                 this.layout.offsetEverything(dx, dy);
                 this.metavec.transformPrimitives(dx, dy, 1, 1);
                 if (this.currentPerm >= 0 && this.templatePerms != null) {
-                    var perm = this.templatePerms[this.currentPerm];
+                    let perm = this.templatePerms[this.currentPerm];
                     perm.metavec.transformPrimitives(dx, dy, 1, 1);
                 }
                 this.delayedRedraw();
             }
-            this.mouseX = xy_2[0];
-            this.mouseY = xy_2[1];
+            this.mouseX = xy[0];
+            this.mouseY = xy[1];
         }
         else if (this.dragType == DraggingTool.Zoom) {
-            var xy_3 = eventCoords(event, this.container);
-            var dy = xy_3[1] - this.mouseY;
+            let xy = eventCoords(event, this.container);
+            let dy = xy[1] - this.mouseY;
             if (dy != 0) {
                 dy = Math.min(50, Math.max(-50, dy));
-                var newScale = this.pointScale * (1 - dy * 0.01);
+                let newScale = this.pointScale * (1 - dy * 0.01);
                 newScale = Math.min(10, Math.max(0.1, newScale));
-                var newOX = this.clickX - (newScale / this.pointScale) * (this.clickX - this.offsetX);
-                var newOY = this.clickY - (newScale / this.pointScale) * (this.clickY - this.offsetY);
+                let newOX = this.clickX - (newScale / this.pointScale) * (this.clickX - this.offsetX);
+                let newOY = this.clickY - (newScale / this.pointScale) * (this.clickY - this.offsetY);
                 this.pointScale = newScale;
                 this.offsetX = newOX;
                 this.offsetY = newOY;
                 this.delayedRedraw();
             }
-            this.mouseX = xy_3[0];
-            this.mouseY = xy_3[1];
+            this.mouseX = xy[0];
+            this.mouseY = xy[1];
         }
         else if (this.dragType == DraggingTool.Rotate ||
             this.dragType == DraggingTool.Move ||
@@ -12382,22 +13492,22 @@ var Sketcher = (function (_super) {
             this.mouseY = xy[1];
             this.delayedRedraw();
         }
-    };
-    Sketcher.prototype.keyPressed = function (event) {
-    };
-    Sketcher.prototype.keyDown = function (event) {
-    };
-    Sketcher.prototype.keyUp = function (event) {
-    };
-    Sketcher.prototype.mouseWheel = function (event) {
-    };
-    Sketcher.prototype.dropInto = function (transfer) {
-        var self = this;
-        var items = transfer.items, files = transfer.files;
-        for (var n = 0; n < items.length; n++) {
+    }
+    keyPressed(event) {
+    }
+    keyDown(event) {
+    }
+    keyUp(event) {
+    }
+    mouseWheel(event) {
+    }
+    dropInto(transfer) {
+        const self = this;
+        let items = transfer.items, files = transfer.files;
+        for (let n = 0; n < items.length; n++) {
             if (items[n].type.startsWith('text/plain')) {
                 items[n].getAsString(function (str) {
-                    var mol = Molecule.fromString(str);
+                    let mol = Molecule.fromString(str);
                     if (mol != null) {
                         self.defineMolecule(mol, true, true);
                     }
@@ -12407,34 +13517,28 @@ var Sketcher = (function (_super) {
                 return;
             }
         }
-        var _loop_3 = function(n) {
+        for (let n = 0; n < files.length; n++) {
             if (files[n].name.endsWith('.el')) {
-                var reader_1 = new FileReader();
-                reader_1.onload = function (event) {
-                    var str = reader_1.result;
-                    var mol = Molecule.fromString(str);
+                let reader = new FileReader();
+                reader.onload = function (event) {
+                    let str = reader.result;
+                    let mol = Molecule.fromString(str);
                     if (mol != null) {
                         self.defineMolecule(mol, true, true);
                     }
                     else
                         console.log('Dragged file is not a SketchEl molecule: ' + str);
                 };
-                reader_1.readAsText(files[n]);
-                return { value: void 0 };
+                reader.readAsText(files[n]);
+                return;
             }
-        };
-        for (var n = 0; n < files.length; n++) {
-            var state_3 = _loop_3(n);
-            if (typeof state_3 === "object") return state_3.value;
         }
-    };
-    Sketcher.UNDO_SIZE = 20;
-    return Sketcher;
-}(Widget));
-var EditCompound = (function (_super) {
-    __extends(EditCompound, _super);
-    function EditCompound(tokenID, mol) {
-        _super.call(this);
+    }
+}
+Sketcher.UNDO_SIZE = 20;
+class EditCompound extends Dialog {
+    constructor(tokenID, mol) {
+        super();
         this.tokenID = tokenID;
         this.mol = mol;
         this.fakeTextArea = null;
@@ -12444,14 +13548,14 @@ var EditCompound = (function (_super) {
         this.minPortionWidth = 20;
         this.maxPortionWidth = 95;
     }
-    EditCompound.prototype.onSave = function (callback, master) {
+    onSave(callback, master) {
         this.callbackSave = callback;
         this.masterSave = master;
-    };
-    EditCompound.prototype.getMolecule = function () { return this.sketcher.getMolecule(); };
-    EditCompound.prototype.populate = function () {
-        var buttons = this.buttons(), body = this.body();
-        var self = this;
+    }
+    getMolecule() { return this.sketcher.getMolecule(); }
+    populate() {
+        let buttons = this.buttons(), body = this.body();
+        const self = this;
         this.btnClear = $('<button class="button button-default">Clear</button>').appendTo(buttons);
         this.btnClear.click(function () { self.sketcher.clearMolecule(); });
         buttons.append(' ');
@@ -12463,24 +13567,24 @@ var EditCompound = (function (_super) {
         this.btnSave = $('<button class="button button-primary">Save</button>').appendTo(buttons);
         this.btnSave.click(function () { if (self.callbackSave)
             self.callbackSave.call(self.masterSave, self); });
-        var skw = 800, skh = 700;
-        var skdiv = $('<div></div>').appendTo(this.body());
+        let skw = 800, skh = 700;
+        let skdiv = $('<div></div>').appendTo(this.body());
         skdiv.css('width', skw + 'px');
         skdiv.css('height', skh + 'px');
         this.sketcher = new Sketcher(this.tokenID);
         this.sketcher.setSize(skw, skh);
         this.sketcher.defineMolecule(this.mol);
         this.sketcher.setup(function () { this.sketcher.render(skdiv); }, this);
-    };
-    EditCompound.prototype.pasteMolecule = function () {
-    };
-    EditCompound.prototype.copyMolecule = function () {
+    }
+    pasteMolecule() {
+    }
+    copyMolecule() {
         this.installFake();
         this.fakeTextArea.value = this.sketcher.getMolecule().toString();
         this.fakeTextArea.select();
         document.execCommand('copy');
-    };
-    EditCompound.prototype.installFake = function () {
+    }
+    installFake() {
         if (this.fakeTextArea != null)
             return;
         this.fakeTextArea = document.createElement('textarea');
@@ -12493,13 +13597,11 @@ var EditCompound = (function (_super) {
         this.fakeTextArea.style.top = (window.pageYOffset || document.documentElement.scrollTop) + 'px';
         this.fakeTextArea.setAttribute('readonly', '');
         document.body.appendChild(this.fakeTextArea);
-    };
-    return EditCompound;
-}(Dialog));
-var MapReaction = (function (_super) {
-    __extends(MapReaction, _super);
-    function MapReaction(mol1, mol2) {
-        _super.call(this);
+    }
+}
+class MapReaction extends Dialog {
+    constructor(mol1, mol2) {
+        super();
         this.callbackSave = null;
         this.masterSave = null;
         this.rawvec1 = null;
@@ -12523,15 +13625,15 @@ var MapReaction = (function (_super) {
         this.minPortionWidth = 20;
         this.maxPortionWidth = 95;
     }
-    MapReaction.prototype.onSave = function (callback, master) {
+    onSave(callback, master) {
         this.callbackSave = callback;
         this.masterSave = master;
-    };
-    MapReaction.prototype.getMolecule1 = function () { return this.mol1; };
-    MapReaction.prototype.getMolecule2 = function () { return this.mol2; };
-    MapReaction.prototype.populate = function () {
-        var buttons = this.buttons(), body = this.body();
-        var self = this;
+    }
+    getMolecule1() { return this.mol1; }
+    getMolecule2() { return this.mol2; }
+    populate() {
+        let buttons = this.buttons(), body = this.body();
+        const self = this;
         this.btnClear = $('<button class="button button-default">Clear</button>').appendTo(buttons);
         this.btnClear.click(function () { self.clearAllMappings(); });
         buttons.append(' ');
@@ -12553,13 +13655,13 @@ var MapReaction = (function (_super) {
                 this.setupPanel();
             }, this);
         }, this);
-    };
-    MapReaction.prototype.setupPanel = function () {
-        var maxWidth = 0.9 * $(window).width(), maxHeight = 0.8 * $(window).height();
+    }
+    setupPanel() {
+        let maxWidth = 0.9 * $(window).width(), maxHeight = 0.8 * $(window).height();
         this.padding = 1 * this.policy.data.pointScale;
-        var scale1 = (maxWidth - this.ARROWWIDTH) / (this.metavec1.width + this.metavec2.width + 4 * this.padding);
-        var scale2 = maxHeight / (this.metavec1.height + 2 * this.padding);
-        var scale3 = maxHeight / (this.metavec2.height + 2 * this.padding);
+        let scale1 = (maxWidth - this.ARROWWIDTH) / (this.metavec1.width + this.metavec2.width + 4 * this.padding);
+        let scale2 = maxHeight / (this.metavec1.height + 2 * this.padding);
+        let scale3 = maxHeight / (this.metavec2.height + 2 * this.padding);
         this.scale = Math.min(1, Math.min(scale1, Math.min(scale2, scale3)));
         this.canvasW = Math.ceil((this.metavec1.width + this.metavec2.width + 4 * this.padding) * this.scale + this.ARROWWIDTH);
         this.canvasH = Math.ceil((Math.max(this.metavec1.height, this.metavec2.height) + 2 * this.padding) * this.scale);
@@ -12567,18 +13669,18 @@ var MapReaction = (function (_super) {
         this.offsetY1 = 0.5 * (this.canvasH - this.metavec1.height * this.scale);
         this.offsetX2 = (this.metavec1.width + 3 * this.padding) * this.scale + this.ARROWWIDTH;
         this.offsetY2 = 0.5 * (this.canvasH - this.metavec2.height * this.scale);
-        var div = $('<div></div>').appendTo(this.body());
+        let div = $('<div></div>').appendTo(this.body());
         div.css('position', 'relative');
         div.css('width', this.canvasW + 'px');
         div.css('height', this.canvasH + 'px');
-        var density = pixelDensity();
-        var styleCanvas = 'position: absolute; left: 0; top: 0; width: ' + this.canvasW + 'px; height: ' + this.canvasH + 'px;';
-        var styleOverlay = styleCanvas + 'pointer-events: none;';
+        let density = pixelDensity();
+        let styleCanvas = 'position: absolute; left: 0; top: 0; width: ' + this.canvasW + 'px; height: ' + this.canvasH + 'px;';
+        let styleOverlay = styleCanvas + 'pointer-events: none;';
         this.canvas = newElement(div, 'canvas', { 'width': this.canvasW * density, 'height': this.canvasH * density, 'style': styleCanvas });
-        var ctx = this.canvas.getContext('2d');
+        let ctx = this.canvas.getContext('2d');
         ctx.scale(density, density);
         this.redrawCanvas();
-        var self = this;
+        const self = this;
         $(this.canvas).mousedown(function (event) { event.preventDefault(); self.mouseDown(event); });
         $(this.canvas).mouseup(function (event) { self.mouseUp(event); });
         $(this.canvas).mouseenter(function (event) { self.mouseEnter(event); });
@@ -12587,7 +13689,7 @@ var MapReaction = (function (_super) {
         this.drawnMols = newElement(div, 'canvas', { 'width': this.canvasW * density, 'height': this.canvasH * density, 'style': styleOverlay });
         ctx = this.drawnMols.getContext('2d');
         ctx.scale(density, density);
-        var draw = new MetaVector(this.rawvec1);
+        let draw = new MetaVector(this.rawvec1);
         draw.offsetX = this.offsetX1;
         draw.offsetY = this.offsetY1;
         draw.scale = this.scale;
@@ -12598,14 +13700,14 @@ var MapReaction = (function (_super) {
         draw.scale = this.scale;
         draw.renderContext(ctx);
         this.bump();
-    };
-    MapReaction.prototype.redrawCanvas = function () {
-        var ctx = this.canvas.getContext('2d');
-        var w = this.canvasW, h = this.canvasH;
+    }
+    redrawCanvas() {
+        let ctx = this.canvas.getContext('2d');
+        let w = this.canvasW, h = this.canvasH;
         ctx.clearRect(0, 0, w, h);
-        var arrowX1 = (2 * this.padding + this.metavec1.width) * this.scale;
-        var arrowX2 = arrowX1 + this.ARROWWIDTH;
-        var arrowY = 0.5 * this.canvasH;
+        let arrowX1 = (2 * this.padding + this.metavec1.width) * this.scale;
+        let arrowX2 = arrowX1 + this.ARROWWIDTH;
+        let arrowY = 0.5 * this.canvasH;
         ctx.beginPath();
         ctx.moveTo(arrowX1, arrowY);
         ctx.lineTo(arrowX2 - 2, arrowY);
@@ -12621,36 +13723,36 @@ var MapReaction = (function (_super) {
         this.drawHighlights(ctx, 1, this.highlighted[0] == 1 ? this.highlighted[1] : 0);
         this.drawHighlights(ctx, 2, this.highlighted[0] == 2 ? this.highlighted[1] : 0);
         if (this.pressed[0] > 0) {
-            var compatMask = this.compatibilityMask(this.pressed[0], this.pressed[1]);
+            let compatMask = this.compatibilityMask(this.pressed[0], this.pressed[1]);
             ctx.strokeStyle = '#808080';
             ctx.lineWidth = 1;
             if (this.pressed[0] == 1) {
-                for (var n = 1; n <= this.mol2.numAtoms; n++)
+                for (let n = 1; n <= this.mol2.numAtoms; n++)
                     if (compatMask[n - 1]) {
-                        var _a = this.getAtomPos(2, n), cx = _a[0], cy = _a[1], rw = _a[2], rh = _a[3];
+                        let [cx, cy, rw, rh] = this.getAtomPos(2, n);
                         ctx.beginPath();
                         ctx.ellipse(cx, cy, rw, rh, 0, 0, TWOPI, false);
                         ctx.stroke();
                     }
             }
             else {
-                for (var n = 1; n <= this.mol1.numAtoms; n++)
+                for (let n = 1; n <= this.mol1.numAtoms; n++)
                     if (compatMask[n - 1]) {
-                        var _b = this.getAtomPos(1, n), cx = _b[0], cy = _b[1], rw = _b[2], rh = _b[3];
+                        let [cx, cy, rw, rh] = this.getAtomPos(1, n);
                         ctx.beginPath();
                         ctx.ellipse(cx, cy, rw, rh, 0, 0, TWOPI, false);
                         ctx.stroke();
                     }
             }
-            var _c = this.getAtomPos(this.pressed[0], this.pressed[1]), cx1 = _c[0], cy1 = _c[1], rw1 = _c[2], rh1 = _c[3];
+            let [cx1, cy1, rw1, rh1] = this.getAtomPos(this.pressed[0], this.pressed[1]);
             ctx.beginPath();
             ctx.ellipse(cx1, cy1, rw1, rh1, 0, 0, TWOPI, false);
             ctx.fillStyle = '#808080';
             ctx.fill();
-            var dx = this.dragToX, dy = this.dragToY;
-            var dest = this.pickAtom(dx, dy, this.pressed[0] == 2 ? compatMask : null, this.pressed[0] == 1 ? compatMask : null);
+            let dx = this.dragToX, dy = this.dragToY;
+            let dest = this.pickAtom(dx, dy, this.pressed[0] == 2 ? compatMask : null, this.pressed[0] == 1 ? compatMask : null);
             if (dest[0] == 3 - this.pressed[0]) {
-                var _d = this.getAtomPos(dest[0], dest[1]), cx2 = _d[0], cy2 = _d[1], rw2 = _d[2], rh2 = _d[3];
+                let [cx2, cy2, rw2, rh2] = this.getAtomPos(dest[0], dest[1]);
                 ctx.beginPath();
                 ctx.ellipse(cx2, cy2, rw2, rh2, 0, 0, TWOPI, false);
                 ctx.fillStyle = '#808080';
@@ -12665,31 +13767,31 @@ var MapReaction = (function (_super) {
             ctx.lineWidth = 1;
             ctx.stroke();
         }
-    };
-    MapReaction.prototype.drawHighlights = function (ctx, side, highlight) {
-        var mol = side == 1 ? this.mol1 : this.mol2;
-        var arrmol = side == 1 ? this.arrmol1 : this.arrmol2;
-        var offsetX = side == 1 ? this.offsetX1 : this.offsetX2;
-        var offsetY = side == 1 ? this.offsetY1 : this.offsetY2;
-        var scale = this.scale;
-        for (var n = 1; n <= mol.numAtoms; n++) {
-            var mapnum = mol.atomMapNum(n);
+    }
+    drawHighlights(ctx, side, highlight) {
+        const mol = side == 1 ? this.mol1 : this.mol2;
+        const arrmol = side == 1 ? this.arrmol1 : this.arrmol2;
+        const offsetX = side == 1 ? this.offsetX1 : this.offsetX2;
+        const offsetY = side == 1 ? this.offsetY1 : this.offsetY2;
+        const scale = this.scale;
+        for (let n = 1; n <= mol.numAtoms; n++) {
+            let mapnum = mol.atomMapNum(n);
             if (mapnum == 0 && n != highlight)
                 continue;
-            var pt = arrmol.points[n - 1];
-            var cx = offsetX + pt.cx * scale, cy = offsetY + pt.cy * scale;
-            var rw = Math.max(0.5 * this.policy.data.pointScale, pt.rw) * scale, rh = Math.max(0.5 * this.policy.data.pointScale, pt.rh) * scale;
+            let pt = arrmol.points[n - 1];
+            let cx = offsetX + pt.cx * scale, cy = offsetY + pt.cy * scale;
+            let rw = Math.max(0.5 * this.policy.data.pointScale, pt.rw) * scale, rh = Math.max(0.5 * this.policy.data.pointScale, pt.rh) * scale;
             if (mapnum > 0) {
-                var col = this.COLCYCLE[(mapnum - 1) % this.COLCYCLE.length];
+                let col = this.COLCYCLE[(mapnum - 1) % this.COLCYCLE.length];
                 ctx.beginPath();
                 ctx.ellipse(cx, cy, rw, rh, 0, 0, TWOPI, false);
                 ctx.fillStyle = col;
                 ctx.fill();
                 if (n == highlight) {
-                    var oside = 3 - side, omol = side == 1 ? this.mol2 : this.mol1;
-                    for (var i = 1; i <= omol.numAtoms; i++)
+                    let oside = 3 - side, omol = side == 1 ? this.mol2 : this.mol1;
+                    for (let i = 1; i <= omol.numAtoms; i++)
                         if (omol.atomMapNum(i) == mapnum) {
-                            var _a = this.getAtomPos(oside, i), dx = _a[0], dy = _a[1];
+                            let [dx, dy] = this.getAtomPos(oside, i);
                             ctx.beginPath();
                             ctx.moveTo(cx, cy);
                             ctx.lineTo(dx, dy);
@@ -12707,85 +13809,85 @@ var MapReaction = (function (_super) {
                 ctx.stroke();
             }
         }
-    };
-    MapReaction.prototype.pickAtom = function (x, y, mask1, mask2) {
-        var ret = [0, 0];
-        var scale = this.scale, thresh2 = sqr(this.scale * 1.0 * this.policy.data.pointScale);
-        var bestDist = Number.POSITIVE_INFINITY;
-        for (var n = 1; n <= this.mol1.numAtoms; n++) {
+    }
+    pickAtom(x, y, mask1, mask2) {
+        let ret = [0, 0];
+        const scale = this.scale, thresh2 = sqr(this.scale * 1.0 * this.policy.data.pointScale);
+        let bestDist = Number.POSITIVE_INFINITY;
+        for (let n = 1; n <= this.mol1.numAtoms; n++) {
             if (mask1 != null && !mask1[n - 1])
                 continue;
-            var pt = this.arrmol1.points[n - 1];
-            var cx = this.offsetX1 + pt.cx * scale, cy = this.offsetY1 + pt.cy * scale;
-            var dsq = norm2_xy(x - cx, y - cy);
+            let pt = this.arrmol1.points[n - 1];
+            let cx = this.offsetX1 + pt.cx * scale, cy = this.offsetY1 + pt.cy * scale;
+            let dsq = norm2_xy(x - cx, y - cy);
             if (dsq < thresh2 && dsq < bestDist) {
                 ret = [1, n];
                 bestDist = dsq;
             }
         }
-        for (var n = 1; n <= this.mol2.numAtoms; n++) {
+        for (let n = 1; n <= this.mol2.numAtoms; n++) {
             if (mask2 != null && !mask2[n - 1])
                 continue;
-            var pt = this.arrmol2.points[n - 1];
-            var cx = this.offsetX2 + pt.cx * scale, cy = this.offsetY2 + pt.cy * scale;
-            var dsq = norm2_xy(x - cx, y - cy);
+            let pt = this.arrmol2.points[n - 1];
+            let cx = this.offsetX2 + pt.cx * scale, cy = this.offsetY2 + pt.cy * scale;
+            let dsq = norm2_xy(x - cx, y - cy);
             if (dsq < thresh2 && dsq < bestDist) {
                 ret = [2, n];
                 bestDist = dsq;
             }
         }
         return ret;
-    };
-    MapReaction.prototype.getAtomPos = function (side, atom) {
-        var arrmol = side == 1 ? this.arrmol1 : this.arrmol2;
-        var ox = side == 1 ? this.offsetX1 : this.offsetX2, oy = side == 1 ? this.offsetY1 : this.offsetY2;
-        var pt = arrmol.points[atom - 1];
-        var cx = ox + pt.cx * this.scale, cy = oy + pt.cy * this.scale;
-        var rw = Math.max(0.5 * this.policy.data.pointScale, pt.rw) * this.scale, rh = Math.max(0.5 * this.policy.data.pointScale, pt.rh) * this.scale;
+    }
+    getAtomPos(side, atom) {
+        let arrmol = side == 1 ? this.arrmol1 : this.arrmol2;
+        let ox = side == 1 ? this.offsetX1 : this.offsetX2, oy = side == 1 ? this.offsetY1 : this.offsetY2;
+        let pt = arrmol.points[atom - 1];
+        let cx = ox + pt.cx * this.scale, cy = oy + pt.cy * this.scale;
+        let rw = Math.max(0.5 * this.policy.data.pointScale, pt.rw) * this.scale, rh = Math.max(0.5 * this.policy.data.pointScale, pt.rh) * this.scale;
         return [cx, cy, rw, rh];
-    };
-    MapReaction.prototype.compatibilityMask = function (side, atom) {
-        var mask = [];
-        var mol1 = side == 1 ? this.mol1 : this.mol2, mol2 = side == 1 ? this.mol2 : this.mol1;
-        var el = mol1.atomElement(atom), iso = mol1.atomIsotope(atom), map = mol1.atomMapNum(atom);
-        for (var n = 1; n <= mol2.numAtoms; n++) {
-            var match = el == mol2.atomElement(n) && iso == mol2.atomIsotope(n);
+    }
+    compatibilityMask(side, atom) {
+        let mask = [];
+        let mol1 = side == 1 ? this.mol1 : this.mol2, mol2 = side == 1 ? this.mol2 : this.mol1;
+        let el = mol1.atomElement(atom), iso = mol1.atomIsotope(atom), map = mol1.atomMapNum(atom);
+        for (let n = 1; n <= mol2.numAtoms; n++) {
+            let match = el == mol2.atomElement(n) && iso == mol2.atomIsotope(n);
             match = match && (map == 0 || mol2.atomMapNum(n) == 0);
             mask.push(match);
         }
         return mask;
-    };
-    MapReaction.prototype.connectAtoms = function (side, atom1, atom2) {
-        var mol1 = side == 1 ? this.mol1 : this.mol2, mol2 = side == 1 ? this.mol2 : this.mol1;
-        var map = mol1.atomMapNum(atom1);
+    }
+    connectAtoms(side, atom1, atom2) {
+        let mol1 = side == 1 ? this.mol1 : this.mol2, mol2 = side == 1 ? this.mol2 : this.mol1;
+        let map = mol1.atomMapNum(atom1);
         if (map == 0)
             map = mol2.atomMapNum(atom2);
         if (map == 0) {
-            var allnums = new Set();
-            for (var n = 1; n <= mol1.numAtoms; n++)
+            let allnums = new Set();
+            for (let n = 1; n <= mol1.numAtoms; n++)
                 allnums.add(mol1.atomMapNum(n));
-            for (var n = 1; n <= mol2.numAtoms; n++)
+            for (let n = 1; n <= mol2.numAtoms; n++)
                 allnums.add(mol2.atomMapNum(n));
             for (map = 1; allnums.has(map); map++)
                 ;
         }
         mol1.setAtomMapNum(atom1, map);
         mol2.setAtomMapNum(atom2, map);
-    };
-    MapReaction.prototype.autoConnect = function () {
+    }
+    autoConnect() {
         Func.atomMapping({ 'leftNative': this.mol1.toString(), 'rightNative': this.mol2.toString() }, function (result, error) {
             if (!result)
                 return;
-            var map1 = result.map1, map2 = result.map2;
+            let map1 = result.map1, map2 = result.map2;
             if (map1 == null || map2 == null)
                 return;
-            var modified = false;
-            for (var n = 1; n <= this.mol1.numAtoms && n <= map1.length; n++)
+            let modified = false;
+            for (let n = 1; n <= this.mol1.numAtoms && n <= map1.length; n++)
                 if (map1[n - 1] > 0 && this.mol1.atomMapNum(n) == 0) {
                     this.mol1.setAtomMapNum(n, map1[n - 1]);
                     modified = true;
                 }
-            for (var n = 1; n <= this.mol2.numAtoms && n <= map2.length; n++)
+            for (let n = 1; n <= this.mol2.numAtoms && n <= map2.length; n++)
                 if (map2[n - 1] > 0 && this.mol2.atomMapNum(n) == 0) {
                     this.mol2.setAtomMapNum(n, map2[n - 1]);
                     modified = true;
@@ -12793,49 +13895,49 @@ var MapReaction = (function (_super) {
             if (modified)
                 this.redrawCanvas();
         }, this);
-    };
-    MapReaction.prototype.clearAllMappings = function () {
-        var anything = false;
-        for (var n = 1; n <= this.mol1.numAtoms; n++)
+    }
+    clearAllMappings() {
+        let anything = false;
+        for (let n = 1; n <= this.mol1.numAtoms; n++)
             if (this.mol1.atomMapNum(n) > 0) {
                 this.mol1.setAtomMapNum(n, 0);
                 anything = true;
             }
-        for (var n = 1; n <= this.mol2.numAtoms; n++)
+        for (let n = 1; n <= this.mol2.numAtoms; n++)
             if (this.mol2.atomMapNum(n) > 0) {
                 this.mol2.setAtomMapNum(n, 0);
                 anything = true;
             }
         if (anything)
             this.redrawCanvas();
-    };
-    MapReaction.prototype.clearMapping = function (side, atom) {
-        var map = side == 1 ? this.mol1.atomMapNum(atom) : this.mol2.atomMapNum(atom);
+    }
+    clearMapping(side, atom) {
+        let map = side == 1 ? this.mol1.atomMapNum(atom) : this.mol2.atomMapNum(atom);
         if (map == 0)
             return;
-        for (var n = 1; n <= this.mol1.numAtoms; n++)
+        for (let n = 1; n <= this.mol1.numAtoms; n++)
             if (this.mol1.atomMapNum(n) == map)
                 this.mol1.setAtomMapNum(n, 0);
-        for (var n = 1; n <= this.mol2.numAtoms; n++)
+        for (let n = 1; n <= this.mol2.numAtoms; n++)
             if (this.mol2.atomMapNum(n) == map)
                 this.mol2.setAtomMapNum(n, 0);
-    };
-    MapReaction.prototype.mouseDown = function (event) {
-        var xy = eventCoords(event, this.canvas);
+    }
+    mouseDown(event) {
+        let xy = eventCoords(event, this.canvas);
         this.pressed = this.pickAtom(xy[0], xy[1]);
         this.dragToX = xy[0];
         this.dragToY = xy[1];
         this.redrawCanvas();
-    };
-    MapReaction.prototype.mouseUp = function (event) {
-        var xy = eventCoords(event, this.canvas);
+    }
+    mouseUp(event) {
+        let xy = eventCoords(event, this.canvas);
         if (this.pressed[0] > 0) {
-            var dest = this.pickAtom(xy[0], xy[1]);
+            let dest = this.pickAtom(xy[0], xy[1]);
             if (dest[0] == this.pressed[0] && dest[1] == this.pressed[1]) {
                 this.clearMapping(dest[0], dest[1]);
             }
             else {
-                var compatMask = this.compatibilityMask(this.pressed[0], this.pressed[1]);
+                let compatMask = this.compatibilityMask(this.pressed[0], this.pressed[1]);
                 dest = this.pickAtom(xy[0], xy[1], this.pressed[0] == 2 ? compatMask : null, this.pressed[0] == 1 ? compatMask : null);
                 if (dest[0] == 3 - this.pressed[0]) {
                     this.connectAtoms(this.pressed[0], this.pressed[1], dest[1]);
@@ -12846,88 +13948,77 @@ var MapReaction = (function (_super) {
         }
         this.highlighted = this.pickAtom(xy[0], xy[1]);
         this.redrawCanvas();
-    };
-    MapReaction.prototype.mouseEnter = function (event) {
-    };
-    MapReaction.prototype.mouseLeave = function (event) {
+    }
+    mouseEnter(event) {
+    }
+    mouseLeave(event) {
         if (this.highlighted[0] > 0 || this.pressed[0] > 0) {
             this.highlighted = [0, 0];
             this.pressed = [0, 0];
             this.redrawCanvas();
         }
-    };
-    MapReaction.prototype.mouseMove = function (event) {
-        var xy = eventCoords(event, this.canvas);
+    }
+    mouseMove(event) {
+        let xy = eventCoords(event, this.canvas);
         if (this.pressed[0] > 0) {
             this.dragToX = xy[0];
             this.dragToY = xy[1];
             this.redrawCanvas();
         }
         else {
-            var high = this.pickAtom(xy[0], xy[1]);
+            let high = this.pickAtom(xy[0], xy[1]);
             if (high[0] != this.highlighted[0] || high[1] != this.highlighted[1]) {
                 this.highlighted = high;
                 this.redrawCanvas();
             }
         }
-    };
-    return MapReaction;
-}(Dialog));
-var Account = (function () {
-    function Account() {
     }
-    Account.connectTransient = function (callback, master) {
+}
+class Account {
+    static connectTransient(callback, master) {
         new RPC('account.connectTransient', {}, callback, master).invoke();
-    };
-    Account.refreshTransient = function (input, callback, master) {
+    }
+    static refreshTransient(input, callback, master) {
         new RPC('account.refreshTransient', input, callback, master).invoke();
-    };
-    return Account;
-}());
-var Pile = (function () {
-    function Pile() {
     }
-    Pile.uploadMolecule = function (input, callback, master) {
+}
+class Pile {
+    static uploadMolecule(input, callback, master) {
         new RPC('pile.uploadMolecule', input, callback, master).invoke();
-    };
-    Pile.uploadDataSheet = function (input, callback, master) {
-        new RPC('pile.uploadDataSheet', input, callback, master).invoke();
-    };
-    Pile.downloadMolecule = function (input, callback, master) {
-        new RPC('pile.downloadMolecule', input, callback, master).invoke();
-    };
-    Pile.downloadDataSheet = function (input, callback, master) {
-        new RPC('pile.downloadDataSheet', input, callback, master).invoke();
-    };
-    Pile.fetchSelection = function (input, callback, master) {
-        new RPC('pile.fetchSelection', input, callback, master).invoke();
-    };
-    Pile.fetchMolecules = function (input, callback, master) {
-        new RPC('pile.fetchMolecules', input, callback, master).invoke();
-    };
-    return Pile;
-}());
-var Search = (function () {
-    function Search() {
     }
-    Search.startMolSearch = function (input, callback, master) {
+    static uploadDataSheet(input, callback, master) {
+        new RPC('pile.uploadDataSheet', input, callback, master).invoke();
+    }
+    static downloadMolecule(input, callback, master) {
+        new RPC('pile.downloadMolecule', input, callback, master).invoke();
+    }
+    static downloadDataSheet(input, callback, master) {
+        new RPC('pile.downloadDataSheet', input, callback, master).invoke();
+    }
+    static fetchSelection(input, callback, master) {
+        new RPC('pile.fetchSelection', input, callback, master).invoke();
+    }
+    static fetchMolecules(input, callback, master) {
+        new RPC('pile.fetchMolecules', input, callback, master).invoke();
+    }
+}
+class Search {
+    static startMolSearch(input, callback, master) {
         new RPC('search.startMolSearch', input, callback, master).invoke();
-    };
-    Search.pollMolSearch = function (input, callback, master) {
+    }
+    static pollMolSearch(input, callback, master) {
         new RPC('search.pollMolSearch', input, callback, master).invoke();
-    };
-    Search.startRxnSearch = function (input, callback, master) {
+    }
+    static startRxnSearch(input, callback, master) {
         new RPC('search.startRxnSearch', input, callback, master).invoke();
-    };
-    Search.pollRxnSearch = function (input, callback, master) {
+    }
+    static pollRxnSearch(input, callback, master) {
         new RPC('search.pollRxnSearch', input, callback, master).invoke();
-    };
-    return Search;
-}());
-var CircleButton = (function (_super) {
-    __extends(CircleButton, _super);
-    function CircleButton(icon) {
-        _super.call(this);
+    }
+}
+class CircleButton extends Widget {
+    constructor(icon) {
+        super();
         this.icon = icon;
         this.BUTTON_DIAMETER = 50;
         this.BUTTON_HPADDING = 4;
@@ -12942,33 +14033,33 @@ var CircleButton = (function (_super) {
         this.progressFraction = null;
         this.callback = null;
     }
-    CircleButton.prototype.onAction = function (callback, master) {
+    onAction(callback, master) {
         this.callback = callback;
         this.master = master;
-    };
-    CircleButton.prototype.render = function (parent) {
-        _super.prototype.render.call(this, parent);
+    }
+    render(parent) {
+        super.render(parent);
         this.content.addClass('no_selection');
-        var diameter = this.BUTTON_DIAMETER;
-        var width = diameter, height = diameter;
-        var div = this.content;
-        var density = pixelDensity();
+        const diameter = this.BUTTON_DIAMETER;
+        const width = diameter, height = diameter;
+        let div = this.content;
+        let density = pixelDensity();
         div.css('width', width + 2 * this.BUTTON_HPADDING);
         div.css('height', height + 2 * this.BUTTON_VPADDING);
         div.css('position', 'relative');
-        var canvasStyle = 'position: absolute; left: ' + this.BUTTON_HPADDING + 'px; top: ' + this.BUTTON_VPADDING + 'px;';
+        let canvasStyle = 'position: absolute; left: ' + this.BUTTON_HPADDING + 'px; top: ' + this.BUTTON_VPADDING + 'px;';
         canvasStyle += 'pointer-events: none;';
         function renderSolid(col1, col2) {
-            var node = newElement(div, 'canvas', { 'width': width * density, 'height': height * density, 'style': canvasStyle });
+            let node = newElement(div, 'canvas', { 'width': width * density, 'height': height * density, 'style': canvasStyle });
             node.style.width = width + 'px';
             node.style.height = height + 'px';
-            var ctx = node.getContext('2d');
+            let ctx = node.getContext('2d');
             ctx.save();
             ctx.scale(density, density);
             ctx.beginPath();
             ctx.arc(0.5 * width, 0.5 * height, 0.5 * diameter - 1, 0, 2 * Math.PI, true);
             ctx.clip();
-            var grad = ctx.createLinearGradient(0, 0, width, height);
+            let grad = ctx.createLinearGradient(0, 0, width, height);
             grad.addColorStop(0, col1);
             grad.addColorStop(1, col2);
             ctx.fillStyle = grad;
@@ -12977,7 +14068,7 @@ var CircleButton = (function (_super) {
             return node;
         }
         function renderBorder(lw) {
-            var node = newElement(div, 'canvas', { 'width': width * density, 'height': height * density, 'style': canvasStyle });
+            let node = newElement(div, 'canvas', { 'width': width * density, 'height': height * density, 'style': canvasStyle });
             node.style.width = width + 'px';
             node.style.height = height + 'px';
             var ctx = node.getContext('2d');
@@ -13005,20 +14096,20 @@ var CircleButton = (function (_super) {
         var svgurl = RPC.BASE_URL + "/img/icons/" + this.icon;
         this.svg = newElement(div, 'object', { 'width': width, 'height': height, 'style': canvasStyle, 'data': svgurl, 'type': 'image/svg+xml' });
         this.updateLayers();
-        var self = this;
+        const self = this;
         div.mouseenter(function () { self.mouseEnter(); ; });
         div.mouseleave(function () { self.mouseLeave(); });
         div.mousedown(function () { self.mouseDown(); });
         div.mouseup(function () { self.mouseUp(); });
         div.click(function () { self.mouseClicked(); });
-    };
+    }
     ;
-    CircleButton.prototype.setProgress = function (fraction) {
+    setProgress(fraction) {
         if (this.progressFraction == fraction)
             return;
         this.progressFraction = fraction;
         this.ringProgress.hidden = false;
-        var diameter = this.BUTTON_DIAMETER, mid = 0.5 * diameter, outer = mid - 1, inner = 0.8 * mid;
+        let diameter = this.BUTTON_DIAMETER, mid = 0.5 * diameter, outer = mid - 1, inner = 0.8 * mid;
         var ctx = this.ringProgress.getContext('2d');
         ctx.clearRect(0, 0, diameter, diameter);
         ctx.strokeStyle = 'rgba(80,80,80,0.5)';
@@ -13032,8 +14123,8 @@ var CircleButton = (function (_super) {
             drawLine(ctx, mid, mid - inner, mid, mid - outer);
             return;
         }
-        var delta = TWOPI * fraction;
-        var theta1 = -0.5 * Math.PI, theta2 = theta1 + delta;
+        let delta = TWOPI * fraction;
+        let theta1 = -0.5 * Math.PI, theta2 = theta1 + delta;
         ctx.save();
         ctx.beginPath();
         ctx.moveTo(mid, mid - outer);
@@ -13041,18 +14132,18 @@ var CircleButton = (function (_super) {
         ctx.lineTo(mid + inner * Math.cos(theta2), mid + inner * Math.sin(theta2));
         ctx.arc(mid, mid, inner, theta2, theta1, true);
         ctx.closePath();
-        var grad = ctx.createRadialGradient(mid, mid, inner, mid, mid, outer);
+        let grad = ctx.createRadialGradient(mid, mid, inner, mid, mid, outer);
         grad.addColorStop(0, '#47D5D2');
         grad.addColorStop(1, '#008FD2');
         ctx.fillStyle = grad;
         ctx.fill();
         ctx.restore();
-    };
-    CircleButton.prototype.clearProgress = function () {
+    }
+    clearProgress() {
         this.progressFraction = null;
         this.ringProgress.hidden = true;
-    };
-    CircleButton.prototype.updateLayers = function () {
+    }
+    updateLayers() {
         setVisible(this.pressedBackgr, this.isPressed);
         setVisible(this.normalBackgr, !this.isPressed && this.state == this.STATE_NORMAL);
         setVisible(this.selectedBackgr, !this.isPressed && this.state == this.STATE_SELECTED);
@@ -13066,52 +14157,50 @@ var CircleButton = (function (_super) {
             this.content.css('cursor', 'pointer');
         setVisible(this.thinBorder, !highlight);
         setVisible(this.thickBorder, highlight);
-    };
-    CircleButton.prototype.mouseEnter = function () {
+    }
+    mouseEnter() {
         this.isHighlight = true;
         this.updateLayers();
-    };
-    CircleButton.prototype.mouseLeave = function () {
+    }
+    mouseLeave() {
         this.isHighlight = false;
         this.isPressed = false;
         this.updateLayers();
-    };
-    CircleButton.prototype.mouseDown = function () {
+    }
+    mouseDown() {
         this.isPressed = this.state != this.STATE_DISABLED;
         this.updateLayers();
-    };
-    CircleButton.prototype.mouseUp = function () {
+    }
+    mouseUp() {
         this.isPressed = false;
         this.updateLayers();
-    };
-    CircleButton.prototype.mouseClicked = function () {
+    }
+    mouseClicked() {
         if (this.callback)
             this.callback.call(this.master, this);
-    };
-    return CircleButton;
-}(Widget));
-var RowView = (function (_super) {
-    __extends(RowView, _super);
-    function RowView(tokenID) {
-        _super.call(this);
+    }
+}
+class RowView extends Widget {
+    constructor(tokenID) {
+        super();
         this.tokenID = tokenID;
         this.entries = null;
         this.watermark = 0;
     }
-    RowView.prototype.defineEntries = function (entries) {
+    defineEntries(entries) {
         this.entries = entries;
-    };
-    RowView.prototype.render = function (parent) {
-        _super.prototype.render.call(this, parent);
+    }
+    render(parent) {
+        super.render(parent);
         if (this.entries == null)
             throw 'molsync.ui.RowView: entries must be defined before rendering';
-        var tableStyle = 'border-collapse: collapse;';
-        var table = $('<table></table>').appendTo(this.content);
+        let tableStyle = 'border-collapse: collapse;';
+        let table = $('<table></table>').appendTo(this.content);
         table.attr('style', tableStyle);
-        var roster = [];
+        let roster = [];
         this.watermark++;
-        for (var n = 0; n < this.entries.length; n++) {
-            var entry = this.entries[n];
+        for (let n = 0; n < this.entries.length; n++) {
+            let entry = this.entries[n];
             entry.tr = $('<tr></tr>').appendTo(table);
             entry = clone(entry);
             entry.tdStyle = '';
@@ -13122,29 +14211,29 @@ var RowView = (function (_super) {
             entry.watermark = this.watermark;
             roster.push(entry);
         }
-        var fcnComposure = function (result, error) {
-            var entry = roster.shift();
+        let fcnComposure = function (result, error) {
+            let entry = roster.shift();
             if (entry.watermark != this.watermark)
                 return;
             if (error != null)
                 throw 'molsync.ui.RowView: failed to obtain document composition: ' + error.message;
-            var nodes = [];
-            for (var n = 0; n < result.doc.nodes.length; n++) {
-                var node = result.doc.nodes[n];
-                var src = node.src;
+            let nodes = [];
+            for (let n = 0; n < result.doc.nodes.length; n++) {
+                let node = result.doc.nodes[n];
+                let src = node.src;
                 if (src.startsWith('experiment:') && src != 'experiment:header' && src != 'experiment:scheme')
                     continue;
                 nodes.push(node);
             }
-            for (var n = 0; n < nodes.length; n++) {
-                var tdStyle = entry.tdStyle + 'vertical-align: top;';
+            for (let n = 0; n < nodes.length; n++) {
+                let tdStyle = entry.tdStyle + 'vertical-align: top;';
                 if (n > 0)
                     tdStyle += 'border-left: 1px solid #80C080;';
                 if (n < nodes.length - 1)
                     tdStyle += 'border-right: 1px solid #80C080;';
                 if (nodes[n].type != 'graphics')
                     tdStyle += 'padding: 0.5em;';
-                var td = $('<td></td>').appendTo(entry.tr);
+                let td = $('<td></td>').appendTo(entry.tr);
                 td.attr('style', tdStyle);
                 this.renderNode(td, nodes[n]);
             }
@@ -13153,8 +14242,8 @@ var RowView = (function (_super) {
         };
         if (roster.length > 0)
             Func.composeDocument({ 'tokenID': this.tokenID, 'dataXML': roster[0].dataXML, 'subsumeTitle': true }, fcnComposure, this);
-    };
-    RowView.prototype.renderNode = function (parent, node) {
+    }
+    renderNode(parent, node) {
         if (node.type == 'line')
             this.renderLine(parent, node, true);
         else if (node.type == 'link')
@@ -13165,8 +14254,8 @@ var RowView = (function (_super) {
             this.renderPara(parent, node);
         else if (node.type == 'matrix')
             this.renderMatrix(parent, node);
-    };
-    RowView.prototype.renderLine = function (parent, node, inPara) {
+    }
+    renderLine(parent, node, inPara) {
         if (inPara)
             parent = $(newElement(parent, 'p'));
         if (node.title) {
@@ -13183,23 +14272,23 @@ var RowView = (function (_super) {
             this.renderFormula(parent, node.text);
         else
             addText(parent, node.text);
-    };
-    RowView.prototype.renderLink = function (parent, node) {
+    }
+    renderLink(parent, node) {
         if (node.title) {
             addText(newElement(parent, 'b'), node.title);
             addText(parent[0], ': ');
         }
-        var ahref = newElement(parent, 'a', { 'href': node.url, 'target': '_blank' });
+        let ahref = newElement(parent, 'a', { 'href': node.url, 'target': '_blank' });
         addText(ahref, node.url);
-    };
-    RowView.prototype.renderGraphics = function (parent, node) {
-        var draw = new MetaVector(node.metavec);
+    }
+    renderGraphics(parent, node) {
+        let draw = new MetaVector(node.metavec);
         draw.renderInto(parent);
-    };
-    RowView.prototype.renderPara = function (parent, node) {
+    }
+    renderPara(parent, node) {
         parent = $('<p></p>').appendTo(parent);
-        for (var n = 0; n < node.nodes.length; n++) {
-            var sub = node.nodes[n];
+        for (let n = 0; n < node.nodes.length; n++) {
+            let sub = node.nodes[n];
             if (n > 0)
                 newElement(parent, 'br');
             if (sub.type == 'line')
@@ -13207,28 +14296,28 @@ var RowView = (function (_super) {
             else
                 this.renderNode(parent, sub);
         }
-    };
-    RowView.prototype.renderMatrix = function (parent, node) {
-        var ncols = node.ncols, nrows = node.nrows;
-        var table = newElement(parent, 'table', { 'class': 'data', 'style': 'margin: 0;' });
-        var tableBody = newElement(table, 'tbody');
-        for (var r = 0; r < nrows; r++) {
-            var tableRow = newElement(tableBody, 'tr');
-            for (var c = 0; c < ncols; c++) {
-                var cell = node.matrix[r][c];
-                var tableCell = newElement(tableRow, 'td', { 'class': 'data' });
+    }
+    renderMatrix(parent, node) {
+        let ncols = node.ncols, nrows = node.nrows;
+        let table = newElement(parent, 'table', { 'class': 'data', 'style': 'margin: 0;' });
+        let tableBody = newElement(table, 'tbody');
+        for (let r = 0; r < nrows; r++) {
+            let tableRow = newElement(tableBody, 'tr');
+            for (let c = 0; c < ncols; c++) {
+                let cell = node.matrix[r][c];
+                let tableCell = newElement(tableRow, 'td', { 'class': 'data' });
                 this.renderNode($(tableCell), cell);
             }
         }
-    };
-    RowView.prototype.renderFormula = function (parent, formula) {
-        for (var n = 0; n < formula.length; n++) {
-            var ch = formula.charAt(n);
+    }
+    renderFormula(parent, formula) {
+        for (let n = 0; n < formula.length; n++) {
+            let ch = formula.charAt(n);
             if (ch == '|') { }
             else if (ch == '{') {
-                var end = formula.indexOf('}', n + 1);
+                let end = formula.indexOf('}', n + 1);
                 if (end >= 0) {
-                    var snip = formula.substring(n + 1, end);
+                    let snip = formula.substring(n + 1, end);
                     addText(newElement(parent, 'sub'), snip);
                     n = end;
                 }
@@ -13238,13 +14327,184 @@ var RowView = (function (_super) {
             else
                 addText(parent, ch);
         }
-    };
-    return RowView;
-}(Widget));
-var SearchPanel = (function (_super) {
-    __extends(SearchPanel, _super);
-    function SearchPanel(type) {
-        _super.call(this);
+    }
+}
+class SearchMolecules extends Widget {
+    constructor(tokenID) {
+        super();
+        this.tokenID = tokenID;
+        this.molsearchToken = null;
+        this.cancelled = false;
+        this.started = false;
+        this.finished = false;
+        this.progress = 0;
+        this.count = 0;
+        this.results = [];
+        this.callbackStop = null;
+        this.masterStop = null;
+        this.callbackProgress = null;
+        this.masterProgress = null;
+        this.callbackMol = null;
+        this.masterMol = null;
+        this.callbackDS = null;
+        this.masterDS = null;
+    }
+    onStop(callback, master) {
+        this.callbackStop = callback;
+        this.masterStop = master;
+    }
+    onProgress(callback, master) {
+        this.callbackProgress = callback;
+        this.masterProgress = master;
+    }
+    onClickMolecule(callback, master) {
+        this.callbackMol = callback;
+        this.masterMol = master;
+    }
+    onClickDataSheet(callback, master) {
+        this.callbackDS = callback;
+        this.masterDS = master;
+    }
+    render(parent) {
+        super.render(parent);
+        let tableStyle = 'border-collapse: collapse;';
+        this.table = $('<table></table>').appendTo(this.content);
+        this.table.attr('style', tableStyle);
+    }
+    startSearch(origin, mol, type, maxResults = 100) {
+        this.cancelled = false;
+        this.results = [];
+        this.table.empty();
+        this.placeholder = $('<tr><td>Starting search...</td></tr>').appendTo(this.table);
+        let molstr = mol == null ? null : mol.toString();
+        let param = { 'origin': origin, 'molNative': molstr, 'type': type, 'maxResults': maxResults };
+        Search.startMolSearch(param, function (result, error) {
+            if (error != null)
+                throw 'molsync.ui.SearchMolecules: failed to initiate search: ' + error.message;
+            this.molsearchToken = result.molsearchToken;
+            this.started = true;
+            this.finished = false;
+            Search.pollMolSearch({ 'molsearchToken': this.molsearchToken }, this.batchSearch, this);
+        }, this);
+    }
+    stopSearch() {
+        if (this.placeholder) {
+            this.placeholder.remove();
+            this.placeholder = null;
+        }
+        this.cancelled = true;
+        this.finished = true;
+        if (this.callbackStop)
+            this.callbackStop.call(this.masterStop, this);
+    }
+    isRunning() {
+        return this.started && !this.finished;
+    }
+    batchSearch(result, error) {
+        if (this.placeholder) {
+            this.placeholder.remove();
+            this.placeholder = null;
+        }
+        if (error != null)
+            throw 'molsync.ui.SearchMolecules: failed to obtain next batch: ' + error.message;
+        if (this.cancelled)
+            return;
+        this.finished = result.finished;
+        this.progress = result.progress;
+        this.count = result.count;
+        if (result.modified)
+            this.updateResults(result.results);
+        if (!this.finished) {
+            Search.pollMolSearch({ 'molsearchToken': this.molsearchToken }, this.batchSearch, this);
+            if (this.callbackProgress)
+                this.callbackProgress.call(this.masterProgress, this.progress, this.count, this);
+        }
+        else {
+            if (this.callbackStop)
+                this.callbackStop.call(this.masterStop, this);
+        }
+    }
+    updateResults(results) {
+        let self = this;
+        for (let n = 0; n < results.length; n++) {
+            let res = results[n];
+            res.tr = $('<tr></tr>').appendTo(this.table);
+            res.td = $('<td></td>').appendTo(res.tr);
+            if (n > 0)
+                res.td.css('border-top', '1px solid #80C080');
+            if (n < results.length - 1)
+                res.td.css('border-bottom', '1px solid #80C080');
+            let table = $('<table></table>').appendTo(res.td), tr = $('<tr></tr>').appendTo(table);
+            if (res.similarity) {
+                let td = $('<td></td>').appendTo(tr);
+                let txt = res.similarity == 1 ? '100%' : (res.similarity * 100).toFixed(1) + '%';
+                td.text(txt);
+            }
+            for (let sk of res.sketches) {
+                let td = $('<td></td>').appendTo(tr);
+                let vs = this.grabSketch(td, sk.molNative, sk.moleculeID);
+                sk.viewMol = vs;
+            }
+            let td = $('<td></td>').appendTo(tr);
+            for (let src of res.sources) {
+                let link = $('<a href="#' + src.datasheetID + '"></a>').appendTo(td);
+                link.mouseenter(function (e) { e.target.style.backgroundColor = '#D0D0D0'; });
+                link.mouseleave(function (e) { e.target.style.backgroundColor = 'transparent'; });
+                let title = src.subTitle ? src.subTitle : src.title ? src.title : 'DataSheet#' + src.datasheetID;
+                link.text(title);
+                let body = '';
+                if (src.title && src.title != title)
+                    body += '<div>Title: <i>' + escapeHTML(src.title) + '</i></div>';
+                if (src.descr)
+                    body += '<div>Description: <i>' + escapeHTML(src.descr) + '</i></div>';
+                body += '<div>Row ' + src.row + '</div>';
+                addTooltip(link, body, escapeHTML(title));
+                link.click(function () {
+                    if (self.callbackDS)
+                        self.callbackDS(src.datasheetID, self);
+                });
+                td.append(' ');
+            }
+        }
+        for (let res of this.results)
+            res.tr.remove();
+        this.results = results;
+    }
+    grabSketch(parent, molNative, moleculeID) {
+        for (let res of this.results)
+            for (let sk of res.sketches) {
+                for (let mid of moleculeID)
+                    if (sk.moleculeID.indexOf(mid) >= 0 && sk.viewMol != null) {
+                        sk.viewMol.content.appendTo(parent);
+                        return sk.viewMol;
+                    }
+            }
+        const vs = new ViewStructure(this.tokenID);
+        vs.content = parent;
+        vs.defineMoleculeString(molNative);
+        vs.borderCol = -1;
+        vs.backgroundCol1 = 0xF8F8F8;
+        vs.backgroundCol2 = 0xE0E0E0;
+        vs.padding = 4;
+        vs.setup(function () {
+            vs.render(parent);
+            vs.content.css('cursor', 'pointer');
+            const self = this;
+            vs.content.click(function () {
+                if (self.callbackMol)
+                    self.callbackMol(moleculeID, Molecule.fromString(molNative), self);
+            });
+        }, this);
+        return vs;
+    }
+}
+SearchMolecules.TYPE_EXACT = 'exact';
+SearchMolecules.TYPE_SUBSTRUCTURE = 'substructure';
+SearchMolecules.TYPE_SIMILARITY = 'similarity';
+SearchMolecules.TYPE_RANDOM = 'random';
+class SearchPanel extends Widget {
+    constructor(type) {
+        super();
         this.type = type;
         this.highlight = 0;
         this.pressed = 0;
@@ -13257,26 +14517,26 @@ var SearchPanel = (function (_super) {
         this.VPADDING = 2;
         this.COLCYCLE = ['#89A54E', '#71588F', '#4198AF', '#DB843D', '#93A9CF', '#D19392', '#4572A7', '#AA4643'];
     }
-    SearchPanel.prototype.getMolecule1 = function () { return this.mol1; };
-    SearchPanel.prototype.getMolecule2 = function () { return this.mol2; };
-    SearchPanel.prototype.setMolecule1 = function (mol) {
+    getMolecule1() { return this.mol1; }
+    getMolecule2() { return this.mol2; }
+    setMolecule1(mol) {
         this.mol1 = mol;
         if (this.drawnMol1 != null)
             this.renderMolecule(1);
-    };
-    SearchPanel.prototype.setMolecule2 = function (mol) {
+    }
+    setMolecule2(mol) {
         this.mol2 = mol;
         if (this.drawnMol2 != null)
             this.renderMolecule(2);
-    };
-    SearchPanel.prototype.render = function (parent) {
-        _super.prototype.render.call(this, parent);
+    }
+    render(parent) {
+        super.render(parent);
         this.content.addClass('no_selection');
-        var height = this.HEIGHT, molw = this.MOLWIDTH, arrow = this.ARROWWIDTH;
-        var density = pixelDensity();
-        var hpad = this.HPADDING, vpad = this.VPADDING;
-        var isRxn = this.type == SearchPanel.TYPE_REACTION, isMol = !isRxn;
-        var div = this.content;
+        const height = this.HEIGHT, molw = this.MOLWIDTH, arrow = this.ARROWWIDTH;
+        const density = pixelDensity();
+        const hpad = this.HPADDING, vpad = this.VPADDING;
+        let isRxn = this.type == SearchPanel.TYPE_REACTION, isMol = !isRxn;
+        let div = this.content;
         if (isMol)
             div.css('width', (molw + 2 * hpad) + 'px');
         else
@@ -13284,12 +14544,12 @@ var SearchPanel = (function (_super) {
         div.css('height', (height + 2 * vpad) + 'px');
         div.css('position', 'relative');
         function renderSolid(col1, col2, style) {
-            var node = newElement(div, 'canvas', { 'width': molw * density, 'height': height * density, 'style': style });
+            let node = newElement(div, 'canvas', { 'width': molw * density, 'height': height * density, 'style': style });
             node.style.width = molw + 'px';
             node.style.height = height + 'px';
-            var ctx = node.getContext('2d');
+            let ctx = node.getContext('2d');
             ctx.scale(density, density);
-            var grad = ctx.createLinearGradient(0, 0, molw, height);
+            let grad = ctx.createLinearGradient(0, 0, molw, height);
             grad.addColorStop(0, col1);
             grad.addColorStop(1, col2);
             ctx.fillStyle = grad;
@@ -13297,10 +14557,10 @@ var SearchPanel = (function (_super) {
             return node;
         }
         function renderBorder(lw, style) {
-            var node = newElement(div, 'canvas', { 'width': molw * density, 'height': height * density, 'style': style });
+            let node = newElement(div, 'canvas', { 'width': molw * density, 'height': height * density, 'style': style });
             node.style.width = molw + 'px';
             node.style.height = height + 'px';
-            var ctx = node.getContext('2d');
+            let ctx = node.getContext('2d');
             ctx.scale(density, density);
             ctx.strokeStyle = 'black';
             ctx.lineWidth = lw;
@@ -13308,12 +14568,12 @@ var SearchPanel = (function (_super) {
             return node;
         }
         function renderArrow(style) {
-            var node = newElement(div, 'canvas', { 'width': arrow * density, 'height': height * density, 'style': style });
+            let node = newElement(div, 'canvas', { 'width': arrow * density, 'height': height * density, 'style': style });
             node.style.width = arrow + 'px';
             node.style.height = height + 'px';
-            var ctx = node.getContext('2d');
+            let ctx = node.getContext('2d');
             ctx.scale(density, density);
-            var midY = Math.round(0.5 * height);
+            let midY = Math.round(0.5 * height);
             ctx.beginPath();
             ctx.moveTo(0, midY);
             ctx.lineTo(arrow - 2, midY);
@@ -13329,19 +14589,19 @@ var SearchPanel = (function (_super) {
             return node;
         }
         function renderOutlineArrow(style, col) {
-            var node = newElement(div, 'canvas', { 'width': arrow * density, 'height': height * density, 'style': style });
+            let node = newElement(div, 'canvas', { 'width': arrow * density, 'height': height * density, 'style': style });
             node.style.width = arrow + 'px';
             node.style.height = height + 'px';
-            var ctx = node.getContext('2d');
+            let ctx = node.getContext('2d');
             ctx.scale(density, density);
-            var midY = Math.round(0.5 * height);
+            let midY = Math.round(0.5 * height);
             var path = pathRoundedRect(0, midY - 8, arrow, midY + 8, 4);
             ctx.fillStyle = col;
             ctx.fill(path);
             return node;
         }
-        var styleMol1Pos = 'position: absolute; left: ' + hpad + 'px; top: ' + vpad + 'px;';
-        var styleMol1 = styleMol1Pos + 'pointer-events: none;';
+        let styleMol1Pos = 'position: absolute; left: ' + hpad + 'px; top: ' + vpad + 'px;';
+        let styleMol1 = styleMol1Pos + 'pointer-events: none;';
         this.normalMol1 = renderSolid('#FFFFFF', '#D0D0D0', styleMol1);
         this.pressedMol1 = renderSolid('#00CA59', '#008650', styleMol1);
         this.drawnMol1 = newElement(div, 'canvas', { 'width': molw, 'height': height, 'style': styleMol1Pos });
@@ -13351,13 +14611,13 @@ var SearchPanel = (function (_super) {
         this.thinMol1 = renderBorder(1, styleMol1);
         this.thickMol1 = renderBorder(2, styleMol1);
         if (isRxn) {
-            var styleArrowPos = 'position: absolute; left: ' + (2 * hpad + molw) + 'px; top: ' + vpad + 'px;';
-            var styleArrow = styleArrowPos + 'pointer-events: none;';
+            let styleArrowPos = 'position: absolute; left: ' + (2 * hpad + molw) + 'px; top: ' + vpad + 'px;';
+            let styleArrow = styleArrowPos + 'pointer-events: none;';
             this.hoverArrow = renderOutlineArrow(styleArrow, '#C0C0C0');
             this.pressedArrow = renderOutlineArrow(styleArrow, '#00CA59');
             this.drawnArrow = renderArrow(styleArrowPos);
-            var styleMol2Pos = 'position: absolute; left: ' + (3 * hpad + molw + arrow) + 'px; top: ' + vpad + 'px;';
-            var styleMol2 = styleMol2Pos + 'pointer-events: none;';
+            let styleMol2Pos = 'position: absolute; left: ' + (3 * hpad + molw + arrow) + 'px; top: ' + vpad + 'px;';
+            let styleMol2 = styleMol2Pos + 'pointer-events: none;';
             this.normalMol2 = renderSolid('#FFFFFF', '#D0D0D0', styleMol2);
             this.pressedMol2 = renderSolid('#00CA59', '#008650', styleMol2);
             this.drawnMol2 = newElement(div, 'canvas', { 'width': molw, 'height': height, 'style': styleMol2Pos });
@@ -13368,7 +14628,7 @@ var SearchPanel = (function (_super) {
             this.thickMol2 = renderBorder(2, styleMol2);
         }
         this.updateLayers();
-        var self = this;
+        const self = this;
         $(this.drawnMol1).mouseenter(function () { self.mouseEnter(1); });
         $(this.drawnMol1).mouseleave(function () { self.mouseLeave(1); });
         $(this.drawnMol1).mousedown(function () { self.mouseDown(1); });
@@ -13419,9 +14679,9 @@ var SearchPanel = (function (_super) {
                 self.dropInto(2, event.dataTransfer);
             });
         }
-    };
+    }
     ;
-    SearchPanel.prototype.updateLayers = function () {
+    updateLayers() {
         setVisible(this.normalMol1, this.pressed != 1);
         setVisible(this.pressedMol1, this.pressed == 1);
         setVisible(this.thinMol1, this.highlight != 1);
@@ -13432,36 +14692,36 @@ var SearchPanel = (function (_super) {
         setVisible(this.pressedMol2, this.pressed == 2);
         setVisible(this.thinMol2, this.highlight != 2);
         setVisible(this.thickMol2, this.highlight == 2);
-    };
-    SearchPanel.prototype.renderMolecule = function (which) {
-        var mol = which == 1 ? this.mol1 : this.mol2, canvas = which == 1 ? this.drawnMol1 : this.drawnMol2;
+    }
+    renderMolecule(which) {
+        let mol = which == 1 ? this.mol1 : this.mol2, canvas = which == 1 ? this.drawnMol1 : this.drawnMol2;
         if (mol.numAtoms == 0) {
             canvas.width = canvas.width;
             return;
         }
-        var withMapping = false;
+        let withMapping = false;
         if (this.type == SearchPanel.TYPE_REACTION)
-            for (var n = 1; n <= mol.numAtoms; n++)
+            for (let n = 1; n <= mol.numAtoms; n++)
                 if (mol.atomMapNum(n) > 0) {
                     withMapping = true;
                     break;
                 }
-        var policy = withMapping ? RenderPolicy.defaultBlackOnWhite() : RenderPolicy.defaultColourOnWhite();
-        var input = { 'molNative': mol.toString(), 'policy': policy.data };
+        let policy = withMapping ? RenderPolicy.defaultBlackOnWhite() : RenderPolicy.defaultColourOnWhite();
+        let input = { 'molNative': mol.toString(), 'policy': policy.data };
         Func.arrangeMolecule(input, function (result, error) {
-            var metavec = new MetaVector(result.metavec);
-            var width = this.MOLWIDTH, height = this.HEIGHT;
-            var limW = width - 2, limH = height - 2;
-            var natW = metavec.width, natH = metavec.height;
-            var scale = 1;
+            let metavec = new MetaVector(result.metavec);
+            let width = this.MOLWIDTH, height = this.HEIGHT;
+            let limW = width - 2, limH = height - 2;
+            let natW = metavec.width, natH = metavec.height;
+            let scale = 1;
             if (natW > limW) {
-                var down = limW / natW;
+                let down = limW / natW;
                 scale *= down;
                 natW *= down;
                 natH *= down;
             }
             if (natH > limH) {
-                var down = limH / natH;
+                let down = limH / natH;
                 scale *= down;
                 natW *= down;
                 natH *= down;
@@ -13469,21 +14729,21 @@ var SearchPanel = (function (_super) {
             metavec.offsetX = 0.5 * (width - natW);
             metavec.offsetY = 0.5 * (height - natH);
             metavec.scale = scale;
-            var ctx = canvas.getContext('2d');
+            let ctx = canvas.getContext('2d');
             ctx.clearRect(0, 0, width, height);
             metavec.density = pixelDensity();
             canvas.style.width = width + 'px';
             canvas.style.height = height + 'px';
             canvas.width = width * metavec.density;
             canvas.height = height * metavec.density;
-            var arrmol = result.arrmol;
-            for (var n = 1; n <= mol.numAtoms; n++)
+            let arrmol = result.arrmol;
+            for (let n = 1; n <= mol.numAtoms; n++)
                 if (mol.atomMapNum(n) > 0) {
-                    var col = this.COLCYCLE[(mol.atomMapNum(n) - 1) % this.COLCYCLE.length];
-                    var pt = arrmol.points[n - 1];
-                    var cx = metavec.offsetX + pt.cx * metavec.scale, cy = metavec.offsetY + pt.cy * metavec.scale;
-                    var rw = Math.max(0.5 * policy.data.pointScale, pt.rw) * metavec.scale;
-                    var rh = Math.max(0.5 * policy.data.pointScale, pt.rh) * metavec.scale;
+                    let col = this.COLCYCLE[(mol.atomMapNum(n) - 1) % this.COLCYCLE.length];
+                    let pt = arrmol.points[n - 1];
+                    let cx = metavec.offsetX + pt.cx * metavec.scale, cy = metavec.offsetY + pt.cy * metavec.scale;
+                    let rw = Math.max(0.5 * policy.data.pointScale, pt.rw) * metavec.scale;
+                    let rh = Math.max(0.5 * policy.data.pointScale, pt.rh) * metavec.scale;
                     ctx.beginPath();
                     ctx.ellipse(cx, cy, rw, rh, 0, 0, TWOPI, false);
                     ctx.fillStyle = col;
@@ -13491,81 +14751,81 @@ var SearchPanel = (function (_super) {
                 }
             metavec.renderContext(ctx);
         }, this);
-    };
-    SearchPanel.prototype.mouseEnter = function (which) {
+    }
+    mouseEnter(which) {
         if (this.highlight != which) {
             this.highlight = which;
             this.updateLayers();
         }
-    };
-    SearchPanel.prototype.mouseLeave = function (which) {
+    }
+    mouseLeave(which) {
         if (this.highlight == which) {
             this.highlight = 0;
             this.pressed = 0;
             this.updateLayers();
         }
-    };
-    SearchPanel.prototype.mouseDown = function (which) {
+    }
+    mouseDown(which) {
         if (this.pressed != which) {
             this.pressed = which;
             this.updateLayers();
         }
-    };
-    SearchPanel.prototype.mouseUp = function (which) {
+    }
+    mouseUp(which) {
         if (this.pressed == which) {
             this.pressed = 0;
             this.updateLayers();
         }
-    };
-    SearchPanel.prototype.editMolecule = function (which) {
+    }
+    editMolecule(which) {
         Account.connectTransient(function (result, error) {
             if (!result)
                 throw 'Token acquisition failed: ' + error.message;
-            var tokenID = result.tokenID;
-            var dlg = new EditCompound(tokenID, which == 1 ? this.mol1 : this.mol2);
+            let tokenID = result.tokenID;
+            let dlg = new EditCompound(tokenID, which == 1 ? this.mol1 : this.mol2);
             dlg.onSave(which == 1 ? this.saveMolecule1 : this.saveMolecule2, this);
             dlg.open();
         }, this);
-    };
-    SearchPanel.prototype.editMapping = function () {
+    }
+    editMapping() {
         if (this.mol1.numAtoms == 0 || this.mol2.numAtoms == 0) {
             alert('Draw structures on both sides of the arrow before mapping.');
             return;
         }
-        var dlg = new MapReaction(this.mol1, this.mol2);
+        let dlg = new MapReaction(this.mol1, this.mol2);
         dlg.onSave(this.saveMapping, this);
         dlg.open();
-    };
-    SearchPanel.prototype.saveMolecule1 = function (dlg, which) {
+    }
+    saveMolecule1(dlg, which) {
         this.mol1 = dlg.getMolecule();
         dlg.close();
         this.renderMolecule(1);
-        var cookies = new Cookies();
+        let cookies = new Cookies();
         if (cookies.numMolecules() > 0)
             cookies.stashMolecule(this.mol1);
-    };
-    SearchPanel.prototype.saveMolecule2 = function (dlg) {
+    }
+    saveMolecule2(dlg) {
         this.mol2 = dlg.getMolecule();
         dlg.close();
         this.renderMolecule(2);
-        var cookies = new Cookies();
+        let cookies = new Cookies();
         if (cookies.numMolecules() > 0)
             cookies.stashMolecule(this.mol2);
-    };
-    SearchPanel.prototype.saveMapping = function (dlg) {
+    }
+    saveMapping(dlg) {
         this.mol1 = dlg.getMolecule1();
         this.mol2 = dlg.getMolecule2();
         dlg.close();
         this.renderMolecule(1);
         this.renderMolecule(2);
-    };
-    SearchPanel.prototype.dropInto = function (which, transfer) {
-        var self = this;
-        var items = transfer.items, files = transfer.files;
-        for (var n = 0; n < items.length; n++) {
+    }
+    dropInto(which, transfer) {
+        const self = this;
+        let items = transfer.items, files = transfer.files;
+        for (let n = 0; n < items.length; n++) {
             if (items[n].type.startsWith('text/plain')) {
                 items[n].getAsString(function (str) {
-                    var mol = Molecule.fromString(str);
+                    let mol = Molecule.fromString(str);
                     if (mol != null) {
                         if (which == 1)
                             self.setMolecule1(mol);
@@ -13578,12 +14838,12 @@ var SearchPanel = (function (_super) {
                 return;
             }
         }
-        var _loop_4 = function(n) {
+        for (let n = 0; n < files.length; n++) {
             if (files[n].name.endsWith('.el')) {
-                var reader_2 = new FileReader();
-                reader_2.onload = function (event) {
-                    var str = reader_2.result;
-                    var mol = Molecule.fromString(str);
+                let reader = new FileReader();
+                reader.onload = function (event) {
+                    let str = reader.result;
+                    let mol = Molecule.fromString(str);
                     if (mol != null) {
                         if (which == 1)
                             self.setMolecule1(mol);
@@ -13593,211 +14853,17 @@ var SearchPanel = (function (_super) {
                     else
                         console.log('Dragged file is not a SketchEl molecule: ' + str);
                 };
-                reader_2.readAsText(files[n]);
-                return { value: void 0 };
+                reader.readAsText(files[n]);
+                return;
             }
-        };
-        for (var n = 0; n < files.length; n++) {
-            var state_4 = _loop_4(n);
-            if (typeof state_4 === "object") return state_4.value;
         }
-    };
-    SearchPanel.TYPE_MOLECULE = 'molecule';
-    SearchPanel.TYPE_REACTION = 'reaction';
-    return SearchPanel;
-}(Widget));
-var SearchMolecules = (function (_super) {
-    __extends(SearchMolecules, _super);
-    function SearchMolecules(tokenID) {
-        _super.call(this);
-        this.tokenID = tokenID;
-        this.molsearchToken = null;
-        this.cancelled = false;
-        this.started = false;
-        this.finished = false;
-        this.progress = 0;
-        this.count = 0;
-        this.results = [];
-        this.callbackStop = null;
-        this.masterStop = null;
-        this.callbackProgress = null;
-        this.masterProgress = null;
-        this.callbackMol = null;
-        this.masterMol = null;
-        this.callbackDS = null;
-        this.masterDS = null;
     }
-    SearchMolecules.prototype.onStop = function (callback, master) {
-        this.callbackStop = callback;
-        this.masterStop = master;
-    };
-    SearchMolecules.prototype.onProgress = function (callback, master) {
-        this.callbackProgress = callback;
-        this.masterProgress = master;
-    };
-    SearchMolecules.prototype.onClickMolecule = function (callback, master) {
-        this.callbackMol = callback;
-        this.masterMol = master;
-    };
-    SearchMolecules.prototype.onClickDataSheet = function (callback, master) {
-        this.callbackDS = callback;
-        this.masterDS = master;
-    };
-    SearchMolecules.prototype.render = function (parent) {
-        _super.prototype.render.call(this, parent);
-        var tableStyle = 'border-collapse: collapse;';
-        this.table = $('<table></table>').appendTo(this.content);
-        this.table.attr('style', tableStyle);
-    };
-    SearchMolecules.prototype.startSearch = function (origin, mol, type, maxResults) {
-        if (maxResults === void 0) { maxResults = 100; }
-        this.cancelled = false;
-        this.results = [];
-        this.table.empty();
-        this.placeholder = $('<tr><td>Starting search...</td></tr>').appendTo(this.table);
-        var molstr = mol == null ? null : mol.toString();
-        var param = { 'origin': origin, 'molNative': molstr, 'type': type, 'maxResults': maxResults };
-        Search.startMolSearch(param, function (result, error) {
-            if (error != null)
-                throw 'molsync.ui.SearchMolecules: failed to initiate search: ' + error.message;
-            this.molsearchToken = result.molsearchToken;
-            this.started = true;
-            this.finished = false;
-            Search.pollMolSearch({ 'molsearchToken': this.molsearchToken }, this.batchSearch, this);
-        }, this);
-    };
-    SearchMolecules.prototype.stopSearch = function () {
-        if (this.placeholder) {
-            this.placeholder.remove();
-            this.placeholder = null;
-        }
-        this.cancelled = true;
-        this.finished = true;
-        if (this.callbackStop)
-            this.callbackStop.call(this.masterStop, this);
-    };
-    SearchMolecules.prototype.isRunning = function () {
-        return this.started && !this.finished;
-    };
-    SearchMolecules.prototype.batchSearch = function (result, error) {
-        if (this.placeholder) {
-            this.placeholder.remove();
-            this.placeholder = null;
-        }
-        if (error != null)
-            throw 'molsync.ui.SearchMolecules: failed to obtain next batch: ' + error.message;
-        if (this.cancelled)
-            return;
-        this.finished = result.finished;
-        this.progress = result.progress;
-        this.count = result.count;
-        if (result.modified)
-            this.updateResults(result.results);
-        if (!this.finished) {
-            Search.pollMolSearch({ 'molsearchToken': this.molsearchToken }, this.batchSearch, this);
-            if (this.callbackProgress)
-                this.callbackProgress.call(this.masterProgress, this.progress, this.count, this);
-        }
-        else {
-            if (this.callbackStop)
-                this.callbackStop.call(this.masterStop, this);
-        }
-    };
-    SearchMolecules.prototype.updateResults = function (results) {
-        var self = this;
-        for (var n = 0; n < results.length; n++) {
-            var res = results[n];
-            res.tr = $('<tr></tr>').appendTo(this.table);
-            res.td = $('<td></td>').appendTo(res.tr);
-            if (n > 0)
-                res.td.css('border-top', '1px solid #80C080');
-            if (n < results.length - 1)
-                res.td.css('border-bottom', '1px solid #80C080');
-            var table = $('<table></table>').appendTo(res.td), tr = $('<tr></tr>').appendTo(table);
-            if (res.similarity) {
-                var td_1 = $('<td></td>').appendTo(tr);
-                var txt = res.similarity == 1 ? '100%' : (res.similarity * 100).toFixed(1) + '%';
-                td_1.text(txt);
-            }
-            for (var _i = 0, _a = res.sketches; _i < _a.length; _i++) {
-                var sk = _a[_i];
-                var td_2 = $('<td></td>').appendTo(tr);
-                var vs = this.grabSketch(td_2, sk.molNative, sk.moleculeID);
-                sk.viewMol = vs;
-            }
-            var td = $('<td></td>').appendTo(tr);
-            var _loop_5 = function(src) {
-                var link = $('<a href="#' + src.datasheetID + '"></a>').appendTo(td);
-                link.mouseenter(function (e) { e.target.style.backgroundColor = '#D0D0D0'; });
-                link.mouseleave(function (e) { e.target.style.backgroundColor = 'transparent'; });
-                var title = src.subTitle ? src.subTitle : src.title ? src.title : 'DataSheet#' + src.datasheetID;
-                link.text(title);
-                var body = '';
-                if (src.title && src.title != title)
-                    body += '<div>Title: <i>' + escapeHTML(src.title) + '</i></div>';
-                if (src.descr)
-                    body += '<div>Description: <i>' + escapeHTML(src.descr) + '</i></div>';
-                body += '<div>Row ' + src.row + '</div>';
-                addTooltip(link, body, escapeHTML(title));
-                link.click(function () {
-                    if (self.callbackDS)
-                        self.callbackDS(src.datasheetID, self);
-                });
-                td.append(' ');
-            };
-            for (var _b = 0, _c = res.sources; _b < _c.length; _b++) {
-                var src = _c[_b];
-                _loop_5(src);
-            }
-        }
-        for (var _d = 0, _e = this.results; _d < _e.length; _d++) {
-            var res = _e[_d];
-            res.tr.remove();
-        }
-        this.results = results;
-    };
-    SearchMolecules.prototype.grabSketch = function (parent, molNative, moleculeID) {
-        for (var _i = 0, _a = this.results; _i < _a.length; _i++) {
-            var res = _a[_i];
-            for (var _b = 0, _c = res.sketches; _b < _c.length; _b++) {
-                var sk = _c[_b];
-                for (var _d = 0, moleculeID_1 = moleculeID; _d < moleculeID_1.length; _d++) {
-                    var mid = moleculeID_1[_d];
-                    if (sk.moleculeID.indexOf(mid) >= 0 && sk.viewMol != null) {
-                        sk.viewMol.content.appendTo(parent);
-                        return sk.viewMol;
-                    }
-                }
-            }
-        }
-        var vs = new ViewStructure(this.tokenID);
-        vs.content = parent;
-        vs.defineMoleculeString(molNative);
-        vs.borderCol = -1;
-        vs.backgroundCol1 = 0xF8F8F8;
-        vs.backgroundCol2 = 0xE0E0E0;
-        vs.padding = 4;
-        vs.setup(function () {
-            vs.render(parent);
-            vs.content.css('cursor', 'pointer');
-            var self = this;
-            vs.content.click(function () {
-                if (self.callbackMol)
-                    self.callbackMol(moleculeID, Molecule.fromString(molNative), self);
-            });
-        }, this);
-        return vs;
-    };
-    SearchMolecules.TYPE_EXACT = 'exact';
-    SearchMolecules.TYPE_SUBSTRUCTURE = 'substructure';
-    SearchMolecules.TYPE_SIMILARITY = 'similarity';
-    SearchMolecules.TYPE_RANDOM = 'random';
-    return SearchMolecules;
-}(Widget));
-var SearchReactions = (function (_super) {
-    __extends(SearchReactions, _super);
-    function SearchReactions(tokenID) {
-        _super.call(this);
+}
+SearchPanel.TYPE_MOLECULE = 'molecule';
+SearchPanel.TYPE_REACTION = 'reaction';
+class SearchReactions extends Widget {
+    constructor(tokenID) {
+        super();
         this.tokenID = tokenID;
         this.rxnsearchToken = null;
         this.cancelled = false;
@@ -13815,37 +14881,36 @@ var SearchReactions = (function (_super) {
         this.callbackDS = null;
         this.masterDS = null;
     }
-    SearchReactions.prototype.onStop = function (callback, master) {
+    onStop(callback, master) {
         this.callbackStop = callback;
         this.masterStop = master;
-    };
-    SearchReactions.prototype.onProgress = function (callback, master) {
+    }
+    onProgress(callback, master) {
         this.callbackProgress = callback;
         this.masterProgress = master;
-    };
-    SearchReactions.prototype.onClickReaction = function (callback, master) {
+    }
+    onClickReaction(callback, master) {
         this.callbackRxn = callback;
         this.masterRxn = master;
-    };
-    SearchReactions.prototype.onClickDataSheet = function (callback, master) {
+    }
+    onClickDataSheet(callback, master) {
         this.callbackDS = callback;
         this.masterDS = master;
-    };
-    SearchReactions.prototype.render = function (parent) {
-        _super.prototype.render.call(this, parent);
-        var tableStyle = 'border-collapse: collapse;';
+    }
+    render(parent) {
+        super.render(parent);
+        let tableStyle = 'border-collapse: collapse;';
         this.table = $('<table></table>').appendTo(this.content);
         this.table.attr('style', tableStyle);
-    };
-    SearchReactions.prototype.startSearch = function (origin, mol1, mol2, type, maxResults) {
-        if (maxResults === void 0) { maxResults = 100; }
+    }
+    startSearch(origin, mol1, mol2, type, maxResults = 100) {
         this.cancelled = false;
         this.results = [];
         this.table.empty();
         this.placeholder = $('<tr><td>Starting search...</td></tr>').appendTo(this.table);
-        var molstr1 = mol1 == null ? null : mol1.toString();
-        var molstr2 = mol2 == null ? null : mol2.toString();
-        var param = { 'origin': origin, 'molNative1': molstr1, 'molNative2': molstr2, 'type': type, 'maxResults': maxResults };
+        let molstr1 = mol1 == null ? null : mol1.toString();
+        let molstr2 = mol2 == null ? null : mol2.toString();
+        let param = { 'origin': origin, 'molNative1': molstr1, 'molNative2': molstr2, 'type': type, 'maxResults': maxResults };
         Search.startRxnSearch(param, function (result, error) {
             if (error != null)
                 throw 'molsync.ui.SearchReactions: failed to initiate search: ' + error.message;
@@ -13854,8 +14919,8 @@ var SearchReactions = (function (_super) {
             this.finished = false;
             Search.pollRxnSearch({ 'rxnsearchToken': this.rxnsearchToken }, this.batchSearch, this);
         }, this);
-    };
-    SearchReactions.prototype.stopSearch = function () {
+    }
+    stopSearch() {
         if (this.placeholder) {
             this.placeholder.remove();
             this.placeholder = null;
@@ -13864,11 +14929,11 @@ var SearchReactions = (function (_super) {
         this.finished = true;
         if (this.callbackStop)
             this.callbackStop.call(this.masterStop, this);
-    };
-    SearchReactions.prototype.isRunning = function () {
+    }
+    isRunning() {
         return this.started && !this.finished;
-    };
-    SearchReactions.prototype.batchSearch = function (result, error) {
+    }
+    batchSearch(result, error) {
         if (error != null)
             throw 'molsync.ui.SearchReactions: failed to obtain next batch: ' + error.message;
         if (this.cancelled)
@@ -13896,35 +14961,35 @@ var SearchReactions = (function (_super) {
             if (this.callbackStop)
                 this.callbackStop.call(this.masterStop, this);
         }
-    };
-    SearchReactions.prototype.updateResults = function (results) {
-        var self = this;
-        var _loop_6 = function(n) {
-            var res = results[n];
-            res.tr = $('<tr></tr>').appendTo(this_3.table);
+    }
+    updateResults(results) {
+        let self = this;
+        for (let n = 0; n < results.length; n++) {
+            let res = results[n];
+            res.tr = $('<tr></tr>').appendTo(this.table);
             res.td = $('<td></td>').appendTo(res.tr);
             if (n > 0)
                 res.td.css('border-top', '1px solid #80C080');
             if (n < results.length - 1)
                 res.td.css('border-bottom', '1px solid #80C080');
-            var table = $('<table></table>').appendTo(res.td), tr = $('<tr></tr>').appendTo(table);
+            let table = $('<table></table>').appendTo(res.td), tr = $('<tr></tr>').appendTo(table);
             if (res.similarity) {
-                var td_3 = $('<td></td>').appendTo(tr);
-                var txt = res.similarity == 1 ? '100%' : (res.similarity * 100).toFixed(1) + '%';
-                td_3.text(txt);
+                let td = $('<td></td>').appendTo(tr);
+                let txt = res.similarity == 1 ? '100%' : (res.similarity * 100).toFixed(1) + '%';
+                td.text(txt);
             }
             if (res.dataXML) {
-                var td_4 = $('<td></td>').appendTo(tr);
-                var vs = this_3.grabSketch(td_4, res.dataXML, res.datasheetID, res.row, res.batchID);
+                let td = $('<td></td>').appendTo(tr);
+                let vs = this.grabSketch(td, res.dataXML, res.datasheetID, res.row, res.batchID);
                 res.viewRxn = vs;
             }
-            var td = $('<td></td>').appendTo(tr);
-            var link = $('<a href="#' + res.datasheetID + '"></a>').appendTo(td);
+            let td = $('<td></td>').appendTo(tr);
+            let link = $('<a href="#' + res.datasheetID + '"></a>').appendTo(td);
             link.mouseenter(function (e) { e.target.style.backgroundColor = '#D0D0D0'; });
             link.mouseleave(function (e) { e.target.style.backgroundColor = 'transparent'; });
-            var title = res.subTitle ? res.subTitle : res.title ? res.title : 'DataSheet#' + res.datasheetID;
+            let title = res.subTitle ? res.subTitle : res.title ? res.title : 'DataSheet#' + res.datasheetID;
             link.text(title);
-            var body = '';
+            let body = '';
             if (res.title && res.title != title)
                 body += '<div>Title: <i>' + escapeHTML(res.title) + '</i></div>';
             if (res.descr)
@@ -13935,26 +15000,18 @@ var SearchReactions = (function (_super) {
                     self.callbackDS(res.datasheetID, self);
             });
             td.append(' ');
-        };
-        var this_3 = this;
-        for (var n = 0; n < results.length; n++) {
-            _loop_6(n);
         }
-        for (var _i = 0, _a = this.results; _i < _a.length; _i++) {
-            var res = _a[_i];
+        for (let res of this.results)
             res.tr.remove();
-        }
         this.results = results;
-    };
-    SearchReactions.prototype.grabSketch = function (parent, dataXML, datasheetID, row, batchID) {
-        for (var _i = 0, _a = this.results; _i < _a.length; _i++) {
-            var res = _a[_i];
+    }
+    grabSketch(parent, dataXML, datasheetID, row, batchID) {
+        for (let res of this.results)
             if (res.batchID == batchID) {
                 res.viewRxn.content.appendTo(parent);
                 return res.viewRxn;
             }
-        }
-        var vs = new ViewStructure(this.tokenID);
+        const vs = new ViewStructure(this.tokenID);
         vs.content = parent;
         vs.defineDataSheetString(dataXML, 0);
         vs.borderCol = -1;
@@ -13964,48 +15021,43 @@ var SearchReactions = (function (_super) {
         vs.setup(function () {
             vs.render(parent);
             vs.content.css('cursor', 'pointer');
-            var self = this;
+            const self = this;
             vs.content.click(function () {
                 if (self.callbackRxn)
                     self.callbackRxn(dataXML, datasheetID, row, self);
             });
         }, this);
         return vs;
-    };
-    SearchReactions.TYPE_COMPONENT = 'component';
-    SearchReactions.TYPE_TRANSFORM = 'transform';
-    SearchReactions.TYPE_SIMILARITY = 'similarity';
-    SearchReactions.TYPE_RANDOM = 'random';
-    return SearchReactions;
-}(Widget));
-var Validation = (function () {
-    function Validation() {
+    }
+}
+SearchReactions.TYPE_COMPONENT = 'component';
+SearchReactions.TYPE_TRANSFORM = 'transform';
+SearchReactions.TYPE_SIMILARITY = 'similarity';
+SearchReactions.TYPE_RANDOM = 'random';
+class Validation {
+    constructor() {
         this.rec = {};
         this.tests = [];
     }
-    Validation.prototype.init = function (donefunc) {
+    init(donefunc) {
         donefunc.call(this);
-    };
-    Validation.prototype.add = function (title, func) {
+    }
+    add(title, func) {
         this.tests.push({ 'title': title, 'func': func });
-    };
-    Object.defineProperty(Validation.prototype, "count", {
-        get: function () { return this.tests.length; },
-        enumerable: true,
-        configurable: true
-    });
-    Validation.prototype.getTitle = function (idx) { return this.tests[idx].title; };
-    Validation.prototype.runTest = function (idx) {
+    }
+    get count() { return this.tests.length; }
+    getTitle(idx) { return this.tests[idx].title; }
+    runTest(idx) {
         this.recentSuccess = true;
         this.recentError = null;
-        var timeStarted = new Date().getTime();
+        let timeStarted = new Date().getTime();
         try {
             this.tests[idx].func.call(this);
         }
         catch (e) {
             this.recentSuccess = false;
             if (this.recentError == null) {
-                var error = e;
+                let error = e;
                 this.recentError = 'Exception: ' + e.message;
                 if (e.fileName)
                     this.recentError += ', file: ' + e.fileName;
@@ -14014,120 +15066,143 @@ var Validation = (function () {
                 console.log('Unhandled exception in validation:\n' + e);
             }
         }
-        var timeFinished = new Date().getTime();
+        let timeFinished = new Date().getTime();
         this.recentTimeTaken = (timeFinished - timeStarted) / 1000;
         return [this.recentSuccess, this.recentError, this.recentTimeTaken];
-    };
-    Validation.prototype.assert = function (condition, message) {
+    }
+    assert(condition, message) {
         if (condition)
             return;
         this.recentError = message;
         throw '!';
-    };
-    Validation.prototype.assertEqual = function (thing1, thing2, message) {
+    }
+    assertEqual(thing1, thing2, message) {
         if (thing1 == thing2)
             return;
         this.recentError = message;
         throw '!';
-    };
-    Validation.prototype.assertNull = function (thing, message) {
+    }
+    assertNull(thing, message) {
         if (thing == null)
             return;
         this.recentError = message;
         throw '!';
-    };
-    Validation.prototype.assertNotNull = function (thing, message) {
+    }
+    assertNotNull(thing, message) {
         if (thing != null)
             return;
         this.recentError = message;
         throw '!';
-    };
-    Validation.prototype.fail = function (message) {
+    }
+    fail(message) {
         this.recentError = message;
         throw '!';
-    };
-    return Validation;
-}());
-var ValidationHeadlessBasic = (function (_super) {
-    __extends(ValidationHeadlessBasic, _super);
-    function ValidationHeadlessBasic() {
-        _super.call(this);
+    }
+}
+class ValidationHeadlessBasic extends Validation {
+    constructor() {
+        super();
         this.add('Vector index sort', this.vectorIndexSort);
     }
-    ValidationHeadlessBasic.prototype.vectorIndexSort = function () {
-        var array = ['b', 'c', 'a'];
-        var idx = Vec.idxSort(array);
+    vectorIndexSort() {
+        let array = ['b', 'c', 'a'];
+        let idx = Vec.idxSort(array);
         this.assert(Vec.equals(idx, [2, 0, 1]));
-    };
-    return ValidationHeadlessBasic;
-}(Validation));
-var ValidationHeadlessMolecule = (function (_super) {
-    __extends(ValidationHeadlessMolecule, _super);
-    function ValidationHeadlessMolecule(urlBase) {
-        _super.call(this);
+    }
+}
+class ValidationHeadlessMolecule extends Validation {
+    constructor(urlBase) {
+        super();
         this.urlBase = urlBase;
         this.add('Parse SketchEl molecule (native format)', this.parseSketchEl);
         this.add('Parse MDL Molfile', this.parseMolfile);
+        this.add('Calculate strict aromaticity', this.calcStrictArom);
+        this.add('Calculate stereochemistry', this.calcStereoChem);
     }
-    ValidationHeadlessMolecule.prototype.init = function (donefunc) {
-        var self = this;
+    init(donefunc) {
+        const self = this;
         $.get(self.urlBase + 'molecule.el', function (data) {
             self.strSketchEl = data;
             $.get(self.urlBase + 'molecule.mol', function (data) {
                 self.strMolfile = data;
-                donefunc.call(self);
+                $.get(self.urlBase + 'stereo.el', function (data) {
+                    self.strStereo = data;
+                    donefunc.call(self);
+                });
             });
         });
-    };
-    ValidationHeadlessMolecule.prototype.parseSketchEl = function () {
+    }
+    parseSketchEl() {
         this.assert(!!this.strSketchEl, 'molecule not loaded');
-        var mol = MoleculeStream.readNative(this.strSketchEl);
+        let mol = MoleculeStream.readNative(this.strSketchEl);
         this.assert(mol != null, 'parsing failed');
         this.assert(mol.numAtoms == 10 && mol.numBonds == 10, 'wrong atom/bond count');
-    };
-    ValidationHeadlessMolecule.prototype.parseMolfile = function () {
+    }
+    parseMolfile() {
         this.assert(!!this.strMolfile, 'molecule not loaded');
-        var mol = MoleculeStream.readMDLMOL(this.strMolfile);
+        let mol = MoleculeStream.readMDLMOL(this.strMolfile);
         this.assert(mol != null, 'parsing failed');
         this.assert(mol.numAtoms == 10 && mol.numBonds == 10, 'wrong atom/bond count');
-    };
-    return ValidationHeadlessMolecule;
-}(Validation));
-var WebValExec = (function () {
-    function WebValExec(validation) {
+    }
+    calcStrictArom() {
+        this.assert(!!this.strStereo, 'molecule not loaded');
+        let meta = MetaMolecule.createStrict(Molecule.fromString(this.strStereo));
+        this.assert(meta.atomArom != null, 'no aromaticity obtained');
+        for (let n = 1; n <= 10; n++)
+            this.assert(meta.isAtomAromatic(n), 'atom #' + n + ' supposed to be aromatic');
+        for (let n = 1; n <= 10; n++)
+            this.assert(meta.isBondAromatic(n), 'bond #' + n + ' supposed to be aromatic');
+    }
+    calcStereoChem() {
+        this.assert(!!this.strStereo, 'molecule not loaded');
+        let meta = MetaMolecule.createStrictRubric(Molecule.fromString(this.strStereo));
+        this.assert(meta.rubricTetra != null, 'no tetrahedral rubric obtained');
+        this.assert(meta.rubricSides != null, 'no cis/trans rubric obtained');
+        let stereo = Stereochemistry.create(meta);
+        let tet11 = stereo.atomTetraChirality(11);
+        this.assert(tet11 == Stereochemistry.STEREO_NEG, 'atom 11: incorrect stereochemistry, got ' + tet11);
+        let tet19 = stereo.atomTetraChirality(19);
+        this.assert(tet19 == Stereochemistry.STEREO_POS, 'atom 19: incorrect stereochemistry, got ' + tet19);
+        let tet20 = stereo.atomTetraChirality(20);
+        this.assert(tet20 == Stereochemistry.STEREO_POS, 'atom 20: incorrect stereochemistry, got ' + tet20);
+        let side26 = stereo.bondSideStereo(26);
+        this.assert(side26 == Stereochemistry.STEREO_NEG, 'bond 26: incorrect stereochemistry, got ' + side26);
+    }
+}
+class WebValExec {
+    constructor(validation) {
         this.validation = validation;
     }
-    WebValExec.prototype.runTests = function (domParent) {
+    runTests(domParent) {
         domParent.empty();
-        var table = $('<table></table>').appendTo(domParent);
-        var tdStatus = [], tdInfo = [];
-        for (var n = 0; n < this.validation.count; n++) {
-            var tr = $('<tr></tr>').appendTo(table);
-            var td = $('<td valign="top"></td>').appendTo(tr);
+        let table = $('<table></table>').appendTo(domParent);
+        let tdStatus = [], tdInfo = [];
+        for (let n = 0; n < this.validation.count; n++) {
+            let tr = $('<tr></tr>').appendTo(table);
+            let td = $('<td valign="top"></td>').appendTo(tr);
             tdStatus.push(td);
             td = $('<td valign="top"></td>').appendTo(tr);
             td.text(this.validation.getTitle(n));
             tdInfo.push(td);
         }
-        for (var n = 0; n < this.validation.count; n++) {
+        for (let n = 0; n < this.validation.count; n++) {
             tdStatus[n].html('&#9744;');
-            var _a = this.validation.runTest(n), success = _a[0], message = _a[1], time = _a[2];
+            let [success, message, time] = this.validation.runTest(n);
             if (success) {
                 tdStatus[n].html('&#9745;');
                 if (time >= 0.001) {
-                    var span = $('<span style="color: #909090;"></span>').appendTo(tdInfo[n]);
+                    let span = $('<span style="color: #909090;"></span>').appendTo(tdInfo[n]);
                     span.text(' (' + time.toFixed(3) + ' sec)');
                 }
             }
             else {
                 tdStatus[n].html('<span style="color: red;">&#9746;</span>');
-                var para = $('<p style="color: purple; margin-top: 0;"></p>').appendTo(tdInfo[n]);
+                let para = $('<p style="color: purple; margin-top: 0;"></p>').appendTo(tdInfo[n]);
                 para.text(message ? message : 'failed');
                 tdStatus[n].css('background-color', '#FFF0F0');
                 tdInfo[n].css('background-color', '#FFF0F0');
             }
         }
-    };
-    return WebValExec;
-}());
+    }
+}
 //# sourceMappingURL=webmolkit-build.js.map

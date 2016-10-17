@@ -332,7 +332,7 @@ class CoordUtil
 			let bfr = mol.bondFrom(n), bto = mol.bondTo(n);
 			dsq.push(norm2_xy(mol.atomX(bto) - mol.atomX(bfr), mol.atomY(bto) - mol.atomY(bfr)));
 		}
-		dsq.sort();
+		Vec.sort(dsq);
 		let median = (nb & 1) == 1 ? Math.sqrt(dsq[nb >> 1]) : 0.5 * (Math.sqrt(dsq[nb >> 1]) + Math.sqrt(dsq[(nb >> 1) - 1]));
 		if (median < 0.1 || (median > Molecule.IDEALBOND * 0.9 && median < Molecule.IDEALBOND * 1.1)) return;
     	
