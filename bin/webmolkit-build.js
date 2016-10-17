@@ -2050,9 +2050,9 @@ function make_crc_table() {
         let c = n;
         for (let i = 0; i < 8; i++)
             if ((c & 1) != 0)
-                c = 0xEDB88320 ^ (c >> 1);
+                c = 0xEDB88320 ^ (c >>> 1);
             else
-                c >>= 1;
+                c = (c >>> 1);
         crc_table.push(c);
     }
 }
@@ -2060,7 +2060,7 @@ const BOOT_CRC = 0xFFFFFFFF;
 function start_crc() { return BOOT_CRC; }
 function feed_crc(crc, byte) {
     let idx = (crc ^ byte) & 0xFF;
-    return crc_table[idx] ^ (crc >> 8);
+    return crc_table[idx] ^ (crc >>> 8);
 }
 function end_crc(crc) { return crc ^ BOOT_CRC; }
 class CircularFingerprints {
@@ -2075,6 +2075,73 @@ class CircularFingerprints {
         this.atomAdj = [];
         this.bondAdj = [];
         make_crc_table();
+    }
+    calculate() {
+        let mol = this.meta.mol, na = mol.numAtoms;
+        this.identity = Vec.numberArray(0, na);
+        this.resolvedChiral = Vec.booleanArray(false, na);
+        for (let n = 0; n < na; n++)
+            this.atomGroup.push([]);
+        this.amask = Vec.booleanArray(false, na);
+        for (let n = 0; n < na; n++) {
+            this.amask[n] = mol.atomicNumber(n + 1) >= 2 && !MolUtil.hasAbbrev(mol, n + 1);
+            this.atomAdj.push([]);
+            this.bondAdj.push([]);
+        }
+        for (let n = 0; n < na; n++) {
+            if (!this.amask[n])
+                continue;
+            this.atomAdj[n] = mol.atomAdjList(n + 1);
+            this.bondAdj[n] = mol.atomAdjBonds(n + 1);
+            for (let i = this.atomAdj[n].length - 1; i >= 0; i--)
+                if (!this.amask[this.atomAdj[n][i] - 1]) {
+                    this.atomAdj[n].splice(i, 1);
+                    this.bondAdj[n].splice(i, 1);
+                }
+        }
+        for (let n = 0; n < na; n++)
+            if (this.amask[n]) {
+                this.identity[n] = this.initialIdentityECFP(n + 1);
+                this.atomGroup[n] = [n + 1];
+                this.applyNewFP({ 'hashCode': this.identity[n], 'iteration': 0, 'atoms': this.atomGroup[n] });
+            }
+        let niter = this.kind;
+        for (let iter = 1; iter <= niter; iter++) {
+            let newident = Vec.numberArray(0, na);
+            for (let n = 0; n < na; n++)
+                if (this.amask[n])
+                    newident[n] = this.circularIterate(iter, n + 1);
+            this.identity = newident;
+            for (let n = 0; n < na; n++)
+                if (this.amask[n]) {
+                    this.atomGroup[n] = this.growAtoms(this.atomGroup[n]);
+                    this.considerNewFP({ 'hashCode': this.identity[n], 'iteration': iter, 'atoms': this.atomGroup[n] });
+                }
+        }
+    }
+    static create(meta, kind) {
+        if (meta instanceof Molecule)
+            meta = MetaMolecule.createStrictRubric(meta);
+        let circ = new CircularFingerprints(meta, kind);
+        circ.calculate();
+        return circ;
+    }
+    getMolecule() { return this.meta.mol; }
+    get numFP() { return this.fplist.length; }
+    getFP(idx) { return this.fplist[idx]; }
+    getFingerprints() { return this.fplist.slice(0); }
+    getUniqueHashes() {
+        let hashes = new Set();
+        for (let fp of this.fplist)
+            hashes.add(fp.hashCode);
+        return Vec.sorted(Array.from(hashes));
+    }
+    getFoldedHashes(maxBits) {
+        let andBits = maxBits - 1;
+        let hashes = new Set();
+        for (let fp of this.fplist)
+            hashes.add(fp.hashCode & andBits);
+        return Vec.sorted(Array.from(hashes));
     }
     static tanimoto(hash1, hash2) {
         let shared = 0, total = 0;
@@ -2109,12 +2176,11 @@ class CircularFingerprints {
         const mol = this.meta.mol;
         let adj = mol.atomAdjList(atom);
         let nheavy = 0, nhydr = mol.atomHydrogens(atom);
-        for (let n = 0; n < adj.length; n++) {
-            if (mol.atomElement(adj[n]) == 'H')
+        for (let a of adj)
+            if (mol.atomElement(a) == 'H')
                 nhydr++;
             else
                 nheavy++;
-        }
         let atno = mol.atomicNumber(atom);
         let degree = Math.max(0, Chemistry.ELEMENT_BONDING[atno] - nhydr);
         let chg = mol.atomCharge(atom);
@@ -2156,7 +2222,7 @@ class CircularFingerprints {
             crc = feed_crc(crc, (v >> 8) & 0xFF);
             crc = feed_crc(crc, v & 0xFF);
         }
-        if (!this.resolvedChiral[atom - 1] && Vec.arrayLength(this.meta.rubricTetra) > 0) {
+        if (!this.resolvedChiral[atom - 1] && Vec.arrayLength(this.meta.rubricTetra) > 0 && this.meta.rubricTetra[atom - 1] != null) {
             let ru = this.meta.rubricTetra[atom - 1];
             let par = [
                 ru[0] == 0 ? 0 : this.identity[ru[0] - 1],
@@ -2203,10 +2269,10 @@ class CircularFingerprints {
         this.fplist[hit] = newFP;
     }
 }
-CircularFingerprints.CLASS_ECFP0 = 1;
-CircularFingerprints.CLASS_ECFP2 = 2;
-CircularFingerprints.CLASS_ECFP4 = 3;
-CircularFingerprints.CLASS_ECFP6 = 4;
+CircularFingerprints.CLASS_ECFP0 = 0;
+CircularFingerprints.CLASS_ECFP2 = 1;
+CircularFingerprints.CLASS_ECFP4 = 2;
+CircularFingerprints.CLASS_ECFP6 = 3;
 class MolUtil {
     static isBlank(mol) {
         return mol == null || mol.numAtoms == 0;
@@ -3239,181 +3305,198 @@ class DataSheet {
             data.extData = [];
         this.data = data;
     }
-    ;
     getData() {
         return this.data;
     }
-    ;
-    numCols() {
+    get numCols() {
         return this.data.numCols;
     }
-    ;
-    numRows() {
+    get numRows() {
         return this.data.numRows;
     }
-    ;
     getTitle() {
         return this.data.title;
     }
-    ;
     getDescription() {
         return this.data.description;
     }
-    ;
     setTitle(val) {
         this.data.title = val;
     }
-    ;
     setDescription(val) {
         this.data.description = val;
     }
-    ;
-    numExtensions() {
+    get numExtensions() {
         return this.data.numExtens;
     }
-    ;
-    getExtName(N) {
-        return this.data.extData[N].name;
+    getExtName(idx) {
+        return this.data.extData[idx].name;
     }
-    ;
-    getExtType(N) {
-        return this.data.extData[N].type;
+    getExtType(idx) {
+        return this.data.extData[idx].type;
     }
-    ;
-    getExtData(N) {
-        return this.data.extData[N].data;
+    getExtData(idx) {
+        return this.data.extData[idx].data;
     }
-    ;
-    setExtName(N, val) {
-        this.data.extData[N].name = val;
+    setExtName(idx, val) {
+        this.data.extData[idx].name = val;
     }
-    ;
-    setExtType(N, val) {
-        this.data.extData[N].type = val;
+    setExtType(idx, val) {
+        this.data.extData[idx].type = val;
     }
-    ;
-    setExtData(N, val) {
-        this.data.extData[N].data = val;
+    setExtData(idx, val) {
+        this.data.extData[idx].data = val;
     }
-    ;
     appendExtension(name, type, data) {
         this.data.numExtens++;
         this.data.extData.push({ 'name': name, 'type': type, 'data': data });
         return this.data.numExtens - 1;
     }
-    ;
-    deleteExtension(N) {
-        this.data.extData.splice(N, 1);
+    deleteExtension(idx) {
+        this.data.extData.splice(idx, 1);
     }
-    ;
-    colName(N) {
-        return this.data.colData[N].name;
+    colName(col) {
+        return this.data.colData[col].name;
     }
-    ;
-    colType(N) {
-        return this.data.colData[N].type;
+    colType(col) {
+        return this.data.colData[col].type;
     }
-    ;
-    colDescr(N) {
-        return this.data.colData[N].descr;
+    colDescr(col) {
+        return this.data.colData[col].descr;
     }
-    ;
-    isNull(RN, CN) {
-        return this.data.rowData[RN][CN] == null;
+    isNull(row, col) {
+        if (typeof col === 'string')
+            col = this.findColByName(col);
+        return this.data.rowData[row][col] == null;
     }
-    ;
-    getMolecule(RN, CN) {
-        return this.data.rowData[RN][CN];
+    getObject(row, col) {
+        if (typeof col === 'string')
+            col = this.findColByName(col);
+        return this.data.rowData[row][col];
     }
-    ;
-    getString(RN, CN) {
-        return this.data.rowData[RN][CN];
+    getMolecule(row, col) {
+        if (typeof col === 'string')
+            col = this.findColByName(col);
+        let datum = this.data.rowData[row][col];
+        if (datum == null)
+            return null;
+        if (typeof datum === 'string') {
+            datum = Molecule.fromString(datum);
+            this.data.rowData[row][col] = datum;
+        }
+        return datum;
     }
-    ;
-    getInteger(RN, CN) {
-        return this.data.rowData[RN][CN];
+    getString(row, col) {
+        if (typeof col === 'string')
+            col = this.findColByName(col);
+        let str = this.data.rowData[row][col];
+        return str == null ? '' : str;
     }
-    ;
-    getReal(RN, CN) {
-        return this.data.rowData[RN][CN];
+    getInteger(row, col) {
+        if (typeof col === 'string')
+            col = this.findColByName(col);
+        return this.data.rowData[row][col];
     }
-    ;
-    getBoolean(RN, CN) {
-        return this.data.rowData[RN][CN];
+    getReal(row, col) {
+        if (typeof col === 'string')
+            col = this.findColByName(col);
+        return this.data.rowData[row][col];
     }
-    ;
-    getExtend(RN, CN) {
-        return this.data.rowData[RN][CN];
+    getBoolean(row, col) {
+        if (typeof col === 'string')
+            col = this.findColByName(col);
+        return this.data.rowData[row][col];
     }
-    ;
-    setToNull(RN, CN) {
-        this.data.rowData[RN][CN] = null;
+    getExtend(row, col) {
+        if (typeof col === 'string')
+            col = this.findColByName(col);
+        return this.data.rowData[row][col];
     }
-    ;
-    setMolecule(RN, CN, val) {
-        this.data.rowData[RN][CN] = val;
+    setToNull(row, col) {
+        if (typeof col === 'string')
+            col = this.findColByName(col);
+        this.data.rowData[row][col] = null;
     }
-    ;
-    setString(RN, CN, val) {
-        this.data.rowData[RN][CN] = val;
+    setObject(row, col, val) {
+        if (typeof col === 'string')
+            col = this.findColByName(col);
+        this.data.rowData[row][col] = val;
     }
-    ;
-    setInteger(RN, CN, val) {
-        this.data.rowData[RN][CN] = val;
+    setMolecule(row, col, mol) {
+        if (typeof col === 'string')
+            col = this.findColByName(col);
+        this.data.rowData[row][col] = mol.clone();
     }
-    ;
-    setReal(RN, CN, val) {
-        this.data.rowData[RN][CN] = val;
+    setString(row, col, val) {
+        if (typeof col === 'string')
+            col = this.findColByName(col);
+        this.data.rowData[row][col] = val;
     }
-    ;
-    setBoolean(RN, CN, val) {
-        this.data.rowData[RN][CN] = val;
+    setInteger(row, col, val) {
+        if (typeof col === 'string')
+            col = this.findColByName(col);
+        this.data.rowData[row][col] = val;
     }
-    ;
-    setExtend(RN, CN, val) {
-        this.data.rowData[RN][CN] = val;
+    setReal(row, col, val) {
+        if (typeof col === 'string')
+            col = this.findColByName(col);
+        this.data.rowData[row][col] = val;
     }
-    ;
-    isEqualMolecule(RN, CN, val) {
-        if (this.isNull(RN, CN) != (val == null))
+    setBoolean(row, col, val) {
+        if (typeof col === 'string')
+            col = this.findColByName(col);
+        this.data.rowData[row][col] = val;
+    }
+    setExtend(row, col, val) {
+        if (typeof col === 'string')
+            col = this.findColByName(col);
+        this.data.rowData[row][col] = val;
+    }
+    isEqualMolecule(row, col, mol) {
+        if (typeof col === 'string')
+            col = this.findColByName(col);
+        if (this.isNull(row, col) != (mol == null))
             return false;
-        if (val == null)
+        if (mol == null)
             return true;
-        return this.getMolecule(RN, CN) == val;
+        return this.getMolecule(row, col).compareTo(mol) == 0;
     }
-    ;
-    isEqualString(RN, CN, val) {
-        if (this.isNull(RN, CN) != (val == null || val == ''))
+    isEqualString(row, col, val) {
+        if (typeof col === 'string')
+            col = this.findColByName(col);
+        if (this.isNull(row, col) != (val == null || val == ''))
             return false;
         if (val == null || val == '')
             return true;
-        return this.getString(RN, CN) == val;
+        return this.getString(row, col) == val;
     }
-    ;
-    isEqualInteger(RN, CN, val) {
-        if (this.isNull(RN, CN) != (val == null))
+    isEqualInteger(row, col, val) {
+        if (typeof col === 'string')
+            col = this.findColByName(col);
+        if (this.isNull(row, col) != (val == null))
             return false;
         if (val == null)
             return true;
-        return this.getInteger(RN, CN) == val;
+        return this.getInteger(row, col) == val;
     }
-    ;
-    isEqualReal(RN, CN, val) {
-        if (this.isNull(RN, CN) != (val == null))
+    isEqualReal(row, col, val) {
+        if (typeof col === 'string')
+            col = this.findColByName(col);
+        if (this.isNull(row, col) != (val == null))
             return false;
         if (val == null)
             return true;
-        return this.getReal(RN, CN) == val;
+        return this.getReal(row, col) == val;
     }
-    ;
-    isEqualBoolean(RN, CN, val) {
-        if (this.isNull(RN, CN) != (val == null))
+    isEqualBoolean(row, col, val) {
+        if (typeof col === 'string')
+            col = this.findColByName(col);
+        if (this.isNull(row, col) != (val == null))
             return false;
         if (val == null)
             return true;
-        return this.getBoolean(RN, CN) == val;
+        return this.getBoolean(row, col) == val;
     }
-    ;
     appendColumn(name, type, descr) {
         this.data.numCols++;
         this.data.colData.push({ 'name': name, 'type': type, 'descr': descr });
@@ -3421,23 +3504,19 @@ class DataSheet {
             this.data.rowData[n].push(null);
         return this.data.numCols - 1;
     }
-    ;
-    deleteColumn(N) {
+    deleteColumn(col) {
         this.data.numCols--;
-        this.data.colData.splice(N, 1);
+        this.data.colData.splice(col, 1);
         for (var n = 0; n < this.data.numRows; n++)
-            this.data.rowData[n].splice(N, 1);
+            this.data.rowData[n].splice(col, 1);
     }
-    ;
-    changeColumnName(N, name, descr) {
-        this.data.colData[N].name = N;
-        this.data.colData[N].descr = descr;
+    changeColumnName(col, name, descr) {
+        this.data.colData[col].name = col;
+        this.data.colData[col].descr = descr;
     }
-    ;
-    changeColumnType(N, newType) {
-        this.data.colData[N].type = newType;
+    changeColumnType(col, newType) {
+        this.data.colData[col].type = newType;
     }
-    ;
     appendRow() {
         this.data.numRows++;
         var row = new Array();
@@ -3446,39 +3525,33 @@ class DataSheet {
         this.data.rowData.push(row);
         return this.data.numRows - 1;
     }
-    ;
-    appendRowFrom(srcDS, RN) {
+    appendRowFrom(srcDS, row) {
         this.data.numRows++;
-        this.data.rowData.push(srcDS.data.rowData[RN].slice(0));
+        this.data.rowData.push(srcDS.data.rowData[row].slice(0));
         return this.data.numRows - 1;
     }
-    ;
-    insertRow(N) {
+    insertRow(row) {
         this.data.numRows++;
-        var row = new Array();
+        var data = new Array();
         for (var n = 0; n < this.data.numCols; n++)
-            row.push(null);
-        this.data.rowData.splice(N, 0, row);
+            data.push(null);
+        this.data.rowData.splice(row, 0, data);
     }
-    ;
     deleteAllRows() {
         this.data.numRows = 0;
         this.data.rowData = new Array();
     }
-    ;
-    moveRowUp(N) {
-        var row = this.data.rowData[N];
-        this.data.rowData[N] = this.data.rowData[N - 1];
-        this.data.rowData[N - 1] = row;
+    moveRowUp(row) {
+        var data = this.data.rowData[row];
+        this.data.rowData[row] = this.data.rowData[row - 1];
+        this.data.rowData[row - 1] = data;
     }
-    ;
-    moveRowDown(N) {
-        var row = this.data.rowData[N];
-        this.data.rowData[N] = this.data.rowData[N + 1];
-        this.data.rowData[N + 1] = row;
+    moveRowDown(row) {
+        var data = this.data.rowData[row];
+        this.data.rowData[row] = this.data.rowData[row + 1];
+        this.data.rowData[row + 1] = data;
     }
-    ;
-    exciseSingleRow(N) {
+    exciseSingleRow(row) {
         var newData = {
             'title': this.data.title,
             'description': this.data.description,
@@ -3486,31 +3559,29 @@ class DataSheet {
             'numRows': 1,
             'numExtens': this.data.numExtens,
             'colData': this.data.colData.slice(0),
-            'rowData': [this.data.rowData[N].slice(0)],
+            'rowData': [this.data.rowData[row].slice(0)],
             'extData': this.data.extData.slice(0)
         };
         return new DataSheet(newData);
     }
-    ;
-    colIsPrimitive(N) {
-        var ct = this.data.colData[N].type;
+    colIsPrimitive(col) {
+        if (typeof col === 'string')
+            col = this.findColByName(col);
+        var ct = this.data.colData[col].type;
         return ct == 'string' || ct == 'real' || ct == 'integer' || ct == 'boolean';
     }
-    ;
     findColByName(name) {
         for (var n = 0; n < this.data.numCols; n++)
             if (this.data.colData[n].name == name)
                 return n;
         return -1;
     }
-    ;
     firstColOfType(type) {
         for (var n = 0; n < this.data.numCols; n++)
             if (this.data.colData[n].type == type)
                 return n;
         return -1;
     }
-    ;
 }
 DataSheet.COLTYPE_MOLECULE = 'molecule';
 DataSheet.COLTYPE_STRING = 'string';
@@ -3564,7 +3635,7 @@ class DataSheetStream {
                 var ct = ds.colType(colidx), val = nodeText(col);
                 if (val == '') { }
                 else if (ct == DataSheet.COLTYPE_MOLECULE)
-                    ds.setMolecule(rowidx, colidx, val);
+                    ds.setObject(rowidx, colidx, val);
                 else if (ct == DataSheet.COLTYPE_STRING)
                     ds.setString(rowidx, colidx, val);
                 else if (ct == DataSheet.COLTYPE_REAL)
@@ -3594,7 +3665,7 @@ class DataSheetStream {
         descr.appendChild(xml.createCDATASection(ds.getDescription()));
         var extension = xml.createElement('Extension');
         xml.documentElement.appendChild(extension);
-        for (var n = 0; n < ds.numExtensions(); n++) {
+        for (var n = 0; n < ds.numExtensions; n++) {
             var ext = xml.createElement('Ext');
             extension.appendChild(ext);
             ext.setAttribute('name', ds.getExtName(n));
@@ -3603,9 +3674,9 @@ class DataSheetStream {
         }
         var header = xml.createElement('Header');
         xml.documentElement.appendChild(header);
-        header.setAttribute('nrows', ds.numRows().toString());
-        header.setAttribute('ncols', ds.numCols().toString());
-        for (var n = 0; n < ds.numCols(); n++) {
+        header.setAttribute('nrows', ds.numRows.toString());
+        header.setAttribute('ncols', ds.numCols.toString());
+        for (var n = 0; n < ds.numCols; n++) {
             var column = xml.createElement('Column');
             header.appendChild(column);
             column.setAttribute('id', (n + 1).toString());
@@ -3615,19 +3686,23 @@ class DataSheetStream {
         }
         var content = xml.createElement('Content');
         xml.documentElement.appendChild(content);
-        for (var r = 0; r < ds.numRows(); r++) {
+        for (var r = 0; r < ds.numRows; r++) {
             var row = xml.createElement('Row');
             row.setAttribute('id', (r + 1).toString());
             content.appendChild(row);
-            for (var c = 0; c < ds.numCols(); c++) {
+            for (var c = 0; c < ds.numCols; c++) {
                 var cell = xml.createElement('Cell');
                 cell.setAttribute('id', (c + 1).toString());
                 row.appendChild(cell);
                 var ct = ds.colType(c);
                 var txtNode = null;
                 if (ds.isNull(r, c)) { }
-                else if (ct == DataSheet.COLTYPE_MOLECULE)
-                    txtNode = xml.createCDATASection(ds.getMolecule(r, c));
+                else if (ct == DataSheet.COLTYPE_MOLECULE) {
+                    let obj = ds.getObject(r, c);
+                    if (obj instanceof Molecule)
+                        obj = MoleculeStream.writeNative(obj);
+                    txtNode = xml.createCDATASection(obj);
+                }
                 else if (ct == DataSheet.COLTYPE_STRING)
                     txtNode = xml.createCDATASection(ds.getString(r, c));
                 else if (ct == DataSheet.COLTYPE_REAL)
@@ -7296,7 +7371,7 @@ class Download extends Dialog {
         }
         else if (this.ds != null) {
             let isReaction = false, isExperiment = false;
-            for (let n = 0; n < this.ds.numExtensions(); n++) {
+            for (let n = 0; n < this.ds.numExtensions; n++) {
                 if (this.ds.getExtType(n) == 'org.mmi.aspect.Reaction')
                     isReaction = true;
                 if (this.ds.getExtType(n) == 'org.mmi.aspect.Experiment')
@@ -7311,12 +7386,12 @@ class Download extends Dialog {
             if (isReaction) {
                 this.formatKey.push(FormatList.FMT_MDLRDF);
                 this.formatGfx.push(false);
-                if (this.ds.numRows() == 1) {
+                if (this.ds.numRows == 1) {
                     this.formatKey.push(FormatList.FMT_MDLRXN);
                     this.formatGfx.push(false);
                 }
             }
-            if (this.ds.numRows() == 1 || isExperiment) {
+            if (this.ds.numRows == 1 || isExperiment) {
                 if (!isReaction && this.ds.firstColOfType(DataSheet.COLTYPE_MOLECULE) >= 0) {
                     this.formatKey.push(FormatList.FMT_NATIVE);
                     this.formatGfx.push(false);
@@ -7433,12 +7508,12 @@ class Download extends Dialog {
         draw.renderContext(ctx);
         let isExperiment = false;
         if (this.ds != null) {
-            for (let n = 0; n < this.ds.numExtensions(); n++)
+            for (let n = 0; n < this.ds.numExtensions; n++)
                 if (this.ds.getExtType(n) == 'org.mmi.aspect.Experiment')
                     isExperiment = true;
         }
-        if (this.ds != null && this.ds.numRows() > 1 && !isExperiment) {
-            let dstxt = '... and ' + (this.ds.numRows() - 1) + ' more row' + (this.ds.numRows() == 2 ? '' : 's') + '.';
+        if (this.ds != null && this.ds.numRows > 1 && !isExperiment) {
+            let dstxt = '... and ' + (this.ds.numRows - 1) + ' more row' + (this.ds.numRows == 2 ? '' : 's') + '.';
             addText(newElement(this.pictureArea, 'p'), dstxt);
         }
         ctx.restore();
@@ -15063,7 +15138,7 @@ class Validation {
                     this.recentError += ', file: ' + e.fileName;
                 if (e.lineNumber)
                     this.recentError += ', line: ' + e.lineNumber;
-                console.log('Unhandled exception in validation:\n' + e);
+                console.log('Unhandled exception in validation:\n' + e.stack);
             }
         }
         let timeFinished = new Date().getTime();
@@ -15118,19 +15193,28 @@ class ValidationHeadlessMolecule extends Validation {
         this.add('Parse MDL Molfile', this.parseMolfile);
         this.add('Calculate strict aromaticity', this.calcStrictArom);
         this.add('Calculate stereochemistry', this.calcStereoChem);
+        this.add('Circular ECFP6 fingerprints', this.calcFingerprints);
     }
     init(donefunc) {
         const self = this;
-        $.get(self.urlBase + 'molecule.el', function (data) {
-            self.strSketchEl = data;
-            $.get(self.urlBase + 'molecule.mol', function (data) {
+        let FILES = ['molecule.el', 'molecule.mol', 'stereo.el', 'circular.ds'];
+        let files = FILES;
+        let fetchResult = function (data) {
+            let fn = files.shift();
+            if (fn == 'molecule.el')
+                self.strSketchEl = data;
+            else if (fn == 'molecule.mol')
                 self.strMolfile = data;
-                $.get(self.urlBase + 'stereo.el', function (data) {
-                    self.strStereo = data;
-                    donefunc.call(self);
-                });
-            });
-        });
+            else if (fn == 'stereo.el')
+                self.molStereo = Molecule.fromString(data);
+            else if (fn == 'circular.ds')
+                self.dsCircular = DataSheetStream.readXML(data);
+            if (files.length > 0)
+                $.get(self.urlBase + files[0], fetchResult);
+            else
+                donefunc.call(self);
+        };
+        $.get(self.urlBase + files[0], fetchResult);
     }
     parseSketchEl() {
         this.assert(!!this.strSketchEl, 'molecule not loaded');
@@ -15145,8 +15229,8 @@ class ValidationHeadlessMolecule extends Validation {
         this.assert(mol.numAtoms == 10 && mol.numBonds == 10, 'wrong atom/bond count');
     }
     calcStrictArom() {
-        this.assert(!!this.strStereo, 'molecule not loaded');
-        let meta = MetaMolecule.createStrict(Molecule.fromString(this.strStereo));
+        this.assert(this.molStereo != null, 'molecule not loaded');
+        let meta = MetaMolecule.createStrict(this.molStereo);
         this.assert(meta.atomArom != null, 'no aromaticity obtained');
         for (let n = 1; n <= 10; n++)
             this.assert(meta.isAtomAromatic(n), 'atom #' + n + ' supposed to be aromatic');
@@ -15154,8 +15238,8 @@ class ValidationHeadlessMolecule extends Validation {
             this.assert(meta.isBondAromatic(n), 'bond #' + n + ' supposed to be aromatic');
     }
     calcStereoChem() {
-        this.assert(!!this.strStereo, 'molecule not loaded');
-        let meta = MetaMolecule.createStrictRubric(Molecule.fromString(this.strStereo));
+        this.assert(this.molStereo != null, 'molecule not loaded');
+        let meta = MetaMolecule.createStrictRubric(this.molStereo);
         this.assert(meta.rubricTetra != null, 'no tetrahedral rubric obtained');
         this.assert(meta.rubricSides != null, 'no cis/trans rubric obtained');
         let stereo = Stereochemistry.create(meta);
@@ -15167,6 +15251,41 @@ class ValidationHeadlessMolecule extends Validation {
         this.assert(tet20 == Stereochemistry.STEREO_POS, 'atom 20: incorrect stereochemistry, got ' + tet20);
         let side26 = stereo.bondSideStereo(26);
         this.assert(side26 == Stereochemistry.STEREO_NEG, 'bond 26: incorrect stereochemistry, got ' + side26);
+    }
+    calcFingerprints() {
+        this.assert(this.dsCircular != null, 'datasheet not loaded');
+        const ds = this.dsCircular;
+        for (let n = 0; n < ds.numRows; n++) {
+            let mol = ds.getMolecule(n, 'Molecule');
+            let ecfp0 = [], ecfp2 = [], ecfp4 = [], ecfp6 = [];
+            for (let fp of ds.getString(n, 'ECFP0').split(','))
+                if (fp.length > 0)
+                    ecfp0.push(parseInt(fp));
+            for (let fp of ds.getString(n, 'ECFP2').split(','))
+                if (fp.length > 0)
+                    ecfp2.push(parseInt(fp));
+            for (let fp of ds.getString(n, 'ECFP4').split(','))
+                if (fp.length > 0)
+                    ecfp4.push(parseInt(fp));
+            for (let fp of ds.getString(n, 'ECFP6').split(','))
+                if (fp.length > 0)
+                    ecfp6.push(parseInt(fp));
+            Vec.sort(ecfp0);
+            Vec.sort(ecfp2);
+            Vec.sort(ecfp4);
+            Vec.sort(ecfp6);
+            let circ = CircularFingerprints.create(mol, CircularFingerprints.CLASS_ECFP6);
+            let got = [[], [], [], []];
+            for (let fp of circ.getFingerprints())
+                if (got[fp.iteration].indexOf(fp.hashCode) < 0)
+                    got[fp.iteration].push(fp.hashCode);
+            for (let ecfp of got)
+                Vec.sort(ecfp);
+            this.assert(Vec.equals(ecfp0, got[0]), 'row#' + (n + 1) + ', iter#0: wanted ' + ecfp0 + ', got ' + got[0]);
+            this.assert(Vec.equals(ecfp2, got[1]), 'row#' + (n + 1) + ', iter#1: wanted ' + ecfp2 + ', got ' + got[1]);
+            this.assert(Vec.equals(ecfp4, got[2]), 'row#' + (n + 1) + ', iter#2: wanted ' + ecfp4 + ', got ' + got[2]);
+            this.assert(Vec.equals(ecfp6, got[3]), 'row#' + (n + 1) + ', iter#3: wanted ' + ecfp6 + ', got ' + got[3]);
+        }
     }
 }
 class WebValExec {

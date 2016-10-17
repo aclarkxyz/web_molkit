@@ -108,7 +108,7 @@ class Download extends Dialog
 		else if (this.ds != null)
 		{
 			let isReaction = false, isExperiment = false;
-			for (let n = 0; n < this.ds.numExtensions(); n++) 
+			for (let n = 0; n < this.ds.numExtensions; n++) 
 			{
 				if (this.ds.getExtType(n) == 'org.mmi.aspect.Reaction') isReaction = true;
 				if (this.ds.getExtType(n) == 'org.mmi.aspect.Experiment') isExperiment = true;
@@ -121,12 +121,12 @@ class Download extends Dialog
 			if (isReaction)
 			{
 				this.formatKey.push(FormatList.FMT_MDLRDF); this.formatGfx.push(false);
-				if (this.ds.numRows() == 1)
+				if (this.ds.numRows == 1)
 				{
 					this.formatKey.push(FormatList.FMT_MDLRXN); this.formatGfx.push(false);
 				}
 			}
-			if (this.ds.numRows() == 1 || isExperiment)
+			if (this.ds.numRows == 1 || isExperiment)
 			{
 				if (!isReaction && this.ds.firstColOfType(DataSheet.COLTYPE_MOLECULE) >= 0)
 				{
@@ -260,13 +260,13 @@ class Download extends Dialog
 		let isExperiment = false;
 		if (this.ds != null) 
 		{
-			for (let n = 0; n < this.ds.numExtensions(); n++)
+			for (let n = 0; n < this.ds.numExtensions; n++)
 				if (this.ds.getExtType(n) == 'org.mmi.aspect.Experiment') isExperiment = true;
 		}
 
-		if (this.ds != null && this.ds.numRows() > 1 && !isExperiment)
+		if (this.ds != null && this.ds.numRows > 1 && !isExperiment)
 		{
-			let dstxt = '... and ' + (this.ds.numRows() - 1) + ' more row' + (this.ds.numRows() == 2 ? '' : 's') + '.';
+			let dstxt = '... and ' + (this.ds.numRows - 1) + ' more row' + (this.ds.numRows == 2 ? '' : 's') + '.';
 			addText(newElement(this.pictureArea, 'p'), dstxt);
 		}
 		

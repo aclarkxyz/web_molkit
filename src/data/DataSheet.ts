@@ -52,7 +52,7 @@ class DataSheet
 		if (data.extData == null) data.extData = [];
 
 		this.data = data;
-	};
+	}
 
 	// constants
 	public static COLTYPE_MOLECULE = 'molecule';
@@ -67,191 +67,228 @@ class DataSheet
 	public getData():any
 	{
 		return this.data;
-	};
+	}
 
-	public numCols():number
+	public get numCols():number
 	{
 		return this.data.numCols;
-	};
-	public numRows():number
+	}
+	public get numRows():number
 	{
 		return this.data.numRows;
-	};
+	}
 	public getTitle():string
 	{
 		return this.data.title;
-	};
+	}
 	public getDescription():string
 	{
 		return this.data.description;
-	};
+	}
 	public setTitle(val:string)
 	{
 		this.data.title = val;
-	};
+	}
 	public setDescription(val:string)
 	{
 		this.data.description = val;
-	};
-	public numExtensions():number
+	}
+	public get numExtensions():number
 	{
 		return this.data.numExtens;
-	};
-	public getExtName(N:number):string
+	}
+	public getExtName(idx:number):string
 	{
-		return this.data.extData[N].name;
-	};
-	public getExtType(N:number):string
+		return this.data.extData[idx].name;
+	}
+	public getExtType(idx:number):string
 	{
-		return this.data.extData[N].type;
-	};
-	public getExtData(N:number):string
+		return this.data.extData[idx].type;
+	}
+	public getExtData(idx:number):string
 	{
-		return this.data.extData[N].data;
-	};
-	public setExtName(N:number, val:string)
+		return this.data.extData[idx].data;
+	}
+	public setExtName(idx:number, val:string)
 	{
-		this.data.extData[N].name = val;
-	};
-	public setExtType(N:number, val:string)
+		this.data.extData[idx].name = val;
+	}
+	public setExtType(idx:number, val:string)
 	{
-		this.data.extData[N].type = val;
-	};
-	public setExtData(N:number, val:string)
+		this.data.extData[idx].type = val;
+	}
+	public setExtData(idx:number, val:string)
 	{
-		this.data.extData[N].data = val;
-	};
+		this.data.extData[idx].data = val;
+	}
 	public appendExtension(name:string, type:string, data:string):number
 	{
 		this.data.numExtens++;
 		this.data.extData.push({'name': name, 'type': type, 'data':data});
 		return this.data.numExtens - 1;
-	};
-	public deleteExtension(N:number)
+	}
+	public deleteExtension(idx:number)
 	{
-		this.data.extData.splice(N, 1);
-	};
-	public colName(N:number):string
+		this.data.extData.splice(idx, 1);
+	}
+	public colName(col:number):string
 	{
-		return this.data.colData[N].name;
-	};
-	public colType(N:number):string
+		return this.data.colData[col].name;
+	}
+	public colType(col:number):string
 	{
-		return this.data.colData[N].type;
-	};
-	public colDescr(N:number):string
+		return this.data.colData[col].type;
+	}
+	public colDescr(col:number):string
 	{
-		return this.data.colData[N].descr;
-	};
-	public isNull(RN:number, CN:number):boolean
+		return this.data.colData[col].descr;
+	}
+	public isNull(row:number, col:number | string):boolean
 	{
-		return this.data.rowData[RN][CN] == null;
-	};
-	public getMolecule(RN:number, CN:number):string
+		if (typeof col === 'string') col = this.findColByName(col);
+		return this.data.rowData[row][col] == null;
+	}
+	public getObject(row:number, col:number | string):any
 	{
-		return this.data.rowData[RN][CN];
-	};
-	public getString(RN:number, CN:number):string
+		if (typeof col === 'string') col = this.findColByName(col);
+		return this.data.rowData[row][col];
+	}
+	public getMolecule(row:number, col:number | string):Molecule
 	{
-		return this.data.rowData[RN][CN];
-	};
-	public getInteger(RN:number, CN:number):number
+		if (typeof col === 'string') col = this.findColByName(col);
+		let datum = this.data.rowData[row][col];
+		if (datum == null) return null;
+		if (typeof datum === 'string')
+		{
+			datum = Molecule.fromString(datum);
+			this.data.rowData[row][col] = datum;
+		} 
+		return datum;
+	}
+	public getString(row:number, col:number | string):string
 	{
-		return this.data.rowData[RN][CN];
-	};
-	public getReal(RN:number, CN:number):number
+		if (typeof col === 'string') col = this.findColByName(col);
+		let str = <string>this.data.rowData[row][col]; 
+		return str == null ? '' : str;
+	}
+	public getInteger(row:number, col:number | string):number
 	{
-		return this.data.rowData[RN][CN];
-	};
-	public getBoolean(RN:number, CN:number):boolean
+		if (typeof col === 'string') col = this.findColByName(col);
+		return this.data.rowData[row][col];
+	}
+	public getReal(row:number, col:number | string):number
 	{
-		return this.data.rowData[RN][CN];
-	};
-	public getExtend(RN:number, CN:number):string
+		if (typeof col === 'string') col = this.findColByName(col);
+		return this.data.rowData[row][col];
+	}
+	public getBoolean(row:number, col:number | string):boolean
 	{
-		return this.data.rowData[RN][CN];
-	};
-	public setToNull(RN:number, CN:number)
+		if (typeof col === 'string') col = this.findColByName(col);
+		return this.data.rowData[row][col];
+	}
+	public getExtend(row:number, col:number | string):string
 	{
-		this.data.rowData[RN][CN] = null;
-	};
-	public setMolecule(RN:number, CN:number, val:string)
+		if (typeof col === 'string') col = this.findColByName(col);
+		return this.data.rowData[row][col];
+	}
+	public setToNull(row:number, col:number | string)
 	{
-		this.data.rowData[RN][CN] = val;
-	};
-	public setString(RN:number, CN:number, val:string)
+		if (typeof col === 'string') col = this.findColByName(col);
+		this.data.rowData[row][col] = null;
+	}
+	public setObject(row:number, col:number | string, val:any)
 	{
-		this.data.rowData[RN][CN] = val;
-	};
-	public setInteger(RN:number, CN:number, val:number)
+		if (typeof col === 'string') col = this.findColByName(col);
+		this.data.rowData[row][col] = val;
+	}
+	public setMolecule(row:number, col:number | string, mol:Molecule)
 	{
-		this.data.rowData[RN][CN] = val;
-	};
-	public setReal(RN:number, CN:number, val:number)
+		if (typeof col === 'string') col = this.findColByName(col);
+		this.data.rowData[row][col] = mol.clone();
+	}
+	public setString(row:number, col:number | string, val:string)
 	{
-		this.data.rowData[RN][CN] = val;
-	};
-	public setBoolean(RN:number, CN:number, val:boolean)
+		if (typeof col === 'string') col = this.findColByName(col);
+		this.data.rowData[row][col] = val;
+	}
+	public setInteger(row:number, col:number | string, val:number)
 	{
-		this.data.rowData[RN][CN] = val;
-	};
-	public setExtend(RN:number, CN:number, val:string)
+		if (typeof col === 'string') col = this.findColByName(col);
+		this.data.rowData[row][col] = val;
+	}
+	public setReal(row:number, col:number | string, val:number)
 	{
-		this.data.rowData[RN][CN] = val;
-	};
-	public isEqualMolecule(RN:number, CN:number, val:string)
+		if (typeof col === 'string') col = this.findColByName(col);
+		this.data.rowData[row][col] = val;
+	}
+	public setBoolean(row:number, col:number | string, val:boolean)
 	{
-		if (this.isNull(RN, CN) != (val == null)) return false;
-		if (val == null) return true;
-		return this.getMolecule(RN, CN) == val;
-	};
-	public isEqualString(RN:number, CN:number, val:string)
+		if (typeof col === 'string') col = this.findColByName(col);
+		this.data.rowData[row][col] = val;
+	}
+	public setExtend(row:number, col:number | string, val:string)
 	{
-		if (this.isNull(RN, CN) != (val == null || val == '')) return false;
+		if (typeof col === 'string') col = this.findColByName(col);
+		this.data.rowData[row][col] = val;
+	}
+	public isEqualMolecule(row:number, col:number | string, mol:Molecule)
+	{
+		if (typeof col === 'string') col = this.findColByName(col);
+		if (this.isNull(row, col) != (mol == null)) return false;
+		if (mol == null) return true;
+		return this.getMolecule(row, col).compareTo(mol) == 0;
+	}
+	public isEqualString(row:number, col:number | string, val:string)
+	{
+		if (typeof col === 'string') col = this.findColByName(col);
+		if (this.isNull(row, col) != (val == null || val == '')) return false;
 		if (val == null || val == '') return true;
-		return this.getString(RN, CN) == val;
-	};
-	public isEqualInteger(RN:number, CN:number, val:number)
+		return this.getString(row, col) == val;
+	}
+	public isEqualInteger(row:number, col:number | string, val:number)
 	{
-		if (this.isNull(RN, CN) != (val == null)) return false;
+		if (typeof col === 'string') col = this.findColByName(col);
+		if (this.isNull(row, col) != (val == null)) return false;
 		if (val == null) return true;
-		return this.getInteger(RN, CN) == val;
-	};
-	public isEqualReal(RN:number, CN:number, val:number)
+		return this.getInteger(row, col) == val;
+	}
+	public isEqualReal(row:number, col:number | string, val:number)
 	{
-		if (this.isNull(RN, CN) != (val == null)) return false;
+		if (typeof col === 'string') col = this.findColByName(col);
+		if (this.isNull(row, col) != (val == null)) return false;
 		if (val == null) return true;
-		return this.getReal(RN, CN) == val;
-	};
-	public isEqualBoolean(RN:number, CN:number, val:boolean)
+		return this.getReal(row, col) == val;
+	}
+	public isEqualBoolean(row:number, col:number | string, val:boolean)
 	{
-		if (this.isNull(RN, CN) != (val == null)) return false;
+		if (typeof col === 'string') col = this.findColByName(col);
+		if (this.isNull(row, col) != (val == null)) return false;
 		if (val == null) return true;
-		return this.getBoolean(RN, CN) == val;
-	};
+		return this.getBoolean(row, col) == val;
+	}
 	public appendColumn(name:string, type:string, descr:string)
 	{
 		this.data.numCols++;
 		this.data.colData.push({'name': name, 'type': type, 'descr': descr});
 		for (var n = 0; n < this.data.numRows; n++) this.data.rowData[n].push(null);
 		return this.data.numCols - 1;
-	};
-	public deleteColumn(N:number)
+	}
+	public deleteColumn(col:number)
 	{
 		this.data.numCols--;
-		this.data.colData.splice(N, 1);
-		for (var n = 0; n < this.data.numRows; n++) this.data.rowData[n].splice(N, 1); 
-	};
-	public changeColumnName(N:number, name:string, descr:string)
+		this.data.colData.splice(col, 1);
+		for (var n = 0; n < this.data.numRows; n++) this.data.rowData[n].splice(col, 1); 
+	}
+	public changeColumnName(col:number, name:string, descr:string)
 	{
-		this.data.colData[N].name = N;
-		this.data.colData[N].descr = descr;
-	};
-	public changeColumnType(N:number, newType:string)
+		this.data.colData[col].name = col;
+		this.data.colData[col].descr = descr;
+	}
+	public changeColumnType(col:number, newType:string)
 	{
-		this.data.colData[N].type = newType;
+		this.data.colData[col].type = newType;
 		// (NOTE: doesn't actually do the cast conversion...)
-	};
+	}
 	/* !! TBD
 	public abstract void reorderColumns(int[] order);
 	*/
@@ -262,38 +299,38 @@ class DataSheet
 		for (var n = 0; n < this.data.numCols; n++) row.push(null);
 		this.data.rowData.push(row);
 		return this.data.numRows - 1;
-	};
-	public appendRowFrom(srcDS:DataSheet, RN:number):number
+	}
+	public appendRowFrom(srcDS:DataSheet, row:number):number
 	{
 		this.data.numRows++;
-		this.data.rowData.push(srcDS.data.rowData[RN].slice(0));
+		this.data.rowData.push(srcDS.data.rowData[row].slice(0));
 		return this.data.numRows - 1;
-	};
-	public insertRow(N:number)
+	}
+	public insertRow(row:number)
 	{
 		this.data.numRows++;
-		var row = new Array();
-		for (var n = 0; n < this.data.numCols; n++) row.push(null);
-		this.data.rowData.splice(N, 0, row);
-	};
+		var data = new Array();
+		for (var n = 0; n < this.data.numCols; n++) data.push(null);
+		this.data.rowData.splice(row, 0, data);
+	}
 	public deleteAllRows()
 	{
 		this.data.numRows = 0;
 		this.data.rowData = new Array();
-	};
-	public moveRowUp(N:number)
+	}
+	public moveRowUp(row:number)
 	{
-		var row = this.data.rowData[N];
-		this.data.rowData[N] = this.data.rowData[N - 1];
-		this.data.rowData[N - 1] = row;
-	};
-	public moveRowDown(N:number)
+		var data = this.data.rowData[row];
+		this.data.rowData[row] = this.data.rowData[row - 1];
+		this.data.rowData[row - 1] = data;
+	}
+	public moveRowDown(row:number)
 	{
-		var row = this.data.rowData[N];
-		this.data.rowData[N] = this.data.rowData[N + 1];
-		this.data.rowData[N + 1] = row;
-	};
-	public exciseSingleRow(N:number)
+		var data = this.data.rowData[row];
+		this.data.rowData[row] = this.data.rowData[row + 1];
+		this.data.rowData[row + 1] = data;
+	}
+	public exciseSingleRow(row:number)
 	{
 		var newData =
 		{
@@ -303,24 +340,25 @@ class DataSheet
 			'numRows': 1,
 			'numExtens': this.data.numExtens,
 			'colData': this.data.colData.slice(0),
-			'rowData': [this.data.rowData[N].slice(0)],
+			'rowData': [this.data.rowData[row].slice(0)],
 			'extData': this.data.extData.slice(0)
 		};
 		return new DataSheet(newData);
-	};
-	public colIsPrimitive(N:number)
+	}
+	public colIsPrimitive(col:number | string)
 	{
-		var ct = this.data.colData[N].type;
+		if (typeof col === 'string') col = this.findColByName(col);
+		var ct = this.data.colData[col].type;
 		return ct == 'string' || ct == 'real' || ct == 'integer' || ct == 'boolean';
-	};
+	}
 	public findColByName(name:string)
 	{
 		for (var n = 0; n < this.data.numCols; n++) if (this.data.colData[n].name == name) return n;
 		return -1;
-	};
+	}
 	public firstColOfType(type:string)
 	{
 		for (var n = 0; n < this.data.numCols; n++) if (this.data.colData[n].type == type) return n;
 		return -1;
-	};
+	}
 }

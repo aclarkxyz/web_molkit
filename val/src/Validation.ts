@@ -69,7 +69,7 @@ class Validation
                 this.recentError = 'Exception: ' + e.message;
                 if (e.fileName) this.recentError += ', file: ' + e.fileName;
                 if (e.lineNumber) this.recentError += ', line: ' + e.lineNumber;
-                console.log('Unhandled exception in validation:\n' + e);
+                console.log('Unhandled exception in validation:\n' + e.stack);
             }
         }
 

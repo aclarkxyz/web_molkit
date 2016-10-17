@@ -84,7 +84,7 @@ class DataSheetStream
 				var ct = ds.colType(colidx), val = nodeText(col);
 
 				if (val == '') {}
-				else if (ct == DataSheet.COLTYPE_MOLECULE) ds.setMolecule(rowidx, colidx, val);
+				else if (ct == DataSheet.COLTYPE_MOLECULE) ds.setObject(rowidx, colidx, val);
 				else if (ct == DataSheet.COLTYPE_STRING) ds.setString(rowidx, colidx, val);
 				else if (ct == DataSheet.COLTYPE_REAL) ds.setReal(rowidx, colidx, parseFloat(val));
 				else if (ct == DataSheet.COLTYPE_INTEGER) ds.setInteger(rowidx, colidx, parseInt(val));
@@ -117,7 +117,7 @@ class DataSheetStream
 		// extras
 		var extension = xml.createElement('Extension');
 		xml.documentElement.appendChild(extension);
-		for (var n = 0; n < ds.numExtensions(); n++)
+		for (var n = 0; n < ds.numExtensions; n++)
 		{
 			var ext = xml.createElement('Ext');
 			extension.appendChild(ext);
@@ -129,9 +129,9 @@ class DataSheetStream
 		// columns
 		var header = xml.createElement('Header');
 		xml.documentElement.appendChild(header);
-		header.setAttribute('nrows', ds.numRows().toString());
-		header.setAttribute('ncols', ds.numCols().toString());
-		for (var n = 0; n < ds.numCols(); n++)
+		header.setAttribute('nrows', ds.numRows.toString());
+		header.setAttribute('ncols', ds.numCols.toString());
+		for (var n = 0; n < ds.numCols; n++)
 		{
 			var column = xml.createElement('Column');
 			header.appendChild(column);
@@ -144,13 +144,13 @@ class DataSheetStream
 		// rows
 		var content = xml.createElement('Content');
 		xml.documentElement.appendChild(content);
-		for (var r = 0; r < ds.numRows(); r++)
+		for (var r = 0; r < ds.numRows; r++)
 		{
 			var row = xml.createElement('Row');
 			row.setAttribute('id', (r + 1).toString());
 			content.appendChild(row);
 
-			for (var c = 0; c < ds.numCols(); c++)
+			for (var c = 0; c < ds.numCols; c++)
 			{
 				var cell = xml.createElement('Cell');
 				cell.setAttribute('id', (c + 1).toString());
@@ -159,7 +159,12 @@ class DataSheetStream
 				
 				var txtNode:Node = null;
 				if (ds.isNull(r, c)) {}
-				else if (ct == DataSheet.COLTYPE_MOLECULE) txtNode = xml.createCDATASection(ds.getMolecule(r, c));
+				else if (ct == DataSheet.COLTYPE_MOLECULE) 
+				{
+					let obj = ds.getObject(r, c);
+					if (obj instanceof Molecule) obj = MoleculeStream.writeNative(obj);
+					txtNode = xml.createCDATASection(<string>obj);
+				}
 				else if (ct == DataSheet.COLTYPE_STRING) txtNode = xml.createCDATASection(ds.getString(r, c));
 				else if (ct == DataSheet.COLTYPE_REAL) txtNode = xml.createTextNode(ds.getReal(r, c).toString());
 				else if (ct == DataSheet.COLTYPE_INTEGER) txtNode = xml.createTextNode(ds.getInteger(r, c).toString());

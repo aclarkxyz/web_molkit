@@ -37,7 +37,7 @@ function make_crc_table():number
 	for (let n = 0; n < 256; n++)
 	{
 		let c = n
-		for (let i = 0; i < 8; i++) if ((c & 1) != 0) c = 0xEDB88320 ^ (c >> 1); else c >>= 1;
+		for (let i = 0; i < 8; i++) if ((c & 1) != 0) c = 0xEDB88320 ^ (c >>> 1); else c = (c >>> 1);
 		crc_table.push(c);
 	}
 }
@@ -46,7 +46,7 @@ function start_crc():number {return BOOT_CRC;}
 function feed_crc(crc:number, byte:number):number
 {
 	let idx = (crc ^ byte) & 0xFF;
-	return crc_table[idx] ^ (crc >> 8);
+	return crc_table[idx] ^ (crc >>> 8);
 }
 function end_crc(crc:number):number {return crc ^ BOOT_CRC}
 
@@ -59,10 +59,10 @@ interface CircularFP
 
 class CircularFingerprints
 {
-	public static CLASS_ECFP0 = 1;
-	public static CLASS_ECFP2 = 2;
-	public static CLASS_ECFP4 = 3;
-	public static CLASS_ECFP6 = 4;
+	public static CLASS_ECFP0 = 0;
+	public static CLASS_ECFP2 = 1;
+	public static CLASS_ECFP4 = 2;
+	public static CLASS_ECFP6 = 3;
 
 	private identity:number[] = [];
 	private resolvedChiral:boolean[] = [];
@@ -79,94 +79,89 @@ class CircularFingerprints
 		make_crc_table() // (nop if already made)
 	}
 
-/*	// performs the calculation; after completion, the results may be fetched
-	open func calculate()
+	// performs the calculation; after completion, the results may be fetched
+	public calculate():void
 	{
-		let mol = meta.mol, na = mol.numAtoms
-		identity = [Int](repeating:0, count:na)
-		resolvedChiral = boolArray(false, na)
-		atomGroup = [[Int]](repeating:[], count:na)
-
+		let mol = this.meta.mol, na = mol.numAtoms;
+		this.identity = Vec.numberArray(0, na);
+		this.resolvedChiral = Vec.booleanArray(false, na);
+		for (let n = 0; n < na; n++) this.atomGroup.push([]);
+		
 		// setup the potential correction between explicit vs. implicit hydrogens, and the stashed adjacency list
-		amask = boolArray(false,na)
-		for n in 0 ..< na {amask[n] = mol.atomicNumber(n+1) >= 2 && !MolUtil.hasAbbrev(meta.mol, atom:n+1)}
-		atomAdj = [[Int]](repeating:[], count:na)
-		bondAdj = [[Int]](repeating:[], count:na)
-		for n in 0 ..< na
+		this.amask = Vec.booleanArray(false, na);
+		for (let n = 0; n < na; n++) 
 		{
-			if !amask[n] {continue}
-			atomAdj[n] = mol.atomAdjList(n+1)
-			bondAdj[n] = mol.atomAdjBonds(n+1)
-			for i in stride(from:(atomAdj[n].count - 1), through:0, by:-1) {if !amask[atomAdj[n][i]-1]
+			this.amask[n] = mol.atomicNumber(n + 1) >= 2 && !MolUtil.hasAbbrev(mol, n+1);
+			this.atomAdj.push([]);
+			this.bondAdj.push([]);
+		}
+		for (let n = 0; n < na; n++)
+		{
+			if (!this.amask[n]) continue;
+			this.atomAdj[n] = mol.atomAdjList(n + 1);
+			this.bondAdj[n] = mol.atomAdjBonds(n + 1);
+			for (let i = this.atomAdj[n].length - 1; i >= 0; i--) if (!this.amask[this.atomAdj[n][i] - 1])
 			{
-				atomAdj[n].remove(at:i)
-				bondAdj[n].remove(at:i)
-			}}
+				this.atomAdj[n].splice(i, 1);
+				this.bondAdj[n].splice(i, 1);
+			}
 		}
 		
 		// seed the initial atom identities, at iteration zero
-		for n in 0 ..< na {if amask[n]
+		for (let n = 0; n < na; n++) if (this.amask[n])
 		{
-			identity[n] = initialIdentityECFP(n+1)
-			atomGroup[n] = [n+1]
-			applyNewFP(FP(hashCode:identity[n], iteration:0, atoms:atomGroup[n]))
-		}}
-
-		let niter = kind // (corresponds: numeric value is # iterations)
+			this.identity[n] = this.initialIdentityECFP(n + 1);
+			this.atomGroup[n] = [n + 1];
+			this.applyNewFP({'hashCode': this.identity[n], 'iteration': 0, 'atoms': this.atomGroup[n]});
+		}
+		let niter = this.kind; // (corresponds: numeric value is # iterations)
 
 		// iterate outward
-		for iter in stride(from:1, through:niter, by:1)
+		for (let iter = 1; iter <= niter; iter++)
 		{
-			var newident = [Int](repeating:0, count:na)
-			for n in 0 ..< na {if amask[n] {newident[n] = circularIterate(iter, atom:n+1)}}
-			identity = newident
+			let newident = Vec.numberArray(0, na);
+			for (let n = 0; n < na; n++) if (this.amask[n]) newident[n] = this.circularIterate(iter, n+1);
+			this.identity = newident;
 
-			for n in 0 ..< na {if amask[n]
+			for (let n = 0; n < na; n++) if (this.amask[n])
 			{
-				atomGroup[n] = growAtoms(atomGroup[n])
-				considerNewFP(FP(hashCode:identity[n], iteration:iter, atoms:atomGroup[n]))
-			}}
+				this.atomGroup[n] = this.growAtoms(this.atomGroup[n])
+				this.considerNewFP({'hashCode': this.identity[n], 'iteration': iter, 'atoms': this.atomGroup[n]});
+			}
 		}
 	}
 
 	// convenience constructors
-	open class func create(meta:MetaMolecule, kind:Int) -> CircularFingerprints
+	public static create(meta:Molecule | MetaMolecule, kind:number):CircularFingerprints
 	{
-		let circ = CircularFingerprints(meta:meta, kind:kind)
-		circ.calculate()
-		return circ
-	}
-	open class func create(mol:Molecule, kind:Int) -> CircularFingerprints
-	{
-		return create(meta:MetaMolecule.createStrictRubric(mol), kind:kind)
+		if (meta instanceof Molecule) meta = MetaMolecule.createStrictRubric(meta);
+		let circ = new CircularFingerprints(meta, kind);
+		circ.calculate();
+		return circ;
 	}
 	
 	// access to the results/input content
-	open func getMolecule() -> Molecule {return meta.mol}
-	open func numFP() -> Int {return fplist.count}
-	open func getFP(_ N:Int) -> FP {return fplist[N]}
+	public getMolecule():Molecule {return this.meta.mol;}
+	public get numFP():number {return this.fplist.length;}
+	public getFP(idx:number):CircularFP {return this.fplist[idx];}
+	public getFingerprints():CircularFP[] {return this.fplist.slice(0);}
 	
 	// pulls out just the unique instances of each hash code, and returns the sorted list
-	open func getUniqueHashes() -> [Int]
+	public getUniqueHashes():number[]
 	{
-		var hashes = Set<Int>()
-		for fp in fplist {hashes.insert(fp.hashCode)}
-		//return sort(Array(hashes))
-		return Array(hashes).sorted()
+		let hashes = new Set<number>();
+		for (let fp of this.fplist) hashes.add(fp.hashCode);
+		return Vec.sorted(Array.from(hashes));
 	}
 	
 	// as above, except cuts off the bits to a certain folding; note that the folding size must be an exponent of 2
-	open func getFoldedHashes(_ maxBits:Int) -> [Int]
+	public getFoldedHashes(maxBits:number):number[]
 	{
-		var mask = boolArray(false, maxBits)
-		let andBits = maxBits-1
-		for fp in fplist
-		{
-			let i = fp.hashCode & andBits
-			mask[i] = true
-		}
-		return maskIdx(mask)
-	}*/
+		let andBits = maxBits - 1;
+		let hashes = new Set<number>();
+		for (let fp of this.fplist) hashes.add(fp.hashCode & andBits);
+		return Vec.sorted(Array.from(hashes));
+	}
 	
 	// calculates the Tanimoto coefficient for two lists of hash codes: these are assumed to be sorted and unique, which
 	// allows the calculation to be done in O(N) time
@@ -207,10 +202,8 @@ class CircularFingerprints
 		*/
 
         let nheavy = 0, nhydr = mol.atomHydrogens(atom);
-		for (let n = 0; n < adj.length; n++)
-        {
-			if (mol.atomElement(adj[n]) == 'H') nhydr++; else nheavy++;
-        }
+		for (let a of adj) if (mol.atomElement(a) == 'H') nhydr++; else nheavy++;
+
 		let atno = mol.atomicNumber(atom);
 		let degree = Math.max(0, Chemistry.ELEMENT_BONDING[atno] - nhydr);
 		let chg = mol.atomCharge(atom);
@@ -267,9 +260,9 @@ class CircularFingerprints
 		}
 
 		// chirality flag: one chance to resolve it
-		if (!this.resolvedChiral[atom - 1] && Vec.arrayLength(this.meta.rubricTetra) > 0)
+		if (!this.resolvedChiral[atom - 1] && Vec.arrayLength(this.meta.rubricTetra) > 0 && this.meta.rubricTetra[atom - 1] != null)
 		{
-			let ru = this.meta.rubricTetra[atom-1]
+			let ru = this.meta.rubricTetra[atom - 1];
 			let par =
 			[
     			ru[0] == 0 ? 0 : this.identity[ru[0] - 1],
@@ -325,7 +318,7 @@ class CircularFingerprints
 		}
 		
 		// if the preexisting fingerprint is from an earlier iteration, or has a lower hashcode, discard
-		if (fp.iteration < newFP.iteration || fp!.hashCode < newFP.hashCode) return;
+		if (fp.iteration < newFP.iteration || fp.hashCode < newFP.hashCode) return;
 		this.fplist[hit] = newFP;
 	}
 }
