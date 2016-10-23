@@ -445,9 +445,9 @@ class ArrangeMolecule
     
     // convenience method: determines the boundaries of the arrangement, and makes sure that it all fits into the given
     // box; will be scaled down if necessary, but not scaled up
-	public squeezeInto(x:number, y:number, w:number, h:number, padding:number):void
+	public squeezeInto(x:number, y:number, w:number, h:number, padding?:number):void
 	{
-		if (padding > 0)
+		if (padding != null && padding > 0)
 		{
 			x += padding;
 			y += padding;

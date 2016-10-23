@@ -86,6 +86,45 @@ function colourCanvas(col:number):string
 	return 'rgba(' + r + ',' + g + ',' + b + ',' + (1 - t) + ')';
 }
 
+// RGB manipulation: very convenient functions for "smearing" between fractional values
+function blendRGB(fract:number, rgb1:number, rgb2:number, rgb3?:number):number
+{
+	fract = Math.max(0, Math.min(1, fract));
+
+	let r1 = ((rgb1 >> 16) & 0xFF) * ONE_OVER_255, g1 = ((rgb1 >> 8) & 0xFF) * ONE_OVER_255, b1 = (rgb1 & 0xFF) * ONE_OVER_255;
+	let r2 = ((rgb2 >> 16) & 0xFF) * ONE_OVER_255, g2 = ((rgb2 >> 8) & 0xFF) * ONE_OVER_255, b2 = (rgb2 & 0xFF) * ONE_OVER_255;
+	let R:number, G:number, B:number;
+
+	if (rgb3 == null)
+	{
+        let f1 = 1 - fract, f2 = fract;
+        R = Math.round(0xFF * (f1 * r1 + f2 * r2));
+        G = Math.round(0xFF * (f1 * g1 + f2 * g2));
+        B = Math.round(0xFF * (f1 * b1 + f2 * b2));
+	}
+	else
+	{
+        let r3 = ((rgb3 >> 16) & 0xFF) * ONE_OVER_255, g3 = ((rgb3 >> 8) & 0xFF) * ONE_OVER_255, b3 = (rgb3 & 0xFF) * ONE_OVER_255;
+        
+        if (fract < 0.5)
+        {
+			let f2 = fract * 2, f1 = 1 - f2;
+			R = Math.round(0xFF * (f1 * r1 + f2 * r2));
+			G = Math.round(0xFF * (f1 * g1 + f2 * g2));
+			B = Math.round(0xFF * (f1 * b1 + f2 * b2));
+        }
+        else
+        {
+			let f2 = (fract - 0.5) * 2, f1 = 1 - f2;
+			R = Math.round(0xFF * (f1 * r2 + f2 * r3));
+			G = Math.round(0xFF * (f1 * g2 + f2 * g3));
+			B = Math.round(0xFF * (f1 * b2 + f2 * b3));
+        }	
+	}
+
+	return (R << 16) | (G << 8) | B;
+}
+
 // takes a GMT date formatted as yyyy-mm-dd hh:mm:ss and converts it to the local timezone, and displays it
 // nicely (not including the time)
 /*function formatGMTDateNicely(gmtDate:string)
