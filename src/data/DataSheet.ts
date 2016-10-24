@@ -28,10 +28,21 @@
 
 */
 
+interface DataSheetContent
+{
+	title?:string;
+	description?:string;
+	numCols?:number;
+	numRows?:number;
+	numExtens?:number;
+	colData?:any[];
+	rowData?:any[][];
+	extData?:any[];
+}
 
 class DataSheet
 {
-	data:any;
+	private data:DataSheetContent;
 	
 	// instantiates the data using a JSON-encoded datasheet; it may be null or empty
 	// note: this class reserves the right to modify the data parameter; it is the caller's responsibility to ensure that there are no
@@ -127,7 +138,7 @@ class DataSheet
 		this.data.extData.push({'name': name, 'type': type, 'data':data});
 		return this.data.numExtens - 1;
 	}
-	public deleteExtension(idx:number)
+	public deleteExtension(idx:number):void
 	{
 		this.data.extData.splice(idx, 1);
 	}
@@ -148,6 +159,7 @@ class DataSheet
 		if (typeof col === 'string') col = this.findColByName(col);
 		return this.data.rowData[row][col] == null;
 	}
+	public notNull(row:number, col:number | string):boolean {return !this.isNull(row, col);}
 	public getObject(row:number, col:number | string):any
 	{
 		if (typeof col === 'string') col = this.findColByName(col);
@@ -191,112 +203,137 @@ class DataSheet
 		if (typeof col === 'string') col = this.findColByName(col);
 		return this.data.rowData[row][col];
 	}
-	public setToNull(row:number, col:number | string)
+	public setToNull(row:number, col:number | string):void
 	{
 		if (typeof col === 'string') col = this.findColByName(col);
 		this.data.rowData[row][col] = null;
 	}
-	public setObject(row:number, col:number | string, val:any)
+	public setObject(row:number, col:number | string, val:any):void
 	{
 		if (typeof col === 'string') col = this.findColByName(col);
 		this.data.rowData[row][col] = val;
 	}
-	public setMolecule(row:number, col:number | string, mol:Molecule)
+	public setMolecule(row:number, col:number | string, mol:Molecule):void
 	{
 		if (typeof col === 'string') col = this.findColByName(col);
 		this.data.rowData[row][col] = mol.clone();
 	}
-	public setString(row:number, col:number | string, val:string)
+	public setString(row:number, col:number | string, val:string):void
 	{
 		if (typeof col === 'string') col = this.findColByName(col);
 		this.data.rowData[row][col] = val;
 	}
-	public setInteger(row:number, col:number | string, val:number)
+	public setInteger(row:number, col:number | string, val:number):void
 	{
 		if (typeof col === 'string') col = this.findColByName(col);
 		this.data.rowData[row][col] = val;
 	}
-	public setReal(row:number, col:number | string, val:number)
+	public setReal(row:number, col:number | string, val:number):void
 	{
 		if (typeof col === 'string') col = this.findColByName(col);
 		this.data.rowData[row][col] = val;
 	}
-	public setBoolean(row:number, col:number | string, val:boolean)
+	public setBoolean(row:number, col:number | string, val:boolean):void
 	{
 		if (typeof col === 'string') col = this.findColByName(col);
 		this.data.rowData[row][col] = val;
 	}
-	public setExtend(row:number, col:number | string, val:string)
+	public setExtend(row:number, col:number | string, val:string):void
 	{
 		if (typeof col === 'string') col = this.findColByName(col);
 		this.data.rowData[row][col] = val;
 	}
-	public isEqualMolecule(row:number, col:number | string, mol:Molecule)
+	public isEqualMolecule(row:number, col:number | string, mol:Molecule):boolean
 	{
 		if (typeof col === 'string') col = this.findColByName(col);
 		if (this.isNull(row, col) != (mol == null)) return false;
 		if (mol == null) return true;
 		return this.getMolecule(row, col).compareTo(mol) == 0;
 	}
-	public isEqualString(row:number, col:number | string, val:string)
+	public isEqualString(row:number, col:number | string, val:string):boolean
 	{
 		if (typeof col === 'string') col = this.findColByName(col);
 		if (this.isNull(row, col) != (val == null || val == '')) return false;
 		if (val == null || val == '') return true;
 		return this.getString(row, col) == val;
 	}
-	public isEqualInteger(row:number, col:number | string, val:number)
+	public isEqualInteger(row:number, col:number | string, val:number):boolean
 	{
 		if (typeof col === 'string') col = this.findColByName(col);
 		if (this.isNull(row, col) != (val == null)) return false;
 		if (val == null) return true;
 		return this.getInteger(row, col) == val;
 	}
-	public isEqualReal(row:number, col:number | string, val:number)
+	public isEqualReal(row:number, col:number | string, val:number):boolean
 	{
 		if (typeof col === 'string') col = this.findColByName(col);
 		if (this.isNull(row, col) != (val == null)) return false;
 		if (val == null) return true;
 		return this.getReal(row, col) == val;
 	}
-	public isEqualBoolean(row:number, col:number | string, val:boolean)
+	public isEqualBoolean(row:number, col:number | string, val:boolean):boolean
 	{
 		if (typeof col === 'string') col = this.findColByName(col);
 		if (this.isNull(row, col) != (val == null)) return false;
 		if (val == null) return true;
 		return this.getBoolean(row, col) == val;
 	}
-	public appendColumn(name:string, type:string, descr:string)
+	public appendColumn(name:string, type:string, descr:string):number
 	{
 		this.data.numCols++;
 		this.data.colData.push({'name': name, 'type': type, 'descr': descr});
-		for (var n = 0; n < this.data.numRows; n++) this.data.rowData[n].push(null);
+		for (let n = 0; n < this.data.numRows; n++) this.data.rowData[n].push(null);
 		return this.data.numCols - 1;
 	}
-	public deleteColumn(col:number)
+	public deleteColumn(col:number):void
 	{
 		this.data.numCols--;
 		this.data.colData.splice(col, 1);
-		for (var n = 0; n < this.data.numRows; n++) this.data.rowData[n].splice(col, 1); 
+		for (let n = 0; n < this.data.numRows; n++) this.data.rowData[n].splice(col, 1); 
 	}
-	public changeColumnName(col:number, name:string, descr:string)
+	public changeColumnName(col:number, name:string, descr:string):void
 	{
 		this.data.colData[col].name = col;
 		this.data.colData[col].descr = descr;
 	}
-	public changeColumnType(col:number, newType:string)
+	public changeColumnType(col:number, newType:string):void
 	{
+		let oldType = this.colType(col);
+		if (oldType == newType) return;
+
+    	let incompatible = oldType == DataSheet.COLTYPE_MOLECULE || newType == DataSheet.COLTYPE_MOLECULE ||
+    	    	    	   oldType == DataSheet.COLTYPE_EXTEND || newType == DataSheet.COLTYPE_EXTEND;
+		
+		for (let n = this.data.rowData.length - 1; n >= 0; n--)
+		{
+			let row = this.data.rowData[n];
+			if (row[col] == null) continue;
+			if (incompatible) {row[col] = null; continue;}
+
+			let val = '';
+			if (oldType == DataSheet.COLTYPE_STRING) val = <string>row[col];
+			else if (oldType == DataSheet.COLTYPE_INTEGER) val = (<number>row[col]).toString();
+			else if (oldType == DataSheet.COLTYPE_REAL) val = (<number>row[col]).toString();
+			else if (oldType == DataSheet.COLTYPE_BOOLEAN) val = <boolean>row[col] ? 'true' : 'false';
+
+			row[col] = null;
+    	    
+			if (newType == DataSheet.COLTYPE_STRING) row[col] = val;
+			else if (newType == DataSheet.COLTYPE_INTEGER) {let num = parseInt(val); row[col] = isFinite(num) ? num : null;} 
+			else if (newType == DataSheet.COLTYPE_REAL) {let num = parseFloat(val); row[col] = isFinite(num) ? num : null;}
+			else if (newType == DataSheet.COLTYPE_BOOLEAN) row[col] = val.toLowerCase() == 'true' ? true : false;
+		}
+
 		this.data.colData[col].type = newType;
-		// (NOTE: doesn't actually do the cast conversion...)
 	}
 	/* !! TBD
 	public abstract void reorderColumns(int[] order);
 	*/
-	public appendRow()
+	public appendRow():number
 	{
 		this.data.numRows++;
-		var row = new Array();
-		for (var n = 0; n < this.data.numCols; n++) row.push(null);
+		let row = new Array();
+		for (let n = 0; n < this.data.numCols; n++) row.push(null);
 		this.data.rowData.push(row);
 		return this.data.numRows - 1;
 	}
@@ -306,33 +343,33 @@ class DataSheet
 		this.data.rowData.push(srcDS.data.rowData[row].slice(0));
 		return this.data.numRows - 1;
 	}
-	public insertRow(row:number)
+	public insertRow(row:number):void
 	{
 		this.data.numRows++;
-		var data = new Array();
-		for (var n = 0; n < this.data.numCols; n++) data.push(null);
+		let data = new Array();
+		for (let n = 0; n < this.data.numCols; n++) data.push(null);
 		this.data.rowData.splice(row, 0, data);
 	}
-	public deleteAllRows()
+	public deleteAllRows():void
 	{
 		this.data.numRows = 0;
 		this.data.rowData = new Array();
 	}
-	public moveRowUp(row:number)
+	public moveRowUp(row:number):void
 	{
-		var data = this.data.rowData[row];
+		let data = this.data.rowData[row];
 		this.data.rowData[row] = this.data.rowData[row - 1];
 		this.data.rowData[row - 1] = data;
 	}
-	public moveRowDown(row:number)
+	public moveRowDown(row:number):void
 	{
-		var data = this.data.rowData[row];
+		let data = this.data.rowData[row];
 		this.data.rowData[row] = this.data.rowData[row + 1];
 		this.data.rowData[row + 1] = data;
 	}
-	public exciseSingleRow(row:number)
+	public exciseSingleRow(row:number):DataSheet
 	{
-		var newData =
+		let newData =
 		{
 			'title': this.data.title,
 			'description': this.data.description,
@@ -345,20 +382,20 @@ class DataSheet
 		};
 		return new DataSheet(newData);
 	}
-	public colIsPrimitive(col:number | string)
+	public colIsPrimitive(col:number | string):boolean
 	{
 		if (typeof col === 'string') col = this.findColByName(col);
-		var ct = this.data.colData[col].type;
+		let ct = this.data.colData[col].type;
 		return ct == 'string' || ct == 'real' || ct == 'integer' || ct == 'boolean';
 	}
-	public findColByName(name:string)
+	public findColByName(name:string):number
 	{
-		for (var n = 0; n < this.data.numCols; n++) if (this.data.colData[n].name == name) return n;
+		for (let n = 0; n < this.data.numCols; n++) if (this.data.colData[n].name == name) return n;
 		return -1;
 	}
-	public firstColOfType(type:string)
+	public firstColOfType(type:string):number
 	{
-		for (var n = 0; n < this.data.numCols; n++) if (this.data.colData[n].type == type) return n;
+		for (let n = 0; n < this.data.numCols; n++) if (this.data.colData[n].type == type) return n;
 		return -1;
 	}
 }

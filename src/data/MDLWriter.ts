@@ -12,9 +12,18 @@
 
 ///<reference path='../decl/corrections.d.ts'/>
 ///<reference path='../util/util.ts'/>
+///<reference path='../data/Molecule.ts'/>
+///<reference path='../data/MolUtil.ts'/>
+///<reference path='../data/DataSheet.ts'/>
 
 /*
-	MDL Molfile writer: 
+	MDL Molfile writer: convert the native structure format to MDL Molfile, V2000. Note that the destination format has legacy
+	problems out the wazoo, and even retroactive improvements (e.g. V3000) tend to be not supported by most implementations. The
+	bottom line is that the best strategy is generally to stick with a lowest common denominator subset, and try to transition away
+	from the format.
+
+	MDL SDfile writer: including non-molecule fields in collections. The SDfile format is problematic for as many reasons as the
+	molecules; the best strategy is to avoid using it whenever possible, but it is so often not.
 */
 
 class MDLMOLWriter
@@ -191,3 +200,52 @@ class MDLMOLWriter
 	}
 }
 
+class MDLSDFWriter
+{
+	// options
+
+	// content in progress
+	private lines:string[] = [];
+
+	// ----------------- public methods -----------------
+
+	constructor(public ds:DataSheet)
+	{
+	}
+
+	// write out the MDL content
+	public write():string
+	{
+		let ds = this.ds, lines = this.lines;
+		let colMol = this.ds.firstColOfType(DataSheet.COLTYPE_MOLECULE);
+
+		for (let i = 0; i < ds.numRows; i++)
+		{
+			let mol = colMol < 0 ? null : ds.getMolecule(i, colMol);
+			if (MolUtil.notBlank(mol))
+			{
+				let molstr = new MDLMOLWriter(mol).write();
+				lines.push(molstr);
+			}
+			
+			for (let j = 0; j < ds.numCols; j++) if (j != colMol && ds.notNull(i, j))
+			{
+				// !!
+			}
+
+			lines.push('$$$$');
+		}
+
+		// !!
+		return lines.join('\n');
+	}
+
+	public getResult():string
+	{
+		return this.lines.join('\n');
+	}
+	
+	// ----------------- private methods -----------------
+	
+	
+}

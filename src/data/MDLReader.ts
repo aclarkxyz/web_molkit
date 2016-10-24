@@ -17,6 +17,9 @@
 	MDL Molfile reader: a somewhat flexible input parser that can turn V2000 and V3000 Molfiles into the internal molecule
 	representation. The molfile format has several official variants, and a much larger number of mutant strains that
 	exist in the wild: mileage may vary.
+
+	MDL SDfile reader: doing the best it can to pull out the auxiliary fields in SDfiles, which can be abused in endless ways,
+	but one does one's best to deal with it.
 */
 
 class MDLMOLReader
@@ -418,3 +421,150 @@ class MDLMOLReader
 	}
 }
 
+class MDLSDFReader
+{
+	public ds = new DataSheet();
+	public upcastColumns = true; // if on, tries to decide on column types based on their data values; otherwise leaves as strings
+
+	private pos = 0;
+	private lines:string[];
+
+	// ----------------- public methods -----------------
+
+	constructor(strData:string)
+	{
+		this.lines = strData.split(/\r?\n/);
+	}
+
+	// perform the parsing operation, and populate the result fields
+	public parse():void
+	{
+		this.parseStream();
+		if (this.upcastColumns) this.upcastStringColumns();
+	}
+	
+	// ----------------- private methods -----------------
+
+	private parseStream():void
+	{
+		let ds = this.ds;
+		ds.appendColumn('Molecule', DataSheet.COLTYPE_MOLECULE, 'Molecular structure');
+		let entry:string[] = [];
+
+		// read the lines from the SD file, and every time a field is encountered, add it as type "string"
+		while (this.pos < this.lines.length)
+		{
+			let line = this.lines[this.pos++];
+			if (!line.startsWith('$$$$')) {entry.push(line); continue;}
+			
+			let rn = ds.appendRow();
+
+			let molstr = '';
+			let pos = 0;
+			while (pos < entry.length)
+			{
+				line = entry[pos];
+				if (line.startsWith('> ')) break;
+				molstr += line + '\n';
+				pos++;
+				if (line.startsWith('M	END')) break;
+			}
+
+			let mol:Molecule = null;
+			try 
+			{
+				if (molstr.length > 0)
+				{
+					let mdl = new MDLMOLReader(molstr);
+					mdl.parse();
+					mol = mdl.mol;
+				}
+			}
+			catch (ex) 
+			{
+				/*let msg = "Failed to parse CTAB, row#" + (rn + 1) + ":\n" + molstr;
+				if (fatalMolFailures) throw new IOException(msg,ex);
+				else if (reportMolFailures) Util.errmsg(msg, ex);*/
+				// (leave the molecule null
+			}
+			if (mol != null) ds.setMolecule(rn, 0, mol);
+			
+			if (rn == 0 && mol != null)
+			{
+				let str1 = entry[0], str3 = entry[2];
+				if (str1.length >= 7 && str1.startsWith("$name="))
+				{
+					ds.changeColumnName(0, str1.substring(6), ds.colDescr(0));
+				}
+				if (str3.length >= 8 && str3.startsWith("$title="))
+				{
+					ds.setTitle(str3.substring(7));
+				}
+			}
+			
+			for (; pos + 1 < entry.length; pos += 3)
+			{
+				let key = entry[pos], val = entry[pos + 1];
+				if (!key.startsWith('>')) continue;
+				let z = key.indexOf('<');
+				if (z < 0) continue;
+				key = key.substring(z + 1);
+				z = key.indexOf('>');
+				if (z < 0) continue;
+				key = key.substring(0, z);
+				if (key.length == 0) continue;
+				
+				while (pos + 2 < entry.length && entry[pos + 2].length > 0)
+				{
+					val += '\n' + entry[pos + 2];
+					pos++;
+				}
+				
+				let cn = ds.findColByName(key);
+				if (cn < 0) cn = ds.appendColumn(key, DataSheet.COLTYPE_STRING, '');
+				
+				if (val.length == 0) ds.setToNull(rn, cn);
+				else ds.setString(rn, cn, val);
+			}
+		 
+			entry = [];
+		}
+	}
+
+    private upcastStringColumns():void
+    {
+		let ds = this.ds;
+		for (let i = 0; i < ds.numCols; i++) if (ds.colType(i) == DataSheet.COLTYPE_STRING)
+    	{
+			let allnull = true, allreal = true, allint = true, allbool = true;
+			for (let j = 0; j < ds.numRows; j++)
+    	    {
+				if (!allreal && !allint && !allbool) break;
+				if (ds.isNull(j, i)) continue;
+        		
+				allnull = false;
+
+				let val = ds.getString(j, i);
+        		if (allbool)
+        		{
+        		    let lc = val.toLowerCase();
+        		    if (lc != 'true' && lc != 'false') allbool = false;
+        		}
+        		if (allint)
+        		{
+					let int = parseInt(val);
+        			if (!isFinite(int) || int != parseFloat(val)) allint = false;
+        		}
+        		if (allreal)
+        		{
+					if (!isFinite(parseFloat(val))) allreal = false;
+        		}
+    	    }
+
+    	    if (allnull) {} // do nothing
+			else if (allint) ds.changeColumnType(i, DataSheet.COLTYPE_INTEGER);
+			else if (allreal) ds.changeColumnType(i, DataSheet.COLTYPE_REAL);
+			else if (allbool) ds.changeColumnType(i, DataSheet.COLTYPE_BOOLEAN);
+    	}
+    }	
+}

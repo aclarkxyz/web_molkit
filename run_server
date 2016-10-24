@@ -1,4 +1,8 @@
 #!/bin/sh
+
+echo 'Starting server; validation test are at:'
+echo '    http://localhost:8080/val/html'
+
 # using a 'localhost' server allows files to be accessed cross-domain, which is not the case
 # when viewing them from the local filesystem
 # the server is from nodejs:

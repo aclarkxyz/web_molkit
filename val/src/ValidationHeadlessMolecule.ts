@@ -26,6 +26,8 @@ class ValidationHeadlessMolecule extends Validation
 {
 	private strSketchEl:string;
 	private strMolfile:string;
+	private strDataXML:string;
+	private strSDfile:string;
 	private molStereo:Molecule;
 	private dsCircular:DataSheet;
 
@@ -34,6 +36,8 @@ class ValidationHeadlessMolecule extends Validation
 		super();
 		this.add('Parse SketchEl molecule (native format)', this.parseSketchEl);
 		this.add('Parse MDL Molfile', this.parseMolfile);
+		this.add('Parse DataSheet XML', this.parseDataXML);
+		this.add('Parse MDL SDfile', this.parseSDfile);
 		this.add('Calculate strict aromaticity', this.calcStrictArom);
 		this.add('Calculate stereochemistry', this.calcStereoChem);
 		this.add('Circular ECFP6 fingerprints', this.calcFingerprints);
@@ -43,7 +47,7 @@ class ValidationHeadlessMolecule extends Validation
     {
 		const self = this;
 
-		let FILES = ['molecule.el', 'molecule.mol', 'stereo.el', 'circular.ds'];
+		let FILES = ['molecule.el', 'molecule.mol', 'datasheet.ds', 'datasheet.sdf', 'stereo.el', 'circular.ds'];
 		let files = FILES;
 
 		let fetchResult = function(data:string):void
@@ -51,6 +55,8 @@ class ValidationHeadlessMolecule extends Validation
 			let fn = files.shift();
 			if (fn == 'molecule.el') self.strSketchEl = data;
 			else if (fn == 'molecule.mol') self.strMolfile = data;
+			else if (fn == 'datasheet.ds') self.strDataXML = data;
+			else if (fn == 'datasheet.sdf') self.strSDfile = data;
 			else if (fn == 'stereo.el') self.molStereo = Molecule.fromString(data);
 			else if (fn == 'circular.ds') self.dsCircular = DataSheetStream.readXML(data);
 
@@ -60,26 +66,7 @@ class ValidationHeadlessMolecule extends Validation
 				donefunc.call(self);
 		}
 		$.get(self.urlBase + files[0], fetchResult);
-
-		/*$.get(self.urlBase + 'molecule.el', function(data)
-		{
-			self.strSketchEl = data;
-			$.get(self.urlBase + 'molecule.mol', function(data)
-			{
-				self.strMolfile = data;
-				$.get(self.urlBase + 'stereo.el', function(data)
-				{
-					self.molStereo = Molecule.fromString(data);
-					$.get(self.urlBase + 'stereo.el', function(data)
-					{
-						self.dsCircular = 
-						donefunc.call(self);
-					});
-				});
-			});
-		});*/
     }
-	
 
 	public parseSketchEl()
 	{
@@ -97,6 +84,47 @@ class ValidationHeadlessMolecule extends Validation
 		this.assert(mol != null, 'parsing failed');
 		this.assert(mol.numAtoms == 10 && mol.numBonds == 10, 'wrong atom/bond count');
 		//console.log(this.strMolfile);
+	}
+
+	public parseDataXML()
+	{
+		this.assert(!!this.strDataXML, 'datasheet not loaded');
+		let ds = DataSheetStream.readXML(this.strDataXML);
+		this.assert(ds != null, 'parsing failed');
+		this.assert(ds.numRows == 2 && ds.numCols == 5, 'wrong row/column count');
+		let colTypes = [DataSheet.COLTYPE_MOLECULE, DataSheet.COLTYPE_STRING, DataSheet.COLTYPE_INTEGER, DataSheet.COLTYPE_REAL, DataSheet.COLTYPE_BOOLEAN];
+		for (let n = 0; n < colTypes.length; n++) this.assert(ds.colType(n) == colTypes[n], 'column#' + (n + 1) + ' wrong type');
+		
+		this.assert(ds.getMolecule(0, 0).numAtoms == 1, 'row 1: invalid molecule');
+		this.assert(ds.getString(0, 1) == 'string', 'row 1: invalid string');
+		this.assert(ds.getInteger(0, 2) == 1, 'row 1: invalid integer');
+		this.assert(ds.getReal(0, 3) == 1.5, 'row 1: invalid real');
+		this.assert(ds.getBoolean(0, 4) == true, 'row 1: invalid boolean');
+
+		this.assert(ds.getMolecule(1, 0).numAtoms == 1, 'row 2: invalid molecule');
+		for (let n = 1; n < ds.numCols; n++) this.assert(ds.isNull(1, n), 'row 2, column#' + (n + 1) + ' supposed to be null');		
+	}
+
+	public parseSDfile()
+	{
+		this.assert(!!this.strSDfile, 'datasheet not loaded');
+		let rdr = new MDLSDFReader(this.strSDfile);
+		rdr.parse();
+		let ds = rdr.ds;
+		this.assert(ds != null, 'parsing failed');
+		this.assert(ds.numRows == 2 && ds.numCols == 5, 'wrong row/column count');
+		let colTypes = [DataSheet.COLTYPE_MOLECULE, DataSheet.COLTYPE_STRING, DataSheet.COLTYPE_INTEGER, DataSheet.COLTYPE_REAL, DataSheet.COLTYPE_BOOLEAN];
+
+		for (let n = 0; n < colTypes.length; n++) this.assert(ds.colType(n) == colTypes[n], 'column#' + (n + 1) + ' wrong type');
+		
+		this.assert(ds.getMolecule(0, 0).numAtoms == 1, 'row 1: invalid molecule');
+		this.assert(ds.getString(0, 1) == 'string', 'row 1: invalid string');
+		this.assert(ds.getInteger(0, 2) == 1, 'row 1: invalid integer');
+		this.assert(ds.getReal(0, 3) == 1.5, 'row 1: invalid real');
+		this.assert(ds.getBoolean(0, 4) == true, 'row 1: invalid boolean');
+
+		this.assert(ds.getMolecule(1, 0).numAtoms == 1, 'row 2: invalid molecule');
+		for (let n = 1; n < ds.numCols; n++) this.assert(ds.isNull(1, n), 'row 2, column#' + (n + 1) + ' supposed to be null');		
 	}
 
 	public calcStrictArom()

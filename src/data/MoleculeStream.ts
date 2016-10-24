@@ -11,8 +11,8 @@
 */
 
 ///<reference path='../decl/corrections.d.ts'/>
-///<reference path='MDLMOLReader.ts'/>
-///<reference path='MDLMOLWriter.ts'/>
+///<reference path='MDLReader.ts'/>
+///<reference path='MDLWriter.ts'/>
 
 /*
 	Serialisation and deserialisation utilities for the Molecule object.

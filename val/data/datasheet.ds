@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DataSheet>
+<Summary>
+<Title></Title>
+<Description><![CDATA[]]></Description>
+</Summary>
+<Header nrows="2" ncols="5">
+<Column name="Molecule" type="molecule" id="1">Molecular structure</Column>
+<Column name="String" type="string" id="2"></Column>
+<Column name="Integer" type="integer" id="3"></Column>
+<Column name="Real" type="real" id="4"></Column>
+<Column name="Boolean" type="boolean" id="5"></Column>
+</Header>
+<Content>
+<Row id="1">
+<Cell id="1"><![CDATA[SketchEl!(1,0)
+C=0.0000,0.0000;0,0,i4
+!End
+]]></Cell>
+<Cell id="2"><![CDATA[string]]></Cell>
+<Cell id="3">1</Cell>
+<Cell id="4">1.5</Cell>
+<Cell id="5">true</Cell>
+</Row>
+<Row id="2">
+<Cell id="1"><![CDATA[SketchEl!(1,0)
+N=0.0000,0.0000;0,0,i3
+!End
+]]></Cell>
+<Cell id="2"></Cell>
+<Cell id="3"></Cell>
+<Cell id="4"></Cell>
+<Cell id="5"></Cell>
+</Row>
+</Content>
+</DataSheet>
