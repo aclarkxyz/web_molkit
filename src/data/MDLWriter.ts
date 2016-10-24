@@ -230,7 +230,19 @@ class MDLSDFWriter
 			
 			for (let j = 0; j < ds.numCols; j++) if (j != colMol && ds.notNull(i, j))
 			{
-				// !!
+				let ct = ds.colType(j);
+				let val = '';
+				if (ct == DataSheet.COLTYPE_STRING) val = ds.getString(i, j);
+				else if (ct == DataSheet.COLTYPE_INTEGER) val = ds.getInteger(i, j).toString();
+				else if (ct == DataSheet.COLTYPE_REAL) val = ds.getReal(i, j).toString();
+				else if (ct == DataSheet.COLTYPE_BOOLEAN) val = ds.getBoolean(i, j) ? 'true' : 'false';
+				
+				if (val != '')
+				{
+					lines.push('> <' + ds.colName(j) + '>');
+					lines.push(val);
+					lines.push('');
+				}
 			}
 
 			lines.push('$$$$');

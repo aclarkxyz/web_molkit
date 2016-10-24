@@ -52,7 +52,7 @@ class MDLMOLReader
 	}
 
 	// perform the parsing operation, and populate the result fields
-	public parse():void
+	public parse():Molecule
 	{
 		if (this.parseHeader)
 		{
@@ -60,6 +60,7 @@ class MDLMOLReader
 			this.pos = 3;
 		}
 		this.parseCTAB();
+		return this.mol;
 	}
 	
 	// ----------------- private methods -----------------
@@ -437,10 +438,11 @@ class MDLSDFReader
 	}
 
 	// perform the parsing operation, and populate the result fields
-	public parse():void
+	public parse():DataSheet
 	{
 		this.parseStream();
 		if (this.upcastColumns) this.upcastStringColumns();
+		return this.ds;
 	}
 	
 	// ----------------- private methods -----------------
