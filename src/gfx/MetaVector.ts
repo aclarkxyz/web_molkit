@@ -224,8 +224,15 @@ class MetaVector
 	public boundHighX():number {return this.highX;}
 	public boundHighY():number {return this.highY;}
 
+	// update width/height (this isn't done automatically, as it can be considered a parameter)
+	public measure():void
+	{
+		this.width = Math.ceil(this.highX - this.lowX);
+		this.height = Math.ceil(this.highY - this.lowY);
+	} 
+
 	// for a metavector that has been drawn programmatically, makes sure that origin is (0,0) and that the size is set
-	public normalise()
+	public normalise():void
 	{
 		if (this.lowX != 0 || this.lowY != 0) this.transformPrimitives(-this.lowX, -this.lowY, 1, 1);
 		this.width = Math.ceil(this.highX - this.lowX);

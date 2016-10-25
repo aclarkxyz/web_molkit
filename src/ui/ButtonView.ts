@@ -31,32 +31,33 @@ interface ButtonViewDisplay
 
 class ButtonView extends Widget
 {
-	border = 0x808080;
-	background = 0xFFFFFF;
-	buttonColNorm1 = 0x47D5D2;
-	buttonColNorm2 = 0x008FD1;
-	buttonColActv1 = 0x30FF69;
-	buttonColActv2 = 0x008650;
-	buttonColSel1 = 0xFFFFFF;
-	buttonColSel2 = 0xE0E0E0;
+	public idealSize = 50;
+	public width = 0;
+	public height = 0;
+	public selectedButton:string = null;
+	public highlightButton:string = null;
 
-	canvas:HTMLCanvasElement = null;
-	stack:ButtonBank[] = [];
-	display:ButtonViewDisplay[] = [];
-	selectedButton:string = null;
-	highlightButton:string = null;
-	hasBigButtons = true;
-	prefabImgSize = 44;
-	idealSize = 50;
-	gripHeight = 30;
-	gripWidth = 50;
-	isRaised = true;
-	outPadding = 2;
-	inPadding = 2;
-	x = 0;
-	y = 0;
-	width = 0;
-	height = 0;
+	private border = 0x808080;
+	private background = 0xFFFFFF;
+	private buttonColNorm1 = 0x47D5D2;
+	private buttonColNorm2 = 0x008FD1;
+	private buttonColActv1 = 0x30FF69;
+	private buttonColActv2 = 0x008650;
+	private buttonColSel1 = 0xFFFFFF;
+	private buttonColSel2 = 0xE0E0E0;
+
+	private canvas:HTMLCanvasElement = null;
+	private stack:ButtonBank[] = [];
+	private display:ButtonViewDisplay[] = [];
+	private hasBigButtons = true;
+	private prefabImgSize = 44;
+	private gripHeight = 30;
+	private gripWidth = 50;
+	private isRaised = true;
+	private outPadding = 2;
+	private inPadding = 2;
+	private x = 0;
+	private y = 0;
 
 	// static cache: needs to be filled out just once; will contain the {icon:svg} pairs that can be used in the buttons
 	private static ACTION_ICONS:{[id:string] : string} = null;
@@ -604,7 +605,6 @@ class ButtonView extends Widget
 				else if (RPC.RESOURCE_URL != null)
 				{
 					let url = RPC.RESOURCE_URL + '/img/actions/' + b.imageFN + '.svg';
-console.log('URL:'+url);//zog 
 					$.ajax(
 					{
 						'url': url, 
@@ -612,7 +612,6 @@ console.log('URL:'+url);//zog
 						'dataType': 'text',
 						'success': function(svg:string)
 						{
-//console.log('DATA:'+svg.toString());
 							svg = self.fixSVGFile(svg);
 							ButtonView.ACTION_ICONS[b.imageFN] = svg;
 							putSVG(svg); 
@@ -623,7 +622,7 @@ console.log('URL:'+url);//zog
 			}
 			else if (b.metavec != null)
 			{
-				let draw = new MetaVector(b.metavec);
+				let draw = b.metavec instanceof MetaVector ? <MetaVector>b.metavec : new MetaVector(b.metavec);
 				draw.offsetX = d.x + Math.floor(0.5 * (d.width - draw.width));
 				draw.offsetY = d.y + Math.floor(0.5 * (d.height - draw.height));
 				draw.renderContext(ctx);

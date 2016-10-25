@@ -6945,6 +6945,10 @@ class MetaVector {
     boundLowY() { return this.lowY; }
     boundHighX() { return this.highX; }
     boundHighY() { return this.highY; }
+    measure() {
+        this.width = Math.ceil(this.highX - this.lowX);
+        this.height = Math.ceil(this.highY - this.lowY);
+    }
     normalise() {
         if (this.lowX != 0 || this.lowY != 0)
             this.transformPrimitives(-this.lowX, -this.lowY, 1, 1);
@@ -9844,6 +9848,11 @@ class ButtonView extends Widget {
         this.parentY = parentY;
         this.parentWidth = parentWidth;
         this.parentHeight = parentHeight;
+        this.idealSize = 50;
+        this.width = 0;
+        this.height = 0;
+        this.selectedButton = null;
+        this.highlightButton = null;
         this.border = 0x808080;
         this.background = 0xFFFFFF;
         this.buttonColNorm1 = 0x47D5D2;
@@ -9855,11 +9864,8 @@ class ButtonView extends Widget {
         this.canvas = null;
         this.stack = [];
         this.display = [];
-        this.selectedButton = null;
-        this.highlightButton = null;
         this.hasBigButtons = true;
         this.prefabImgSize = 44;
-        this.idealSize = 50;
         this.gripHeight = 30;
         this.gripWidth = 50;
         this.isRaised = true;
@@ -9867,8 +9873,6 @@ class ButtonView extends Widget {
         this.inPadding = 2;
         this.x = 0;
         this.y = 0;
-        this.width = 0;
-        this.height = 0;
     }
     static prepare(callback, master) {
         if (RPC.BASE_URL == null && RPC.RESOURCE_URL != null)
@@ -10276,7 +10280,6 @@ class ButtonView extends Widget {
                     putSVG(svg);
                 else if (RPC.RESOURCE_URL != null) {
                     let url = RPC.RESOURCE_URL + '/img/actions/' + b.imageFN + '.svg';
-                    console.log('URL:' + url);
                     $.ajax({
                         'url': url,
                         'type': 'GET',
@@ -10292,7 +10295,7 @@ class ButtonView extends Widget {
                     console.log('Action button "' + b.imageFN + '" not found.');
             }
             else if (b.metavec != null) {
-                let draw = new MetaVector(b.metavec);
+                let draw = b.metavec instanceof MetaVector ? b.metavec : new MetaVector(b.metavec);
                 draw.offsetX = d.x + Math.floor(0.5 * (d.width - draw.width));
                 draw.offsetY = d.y + Math.floor(0.5 * (d.height - draw.height));
                 draw.renderContext(ctx);
@@ -12279,34 +12282,51 @@ class TemplateBank extends ButtonBank {
         this.templates = null;
     }
     init() {
+        const self = this;
         let policy = RenderPolicy.defaultBlackOnWhite();
         policy.data.pointScale = 10;
         policy.data.lineSize *= 1.5;
         policy.data.bondSep *= 1.5;
         let sz = this.buttonView.idealSize;
         if (this.group == null) {
-            let input = { 'tokenID': this.owner.tokenID, 'policy': policy.data, 'size': [sz - 4, sz - 4] };
-            let fcn = function (result, error) {
-                if (!result) {
-                    alert('Setup of TemplateBank failed: ' + error.message);
-                    return;
-                }
-                this.subgroups = result;
-                this.buttonView.refreshBank();
-            };
-            Func.getDefaultTemplateGroups(input, fcn, this);
+            if (RPC.BASE_URL != null) {
+                let input = { 'tokenID': this.owner.tokenID, 'policy': policy.data, 'size': [sz - 4, sz - 4] };
+                let fcn = function (result, error) {
+                    if (!result) {
+                        alert('Setup of TemplateBank failed: ' + error.message);
+                        return;
+                    }
+                    this.subgroups = result;
+                    this.buttonView.refreshBank();
+                };
+                Func.getDefaultTemplateGroups(input, fcn, this);
+            }
+            else if (RPC.RESOURCE_URL != null) {
+                if (TemplateBank.RESOURCE_DATA == null)
+                    this.loadResourceData(function () { self.prepareSubGroups(); });
+                else
+                    this.prepareSubGroups();
+            }
         }
         else {
-            let input = { 'tokenID': this.owner.tokenID, 'policy': policy.data, 'size': [sz - 4, sz - 4], 'group': this.group };
-            let fcn = function (result, error) {
-                if (!result) {
-                    alert('Setup of TemplateBank failed: ' + error.message);
-                    return;
-                }
-                this.templates = result;
-                this.buttonView.refreshBank();
-            };
-            Func.getDefaultTemplateStructs(input, fcn, this);
+            if (RPC.BASE_URL != null) {
+                let input = { 'tokenID': this.owner.tokenID, 'policy': policy.data, 'size': [sz - 4, sz - 4], 'group': this.group };
+                let fcn = function (result, error) {
+                    if (!result) {
+                        alert('Setup of TemplateBank failed: ' + error.message);
+                        return;
+                    }
+                    this.templates = result;
+                    this.buttonView.refreshBank();
+                };
+                Func.getDefaultTemplateStructs(input, fcn, this);
+            }
+            else if (RPC.RESOURCE_URL != null) {
+                if (TemplateBank.RESOURCE_DATA == null)
+                    this.loadResourceData(function () { self.prepareTemplates(); });
+                else
+                    this.prepareTemplates();
+            }
         }
     }
     update() {
@@ -12340,7 +12360,104 @@ class TemplateBank extends ButtonBank {
             new MoleculeActivity(this.owner, ActivityType.TemplateFusion, param).execute();
         }
     }
+    loadResourceData(onComplete) {
+        let roster = [
+            'rings',
+            'termgrp',
+            'funcgrp',
+            'nonplrings',
+            'largerings',
+            'crownethers',
+            'ligmonodent',
+            'ligbident',
+            'ligtrident',
+            'ligmultident',
+            'cagecmplx',
+            'aminoacids',
+            'biomolecules',
+            'saccharides'
+        ];
+        TemplateBank.RESOURCE_LIST = roster.slice(0);
+        TemplateBank.RESOURCE_DATA = [];
+        let grabNext = function () {
+            if (roster.length == 0) {
+                onComplete();
+                return;
+            }
+            let url = RPC.RESOURCE_URL + '/data/templates/' + roster.shift() + '.ds';
+            $.ajax({
+                'url': url,
+                'type': 'GET',
+                'dataType': 'text',
+                'success': function (dsstr) {
+                    TemplateBank.RESOURCE_DATA.push(DataSheetStream.readXML(dsstr));
+                    grabNext();
+                }
+            });
+        };
+        grabNext();
+    }
+    prepareSubGroups() {
+        this.subgroups = { 'groups': TemplateBank.RESOURCE_LIST, 'titles': [], 'preview': [] };
+        let sz = this.buttonView.idealSize, msz = 0.5 * (sz - 2);
+        let policy = RenderPolicy.defaultBlackOnWhite();
+        policy.data.pointScale = 10;
+        let effects = new RenderEffects();
+        let measure = new OutlineMeasurement(0, 0, policy.data.pointScale);
+        for (let ds of TemplateBank.RESOURCE_DATA) {
+            this.subgroups.titles.push(ds.getTitle());
+            let colMol = ds.firstColOfType(DataSheet.COLTYPE_MOLECULE);
+            let metavec = new MetaVector();
+            for (let n = 0, idx = 0; idx < 4 && n < ds.numRows; n++) {
+                let mol = ds.getMolecule(n, colMol);
+                if (MolUtil.isBlank(mol))
+                    continue;
+                let layout = new ArrangeMolecule(mol, measure, policy, effects);
+                layout.arrange();
+                let col = (idx % 2), row = Math.floor(idx / 2);
+                layout.squeezeInto(1 + col * msz, 1 + row * msz, msz, msz, 1);
+                new DrawMolecule(layout, metavec).draw();
+                idx++;
+            }
+            metavec.width = sz;
+            metavec.height = sz;
+            this.subgroups.preview.push(metavec);
+        }
+        this.buttonView.refreshBank();
+    }
+    prepareTemplates() {
+        let idx = TemplateBank.RESOURCE_LIST.indexOf(this.group);
+        let ds = TemplateBank.RESOURCE_DATA[idx];
+        this.templates = { 'molecules': [], 'names': [], 'abbrev': [], 'mnemonic': [], 'preview': [] };
+        let sz = this.buttonView.idealSize;
+        let policy = RenderPolicy.defaultBlackOnWhite();
+        policy.data.pointScale = 15;
+        let effects = new RenderEffects();
+        let measure = new OutlineMeasurement(0, 0, policy.data.pointScale);
+        let colMol = ds.findColByName("Molecule");
+        let colName = ds.findColByName("Name");
+        let colAbbrev = ds.findColByName("Abbrev");
+        let colMnemonic = ds.findColByName("Mnemonic");
+        for (let n = 0; n < ds.numRows; n++) {
+            let mol = ds.getMolecule(n, colMol);
+            this.templates.molecules.push(mol.toString());
+            this.templates.names.push(ds.getString(n, colName));
+            this.templates.abbrev.push(ds.getString(n, colAbbrev));
+            this.templates.mnemonic.push(ds.getString(n, colMnemonic));
+            let layout = new ArrangeMolecule(mol, measure, policy, effects);
+            layout.arrange();
+            layout.squeezeInto(0, 0, sz, sz, 2);
+            let metavec = new MetaVector();
+            new DrawMolecule(layout, metavec).draw();
+            metavec.width = sz;
+            metavec.height = sz;
+            this.templates.preview.push(metavec);
+        }
+        this.buttonView.refreshBank();
+    }
 }
+TemplateBank.RESOURCE_LIST = null;
+TemplateBank.RESOURCE_DATA = null;
 class FusionBank extends ButtonBank {
     constructor(owner) {
         super();
