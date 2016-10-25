@@ -268,7 +268,7 @@ class TemplateBank extends ButtonBank
 		let sz = this.buttonView.idealSize;
 
 		let policy = RenderPolicy.defaultBlackOnWhite();
-		policy.data.pointScale = 15;
+		policy.data.pointScale = 12;
 		let effects = new RenderEffects();
 		let measure = new OutlineMeasurement(0, 0, policy.data.pointScale);
 

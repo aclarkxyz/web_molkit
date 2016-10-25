@@ -89,7 +89,7 @@ class Graph
 		return buff;
     }
 
-    public numNodes():number {return this.nbrs.length;}
+    public get numNodes():number {return this.nbrs.length;}
     public numEdges(N:number):number {return this.nbrs[N].length;}
     public getEdge(N:number, E:number):number {return this.nbrs[N][E];}
     public getAdj(N:number):number[] {return this.nbrs[N];}
@@ -395,24 +395,25 @@ class Graph
 		}
 
 		return rings.toArray(new int[rings.size()][]);
-    }
+    }*/
     
-    public int[] calculateBFS(int N)
+	public calculateBFS(idx:number):number[]
     {
-		int[] ret = Vec.intArray(-1, numNodes());
-		ret[N] = 0;
+		let ret = Vec.numberArray(-1, this.numNodes);
+		ret[idx] = 0;
 
-		int curnum = 0, lsz = 1, watermark = 0;
-		int[] list = new int[numNodes()];
-		list[0] = N;
+		let curnum = 0, lsz = 1, watermark = 0;
+		let list = Vec.numberArray(0, this.numNodes);
+		list[0] = idx;
+
 		while (true)
 		{
-			int newsz = lsz;
-			for (int n = watermark; n < lsz; n++)
+			let newsz = lsz;
+			for (let n = watermark; n < lsz; n++)
 			{
-				for (int i = 0; i < nbrs[list[n]].length; i++)
+				for (let i = 0; i < this.nbrs[list[n]].length; i++)
 				{
-					int j = nbrs[list[n]][i];
+					let j = this.nbrs[list[n]][i];
 					if (ret[j] < 0)
 					{
 						ret[j] = curnum + 1;
@@ -428,7 +429,7 @@ class Graph
 		return ret;
     }
     
-    public int[] calculateGravity()
+    /*public int[] calculateGravity()
     {
 		final int sz = numNodes();
 		int[] wght = Vec.intArray(1, sz), wmod = new int[sz];

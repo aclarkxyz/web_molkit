@@ -14,6 +14,7 @@
 ///<reference path='../gfx/MetaVector.ts'/>
 ///<reference path='../data/CoordUtil.ts'/>
 ///<reference path='../data/SketchUtil.ts'/>
+///<reference path='TemplateFusion.ts'/>
 
 /*
 	MoleculeActivity: command-oriented modifications of the current molecular state.
@@ -85,6 +86,9 @@ interface SketchState
 	currentAtom:number;
 	currentBond:number;
 	selectedMask:boolean[];
+	
+	// only used in specific circumstances
+	permutations?:FusionPermutation[];
 }
 
 interface TemplatePermutation
@@ -421,8 +425,8 @@ class MoleculeActivity
 		}*/
 		else if (this.activity == ActivityType.TemplateFusion)
 		{
-// !!			
-			this.executeRPC('templateFusion', {'fragNative': param.fragNative});
+			this.execTemplateFusion(Molecule.fromString(param.fragNative));
+			this.owner.setPermutations(this.output.permutations);
 		}
 		else if (this.activity == ActivityType.AbbrevTempl)
 		{
@@ -481,7 +485,7 @@ class MoleculeActivity
 			
 			if (this.activity == ActivityType.TemplateFusion && result.permutations != null)
 			{
-				this.owner.setPermutations(<TemplatePermutation[]>result.permutations);
+				this.owner.setPermutations(result.permutations);
 			}
 			else this.finish();
 			
@@ -1367,12 +1371,32 @@ class MoleculeActivity
 		this.output.mol = outmol;
 	}
 
+	public execTemplateFusion(frag:Molecule):void
+	{
+		let mol = this.input.mol;
+		let fusion = new TemplateFusion(mol, frag, '');
+		if (this.subjectLength == 0) fusion.permuteNone();
+		else if (this.subjectLength == 1) fusion.permuteAtom(this.subjectIndex[0]);
+		else if (this.subjectLength == 2 && mol.findBond(this.subjectIndex[0], this.subjectIndex[1]) > 0)
+			fusion.permuteBond(this.subjectIndex[0], this.subjectIndex[1]);
+		else fusion.permuteMulti(this.subjectIndex);
+		
+		// package up the results
+		let permutations:any[] = [];
+		for (let perm of fusion.perms)
+		{
+			let obj:{[id:string] : any} = {};
+			obj['mol'] = perm.mol.toString();
+			obj['display'] = perm.display.toString();
+			obj['molidx'] = perm.molidx;
+			obj['temidx'] = perm.temidx;
+			obj['srcidx'] = perm.srcidx;
+			permutations.push(obj);
+		}
+		this.output.permutations = permutations
+	}
 
-
-// fnord/zog
 	/*
-	
-	
 	// input: (standard)
 	// output: (standard)
 	public void execBondInsert() throws Exception
@@ -1436,36 +1460,6 @@ class MoleculeActivity
 		outmol = fusion.getPerm(0).mol;
 		zapSubject();
 		outCurrentAtom = alink;
-	}
-	
-	// input: (standard)
-	// output: 
-	//		.permutations: all of the interesting outcomes
-	public void execTemplateFusion(String molstr) throws Exception
-	{
-		ensureSubject();
-		Molecule frag = Molecule.fromString(molstr);
-		
-		TemplateFusion fusion = new TemplateFusion(mol, frag, "");
-		if (subjectLength == 0) fusion.permuteNone();
-		else if (subjectLength == 1) fusion.permuteAtom(subjectIndex[0]);
-		else if (subjectLength == 2 && mol.findBond(subjectIndex[0], subjectIndex[1]) > 0) fusion.permuteBond(subjectIndex[0], subjectIndex[1]);
-		else fusion.permuteMulti(subjectIndex);
-		
-		// package up the results
-		JSONArray permutations = new JSONArray();
-		for (int n = 0; n < fusion.numPerms(); n++)
-		{
-			TemplateFusion.Permutation perm = fusion.getPerm(n);
-			JSONObject obj = new JSONObject();
-			obj.put("mol", perm.mol.toString());
-			obj.put("display", perm.display.toString());
-			obj.put("molidx", perm.molidx);
-			obj.put("temidx", perm.temidx);
-			obj.put("srcidx", perm.srcidx);
-			permutations.put(obj);
-		}
-		output.put("permutations", permutations);
 	}
 	
 	// input: (standard)
