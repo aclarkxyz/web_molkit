@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="320"
+   height="320"
+   id="svg2"
+   sodipodi:version="0.32"
+   inkscape:version="0.47 r22583"
+   version="1.0"
+   sodipodi:docname="MainRedo.svg"
+   inkscape:output_extension="org.inkscape.output.svg.inkscape"
+   inkscape:export-filename="/home/aclark/CRK3/MMTk/images/msk/MainExport.png"
+   inkscape:export-xdpi="9"
+   inkscape:export-ydpi="9">
+  <defs
+     id="defs4">
+    <linearGradient
+       id="linearGradient3604">
+      <stop
+         style="stop-color:#000000;stop-opacity:0.25098041;"
+         offset="0"
+         id="stop3606" />
+      <stop
+         style="stop-color:#000000;stop-opacity:0.1254902;"
+         offset="1"
+         id="stop3608" />
+    </linearGradient>
+    <inkscape:perspective
+       sodipodi:type="inkscape:persp3d"
+       inkscape:vp_x="0 : 160 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_z="320 : 160 : 1"
+       inkscape:persp3d-origin="160 : 106.66667 : 1"
+       id="perspective23" />
+    <pattern
+       patternUnits="userSpaceOnUse"
+       width="30"
+       height="33"
+       patternTransform="translate(0,0)"
+       id="pattern5043">
+      <rect
+         id="rect5041"
+         y="0"
+         x="0"
+         height="33"
+         width="30"
+         style="fill:none;stroke:none;stroke-linecap:round" />
+      <path
+         id="path5039"
+         d="M 21.5,31.5 L 31.5,21.5"
+         style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:3;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+      <path
+         id="path5037"
+         d="M 11.5,31.5 L 31.5,11.5"
+         style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:3;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+      <path
+         id="path5035"
+         d="M 1.5,31.5 L 31.5,1.5"
+         style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:3;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+      <path
+         id="path5033"
+         d="M 1.5,21.5 L 21.5,1.5"
+         style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:3;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+    </pattern>
+    <pattern
+       patternUnits="userSpaceOnUse"
+       width="30"
+       height="33"
+       patternTransform="translate(18.5,-71.5)"
+       id="pattern5062">
+      <path
+         id="path5060"
+         d="M 1.5,21.5 L 21.5,1.5"
+         style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:3;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+      <path
+         id="path5058"
+         d="M 1.5,31.5 L 31.5,1.5"
+         style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:3;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+      <path
+         id="path5056"
+         d="M 11.5,31.5 L 31.5,11.5"
+         style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:3;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+      <path
+         id="path5054"
+         d="M 21.5,31.5 L 31.5,21.5"
+         style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:3;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+      <rect
+         id="rect5052"
+         y="0"
+         x="0"
+         height="33"
+         width="30"
+         style="fill:none;stroke:none;stroke-linecap:round" />
+      <rect
+         id="rect5050"
+         y="0"
+         x="0"
+         height="33"
+         width="30"
+         style="fill:none;stroke:none" />
+      <path
+         id="path5000"
+         d="M 1.5,11.5 L 11.5,1.5"
+         style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:3;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+      <rect
+         id="rect5030"
+         y="0"
+         x="0"
+         height="33"
+         width="30"
+         style="fill:none;stroke:none" />
+    </pattern>
+    <radialGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient3604"
+       id="radialGradient3610"
+       cx="210"
+       cy="140"
+       fx="210"
+       fy="140"
+       r="152.5"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(1.0491803,-0.78688524,0.78096126,1.0412817,-119.66246,159.46646)" />
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     gridtolerance="10000"
+     guidetolerance="10"
+     objecttolerance="10"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="1.2586836"
+     inkscape:cx="16.170725"
+     inkscape:cy="164.16609"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     width="320px"
+     height="320px"
+     showborder="true"
+     inkscape:window-width="1716"
+     inkscape:window-height="1116"
+     inkscape:window-x="144"
+     inkscape:window-y="0"
+     showgrid="true"
+     inkscape:window-maximized="0">
+    <inkscape:grid
+       type="xygrid"
+       id="grid3600" />
+  </sodipodi:namedview>
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <path
+       sodipodi:type="arc"
+       style="fill:url(#radialGradient3610);fill-opacity:1;stroke:#000000;stroke-width:5;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0"
+       id="path3602"
+       sodipodi:cx="160"
+       sodipodi:cy="160"
+       sodipodi:rx="150"
+       sodipodi:ry="150"
+       d="m 310,160 a 150,150 0 1 1 -300,0 150,150 0 1 1 300,0 z"
+       transform="matrix(0.93333333,0,0,0.93333333,10.666666,10.666666)" />
+    <path
+       style="font-size:medium;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-indent:0;text-align:start;text-decoration:none;line-height:normal;letter-spacing:normal;word-spacing:normal;text-transform:none;direction:ltr;block-progression:tb;writing-mode:lr-tb;text-anchor:start;color:#000000;fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:10;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;font-family:Bitstream Vera Sans;-inkscape-font-specification:Bitstream Vera Sans"
+       d="m 124.537,12.690252 90,50 -90,49.999998 0,-12.8125 c -20.29664,12.07637 -33.75,34.2109 -33.75,59.78125 0,38.68907 30.81093,69.5 69.5,69.5 38.68907,0 69.53125,-30.81093 69.53125,-69.5 -0.0934,-6.60391 2.559,-13.20451 7.196,-17.90755 4.637,-4.70304 11.19944,-7.4485 17.804,-7.4485 6.60457,0 13.16701,2.74546 17.804,7.4485 4.637,4.70304 7.2894,11.30364 7.196,17.90755 0,65.71107 -53.82018,119.5 -119.53125,119.5 -65.71107,0 -119.5,-53.78892 -119.5,-119.5 0,-53.27576 35.34828,-98.733461 83.75,-114.031248 l 0,-32.9375 z"
+       id="path3612"
+       sodipodi:nodetypes="ccccsscssscsscc" />
+  </g>
+</svg>

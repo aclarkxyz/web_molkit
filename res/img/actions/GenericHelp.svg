@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="320"
+   height="320"
+   id="svg2"
+   sodipodi:version="0.32"
+   inkscape:version="0.47 r22583"
+   version="1.0"
+   sodipodi:docname="GenericHelp.svg"
+   inkscape:output_extension="org.inkscape.output.svg.inkscape"
+   inkscape:export-filename="/home/aclark/CRK3/MMTk/images/msk/AtomMinus.png"
+   inkscape:export-xdpi="9"
+   inkscape:export-ydpi="9">
+  <defs
+     id="defs4">
+    <inkscape:perspective
+       sodipodi:type="inkscape:persp3d"
+       inkscape:vp_x="0 : 160 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_z="320 : 160 : 1"
+       inkscape:persp3d-origin="160 : 106.66667 : 1"
+       id="perspective9" />
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     gridtolerance="10000"
+     guidetolerance="10"
+     objecttolerance="10"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="1.4"
+     inkscape:cx="217.67081"
+     inkscape:cy="155.93898"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     width="320px"
+     height="320px"
+     showborder="true"
+     inkscape:window-width="1440"
+     inkscape:window-height="838"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     showgrid="true"
+     inkscape:window-maximized="1">
+    <inkscape:grid
+       type="xygrid"
+       id="grid2815" />
+  </sodipodi:namedview>
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <g
+       transform="matrix(0.97453816,0,0,0.92482941,46.923071,-10.653945)"
+       style="font-size:181.11302185px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:125%;fill:#ffffff;fill-opacity:1;stroke:none;font-family:AR CARTER;-inkscape-font-specification:AR CARTER"
+       id="text2815">
+      <path
+         d="M 56.640307,253.37989 56.018412,225.9801 c -5.3e-5,-27.24488 14.199874,-53.32882 42.599825,-78.25198 28.399763,-24.92278 42.599683,-41.56389 42.599823,-49.923367 -1.4e-4,-7.739813 -3.62786,-14.009259 -10.88317,-18.808336 -7.25556,-4.798579 -16.27303,-7.198 -27.05244,-7.198262 -12.43799,2.62e-4 -26.326969,2.631874 -41.66698,7.894861 -7.877391,2.786686 -20.522581,8.359505 -37.935612,16.718512 l 0,-53.406394 C 37.776118,37.7422 52.183343,33.485172 66.901578,30.234052 81.61969,26.983536 96.234213,25.35812 110.74519,25.357805 c 29.02164,3.15e-4 53.37919,6.424546 73.07269,19.272745 19.69315,12.848776 29.53982,30.109102 29.54003,51.780978 -2.1e-4,17.647562 -8.29214,34.830482 -24.87581,51.548792 -39.80144,40.24846 -59.90937,61.30137 -60.32384,63.15887 -0.41472,1.85774 -0.82932,5.18595 -1.24379,9.98466 -0.41472,4.79895 -0.62202,9.21079 -0.6219,13.23549 l 0,19.04055 z m 34.204237,17.64733 c 12.852406,8e-5 23.942856,3.4831 33.271396,10.4491 9.3283,6.96609 13.99251,15.24793 13.99265,24.84556 -1.4e-4,9.59771 -4.5607,17.95695 -13.6817,25.07781 -9.12124,7.12083 -20.31535,10.68126 -33.582346,10.68126 -13.267169,0 -24.564924,-3.48303 -33.89329,-10.44907 -9.328472,-6.96605 -13.992681,-15.40269 -13.992643,-25.31 -3.8e-5,-9.90723 4.560522,-18.26647 13.681696,-25.07778 9.121068,-6.81118 20.522472,-10.2168 34.204237,-10.21688 z"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:10;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;font-family:AR CARTER;-inkscape-font-specification:AR CARTER"
+         id="path2822" />
+    </g>
+  </g>
+</svg>

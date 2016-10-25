@@ -51,7 +51,10 @@ class RPC
 {
 	// must be defined before any invocation; this is the URL where all of the standard resources can be found,
 	// e.g. 'http://servername/MolSync'; the REST services hang off of this url: ${BASE_URL}/REST/...
-	public static BASE_URL:string = null; 
+	public static BASE_URL:string = null;
+
+	// base for static resources that can be fetched without going through the RPC mechanism
+	public static RESOURCE_URL:string = null;
 	
 	// commonly structured error codes; see com.mmi.server.wsvc.SyncException;
 	public static ERRCODE_CLIENT_ABORTED = -3;

@@ -59,7 +59,7 @@ class ButtonView extends Widget
 	height = 0;
 
 	// static cache: needs to be filled out just once; will contain the {icon:svg} pairs that can be used in the buttons
-	private static ACTION_ICONS:any = null;
+	private static ACTION_ICONS:{[id:string] : string} = null;
 		
 	constructor(private position:string, private parentX:number, private parentY:number, private parentWidth:number, private parentHeight:number)
 	{
@@ -69,7 +69,10 @@ class ButtonView extends Widget
 	// static: should be called before making use of buttons; does nothing if they are already defined
 	public static prepare(callback:() => void, master:any)
 	{
-		if (ButtonView.ACTION_ICONS)
+		// if we have no RPC server, but we do have a resource URL, they're going to be loaded on demand, one file at a time
+		if (RPC.BASE_URL == null && RPC.RESOURCE_URL != null) ButtonView.ACTION_ICONS = {}; 
+
+		if (ButtonView.ACTION_ICONS != null)
 		{
 			callback.call(master);
 			return;
@@ -494,6 +497,8 @@ class ButtonView extends Widget
 	{
 		if (!this.content || !this.canvas) return;
 		
+		const self = this;
+
 		// background
 		
 		let density = pixelDensity();
@@ -522,7 +527,7 @@ class ButtonView extends Widget
 		// button outlines
 		for (let n = 0; n < this.display.length; n++)
 		{
-			let d = this.display[n], b = this.buttonFromID(d.id);
+			const d = this.display[n], b = this.buttonFromID(d.id);
 			
 			let col1:number, col2:number;
 			if (this.highlightButton != null && d.id == this.highlightButton)
@@ -579,20 +584,41 @@ class ButtonView extends Widget
 			if (b == null) {}
 			else if (b.imageFN != null && d.svgDOM == null)
 			{
-				let sz = this.prefabImgSize;
-				let bx = d.x + Math.floor(0.5 * (d.width - sz));
-				let by = d.y + Math.floor(0.5 * (d.height - sz));
+				const sz = this.prefabImgSize;
+				const bx = d.x + Math.floor(0.5 * (d.width - sz));
+				const by = d.y + Math.floor(0.5 * (d.height - sz));
 
-				let svg = ButtonView.ACTION_ICONS[b.imageFN];
-				if (svg)
+				let putSVG = function(svg:string):void
 				{
-					let extra = 'style="position: absolute; left: ' + bx + 'px; top: ' + by + 'px; width: ' + sz + 'px; height: ' + sz + 'px; pointer-events: none;"';
+					let extra = 'style="position: absolute; left: ' + bx + 'px; top: ' + by + 'px;' + 
+								' width: ' + sz + 'px; height: ' + sz + 'px; pointer-events: none;"';
 					svg = svg.substring(0, 4) + ' ' + extra + svg.substring(4);
-					//d.svgDOM = goog.dom.htmlToDocumentFragment(svg);
-					//this.content.appendChild(d.svgDOM);
 					d.svgDOM = $(svg)[0];
-					this.content.append(d.svgDOM);
+					self.content.append(d.svgDOM);
 				}
+
+				// SVG icons: if there's an RPC server, they're already in the cache; if not, they have to be loaded individually
+				// the first time, and after that, they're cached
+				let svg = ButtonView.ACTION_ICONS[b.imageFN];
+				if (svg) putSVG(svg);
+				else if (RPC.RESOURCE_URL != null)
+				{
+					let url = RPC.RESOURCE_URL + '/img/actions/' + b.imageFN + '.svg';
+console.log('URL:'+url);//zog 
+					$.ajax(
+					{
+						'url': url, 
+						'type': 'GET',
+						'dataType': 'text',
+						'success': function(svg:string)
+						{
+//console.log('DATA:'+svg.toString());
+							svg = self.fixSVGFile(svg);
+							ButtonView.ACTION_ICONS[b.imageFN] = svg;
+							putSVG(svg); 
+						}
+					});
+  				}
 				else console.log('Action button "' + b.imageFN + '" not found.');
 			}
 			else if (b.metavec != null)
@@ -1027,4 +1053,18 @@ class ButtonView extends Widget
 	{
 		// !!
 	}
+
+	// a rather unfortunate hack: raw files from the action button directory have to be patched up so that the viewbox
+	// defines the correct dimensions; this works for SVG files that are edited with inkscape (which these are); it would be
+	// nice to replace this with a better system at some point, but for now it works
+	private fixSVGFile(svg:string):string
+	{
+		svg = svg.substring(svg.indexOf('<svg')); // remove the header fluff
+		let iw = svg.indexOf('width="'), ih = svg.indexOf('height="');
+		if (iw < 0 || ih < 0) return svg;
+		let w = parseInt(svg.substring(iw + 7, svg.indexOf('"', iw + 7)));
+		let h = parseInt(svg.substring(ih + 8, svg.indexOf('"', ih + 8)));
+		svg = '<svg viewBox="0 0 ' + w + ' ' + h + '"' + svg.substring(svg.indexOf('>'));
+		return svg;	
+	}	
 }

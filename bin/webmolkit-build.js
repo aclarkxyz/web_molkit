@@ -263,6 +263,7 @@ class MDLMOLReader {
             this.pos = 3;
         }
         this.parseCTAB();
+        return this.mol;
     }
     nextLine() {
         if (this.pos >= this.lines.length)
@@ -553,6 +554,7 @@ class MDLSDFReader {
         this.parseStream();
         if (this.upcastColumns)
             this.upcastStringColumns();
+        return this.ds;
     }
     parseStream() {
         let ds = this.ds;
@@ -1672,6 +1674,21 @@ class MDLSDFWriter {
             }
             for (let j = 0; j < ds.numCols; j++)
                 if (j != colMol && ds.notNull(i, j)) {
+                    let ct = ds.colType(j);
+                    let val = '';
+                    if (ct == DataSheet.COLTYPE_STRING)
+                        val = ds.getString(i, j);
+                    else if (ct == DataSheet.COLTYPE_INTEGER)
+                        val = ds.getInteger(i, j).toString();
+                    else if (ct == DataSheet.COLTYPE_REAL)
+                        val = ds.getReal(i, j).toString();
+                    else if (ct == DataSheet.COLTYPE_BOOLEAN)
+                        val = ds.getBoolean(i, j) ? 'true' : 'false';
+                    if (val != '') {
+                        lines.push('> <' + ds.colName(j) + '>');
+                        lines.push(val);
+                        lines.push('');
+                    }
                 }
             lines.push('$$$$');
         }
@@ -5923,6 +5940,7 @@ class RPC {
     }
 }
 RPC.BASE_URL = null;
+RPC.RESOURCE_URL = null;
 RPC.ERRCODE_CLIENT_ABORTED = -3;
 RPC.ERRCODE_CLIENT_TIMEOUT = -1;
 RPC.ERRCODE_CLIENT_OTHER = -1;
@@ -9853,7 +9871,9 @@ class ButtonView extends Widget {
         this.height = 0;
     }
     static prepare(callback, master) {
-        if (ButtonView.ACTION_ICONS) {
+        if (RPC.BASE_URL == null && RPC.RESOURCE_URL != null)
+            ButtonView.ACTION_ICONS = {};
+        if (ButtonView.ACTION_ICONS != null) {
             callback.call(master);
             return;
         }
@@ -10176,6 +10196,7 @@ class ButtonView extends Widget {
     redraw() {
         if (!this.content || !this.canvas)
             return;
+        const self = this;
         let density = pixelDensity();
         this.canvas.width = this.width * density;
         this.canvas.height = this.height * density;
@@ -10195,7 +10216,7 @@ class ButtonView extends Widget {
         this.content.css('width', this.width + 'px');
         this.content.css('height', this.height + 'px');
         for (let n = 0; n < this.display.length; n++) {
-            let d = this.display[n], b = this.buttonFromID(d.id);
+            const d = this.display[n], b = this.buttonFromID(d.id);
             let col1, col2;
             if (this.highlightButton != null && d.id == this.highlightButton) {
                 col1 = this.buttonColActv1;
@@ -10240,15 +10261,32 @@ class ButtonView extends Widget {
             }
             if (b == null) { }
             else if (b.imageFN != null && d.svgDOM == null) {
-                let sz = this.prefabImgSize;
-                let bx = d.x + Math.floor(0.5 * (d.width - sz));
-                let by = d.y + Math.floor(0.5 * (d.height - sz));
-                let svg = ButtonView.ACTION_ICONS[b.imageFN];
-                if (svg) {
-                    let extra = 'style="position: absolute; left: ' + bx + 'px; top: ' + by + 'px; width: ' + sz + 'px; height: ' + sz + 'px; pointer-events: none;"';
+                const sz = this.prefabImgSize;
+                const bx = d.x + Math.floor(0.5 * (d.width - sz));
+                const by = d.y + Math.floor(0.5 * (d.height - sz));
+                let putSVG = function (svg) {
+                    let extra = 'style="position: absolute; left: ' + bx + 'px; top: ' + by + 'px;' +
+                        ' width: ' + sz + 'px; height: ' + sz + 'px; pointer-events: none;"';
                     svg = svg.substring(0, 4) + ' ' + extra + svg.substring(4);
                     d.svgDOM = $(svg)[0];
-                    this.content.append(d.svgDOM);
+                    self.content.append(d.svgDOM);
+                };
+                let svg = ButtonView.ACTION_ICONS[b.imageFN];
+                if (svg)
+                    putSVG(svg);
+                else if (RPC.RESOURCE_URL != null) {
+                    let url = RPC.RESOURCE_URL + '/img/actions/' + b.imageFN + '.svg';
+                    console.log('URL:' + url);
+                    $.ajax({
+                        'url': url,
+                        'type': 'GET',
+                        'dataType': 'text',
+                        'success': function (svg) {
+                            svg = self.fixSVGFile(svg);
+                            ButtonView.ACTION_ICONS[b.imageFN] = svg;
+                            putSVG(svg);
+                        }
+                    });
                 }
                 else
                     console.log('Action button "' + b.imageFN + '" not found.');
@@ -10596,6 +10634,16 @@ class ButtonView extends Widget {
     keyDown(event) {
     }
     keyUp(event) {
+    }
+    fixSVGFile(svg) {
+        svg = svg.substring(svg.indexOf('<svg'));
+        let iw = svg.indexOf('width="'), ih = svg.indexOf('height="');
+        if (iw < 0 || ih < 0)
+            return svg;
+        let w = parseInt(svg.substring(iw + 7, svg.indexOf('"', iw + 7)));
+        let h = parseInt(svg.substring(ih + 8, svg.indexOf('"', ih + 8)));
+        svg = '<svg viewBox="0 0 ' + w + ' ' + h + '"' + svg.substring(svg.indexOf('>'));
+        return svg;
     }
 }
 ButtonView.ACTION_ICONS = null;
