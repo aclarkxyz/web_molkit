@@ -83,7 +83,7 @@ class TemplateFusion
 		duplicate: for (let n = 0; n < ROTN.length; n++)
 		{
 			let rotmol = newmol.clone();
-			CoordUtil.rotateMolecule(rotmol, cx, cy, -ROTN[n] * DEGRAD);
+			CoordUtil.rotateMolecule(rotmol, -ROTN[n] * DEGRAD, cx, cy);
 
 			for (let i = 0; i < this.perms.length; i++)
 				if (CoordUtil.sketchEquivalent(rotmol, this.perms[i].display)) continue duplicate;
@@ -138,7 +138,7 @@ class TemplateFusion
 				this.composeBridge(newperms, oldmol, flipmol, atom, n);
     		}
     	}
-    	    		
+
     	this.affixRawPermutations(newperms);
 	}
 	
@@ -296,7 +296,7 @@ class TemplateFusion
 			let dth = angleDiff(theta1[n], theta2[n]);
 			let frag = newmol.clone();
 			CoordUtil.translateMolecule(frag, ox - nx, oy - ny);
-			CoordUtil.rotateMolecule(frag, ox, oy, dth);
+			CoordUtil.rotateMolecule(frag, dth, ox, oy);
 
 			let pmol = oldmol.clone();
 			let osz = pmol.numAtoms;
@@ -327,7 +327,7 @@ class TemplateFusion
     	
 		let frag = newmol.clone();
 		CoordUtil.translateMolecule(frag, cx - 0.5 * (newmol.atomX(n1) + newmol.atomX(n2)), cy - 0.5 * (newmol.atomY(n1) + newmol.atomY(n2)));
-		CoordUtil.rotateMolecule(frag, cx, cy, oth - nth);
+		CoordUtil.rotateMolecule(frag, oth - nth, cx, cy);
 		frag.setAtomPos(n1, oldmol.atomX(o1), oldmol.atomY(o1));
 		frag.setAtomPos(n2, oldmol.atomX(o2), oldmol.atomY(o2));
     	
@@ -369,7 +369,7 @@ class TemplateFusion
 			let nx = frag.atomX(n2) - frag.atomX(n1), ny = frag.atomY(n2) - frag.atomY(n1), nrad = norm_xy(nx, ny);
 			if (Math.abs(nrad - orad) > 0.1) continue; // no point in trying to map {o1,o2} to {n1,n2}
 			let ntheta = Math.atan2(ny, nx);
-			CoordUtil.rotateMolecule(frag, x0, y0, otheta - ntheta);
+			CoordUtil.rotateMolecule(frag, otheta - ntheta, x0, y0);
     		
     		nidx = [n1, n2];
     		
@@ -446,7 +446,7 @@ class TemplateFusion
 			let frag = newmol.clone();
 
 			CoordUtil.translateMolecule(frag, ox - nx + dx, oy - ny + dy);
-			CoordUtil.rotateMolecule(frag, ox + dx, oy + dy, dth);
+			CoordUtil.rotateMolecule(frag, dth, ox + dx, oy + dy);
 			let pmol = oldmol.clone();
 
 			let att = pmol.numAtoms + n1, osz = pmol.numAtoms;
@@ -478,7 +478,7 @@ class TemplateFusion
 		if (newmol.atomAdjCount(gidx) == 0) return;
 
 		let otheta = SketchUtil.primeDirections(oldmol, oidx);
-    	
+
     	// special deal: if the attachment is multidentate, make sure there is an out-jutting angle that is the simple average of the other
     	// constituents' opposites, since regular bond angles are less definitively useful
 		if (newmol.atomAdjCount(gidx) > 1 && oldmol.atomAdjCount(oidx) > 0)
@@ -533,7 +533,7 @@ class TemplateFusion
 				}
 			}
 
-			CoordUtil.rotateMolecule(frag, gx, gy, otheta[n] - ntheta);
+			CoordUtil.rotateMolecule(frag, otheta[n] - ntheta, gx, gy);
 			CoordUtil.translateMolecule(frag, oldmol.atomX(oidx) - gx, oldmol.atomY(oidx) - gy);
 
 			let pmol = oldmol.clone();
@@ -584,7 +584,7 @@ class TemplateFusion
 		let isGuideOnTerminal = oldmol.atomAdjCount(o1) == 1; // prefer to stick the guide atom on a non-terminal atom  	
 
 		let pmol = oldmol.clone(), frag = newmol.clone();
-		CoordUtil.rotateMolecule(frag, gx, gy, otheta - gtheta);
+		CoordUtil.rotateMolecule(frag, otheta - gtheta, gx, gy);
 
 		if (snapToGuide)
 		{
@@ -639,7 +639,7 @@ class TemplateFusion
 			let pmol = oldmol.clone(), frag = newmol.clone();
 			let th1 = Math.atan2(pmol.atomY(oidx[i]) - cy1, pmol.atomX(oidx[i]) - cx1);
 			let th2 = Math.atan2(frag.atomY(gidx[j]) - cy2, frag.atomX(gidx[j]) - cx2);
-			CoordUtil.rotateMolecule(frag, cx2, cy2, th1 - th2);
+			CoordUtil.rotateMolecule(frag, th1 - th2, cx2, cy2);
 			CoordUtil.translateMolecule(frag, cx1 - cx2, cy1 - cy2);
 			pmol.append(frag);
 

@@ -3699,6 +3699,7 @@ class CoordUtil {
             mol.setAtomPos(n, mol.atomX(n) + ox, mol.atomY(n) + oy);
     }
     static rotateMolecule(mol, theta, cx, cy) {
+        console.log('ROT:' + (RADDEG * theta) + ',' + cx + ',' + cy);
         if (cx == null || cy == null) {
             let box = mol.boundary();
             cx = box.midX();
@@ -10711,18 +10712,12 @@ class TemplateFusion {
             let newbox = newmol.boundary();
             CoordUtil.translateMolecule(newmol, -newbox.midX(), -newbox.midY());
         }
-        console.log("ZEROMOL:" + newmol);
         let oldbox = oldmol.boundary(), newbox = newmol.boundary();
-        console.log('OLD:' + oldbox);
         let cx = newbox.midX(), cy = newbox.midY();
-        console.log('NEW:' + newbox);
-        console.log('CENTRE:' + cx + ',' + cy);
-        console.log('X:' + newbox.minX() + ',' + newbox.maxX());
-        console.log('Y:' + newbox.minY() + ',' + newbox.maxY());
         let ROTN = [0, 30, 45, 60, 90, 120, 135, 150, 180, 210, 225, 240, 270, 300, 315, 330];
         duplicate: for (let n = 0; n < ROTN.length; n++) {
             let rotmol = newmol.clone();
-            CoordUtil.rotateMolecule(rotmol, cx, cy, -ROTN[n] * DEGRAD);
+            CoordUtil.rotateMolecule(rotmol, -ROTN[n] * DEGRAD, cx, cy);
             for (let i = 0; i < this.perms.length; i++)
                 if (CoordUtil.sketchEquivalent(rotmol, this.perms[i].display))
                     continue duplicate;
@@ -10882,7 +10877,7 @@ class TemplateFusion {
             let dth = angleDiff(theta1[n], theta2[n]);
             let frag = newmol.clone();
             CoordUtil.translateMolecule(frag, ox - nx, oy - ny);
-            CoordUtil.rotateMolecule(frag, ox, oy, dth);
+            CoordUtil.rotateMolecule(frag, dth, ox, oy);
             let pmol = oldmol.clone();
             let osz = pmol.numAtoms;
             pmol.append(frag);
@@ -10909,7 +10904,7 @@ class TemplateFusion {
         let cx = 0.5 * (oldmol.atomX(o1) + oldmol.atomX(o2)), cy = 0.5 * (oldmol.atomY(o1) + oldmol.atomY(o2));
         let frag = newmol.clone();
         CoordUtil.translateMolecule(frag, cx - 0.5 * (newmol.atomX(n1) + newmol.atomX(n2)), cy - 0.5 * (newmol.atomY(n1) + newmol.atomY(n2)));
-        CoordUtil.rotateMolecule(frag, cx, cy, oth - nth);
+        CoordUtil.rotateMolecule(frag, oth - nth, cx, cy);
         frag.setAtomPos(n1, oldmol.atomX(o1), oldmol.atomY(o1));
         frag.setAtomPos(n2, oldmol.atomX(o2), oldmol.atomY(o2));
         let pmol = oldmol.clone();
@@ -10945,7 +10940,7 @@ class TemplateFusion {
                 if (Math.abs(nrad - orad) > 0.1)
                     continue;
                 let ntheta = Math.atan2(ny, nx);
-                CoordUtil.rotateMolecule(frag, x0, y0, otheta - ntheta);
+                CoordUtil.rotateMolecule(frag, otheta - ntheta, x0, y0);
                 nidx = [n1, n2];
                 for (let i = 2; i < oidx.length; i++) {
                     let hit = false;
@@ -11011,7 +11006,7 @@ class TemplateFusion {
                 let dth = angleDiff(otheta[i], Math.PI + ntheta[j]);
                 let frag = newmol.clone();
                 CoordUtil.translateMolecule(frag, ox - nx + dx, oy - ny + dy);
-                CoordUtil.rotateMolecule(frag, ox + dx, oy + dy, dth);
+                CoordUtil.rotateMolecule(frag, dth, ox + dx, oy + dy);
                 let pmol = oldmol.clone();
                 let att = pmol.numAtoms + n1, osz = pmol.numAtoms;
                 pmol.append(frag);
@@ -11081,7 +11076,7 @@ class TemplateFusion {
                         break;
                     }
             }
-            CoordUtil.rotateMolecule(frag, gx, gy, otheta[n] - ntheta);
+            CoordUtil.rotateMolecule(frag, otheta[n] - ntheta, gx, gy);
             CoordUtil.translateMolecule(frag, oldmol.atomX(oidx) - gx, oldmol.atomY(oidx) - gy);
             let pmol = oldmol.clone();
             let osz = pmol.numAtoms;
@@ -11125,7 +11120,7 @@ class TemplateFusion {
         let gtheta = Math.atan2(ny - gy, nx - gx);
         let isGuideOnTerminal = oldmol.atomAdjCount(o1) == 1;
         let pmol = oldmol.clone(), frag = newmol.clone();
-        CoordUtil.rotateMolecule(frag, gx, gy, otheta - gtheta);
+        CoordUtil.rotateMolecule(frag, otheta - gtheta, gx, gy);
         if (snapToGuide) {
             CoordUtil.translateMolecule(frag, ox - gx, oy - gy);
             pmol.setAtomPos(o2, frag.atomX(nidx), frag.atomY(nidx));
@@ -11171,7 +11166,7 @@ class TemplateFusion {
                 let pmol = oldmol.clone(), frag = newmol.clone();
                 let th1 = Math.atan2(pmol.atomY(oidx[i]) - cy1, pmol.atomX(oidx[i]) - cx1);
                 let th2 = Math.atan2(frag.atomY(gidx[j]) - cy2, frag.atomX(gidx[j]) - cx2);
-                CoordUtil.rotateMolecule(frag, cx2, cy2, th1 - th2);
+                CoordUtil.rotateMolecule(frag, th1 - th2, cx2, cy2);
                 CoordUtil.translateMolecule(frag, cx1 - cx2, cy1 - cy2);
                 pmol.append(frag);
                 let srcidx = this.sourceIndex(pmol, oldmol);
@@ -13628,6 +13623,8 @@ class Sketcher extends Widget {
         this.pickTemplatePermutation(0);
         this.fusionBank = new FusionBank(this);
         this.templateView.pushBank(this.fusionBank);
+        if (this.mol.numAtoms == 0)
+            this.centreAndShrink();
     }
     stopTemplateFusion() {
         if (this.fusionBank != null)
@@ -13739,8 +13736,12 @@ class Sketcher extends Widget {
     yIsUp() { return false; }
     measureText(str, fontSize) { return FontData.main.measureText(str, fontSize); }
     centreAndShrink() {
-        if (this.layout == null)
+        if (this.mol.numAtoms == 0 || this.layout == null) {
+            this.offsetX = 0.5 * this.width;
+            this.offsetY = 0.5 * this.height;
+            this.pointScale = this.policy.data.pointScale;
             return;
+        }
         let bounds = this.layout.determineBoundary(0);
         let limW = this.width - 6, limH = this.height - 6;
         let natW = bounds[2] - bounds[0], natH = bounds[3] - bounds[1];

@@ -554,6 +554,8 @@ class Sketcher extends Widget implements ArrangeMeasurement
 		this.pickTemplatePermutation(0);
 		this.fusionBank = new FusionBank(this);
 		this.templateView.pushBank(this.fusionBank);
+
+		if (this.mol.numAtoms == 0) this.centreAndShrink();
 	}	
 
 	// stop fusing templates, and clear out the fusion bank as well
@@ -752,7 +754,13 @@ class Sketcher extends Widget implements ArrangeMeasurement
 	// redetermines the offset and scale so that the molecular structure fits cleanly 
 	private centreAndShrink():void
 	{
-		if (this.layout == null) return;
+		if (this.mol.numAtoms == 0 || this.layout == null) 
+		{
+			this.offsetX = 0.5 * this.width;
+			this.offsetY = 0.5 * this.height;
+			this.pointScale = this.policy.data.pointScale;
+			return;
+		}
 
 		let bounds = this.layout.determineBoundary(0);
 
@@ -790,7 +798,7 @@ class Sketcher extends Widget implements ArrangeMeasurement
 	}
 
 	// creates the template permutation rendering object using the same transform as the main molecule
-	private layoutTemplatePerm()
+	private layoutTemplatePerm():void
 	{
 		if (this.currentPerm < 0 || this.templatePerms == null) return;
 		let perm = this.templatePerms[this.currentPerm];
