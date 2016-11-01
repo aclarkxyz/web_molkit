@@ -317,7 +317,7 @@ class SketchUtil
 		for (let n = 0; n < sz; n++)
 		{
 			let nn = n < sz - 1 ? n + 1 : 0;
-			ret.push(angleNorm(ang[n] + 0.5 * (ang[nn] - ang[n])));
+			ret.push(angleNorm(ang[n] + 0.5 * angleDiffPos(ang[nn], ang[n])));
 		}
 		
 		return ret;

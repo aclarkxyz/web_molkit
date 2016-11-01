@@ -13,7 +13,7 @@
    height="320"
    id="svg2"
    sodipodi:version="0.32"
-   inkscape:version="0.91 r"
+   inkscape:version="0.91 r13725"
    version="1.0"
    sodipodi:docname="MoveRotP01.svg"
    inkscape:output_extension="org.inkscape.output.svg.inkscape"
@@ -48,15 +48,15 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="1.4"
-     inkscape:cx="206.12564"
+     inkscape:cx="-2.4457843"
      inkscape:cy="158.25753"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      width="320px"
      height="320px"
      showborder="true"
-     inkscape:window-width="814"
-     inkscape:window-height="842"
+     inkscape:window-width="1468"
+     inkscape:window-height="892"
      inkscape:window-x="267"
      inkscape:window-y="87"
      showgrid="true"
@@ -81,20 +81,23 @@
      inkscape:groupmode="layer"
      id="layer1">
     <g
-       style="font-style:normal;font-weight:normal;font-size:19.54706955px;font-family:'Bitstream Vera Sans';fill:#000000;fill-opacity:1;stroke:none"
-       id="text3988">
+       id="g8189"
+       transform="matrix(0.82715321,0,0,0.82715321,58.222329,-1.8743271)">
       <path
-         d="m 210.48975,27.604916 0,15.230468 15.23046,0 0,4.648438 -15.23046,0 0,15.230469 -4.59375,0 0,-15.230469 -15.23047,0 0,-4.648438 15.23047,0 0,-15.230468 4.59375,0 z"
-         style="font-size:56px"
-         id="path8057" />
+         d="m 210.48975,15.472333 0,15.230468 15.23046,0 0,4.648438 -15.23046,0 0,15.230469 -4.59375,0 0,-15.230469 -15.23047,0 0,-4.648438 15.23047,0 0,-15.230468 4.59375,0 z"
+         style="font-style:normal;font-weight:normal;font-size:56px;font-family:'Bitstream Vera Sans';fill:#000000;fill-opacity:1;stroke:none"
+         id="path8057"
+         inkscape:connector-curvature="0" />
       <path
          d="m 241.75504,55.953626 13.12364,0 0,-45.296451 -14.27693,2.86334 0,-7.3174247 14.19739,-2.8633402 8.03326,0 0,52.6138759 13.12364,0 0,6.760665 -34.201,0 0,-6.760665 z"
-         style="font-size:81.44612122px"
-         id="path8059" />
+         style="font-style:normal;font-weight:normal;font-size:81.44612122px;font-family:'Bitstream Vera Sans';fill:#000000;fill-opacity:1;stroke:none"
+         id="path8059"
+         inkscape:connector-curvature="0" />
       <path
          d="m 303.87362,7.3961487 q -3.18149,0 -5.36877,2.2270424 -2.18727,2.1872739 -2.18727,5.3687629 0,3.14172 2.18727,5.328994 2.18728,2.147505 5.36877,2.147505 3.18148,0 5.36876,-2.147505 2.18727,-2.187274 2.18727,-5.328994 0,-3.141721 -2.22704,-5.3687629 -2.18727,-2.2270424 -5.32899,-2.2270424 z m 0,-5.1301512 q 2.54519,0 4.89153,0.9942154 2.34635,0.9544467 4.0564,2.7838029 1.82936,1.7895877 2.74404,4.0563982 0.91468,2.266811 0.91468,4.89154 0,5.249457 -3.69849,8.908169 -3.65871,3.618944 -8.9877,3.618944 -5.36876,0 -8.94794,-3.579175 -3.57918,-3.579175 -3.57918,-8.947938 0,-5.3289943 3.65872,-9.0274754 3.65871,-3.6984811 8.94794,-3.6984811 z"
-         style="font-size:81.44612122px"
-         id="path8061" />
+         style="font-style:normal;font-weight:normal;font-size:81.44612122px;font-family:'Bitstream Vera Sans';fill:#000000;fill-opacity:1;stroke:none"
+         id="path8061"
+         inkscape:connector-curvature="0" />
     </g>
     <path
        sodipodi:type="arc"

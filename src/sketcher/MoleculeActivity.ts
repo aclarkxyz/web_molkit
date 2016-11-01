@@ -112,7 +112,7 @@ class MoleculeActivity
 	private output:SketchState;
 	private errmsg:string;
 	
-	constructor(private owner:any, private activity:ActivityType, private param:any /*{[id:string]: any}*/, override?:any)
+	constructor(private owner:any, private activity:ActivityType, private param:any /*{[id:string]: any}*/, override?:{[id:string]: any})
 	{
 		this.input = owner.getState();
 		this.output =
@@ -124,7 +124,7 @@ class MoleculeActivity
 		};
 
 		let altInput = <{[id:string] : any}>this.input;
-		for (let k in override) altInput = override[k];
+		for (let k in override) altInput[k]= override[k];
 
 		let na = this.input.mol.numAtoms;
 		if (this.input.selectedMask == null) this.input.selectedMask = Vec.booleanArray(false, na);

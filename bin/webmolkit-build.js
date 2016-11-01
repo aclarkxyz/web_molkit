@@ -3699,7 +3699,6 @@ class CoordUtil {
             mol.setAtomPos(n, mol.atomX(n) + ox, mol.atomY(n) + oy);
     }
     static rotateMolecule(mol, theta, cx, cy) {
-        console.log('ROT:' + (RADDEG * theta) + ',' + cx + ',' + cy);
         if (cx == null || cy == null) {
             let box = mol.boundary();
             cx = box.midX();
@@ -4450,7 +4449,7 @@ class SketchUtil {
         let ang = GeomUtil.sortAngles(CoordUtil.atomBondAngles(mol, atom, adj));
         for (let n = 0; n < sz; n++) {
             let nn = n < sz - 1 ? n + 1 : 0;
-            ret.push(angleNorm(ang[n] + 0.5 * (ang[nn] - ang[n])));
+            ret.push(angleNorm(ang[n] + 0.5 * angleDiffPos(ang[nn], ang[n])));
         }
         return ret;
     }
@@ -11478,7 +11477,7 @@ class MoleculeActivity {
             };
         let altInput = this.input;
         for (let k in override)
-            altInput = override[k];
+            altInput[k] = override[k];
         let na = this.input.mol.numAtoms;
         if (this.input.selectedMask == null)
             this.input.selectedMask = Vec.booleanArray(false, na);

@@ -13,7 +13,7 @@
    height="320"
    id="svg2"
    sodipodi:version="0.32"
-   inkscape:version="0.91 r"
+   inkscape:version="0.91 r13725"
    version="1.0"
    sodipodi:docname="MoveRotM01.svg"
    inkscape:output_extension="org.inkscape.output.svg.inkscape"
@@ -55,8 +55,8 @@
      width="320px"
      height="320px"
      showborder="true"
-     inkscape:window-width="814"
-     inkscape:window-height="842"
+     inkscape:window-width="1644"
+     inkscape:window-height="898"
      inkscape:window-x="154"
      inkscape:window-y="90"
      showgrid="true"
@@ -82,19 +82,23 @@
      id="layer1">
     <g
        style="font-style:normal;font-weight:normal;font-size:19.54706955px;font-family:'Bitstream Vera Sans';fill:#000000;fill-opacity:1;stroke:none"
-       id="text3988">
+       id="text3988"
+       transform="matrix(0.82715322,0,0,0.82715322,1.6734456,-2.9378058)">
       <path
          d="m -2.0231386,38.428781 21.4352826,0 0,6.522053 -21.4352826,0 0,-6.522053 z"
          style="font-size:81.44612122px"
-         id="path8041" />
+         id="path8041"
+         inkscape:connector-curvature="0" />
       <path
          d="m 33.530002,57.239336 13.123642,0 0,-45.296452 -14.276932,2.863341 0,-7.3174253 14.197395,-2.8633402 8.03326,0 0,52.6138765 13.123643,0 0,6.760664 -34.201008,0 0,-6.760664 z"
          style="font-size:81.44612122px"
-         id="path8043" />
+         id="path8043"
+         inkscape:connector-curvature="0" />
       <path
          d="m 95.648579,8.6818581 q -3.181489,0 -5.368763,2.2270419 -2.187274,2.187274 -2.187274,5.368763 0,3.141721 2.187274,5.328995 2.187274,2.147505 5.368763,2.147505 3.181489,0 5.368761,-2.147505 2.18728,-2.187274 2.18728,-5.328995 0,-3.14172 -2.22705,-5.368763 -2.187271,-2.2270419 -5.328991,-2.2270419 z m 0,-5.1301512 q 2.545191,0 4.891541,0.9942154 2.34635,0.9544467 4.0564,2.7838029 1.82935,1.7895877 2.74403,4.0563988 0.91468,2.266811 0.91468,4.891539 0,5.249457 -3.69848,8.90817 -3.65871,3.618944 -8.987709,3.618944 -5.368762,0 -8.947938,-3.579176 -3.579175,-3.579175 -3.579175,-8.947938 0,-5.328994 3.658713,-9.027475 3.658712,-3.6984811 8.947938,-3.6984811 z"
          style="font-size:81.44612122px"
-         id="path8045" />
+         id="path8045"
+         inkscape:connector-curvature="0" />
     </g>
     <path
        sodipodi:type="arc"
