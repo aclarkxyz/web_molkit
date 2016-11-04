@@ -54,6 +54,12 @@ function plural(count:number):string
 	return count == 1 ? '' : 's';
 }
 
+// turns an HTML-style colour (#RRGGBB) into its numeric equivalent (0xRRGGBB), or null if invalid
+function htmlToRGB(col:string):number
+{
+	if (col == null || col.charAt(0) != '#' || col.length != 7) return null;
+	return parseInt(col.substring(1), 16);
+}
 
 // converts an integer colour (0xTTRRGGBB) to the HTML style; transparency info is stripped out
 function colourCode(col:number):string

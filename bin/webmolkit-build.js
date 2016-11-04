@@ -18,6 +18,11 @@ function setVisible(node, visible) {
 function plural(count) {
     return count == 1 ? '' : 's';
 }
+function htmlToRGB(col) {
+    if (col == null || col.charAt(0) != '#' || col.length != 7)
+        return null;
+    return parseInt(col.substring(1), 16);
+}
 function colourCode(col) {
     var hex = (col & 0xFFFFFF).toString(16);
     while (hex.length < 6)
@@ -5792,10 +5797,12 @@ class Tooltip {
 }
 class Widget {
     constructor() {
+        this.tagType = 'div';
         this.content = null;
     }
     render(parent) {
-        this.content = $('<div></div>').appendTo($(parent));
+        let tag = this.tagType;
+        this.content = $(`<${tag}></${tag}>`).appendTo($(parent));
     }
     addTooltip(bodyHTML, titleHTML) {
         addTooltip(this.content, bodyHTML, titleHTML);
@@ -15420,6 +15427,109 @@ class CircleButton extends Widget {
     mouseClicked() {
         if (this.callback)
             this.callback.call(this.master, this);
+    }
+}
+class EmbedChemistry extends Widget {
+    constructor() {
+        super();
+        this.padding = 4;
+        this.borderCol = 0xD0D0D0;
+        this.borderRadius = 8;
+        this.backgroundCol1 = 0xFFFFFF;
+        this.backgroundCol2 = 0xF0F0F0;
+        this.policy = RenderPolicy.defaultColourOnWhite();
+    }
+    clearBackground() { this.backgroundCol1 = null; this.backgroundCol2 = null; }
+    setBackground(bg) { this.backgroundCol1 = bg; this.backgroundCol2 = null; }
+    setBackgroundGradient(bg1, bg2) { this.backgroundCol1 = bg1; this.backgroundCol2 = bg2; }
+    render(parent) {
+        super.render(parent);
+        if (this.borderCol != null)
+            this.content.css('border', '1px solid ' + colourCanvas(this.borderCol));
+        if (this.borderRadius > 0)
+            this.content.css('border-radius', this.borderRadius + 'px');
+        let bg1 = this.backgroundCol1, bg2 = this.backgroundCol2;
+        if (bg1 != null && bg2 != null) {
+            let cols = colourCanvas(bg1) + ',' + colourCanvas(bg2);
+            this.content.css('background-image', 'linear-gradient(to bottom right, ' + cols + ')');
+        }
+        else if (bg1 != null) {
+            this.content.css('background-color', colourCanvas(bg1));
+        }
+        this.content.css('padding', this.padding + 'px');
+        this.content.css('margin', 0);
+    }
+}
+class EmbedMolecule extends EmbedChemistry {
+    constructor(molstr, options) {
+        super();
+        this.molstr = molstr;
+        this.mol = null;
+        this.maxWidth = 0;
+        this.maxHeight = 0;
+        this.boxSize = null;
+        if (!options)
+            options = {};
+        let mol = Molecule.fromString(molstr);
+        if (mol == null)
+            return;
+        if (options.invert)
+            mol = CoordUtil.mirrorImage(mol);
+        if (options.rotate)
+            CoordUtil.rotateMolecule(mol, options.rotate * DEGRAD);
+        if (options.padding)
+            this.padding = options.padding;
+        if (options.background == 'transparent')
+            this.clearBackground();
+        else if (options.background) {
+            let bg = options.background, comma = bg.indexOf(',');
+            if (comma >= 0)
+                this.setBackground(htmlToRGB(bg));
+            else
+                this.setBackgroundGradient(htmlToRGB(bg.substring(0, comma)), htmlToRGB(bg.substring(comma + 1)));
+        }
+        if (options.width)
+            this.maxWidth = options.width;
+        if (options.height)
+            this.maxHeight = options.height;
+        if (options.box) {
+            let box = options.box, comma = box.indexOf(',');
+            this.boxSize = new Size(parseInt(box.substring(0, comma)), parseInt(box.substring(comma + 1)));
+        }
+        if (options.policy == 'wob')
+            this.policy = RenderPolicy.defaultWhiteOnBlack();
+        else if (options.policy == 'cob')
+            this.policy = RenderPolicy.defaultColourOnBlack();
+        else if (options.policy == 'bow')
+            this.policy = RenderPolicy.defaultBlackOnWhite();
+        else if (options.policy == 'cow')
+            this.policy = RenderPolicy.defaultColourOnWhite();
+        if (options.scale)
+            this.policy.data.pointScale = options.scale;
+        this.mol = mol;
+    }
+    render(parent) {
+        this.tagType = 'span';
+        super.render(parent);
+        let span = this.content, mol = this.mol, policy = this.policy;
+        span.css('display', 'inline-block');
+        span.css('line-height', '0');
+        if (mol != null && mol.numAtoms > 0) {
+            let effects = new RenderEffects();
+            let measure = new OutlineMeasurement(0, 0, policy.data.pointScale);
+            let layout = new ArrangeMolecule(mol, measure, policy, effects);
+            layout.arrange();
+            let metavec = new MetaVector();
+            new DrawMolecule(layout, metavec).draw();
+            metavec.normalise();
+            let svg = $(metavec.createSVG()).appendTo(span);
+        }
+        else {
+            span.css('color', 'red');
+            span.text('Unable to parse molecule:');
+            let pre = $('<pre></pre>').appendTo(span);
+            pre.text(this.molstr);
+        }
     }
 }
 class RowView extends Widget {

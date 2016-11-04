@@ -347,7 +347,7 @@ class CoordUtil
 		}
     }
     
-    // returns an inverted version of the molecule, by switching one axis; if there are any inclined/declined bonds, they are
+    // returns an inverted version of the molecule, by switching one axis (X); if there are any inclined/declined bonds, they are
     // also inverted
     public static mirrorImage(mol:Molecule):Molecule
     {

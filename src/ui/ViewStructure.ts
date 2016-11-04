@@ -21,6 +21,8 @@
 /*
 	ViewStructure: a middleweight widget that renders a 2D structure non-interactively.
 
+	The rendering is done using an HTML canvas.
+
 	The content can be either a molecule or a single row from a datasheet. DataSheets with embedded aspects (e.g. reactions)
 	will display that content.
 */

@@ -20,6 +20,7 @@
 
 class Widget
 {
+	protected tagType = 'div';
 	public content:JQuery = null;
 	
 	constructor() {}
@@ -27,7 +28,8 @@ class Widget
 	// create the underlying structure; the parent parameter must be jQuery-compatible
 	public render(parent:any)
 	{
-		this.content = $('<div></div>').appendTo($(parent));
+		let tag = this.tagType;
+		this.content = $(`<${tag}></${tag}>`).appendTo($(parent));
 	}
 
 	// convenience function: attaches a tooltip to the main content element, after rendering	
