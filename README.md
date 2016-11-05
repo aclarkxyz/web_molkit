@@ -16,7 +16,7 @@ All rights reserved
 
 * If the copyright owner adds additional exceptions in later releases, they will take effect as of that version.
 
-* **Owner availability**: The copyright owner, [http://molmatinf.com](http://molmatinf.com), can and will exercise the liberty of using this toolkit in proprietary and/or open source software.
+* **Owner availability**: The copyright owner, [Molecular Materials Informatics, Inc.](http://molmatinf.com), can and will exercise the liberty of using this toolkit in proprietary and/or open source software.
 
 ## Codebase
 

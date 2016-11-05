@@ -794,8 +794,8 @@ class MetaVector
 		let oval = $('<ellipse></ellipse>').appendTo(svg);
 		oval.attr('cx', cx);
 		oval.attr('cy', cy);
-		oval.attr('rw', rw);
-		oval.attr('rw', rh);
+		oval.attr('rx', rw);
+		oval.attr('ry', rh);
 
 		if (type.edgeCol != null)
 		{
@@ -836,11 +836,11 @@ class MetaVector
 			rw *= this.scale;
 			rh *= this.scale;
 
-			let oval = $('<ellipse></ellipse>').appendTo(svg);
+			let oval = $('<ellipse></ellipse>').appendTo(g);
 			oval.attr('cx', cx);
 			oval.attr('cy', cy);
-			oval.attr('rw', rw);
-			oval.attr('rw', rh);
+			oval.attr('rx', rw);
+			oval.attr('ry', rh);
 		}
 	}
 	public svgPath(svg:JQuery, p:any)

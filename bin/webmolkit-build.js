@@ -7447,8 +7447,8 @@ class MetaVector {
         let oval = $('<ellipse></ellipse>').appendTo(svg);
         oval.attr('cx', cx);
         oval.attr('cy', cy);
-        oval.attr('rw', rw);
-        oval.attr('rw', rh);
+        oval.attr('rx', rw);
+        oval.attr('ry', rh);
         if (type.edgeCol != null) {
             oval.attr('stroke', type.edgeCol);
             oval.attr('stroke-width', type.thickness);
@@ -7479,11 +7479,11 @@ class MetaVector {
             cy = this.offsetY + this.scale * cy;
             rw *= this.scale;
             rh *= this.scale;
-            let oval = $('<ellipse></ellipse>').appendTo(svg);
+            let oval = $('<ellipse></ellipse>').appendTo(g);
             oval.attr('cx', cx);
             oval.attr('cy', cy);
-            oval.attr('rw', rw);
-            oval.attr('rw', rh);
+            oval.attr('rx', rw);
+            oval.attr('ry', rh);
         }
     }
     svgPath(svg, p) {
@@ -15465,12 +15465,41 @@ class EmbedMolecule extends EmbedChemistry {
         super();
         this.molstr = molstr;
         this.mol = null;
+        this.name = '';
+        this.failmsg = '';
         this.maxWidth = 0;
         this.maxHeight = 0;
         this.boxSize = null;
+        this.tight = false;
         if (!options)
             options = {};
-        let mol = Molecule.fromString(molstr);
+        let mol = null, name = options.name;
+        if (options.format == 'sketchel' || options.format == 'chemical/x-sketchel') {
+            mol = Molecule.fromString(molstr);
+        }
+        else if (options.format == 'molfile' || options.format == 'chemical/x-mdl-molfile') {
+            try {
+                let mdl = new MDLMOLReader(molstr);
+                mol = mdl.parse();
+                if (mol != null && name == null)
+                    name = mdl.molName;
+            }
+            catch (ex) {
+                this.failmsg = ex;
+            }
+        }
+        else {
+            mol = Molecule.fromString(molstr);
+            if (mol == null) {
+                try {
+                    let mdl = new MDLMOLReader(molstr);
+                    mol = mdl.parse();
+                    if (mol != null && name == null)
+                        name = mdl.molName;
+                }
+                catch (ex) { }
+            }
+        }
         if (mol == null)
             return;
         if (options.invert)
@@ -15506,7 +15535,10 @@ class EmbedMolecule extends EmbedChemistry {
             this.policy = RenderPolicy.defaultColourOnWhite();
         if (options.scale)
             this.policy.data.pointScale = options.scale;
+        if (options.tight == true || options.tight == 'true')
+            this.tight = true;
         this.mol = mol;
+        this.name = name;
     }
     render(parent) {
         this.tagType = 'span';
@@ -15514,21 +15546,47 @@ class EmbedMolecule extends EmbedChemistry {
         let span = this.content, mol = this.mol, policy = this.policy;
         span.css('display', 'inline-block');
         span.css('line-height', '0');
+        if (!this.tight)
+            span.css('margin-bottom', '1.5em');
         if (mol != null && mol.numAtoms > 0) {
             let effects = new RenderEffects();
             let measure = new OutlineMeasurement(0, 0, policy.data.pointScale);
             let layout = new ArrangeMolecule(mol, measure, policy, effects);
             layout.arrange();
+            if (this.boxSize)
+                layout.squeezeInto(0, 0, this.boxSize.w, this.boxSize.h);
+            else if (this.maxWidth > 0 || this.maxHeight > 0) {
+                let bounds = layout.determineBoundary();
+                let w = bounds[2] - bounds[0], h = bounds[3] - bounds[1];
+                let limW = this.maxWidth == 0 ? w : Math.min(w, this.maxWidth);
+                let limH = this.maxHeight == 0 ? h : Math.min(h, this.maxHeight);
+                if (limW != w || limH != h)
+                    layout.squeezeInto(0, 0, limW, limH);
+            }
             let metavec = new MetaVector();
             new DrawMolecule(layout, metavec).draw();
             metavec.normalise();
             let svg = $(metavec.createSVG()).appendTo(span);
+            if (this.name) {
+                let p = $('<p></p>').appendTo(span);
+                p.css('padding', '0');
+                p.css('padding-top', '0.2em');
+                p.css('margin', 0);
+                p.css('font-family', '"HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif');
+                p.css('line-height', '1');
+                p.css('text-alignment', 'center');
+                p.css('color', '#606060');
+                p.text(this.name);
+            }
         }
         else {
             span.css('color', 'red');
-            span.text('Unable to parse molecule:');
+            span.text('Unable to parse molecule: ' + this.failmsg);
+            console.log('Blag![' + this.molstr + ']');
             let pre = $('<pre></pre>').appendTo(span);
+            pre.css('line-height', '1.1');
             pre.text(this.molstr);
+            console.log('Unparseable molecule source string:\n[' + this.molstr + ']');
         }
     }
 }
