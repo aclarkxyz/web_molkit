@@ -25,7 +25,6 @@
 
 	- column types are represented as strings, not integers (see constants below)
 	- molecules are represented as strings, in SketchEl format, not objects
-
 */
 
 interface DataSheetContent
@@ -157,6 +156,7 @@ class DataSheet
 	public isNull(row:number, col:number | string):boolean
 	{
 		if (typeof col === 'string') col = this.findColByName(col);
+		if (col < 0) return null;
 		return this.data.rowData[row][col] == null;
 	}
 	public notNull(row:number, col:number | string):boolean {return !this.isNull(row, col);}
@@ -168,6 +168,7 @@ class DataSheet
 	public getMolecule(row:number, col:number | string):Molecule
 	{
 		if (typeof col === 'string') col = this.findColByName(col);
+		if (col < 0) return null;
 		let datum = this.data.rowData[row][col];
 		if (datum == null) return null;
 		if (typeof datum === 'string')
@@ -180,67 +181,80 @@ class DataSheet
 	public getString(row:number, col:number | string):string
 	{
 		if (typeof col === 'string') col = this.findColByName(col);
+		if (col < 0) return null;
 		let str = <string>this.data.rowData[row][col]; 
 		return str == null ? '' : str;
 	}
 	public getInteger(row:number, col:number | string):number
 	{
 		if (typeof col === 'string') col = this.findColByName(col);
+		if (col < 0) return null;
 		return this.data.rowData[row][col];
 	}
 	public getReal(row:number, col:number | string):number
 	{
 		if (typeof col === 'string') col = this.findColByName(col);
+		if (col < 0) return null;
 		return this.data.rowData[row][col];
 	}
 	public getBoolean(row:number, col:number | string):boolean
 	{
 		if (typeof col === 'string') col = this.findColByName(col);
+		if (col < 0) return null;
 		return this.data.rowData[row][col];
 	}
 	public getExtend(row:number, col:number | string):string
 	{
 		if (typeof col === 'string') col = this.findColByName(col);
+		if (col < 0) return null;
 		return this.data.rowData[row][col];
 	}
 	public setToNull(row:number, col:number | string):void
 	{
 		if (typeof col === 'string') col = this.findColByName(col);
+		if (col < 0) return;
 		this.data.rowData[row][col] = null;
 	}
 	public setObject(row:number, col:number | string, val:any):void
 	{
 		if (typeof col === 'string') col = this.findColByName(col);
+		if (col < 0) return;
 		this.data.rowData[row][col] = val;
 	}
 	public setMolecule(row:number, col:number | string, mol:Molecule):void
 	{
 		if (typeof col === 'string') col = this.findColByName(col);
+		if (col < 0) return;
 		this.data.rowData[row][col] = mol.clone();
 	}
 	public setString(row:number, col:number | string, val:string):void
 	{
 		if (typeof col === 'string') col = this.findColByName(col);
+		if (col < 0) return;
 		this.data.rowData[row][col] = val;
 	}
 	public setInteger(row:number, col:number | string, val:number):void
 	{
 		if (typeof col === 'string') col = this.findColByName(col);
+		if (col < 0) return;
 		this.data.rowData[row][col] = val;
 	}
 	public setReal(row:number, col:number | string, val:number):void
 	{
 		if (typeof col === 'string') col = this.findColByName(col);
+		if (col < 0) return;
 		this.data.rowData[row][col] = val;
 	}
 	public setBoolean(row:number, col:number | string, val:boolean):void
 	{
 		if (typeof col === 'string') col = this.findColByName(col);
+		if (col < 0) return;
 		this.data.rowData[row][col] = val;
 	}
 	public setExtend(row:number, col:number | string, val:string):void
 	{
 		if (typeof col === 'string') col = this.findColByName(col);
+		if (col < 0) return;
 		this.data.rowData[row][col] = val;
 	}
 	public isEqualMolecule(row:number, col:number | string, mol:Molecule):boolean
@@ -326,6 +340,16 @@ class DataSheet
 
 		this.data.colData[col].type = newType;
 	}
+	public ensureColumn(name:string, type:string, descr:string):number
+	{
+		for (let n = 0; n < this.data.numCols; n++) if (this.data.colData[n].name == name)
+		{
+			if (this.data.colData[n].type != type) this.changeColumnType(n, type);
+			this.data.colData[n].descr = descr;
+			return n;
+		}
+		return this.appendColumn(name, type, descr);
+	}
 	/* !! TBD
 	public abstract void reorderColumns(int[] order);
 	*/
@@ -388,9 +412,12 @@ class DataSheet
 		let ct = this.data.colData[col].type;
 		return ct == 'string' || ct == 'real' || ct == 'integer' || ct == 'boolean';
 	}
-	public findColByName(name:string):number
+	public findColByName(name:string, type?:string):number
 	{
-		for (let n = 0; n < this.data.numCols; n++) if (this.data.colData[n].name == name) return n;
+		for (let n = 0; n < this.data.numCols; n++) if (this.data.colData[n].name == name)
+		{
+			if (type == null || this.data.colData[n].type == type) return n;
+		}
 		return -1;
 	}
 	public firstColOfType(type:string):number
