@@ -64,15 +64,20 @@ class DrawMolecule
 			if (spc.px != null && spc.py != null && spc.px.length > 2) this.vg.drawPoly(spc.px, spc.py, 0x000000, 1, 0x808080FF, true);
 		}
 
+		this.drawUnderEffects();
+
 		// emit the drawing elements as vector primitives
 		
-		for (let n = 0; n < this.layout.numLines(); n++)
+		let layout = this.layout, effects = this.effects, policy = this.policy, vg = this.vg;
+
+		for (let n = 0; n < layout.numLines(); n++)
 		{
-			let b = this.layout.getLine(n);
+			let b = layout.getLine(n);
+			if (effects.hideBonds.has(b.bnum)) continue;
 
 			if (b.type == BLineType.Normal)
 			{
-				this.vg.drawLine(b.line.x1, b.line.y1, b.line.x2, b.line.y2, b.col, b.size);
+				vg.drawLine(b.line.x1, b.line.y1, b.line.x2, b.line.y2, b.col, b.size);
 			}
 			else if (b.type == BLineType.Inclined) this.drawBondInclined(b);
 			else if (b.type == BLineType.Declined) this.drawBondDeclined(b);
@@ -81,9 +86,10 @@ class DrawMolecule
 			else if (b.type == BLineType.IncDouble || b.type == BLineType.IncTriple || b.type == BLineType.IncQuadruple) this.drawBondIncMulti(b);
 		}
 		
-		for (let n = 0; n < this.layout.numPoints(); n++)
+		for (let n = 0; n < layout.numPoints(); n++)
 		{
-			let p = this.layout.getPoint(n);
+			let p = layout.getPoint(n);
+			if (effects.hideBonds.has(p.anum)) continue;
 
 			let txt = p.text;
 			if (txt == null) continue; // is a point, so do not draw anything
@@ -91,32 +97,32 @@ class DrawMolecule
 			let cx = p.oval.cx, cy = p.oval.cy, rw = p.oval.rw;
 			let col = p.col;
 
-			while (txt.endsWith("."))
+			while (txt.endsWith('.'))
 			{
 				let dw = rw / txt.length;
 				let r = fsz * 0.15;
-				this.vg.drawOval(cx + rw - dw, cy, r, r, MetaVector.NOCOLOUR, 0, col);
+				vg.drawOval(cx + rw - dw, cy, r, r, MetaVector.NOCOLOUR, 0, col);
 
 				cx -= dw;
 				rw -= dw;
 				txt = txt.substring(0, txt.length - 1);
 			}
-			while (txt.startsWith("+"))
+			while (txt.startsWith('+'))
 			{
 				let dw = rw / txt.length;
 				let x = cx - rw + dw, y = cy, r = fsz * 0.18, lsz = fsz * 0.1;
-				this.vg.drawLine(x - r, y, x + r, y, col, lsz);
-				this.vg.drawLine(x, y - r, x, y + r, col, lsz);
+				vg.drawLine(x - r, y, x + r, y, col, lsz);
+				vg.drawLine(x, y - r, x, y + r, col, lsz);
 
 				cx += dw;
 				rw -= dw;
 				txt = txt.substring(1, txt.length);
 			}
-			while (txt.startsWith("-"))
+			while (txt.startsWith('-'))
 			{
 				let dw = rw / txt.length;
 				let x = cx - rw + dw, y = cy, r = fsz * 0.18, lsz = fsz * 0.1;
-				this.vg.drawLine(x - r, y, x + r, y, col, lsz);
+				vg.drawLine(x - r, y, x + r, y, col, lsz);
 
 				cx += dw;
 				rw -= dw;
@@ -124,10 +130,117 @@ class DrawMolecule
 			}
 			if (txt.length > 0)
 			{
-				this.vg.drawText(cx, cy, txt, fsz, col, TextAlign.Centre | TextAlign.Middle);
+				vg.drawText(cx, cy, txt, fsz, col, TextAlign.Centre | TextAlign.Middle);
+			}
+		}
+
+		this.drawOverEffects();	
+	}
+
+	private drawUnderEffects():void
+	{
+		let mol = this.mol, policy = this.policy, effects = this.effects, layout = this.layout, scale = this.scale, vg = this.vg;
+
+		for (let n = 0, num = Math.min(effects.atomFrameDotSz.length, mol.numAtoms); n < num; n++)
+		{
+			if (effects.hideAtoms.has(n + 1)) continue;
+
+			let dw = effects.atomFrameDotSz[n] * scale, col = effects.atomFrameCol[n];
+			let a = layout.getPoint(n);
+			
+			let rw = a.oval.rw + 0.1 * scale, rh = a.oval.rh + 0.1 * scale;
+			let wdots = Math.ceil(2 * rw / (3 * dw));
+			let hdots = Math.ceil(2 * rh / (3 * dw));
+			let wspc = 2 * rw / wdots, hspc = 2 * rh / hdots;
+			
+			for (let i = 0; i <= wdots; i++)
+			{
+				let x = a.oval.cx - rw + i * wspc;
+				vg.drawOval(x, a.oval.cy - rh, dw, dw, MetaVector.NOCOLOUR, 0, col);
+				vg.drawOval(x, a.oval.cy + rh, dw, dw, MetaVector.NOCOLOUR, 0, col);
+			}
+			for (let i = 1; i < hdots; i++)
+			{
+				let y = a.oval.cy - rh + i * hspc;
+				vg.drawOval(a.oval.cx - rw, y, dw, dw, MetaVector.NOCOLOUR, 0, col);
+				vg.drawOval(a.oval.cx + rw, y, dw, dw, MetaVector.NOCOLOUR, 0, col);
+			}
+		}
+
+		for (let key in effects.dottedRectOutline)
+		{
+			let atom = parseInt(key), col = effects.dottedRectOutline[key];
+			let a = layout.getPoint(atom - 1);
+			let rw = Math.max(a.oval.rw, 0.2 * scale), rh = Math.max(a.oval.rh, 0.2 * scale);
+			let sz = 0.05 * scale;
+			let xdots = Math.max(1, Math.round(rw / (2 * sz)));
+			let ydots = Math.max(1, Math.round(rh / (2 * sz)));
+			let invX = (2 * rw) / xdots, invY = (2 * rh) / ydots;
+			for (let n = 0; n <= xdots; n++)
+			{
+				let x = a.oval.cx - rw + n * invX;
+				vg.drawOval(x, a.oval.cy - rh, sz, sz, MetaVector.NOCOLOUR, 0, col);
+				vg.drawOval(x, a.oval.cy + rh, sz, sz, MetaVector.NOCOLOUR, 0, col);
+			}
+			for (let n = 1; n < ydots; n++)
+			{
+				let y = a.oval.cy - rh + n * invY;
+				vg.drawOval(a.oval.cx - rw, y, sz, sz, MetaVector.NOCOLOUR, 0, col);
+				vg.drawOval(a.oval.cx + rw, y, sz, sz, MetaVector.NOCOLOUR, 0, col);
+			}
+		}
+		
+		for (let key in effects.dottedBondCross)
+		{
+			let bond = parseInt(key), col = effects.dottedBondCross[key];
+			var x1 = 0, y1 = 0, x2 = 0, y2 = 0, bcount = 0;
+			for (let n = 0; n < layout.numLines(); n++)
+			{
+				let b = layout.getLine(n);
+				if (b.bnum == bond)
+				{
+					x1 += b.line.x1; y1 += b.line.y1;
+					x2 += b.line.x2; y2 += b.line.y2;
+					bcount += 1;
+				}
+			}
+			if (bcount > 1) 
+			{
+				let inv = 1 / bcount; 
+				[x1, y1, x2, y2] = [x1 * inv, y1 * inv, x2 * inv, y2 * inv];
+			}
+			
+			let dx = x2 - x1, dy = y2 - y1;
+			let inv = 0.2 * scale * invZ(norm_xy(dx, dy)), ox = dy * inv, oy = -dx * inv;
+			let cx = 0.5 * (x1 + x2), cy = 0.5 * (y1 + y2), sz = 0.05 * scale;
+			for (let p of [-2, -1, 1, 2])
+			{
+				let x = cx + p * ox, y = cy + p * oy;
+				vg.drawOval(x, y, sz, sz, MetaVector.NOCOLOUR, 0, col);
 			}
 		}
 	}
+	
+	private drawOverEffects():void
+	{
+		let mol = this.mol, policy = this.policy, effects = this.effects, layout = this.layout, scale = this.scale, vg = this.vg;
+
+		for (let a of effects.overlapAtoms)
+		{
+			let p = layout.getPoint(a - 1);
+			let rad = scale * 0.2;
+			vg.drawLine(p.oval.cx - rad, p.oval.cy - rad, p.oval.cx + rad, p.oval.cy + rad, 0xFF0000, 1);
+			vg.drawLine(p.oval.cx + rad, p.oval.cy - rad, p.oval.cx - rad, p.oval.cy + rad, 0xFF0000, 1);
+		}
+	
+		for (let n = 0, num = Math.min(effects.atomCircleSz.length, mol.numAtoms); n < num; n++) if (effects.atomCircleSz[n] > 0)
+		{
+			let dw = effects.atomCircleSz[n] * scale, col = effects.atomCircleCol[n];
+			let p = layout.getPoint(n);
+			vg.drawOval(p.oval.cx, p.oval.cy, dw, dw, MetaVector.NOCOLOUR, 0, col);
+		}
+	}
+	
 	
 	private drawBondInclined(b:BLine):void
 	{

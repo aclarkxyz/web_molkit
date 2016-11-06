@@ -70,9 +70,9 @@ abstract class Aspect
 	// a bulk version of above: override this only if is overhead per determination
 	public areColumnsReserved(colNames:string[]):boolean[]
 	{
-		let result = Vec.booleanArray(false, colNames.length);
-		for (let n = 0; n < colNames.length; n++) result[n] = this.isColumnReserved(colNames[n]);
-		return result;
+		let reserved = Vec.booleanArray(false, colNames.length);
+		for (let n = 0; n < colNames.length; n++) reserved[n] = this.isColumnReserved(colNames[n]);
+		return reserved;
 	}	
 	
 	// some aspects reserve multiple rows as a "block" (e.g. multistep reaction experiments); the following two methods must
@@ -105,7 +105,7 @@ abstract class Aspect
 	// colour); the returned object provides additional metadata: the vector graphics builder object is typically the
 	// same object as provided as the parameter
 	public numGraphicRenderings(row:number):number {return 0;}
-	public produceGraphicRendering(row:number, idx:number, policy:RenderPolicy):MetaVector {return null;}
+	public produceGraphicRendering(row:number, idx:number, policy:RenderPolicy):[string, MetaVector] {return [null, null];}
 	
 	// header rendering: some number of text items that describe the datasheet overall; these are typically {name:value} pairs, which
 	// are shown at the beginning of the datasheet, and supplement the universal title & description fields

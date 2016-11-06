@@ -121,4 +121,36 @@ class RenderPolicy
 
 class RenderEffects
 {
+	// optional replacement colours, by object index: to override defaults
+	public colAtom:{[id:number] : number} = {};
+	public colBond:{[id:number] : number} = {};
+	
+	// atoms that should be surrounded by a dotted rectangular outline (atom = colour)
+	public dottedRectOutline:{[id:number] : number} = {};
+	
+	// bonds that should have a dotted line plotted across them (bond = colour)
+	public dottedBondCross:{[id:number] : number} = {};
+	
+	// list of atom/bond indices to NOT draw
+	public hideAtoms = new Set<number>();
+	public hideBonds = new Set<number>(); 
+	
+	// rectangular frames to draw around atoms
+	public atomFrameDotSz:number[] = [];
+	public atomFrameCol:number[] = [];
+	
+	// solid dots to draw over top of atoms
+	public atomCircleSz:number[] = [];
+	public atomCircleCol:number[] = []
+	
+	// atom & bond decoration: text to display, colour, and font size (in Angstrom units)
+	public atomDecoText:string[] = []; 
+	public atomDecoCol:number[] = [];
+	public atomDecoSize:number[] = [];
+	public bondDecoText:string[] = [];
+	public bondDecoCol:number[] = []; 
+	public bondDecoSize:number[] = [];
+	
+	// list of atom indices which are considered to be "overlapping", i.e. this is bad
+	public overlapAtoms:number[] = []; 
 }

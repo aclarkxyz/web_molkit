@@ -116,6 +116,7 @@ function norm2_xyz(dx, dy, dz) {
 function sqr(v) {
     return v * v;
 }
+function invZ(v) { return v == 0 ? 0 : 1.0 / v; }
 function realEqual(v1, v2) { return v1 == v2 || Math.abs(v1 - v2) <= 1E-14 * Math.max(v1, v2); }
 const TWOPI = 2 * Math.PI;
 const INV_TWOPI = 1.0 / TWOPI;
@@ -246,6 +247,418 @@ function escapeHTML(text) {
     const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
     return text.replace(/[&<>"']/g, function (m) { return map[m]; });
 }
+class DataSheet {
+    constructor(data) {
+        if (!data)
+            data = {};
+        if (!data.title)
+            data.title = '';
+        if (!data.description)
+            data.description = '';
+        if (data.numCols == null)
+            data.numCols = 0;
+        if (data.numRows == null)
+            data.numRows = 0;
+        if (data.numExtens == null)
+            data.numExtens = 0;
+        if (data.colData == null)
+            data.colData = [];
+        if (data.rowData == null)
+            data.rowData = [];
+        if (data.extData == null)
+            data.extData = [];
+        this.data = data;
+    }
+    getData() {
+        return this.data;
+    }
+    get numCols() {
+        return this.data.numCols;
+    }
+    get numRows() {
+        return this.data.numRows;
+    }
+    getTitle() {
+        return this.data.title;
+    }
+    getDescription() {
+        return this.data.description;
+    }
+    setTitle(val) {
+        this.data.title = val;
+    }
+    setDescription(val) {
+        this.data.description = val;
+    }
+    get numExtensions() {
+        return this.data.numExtens;
+    }
+    getExtName(idx) {
+        return this.data.extData[idx].name;
+    }
+    getExtType(idx) {
+        return this.data.extData[idx].type;
+    }
+    getExtData(idx) {
+        return this.data.extData[idx].data;
+    }
+    setExtName(idx, val) {
+        this.data.extData[idx].name = val;
+    }
+    setExtType(idx, val) {
+        this.data.extData[idx].type = val;
+    }
+    setExtData(idx, val) {
+        this.data.extData[idx].data = val;
+    }
+    appendExtension(name, type, data) {
+        this.data.numExtens++;
+        this.data.extData.push({ 'name': name, 'type': type, 'data': data });
+        return this.data.numExtens - 1;
+    }
+    deleteExtension(idx) {
+        this.data.extData.splice(idx, 1);
+    }
+    colName(col) {
+        return this.data.colData[col].name;
+    }
+    colType(col) {
+        return this.data.colData[col].type;
+    }
+    colDescr(col) {
+        return this.data.colData[col].descr;
+    }
+    isNull(row, col) {
+        if (typeof col === 'string')
+            col = this.findColByName(col);
+        if (col < 0)
+            return null;
+        return this.data.rowData[row][col] == null;
+    }
+    notNull(row, col) { return !this.isNull(row, col); }
+    getObject(row, col) {
+        if (typeof col === 'string')
+            col = this.findColByName(col);
+        return this.data.rowData[row][col];
+    }
+    getMolecule(row, col) {
+        if (typeof col === 'string')
+            col = this.findColByName(col);
+        if (col < 0)
+            return null;
+        let datum = this.data.rowData[row][col];
+        if (datum == null)
+            return null;
+        if (typeof datum === 'string') {
+            datum = Molecule.fromString(datum);
+            this.data.rowData[row][col] = datum;
+        }
+        return datum;
+    }
+    getString(row, col) {
+        if (typeof col === 'string')
+            col = this.findColByName(col);
+        if (col < 0)
+            return null;
+        let str = this.data.rowData[row][col];
+        return str == null ? '' : str;
+    }
+    getInteger(row, col) {
+        if (typeof col === 'string')
+            col = this.findColByName(col);
+        if (col < 0)
+            return null;
+        return this.data.rowData[row][col];
+    }
+    getReal(row, col) {
+        if (typeof col === 'string')
+            col = this.findColByName(col);
+        if (col < 0)
+            return null;
+        return this.data.rowData[row][col];
+    }
+    getBoolean(row, col) {
+        if (typeof col === 'string')
+            col = this.findColByName(col);
+        if (col < 0)
+            return null;
+        return this.data.rowData[row][col];
+    }
+    getExtend(row, col) {
+        if (typeof col === 'string')
+            col = this.findColByName(col);
+        if (col < 0)
+            return null;
+        return this.data.rowData[row][col];
+    }
+    setToNull(row, col) {
+        if (typeof col === 'string')
+            col = this.findColByName(col);
+        if (col < 0)
+            return;
+        this.data.rowData[row][col] = null;
+    }
+    setObject(row, col, val) {
+        if (typeof col === 'string')
+            col = this.findColByName(col);
+        if (col < 0)
+            return;
+        this.data.rowData[row][col] = val;
+    }
+    setMolecule(row, col, mol) {
+        if (typeof col === 'string')
+            col = this.findColByName(col);
+        if (col < 0)
+            return;
+        this.data.rowData[row][col] = mol.clone();
+    }
+    setString(row, col, val) {
+        if (typeof col === 'string')
+            col = this.findColByName(col);
+        if (col < 0)
+            return;
+        this.data.rowData[row][col] = val;
+    }
+    setInteger(row, col, val) {
+        if (typeof col === 'string')
+            col = this.findColByName(col);
+        if (col < 0)
+            return;
+        this.data.rowData[row][col] = val;
+    }
+    setReal(row, col, val) {
+        if (typeof col === 'string')
+            col = this.findColByName(col);
+        if (col < 0)
+            return;
+        this.data.rowData[row][col] = val;
+    }
+    setBoolean(row, col, val) {
+        if (typeof col === 'string')
+            col = this.findColByName(col);
+        if (col < 0)
+            return;
+        this.data.rowData[row][col] = val;
+    }
+    setExtend(row, col, val) {
+        if (typeof col === 'string')
+            col = this.findColByName(col);
+        if (col < 0)
+            return;
+        this.data.rowData[row][col] = val;
+    }
+    isEqualMolecule(row, col, mol) {
+        if (typeof col === 'string')
+            col = this.findColByName(col);
+        if (this.isNull(row, col) != (mol == null))
+            return false;
+        if (mol == null)
+            return true;
+        return this.getMolecule(row, col).compareTo(mol) == 0;
+    }
+    isEqualString(row, col, val) {
+        if (typeof col === 'string')
+            col = this.findColByName(col);
+        if (this.isNull(row, col) != (val == null || val == ''))
+            return false;
+        if (val == null || val == '')
+            return true;
+        return this.getString(row, col) == val;
+    }
+    isEqualInteger(row, col, val) {
+        if (typeof col === 'string')
+            col = this.findColByName(col);
+        if (this.isNull(row, col) != (val == null))
+            return false;
+        if (val == null)
+            return true;
+        return this.getInteger(row, col) == val;
+    }
+    isEqualReal(row, col, val) {
+        if (typeof col === 'string')
+            col = this.findColByName(col);
+        if (this.isNull(row, col) != (val == null))
+            return false;
+        if (val == null)
+            return true;
+        return this.getReal(row, col) == val;
+    }
+    isEqualBoolean(row, col, val) {
+        if (typeof col === 'string')
+            col = this.findColByName(col);
+        if (this.isNull(row, col) != (val == null))
+            return false;
+        if (val == null)
+            return true;
+        return this.getBoolean(row, col) == val;
+    }
+    appendColumn(name, type, descr) {
+        this.data.numCols++;
+        this.data.colData.push({ 'name': name, 'type': type, 'descr': descr });
+        for (let n = 0; n < this.data.numRows; n++)
+            this.data.rowData[n].push(null);
+        return this.data.numCols - 1;
+    }
+    deleteColumn(col) {
+        this.data.numCols--;
+        this.data.colData.splice(col, 1);
+        for (let n = 0; n < this.data.numRows; n++)
+            this.data.rowData[n].splice(col, 1);
+    }
+    changeColumnName(col, name, descr) {
+        this.data.colData[col].name = col;
+        this.data.colData[col].descr = descr;
+    }
+    changeColumnType(col, newType) {
+        let oldType = this.colType(col);
+        if (oldType == newType)
+            return;
+        let incompatible = oldType == DataSheet.COLTYPE_MOLECULE || newType == DataSheet.COLTYPE_MOLECULE ||
+            oldType == DataSheet.COLTYPE_EXTEND || newType == DataSheet.COLTYPE_EXTEND;
+        for (let n = this.data.rowData.length - 1; n >= 0; n--) {
+            let row = this.data.rowData[n];
+            if (row[col] == null)
+                continue;
+            if (incompatible) {
+                row[col] = null;
+                continue;
+            }
+            let val = '';
+            if (oldType == DataSheet.COLTYPE_STRING)
+                val = row[col];
+            else if (oldType == DataSheet.COLTYPE_INTEGER)
+                val = row[col].toString();
+            else if (oldType == DataSheet.COLTYPE_REAL)
+                val = row[col].toString();
+            else if (oldType == DataSheet.COLTYPE_BOOLEAN)
+                val = row[col] ? 'true' : 'false';
+            row[col] = null;
+            if (newType == DataSheet.COLTYPE_STRING)
+                row[col] = val;
+            else if (newType == DataSheet.COLTYPE_INTEGER) {
+                let num = parseInt(val);
+                row[col] = isFinite(num) ? num : null;
+            }
+            else if (newType == DataSheet.COLTYPE_REAL) {
+                let num = parseFloat(val);
+                row[col] = isFinite(num) ? num : null;
+            }
+            else if (newType == DataSheet.COLTYPE_BOOLEAN)
+                row[col] = val.toLowerCase() == 'true' ? true : false;
+        }
+        this.data.colData[col].type = newType;
+    }
+    ensureColumn(name, type, descr) {
+        for (let n = 0; n < this.data.numCols; n++)
+            if (this.data.colData[n].name == name) {
+                if (this.data.colData[n].type != type)
+                    this.changeColumnType(n, type);
+                this.data.colData[n].descr = descr;
+                return n;
+            }
+        return this.appendColumn(name, type, descr);
+    }
+    appendRow() {
+        this.data.numRows++;
+        let row = new Array();
+        for (let n = 0; n < this.data.numCols; n++)
+            row.push(null);
+        this.data.rowData.push(row);
+        return this.data.numRows - 1;
+    }
+    appendRowFrom(srcDS, row) {
+        this.data.numRows++;
+        this.data.rowData.push(srcDS.data.rowData[row].slice(0));
+        return this.data.numRows - 1;
+    }
+    insertRow(row) {
+        this.data.numRows++;
+        let data = new Array();
+        for (let n = 0; n < this.data.numCols; n++)
+            data.push(null);
+        this.data.rowData.splice(row, 0, data);
+    }
+    deleteAllRows() {
+        this.data.numRows = 0;
+        this.data.rowData = new Array();
+    }
+    moveRowUp(row) {
+        let data = this.data.rowData[row];
+        this.data.rowData[row] = this.data.rowData[row - 1];
+        this.data.rowData[row - 1] = data;
+    }
+    moveRowDown(row) {
+        let data = this.data.rowData[row];
+        this.data.rowData[row] = this.data.rowData[row + 1];
+        this.data.rowData[row + 1] = data;
+    }
+    exciseSingleRow(row) {
+        let newData = {
+            'title': this.data.title,
+            'description': this.data.description,
+            'numCols': this.data.numCols,
+            'numRows': 1,
+            'numExtens': this.data.numExtens,
+            'colData': this.data.colData.slice(0),
+            'rowData': [this.data.rowData[row].slice(0)],
+            'extData': this.data.extData.slice(0)
+        };
+        return new DataSheet(newData);
+    }
+    colIsPrimitive(col) {
+        if (typeof col === 'string')
+            col = this.findColByName(col);
+        let ct = this.data.colData[col].type;
+        return ct == 'string' || ct == 'real' || ct == 'integer' || ct == 'boolean';
+    }
+    findColByName(name, type) {
+        for (let n = 0; n < this.data.numCols; n++)
+            if (this.data.colData[n].name == name) {
+                if (type == null || this.data.colData[n].type == type)
+                    return n;
+            }
+        return -1;
+    }
+    firstColOfType(type) {
+        for (let n = 0; n < this.data.numCols; n++)
+            if (this.data.colData[n].type == type)
+                return n;
+        return -1;
+    }
+}
+DataSheet.COLTYPE_MOLECULE = 'molecule';
+DataSheet.COLTYPE_STRING = 'string';
+DataSheet.COLTYPE_REAL = 'real';
+DataSheet.COLTYPE_INTEGER = 'integer';
+DataSheet.COLTYPE_BOOLEAN = 'boolean';
+DataSheet.COLTYPE_EXTEND = 'extend';
+class Aspect {
+    constructor(ds, allowModify) {
+        this.allowModify = true;
+        this.ds = ds ? ds : new DataSheet();
+        if (allowModify != null)
+            this.allowModify = allowModify;
+    }
+    isColumnReserved(colName) { return false; }
+    areColumnsReserved(colNames) {
+        let reserved = Vec.booleanArray(false, colNames.length);
+        for (let n = 0; n < colNames.length; n++)
+            reserved[n] = this.isColumnReserved(colNames[n]);
+        return reserved;
+    }
+    rowFirstBlock(row) { return true; }
+    rowBlockCount(row) { return 1; }
+    aspectUnion(other) { }
+    numTextRenderings(row) { return 0; }
+    produceTextRendering(row, idx) { return null; }
+    numGraphicRenderings(row) { return 0; }
+    produceGraphicRendering(row, idx, policy) { return [null, null]; }
+    numHeaderRenderings() { return 0; }
+    produceHeaderRendering(idx) { return null; }
+}
+Aspect.TEXT_PLAIN = 0;
+Aspect.TEXT_LINK = 1;
+Aspect.TEXT_HTML = 2;
 class MDLMOLReader {
     constructor(strData) {
         this.parseHeader = true;
@@ -669,1172 +1082,6 @@ class MDLSDFReader {
                     ds.changeColumnType(i, DataSheet.COLTYPE_BOOLEAN);
             }
     }
-}
-class MolUtil {
-    static isBlank(mol) {
-        return mol == null || mol.numAtoms == 0;
-    }
-    static notBlank(mol) {
-        return mol != null || mol.numAtoms > 0;
-    }
-    static orBlank(mol) { return mol == null ? new Molecule() : mol; }
-    static hasAnyAbbrev(mol) {
-        for (let n = 1; n <= mol.numAtoms; n++)
-            if (MolUtil.hasAbbrev(mol, n))
-                return true;
-        return false;
-    }
-    static hasAbbrev(mol, atom) {
-        let extra = mol.atomExtra(atom);
-        for (let n = 0; n < (extra == null ? 0 : extra.length); n++)
-            if (extra[n].startsWith('a'))
-                return true;
-        return false;
-    }
-    static getAbbrev(mol, atom) {
-        let extra = mol.atomExtra(atom);
-        for (let n = 0; n < (extra != null ? extra.length : 0); n++)
-            if (extra[n].startsWith("a")) {
-                return Molecule.fromString(extra[n].substring(1));
-            }
-        return null;
-    }
-    static setAbbrev(mol, atom, frag) {
-        let attidx = 0;
-        for (let n = 1; n <= frag.numAtoms; n++)
-            if (frag.atomElement(n) == MolUtil.ABBREV_ATTACHMENT) {
-                if (attidx > 0)
-                    throw 'Multiple attachment points indicated: invalid.';
-                attidx = n;
-            }
-        if (attidx == 0)
-            throw 'No attachment points indicated.';
-        if (attidx >= 2) {
-            frag = frag.clone();
-            frag.swapAtoms(attidx, 1);
-        }
-        let adj = mol.atomAdjList(atom);
-        if (adj.length > 1)
-            throw 'Setting abbreviation for non-terminal atom.';
-        if (frag.atomAdjCount(1) == 1 && mol.atomAdjCount(atom) > 0) {
-            let b1 = mol.findBond(atom, mol.atomAdjList(atom)[0]);
-            let b2 = frag.findBond(1, frag.atomAdjList(1)[0]);
-            mol.setBondOrder(b1, frag.bondOrder(b2));
-        }
-        let extra = mol.atomExtra(atom);
-        let idx = -1;
-        for (let n = 0; n < (extra != null ? extra.length : 0); n++)
-            if (extra[n].startsWith("a")) {
-                idx = n;
-                break;
-            }
-        if (idx < 0)
-            idx = extra.push(null) - 1;
-        extra[idx] = "a" + frag.toString();
-        mol.setAtomExtra(atom, extra);
-    }
-    static validateAbbrevs(mol) {
-        for (let n = 1; n <= mol.numAtoms; n++)
-            if (MolUtil.hasAbbrev(mol, n)) {
-                if (mol.atomAdjCount(n) > 1)
-                    MolUtil.clearAbbrev(mol, n);
-                if (mol.atomCharge(n) != 0)
-                    mol.setAtomCharge(n, 0);
-                if (mol.atomUnpaired(n) != 0)
-                    mol.setAtomUnpaired(n, 0);
-                if (mol.atomIsotope(n) != 0)
-                    mol.setAtomIsotope(n, Molecule.ISOTOPE_NATURAL);
-                if (mol.atomHExplicit(n) != Molecule.HEXPLICIT_UNKNOWN)
-                    mol.setAtomHExplicit(n, Molecule.HEXPLICIT_UNKNOWN);
-            }
-    }
-    static expandAbbrevs(mol, alignCoords) {
-        while (true) {
-            let anything = false;
-            for (let n = 1; n <= mol.numAtoms; n++)
-                if (MolUtil.hasAbbrev(mol, n)) {
-                    if (MolUtil.expandOneAbbrev(mol, n, alignCoords))
-                        anything = true;
-                    n--;
-                }
-            if (!anything)
-                break;
-        }
-    }
-    static expandOneAbbrev(mol, atom, alignCoords) {
-        let frag = MolUtil.getAbbrev(mol, atom);
-        if (frag == null)
-            return false;
-        if (mol.atomAdjCount(atom) != 1 || frag.numAtoms == 0) {
-            MolUtil.clearAbbrev(mol, atom);
-            return false;
-        }
-        let m = mol.atomMapNum(atom);
-        if (m > 0)
-            for (let n of frag.atomAdjList(1))
-                frag.setAtomMapNum(n, m);
-        MolUtil.expandOneAbbrevFrag(mol, atom, frag, alignCoords);
-        return true;
-    }
-    static expandOneAbbrevFrag(mol, atom, frag, alignCoords) {
-        let nbr = mol.atomAdjCount(atom) == 1 ? mol.atomAdjList(atom)[0] : 0;
-        if (alignCoords) {
-            let vx1 = mol.atomX(atom) - mol.atomX(nbr), vy1 = mol.atomY(atom) - mol.atomY(nbr);
-            let adj = frag.atomAdjList(1);
-            let vx2 = 0, vy2 = 0, inv = 1.0 / adj.length;
-            for (let n = 0; n < adj.length; n++) {
-                vx2 += frag.atomX(adj[n]) - frag.atomX(1);
-                vy2 += frag.atomY(adj[n]) - frag.atomY(1);
-            }
-            vx2 *= inv;
-            vy2 *= inv;
-            let th1 = Math.atan2(vy1, vx1), th2 = Math.atan2(vy2, vx2);
-            CoordUtil.rotateMolecule(frag, th1 - th2);
-            CoordUtil.translateMolecule(frag, mol.atomX(nbr) - frag.atomX(1), mol.atomY(nbr) - frag.atomY(1));
-        }
-        let join = mol.numAtoms + 1;
-        mol.append(frag);
-        for (let n = 1; n <= mol.numBonds; n++) {
-            if (mol.bondFrom(n) == join)
-                mol.setBondFrom(n, nbr);
-            if (mol.bondTo(n) == join)
-                mol.setBondTo(n, nbr);
-        }
-        mol.deleteAtomAndBonds(join);
-        mol.deleteAtomAndBonds(atom);
-    }
-    static clearAbbrev(mol, atom) {
-        let extra = mol.atomExtra(atom);
-        for (let n = 0; n < (extra != null ? extra.length : 0); n++)
-            if (extra[n].startsWith("a")) {
-                extra.splice(n, 1);
-                mol.setAtomExtra(atom, extra);
-                mol.setAtomElement(atom, 'C');
-                return;
-            }
-    }
-    static setAtomElement(mol, atom, el) {
-        if (mol.atomElement(atom) == el)
-            return;
-        this.clearAbbrev(mol, atom);
-        mol.setAtomElement(atom, el);
-    }
-    static addBond(mol, bfr, bto, order, type) {
-        if (type == null)
-            type = Molecule.BONDTYPE_NORMAL;
-        if (mol.atomAdjCount(bfr) >= 1)
-            this.clearAbbrev(mol, bfr);
-        if (mol.atomAdjCount(bto) >= 1)
-            this.clearAbbrev(mol, bto);
-        let b = mol.findBond(bfr, bto);
-        if (b > 0)
-            mol.deleteBond(b);
-        return mol.addBond(bfr, bto, order, type);
-    }
-    static subgraphMask(mol, mask) {
-        let invidx = [];
-        let sum = 0;
-        for (let n = 0; n < mol.numAtoms; n++) {
-            if (mask[n])
-                invidx.push(++sum);
-            else
-                invidx.push(0);
-        }
-        if (sum == 0)
-            return new Molecule();
-        if (sum == mol.numAtoms)
-            return mol.clone();
-        let frag = new Molecule();
-        for (let n = 1; n <= mol.numAtoms; n++)
-            if (mask[n - 1]) {
-                let num = frag.addAtom(mol.atomElement(n), mol.atomX(n), mol.atomY(n), mol.atomCharge(n), mol.atomUnpaired(n));
-                frag.setAtomIsotope(num, mol.atomIsotope(n));
-                frag.setAtomHExplicit(num, mol.atomHExplicit(n));
-                frag.setAtomMapNum(num, mol.atomMapNum(n));
-                frag.setAtomExtra(num, mol.atomExtra(n));
-            }
-        for (let n = 1; n <= mol.numBonds; n++) {
-            let bfr = invidx[mol.bondFrom(n) - 1], bto = invidx[mol.bondTo(n) - 1];
-            if (bfr > 0 && bto > 0) {
-                let num = frag.addBond(bfr, bto, mol.bondOrder(n), mol.bondType(n));
-                frag.setBondExtra(num, mol.bondExtra(n));
-            }
-        }
-        return frag;
-    }
-    static subgraphIndex(mol, idx) {
-        let invidx = Vec.numberArray(0, mol.numAtoms);
-        for (let n = 0; n < invidx.length; n++)
-            invidx[n] = 0;
-        for (let n = 0; n < idx.length; n++)
-            invidx[idx[n] - 1] = n + 1;
-        let frag = new Molecule();
-        for (let n = 0; n < idx.length; n++) {
-            let num = frag.addAtom(mol.atomElement(idx[n]), mol.atomX(idx[n]), mol.atomY(idx[n]), mol.atomCharge(idx[n]), mol.atomUnpaired(idx[n]));
-            frag.setAtomIsotope(num, mol.atomIsotope(idx[n]));
-            frag.setAtomHExplicit(num, mol.atomHExplicit(idx[n]));
-            frag.setAtomMapNum(num, mol.atomMapNum(idx[n]));
-            frag.setAtomExtra(num, mol.atomExtra(idx[n]));
-        }
-        for (let n = 1; n <= mol.numBonds; n++) {
-            let bfr = invidx[mol.bondFrom(n) - 1], bto = invidx[mol.bondTo(n) - 1];
-            if (bfr > 0 && bto > 0) {
-                let num = frag.addBond(bfr, bto, mol.bondOrder(n), mol.bondType(n));
-                frag.setBondExtra(num, mol.bondExtra(n));
-            }
-        }
-        return frag;
-    }
-    static deleteAtoms(mol, idx) {
-        let mask = Vec.booleanArray(true, mol.numAtoms);
-        for (let n = 0; n < idx.length; n++)
-            mask[idx[n] - 1] = false;
-        return MolUtil.subgraphMask(mol, mask);
-    }
-    static componentList(mol) {
-        let sz = mol.numAtoms;
-        if (sz == 0)
-            return null;
-        let g = Graph.fromMolecule(mol);
-        let groups = g.calculateComponentGroups();
-        for (let grp of groups)
-            Vec.addTo(grp, 1);
-        return groups;
-    }
-    static getAtomSides(mol, atom) {
-        let g = Graph.fromMolecule(mol);
-        let cc = g.calculateComponents();
-        let mask = [];
-        for (let n = 0; n < cc.length; n++)
-            mask.push(cc[n] == cc[atom - 1]);
-        mask[atom - 1] = false;
-        let oldmap = Vec.maskIdx(mask);
-        g.keepNodesMask(mask);
-        cc = g.calculateComponents();
-        let ccmax = Vec.max(cc);
-        let grps = [];
-        for (let n = 0; n < ccmax; n++)
-            grps.push([atom]);
-        for (let n = 0; n < cc.length; n++)
-            grps[cc[n] - 1].push(oldmap[n] + 1);
-        return grps;
-    }
-    static getBondSides(mol, bond) {
-        let bf = mol.bondFrom(bond), bt = mol.bondTo(bond);
-        let inRing = mol.bondInRing(bond);
-        let g = Graph.fromMolecule(mol);
-        let cc = g.calculateComponents();
-        let mask = [];
-        for (let n = 0; n < cc.length; n++)
-            mask.push(cc[n] == cc[bf - 1]);
-        if (!inRing)
-            g.removeEdge(bf - 1, bt - 1);
-        else {
-            mask[bf - 1] = false;
-            mask[bt - 1] = false;
-        }
-        let oldmap = Vec.maskIdx(mask);
-        g.keepNodesMask(mask);
-        cc = g.calculateComponents();
-        let ccmax = Vec.max(cc);
-        let grps = Vec.anyArray([], ccmax);
-        for (let n = 0; n < ccmax; n++) {
-            if (inRing) {
-                grps[n].push(bf);
-                grps[n].push(bt);
-            }
-        }
-        for (let n = 0; n < cc.length; n++)
-            grps[cc[n] - 1].push(oldmap[n] + 1);
-        return grps;
-    }
-    static arrayAtomX(mol) {
-        let x = Vec.numberArray(0, mol.numAtoms);
-        for (let n = x.length - 1; n >= 0; n--)
-            x[n] = mol.atomX(n + 1);
-        return x;
-    }
-    static arrayAtomY(mol) {
-        let y = Vec.numberArray(0, mol.numAtoms);
-        for (let n = y.length - 1; n >= 0; n--)
-            y[n] = mol.atomY(n + 1);
-        return y;
-    }
-    static molecularFormula(mol, punctuation) {
-        for (let n = 1; n <= mol.numAtoms; n++)
-            if (MolUtil.hasAbbrev(mol, n)) {
-                mol = mol.clone();
-                MolUtil.expandAbbrevs(mol, false);
-                break;
-            }
-        let countC = 0, countH = 0;
-        let elements = Vec.stringArray('', mol.numAtoms);
-        for (let n = 1; n <= mol.numAtoms; n++) {
-            countH += mol.atomHydrogens(n);
-            let el = mol.atomElement(n);
-            if (el == 'C')
-                countC++;
-            else if (el == 'H')
-                countH++;
-            else
-                elements[n - 1] = el;
-        }
-        elements.sort();
-        let formula = '';
-        if (countC > 0)
-            formula += 'C';
-        if (countC > 1) {
-            if (punctuation)
-                formula += '{';
-            formula += countC;
-            if (punctuation)
-                formula += '}';
-        }
-        if (countH > 0)
-            formula += 'H';
-        if (countH > 1) {
-            if (punctuation)
-                formula += '{';
-            formula += countH;
-            if (punctuation)
-                formula += '}';
-        }
-        for (let n = 0; n < elements.length; n++)
-            if (elements[n].length > 0) {
-                let count = 1;
-                for (; n + 1 < elements.length && elements[n] == elements[n + 1]; n++)
-                    count++;
-                formula += elements[n];
-                if (count > 1) {
-                    if (punctuation)
-                        formula += '{';
-                    formula += count;
-                    if (punctuation)
-                        formula += '}';
-                }
-            }
-        return formula.toString();
-    }
-    static molecularWeight(mol) {
-        for (let n = 1; n <= mol.numAtoms; n++)
-            if (MolUtil.hasAbbrev(mol, n)) {
-                mol = mol.clone();
-                MolUtil.expandAbbrevs(mol, false);
-                break;
-            }
-        let mw = 0;
-        for (let n = 1; n <= mol.numAtoms; n++) {
-            mw += mol.atomHydrogens(n) * Chemistry.NATURAL_ATOMIC_WEIGHTS[1];
-            let iso = mol.atomIsotope(n);
-            if (iso != Molecule.ISOTOPE_NATURAL) {
-                mw += iso;
-                continue;
-            }
-            let an = Molecule.elementAtomicNumber(mol.atomElement(n));
-            if (an > 0 && an < Chemistry.NATURAL_ATOMIC_WEIGHTS.length)
-                mw += Chemistry.NATURAL_ATOMIC_WEIGHTS[an];
-        }
-        return mw;
-    }
-    static removeDuplicateBonds(mol) {
-        let bpri = [];
-        for (let n = 1; n <= mol.numBonds; n++) {
-            let p = Math.min(mol.bondFrom(n), mol.bondTo(n)) * mol.numAtoms + Math.max(mol.bondFrom(n), mol.bondTo(n));
-            bpri.push(p);
-        }
-        let bidx = Vec.idxSort(bpri);
-        let keepmask = Vec.booleanArray(false, bidx.length);
-        let p = 0;
-        while (p < bidx.length) {
-            let sz = 1;
-            while (p + sz < bidx.length && bpri[bidx[p]] == bpri[bidx[p + sz]])
-                sz++;
-            let best = p;
-            for (let n = p + 1; n < p + sz; n++) {
-                let b1 = bidx[best] + 1, b2 = bidx[n] + 1;
-                let a1 = mol.bondFrom(b1), a2 = mol.bondTo(b1);
-                let el1 = mol.atomElement(a1), el2 = mol.atomElement(a2);
-                let limit1 = 0, limit2 = 0;
-                if (el1 == 'C' || el1 == 'N')
-                    limit1 = 4;
-                else if (el1 == 'O')
-                    limit1 = 3;
-                if (el2 == 'C' || el2 == 'N')
-                    limit2 = 4;
-                else if (el2 == 'O')
-                    limit2 = 3;
-                if (limit1 > 0 || limit2 > 0) {
-                    let boB1A1 = 0, boB1A2 = 0, boB2A1 = 0, boB2A2 = 0;
-                    for (let i = 1; i <= mol.numBonds; i++) {
-                        if (i != b2 && (mol.bondFrom(i) == a1 || mol.bondTo(i) == a1))
-                            boB1A1 += mol.bondOrder(i);
-                        if (i != b2 && (mol.bondFrom(i) == a2 || mol.bondTo(i) == a2))
-                            boB1A2 += mol.bondOrder(i);
-                        if (i != b1 && (mol.bondFrom(i) == a1 || mol.bondTo(i) == a1))
-                            boB2A1 += mol.bondOrder(i);
-                        if (i != b1 && (mol.bondFrom(i) == a2 || mol.bondTo(i) == a2))
-                            boB2A2 += mol.bondOrder(i);
-                    }
-                    let bad1 = 0, bad2 = 0;
-                    if (limit1 > 0 && boB1A1 > limit1)
-                        bad1++;
-                    if (limit2 > 0 && boB1A2 > limit2)
-                        bad1++;
-                    if (limit1 > 0 && boB2A1 > limit1)
-                        bad2++;
-                    if (limit2 > 0 && boB2A2 > limit2)
-                        bad2++;
-                    if (bad1 < bad2)
-                        continue;
-                    if (bad1 > bad2) {
-                        best = n;
-                        continue;
-                    }
-                }
-                let exotic1 = 2 * mol.bondOrder(b1), exotic2 = 2 * mol.bondOrder(b2);
-                exotic1 += (exotic1 == 0 ? 4 : 0) + (mol.bondType(b1) != Molecule.BONDTYPE_NORMAL ? 1 : 0);
-                exotic2 += (exotic2 == 0 ? 4 : 0) + (mol.bondType(b2) != Molecule.BONDTYPE_NORMAL ? 1 : 0);
-                if (exotic2 > exotic1)
-                    best = n;
-            }
-            keepmask[bidx[best]] = true;
-            p += sz;
-        }
-        for (let n = mol.numBonds; n >= 1; n--)
-            if (!keepmask[n - 1] || mol.bondFrom(n) == mol.bondTo(n))
-                mol.deleteBond(n);
-    }
-    static calculateWalkWeight(mol, atom) {
-        let ccsz = 0, cc = Graph.fromMolecule(mol).calculateComponents();
-        for (let n = 0; n < cc.length; n++)
-            if (cc[n] == cc[atom - 1])
-                ccsz++;
-        let w = Vec.numberArray(1, mol.numAtoms), wn = Vec.numberArray(0, mol.numAtoms);
-        w[atom - 1] = 0;
-        for (; ccsz > 0; ccsz--) {
-            for (let n = 0; n < mol.numAtoms; n++)
-                wn[n] = w[n];
-            for (let n = 1; n <= mol.numBonds; n++) {
-                let a1 = mol.bondFrom(n) - 1, a2 = mol.bondTo(n) - 1;
-                w[a1] += wn[a2] * 0.1;
-                w[a2] += wn[a1] * 0.1;
-            }
-            w[atom - 1] = 0;
-        }
-        return w;
-    }
-    static totalHydrogens(mol, atom) {
-        let hc = mol.atomHydrogens(atom);
-        let adj = mol.atomAdjList(atom);
-        for (let n = 0; n < adj.length; n++)
-            if (mol.atomElement(adj[n]) == 'H')
-                hc++;
-        return hc;
-    }
-    static stripHydrogens(mol, force) {
-        if (force == null)
-            force = false;
-        for (let n = mol.numAtoms; n >= 1; n--) {
-            if (mol.atomElement(n) != 'H')
-                continue;
-            if (!force) {
-                if (mol.atomCharge(n) != 0 || mol.atomUnpaired(n) != 0)
-                    continue;
-                if (mol.atomIsotope(n) != Molecule.ISOTOPE_NATURAL)
-                    continue;
-                if (mol.atomExtra(n) != null || mol.atomTransient(n) != null)
-                    continue;
-                if (mol.atomAdjCount(n) != 1)
-                    continue;
-                let other = mol.atomAdjList(n)[0];
-                if (mol.atomElement(other) == 'H')
-                    continue;
-                let bond = mol.atomAdjBonds(n)[0];
-                if (mol.bondOrder(bond) != 1 || mol.bondType(bond) != Molecule.BONDTYPE_NORMAL)
-                    continue;
-                if (mol.atomHExplicit(other) != Molecule.HEXPLICIT_UNKNOWN)
-                    continue;
-                if (Molecule.HYVALENCE_EL.indexOf(mol.atomElement(other)) < 0)
-                    continue;
-            }
-            mol.deleteAtomAndBonds(n);
-        }
-    }
-    static createHydrogens(mol, position) {
-        if (position == null)
-            position = false;
-        let na = mol.numAtoms;
-        for (let n = 1; n <= na; n++) {
-            let hc = mol.atomHydrogens(n);
-            if (hc == 0)
-                continue;
-            if (mol.atomHExplicit(n) != Molecule.HEXPLICIT_UNKNOWN)
-                mol.setAtomHExplicit(n, 0);
-            if (!position) {
-                for (; hc > 0; hc--) {
-                    let a = mol.addAtom("H", mol.atomX(n), mol.atomY(n));
-                    mol.addBond(n, a, 1);
-                }
-            }
-            else
-                SketchUtil.placeAdditionalHydrogens(mol, n, hc);
-        }
-        return mol.numAtoms - na;
-    }
-    static atomVec3(mol, atom) {
-        if (mol.is3D())
-            return [mol.atomX(atom), mol.atomY(atom), mol.atomZ(atom)];
-        else
-            return [mol.atomX(atom), mol.atomY(atom), 0];
-    }
-}
-MolUtil.TEMPLATE_ATTACHMENT = 'X';
-MolUtil.ABBREV_ATTACHMENT = '*';
-class DataSheet {
-    constructor(data) {
-        if (!data)
-            data = {};
-        if (!data.title)
-            data.title = '';
-        if (!data.description)
-            data.description = '';
-        if (data.numCols == null)
-            data.numCols = 0;
-        if (data.numRows == null)
-            data.numRows = 0;
-        if (data.numExtens == null)
-            data.numExtens = 0;
-        if (data.colData == null)
-            data.colData = [];
-        if (data.rowData == null)
-            data.rowData = [];
-        if (data.extData == null)
-            data.extData = [];
-        this.data = data;
-    }
-    getData() {
-        return this.data;
-    }
-    get numCols() {
-        return this.data.numCols;
-    }
-    get numRows() {
-        return this.data.numRows;
-    }
-    getTitle() {
-        return this.data.title;
-    }
-    getDescription() {
-        return this.data.description;
-    }
-    setTitle(val) {
-        this.data.title = val;
-    }
-    setDescription(val) {
-        this.data.description = val;
-    }
-    get numExtensions() {
-        return this.data.numExtens;
-    }
-    getExtName(idx) {
-        return this.data.extData[idx].name;
-    }
-    getExtType(idx) {
-        return this.data.extData[idx].type;
-    }
-    getExtData(idx) {
-        return this.data.extData[idx].data;
-    }
-    setExtName(idx, val) {
-        this.data.extData[idx].name = val;
-    }
-    setExtType(idx, val) {
-        this.data.extData[idx].type = val;
-    }
-    setExtData(idx, val) {
-        this.data.extData[idx].data = val;
-    }
-    appendExtension(name, type, data) {
-        this.data.numExtens++;
-        this.data.extData.push({ 'name': name, 'type': type, 'data': data });
-        return this.data.numExtens - 1;
-    }
-    deleteExtension(idx) {
-        this.data.extData.splice(idx, 1);
-    }
-    colName(col) {
-        return this.data.colData[col].name;
-    }
-    colType(col) {
-        return this.data.colData[col].type;
-    }
-    colDescr(col) {
-        return this.data.colData[col].descr;
-    }
-    isNull(row, col) {
-        if (typeof col === 'string')
-            col = this.findColByName(col);
-        return this.data.rowData[row][col] == null;
-    }
-    notNull(row, col) { return !this.isNull(row, col); }
-    getObject(row, col) {
-        if (typeof col === 'string')
-            col = this.findColByName(col);
-        return this.data.rowData[row][col];
-    }
-    getMolecule(row, col) {
-        if (typeof col === 'string')
-            col = this.findColByName(col);
-        let datum = this.data.rowData[row][col];
-        if (datum == null)
-            return null;
-        if (typeof datum === 'string') {
-            datum = Molecule.fromString(datum);
-            this.data.rowData[row][col] = datum;
-        }
-        return datum;
-    }
-    getString(row, col) {
-        if (typeof col === 'string')
-            col = this.findColByName(col);
-        let str = this.data.rowData[row][col];
-        return str == null ? '' : str;
-    }
-    getInteger(row, col) {
-        if (typeof col === 'string')
-            col = this.findColByName(col);
-        return this.data.rowData[row][col];
-    }
-    getReal(row, col) {
-        if (typeof col === 'string')
-            col = this.findColByName(col);
-        return this.data.rowData[row][col];
-    }
-    getBoolean(row, col) {
-        if (typeof col === 'string')
-            col = this.findColByName(col);
-        return this.data.rowData[row][col];
-    }
-    getExtend(row, col) {
-        if (typeof col === 'string')
-            col = this.findColByName(col);
-        return this.data.rowData[row][col];
-    }
-    setToNull(row, col) {
-        if (typeof col === 'string')
-            col = this.findColByName(col);
-        this.data.rowData[row][col] = null;
-    }
-    setObject(row, col, val) {
-        if (typeof col === 'string')
-            col = this.findColByName(col);
-        this.data.rowData[row][col] = val;
-    }
-    setMolecule(row, col, mol) {
-        if (typeof col === 'string')
-            col = this.findColByName(col);
-        this.data.rowData[row][col] = mol.clone();
-    }
-    setString(row, col, val) {
-        if (typeof col === 'string')
-            col = this.findColByName(col);
-        this.data.rowData[row][col] = val;
-    }
-    setInteger(row, col, val) {
-        if (typeof col === 'string')
-            col = this.findColByName(col);
-        this.data.rowData[row][col] = val;
-    }
-    setReal(row, col, val) {
-        if (typeof col === 'string')
-            col = this.findColByName(col);
-        this.data.rowData[row][col] = val;
-    }
-    setBoolean(row, col, val) {
-        if (typeof col === 'string')
-            col = this.findColByName(col);
-        this.data.rowData[row][col] = val;
-    }
-    setExtend(row, col, val) {
-        if (typeof col === 'string')
-            col = this.findColByName(col);
-        this.data.rowData[row][col] = val;
-    }
-    isEqualMolecule(row, col, mol) {
-        if (typeof col === 'string')
-            col = this.findColByName(col);
-        if (this.isNull(row, col) != (mol == null))
-            return false;
-        if (mol == null)
-            return true;
-        return this.getMolecule(row, col).compareTo(mol) == 0;
-    }
-    isEqualString(row, col, val) {
-        if (typeof col === 'string')
-            col = this.findColByName(col);
-        if (this.isNull(row, col) != (val == null || val == ''))
-            return false;
-        if (val == null || val == '')
-            return true;
-        return this.getString(row, col) == val;
-    }
-    isEqualInteger(row, col, val) {
-        if (typeof col === 'string')
-            col = this.findColByName(col);
-        if (this.isNull(row, col) != (val == null))
-            return false;
-        if (val == null)
-            return true;
-        return this.getInteger(row, col) == val;
-    }
-    isEqualReal(row, col, val) {
-        if (typeof col === 'string')
-            col = this.findColByName(col);
-        if (this.isNull(row, col) != (val == null))
-            return false;
-        if (val == null)
-            return true;
-        return this.getReal(row, col) == val;
-    }
-    isEqualBoolean(row, col, val) {
-        if (typeof col === 'string')
-            col = this.findColByName(col);
-        if (this.isNull(row, col) != (val == null))
-            return false;
-        if (val == null)
-            return true;
-        return this.getBoolean(row, col) == val;
-    }
-    appendColumn(name, type, descr) {
-        this.data.numCols++;
-        this.data.colData.push({ 'name': name, 'type': type, 'descr': descr });
-        for (let n = 0; n < this.data.numRows; n++)
-            this.data.rowData[n].push(null);
-        return this.data.numCols - 1;
-    }
-    deleteColumn(col) {
-        this.data.numCols--;
-        this.data.colData.splice(col, 1);
-        for (let n = 0; n < this.data.numRows; n++)
-            this.data.rowData[n].splice(col, 1);
-    }
-    changeColumnName(col, name, descr) {
-        this.data.colData[col].name = col;
-        this.data.colData[col].descr = descr;
-    }
-    changeColumnType(col, newType) {
-        let oldType = this.colType(col);
-        if (oldType == newType)
-            return;
-        let incompatible = oldType == DataSheet.COLTYPE_MOLECULE || newType == DataSheet.COLTYPE_MOLECULE ||
-            oldType == DataSheet.COLTYPE_EXTEND || newType == DataSheet.COLTYPE_EXTEND;
-        for (let n = this.data.rowData.length - 1; n >= 0; n--) {
-            let row = this.data.rowData[n];
-            if (row[col] == null)
-                continue;
-            if (incompatible) {
-                row[col] = null;
-                continue;
-            }
-            let val = '';
-            if (oldType == DataSheet.COLTYPE_STRING)
-                val = row[col];
-            else if (oldType == DataSheet.COLTYPE_INTEGER)
-                val = row[col].toString();
-            else if (oldType == DataSheet.COLTYPE_REAL)
-                val = row[col].toString();
-            else if (oldType == DataSheet.COLTYPE_BOOLEAN)
-                val = row[col] ? 'true' : 'false';
-            row[col] = null;
-            if (newType == DataSheet.COLTYPE_STRING)
-                row[col] = val;
-            else if (newType == DataSheet.COLTYPE_INTEGER) {
-                let num = parseInt(val);
-                row[col] = isFinite(num) ? num : null;
-            }
-            else if (newType == DataSheet.COLTYPE_REAL) {
-                let num = parseFloat(val);
-                row[col] = isFinite(num) ? num : null;
-            }
-            else if (newType == DataSheet.COLTYPE_BOOLEAN)
-                row[col] = val.toLowerCase() == 'true' ? true : false;
-        }
-        this.data.colData[col].type = newType;
-    }
-    appendRow() {
-        this.data.numRows++;
-        let row = new Array();
-        for (let n = 0; n < this.data.numCols; n++)
-            row.push(null);
-        this.data.rowData.push(row);
-        return this.data.numRows - 1;
-    }
-    appendRowFrom(srcDS, row) {
-        this.data.numRows++;
-        this.data.rowData.push(srcDS.data.rowData[row].slice(0));
-        return this.data.numRows - 1;
-    }
-    insertRow(row) {
-        this.data.numRows++;
-        let data = new Array();
-        for (let n = 0; n < this.data.numCols; n++)
-            data.push(null);
-        this.data.rowData.splice(row, 0, data);
-    }
-    deleteAllRows() {
-        this.data.numRows = 0;
-        this.data.rowData = new Array();
-    }
-    moveRowUp(row) {
-        let data = this.data.rowData[row];
-        this.data.rowData[row] = this.data.rowData[row - 1];
-        this.data.rowData[row - 1] = data;
-    }
-    moveRowDown(row) {
-        let data = this.data.rowData[row];
-        this.data.rowData[row] = this.data.rowData[row + 1];
-        this.data.rowData[row + 1] = data;
-    }
-    exciseSingleRow(row) {
-        let newData = {
-            'title': this.data.title,
-            'description': this.data.description,
-            'numCols': this.data.numCols,
-            'numRows': 1,
-            'numExtens': this.data.numExtens,
-            'colData': this.data.colData.slice(0),
-            'rowData': [this.data.rowData[row].slice(0)],
-            'extData': this.data.extData.slice(0)
-        };
-        return new DataSheet(newData);
-    }
-    colIsPrimitive(col) {
-        if (typeof col === 'string')
-            col = this.findColByName(col);
-        let ct = this.data.colData[col].type;
-        return ct == 'string' || ct == 'real' || ct == 'integer' || ct == 'boolean';
-    }
-    findColByName(name) {
-        for (let n = 0; n < this.data.numCols; n++)
-            if (this.data.colData[n].name == name)
-                return n;
-        return -1;
-    }
-    firstColOfType(type) {
-        for (let n = 0; n < this.data.numCols; n++)
-            if (this.data.colData[n].type == type)
-                return n;
-        return -1;
-    }
-}
-DataSheet.COLTYPE_MOLECULE = 'molecule';
-DataSheet.COLTYPE_STRING = 'string';
-DataSheet.COLTYPE_REAL = 'real';
-DataSheet.COLTYPE_INTEGER = 'integer';
-DataSheet.COLTYPE_BOOLEAN = 'boolean';
-DataSheet.COLTYPE_EXTEND = 'extend';
-class MDLMOLWriter {
-    constructor(mol) {
-        this.mol = mol;
-        this.includeHeader = true;
-        this.enhancedFields = true;
-        this.chargeSeparate = true;
-        this.molName = '';
-        this.lines = [];
-    }
-    write() {
-        if (this.includeHeader) {
-            this.lines.push(this.molName);
-            this.lines.push('Generated by WebMolKit');
-            this.lines.push('');
-            this.writeCTAB();
-        }
-        return this.lines.join('\n');
-    }
-    getResult() {
-        return this.lines.join('\n');
-    }
-    writeCTAB() {
-        let mol = this.mol;
-        for (let n = 1; n <= mol.numAtoms; n++)
-            if (MolUtil.hasAbbrev(mol, n)) {
-                mol = mol.clone();
-                MolUtil.expandAbbrevs(mol, true);
-                break;
-            }
-        this.lines.push(this.intrpad(mol.numAtoms, 3) + this.intrpad(mol.numBonds, 3) + '  0  0  0  0  0  0  0  0999 V2000');
-        let chgidx = [], chgval = [];
-        let radidx = [], radval = [];
-        let isoidx = [], isoval = [];
-        let rgpidx = [], rgpval = [];
-        let hydidx = [], hydval = [];
-        let zchidx = [], zchval = [];
-        let zboidx = [], zboval = [];
-        for (let n = 1; n <= mol.numAtoms; n++) {
-            let x = mol.atomX(n), y = mol.atomY(n), z = 0;
-            let line = this.rpad(x.toFixed(4), 10) + this.rpad(y.toFixed(4), 10) + this.rpad(z.toFixed(4), 10);
-            let str = mol.atomElement(n);
-            if (str.length > 3)
-                str = str.substring(0, 3);
-            if (str.length > 1 && str.charAt(0) == 'R' && str.charAt(1) >= '0' && str.charAt(1) <= '9') {
-                rgpidx.push(n);
-                rgpval.push(parseInt(str.substring(1)));
-                str = 'R#';
-            }
-            while (str.length < 4)
-                str += ' ';
-            line += ' ' + str + '0';
-            let chg = mol.atomCharge(n), rad = mol.atomUnpaired(n), mapnum = mol.atomMapNum(n);
-            if (chg >= -3 && chg <= -1)
-                chg = 4 - chg;
-            else if (chg == 0 && rad == 2)
-                chg = 4;
-            else if (chg >= 1 && chg <= 3)
-                chg = 4 - chg;
-            else
-                chg = 0;
-            line += this.intrpad(chg, 3) + '  0  0  0  0  0  0  0' + this.intrpad(mapnum, 3) + '  0  0';
-            this.lines.push(line);
-            if (mol.atomCharge(n) != 0) {
-                chgidx.push(n);
-                chgval.push(mol.atomCharge(n));
-            }
-            if (mol.atomUnpaired(n) != 0) {
-                radidx.push(n);
-                radval.push(mol.atomUnpaired(n));
-            }
-            if (mol.atomIsotope(n) != Molecule.ISOTOPE_NATURAL) {
-                isoidx.push(n);
-                isoval.push(mol.atomIsotope(n));
-            }
-        }
-        for (let n = 1; n <= mol.numBonds; n++) {
-            let type = mol.bondOrder(n);
-            let stereo = mol.bondType(n);
-            if (stereo == Molecule.BONDTYPE_NORMAL) { }
-            else if (stereo == Molecule.BONDTYPE_INCLINED) {
-                stereo = 1;
-                type = 1;
-            }
-            else if (stereo == Molecule.BONDTYPE_DECLINED) {
-                stereo = 6;
-                type = 1;
-            }
-            else if (stereo == Molecule.BONDTYPE_UNKNOWN) {
-                stereo = 4;
-                type = 1;
-            }
-            else
-                stereo = 0;
-            let line = this.intrpad(mol.bondFrom(n), 3) + this.intrpad(mol.bondTo(n), 3) +
-                this.intrpad(type, 3) + this.intrpad(stereo, 3) + '  0  0  0';
-            this.lines.push(line);
-        }
-        this.writeMBlock('CHG', chgidx, chgval);
-        this.writeMBlock('RAD', radidx, radval);
-        this.writeMBlock('ISO', isoidx, isoval);
-        this.writeMBlock('RGP', rgpidx, rgpval);
-        this.writeMBlock('HYD', hydidx, hydval);
-        this.writeMBlock('ZCH', zchidx, zchval);
-        this.writeMBlock('ZBO', zboidx, zboval);
-        for (let n = 1; n <= mol.numAtoms; n++)
-            if (mol.atomElement(n).length > 2) {
-                this.lines.push('A  ' + this.intrpad(n, 3));
-                this.lines.push(mol.atomElement(n));
-            }
-        this.lines.push('M  END');
-    }
-    writeMBlock(token, idx, val) {
-        const sz = idx.length;
-        for (let i = 0; i < sz; i += 8) {
-            let count = Math.min(8, sz - i);
-            let line = "M  " + token + this.intrpad(count, 3);
-            for (let j = 0; j < count; j++)
-                line += this.intrpad(idx[i + j], 4) + this.intrpad(val[i + j], 4);
-            this.lines.push(line);
-        }
-    }
-    intrpad(num, sz) {
-        return this.rpad(num.toString(), sz);
-    }
-    rpad(str, sz) {
-        while (str.length < sz)
-            str = ' ' + str;
-        return str;
-    }
-}
-class MDLSDFWriter {
-    constructor(ds) {
-        this.ds = ds;
-        this.lines = [];
-    }
-    write() {
-        let ds = this.ds, lines = this.lines;
-        let colMol = this.ds.firstColOfType(DataSheet.COLTYPE_MOLECULE);
-        for (let i = 0; i < ds.numRows; i++) {
-            let mol = colMol < 0 ? null : ds.getMolecule(i, colMol);
-            if (MolUtil.notBlank(mol)) {
-                let molstr = new MDLMOLWriter(mol).write();
-                lines.push(molstr);
-            }
-            for (let j = 0; j < ds.numCols; j++)
-                if (j != colMol && ds.notNull(i, j)) {
-                    let ct = ds.colType(j);
-                    let val = '';
-                    if (ct == DataSheet.COLTYPE_STRING)
-                        val = ds.getString(i, j);
-                    else if (ct == DataSheet.COLTYPE_INTEGER)
-                        val = ds.getInteger(i, j).toString();
-                    else if (ct == DataSheet.COLTYPE_REAL)
-                        val = ds.getReal(i, j).toString();
-                    else if (ct == DataSheet.COLTYPE_BOOLEAN)
-                        val = ds.getBoolean(i, j) ? 'true' : 'false';
-                    if (val != '') {
-                        lines.push('> <' + ds.colName(j) + '>');
-                        lines.push(val);
-                        lines.push('');
-                    }
-                }
-            lines.push('$$$$');
-        }
-        return lines.join('\n');
-    }
-    getResult() {
-        return this.lines.join('\n');
-    }
-}
-class MoleculeStream {
-    static readNative(strData) {
-        let mol = new Molecule();
-        mol.keepTransient = true;
-        let lines = strData.split(/\r?\n/);
-        if (lines.length < 2)
-            return null;
-        if (!lines[0].startsWith('SketchEl!') && lines.length >= 4 && lines[3].indexOf('V2000') >= 0) {
-            let i = strData.indexOf('SketchEl!');
-            if (i < 0)
-                return null;
-            lines = strData.substring(i).split(/r?\n/);
-        }
-        let bits = lines[0].match(/^SketchEl\!\((\d+)\,(\d+)\)/);
-        if (!bits)
-            return null;
-        let numAtoms = parseInt(bits[1]), numBonds = parseInt(bits[2]);
-        if (lines.length < 2 + numAtoms + numBonds)
-            return null;
-        if (!lines[1 + numAtoms + numBonds].match(/^!End/))
-            return null;
-        for (let n = 0; n < numAtoms; n++) {
-            bits = lines[1 + n].split(/[=,;]/);
-            let num = mol.addAtom(bits[0], parseFloat(bits[1]), parseFloat(bits[2]), parseInt(bits[3]), parseInt(bits[4]));
-            let extra = [], trans = [];
-            for (let i = 5; i < bits.length; i++) {
-                let ch = bits[i].charAt(0);
-                if (bits[i].charAt(0) == 'i') { }
-                else if (bits[i].charAt(0) == 'e')
-                    mol.setAtomHExplicit(num, parseInt(bits[i].substring(1)));
-                else if (bits[i].charAt(0) == 'm')
-                    mol.setAtomIsotope(num, parseInt(bits[i].substring(1)));
-                else if (bits[i].charAt(0) == 'n')
-                    mol.setAtomMapNum(num, parseInt(bits[i].substring(1)));
-                else if (bits[i].charAt(0) == 'x')
-                    extra.push(MoleculeStream.sk_unescape(bits[i]));
-                else if (bits[i].charAt(0) == 'y')
-                    trans.push(MoleculeStream.sk_unescape(bits[i]));
-                else if (bits[i].charAt(0) == 'z') {
-                    mol.setAtomZ(num, parseFloat(bits[i].substring(1)));
-                    mol.setIs3D(true);
-                }
-                else
-                    extra.push(MoleculeStream.sk_unescape(bits[i]));
-            }
-            mol.setAtomExtra(num, extra);
-            mol.setAtomTransient(num, trans);
-        }
-        for (let n = 0; n < numBonds; n++) {
-            bits = lines[1 + numAtoms + n].split(/[-=,]/);
-            let num = mol.addBond(parseInt(bits[0]), parseInt(bits[1]), parseInt(bits[2]), parseInt(bits[3]));
-            let extra = new Array(), trans = new Array();
-            for (let i = 4; i < bits.length; i++) {
-                let ch = bits[i].charAt(0);
-                if (bits[i].charAt(0) == 'x')
-                    extra.push(MoleculeStream.sk_unescape(bits[i]));
-                else if (bits[i].charAt(0) == 'y')
-                    trans.push(MoleculeStream.sk_unescape(bits[i]));
-                else
-                    extra.push(MoleculeStream.sk_unescape(bits[i]));
-            }
-            mol.setBondExtra(num, extra);
-            mol.setBondTransient(num, trans);
-        }
-        mol.keepTransient = false;
-        return mol;
-    }
-    static writeNative(mol) {
-        let ret = 'SketchEl!(' + mol.numAtoms + ',' + mol.numBonds + ')\n';
-        for (let n = 1; n <= mol.numAtoms; n++) {
-            let el = mol.atomElement(n), x = mol.atomX(n), y = mol.atomY(n), charge = mol.atomCharge(n), unpaired = mol.atomUnpaired(n);
-            let hy = mol.atomHExplicit(n) != Molecule.HEXPLICIT_UNKNOWN ? ('e' + mol.atomHExplicit(n)) : ('i' + mol.atomHydrogens(n));
-            ret += MoleculeStream.sk_escape(el) + '=' + x.toFixed(4) + ',' + y.toFixed(4) + ';' + charge + ',' + unpaired + ',' + hy;
-            if (mol.is3D())
-                ret += ',z' + mol.atomZ(n);
-            if (mol.atomIsotope(n) != Molecule.ISOTOPE_NATURAL)
-                ret += ',m' + mol.atomIsotope(n);
-            if (mol.atomMapNum(n) > 0)
-                ret += ',n' + mol.atomMapNum(n);
-            ret += MoleculeStream.sk_encodeExtra(mol.atomExtra(n));
-            ret += MoleculeStream.sk_encodeExtra(mol.atomTransient(n));
-            ret += '\n';
-        }
-        for (let n = 1; n <= mol.numBonds; n++) {
-            ret += mol.bondFrom(n) + '-' + mol.bondTo(n) + '=' + mol.bondOrder(n) + ',' + mol.bondType(n);
-            ret += MoleculeStream.sk_encodeExtra(mol.bondExtra(n));
-            ret += MoleculeStream.sk_encodeExtra(mol.bondTransient(n));
-            ret += '\n';
-        }
-        ret += '!End\n';
-        return ret;
-    }
-    static readMDLMOL(strData) {
-        let src = new MDLMOLReader(strData);
-        src.parseHeader = true;
-        src.parse();
-        return src.mol;
-    }
-    static writeMDLMOL(mol) {
-        return new MDLMOLWriter(mol).write();
-    }
-    static sk_unescape(str) {
-        let ret = '', match;
-        while (match = str.match(/^(.*?)\\([0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f])(.*)/)) {
-            ret += match[1] + String.fromCharCode(parseInt("0x" + match[2]));
-            str = match[3];
-        }
-        return ret + str;
-    }
-    static sk_escape(str) {
-        let ret = '';
-        for (let n = 0; n < str.length; n++) {
-            let ch = str.charAt(n), code = str.charCodeAt(n);
-            if (code <= 32 || code > 127 || ch == '\\' || ch == ',' || ch == ';' || ch == '=') {
-                let hex = (code & 0xFFFF).toString(16).toUpperCase();
-                ret += '\\';
-                for (let i = 4 - hex.length; i > 0; i--)
-                    ret += '0';
-                ret += hex;
-            }
-            else
-                ret += ch;
-        }
-        return ret;
-    }
-    static sk_encodeExtra(extra) {
-        let ret = '';
-        for (let n = 0; n < extra.length; n++)
-            ret += ',' + MoleculeStream.sk_escape(extra[n]);
-        return ret;
-    }
-    ;
 }
 class Chemistry {
 }
@@ -3101,6 +2348,1142 @@ Molecule.BONDTYPE_DECLINED = 2;
 Molecule.BONDTYPE_UNKNOWN = 3;
 Molecule.HYVALENCE_EL = ['C', 'N', 'O', 'S', 'P'];
 Molecule.HYVALENCE_VAL = [4, 3, 2, 2, 3];
+class MolUtil {
+    static isBlank(mol) {
+        return mol == null || mol.numAtoms == 0;
+    }
+    static notBlank(mol) {
+        return mol != null || mol.numAtoms > 0;
+    }
+    static orBlank(mol) { return mol == null ? new Molecule() : mol; }
+    static hasAnyAbbrev(mol) {
+        for (let n = 1; n <= mol.numAtoms; n++)
+            if (MolUtil.hasAbbrev(mol, n))
+                return true;
+        return false;
+    }
+    static hasAbbrev(mol, atom) {
+        let extra = mol.atomExtra(atom);
+        for (let n = 0; n < (extra == null ? 0 : extra.length); n++)
+            if (extra[n].startsWith('a'))
+                return true;
+        return false;
+    }
+    static getAbbrev(mol, atom) {
+        let extra = mol.atomExtra(atom);
+        for (let n = 0; n < (extra != null ? extra.length : 0); n++)
+            if (extra[n].startsWith("a")) {
+                return Molecule.fromString(extra[n].substring(1));
+            }
+        return null;
+    }
+    static setAbbrev(mol, atom, frag) {
+        let attidx = 0;
+        for (let n = 1; n <= frag.numAtoms; n++)
+            if (frag.atomElement(n) == MolUtil.ABBREV_ATTACHMENT) {
+                if (attidx > 0)
+                    throw 'Multiple attachment points indicated: invalid.';
+                attidx = n;
+            }
+        if (attidx == 0)
+            throw 'No attachment points indicated.';
+        if (attidx >= 2) {
+            frag = frag.clone();
+            frag.swapAtoms(attidx, 1);
+        }
+        let adj = mol.atomAdjList(atom);
+        if (adj.length > 1)
+            throw 'Setting abbreviation for non-terminal atom.';
+        if (frag.atomAdjCount(1) == 1 && mol.atomAdjCount(atom) > 0) {
+            let b1 = mol.findBond(atom, mol.atomAdjList(atom)[0]);
+            let b2 = frag.findBond(1, frag.atomAdjList(1)[0]);
+            mol.setBondOrder(b1, frag.bondOrder(b2));
+        }
+        let extra = mol.atomExtra(atom);
+        let idx = -1;
+        for (let n = 0; n < (extra != null ? extra.length : 0); n++)
+            if (extra[n].startsWith("a")) {
+                idx = n;
+                break;
+            }
+        if (idx < 0)
+            idx = extra.push(null) - 1;
+        extra[idx] = "a" + frag.toString();
+        mol.setAtomExtra(atom, extra);
+    }
+    static validateAbbrevs(mol) {
+        for (let n = 1; n <= mol.numAtoms; n++)
+            if (MolUtil.hasAbbrev(mol, n)) {
+                if (mol.atomAdjCount(n) > 1)
+                    MolUtil.clearAbbrev(mol, n);
+                if (mol.atomCharge(n) != 0)
+                    mol.setAtomCharge(n, 0);
+                if (mol.atomUnpaired(n) != 0)
+                    mol.setAtomUnpaired(n, 0);
+                if (mol.atomIsotope(n) != 0)
+                    mol.setAtomIsotope(n, Molecule.ISOTOPE_NATURAL);
+                if (mol.atomHExplicit(n) != Molecule.HEXPLICIT_UNKNOWN)
+                    mol.setAtomHExplicit(n, Molecule.HEXPLICIT_UNKNOWN);
+            }
+    }
+    static expandAbbrevs(mol, alignCoords) {
+        while (true) {
+            let anything = false;
+            for (let n = 1; n <= mol.numAtoms; n++)
+                if (MolUtil.hasAbbrev(mol, n)) {
+                    if (MolUtil.expandOneAbbrev(mol, n, alignCoords))
+                        anything = true;
+                    n--;
+                }
+            if (!anything)
+                break;
+        }
+    }
+    static expandOneAbbrev(mol, atom, alignCoords) {
+        let frag = MolUtil.getAbbrev(mol, atom);
+        if (frag == null)
+            return false;
+        if (mol.atomAdjCount(atom) != 1 || frag.numAtoms == 0) {
+            MolUtil.clearAbbrev(mol, atom);
+            return false;
+        }
+        let m = mol.atomMapNum(atom);
+        if (m > 0)
+            for (let n of frag.atomAdjList(1))
+                frag.setAtomMapNum(n, m);
+        MolUtil.expandOneAbbrevFrag(mol, atom, frag, alignCoords);
+        return true;
+    }
+    static expandOneAbbrevFrag(mol, atom, frag, alignCoords) {
+        let nbr = mol.atomAdjCount(atom) == 1 ? mol.atomAdjList(atom)[0] : 0;
+        if (alignCoords) {
+            let vx1 = mol.atomX(atom) - mol.atomX(nbr), vy1 = mol.atomY(atom) - mol.atomY(nbr);
+            let adj = frag.atomAdjList(1);
+            let vx2 = 0, vy2 = 0, inv = 1.0 / adj.length;
+            for (let n = 0; n < adj.length; n++) {
+                vx2 += frag.atomX(adj[n]) - frag.atomX(1);
+                vy2 += frag.atomY(adj[n]) - frag.atomY(1);
+            }
+            vx2 *= inv;
+            vy2 *= inv;
+            let th1 = Math.atan2(vy1, vx1), th2 = Math.atan2(vy2, vx2);
+            CoordUtil.rotateMolecule(frag, th1 - th2);
+            CoordUtil.translateMolecule(frag, mol.atomX(nbr) - frag.atomX(1), mol.atomY(nbr) - frag.atomY(1));
+        }
+        let join = mol.numAtoms + 1;
+        mol.append(frag);
+        for (let n = 1; n <= mol.numBonds; n++) {
+            if (mol.bondFrom(n) == join)
+                mol.setBondFrom(n, nbr);
+            if (mol.bondTo(n) == join)
+                mol.setBondTo(n, nbr);
+        }
+        mol.deleteAtomAndBonds(join);
+        mol.deleteAtomAndBonds(atom);
+    }
+    static clearAbbrev(mol, atom) {
+        let extra = mol.atomExtra(atom);
+        for (let n = 0; n < (extra != null ? extra.length : 0); n++)
+            if (extra[n].startsWith("a")) {
+                extra.splice(n, 1);
+                mol.setAtomExtra(atom, extra);
+                mol.setAtomElement(atom, 'C');
+                return;
+            }
+    }
+    static setAtomElement(mol, atom, el) {
+        if (mol.atomElement(atom) == el)
+            return;
+        this.clearAbbrev(mol, atom);
+        mol.setAtomElement(atom, el);
+    }
+    static addBond(mol, bfr, bto, order, type) {
+        if (type == null)
+            type = Molecule.BONDTYPE_NORMAL;
+        if (mol.atomAdjCount(bfr) >= 1)
+            this.clearAbbrev(mol, bfr);
+        if (mol.atomAdjCount(bto) >= 1)
+            this.clearAbbrev(mol, bto);
+        let b = mol.findBond(bfr, bto);
+        if (b > 0)
+            mol.deleteBond(b);
+        return mol.addBond(bfr, bto, order, type);
+    }
+    static subgraphMask(mol, mask) {
+        let invidx = [];
+        let sum = 0;
+        for (let n = 0; n < mol.numAtoms; n++) {
+            if (mask[n])
+                invidx.push(++sum);
+            else
+                invidx.push(0);
+        }
+        if (sum == 0)
+            return new Molecule();
+        if (sum == mol.numAtoms)
+            return mol.clone();
+        let frag = new Molecule();
+        for (let n = 1; n <= mol.numAtoms; n++)
+            if (mask[n - 1]) {
+                let num = frag.addAtom(mol.atomElement(n), mol.atomX(n), mol.atomY(n), mol.atomCharge(n), mol.atomUnpaired(n));
+                frag.setAtomIsotope(num, mol.atomIsotope(n));
+                frag.setAtomHExplicit(num, mol.atomHExplicit(n));
+                frag.setAtomMapNum(num, mol.atomMapNum(n));
+                frag.setAtomExtra(num, mol.atomExtra(n));
+            }
+        for (let n = 1; n <= mol.numBonds; n++) {
+            let bfr = invidx[mol.bondFrom(n) - 1], bto = invidx[mol.bondTo(n) - 1];
+            if (bfr > 0 && bto > 0) {
+                let num = frag.addBond(bfr, bto, mol.bondOrder(n), mol.bondType(n));
+                frag.setBondExtra(num, mol.bondExtra(n));
+            }
+        }
+        return frag;
+    }
+    static subgraphIndex(mol, idx) {
+        let invidx = Vec.numberArray(0, mol.numAtoms);
+        for (let n = 0; n < invidx.length; n++)
+            invidx[n] = 0;
+        for (let n = 0; n < idx.length; n++)
+            invidx[idx[n] - 1] = n + 1;
+        let frag = new Molecule();
+        for (let n = 0; n < idx.length; n++) {
+            let num = frag.addAtom(mol.atomElement(idx[n]), mol.atomX(idx[n]), mol.atomY(idx[n]), mol.atomCharge(idx[n]), mol.atomUnpaired(idx[n]));
+            frag.setAtomIsotope(num, mol.atomIsotope(idx[n]));
+            frag.setAtomHExplicit(num, mol.atomHExplicit(idx[n]));
+            frag.setAtomMapNum(num, mol.atomMapNum(idx[n]));
+            frag.setAtomExtra(num, mol.atomExtra(idx[n]));
+        }
+        for (let n = 1; n <= mol.numBonds; n++) {
+            let bfr = invidx[mol.bondFrom(n) - 1], bto = invidx[mol.bondTo(n) - 1];
+            if (bfr > 0 && bto > 0) {
+                let num = frag.addBond(bfr, bto, mol.bondOrder(n), mol.bondType(n));
+                frag.setBondExtra(num, mol.bondExtra(n));
+            }
+        }
+        return frag;
+    }
+    static deleteAtoms(mol, idx) {
+        let mask = Vec.booleanArray(true, mol.numAtoms);
+        for (let n = 0; n < idx.length; n++)
+            mask[idx[n] - 1] = false;
+        return MolUtil.subgraphMask(mol, mask);
+    }
+    static componentList(mol) {
+        let sz = mol.numAtoms;
+        if (sz == 0)
+            return null;
+        let g = Graph.fromMolecule(mol);
+        let groups = g.calculateComponentGroups();
+        for (let grp of groups)
+            Vec.addTo(grp, 1);
+        return groups;
+    }
+    static getAtomSides(mol, atom) {
+        let g = Graph.fromMolecule(mol);
+        let cc = g.calculateComponents();
+        let mask = [];
+        for (let n = 0; n < cc.length; n++)
+            mask.push(cc[n] == cc[atom - 1]);
+        mask[atom - 1] = false;
+        let oldmap = Vec.maskIdx(mask);
+        g.keepNodesMask(mask);
+        cc = g.calculateComponents();
+        let ccmax = Vec.max(cc);
+        let grps = [];
+        for (let n = 0; n < ccmax; n++)
+            grps.push([atom]);
+        for (let n = 0; n < cc.length; n++)
+            grps[cc[n] - 1].push(oldmap[n] + 1);
+        return grps;
+    }
+    static getBondSides(mol, bond) {
+        let bf = mol.bondFrom(bond), bt = mol.bondTo(bond);
+        let inRing = mol.bondInRing(bond);
+        let g = Graph.fromMolecule(mol);
+        let cc = g.calculateComponents();
+        let mask = [];
+        for (let n = 0; n < cc.length; n++)
+            mask.push(cc[n] == cc[bf - 1]);
+        if (!inRing)
+            g.removeEdge(bf - 1, bt - 1);
+        else {
+            mask[bf - 1] = false;
+            mask[bt - 1] = false;
+        }
+        let oldmap = Vec.maskIdx(mask);
+        g.keepNodesMask(mask);
+        cc = g.calculateComponents();
+        let ccmax = Vec.max(cc);
+        let grps = Vec.anyArray([], ccmax);
+        for (let n = 0; n < ccmax; n++) {
+            if (inRing) {
+                grps[n].push(bf);
+                grps[n].push(bt);
+            }
+        }
+        for (let n = 0; n < cc.length; n++)
+            grps[cc[n] - 1].push(oldmap[n] + 1);
+        return grps;
+    }
+    static arrayAtomX(mol) {
+        let x = Vec.numberArray(0, mol.numAtoms);
+        for (let n = x.length - 1; n >= 0; n--)
+            x[n] = mol.atomX(n + 1);
+        return x;
+    }
+    static arrayAtomY(mol) {
+        let y = Vec.numberArray(0, mol.numAtoms);
+        for (let n = y.length - 1; n >= 0; n--)
+            y[n] = mol.atomY(n + 1);
+        return y;
+    }
+    static molecularFormula(mol, punctuation) {
+        for (let n = 1; n <= mol.numAtoms; n++)
+            if (MolUtil.hasAbbrev(mol, n)) {
+                mol = mol.clone();
+                MolUtil.expandAbbrevs(mol, false);
+                break;
+            }
+        let countC = 0, countH = 0;
+        let elements = Vec.stringArray('', mol.numAtoms);
+        for (let n = 1; n <= mol.numAtoms; n++) {
+            countH += mol.atomHydrogens(n);
+            let el = mol.atomElement(n);
+            if (el == 'C')
+                countC++;
+            else if (el == 'H')
+                countH++;
+            else
+                elements[n - 1] = el;
+        }
+        elements.sort();
+        let formula = '';
+        if (countC > 0)
+            formula += 'C';
+        if (countC > 1) {
+            if (punctuation)
+                formula += '{';
+            formula += countC;
+            if (punctuation)
+                formula += '}';
+        }
+        if (countH > 0)
+            formula += 'H';
+        if (countH > 1) {
+            if (punctuation)
+                formula += '{';
+            formula += countH;
+            if (punctuation)
+                formula += '}';
+        }
+        for (let n = 0; n < elements.length; n++)
+            if (elements[n].length > 0) {
+                let count = 1;
+                for (; n + 1 < elements.length && elements[n] == elements[n + 1]; n++)
+                    count++;
+                formula += elements[n];
+                if (count > 1) {
+                    if (punctuation)
+                        formula += '{';
+                    formula += count;
+                    if (punctuation)
+                        formula += '}';
+                }
+            }
+        return formula.toString();
+    }
+    static molecularWeight(mol) {
+        for (let n = 1; n <= mol.numAtoms; n++)
+            if (MolUtil.hasAbbrev(mol, n)) {
+                mol = mol.clone();
+                MolUtil.expandAbbrevs(mol, false);
+                break;
+            }
+        let mw = 0;
+        for (let n = 1; n <= mol.numAtoms; n++) {
+            mw += mol.atomHydrogens(n) * Chemistry.NATURAL_ATOMIC_WEIGHTS[1];
+            let iso = mol.atomIsotope(n);
+            if (iso != Molecule.ISOTOPE_NATURAL) {
+                mw += iso;
+                continue;
+            }
+            let an = Molecule.elementAtomicNumber(mol.atomElement(n));
+            if (an > 0 && an < Chemistry.NATURAL_ATOMIC_WEIGHTS.length)
+                mw += Chemistry.NATURAL_ATOMIC_WEIGHTS[an];
+        }
+        return mw;
+    }
+    static removeDuplicateBonds(mol) {
+        let bpri = [];
+        for (let n = 1; n <= mol.numBonds; n++) {
+            let p = Math.min(mol.bondFrom(n), mol.bondTo(n)) * mol.numAtoms + Math.max(mol.bondFrom(n), mol.bondTo(n));
+            bpri.push(p);
+        }
+        let bidx = Vec.idxSort(bpri);
+        let keepmask = Vec.booleanArray(false, bidx.length);
+        let p = 0;
+        while (p < bidx.length) {
+            let sz = 1;
+            while (p + sz < bidx.length && bpri[bidx[p]] == bpri[bidx[p + sz]])
+                sz++;
+            let best = p;
+            for (let n = p + 1; n < p + sz; n++) {
+                let b1 = bidx[best] + 1, b2 = bidx[n] + 1;
+                let a1 = mol.bondFrom(b1), a2 = mol.bondTo(b1);
+                let el1 = mol.atomElement(a1), el2 = mol.atomElement(a2);
+                let limit1 = 0, limit2 = 0;
+                if (el1 == 'C' || el1 == 'N')
+                    limit1 = 4;
+                else if (el1 == 'O')
+                    limit1 = 3;
+                if (el2 == 'C' || el2 == 'N')
+                    limit2 = 4;
+                else if (el2 == 'O')
+                    limit2 = 3;
+                if (limit1 > 0 || limit2 > 0) {
+                    let boB1A1 = 0, boB1A2 = 0, boB2A1 = 0, boB2A2 = 0;
+                    for (let i = 1; i <= mol.numBonds; i++) {
+                        if (i != b2 && (mol.bondFrom(i) == a1 || mol.bondTo(i) == a1))
+                            boB1A1 += mol.bondOrder(i);
+                        if (i != b2 && (mol.bondFrom(i) == a2 || mol.bondTo(i) == a2))
+                            boB1A2 += mol.bondOrder(i);
+                        if (i != b1 && (mol.bondFrom(i) == a1 || mol.bondTo(i) == a1))
+                            boB2A1 += mol.bondOrder(i);
+                        if (i != b1 && (mol.bondFrom(i) == a2 || mol.bondTo(i) == a2))
+                            boB2A2 += mol.bondOrder(i);
+                    }
+                    let bad1 = 0, bad2 = 0;
+                    if (limit1 > 0 && boB1A1 > limit1)
+                        bad1++;
+                    if (limit2 > 0 && boB1A2 > limit2)
+                        bad1++;
+                    if (limit1 > 0 && boB2A1 > limit1)
+                        bad2++;
+                    if (limit2 > 0 && boB2A2 > limit2)
+                        bad2++;
+                    if (bad1 < bad2)
+                        continue;
+                    if (bad1 > bad2) {
+                        best = n;
+                        continue;
+                    }
+                }
+                let exotic1 = 2 * mol.bondOrder(b1), exotic2 = 2 * mol.bondOrder(b2);
+                exotic1 += (exotic1 == 0 ? 4 : 0) + (mol.bondType(b1) != Molecule.BONDTYPE_NORMAL ? 1 : 0);
+                exotic2 += (exotic2 == 0 ? 4 : 0) + (mol.bondType(b2) != Molecule.BONDTYPE_NORMAL ? 1 : 0);
+                if (exotic2 > exotic1)
+                    best = n;
+            }
+            keepmask[bidx[best]] = true;
+            p += sz;
+        }
+        for (let n = mol.numBonds; n >= 1; n--)
+            if (!keepmask[n - 1] || mol.bondFrom(n) == mol.bondTo(n))
+                mol.deleteBond(n);
+    }
+    static calculateWalkWeight(mol, atom) {
+        let ccsz = 0, cc = Graph.fromMolecule(mol).calculateComponents();
+        for (let n = 0; n < cc.length; n++)
+            if (cc[n] == cc[atom - 1])
+                ccsz++;
+        let w = Vec.numberArray(1, mol.numAtoms), wn = Vec.numberArray(0, mol.numAtoms);
+        w[atom - 1] = 0;
+        for (; ccsz > 0; ccsz--) {
+            for (let n = 0; n < mol.numAtoms; n++)
+                wn[n] = w[n];
+            for (let n = 1; n <= mol.numBonds; n++) {
+                let a1 = mol.bondFrom(n) - 1, a2 = mol.bondTo(n) - 1;
+                w[a1] += wn[a2] * 0.1;
+                w[a2] += wn[a1] * 0.1;
+            }
+            w[atom - 1] = 0;
+        }
+        return w;
+    }
+    static totalHydrogens(mol, atom) {
+        let hc = mol.atomHydrogens(atom);
+        let adj = mol.atomAdjList(atom);
+        for (let n = 0; n < adj.length; n++)
+            if (mol.atomElement(adj[n]) == 'H')
+                hc++;
+        return hc;
+    }
+    static stripHydrogens(mol, force) {
+        if (force == null)
+            force = false;
+        for (let n = mol.numAtoms; n >= 1; n--) {
+            if (mol.atomElement(n) != 'H')
+                continue;
+            if (!force) {
+                if (mol.atomCharge(n) != 0 || mol.atomUnpaired(n) != 0)
+                    continue;
+                if (mol.atomIsotope(n) != Molecule.ISOTOPE_NATURAL)
+                    continue;
+                if (mol.atomExtra(n) != null || mol.atomTransient(n) != null)
+                    continue;
+                if (mol.atomAdjCount(n) != 1)
+                    continue;
+                let other = mol.atomAdjList(n)[0];
+                if (mol.atomElement(other) == 'H')
+                    continue;
+                let bond = mol.atomAdjBonds(n)[0];
+                if (mol.bondOrder(bond) != 1 || mol.bondType(bond) != Molecule.BONDTYPE_NORMAL)
+                    continue;
+                if (mol.atomHExplicit(other) != Molecule.HEXPLICIT_UNKNOWN)
+                    continue;
+                if (Molecule.HYVALENCE_EL.indexOf(mol.atomElement(other)) < 0)
+                    continue;
+            }
+            mol.deleteAtomAndBonds(n);
+        }
+    }
+    static createHydrogens(mol, position) {
+        if (position == null)
+            position = false;
+        let na = mol.numAtoms;
+        for (let n = 1; n <= na; n++) {
+            let hc = mol.atomHydrogens(n);
+            if (hc == 0)
+                continue;
+            if (mol.atomHExplicit(n) != Molecule.HEXPLICIT_UNKNOWN)
+                mol.setAtomHExplicit(n, 0);
+            if (!position) {
+                for (; hc > 0; hc--) {
+                    let a = mol.addAtom("H", mol.atomX(n), mol.atomY(n));
+                    mol.addBond(n, a, 1);
+                }
+            }
+            else
+                SketchUtil.placeAdditionalHydrogens(mol, n, hc);
+        }
+        return mol.numAtoms - na;
+    }
+    static atomVec3(mol, atom) {
+        if (mol.is3D())
+            return [mol.atomX(atom), mol.atomY(atom), mol.atomZ(atom)];
+        else
+            return [mol.atomX(atom), mol.atomY(atom), 0];
+    }
+}
+MolUtil.TEMPLATE_ATTACHMENT = 'X';
+MolUtil.ABBREV_ATTACHMENT = '*';
+class MDLMOLWriter {
+    constructor(mol) {
+        this.mol = mol;
+        this.includeHeader = true;
+        this.enhancedFields = true;
+        this.chargeSeparate = true;
+        this.molName = '';
+        this.lines = [];
+    }
+    write() {
+        if (this.includeHeader) {
+            this.lines.push(this.molName);
+            this.lines.push('Generated by WebMolKit');
+            this.lines.push('');
+            this.writeCTAB();
+        }
+        return this.lines.join('\n');
+    }
+    getResult() {
+        return this.lines.join('\n');
+    }
+    writeCTAB() {
+        let mol = this.mol;
+        for (let n = 1; n <= mol.numAtoms; n++)
+            if (MolUtil.hasAbbrev(mol, n)) {
+                mol = mol.clone();
+                MolUtil.expandAbbrevs(mol, true);
+                break;
+            }
+        this.lines.push(this.intrpad(mol.numAtoms, 3) + this.intrpad(mol.numBonds, 3) + '  0  0  0  0  0  0  0  0999 V2000');
+        let chgidx = [], chgval = [];
+        let radidx = [], radval = [];
+        let isoidx = [], isoval = [];
+        let rgpidx = [], rgpval = [];
+        let hydidx = [], hydval = [];
+        let zchidx = [], zchval = [];
+        let zboidx = [], zboval = [];
+        for (let n = 1; n <= mol.numAtoms; n++) {
+            let x = mol.atomX(n), y = mol.atomY(n), z = 0;
+            let line = this.rpad(x.toFixed(4), 10) + this.rpad(y.toFixed(4), 10) + this.rpad(z.toFixed(4), 10);
+            let str = mol.atomElement(n);
+            if (str.length > 3)
+                str = str.substring(0, 3);
+            if (str.length > 1 && str.charAt(0) == 'R' && str.charAt(1) >= '0' && str.charAt(1) <= '9') {
+                rgpidx.push(n);
+                rgpval.push(parseInt(str.substring(1)));
+                str = 'R#';
+            }
+            while (str.length < 4)
+                str += ' ';
+            line += ' ' + str + '0';
+            let chg = mol.atomCharge(n), rad = mol.atomUnpaired(n), mapnum = mol.atomMapNum(n);
+            if (chg >= -3 && chg <= -1)
+                chg = 4 - chg;
+            else if (chg == 0 && rad == 2)
+                chg = 4;
+            else if (chg >= 1 && chg <= 3)
+                chg = 4 - chg;
+            else
+                chg = 0;
+            line += this.intrpad(chg, 3) + '  0  0  0  0  0  0  0' + this.intrpad(mapnum, 3) + '  0  0';
+            this.lines.push(line);
+            if (mol.atomCharge(n) != 0) {
+                chgidx.push(n);
+                chgval.push(mol.atomCharge(n));
+            }
+            if (mol.atomUnpaired(n) != 0) {
+                radidx.push(n);
+                radval.push(mol.atomUnpaired(n));
+            }
+            if (mol.atomIsotope(n) != Molecule.ISOTOPE_NATURAL) {
+                isoidx.push(n);
+                isoval.push(mol.atomIsotope(n));
+            }
+        }
+        for (let n = 1; n <= mol.numBonds; n++) {
+            let type = mol.bondOrder(n);
+            let stereo = mol.bondType(n);
+            if (stereo == Molecule.BONDTYPE_NORMAL) { }
+            else if (stereo == Molecule.BONDTYPE_INCLINED) {
+                stereo = 1;
+                type = 1;
+            }
+            else if (stereo == Molecule.BONDTYPE_DECLINED) {
+                stereo = 6;
+                type = 1;
+            }
+            else if (stereo == Molecule.BONDTYPE_UNKNOWN) {
+                stereo = 4;
+                type = 1;
+            }
+            else
+                stereo = 0;
+            let line = this.intrpad(mol.bondFrom(n), 3) + this.intrpad(mol.bondTo(n), 3) +
+                this.intrpad(type, 3) + this.intrpad(stereo, 3) + '  0  0  0';
+            this.lines.push(line);
+        }
+        this.writeMBlock('CHG', chgidx, chgval);
+        this.writeMBlock('RAD', radidx, radval);
+        this.writeMBlock('ISO', isoidx, isoval);
+        this.writeMBlock('RGP', rgpidx, rgpval);
+        this.writeMBlock('HYD', hydidx, hydval);
+        this.writeMBlock('ZCH', zchidx, zchval);
+        this.writeMBlock('ZBO', zboidx, zboval);
+        for (let n = 1; n <= mol.numAtoms; n++)
+            if (mol.atomElement(n).length > 2) {
+                this.lines.push('A  ' + this.intrpad(n, 3));
+                this.lines.push(mol.atomElement(n));
+            }
+        this.lines.push('M  END');
+    }
+    writeMBlock(token, idx, val) {
+        const sz = idx.length;
+        for (let i = 0; i < sz; i += 8) {
+            let count = Math.min(8, sz - i);
+            let line = "M  " + token + this.intrpad(count, 3);
+            for (let j = 0; j < count; j++)
+                line += this.intrpad(idx[i + j], 4) + this.intrpad(val[i + j], 4);
+            this.lines.push(line);
+        }
+    }
+    intrpad(num, sz) {
+        return this.rpad(num.toString(), sz);
+    }
+    rpad(str, sz) {
+        while (str.length < sz)
+            str = ' ' + str;
+        return str;
+    }
+}
+class MDLSDFWriter {
+    constructor(ds) {
+        this.ds = ds;
+        this.lines = [];
+    }
+    write() {
+        let ds = this.ds, lines = this.lines;
+        let colMol = this.ds.firstColOfType(DataSheet.COLTYPE_MOLECULE);
+        for (let i = 0; i < ds.numRows; i++) {
+            let mol = colMol < 0 ? null : ds.getMolecule(i, colMol);
+            if (MolUtil.notBlank(mol)) {
+                let molstr = new MDLMOLWriter(mol).write();
+                lines.push(molstr);
+            }
+            for (let j = 0; j < ds.numCols; j++)
+                if (j != colMol && ds.notNull(i, j)) {
+                    let ct = ds.colType(j);
+                    let val = '';
+                    if (ct == DataSheet.COLTYPE_STRING)
+                        val = ds.getString(i, j);
+                    else if (ct == DataSheet.COLTYPE_INTEGER)
+                        val = ds.getInteger(i, j).toString();
+                    else if (ct == DataSheet.COLTYPE_REAL)
+                        val = ds.getReal(i, j).toString();
+                    else if (ct == DataSheet.COLTYPE_BOOLEAN)
+                        val = ds.getBoolean(i, j) ? 'true' : 'false';
+                    if (val != '') {
+                        lines.push('> <' + ds.colName(j) + '>');
+                        lines.push(val);
+                        lines.push('');
+                    }
+                }
+            lines.push('$$$$');
+        }
+        return lines.join('\n');
+    }
+    getResult() {
+        return this.lines.join('\n');
+    }
+}
+class MoleculeStream {
+    static readNative(strData) {
+        let mol = new Molecule();
+        mol.keepTransient = true;
+        let lines = strData.split(/\r?\n/);
+        if (lines.length < 2)
+            return null;
+        if (!lines[0].startsWith('SketchEl!') && lines.length >= 4 && lines[3].indexOf('V2000') >= 0) {
+            let i = strData.indexOf('SketchEl!');
+            if (i < 0)
+                return null;
+            lines = strData.substring(i).split(/r?\n/);
+        }
+        let bits = lines[0].match(/^SketchEl\!\((\d+)\,(\d+)\)/);
+        if (!bits)
+            return null;
+        let numAtoms = parseInt(bits[1]), numBonds = parseInt(bits[2]);
+        if (lines.length < 2 + numAtoms + numBonds)
+            return null;
+        if (!lines[1 + numAtoms + numBonds].match(/^!End/))
+            return null;
+        for (let n = 0; n < numAtoms; n++) {
+            bits = lines[1 + n].split(/[=,;]/);
+            let num = mol.addAtom(bits[0], parseFloat(bits[1]), parseFloat(bits[2]), parseInt(bits[3]), parseInt(bits[4]));
+            let extra = [], trans = [];
+            for (let i = 5; i < bits.length; i++) {
+                let ch = bits[i].charAt(0);
+                if (bits[i].charAt(0) == 'i') { }
+                else if (bits[i].charAt(0) == 'e')
+                    mol.setAtomHExplicit(num, parseInt(bits[i].substring(1)));
+                else if (bits[i].charAt(0) == 'm')
+                    mol.setAtomIsotope(num, parseInt(bits[i].substring(1)));
+                else if (bits[i].charAt(0) == 'n')
+                    mol.setAtomMapNum(num, parseInt(bits[i].substring(1)));
+                else if (bits[i].charAt(0) == 'x')
+                    extra.push(MoleculeStream.sk_unescape(bits[i]));
+                else if (bits[i].charAt(0) == 'y')
+                    trans.push(MoleculeStream.sk_unescape(bits[i]));
+                else if (bits[i].charAt(0) == 'z') {
+                    mol.setAtomZ(num, parseFloat(bits[i].substring(1)));
+                    mol.setIs3D(true);
+                }
+                else
+                    extra.push(MoleculeStream.sk_unescape(bits[i]));
+            }
+            mol.setAtomExtra(num, extra);
+            mol.setAtomTransient(num, trans);
+        }
+        for (let n = 0; n < numBonds; n++) {
+            bits = lines[1 + numAtoms + n].split(/[-=,]/);
+            let num = mol.addBond(parseInt(bits[0]), parseInt(bits[1]), parseInt(bits[2]), parseInt(bits[3]));
+            let extra = new Array(), trans = new Array();
+            for (let i = 4; i < bits.length; i++) {
+                let ch = bits[i].charAt(0);
+                if (bits[i].charAt(0) == 'x')
+                    extra.push(MoleculeStream.sk_unescape(bits[i]));
+                else if (bits[i].charAt(0) == 'y')
+                    trans.push(MoleculeStream.sk_unescape(bits[i]));
+                else
+                    extra.push(MoleculeStream.sk_unescape(bits[i]));
+            }
+            mol.setBondExtra(num, extra);
+            mol.setBondTransient(num, trans);
+        }
+        mol.keepTransient = false;
+        return mol;
+    }
+    static writeNative(mol) {
+        let ret = 'SketchEl!(' + mol.numAtoms + ',' + mol.numBonds + ')\n';
+        for (let n = 1; n <= mol.numAtoms; n++) {
+            let el = mol.atomElement(n), x = mol.atomX(n), y = mol.atomY(n), charge = mol.atomCharge(n), unpaired = mol.atomUnpaired(n);
+            let hy = mol.atomHExplicit(n) != Molecule.HEXPLICIT_UNKNOWN ? ('e' + mol.atomHExplicit(n)) : ('i' + mol.atomHydrogens(n));
+            ret += MoleculeStream.sk_escape(el) + '=' + x.toFixed(4) + ',' + y.toFixed(4) + ';' + charge + ',' + unpaired + ',' + hy;
+            if (mol.is3D())
+                ret += ',z' + mol.atomZ(n);
+            if (mol.atomIsotope(n) != Molecule.ISOTOPE_NATURAL)
+                ret += ',m' + mol.atomIsotope(n);
+            if (mol.atomMapNum(n) > 0)
+                ret += ',n' + mol.atomMapNum(n);
+            ret += MoleculeStream.sk_encodeExtra(mol.atomExtra(n));
+            ret += MoleculeStream.sk_encodeExtra(mol.atomTransient(n));
+            ret += '\n';
+        }
+        for (let n = 1; n <= mol.numBonds; n++) {
+            ret += mol.bondFrom(n) + '-' + mol.bondTo(n) + '=' + mol.bondOrder(n) + ',' + mol.bondType(n);
+            ret += MoleculeStream.sk_encodeExtra(mol.bondExtra(n));
+            ret += MoleculeStream.sk_encodeExtra(mol.bondTransient(n));
+            ret += '\n';
+        }
+        ret += '!End\n';
+        return ret;
+    }
+    static readMDLMOL(strData) {
+        let src = new MDLMOLReader(strData);
+        src.parseHeader = true;
+        src.parse();
+        return src.mol;
+    }
+    static writeMDLMOL(mol) {
+        return new MDLMOLWriter(mol).write();
+    }
+    static sk_unescape(str) {
+        let ret = '', match;
+        while (match = str.match(/^(.*?)\\([0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f])(.*)/)) {
+            ret += match[1] + String.fromCharCode(parseInt("0x" + match[2]));
+            str = match[3];
+        }
+        return ret + str;
+    }
+    static sk_escape(str) {
+        let ret = '';
+        for (let n = 0; n < str.length; n++) {
+            let ch = str.charAt(n), code = str.charCodeAt(n);
+            if (code <= 32 || code > 127 || ch == '\\' || ch == ',' || ch == ';' || ch == '=') {
+                let hex = (code & 0xFFFF).toString(16).toUpperCase();
+                ret += '\\';
+                for (let i = 4 - hex.length; i > 0; i--)
+                    ret += '0';
+                ret += hex;
+            }
+            else
+                ret += ch;
+        }
+        return ret;
+    }
+    static sk_encodeExtra(extra) {
+        let ret = '';
+        for (let n = 0; n < extra.length; n++)
+            ret += ',' + MoleculeStream.sk_escape(extra[n]);
+        return ret;
+    }
+    ;
+}
+class SARTable extends Aspect {
+    constructor(ds, allowModify) {
+        super(ds, allowModify);
+        this.setup();
+    }
+    static isSARTable(ds) {
+        for (let n = 0; n < ds.numExtensions; n++)
+            if (ds.getExtType(n) == SARTable.CODE)
+                return true;
+        return false;
+    }
+    getFields() {
+        for (let n = 0; n < this.ds.numExtensions; n++)
+            if (this.ds.getExtType(n) == SARTable.CODE)
+                return this.parseMetaData(this.ds.getExtData(n));
+        return null;
+    }
+    setFields(fields) {
+        let content = this.formatMetaData(fields);
+        for (let n = 0; n < this.ds.numExtensions; n++)
+            if (this.ds.getExtType(n) == SARTable.CODE) {
+                this.ds.setExtData(n, content);
+                return;
+            }
+        this.ds.appendExtension(SARTable.NAME, SARTable.CODE, content);
+    }
+    getEntry(row) {
+        let fields = this.getFields();
+        let entry = {
+            'construct': this.ds.getMolecule(row, fields.construct),
+            'locked': !!this.ds.getBoolean(row, fields.locked),
+            'scaffold': this.ds.getMolecule(row, fields.scaffold),
+            'substNames': [],
+            'substituents': []
+        };
+        for (let subst of fields.substituents) {
+            entry.substNames.push(subst);
+            entry.substituents.push(this.ds.getMolecule(row, subst));
+        }
+        return entry;
+    }
+    setEntry(row, entry) {
+        let fields = this.getFields();
+        let colConstruct = this.ds.findColByName(fields.construct, DataSheet.COLTYPE_MOLECULE);
+        if (colConstruct >= 0)
+            this.ds.setMolecule(row, colConstruct, entry.construct);
+        let colLocked = this.ds.findColByName(fields.locked, DataSheet.COLTYPE_BOOLEAN);
+        if (colLocked >= 0)
+            this.ds.setBoolean(row, colLocked, entry.locked);
+        let colScaffold = this.ds.findColByName(fields.scaffold, DataSheet.COLTYPE_MOLECULE);
+        if (colScaffold >= 0)
+            this.ds.setMolecule(row, colScaffold, entry.scaffold);
+        for (let n = 0; n < fields.substituents.length; n++) {
+            let colSubst = this.ds.findColByName(fields.substituents[n], DataSheet.COLTYPE_MOLECULE);
+            if (colSubst >= 0)
+                this.ds.setMolecule(row, colSubst, entry.substituents[n]);
+        }
+    }
+    createSubstituents(tobeAdded) {
+        if (tobeAdded.length == 0)
+            return;
+        let fields = this.getFields();
+        let modified = false;
+        for (let name of tobeAdded)
+            if (fields.substituents.indexOf(name) < 0) {
+                fields.substituents.push(name);
+                this.ds.ensureColumn(name, DataSheet.COLTYPE_MOLECULE, SARTable.DESCR_SUBSTITUENT);
+                modified = true;
+            }
+        if (modified)
+            this.setFields(fields);
+    }
+    static isAttachment(mol, atom) {
+        return mol.atomicNumber(atom) == 0 && !MolUtil.hasAbbrev(mol, atom) && mol.atomAdjCount(atom) == 1;
+    }
+    setup() {
+        this.parseAndCorrect();
+    }
+    parseAndCorrect() {
+        let fields = {
+            'construct': 'Molecule',
+            'locked': 'Molecule_locked',
+            'scaffold': 'Scaffold',
+            'substituents': [],
+            'metadata': []
+        };
+        let got = false;
+        for (let n = 0; n < this.ds.numExtensions; n++)
+            if (this.ds.getExtType(n) == SARTable.CODE) {
+                fields = this.parseMetaData(this.ds.getExtData(n));
+                got = true;
+                break;
+            }
+        this.ds.ensureColumn(fields.construct, DataSheet.COLTYPE_MOLECULE, SARTable.DESCR_CONSTRUCT);
+        this.ds.ensureColumn(fields.locked, DataSheet.COLTYPE_BOOLEAN, SARTable.DESCR_LOCKED);
+        this.ds.ensureColumn(fields.scaffold, DataSheet.COLTYPE_MOLECULE, SARTable.DESCR_SCAFFOLD);
+        for (let subst of fields.substituents)
+            this.ds.ensureColumn(subst, DataSheet.COLTYPE_MOLECULE, SARTable.DESCR_SUBSTITUENT);
+        if (!got) {
+            let content = this.formatMetaData(fields);
+            this.ds.appendExtension(SARTable.NAME, SARTable.CODE, content);
+        }
+    }
+    parseMetaData(content) {
+        let fields = { 'construct': null, 'locked': null, 'scaffold': null, 'substituents': [], metadata: [] };
+        for (let line of content.split(/\r?\n/)) {
+            let pos = line.indexOf('=');
+            if (pos < 0)
+                continue;
+            let key = line.substring(0, pos), val = line.substring(pos + 1);
+            if (key == 'field') {
+                let bits = val.split(',');
+                if (bits.length >= 3) {
+                    let type = bits[0], name = MoleculeStream.sk_unescape(bits[1]);
+                    if (type == 'construct') {
+                        fields.construct = name;
+                        fields.locked = name + '_locked';
+                        continue;
+                    }
+                    else if (type == 'scaffold') {
+                        fields.scaffold = name;
+                        continue;
+                    }
+                    else if (type == 'substituent') {
+                        fields.substituents.push(name);
+                        continue;
+                    }
+                }
+            }
+            fields.metadata.push(line);
+        }
+        return fields;
+    }
+    formatMetaData(fields) {
+        let content = '';
+        content += 'field=construct,' + MoleculeStream.sk_escape(fields.construct) + ',\n';
+        content += 'field=scaffold,' + MoleculeStream.sk_escape(fields.scaffold) + ',\n';
+        for (let subst of fields.substituents)
+            content += 'field=substituent,' + MoleculeStream.sk_escape(subst) + ',\n';
+        for (let meta of fields.metadata)
+            content += meta + '\n';
+        return content;
+    }
+    plainHeading() { return SARTable.NAME; }
+    isColumnReserved(colName) {
+        return this.areColumnsReserved([colName])[0];
+    }
+    areColumnsReserved(colNames) {
+        let fields = this.getFields();
+        var used = new Set();
+        used.add(fields.construct);
+        used.add(fields.locked);
+        used.add(fields.scaffold);
+        for (let subst of fields.substituents)
+            used.add(subst);
+        let reserved = Vec.booleanArray(false, colNames.length);
+        for (let n = 0; n < colNames.length; n++)
+            reserved[n] = used.has(colNames[n]);
+        return reserved;
+    }
+    numGraphicRenderings(row) {
+        let fields = this.getFields();
+        return 2 + fields.substituents.length;
+    }
+    produceGraphicRendering(row, idx, policy) {
+        let fields = this.getFields(), ds = this.ds;
+        if (idx == SARTable.RENDER_CONSTRUCT) {
+            let mol = ds.getMolecule(row, fields.construct);
+            let metavec = new MetaVector();
+            if (MolUtil.notBlank(mol)) {
+                let effects = new RenderEffects();
+                for (let n = 1; n <= mol.numAtoms; n++)
+                    if (mol.atomMapNum(n) > 0)
+                        effects.colAtom[n] = 0x096E6F;
+                for (let n = 1; n <= mol.numBonds; n++) {
+                    let m1 = mol.atomMapNum(mol.bondFrom(n)), m2 = mol.atomMapNum(mol.bondTo(n));
+                    if (m1 > 0 && m2 > 0)
+                        effects.colBond[n] = 0x096E6F;
+                    else if (m1 > 0 || m2 > 0)
+                        effects.dottedBondCross[n] = 0x606060;
+                }
+                let measure = new OutlineMeasurement(0, 0, policy.data.pointScale);
+                let layout = new ArrangeMolecule(mol, measure, policy, effects);
+                layout.arrange();
+                new DrawMolecule(layout, metavec).draw();
+            }
+            else
+                metavec.drawText(0, 0, '?', 15, 0x000000);
+            metavec.normalise();
+            return [fields.construct, metavec];
+        }
+        else if (idx == SARTable.RENDER_SCAFFOLD) {
+            let mol = ds.getMolecule(row, fields.scaffold);
+            let metavec = new MetaVector();
+            if (MolUtil.notBlank(mol)) {
+                let effects = new RenderEffects();
+                for (let n = 1; n <= mol.numAtoms; n++)
+                    if (SARTable.isAttachment(mol, n)) {
+                        let isDefined = false;
+                        let el = mol.atomElement(n);
+                        outer: for (let colName of fields.substituents) {
+                            let subst = ds.getMolecule(row, colName);
+                            for (let i = 1; i <= subst.numAtoms; i++)
+                                if (subst.atomElement(i) == el || (subst.atomElement(i) == 'R' && el == colName)) {
+                                    isDefined = true;
+                                    break outer;
+                                }
+                        }
+                        effects.colAtom[n] = isDefined ? 0x096E6F : 0xFF0000;
+                        effects.dottedRectOutline[n] = isDefined ? 0x808080 : 0xFF0000;
+                    }
+                let measure = new OutlineMeasurement(0, 0, policy.data.pointScale);
+                let layout = new ArrangeMolecule(mol, measure, policy, effects);
+                layout.arrange();
+                new DrawMolecule(layout, metavec).draw();
+            }
+            else
+                metavec.drawText(0, 0, '?', 15, 0x000000);
+            metavec.normalise();
+            return [fields.construct, metavec];
+        }
+        else if (idx >= SARTable.RENDER_SUBSTITUENT && idx < SARTable.RENDER_SUBSTITUENT + fields.substituents.length) {
+            let sidx = idx - SARTable.RENDER_SUBSTITUENT;
+            let mol = ds.getMolecule(row, fields.substituents[sidx]);
+            let metavec = new MetaVector();
+            if (MolUtil.notBlank(mol)) {
+                let effects = new RenderEffects();
+                for (let n = 1; n <= mol.numAtoms; n++)
+                    if (SARTable.isAttachment(mol, n)) {
+                        effects.colAtom[n] = 0x096E6F;
+                        effects.dottedRectOutline[n] = 0x808080;
+                    }
+                let measure = new OutlineMeasurement(0, 0, policy.data.pointScale);
+                let layout = new ArrangeMolecule(mol, measure, policy, effects);
+                layout.arrange();
+                new DrawMolecule(layout, metavec).draw();
+            }
+            else {
+                let txt = '?';
+                let scaff = ds.getMolecule(row, fields.scaffold);
+                if (MolUtil.notBlank(scaff)) {
+                    let sname = fields.substituents[sidx];
+                    txt = 'n/a';
+                    for (let n = 1; n <= scaff.numAtoms; n++)
+                        if (scaff.atomElement(n) == sname) {
+                            txt = '?';
+                            break;
+                        }
+                    if (txt == '?')
+                        for (let n = 0; n < fields.substituents.length; n++)
+                            if (n != sidx) {
+                                let subst = ds.getMolecule(row, fields.substituents[n]);
+                                if (MolUtil.notBlank(subst)) {
+                                    for (let i = 1; i <= subst.numAtoms; i++)
+                                        if (subst.atomElement(i) == sname) {
+                                            txt = 'n/a';
+                                            break;
+                                        }
+                                }
+                            }
+                }
+                metavec.drawText(0, 0, txt, 15, 0x000000);
+            }
+            metavec.normalise();
+            return [fields.construct, metavec];
+        }
+        return [null, null];
+    }
+}
+SARTable.CODE = 'org.mmi.aspect.SARTable';
+SARTable.NAME = 'SAR Table';
+SARTable.DESCR_CONSTRUCT = 'Structure of constructed molecule';
+SARTable.DESCR_LOCKED = 'Whether constructed molecule should be rebuilt';
+SARTable.DESCR_SCAFFOLD = 'Decorated core scaffold of molecule';
+SARTable.DESCR_SUBSTITUENT = 'Substituent fragment to be attached to scaffold';
+SARTable.RENDER_CONSTRUCT = 0;
+SARTable.RENDER_SCAFFOLD = 1;
+SARTable.RENDER_SUBSTITUENT = 2;
+const SUPPORTED_ASPECTS = {};
+class AspectList {
+    constructor(ds) {
+        this.ds = ds;
+        if (!SUPPORTED_ASPECTS) {
+            SUPPORTED_ASPECTS[SARTable.CODE] = SARTable.NAME;
+        }
+    }
+    list() {
+        let present = [], absent = [];
+        let codes = new Set();
+        for (let n = 0; n < this.ds.numExtensions; n++)
+            codes.add(this.ds.getExtType(n));
+        for (let code in SUPPORTED_ASPECTS)
+            if (codes.has(code))
+                present.push(code);
+            else
+                absent.push(code);
+        return [present, absent];
+    }
+    instantiate(code) {
+        if (code == SARTable.CODE)
+            return new SARTable(this.ds);
+        return null;
+    }
+    enumerate() {
+        let aspects = [];
+        for (let n = 0; n < this.ds.numExtensions; n++) {
+            let code = this.ds.getExtType(n);
+            if (SUPPORTED_ASPECTS[code])
+                aspects.push(this.instantiate(code));
+        }
+        return aspects;
+    }
+}
 let crc_table = [];
 function make_crc_table() {
     if (crc_table.length > 0)
@@ -6099,6 +6482,25 @@ RenderPolicy.defaultPrintedPublication = function () {
     return policy;
 };
 class RenderEffects {
+    constructor() {
+        this.colAtom = {};
+        this.colBond = {};
+        this.dottedRectOutline = {};
+        this.dottedBondCross = {};
+        this.hideAtoms = new Set();
+        this.hideBonds = new Set();
+        this.atomFrameDotSz = [];
+        this.atomFrameCol = [];
+        this.atomCircleSz = [];
+        this.atomCircleCol = [];
+        this.atomDecoText = [];
+        this.atomDecoCol = [];
+        this.atomDecoSize = [];
+        this.bondDecoText = [];
+        this.bondDecoCol = [];
+        this.bondDecoSize = [];
+        this.overlapAtoms = [];
+    }
 }
 class GeomUtil {
     static pointInPolygon(x, y, px, py) {
@@ -9433,10 +9835,14 @@ class DrawMolecule {
                 if (spc.px != null && spc.py != null && spc.px.length > 2)
                     this.vg.drawPoly(spc.px, spc.py, 0x000000, 1, 0x808080FF, true);
             }
-        for (let n = 0; n < this.layout.numLines(); n++) {
-            let b = this.layout.getLine(n);
+        this.drawUnderEffects();
+        let layout = this.layout, effects = this.effects, policy = this.policy, vg = this.vg;
+        for (let n = 0; n < layout.numLines(); n++) {
+            let b = layout.getLine(n);
+            if (effects.hideBonds.has(b.bnum))
+                continue;
             if (b.type == BLineType.Normal) {
-                this.vg.drawLine(b.line.x1, b.line.y1, b.line.x2, b.line.y2, b.col, b.size);
+                vg.drawLine(b.line.x1, b.line.y1, b.line.x2, b.line.y2, b.col, b.size);
             }
             else if (b.type == BLineType.Inclined)
                 this.drawBondInclined(b);
@@ -9449,43 +9855,128 @@ class DrawMolecule {
             else if (b.type == BLineType.IncDouble || b.type == BLineType.IncTriple || b.type == BLineType.IncQuadruple)
                 this.drawBondIncMulti(b);
         }
-        for (let n = 0; n < this.layout.numPoints(); n++) {
-            let p = this.layout.getPoint(n);
+        for (let n = 0; n < layout.numPoints(); n++) {
+            let p = layout.getPoint(n);
+            if (effects.hideBonds.has(p.anum))
+                continue;
             let txt = p.text;
             if (txt == null)
                 continue;
             let fsz = p.fsz;
             let cx = p.oval.cx, cy = p.oval.cy, rw = p.oval.rw;
             let col = p.col;
-            while (txt.endsWith(".")) {
+            while (txt.endsWith('.')) {
                 let dw = rw / txt.length;
                 let r = fsz * 0.15;
-                this.vg.drawOval(cx + rw - dw, cy, r, r, MetaVector.NOCOLOUR, 0, col);
+                vg.drawOval(cx + rw - dw, cy, r, r, MetaVector.NOCOLOUR, 0, col);
                 cx -= dw;
                 rw -= dw;
                 txt = txt.substring(0, txt.length - 1);
             }
-            while (txt.startsWith("+")) {
+            while (txt.startsWith('+')) {
                 let dw = rw / txt.length;
                 let x = cx - rw + dw, y = cy, r = fsz * 0.18, lsz = fsz * 0.1;
-                this.vg.drawLine(x - r, y, x + r, y, col, lsz);
-                this.vg.drawLine(x, y - r, x, y + r, col, lsz);
+                vg.drawLine(x - r, y, x + r, y, col, lsz);
+                vg.drawLine(x, y - r, x, y + r, col, lsz);
                 cx += dw;
                 rw -= dw;
                 txt = txt.substring(1, txt.length);
             }
-            while (txt.startsWith("-")) {
+            while (txt.startsWith('-')) {
                 let dw = rw / txt.length;
                 let x = cx - rw + dw, y = cy, r = fsz * 0.18, lsz = fsz * 0.1;
-                this.vg.drawLine(x - r, y, x + r, y, col, lsz);
+                vg.drawLine(x - r, y, x + r, y, col, lsz);
                 cx += dw;
                 rw -= dw;
                 txt = txt.substring(1, txt.length);
             }
             if (txt.length > 0) {
-                this.vg.drawText(cx, cy, txt, fsz, col, TextAlign.Centre | TextAlign.Middle);
+                vg.drawText(cx, cy, txt, fsz, col, TextAlign.Centre | TextAlign.Middle);
             }
         }
+        this.drawOverEffects();
+    }
+    drawUnderEffects() {
+        let mol = this.mol, policy = this.policy, effects = this.effects, layout = this.layout, scale = this.scale, vg = this.vg;
+        for (let n = 0, num = Math.min(effects.atomFrameDotSz.length, mol.numAtoms); n < num; n++) {
+            if (effects.hideAtoms.has(n + 1))
+                continue;
+            let dw = effects.atomFrameDotSz[n] * scale, col = effects.atomFrameCol[n];
+            let a = layout.getPoint(n);
+            let rw = a.oval.rw + 0.1 * scale, rh = a.oval.rh + 0.1 * scale;
+            let wdots = Math.ceil(2 * rw / (3 * dw));
+            let hdots = Math.ceil(2 * rh / (3 * dw));
+            let wspc = 2 * rw / wdots, hspc = 2 * rh / hdots;
+            for (let i = 0; i <= wdots; i++) {
+                let x = a.oval.cx - rw + i * wspc;
+                vg.drawOval(x, a.oval.cy - rh, dw, dw, MetaVector.NOCOLOUR, 0, col);
+                vg.drawOval(x, a.oval.cy + rh, dw, dw, MetaVector.NOCOLOUR, 0, col);
+            }
+            for (let i = 1; i < hdots; i++) {
+                let y = a.oval.cy - rh + i * hspc;
+                vg.drawOval(a.oval.cx - rw, y, dw, dw, MetaVector.NOCOLOUR, 0, col);
+                vg.drawOval(a.oval.cx + rw, y, dw, dw, MetaVector.NOCOLOUR, 0, col);
+            }
+        }
+        for (let key in effects.dottedRectOutline) {
+            let atom = parseInt(key), col = effects.dottedRectOutline[key];
+            let a = layout.getPoint(atom - 1);
+            let rw = Math.max(a.oval.rw, 0.2 * scale), rh = Math.max(a.oval.rh, 0.2 * scale);
+            let sz = 0.05 * scale;
+            let xdots = Math.max(1, Math.round(rw / (2 * sz)));
+            let ydots = Math.max(1, Math.round(rh / (2 * sz)));
+            let invX = (2 * rw) / xdots, invY = (2 * rh) / ydots;
+            for (let n = 0; n <= xdots; n++) {
+                let x = a.oval.cx - rw + n * invX;
+                vg.drawOval(x, a.oval.cy - rh, sz, sz, MetaVector.NOCOLOUR, 0, col);
+                vg.drawOval(x, a.oval.cy + rh, sz, sz, MetaVector.NOCOLOUR, 0, col);
+            }
+            for (let n = 1; n < ydots; n++) {
+                let y = a.oval.cy - rh + n * invY;
+                vg.drawOval(a.oval.cx - rw, y, sz, sz, MetaVector.NOCOLOUR, 0, col);
+                vg.drawOval(a.oval.cx + rw, y, sz, sz, MetaVector.NOCOLOUR, 0, col);
+            }
+        }
+        for (let key in effects.dottedBondCross) {
+            let bond = parseInt(key), col = effects.dottedBondCross[key];
+            var x1 = 0, y1 = 0, x2 = 0, y2 = 0, bcount = 0;
+            for (let n = 0; n < layout.numLines(); n++) {
+                let b = layout.getLine(n);
+                if (b.bnum == bond) {
+                    x1 += b.line.x1;
+                    y1 += b.line.y1;
+                    x2 += b.line.x2;
+                    y2 += b.line.y2;
+                    bcount += 1;
+                }
+            }
+            if (bcount > 1) {
+                let inv = 1 / bcount;
+                [x1, y1, x2, y2] = [x1 * inv, y1 * inv, x2 * inv, y2 * inv];
+            }
+            let dx = x2 - x1, dy = y2 - y1;
+            let inv = 0.2 * scale * invZ(norm_xy(dx, dy)), ox = dy * inv, oy = -dx * inv;
+            let cx = 0.5 * (x1 + x2), cy = 0.5 * (y1 + y2), sz = 0.05 * scale;
+            for (let p of [-2, -1, 1, 2]) {
+                let x = cx + p * ox, y = cy + p * oy;
+                vg.drawOval(x, y, sz, sz, MetaVector.NOCOLOUR, 0, col);
+            }
+        }
+    }
+    drawOverEffects() {
+        let mol = this.mol, policy = this.policy, effects = this.effects, layout = this.layout, scale = this.scale, vg = this.vg;
+        for (let a of effects.overlapAtoms) {
+            let p = layout.getPoint(a - 1);
+            let rad = scale * 0.2;
+            vg.drawLine(p.oval.cx - rad, p.oval.cy - rad, p.oval.cx + rad, p.oval.cy + rad, 0xFF0000, 1);
+            vg.drawLine(p.oval.cx + rad, p.oval.cy - rad, p.oval.cx - rad, p.oval.cy + rad, 0xFF0000, 1);
+        }
+        for (let n = 0, num = Math.min(effects.atomCircleSz.length, mol.numAtoms); n < num; n++)
+            if (effects.atomCircleSz[n] > 0) {
+                let dw = effects.atomCircleSz[n] * scale, col = effects.atomCircleCol[n];
+                let p = layout.getPoint(n);
+                vg.drawOval(p.oval.cx, p.oval.cy, dw, dw, MetaVector.NOCOLOUR, 0, col);
+            }
     }
     drawBondInclined(b) {
         let x1 = b.line.x1, y1 = b.line.y1, x2 = b.line.x2, y2 = b.line.y2;
@@ -15582,7 +16073,6 @@ class EmbedMolecule extends EmbedChemistry {
         else {
             span.css('color', 'red');
             span.text('Unable to parse molecule: ' + this.failmsg);
-            console.log('Blag![' + this.molstr + ']');
             let pre = $('<pre></pre>').appendTo(span);
             pre.css('line-height', '1.1');
             pre.text(this.molstr);

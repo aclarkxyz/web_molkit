@@ -182,7 +182,6 @@ class EmbedMolecule extends EmbedChemistry
 		{
 			span.css('color', 'red');
 			span.text('Unable to parse molecule: ' + this.failmsg);
-console.log('Blag!['+this.molstr+']');
 			let pre = $('<pre></pre>').appendTo(span);
 			pre.css('line-height', '1.1');
 			pre.text(this.molstr);

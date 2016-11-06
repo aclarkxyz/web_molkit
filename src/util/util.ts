@@ -212,10 +212,13 @@ function norm2_xyz(dx:number, dy:number, dz:number):number
 {
 	return dx * dx + dy * dy + dz * dz;
 }
+
+// miscellaneous math
 function sqr(v:number):number
 {
 	return v * v;
 }
+function invZ(v:number):number {return v == 0 ? 0 : 1.0 / v;}
 
 // returns true if the numbers are effectively equal, assuming double precision
 function realEqual(v1:number, v2:number) {return v1 == v2 || Math.abs(v1 - v2) <= 1E-14 * Math.max(v1, v2);}

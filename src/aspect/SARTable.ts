@@ -55,6 +55,11 @@ class SARTable extends Aspect
 	private static DESCR_SCAFFOLD = 'Decorated core scaffold of molecule';
 	private static DESCR_SUBSTITUENT = 'Substituent fragment to be attached to scaffold';
 
+	// indices that can be used to request specific graphics
+	public static RENDER_CONSTRUCT = 0;
+	public static RENDER_SCAFFOLD = 1;
+	public static RENDER_SUBSTITUENT = 2; // (and beyond)
+
 	// ----------------- public methods -----------------
 
 	// used to test if a datasheet has the appropriate metadata flagging it as a feedstock-containing datasheet
@@ -141,12 +146,18 @@ class SARTable extends Aspect
 		if (modified) this.setFields(fields);
 	}
 
+	// general purpose: returns true if an atom is considered to be an attachment placeholder
+	public static isAttachment(mol:Molecule, atom:number):boolean
+	{
+		return mol.atomicNumber(atom) == 0 && !MolUtil.hasAbbrev(mol, atom) && mol.atomAdjCount(atom) == 1;
+	}
+
 	// ----------------- private methods -----------------
 
 	// workhorse for the constructor 
 	private setup():void  
 	{
-		//this.parseAndCorrect();
+		this.parseAndCorrect();
 	}
 
     // assuming that the underlying datasheet definitely is a datasheet, makes any necessary corrections to force it into compliance
@@ -233,148 +244,146 @@ class SARTable extends Aspect
 		return this.areColumnsReserved([colName])[0];
 	}
 	
-	/*public areColumnsReserved(colNames:string[]):boolean[]
+	public areColumnsReserved(colNames:string[]):boolean[]
 	{
-		let fields = getFields(ds:ds)
-		var used = Set<String>([fields.construct, fields.locked, fields.scaffold])
-		for subst in fields.substituents {used.insert(subst)}
+		let fields = this.getFields();
+		var used = new Set<String>();
+		used.add(fields.construct);
+		used.add(fields.locked);
+		used.add(fields.scaffold);
+		for (let subst of fields.substituents) used.add(subst);
 
-		var reserved = boolArray(false, colNames.count)
-		for n in 0 ..< colNames.count {reserved[n] = used.contains(colNames[n])}
-		return reserved
-	}*/
-	
-
-	/*public numTextRenderings(row:number):number {return 0;}
-	public produceTextRendering(row:number, idx:number):AspectTextRendering {return null;}
-	
-	public numGraphicRenderings(row:number):number {return 0;}
-	public produceGraphicRendering(row:number, idx:number, policy:RenderPolicy):MetaVector {return null;}
-	
-	public numHeaderRenderings():number {return 0;}
-	public produceHeaderRendering(idx:number):AspectTextRendering {return null;}*/	
-
-
-	
-	/*open override func numGraphicRenderings(row:Int) -> Int
-	{
-		var numSubst = 0
-		data.observe() {(ds:DataSheet) in numSubst = self.getFields(ds:ds).substituents.count}
-		return 2 + numSubst
+		let reserved = Vec.booleanArray(false, colNames.length);
+		for (let n = 0; n < colNames.length; n++) reserved[n] = used.has(colNames[n]);
+		return reserved;
 	}
-	open override func produceGraphicRendering(row:Int, idx:Int, policy:RenderPolicy, vg:VectorGfxBuilder) -> (name:String, vg:VectorGfxBuilder)
-	{
-		var retName = "", retVG = vg
-		data.observe() {(ds:DataSheet) in (retName, retVG) = self.produceGraphicRendering(row:row, idx:idx, policy:policy, vg:vg, ds:ds)}
-		return (name:retName, vg:retVG)
-	}
-	open override func produceGraphicRendering(row:Int, idx:Int, policy:RenderPolicy, vg:VectorGfxBuilder, ds:DataSheet) -> (name:String, vg:VectorGfxBuilder)
-	{
-		let fields = getFields(ds:ds)
 	
-		if idx == Render.Construct
+	public numGraphicRenderings(row:number):number 
+	{
+		let fields = this.getFields();
+		return 2 + fields.substituents.length;
+	}
+	public produceGraphicRendering(row:number, idx:number, policy:RenderPolicy):[string, MetaVector] 
+	{
+		let fields = this.getFields(), ds = this.ds;
+
+		if (idx == SARTable.RENDER_CONSTRUCT)
 		{
-			let mol:Molecule! = ds.getMoleculeWeak(row:row, colName:fields.construct)
-			if mol != nil && mol.numAtoms > 0
+			let mol = ds.getMolecule(row, fields.construct);
+			let metavec = new MetaVector();
+
+			if (MolUtil.notBlank(mol))
 			{
-				let effects = RenderEffects()
-				
+				let effects = new RenderEffects();
+
 				// recolour the core scaffold, and add boundary notation
-				for n in stride(from:1, through:mol.numAtoms, by:1) where mol.atomMapNum(n) > 0 {effects.colAtom[n] = 0x096E6F}
-				for n in stride(from:1, through:mol.numBonds, by:1)
+				for (let n = 1; n <= mol.numAtoms; n++) if (mol.atomMapNum(n) > 0) effects.colAtom[n] = 0x096E6F;
+				for (let n = 1; n <= mol.numBonds; n++)
 				{
-					let m1 = mol.atomMapNum(mol.bondFrom(n)), m2 = mol.atomMapNum(mol.bondTo(n))
-					if m1 > 0 && m2 > 0 {effects.colBond[n] = 0x096E6F}
-					else if m1 > 0 || m2 > 0 {effects.dottedBondCross[n] = 0x606060}
+					let m1 = mol.atomMapNum(mol.bondFrom(n)), m2 = mol.atomMapNum(mol.bondTo(n));
+					if (m1 > 0 && m2 > 0) effects.colBond[n] = 0x096E6F;
+					else if (m1 > 0 || m2 > 0) effects.dottedBondCross[n] = 0x606060;
 				}
-				
-				let measure = OutlineMeasurement(scale:policy.pointScale, yUp:false)
-				let layout = ArrangeMolecule(mol:mol, measure:measure, policy:policy, effects:effects)
-				layout.fastPlacement = true
-				layout.arrange()
-				DrawMolecule(layout:layout, vg:vg).draw()
+
+				let measure = new OutlineMeasurement(0, 0, policy.data.pointScale);
+				let layout = new ArrangeMolecule(mol, measure, policy, effects);
+				layout.arrange();
+
+				new DrawMolecule(layout, metavec).draw();
 			}
-			else {vg.drawText(x:0, y:0, txt:"?", sz:15, colour:0x000000, align:0)}
-			
-			return (name:fields.construct, vg:vg)
+			else metavec.drawText(0, 0, '?', 15, 0x000000);
+
+			metavec.normalise();
+			return [fields.construct, metavec];
 		}
-		else if idx == Render.Scaffold
+		else if (idx == SARTable.RENDER_SCAFFOLD)
 		{
-			let mol:Molecule! = ds.getMoleculeWeak(row:row, colName:fields.scaffold)
-			if mol != nil && mol.numAtoms > 0
+			let mol = ds.getMolecule(row, fields.scaffold);
+			let metavec = new MetaVector();
+			
+			if (MolUtil.notBlank(mol))
 			{
-				let effects = RenderEffects()
+				let effects = new RenderEffects();
 
 				// decorate substituents: different display depending on whether matching substituents are available
-				for n in stride(from:1, to:mol.numAtoms, by:1) where Scaffolding.isAttachment(mol, atom:n)
+				for (let n = 1; n <= mol.numAtoms; n++) if (SARTable.isAttachment(mol, n))
 				{
-					var isDefined = false
-					let el = mol.atomElement(n)
-					outer: for colName in fields.substituents {if let subst = ds.getMoleculeWeak(row:row, colName:colName)
+					let isDefined = false;
+					let el = mol.atomElement(n);
+					outer: for (let colName of fields.substituents)
 					{
-						for i in stride(from:1, through:subst.numAtoms, by:1) where subst.atomElement(i) == el || (subst.atomElement(i) == "R" && el == colName)
+						let subst = ds.getMolecule(row, colName);
+						for (let i = 1; i <= subst.numAtoms; i++) if (subst.atomElement(i) == el || (subst.atomElement(i) == 'R' && el == colName))
 						{
-							isDefined = true
-							break outer
+							isDefined = true;
+							break outer;
 						}
-					}}
+					}
 					effects.colAtom[n] = isDefined ? 0x096E6F : 0xFF0000
 					effects.dottedRectOutline[n] = isDefined ? 0x808080 : 0xFF0000
 				}
-				
-				let measure = OutlineMeasurement(scale:policy.pointScale, yUp:false)
-				let layout = ArrangeMolecule(mol:mol, measure:measure, policy:policy, effects:effects)
-				layout.fastPlacement = true
-				layout.arrange()
-				DrawMolecule(layout:layout, vg:vg).draw()
+
+				let measure = new OutlineMeasurement(0, 0, policy.data.pointScale);
+				let layout = new ArrangeMolecule(mol, measure, policy, effects);
+				layout.arrange();
+
+				new DrawMolecule(layout, metavec).draw();
 			}
-			else {vg.drawText(x:0, y:0, txt:"?", sz:15, colour:0x000000, align:0)}
-			
-			return (name:fields.construct, vg:vg)
+			else metavec.drawText(0, 0, '?', 15, 0x000000);
+
+			metavec.normalise();
+			return [fields.construct, metavec];
 		}
-		else if idx >= Render.Substituent && idx < Render.Substituent + fields.substituents.count
+		else if (idx >= SARTable.RENDER_SUBSTITUENT && idx < SARTable.RENDER_SUBSTITUENT + fields.substituents.length)
 		{
-			let sidx = idx - Render.Substituent
-			let mol:Molecule! = ds.getMoleculeWeak(row:row, colName:fields.substituents[sidx])
-			if mol != nil && mol.numAtoms > 0
+			let sidx = idx - SARTable.RENDER_SUBSTITUENT;
+			let mol = ds.getMolecule(row, fields.substituents[sidx]);
+			let metavec = new MetaVector();
+			
+			if (MolUtil.notBlank(mol))
 			{
-				let effects = RenderEffects()
-				
+				let effects = new RenderEffects();
+
 				// decorated substituents
-				for n in stride(from:1, to:mol.numAtoms, by:1) where Scaffolding.isAttachment(mol, atom:n)
+				for (let n = 1; n <= mol.numAtoms; n++) if (SARTable.isAttachment(mol, n))
 				{
-					effects.colAtom[n] = 0x096E6F
-					effects.dottedRectOutline[n] = 0x808080
+					effects.colAtom[n] = 0x096E6F;
+					effects.dottedRectOutline[n] = 0x808080;
 					// (different colours if the attachments don't line up? or just leave it?)
-				}
-				
-				let measure = OutlineMeasurement(scale:policy.pointScale, yUp:false)
-				let layout = ArrangeMolecule(mol:mol, measure:measure, policy:policy, effects:effects)
-				layout.fastPlacement = true
-				layout.arrange()
-				DrawMolecule(layout:layout, vg:vg).draw()
+				}		
+
+				let measure = new OutlineMeasurement(0, 0, policy.data.pointScale);
+				let layout = new ArrangeMolecule(mol, measure, policy, effects);
+				layout.arrange();
+
+				new DrawMolecule(layout, metavec).draw();
 			}
 			else
 			{
 				// empty substituents get decorated in some way, depending on whether absence is justified
-				var txt = "?"
-				let scaff:Molecule! = ds.getMoleculeWeak(row:row, colName:fields.scaffold)
-				if scaff != nil && scaff.numAtoms > 0
+				let txt = '?';
+				let scaff = ds.getMolecule(row, fields.scaffold);
+				if (MolUtil.notBlank(scaff))
 				{
-					let sname = fields.substituents[sidx]
-					txt = "n/a"
-					for n in stride(from:1, through:scaff.numAtoms, by:1) where scaff.atomElement(n) == sname {txt = "?"; break}
-					if txt == "?" {for n in 0 ..< fields.substituents.count where n != sidx
+					let sname = fields.substituents[sidx];
+					txt = 'n/a';
+					for (let n = 1; n <= scaff.numAtoms; n++) if (scaff.atomElement(n) == sname) {txt = '?'; break;}
+					if (txt == '?') for (let n = 0; n < fields.substituents.length; n++) if (n != sidx)
 					{
-						if let subst = ds.getMoleculeWeak(row:row, colName:fields.substituents[n])
+						let subst = ds.getMolecule(row, fields.substituents[n]);
+						if (MolUtil.notBlank(subst))
 						{
-							for i in stride(from:1, through:subst.numAtoms, by:1) where subst.atomElement(i) == sname {txt = "n/a"; break} // multidentate
+							for (let i = 1; i <= subst.numAtoms; i++) if (subst.atomElement(i) == sname) {txt = 'n/a'; break;} // multidentate
 						}
-					}}
+					}
 				}
-				vg.drawText(x:0, y:0, txt:txt, sz:15, colour:0x000000, align:0)
+				metavec.drawText(0, 0, txt, 15, 0x000000);
 			}
+
+			metavec.normalise();
+			return [fields.construct, metavec];
 		}
-		return (name:"", vg:vg)
-	}*/
+
+		return [null, null];
+	}
 }
