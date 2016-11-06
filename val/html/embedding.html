@@ -357,6 +357,266 @@ C=-1.0049,4.8012;0,0,i1
 
 </tr></table>
 
+<h2>Reactions</h2>
+
+(to be done)
+
+<h2>Collections</h2>
+
+<collection><script type="text/xml"><DataSheet>
+<Summary>
+<Title></Title>
+<Description><![CDATA[]]></Description>
+</Summary>
+<Header nrows="3" ncols="5">
+<Column name="Molecule" type="molecule" id="1">Molecular structure</Column>
+<Column name="String" type="string" id="2"></Column>
+<Column name="Integer" type="integer" id="3"></Column>
+<Column name="Real" type="real" id="4"></Column>
+<Column name="Boolean" type="boolean" id="5"></Column>
+</Header>
+<Content>
+<Row id="1">
+<Cell id="1"><![CDATA[SketchEl!(1,0)
+C=0.0000,0.0000;0,0,i4
+!End
+]]></Cell>
+<Cell id="2"><![CDATA[string]]></Cell>
+<Cell id="3">1</Cell>
+<Cell id="4">1.5</Cell>
+<Cell id="5">true</Cell>
+</Row>
+<Row id="2">
+<Cell id="1"><![CDATA[SketchEl!(1,0)
+N=0.0000,0.0000;0,0,i3
+!End
+]]></Cell>
+<Cell id="2"></Cell>
+<Cell id="3"></Cell>
+<Cell id="4"></Cell>
+<Cell id="5"></Cell>
+</Row>
+<Row id="3">
+<Cell id="1"><![CDATA[SketchEl!(1,0)
+O=0.0000,0.0000;0,0,i3
+!End
+]]></Cell>
+<Cell id="2">text</Cell>
+<Cell id="3">3</Cell>
+<Cell id="4">-5</Cell>
+<Cell id="5">false</Cell>
+</Row>
+</Content>
+</DataSheet></script></collection>
+
+<collection><script type="text/xml"><DataSheet>
+<Summary>
+<Title></Title>
+<Description><![CDATA[]]></Description>
+</Summary>
+<Header nrows="2" ncols="6">
+<Column name="Molecule" type="molecule" id="1">Molecular structure</Column>
+<Column name="Molecule_locked" type="boolean" id="2">Whether constructed molecule should be rebuilt</Column>
+<Column name="Scaffold" type="molecule" id="3">Decorated core scaffold of molecule</Column>
+<Column name="R1" type="molecule" id="4">Substituent fragment to be attached to scaffold</Column>
+<Column name="R2" type="molecule" id="5">Substituent fragment to be attached to scaffold</Column>
+<Column name="R3" type="molecule" id="6">Substituent fragment to be attached to scaffold</Column>
+</Header>
+<Extension>
+<Ext type="org.mmi.aspect.SARTable" name="SAR Table"><![CDATA[field=construct,Molecule,
+field=scaffold,Scaffold,
+field=substituent,R1,
+field=substituent,R2,
+field=substituent,R3,
+]]></Ext>
+</Extension>
+<Content>
+<Row id="1">
+<Cell id="1"><![CDATA[SketchEl!(17,19)
+C=-1.4393,5.6028;0,0,i1,n1
+C=-2.7384,6.3528;0,0,i2,n2
+C=-4.0374,5.6028;0,0,i0,n3
+C=-4.0374,4.1028;0,0,i0,n4
+C=-2.7384,3.3528;0,0,i2,n5
+C=-1.4393,4.1028;0,0,i1,n6
+N=-5.3365,6.3528;0,0,i0,n9
+C=-6.6355,5.6028;0,0,i1,n10
+C=-6.6355,4.1028;0,0,i1,n11
+C=-5.3364,3.3528;0,0,i1,n12
+Cl=-0.1403,6.3528;0,0,i0
+C=-0.1403,3.3528;0,0,i1
+C=-0.1403,1.8528;0,0,i2
+C=1.1588,1.1028;0,0,i2
+C=2.4578,1.8528;0,0,i2
+C=2.4578,3.3527;0,0,i2
+C=1.1588,4.1027;0,0,i2
+1-2=1,0
+2-3=1,0
+3-4=2,0
+4-5=1,0
+5-6=1,0
+6-1=1,0
+3-7=1,0
+7-8=2,0
+8-9=1,0
+9-10=2,0
+10-4=1,0
+1-11=1,0
+12-13=1,0
+13-14=1,0
+14-15=1,0
+15-16=1,0
+16-17=1,0
+17-12=1,0
+6-12=1,0
+!End
+]]></Cell>
+<Cell id="2">false</Cell>
+<Cell id="3"><![CDATA[SketchEl!(12,13)
+C=-1.4393,5.6028;0,0,i1
+C=-2.7384,6.3528;0,0,i2
+C=-4.0374,5.6028;0,0,i0
+C=-4.0374,4.1028;0,0,i0
+C=-2.7384,3.3528;0,0,i2
+C=-1.4393,4.1028;0,0,i1
+R1=-0.1403,6.3528;0,0,i0
+R2=-0.1403,3.3528;0,0,i0
+N=-5.3365,6.3528;0,0,i0
+C=-6.6355,5.6028;0,0,i1
+C=-6.6355,4.1028;0,0,i1
+C=-5.3364,3.3528;0,0,i1
+1-2=1,0
+2-3=1,0
+3-4=2,0
+4-5=1,0
+5-6=1,0
+6-1=1,0
+1-7=1,0
+6-8=1,0
+3-9=1,0
+9-10=2,0
+10-11=1,0
+11-12=2,0
+12-4=1,0
+!End
+]]></Cell>
+<Cell id="4"><![CDATA[SketchEl!(2,1)
+R1=-8.0158,1.9078;0,0,i0
+Cl=-6.5158,1.9078;0,0,i0
+1-2=1,0
+!End
+]]></Cell>
+<Cell id="5"><![CDATA[SketchEl!(7,7)
+R2=1.0000,0.0000;0,0,i0
+C=2.5000,0.0000;0,0,i1
+C=3.2500,-1.2990;0,0,i2
+C=4.7500,-1.2990;0,0,i2
+C=5.5000,-0.0000;0,0,i2
+C=4.7500,1.2990;0,0,i2
+C=3.2500,1.2990;0,0,i2
+1-2=1,0
+2-3=1,0
+3-4=1,0
+4-5=1,0
+5-6=1,0
+6-7=1,0
+7-2=1,0
+!End
+]]></Cell>
+<Cell id="6"></Cell>
+</Row>
+<Row id="2">
+<Cell id="1"><![CDATA[SketchEl!(16,18)
+C=6.1962,0.7500;0,0,i2,n1
+C=4.8971,1.5000;0,0,i0,n2
+C=3.5981,0.7500;0,0,i0,n3
+C=3.5981,-0.7500;0,0,i0,n4
+C=4.8971,-1.5000;0,0,i2,n5
+C=6.1962,-0.7500;0,0,i2,n6
+C=2.2990,1.5000;0,0,i1,n9
+C=1.0000,0.7500;0,0,i1,n10
+C=1.0000,-0.7500;0,0,i1,n11
+C=2.2991,-1.5000;0,0,i1,n12
+C=4.8971,3.0000;0,0,i0
+C=6.1961,3.7500;0,0,i2
+C=6.1960,5.2500;0,0,i2
+C=4.8970,6.0000;0,0,i2
+C=3.5980,5.2500;0,0,i2
+C=3.5981,3.7500;0,0,i2
+1-2=1,0
+2-3=1,0
+3-4=2,0
+4-5=1,0
+5-6=1,0
+6-1=1,0
+3-7=1,0
+7-8=2,0
+8-9=1,0
+9-10=2,0
+10-4=1,0
+11-12=1,0
+12-13=1,0
+13-14=1,0
+14-15=1,0
+15-16=1,0
+16-11=1,0
+2-11=2,0
+!End
+]]></Cell>
+<Cell id="2">false</Cell>
+<Cell id="3"><![CDATA[SketchEl!(13,14)
+C=6.1962,0.7500;0,0,i1
+C=4.8971,1.5000;0,0,i0
+C=3.5981,0.7500;0,0,i0
+C=3.5981,-0.7500;0,0,i0
+C=4.8971,-1.5000;0,0,i2
+C=6.1962,-0.7500;0,0,i1
+R1=7.4952,1.5000;0,0,i0
+R2=7.4952,-1.5000;0,0,i0
+C=2.2990,1.5000;0,0,i1
+C=1.0000,0.7500;0,0,i1
+C=1.0000,-0.7500;0,0,i1
+C=2.2991,-1.5000;0,0,i1
+R3=4.8971,3.0000;0,0,i0
+1-2=1,0
+2-3=1,0
+3-4=2,0
+4-5=1,0
+5-6=1,0
+6-1=1,0
+1-7=1,0
+6-8=1,0
+3-9=1,0
+9-10=2,0
+10-11=1,0
+11-12=2,0
+12-4=1,0
+2-13=2,0
+!End
+]]></Cell>
+<Cell id="4"></Cell>
+<Cell id="5"></Cell>
+<Cell id="6"><![CDATA[SketchEl!(7,7)
+R2=1.0000,0.0000;0,0,i0
+C=2.5000,0.0000;0,0,i1
+C=3.2500,-1.2990;0,0,i2
+C=4.7500,-1.2990;0,0,i2
+C=5.5000,-0.0000;0,0,i2
+C=4.7500,1.2990;0,0,i2
+C=3.2500,1.2990;0,0,i2
+1-2=1,0
+2-3=1,0
+3-4=1,0
+4-5=1,0
+5-6=1,0
+6-7=1,0
+7-2=1,0
+!End
+]]></Cell>
+</Row>
+</Content>
+</DataSheet></script></collection>
+
 <script>
 	var url = window.location.href.substring(0, window.location.href.lastIndexOf('/'));
 	RPC.RESOURCE_URL = url + '../../../res';
@@ -369,6 +629,16 @@ C=-1.0049,4.8012;0,0,i1
 		for (let attr of this.attributes) params[attr.name] = attr.value;
 		obj.remove();
 		new EmbedMolecule(molstr, params).render(div);
+	});
+
+	$('collection').each(function()
+	{
+		let obj = $(this), div = $('<div></div>');
+		div.insertAfter(obj);
+		let xml = obj.find('script').html(), params = {};
+		for (let attr of this.attributes) params[attr.name] = attr.value;
+		obj.remove();
+		new EmbedCollection(xml, params).render(div);
 	});
 </script>
 

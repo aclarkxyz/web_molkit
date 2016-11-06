@@ -20,11 +20,15 @@ class MolUtil
 {
     public static isBlank(mol:Molecule):boolean
     {
-        return mol == null || mol.numAtoms == 0;
+        //return mol == null || mol.numAtoms == 0;
+		if (mol == null) return true;
+		return mol.numAtoms == 0;
     }
     public static notBlank(mol:Molecule):boolean
     {
-        return mol != null || mol.numAtoms > 0;
+        //return mol != null || mol.numAtoms > 0;
+		if (mol == null) return false;
+		return mol.numAtoms > 0;
     }
 
     // substitutes an empty molecule for null

@@ -35,7 +35,7 @@
         width, height: optional, either one (used as a maximum)
         box: specific size to stick with (comma-separated)
         scheme: molecule colouring schema (wob/cob/bow/cow)
-        scale: points per ang
+        scale: points per angstrom
 		tight: if true, reduces the padding underneath
 
     ... these ones TBD

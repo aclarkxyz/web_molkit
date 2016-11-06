@@ -163,6 +163,8 @@ class ArrangeMolecule
 				'col': this.policy.data.atomCols[this.mol.atomicNumber(n)],
 				'oval': new Oval(this.measure.angToX(this.mol.atomX(n)), this.measure.angToY(this.mol.atomY(n)), 0, 0)
 			};
+			let overCol = this.effects.colAtom[n];
+			if (overCol) a.col = overCol;
 
 			//if (policy.mappedColour >= 0 && mol.atomMapNum(n) > 0) a.col = policy.mappedColour;
     
@@ -198,7 +200,9 @@ class ArrangeMolecule
 		{
 			let bfr = this.mol.bondFrom(n), bto = this.mol.bondTo(n);
 			let bt = this.mol.bondType(n), bo = this.mol.bondOrder(n);
-			let col = this.policy.data.foreground;
+			let col = this.effects.colBond[n];
+			if (!col) col = this.policy.data.foreground;
+
 			//if (this.policy.data.mappedColour >= 0 && mol.atomMapNum(mol.bondFrom(bfr)) > 0 && mol.atomMapNum(mol.bondTo(bto)) > 0) col = policy.mappedColour;
 			bdbl[n - 1] = bo == 2 && (bt == Molecule.BONDTYPE_NORMAL || bt == Molecule.BONDTYPE_UNKNOWN);
     
@@ -986,7 +990,8 @@ class ArrangeMolecule
     	}
 
 		let lt = this.mol.bondType(idx) == Molecule.BONDTYPE_UNKNOWN ? BLineType.Unknown : BLineType.Normal;
-		let col = this.policy.data.foreground;
+		let col = this.effects.colBond[idx];
+		if (!col) col = this.policy.data.foreground;
 		//(do mapped colour?)
 		//if (this.policy.mappedColour >= 0 && this.mol.atomMapNum(this.mol.bondFrom(bfr)) > 0 && this.mol.atomMapNum(this.mol.bondTo(bto)) > 0) col = this.policy.mappedColour;
 

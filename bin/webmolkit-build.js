@@ -2350,10 +2350,14 @@ Molecule.HYVALENCE_EL = ['C', 'N', 'O', 'S', 'P'];
 Molecule.HYVALENCE_VAL = [4, 3, 2, 2, 3];
 class MolUtil {
     static isBlank(mol) {
-        return mol == null || mol.numAtoms == 0;
+        if (mol == null)
+            return true;
+        return mol.numAtoms == 0;
     }
     static notBlank(mol) {
-        return mol != null || mol.numAtoms > 0;
+        if (mol == null)
+            return false;
+        return mol.numAtoms > 0;
     }
     static orBlank(mol) { return mol == null ? new Molecule() : mol; }
     static hasAnyAbbrev(mol) {
@@ -3373,11 +3377,12 @@ class SARTable extends Aspect {
                         let el = mol.atomElement(n);
                         outer: for (let colName of fields.substituents) {
                             let subst = ds.getMolecule(row, colName);
-                            for (let i = 1; i <= subst.numAtoms; i++)
-                                if (subst.atomElement(i) == el || (subst.atomElement(i) == 'R' && el == colName)) {
-                                    isDefined = true;
-                                    break outer;
-                                }
+                            if (subst != null)
+                                for (let i = 1; i <= subst.numAtoms; i++)
+                                    if (subst.atomElement(i) == el || (subst.atomElement(i) == 'R' && el == colName)) {
+                                        isDefined = true;
+                                        break outer;
+                                    }
                         }
                         effects.colAtom[n] = isDefined ? 0x096E6F : 0xFF0000;
                         effects.dottedRectOutline[n] = isDefined ? 0x808080 : 0xFF0000;
@@ -3390,11 +3395,11 @@ class SARTable extends Aspect {
             else
                 metavec.drawText(0, 0, '?', 15, 0x000000);
             metavec.normalise();
-            return [fields.construct, metavec];
+            return [fields.scaffold, metavec];
         }
         else if (idx >= SARTable.RENDER_SUBSTITUENT && idx < SARTable.RENDER_SUBSTITUENT + fields.substituents.length) {
-            let sidx = idx - SARTable.RENDER_SUBSTITUENT;
-            let mol = ds.getMolecule(row, fields.substituents[sidx]);
+            let sidx = idx - SARTable.RENDER_SUBSTITUENT, sname = fields.substituents[sidx];
+            let mol = ds.getMolecule(row, sname);
             let metavec = new MetaVector();
             if (MolUtil.notBlank(mol)) {
                 let effects = new RenderEffects();
@@ -3412,7 +3417,6 @@ class SARTable extends Aspect {
                 let txt = '?';
                 let scaff = ds.getMolecule(row, fields.scaffold);
                 if (MolUtil.notBlank(scaff)) {
-                    let sname = fields.substituents[sidx];
                     txt = 'n/a';
                     for (let n = 1; n <= scaff.numAtoms; n++)
                         if (scaff.atomElement(n) == sname) {
@@ -3435,7 +3439,7 @@ class SARTable extends Aspect {
                 metavec.drawText(0, 0, txt, 15, 0x000000);
             }
             metavec.normalise();
-            return [fields.construct, metavec];
+            return [sname, metavec];
         }
         return [null, null];
     }
@@ -3449,11 +3453,11 @@ SARTable.DESCR_SUBSTITUENT = 'Substituent fragment to be attached to scaffold';
 SARTable.RENDER_CONSTRUCT = 0;
 SARTable.RENDER_SCAFFOLD = 1;
 SARTable.RENDER_SUBSTITUENT = 2;
-const SUPPORTED_ASPECTS = {};
+let SUPPORTED_ASPECTS = {};
 class AspectList {
     constructor(ds) {
         this.ds = ds;
-        if (!SUPPORTED_ASPECTS) {
+        if ($.isEmptyObject(SUPPORTED_ASPECTS)) {
             SUPPORTED_ASPECTS[SARTable.CODE] = SARTable.NAME;
         }
     }
@@ -8535,6 +8539,9 @@ class ArrangeMolecule {
                 'col': this.policy.data.atomCols[this.mol.atomicNumber(n)],
                 'oval': new Oval(this.measure.angToX(this.mol.atomX(n)), this.measure.angToY(this.mol.atomY(n)), 0, 0)
             };
+            let overCol = this.effects.colAtom[n];
+            if (overCol)
+                a.col = overCol;
             if (a.text != null) {
                 let wad = this.measure.measureText(a.text, a.fsz);
                 const PADDING = 1.1;
@@ -8551,7 +8558,9 @@ class ArrangeMolecule {
         for (let n = 1; n <= this.mol.numBonds; n++) {
             let bfr = this.mol.bondFrom(n), bto = this.mol.bondTo(n);
             let bt = this.mol.bondType(n), bo = this.mol.bondOrder(n);
-            let col = this.policy.data.foreground;
+            let col = this.effects.colBond[n];
+            if (!col)
+                col = this.policy.data.foreground;
             bdbl[n - 1] = bo == 2 && (bt == Molecule.BONDTYPE_NORMAL || bt == Molecule.BONDTYPE_UNKNOWN);
             let a1 = this.points[bfr - 1], a2 = this.points[bto - 1];
             let x1 = a1.oval.cx, y1 = a1.oval.cy, x2 = a2.oval.cx, y2 = a2.oval.cy;
@@ -9227,7 +9236,9 @@ class ArrangeMolecule {
             }
         }
         let lt = this.mol.bondType(idx) == Molecule.BONDTYPE_UNKNOWN ? BLineType.Unknown : BLineType.Normal;
-        let col = this.policy.data.foreground;
+        let col = this.effects.colBond[idx];
+        if (!col)
+            col = this.policy.data.foreground;
         let b1 = {
             'bnum': idx,
             'bfr': bfr,
@@ -15950,6 +15961,210 @@ class EmbedChemistry extends Widget {
         }
         this.content.css('padding', this.padding + 'px');
         this.content.css('margin', 0);
+    }
+}
+class EmbedCollection extends EmbedChemistry {
+    constructor(datastr, options) {
+        super();
+        this.datastr = datastr;
+        this.ds = null;
+        this.failmsg = '';
+        this.tight = false;
+        if (!options)
+            options = {};
+        let ds = null, name = options.name;
+        if (options.format == 'datasheet' || options.format == 'chemical/x-datasheet') {
+            ds = DataSheetStream.readXML(datastr);
+        }
+        else if (options.format == 'sdfile' || options.format == 'chemical/x-mdl-sdfile') {
+            try {
+                let mdl = new MDLSDFReader(datastr);
+                ds = mdl.parse();
+            }
+            catch (ex) {
+                this.failmsg = ex;
+            }
+        }
+        else {
+            ds = DataSheetStream.readXML(datastr);
+            if (ds == null) {
+                try {
+                    let mdl = new MDLSDFReader(datastr);
+                    ds = mdl.parse();
+                }
+                catch (ex) { }
+            }
+        }
+        if (ds == null)
+            return;
+        if (options.padding)
+            this.padding = options.padding;
+        if (options.background == 'transparent')
+            this.clearBackground();
+        else if (options.background) {
+            let bg = options.background, comma = bg.indexOf(',');
+            if (comma < 0)
+                this.setBackground(htmlToRGB(bg));
+            else
+                this.setBackgroundGradient(htmlToRGB(bg.substring(0, comma)), htmlToRGB(bg.substring(comma + 1)));
+        }
+        if (options.border == 'transparent')
+            this.borderCol = MetaVector.NOCOLOUR;
+        else if (options.border)
+            this.borderCol = htmlToRGB(options.border);
+        if (options.radius != null)
+            this.borderRadius = parseInt(options.radius);
+        if (options.scheme == 'wob')
+            this.policy = RenderPolicy.defaultWhiteOnBlack();
+        else if (options.scheme == 'cob')
+            this.policy = RenderPolicy.defaultColourOnBlack();
+        else if (options.scheme == 'bow')
+            this.policy = RenderPolicy.defaultBlackOnWhite();
+        else if (options.scheme == 'cow')
+            this.policy = RenderPolicy.defaultColourOnWhite();
+        if (options.scale)
+            this.policy.data.pointScale = options.scale;
+        if (options.tight == true || options.tight == 'true')
+            this.tight = true;
+        this.ds = ds;
+    }
+    render(parent) {
+        this.tagType = 'span';
+        super.render(parent);
+        let span = this.content, ds = this.ds, policy = this.policy;
+        span.css('display', 'inline-block');
+        span.css('line-height', '0');
+        if (!this.tight)
+            span.css('margin-bottom', '1.5em');
+        if (ds != null) {
+            let aspects = new AspectList(ds).enumerate();
+            let columns = this.determineColumns(aspects);
+            let table = $('<table></table>').appendTo(span);
+            table.css('font-family', '"HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif');
+            table.css('border-collapse', 'collapse');
+            let tr = $('<tr></tr>').appendTo(table);
+            for (let n = 0; n < columns.length; n++) {
+                let th = $('<th></th>').appendTo(tr);
+                th.css('white-space', 'nowrap');
+                th.css('font-weight', '600');
+                th.css('color', 'black');
+                th.css('text-decoration', 'underline');
+                th.css('text-align', 'center');
+                th.css('padding', '0.2em 0.5em 0.2em 0.5em');
+                th.text(columns[n].name);
+            }
+            for (let row = 0; row < ds.numRows;) {
+                let blksz = 1;
+                for (let aspect of aspects)
+                    blksz = Math.max(blksz, aspect.rowBlockCount(row));
+                tr = $('<tr></tr>').appendTo(table);
+                for (let col = 0; col < columns.length; col++) {
+                    let td = $('<td></td>').appendTo(tr);
+                    td.css('border', '1px solid #D0D0D0');
+                    td.css('padding', '0.2em');
+                    let spec = columns[col];
+                    if (spec.aspect == null) {
+                        if (ds.isNull(row, spec.idx))
+                            td.text(' ');
+                        else if (ds.colType(spec.idx) == DataSheet.COLTYPE_MOLECULE)
+                            this.renderMolecule(td, row, spec.idx);
+                        else
+                            this.renderPrimitive(td, row, spec.idx);
+                    }
+                    else if (spec.type == 'text')
+                        this.renderTextAspect(td, row, spec.aspect, spec.idx);
+                    else if (spec.type == 'graphic')
+                        this.renderGraphicAspect(td, row, spec.aspect, spec.idx);
+                }
+                row += blksz;
+            }
+        }
+        else {
+            span.css('color', 'red');
+            span.text('Unable to parse datasheet: ' + this.failmsg);
+            let pre = $('<pre></pre>').appendTo(span);
+            pre.css('line-height', '1.1');
+            pre.text(this.datastr);
+            console.log('Unparseable datasheet source string:\n[' + this.datastr + ']');
+        }
+    }
+    determineColumns(aspects) {
+        let ds = this.ds;
+        let columns = [];
+        let reserved = Vec.booleanArray(false, ds.numCols);
+        let names = [];
+        for (let n = 0; n < ds.numCols; n++)
+            names.push(ds.colName(n));
+        for (let aspect of aspects) {
+            if (ds.numRows > 0)
+                for (let n = 0, num = aspect.numTextRenderings(0); n < num; n++) {
+                    let title = aspect.produceTextRendering(0, n).name;
+                    columns.push({ 'name': title, 'aspect': aspect, 'type': 'text', 'idx': n });
+                }
+            if (ds.numRows > 0)
+                for (let n = 0, num = aspect.numGraphicRenderings(0); n < num; n++) {
+                    let title = aspect.produceGraphicRendering(0, n, this.policy)[0];
+                    columns.push({ 'name': title, 'aspect': aspect, 'type': 'graphic', 'idx': n });
+                }
+            let claimed = aspect.areColumnsReserved(names);
+            for (let n = 0; n < names.length; n++)
+                reserved[n] = reserved[n] || claimed[n];
+        }
+        for (let n = 0; n < ds.numCols; n++)
+            if (!reserved[n] && ds.colType(n) != DataSheet.COLTYPE_EXTEND) {
+                columns.push({ 'name': ds.colName(n), 'aspect': null, 'type': null, 'idx': n });
+            }
+        return columns;
+    }
+    renderPrimitive(td, row, col) {
+        let txt = '', ct = this.ds.colType(col), align = 'center';
+        if (ct == DataSheet.COLTYPE_STRING) {
+            txt = this.ds.getString(row, col);
+            align = 'left';
+        }
+        else if (ct == DataSheet.COLTYPE_INTEGER)
+            txt = this.ds.getInteger(row, col).toString();
+        else if (ct == DataSheet.COLTYPE_REAL)
+            txt = this.ds.getReal(row, col).toString();
+        else if (ct == DataSheet.COLTYPE_BOOLEAN)
+            txt = this.ds.getBoolean(row, col) ? 'true' : 'false';
+        td.text(txt);
+        td.css('text-align', align);
+    }
+    renderMolecule(td, row, col) {
+        td.css('text-align', 'center');
+        let effects = new RenderEffects();
+        let measure = new OutlineMeasurement(0, 0, this.policy.data.pointScale);
+        let layout = new ArrangeMolecule(this.ds.getMolecule(row, col), measure, this.policy, effects);
+        layout.arrange();
+        let metavec = new MetaVector();
+        new DrawMolecule(layout, metavec).draw();
+        metavec.normalise();
+        let svg = $(metavec.createSVG()).appendTo(td);
+    }
+    renderTextAspect(td, row, aspect, idx) {
+        let rend = aspect.produceTextRendering(row, idx);
+        if (!rend.text)
+            td.text(' ');
+        else if (rend.type == Aspect.TEXT_PLAIN)
+            td.text(rend.text);
+        else if (rend.type == Aspect.TEXT_LINK) {
+            let ahref = $('<a target="_blank"></a>').appendTo(td);
+            ahref.attr('href', rend.text);
+            ahref.text(rend.text);
+        }
+        else if (rend.type == Aspect.TEXT_HTML)
+            td.html(rend.text);
+    }
+    renderGraphicAspect(td, row, aspect, idx) {
+        let [name, metavec] = aspect.produceGraphicRendering(row, idx, this.policy);
+        if (metavec == null) {
+            td.text(' ');
+            return;
+        }
+        td.css('text-align', 'center');
+        metavec.normalise();
+        $(metavec.createSVG()).appendTo(td);
     }
 }
 class EmbedMolecule extends EmbedChemistry {

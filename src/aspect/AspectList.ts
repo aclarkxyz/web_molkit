@@ -20,13 +20,13 @@
 	explicitly here, if it is going to get automatically considered during routine operations (e.g. rendering arbitrary datasheets).
 */
 
-const SUPPORTED_ASPECTS:{[id:string] : string} = {};
+let SUPPORTED_ASPECTS:{[id:string] : string} = {};
 
 class AspectList
 {
 	constructor(public ds:DataSheet)
 	{
-		if (!SUPPORTED_ASPECTS)
+		if ($.isEmptyObject(SUPPORTED_ASPECTS))
 		{
 			SUPPORTED_ASPECTS[SARTable.CODE] = SARTable.NAME;
 		}

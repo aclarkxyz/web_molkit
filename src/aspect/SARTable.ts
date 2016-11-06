@@ -313,7 +313,8 @@ class SARTable extends Aspect
 					outer: for (let colName of fields.substituents)
 					{
 						let subst = ds.getMolecule(row, colName);
-						for (let i = 1; i <= subst.numAtoms; i++) if (subst.atomElement(i) == el || (subst.atomElement(i) == 'R' && el == colName))
+						if (subst != null) for (let i = 1; i <= subst.numAtoms; i++) 
+							if (subst.atomElement(i) == el || (subst.atomElement(i) == 'R' && el == colName))
 						{
 							isDefined = true;
 							break outer;
@@ -332,12 +333,12 @@ class SARTable extends Aspect
 			else metavec.drawText(0, 0, '?', 15, 0x000000);
 
 			metavec.normalise();
-			return [fields.construct, metavec];
+			return [fields.scaffold, metavec];
 		}
 		else if (idx >= SARTable.RENDER_SUBSTITUENT && idx < SARTable.RENDER_SUBSTITUENT + fields.substituents.length)
 		{
-			let sidx = idx - SARTable.RENDER_SUBSTITUENT;
-			let mol = ds.getMolecule(row, fields.substituents[sidx]);
+			let sidx = idx - SARTable.RENDER_SUBSTITUENT, sname = fields.substituents[sidx];
+			let mol = ds.getMolecule(row, sname);
 			let metavec = new MetaVector();
 			
 			if (MolUtil.notBlank(mol))
@@ -365,7 +366,6 @@ class SARTable extends Aspect
 				let scaff = ds.getMolecule(row, fields.scaffold);
 				if (MolUtil.notBlank(scaff))
 				{
-					let sname = fields.substituents[sidx];
 					txt = 'n/a';
 					for (let n = 1; n <= scaff.numAtoms; n++) if (scaff.atomElement(n) == sname) {txt = '?'; break;}
 					if (txt == '?') for (let n = 0; n < fields.substituents.length; n++) if (n != sidx)
@@ -381,7 +381,7 @@ class SARTable extends Aspect
 			}
 
 			metavec.normalise();
-			return [fields.construct, metavec];
+			return [sname, metavec];
 		}
 
 		return [null, null];
