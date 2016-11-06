@@ -26,7 +26,7 @@
 
         format: MIME, or shortcuts for "molfile" or "sketchel"
         name: null/default = if molfile pull it out and display; blank = show nothing; text = show that
-        invert: boolean; inverts X (applied before rotation)
+        invert: boolean; inverts the coordinates (applied before rotation)
         rotate: degrees to rotate molecule
         padding: number of pixels to space around the molecule
 		border: border colour, HTML-style colour code or 'transparent' for none
@@ -102,11 +102,16 @@ class EmbedMolecule extends EmbedChemistry
 		else if (options.background)
 		{
 			let bg:string = options.background, comma = bg.indexOf(',');
-			if (comma >= 0)
+			if (comma < 0)
 				this.setBackground(htmlToRGB(bg));
 			else
 				this.setBackgroundGradient(htmlToRGB(bg.substring(0, comma)), htmlToRGB(bg.substring(comma + 1)));
 		}
+
+		if (options.border == 'transparent') this.borderCol = MetaVector.NOCOLOUR; 
+		else if (options.border) this.borderCol = htmlToRGB(options.border);
+
+		if (options.radius != null) this.borderRadius = parseInt(options.radius);
 
 		if (options.width) this.maxWidth = options.width;
 		if (options.height) this.maxHeight = options.height;
@@ -116,10 +121,10 @@ class EmbedMolecule extends EmbedChemistry
 			this.boxSize = new Size(parseInt(box.substring(0, comma)), parseInt(box.substring(comma + 1)));
 		}
 
-		if (options.policy == 'wob') this.policy = RenderPolicy.defaultWhiteOnBlack();
-		else if (options.policy == 'cob') this.policy = RenderPolicy.defaultColourOnBlack();
-		else if (options.policy == 'bow') this.policy = RenderPolicy.defaultBlackOnWhite();
-		else if (options.policy == 'cow') this.policy = RenderPolicy.defaultColourOnWhite();
+		if (options.scheme == 'wob') this.policy = RenderPolicy.defaultWhiteOnBlack();
+		else if (options.scheme == 'cob') this.policy = RenderPolicy.defaultColourOnBlack();
+		else if (options.scheme == 'bow') this.policy = RenderPolicy.defaultBlackOnWhite();
+		else if (options.scheme == 'cow') this.policy = RenderPolicy.defaultColourOnWhite();
 
 		if (options.scale) this.policy.data.pointScale = options.scale;
 
@@ -144,6 +149,8 @@ class EmbedMolecule extends EmbedChemistry
 
 		if (mol != null && mol.numAtoms > 0)
 		{
+			span.css('text-align', 'center');
+
 			let effects = new RenderEffects();
 			let measure = new OutlineMeasurement(0, 0, policy.data.pointScale);
 			let layout = new ArrangeMolecule(mol, measure, policy, effects);
@@ -161,7 +168,10 @@ class EmbedMolecule extends EmbedChemistry
 
 			let metavec = new MetaVector();
 			new DrawMolecule(layout, metavec).draw();
-			metavec.normalise();
+			if (this.boxSize == null)
+				metavec.normalise();
+			else
+				metavec.setSize(this.boxSize.w, this.boxSize.h);
 
 			let svg = $(metavec.createSVG()).appendTo(span);
 
@@ -173,7 +183,8 @@ class EmbedMolecule extends EmbedChemistry
 				p.css('margin', 0);
 				p.css('font-family', '"HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif');
 				p.css('line-height', '1');
-				p.css('text-alignment', 'center');
+				p.css('width', '100%');
+				//p.css('text-align', 'center');
 				p.css('color', '#606060');
 				p.text(this.name);
 			}

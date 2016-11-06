@@ -239,6 +239,9 @@ class MetaVector
 		this.height = Math.ceil(this.highY - this.lowY);
 	}
 
+	// convenience
+	public setSize(width:number, height:number) {this.width = width; this.height = height;}
+
 	// makes sure everything fits into the indicated box, scaling down if necessary (but not up)	
 	public transformIntoBox(box:Box):void
 	{

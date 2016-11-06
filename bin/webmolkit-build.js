@@ -7389,6 +7389,7 @@ class MetaVector {
         this.width = Math.ceil(this.highX - this.lowX);
         this.height = Math.ceil(this.highY - this.lowY);
     }
+    setSize(width, height) { this.width = width; this.height = height; }
     transformIntoBox(box) {
         this.transformPrimitives(-this.lowX, -this.lowY, 1, 1);
         let nw = Math.ceil(this.highX - this.lowX), nh = Math.ceil(this.highY - this.lowY);
@@ -16003,11 +16004,17 @@ class EmbedMolecule extends EmbedChemistry {
             this.clearBackground();
         else if (options.background) {
             let bg = options.background, comma = bg.indexOf(',');
-            if (comma >= 0)
+            if (comma < 0)
                 this.setBackground(htmlToRGB(bg));
             else
                 this.setBackgroundGradient(htmlToRGB(bg.substring(0, comma)), htmlToRGB(bg.substring(comma + 1)));
         }
+        if (options.border == 'transparent')
+            this.borderCol = MetaVector.NOCOLOUR;
+        else if (options.border)
+            this.borderCol = htmlToRGB(options.border);
+        if (options.radius != null)
+            this.borderRadius = parseInt(options.radius);
         if (options.width)
             this.maxWidth = options.width;
         if (options.height)
@@ -16016,13 +16023,13 @@ class EmbedMolecule extends EmbedChemistry {
             let box = options.box, comma = box.indexOf(',');
             this.boxSize = new Size(parseInt(box.substring(0, comma)), parseInt(box.substring(comma + 1)));
         }
-        if (options.policy == 'wob')
+        if (options.scheme == 'wob')
             this.policy = RenderPolicy.defaultWhiteOnBlack();
-        else if (options.policy == 'cob')
+        else if (options.scheme == 'cob')
             this.policy = RenderPolicy.defaultColourOnBlack();
-        else if (options.policy == 'bow')
+        else if (options.scheme == 'bow')
             this.policy = RenderPolicy.defaultBlackOnWhite();
-        else if (options.policy == 'cow')
+        else if (options.scheme == 'cow')
             this.policy = RenderPolicy.defaultColourOnWhite();
         if (options.scale)
             this.policy.data.pointScale = options.scale;
@@ -16040,6 +16047,7 @@ class EmbedMolecule extends EmbedChemistry {
         if (!this.tight)
             span.css('margin-bottom', '1.5em');
         if (mol != null && mol.numAtoms > 0) {
+            span.css('text-align', 'center');
             let effects = new RenderEffects();
             let measure = new OutlineMeasurement(0, 0, policy.data.pointScale);
             let layout = new ArrangeMolecule(mol, measure, policy, effects);
@@ -16056,7 +16064,10 @@ class EmbedMolecule extends EmbedChemistry {
             }
             let metavec = new MetaVector();
             new DrawMolecule(layout, metavec).draw();
-            metavec.normalise();
+            if (this.boxSize == null)
+                metavec.normalise();
+            else
+                metavec.setSize(this.boxSize.w, this.boxSize.h);
             let svg = $(metavec.createSVG()).appendTo(span);
             if (this.name) {
                 let p = $('<p></p>').appendTo(span);
@@ -16065,7 +16076,7 @@ class EmbedMolecule extends EmbedChemistry {
                 p.css('margin', 0);
                 p.css('font-family', '"HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif');
                 p.css('line-height', '1');
-                p.css('text-alignment', 'center');
+                p.css('width', '100%');
                 p.css('color', '#606060');
                 p.text(this.name);
             }

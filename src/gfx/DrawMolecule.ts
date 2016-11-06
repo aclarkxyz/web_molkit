@@ -241,7 +241,6 @@ class DrawMolecule
 		}
 	}
 	
-	
 	private drawBondInclined(b:BLine):void
 	{
 		let x1 = b.line.x1, y1 = b.line.y1, x2 = b.line.x2, y2 = b.line.y2;
