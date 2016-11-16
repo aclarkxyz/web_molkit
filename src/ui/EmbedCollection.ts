@@ -143,7 +143,12 @@ class EmbedCollection extends EmbedChemistry
 			let table = $('<table></table>').appendTo(span);
 			table.css('font-family', '"HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif');
 			table.css('border-collapse', 'collapse');
+			table.css('line-height', '1');
+			table.css('margin', '2px');
+			table.css('border', '0');
+
 			let tr = $('<tr></tr>').appendTo(table);
+			tr.css('line-height', '1');
 			for (let n = 0; n < columns.length; n++)
 			{
 				let th = $('<th></th>').appendTo(tr);
@@ -153,6 +158,7 @@ class EmbedCollection extends EmbedChemistry
 				th.css('text-decoration', 'underline');
 				th.css('text-align', 'center');
 				th.css('padding', '0.2em 0.5em 0.2em 0.5em');
+				th.css('border', '0');
 				th.text(columns[n].name);
 			}
 
@@ -162,11 +168,13 @@ class EmbedCollection extends EmbedChemistry
 				for (let aspect of aspects) blksz = Math.max(blksz, aspect.rowBlockCount(row));
 
 				tr = $('<tr></tr>').appendTo(table);
+				tr.css('line-height', '1');
 				for (let col = 0; col < columns.length; col++)
 				{
 					let td = $('<td></td>').appendTo(tr);
 					td.css('border', '1px solid #D0D0D0');
 					td.css('padding', '0.2em');
+					td.css('vertical-align', 'middle');
 					let spec = columns[col];
 					if (spec.aspect == null)
 					{
