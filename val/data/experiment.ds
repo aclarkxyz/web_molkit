@@ -1,0 +1,434 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DataSheet>
+<Summary>
+<Title>Osmium complexes containing either chelating or non-chelating 8-quinolyl ligands</Title>
+<Description><![CDATA[Journal of Organometallic Chemistry, 545, 619-622 (1997)]]></Description>
+</Summary>
+<Header nrows="2" ncols="76">
+<Column name="ExperimentTitle" type="string" id="1">Title description for the experiment</Column>
+<Column name="ExperimentCreateDate" type="real" id="2">Date the experiment was created (seconds since 1970)</Column>
+<Column name="ExperimentModifyDate" type="real" id="3">Date the experiment was last modified (seconds since 1970)</Column>
+<Column name="ReactantMol1" type="molecule" id="4">Molecular structure of reactant</Column>
+<Column name="ReactantName1" type="string" id="5">Name of reactant</Column>
+<Column name="ReactantStoich1" type="string" id="6">Stoichiometry of reactant</Column>
+<Column name="ReactantMass1" type="real" id="7">Mass quantity of reactant (g)</Column>
+<Column name="ReactantVolume1" type="real" id="8">Volume quantity of reactant (mL)</Column>
+<Column name="ReactantMoles1" type="real" id="9">Molar quantity of reactant (mol)</Column>
+<Column name="ReactantDensity1" type="real" id="10">Density of reactant (g/mL)</Column>
+<Column name="ReactantConc1" type="real" id="11">Concentration of reactant (mol/L)</Column>
+<Column name="ReactantPrimary1" type="boolean" id="12">Whether the reactant is used for yield calculation</Column>
+<Column name="ReactantMol2" type="molecule" id="13">Molecular structure of reactant</Column>
+<Column name="ReactantName2" type="string" id="14">Name of reactant</Column>
+<Column name="ReactantStoich2" type="string" id="15">Stoichiometry of reactant</Column>
+<Column name="ReactantMass2" type="real" id="16">Mass quantity of reactant (g)</Column>
+<Column name="ReactantVolume2" type="real" id="17">Volume quantity of reactant (mL)</Column>
+<Column name="ReactantMoles2" type="real" id="18">Molar quantity of reactant (mol)</Column>
+<Column name="ReactantDensity2" type="real" id="19">Density of reactant (g/mL)</Column>
+<Column name="ReactantConc2" type="real" id="20">Concentration of reactant (mol/L)</Column>
+<Column name="ReactantPrimary2" type="boolean" id="21">Whether the reactant is used for yield calculation</Column>
+<Column name="ProductMol1" type="molecule" id="22">Molecular structure of product</Column>
+<Column name="ProductName1" type="string" id="23">Name of product</Column>
+<Column name="ProductStoich1" type="string" id="24">Stoichiometry of product</Column>
+<Column name="ProductMass1" type="real" id="25">Mass quantity of product (g)</Column>
+<Column name="ProductVolume1" type="real" id="26">Volume quantity of product (mL)</Column>
+<Column name="ProductMoles1" type="real" id="27">Molar quantity of product (mol)</Column>
+<Column name="ProductDensity1" type="real" id="28">Density of product (g/mL)</Column>
+<Column name="ProductConc1" type="real" id="29">Concentration of product (mol/L)</Column>
+<Column name="ProductYield1" type="real" id="30">Yield of product (%)</Column>
+<Column name="ProductWaste1" type="boolean" id="31">Whether the product is an unwanted byproduct</Column>
+<Column name="ProductMol2" type="molecule" id="32">Molecular structure of product</Column>
+<Column name="ProductName2" type="string" id="33">Name of product</Column>
+<Column name="ProductStoich2" type="string" id="34">Stoichiometry of product</Column>
+<Column name="ProductMass2" type="real" id="35">Mass quantity of product (g)</Column>
+<Column name="ProductVolume2" type="real" id="36">Volume quantity of product (mL)</Column>
+<Column name="ProductMoles2" type="real" id="37">Molar quantity of product (mol)</Column>
+<Column name="ProductDensity2" type="real" id="38">Density of product (g/mL)</Column>
+<Column name="ProductConc2" type="real" id="39">Concentration of product (mol/L)</Column>
+<Column name="ProductYield2" type="real" id="40">Yield of product (%)</Column>
+<Column name="ProductWaste2" type="boolean" id="41">Whether the product is an unwanted byproduct</Column>
+<Column name="ProductMol3" type="molecule" id="42">Molecular structure of product</Column>
+<Column name="ProductName3" type="string" id="43">Name of product</Column>
+<Column name="ProductStoich3" type="string" id="44">Stoichiometry of product</Column>
+<Column name="ProductMass3" type="real" id="45">Mass quantity of product (g)</Column>
+<Column name="ProductVolume3" type="real" id="46">Volume quantity of product (mL)</Column>
+<Column name="ProductMoles3" type="real" id="47">Molar quantity of product (mol)</Column>
+<Column name="ProductDensity3" type="real" id="48">Density of product (g/mL)</Column>
+<Column name="ProductConc3" type="real" id="49">Concentration of product (mol/L)</Column>
+<Column name="ProductYield3" type="real" id="50">Yield of product (%)</Column>
+<Column name="ProductWaste3" type="boolean" id="51">Whether the product is an unwanted byproduct</Column>
+<Column name="ReagentMol1" type="molecule" id="52">Molecular structure of reagent</Column>
+<Column name="ReagentName1" type="string" id="53">Name of reagent</Column>
+<Column name="ReagentEquiv1" type="real" id="54">Molar equivalents of reagent</Column>
+<Column name="ReagentMass1" type="real" id="55">Mass quantity of reagent (g)</Column>
+<Column name="ReagentVolume1" type="real" id="56">Volume quantity of reagent (mL)</Column>
+<Column name="ReagentMoles1" type="real" id="57">Molar quantity of reagent (mol)</Column>
+<Column name="ReagentDensity1" type="real" id="58">Density of reagent (g/mL)</Column>
+<Column name="ReagentConc1" type="real" id="59">Concentration of reagent (mol/L)</Column>
+<Column name="ReagentMol2" type="molecule" id="60">Molecular structure of reagent</Column>
+<Column name="ReagentName2" type="string" id="61">Name of reagent</Column>
+<Column name="ReagentEquiv2" type="real" id="62">Molar equivalents of reagent</Column>
+<Column name="ReagentMass2" type="real" id="63">Mass quantity of reagent (g)</Column>
+<Column name="ReagentVolume2" type="real" id="64">Volume quantity of reagent (mL)</Column>
+<Column name="ReagentMoles2" type="real" id="65">Molar quantity of reagent (mol)</Column>
+<Column name="ReagentDensity2" type="real" id="66">Density of reagent (g/mL)</Column>
+<Column name="ReagentConc2" type="real" id="67">Concentration of reagent (mol/L)</Column>
+<Column name="ReagentMol3" type="molecule" id="68">Molecular structure of reagent</Column>
+<Column name="ReagentName3" type="string" id="69">Name of reagent</Column>
+<Column name="ReagentEquiv3" type="real" id="70">Molar equivalents of reagent</Column>
+<Column name="ReagentMass3" type="real" id="71">Mass quantity of reagent (g)</Column>
+<Column name="ReagentVolume3" type="real" id="72">Volume quantity of reagent (mL)</Column>
+<Column name="ReagentMoles3" type="real" id="73">Molar quantity of reagent (mol)</Column>
+<Column name="ReagentDensity3" type="real" id="74">Density of reagent (g/mL)</Column>
+<Column name="ReagentConc3" type="real" id="75">Concentration of reagent (mol/L)</Column>
+<Column name="ExperimentDOI" type="string" id="76">Digital object identifiers (DOI) for the experiment (whitespace separated)</Column>
+</Header>
+<Extension>
+<Ext type="org.mmi.aspect.Yield" name="Yield"><![CDATA[nreactants=2
+nproducts=3
+nreagents=3
+]]></Ext>
+<Ext type="org.mmi.aspect.Experiment" name="Experiment"><![CDATA[nreactants=2
+nreagents=3
+nproducts=3
+]]></Ext>
+<Ext type="org.mmi.aspect.Reaction" name="Reaction"><![CDATA[nreactants=2
+nproducts=3
+nreagents=3
+]]></Ext>
+</Extension>
+<Content>
+<Row id="1">
+<Cell id="1"><![CDATA[Halide substitution]]></Cell>
+<Cell id="2">1456113261.97393</Cell>
+<Cell id="3">1456113261.98064</Cell>
+<Cell id="4"><![CDATA[SketchEl!(16,18)
+Os=0.6143,-1.5429;0,0,i0
+P|Ph{3}=0.6143,0.4571;0,0,i0,aSketchEl!(20\002C22)\000A*\003D0.6143\002C-1.5429\003B0\002C0\002Ci0\000AP\003D0.6143\002C0.4571\003B0\002C0\002Ci0\000AC\003D-1.3857\002C0.4571\003B0\002C0\002Ci0\000AC\003D0.6143\002C2.4571\003B0\002C0\002Ci0\000AC\003D2.6143\002C0.4571\003B0\002C0\002Ci0\000AC\003D-2.1357\002C-0.8419\003B0\002C0\002Ci1\000AC\003D-2.1357\002C1.7561\003B0\002C0\002Ci1\000AC\003D-3.6357\002C-0.8419\003B0\002C0\002Ci1\000AC\003D-4.3857\002C0.4571\003B0\002C0\002Ci1\000AC\003D-3.6357\002C1.7561\003B0\002C0\002Ci1\000AC\003D-0.6847\002C3.2071\003B0\002C0\002Ci1\000AC\003D1.9133\002C3.2071\003B0\002C0\002Ci1\000AC\003D-0.6847\002C4.7071\003B0\002C0\002Ci1\000AC\003D0.6143\002C5.4571\003B0\002C0\002Ci1\000AC\003D1.9133\002C4.7071\003B0\002C0\002Ci1\000AC\003D3.3643\002C1.7561\003B0\002C0\002Ci1\000AC\003D3.3643\002C-0.8419\003B0\002C0\002Ci1\000AC\003D4.8643\002C1.7561\003B0\002C0\002Ci1\000AC\003D5.6143\002C0.4571\003B0\002C0\002Ci1\000AC\003D4.8643\002C-0.8419\003B0\002C0\002Ci1\000A2-3\003D1\002C0\000A2-4\003D1\002C0\000A2-5\003D1\002C0\000A3-6\003D1\002C0\000A3-7\003D2\002C0\000A6-8\003D2\002C0\000A8-9\003D1\002C0\000A9-10\003D2\002C0\000A10-7\003D1\002C0\000A4-11\003D1\002C0\000A4-12\003D2\002C0\000A11-13\003D2\002C0\000A13-14\003D1\002C0\000A14-15\003D2\002C0\000A15-12\003D1\002C0\000A5-16\003D1\002C0\000A5-17\003D2\002C0\000A16-18\003D2\002C0\000A18-19\003D1\002C0\000A19-20\003D2\002C0\000A20-17\003D1\002C0\000A2-1\003D0\002C0\000A!End\000A
+P|Ph{3}=0.6143,-3.5429;0,0,i0,aSketchEl!(20\002C22)\000A*\003D0.6143\002C-1.5429\003B0\002C0\002Ci0\000AP\003D0.6143\002C-3.5429\003B0\002C0\002Ci0\000AC\003D2.6143\002C-3.5429\003B0\002C0\002Ci0\000AC\003D0.6143\002C-5.5429\003B0\002C0\002Ci0\000AC\003D-1.3857\002C-3.5429\003B0\002C0\002Ci0\000AC\003D3.3643\002C-2.2439\003B0\002C0\002Ci1\000AC\003D3.3643\002C-4.8419\003B0\002C0\002Ci1\000AC\003D4.8643\002C-2.2439\003B0\002C0\002Ci1\000AC\003D5.6143\002C-3.5429\003B0\002C0\002Ci1\000AC\003D4.8643\002C-4.8419\003B0\002C0\002Ci1\000AC\003D1.9133\002C-6.2929\003B0\002C0\002Ci1\000AC\003D-0.6847\002C-6.2929\003B0\002C0\002Ci1\000AC\003D1.9133\002C-7.7929\003B0\002C0\002Ci1\000AC\003D0.6143\002C-8.5429\003B0\002C0\002Ci1\000AC\003D-0.6847\002C-7.7929\003B0\002C0\002Ci1\000AC\003D-2.1357\002C-4.8419\003B0\002C0\002Ci1\000AC\003D-2.1357\002C-2.2439\003B0\002C0\002Ci1\000AC\003D-3.6357\002C-4.8419\003B0\002C0\002Ci1\000AC\003D-4.3857\002C-3.5429\003B0\002C0\002Ci1\000AC\003D-3.6357\002C-2.2439\003B0\002C0\002Ci1\000A2-3\003D1\002C0\000A2-4\003D1\002C0\000A2-5\003D1\002C0\000A3-6\003D1\002C0\000A3-7\003D2\002C0\000A6-8\003D2\002C0\000A8-9\003D1\002C0\000A9-10\003D2\002C0\000A10-7\003D1\002C0\000A4-11\003D1\002C0\000A4-12\003D2\002C0\000A11-13\003D2\002C0\000A13-14\003D1\002C0\000A14-15\003D2\002C0\000A15-12\003D1\002C0\000A5-16\003D1\002C0\000A5-17\003D2\002C0\000A16-18\003D2\002C0\000A18-19\003D1\002C0\000A19-20\003D2\002C0\000A20-17\003D1\002C0\000A2-1\003D0\002C0\000A!End\000A
+C=-0.9575,-0.6354;0,0,e0
+O=-2.2566,0.1146;0,0,i0
+Cl=-1.1147,-2.5412;0,0,i0
+C=3.2124,-1.5429;0,0,i0
+C=4.7124,-1.5429;0,0,i0
+C=5.4624,-0.2438;0,0,i1
+C=4.7123,1.0552;0,0,i1
+C=3.2123,1.0552;0,0,i1
+C=2.4624,-0.2438;0,0,i0
+C=5.4624,-2.8419;0,0,i1
+C=4.7124,-4.1409;0,0,i1
+C=3.2124,-4.1409;0,0,i1
+N=2.4624,-2.8419;0,0,i0
+1-2=0,0
+1-3=0,0
+1-4=0,2
+4-5=2,0
+1-6=1,1
+7-8=2,0
+8-9=1,0
+9-10=2,0
+10-11=1,0
+11-12=2,0
+12-7=1,0
+8-13=1,0
+13-14=2,0
+14-15=1,0
+15-16=2,0
+16-7=1,0
+1-16=0,1
+1-12=1,2
+!End
+]]></Cell>
+<Cell id="5"></Cell>
+<Cell id="6"></Cell>
+<Cell id="7">0.1</Cell>
+<Cell id="8"></Cell>
+<Cell id="9"></Cell>
+<Cell id="10"></Cell>
+<Cell id="11"></Cell>
+<Cell id="12">true</Cell>
+<Cell id="13"></Cell>
+<Cell id="14"></Cell>
+<Cell id="15"></Cell>
+<Cell id="16"></Cell>
+<Cell id="17"></Cell>
+<Cell id="18"></Cell>
+<Cell id="19"></Cell>
+<Cell id="20"></Cell>
+<Cell id="21"></Cell>
+<Cell id="22"><![CDATA[SketchEl!(22,23)
+Os=0.6143,-1.5429;1,0,i0
+P|Ph{3}=0.6143,0.4571;0,0,i0,aSketchEl!(20\002C22)\000A*\003D0.6143\002C-1.5429\003B0\002C0\002Ci0\000AP\003D0.6143\002C0.4571\003B0\002C0\002Ci0\000AC\003D-1.3857\002C0.4571\003B0\002C0\002Ci0\000AC\003D0.6143\002C2.4571\003B0\002C0\002Ci0\000AC\003D2.6143\002C0.4571\003B0\002C0\002Ci0\000AC\003D-2.1357\002C-0.8419\003B0\002C0\002Ci1\000AC\003D-2.1357\002C1.7561\003B0\002C0\002Ci1\000AC\003D-3.6357\002C-0.8419\003B0\002C0\002Ci1\000AC\003D-4.3857\002C0.4571\003B0\002C0\002Ci1\000AC\003D-3.6357\002C1.7561\003B0\002C0\002Ci1\000AC\003D-0.6847\002C3.2071\003B0\002C0\002Ci1\000AC\003D1.9133\002C3.2071\003B0\002C0\002Ci1\000AC\003D-0.6847\002C4.7071\003B0\002C0\002Ci1\000AC\003D0.6143\002C5.4571\003B0\002C0\002Ci1\000AC\003D1.9133\002C4.7071\003B0\002C0\002Ci1\000AC\003D3.3643\002C1.7561\003B0\002C0\002Ci1\000AC\003D3.3643\002C-0.8419\003B0\002C0\002Ci1\000AC\003D4.8643\002C1.7561\003B0\002C0\002Ci1\000AC\003D5.6143\002C0.4571\003B0\002C0\002Ci1\000AC\003D4.8643\002C-0.8419\003B0\002C0\002Ci1\000A2-3\003D1\002C0\000A2-4\003D1\002C0\000A2-5\003D1\002C0\000A3-6\003D1\002C0\000A3-7\003D2\002C0\000A6-8\003D2\002C0\000A8-9\003D1\002C0\000A9-10\003D2\002C0\000A10-7\003D1\002C0\000A4-11\003D1\002C0\000A4-12\003D2\002C0\000A11-13\003D2\002C0\000A13-14\003D1\002C0\000A14-15\003D2\002C0\000A15-12\003D1\002C0\000A5-16\003D1\002C0\000A5-17\003D2\002C0\000A16-18\003D2\002C0\000A18-19\003D1\002C0\000A19-20\003D2\002C0\000A20-17\003D1\002C0\000A2-1\003D0\002C0\000A!End\000A
+P|Ph{3}=0.6143,-3.5429;0,0,i0,aSketchEl!(20\002C22)\000A*\003D0.6143\002C-1.5429\003B0\002C0\002Ci0\000AP\003D0.6143\002C-3.5429\003B0\002C0\002Ci0\000AC\003D2.6143\002C-3.5429\003B0\002C0\002Ci0\000AC\003D0.6143\002C-5.5429\003B0\002C0\002Ci0\000AC\003D-1.3857\002C-3.5429\003B0\002C0\002Ci0\000AC\003D3.3643\002C-2.2439\003B0\002C0\002Ci1\000AC\003D3.3643\002C-4.8419\003B0\002C0\002Ci1\000AC\003D4.8643\002C-2.2439\003B0\002C0\002Ci1\000AC\003D5.6143\002C-3.5429\003B0\002C0\002Ci1\000AC\003D4.8643\002C-4.8419\003B0\002C0\002Ci1\000AC\003D1.9133\002C-6.2929\003B0\002C0\002Ci1\000AC\003D-0.6847\002C-6.2929\003B0\002C0\002Ci1\000AC\003D1.9133\002C-7.7929\003B0\002C0\002Ci1\000AC\003D0.6143\002C-8.5429\003B0\002C0\002Ci1\000AC\003D-0.6847\002C-7.7929\003B0\002C0\002Ci1\000AC\003D-2.1357\002C-4.8419\003B0\002C0\002Ci1\000AC\003D-2.1357\002C-2.2439\003B0\002C0\002Ci1\000AC\003D-3.6357\002C-4.8419\003B0\002C0\002Ci1\000AC\003D-4.3857\002C-3.5429\003B0\002C0\002Ci1\000AC\003D-3.6357\002C-2.2439\003B0\002C0\002Ci1\000A2-3\003D1\002C0\000A2-4\003D1\002C0\000A2-5\003D1\002C0\000A3-6\003D1\002C0\000A3-7\003D2\002C0\000A6-8\003D2\002C0\000A8-9\003D1\002C0\000A9-10\003D2\002C0\000A10-7\003D1\002C0\000A4-11\003D1\002C0\000A4-12\003D2\002C0\000A11-13\003D2\002C0\000A13-14\003D1\002C0\000A14-15\003D2\002C0\000A15-12\003D1\002C0\000A5-16\003D1\002C0\000A5-17\003D2\002C0\000A16-18\003D2\002C0\000A18-19\003D1\002C0\000A19-20\003D2\002C0\000A20-17\003D1\002C0\000A2-1\003D0\002C0\000A!End\000A
+C=-0.9575,-0.6354;0,0,e0
+O=-2.2566,0.1146;0,0,i0
+C=3.2124,-1.5429;0,0,i0
+C=4.7124,-1.5429;0,0,i0
+C=5.4624,-0.2438;0,0,i1
+C=4.7123,1.0552;0,0,i1
+C=3.2123,1.0552;0,0,i1
+C=2.4624,-0.2438;0,0,i0
+C=5.4624,-2.8419;0,0,i1
+C=4.7124,-4.1409;0,0,i1
+C=3.2124,-4.1409;0,0,i1
+N=2.4624,-2.8419;0,0,i0
+P=-3.5557,-2.5429;-1,0,i0,n1
+F=-2.2566,-3.2929;0,0,i0
+F=-3.5557,-1.0429;0,0,i0
+F=-4.8547,-3.2929;0,0,i0
+F=-2.2566,-1.7929;0,0,i0
+F=-3.5557,-4.0429;0,0,i0
+F=-4.8547,-1.7929;0,0,i0
+1-2=0,0
+1-3=0,0
+1-4=0,2
+4-5=2,0
+6-7=2,0
+7-8=1,0
+8-9=2,0
+9-10=1,0
+10-11=2,0
+11-6=1,0
+7-12=1,0
+12-13=2,0
+13-14=1,0
+14-15=2,0
+15-6=1,0
+1-15=0,1
+1-11=1,2
+16-17=1,0
+16-18=1,0
+16-19=1,0
+16-20=1,0
+16-21=1,0
+16-22=1,0
+!End
+]]></Cell>
+<Cell id="23"></Cell>
+<Cell id="24"></Cell>
+<Cell id="25"></Cell>
+<Cell id="26"></Cell>
+<Cell id="27"></Cell>
+<Cell id="28"></Cell>
+<Cell id="29"></Cell>
+<Cell id="30"></Cell>
+<Cell id="31">false</Cell>
+<Cell id="32"><![CDATA[SketchEl!(2,0)
+Ag=0.3857,-0.1857;1,0,i0
+Cl=1.8857,-0.1857;-1,0,i0
+!End
+]]></Cell>
+<Cell id="33"></Cell>
+<Cell id="34"></Cell>
+<Cell id="35"></Cell>
+<Cell id="36"></Cell>
+<Cell id="37"></Cell>
+<Cell id="38"></Cell>
+<Cell id="39"></Cell>
+<Cell id="40"></Cell>
+<Cell id="41">true</Cell>
+<Cell id="42"></Cell>
+<Cell id="43"></Cell>
+<Cell id="44"></Cell>
+<Cell id="45"></Cell>
+<Cell id="46"></Cell>
+<Cell id="47"></Cell>
+<Cell id="48"></Cell>
+<Cell id="49"></Cell>
+<Cell id="50"></Cell>
+<Cell id="51"></Cell>
+<Cell id="52"><![CDATA[SketchEl!(8,6)
+Ag=-0.6429,-1.3429;1,0,i0
+P=2.3571,-1.3429;-1,0,i0,n1
+F=3.6562,-2.0929;0,0,i0
+F=2.3571,0.1571;0,0,i0
+F=1.0581,-2.0929;0,0,i0
+F=3.6562,-0.5929;0,0,i0
+F=2.3571,-2.8429;0,0,i0
+F=1.0581,-0.5929;0,0,i0
+2-3=1,0
+2-4=1,0
+2-5=1,0
+2-6=1,0
+2-7=1,0
+2-8=1,0
+!End
+]]></Cell>
+<Cell id="53"></Cell>
+<Cell id="54"></Cell>
+<Cell id="55">0.08</Cell>
+<Cell id="56"></Cell>
+<Cell id="57"></Cell>
+<Cell id="58"></Cell>
+<Cell id="59"></Cell>
+<Cell id="60"><![CDATA[SketchEl!(5,4)
+C=6.1000,0.2500;0,0,i0
+Cl=4.8010,-0.5000;0,0,i0
+Cl=7.3990,-0.5000;0,0,i0
+H=6.8500,1.5490;0,0,i0
+H=5.3500,1.5490;0,0,i0
+1-2=1,0
+1-3=1,0
+1-4=1,0
+1-5=1,0
+!End
+]]></Cell>
+<Cell id="61"><![CDATA[Dichloromethane]]></Cell>
+<Cell id="62"></Cell>
+<Cell id="63"></Cell>
+<Cell id="64">20.0</Cell>
+<Cell id="65"></Cell>
+<Cell id="66">1.325</Cell>
+<Cell id="67"></Cell>
+<Cell id="68"><![CDATA[SketchEl!(3,2)
+O=0.1714,1.2286;0,0,i1
+C=-1.1276,0.4786;0,0,i2
+C=-2.4266,1.2286;0,0,i3
+1-2=1,0
+2-3=1,0
+!End
+]]></Cell>
+<Cell id="69"><![CDATA[Ethanol]]></Cell>
+<Cell id="70"></Cell>
+<Cell id="71"></Cell>
+<Cell id="72">5.0</Cell>
+<Cell id="73"></Cell>
+<Cell id="74">0.789</Cell>
+<Cell id="75"></Cell>
+<Cell id="76"></Cell>
+</Row>
+<Row id="2">
+<Cell id="1"></Cell>
+<Cell id="2"></Cell>
+<Cell id="3"></Cell>
+<Cell id="4"></Cell>
+<Cell id="5"></Cell>
+<Cell id="6"></Cell>
+<Cell id="7"></Cell>
+<Cell id="8"></Cell>
+<Cell id="9"></Cell>
+<Cell id="10"></Cell>
+<Cell id="11"></Cell>
+<Cell id="12"></Cell>
+<Cell id="13"></Cell>
+<Cell id="14"></Cell>
+<Cell id="15"></Cell>
+<Cell id="16"></Cell>
+<Cell id="17"></Cell>
+<Cell id="18"></Cell>
+<Cell id="19"></Cell>
+<Cell id="20"></Cell>
+<Cell id="21"></Cell>
+<Cell id="22"><![CDATA[SketchEl!(16,18)
+Os=0.6143,-1.5429;0,0,i0
+P|Ph{3}=0.6143,0.4571;0,0,i0,aSketchEl!(20\002C22)\000A*\003D0.6143\002C-1.5429\003B0\002C0\002Ci0\000AP\003D0.6143\002C0.4571\003B0\002C0\002Ci0\000AC\003D-1.3857\002C0.4571\003B0\002C0\002Ci0\000AC\003D0.6143\002C2.4571\003B0\002C0\002Ci0\000AC\003D2.6143\002C0.4571\003B0\002C0\002Ci0\000AC\003D-2.1357\002C-0.8419\003B0\002C0\002Ci1\000AC\003D-2.1357\002C1.7561\003B0\002C0\002Ci1\000AC\003D-3.6357\002C-0.8419\003B0\002C0\002Ci1\000AC\003D-4.3857\002C0.4571\003B0\002C0\002Ci1\000AC\003D-3.6357\002C1.7561\003B0\002C0\002Ci1\000AC\003D-0.6847\002C3.2071\003B0\002C0\002Ci1\000AC\003D1.9133\002C3.2071\003B0\002C0\002Ci1\000AC\003D-0.6847\002C4.7071\003B0\002C0\002Ci1\000AC\003D0.6143\002C5.4571\003B0\002C0\002Ci1\000AC\003D1.9133\002C4.7071\003B0\002C0\002Ci1\000AC\003D3.3643\002C1.7561\003B0\002C0\002Ci1\000AC\003D3.3643\002C-0.8419\003B0\002C0\002Ci1\000AC\003D4.8643\002C1.7561\003B0\002C0\002Ci1\000AC\003D5.6143\002C0.4571\003B0\002C0\002Ci1\000AC\003D4.8643\002C-0.8419\003B0\002C0\002Ci1\000A2-3\003D1\002C0\000A2-4\003D1\002C0\000A2-5\003D1\002C0\000A3-6\003D1\002C0\000A3-7\003D2\002C0\000A6-8\003D2\002C0\000A8-9\003D1\002C0\000A9-10\003D2\002C0\000A10-7\003D1\002C0\000A4-11\003D1\002C0\000A4-12\003D2\002C0\000A11-13\003D2\002C0\000A13-14\003D1\002C0\000A14-15\003D2\002C0\000A15-12\003D1\002C0\000A5-16\003D1\002C0\000A5-17\003D2\002C0\000A16-18\003D2\002C0\000A18-19\003D1\002C0\000A19-20\003D2\002C0\000A20-17\003D1\002C0\000A2-1\003D0\002C0\000A!End\000A
+P|Ph{3}=0.6143,-3.5429;0,0,i0,aSketchEl!(20\002C22)\000A*\003D0.6143\002C-1.5429\003B0\002C0\002Ci0\000AP\003D0.6143\002C-3.5429\003B0\002C0\002Ci0\000AC\003D2.6143\002C-3.5429\003B0\002C0\002Ci0\000AC\003D0.6143\002C-5.5429\003B0\002C0\002Ci0\000AC\003D-1.3857\002C-3.5429\003B0\002C0\002Ci0\000AC\003D3.3643\002C-2.2439\003B0\002C0\002Ci1\000AC\003D3.3643\002C-4.8419\003B0\002C0\002Ci1\000AC\003D4.8643\002C-2.2439\003B0\002C0\002Ci1\000AC\003D5.6143\002C-3.5429\003B0\002C0\002Ci1\000AC\003D4.8643\002C-4.8419\003B0\002C0\002Ci1\000AC\003D1.9133\002C-6.2929\003B0\002C0\002Ci1\000AC\003D-0.6847\002C-6.2929\003B0\002C0\002Ci1\000AC\003D1.9133\002C-7.7929\003B0\002C0\002Ci1\000AC\003D0.6143\002C-8.5429\003B0\002C0\002Ci1\000AC\003D-0.6847\002C-7.7929\003B0\002C0\002Ci1\000AC\003D-2.1357\002C-4.8419\003B0\002C0\002Ci1\000AC\003D-2.1357\002C-2.2439\003B0\002C0\002Ci1\000AC\003D-3.6357\002C-4.8419\003B0\002C0\002Ci1\000AC\003D-4.3857\002C-3.5429\003B0\002C0\002Ci1\000AC\003D-3.6357\002C-2.2439\003B0\002C0\002Ci1\000A2-3\003D1\002C0\000A2-4\003D1\002C0\000A2-5\003D1\002C0\000A3-6\003D1\002C0\000A3-7\003D2\002C0\000A6-8\003D2\002C0\000A8-9\003D1\002C0\000A9-10\003D2\002C0\000A10-7\003D1\002C0\000A4-11\003D1\002C0\000A4-12\003D2\002C0\000A11-13\003D2\002C0\000A13-14\003D1\002C0\000A14-15\003D2\002C0\000A15-12\003D1\002C0\000A5-16\003D1\002C0\000A5-17\003D2\002C0\000A16-18\003D2\002C0\000A18-19\003D1\002C0\000A19-20\003D2\002C0\000A20-17\003D1\002C0\000A2-1\003D0\002C0\000A!End\000A
+C=-0.9575,-0.6354;0,0,e0
+O=-2.2566,0.1146;0,0,i0
+I=-1.1147,-2.5412;0,0,i0,n2
+C=3.2124,-1.5429;0,0,i0
+C=4.7124,-1.5429;0,0,i0
+C=5.4624,-0.2438;0,0,i1
+C=4.7123,1.0552;0,0,i1
+C=3.2123,1.0552;0,0,i1
+C=2.4624,-0.2438;0,0,i0
+C=5.4624,-2.8419;0,0,i1
+C=4.7124,-4.1409;0,0,i1
+C=3.2124,-4.1409;0,0,i1
+N=2.4624,-2.8419;0,0,i0
+1-2=0,0
+1-3=0,0
+1-4=0,2
+4-5=2,0
+1-6=1,1
+7-8=2,0
+8-9=1,0
+9-10=2,0
+10-11=1,0
+11-12=2,0
+12-7=1,0
+8-13=1,0
+13-14=2,0
+14-15=1,0
+15-16=2,0
+16-7=1,0
+1-16=0,1
+1-12=1,2
+!End
+]]></Cell>
+<Cell id="23"></Cell>
+<Cell id="24"></Cell>
+<Cell id="25">0.106</Cell>
+<Cell id="26"></Cell>
+<Cell id="27"></Cell>
+<Cell id="28"></Cell>
+<Cell id="29"></Cell>
+<Cell id="30"></Cell>
+<Cell id="31">false</Cell>
+<Cell id="32"><![CDATA[SketchEl!(8,6)
+Na=-0.6429,-1.3429;1,0,i0
+P=2.3571,-1.3429;-1,0,i0
+F=3.6562,-2.0929;0,0,i0
+F=2.3571,0.1571;0,0,i0
+F=1.0581,-2.0929;0,0,i0
+F=3.6562,-0.5929;0,0,i0
+F=2.3571,-2.8429;0,0,i0
+F=1.0581,-0.5929;0,0,i0
+2-3=1,0
+2-4=1,0
+2-5=1,0
+2-6=1,0
+2-7=1,0
+2-8=1,0
+!End
+]]></Cell>
+<Cell id="33"></Cell>
+<Cell id="34"></Cell>
+<Cell id="35"></Cell>
+<Cell id="36"></Cell>
+<Cell id="37"></Cell>
+<Cell id="38"></Cell>
+<Cell id="39"></Cell>
+<Cell id="40"></Cell>
+<Cell id="41">true</Cell>
+<Cell id="42"></Cell>
+<Cell id="43"></Cell>
+<Cell id="44"></Cell>
+<Cell id="45"></Cell>
+<Cell id="46"></Cell>
+<Cell id="47"></Cell>
+<Cell id="48"></Cell>
+<Cell id="49"></Cell>
+<Cell id="50"></Cell>
+<Cell id="51"></Cell>
+<Cell id="52"><![CDATA[SketchEl!(2,0)
+Na=-0.1000,-1.3143;1,0,i0
+I=1.4000,-1.3143;-1,0,i0,n2
+!End
+]]></Cell>
+<Cell id="53"></Cell>
+<Cell id="54"></Cell>
+<Cell id="55"></Cell>
+<Cell id="56"></Cell>
+<Cell id="57"></Cell>
+<Cell id="58"></Cell>
+<Cell id="59"></Cell>
+<Cell id="60"></Cell>
+<Cell id="61"></Cell>
+<Cell id="62"></Cell>
+<Cell id="63"></Cell>
+<Cell id="64"></Cell>
+<Cell id="65"></Cell>
+<Cell id="66"></Cell>
+<Cell id="67"></Cell>
+<Cell id="68"></Cell>
+<Cell id="69"></Cell>
+<Cell id="70"></Cell>
+<Cell id="71"></Cell>
+<Cell id="72"></Cell>
+<Cell id="73"></Cell>
+<Cell id="74"></Cell>
+<Cell id="75"></Cell>
+<Cell id="76"></Cell>
+</Row>
+</Content>
+</DataSheet>

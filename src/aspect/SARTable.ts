@@ -13,6 +13,7 @@
 ///<reference path='../util/util.ts'/>
 ///<reference path='../data/DataSheet.ts'/>
 ///<reference path='../data/MoleculeStream.ts'/>
+///<reference path='Aspect.ts'/>
 
 /*
 	SAR Table: provides scaffold/substituent/molecule equivalence based on fragment placeholders (R-groups).

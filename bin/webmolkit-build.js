@@ -578,6 +578,10 @@ class DataSheet {
             data.push(null);
         this.data.rowData.splice(row, 0, data);
     }
+    deleteRow(row) {
+        this.data.numRows--;
+        this.data.rowData.splice(row, 1);
+    }
     deleteAllRows() {
         this.data.numRows = 0;
         this.data.rowData = new Array();
@@ -3488,6 +3492,652 @@ class AspectList {
         return aspects;
     }
 }
+class ExperimentComponent {
+    constructor(mol, name) {
+        this.mol = null;
+        this.name = '';
+        this.stoich = '';
+        this.mass = null;
+        this.volume = null;
+        this.moles = null;
+        this.density = null;
+        this.conc = null;
+        this.yield = null;
+        this.primary = false;
+        this.waste = false;
+        this.equiv = null;
+        this.mol = mol;
+        if (name)
+            this.name = name;
+    }
+    clone() {
+        let dup = new ExperimentComponent(this.mol, this.name);
+        dup.stoich = this.stoich;
+        dup.mass = this.mass;
+        dup.volume = this.volume;
+        dup.moles = this.moles;
+        dup.density = this.density;
+        dup.conc = this.conc;
+        dup.yield = this.yield;
+        dup.primary = this.primary;
+        dup.waste = this.waste;
+        dup.equiv = this.equiv;
+        return dup;
+    }
+    equals(other) {
+        if (this.name != other.name)
+            return false;
+        if (this.stoich != other.stoich || this.mass != other.mass || this.volume != other.volume || this.moles != other.moles ||
+            this.density != other.density || this.conc != other.conc || this.yield != other.yield || this.primary != other.primary ||
+            this.waste != other.waste || this.equiv != other.equiv)
+            return false;
+        if (this.mol === other.mol)
+            return true;
+        if (this.mol == null || other.mol == null)
+            return false;
+        return this.mol.compareTo(other.mol) == 0;
+    }
+    isBlank() {
+        return MolUtil.isBlank(this.mol) && !this.name;
+    }
+}
+class ExperimentStep {
+    constructor() {
+        this.reactants = [];
+        this.reagents = [];
+        this.products = [];
+    }
+    contructor() { }
+    clone() {
+        let dup = new ExperimentStep();
+        for (let c of this.reactants)
+            dup.reactants.push(c.clone());
+        for (let c of this.reagents)
+            dup.reagents.push(c.clone());
+        for (let c of this.products)
+            dup.products.push(c.clone());
+        return dup;
+    }
+    equals(other) {
+        if (this.reactants.length != other.reactants.length)
+            return false;
+        if (this.reagents.length != other.reagents.length)
+            return false;
+        if (this.products.length != other.products.length)
+            return false;
+        for (let n = 0; n < this.reactants.length; n++)
+            if (!this.reactants[n].equals(other.reactants[n]))
+                return false;
+        for (let n = 0; n < this.reagents.length; n++)
+            if (!this.reagents[n].equals(other.reagents[n]))
+                return false;
+        for (let n = 0; n < this.products.length; n++)
+            if (!this.products[n].equals(other.products[n]))
+                return false;
+        return true;
+    }
+}
+class ExperimentEntry {
+    constructor() {
+        this.title = '';
+        this.createDate = null;
+        this.modifyDate = null;
+        this.doi = '';
+        this.steps = [];
+    }
+    clone() {
+        let dup = new ExperimentEntry();
+        dup.title = this.title;
+        dup.createDate = this.createDate;
+        dup.modifyDate = this.modifyDate;
+        dup.doi = this.doi;
+        for (let s of this.steps)
+            dup.steps.push(s.clone());
+        return dup;
+    }
+    deepClone() {
+        let dup = this.clone();
+        for (let step of dup.steps) {
+            for (let comp of step.reactants)
+                if (comp.mol != null)
+                    comp.mol = comp.mol.clone();
+            for (let comp of step.reagents)
+                if (comp.mol != null)
+                    comp.mol = comp.mol.clone();
+            for (let comp of step.products)
+                if (comp.mol != null)
+                    comp.mol = comp.mol.clone();
+        }
+        return dup;
+    }
+    equals(other) {
+        if (this.title != other.title)
+            return false;
+        let d1 = this.createDate == null ? 0 : this.createDate.getTime(), d2 = other.createDate == null ? 0 : other.createDate.getTime();
+        if (d1 != d2)
+            return false;
+        let d3 = this.modifyDate == null ? 0 : this.modifyDate.getTime(), d4 = other.modifyDate == null ? 0 : other.modifyDate.getTime();
+        if (d3 != d4)
+            return false;
+        if (this.doi != other.doi)
+            return false;
+        if (this.steps.length != other.steps.length)
+            return false;
+        for (let n = 0; n < this.steps.length; n++)
+            if (!this.steps[n].equals(other.steps[n]))
+                return false;
+        return true;
+    }
+    getComponent(step, type, idx) {
+        if (type == Experiment.REACTANT)
+            return this.steps[step].reactants[idx];
+        if (type == Experiment.REAGENT)
+            return this.steps[step].reagents[idx];
+        if (type == Experiment.PRODUCT)
+            return this.steps[step].products[idx];
+        return new ExperimentComponent();
+    }
+}
+let EXPERIMEN_ASPECTS = {};
+class Experiment extends Aspect {
+    constructor(ds, allowModify) {
+        super(ds, allowModify);
+        if ($.isEmptyObject(Experiment.COLUMN_DESCRIPTIONS)) {
+            let v = Experiment.COLUMN_DESCRIPTIONS;
+            v[Experiment.COLNAME_EXPERIMENT_TITLE] = 'Title description for the experiment';
+            v[Experiment.COLNAME_EXPERIMENT_CREATEDATE] = 'Date the experiment was created (seconds since 1970)';
+            v[Experiment.COLNAME_EXPERIMENT_MODIFYDATE] = 'Date the experiment was last modified (seconds since 1970)';
+            v[Experiment.COLNAME_EXPERIMENT_DOI] = 'Digital object identifiers (DOI) for the experiment (whitespace separated)';
+            v[Experiment.COLNAME_REACTANT_MOL] = 'Molecular structure of reactant';
+            v[Experiment.COLNAME_REACTANT_NAME] = 'Name of reactant';
+            v[Experiment.COLNAME_REACTANT_STOICH] = 'Stoichiometry of reactant';
+            v[Experiment.COLNAME_REACTANT_MASS] = 'Mass quantity of reactant (g)';
+            v[Experiment.COLNAME_REACTANT_VOLUME] = 'Volume quantity of reactant (mL)';
+            v[Experiment.COLNAME_REACTANT_MOLES] = 'Molar quantity of reactant (mol)';
+            v[Experiment.COLNAME_REACTANT_DENSITY] = 'Density of reactant (g/mL)';
+            v[Experiment.COLNAME_REACTANT_CONC] = 'Concentration of reactant (mol/L)';
+            v[Experiment.COLNAME_REACTANT_PRIMARY] = 'Whether the reactant is used for yield calculation';
+            v[Experiment.COLNAME_REAGENT_MOL] = 'Molecular structure of reagent';
+            v[Experiment.COLNAME_REAGENT_NAME] = 'Name of reagent';
+            v[Experiment.COLNAME_REAGENT_EQUIV] = 'Molar equivalents of reagent';
+            v[Experiment.COLNAME_REAGENT_MASS] = 'Mass quantity of reagent (g)';
+            v[Experiment.COLNAME_REAGENT_VOLUME] = 'Volume quantity of reagent (mL)';
+            v[Experiment.COLNAME_REAGENT_MOLES] = 'Molar quantity of reagent (mol)';
+            v[Experiment.COLNAME_REAGENT_DENSITY] = 'Density of reagent (g/mL)';
+            v[Experiment.COLNAME_REAGENT_CONC] = 'Concentration of reagent (mol/L)';
+            v[Experiment.COLNAME_PRODUCT_MOL] = 'Molecular structure of product';
+            v[Experiment.COLNAME_PRODUCT_NAME] = 'Name of product';
+            v[Experiment.COLNAME_PRODUCT_STOICH] = 'Stoichiometry of product';
+            v[Experiment.COLNAME_PRODUCT_MASS] = 'Mass quantity of reactant (g)';
+            v[Experiment.COLNAME_PRODUCT_VOLUME] = 'Volume quantity of reactant (mL)';
+            v[Experiment.COLNAME_PRODUCT_MOLES] = 'Molar quantity of reactant (mol)';
+            v[Experiment.COLNAME_PRODUCT_DENSITY] = 'Density of reactant (g/mL)';
+            v[Experiment.COLNAME_PRODUCT_CONC] = 'Concentration of reactant (mol/L)';
+            v[Experiment.COLNAME_PRODUCT_YIELD] = 'Yield of product (%)';
+            v[Experiment.COLNAME_PRODUCT_WASTE] = 'Whether the product is an unwanted byproduct';
+        }
+        this.setup();
+    }
+    static isExperiment(ds) {
+        for (let n = 0; n < ds.numExtensions; n++)
+            if (ds.getExtType(n) == Experiment.CODE)
+                return true;
+        return false;
+    }
+    isFirstStep(row) {
+        if (this.ds.notNull(row, Experiment.COLNAME_EXPERIMENT_CREATEDATE))
+            return true;
+        let mol = this.ds.getMolecule(row, Experiment.COLNAME_REACTANT_MOL + '1');
+        if (MolUtil.notBlank(mol))
+            return true;
+        let name = this.ds.getString(row, Experiment.COLNAME_REACTANT_NAME + '1');
+        if (name)
+            return true;
+        return false;
+    }
+    numberOfSteps(row) {
+        if (row >= this.ds.numRows)
+            return 0;
+        let steps = 1;
+        while (row + steps < this.ds.numRows) {
+            if (this.isFirstStep(row + steps))
+                break;
+            steps++;
+        }
+        return steps;
+    }
+    getEntry(row) {
+        let entry = new ExperimentEntry();
+        let title = this.ds.getString(row, Experiment.COLNAME_EXPERIMENT_TITLE);
+        if (title)
+            entry.title = title;
+        let createDate = this.ds.getReal(row, Experiment.COLNAME_EXPERIMENT_CREATEDATE);
+        if (createDate)
+            entry.createDate = new Date(createDate);
+        let modifyDate = this.ds.getReal(row, Experiment.COLNAME_EXPERIMENT_MODIFYDATE);
+        if (modifyDate)
+            entry.modifyDate = new Date(modifyDate);
+        let doi = this.ds.getString(row, Experiment.COLNAME_EXPERIMENT_DOI);
+        if (doi)
+            entry.doi = doi;
+        let [nreactants, nproducts, nreagents] = this.countComponents();
+        for (let pos = row; pos < this.ds.numRows; pos++) {
+            if (pos > row && this.isFirstStep(pos))
+                break;
+            let step = new ExperimentStep();
+            if (pos == row)
+                for (let n = 1; n <= nreactants; n++) {
+                    let comp = this.fetchReactant(pos, n);
+                    if (comp != null)
+                        step.reactants.push(comp);
+                    else
+                        break;
+                }
+            for (let n = 1; n <= nproducts; n++) {
+                let comp = this.fetchProduct(pos, n);
+                if (comp != null)
+                    step.products.push(comp);
+                else
+                    break;
+            }
+            for (let n = 1; n <= nreagents; n++) {
+                let comp = this.fetchReagent(pos, n);
+                if (comp != null)
+                    step.reagents.push(comp);
+                else
+                    break;
+            }
+            entry.steps.push(step);
+        }
+        return entry;
+    }
+    setEntry(row, entry) {
+        this.putEntry(row, entry, true);
+    }
+    addEntry(entry) {
+        this.putEntry(this.ds.numRows, entry, false);
+    }
+    insertEntry(row, entry) {
+        this.putEntry(row, entry, false);
+    }
+    deleteEntry(row) {
+        let nsteps = this.numberOfSteps(row);
+        for (let n = row + nsteps - 1; n >= row; n--)
+            this.ds.deleteRow(n);
+    }
+    setup() {
+        this.parseAndCorrect();
+    }
+    parseAndCorrect() {
+        let ds = this.ds;
+        let idxRxn = -1, idxYld = -1, idxExp = -1;
+        let extRxn = '', extYld = '', extExp = '';
+        for (let n = 0; n < ds.numExtensions; n++) {
+            if (ds.getExtType(n) == Experiment.CODE_RXN) {
+                idxRxn = n;
+                extRxn = ds.getExtData(n);
+            }
+            else if (ds.getExtType(n) == Experiment.CODE_YLD) {
+                idxYld = n;
+                extYld = ds.getExtData(n);
+            }
+            else if (ds.getExtType(n) == Experiment.CODE) {
+                idxExp = n;
+                extExp = ds.getExtData(n);
+            }
+        }
+        let [nreactants, nproducts, nreagents] = this.parseReactionMetaData(extRxn);
+        let meta = `nreactants=${nreactants}\nnproducts=${nproducts}\nnreagents=${nreagents}\n`;
+        if (idxRxn >= 0)
+            ds.setExtData(idxRxn, meta);
+        else
+            ds.appendExtension(Experiment.NAME_RXN, Experiment.CODE_RXN, meta);
+        if (idxYld >= 0)
+            ds.setExtData(idxYld, '');
+        else
+            ds.appendExtension(Experiment.NAME_YLD, Experiment.CODE_YLD, '');
+        if (idxExp >= 0)
+            ds.setExtData(idxExp, '');
+        else
+            ds.appendExtension(Experiment.NAME, Experiment.CODE, '');
+        this.forceColumn(Experiment.COLNAME_EXPERIMENT_TITLE, DataSheet.COLTYPE_STRING);
+        this.forceColumn(Experiment.COLNAME_EXPERIMENT_CREATEDATE, DataSheet.COLTYPE_REAL);
+        this.forceColumn(Experiment.COLNAME_EXPERIMENT_MODIFYDATE, DataSheet.COLTYPE_REAL);
+        this.forceColumn(Experiment.COLNAME_EXPERIMENT_DOI, DataSheet.COLTYPE_STRING);
+        for (let n = 1; n <= nreactants; n++)
+            this.forceReactantColumns(n);
+        for (let n = 1; n <= nreagents; n++)
+            this.forceReagentColumns(n);
+        for (let n = 1; n <= nproducts; n++)
+            this.forceProductColumns(n);
+    }
+    forceColumn(colName, type, suffix) {
+        let useName = colName + (suffix == null ? '' : suffix);
+        this.ds.ensureColumn(useName, type, Experiment.COLUMN_DESCRIPTIONS[colName]);
+    }
+    forceReactantColumns(suffix) {
+        this.forceColumn(Experiment.COLNAME_REACTANT_MOL, DataSheet.COLTYPE_MOLECULE, suffix);
+        this.forceColumn(Experiment.COLNAME_REACTANT_NAME, DataSheet.COLTYPE_STRING, suffix);
+        this.forceColumn(Experiment.COLNAME_REACTANT_STOICH, DataSheet.COLTYPE_STRING, suffix);
+        this.forceColumn(Experiment.COLNAME_REACTANT_MASS, DataSheet.COLTYPE_REAL, suffix);
+        this.forceColumn(Experiment.COLNAME_REACTANT_VOLUME, DataSheet.COLTYPE_REAL, suffix);
+        this.forceColumn(Experiment.COLNAME_REACTANT_MOLES, DataSheet.COLTYPE_REAL, suffix);
+        this.forceColumn(Experiment.COLNAME_REACTANT_DENSITY, DataSheet.COLTYPE_REAL, suffix);
+        this.forceColumn(Experiment.COLNAME_REACTANT_CONC, DataSheet.COLTYPE_REAL, suffix);
+        this.forceColumn(Experiment.COLNAME_REACTANT_PRIMARY, DataSheet.COLTYPE_BOOLEAN, suffix);
+    }
+    forceReagentColumns(suffix) {
+        this.forceColumn(Experiment.COLNAME_REAGENT_MOL, DataSheet.COLTYPE_MOLECULE, suffix);
+        this.forceColumn(Experiment.COLNAME_REAGENT_NAME, DataSheet.COLTYPE_STRING, suffix);
+        this.forceColumn(Experiment.COLNAME_REAGENT_EQUIV, DataSheet.COLTYPE_REAL, suffix);
+        this.forceColumn(Experiment.COLNAME_REAGENT_MASS, DataSheet.COLTYPE_REAL, suffix);
+        this.forceColumn(Experiment.COLNAME_REAGENT_VOLUME, DataSheet.COLTYPE_REAL, suffix);
+        this.forceColumn(Experiment.COLNAME_REAGENT_MOLES, DataSheet.COLTYPE_REAL, suffix);
+        this.forceColumn(Experiment.COLNAME_REAGENT_DENSITY, DataSheet.COLTYPE_REAL, suffix);
+        this.forceColumn(Experiment.COLNAME_REAGENT_CONC, DataSheet.COLTYPE_REAL, suffix);
+    }
+    forceProductColumns(suffix) {
+        this.forceColumn(Experiment.COLNAME_PRODUCT_MOL, DataSheet.COLTYPE_MOLECULE, suffix);
+        this.forceColumn(Experiment.COLNAME_PRODUCT_NAME, DataSheet.COLTYPE_STRING, suffix);
+        this.forceColumn(Experiment.COLNAME_PRODUCT_STOICH, DataSheet.COLTYPE_STRING, suffix);
+        this.forceColumn(Experiment.COLNAME_PRODUCT_MASS, DataSheet.COLTYPE_REAL, suffix);
+        this.forceColumn(Experiment.COLNAME_PRODUCT_VOLUME, DataSheet.COLTYPE_REAL, suffix);
+        this.forceColumn(Experiment.COLNAME_PRODUCT_MOLES, DataSheet.COLTYPE_REAL, suffix);
+        this.forceColumn(Experiment.COLNAME_PRODUCT_DENSITY, DataSheet.COLTYPE_REAL, suffix);
+        this.forceColumn(Experiment.COLNAME_PRODUCT_CONC, DataSheet.COLTYPE_REAL, suffix);
+        this.forceColumn(Experiment.COLNAME_PRODUCT_YIELD, DataSheet.COLTYPE_REAL, suffix);
+        this.forceColumn(Experiment.COLNAME_PRODUCT_WASTE, DataSheet.COLTYPE_BOOLEAN, suffix);
+    }
+    parseReactionMetaData(content) {
+        let nreactants = 1, nproducts = 1, nreagents = 0;
+        for (let line of content.split(/\r?\n/)) {
+            if (line.startsWith('nreactants='))
+                nreactants = Math.max(nreactants, Math.min(100, parseInt(line.substring(11))));
+            else if (line.startsWith('nproducts='))
+                nproducts = Math.max(nproducts, Math.min(100, parseInt(line.substring(10))));
+            else if (line.startsWith('nreagents='))
+                nreagents = Math.max(nreagents, Math.min(100, parseInt(line.substring(10))));
+        }
+        return [nreactants, nproducts, nreagents];
+    }
+    countComponents() {
+        let nreactants = 0, nproducts = 0, nreagents = 0;
+        for (let n = 0; n < this.ds.numExtensions; n++)
+            if (this.ds.getExtType(n) == Experiment.CODE_RXN) {
+                [nreactants, nproducts, nreagents] = this.parseReactionMetaData(this.ds.getExtData(n));
+                break;
+            }
+        return [nreactants, nproducts, nreagents];
+    }
+    fetchReactant(row, idx) {
+        let mol = this.ds.getMolecule(row, `${Experiment.COLNAME_REACTANT_MOL}${idx}`);
+        let name = this.ds.getString(row, `${Experiment.COLNAME_REACTANT_NAME}${idx}`);
+        if (MolUtil.isBlank(mol) && !name)
+            return null;
+        let comp = new ExperimentComponent(mol, name);
+        let stoich = this.ds.getString(row, `${Experiment.COLNAME_REACTANT_STOICH}${idx}`);
+        if (stoich)
+            comp.stoich = stoich;
+        comp.mass = this.ds.getReal(row, `${Experiment.COLNAME_REACTANT_MASS}${idx}`);
+        comp.volume = this.ds.getReal(row, `${Experiment.COLNAME_REACTANT_VOLUME}${idx}`);
+        comp.moles = this.ds.getReal(row, `${Experiment.COLNAME_REACTANT_MOLES}${idx}`);
+        comp.density = this.ds.getReal(row, `${Experiment.COLNAME_REACTANT_DENSITY}${idx}`);
+        comp.conc = this.ds.getReal(row, `${Experiment.COLNAME_REACTANT_CONC}${idx}`);
+        let primary = this.ds.getBoolean(row, `${Experiment.COLNAME_REACTANT_PRIMARY}${idx}`);
+        if (primary != null)
+            comp.primary = primary;
+        return comp;
+    }
+    fetchProduct(row, idx) {
+        let mol = this.ds.getMolecule(row, `${Experiment.COLNAME_PRODUCT_MOL}${idx}`);
+        let name = this.ds.getString(row, `${Experiment.COLNAME_PRODUCT_NAME}${idx}`);
+        if (MolUtil.isBlank(mol) && !name)
+            return null;
+        let comp = new ExperimentComponent(mol, name);
+        let stoich = this.ds.getString(row, `${Experiment.COLNAME_PRODUCT_STOICH}${idx}`);
+        if (stoich)
+            comp.stoich = stoich;
+        comp.mass = this.ds.getReal(row, `${Experiment.COLNAME_PRODUCT_MASS}${idx}`);
+        comp.volume = this.ds.getReal(row, `${Experiment.COLNAME_PRODUCT_VOLUME}${idx}`);
+        comp.moles = this.ds.getReal(row, `${Experiment.COLNAME_PRODUCT_MOLES}${idx}`);
+        comp.density = this.ds.getReal(row, `${Experiment.COLNAME_PRODUCT_DENSITY}${idx}`);
+        comp.conc = this.ds.getReal(row, `${Experiment.COLNAME_PRODUCT_CONC}${idx}`);
+        let waste = this.ds.getBoolean(row, `${Experiment.COLNAME_PRODUCT_WASTE}${idx}`);
+        if (waste != null)
+            comp.waste = waste;
+        return comp;
+    }
+    fetchReagent(row, idx) {
+        let mol = this.ds.getMolecule(row, `${Experiment.COLNAME_REAGENT_MOL}${idx}`);
+        let name = this.ds.getString(row, `${Experiment.COLNAME_REAGENT_NAME}${idx}`);
+        if (MolUtil.isBlank(mol) && !name)
+            return null;
+        let comp = new ExperimentComponent(mol, name);
+        comp.mass = this.ds.getReal(row, `${Experiment.COLNAME_REAGENT_MASS}${idx}`);
+        comp.volume = this.ds.getReal(row, `${Experiment.COLNAME_REAGENT_VOLUME}${idx}`);
+        comp.moles = this.ds.getReal(row, `${Experiment.COLNAME_REAGENT_MOLES}${idx}`);
+        comp.density = this.ds.getReal(row, `${Experiment.COLNAME_REAGENT_DENSITY}${idx}`);
+        comp.conc = this.ds.getReal(row, `${Experiment.COLNAME_REAGENT_CONC}${idx}`);
+        comp.equiv = this.ds.getReal(row, `${Experiment.COLNAME_REAGENT_EQUIV}${idx}`);
+        return comp;
+    }
+    putEntry(row, entry, replace) {
+        let [preactants, pproducts, preagents] = this.countComponents();
+        var [nreactants, nproducts, nreagents] = [preactants, pproducts, preagents];
+        for (let step of entry.steps) {
+            nreactants = Math.max(nreactants, step.reactants.length);
+            nproducts = Math.max(nproducts, step.products.length);
+            nreagents = Math.max(nreagents, step.reagents.length);
+        }
+        if (nreactants != preactants || nproducts != pproducts || nreagents != preagents) {
+            let meta = `nreactants=${nreactants}\nnproducts=${nproducts}\nnreagents=${nreagents}`;
+            let got = false;
+            for (let n = 0; n < this.ds.numExtensions; n++)
+                if (this.ds.getExtType(n) == Experiment.CODE_RXN) {
+                    this.ds.setExtData(n, meta);
+                    got = true;
+                    break;
+                }
+            if (!got)
+                this.ds.appendExtension(Experiment.NAME_RXN, Experiment.CODE_RXN, meta);
+        }
+        for (let n = 1; n <= nreactants; n++)
+            this.forceReactantColumns(n);
+        for (let n = 1; n <= nreagents; n++)
+            this.forceReagentColumns(n);
+        for (let n = 1; n <= nproducts; n++)
+            this.forceProductColumns(n);
+        let oldSteps = replace ? this.numberOfSteps(row) : 0, newSteps = entry.steps.length;
+        if (oldSteps > newSteps) {
+            for (let n = newSteps; n < oldSteps; n++)
+                this.ds.deleteRow(row + newSteps - 1);
+        }
+        else if (newSteps > oldSteps) {
+            for (let n = oldSteps; n < newSteps; n++)
+                this.ds.insertRow(row + oldSteps);
+        }
+        this.ds.setString(row, Experiment.COLNAME_EXPERIMENT_TITLE, entry.title);
+        this.ds.setReal(row, Experiment.COLNAME_EXPERIMENT_CREATEDATE, entry.createDate == null ? null : entry.createDate.getTime());
+        this.ds.setReal(row, Experiment.COLNAME_EXPERIMENT_MODIFYDATE, entry.modifyDate == null ? null : entry.modifyDate.getTime());
+        this.ds.setString(row, Experiment.COLNAME_EXPERIMENT_DOI, entry.doi);
+        for (let s = 0; s < entry.steps.length; s++) {
+            let r = row + s;
+            if (s == 0)
+                for (let n = 0; n < entry.steps[s].reactants.length; n++) {
+                    let comp = entry.steps[s].reactants[n], i = n + 1;
+                    this.ds.setMolecule(r, `${Experiment.COLNAME_REACTANT_MOL}${i}`, comp.mol);
+                    this.ds.setString(r, `${Experiment.COLNAME_REACTANT_NAME}${i}`, comp.name);
+                    this.ds.setString(r, `${Experiment.COLNAME_REACTANT_STOICH}${i}`, comp.stoich);
+                    this.ds.setReal(r, `${Experiment.COLNAME_REACTANT_MASS}${i}`, comp.mass);
+                    this.ds.setReal(r, `${Experiment.COLNAME_REACTANT_VOLUME}${i}`, comp.volume);
+                    this.ds.setReal(r, `${Experiment.COLNAME_REACTANT_MOLES}${i}`, comp.moles);
+                    this.ds.setReal(r, `${Experiment.COLNAME_REACTANT_DENSITY}${i}`, comp.density);
+                    this.ds.setReal(r, `${Experiment.COLNAME_REACTANT_CONC}${i}`, comp.conc);
+                    this.ds.setBoolean(r, `${Experiment.COLNAME_REACTANT_PRIMARY}${i}`, comp.primary);
+                }
+            for (let n = 0; n < entry.steps[s].reagents.length; n++) {
+                let comp = entry.steps[s].reagents[n], i = n + 1;
+                this.ds.setMolecule(r, `${Experiment.COLNAME_REAGENT_MOL}${i}`, comp.mol);
+                this.ds.setString(r, `${Experiment.COLNAME_REAGENT_NAME}${i}`, comp.name);
+                this.ds.setReal(r, `${Experiment.COLNAME_REAGENT_EQUIV}${i}`, comp.equiv);
+                this.ds.setReal(r, `${Experiment.COLNAME_REAGENT_MASS}${i}`, comp.mass);
+                this.ds.setReal(r, `${Experiment.COLNAME_REAGENT_VOLUME}${i}`, comp.volume);
+                this.ds.setReal(r, `${Experiment.COLNAME_REAGENT_MOLES}${i}`, comp.moles);
+                this.ds.setReal(r, `${Experiment.COLNAME_REAGENT_DENSITY}${i}`, comp.density);
+                this.ds.setReal(r, `${Experiment.COLNAME_REAGENT_CONC}${i}`, comp.conc);
+            }
+            for (let n = 0; n < entry.steps[s].products.length; n++) {
+                let comp = entry.steps[s].products[n], i = n + 1;
+                this.ds.setMolecule(r, `${Experiment.COLNAME_PRODUCT_MOL}${i}`, comp.mol);
+                this.ds.setString(r, `${Experiment.COLNAME_PRODUCT_NAME}${i}`, comp.name);
+                this.ds.setString(r, `${Experiment.COLNAME_PRODUCT_STOICH}${i}`, comp.stoich);
+                this.ds.setReal(r, `${Experiment.COLNAME_PRODUCT_MASS}${i}`, comp.mass);
+                this.ds.setReal(r, `${Experiment.COLNAME_PRODUCT_VOLUME}${i}`, comp.volume);
+                this.ds.setReal(r, `${Experiment.COLNAME_PRODUCT_MOLES}${i}`, comp.moles);
+                this.ds.setReal(r, `${Experiment.COLNAME_PRODUCT_DENSITY}${i}`, comp.density);
+                this.ds.setReal(r, `${Experiment.COLNAME_PRODUCT_CONC}${i}`, comp.conc);
+                this.ds.setBoolean(r, `${Experiment.COLNAME_PRODUCT_WASTE}${i}`, comp.waste);
+            }
+        }
+        for (let s = 0; s < entry.steps.length; s++) {
+            let r = row + s;
+            let start = s > 0 ? 0 : entry.steps[s].reactants.length;
+            for (let n = start; n < nreactants; n++) {
+                let i = n + 1;
+                this.ds.setToNull(r, `${Experiment.COLNAME_REACTANT_MOL}${i}`);
+                this.ds.setToNull(r, `${Experiment.COLNAME_REACTANT_NAME}${i}`);
+                this.ds.setToNull(r, `${Experiment.COLNAME_REACTANT_STOICH}${i}`);
+                this.ds.setToNull(r, `${Experiment.COLNAME_REACTANT_MASS}${i}`);
+                this.ds.setToNull(r, `${Experiment.COLNAME_REACTANT_VOLUME}${i}`);
+                this.ds.setToNull(r, `${Experiment.COLNAME_REACTANT_MOLES}${i}`);
+                this.ds.setToNull(r, `${Experiment.COLNAME_REACTANT_DENSITY}${i}`);
+                this.ds.setToNull(r, `${Experiment.COLNAME_REACTANT_CONC}${i}`);
+                this.ds.setToNull(r, `${Experiment.COLNAME_REACTANT_PRIMARY}${i}`);
+            }
+            for (let n = entry.steps[s].reagents.length; n < nreagents; n++) {
+                let i = n + 1;
+                this.ds.setToNull(r, `${Experiment.COLNAME_REAGENT_MOL}${i}`);
+                this.ds.setToNull(r, `${Experiment.COLNAME_REAGENT_NAME}${i}`);
+                this.ds.setToNull(r, `${Experiment.COLNAME_REAGENT_EQUIV}${i}`);
+                this.ds.setToNull(r, `${Experiment.COLNAME_REAGENT_MASS}${i}`);
+                this.ds.setToNull(r, `${Experiment.COLNAME_REAGENT_VOLUME}${i}`);
+                this.ds.setToNull(r, `${Experiment.COLNAME_REAGENT_MOLES}${i}`);
+                this.ds.setToNull(r, `${Experiment.COLNAME_REAGENT_DENSITY}${i}`);
+                this.ds.setToNull(r, `${Experiment.COLNAME_REAGENT_CONC}${i}`);
+            }
+            for (let n = entry.steps[s].products.length; n < nproducts; n++) {
+                let i = n + 1;
+                this.ds.setToNull(r, `${Experiment.COLNAME_PRODUCT_MOL}${i}`);
+                this.ds.setToNull(r, `${Experiment.COLNAME_PRODUCT_NAME}${i}`);
+                this.ds.setToNull(r, `${Experiment.COLNAME_PRODUCT_STOICH}${i}`);
+                this.ds.setToNull(r, `${Experiment.COLNAME_PRODUCT_MASS}${i}`);
+                this.ds.setToNull(r, `${Experiment.COLNAME_PRODUCT_VOLUME}${i}`);
+                this.ds.setToNull(r, `${Experiment.COLNAME_PRODUCT_MOLES}${i}`);
+                this.ds.setToNull(r, `${Experiment.COLNAME_PRODUCT_DENSITY}${i}`);
+                this.ds.setToNull(r, `${Experiment.COLNAME_PRODUCT_CONC}${i}`);
+                this.ds.setToNull(r, `${Experiment.COLNAME_PRODUCT_WASTE}${i}`);
+            }
+        }
+    }
+    plainHeading() { return Experiment.NAME; }
+    rowFirstBlock(row) { return this.isFirstStep(row); }
+    rowBlockCount(row) { return this.numberOfSteps(row); }
+    isColumnReserved(colName) {
+        return this.areColumnsReserved([colName])[0];
+    }
+    areColumnsReserved(colNames) {
+        let LITERALS = [
+            Experiment.COLNAME_EXPERIMENT_TITLE,
+            Experiment.COLNAME_EXPERIMENT_CREATEDATE,
+            Experiment.COLNAME_EXPERIMENT_MODIFYDATE,
+            Experiment.COLNAME_EXPERIMENT_DOI
+        ];
+        let PREFIXES = [
+            Experiment.COLNAME_REACTANT_MOL,
+            Experiment.COLNAME_REACTANT_NAME,
+            Experiment.COLNAME_REACTANT_STOICH,
+            Experiment.COLNAME_REACTANT_MASS,
+            Experiment.COLNAME_REACTANT_VOLUME,
+            Experiment.COLNAME_REACTANT_MOLES,
+            Experiment.COLNAME_REACTANT_DENSITY,
+            Experiment.COLNAME_REACTANT_CONC,
+            Experiment.COLNAME_REACTANT_PRIMARY,
+            Experiment.COLNAME_REAGENT_MOL,
+            Experiment.COLNAME_REAGENT_NAME,
+            Experiment.COLNAME_REAGENT_EQUIV,
+            Experiment.COLNAME_REAGENT_MASS,
+            Experiment.COLNAME_REAGENT_VOLUME,
+            Experiment.COLNAME_REAGENT_MOLES,
+            Experiment.COLNAME_REAGENT_DENSITY,
+            Experiment.COLNAME_REAGENT_CONC,
+            Experiment.COLNAME_PRODUCT_MOL,
+            Experiment.COLNAME_PRODUCT_NAME,
+            Experiment.COLNAME_PRODUCT_STOICH,
+            Experiment.COLNAME_PRODUCT_MASS,
+            Experiment.COLNAME_PRODUCT_VOLUME,
+            Experiment.COLNAME_PRODUCT_MOLES,
+            Experiment.COLNAME_PRODUCT_DENSITY,
+            Experiment.COLNAME_PRODUCT_CONC,
+            Experiment.COLNAME_PRODUCT_YIELD,
+            Experiment.COLNAME_PRODUCT_WASTE
+        ];
+        let resv = Vec.booleanArray(false, colNames.length);
+        for (let n = 0; n < colNames.length; n++) {
+            let name = colNames[n];
+            if (LITERALS.indexOf(name) >= 0) {
+                resv[n] = true;
+                continue;
+            }
+            for (let pfx of PREFIXES)
+                if (name.startsWith(pfx)) {
+                    resv[n] = true;
+                    break;
+                }
+        }
+        return resv;
+    }
+}
+Experiment.CODE = 'org.mmi.aspect.Experiment';
+Experiment.CODE_RXN = 'org.mmi.aspect.Reaction';
+Experiment.CODE_YLD = 'org.mmi.aspect.Yield';
+Experiment.NAME = 'Experiment';
+Experiment.NAME_RXN = 'Reaction';
+Experiment.NAME_YLD = 'Yield';
+Experiment.REACTANT = 1;
+Experiment.REAGENT = 2;
+Experiment.PRODUCT = 3;
+Experiment.COLNAME_EXPERIMENT_TITLE = 'ExperimentTitle';
+Experiment.COLNAME_EXPERIMENT_CREATEDATE = 'ExperimentCreateDate';
+Experiment.COLNAME_EXPERIMENT_MODIFYDATE = 'ExperimentModifyDate';
+Experiment.COLNAME_EXPERIMENT_DOI = 'ExperimentDOI';
+Experiment.COLNAME_REACTANT_MOL = 'ReactantMol';
+Experiment.COLNAME_REACTANT_NAME = 'ReactantName';
+Experiment.COLNAME_REACTANT_STOICH = 'ReactantStoich';
+Experiment.COLNAME_REACTANT_MASS = 'ReactantMass';
+Experiment.COLNAME_REACTANT_VOLUME = 'ReactantVolume';
+Experiment.COLNAME_REACTANT_MOLES = 'ReactantMoles';
+Experiment.COLNAME_REACTANT_DENSITY = 'ReactantDensity';
+Experiment.COLNAME_REACTANT_CONC = 'ReactantConc';
+Experiment.COLNAME_REACTANT_PRIMARY = 'ReactantPrimary';
+Experiment.COLNAME_REAGENT_MOL = 'ReagentMol';
+Experiment.COLNAME_REAGENT_NAME = 'ReagentName';
+Experiment.COLNAME_REAGENT_EQUIV = 'ReagentEquiv';
+Experiment.COLNAME_REAGENT_MASS = 'ReagentMass';
+Experiment.COLNAME_REAGENT_VOLUME = 'ReagentVolume';
+Experiment.COLNAME_REAGENT_MOLES = 'ReagentMoles';
+Experiment.COLNAME_REAGENT_DENSITY = 'ReagentDensity';
+Experiment.COLNAME_REAGENT_CONC = 'ReagentConc';
+Experiment.COLNAME_PRODUCT_MOL = 'ProductMol';
+Experiment.COLNAME_PRODUCT_NAME = 'ProductName';
+Experiment.COLNAME_PRODUCT_STOICH = 'ProductStoich';
+Experiment.COLNAME_PRODUCT_MASS = 'ProductMass';
+Experiment.COLNAME_PRODUCT_VOLUME = 'ProductVolume';
+Experiment.COLNAME_PRODUCT_MOLES = 'ProductMoles';
+Experiment.COLNAME_PRODUCT_DENSITY = 'ProductDensity';
+Experiment.COLNAME_PRODUCT_CONC = 'ProductConc';
+Experiment.COLNAME_PRODUCT_YIELD = 'ProductYield';
+Experiment.COLNAME_PRODUCT_WASTE = 'ProductWaste';
+Experiment.COLUMN_DESCRIPTIONS = {};
 let crc_table = [];
 function make_crc_table() {
     if (crc_table.length > 0)
@@ -17386,6 +18036,44 @@ class ValidationHeadlessMolecule extends Validation {
             this.assert(Vec.equals(ecfp4, got[2]), 'row#' + (n + 1) + ', iter#2: wanted ' + ecfp4 + ', got ' + got[2]);
             this.assert(Vec.equals(ecfp6, got[3]), 'row#' + (n + 1) + ', iter#3: wanted ' + ecfp6 + ', got ' + got[3]);
         }
+    }
+}
+class ValidationHeadlessReaction extends Validation {
+    constructor(urlBase) {
+        super();
+        this.urlBase = urlBase;
+        this.add('Experiment aspect', this.confirmAspect);
+    }
+    init(donefunc) {
+        const self = this;
+        let FILES = ['experiment.ds'];
+        let files = FILES;
+        let fetchResult = function (data) {
+            let fn = files.shift();
+            if (fn == 'experiment.ds')
+                self.strExperiment = data;
+            if (files.length > 0)
+                $.get(self.urlBase + files[0], fetchResult);
+            else
+                donefunc.call(self);
+        };
+        $.get(self.urlBase + files[0], fetchResult);
+    }
+    confirmAspect() {
+        this.assert(!!this.strExperiment, 'datasheet not loaded');
+        let ds = DataSheetStream.readXML(this.strExperiment);
+        this.assert(ds != null, 'parsing failed');
+        this.assert(Experiment.isExperiment(ds), 'aspect claimed not an Experiment');
+        let xp = new Experiment(ds);
+        let entry = xp.getEntry(0);
+        this.assert(entry != null, 'null entry returned');
+        this.assert(entry.steps.length == 2, 'reaction supposed to be 2 steps, got ' + entry.steps.length);
+        this.assert(entry.steps[0].reactants.length == 1, 'require step 1: #reactants = 1');
+        this.assert(entry.steps[0].reagents.length == 3, 'require step 1: #reagnets = 3');
+        this.assert(entry.steps[0].products.length == 2, 'require step 1: #products = 2');
+        this.assert(entry.steps[1].reactants.length == 0, 'require step 2: #reactants = 0');
+        this.assert(entry.steps[1].reagents.length == 1, 'require step 2: #reagnets = 1');
+        this.assert(entry.steps[1].products.length == 3, 'require step 2: #products = 2');
     }
 }
 class WebValExec {

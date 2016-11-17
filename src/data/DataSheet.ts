@@ -374,6 +374,11 @@ class DataSheet
 		for (let n = 0; n < this.data.numCols; n++) data.push(null);
 		this.data.rowData.splice(row, 0, data);
 	}
+	public deleteRow(row:number):void
+	{
+		this.data.numRows--;
+		this.data.rowData.splice(row, 1);
+	}
 	public deleteAllRows():void
 	{
 		this.data.numRows = 0;

@@ -19,7 +19,7 @@
 ///<reference path='Validation.ts'/>
 
 /*
-    Headless validation: basic tests - simple things like vector operators and common utilities.
+    Headless validation: molecule tests - algorithms that apply to molecular connection tables.
 */
 
 class ValidationHeadlessMolecule extends Validation

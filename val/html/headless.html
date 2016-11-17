@@ -16,6 +16,9 @@
 <h2>Molecule Functions</h2>
 <div id="molecule"></div>
 
+<h2>Reaction Experiment Functions</h2>
+<div id="reaction"></div>
+
 <div id="final"></div>
 
 <script>
@@ -35,6 +38,15 @@
 		new ValidationHeadlessMolecule('../data/').init(function()
 		{
 			new WebValExec(this).runTests($('#molecule'));
+			runReaction();
+		});
+	}
+
+	function runReaction()
+	{
+		new ValidationHeadlessReaction('../data/').init(function()
+		{
+			new WebValExec(this).runTests($('#reaction'));
 			//run...();
 		});
 	}
