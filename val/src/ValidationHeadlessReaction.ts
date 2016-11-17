@@ -58,8 +58,8 @@ class ValidationHeadlessReaction extends Validation
 		this.assert(ds != null, 'parsing failed');
 		this.assert(Experiment.isExperiment(ds), 'aspect claimed not an Experiment');
 
-		let xp = new Experiment(ds);
-		let entry = xp.getEntry(0);
+		let xs = new Experiment(ds);
+		let entry = xs.getEntry(0);
 		this.assert(entry != null, 'null entry returned');
 		this.assert(entry.steps.length == 2, 'reaction supposed to be 2 steps, got ' + entry.steps.length);
 		this.assert(entry.steps[0].reactants.length == 1, 'require step 1: #reactants = 1'); 

@@ -29,6 +29,7 @@ class AspectList
 		if ($.isEmptyObject(SUPPORTED_ASPECTS))
 		{
 			SUPPORTED_ASPECTS[SARTable.CODE] = SARTable.NAME;
+			SUPPORTED_ASPECTS[Experiment.CODE] = Experiment.NAME;
 		}
 	}
 
@@ -53,6 +54,7 @@ class AspectList
 	public instantiate(code:String):Aspect
 	{
 		if (code == SARTable.CODE) return new SARTable(this.ds);
+		if (code == Experiment.CODE) return new Experiment(this.ds);
 		return null;
 	}
 

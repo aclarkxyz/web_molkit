@@ -367,6 +367,7 @@ class Pos
 	public y:number;
 
 	public static zero():Pos {return new Pos();}
+	public static fromArray(src:number[]):Pos {return new Pos(src[0], src[1]);}
 	constructor(x?:number, y?:number)
 	{
 		this.x = x == null ? 0 : x;
@@ -396,6 +397,7 @@ class Size
 	public h:number;
 
 	public static zero():Size {return new Size();}
+	public static fromArray(src:number[]):Size {return new Size(src[0], src[1]);}
 	constructor(w?:number, h?:number)
 	{
 		this.w = w == null ? 0 : w;
@@ -429,8 +431,9 @@ class Box
 	public h:number;
 
 	public static zero():Box {return new Box();}
-	public static fromSize(sz:Size) {return new Box(0, 0, sz.w, sz.h);}
-	public static fromOval(oval:Oval) {return new Box(oval.cx - oval.rw, oval.cy - oval.rh, 2 * oval.rw, 2 * oval.rh);}
+	public static fromSize(sz:Size):Box {return new Box(0, 0, sz.w, sz.h);}
+	public static fromOval(oval:Oval):Box {return new Box(oval.cx - oval.rw, oval.cy - oval.rh, 2 * oval.rw, 2 * oval.rh);}
+	public static fromArray(src:number[]):Box {return new Box(src[0], src[1], src[2], src[3]);}
 	constructor(x?:number, y?:number, w?:number, h?:number)
 	{
 		this.x = x == null ? 0 : x;
@@ -489,7 +492,8 @@ class Oval
 	public rh:number;
 
 	public static zero():Oval {return new Oval();}
-	public static fromBox(box:Box) {return new Oval(box.x + 0.5 * box.w, box.y + 0.5 * box.h, 0.5 * box.w, 0.5 * box.h);}
+	public static fromBox(box:Box):Oval {return new Oval(box.x + 0.5 * box.w, box.y + 0.5 * box.h, 0.5 * box.w, 0.5 * box.h);}
+	public static fromArray(src:number[]):Oval {return new Oval(src[0], src[1], src[2], src[3]);}
 	constructor(cx?:number, cy?:number, rw?:number, rh?:number)
 	{
 		this.cx = cx == null ? 0 : cx;
