@@ -19,69 +19,67 @@
 	mark them as such for convenient recall.
 */
 
+class QuantityComp
+{
+	public role = 0;
+	public molw = 0;
+	public valueEquiv = 0;
+	public statEquiv = QuantityCalc.STAT_UNKNOWN;
+	public valueMass = QuantityCalc.UNSPECIFIED;
+	public statMass = QuantityCalc.STAT_UNKNOWN;
+	public valueVolume = QuantityCalc.UNSPECIFIED;
+	public statVolume = QuantityCalc.STAT_UNKNOWN;
+	public valueMoles = QuantityCalc.UNSPECIFIED;
+	public statMoles = QuantityCalc.STAT_UNKNOWN;
+	public valueDensity = QuantityCalc.UNSPECIFIED;
+	public statDensity = QuantityCalc.STAT_UNKNOWN;
+	public valueConc = QuantityCalc.UNSPECIFIED;
+	public statConc = QuantityCalc.STAT_UNKNOWN;
+	public valueYield = QuantityCalc.UNSPECIFIED;
+	public statYield = QuantityCalc.STAT_UNKNOWN;
+	
+	constructor(public comp:ExperimentComponent, public step:number, public type:number, public idx:number)
+	{
+	}
+}
+
+class GreenMetrics
+{
+	public step = 0; // reaction step
+	public idx = 0; // index into the overall quantity list
+	public massReact:number[] = [];
+	public massProd:number[] = [];
+	public massWaste:number[] = [];
+	public massProdWaste:number[] = [];
+	public molwReact:number[] = [];
+	public molwProd:number[] = [];
+	public impliedWaste = 0;
+	public isBlank = false; // set to true if there's no content (blank entries can still be useful as placeholders)
+}
+
 class QuantityCalc
 {
-	/*protected Entry entry;
-
-	public static final float UNSPECIFIED = -1;
+	public static UNSPECIFIED = -1;
 	
-	public static final int ROLE_PRIMARY = 1; // a reactant upon which ratios depend
-	public static final int ROLE_SECONDARY = 2; // a stoichiometric reactant, intermediate or waste product
-	public static final int ROLE_PRODUCT = 3; // a final product for which yield should be calculated
-	public static final int ROLE_INDEPENDENT = 4; // a nonstoichiometric reagent or waste product
+	public static ROLE_PRIMARY = 1; // a reactant upon which ratios depend
+	public static ROLE_SECONDARY = 2; // a stoichiometric reactant, intermediate or waste product
+	public static ROLE_PRODUCT = 3; // a final product for which yield should be calculated
+	public static ROLE_INDEPENDENT = 4; // a nonstoichiometric reagent or waste product
 
-	public static final int STAT_UNKNOWN = 0; // no data, i.e. not provided and cannot be calculated
-	public static final int STAT_ACTUAL = 1; // user-provided data
-	public static final int STAT_VIRTUAL = 2; // calculated data
-	public static final int STAT_CONFLICT = 3; // user-provided data that clashes
+	public static STAT_UNKNOWN = 0; // no data, i.e. not provided and cannot be calculated
+	public static STAT_ACTUAL = 1; // user-provided data
+	public static STAT_VIRTUAL = 2; // calculated data
+	public static STAT_CONFLICT = 3; // user-provided data that clashes
 	
-	public static final class QuantComp
-	{
-		public Component comp;
-		public int step; // references the entry
-		public int type; // one of RxnComponent.*
-		public int idx; // index into in the entry source
-		
-		public int role = 0;
-		public float molw = 0;
-		public float valueEquiv = 0;
-		public int statEquiv = STAT_UNKNOWN;
-		public float valueMass = UNSPECIFIED;
-		public int statMass = STAT_UNKNOWN;
-		public float valueVolume = UNSPECIFIED;
-		public int statVolume = STAT_UNKNOWN;
-		public float valueMoles = UNSPECIFIED;
-		public int statMoles = STAT_UNKNOWN;
-		public float valueDensity = UNSPECIFIED;
-		public int statDensity = STAT_UNKNOWN;
-		public float valueConc = UNSPECIFIED;
-		public int statConc = STAT_UNKNOWN;
-		public float valueYield = UNSPECIFIED;
-		public int statYield = STAT_UNKNOWN;
-		
-		public QuantComp(Component comp, int step, int type, int idx)		
-		{
-			this.comp = comp;
-			this.step = step;
-			this.type = type;
-			this.idx = idx;
-		}
-	}
-	protected List<QuantComp> quantities = new ArrayList<>();
-	
-	protected IntVector idxPrimary = new IntVector(), idxYield = new IntVector();
-	protected FloatVector allMassReact = new FloatVector(), allMassProd = new FloatVector(), allMassWaste = new FloatVector();
+	public quantities:QuantityComp[] = [];
 
-	public class GreenMetrics
-	{
-		public int step = 0; // reaction step
-		public int idx = 0; // index into the overall quantity list
-		public float[] massReact = null, massProd = null, massWaste = null, massProdWaste = null;
-		public float[] molwReact = null, molwProd = null;
-		public float impliedWaste = 0;
-		public boolean isBlank = false; // set to true if there's no content (blank entries can still be useful as placeholders)
-	}
-	protected List<GreenMetrics> greenMetrics = new ArrayList<>();*/
+	private idxPrimary:number[] = [];
+	private idxYield:number[] = [];
+	private allMassReact:number[] = [];
+	private allMassProd:number[] = [];
+	private allMassWaste:number[] = [];	
+
+	public greenMetrics:GreenMetrics[] = [];
 
 	// ---------------- static methods -----------------
 	
@@ -165,33 +163,32 @@ class QuantityCalc
 		return [bestOver + (whole * bestUnder), bestUnder];
 	}
 	
-	/*
 	// if the given reagent has a molecule with mapping numbers, checks to see if they line up with product(s), and derives stoichiometry from
 	// there; a value of 0 means that nothing could be determined
-	public static float impliedReagentStoich(Component reagent, Experiment.Component[] products)
+	public static impliedReagentStoich(reagent:ExperimentComponent, products:ExperimentComponent[]):number
 	{
 		if (MolUtil.isBlank(reagent.mol) || products.length == 0) return 0;
 		
-		float[] pstoich = Vec.floatArray(-1, products.length);
-		Molecule rmol = reagent.mol;
-		float highest = 0;
+		let pstoich = Vec.numberArray(-1, products.length);
+		let rmol = reagent.mol;
+		let highest = 0;
 		
-		for (int n = 1; n <= rmol.numAtoms(); n++)
+		for (let n = 1; n <= rmol.numAtoms; n++)
 		{
-			int m = rmol.atomMapNum(n);
+			let m = rmol.atomMapNum(n);
 			if (m == 0) continue;
-			float total = 0;
-			for (int i = 0; i < products.length; i++)
+			let total = 0;
+			for (let i = 0; i < products.length; i++)
 			{
-				Molecule pmol = products[i].mol;
+				let pmol = products[i].mol;
 				if (MolUtil.isBlank(pmol)) continue;
 				
-				int pcount = 0;
-				for (int j = 1; j <= pmol.numAtoms(); j++) if (pmol.atomMapNum(j) == m) pcount++;
+				let pcount = 0;
+				for (let j = 1; j <= pmol.numAtoms; j++) if (pmol.atomMapNum(j) == m) pcount++;
 				if (pcount > 0)
 				{
-					int rcount = 0;
-					for (int k = 1; k <= rmol.numAtoms(); k++) if (rmol.atomMapNum(k) == m) rcount++;
+					let rcount = 0;
+					for (let k = 1; k <= rmol.numAtoms; k++) if (rmol.atomMapNum(k) == m) rcount++;
 					if (pstoich[i] < 0) pstoich[i] = QuantityCalc.extractStoichValue(products[i].stoich);
 					total += pcount * pstoich[i] / rcount;
 				}
@@ -201,6 +198,7 @@ class QuantityCalc
 		return highest;
 	}
 	
+	/*
 	// for a given step in a reaction, adds up all the structures on both the left and right hand sides; the structures on each side are combined
 	// into a single molecule instance, and are expanded out based on the relative ratio of stoichiometry; zero stoichiometry is treated as 1
 	public static Molecule[] combinedSides(Experiment.Entry entry, int step)
@@ -306,194 +304,192 @@ class QuantityCalc
 	{
 	}
 
-/*
 	// fill in all the details
-	public void calculate()
+	public calculate():void
 	{
 		// the basic quantities: iteratively ifer everything possible
-		classifyTypes();
-		while (calculateSomething()) {}
+		this.classifyTypes();
+		while (this.calculateSomething()) {}
 		
 		// work out green metrics, where applicable
-		allMassReact.clear();
-		allMassProd.clear();
-		allMassWaste.clear();
-		for (int n = 0; n < quantities.size(); n++)
+		this.allMassReact = [];
+		this.allMassProd = [];
+		this.allMassWaste = [];
+		for (let n = 0; n < this.quantities.length; n++)
     	{
-    		QuantComp qc = quantities.get(n);
-			if (qc.type == Reaction.REACTANT || qc.type == Reaction.REAGENT)
+    		let qc = this.quantities[n];
+			if (qc.type == Experiment.REACTANT || qc.type == Experiment.REAGENT)
 			{
-				if (qc.valueEquiv == 0 && qc.type == Reaction.REAGENT) continue;
-				allMassReact.add(qc.valueMass);
+				if (qc.valueEquiv == 0 && qc.type == Experiment.REAGENT) continue;
+				this.allMassReact.push(qc.valueMass);
 			}
-			else if (qc.type == Reaction.PRODUCT)
+			else if (qc.type == Experiment.PRODUCT)
 			{
 				if (!qc.comp.waste)
 				{
-					allMassProd.add(qc.valueMass);
-					calculateGreenMetrics(n);
+					this.allMassProd.push(qc.valueMass);
+					this.calculateGreenMetrics(n);
 				}
 				else
 				{
-					allMassWaste.add(qc.valueMass);
+					this.allMassWaste.push(qc.valueMass);
 				}
 			}
 		}
 	}
 
 	// access to determined results
-	public int numQuantities() {return quantities.size();}
-	public QuantComp getQuantity(int N) {return quantities.get(N);}
-	public QuantComp[] getAllQuantities() {return quantities.toArray(new QuantComp[quantities.size()]);}
-	public int numGreenMetrics() {return greenMetrics.size();}
-	public GreenMetrics getGreenMetrics(int N) {return greenMetrics.get(N);}
-	public GreenMetrics[] getAllGreenMetrics() {return greenMetrics.toArray(new GreenMetrics[greenMetrics.size()]);}
-	public float[] getAllMassReact() {return allMassReact.getData();}
-	public float[] getAllMassProd() {return allMassProd.getData();}
-	public float[] getAllMassWaste() {return allMassWaste.getData();}
-	
+	public get numQuantities():number {return this.quantities.length;}
+	public getQuantity(idx:number):QuantityComp {return this.quantities[idx];}
+	public getAllQuantities():QuantityComp[] {return this.quantities.slice(0);}
+	public get numGreenMetrics():number {return this.greenMetrics.length;}
+	public getGreenMetrics(idx:number):GreenMetrics {return this.greenMetrics[idx];}
+	public getAllGreenMetrics():GreenMetrics[] {return this.greenMetrics.slice(0);}
+	public getAllMassReact():number[] {return this.allMassReact.slice(0);}
+	public getAllMassProd():number[] {return this.allMassProd.slice(0);}
+	public getAllMassWaste():number[] {return this.allMassWaste.slice(0);}
 	
 	// convenience: locate a component somewhere within the entry
-	public QuantComp findComponent(int step, int type, int idx)
+	public findComponent(step:number, type:number, idx:number):QuantityComp
 	{
-		for (QuantComp qc : quantities) if (qc.step == step && qc.type == type && qc.idx == idx) return qc;
+		for (let qc of this.quantities) if (qc.step == step && qc.type == type && qc.idx == idx) return qc;
 		return null;
 	}
 
 	// convenience formatting tools, which pick appropriate units
-	public static String formatMolWeight(double value)
+	public static formatMolWeight(value:number):string
     {
-    	if (value == UNSPECIFIED) return "";
-    	return Util.formatDouble(value,6) + " g/mol";
+    	if (value == QuantityCalc.UNSPECIFIED) return '';
+    	return formatDouble(value,6) + ' g/mol';
     }
-	public static String formatMass(double value)
+	public static formatMass(value:number):string
     {
-    	if (value == UNSPECIFIED) return "";
-    	if (value <= 1E-6) return Util.formatDouble(value*1E6,6) + " \u03BCg";
-    	if (value <= 1E-3) return Util.formatDouble(value*1E3,6) + " mg";
-    	if (value >= 1E3) return Util.formatDouble(value*1E-3,6) + " kg";
-    	return Util.formatDouble(value,6) + " g";
+    	if (value == QuantityCalc.UNSPECIFIED) return '';
+    	if (value <= 1E-6) return formatDouble(value*1E6,6) + ' \u03BCg';
+    	if (value <= 1E-3) return formatDouble(value*1E3,6) + ' mg';
+    	if (value >= 1E3) return formatDouble(value*1E-3,6) + ' kg';
+    	return formatDouble(value,6) + ' g';
     }
-	public static String formatVolume(double value)
+	public static formatVolume(value:number):string
     {
-		if (value == UNSPECIFIED) return "";
-		if (value <= 1E-6) return Util.formatDouble(value * 1E6, 6) + " nL";
-		if (value <= 1E-3) return Util.formatDouble(value * 1E3, 6) + " \u03BCL";
-		if (value >= 1E3) return Util.formatDouble(value * 1E-3, 6) + " L";
-		return Util.formatDouble(value, 6) + " mL";
+		if (value == QuantityCalc.UNSPECIFIED) return '';
+		if (value <= 1E-6) return formatDouble(value * 1E6, 6) + ' nL';
+		if (value <= 1E-3) return formatDouble(value * 1E3, 6) + ' \u03BCL';
+		if (value >= 1E3) return formatDouble(value * 1E-3, 6) + ' L';
+		return formatDouble(value, 6) + ' mL';
     }
-	public static String formatMoles(double value)
+	public static formatMoles(value:number):string
     {
-		if (value == UNSPECIFIED) return "";
-		if (value <= 1E-9) return Util.formatDouble(value * 1E9, 6) + " nmol";
-		if (value <= 1E-6) return Util.formatDouble(value * 1E6, 6) + " \u03BCmol";
-		if (value <= 1E-3) return Util.formatDouble(value * 1E3, 6) + " mmol";
-		return Util.formatDouble(value, 6) + " mol";
+		if (value == QuantityCalc.UNSPECIFIED) return '';
+		if (value <= 1E-9) return formatDouble(value * 1E9, 6) + ' nmol';
+		if (value <= 1E-6) return formatDouble(value * 1E6, 6) + ' \u03BCmol';
+		if (value <= 1E-3) return formatDouble(value * 1E3, 6) + ' mmol';
+		return formatDouble(value, 6) + ' mol';
     }
-	public static String formatDensity(float value)
+	public static formatDensity(value:number):string
     {
-		if (value == UNSPECIFIED) return "";
-		return Util.formatDouble(value, 6) + " g/mL";
+		if (value == QuantityCalc.UNSPECIFIED) return '';
+		return formatDouble(value, 6) + ' g/mL';
     }
-	public static String formatConc(double value)
+	public static formatConc(value:number):string
     {
-		if (value == UNSPECIFIED) return "";
-		if (value <= 1E-9) return Util.formatDouble(value * 1E9, 6) + " nmol/L";
-		if (value <= 1E-6) return Util.formatDouble(value * 1E6, 6) + " \u03BCmol/L";
-		if (value <= 1E-3) return Util.formatDouble(value * 1E3, 6) + " mmol/L";
-		return Util.formatDouble(value, 6) + " mol/L";
+		if (value == QuantityCalc.UNSPECIFIED) return '';
+		if (value <= 1E-9) return formatDouble(value * 1E9, 6) + ' nmol/L';
+		if (value <= 1E-6) return formatDouble(value * 1E6, 6) + ' \u03BCmol/L';
+		if (value <= 1E-3) return formatDouble(value * 1E3, 6) + ' mmol/L';
+		return formatDouble(value, 6) + ' mol/L';
     }
-	public static String formatPercent(double value)
+	public static formatPercent(value:number):string
     {
-		if (value == UNSPECIFIED) return "";
-		return Util.formatDouble(value, 6) + " mol/L";
+		if (value == QuantityCalc.UNSPECIFIED) return '';
+		return formatDouble(value, 6) + '%';
     }
 
 	// ---------------- private methods -----------------
 
 	// do a first pass of pulling out the raw data
-	private void classifyTypes()
+	private classifyTypes():void
     {
-    	for (int s = 0; s < entry.steps.length; s++)
+    	for (let s = 0; s < this.entry.steps.length; s++)
 		{
-			Experiment.Step step = entry.steps[s];
-			for (int n = 0; n < step.reactants.length; n++) quantities.add(new QuantComp(step.reactants[n], s, Reaction.REACTANT, n));
-			for (int n = 0; n < step.reagents.length; n++) quantities.add(new QuantComp(step.reagents[n], s, Reaction.REAGENT, n));
-			for (int n = 0; n < step.products.length; n++) quantities.add(new QuantComp(step.products[n], s, Reaction.PRODUCT, n));
+			let step = this.entry.steps[s];
+			for (let n = 0; n < step.reactants.length; n++) this.quantities.push(new QuantityComp(step.reactants[n], s, Experiment.REACTANT, n));
+			for (let n = 0; n < step.reagents.length; n++) this.quantities.push(new QuantityComp(step.reagents[n], s, Experiment.REAGENT, n));
+			for (let n = 0; n < step.products.length; n++) this.quantities.push(new QuantityComp(step.products[n], s, Experiment.PRODUCT, n));
 		}
 
 		// classify each component into roles, and fill in some basic properties
-		for (int n = 0; n < quantities.size(); n++)
+		for (let n = 0; n < this.quantities.length; n++)
 		{
-			QuantComp qc = quantities.get(n);
+			let qc = this.quantities[n];
 
-			if (qc.type == Reaction.REAGENT)
+			if (qc.type == Experiment.REAGENT)
 			{
-				if (qc.comp.equiv != null) qc.valueEquiv = qc.comp.equiv.floatValue();
+				if (qc.comp.equiv != null) qc.valueEquiv = qc.comp.equiv;
 				else
 				{
-					float eq = QuantityCalc.impliedReagentStoich(qc.comp, entry.steps[qc.step].products);
+					let eq = QuantityCalc.impliedReagentStoich(qc.comp, this.entry.steps[qc.step].products);
 					if (eq > 0) qc.valueEquiv = eq;
 				}
 			}
 			else
 			{
-				qc.valueEquiv = extractStoichValue(qc.comp.stoich);
+				qc.valueEquiv = QuantityCalc.extractStoichValue(qc.comp.stoich);
 			}
 			
-			if (qc.comp.mol != null) qc.molw = (float)MolUtil.molecularWeight(qc.comp.mol);
+			if (qc.comp.mol != null) qc.molw = MolUtil.molecularWeight(qc.comp.mol);
 			
-			qc.role = ROLE_INDEPENDENT;
-			if (qc.step == 0 && qc.type == Reaction.REACTANT)
+			qc.role = QuantityCalc.ROLE_INDEPENDENT;
+			if (qc.step == 0 && qc.type == Experiment.REACTANT)
 			{
 				if (qc.comp.primary)
 				{
-					qc.role = ROLE_PRIMARY;
-					idxPrimary.add(n);
+					qc.role = QuantityCalc.ROLE_PRIMARY;
+					this.idxPrimary.push(n);
 				}
-				else qc.role = ROLE_SECONDARY;
+				else qc.role = QuantityCalc.ROLE_SECONDARY;
 			}
-			else if (qc.type == Reaction.REAGENT)
+			else if (qc.type == Experiment.REAGENT)
 			{
-				if (qc.valueEquiv > 0) qc.role = ROLE_SECONDARY;
+				if (qc.valueEquiv > 0) qc.role = QuantityCalc.ROLE_SECONDARY;
 			}
-			else if (qc.type == Reaction.PRODUCT && !qc.comp.waste)
+			else if (qc.type == Experiment.PRODUCT && !qc.comp.waste)
 			{
-				qc.role = ROLE_PRODUCT;
-				idxYield.add(n);
+				qc.role = QuantityCalc.ROLE_PRODUCT;
+				this.idxYield.push(n);
 			}
 			else if (qc.valueEquiv > 0)
 			{
-				qc.role = ROLE_SECONDARY;
+				qc.role = QuantityCalc.ROLE_SECONDARY;
 			}
 			
 			// fill in any user-specified values
-			if (qc.comp.mass != null) qc.valueMass = qc.comp.mass.floatValue();
-			if (qc.comp.volume != null) qc.valueVolume = qc.comp.volume.floatValue();
-			if (qc.comp.moles != null) qc.valueMoles = qc.comp.moles.floatValue();
-			if (qc.comp.density != null) qc.valueDensity = qc.comp.density.floatValue();
-			if (qc.comp.conc != null) qc.valueConc = qc.comp.conc.floatValue();
-			if (qc.comp.yield != null) qc.valueYield = qc.comp.yield.floatValue();
+			if (qc.comp.mass != null) qc.valueMass = qc.comp.mass;
+			if (qc.comp.volume != null) qc.valueVolume = qc.comp.volume;
+			if (qc.comp.moles != null) qc.valueMoles = qc.comp.moles;
+			if (qc.comp.density != null) qc.valueDensity = qc.comp.density;
+			if (qc.comp.conc != null) qc.valueConc = qc.comp.conc;
+			if (qc.comp.yield != null) qc.valueYield = qc.comp.yield;
 			
-			qc.statEquiv = qc.valueEquiv == UNSPECIFIED ? STAT_UNKNOWN : STAT_ACTUAL;
-			qc.statMass = qc.valueMass == UNSPECIFIED ? STAT_UNKNOWN : STAT_ACTUAL;
-			qc.statVolume = qc.valueVolume == UNSPECIFIED ? STAT_UNKNOWN : STAT_ACTUAL;
-			qc.statMoles = qc.valueMoles == UNSPECIFIED ? STAT_UNKNOWN : STAT_ACTUAL;
-			qc.statDensity = qc.valueDensity == UNSPECIFIED ? STAT_UNKNOWN : STAT_ACTUAL;
-			qc.statConc = qc.valueConc == UNSPECIFIED ? STAT_UNKNOWN : STAT_ACTUAL;
-			qc.statYield = qc.valueYield == UNSPECIFIED ? STAT_UNKNOWN : STAT_ACTUAL;
+			qc.statEquiv = qc.valueEquiv == QuantityCalc.UNSPECIFIED ? QuantityCalc.STAT_UNKNOWN : QuantityCalc.STAT_ACTUAL;
+			qc.statMass = qc.valueMass == QuantityCalc.UNSPECIFIED ? QuantityCalc.STAT_UNKNOWN : QuantityCalc.STAT_ACTUAL;
+			qc.statVolume = qc.valueVolume == QuantityCalc.UNSPECIFIED ? QuantityCalc.STAT_UNKNOWN : QuantityCalc.STAT_ACTUAL;
+			qc.statMoles = qc.valueMoles == QuantityCalc.UNSPECIFIED ? QuantityCalc.STAT_UNKNOWN : QuantityCalc.STAT_ACTUAL;
+			qc.statDensity = qc.valueDensity == QuantityCalc.UNSPECIFIED ? QuantityCalc.STAT_UNKNOWN : QuantityCalc.STAT_ACTUAL;
+			qc.statConc = qc.valueConc == QuantityCalc.UNSPECIFIED ? QuantityCalc.STAT_UNKNOWN : QuantityCalc.STAT_ACTUAL;
+			qc.statYield = qc.valueYield == QuantityCalc.UNSPECIFIED ? QuantityCalc.STAT_UNKNOWN : QuantityCalc.STAT_ACTUAL;
 		}
 
 		// if no rate limiting reactants, pick everything from step 1
-		if (idxPrimary.size() == 0)
+		if (this.idxPrimary.length == 0)
 		{
-			for (int n = 0; n < quantities.size(); n++)
+			for (let n = 0; n < this.quantities.length; n++)
 			{
-				QuantComp qc = quantities.get(n);
-				if (qc.type == Reaction.REACTANT && qc.step == 0)
+				let qc = this.quantities[n];
+				if (qc.type == Experiment.REACTANT && qc.step == 0)
 				{
-					qc.role = ROLE_PRIMARY;
-					idxPrimary.add(n);
+					qc.role = QuantityCalc.ROLE_PRIMARY;
+					this.idxPrimary.push(n);
 				}
 			}
 		}
@@ -501,61 +497,62 @@ class QuantityCalc
 	
     // attempt to replace at least one unknown value with an inferred value; returns true if anything happened, which
     // signals that another round should be repeated, in case more possibilities come online
-    private boolean calculateSomething()
+    private calculateSomething():boolean
     {
-    	boolean anything = false;
+		let anything = false;
 
 		// ---- part 1: look for any interconversions that are internal to a component
 
-		for (QuantComp qc : quantities)
+		for (let qc of this.quantities)
 		{
 			// molar interconversion
-			if (qc.molw > 0 && qc.valueMass == UNSPECIFIED && qc.statMoles == STAT_ACTUAL)
+			if (qc.molw > 0 && qc.valueMass == QuantityCalc.UNSPECIFIED && qc.statMoles == QuantityCalc.STAT_ACTUAL)
 			{
 				qc.valueMass = qc.valueMoles * qc.molw;
-				qc.statMass = STAT_VIRTUAL;
+				qc.statMass = QuantityCalc.STAT_VIRTUAL;
 				anything = true;
 			}
-			if (qc.molw > 0 && qc.valueMass != UNSPECIFIED && qc.valueMoles == UNSPECIFIED)
+			if (qc.molw > 0 && qc.valueMass != QuantityCalc.UNSPECIFIED && qc.valueMoles == QuantityCalc.UNSPECIFIED)
 			{
 				qc.valueMoles = qc.valueMass / qc.molw;
-				qc.statMoles = STAT_VIRTUAL;
+				qc.statMoles = QuantityCalc.STAT_VIRTUAL;
 				anything = true;
 			}
-			if (qc.molw > 0 && qc.statMass == STAT_ACTUAL && qc.statMoles == STAT_ACTUAL)
+			if (qc.molw > 0 && qc.statMass == QuantityCalc.STAT_ACTUAL && qc.statMoles == QuantityCalc.STAT_ACTUAL)
 			{
-				float calcMoles = qc.valueMass / qc.molw;
-				if (!closeEnough(qc.valueMoles, calcMoles))
+				let calcMoles = qc.valueMass / qc.molw;
+				if (!this.closeEnough(qc.valueMoles, calcMoles))
 				{
-					qc.statMass = STAT_CONFLICT;
-					qc.statMoles = STAT_CONFLICT;
+					qc.statMass = QuantityCalc.STAT_CONFLICT;
+					qc.statMoles = QuantityCalc.STAT_CONFLICT;
 				}
     		}
 			
-			boolean isSoln = qc.statConc == STAT_ACTUAL ||
-					(qc.statVolume == STAT_ACTUAL && (qc.statMass == STAT_ACTUAL || qc.statMoles == STAT_ACTUAL));
+			let isSoln = qc.statConc == QuantityCalc.STAT_ACTUAL ||
+				(qc.statVolume == QuantityCalc.STAT_ACTUAL && (qc.statMass == QuantityCalc.STAT_ACTUAL || qc.statMoles == QuantityCalc.STAT_ACTUAL));
 
     		// non solutions, mass/density/volume
     		if (!isSoln)
     		{
-				if (qc.valueDensity > 0 && qc.valueMass == UNSPECIFIED && qc.valueVolume != UNSPECIFIED)
+				if (qc.valueDensity > 0 && qc.valueMass == QuantityCalc.UNSPECIFIED && qc.valueVolume != QuantityCalc.UNSPECIFIED)
 				{
 					qc.valueMass = qc.valueVolume * qc.valueDensity;
-					qc.statMass = STAT_VIRTUAL;
+					qc.statMass = QuantityCalc.STAT_VIRTUAL;
 					anything = true;
 				}
-				if (qc.valueDensity > 0 && qc.valueMass != UNSPECIFIED && qc.valueVolume == UNSPECIFIED)
+				if (qc.valueDensity > 0 && qc.valueMass != QuantityCalc.UNSPECIFIED && qc.valueVolume == QuantityCalc.UNSPECIFIED)
 				{
 					qc.valueVolume = qc.valueMass / qc.valueDensity;
-					qc.statVolume = STAT_VIRTUAL;
+					qc.statVolume = QuantityCalc.STAT_VIRTUAL;
 					anything = true;
 				}
-				if (qc.valueDensity == UNSPECIFIED && qc.valueMass != UNSPECIFIED && qc.valueVolume != UNSPECIFIED && qc.valueConc == UNSPECIFIED)
+				if (qc.valueDensity == QuantityCalc.UNSPECIFIED && qc.valueMass != QuantityCalc.UNSPECIFIED && 
+					qc.valueVolume != QuantityCalc.UNSPECIFIED && qc.valueConc == QuantityCalc.UNSPECIFIED)
 				{
-					if (qc.statMass == STAT_ACTUAL || qc.statMoles == STAT_ACTUAL) // don't guess density from stoichoimetry
+					if (qc.statMass == QuantityCalc.STAT_ACTUAL || qc.statMoles == QuantityCalc.STAT_ACTUAL) // don't guess density from stoichoimetry
 					{
 						qc.valueDensity = qc.valueMass / qc.valueVolume;
-						qc.statDensity = STAT_VIRTUAL;
+						qc.statDensity = QuantityCalc.STAT_VIRTUAL;
 						anything = true;
 					}
 				}
@@ -564,50 +561,50 @@ class QuantityCalc
     		// solutions, moles/conc/volume
     		if (isSoln)
     		{
-				if (qc.valueConc > 0 && qc.valueMoles == UNSPECIFIED && qc.valueVolume != UNSPECIFIED)
+				if (qc.valueConc > 0 && qc.valueMoles == QuantityCalc.UNSPECIFIED && qc.valueVolume != QuantityCalc.UNSPECIFIED)
 				{
-					qc.valueMoles = 0.001f * qc.valueVolume * qc.valueConc;
-					qc.statMoles = STAT_VIRTUAL;
+					qc.valueMoles = 0.001 * qc.valueVolume * qc.valueConc;
+					qc.statMoles = QuantityCalc.STAT_VIRTUAL;
 					anything = true;
 				}
-				if (qc.valueConc > 0 && qc.valueMoles != UNSPECIFIED && qc.valueVolume == UNSPECIFIED)
+				if (qc.valueConc > 0 && qc.valueMoles != QuantityCalc.UNSPECIFIED && qc.valueVolume == QuantityCalc.UNSPECIFIED)
 				{
 					qc.valueVolume = 1000 * qc.valueMoles / qc.valueConc;
-					qc.statVolume = STAT_VIRTUAL;
+					qc.statVolume = QuantityCalc.STAT_VIRTUAL;
 					anything = true;
 				}
-				if (qc.valueConc == UNSPECIFIED && qc.valueMass != UNSPECIFIED && qc.valueVolume != UNSPECIFIED)
+				if (qc.valueConc == QuantityCalc.UNSPECIFIED && qc.valueMass != QuantityCalc.UNSPECIFIED && qc.valueVolume != QuantityCalc.UNSPECIFIED)
 				{
 					qc.valueConc = 1000 * qc.valueMoles / qc.valueVolume;
-					qc.statConc = STAT_VIRTUAL;
+					qc.statConc = QuantityCalc.STAT_VIRTUAL;
 					anything = true;
 				}
-				if (qc.statConc == STAT_ACTUAL && qc.valueMoles > 0 && qc.statVolume == STAT_ACTUAL)
+				if (qc.statConc == QuantityCalc.STAT_ACTUAL && qc.valueMoles > 0 && qc.statVolume == QuantityCalc.STAT_ACTUAL)
 				{
-					float calcVolume = 1000 * qc.valueMoles / qc.valueConc;
-					if (!closeEnough(qc.valueVolume, calcVolume))
+					let calcVolume = 1000 * qc.valueMoles / qc.valueConc;
+					if (!this.closeEnough(qc.valueVolume, calcVolume))
 					{
-						qc.statConc = STAT_CONFLICT;
-						if (qc.statMass == STAT_ACTUAL) qc.statMass = STAT_CONFLICT;
-						if (qc.statMoles == STAT_ACTUAL) qc.statMoles = STAT_CONFLICT;
-						qc.statVolume = STAT_CONFLICT;
+						qc.statConc = QuantityCalc.STAT_CONFLICT;
+						if (qc.statMass == QuantityCalc.STAT_ACTUAL) qc.statMass = QuantityCalc.STAT_CONFLICT;
+						if (qc.statMoles == QuantityCalc.STAT_ACTUAL) qc.statMoles = QuantityCalc.STAT_CONFLICT;
+						qc.statVolume = QuantityCalc.STAT_CONFLICT;
 					}
 				}
     		}
 			
 			// calculating mass from virtual molar mass
-			if (qc.molw > 0 && qc.valueMass == UNSPECIFIED && qc.valueMoles != UNSPECIFIED)
+			if (qc.molw > 0 && qc.valueMass == QuantityCalc.UNSPECIFIED && qc.valueMoles != QuantityCalc.UNSPECIFIED)
 			{
 				qc.valueMass = qc.valueMoles * qc.molw;
-				qc.statMass = STAT_VIRTUAL;
+				qc.statMass = QuantityCalc.STAT_VIRTUAL;
 				anything = true;
 			}
 			
     		// providing a concentration and density is disallowed
-			if (qc.statDensity == STAT_ACTUAL && qc.statConc == STAT_ACTUAL)
+			if (qc.statDensity == QuantityCalc.STAT_ACTUAL && qc.statConc == QuantityCalc.STAT_ACTUAL)
 			{
-				qc.statDensity = STAT_CONFLICT;
-				qc.statConc = STAT_CONFLICT;
+				qc.statDensity = QuantityCalc.STAT_CONFLICT;
+				qc.statConc = QuantityCalc.STAT_CONFLICT;
 			}
     	}
 	
@@ -615,22 +612,22 @@ class QuantityCalc
     	
     	// ---- part 2: determine the molar quantity baseline, for each step, where applicable
     	
-		boolean hasRef = false;
-		int numSteps = entry.steps.length;
-		float[] primaryCounts = Vec.floatArray(0, numSteps);
-		float[] primaryEquivs = Vec.floatArray(0, numSteps);
-		float[] primaryMoles = Vec.floatArray(0, numSteps);
+		let hasRef = false;
+		let numSteps = this.entry.steps.length;
+		let primaryCounts = Vec.numberArray(0, numSteps);
+		let primaryEquivs = Vec.numberArray(0, numSteps);
+		let primaryMoles = Vec.numberArray(0, numSteps);
     	
     	// go over components: first step uses reactants; next steps use products from previous
-    	for (QuantComp qc : quantities)
+    	for (let qc of this.quantities)
 		{
-			int ref = -1;
-			if (qc.step == 0 && qc.type == Reaction.REACTANT && qc.comp.primary) ref = qc.step;
-			else if (qc.step < numSteps - 1 && qc.type == Reaction.PRODUCT && !qc.comp.waste) ref = qc.step + 1;
+			let ref = -1;
+			if (qc.step == 0 && qc.type == Experiment.REACTANT && qc.comp.primary) ref = qc.step;
+			else if (qc.step < numSteps - 1 && qc.type == Experiment.PRODUCT && !qc.comp.waste) ref = qc.step + 1;
 			else continue;
 			if (primaryEquivs[ref] < 0) continue;
 			
-			if (qc.statMoles == STAT_UNKNOWN)
+			if (qc.statMoles == QuantityCalc.STAT_UNKNOWN)
 			{
 				primaryEquivs[ref] = -1;
 				continue;
@@ -647,10 +644,10 @@ class QuantityCalc
 			primaryCounts[0] = 0;
 			primaryEquivs[0] = 0;
 			primaryMoles[0] = 0;
-			for (int i : idxPrimary)
+			for (let i of this.idxPrimary)
 			{
-				QuantComp qc = quantities.get(i);
-				if (qc.statMoles == STAT_UNKNOWN)
+				let qc = this.quantities[i];
+				if (qc.statMoles == QuantityCalc.STAT_UNKNOWN)
 				{
 					primaryCounts[0] = 0;
 					primaryEquivs[0] = -1;
@@ -662,8 +659,8 @@ class QuantityCalc
 				primaryMoles[0] += qc.valueMoles;
 			}
 		}
-		float[] refMoles = Vec.floatArray(0, numSteps);
-		for (int n = 0; n < numSteps; n++)
+		let refMoles = Vec.numberArray(0, numSteps);
+		for (let n = 0; n < numSteps; n++)
 		{
 			refMoles[n] = primaryCounts[n] == 0 || primaryEquivs[n] <= 0 ? 0 : primaryMoles[n] / primaryEquivs[n];
 			if (refMoles[n] > 0) hasRef = true;
@@ -672,17 +669,17 @@ class QuantityCalc
 		// if no reference moles at all, try formulating some by making use of product quantities
 		if (!hasRef)
 		{
-			for (int n = 0; n < numSteps; n++)
+			for (let n = 0; n < numSteps; n++)
 			{
-				float[] prodMolar = null;
-				for (QuantComp qc : quantities)
+				let prodMolar:number[] = [];
+				for (let qc of this.quantities)
 				{
-					if (qc.step != n || qc.role != ROLE_PRODUCT) continue;
-					if (qc.statMoles == STAT_UNKNOWN || qc.valueMoles <= 0 || qc.valueEquiv <= 0) continue;
-					float yield = qc.valueYield > 0 ? qc.valueYield * 0.01f : 1;
-					prodMolar = Vec.append(prodMolar, qc.valueMoles / (qc.valueEquiv * yield));
+					if (qc.step != n || qc.role != QuantityCalc.ROLE_PRODUCT) continue;
+					if (qc.statMoles == QuantityCalc.STAT_UNKNOWN || qc.valueMoles <= 0 || qc.valueEquiv <= 0) continue;
+					let yld = qc.valueYield > 0 ? qc.valueYield * 0.01 : 1;
+					prodMolar.push(qc.valueMoles / (qc.valueEquiv * yld));
 				}
-				if (prodMolar != null)
+				if (prodMolar.length > 0)
 				{
 					refMoles[n] = Vec.sum(prodMolar) / prodMolar.length;
 					hasRef = true;
@@ -694,32 +691,32 @@ class QuantityCalc
 		
     	// ---- part 3: look for ways to apply the yield
 		
-		for (QuantComp qc : quantities)
+		for (let qc of this.quantities)
 		{
-			if (qc.type != Reaction.PRODUCT) continue;
+			if (qc.type != Experiment.PRODUCT) continue;
 			
 			if (refMoles[qc.step] == 0) continue;
 
-			if (qc.valueYield == UNSPECIFIED && qc.valueMoles != UNSPECIFIED)
+			if (qc.valueYield == QuantityCalc.UNSPECIFIED && qc.valueMoles != QuantityCalc.UNSPECIFIED)
 			{
 				qc.valueYield = 100 * qc.valueMoles / (refMoles[qc.step] * qc.valueEquiv);
-				qc.statYield = STAT_VIRTUAL;
+				qc.statYield = QuantityCalc.STAT_VIRTUAL;
 				anything = true;
 			}
-			if (qc.valueYield != UNSPECIFIED && qc.valueMoles == UNSPECIFIED)
+			if (qc.valueYield != QuantityCalc.UNSPECIFIED && qc.valueMoles == QuantityCalc.UNSPECIFIED)
 			{
-				qc.valueMoles = qc.valueYield * 0.01f * (refMoles[qc.step] * qc.valueEquiv);
-				qc.statMoles = STAT_VIRTUAL;
+				qc.valueMoles = qc.valueYield * 0.01 * (refMoles[qc.step] * qc.valueEquiv);
+				qc.statMoles = QuantityCalc.STAT_VIRTUAL;
 				anything = true;
 			}
-			if (qc.valueMoles > 0 && qc.statYield == STAT_ACTUAL)
+			if (qc.valueMoles > 0 && qc.statYield == QuantityCalc.STAT_ACTUAL)
 			{
-				float calcYield = 100 * qc.valueMoles / (refMoles[qc.step] * qc.valueEquiv);
-				if (!closeEnough(qc.valueYield, calcYield))
+				let calcYield = 100 * qc.valueMoles / (refMoles[qc.step] * qc.valueEquiv);
+				if (!this.closeEnough(qc.valueYield, calcYield))
 				{
-					if (qc.statMass == STAT_ACTUAL) qc.statMass = STAT_CONFLICT;
-					if (qc.statMoles == STAT_ACTUAL) qc.statMoles = STAT_CONFLICT;
-					qc.statYield = STAT_CONFLICT;
+					if (qc.statMass == QuantityCalc.STAT_ACTUAL) qc.statMass = QuantityCalc.STAT_CONFLICT;
+					if (qc.statMoles == QuantityCalc.STAT_ACTUAL) qc.statMoles = QuantityCalc.STAT_CONFLICT;
+					qc.statYield = QuantityCalc.STAT_CONFLICT;
 				}
     		}
     	}
@@ -728,20 +725,20 @@ class QuantityCalc
     	
     	// ---- part 4: look for stoichiometric components where molarity can be filled in
 
-		for (QuantComp qc : quantities)
+		for (let qc of this.quantities)
 		{
 			if (refMoles[qc.step] == 0) continue;
 
-			if (qc.valueMass == UNSPECIFIED && qc.valueMoles == UNSPECIFIED && qc.valueEquiv > 0)
+			if (qc.valueMass == QuantityCalc.UNSPECIFIED && qc.valueMoles == QuantityCalc.UNSPECIFIED && qc.valueEquiv > 0)
 			{
 				qc.valueMoles = refMoles[qc.step] * qc.valueEquiv;
-				qc.statMoles = STAT_VIRTUAL;
+				qc.statMoles = QuantityCalc.STAT_VIRTUAL;
 				anything = true;
 			}
-			if (qc.valueMoles != UNSPECIFIED && qc.valueEquiv == UNSPECIFIED)
+			if (qc.valueMoles != QuantityCalc.UNSPECIFIED && qc.valueEquiv == QuantityCalc.UNSPECIFIED)
 			{
 				qc.valueEquiv = qc.valueMoles / refMoles[qc.step];
-				qc.statEquiv = STAT_VIRTUAL;
+				qc.statEquiv = QuantityCalc.STAT_VIRTUAL;
 				anything = true;
 			}
 		}
@@ -750,60 +747,60 @@ class QuantityCalc
     }
 
 	// work out all available green metrics for a particular product index
-	private void calculateGreenMetrics(int idx)
+	private calculateGreenMetrics(idx:number):void
     {
-    	QuantComp qc = quantities.get(idx);
-    	GreenMetrics gm = new GreenMetrics();
+		let qc = this.quantities[idx];
+    	let gm = new GreenMetrics();
 
 		gm.step = qc.step;
 		gm.idx = idx;
 		gm.isBlank = true;
 	
-		for (int n = 0; n < quantities.size(); n++)
+		for (let n = 0; n < this.quantities.length; n++)
 		{
-			QuantComp sub = quantities.get(n);
+			let sub = this.quantities[n];
 			if (sub.step > gm.step) continue;
 			
-			float eq = sub.valueEquiv;
-			if (eq == 0 && sub.type == Reaction.REAGENT) continue;
+			let eq = sub.valueEquiv;
+			if (eq == 0 && sub.type == Experiment.REAGENT) continue;
 
-			if (sub.valueMass != UNSPECIFIED) gm.isBlank = false;
+			if (sub.valueMass != QuantityCalc.UNSPECIFIED) gm.isBlank = false;
 			
-			if (sub.type == Reaction.REACTANT || sub.type == Reaction.REAGENT)
+			if (sub.type == Experiment.REACTANT || sub.type == Experiment.REAGENT)
 			{
-				gm.massReact = Vec.append(gm.massReact, sub.valueMass);
-				if (sub.step == gm.step && eq > 0 && sub.molw > 0) gm.molwReact = Vec.append(gm.molwReact, eq * sub.molw);
+				gm.massReact.push(sub.valueMass);
+				if (sub.step == gm.step && eq > 0 && sub.molw > 0) gm.molwReact.push(eq * sub.molw);
 			}
-			else if (sub.type == Reaction.PRODUCT)
+			else if (sub.type == Experiment.PRODUCT)
 			{
 				if (!sub.comp.waste)
 				{
-					if (sub.step == gm.step) gm.massProd = Vec.append(gm.massProd, sub.valueMass);
+					if (sub.step == gm.step) gm.massProd.push(sub.valueMass);
 					if (eq > 0 && sub.molw > 0)
 					{
-						if (sub.step == gm.step) gm.molwProd = Vec.append(gm.molwProd, eq * sub.molw);
-						else if (sub.step == gm.step - 1) gm.molwReact = Vec.append(gm.molwReact, eq * sub.molw);
+						if (sub.step == gm.step) gm.molwProd.push(eq * sub.molw);
+						else if (sub.step == gm.step - 1) gm.molwReact.push(eq * sub.molw);
 					}
 				}
 				else
 				{
-					gm.massWaste = Vec.append(gm.massWaste, sub.valueMass);
+					gm.massWaste.push(sub.valueMass);
 				}
-				if (sub.step == gm.step) gm.massProdWaste = Vec.append(gm.massProdWaste, sub.valueMass);
+				if (sub.step == gm.step) gm.massProdWaste.push(sub.valueMass);
 			}
 		}
 		
 		gm.impliedWaste = Vec.sum(gm.massReact) - Vec.sum(gm.massProdWaste);
 		if (Math.abs(gm.impliedWaste) > 1E-3) gm.impliedWaste = 0;
 
-    	greenMetrics.add(gm);
+    	this.greenMetrics.push(gm);
 	}
 
 	// figure out if two values are not in conflict
-	private static boolean closeEnough(float value1, float value2)
+	private closeEnough(value1:number, value2:number):boolean
 	{
 		if (value1 <= 0 || value2 <= 0) return true;
-		float ratio = value1 / value2;
+		let ratio = value1 / value2;
 		return ratio >= 0.99 && ratio <= 1.01;
-	}*/
+	}
 }

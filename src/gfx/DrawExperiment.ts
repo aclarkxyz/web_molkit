@@ -188,6 +188,19 @@ class DrawExperiment
 				vg.drawLine(cx - dw, y, cx + dw, y, policy.data.foreground, lw);
 			}
 		}
+		else if (annot == ArrangeExperiment.COMP_ANNOT_IMPLIED)
+		{
+			let tw = 0.5 * sz, th = 0.75 * sz;
+			let cx = x2 - 0.5 * tw, cy = y1 + 0.5 * th;
+			let ty = y1 + 0.25 * th, dsz = sz * 0.1, hsz = 0.5 * dsz;
+			let lw = 0.05 * this.scale, fg = policy.data.foreground;
+			
+			vg.drawLine(cx, y1, cx, y1 + th, fg, lw);
+			vg.drawLine(x2 - tw, ty, x2, ty, fg, lw);
+			vg.drawLine(x2 - tw, cy, x2, cy, fg, lw);
+			vg.drawOval(x2 - tw + hsz, y1 + th - hsz, hsz, hsz, 0, 0, fg);
+			vg.drawOval(x2 - hsz, y1 + th - hsz, hsz, hsz, 0, 0, fg);
+		}
     }
 
 	private drawArrow(x1:number, y1:number, x2:number, y2:number, headsz:number, colour:number, linesz:number):void

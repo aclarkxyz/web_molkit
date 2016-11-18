@@ -489,8 +489,18 @@ class MolUtil
 	}
 
 	// calculates the molecular formula
-	public static molecularFormula(mol:Molecule, punctuation?:boolean):string
+	public static molecularFormula(mol:Molecule, punctuation?:boolean|string[]):string
 	{
+		let puncEnter = '', puncExit = '', puncEnterSuper = '', puncExitSuper = '';
+		if (punctuation == true) [puncEnter, puncExit] = ['{', '}', '{^', '}'];
+		else if (punctuation instanceof Array)
+		{
+			puncEnter = punctuation[0];
+			puncExit = punctuation[1];
+			puncEnterSuper = punctuation[2];
+			puncExitSuper = punctuation[3];
+		}
+
 		for (let n = 1; n <= mol.numAtoms; n++) if (MolUtil.hasAbbrev(mol, n))
 		{
 			mol = mol.clone();
@@ -505,6 +515,10 @@ class MolUtil
 			countH += mol.atomHydrogens(n);
 			let el = mol.atomElement(n);
 
+			// this is hacky, but at least isotopes are separated out; they should ideally be sorted just after their non-isotopes, in
+			// numerical order
+			if (mol.atomIsotope(n) != Molecule.ISOTOPE_NATURAL) el = puncEnterSuper + mol.atomIsotope(n) + puncExitSuper + el;
+
 			if (el == 'C') countC++;
 			else if (el == 'H') countH++;
 			else elements[n - 1] = el;
@@ -517,16 +531,16 @@ class MolUtil
 		if (countC > 0) formula += 'C';
 		if (countC > 1)
 		{
-			if (punctuation) formula += '{';
+			if (punctuation) formula += puncEnter;
 			formula += countC;
-			if (punctuation) formula += '}';
+			if (punctuation) formula += puncExit;
 		}
 		if (countH > 0) formula += 'H';
 		if (countH > 1)
 		{
-			if (punctuation) formula += '{';
+			if (punctuation) formula += puncEnter;
 			formula += countH;
-			if (punctuation) formula += '}';
+			if (punctuation) formula += puncExit;
 		}
 		for (let n = 0; n < elements.length; n++) if (elements[n].length > 0)
 		{
@@ -535,9 +549,9 @@ class MolUtil
 			formula += elements[n];
 			if (count > 1)
 			{
-			if (punctuation) formula += '{';
-			formula += count;
-			if (punctuation) formula += '}';
+				if (punctuation) formula += puncEnter;
+				formula += count;
+				if (punctuation) formula += puncExit;
 			}
 		}
 		

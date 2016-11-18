@@ -54,6 +54,15 @@ function plural(count:number):string
 	return count == 1 ? '' : 's';
 }
 
+// turns a number into a floating point representation with a maximum number of significant figures
+function formatDouble(value:number, sigfig:number):string
+{
+	if (value == null) return '';
+	let str = value.toPrecision(sigfig);
+	if (str.indexOf('.') > 0) while (str.endsWith('0') || str.endsWith('.')) str = str.substring(0, str.length - 1);
+	return str;
+}
+
 // turns an HTML-style colour (#RRGGBB) into its numeric equivalent (0xRRGGBB), or null if invalid
 function htmlToRGB(col:string):number
 {

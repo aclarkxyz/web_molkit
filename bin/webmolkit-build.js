@@ -18,6 +18,15 @@ function setVisible(node, visible) {
 function plural(count) {
     return count == 1 ? '' : 's';
 }
+function formatDouble(value, sigfig) {
+    if (value == null)
+        return '';
+    let str = value.toPrecision(sigfig);
+    if (str.indexOf('.') > 0)
+        while (str.endsWith('0') || str.endsWith('.'))
+            str = str.substring(0, str.length - 1);
+    return str;
+}
 function htmlToRGB(col) {
     if (col == null || col.charAt(0) != '#' || col.length != 7)
         return null;
@@ -2647,6 +2656,15 @@ class MolUtil {
         return y;
     }
     static molecularFormula(mol, punctuation) {
+        let puncEnter = '', puncExit = '', puncEnterSuper = '', puncExitSuper = '';
+        if (punctuation == true)
+            [puncEnter, puncExit] = ['{', '}', '{^', '}'];
+        else if (punctuation instanceof Array) {
+            puncEnter = punctuation[0];
+            puncExit = punctuation[1];
+            puncEnterSuper = punctuation[2];
+            puncExitSuper = punctuation[3];
+        }
         for (let n = 1; n <= mol.numAtoms; n++)
             if (MolUtil.hasAbbrev(mol, n)) {
                 mol = mol.clone();
@@ -2658,6 +2676,8 @@ class MolUtil {
         for (let n = 1; n <= mol.numAtoms; n++) {
             countH += mol.atomHydrogens(n);
             let el = mol.atomElement(n);
+            if (mol.atomIsotope(n) != Molecule.ISOTOPE_NATURAL)
+                el = puncEnterSuper + mol.atomIsotope(n) + puncExitSuper + el;
             if (el == 'C')
                 countC++;
             else if (el == 'H')
@@ -2671,19 +2691,19 @@ class MolUtil {
             formula += 'C';
         if (countC > 1) {
             if (punctuation)
-                formula += '{';
+                formula += puncEnter;
             formula += countC;
             if (punctuation)
-                formula += '}';
+                formula += puncExit;
         }
         if (countH > 0)
             formula += 'H';
         if (countH > 1) {
             if (punctuation)
-                formula += '{';
+                formula += puncEnter;
             formula += countH;
             if (punctuation)
-                formula += '}';
+                formula += puncExit;
         }
         for (let n = 0; n < elements.length; n++)
             if (elements[n].length > 0) {
@@ -2693,10 +2713,10 @@ class MolUtil {
                 formula += elements[n];
                 if (count > 1) {
                     if (punctuation)
-                        formula += '{';
+                        formula += puncEnter;
                     formula += count;
                     if (punctuation)
-                        formula += '}';
+                        formula += puncExit;
                 }
             }
         return formula.toString();
@@ -3715,10 +3735,10 @@ class Experiment extends Aspect {
             entry.title = title;
         let createDate = this.ds.getReal(row, Experiment.COLNAME_EXPERIMENT_CREATEDATE);
         if (createDate)
-            entry.createDate = new Date(createDate);
+            entry.createDate = new Date(createDate * 1000);
         let modifyDate = this.ds.getReal(row, Experiment.COLNAME_EXPERIMENT_MODIFYDATE);
         if (modifyDate)
-            entry.modifyDate = new Date(modifyDate);
+            entry.modifyDate = new Date(modifyDate * 1000);
         let doi = this.ds.getString(row, Experiment.COLNAME_EXPERIMENT_DOI);
         if (doi)
             entry.doi = doi;
@@ -3959,8 +3979,8 @@ class Experiment extends Aspect {
                 this.ds.insertRow(row + oldSteps);
         }
         this.ds.setString(row, Experiment.COLNAME_EXPERIMENT_TITLE, entry.title);
-        this.ds.setReal(row, Experiment.COLNAME_EXPERIMENT_CREATEDATE, entry.createDate == null ? null : entry.createDate.getTime());
-        this.ds.setReal(row, Experiment.COLNAME_EXPERIMENT_MODIFYDATE, entry.modifyDate == null ? null : entry.modifyDate.getTime());
+        this.ds.setReal(row, Experiment.COLNAME_EXPERIMENT_CREATEDATE, entry.createDate == null ? null : entry.createDate.getTime() * 1E-3);
+        this.ds.setReal(row, Experiment.COLNAME_EXPERIMENT_MODIFYDATE, entry.modifyDate == null ? null : entry.modifyDate.getTime() * 1E-3);
         this.ds.setString(row, Experiment.COLNAME_EXPERIMENT_DOI, entry.doi);
         for (let s = 0; s < entry.steps.length; s++) {
             let r = row + s;
@@ -5265,9 +5285,54 @@ class MetaMolecule {
             }
     }
 }
+class QuantityComp {
+    constructor(comp, step, type, idx) {
+        this.comp = comp;
+        this.step = step;
+        this.type = type;
+        this.idx = idx;
+        this.role = 0;
+        this.molw = 0;
+        this.valueEquiv = 0;
+        this.statEquiv = QuantityCalc.STAT_UNKNOWN;
+        this.valueMass = QuantityCalc.UNSPECIFIED;
+        this.statMass = QuantityCalc.STAT_UNKNOWN;
+        this.valueVolume = QuantityCalc.UNSPECIFIED;
+        this.statVolume = QuantityCalc.STAT_UNKNOWN;
+        this.valueMoles = QuantityCalc.UNSPECIFIED;
+        this.statMoles = QuantityCalc.STAT_UNKNOWN;
+        this.valueDensity = QuantityCalc.UNSPECIFIED;
+        this.statDensity = QuantityCalc.STAT_UNKNOWN;
+        this.valueConc = QuantityCalc.UNSPECIFIED;
+        this.statConc = QuantityCalc.STAT_UNKNOWN;
+        this.valueYield = QuantityCalc.UNSPECIFIED;
+        this.statYield = QuantityCalc.STAT_UNKNOWN;
+    }
+}
+class GreenMetrics {
+    constructor() {
+        this.step = 0;
+        this.idx = 0;
+        this.massReact = [];
+        this.massProd = [];
+        this.massWaste = [];
+        this.massProdWaste = [];
+        this.molwReact = [];
+        this.molwProd = [];
+        this.impliedWaste = 0;
+        this.isBlank = false;
+    }
+}
 class QuantityCalc {
     constructor(entry) {
         this.entry = entry;
+        this.quantities = [];
+        this.idxPrimary = [];
+        this.idxYield = [];
+        this.allMassReact = [];
+        this.allMassProd = [];
+        this.allMassWaste = [];
+        this.greenMetrics = [];
     }
     static isStoichZero(stoich) {
         if (this.isStoichUnity(stoich))
@@ -5336,7 +5401,463 @@ class QuantityCalc {
             }
         return [bestOver + (whole * bestUnder), bestUnder];
     }
+    static impliedReagentStoich(reagent, products) {
+        if (MolUtil.isBlank(reagent.mol) || products.length == 0)
+            return 0;
+        let pstoich = Vec.numberArray(-1, products.length);
+        let rmol = reagent.mol;
+        let highest = 0;
+        for (let n = 1; n <= rmol.numAtoms; n++) {
+            let m = rmol.atomMapNum(n);
+            if (m == 0)
+                continue;
+            let total = 0;
+            for (let i = 0; i < products.length; i++) {
+                let pmol = products[i].mol;
+                if (MolUtil.isBlank(pmol))
+                    continue;
+                let pcount = 0;
+                for (let j = 1; j <= pmol.numAtoms; j++)
+                    if (pmol.atomMapNum(j) == m)
+                        pcount++;
+                if (pcount > 0) {
+                    let rcount = 0;
+                    for (let k = 1; k <= rmol.numAtoms; k++)
+                        if (rmol.atomMapNum(k) == m)
+                            rcount++;
+                    if (pstoich[i] < 0)
+                        pstoich[i] = QuantityCalc.extractStoichValue(products[i].stoich);
+                    total += pcount * pstoich[i] / rcount;
+                }
+            }
+            highest = Math.max(highest, total);
+        }
+        return highest;
+    }
+    calculate() {
+        this.classifyTypes();
+        while (this.calculateSomething()) { }
+        this.allMassReact = [];
+        this.allMassProd = [];
+        this.allMassWaste = [];
+        for (let n = 0; n < this.quantities.length; n++) {
+            let qc = this.quantities[n];
+            if (qc.type == Experiment.REACTANT || qc.type == Experiment.REAGENT) {
+                if (qc.valueEquiv == 0 && qc.type == Experiment.REAGENT)
+                    continue;
+                this.allMassReact.push(qc.valueMass);
+            }
+            else if (qc.type == Experiment.PRODUCT) {
+                if (!qc.comp.waste) {
+                    this.allMassProd.push(qc.valueMass);
+                    this.calculateGreenMetrics(n);
+                }
+                else {
+                    this.allMassWaste.push(qc.valueMass);
+                }
+            }
+        }
+    }
+    get numQuantities() { return this.quantities.length; }
+    getQuantity(idx) { return this.quantities[idx]; }
+    getAllQuantities() { return this.quantities.slice(0); }
+    get numGreenMetrics() { return this.greenMetrics.length; }
+    getGreenMetrics(idx) { return this.greenMetrics[idx]; }
+    getAllGreenMetrics() { return this.greenMetrics.slice(0); }
+    getAllMassReact() { return this.allMassReact.slice(0); }
+    getAllMassProd() { return this.allMassProd.slice(0); }
+    getAllMassWaste() { return this.allMassWaste.slice(0); }
+    findComponent(step, type, idx) {
+        for (let qc of this.quantities)
+            if (qc.step == step && qc.type == type && qc.idx == idx)
+                return qc;
+        return null;
+    }
+    static formatMolWeight(value) {
+        if (value == QuantityCalc.UNSPECIFIED)
+            return '';
+        return formatDouble(value, 6) + ' g/mol';
+    }
+    static formatMass(value) {
+        if (value == QuantityCalc.UNSPECIFIED)
+            return '';
+        if (value <= 1E-6)
+            return formatDouble(value * 1E6, 6) + ' \u03BCg';
+        if (value <= 1E-3)
+            return formatDouble(value * 1E3, 6) + ' mg';
+        if (value >= 1E3)
+            return formatDouble(value * 1E-3, 6) + ' kg';
+        return formatDouble(value, 6) + ' g';
+    }
+    static formatVolume(value) {
+        if (value == QuantityCalc.UNSPECIFIED)
+            return '';
+        if (value <= 1E-6)
+            return formatDouble(value * 1E6, 6) + ' nL';
+        if (value <= 1E-3)
+            return formatDouble(value * 1E3, 6) + ' \u03BCL';
+        if (value >= 1E3)
+            return formatDouble(value * 1E-3, 6) + ' L';
+        return formatDouble(value, 6) + ' mL';
+    }
+    static formatMoles(value) {
+        if (value == QuantityCalc.UNSPECIFIED)
+            return '';
+        if (value <= 1E-9)
+            return formatDouble(value * 1E9, 6) + ' nmol';
+        if (value <= 1E-6)
+            return formatDouble(value * 1E6, 6) + ' \u03BCmol';
+        if (value <= 1E-3)
+            return formatDouble(value * 1E3, 6) + ' mmol';
+        return formatDouble(value, 6) + ' mol';
+    }
+    static formatDensity(value) {
+        if (value == QuantityCalc.UNSPECIFIED)
+            return '';
+        return formatDouble(value, 6) + ' g/mL';
+    }
+    static formatConc(value) {
+        if (value == QuantityCalc.UNSPECIFIED)
+            return '';
+        if (value <= 1E-9)
+            return formatDouble(value * 1E9, 6) + ' nmol/L';
+        if (value <= 1E-6)
+            return formatDouble(value * 1E6, 6) + ' \u03BCmol/L';
+        if (value <= 1E-3)
+            return formatDouble(value * 1E3, 6) + ' mmol/L';
+        return formatDouble(value, 6) + ' mol/L';
+    }
+    static formatPercent(value) {
+        if (value == QuantityCalc.UNSPECIFIED)
+            return '';
+        return formatDouble(value, 6) + '%';
+    }
+    classifyTypes() {
+        for (let s = 0; s < this.entry.steps.length; s++) {
+            let step = this.entry.steps[s];
+            for (let n = 0; n < step.reactants.length; n++)
+                this.quantities.push(new QuantityComp(step.reactants[n], s, Experiment.REACTANT, n));
+            for (let n = 0; n < step.reagents.length; n++)
+                this.quantities.push(new QuantityComp(step.reagents[n], s, Experiment.REAGENT, n));
+            for (let n = 0; n < step.products.length; n++)
+                this.quantities.push(new QuantityComp(step.products[n], s, Experiment.PRODUCT, n));
+        }
+        for (let n = 0; n < this.quantities.length; n++) {
+            let qc = this.quantities[n];
+            if (qc.type == Experiment.REAGENT) {
+                if (qc.comp.equiv != null)
+                    qc.valueEquiv = qc.comp.equiv;
+                else {
+                    let eq = QuantityCalc.impliedReagentStoich(qc.comp, this.entry.steps[qc.step].products);
+                    if (eq > 0)
+                        qc.valueEquiv = eq;
+                }
+            }
+            else {
+                qc.valueEquiv = QuantityCalc.extractStoichValue(qc.comp.stoich);
+            }
+            if (qc.comp.mol != null)
+                qc.molw = MolUtil.molecularWeight(qc.comp.mol);
+            qc.role = QuantityCalc.ROLE_INDEPENDENT;
+            if (qc.step == 0 && qc.type == Experiment.REACTANT) {
+                if (qc.comp.primary) {
+                    qc.role = QuantityCalc.ROLE_PRIMARY;
+                    this.idxPrimary.push(n);
+                }
+                else
+                    qc.role = QuantityCalc.ROLE_SECONDARY;
+            }
+            else if (qc.type == Experiment.REAGENT) {
+                if (qc.valueEquiv > 0)
+                    qc.role = QuantityCalc.ROLE_SECONDARY;
+            }
+            else if (qc.type == Experiment.PRODUCT && !qc.comp.waste) {
+                qc.role = QuantityCalc.ROLE_PRODUCT;
+                this.idxYield.push(n);
+            }
+            else if (qc.valueEquiv > 0) {
+                qc.role = QuantityCalc.ROLE_SECONDARY;
+            }
+            if (qc.comp.mass != null)
+                qc.valueMass = qc.comp.mass;
+            if (qc.comp.volume != null)
+                qc.valueVolume = qc.comp.volume;
+            if (qc.comp.moles != null)
+                qc.valueMoles = qc.comp.moles;
+            if (qc.comp.density != null)
+                qc.valueDensity = qc.comp.density;
+            if (qc.comp.conc != null)
+                qc.valueConc = qc.comp.conc;
+            if (qc.comp.yield != null)
+                qc.valueYield = qc.comp.yield;
+            qc.statEquiv = qc.valueEquiv == QuantityCalc.UNSPECIFIED ? QuantityCalc.STAT_UNKNOWN : QuantityCalc.STAT_ACTUAL;
+            qc.statMass = qc.valueMass == QuantityCalc.UNSPECIFIED ? QuantityCalc.STAT_UNKNOWN : QuantityCalc.STAT_ACTUAL;
+            qc.statVolume = qc.valueVolume == QuantityCalc.UNSPECIFIED ? QuantityCalc.STAT_UNKNOWN : QuantityCalc.STAT_ACTUAL;
+            qc.statMoles = qc.valueMoles == QuantityCalc.UNSPECIFIED ? QuantityCalc.STAT_UNKNOWN : QuantityCalc.STAT_ACTUAL;
+            qc.statDensity = qc.valueDensity == QuantityCalc.UNSPECIFIED ? QuantityCalc.STAT_UNKNOWN : QuantityCalc.STAT_ACTUAL;
+            qc.statConc = qc.valueConc == QuantityCalc.UNSPECIFIED ? QuantityCalc.STAT_UNKNOWN : QuantityCalc.STAT_ACTUAL;
+            qc.statYield = qc.valueYield == QuantityCalc.UNSPECIFIED ? QuantityCalc.STAT_UNKNOWN : QuantityCalc.STAT_ACTUAL;
+        }
+        if (this.idxPrimary.length == 0) {
+            for (let n = 0; n < this.quantities.length; n++) {
+                let qc = this.quantities[n];
+                if (qc.type == Experiment.REACTANT && qc.step == 0) {
+                    qc.role = QuantityCalc.ROLE_PRIMARY;
+                    this.idxPrimary.push(n);
+                }
+            }
+        }
+    }
+    calculateSomething() {
+        let anything = false;
+        for (let qc of this.quantities) {
+            if (qc.molw > 0 && qc.valueMass == QuantityCalc.UNSPECIFIED && qc.statMoles == QuantityCalc.STAT_ACTUAL) {
+                qc.valueMass = qc.valueMoles * qc.molw;
+                qc.statMass = QuantityCalc.STAT_VIRTUAL;
+                anything = true;
+            }
+            if (qc.molw > 0 && qc.valueMass != QuantityCalc.UNSPECIFIED && qc.valueMoles == QuantityCalc.UNSPECIFIED) {
+                qc.valueMoles = qc.valueMass / qc.molw;
+                qc.statMoles = QuantityCalc.STAT_VIRTUAL;
+                anything = true;
+            }
+            if (qc.molw > 0 && qc.statMass == QuantityCalc.STAT_ACTUAL && qc.statMoles == QuantityCalc.STAT_ACTUAL) {
+                let calcMoles = qc.valueMass / qc.molw;
+                if (!this.closeEnough(qc.valueMoles, calcMoles)) {
+                    qc.statMass = QuantityCalc.STAT_CONFLICT;
+                    qc.statMoles = QuantityCalc.STAT_CONFLICT;
+                }
+            }
+            let isSoln = qc.statConc == QuantityCalc.STAT_ACTUAL ||
+                (qc.statVolume == QuantityCalc.STAT_ACTUAL && (qc.statMass == QuantityCalc.STAT_ACTUAL || qc.statMoles == QuantityCalc.STAT_ACTUAL));
+            if (!isSoln) {
+                if (qc.valueDensity > 0 && qc.valueMass == QuantityCalc.UNSPECIFIED && qc.valueVolume != QuantityCalc.UNSPECIFIED) {
+                    qc.valueMass = qc.valueVolume * qc.valueDensity;
+                    qc.statMass = QuantityCalc.STAT_VIRTUAL;
+                    anything = true;
+                }
+                if (qc.valueDensity > 0 && qc.valueMass != QuantityCalc.UNSPECIFIED && qc.valueVolume == QuantityCalc.UNSPECIFIED) {
+                    qc.valueVolume = qc.valueMass / qc.valueDensity;
+                    qc.statVolume = QuantityCalc.STAT_VIRTUAL;
+                    anything = true;
+                }
+                if (qc.valueDensity == QuantityCalc.UNSPECIFIED && qc.valueMass != QuantityCalc.UNSPECIFIED &&
+                    qc.valueVolume != QuantityCalc.UNSPECIFIED && qc.valueConc == QuantityCalc.UNSPECIFIED) {
+                    if (qc.statMass == QuantityCalc.STAT_ACTUAL || qc.statMoles == QuantityCalc.STAT_ACTUAL) {
+                        qc.valueDensity = qc.valueMass / qc.valueVolume;
+                        qc.statDensity = QuantityCalc.STAT_VIRTUAL;
+                        anything = true;
+                    }
+                }
+            }
+            if (isSoln) {
+                if (qc.valueConc > 0 && qc.valueMoles == QuantityCalc.UNSPECIFIED && qc.valueVolume != QuantityCalc.UNSPECIFIED) {
+                    qc.valueMoles = 0.001 * qc.valueVolume * qc.valueConc;
+                    qc.statMoles = QuantityCalc.STAT_VIRTUAL;
+                    anything = true;
+                }
+                if (qc.valueConc > 0 && qc.valueMoles != QuantityCalc.UNSPECIFIED && qc.valueVolume == QuantityCalc.UNSPECIFIED) {
+                    qc.valueVolume = 1000 * qc.valueMoles / qc.valueConc;
+                    qc.statVolume = QuantityCalc.STAT_VIRTUAL;
+                    anything = true;
+                }
+                if (qc.valueConc == QuantityCalc.UNSPECIFIED && qc.valueMass != QuantityCalc.UNSPECIFIED && qc.valueVolume != QuantityCalc.UNSPECIFIED) {
+                    qc.valueConc = 1000 * qc.valueMoles / qc.valueVolume;
+                    qc.statConc = QuantityCalc.STAT_VIRTUAL;
+                    anything = true;
+                }
+                if (qc.statConc == QuantityCalc.STAT_ACTUAL && qc.valueMoles > 0 && qc.statVolume == QuantityCalc.STAT_ACTUAL) {
+                    let calcVolume = 1000 * qc.valueMoles / qc.valueConc;
+                    if (!this.closeEnough(qc.valueVolume, calcVolume)) {
+                        qc.statConc = QuantityCalc.STAT_CONFLICT;
+                        if (qc.statMass == QuantityCalc.STAT_ACTUAL)
+                            qc.statMass = QuantityCalc.STAT_CONFLICT;
+                        if (qc.statMoles == QuantityCalc.STAT_ACTUAL)
+                            qc.statMoles = QuantityCalc.STAT_CONFLICT;
+                        qc.statVolume = QuantityCalc.STAT_CONFLICT;
+                    }
+                }
+            }
+            if (qc.molw > 0 && qc.valueMass == QuantityCalc.UNSPECIFIED && qc.valueMoles != QuantityCalc.UNSPECIFIED) {
+                qc.valueMass = qc.valueMoles * qc.molw;
+                qc.statMass = QuantityCalc.STAT_VIRTUAL;
+                anything = true;
+            }
+            if (qc.statDensity == QuantityCalc.STAT_ACTUAL && qc.statConc == QuantityCalc.STAT_ACTUAL) {
+                qc.statDensity = QuantityCalc.STAT_CONFLICT;
+                qc.statConc = QuantityCalc.STAT_CONFLICT;
+            }
+        }
+        if (anything)
+            return true;
+        let hasRef = false;
+        let numSteps = this.entry.steps.length;
+        let primaryCounts = Vec.numberArray(0, numSteps);
+        let primaryEquivs = Vec.numberArray(0, numSteps);
+        let primaryMoles = Vec.numberArray(0, numSteps);
+        for (let qc of this.quantities) {
+            let ref = -1;
+            if (qc.step == 0 && qc.type == Experiment.REACTANT && qc.comp.primary)
+                ref = qc.step;
+            else if (qc.step < numSteps - 1 && qc.type == Experiment.PRODUCT && !qc.comp.waste)
+                ref = qc.step + 1;
+            else
+                continue;
+            if (primaryEquivs[ref] < 0)
+                continue;
+            if (qc.statMoles == QuantityCalc.STAT_UNKNOWN) {
+                primaryEquivs[ref] = -1;
+                continue;
+            }
+            primaryCounts[ref]++;
+            primaryEquivs[ref] += qc.valueEquiv;
+            primaryMoles[ref] += qc.valueMoles;
+        }
+        if (primaryEquivs[0] <= 0) {
+            primaryCounts[0] = 0;
+            primaryEquivs[0] = 0;
+            primaryMoles[0] = 0;
+            for (let i of this.idxPrimary) {
+                let qc = this.quantities[i];
+                if (qc.statMoles == QuantityCalc.STAT_UNKNOWN) {
+                    primaryCounts[0] = 0;
+                    primaryEquivs[0] = -1;
+                    primaryMoles[0] = 0;
+                    break;
+                }
+                primaryCounts[0]++;
+                primaryEquivs[0] += qc.valueEquiv;
+                primaryMoles[0] += qc.valueMoles;
+            }
+        }
+        let refMoles = Vec.numberArray(0, numSteps);
+        for (let n = 0; n < numSteps; n++) {
+            refMoles[n] = primaryCounts[n] == 0 || primaryEquivs[n] <= 0 ? 0 : primaryMoles[n] / primaryEquivs[n];
+            if (refMoles[n] > 0)
+                hasRef = true;
+        }
+        if (!hasRef) {
+            for (let n = 0; n < numSteps; n++) {
+                let prodMolar = [];
+                for (let qc of this.quantities) {
+                    if (qc.step != n || qc.role != QuantityCalc.ROLE_PRODUCT)
+                        continue;
+                    if (qc.statMoles == QuantityCalc.STAT_UNKNOWN || qc.valueMoles <= 0 || qc.valueEquiv <= 0)
+                        continue;
+                    let yld = qc.valueYield > 0 ? qc.valueYield * 0.01 : 1;
+                    prodMolar.push(qc.valueMoles / (qc.valueEquiv * yld));
+                }
+                if (prodMolar.length > 0) {
+                    refMoles[n] = Vec.sum(prodMolar) / prodMolar.length;
+                    hasRef = true;
+                }
+            }
+        }
+        if (!hasRef)
+            return false;
+        for (let qc of this.quantities) {
+            if (qc.type != Experiment.PRODUCT)
+                continue;
+            if (refMoles[qc.step] == 0)
+                continue;
+            if (qc.valueYield == QuantityCalc.UNSPECIFIED && qc.valueMoles != QuantityCalc.UNSPECIFIED) {
+                qc.valueYield = 100 * qc.valueMoles / (refMoles[qc.step] * qc.valueEquiv);
+                qc.statYield = QuantityCalc.STAT_VIRTUAL;
+                anything = true;
+            }
+            if (qc.valueYield != QuantityCalc.UNSPECIFIED && qc.valueMoles == QuantityCalc.UNSPECIFIED) {
+                qc.valueMoles = qc.valueYield * 0.01 * (refMoles[qc.step] * qc.valueEquiv);
+                qc.statMoles = QuantityCalc.STAT_VIRTUAL;
+                anything = true;
+            }
+            if (qc.valueMoles > 0 && qc.statYield == QuantityCalc.STAT_ACTUAL) {
+                let calcYield = 100 * qc.valueMoles / (refMoles[qc.step] * qc.valueEquiv);
+                if (!this.closeEnough(qc.valueYield, calcYield)) {
+                    if (qc.statMass == QuantityCalc.STAT_ACTUAL)
+                        qc.statMass = QuantityCalc.STAT_CONFLICT;
+                    if (qc.statMoles == QuantityCalc.STAT_ACTUAL)
+                        qc.statMoles = QuantityCalc.STAT_CONFLICT;
+                    qc.statYield = QuantityCalc.STAT_CONFLICT;
+                }
+            }
+        }
+        if (anything)
+            return true;
+        for (let qc of this.quantities) {
+            if (refMoles[qc.step] == 0)
+                continue;
+            if (qc.valueMass == QuantityCalc.UNSPECIFIED && qc.valueMoles == QuantityCalc.UNSPECIFIED && qc.valueEquiv > 0) {
+                qc.valueMoles = refMoles[qc.step] * qc.valueEquiv;
+                qc.statMoles = QuantityCalc.STAT_VIRTUAL;
+                anything = true;
+            }
+            if (qc.valueMoles != QuantityCalc.UNSPECIFIED && qc.valueEquiv == QuantityCalc.UNSPECIFIED) {
+                qc.valueEquiv = qc.valueMoles / refMoles[qc.step];
+                qc.statEquiv = QuantityCalc.STAT_VIRTUAL;
+                anything = true;
+            }
+        }
+        return anything;
+    }
+    calculateGreenMetrics(idx) {
+        let qc = this.quantities[idx];
+        let gm = new GreenMetrics();
+        gm.step = qc.step;
+        gm.idx = idx;
+        gm.isBlank = true;
+        for (let n = 0; n < this.quantities.length; n++) {
+            let sub = this.quantities[n];
+            if (sub.step > gm.step)
+                continue;
+            let eq = sub.valueEquiv;
+            if (eq == 0 && sub.type == Experiment.REAGENT)
+                continue;
+            if (sub.valueMass != QuantityCalc.UNSPECIFIED)
+                gm.isBlank = false;
+            if (sub.type == Experiment.REACTANT || sub.type == Experiment.REAGENT) {
+                gm.massReact.push(sub.valueMass);
+                if (sub.step == gm.step && eq > 0 && sub.molw > 0)
+                    gm.molwReact.push(eq * sub.molw);
+            }
+            else if (sub.type == Experiment.PRODUCT) {
+                if (!sub.comp.waste) {
+                    if (sub.step == gm.step)
+                        gm.massProd.push(sub.valueMass);
+                    if (eq > 0 && sub.molw > 0) {
+                        if (sub.step == gm.step)
+                            gm.molwProd.push(eq * sub.molw);
+                        else if (sub.step == gm.step - 1)
+                            gm.molwReact.push(eq * sub.molw);
+                    }
+                }
+                else {
+                    gm.massWaste.push(sub.valueMass);
+                }
+                if (sub.step == gm.step)
+                    gm.massProdWaste.push(sub.valueMass);
+            }
+        }
+        gm.impliedWaste = Vec.sum(gm.massReact) - Vec.sum(gm.massProdWaste);
+        if (Math.abs(gm.impliedWaste) > 1E-3)
+            gm.impliedWaste = 0;
+        this.greenMetrics.push(gm);
+    }
+    closeEnough(value1, value2) {
+        if (value1 <= 0 || value2 <= 0)
+            return true;
+        let ratio = value1 / value2;
+        return ratio >= 0.99 && ratio <= 1.01;
+    }
 }
+QuantityCalc.UNSPECIFIED = -1;
+QuantityCalc.ROLE_PRIMARY = 1;
+QuantityCalc.ROLE_SECONDARY = 2;
+QuantityCalc.ROLE_PRODUCT = 3;
+QuantityCalc.ROLE_INDEPENDENT = 4;
+QuantityCalc.STAT_UNKNOWN = 0;
+QuantityCalc.STAT_ACTUAL = 1;
+QuantityCalc.STAT_VIRTUAL = 2;
+QuantityCalc.STAT_CONFLICT = 3;
 QuantityCalc.MAX_DENOM = 16;
 QuantityCalc.RATIO_FRACT = null;
 var Geometry;
@@ -16458,7 +16979,7 @@ class MapReaction extends Dialog {
 }
 class ArrangeComponent {
     constructor() {
-        this.annot = 0;
+        this.annot = ArrangeExperiment.COMP_ANNOT_NONE;
         this.box = new Box();
     }
     clone() {
@@ -16656,6 +17177,17 @@ class ArrangeExperiment {
             xc.text = name;
         if (MolUtil.isBlank(xc.mol) && !xc.text)
             xc.text = '?';
+        if (this.includeAnnot) {
+            let stoich = QuantityCalc.impliedReagentStoich(comp, this.entry.steps[step].products);
+            if (stoich > 0)
+                xc.annot = ArrangeExperiment.COMP_ANNOT_IMPLIED;
+            if (stoich > 0 && stoich != 1) {
+                if (realEqual(stoich, Math.round(stoich)))
+                    xc.leftNumer = Math.round(stoich).toString();
+                else
+                    xc.leftNumer = stoich.toString();
+            }
+        }
         this.components.push(xc);
     }
     createProduct(idx, step) {
@@ -16926,6 +17458,7 @@ ArrangeExperiment.COMP_PRODUCT = 5;
 ArrangeExperiment.COMP_ANNOT_NONE = 0;
 ArrangeExperiment.COMP_ANNOT_PRIMARY = 1;
 ArrangeExperiment.COMP_ANNOT_WASTE = 2;
+ArrangeExperiment.COMP_ANNOT_IMPLIED = 3;
 ArrangeExperiment.COMP_GAP_LEFT = 0.5;
 ArrangeExperiment.COMP_ANNOT_SIZE = 1;
 class DrawExperiment {
@@ -17040,6 +17573,17 @@ class DrawExperiment {
                 let y = cy + n * 0.45 * sz * (1.0 / 3), dw = (3.1 - n) * 0.1 * sz;
                 vg.drawLine(cx - dw, y, cx + dw, y, policy.data.foreground, lw);
             }
+        }
+        else if (annot == ArrangeExperiment.COMP_ANNOT_IMPLIED) {
+            let tw = 0.5 * sz, th = 0.75 * sz;
+            let cx = x2 - 0.5 * tw, cy = y1 + 0.5 * th;
+            let ty = y1 + 0.25 * th, dsz = sz * 0.1, hsz = 0.5 * dsz;
+            let lw = 0.05 * this.scale, fg = policy.data.foreground;
+            vg.drawLine(cx, y1, cx, y1 + th, fg, lw);
+            vg.drawLine(x2 - tw, ty, x2, ty, fg, lw);
+            vg.drawLine(x2 - tw, cy, x2, cy, fg, lw);
+            vg.drawOval(x2 - tw + hsz, y1 + th - hsz, hsz, hsz, 0, 0, fg);
+            vg.drawOval(x2 - hsz, y1 + th - hsz, hsz, hsz, 0, 0, fg);
         }
     }
     drawArrow(x1, y1, x2, y2, headsz, colour, linesz) {
@@ -17749,6 +18293,53 @@ class EmbedReaction extends EmbedChemistry {
         }
     }
     renderHeader(span) {
+        let table = $('<table></table>').appendTo(span);
+        table.css('font-family', '"HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif');
+        table.css('border-collapse', 'collapse');
+        table.css('line-height', '1');
+        table.css('margin', '2px');
+        table.css('border', '0');
+        let titles = ['Title', 'Created', 'Modified', 'DOI'];
+        for (let n = 0; n < 4; n++) {
+            if (n == 3 && !this.entry.doi)
+                continue;
+            let tr = $('<tr></tr>').appendTo(table);
+            tr.css('line-height', '1');
+            let th = $('<th></th>').appendTo(tr);
+            th.css('white-space', 'nowrap');
+            th.css('font-weight', '600');
+            th.css('color', 'black');
+            th.css('text-align', 'left');
+            th.css('vertical-align', 'middle');
+            th.css('padding', '0.2em 0.5em 0.2em 0.5em');
+            th.css('border', '1px solid #D0D0D0');
+            th.text(titles[n]);
+            let td = $('<td></td>').appendTo(tr);
+            td.css('border', '1px solid #D0D0D0');
+            td.css('padding', '0.2em');
+            td.css('vertical-align', 'middle');
+            if (n == 0) {
+                if (!this.entry.title)
+                    td.css('font-style', 'italic');
+                td.text(this.entry.title ? this.entry.title : '(none)');
+            }
+            else if (n == 1 || n == 2) {
+                let date = n == 1 ? this.entry.createDate : this.entry.modifyDate;
+                if (date == null)
+                    td.css('font-style', 'italic');
+                td.text(date == null ? '(none)' : date.toLocaleString());
+            }
+            else if (n == 3) {
+                let url = this.doiToLink(this.entry.doi);
+                if (url != null && (url.startsWith('http://') || url.startsWith('https://'))) {
+                    let ahref = $('<a target="_blank"></a>').appendTo(td);
+                    ahref.attr('href', url);
+                    ahref.text(this.entry.doi);
+                }
+                else
+                    td.text(this.entry.doi);
+            }
+        }
     }
     renderScheme(span) {
         let measure = new OutlineMeasurement(0, 0, this.policy.data.pointScale);
@@ -17763,10 +18354,146 @@ class EmbedReaction extends EmbedChemistry {
         let svg = $(metavec.createSVG()).appendTo(span);
     }
     renderQuantity(span) {
+        let quant = new QuantityCalc(this.entry);
+        quant.calculate();
+        let table = $('<table></table>').appendTo(span);
+        table.css('font-family', '"HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif');
+        table.css('border-collapse', 'collapse');
+        table.css('line-height', '1');
+        table.css('margin', '2px');
+        table.css('border', '0');
+        let effects = new RenderEffects();
+        let measure = new OutlineMeasurement(0, 0, this.policy.data.pointScale);
+        for (let n = 0; n < quant.numQuantities; n++) {
+            let qc = quant.getQuantity(n);
+            let tr = $('<tr></tr>').appendTo(table);
+            tr.css('line-height', '1');
+            let td = $('<td></td>').appendTo(tr);
+            td.css('border', '1px solid #D0D0D0');
+            td.css('padding', '0.2em');
+            td.css('text-align', 'center');
+            td.css('vertical-align', 'middle');
+            if (MolUtil.notBlank(qc.comp.mol)) {
+                let layout = new ArrangeMolecule(qc.comp.mol, measure, this.policy, effects);
+                layout.arrange();
+                let metavec = new MetaVector();
+                new DrawMolecule(layout, metavec).draw();
+                metavec.normalise();
+                let svg = $(metavec.createSVG()).appendTo(td);
+            }
+            td = $('<td></td>').appendTo(tr);
+            td.css('border', '1px solid #D0D0D0');
+            td.css('padding', '0.2em');
+            td.css('text-align', 'left');
+            td.css('vertical-align', 'top');
+            this.renderComponentText(td, qc);
+        }
+    }
+    renderComponentText(parent, qc) {
+        let title = [], content = [];
+        if (qc.comp.name) {
+            title.push('Name');
+            content.push('<i>' + escapeHTML(qc.comp.name) + '</i>');
+        }
+        if (MolUtil.notBlank(qc.comp.mol)) {
+            let mw = MolUtil.molecularWeight(qc.comp.mol);
+            title.push('Weight');
+            content.push(mw.toFixed(4));
+            let mf = MolUtil.molecularFormula(qc.comp.mol, ['<sub>', '</sub>', '<sup>', '</sup>']);
+            title.push('Formula');
+            content.push(mf);
+        }
+        if (qc.valueEquiv > 0) {
+            let text = qc.valueEquiv.toString(), stat = qc.statEquiv;
+            if (stat == QuantityCalc.STAT_VIRTUAL)
+                text = "<i>(" + text + ")</i>";
+            else if (stat == QuantityCalc.STAT_CONFLICT)
+                text += " (conflicting)";
+            title.push('Stoichiometry');
+            content.push(text);
+        }
+        if (qc.valueMass > 0) {
+            let text = QuantityCalc.formatMass(qc.valueMass), stat = qc.statMass;
+            if (stat == QuantityCalc.STAT_VIRTUAL)
+                text = "<i>(" + text + ")</i>";
+            else if (stat == QuantityCalc.STAT_CONFLICT)
+                text += " (conflicting)";
+            title.push('Mass');
+            content.push(text);
+        }
+        if (qc.valueVolume > 0) {
+            let text = QuantityCalc.formatVolume(qc.valueVolume), stat = qc.statVolume;
+            if (stat == QuantityCalc.STAT_VIRTUAL)
+                text = "<i>(" + text + ")</i>";
+            else if (stat == QuantityCalc.STAT_CONFLICT)
+                text += " (conflicting)";
+            title.push('Volume');
+            content.push(text);
+        }
+        if (qc.valueMoles > 0) {
+            let text = QuantityCalc.formatMoles(qc.valueMoles), stat = qc.statMoles;
+            if (stat == QuantityCalc.STAT_VIRTUAL)
+                text = "<i>(" + text + ")</i>";
+            else if (stat == QuantityCalc.STAT_CONFLICT)
+                text += " (conflicting)";
+            title.push('Moles');
+            content.push(text);
+        }
+        if (qc.valueDensity > 0) {
+            let text = QuantityCalc.formatDensity(qc.valueDensity), stat = qc.statDensity;
+            if (stat == QuantityCalc.STAT_VIRTUAL)
+                text = "<i>(" + text + ")</i>";
+            else if (stat == QuantityCalc.STAT_CONFLICT)
+                text += " (conflicting)";
+            title.push('Density');
+            content.push(text);
+        }
+        if (qc.valueConc > 0) {
+            let text = QuantityCalc.formatConc(qc.valueConc), stat = qc.statConc;
+            if (stat == QuantityCalc.STAT_VIRTUAL)
+                text = "<i>(" + text + ")</i>";
+            else if (stat == QuantityCalc.STAT_CONFLICT)
+                text += " (conflicting)";
+            title.push('Concentration');
+            content.push(text);
+        }
+        if (qc.valueYield > 0 && !qc.comp.waste) {
+            let text = QuantityCalc.formatPercent(qc.valueYield), stat = qc.statYield;
+            if (stat == QuantityCalc.STAT_VIRTUAL)
+                text = "<i>(" + text + ")</i>";
+            else if (stat == QuantityCalc.STAT_CONFLICT)
+                text += " (conflicting)";
+            title.push('Yield');
+            content.push(text);
+        }
+        for (let n = 0; n < title.length; n++) {
+            let p = $('<p></p>').appendTo(parent);
+            p.css('margin', '0.1em');
+            p.append($('<b>' + title[n] + '</b>'));
+            p.append(': ');
+            p.append(content[n]);
+        }
     }
     renderMetrics(span) {
     }
+    doiToLink(doi) {
+        if (doi.startsWith('http://') || doi.startsWith('https://'))
+            return doi;
+        let m = EmbedReaction.PTN_DOI1.exec(doi);
+        if (m)
+            return 'http://dx.doi.org/' + m[1];
+        m = EmbedReaction.PTN_DOI2.exec(doi);
+        if (m)
+            return 'http://dx.doi.org/' + m[1];
+        m = EmbedReaction.PTN_ISBN.exec(doi);
+        if (m)
+            return 'ISBN: ' + m[1];
+        return null;
+    }
 }
+EmbedReaction.PTN_DOI1 = /^doi:(\d+\.\d+\/.*)$/;
+EmbedReaction.PTN_DOI2 = /^(\d+\.\d+\/.*)$/;
+EmbedReaction.PTN_ISBN = /^(\d+-\d+-\d+-\d+-\d+)$/;
 class RowView extends Widget {
     constructor(tokenID) {
         super();

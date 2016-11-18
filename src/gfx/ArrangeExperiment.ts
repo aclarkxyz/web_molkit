@@ -43,7 +43,7 @@ class ArrangeComponent
 	public leftDenom:string; 
 	public fszText:number; // text font sizes, if applicable
 	public fszLeft:number;
-	public annot = 0; // annotation glyph on the right (COMP_ANNOT_*)
+	public annot = ArrangeExperiment.COMP_ANNOT_NONE; // annotation glyph on the right (COMP_ANNOT_*)
 	public box = new Box(); // bounding box
 	public padding:number; // how much padding around the outer boundary
 	
@@ -85,6 +85,7 @@ class ArrangeExperiment
 	public static COMP_ANNOT_NONE = 0;
 	public static COMP_ANNOT_PRIMARY = 1;
 	public static COMP_ANNOT_WASTE = 2;
+	public static COMP_ANNOT_IMPLIED = 3;
 
 	public components:ArrangeComponent[] = [];
 
@@ -317,6 +318,20 @@ class ArrangeExperiment
 		if (MolUtil.notBlank(comp.mol)) xc.mol = comp.mol;
 		if (name && (this.includeNames || MolUtil.isBlank(comp.mol))) xc.text = name;
 		if (MolUtil.isBlank(xc.mol) && !xc.text) xc.text = '?';
+
+		if (this.includeAnnot)
+		{
+			let stoich = QuantityCalc.impliedReagentStoich(comp, this.entry.steps[step].products);
+			if (stoich > 0) xc.annot = ArrangeExperiment.COMP_ANNOT_IMPLIED;
+			if (stoich > 0 && stoich != 1)
+			{
+				if (realEqual(stoich, Math.round(stoich)))
+					xc.leftNumer = Math.round(stoich).toString();
+				else
+					xc.leftNumer = stoich.toString(); // TODO: use ratio instead, this can be ugly
+			}
+		}
+
 		this.components.push(xc);
 	}
 	private createProduct(idx:number, step:number):void

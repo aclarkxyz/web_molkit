@@ -301,9 +301,9 @@ class Experiment extends Aspect
 		let title = this.ds.getString(row, Experiment.COLNAME_EXPERIMENT_TITLE);
 		if (title) entry.title = title;
 		let createDate = this.ds.getReal(row, Experiment.COLNAME_EXPERIMENT_CREATEDATE);
-		if (createDate) entry.createDate = new Date(createDate);
+		if (createDate) entry.createDate = new Date(createDate * 1000);
 		let modifyDate = this.ds.getReal(row, Experiment.COLNAME_EXPERIMENT_MODIFYDATE);
-		if (modifyDate) entry.modifyDate = new Date(modifyDate);
+		if (modifyDate) entry.modifyDate = new Date(modifyDate * 1000);
 		let doi = this.ds.getString(row, Experiment.COLNAME_EXPERIMENT_DOI);
 		if (doi) entry.doi = doi;
 
@@ -557,8 +557,8 @@ class Experiment extends Aspect
 		
 		// emit the header
 		this.ds.setString(row, Experiment.COLNAME_EXPERIMENT_TITLE, entry.title);
-		this.ds.setReal(row, Experiment.COLNAME_EXPERIMENT_CREATEDATE, entry.createDate == null ? null : entry.createDate.getTime());
-		this.ds.setReal(row, Experiment.COLNAME_EXPERIMENT_MODIFYDATE, entry.modifyDate == null ? null : entry.modifyDate.getTime());
+		this.ds.setReal(row, Experiment.COLNAME_EXPERIMENT_CREATEDATE, entry.createDate == null ? null : entry.createDate.getTime() * 1E-3);
+		this.ds.setReal(row, Experiment.COLNAME_EXPERIMENT_MODIFYDATE, entry.modifyDate == null ? null : entry.modifyDate.getTime() * 1E-3);
 		this.ds.setString(row, Experiment.COLNAME_EXPERIMENT_DOI, entry.doi);
 
 		// emit the steps and components

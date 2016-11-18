@@ -149,6 +149,60 @@ class EmbedReaction extends EmbedChemistry
 	// display summary information from the header
 	private renderHeader(span:JQuery):void
 	{
+		let table = $('<table></table>').appendTo(span);
+		table.css('font-family', '"HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif');
+		table.css('border-collapse', 'collapse');
+		table.css('line-height', '1');
+		table.css('margin', '2px');
+		table.css('border', '0');
+
+		let titles = ['Title', 'Created', 'Modified', 'DOI'];
+		for (let n = 0; n < 4; n++)
+		{
+			if (n == 3 && !this.entry.doi) continue;
+
+			let tr = $('<tr></tr>').appendTo(table);
+			tr.css('line-height', '1');
+
+			let th = $('<th></th>').appendTo(tr);
+			th.css('white-space', 'nowrap');
+			th.css('font-weight', '600');
+			th.css('color', 'black');
+			th.css('text-align', 'left');
+			th.css('vertical-align', 'middle');
+			th.css('padding', '0.2em 0.5em 0.2em 0.5em');
+			th.css('border', '1px solid #D0D0D0');
+			th.text(titles[n]);
+
+			let td = $('<td></td>').appendTo(tr);
+			td.css('border', '1px solid #D0D0D0');
+			td.css('padding', '0.2em');
+			td.css('vertical-align', 'middle');
+			
+			if (n == 0)
+			{
+				if (!this.entry.title) td.css('font-style', 'italic');
+				td.text(this.entry.title ? this.entry.title : '(none)');
+			}
+			else if (n == 1 || n == 2)
+			{
+				let date = n == 1 ? this.entry.createDate : this.entry.modifyDate;
+				if (date == null) td.css('font-style', 'italic');
+				td.text(date == null ? '(none)' : date.toLocaleString());
+			}
+			else if (n == 3)
+			{
+				let url = this.doiToLink(this.entry.doi);
+
+				if (url != null && (url.startsWith('http://') || url.startsWith('https://')))
+				{
+					let ahref = $('<a target="_blank"></a>').appendTo(td);
+					ahref.attr('href', url);
+					ahref.text(this.entry.doi);
+				}
+				else td.text(this.entry.doi);
+			}
+		}
 	}
 
 	// render the schema, using preferred chemist-style diagram
@@ -171,7 +225,137 @@ class EmbedReaction extends EmbedChemistry
 	// render all the quantities by listing out each component in a table
 	private renderQuantity(span:JQuery):void
 	{
-		// TODO
+		let quant = new QuantityCalc(this.entry);
+		quant.calculate();
+		
+		let table = $('<table></table>').appendTo(span);
+		table.css('font-family', '"HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif');
+		table.css('border-collapse', 'collapse');
+		table.css('line-height', '1');
+		table.css('margin', '2px');
+		table.css('border', '0');
+
+		let effects = new RenderEffects();
+		let measure = new OutlineMeasurement(0, 0, this.policy.data.pointScale);
+
+		for (let n = 0; n < quant.numQuantities; n++)
+		{
+			let qc = quant.getQuantity(n);
+
+			let tr = $('<tr></tr>').appendTo(table);
+			tr.css('line-height', '1');
+
+			let td = $('<td></td>').appendTo(tr);
+			td.css('border', '1px solid #D0D0D0');
+			td.css('padding', '0.2em');
+			td.css('text-align', 'center');		
+			td.css('vertical-align', 'middle');
+			if (MolUtil.notBlank(qc.comp.mol))
+			{
+				let layout = new ArrangeMolecule(qc.comp.mol, measure, this.policy, effects);
+				layout.arrange();
+
+				let metavec = new MetaVector();
+				new DrawMolecule(layout, metavec).draw();
+				metavec.normalise();
+				let svg = $(metavec.createSVG()).appendTo(td);
+			}
+
+			td = $('<td></td>').appendTo(tr);
+			td.css('border', '1px solid #D0D0D0');
+			td.css('padding', '0.2em');
+			td.css('text-align', 'left');		
+			td.css('vertical-align', 'top');
+
+			this.renderComponentText(td, qc);
+		}
+	}
+
+	// renders lines representing the component's text-like properties
+	private renderComponentText(parent:JQuery, qc:QuantityComp)
+	{
+		let title:string[] = [], content:string[] = [];
+
+		if (qc.comp.name)
+		{
+			title.push('Name');
+			content.push('<i>' + escapeHTML(qc.comp.name) + '</i>');
+		}
+		if (MolUtil.notBlank(qc.comp.mol))
+		{
+			let mw = MolUtil.molecularWeight(qc.comp.mol);
+			title.push('Weight');
+			content.push(mw.toFixed(4));
+
+			let mf = MolUtil.molecularFormula(qc.comp.mol, ['<sub>', '</sub>', '<sup>', '</sup>']);
+			title.push('Formula');
+			content.push(mf);
+		}
+		if (qc.valueEquiv > 0)
+		{
+			let text = qc.valueEquiv.toString(), stat = qc.statEquiv;
+			if (stat == QuantityCalc.STAT_VIRTUAL) text = "<i>(" + text + ")</i>";
+			else if (stat == QuantityCalc.STAT_CONFLICT) text += " (conflicting)";
+			title.push('Stoichiometry');
+			content.push(text);
+		}
+		if (qc.valueMass > 0)
+		{
+			let text = QuantityCalc.formatMass(qc.valueMass), stat = qc.statMass;
+			if (stat == QuantityCalc.STAT_VIRTUAL) text = "<i>(" + text + ")</i>";
+			else if (stat == QuantityCalc.STAT_CONFLICT) text += " (conflicting)";
+			title.push('Mass');
+			content.push(text);
+		}
+		if (qc.valueVolume > 0)
+		{
+			let text = QuantityCalc.formatVolume(qc.valueVolume), stat = qc.statVolume;
+			if (stat == QuantityCalc.STAT_VIRTUAL) text = "<i>(" + text + ")</i>";
+			else if (stat == QuantityCalc.STAT_CONFLICT) text += " (conflicting)";
+			title.push('Volume');
+			content.push(text);
+		}
+		if (qc.valueMoles > 0)
+		{
+			let text = QuantityCalc.formatMoles(qc.valueMoles), stat = qc.statMoles;
+			if (stat == QuantityCalc.STAT_VIRTUAL) text = "<i>(" + text + ")</i>";
+			else if (stat == QuantityCalc.STAT_CONFLICT) text += " (conflicting)";
+			title.push('Moles');
+			content.push(text);
+		}
+		if (qc.valueDensity > 0)
+		{
+			let text = QuantityCalc.formatDensity(qc.valueDensity), stat = qc.statDensity;
+			if (stat == QuantityCalc.STAT_VIRTUAL) text = "<i>(" + text + ")</i>";
+			else if (stat == QuantityCalc.STAT_CONFLICT) text += " (conflicting)";
+			title.push('Density');
+			content.push(text);
+		}
+		if (qc.valueConc > 0)
+		{
+			let text = QuantityCalc.formatConc(qc.valueConc), stat = qc.statConc;
+			if (stat == QuantityCalc.STAT_VIRTUAL) text = "<i>(" + text + ")</i>";
+			else if (stat == QuantityCalc.STAT_CONFLICT) text += " (conflicting)";
+			title.push('Concentration');
+			content.push(text);
+		}
+		if (qc.valueYield > 0 && !qc.comp.waste)
+		{
+			let text = QuantityCalc.formatPercent(qc.valueYield), stat = qc.statYield;
+			if (stat == QuantityCalc.STAT_VIRTUAL) text = "<i>(" + text + ")</i>";
+			else if (stat == QuantityCalc.STAT_CONFLICT) text += " (conflicting)";
+			title.push('Yield');
+			content.push(text);
+		}
+
+		for (let n = 0; n < title.length; n++)
+		{
+			let p = $('<p></p>').appendTo(parent);
+			p.css('margin', '0.1em');
+			p.append($('<b>' + title[n] + '</b>'));
+			p.append(': ');
+			p.append(content[n]);
+		}
 	}
 
 	// display calculated green chemistry metrics
@@ -179,6 +363,27 @@ class EmbedReaction extends EmbedChemistry
 	{
 		// TODO
 	}
+
+	private static PTN_DOI1 = /^doi:(\d+\.\d+\/.*)$/;
+	private static PTN_DOI2 = /^(\d+\.\d+\/.*)$/;
+	private static PTN_ISBN = /^(\d+-\d+-\d+-\d+-\d+)$/;
+	private doiToLink(doi:string):string
+	{
+		if (doi.startsWith('http://') || doi.startsWith('https://')) return doi;
+	
+		let m = EmbedReaction.PTN_DOI1.exec(doi);
+		if (m) return 'http://dx.doi.org/' + m[1];
+		m = EmbedReaction.PTN_DOI2.exec(doi);
+		if (m) return 'http://dx.doi.org/' + m[1];
+		
+		// note: there doesn't seem to be a way to turn an ISBN into a URL, which is rather unfortunate
+		m = EmbedReaction.PTN_ISBN.exec(doi);
+		if (m) return 'ISBN: ' + m[1];
+	
+		return null; // fail
+	}	
+
+
 
 /*
 	// rendering specifics for individual cells
