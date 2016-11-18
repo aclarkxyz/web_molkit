@@ -38,7 +38,7 @@
 		tight: if true, reduces the padding underneath
 		stoichiometry: if false, doesn't display non-unit stoichiometry
 		annotations: if true, adds annotations for component types
-		maximumWidth: optionally constrain the width in pixels (guideline only)
+		maximumwidth: optionally constrain the width in pixels (guideline only)
 
     ... these ones TBD
 		(option to limitW/H?)
@@ -108,7 +108,9 @@ class EmbedReaction extends EmbedChemistry
 		if (options.scale) this.policy.data.pointScale = options.scale;
 
 		if (options.tight == true || options.tight == 'true') this.tight = true;
-		if (options.maximumWidth > 0) this.limitTotalW = options.maximumWidth;
+		if (options.maximumwidth > 0) this.limitTotalW = options.maximumwidth;
+console.log('O:'+JSON.stringify(options));
+console.log('OPTIONS:'+options.maximumwidth+'/'+this.limitTotalW);
 		if (options.stoichiometry == false || options.stoichiometry == 'false') this.includeStoich = true;
 		if (options.annotations == true || options.annotations == 'true') this.includeAnnot = true;
 	}

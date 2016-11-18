@@ -18258,8 +18258,10 @@ class EmbedReaction extends EmbedChemistry {
             this.policy.data.pointScale = options.scale;
         if (options.tight == true || options.tight == 'true')
             this.tight = true;
-        if (options.maximumWidth > 0)
-            this.limitTotalW = options.maximumWidth;
+        if (options.maximumwidth > 0)
+            this.limitTotalW = options.maximumwidth;
+        console.log('O:' + JSON.stringify(options));
+        console.log('OPTIONS:' + options.maximumwidth + '/' + this.limitTotalW);
         if (options.stoichiometry == false || options.stoichiometry == 'false')
             this.includeStoich = true;
         if (options.annotations == true || options.annotations == 'true')
