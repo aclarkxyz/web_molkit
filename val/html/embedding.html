@@ -359,7 +359,7 @@ C=-1.0049,4.8012;0,0,i1
 
 <h2>Reactions</h2>
 
-(to be done)
+<reaction source="../data/experiment.ds" facet="scheme" annotations="true"></reaction>
 
 <h2>Collections</h2>
 
@@ -629,6 +629,29 @@ C=3.2500,1.2990;0,0,i2
 		for (let attr of this.attributes) params[attr.name] = attr.value;
 		obj.remove();
 		new EmbedMolecule(molstr, params).render(div);
+	});
+
+	$('reaction').each(function()
+	{
+		let obj = $(this), div = $('<div></div>');
+		div.insertAfter(obj);
+		let params = {};
+		for (let attr of this.attributes) params[attr.name] = attr.value;
+
+		if (obj.attr('source'))
+		{
+			$.get(obj.attr('source'), function(data)
+			{
+				obj.remove();
+				new EmbedReaction(data, params).render(div);
+			}, 'text');
+		}
+		else
+		{
+			let xml = obj.find('script').html();
+			obj.remove();
+			new EmbedReaction(xml, params).render(div);
+		}
 	});
 
 	$('collection').each(function()

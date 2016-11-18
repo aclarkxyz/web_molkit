@@ -48,7 +48,7 @@ interface AspectGraphicRendering
 
 abstract class Aspect
 {
-	protected ds:DataSheet;
+	public ds:DataSheet;
 	protected allowModify = true; // if set to false, aspect is not allowed to modify any part of the header
 
 	// usually provide an existing datasheet with the aspect already installed; if not, it will be added (as long as

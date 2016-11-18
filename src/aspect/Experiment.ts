@@ -164,9 +164,6 @@ class ExperimentEntry
 	}
 }
 
-let EXPERIMEN_ASPECTS:{[id:string] : string} = {};
-
-
 class Experiment extends Aspect
 {
 	public static CODE = 'org.mmi.aspect.Experiment';

@@ -43,7 +43,7 @@ class ArrangeComponent
 	public leftDenom:string; 
 	public fszText:number; // text font sizes, if applicable
 	public fszLeft:number;
-	public annot:number; // annotation glyph on the right (COMP_ANNOT_*)
+	public annot = 0; // annotation glyph on the right (COMP_ANNOT_*)
 	public box = new Box(); // bounding box
 	public padding:number; // how much padding around the outer boundary
 	
@@ -89,8 +89,8 @@ class ArrangeExperiment
 	public components:ArrangeComponent[] = [];
 
 	// parameters to influence the drawing
-	public limitTotalW = 0;
-	public limitTotalH = 0;
+	public limitTotalW = 1000;
+	public limitTotalH = 1000;
 	public limitStructW = 0;
 	public limitStructH = 0;
 	public includeReagents = true; // drawing of reagents alongside the arrow
@@ -200,6 +200,10 @@ class ArrangeExperiment
 			this.height = Math.max(this.height, xc.box.maxY());
 		}
 	}
+
+	// access to content
+	public get numComponents() {return this.components.length;}
+	public getComponent(idx:number) {return this.components[idx];}
 
 	// resize the whole thing
 	public scaleComponents(modScale:number):void

@@ -3463,6 +3463,7 @@ class AspectList {
         this.ds = ds;
         if ($.isEmptyObject(SUPPORTED_ASPECTS)) {
             SUPPORTED_ASPECTS[SARTable.CODE] = SARTable.NAME;
+            SUPPORTED_ASPECTS[Experiment.CODE] = Experiment.NAME;
         }
     }
     list() {
@@ -3480,6 +3481,8 @@ class AspectList {
     instantiate(code) {
         if (code == SARTable.CODE)
             return new SARTable(this.ds);
+        if (code == Experiment.CODE)
+            return new Experiment(this.ds);
         return null;
     }
     enumerate() {
@@ -3638,7 +3641,6 @@ class ExperimentEntry {
         return new ExperimentComponent();
     }
 }
-let EXPERIMEN_ASPECTS = {};
 class Experiment extends Aspect {
     constructor(ds, allowModify) {
         super(ds, allowModify);
@@ -5263,6 +5265,80 @@ class MetaMolecule {
             }
     }
 }
+class QuantityCalc {
+    constructor(entry) {
+        this.entry = entry;
+    }
+    static isStoichZero(stoich) {
+        if (this.isStoichUnity(stoich))
+            return false;
+        if (parseFloat(stoich) == 0)
+            return true;
+        return false;
+    }
+    static isStoichUnity(stoich) {
+        if (!stoich || stoich == '1')
+            return true;
+        let [numer, denom] = this.extractStoichFraction(stoich);
+        return numer != 0 && numer == denom;
+    }
+    static extractStoichFraction(stoich) {
+        if (!stoich)
+            return [1, 1];
+        let numer = 1, denom = 1;
+        let i = stoich.indexOf('/');
+        if (i < 0) {
+            let v = parseFloat(stoich);
+            if (v >= 0)
+                numer = v;
+        }
+        else {
+            let v1 = parseFloat(stoich.substring(0, i)), v2 = parseFloat(stoich.substring(i + 1));
+            if (v1 >= 0)
+                numer = v1;
+            if (v2 >= 0)
+                denom = v2;
+        }
+        return [numer, denom];
+    }
+    static extractStoichValue(stoich) {
+        let [numer, denom] = this.extractStoichFraction(stoich);
+        return denom <= 1 ? numer : numer / denom;
+    }
+    static stoichAsRatio(stoich) {
+        let [numer, denom] = this.extractStoichFraction(stoich);
+        if (numer == Math.floor(numer))
+            return [numer, denom];
+        return this.stoichFractAsRatio(numer);
+    }
+    static stoichFractAsRatio(fract) {
+        if (fract == Math.floor(fract))
+            return [fract, 1];
+        const MAX_DENOM = QuantityCalc.MAX_DENOM;
+        if (QuantityCalc.RATIO_FRACT == null) {
+            QuantityCalc.RATIO_FRACT = [];
+            for (let p = 0, j = 2; j <= MAX_DENOM; j++)
+                for (let i = 1; i < j && i < MAX_DENOM - 1; i++)
+                    QuantityCalc.RATIO_FRACT.push(i * 1.0 / j);
+        }
+        let whole = Math.floor(fract);
+        let resid = fract - whole;
+        let bestDiff = Number.MAX_VALUE;
+        let bestOver = 1, bestUnder = 1;
+        for (let p = 0, j = 2; j <= MAX_DENOM; j++)
+            for (let i = 1; i < j && i < MAX_DENOM - 1; i++) {
+                let diff = Math.abs(QuantityCalc.RATIO_FRACT[p++] - resid);
+                if (diff < bestDiff) {
+                    bestDiff = diff;
+                    bestOver = i;
+                    bestUnder = j;
+                }
+            }
+        return [bestOver + (whole * bestUnder), bestUnder];
+    }
+}
+QuantityCalc.MAX_DENOM = 16;
+QuantityCalc.RATIO_FRACT = null;
 var Geometry;
 (function (Geometry) {
     Geometry[Geometry["Linear"] = 0] = "Linear";
@@ -7427,6 +7503,7 @@ class Pos {
         this.y = y == null ? 0 : y;
     }
     static zero() { return new Pos(); }
+    static fromArray(src) { return new Pos(src[0], src[1]); }
     clone() { return new Pos(this.x, this.y); }
     scaleBy(mag) {
         if (mag == 1)
@@ -7446,6 +7523,7 @@ class Size {
         this.h = h == null ? 0 : h;
     }
     static zero() { return new Size(); }
+    static fromArray(src) { return new Size(src[0], src[1]); }
     clone() { return new Size(this.w, this.h); }
     scaleBy(mag) {
         if (mag == 1)
@@ -7474,6 +7552,7 @@ class Box {
     static zero() { return new Box(); }
     static fromSize(sz) { return new Box(0, 0, sz.w, sz.h); }
     static fromOval(oval) { return new Box(oval.cx - oval.rw, oval.cy - oval.rh, 2 * oval.rw, 2 * oval.rh); }
+    static fromArray(src) { return new Box(src[0], src[1], src[2], src[3]); }
     clone() { return new Box(this.x, this.y, this.w, this.h); }
     setPos(pos) {
         this.x = pos.x;
@@ -7515,6 +7594,7 @@ class Oval {
     }
     static zero() { return new Oval(); }
     static fromBox(box) { return new Oval(box.x + 0.5 * box.w, box.y + 0.5 * box.h, 0.5 * box.w, 0.5 * box.h); }
+    static fromArray(src) { return new Oval(src[0], src[1], src[2], src[3]); }
     clone() { return new Oval(this.cx, this.cy, this.rw, this.rh); }
     setCentre(pos) {
         this.cx = pos.x;
@@ -16376,6 +16456,619 @@ class MapReaction extends Dialog {
         }
     }
 }
+class ArrangeComponent {
+    constructor() {
+        this.annot = 0;
+        this.box = new Box();
+    }
+    clone() {
+        let dup = new ArrangeComponent();
+        dup.type = this.type;
+        dup.srcIdx = this.srcIdx;
+        dup.step = this.step;
+        dup.side = this.side;
+        dup.refIdx = this.refIdx;
+        dup.mol = this.mol;
+        dup.text = this.text;
+        dup.leftNumer = this.leftNumer;
+        dup.leftDenom = this.leftDenom;
+        dup.fszText = this.fszText;
+        dup.fszLeft = this.fszLeft;
+        dup.annot = this.annot;
+        dup.box = this.box.clone();
+        dup.padding = this.padding;
+        return dup;
+    }
+}
+class ArrangeExperiment {
+    constructor(entry, measure, policy) {
+        this.entry = entry;
+        this.measure = measure;
+        this.policy = policy;
+        this.width = 0;
+        this.height = 0;
+        this.components = [];
+        this.limitTotalW = 1000;
+        this.limitTotalH = 1000;
+        this.limitStructW = 0;
+        this.limitStructH = 0;
+        this.includeReagents = true;
+        this.includeNames = false;
+        this.includeStoich = true;
+        this.includeAnnot = false;
+        this.includeBlank = false;
+        this.PADDING = 0.25;
+        this.PLUSSZ = 0.5;
+        this.ARROW_W = 2;
+        this.ARROW_H = 0.5;
+        this.REAGENT_SCALE = 0.7;
+        this.PLACEHOLDER_W = 2;
+        this.PLACEHOLDER_H = 2;
+        this.scale = policy.data.pointScale;
+        this.limitStructW = this.limitStructH = this.scale * 10;
+    }
+    arrange() {
+        this.createComponents();
+        let fszText = this.scale * this.policy.data.fontSize, fszLeft = this.scale * this.policy.data.fontSize * 1.5;
+        let padding = this.PADDING * this.scale;
+        for (let xc of this.components) {
+            if (xc.type == ArrangeExperiment.COMP_PLUS)
+                xc.box = new Box(0, 0, this.scale * this.PLUSSZ, this.scale * this.PLUSSZ);
+            else if (xc.type == ArrangeExperiment.COMP_ARROW) { }
+            else {
+                let w = 0, h = 0;
+                if (MolUtil.notBlank(xc.mol)) {
+                    let sz = Size.fromArray(ArrangeMolecule.guestimateSize(xc.mol, this.policy));
+                    if (xc.type == ArrangeExperiment.COMP_REAGENT)
+                        sz.scaleBy(this.REAGENT_SCALE);
+                    if (xc.leftNumer) {
+                        xc.fszLeft = fszLeft;
+                        let wad = this.measure.measureText(xc.leftNumer, fszLeft);
+                        let lw = wad[0], lh = wad[1] + wad[2];
+                        if (xc.leftDenom)
+                            lw = Math.max(lw, this.measure.measureText(xc.leftDenom, fszLeft)[0]);
+                        sz.w += lw + ArrangeExperiment.COMP_GAP_LEFT * lh;
+                        sz.h = Math.max(sz.h, lh * (xc.leftDenom ? 2 : 1));
+                    }
+                    sz.fitInto(this.limitStructW, this.limitStructH);
+                    w = sz.w;
+                    h = sz.h;
+                }
+                if (xc.text) {
+                    xc.fszText = fszText;
+                    let wad = this.measure.measureText(xc.text, fszText);
+                    w = Math.max(w, wad[0]);
+                    h += wad[1] + wad[2];
+                }
+                if (xc.annot != 0)
+                    w += ArrangeExperiment.COMP_ANNOT_SIZE * this.scale;
+                if (this.includeBlank || w == 0 || h == 0) {
+                    w = Math.max(w, this.PLACEHOLDER_W * this.scale);
+                    h = Math.max(h, this.PLACEHOLDER_H * this.scale);
+                }
+                xc.box = new Box(0, 0, w, h);
+            }
+            xc.padding = padding;
+            xc.box = new Box(0, 0, xc.box.w + 2 * padding, xc.box.h + 2 * padding);
+        }
+        let best = null;
+        let bestScore = 0;
+        for (let bend = this.entry.steps.length + 1; bend >= 1; bend--)
+            for (let vert = 0; vert <= 1; vert++) {
+                let trial = [];
+                for (let xc of this.components)
+                    trial.push(xc.clone());
+                this.arrangeComponents(trial, bend, vert > 0);
+                let score = this.scoreArrangement(trial);
+                if (best == null || score > bestScore) {
+                    best = trial;
+                    bestScore = score;
+                }
+            }
+        this.components = best;
+        this.width = this.height = 0;
+        for (let xc of this.components) {
+            this.width = Math.max(this.width, xc.box.maxX());
+            this.height = Math.max(this.height, xc.box.maxY());
+        }
+    }
+    get numComponents() { return this.components.length; }
+    getComponent(idx) { return this.components[idx]; }
+    scaleComponents(modScale) {
+        if (modScale == 1)
+            return;
+        this.scale *= modScale;
+        this.width *= modScale;
+        this.height *= modScale;
+        for (let xc of this.components) {
+            xc.box.scaleBy(modScale);
+            xc.fszText *= modScale;
+            xc.fszLeft *= modScale;
+            xc.padding *= modScale;
+        }
+    }
+    createComponents() {
+        for (let n = 0; n < this.entry.steps[0].reactants.length; n++) {
+            if (n > 0)
+                this.createSegregator(ArrangeExperiment.COMP_PLUS, 0, -1);
+            this.createReactant(n, 0);
+        }
+        if (this.components.length == 0 && this.includeBlank)
+            this.createBlank(ArrangeExperiment.COMP_REACTANT, 0);
+        for (let s = 0; s < this.entry.steps.length; s++) {
+            this.createSegregator(ArrangeExperiment.COMP_ARROW, s, 0);
+            if (this.includeReagents) {
+                let any = false;
+                for (let n = 0; n < this.entry.steps[s].reagents.length; n++) {
+                    this.createReagent(n, s);
+                    any = true;
+                }
+                if (!any && this.includeBlank)
+                    this.createBlank(ArrangeExperiment.COMP_REAGENT, s);
+            }
+            let any = false;
+            for (let n = 0; n < this.entry.steps[s].products.length; n++) {
+                if (n > 0)
+                    this.createSegregator(ArrangeExperiment.COMP_PLUS, s, 1);
+                this.createProduct(n, s);
+                any = true;
+            }
+            if (!any && this.includeBlank)
+                this.createBlank(ArrangeExperiment.COMP_PRODUCT, s);
+        }
+    }
+    createReactant(idx, step) {
+        let comp = this.entry.steps[step].reactants[idx];
+        let xc = new ArrangeComponent();
+        xc.type = ArrangeExperiment.COMP_REACTANT;
+        xc.srcIdx = idx;
+        xc.step = step;
+        xc.side = -1;
+        if (MolUtil.notBlank(comp.mol))
+            xc.mol = comp.mol;
+        if (name && (this.includeNames || MolUtil.isBlank(comp.mol)))
+            xc.text = name;
+        if (MolUtil.isBlank(xc.mol) && !xc.text)
+            xc.text = '?';
+        if (this.includeStoich && !QuantityCalc.isStoichZero(comp.stoich) && !QuantityCalc.isStoichUnity(comp.stoich)) {
+            let slash = comp.stoich.indexOf('/');
+            if (slash >= 0) {
+                xc.leftNumer = comp.stoich.substring(0, slash);
+                xc.leftDenom = comp.stoich.substring(slash + 1);
+            }
+            else
+                xc.leftNumer = comp.stoich;
+        }
+        if (this.includeAnnot && MolUtil.notBlank(comp.mol) && comp.primary)
+            xc.annot = ArrangeExperiment.COMP_ANNOT_PRIMARY;
+        this.components.push(xc);
+    }
+    createReagent(idx, step) {
+        let comp = this.entry.steps[step].reagents[idx];
+        let xc = new ArrangeComponent();
+        xc.type = ArrangeExperiment.COMP_REAGENT;
+        xc.srcIdx = idx;
+        xc.step = step;
+        xc.side = 0;
+        if (MolUtil.notBlank(comp.mol))
+            xc.mol = comp.mol;
+        if (name && (this.includeNames || MolUtil.isBlank(comp.mol)))
+            xc.text = name;
+        if (MolUtil.isBlank(xc.mol) && !xc.text)
+            xc.text = '?';
+        this.components.push(xc);
+    }
+    createProduct(idx, step) {
+        let comp = this.entry.steps[step].products[idx];
+        let xc = new ArrangeComponent();
+        xc.type = ArrangeExperiment.COMP_PRODUCT;
+        xc.srcIdx = idx;
+        xc.step = step;
+        xc.side = 1;
+        if (MolUtil.notBlank(comp.mol))
+            xc.mol = comp.mol;
+        if (name && (this.includeNames || MolUtil.isBlank(comp.mol)))
+            xc.text = comp.name;
+        if (MolUtil.isBlank(xc.mol) && !xc.text)
+            xc.text = '?';
+        if (this.includeStoich && !QuantityCalc.isStoichZero(comp.stoich) && !QuantityCalc.isStoichUnity(comp.stoich)) {
+            let slash = comp.stoich.indexOf('/');
+            if (slash >= 0) {
+                xc.leftNumer = comp.stoich.substring(0, slash);
+                xc.leftDenom = comp.stoich.substring(slash + 1);
+            }
+            else
+                xc.leftNumer = comp.stoich;
+        }
+        if (this.includeAnnot && MolUtil.notBlank(comp.mol) && comp.waste)
+            xc.annot = ArrangeExperiment.COMP_ANNOT_WASTE;
+        this.components.push(xc);
+    }
+    createSegregator(type, step, side) {
+        let xc = new ArrangeComponent();
+        xc.type = type;
+        xc.step = step;
+        xc.side = side;
+        this.components.push(xc);
+    }
+    createBlank(type, step) {
+        let xc = new ArrangeComponent();
+        xc.type = type;
+        xc.step = step;
+        xc.side = type == ArrangeExperiment.COMP_REACTANT ? -1 : type == ArrangeExperiment.COMP_PRODUCT ? 1 : 0;
+        xc.srcIdx = -1;
+        this.components.push(xc);
+    }
+    arrangeComponents(comps, bendStep, vertComp) {
+        let blkMain = [];
+        let blkArrow = [];
+        let szMain = [], szArrow = [];
+        let midMain = [], midArrow = [];
+        blkMain.push(this.gatherBlock(comps, 0, -1));
+        szMain.push(this.arrangeMainBlock(blkMain[0], vertComp));
+        midMain.push(this.findMidBlock(blkMain[0], szMain[0]));
+        for (let n = 0; n < this.entry.steps.length; n++) {
+            let bent = n + 1 >= bendStep;
+            blkMain.push(this.gatherBlock(comps, n, 1));
+            szMain.push(this.arrangeMainBlock(blkMain[n + 1], vertComp && !bent));
+            midMain.push(this.findMidBlock(blkMain[n + 1], szMain[n + 1]));
+            blkArrow.push(this.gatherBlock(comps, n, 0));
+            if (!bent)
+                szArrow.push(this.arrangeHorizontalArrowBlock(blkArrow[n]));
+            else
+                szArrow.push(this.arrangeVerticalArrowBlock(blkArrow[n]));
+            midArrow.push(this.findMidBlock(blkArrow[n], szArrow[n]));
+        }
+        let midH = 0;
+        for (let n = 0; n < bendStep; n++) {
+            midH = Math.max(midH, midMain[n].y);
+            if (n > 0)
+                midH = Math.max(midH, midArrow[n - 1].y);
+        }
+        let sz = Size.zero();
+        for (let n = 0; n < bendStep; n++) {
+            sz.w += szMain[n].w;
+            sz.h = Math.max(sz.h, midH + (szMain[n].h - midMain[n].y));
+            if (n > 0) {
+                sz.w += szArrow[n - 1].w;
+                sz.h = Math.max(sz.h, midH + (szArrow[n - 1].h - midArrow[n - 1].y));
+            }
+        }
+        let x = 0, arrowX = 0;
+        for (let n = 0; n < bendStep; n++) {
+            if (n > 0) {
+                this.originateBlock(blkArrow[n - 1], x, midH - midArrow[n - 1].y);
+                x += szArrow[n - 1].w;
+            }
+            this.originateBlock(blkMain[n], x, midH - midMain[n].y);
+            arrowX = x + midMain[n].x;
+            x += szMain[n].w;
+        }
+        let y = sz.h, lowX = 0;
+        for (let n = bendStep; n <= this.entry.steps.length; n++) {
+            x = arrowX - midArrow[n - 1].x;
+            lowX = Math.min(lowX, x);
+            this.originateBlock(blkArrow[n - 1], x, y);
+            y += szArrow[n - 1].h;
+            sz.w = Math.max(sz.w, x + szArrow[n - 1].w);
+            x = arrowX - midMain[n].x;
+            lowX = Math.min(lowX, x);
+            this.originateBlock(blkMain[n], x, y);
+            y += szMain[n].h;
+            sz.w = Math.max(sz.w, x + szMain[n].w);
+        }
+        if (lowX < 0) {
+            for (let xc of comps)
+                xc.box.x -= lowX;
+        }
+    }
+    gatherBlock(comps, step, side) {
+        let block = [];
+        for (let xc of comps)
+            if (xc.side == side && xc.step == step)
+                block.push(xc);
+        return block;
+    }
+    arrangeMainBlock(block, vertComp) {
+        let sz = Size.zero();
+        if (!vertComp) {
+            for (let xc of block) {
+                sz.w += xc.box.w;
+                sz.h = Math.max(sz.h, xc.box.h);
+            }
+        }
+        else {
+            for (let xc of block) {
+                sz.w = Math.max(sz.w, xc.box.w);
+                sz.h += xc.box.h;
+            }
+        }
+        sz.w = Math.max(sz.w, this.scale * 2.0);
+        sz.h = Math.max(sz.h, this.scale * 2.0);
+        if (!vertComp) {
+            let x = 0;
+            for (let xc of block) {
+                xc.box.x = x;
+                xc.box.y = 0.5 * (sz.h - xc.box.h);
+                x += xc.box.w;
+            }
+        }
+        else {
+            let y = 0;
+            for (let xc of block) {
+                xc.box.x = 0.5 * (sz.w - xc.box.w);
+                xc.box.y = y;
+                y += xc.box.h;
+            }
+        }
+        return sz;
+    }
+    arrangeHorizontalArrowBlock(block) {
+        let arrow = null;
+        for (let xc of block)
+            if (xc.type == ArrangeExperiment.COMP_ARROW) {
+                arrow = xc;
+                xc.box.w = this.ARROW_W * this.scale + 2 * xc.padding;
+                xc.box.h = this.ARROW_H * this.scale + 2 * xc.padding;
+            }
+        let mid = block.length >> 1;
+        for (let xc of block)
+            arrow.box.w = Math.max(xc.box.w, arrow.box.w);
+        let sz = Size.zero();
+        let n = 0;
+        let y = 0;
+        let arrowPlaced = false;
+        for (let xc of block)
+            if (xc.type != ArrangeExperiment.COMP_ARROW) {
+                xc.box.x = 0.5 * (arrow.box.w - xc.box.w);
+                xc.box.y = y;
+                y += xc.box.h;
+                n++;
+                if (n == mid) {
+                    arrow.box.x = 0;
+                    arrow.box.y = y;
+                    y += arrow.box.h;
+                    arrowPlaced = true;
+                }
+            }
+        if (!arrowPlaced) {
+            arrow.box.x = 0;
+            arrow.box.y = y;
+            y += arrow.box.h;
+        }
+        sz.w = arrow.box.w;
+        sz.h = y;
+        return sz;
+    }
+    arrangeVerticalArrowBlock(block) {
+        let arrow = null;
+        for (let xc of block)
+            if (xc.type == ArrangeExperiment.COMP_ARROW) {
+                arrow = xc;
+                xc.box.w = this.ARROW_H * this.scale + 2 * xc.padding;
+                xc.box.h = this.ARROW_W * this.scale + 2 * xc.padding;
+            }
+        let mid = block.length >> 1;
+        let sz1 = Size.zero(), sz2 = Size.zero();
+        let n = 0;
+        for (let xc of block)
+            if (xc.type != ArrangeExperiment.COMP_ARROW) {
+                if (n < mid) {
+                    sz1.w = Math.max(sz1.w, xc.box.w);
+                    sz1.h += xc.box.h;
+                }
+                else {
+                    sz2.w = Math.max(sz2.w, xc.box.w);
+                    sz2.h += xc.box.h;
+                }
+                n++;
+            }
+        let sz = new Size(sz1.w + sz2.w + arrow.box.w, Math.max(arrow.box.h, Math.max(sz1.h, sz2.h)));
+        arrow.box = new Box(sz1.w, 0, arrow.box.w, sz.h);
+        let y1 = 0.5 * (sz.h - sz1.h), y2 = 0.5 * (sz.h - sz2.h);
+        n = 0;
+        for (let xc of block)
+            if (xc.type != ArrangeExperiment.COMP_ARROW) {
+                if (n < mid) {
+                    xc.box.x = sz1.w - xc.box.w;
+                    xc.box.y = y1;
+                    y1 += xc.box.h;
+                }
+                else {
+                    xc.box.x = sz.w - sz2.w;
+                    xc.box.y = y2;
+                    y2 += xc.box.h;
+                }
+                n++;
+            }
+        return sz;
+    }
+    findMidBlock(block, sz) {
+        let count = 0;
+        let mid = Pos.zero();
+        for (let xc of block)
+            if (xc.type == ArrangeExperiment.COMP_PLUS || xc.type == ArrangeExperiment.COMP_ARROW) {
+                mid.x += xc.box.midX();
+                mid.y += xc.box.midY();
+                count++;
+            }
+        if (count == 0) {
+            mid.x = 0.5 * sz.w;
+            mid.y = 0.5 * sz.h;
+        }
+        else if (count > 1) {
+            let inv = 1.0 / count;
+            mid.x *= inv;
+            mid.y *= inv;
+        }
+        return mid;
+    }
+    scoreArrangement(comps) {
+        let w = 0;
+        for (let xc of comps)
+            w = Math.max(w, xc.box.maxX());
+        let score = 0;
+        score -= Math.abs(w - this.limitTotalW);
+        return score;
+    }
+    originateBlock(block, x, y) {
+        for (let xc of block) {
+            xc.box.x += x;
+            xc.box.y += y;
+        }
+    }
+}
+ArrangeExperiment.COMP_ARROW = 1;
+ArrangeExperiment.COMP_PLUS = 2;
+ArrangeExperiment.COMP_REACTANT = 3;
+ArrangeExperiment.COMP_REAGENT = 4;
+ArrangeExperiment.COMP_PRODUCT = 5;
+ArrangeExperiment.COMP_ANNOT_NONE = 0;
+ArrangeExperiment.COMP_ANNOT_PRIMARY = 1;
+ArrangeExperiment.COMP_ANNOT_WASTE = 2;
+ArrangeExperiment.COMP_GAP_LEFT = 0.5;
+ArrangeExperiment.COMP_ANNOT_SIZE = 1;
+class DrawExperiment {
+    constructor(layout, vg) {
+        this.layout = layout;
+        this.vg = vg;
+        this.entry = layout.entry;
+        this.measure = layout.measure;
+        this.policy = layout.policy;
+        this.scale = layout.scale;
+        this.invScale = 1.0 / this.scale;
+    }
+    draw() {
+        for (let xc of this.layout.components) {
+            if (xc.type == ArrangeExperiment.COMP_ARROW)
+                this.drawSymbolArrow(xc);
+            else if (xc.type == ArrangeExperiment.COMP_PLUS)
+                this.drawSymbolPlus(xc);
+            else
+                this.drawComponent(xc);
+        }
+    }
+    drawComponent(xc) {
+        let vg = this.vg, policy = this.policy;
+        let bx = xc.box.x + xc.padding, by = xc.box.y + xc.padding;
+        let bw = xc.box.w - 2 * xc.padding, bh = xc.box.h - 2 * xc.padding;
+        if (xc.text) {
+            let wad = this.measure.measureText(xc.text, xc.fszText);
+            vg.drawText(bx + 0.5 * bw, by + bh, xc.text, xc.fszText, policy.data.foreground, TextAlign.Bottom | TextAlign.Centre);
+            bh -= wad[1] + wad[2];
+        }
+        if (xc.leftNumer) {
+            let wad1 = this.measure.measureText(xc.leftNumer, xc.fszLeft);
+            if (xc.leftDenom) {
+                vg.drawText(bx, by + 0.5 * bh, xc.leftNumer, xc.fszLeft, policy.data.foreground, TextAlign.Left | TextAlign.Middle);
+                let useW = wad1[0] + ArrangeExperiment.COMP_GAP_LEFT * (wad1[1] + wad1[2]);
+                bx += useW;
+                bw -= useW;
+            }
+            else {
+                let wad2 = this.measure.measureText(xc.leftDenom, xc.fszLeft);
+                let tw = Math.max(wad1[0], wad2[0]);
+                let x = bx + 0.5 * tw, y = by + 0.5 * bh;
+                vg.drawText(x, y, xc.leftNumer, xc.fszLeft, policy.data.foreground, TextAlign.Centre | TextAlign.Bottom);
+                vg.drawText(x, y + wad1[2], xc.leftDenom, xc.fszLeft, policy.data.foreground, TextAlign.Centre | TextAlign.Top);
+                vg.drawLine(bx, y, bx + tw, y, policy.data.foreground, this.scale * 0.03);
+                let useW = tw + ArrangeExperiment.COMP_GAP_LEFT * (wad1[1] + wad1[2]);
+                bx += useW;
+                bw -= useW;
+            }
+        }
+        if (xc.annot != 0) {
+            let aw = ArrangeExperiment.COMP_ANNOT_SIZE * this.scale;
+            bw -= aw;
+            this.drawAnnotation(xc.annot, bx + bw, by, aw, bh);
+        }
+        if (MolUtil.notBlank(xc.mol)) {
+            let arrmol = new ArrangeMolecule(xc.mol, this.layout.measure, policy, new RenderEffects());
+            arrmol.arrange();
+            arrmol.squeezeInto(bx, by, bw, bh, 0);
+            let drawmol = new DrawMolecule(arrmol, vg);
+            drawmol.draw();
+        }
+        if (xc.srcIdx < 0) {
+            let fsz = 0.5 * bh;
+            vg.drawText(bx + 0.5 * bw, by + 0.5 * bh, '?', fsz, policy.data.foreground, TextAlign.Centre | TextAlign.Middle);
+        }
+    }
+    drawSymbolArrow(xc) {
+        let bx = xc.box.x + xc.padding, by = xc.box.y + xc.padding;
+        let bw = xc.box.w - 2 * xc.padding, bh = xc.box.h - 2 * xc.padding;
+        if (bw > bh)
+            this.drawArrow(bx, by + 0.5 * bh, bx + bw, by + 0.5 * bh, bh, this.policy.data.foreground, this.scale * 0.05);
+        else
+            this.drawArrow(bx + 0.5 * bw, by, bx + 0.5 * bw, by + bh, bw, this.policy.data.foreground, this.scale * 0.05);
+    }
+    drawSymbolPlus(xc) {
+        let vg = this.vg, policy = this.policy;
+        let x1 = xc.box.x + xc.padding, y1 = xc.box.y + xc.padding;
+        let x3 = x1 + xc.box.w - 2 * xc.padding, y3 = y1 + xc.box.h - 2 * xc.padding;
+        let x2 = 0.5 * (x1 + x3), y2 = 0.5 * (y1 + y3);
+        let lw = 0.2 * 0.5 * (x3 - x1 + y3 - y1);
+        vg.drawLine(x1, y2, x3, y2, policy.data.foreground, lw);
+        vg.drawLine(x2, y1, x2, y3, policy.data.foreground, lw);
+    }
+    drawAnnotation(annot, bx, by, bw, bh) {
+        let vg = this.vg, policy = this.policy;
+        let sz = bw, x2 = bx + bw, y2 = by + bh, x1 = x2 - sz, y1 = by;
+        if (annot == ArrangeExperiment.COMP_ANNOT_PRIMARY)
+            y2 = y1 + sz;
+        else if (annot == ArrangeExperiment.COMP_ANNOT_WASTE)
+            y1 = y2 - sz;
+        if (annot == ArrangeExperiment.COMP_ANNOT_PRIMARY) {
+            let cx = 0.5 * (x1 + x2), cy = 0.5 * (y1 + y2), ext = 0.25 * sz;
+            let px = [cx, cx + 0.866 * ext, cx + 0.866 * ext, cx, cx - 0.866 * ext, cx - 0.866 * ext];
+            let py = [cy - ext, cy - 0.5 * ext, cy + 0.5 * ext, cy + ext, cy + 0.5 * ext, cy - 0.5 * ext];
+            let lw = 0.05 * this.scale;
+            vg.drawLine(px[0], py[0], px[3], py[3], policy.data.foreground, lw);
+            vg.drawLine(px[1], py[1], px[4], py[4], policy.data.foreground, lw);
+            vg.drawLine(px[2], py[2], px[5], py[5], policy.data.foreground, lw);
+            let inset = 0.1 * sz;
+            vg.drawOval(x1 + 0.5 * sz, y1 + 0.5 * sz, 0.5 * sz - inset, 0.5 * sz - inset, policy.data.foreground, lw, MetaVector.NOCOLOUR);
+        }
+        else if (annot == ArrangeExperiment.COMP_ANNOT_WASTE) {
+            let cx = x1 + 0.7 * sz, cy = 0.5 * (y1 + y2), quart = 0.25 * sz;
+            let lw = 0.05 * this.scale;
+            let px = [x1 + 0.1 * sz, cx - quart, cx, cx, cx];
+            let py = [y1, y1, y1, cy - quart, cy];
+            let ctrl = [false, false, true, false, false];
+            vg.drawPath(px, py, ctrl, false, policy.data.foreground, lw, MetaVector.NOCOLOUR, false);
+            for (let n = 0; n < 4; n++) {
+                let y = cy + n * 0.45 * sz * (1.0 / 3), dw = (3.1 - n) * 0.1 * sz;
+                vg.drawLine(cx - dw, y, cx + dw, y, policy.data.foreground, lw);
+            }
+        }
+    }
+    drawArrow(x1, y1, x2, y2, headsz, colour, linesz) {
+        let dx = x2 - x1, dy = y2 - y1, invD = invZ(norm_xy(dx, dy));
+        dx *= invD;
+        dy *= invD;
+        let ox = dy, oy = -dx;
+        let hx = x2 - dx * headsz, hy = y2 - dy * headsz;
+        let px = [
+            x1 + ox * 0.5 * linesz,
+            hx + ox * 0.5 * linesz,
+            hx + ox * 0.5 * headsz,
+            x2,
+            hx - ox * 0.5 * headsz,
+            hx - ox * 0.5 * linesz,
+            x1 - ox * 0.5 * linesz
+        ];
+        let py = [
+            y1 + oy * 0.5 * linesz,
+            hy + oy * 0.5 * linesz,
+            hy + oy * 0.5 * headsz,
+            y2,
+            hy - oy * 0.5 * headsz,
+            hy - oy * 0.5 * linesz,
+            y1 - oy * 0.5 * linesz
+        ];
+        this.vg.drawPoly(px, py, MetaVector.NOCOLOUR, 0, colour, true);
+    }
+}
 class Account {
     static connectTransient(callback, master) {
         new RPC('account.connectTransient', {}, callback, master).invoke();
@@ -16961,6 +17654,117 @@ class EmbedMolecule extends EmbedChemistry {
             pre.text(this.molstr);
             console.log('Unparseable molecule source string:\n[' + this.molstr + ']');
         }
+    }
+}
+class EmbedReaction extends EmbedChemistry {
+    constructor(datastr, options) {
+        super();
+        this.datastr = datastr;
+        this.entry = null;
+        this.failmsg = '';
+        this.tight = false;
+        this.facet = 'scheme';
+        this.limitTotalW = 800;
+        this.includeStoich = true;
+        this.includeAnnot = false;
+        if (!options)
+            options = {};
+        let xs = null;
+        if (options.format == 'datasheet' || options.format == 'chemical/x-datasheet') {
+            let ds = DataSheetStream.readXML(datastr);
+            if (ds != null && Experiment.isExperiment(ds))
+                xs = new Experiment(ds);
+        }
+        else {
+            let ds = DataSheetStream.readXML(datastr);
+            if (ds != null && Experiment.isExperiment(ds))
+                xs = new Experiment(ds);
+        }
+        if (xs == null || xs.ds.numRows == 0)
+            return;
+        this.entry = xs.getEntry(0);
+        if (options.facet)
+            this.facet = options.facet;
+        if (options.padding)
+            this.padding = options.padding;
+        if (options.background == 'transparent')
+            this.clearBackground();
+        else if (options.background) {
+            let bg = options.background, comma = bg.indexOf(',');
+            if (comma < 0)
+                this.setBackground(htmlToRGB(bg));
+            else
+                this.setBackgroundGradient(htmlToRGB(bg.substring(0, comma)), htmlToRGB(bg.substring(comma + 1)));
+        }
+        if (options.border == 'transparent')
+            this.borderCol = MetaVector.NOCOLOUR;
+        else if (options.border)
+            this.borderCol = htmlToRGB(options.border);
+        if (options.radius != null)
+            this.borderRadius = parseInt(options.radius);
+        if (options.scheme == 'wob')
+            this.policy = RenderPolicy.defaultWhiteOnBlack();
+        else if (options.scheme == 'cob')
+            this.policy = RenderPolicy.defaultColourOnBlack();
+        else if (options.scheme == 'bow')
+            this.policy = RenderPolicy.defaultBlackOnWhite();
+        else if (options.scheme == 'cow')
+            this.policy = RenderPolicy.defaultColourOnWhite();
+        if (options.scale)
+            this.policy.data.pointScale = options.scale;
+        if (options.tight == true || options.tight == 'true')
+            this.tight = true;
+        if (options.maximumWidth > 0)
+            this.limitTotalW = options.maximumWidth;
+        if (options.stoichiometry == false || options.stoichiometry == 'false')
+            this.includeStoich = true;
+        if (options.annotations == true || options.annotations == 'true')
+            this.includeAnnot = true;
+    }
+    render(parent) {
+        this.tagType = 'span';
+        super.render(parent);
+        let span = this.content;
+        span.css('display', 'inline-block');
+        span.css('line-height', '0');
+        if (!this.tight)
+            span.css('margin-bottom', '1.5em');
+        if (this.entry != null) {
+            if (this.facet == 'header')
+                this.renderHeader(span);
+            else if (this.facet == 'scheme')
+                this.renderScheme(span);
+            else if (this.facet == 'quantity')
+                this.renderQuantity(span);
+            else if (this.facet == 'metrics')
+                this.renderMetrics(span);
+        }
+        else {
+            span.css('color', 'red');
+            span.text('Unable to parse datasheet: ' + this.failmsg);
+            let pre = $('<pre></pre>').appendTo(span);
+            pre.css('line-height', '1.1');
+            pre.text(this.datastr);
+            console.log('Unparseable datasheet source string:\n[' + this.datastr + ']');
+        }
+    }
+    renderHeader(span) {
+    }
+    renderScheme(span) {
+        let measure = new OutlineMeasurement(0, 0, this.policy.data.pointScale);
+        let layout = new ArrangeExperiment(this.entry, measure, this.policy);
+        layout.limitTotalW = this.limitTotalW;
+        layout.includeStoich = this.includeStoich;
+        layout.includeAnnot = this.includeAnnot;
+        layout.arrange();
+        let metavec = new MetaVector();
+        new DrawExperiment(layout, metavec).draw();
+        metavec.normalise();
+        let svg = $(metavec.createSVG()).appendTo(span);
+    }
+    renderQuantity(span) {
+    }
+    renderMetrics(span) {
     }
 }
 class RowView extends Widget {
@@ -18064,16 +18868,16 @@ class ValidationHeadlessReaction extends Validation {
         let ds = DataSheetStream.readXML(this.strExperiment);
         this.assert(ds != null, 'parsing failed');
         this.assert(Experiment.isExperiment(ds), 'aspect claimed not an Experiment');
-        let xp = new Experiment(ds);
-        let entry = xp.getEntry(0);
+        let xs = new Experiment(ds);
+        let entry = xs.getEntry(0);
         this.assert(entry != null, 'null entry returned');
         this.assert(entry.steps.length == 2, 'reaction supposed to be 2 steps, got ' + entry.steps.length);
         this.assert(entry.steps[0].reactants.length == 1, 'require step 1: #reactants = 1');
-        this.assert(entry.steps[0].reagents.length == 3, 'require step 1: #reagnets = 3');
+        this.assert(entry.steps[0].reagents.length == 3, 'require step 1: #reagents = 3');
         this.assert(entry.steps[0].products.length == 2, 'require step 1: #products = 2');
         this.assert(entry.steps[1].reactants.length == 0, 'require step 2: #reactants = 0');
-        this.assert(entry.steps[1].reagents.length == 1, 'require step 2: #reagnets = 1');
-        this.assert(entry.steps[1].products.length == 3, 'require step 2: #products = 2');
+        this.assert(entry.steps[1].reagents.length == 1, 'require step 2: #reagents = 1');
+        this.assert(entry.steps[1].products.length == 2, 'require step 2: #products = 2');
     }
 }
 class WebValExec {
