@@ -18260,8 +18260,6 @@ class EmbedReaction extends EmbedChemistry {
             this.tight = true;
         if (options.maximumwidth > 0)
             this.limitTotalW = options.maximumwidth;
-        console.log('O:' + JSON.stringify(options));
-        console.log('OPTIONS:' + options.maximumwidth + '/' + this.limitTotalW);
         if (options.stoichiometry == false || options.stoichiometry == 'false')
             this.includeStoich = true;
         if (options.annotations == true || options.annotations == 'true')
@@ -18477,6 +18475,174 @@ class EmbedReaction extends EmbedChemistry {
         }
     }
     renderMetrics(span) {
+        let quant = new QuantityCalc(this.entry);
+        quant.calculate();
+        let table = $('<table></table>').appendTo(span);
+        table.css('font-family', '"HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif');
+        table.css('border-collapse', 'collapse');
+        table.css('line-height', '1');
+        table.css('margin', '2px');
+        table.css('border', '0');
+        let effects = new RenderEffects();
+        let measure = new OutlineMeasurement(0, 0, this.policy.data.pointScale);
+        if (quant.numGreenMetrics > 0)
+            for (let n = 0; n < 3; n++) {
+                let tr = $('<tr></tr>').appendTo(table);
+                tr.css('line-height', '1');
+                let th = $('<th></th>').appendTo(tr);
+                th.css('border', '1px solid #D0D0D0');
+                th.css('padding', '0.5em');
+                th.css('text-align', 'right');
+                th.css('vertical-align', 'middle');
+                th.css('white-space', 'nowrap');
+                th.css('font-weight', 'bold');
+                th.text(n == 0 ? 'All Reactants' : n == 1 ? 'All Products' : 'All Waste');
+                let td = $('<td></td>').appendTo(tr);
+                td.css('border', '1px solid #D0D0D0');
+                td.css('padding', '0.5em');
+                td.css('text-align', 'left');
+                td.css('vertical-align', 'middle');
+                td.css('white-space', 'nowrap');
+                if (n == 0) {
+                    td.text(this.combineQuant(quant.getAllMassReact(), 'g') + ' = ' + this.sumQuant(quant.getAllMassReact(), 'g', true));
+                }
+                else if (n == 1) {
+                    td.text(this.combineQuant(quant.getAllMassProd(), 'g') + ' = ' + this.sumQuant(quant.getAllMassProd(), 'g', true));
+                }
+                else if (n == 2) {
+                    if (quant.getAllMassWaste().length > 0)
+                        td.text(this.combineQuant(quant.getAllMassWaste(), 'g') + ' = ' + this.sumQuant(quant.getAllMassWaste(), 'g', false));
+                    else
+                        td.text('none');
+                }
+            }
+        else {
+            let tr = $('<tr></tr>').appendTo(table);
+            let td = $('<td></td>').appendTo(tr);
+            td.text('No metrics to show.');
+        }
+        for (let n = 0; n < quant.numGreenMetrics; n++) {
+            let gm = quant.getGreenMetrics(n);
+            let qc = quant.getQuantity(gm.idx);
+            let tr = $('<tr></tr>').appendTo(table);
+            tr.css('line-height', '1');
+            let td = $('<td></td>').appendTo(tr);
+            td.css('border', '1px solid #D0D0D0');
+            td.css('padding', '0.2em');
+            td.css('text-align', 'center');
+            td.css('vertical-align', 'middle');
+            if (MolUtil.notBlank(qc.comp.mol)) {
+                let layout = new ArrangeMolecule(qc.comp.mol, measure, this.policy, effects);
+                layout.arrange();
+                let metavec = new MetaVector();
+                new DrawMolecule(layout, metavec).draw();
+                metavec.normalise();
+                $(metavec.createSVG()).appendTo(td);
+            }
+            td = $('<td></td>').appendTo(tr);
+            td.css('border', '1px solid #D0D0D0');
+            td.css('padding', '0.5em');
+            td.css('text-align', 'left');
+            td.css('vertical-align', 'top');
+            let pmi1 = this.combineQuant(gm.massReact, 'g'), pmi2 = this.combineQuant(gm.massProd, 'g');
+            let pmi3 = this.sumQuantExt(gm.massReact, gm.massProd, 1, Number.NaN, null);
+            let vg = this.drawTotals('PMI', pmi1, pmi2, pmi3);
+            vg.normalise();
+            let para = $('<p></p>').appendTo(td);
+            $(vg.createSVG()).appendTo(para);
+            let ef1 = this.combineQuant(gm.massWaste, 'g'), ef2 = this.combineQuant(gm.massProd, 'g');
+            let ef3 = this.sumQuantExt(gm.massWaste, gm.massProd, 1, Number.NaN, null);
+            vg = this.drawTotals('E-factor', ef1, ef2, ef3);
+            vg.normalise();
+            para = $('<p></p>').appendTo(td);
+            $(vg.createSVG()).appendTo(para);
+            let ae1 = this.combineQuant(gm.molwProd, null), ae2 = this.combineQuant(gm.molwReact, null);
+            let ae3 = this.sumQuantExt(gm.molwProd, gm.molwReact, 100, 100, '%');
+            vg = this.drawTotals('Atom-E', ae1, ae2, ae3);
+            vg.normalise();
+            para = $('<p></p>').appendTo(td);
+            $(vg.createSVG()).appendTo(para);
+        }
+    }
+    combineQuant(values, units) {
+        if (values.length == 0)
+            return '?';
+        let str = '';
+        for (let n = 0; n < values.length; n++) {
+            if (n > 0)
+                str += ' + ';
+            if (values[n] == QuantityCalc.UNSPECIFIED) {
+                str += '?';
+            }
+            else {
+                str += formatDouble(values[n], 4);
+                if (units)
+                    str += ' ' + units;
+            }
+        }
+        return str;
+    }
+    sumQuant(values, units, requireSomething) {
+        if (values.length == 0)
+            return requireSomething ? '?' : '0';
+        let sum = 0;
+        for (let n = 0; n < values.length; n++) {
+            if (values[n] == QuantityCalc.UNSPECIFIED)
+                return '?';
+            sum += values[n];
+        }
+        let ret = formatDouble(sum, 4);
+        if (units)
+            ret += ' ' + units;
+        return ret;
+    }
+    sumQuantExt(numer, denom, mul, max, units) {
+        if (numer.length == 0 || denom.length == 0)
+            return '?';
+        let sum1 = 0, sum2 = 0;
+        for (let n = 0; n < numer.length; n++) {
+            if (numer[n] == QuantityCalc.UNSPECIFIED)
+                return '?';
+            sum1 += numer[n];
+        }
+        for (let n = 0; n < denom.length; n++) {
+            if (denom[n] == QuantityCalc.UNSPECIFIED)
+                return '?';
+            sum2 += denom[n];
+        }
+        if (sum2 <= 0)
+            return '?';
+        let val = mul * sum1 / sum2;
+        if (!Number.isNaN(max))
+            val = Math.min(val, max);
+        let ret = formatDouble(val, 4);
+        if (units)
+            ret += ' ' + units;
+        return ret;
+    }
+    drawTotals(heading, over, under, answer) {
+        let vg = new MetaVector();
+        let measure = new OutlineMeasurement(0, 0, this.policy.data.pointScale);
+        let sep = ' = ';
+        let fsz = this.policy.data.pointScale * 0.8;
+        let wadHeading = measure.measureText(heading, fsz);
+        let wadOver = measure.measureText(over, fsz), wadUnder = measure.measureText(under, fsz);
+        let wadAnswer = measure.measureText(answer, fsz);
+        let wadSep = measure.measureText(sep, fsz);
+        let x = 0;
+        vg.drawText(x, 0, heading, fsz, 0x000000, TextAlign.Left | TextAlign.Middle);
+        x += wadHeading[0];
+        vg.drawText(x, 0, sep, fsz, 0x000000, TextAlign.Left | TextAlign.Middle);
+        x += wadSep[0];
+        vg.drawText(x, 0, answer, fsz, 0x000000, TextAlign.Left | TextAlign.Middle);
+        x += wadAnswer[0];
+        vg.drawText(x, 0, sep, fsz, 0x000000, TextAlign.Left | TextAlign.Middle);
+        x += wadSep[0];
+        let lw = Math.max(wadOver[0], wadUnder[0]);
+        vg.drawLine(x, 0, x + lw, 0, 0x000000, 1);
+        vg.drawText(x + 0.5 * lw, -2, over, fsz, 0x000000, TextAlign.Centre | TextAlign.Bottom);
+        vg.drawText(x + 0.5 * lw, 2, under, fsz, 0x000000, TextAlign.Centre | TextAlign.Top);
+        return vg;
     }
     doiToLink(doi) {
         if (doi.startsWith('http://') || doi.startsWith('https://'))
