@@ -169,7 +169,8 @@ class Graph
 		}
 
 		let newmap = Vec.maskMap(mask);
-		let newnbrs:number[][] = Vec.anyArray([], newsz);
+		let newnbrs:number[][] = [];
+		for (let n = 0; n < newsz; n++) newnbrs.push([]);
 		for (let n = 0, pos = 0; n < oldsz; n++) if (mask[n])
     	{
 			for (let i of this.nbrs[n]) if (mask[i]) newnbrs[pos].push(newmap[i]);
@@ -254,7 +255,8 @@ class Graph
 		let cc = this.calculateComponents();
 		let sz = Vec.max(cc);
 
-		let grp:number[][] = Vec.anyArray([], sz);
+		let grp:number[][] = [];
+		for (let n = 0; n < sz; n++) grp.push([]);
 		for (let n = 0; n < cc.length; n++) grp[cc[n]].push(n);
 		return grp;
     }

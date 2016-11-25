@@ -464,9 +464,10 @@ class MolUtil
 		cc = g.calculateComponents();
 		let ccmax = Vec.max(cc);
 
-		let grps:number[][] = Vec.anyArray([], ccmax);
+		let grps:number[][] = [];
 		for (let n = 0; n < ccmax; n++)
 		{
+			grps[n] = [];
 			if (inRing) {grps[n].push(bf); grps[n].push(bt);}
 		}
 		for (let n = 0; n < cc.length; n++) grps[cc[n] - 1].push(oldmap[n] + 1);

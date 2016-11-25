@@ -2632,8 +2632,9 @@ class MolUtil {
         g.keepNodesMask(mask);
         cc = g.calculateComponents();
         let ccmax = Vec.max(cc);
-        let grps = Vec.anyArray([], ccmax);
+        let grps = [];
         for (let n = 0; n < ccmax; n++) {
+            grps[n] = [];
             if (inRing) {
                 grps[n].push(bf);
                 grps[n].push(bt);
@@ -4510,7 +4511,9 @@ class Graph {
             return;
         }
         let newmap = Vec.maskMap(mask);
-        let newnbrs = Vec.anyArray([], newsz);
+        let newnbrs = [];
+        for (let n = 0; n < newsz; n++)
+            newnbrs.push([]);
         for (let n = 0, pos = 0; n < oldsz; n++)
             if (mask[n]) {
                 for (let i of this.nbrs[n])
@@ -4559,7 +4562,9 @@ class Graph {
             return [];
         let cc = this.calculateComponents();
         let sz = Vec.max(cc);
-        let grp = Vec.anyArray([], sz);
+        let grp = [];
+        for (let n = 0; n < sz; n++)
+            grp.push([]);
         for (let n = 0; n < cc.length; n++)
             grp[cc[n]].push(n);
         return grp;
