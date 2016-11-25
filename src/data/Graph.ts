@@ -257,7 +257,7 @@ class Graph
 
 		let grp:number[][] = [];
 		for (let n = 0; n < sz; n++) grp.push([]);
-		for (let n = 0; n < cc.length; n++) grp[cc[n]].push(n);
+		for (let n = 0; n < cc.length; n++) grp[cc[n] - 1].push(n);
 		return grp;
     }
     

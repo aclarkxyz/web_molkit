@@ -119,7 +119,7 @@ class ButtonView extends Widget
 		const self = this;		
 		this.content.click(function(event:MouseEvent) {self.mouseClick(event);});
 		this.content.dblclick(function(event:MouseEvent) {self.mouseDoubleClick(event);});
-		this.content.mousedown(function(event:JQueryEventObject) {self.mouseDown(event);});
+		this.content.mousedown(function(event:JQueryEventObject) {event.preventDefault(); self.mouseDown(event);});
 		this.content.mouseup(function(event:JQueryEventObject) {self.mouseUp(event);});
 		this.content.mouseover(function(event:JQueryEventObject) {self.mouseOver(event);});
 		this.content.mouseout(function(event:JQueryEventObject) {self.mouseOut(event);});

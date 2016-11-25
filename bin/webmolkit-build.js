@@ -4566,7 +4566,7 @@ class Graph {
         for (let n = 0; n < sz; n++)
             grp.push([]);
         for (let n = 0; n < cc.length; n++)
-            grp[cc[n]].push(n);
+            grp[cc[n] - 1].push(n);
         return grp;
     }
     calculateBFS(idx) {
@@ -11699,7 +11699,7 @@ class ButtonView extends Widget {
         const self = this;
         this.content.click(function (event) { self.mouseClick(event); });
         this.content.dblclick(function (event) { self.mouseDoubleClick(event); });
-        this.content.mousedown(function (event) { self.mouseDown(event); });
+        this.content.mousedown(function (event) { event.preventDefault(); self.mouseDown(event); });
         this.content.mouseup(function (event) { self.mouseUp(event); });
         this.content.mouseover(function (event) { self.mouseOver(event); });
         this.content.mouseout(function (event) { self.mouseOut(event); });
