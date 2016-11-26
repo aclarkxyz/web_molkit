@@ -274,7 +274,7 @@ class CommandBank extends ButtonBank
 		else if (id == 'toggle') actv = ActivityType.SelectToggle;
 		else if (id == 'uncurrent') actv = ActivityType.SelectUnCurrent;
 		else if (id == 'join') actv = ActivityType.Join;
-		else if (id == 'inline') actv = ActivityType.AbbrevInline;
+		else if (id == 'inline') actv = ActivityType.AbbrevGroup;
 		else if (id == 'formula') actv = ActivityType.AbbrevFormula;
 		else if (id == 'clearabbrev') actv = ActivityType.AbbrevClear;
 		else if (id == 'expandabbrev') actv = ActivityType.AbbrevExpand;
