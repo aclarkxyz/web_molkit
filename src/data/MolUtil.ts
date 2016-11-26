@@ -151,8 +151,8 @@ class MolUtil
 		frag.setAtomUnpaired(fragidx, 0);
 		frag.setAtomHExplicit(fragidx, Molecule.HEXPLICIT_UNKNOWN);
 		frag.setAtomMapNum(fragidx, 0);
-		frag.setAtomExtra(fragidx, null);
-		frag.setAtomTransient(fragidx, null);
+		frag.setAtomExtra(fragidx, []);
+		frag.setAtomTransient(fragidx, []);
 		let adj = frag.atomAdjList(fragidx);
 		let x = 0, y = 0, inv = 1.0 / adj.length;
 		let bondOrder = 1;
@@ -168,7 +168,7 @@ class MolUtil
     
 		// create the excised molecule, and add in the fragment
 		let newmol = MolUtil.subgraphMask(mol, maskmol);
-		let newatom = newmol.addAtom(abbrevName, x, y);
+		let	 newatom = newmol.addAtom(abbrevName, x, y);
 		newmol.addBond(molidx, newatom, bondOrder);
 		MolUtil.setAbbrev(newmol, newatom, frag);
     

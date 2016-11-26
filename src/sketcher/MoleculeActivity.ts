@@ -179,238 +179,195 @@ class MoleculeActivity
 		
 		if (this.activity == ActivityType.Delete)
 		{
-			//this.executeRPC('delete');
 			this.execDelete();
 			this.finish();
 		}
 		else if (this.activity == ActivityType.Clear)
 		{
-			//this.executeRPC('clear');
 			this.execClear();
 			this.finish();
 		}
 		else if (this.activity == ActivityType.Cut)
 		{
-// !!			
-			this.executeRPC('cut');
+			// !! TODO			
 		}
 		else if (this.activity == ActivityType.Copy)
 		{
-// !!			
-			this.executeRPC('copy');
+			// !! TODO			
 		}
 		else if (this.activity == ActivityType.CopyMDLMOL)
 		{
-// !!			
-			//this.executeRPC('copyMDLMOL');
-			// !! do clipboard with result
+			// !! TODO			
 		}
 		else if (this.activity == ActivityType.CopySMILES)
 		{
-// !!			
-			//this.executeRPC('copySMILES');
-			// !! do clipboard with result
+			// !! TODO
 		}
 		else if (this.activity == ActivityType.Paste)
 		{
-// !!			
-			//this.executeRPC('paste');
-			// !! if applicable, activate template placement with result
+			// !! TODO
 		}
 		else if (this.activity == ActivityType.SelectAll)
 		{
-			//this.executeRPC('select', {'mode': 'all'});
 			this.execSelectAll(true);
 			this.finish();
 		}
 		else if (this.activity == ActivityType.SelectNone)
 		{
-			//this.executeRPC('select', {'mode': 'none'});
 			this.execSelectAll(false);
 			this.finish();
 		}
 		else if (this.activity == ActivityType.SelectPrevComp)
 		{
-			//this.executeRPC('select', {'mode': 'prevcomp'});
 			this.execSelectComp(-1);
 			this.finish();
 		}
 		else if (this.activity == ActivityType.SelectNextComp)
 		{
-			//this.executeRPC('select', {'mode': 'nextcomp'});
 			this.execSelectComp(1);
 			this.finish();
 		}
 		else if (this.activity == ActivityType.SelectSide)
 		{
-			//this.executeRPC('select', {'mode': 'side'});
 			this.execSelectSide();
 			this.finish();
 		}
 		else if (this.activity == ActivityType.SelectGrow)
 		{
-			//this.executeRPC('select', {'mode': 'grow'});
 			this.execSelectGrow();
 			this.finish();
 		}
 		else if (this.activity == ActivityType.SelectShrink)
 		{
-			//this.executeRPC('select', {'mode': 'shrink'});
 			this.execSelectShrink();
 			this.finish();
 		}
 		else if (this.activity == ActivityType.SelectChain)
 		{
-			//this.executeRPC('select', {'mode': 'chain'});
 			this.execSelectChain();
 			this.finish();
 		}
 		else if (this.activity == ActivityType.SelectSmRing)
 		{
-			//this.executeRPC('select', {'mode': 'smring'});
 			this.execSelectSmRing();
 			this.finish();
 		}
 		else if (this.activity == ActivityType.SelectRingBlk)
 		{
-			//this.executeRPC('select', {'mode': 'ringblk'});
 			this.execSelectRingBlk();
 			this.finish();
 		}
 		else if (this.activity == ActivityType.SelectCurElement)
 		{
-			//this.executeRPC('select', {'mode': 'curelement'});
 			this.execSelectCurElement();
 			this.finish();
 		}
 		else if (this.activity == ActivityType.SelectToggle)
 		{
-			//this.executeRPC('select', {'mode': 'toggle'});
 			this.execSelectToggle();
 			this.finish();
 		}
 		else if (this.activity == ActivityType.SelectUnCurrent)
 		{
-			//this.executeRPC('select', {'mode': 'uncurrent'});
 			this.execSelectUnCurrent();
 			this.finish();
 		}
 		else if (this.activity == ActivityType.Element)
 		{
-			//this.executeRPC('element', {'element': param.element, 'position': param.position});
-			this.execElement(param.element, param.positionX, param.positionY);
+			this.execElement(param.element, param.positionX, param.positionY, param.keepAbbrev);
 			this.finish();
 		}
 		else if (this.activity == ActivityType.Charge)
 		{
-			//this.executeRPC('charge', {'delta': param.delta});
 			this.execCharge(param.delta);
 			this.finish();
 		}
 		else if (this.activity == ActivityType.Connect)
 		{
-			//this.executeRPC('connect');
 			this.execConnect(1, Molecule.BONDTYPE_NORMAL);
 			this.finish();
 		}
 		else if (this.activity == ActivityType.Disconnect)
 		{
-			//this.executeRPC('disconnect');
 			this.execDisconnect();
 			this.finish();
 		}
 		else if (this.activity == ActivityType.BondOrder)
 		{
-			//this.executeRPC('bondorder', {'order': param.order});
 			this.execBond(param.order, Molecule.BONDTYPE_NORMAL);
 			this.finish();
 		}
 		else if (this.activity == ActivityType.BondType)
 		{
-			//this.executeRPC('bondtype', {'type': param.type});
 			this.execBond(1, param.type);
 			this.finish();
 		}
 		else if (this.activity == ActivityType.BondGeom)
 		{
-			//this.executeRPC('bondgeom', {'geom': param.geom});
 			this.execBondGeom(param.geom);
 			this.finish();
 		}
 		else if (this.activity == ActivityType.BondAtom)
 		{
-			//this.executeRPC('bondatom', param);
 			this.execBondAtom(param.order, param.type, param.element, param.x1, param.y1, param.x2, param.y2);
 			this.finish();
 		}
 		else if (this.activity == ActivityType.BondSwitch)
 		{
-			//this.executeRPC('bondswitch');
 			this.execBondSwitch();
 			this.finish();
 		}
 		else if (this.activity == ActivityType.BondAddTwo)
 		{
-			//this.executeRPC('bondaddtwo');
 			this.execBondAddTwo();
 			this.finish();
 		}
 		else if (this.activity == ActivityType.BondInsert)
 		{
-// !! (this is hard: requires template fusion)
-			this.executeRPC('bondinsert');
+			// !! TODO (use TemplateFusion)
 		}
 		else if (this.activity == ActivityType.Join)
 		{
-			//this.executeRPC('join');
 			this.execJoin();
 			this.finish();
 		}
 		else if (this.activity == ActivityType.Nudge)
 		{
-			//this.executeRPC('nudge', {'dir': param.dir});
 			this.execNudge(param.dir, 0.1);
 			this.finish();
 		}
 		else if (this.activity == ActivityType.NudgeLots)
 		{
-			//this.executeRPC('nudgelots', {'dir': param.dir});
 			this.execNudge(param.dir, 1);
 			this.finish();
 		}
 		else if (this.activity == ActivityType.NudgeFar)
 		{
-			//this.executeRPC('nudgefar', {'dir': param.dir});
 			this.execNudgeFar(param.dir);
 			this.finish();
 		}
 		else if (this.activity == ActivityType.Flip)
 		{
-			//this.executeRPC('flip', {'axis': param.axis});
 			this.execFlip(param.axis);
 			this.finish();
 		}
 		else if (this.activity == ActivityType.Scale)
 		{
-			//this.executeRPC('scale', {'mag': param.mag});
 			this.execScale(param.mag);
 			this.finish();
 		}
 		else if (this.activity == ActivityType.Rotate)
 		{
-			//this.executeRPC('rotate', {'theta': param.theta, 'centreX': param.centreX, 'centreY': param.centreY});
 			this.execRotate(param.theta, param.centreX, param.centreY);
 			this.finish();
 		}
 		else if (this.activity == ActivityType.Move)
 		{
-			//this.executeRPC('move', {'refAtom': param.refAtom, 'deltaX': param.deltaX, 'deltaY': param.deltaY});
 			this.execMove(param.refAtom, param.deltaX, param.deltaY);
 			this.finish();
 		}
 		else if (this.activity == ActivityType.Ring)
 		{
-			//this.executeRPC('ring', {'ringX': param.ringX, 'ringY': param.ringY, 'aromatic': param.aromatic});
 			this.execRing(param.ringX, param.ringY, param.aromatic);
 			this.finish();
 		}
@@ -512,46 +469,6 @@ class MoleculeActivity
 		}
 	}
 
-/*
-	// input: (standard)
-	//		.position: optional parameter; provides {x,y} position in the case of a new atom
-	// output: (standard)
-	public void execElement(String el) throws Exception
-	{
-		if (subjectLength > 0)
-		{
-			boolean anyChange = false;
-			for (int n = 0; n < subjectLength; n++) if (!mol.atomElement(subjectIndex[n]).equals(el))
-			{
-				anyChange = true;
-				break;
-			}
-			if (!anyChange)
-			{
-				errmsg = 'Elements not changed.';
-				return;
-			}
-		}
-		
-		outmol = mol.clone();
-
-		// when there's no subject, this is an add-atom operation
-		if (subjectLength == 0)
-		{
-			JSONArray pos = input.optJSONArray("position");
-			if (pos != null)
-			{
-				float x = (float) pos.getDouble(0), y = (float) pos.getDouble(1);
-				outmol.addAtom(el, x, y);
-			}
-			else SketchUtil.placeNewAtom(outmol, el);
-		}
-		else // there is a subject, so it's a change-atom operation
-		{
-			for (int n = 0; n < subjectLength; n++) MolUtil.setAtomElement(outmol, subjectIndex[n], el);
-		}
-	}*/
-	
 	public execDelete():void
 	{
 		if (!this.requireSubject()) return;
@@ -809,7 +726,7 @@ class MoleculeActivity
 		}
 	}
 
-	public execElement(element:string, positionX?:number, positionY?:number):void
+	public execElement(element:string, positionX?:number, positionY?:number, keepAbbrev?:boolean):void
 	{
 		if (this.subjectLength > 0)
 		{
@@ -838,7 +755,13 @@ class MoleculeActivity
 		}
 		else // there is a subject, so it's a change-atom operation
 		{
-			for (let n = 0; n < this.subjectLength; n++) MolUtil.setAtomElement(this.output.mol, this.subjectIndex[n], element);
+			for (let n = 0; n < this.subjectLength; n++)
+			{
+				if (keepAbbrev)
+					this.output.mol.setAtomElement(this.subjectIndex[n], element);
+				else 
+					MolUtil.setAtomElement(this.output.mol, this.subjectIndex[n], element);
+			}
 		}
 	}
 

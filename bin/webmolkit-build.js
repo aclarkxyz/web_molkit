@@ -2475,8 +2475,8 @@ class MolUtil {
         frag.setAtomUnpaired(fragidx, 0);
         frag.setAtomHExplicit(fragidx, Molecule.HEXPLICIT_UNKNOWN);
         frag.setAtomMapNum(fragidx, 0);
-        frag.setAtomExtra(fragidx, null);
-        frag.setAtomTransient(fragidx, null);
+        frag.setAtomExtra(fragidx, []);
+        frag.setAtomTransient(fragidx, []);
         let adj = frag.atomAdjList(fragidx);
         let x = 0, y = 0, inv = 1.0 / adj.length;
         let bondOrder = 1;
@@ -13341,10 +13341,8 @@ class MoleculeActivity {
             this.finish();
         }
         else if (this.activity == ActivityType.Cut) {
-            this.executeRPC('cut');
         }
         else if (this.activity == ActivityType.Copy) {
-            this.executeRPC('copy');
         }
         else if (this.activity == ActivityType.CopyMDLMOL) {
         }
@@ -13405,7 +13403,7 @@ class MoleculeActivity {
             this.finish();
         }
         else if (this.activity == ActivityType.Element) {
-            this.execElement(param.element, param.positionX, param.positionY);
+            this.execElement(param.element, param.positionX, param.positionY, param.keepAbbrev);
             this.finish();
         }
         else if (this.activity == ActivityType.Charge) {
@@ -13445,7 +13443,6 @@ class MoleculeActivity {
             this.finish();
         }
         else if (this.activity == ActivityType.BondInsert) {
-            this.executeRPC('bondinsert');
         }
         else if (this.activity == ActivityType.Join) {
             this.execJoin();
@@ -13759,7 +13756,7 @@ class MoleculeActivity {
             this.output.selectedMask[this.input.mol.bondTo(this.input.currentBond) - 1] = false;
         }
     }
-    execElement(element, positionX, positionY) {
+    execElement(element, positionX, positionY, keepAbbrev) {
         if (this.subjectLength > 0) {
             let anyChange = false;
             for (let n = 0; n < this.subjectLength; n++)
@@ -13780,8 +13777,12 @@ class MoleculeActivity {
                 SketchUtil.placeNewAtom(this.output.mol, element);
         }
         else {
-            for (let n = 0; n < this.subjectLength; n++)
-                MolUtil.setAtomElement(this.output.mol, this.subjectIndex[n], element);
+            for (let n = 0; n < this.subjectLength; n++) {
+                if (keepAbbrev)
+                    this.output.mol.setAtomElement(this.subjectIndex[n], element);
+                else
+                    MolUtil.setAtomElement(this.output.mol, this.subjectIndex[n], element);
+            }
         }
     }
     execCharge(delta) {
@@ -15409,7 +15410,7 @@ class Sketcher extends Widget {
         this.hoverAtom = 0;
         this.hoverBond = 0;
         if (!withAutoScale) {
-            let effects = new RenderEffects();
+            let effects = this.sketchEffects();
             this.layout = new ArrangeMolecule(this.mol, this, this.policy, effects);
             this.layout.arrange();
             this.metavec = new MetaVector();
@@ -15437,7 +15438,7 @@ class Sketcher extends Widget {
                 this.policy = RenderPolicy.defaultColourOnWhite();
                 this.pointScale = this.policy.data.pointScale;
             }
-            let effects = new RenderEffects();
+            let effects = this.sketchEffects();
             this.layout = new ArrangeMolecule(this.mol, this, this.policy, effects);
             this.layout.arrange();
             this.centreAndShrink();
@@ -15549,7 +15550,7 @@ class Sketcher extends Widget {
     }
     autoScale() {
         this.pointScale = this.policy.data.pointScale;
-        let effects = new RenderEffects();
+        let effects = this.sketchEffects();
         this.layout = new ArrangeMolecule(this.mol, this, this.policy, effects);
         this.layout.arrange();
         this.centreAndShrink();
@@ -15691,7 +15692,7 @@ class Sketcher extends Widget {
         this.offsetX = cx - (newScale / this.pointScale) * (cx - this.offsetX);
         this.offsetY = cy - (newScale / this.pointScale) * (cy - this.offsetY);
         this.pointScale = newScale;
-        let effects = new RenderEffects();
+        let effects = this.sketchEffects();
         this.layout = new ArrangeMolecule(this.mol, this, this.policy, effects);
         this.layout.arrange();
         this.metavec = new MetaVector();
@@ -16516,8 +16517,8 @@ class Sketcher extends Widget {
                 if (element == 'A') {
                     element = window.prompt('Enter element symbol:', this.opAtom == 0 ? '' : this.mol.atomElement(this.opAtom));
                 }
-                if (element != '') {
-                    let param = { 'element': element };
+                if (element) {
+                    let param = { 'element': element, 'keepAbbrev': true };
                     if (this.opAtom == 0) {
                         let x = this.xToAng(this.clickX), y = this.yToAng(this.clickY);
                         if (this.mol.numAtoms == 0) {
@@ -16818,6 +16819,13 @@ class Sketcher extends Widget {
                 return;
             }
         }
+    }
+    sketchEffects() {
+        let effects = new RenderEffects();
+        for (let n = 1; n <= this.mol.numAtoms; n++)
+            if (MolUtil.hasAbbrev(this.mol, n))
+                effects.dottedRectOutline[n] = 0x808080;
+        return effects;
     }
 }
 Sketcher.UNDO_SIZE = 20;

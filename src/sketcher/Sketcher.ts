@@ -158,7 +158,7 @@ class Sketcher extends Widget implements ArrangeMeasurement
 
 		if (!withAutoScale) 
 		{
-			let effects = new RenderEffects();
+			let effects = this.sketchEffects();
 			this.layout = new ArrangeMolecule(this.mol, this, this.policy, effects);
 			this.layout.arrange();
 			this.metavec = new MetaVector();
@@ -200,8 +200,7 @@ class Sketcher extends Widget implements ArrangeMeasurement
 				this.pointScale = this.policy.data.pointScale;
 			}
 		
-			let effects = new RenderEffects();
-			//let measure = new OutlineMeasurement(0, 0, this.policy.data.pointScale);
+			let effects = this.sketchEffects();
 			this.layout = new ArrangeMolecule(this.mol, this, this.policy, effects);
 			this.layout.arrange();
 
@@ -362,7 +361,7 @@ class Sketcher extends Widget implements ArrangeMeasurement
 
 		this.pointScale = this.policy.data.pointScale;
 
-		let effects = new RenderEffects();
+		let effects = this.sketchEffects();
 		this.layout = new ArrangeMolecule(this.mol, this, this.policy, effects);
 		this.layout.arrange();
 
@@ -548,7 +547,7 @@ class Sketcher extends Widget implements ArrangeMeasurement
 		this.pointScale = newScale;
 				
 		// --- begin inefficient: rewrite this to just transform the constituents...
-		let effects = new RenderEffects();
+		let effects = this.sketchEffects();
 		this.layout = new ArrangeMolecule(this.mol, this, this.policy, effects);
 		this.layout.arrange();
 		this.metavec = new MetaVector();
@@ -584,42 +583,6 @@ class Sketcher extends Widget implements ArrangeMeasurement
 		let perm = this.templatePerms[idx];
 		this.currentPerm = idx;
 
-/* !!! fnord... replace...		
-		// if not rendered yet, defer to the service to make that happen
-		if (perm.metavec == null)
-		{
-			let tpolicy = new RenderPolicy(this.policy.data);
-			tpolicy.data.foreground = 0x808080;
-			tpolicy.data.atomCols = tpolicy.data.atomCols.slice(0);
-			for (let n in tpolicy.data.atomCols) tpolicy.data.atomCols[n] = 0x808080;
-			
-			let input:any =
-			{
-				'tokenID': this.tokenID,
-				'policy': tpolicy.data,
-				'molNative': perm.display,
-				'transform': this.transform
-			};
-
-			Func.arrangeMolecule(input, function(result:any, error:ErrorRPC)
-			{
-				if (!result) 
-				{
-					alert('Arrangement of template overlay failed: ' + error.message);
-					return;
-				}
-				
-				//this.arrmol = result.arrmol;
-				perm.metavec = new MetaVector(result.metavec);
-
-				this.currentPerm = idx;
-				this.delayedRedraw();
-			}, this);
-
-			return;
-		}
-		
-*/
 		this.layoutTemplatePerm();
 		this.delayedRedraw();
 	}
@@ -1621,9 +1584,9 @@ class Sketcher extends Widget implements ArrangeMeasurement
 				{
 					element = window.prompt('Enter element symbol:', this.opAtom == 0 ? '' : this.mol.atomElement(this.opAtom));
 				}
-				if (element != '')
+				if (element)
 				{
-					let param:any = {'element': element};
+					let param:any = {'element': element, 'keepAbbrev': true};
 					if (this.opAtom == 0)
 					{
 						let x = this.xToAng(this.clickX), y = this.yToAng(this.clickY);
@@ -2003,6 +1966,14 @@ class Sketcher extends Widget implements ArrangeMeasurement
 
 			//console.log('DRAGFILE['+n+']: ' + files[n].name+',sz='+files[n].size+',type='+files[n].type);
 		}
+	}
+
+	// puts together an effects parameter for the main sketch
+	private sketchEffects():RenderEffects
+	{
+		let effects = new RenderEffects();
+		for (let n = 1; n <= this.mol.numAtoms; n++) if (MolUtil.hasAbbrev(this.mol, n)) effects.dottedRectOutline[n] = 0x808080; 
+		return effects;
 	}
 }
 
