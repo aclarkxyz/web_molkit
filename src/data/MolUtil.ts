@@ -114,17 +114,16 @@ class MolUtil
     	}
     }
     
-/*
     // converts a partitioned molecule into a molecule with a subsumed abbreviation; srcmask defines all the atoms which are not part
     // of the abbreviation; the resulting molecule will contain all of these, plus a new one that has been created to hold the 
     // abbreviation; the molecule  must be partitioned so that there is exactly 1 source atom attached to all of the abbreviations
     // NOTE: returns null if the template creation is invalid
-	public static Molecule convertToAbbrev(Molecule mol, boolean[] srcmask, String abbrevName)
+	public static convertToAbbrev(mol:Molecule, srcmask:boolean[], abbrevName:string):Molecule
 	{
-		int junction = 0;
-		for (int n = 1; n <= mol.numBonds; n++)
+		let junction = 0;
+		for (let n = 1; n <= mol.numBonds; n++)
 		{
-			int b1 = mol.bondFrom(n), b2 = mol.bondTo(n), atom = 0;
+			let b1 = mol.bondFrom(n), b2 = mol.bondTo(n), atom = 0;
 			if (srcmask[b1 - 1] && !srcmask[b2 - 1]) atom = b1;
 			else if (!srcmask[b1 - 1] && srcmask[b2 - 1]) atom = b2;
 			if (atom == 0) continue;
@@ -135,9 +134,9 @@ class MolUtil
 		if (junction == 0) return null;
     	
 		// refine the partition based on the junction, and derive reference indices
-		int na = mol.numAtoms, molidx = 0, fragidx = 0;
-		boolean[] maskmol = new boolean[na], maskfrag = new boolean[na];
-		for (int n = 0; n < na; n++)
+		let na = mol.numAtoms, molidx = 0, fragidx = 0;
+		let maskmol = Vec.booleanArray(false, na), maskfrag = Vec.booleanArray(false, na);
+		for (let n = 0; n < na; n++)
 		{
 			maskmol[n] = srcmask[n];
 			maskfrag[n] = !srcmask[n] || n + 1 == junction;
@@ -146,35 +145,35 @@ class MolUtil
 		}
     	
 		// create and analyse the fragment
-		Molecule frag = MolUtil.subgraph(mol, maskfrag);
-		frag.setAtomElement(fragidx, ABBREV_ATTACHMENT);
+		let frag = MolUtil.subgraphMask(mol, maskfrag);
+		frag.setAtomElement(fragidx, MolUtil.ABBREV_ATTACHMENT);
 		frag.setAtomCharge(fragidx, 0);
 		frag.setAtomUnpaired(fragidx, 0);
 		frag.setAtomHExplicit(fragidx, Molecule.HEXPLICIT_UNKNOWN);
 		frag.setAtomMapNum(fragidx, 0);
 		frag.setAtomExtra(fragidx, null);
 		frag.setAtomTransient(fragidx, null);
-		int[] adj = frag.atomAdjList(fragidx);
-		float x = 0, y = 0, inv = 1.0f / adj.length;
-		int bondOrder = 1;
-		for (int n = 0; n < adj.length; n++)
+		let adj = frag.atomAdjList(fragidx);
+		let x = 0, y = 0, inv = 1.0 / adj.length;
+		let bondOrder = 1;
+		for (let n = 0; n < adj.length; n++)
 		{
 			x += frag.atomX(adj[n]);
 			y += frag.atomY(adj[n]);
-			int b = frag.findBond(fragidx, adj[n]);
+			let b = frag.findBond(fragidx, adj[n]);
 			if (n == 0) bondOrder = frag.bondOrder(b);
 			else if (bondOrder != frag.bondOrder(b)) bondOrder = 1;
 		}
 		x *= inv; y *= inv;
     
 		// create the excised molecule, and add in the fragment
-		Molecule newmol = MolUtil.subgraph(mol, maskmol);
-		int newatom = newmol.addAtom(abbrevName, x, y);
+		let newmol = MolUtil.subgraphMask(mol, maskmol);
+		let newatom = newmol.addAtom(abbrevName, x, y);
 		newmol.addBond(molidx, newatom, bondOrder);
 		MolUtil.setAbbrev(newmol, newatom, frag);
     
     	return newmol;
-    }*/
+    }
     
     // hunts through any abbreviations, and expands them out to form actual atoms; the resulting representation is fair game for things 
     // like MF/MW calculations, or any other pure-atom property calculation; if alignCoords is true, it will line up the positions of
