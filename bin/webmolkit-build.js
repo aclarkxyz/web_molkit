@@ -11682,6 +11682,10 @@ class ButtonView extends Widget {
         };
         Func.getActionIcons({}, fcn, this);
     }
+    get topBank() {
+        return this.stack.length > 0 ? this.stack[this.stack.length - 1] : null;
+    }
+    get stackSize() { return this.stack.length; }
     render(parent) {
         super.render(parent);
         this.content.css('position', 'absolute');
@@ -11704,9 +11708,6 @@ class ButtonView extends Widget {
         this.content.mouseover(function (event) { self.mouseOver(event); });
         this.content.mouseout(function (event) { self.mouseOut(event); });
         this.content.mousemove(function (event) { self.mouseMove(event); });
-        this.content.keypress(function (event) { self.keyPressed(event); });
-        this.content.keydown(function (event) { self.keyDown(event); });
-        this.content.keyup(function (event) { self.keyUp(event); });
     }
     pushBank(bank) {
         bank.buttonView = this;
@@ -12047,7 +12048,13 @@ class ButtonView extends Widget {
             if (b != null) {
                 if (d.helpSpan == null) {
                     d.helpSpan = $('<span style="position: absolute;"></span>').appendTo(this.content);
-                    addTooltip(d.helpSpan, b.helpText);
+                    let txt = b.helpText;
+                    if (b.mnemonic) {
+                        while (txt.endsWith('.'))
+                            txt = txt.substring(0, txt.length - 1);
+                        txt += ' [' + b.mnemonic + ']';
+                    }
+                    addTooltip(d.helpSpan, txt);
                 }
                 d.helpSpan.css('left', d.x + 'px');
                 d.helpSpan.css('top', d.y + 'px');
@@ -12422,12 +12429,6 @@ class ButtonView extends Widget {
         let xy = eventCoords(event, this.content);
         if (!this.withinOutline(xy[0], xy[1]))
             return;
-    }
-    keyPressed(event) {
-    }
-    keyDown(event) {
-    }
-    keyUp(event) {
     }
     fixSVGFile(svg) {
         svg = svg.substring(svg.indexOf('<svg'));
@@ -14379,7 +14380,49 @@ class ButtonBank {
         this.buttons = [];
     }
     init() { }
+    claimKey(event) { return false; }
     bankClosed() { }
+    static matchKey(event, mnemonic) {
+        if (mnemonic == null || mnemonic == '')
+            return;
+        let mshift = false, mctrl = false, malt = false, mkey = mnemonic;
+        while (true) {
+            if (mkey.startsWith('Shift-')) {
+                mshift = true;
+                mkey = mkey.substring(6);
+            }
+            else if (mkey.startsWith('Ctrl-')) {
+                mctrl = true;
+                mkey = mkey.substring(5);
+            }
+            else if (mkey.startsWith('Alt-')) {
+                malt = true;
+                mkey = mkey.substring(4);
+            }
+            else
+                break;
+        }
+        if (mshift && !event.shiftKey)
+            return false;
+        if (mctrl && !event.ctrlKey)
+            return false;
+        if (malt && !event.altKey)
+            return false;
+        let ch = String.fromCharCode(event.keyCode || event.charCode);
+        if (event.keyCode == 27)
+            ch = 'escape';
+        else if (event.keyCode == 8)
+            ch = 'backspace';
+        else if (event.keyCode == 46)
+            ch = 'delete';
+        if (mshift) {
+            const SHIFT_SUBST = { '1': '!', '2': '@', '3': '#', '4': '$', '5': '%', '6': '^', '7': '&', '8': '*', '9': '(', '0': ')', '-': '_', '=': '+' };
+            let subst = SHIFT_SUBST[mkey];
+            if (subst)
+                mkey = subst;
+        }
+        return ch.toLowerCase() == mkey.toLowerCase();
+    }
 }
 const ELEMENTS_NOBLE = [
     "He", "Ar", "Kr", "Xe", "Rn"
@@ -14419,6 +14462,110 @@ var CommandType;
     CommandType[CommandType["FBlock"] = 9] = "FBlock";
     CommandType[CommandType["Noble"] = 10] = "Noble";
 })(CommandType || (CommandType = {}));
+const COMMANDS_MAIN = [
+    { 'id': 'undo', 'imageFN': 'MainUndo', 'helpText': 'Undo last change.', 'mnemonic': '' },
+    { 'id': 'redo', 'imageFN': 'MainRedo', 'helpText': 'Cancel last undo.', 'mnemonic': '' },
+    { 'id': 'zoomin', 'imageFN': 'MainZoomIn', 'helpText': 'Zoom in.', 'mnemonic': '=' },
+    { 'id': 'zoomout', 'imageFN': 'MainZoomOut', 'helpText': 'Zoom out.', 'mnemonic': '-' },
+    { 'id': 'zoomfit', 'imageFN': 'MainZoomFit', 'helpText': 'Show whole diagram onscreen.', 'mnemonic': '' },
+    { 'id': 'selside', 'imageFN': 'MainSelSide', 'helpText': 'Select alternate side of current atom or bond.', 'mnemonic': 'E' },
+    { 'id': 'selall', 'imageFN': 'MainSelAll', 'helpText': 'Select all atoms.', 'mnemonic': '' },
+    { 'id': 'selnone', 'imageFN': 'MainSelNone', 'helpText': 'Clear selection.', 'mnemonic': '' },
+    { 'id': 'delete', 'imageFN': 'MainDelete', 'helpText': 'Delete selected atoms and bonds.', 'mnemonic': '' },
+    { 'id': 'cut', 'imageFN': 'MainCut', 'helpText': 'Copy selection to clipboard, and remove.', 'mnemonic': '' },
+    { 'id': 'copy', 'imageFN': 'MainCopy', 'helpText': 'Copy selection to clipboard.', 'mnemonic': '' },
+    { 'id': 'paste', 'imageFN': 'MainPaste', 'helpText': 'Paste clipboard contents.', 'mnemonic': '' },
+    { 'id': 'atom', 'imageFN': 'MainAtom', 'helpText': 'Open the Atom submenu.', 'isSubMenu': true, 'mnemonic': 'A' },
+    { 'id': 'bond', 'imageFN': 'MainBond', 'helpText': 'Open the Bond submenu.', 'isSubMenu': true, 'mnemonic': 'B' },
+    { 'id': 'select', 'imageFN': 'MainSelect', 'helpText': 'Open the Selection submenu.', 'isSubMenu': true, 'mnemonic': 'S' },
+    { 'id': 'move', 'imageFN': 'MainMove', 'helpText': 'Open the Move submenu.', 'isSubMenu': true, 'mnemonic': 'M' }
+];
+const COMMANDS_ATOM = [
+    { 'id': 'element:C', 'text': 'C', 'helpText': 'Change elements to Carbon.', 'mnemonic': 'Shift-C' },
+    { 'id': 'element:N', 'text': 'N', 'helpText': 'Change elements to Nitrogen.', 'mnemonic': 'Shift-N' },
+    { 'id': 'element:O', 'text': 'O', 'helpText': 'Change elements to Oxygen.', 'mnemonic': 'Shift-O' },
+    { 'id': 'element:S', 'text': 'S', 'helpText': 'Change elements to Sulfur.', 'mnemonic': 'Shift-S' },
+    { 'id': 'element:P', 'text': 'P', 'helpText': 'Change elements to Phosphorus.', 'mnemonic': 'Shift-P' },
+    { 'id': 'element:H', 'text': 'H', 'helpText': 'Change elements to Hydrogen.', 'mnemonic': 'Shift-H' },
+    { 'id': 'element:F', 'text': 'F', 'helpText': 'Change elements to Fluorine.', 'mnemonic': 'Shift-F' },
+    { 'id': 'element:Cl', 'text': 'Cl', 'helpText': 'Change elements to Chlorine.', 'mnemonic': 'Shift-L' },
+    { 'id': 'element:Br', 'text': 'Br', 'helpText': 'Change elements to Bromine.', 'mnemonic': 'Shift-B' },
+    { 'id': 'element:I', 'text': 'I', 'helpText': 'Change elements to Iodine.', 'mnemonic': 'Shift-I' },
+    { 'id': 'plus', 'imageFN': 'AtomPlus', 'helpText': 'Increase the atom charge.', 'mnemonic': '+' },
+    { 'id': 'minus', 'imageFN': 'AtomMinus', 'helpText': 'Decrease the atom charge.', 'mnemonic': '_' },
+    { 'id': 'abbrev', 'imageFN': 'AtomAbbrev', 'helpText': 'Open list of common labels.', 'isSubMenu': true, 'mnemonic': 'Q' },
+    { 'id': 'sblock', 'imageFN': 'AtomSBlock', 'helpText': 'Open list of s-block elements.', 'isSubMenu': true, 'mnemonic': 'S' },
+    { 'id': 'pblock', 'imageFN': 'AtomPBlock', 'helpText': 'Open list of p-block elements.', 'isSubMenu': true, 'mnemonic': 'P' },
+    { 'id': 'dblock', 'imageFN': 'AtomDBlock', 'helpText': 'Open list of d-block elements.', 'isSubMenu': true, 'mnemonic': 'D' },
+    { 'id': 'fblock', 'imageFN': 'AtomFBlock', 'helpText': 'Open list of f-block elements.', 'isSubMenu': true, 'mnemonic': 'F' },
+    { 'id': 'noble', 'imageFN': 'AtomNoble', 'helpText': 'Open list of noble elements.', 'isSubMenu': true, 'mnemonic': 'Y' }
+];
+const COMMANDS_BOND = [
+    { 'id': 'one', 'imageFN': 'BondOne', 'helpText': 'Create or set bonds to single.', 'mnemonic': '1' },
+    { 'id': 'two', 'imageFN': 'BondTwo', 'helpText': 'Create or set bonds to double.', 'mnemonic': '2' },
+    { 'id': 'three', 'imageFN': 'BondThree', 'helpText': 'Create or set bonds to triple.', 'mnemonic': '3' },
+    { 'id': 'four', 'imageFN': 'BondFour', 'helpText': 'Create or set bonds to quadruple.', 'mnemonic': '' },
+    { 'id': 'zero', 'imageFN': 'BondZero', 'helpText': 'Create or set bonds to zero-order.', 'mnemonic': '0' },
+    { 'id': 'inclined', 'imageFN': 'BondUp', 'helpText': 'Create or set bonds to inclined.', 'mnemonic': '5' },
+    { 'id': 'declined', 'imageFN': 'BondDown', 'helpText': 'Create or set bonds to declined.', 'mnemonic': '6' },
+    { 'id': 'squig', 'imageFN': 'BondSquig', 'helpText': 'Create or set bonds to unknown stereochemistry.', 'mnemonic': '4' },
+    { 'id': 'addtwo', 'imageFN': 'BondAddTwo', 'helpText': 'Add two new bonds to the subject atom.', 'mnemonic': 'Shift-A' },
+    { 'id': 'insert', 'imageFN': 'BondInsert', 'helpText': 'Insert a methylene into the subject bond.', 'mnemonic': '' },
+    { 'id': 'switch', 'imageFN': 'BondSwitch', 'helpText': 'Cycle through likely bond geometries.', 'mnemonic': '' },
+    { 'id': 'linear', 'imageFN': 'BondLinear', 'helpText': 'Apply linear geometry.', 'mnemonic': 'Shift-Q' },
+    { 'id': 'trigonal', 'imageFN': 'BondTrigonal', 'helpText': 'Apply trigonal geometry.', 'mnemonic': 'Shift-W' },
+    { 'id': 'tetra1', 'imageFN': 'BondTetra1', 'helpText': 'Apply tetrahedral geometry #1.', 'mnemonic': 'Shift-E' },
+    { 'id': 'tetra2', 'imageFN': 'BondTetra2', 'helpText': 'Apply tetrahedral geometry #2.', 'mnemonic': 'Shift-R' },
+    { 'id': 'sqplan', 'imageFN': 'BondSqPlan', 'helpText': 'Apply square planar geometry.', 'mnemonic': 'Shift-T' },
+    { 'id': 'octa1', 'imageFN': 'BondOcta1', 'helpText': 'Apply octahedral geometry #1.', 'mnemonic': 'Shift-Y' },
+    { 'id': 'octa2', 'imageFN': 'BondOcta2', 'helpText': 'Apply octahedral geometry #2.', 'mnemonic': 'Shift-U' },
+    { 'id': 'connect', 'imageFN': 'BondConnect', 'helpText': 'Connect selected atoms, by proximity.', 'mnemonic': '' },
+    { 'id': 'disconnect', 'imageFN': 'BondDisconnect', 'helpText': 'Disconnect selected atoms.', 'mnemonic': '' }
+];
+const COMMANDS_SELECT = [
+    { 'id': 'selgrow', 'imageFN': 'SelectionGrow', 'helpText': 'Add adjacent atoms to selection.', 'mnemonic': '' },
+    { 'id': 'selshrink', 'imageFN': 'SelectionShrink', 'helpText': 'Unselect exterior atoms.', 'mnemonic': '' },
+    { 'id': 'selchain', 'imageFN': 'SelectionChain', 'helpText': 'Extend selection to non-ring atoms.', 'mnemonic': '' },
+    { 'id': 'smallring', 'imageFN': 'SelectionSmRing', 'helpText': 'Extend selection to small rings.', 'mnemonic': '' },
+    { 'id': 'ringblock', 'imageFN': 'SelectionRingBlk', 'helpText': 'Extend selection to ring blocks.', 'mnemonic': '' },
+    { 'id': 'curelement', 'imageFN': 'SelectionCurElement', 'helpText': 'Select all atoms of current element type.', 'mnemonic': '' },
+    { 'id': 'selprev', 'imageFN': 'MainSelPrev', 'helpText': 'Select previous connected component.', 'mnemonic': '' },
+    { 'id': 'selnext', 'imageFN': 'MainSelNext', 'helpText': 'Select next connected component.', 'mnemonic': '' },
+    { 'id': 'toggle', 'imageFN': 'SelectionToggle', 'helpText': 'Toggle selection of current.', 'mnemonic': '' },
+    { 'id': 'uncurrent', 'imageFN': 'SelectionUncurrent', 'helpText': 'Undefine current object.', 'mnemonic': '' },
+    { 'id': 'join', 'imageFN': 'MoveJoin', 'helpText': 'Overlapping atoms will be joined as one.', 'mnemonic': '' },
+    { 'id': 'new', 'imageFN': 'MainNew', 'helpText': 'Clear the molecular structure.', 'mnemonic': '' },
+    { 'id': 'inline', 'imageFN': 'AtomInline', 'helpText': 'Make selected atoms into an inline abbreviation.', 'mnemonic': '' },
+    { 'id': 'formula', 'imageFN': 'AtomFormula', 'helpText': 'Make selected atoms into their molecule formula.', 'mnemonic': '' },
+    { 'id': 'clearabbrev', 'imageFN': 'AtomClearAbbrev', 'helpText': 'Remove inline abbreviation.', 'mnemonic': '' },
+    { 'id': 'expandabbrev', 'imageFN': 'AtomExpandAbbrev', 'helpText': 'Expand out the inline abbreviation.', 'mnemonic': '' }
+];
+const COMMANDS_MOVE = [
+    { 'id': 'up', 'imageFN': 'MoveUp', 'helpText': 'Move subject atoms up slightly.', 'mnemonic': '' },
+    { 'id': 'down', 'imageFN': 'MoveDown', 'helpText': 'Move subject atoms down slightly.', 'mnemonic': '' },
+    { 'id': 'left', 'imageFN': 'MoveLeft', 'helpText': 'Move subject atoms slightly to the left.', 'mnemonic': '' },
+    { 'id': 'right', 'imageFN': 'MoveRight', 'helpText': 'Move subject atoms slightly to the right.', 'mnemonic': '' },
+    { 'id': 'uplots', 'imageFN': 'MoveUpLots', 'helpText': 'Move subject atoms up somewhat.', 'mnemonic': '' },
+    { 'id': 'downlots', 'imageFN': 'MoveDownLots', 'helpText': 'Move subject atoms down somewhat.', 'mnemonic': '' },
+    { 'id': 'leftlots', 'imageFN': 'MoveLeftLots', 'helpText': 'Move subject atoms somewhat to the left.', 'mnemonic': '' },
+    { 'id': 'rightlots', 'imageFN': 'MoveRightLots', 'helpText': 'Move subject atoms somewhat to the right.', 'mnemonic': '' },
+    { 'id': 'upfar', 'imageFN': 'MoveUpFar', 'helpText': 'Move subject atoms far up.', 'mnemonic': '' },
+    { 'id': 'downfar', 'imageFN': 'MoveDownFar', 'helpText': 'Move subject atoms far down.', 'mnemonic': '' },
+    { 'id': 'leftfar', 'imageFN': 'MoveLeftFar', 'helpText': 'Move subject atoms far to the left.', 'mnemonic': '' },
+    { 'id': 'rightfar', 'imageFN': 'MoveRightFar', 'helpText': 'Move subject atoms far to the right.', 'mnemonic': '' },
+    { 'id': 'rotp01', 'imageFN': 'MoveRotP01', 'helpText': 'Rotate 1\u00B0 counter-clockwise.', 'mnemonic': '' },
+    { 'id': 'rotm01', 'imageFN': 'MoveRotM01', 'helpText': 'Rotate 1\u00B0 clockwise.', 'mnemonic': '' },
+    { 'id': 'rotp05', 'imageFN': 'MoveRotP05', 'helpText': 'Rotate 5\u00B0 counter-clockwise.', 'mnemonic': '' },
+    { 'id': 'rotm05', 'imageFN': 'MoveRotM05', 'helpText': 'Rotate 5\u00B0 clockwise.', 'mnemonic': '' },
+    { 'id': 'rotp15', 'imageFN': 'MoveRotP15', 'helpText': 'Rotate 15\u00B0 counter-clockwise.', 'mnemonic': '' },
+    { 'id': 'rotm15', 'imageFN': 'MoveRotM15', 'helpText': 'Rotate 15\u00B0 clockwise.', 'mnemonic': '' },
+    { 'id': 'rotp30', 'imageFN': 'MoveRotP30', 'helpText': 'Rotate 30\u00B0 counter-clockwise.', 'mnemonic': '' },
+    { 'id': 'rotm30', 'imageFN': 'MoveRotM30', 'helpText': 'Rotate 30\u00B0 clockwise.', 'mnemonic': '' },
+    { 'id': 'hflip', 'imageFN': 'MoveHFlip', 'helpText': 'Flip subject atoms horizontally.', 'mnemonic': '' },
+    { 'id': 'vflip', 'imageFN': 'MoveVFlip', 'helpText': 'Flip subject atoms vertically.', 'mnemonic': '' },
+    { 'id': 'shrink', 'imageFN': 'MoveShrink', 'helpText': 'Decrease subject bond distances.', 'mnemonic': '' },
+    { 'id': 'grow', 'imageFN': 'MoveGrow', 'helpText': 'Increase subject bond distances.', 'mnemonic': '' }
+];
 class CommandBank extends ButtonBank {
     constructor(owner, cmdType = CommandType.Main) {
         super();
@@ -14426,110 +14573,21 @@ class CommandBank extends ButtonBank {
         this.cmdType = cmdType;
     }
     update() {
-        if (this.cmdType == CommandType.Main) {
-            this.buttons.push({ 'id': 'undo', 'imageFN': 'MainUndo', 'helpText': 'Undo last change.' });
-            this.buttons.push({ 'id': 'redo', 'imageFN': 'MainRedo', 'helpText': 'Cancel last undo.' });
-            this.buttons.push({ 'id': 'zoomin', 'imageFN': 'MainZoomIn', 'helpText': 'Zoom in.' });
-            this.buttons.push({ 'id': 'zoomout', 'imageFN': 'MainZoomOut', 'helpText': 'Zoom out.' });
-            this.buttons.push({ 'id': 'zoomfit', 'imageFN': 'MainZoomFit', 'helpText': 'Show whole diagram onscreen.' });
-            this.buttons.push({ 'id': 'selside', 'imageFN': 'MainSelSide', 'helpText': 'Select alternate side of current atom or bond.' });
-            this.buttons.push({ 'id': 'selall', 'imageFN': 'MainSelAll', 'helpText': 'Select all atoms.' });
-            this.buttons.push({ 'id': 'selnone', 'imageFN': 'MainSelNone', 'helpText': 'Clear selection.' });
-            this.buttons.push({ 'id': 'delete', 'imageFN': 'MainDelete', 'helpText': 'Delete selected atoms and bonds.' });
-            this.buttons.push({ 'id': 'cut', 'imageFN': 'MainCut', 'helpText': 'Copy selection to clipboard, and remove.' });
-            this.buttons.push({ 'id': 'copy', 'imageFN': 'MainCopy', 'helpText': 'Copy selection to clipboard.' });
-            this.buttons.push({ 'id': 'paste', 'imageFN': 'MainPaste', 'helpText': 'Paste clipboard contents.' });
-            this.buttons.push({ 'id': 'atom', 'imageFN': 'MainAtom', 'helpText': 'Open the Atom submenu.', 'isSubMenu': true });
-            this.buttons.push({ 'id': 'bond', 'imageFN': 'MainBond', 'helpText': 'Open the Bond submenu.', 'isSubMenu': true });
-            this.buttons.push({ 'id': 'select', 'imageFN': 'MainSelect', 'helpText': 'Open the Selection submenu.', 'isSubMenu': true });
-            this.buttons.push({ 'id': 'move', 'imageFN': 'MainMove', 'helpText': 'Open the Move submenu.', 'isSubMenu': true });
-        }
-        else if (this.cmdType == CommandType.Atom) {
-            this.buttons.push({ 'id': 'element:C', 'text': 'C', 'helpText': 'Change elements to Carbon.' });
-            this.buttons.push({ 'id': 'element:N', 'text': 'N', 'helpText': 'Change elements to Nitrogen.' });
-            this.buttons.push({ 'id': 'element:O', 'text': 'O', 'helpText': 'Change elements to Oxygen.' });
-            this.buttons.push({ 'id': 'element:S', 'text': 'S', 'helpText': 'Change elements to Sulfur.' });
-            this.buttons.push({ 'id': 'element:P', 'text': 'P', 'helpText': 'Change elements to Phosphorus.' });
-            this.buttons.push({ 'id': 'element:H', 'text': 'H', 'helpText': 'Change elements to Hydrogen.' });
-            this.buttons.push({ 'id': 'element:F', 'text': 'F', 'helpText': 'Change elements to Fluorine.' });
-            this.buttons.push({ 'id': 'element:Cl', 'text': 'Cl', 'helpText': 'Change elements to Chlorine.' });
-            this.buttons.push({ 'id': 'element:Br', 'text': 'Br', 'helpText': 'Change elements to Bromine.' });
-            this.buttons.push({ 'id': 'element:I', 'text': 'I', 'helpText': 'Change elements to Iodine.' });
-            this.buttons.push({ 'id': 'plus', 'imageFN': 'AtomPlus', 'helpText': 'Increase the atom charge.' });
-            this.buttons.push({ 'id': 'minus', 'imageFN': 'AtomMinus', 'helpText': 'Decrease the atom charge.' });
-            this.buttons.push({ 'id': 'abbrev', 'imageFN': 'AtomAbbrev', 'helpText': 'Open list of common labels.', 'isSubMenu': true });
-            this.buttons.push({ 'id': 'sblock', 'imageFN': 'AtomSBlock', 'helpText': 'Open list of s-block elements.', 'isSubMenu': true });
-            this.buttons.push({ 'id': 'pblock', 'imageFN': 'AtomPBlock', 'helpText': 'Open list of p-block elements.', 'isSubMenu': true });
-            this.buttons.push({ 'id': 'dblock', 'imageFN': 'AtomDBlock', 'helpText': 'Open list of d-block elements.', 'isSubMenu': true });
-            this.buttons.push({ 'id': 'fblock', 'imageFN': 'AtomFBlock', 'helpText': 'Open list of f-block elements.', 'isSubMenu': true });
-            this.buttons.push({ 'id': 'noble', 'imageFN': 'AtomNoble', 'helpText': 'Open list of noble elements.', 'isSubMenu': true });
-        }
-        else if (this.cmdType == CommandType.Bond) {
-            this.buttons.push({ 'id': 'one', 'imageFN': 'BondOne', 'helpText': 'Create or set bonds to single.' });
-            this.buttons.push({ 'id': 'two', 'imageFN': 'BondTwo', 'helpText': 'Create or set bonds to double.' });
-            this.buttons.push({ 'id': 'three', 'imageFN': 'BondThree', 'helpText': 'Create or set bonds to triple.' });
-            this.buttons.push({ 'id': 'four', 'imageFN': 'BondFour', 'helpText': 'Create or set bonds to quadruple.' });
-            this.buttons.push({ 'id': 'zero', 'imageFN': 'BondZero', 'helpText': 'Create or set bonds to zero-order.' });
-            this.buttons.push({ 'id': 'inclined', 'imageFN': 'BondUp', 'helpText': 'Create or set bonds to inclined.' });
-            this.buttons.push({ 'id': 'declined', 'imageFN': 'BondDown', 'helpText': 'Create or set bonds to declined.' });
-            this.buttons.push({ 'id': 'squig', 'imageFN': 'BondSquig', 'helpText': 'Create or set bonds to unknown stereochemistry.' });
-            this.buttons.push({ 'id': 'addtwo', 'imageFN': 'BondAddTwo', 'helpText': 'Add two new bonds to the subject atom.' });
-            this.buttons.push({ 'id': 'insert', 'imageFN': 'BondInsert', 'helpText': 'Insert a methylene into the subject bond.' });
-            this.buttons.push({ 'id': 'switch', 'imageFN': 'BondSwitch', 'helpText': 'Cycle through likely bond geometries.' });
-            this.buttons.push({ 'id': 'linear', 'imageFN': 'BondLinear', 'helpText': 'Apply linear geometry.' });
-            this.buttons.push({ 'id': 'trigonal', 'imageFN': 'BondTrigonal', 'helpText': 'Apply trigonal geometry.' });
-            this.buttons.push({ 'id': 'tetra1', 'imageFN': 'BondTetra1', 'helpText': 'Apply tetrahedral geometry #1.' });
-            this.buttons.push({ 'id': 'tetra2', 'imageFN': 'BondTetra2', 'helpText': 'Apply tetrahedral geometry #2.' });
-            this.buttons.push({ 'id': 'sqplan', 'imageFN': 'BondSqPlan', 'helpText': 'Apply square planar geometry.' });
-            this.buttons.push({ 'id': 'octa1', 'imageFN': 'BondOcta1', 'helpText': 'Apply octahedral geometry #1.' });
-            this.buttons.push({ 'id': 'octa2', 'imageFN': 'BondOcta2', 'helpText': 'Apply octahedral geometry #2.' });
-            this.buttons.push({ 'id': 'connect', 'imageFN': 'BondConnect', 'helpText': 'Connect selected atoms, by proximity.' });
-            this.buttons.push({ 'id': 'disconnect', 'imageFN': 'BondDisconnect', 'helpText': 'Disconnect selected atoms.' });
-        }
-        else if (this.cmdType == CommandType.Select) {
-            this.buttons.push({ 'id': 'selgrow', 'imageFN': 'SelectionGrow', 'helpText': 'Add adjacent atoms to selection.' });
-            this.buttons.push({ 'id': 'selshrink', 'imageFN': 'SelectionShrink', 'helpText': 'Unselect exterior atoms.' });
-            this.buttons.push({ 'id': 'selchain', 'imageFN': 'SelectionChain', 'helpText': 'Extend selection to non-ring atoms.' });
-            this.buttons.push({ 'id': 'smallring', 'imageFN': 'SelectionSmRing', 'helpText': 'Extend selection to small rings.' });
-            this.buttons.push({ 'id': 'ringblock', 'imageFN': 'SelectionRingBlk', 'helpText': 'Extend selection to ring blocks.' });
-            this.buttons.push({ 'id': 'curelement', 'imageFN': 'SelectionCurElement', 'helpText': 'Select all atoms of current element type.' });
-            this.buttons.push({ 'id': 'selprev', 'imageFN': 'MainSelPrev', 'helpText': 'Select previous connected component.' });
-            this.buttons.push({ 'id': 'selnext', 'imageFN': 'MainSelNext', 'helpText': 'Select next connected component.' });
-            this.buttons.push({ 'id': 'toggle', 'imageFN': 'SelectionToggle', 'helpText': 'Toggle selection of current.' });
-            this.buttons.push({ 'id': 'uncurrent', 'imageFN': 'SelectionUncurrent', 'helpText': 'Undefine current object.' });
-            this.buttons.push({ 'id': 'join', 'imageFN': 'MoveJoin', 'helpText': 'Overlapping atoms will be joined as one.' });
-            this.buttons.push({ 'id': 'new', 'imageFN': 'MainNew', 'helpText': 'Clear the molecular structure..' });
-            this.buttons.push({ 'id': 'inline', 'imageFN': 'AtomInline', 'helpText': 'Make selected atoms into an inline abbreviation.' });
-            this.buttons.push({ 'id': 'formula', 'imageFN': 'AtomFormula', 'helpText': 'Make selected atoms into their molecule formula.' });
-            this.buttons.push({ 'id': 'clearabbrev', 'imageFN': 'AtomClearAbbrev', 'helpText': 'Remove inline abbreviation.' });
-            this.buttons.push({ 'id': 'expandabbrev', 'imageFN': 'AtomExpandAbbrev', 'helpText': 'Expand out the inline abbreviation.' });
-        }
-        else if (this.cmdType == CommandType.Move) {
-            this.buttons.push({ 'id': 'up', 'imageFN': 'MoveUp', 'helpText': 'Move subject atoms up slightly.' });
-            this.buttons.push({ 'id': 'down', 'imageFN': 'MoveDown', 'helpText': 'Move subject atoms down slightly.' });
-            this.buttons.push({ 'id': 'left', 'imageFN': 'MoveLeft', 'helpText': 'Move subject atoms slightly to the left.' });
-            this.buttons.push({ 'id': 'right', 'imageFN': 'MoveRight', 'helpText': 'Move subject atoms slightly to the right.' });
-            this.buttons.push({ 'id': 'uplots', 'imageFN': 'MoveUpLots', 'helpText': 'Move subject atoms up somewhat.' });
-            this.buttons.push({ 'id': 'downlots', 'imageFN': 'MoveDownLots', 'helpText': 'Move subject atoms down somewhat.' });
-            this.buttons.push({ 'id': 'leftlots', 'imageFN': 'MoveLeftLots', 'helpText': 'Move subject atoms somewhat to the left.' });
-            this.buttons.push({ 'id': 'rightlots', 'imageFN': 'MoveRightLots', 'helpText': 'Move subject atoms somewhat to the right.' });
-            this.buttons.push({ 'id': 'upfar', 'imageFN': 'MoveUpFar', 'helpText': 'Move subject atoms far up.' });
-            this.buttons.push({ 'id': 'downfar', 'imageFN': 'MoveDownFar', 'helpText': 'Move subject atoms far down.' });
-            this.buttons.push({ 'id': 'leftfar', 'imageFN': 'MoveLeftFar', 'helpText': 'Move subject atoms far to the left.' });
-            this.buttons.push({ 'id': 'rightfar', 'imageFN': 'MoveRightFar', 'helpText': 'Move subject atoms far to the right.' });
-            this.buttons.push({ 'id': 'rotp01', 'imageFN': 'MoveRotP01', 'helpText': 'Rotate 1\u00B0 counter-clockwise.' });
-            this.buttons.push({ 'id': 'rotm01', 'imageFN': 'MoveRotM01', 'helpText': 'Rotate 1\u00B0 clockwise.' });
-            this.buttons.push({ 'id': 'rotp05', 'imageFN': 'MoveRotP05', 'helpText': 'Rotate 5\u00B0 counter-clockwise.' });
-            this.buttons.push({ 'id': 'rotm05', 'imageFN': 'MoveRotM05', 'helpText': 'Rotate 5\u00B0 clockwise.' });
-            this.buttons.push({ 'id': 'rotp15', 'imageFN': 'MoveRotP15', 'helpText': 'Rotate 15\u00B0 counter-clockwise.' });
-            this.buttons.push({ 'id': 'rotm15', 'imageFN': 'MoveRotM15', 'helpText': 'Rotate 15\u00B0 clockwise.' });
-            this.buttons.push({ 'id': 'rotp30', 'imageFN': 'MoveRotP30', 'helpText': 'Rotate 30\u00B0 counter-clockwise.' });
-            this.buttons.push({ 'id': 'rotm30', 'imageFN': 'MoveRotM30', 'helpText': 'Rotate 30\u00B0 clockwise.' });
-            this.buttons.push({ 'id': 'hflip', 'imageFN': 'MoveHFlip', 'helpText': 'Flip subject atoms horizontally.' });
-            this.buttons.push({ 'id': 'vflip', 'imageFN': 'MoveVFlip', 'helpText': 'Flip subject atoms vertically.' });
-            this.buttons.push({ 'id': 'shrink', 'imageFN': 'MoveShrink', 'helpText': 'Decrease subject bond distances.' });
-            this.buttons.push({ 'id': 'grow', 'imageFN': 'MoveGrow', 'helpText': 'Increase subject bond distances.' });
-        }
+        if (this.cmdType == CommandType.Main)
+            for (let btn of COMMANDS_MAIN)
+                this.buttons.push(btn);
+        else if (this.cmdType == CommandType.Atom)
+            for (let btn of COMMANDS_ATOM)
+                this.buttons.push(btn);
+        else if (this.cmdType == CommandType.Bond)
+            for (let btn of COMMANDS_BOND)
+                this.buttons.push(btn);
+        else if (this.cmdType == CommandType.Select)
+            for (let btn of COMMANDS_SELECT)
+                this.buttons.push(btn);
+        else if (this.cmdType == CommandType.Move)
+            for (let btn of COMMANDS_MOVE)
+                this.buttons.push(btn);
         else if (this.cmdType == CommandType.Abbrev)
             this.populateElements(ELEMENTS_NOBLE);
         else if (this.cmdType == CommandType.SBlock)
@@ -14823,6 +14881,16 @@ class CommandBank extends ButtonBank {
             new MoleculeActivity(this.owner, actv, param).execute();
         }
     }
+    claimKey(event) {
+        for (let listItems of [COMMANDS_MAIN, COMMANDS_ATOM, COMMANDS_BOND, COMMANDS_SELECT, COMMANDS_MOVE])
+            for (let item of listItems) {
+                if (ButtonBank.matchKey(event, item.mnemonic)) {
+                    this.hitButton(item.id);
+                    return true;
+                }
+            }
+        return false;
+    }
 }
 class TemplateBank extends ButtonBank {
     constructor(owner, group) {
@@ -15032,6 +15100,34 @@ class FusionBank extends ButtonBank {
         this.owner.clearPermutations();
     }
 }
+const TOOLS_MAIN = [
+    { 'id': 'arrow', 'imageFN': 'ToolSelect', 'helpText': 'Selection tool.', 'mnemonic': 'Escape' },
+    { 'id': 'rotate', 'imageFN': 'ToolRotate', 'helpText': 'Rotate subject atoms.', 'mnemonic': 'R' },
+    { 'id': 'pan', 'imageFN': 'ToolPan', 'helpText': 'Pan the viewport around the screen.', 'mnemonic': 'V' },
+    { 'id': 'drag', 'imageFN': 'ToolDrag', 'helpText': 'Drag selected atoms to new positions.', 'mnemonic': 'G' },
+    { 'id': 'erasor', 'imageFN': 'ToolErasor', 'helpText': 'Delete atoms or bonds by selecting.', 'mnemonic': 'Delete' },
+    { 'id': 'bondOrder0', 'imageFN': 'BondZero', 'helpText': 'Create or change a bond to zero order.', 'mnemonic': '' },
+    { 'id': 'bondOrder1', 'imageFN': 'BondOne', 'helpText': 'Create or change a bond to single.', 'mnemonic': 'Shift-1' },
+    { 'id': 'bondOrder2', 'imageFN': 'BondTwo', 'helpText': 'Create or change a bond to double.', 'mnemonic': 'Shift-2' },
+    { 'id': 'bondOrder3', 'imageFN': 'BondThree', 'helpText': 'Create or change a bond to triple.', 'mnemonic': 'Shift-3' },
+    { 'id': 'bondUnknown', 'imageFN': 'BondSquig', 'helpText': 'Create or change a bond to unknown stereochemistry.', 'mnemonic': 'Shift-4' },
+    { 'id': 'bondInclined', 'imageFN': 'BondUp', 'helpText': 'Create or change a bond to up-wedge.', 'mnemonic': 'Shift-5' },
+    { 'id': 'bondDeclined', 'imageFN': 'BondDown', 'helpText': 'Create or change a bond to down-wedge.', 'mnemonic': 'Shift-6' },
+    { 'id': 'ringAliph', 'imageFN': 'ToolRing', 'helpText': 'Create plain ring.', 'mnemonic': 'Shift-7' },
+    { 'id': 'ringArom', 'imageFN': 'ToolArom', 'helpText': 'Create aromatic ring.', 'mnemonic': 'Shift-8' },
+    { 'id': 'atomPlus', 'imageFN': 'AtomPlus', 'helpText': 'Increase charge on atom.', 'mnemonic': '' },
+    { 'id': 'atomMinus', 'imageFN': 'AtomMinus', 'helpText': 'Decrease charge on atom.', 'mnemonic': '' },
+    { 'id': 'elementC', 'text': 'C', 'helpText': 'Change elements to Carbon.', 'mnemonic': '' },
+    { 'id': 'elementN', 'text': 'N', 'helpText': 'Change elements to Nitrogen.', 'mnemonic': '' },
+    { 'id': 'elementO', 'text': 'O', 'helpText': 'Change elements to Oxygen.', 'mnemonic': '' },
+    { 'id': 'elementS', 'text': 'S', 'helpText': 'Change elements to Sulfur.', 'mnemonic': '' },
+    { 'id': 'elementP', 'text': 'P', 'helpText': 'Change elements to Phosphorus.', 'mnemonic': '' },
+    { 'id': 'elementH', 'text': 'H', 'helpText': 'Change elements to Hydrogen.', 'mnemonic': '' },
+    { 'id': 'elementF', 'text': 'F', 'helpText': 'Change elements to Fluorine.', 'mnemonic': '' },
+    { 'id': 'elementCl', 'text': 'Cl', 'helpText': 'Change elements to Chlorine.', 'mnemonic': '' },
+    { 'id': 'elementBr', 'text': 'Br', 'helpText': 'Change elements to Bromine.', 'mnemonic': '' },
+    { 'id': 'elementA', 'text': 'A', 'helpText': 'Pick other element.', 'mnemonic': 'O' }
+];
 class ToolBank extends ButtonBank {
     constructor(owner) {
         super();
@@ -15039,38 +15135,22 @@ class ToolBank extends ButtonBank {
         this.initiallySelected = 'arrow';
     }
     update() {
-        this.buttons = [];
-        this.buttons.push({ 'id': 'arrow', 'imageFN': 'ToolSelect', 'helpText': 'Selection tool.' });
-        this.buttons.push({ 'id': 'rotate', 'imageFN': 'ToolRotate', 'helpText': 'Rotate subject atoms.' });
-        this.buttons.push({ 'id': 'pan', 'imageFN': 'ToolPan', 'helpText': 'Pan the viewport around the screen.' });
-        this.buttons.push({ 'id': 'drag', 'imageFN': 'ToolDrag', 'helpText': 'Drag selected atoms to new positions.' });
-        this.buttons.push({ 'id': 'erasor', 'imageFN': 'ToolErasor', 'helpText': 'Delete atoms or bonds by selecting.' });
-        this.buttons.push({ 'id': 'bondOrder0', 'imageFN': 'BondZero', 'helpText': 'Create or change a bond to zero order.' });
-        this.buttons.push({ 'id': 'bondOrder1', 'imageFN': 'BondOne', 'helpText': 'Create or change a bond to single.' });
-        this.buttons.push({ 'id': 'bondOrder2', 'imageFN': 'BondTwo', 'helpText': 'Create or change a bond to double.' });
-        this.buttons.push({ 'id': 'bondOrder3', 'imageFN': 'BondThree', 'helpText': 'Create or change a bond to triple.' });
-        this.buttons.push({ 'id': 'bondUnknown', 'imageFN': 'BondSquig', 'helpText': 'Create or change a bond to down-wedge.' });
-        this.buttons.push({ 'id': 'bondInclined', 'imageFN': 'BondUp', 'helpText': 'Create or change a bond to up-wedge.' });
-        this.buttons.push({ 'id': 'bondDeclined', 'imageFN': 'BondDown', 'helpText': 'Create or change a bond to down-wedge.' });
-        this.buttons.push({ 'id': 'ringAliph', 'imageFN': 'ToolRing', 'helpText': 'Create plain ring.' });
-        this.buttons.push({ 'id': 'ringArom', 'imageFN': 'ToolArom', 'helpText': 'Create aromatic ring.' });
-        this.buttons.push({ 'id': 'atomPlus', 'imageFN': 'AtomPlus', 'helpText': 'Increase charge on atom.' });
-        this.buttons.push({ 'id': 'atomMinus', 'imageFN': 'AtomMinus', 'helpText': 'Decrease charge on atom.' });
-        this.buttons.push({ 'id': 'elementC', 'text': 'C', 'helpText': 'Change elements to Carbon.' });
-        this.buttons.push({ 'id': 'elementN', 'text': 'N', 'helpText': 'Change elements to Nitrogen.' });
-        this.buttons.push({ 'id': 'elementO', 'text': 'O', 'helpText': 'Change elements to Oxygen.' });
-        this.buttons.push({ 'id': 'elementS', 'text': 'S', 'helpText': 'Change elements to Sulfur.' });
-        this.buttons.push({ 'id': 'elementP', 'text': 'P', 'helpText': 'Change elements to Phosphorus.' });
-        this.buttons.push({ 'id': 'elementH', 'text': 'H', 'helpText': 'Change elements to Hydrogen.' });
-        this.buttons.push({ 'id': 'elementF', 'text': 'F', 'helpText': 'Change elements to Fluorine.' });
-        this.buttons.push({ 'id': 'elementCl', 'text': 'Cl', 'helpText': 'Change elements to Chlorine.' });
-        this.buttons.push({ 'id': 'elementBr', 'text': 'Br', 'helpText': 'Change elements to Bromine.' });
-        this.buttons.push({ 'id': 'elementA', 'text': 'A', 'helpText': 'Pick other element.' });
+        for (let btn of TOOLS_MAIN)
+            this.buttons.push(btn);
         this.buttonView.setSelectedButton('arrow');
     }
     ;
     hitButton(id) {
         this.buttonView.setSelectedButton(id);
+    }
+    claimKey(event) {
+        for (let item of TOOLS_MAIN) {
+            if (ButtonBank.matchKey(event, item.mnemonic)) {
+                this.hitButton(item.id);
+                return true;
+            }
+        }
+        return false;
     }
 }
 var DraggingTool;
@@ -15222,6 +15302,8 @@ class Sketcher extends Widget {
         this.container.css('background-color', colourCanvas(this.background));
         this.container.css('border', '1px solid ' + colourCanvas(this.border));
         this.container.css('border-radius', '4px');
+        this.container.attr('tabindex', '0');
+        this.container.focus();
         let canvasStyle = 'position: absolute; left: 0; top: 0;';
         canvasStyle += ' pointer-events: none;';
         this.canvasUnder = newElement(this.container, 'canvas', { 'width': this.width, 'height': this.height, 'style': canvasStyle });
@@ -16137,6 +16219,7 @@ class Sketcher extends Widget {
         return atoms;
     }
     mouseClick(event) {
+        this.container.focus();
     }
     mouseDoubleClick(event) {
         event.stopImmediatePropagation();
@@ -16502,8 +16585,47 @@ class Sketcher extends Widget {
         }
     }
     keyPressed(event) {
+        if (this.toolView != null && this.toolView.topBank.claimKey(event)) {
+            event.preventDefault();
+            return;
+        }
+        if (this.commandView != null && this.commandView.topBank.claimKey(event)) {
+            event.preventDefault();
+            return;
+        }
+        if (this.templateView != null && this.templateView.topBank.claimKey(event)) {
+            event.preventDefault();
+            return;
+        }
     }
     keyDown(event) {
+        let key = event.keyCode;
+        if (key == 27) {
+            for (let view of [this.templateView, this.commandView, this.toolView])
+                if (view != null && view.stackSize > 1) {
+                    view.popBank();
+                    event.preventDefault();
+                    return;
+                }
+        }
+        if (key == 37) { }
+        else if (key == 39) { }
+        else if (key == 38) { }
+        else if (key == 40) { }
+        else if ([27, 8, 46].indexOf(key) >= 0) {
+            if (this.toolView != null && this.toolView.topBank.claimKey(event)) {
+                event.preventDefault();
+                return;
+            }
+            if (this.commandView != null && this.commandView.topBank.claimKey(event)) {
+                event.preventDefault();
+                return;
+            }
+            if (this.templateView != null && this.templateView.topBank.claimKey(event)) {
+                event.preventDefault();
+                return;
+            }
+        }
     }
     keyUp(event) {
     }
