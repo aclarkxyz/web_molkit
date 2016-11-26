@@ -95,6 +95,15 @@ class ButtonView extends Widget
 
 	// --------------------------------------- public methods ---------------------------------------
 
+	// returns the current bank, or null if none
+	public get topBank():ButtonBank
+	{
+		return this.stack.length > 0 ? this.stack[this.stack.length - 1] : null;
+	}
+
+	// returns how many banks are piled up
+	public get stackSize():number {return this.stack.length;}
+
 	// create the canvas
 	public render(parent:any):void
 	{
@@ -124,9 +133,9 @@ class ButtonView extends Widget
 		this.content.mouseover(function(event:JQueryEventObject) {self.mouseOver(event);});
 		this.content.mouseout(function(event:JQueryEventObject) {self.mouseOut(event);});
 		this.content.mousemove(function(event:JQueryEventObject) {self.mouseMove(event);});
-		this.content.keypress(function(event:KeyboardEvent) {self.keyPressed(event);});
+		/*this.content.keypress(function(event:KeyboardEvent) {self.keyPressed(event);});
 		this.content.keydown(function(event:KeyboardEvent) {self.keyDown(event);});
-		this.content.keyup(function(event:KeyboardEvent) {self.keyUp(event);});
+		this.content.keyup(function(event:KeyboardEvent) {self.keyUp(event);});*/
 	}
 
 	// adds a new molsync.ui.ButtonBank instance to the stack, making it the current one
@@ -345,7 +354,7 @@ class ButtonView extends Widget
 		}
 		else
 		{
-			// !! implement...
+			// !! implement "middle of window" type (?)
 		}
 
 		// determine total size, and position everything
@@ -574,7 +583,13 @@ class ButtonView extends Widget
 				if (d.helpSpan == null) 
 				{
 					d.helpSpan = $('<span style="position: absolute;"></span>').appendTo(this.content);
-					addTooltip(d.helpSpan, b.helpText);
+					let txt = b.helpText;
+					if (b.mnemonic) 
+					{
+						while (txt.endsWith('.')) txt = txt.substring(0, txt.length - 1);
+						txt += ' [' + b.mnemonic + ']';
+					}
+					addTooltip(d.helpSpan, txt);
 				}
 				d.helpSpan.css('left', d.x + 'px');
 				d.helpSpan.css('top', d.y + 'px');
@@ -1040,7 +1055,7 @@ class ButtonView extends Widget
 
 		//event.stopPropagation();
 	}
-	private keyPressed(event:KeyboardEvent):void
+	/*private keyPressed(event:KeyboardEvent):void
 	{
 		// !!
 	}
@@ -1051,7 +1066,7 @@ class ButtonView extends Widget
 	private keyUp(event:KeyboardEvent):void
 	{
 		// !!
-	}
+	}*/
 
 	// a rather unfortunate hack: raw files from the action button directory have to be patched up so that the viewbox
 	// defines the correct dimensions; this works for SVG files that are edited with inkscape (which these are); it would be

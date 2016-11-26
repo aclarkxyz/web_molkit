@@ -48,42 +48,6 @@ enum DraggingTool
 	Ring
 }
 
-/*
-// !!!!!!!!!!!!!!!!!!!!!!!! TO BE DEPRECATED
-interface ArrMolPoint
-{
-	anum:number;
-	text:string;
-	fontSize:number;
-	bold:boolean;
-	col:number;
-	cx:number;
-	cy:number;
-	rw:number;
-	rh:number;
-}
-
-interface ArrMolLine
-{
-	bnum:number;
-	type:number;
-	x1:number;
-	y1:number;
-	x2:number;
-	y2:number;
-	size:number;
-	head:number;
-	col:number;
-}
-
-interface PreArrangeMolecule
-{
-	scale:number;
-	points:ArrMolPoint[];
-	lines:ArrMolLine[];
-}*/
-
-
 // used as a transient backup in case of access to the clipboard being problematic
 var globalMoleculeClipboard:Molecule = null;
 
@@ -202,44 +166,6 @@ class Sketcher extends Widget implements ArrangeMeasurement
 			this.delayedRedraw();
 		}
 		else this.autoScale();
-		
-		/*
-		// replace the arrangement before redrawing
-		let input:any =
-		{
-			'tokenID': this.tokenID,
-			'policy': this.policy.data,
-			'molNative': this.mol.toString(),
-			'withGuidelines': true
-		};
-
-		let fcn = function(result:any, error:ErrorRPC)
-		{
-			if (!result) 
-			{
-				alert('Arrangement of structure failed: ' + error.message);
-				return;
-			}
-
-			// may need to pre-adjust for different offsets - otherwise the picture shifts over when lowX/lowY alters
-			if (this.transform != null)
-			{
-				let dx = result.transform[0] - this.transform[0];
-				let dy = result.transform[1] - this.transform[1];
-				this.offsetX -= dx * this.scale;
-				this.offsetY -= dy * this.scale;
-			}
-			
-			this.arrmol = result.arrmol;
-			this.rawvec = result.metavec;
-			this.metavec = new MetaVector(result.metavec);
-			this.transform = result.transform;
-			this.guidelines = result.guidelines;
-
-			if (withAutoScale) this.autoScale();
-			this.delayedRedraw();
-		};
-		Func.arrangeMolecule(input, fcn, this);*/
 	}
 
 	// define the molecule as a SketchEl-formatted string
@@ -274,33 +200,6 @@ class Sketcher extends Widget implements ArrangeMeasurement
 				this.pointScale = this.policy.data.pointScale;
 			}
 		
-			/* deprecated
-			//if ([not init?]) throw 'molsync.ui.ViewStructure.setup called without specifying a molecule';
-			let input:any =
-			{
-				'tokenID': this.tokenID,
-				'policy': this.policy.data,
-				'molNative': this.mol.toString(),
-				'withGuidelines': true
-			};
-			
-			let fcnArrange = function(result:any, error:ErrorRPC)
-			{
-				if (!result) 
-				{
-					alert('Setup of EditMolecule failed: ' + error.message);
-					return;
-				}
-				this.arrmol = result.arrmol;
-				this.rawvec = result.metavec;
-				this.metavec = new MetaVector(result.metavec);
-				this.transform = result.transform;
-				this.guidelines = result.guidelines;
-				
-				if (callback) callback.call(master);
-			};
-			Func.arrangeMolecule(input, fcnArrange, this);*/
-
 			let effects = new RenderEffects();
 			//let measure = new OutlineMeasurement(0, 0, this.policy.data.pointScale);
 			this.layout = new ArrangeMolecule(this.mol, this, this.policy, effects);
@@ -331,6 +230,9 @@ class Sketcher extends Widget implements ArrangeMeasurement
 		this.container.css('background-color', colourCanvas(this.background));
 		this.container.css('border', '1px solid ' + colourCanvas(this.border));
 		this.container.css('border-radius', '4px');
+		
+		this.container.attr('tabindex', '0');
+		this.container.focus();
 		
 		let canvasStyle = 'position: absolute; left: 0; top: 0;';
 		canvasStyle += ' pointer-events: none;';
@@ -1531,7 +1433,7 @@ class Sketcher extends Widget implements ArrangeMeasurement
 	// event responses
 	private mouseClick(event:JQueryEventObject):void
 	{
-		// (no need to do anything here)
+		this.container.focus(); // just in case it wasn't already
 	}
 	private mouseDoubleClick(event:JQueryEventObject):void
 	{
@@ -1989,11 +1891,44 @@ class Sketcher extends Widget implements ArrangeMeasurement
 	}
 	private keyPressed(event:JQueryEventObject):void
 	{
-		// !!
+		//let ch = String.fromCharCode(event.keyCode || event.charCode);
+		//console.log('PRESSED['+ch+'] key='+event.keyCode+' chcode='+event.charCode);
+		
+		// !! TODO: special cases, like arrow keys/escape...
+
+		if (this.toolView != null && this.toolView.topBank.claimKey(event)) {event.preventDefault(); return;}
+		if (this.commandView != null && this.commandView.topBank.claimKey(event)) {event.preventDefault(); return;}
+		if (this.templateView != null && this.templateView.topBank.claimKey(event)) {event.preventDefault(); return;}
 	}
 	private keyDown(event:JQueryEventObject):void
 	{
-		// !!
+		let key = event.keyCode;
+		//console.log('DOWN: key='+key);
+
+		// special deal for the escape key: if any bank needs to be popped, consume it 
+		if (key == 27)
+		{
+			for (let view of [this.templateView, this.commandView, this.toolView]) if (view != null && view.stackSize > 1)
+			{
+				view.popBank(); 
+				event.preventDefault(); 
+				return;
+			}
+		}
+
+		// non-modifier keys that don't generate a 'pressed' event		
+		if (key == 37) {} // left
+		else if (key == 39) {} // right
+		else if (key == 38) {} // up
+		else if (key == 40) {} // down
+		else if ([27, 8, 46].indexOf(key) >= 0)
+		{
+			if (this.toolView != null && this.toolView.topBank.claimKey(event)) {event.preventDefault(); return;}
+			if (this.commandView != null && this.commandView.topBank.claimKey(event)) {event.preventDefault(); return;}
+			if (this.templateView != null && this.templateView.topBank.claimKey(event)) {event.preventDefault(); return;}
+		} 
+		
+		// !! do something interesting when modifier keys are held down?
 	}
 	private keyUp(event:JQueryEventObject):void
 	{
