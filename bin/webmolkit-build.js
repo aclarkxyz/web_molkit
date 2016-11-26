@@ -2443,6 +2443,60 @@ class MolUtil {
                     mol.setAtomHExplicit(n, Molecule.HEXPLICIT_UNKNOWN);
             }
     }
+    static convertToAbbrev(mol, srcmask, abbrevName) {
+        let junction = 0;
+        for (let n = 1; n <= mol.numBonds; n++) {
+            let b1 = mol.bondFrom(n), b2 = mol.bondTo(n), atom = 0;
+            if (srcmask[b1 - 1] && !srcmask[b2 - 1])
+                atom = b1;
+            else if (!srcmask[b1 - 1] && srcmask[b2 - 1])
+                atom = b2;
+            if (atom == 0)
+                continue;
+            if (junction > 0 && atom != junction)
+                return null;
+            junction = atom;
+        }
+        if (junction == 0)
+            return null;
+        let na = mol.numAtoms, molidx = 0, fragidx = 0;
+        let maskmol = Vec.booleanArray(false, na), maskfrag = Vec.booleanArray(false, na);
+        for (let n = 0; n < na; n++) {
+            maskmol[n] = srcmask[n];
+            maskfrag[n] = !srcmask[n] || n + 1 == junction;
+            if (maskmol[n] && n + 1 <= junction)
+                molidx++;
+            if (maskfrag[n] && n + 1 <= junction)
+                fragidx++;
+        }
+        let frag = MolUtil.subgraphMask(mol, maskfrag);
+        frag.setAtomElement(fragidx, MolUtil.ABBREV_ATTACHMENT);
+        frag.setAtomCharge(fragidx, 0);
+        frag.setAtomUnpaired(fragidx, 0);
+        frag.setAtomHExplicit(fragidx, Molecule.HEXPLICIT_UNKNOWN);
+        frag.setAtomMapNum(fragidx, 0);
+        frag.setAtomExtra(fragidx, null);
+        frag.setAtomTransient(fragidx, null);
+        let adj = frag.atomAdjList(fragidx);
+        let x = 0, y = 0, inv = 1.0 / adj.length;
+        let bondOrder = 1;
+        for (let n = 0; n < adj.length; n++) {
+            x += frag.atomX(adj[n]);
+            y += frag.atomY(adj[n]);
+            let b = frag.findBond(fragidx, adj[n]);
+            if (n == 0)
+                bondOrder = frag.bondOrder(b);
+            else if (bondOrder != frag.bondOrder(b))
+                bondOrder = 1;
+        }
+        x *= inv;
+        y *= inv;
+        let newmol = MolUtil.subgraphMask(mol, maskmol);
+        let newatom = newmol.addAtom(abbrevName, x, y);
+        newmol.addBond(molidx, newatom, bondOrder);
+        MolUtil.setAbbrev(newmol, newatom, frag);
+        return newmol;
+    }
     static expandAbbrevs(mol, alignCoords) {
         while (true) {
             let anything = false;
@@ -13224,10 +13278,9 @@ var ActivityType;
     ActivityType[ActivityType["TemplateFusion"] = 42] = "TemplateFusion";
     ActivityType[ActivityType["AbbrevTempl"] = 43] = "AbbrevTempl";
     ActivityType[ActivityType["AbbrevGroup"] = 44] = "AbbrevGroup";
-    ActivityType[ActivityType["AbbrevInline"] = 45] = "AbbrevInline";
-    ActivityType[ActivityType["AbbrevFormula"] = 46] = "AbbrevFormula";
-    ActivityType[ActivityType["AbbrevClear"] = 47] = "AbbrevClear";
-    ActivityType[ActivityType["AbbrevExpand"] = 48] = "AbbrevExpand";
+    ActivityType[ActivityType["AbbrevFormula"] = 45] = "AbbrevFormula";
+    ActivityType[ActivityType["AbbrevClear"] = 46] = "AbbrevClear";
+    ActivityType[ActivityType["AbbrevExpand"] = 47] = "AbbrevExpand";
 })(ActivityType || (ActivityType = {}));
 class MoleculeActivity {
     constructor(owner, activity, param, override) {
@@ -13435,16 +13488,24 @@ class MoleculeActivity {
             this.owner.setPermutations(this.output.permutations);
         }
         else if (this.activity == ActivityType.AbbrevTempl) {
+            this.execAbbrevTempl();
+            this.finish();
         }
         else if (this.activity == ActivityType.AbbrevGroup) {
-        }
-        else if (this.activity == ActivityType.AbbrevInline) {
+            this.execAbbrevGroup();
+            this.finish();
         }
         else if (this.activity == ActivityType.AbbrevFormula) {
+            this.execAbbrevFormula();
+            this.finish();
         }
         else if (this.activity == ActivityType.AbbrevClear) {
+            this.execAbbrevClear();
+            this.finish();
         }
         else if (this.activity == ActivityType.AbbrevExpand) {
+            this.execAbbrevExpand();
+            this.finish();
         }
     }
     executeRPC(optype, xparam = {}) {
@@ -14175,6 +14236,75 @@ class MoleculeActivity {
         }
         this.output.permutations = permutations;
     }
+    execAbbrevTempl() {
+    }
+    execAbbrevGroup() {
+        if (!this.requireSubject())
+            return;
+        if (!this.checkAbbreviationReady())
+            return;
+        let mask = [];
+        for (let m of this.subjectMask)
+            mask.push(!m);
+        let mol = MolUtil.convertToAbbrev(this.input.mol, mask, '?');
+        if (mol == null) {
+            this.errmsg = 'Inline abbreviations must be terminal with exactly one attachment point.';
+            return;
+        }
+        this.output.mol = mol;
+        this.zapSubject();
+        this.output.currentAtom = mol.numAtoms;
+    }
+    execAbbrevFormula() {
+        if (!this.requireSubject())
+            return;
+        if (!this.checkAbbreviationReady())
+            return;
+        let fixed = this.input.mol.clone();
+        for (let n = 1; n <= fixed.numAtoms; n++)
+            fixed.setAtomHExplicit(n, fixed.atomHydrogens(n));
+        let abv = MolUtil.subgraphMask(fixed, this.subjectMask);
+        let formula = MolUtil.molecularFormula(abv, true);
+        let mask = [];
+        for (let m of this.subjectMask)
+            mask.push(!m);
+        let mol = MolUtil.convertToAbbrev(this.input.mol, mask, formula);
+        if (mol == null) {
+            this.errmsg = 'Inline abbreviations must be terminal with exactly one attachment point.';
+            return;
+        }
+        this.output.mol = mol;
+        this.zapSubject();
+        this.output.currentAtom = mol.numAtoms;
+    }
+    execAbbrevClear() {
+        let idx = [];
+        for (let n of this.subjectIndex)
+            if (MolUtil.hasAbbrev(this.input.mol, n))
+                idx.push(n);
+        if (idx.length == 0) {
+            this.errmsg = 'No abbreviations to clear.';
+            return;
+        }
+        let mol = this.input.mol.clone();
+        for (let n of idx)
+            MolUtil.clearAbbrev(mol, n);
+        this.output.mol = mol;
+    }
+    execAbbrevExpand() {
+        let idx = [];
+        for (let n of this.subjectIndex)
+            if (MolUtil.hasAbbrev(this.input.mol, n))
+                idx.push(n);
+        if (idx.length == 0) {
+            this.errmsg = 'No abbreviations to expand.';
+            return;
+        }
+        let mol = this.input.mol.clone();
+        for (let n of idx)
+            MolUtil.expandOneAbbrev(mol, n, true);
+        this.output.mol = mol;
+    }
     requireSubject() {
         if (this.subjectLength == 0)
             this.errmsg = 'Subject required: current atom/bond or selected atoms.';
@@ -14372,6 +14502,31 @@ class MoleculeActivity {
         }
         this.output.mol = mol.clone();
         this.output.mol.setAtomPos(bto, bestX, bestY);
+    }
+    checkAbbreviationReady() {
+        let junction = 0;
+        let mol = this.input.mol, subjmask = this.subjectMask;
+        for (let n = 1; n <= mol.numBonds; n++) {
+            let b1 = mol.bondFrom(n), b2 = mol.bondTo(n);
+            let atom = 0;
+            if ((subjmask[b1 - 1] && !subjmask[b2 - 1] && MolUtil.hasAbbrev(mol, b1)) ||
+                (subjmask[b2 - 1] && !subjmask[b1 - 1] && MolUtil.hasAbbrev(mol, b2))) {
+                this.errmsg = 'Already an abbreviation.';
+                return false;
+            }
+            if (subjmask[b1 - 1] && !subjmask[b2 - 1])
+                atom = b1;
+            else if (subjmask[b2 - 1] && !subjmask[b1 - 1])
+                atom = b2;
+            if (atom == 0 || atom == junction) { }
+            else if (junction == 0)
+                junction = atom;
+            else {
+                this.errmsg = 'The selected group must be terminal.';
+                return false;
+            }
+        }
+        return true;
     }
 }
 class ButtonBank {
@@ -14752,7 +14907,7 @@ class CommandBank extends ButtonBank {
         else if (id == 'join')
             actv = ActivityType.Join;
         else if (id == 'inline')
-            actv = ActivityType.AbbrevInline;
+            actv = ActivityType.AbbrevGroup;
         else if (id == 'formula')
             actv = ActivityType.AbbrevFormula;
         else if (id == 'clearabbrev')

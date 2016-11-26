@@ -114,7 +114,7 @@ class MolUtil
     	}
     }
     
-    // converts a partitioned molecule into a molecule with a subsumed abbreviation; srcmask defines all the atoms which are not part
+    // converts a partitioned molecule into a molecule with a subsumed abbreviation; srcmask defines all the atoms which are NOT part
     // of the abbreviation; the resulting molecule will contain all of these, plus a new one that has been created to hold the 
     // abbreviation; the molecule  must be partitioned so that there is exactly 1 source atom attached to all of the abbreviations
     // NOTE: returns null if the template creation is invalid

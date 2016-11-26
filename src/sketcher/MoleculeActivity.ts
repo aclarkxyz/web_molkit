@@ -1440,78 +1440,75 @@ class MoleculeActivity
 		if (!this.checkAbbreviationReady()) return;
 
 		let mask:boolean[] = [];
-		for (let m of instate.mask) mask.push(!m);
-		let mol = MolUtil.convertToAbbrev(this.input.mol, Vec.not(instate.mask), abbrevName:"?")
-		if mol == nil
+		for (let m of this.subjectMask) mask.push(!m);
+		let mol = MolUtil.convertToAbbrev(this.input.mol, mask, '?');
+		if (mol == null)
 		{
 			// (probably already filtered out from above)
-			message = "Inline abbreviations must be terminal with exactly one attachment point."
-			return false
+			this.errmsg = 'Inline abbreviations must be terminal with exactly one attachment point.';
+			return;
 		}
 
-		outstate.mol = mol!
-		zapSubject()
-		outstate.currentAtom = mol!.numAtoms*/
+		this.output.mol = mol;
+		this.zapSubject();
+		this.output.currentAtom = mol.numAtoms;
 	}
 
 	public execAbbrevFormula():void
 	{
-		/*if !requireSubject() {return false}
-		if !checkAbbreviationReady() {return false}
+		if (!this.requireSubject()) return;
+		if (!this.checkAbbreviationReady()) return;
 
-		if !doCommit {return true}
-		
-		let subjmask = instate.mask
-		let fixed = instate.mol.copy()
-		//for var n = 1; n <= fixed.numAtoms; n += 1 {fixed.setAtom(n, hExplicit:fixed.atomHydrogens(n))}
-		for n in stride(from:1, through:fixed.numAtoms, by:1) {fixed.setAtom(n, hExplicit:fixed.atomHydrogens(n))}
-		let abv = MolUtil.subgraph(fixed, mask:subjmask)
-		let formula = MolUtil.molecularFormula(abv, punctuation:true)
+		let fixed = this.input.mol.clone();
+		for (let n = 1; n <= fixed.numAtoms; n++) fixed.setAtomHExplicit(n, fixed.atomHydrogens(n));
+		let abv = MolUtil.subgraphMask(fixed, this.subjectMask);
+		let formula = MolUtil.molecularFormula(abv, true);
 
-		let mol = MolUtil.convertToAbbrev(instate.mol, srcmask:not(instate.mask), abbrevName:formula)
-		if mol == nil
+		let mask:boolean[] = [];
+		for (let m of this.subjectMask) mask.push(!m);
+		let mol = MolUtil.convertToAbbrev(this.input.mol, mask, formula);
+		if (mol == null)
 		{
 			// (probably already filtered out from above)
-			message = "Inline abbreviations must be terminal with exactly one attachment point."
-			return false
+			this.errmsg = 'Inline abbreviations must be terminal with exactly one attachment point.';
+			return;
 		}
 		
-		outstate.mol = mol!
-		zapSubject()
-		outstate.currentAtom = mol!.numAtoms
-
-		return true*/
+		this.output.mol = mol;
+		this.zapSubject();
+		this.output.currentAtom = mol.numAtoms;
 	}
 
 	public execAbbrevClear():void
 	{
-		/*var idx:[Int] = []
-		for n in instate.subject {if MolUtil.hasAbbrev(instate.mol, atom:n) {idx.append(n)}}
-		
-		if idx.isEmpty {return false}
-		
-		if !doCommit {return true}
-		
-		for n in idx {MolUtil.clearAbbrev(outstate.mol, atom:n, resetAtom:false)}
-	
-		return true*/
+		let idx:number[] = [];
+		for (let n of this.subjectIndex) if (MolUtil.hasAbbrev(this.input.mol, n)) idx.push(n);
+
+		if (idx.length == 0)
+		{
+			this.errmsg = 'No abbreviations to clear.';
+			return;
+		}
+
+		let mol = this.input.mol.clone();
+		for (let n of idx) MolUtil.clearAbbrev(mol, n);
+		this.output.mol = mol; 
 	}
 
 	public execAbbrevExpand():void
 	{
-		/*var idx:[Int] = []
-		for n in instate.subject {if MolUtil.hasAbbrev(instate.mol, atom:n) {idx.append(n)}}
-		
-		if idx.isEmpty {return false}
-		
-		if !doCommit {return true}
-		
-		for n in idx
+		let idx:number[] = [];
+		for (let n of this.subjectIndex) if (MolUtil.hasAbbrev(this.input.mol, n)) idx.push(n);
+
+		if (idx.length == 0)
 		{
-			MolUtil.expandOneAbbrev(outstate.mol, atom:n, alignCoords:true)
+			this.errmsg = 'No abbreviations to expand.';
+			return;
 		}
-	
-		return true*/
+
+		let mol = this.input.mol.clone();
+		for (let n of idx) MolUtil.expandOneAbbrev(mol, n, true);
+		this.output.mol = mol; 
 	}
 
 	/*
@@ -1871,7 +1868,7 @@ class MoleculeActivity
 			if ((subjmask[b1 - 1] && !subjmask[b2 - 1] && MolUtil.hasAbbrev(mol, b1)) ||
 			    (subjmask[b2 - 1] && !subjmask[b1 - 1] && MolUtil.hasAbbrev(mol, b2)))
 			{
-				this.errmsg = "Already an abbreviation.";
+				this.errmsg = 'Already an abbreviation.';
 				return false;
 			}
 
@@ -1882,7 +1879,7 @@ class MoleculeActivity
 			else if (junction == 0) junction = atom;
 			else
 			{
-				this.errmsg = "The selected group must be terminal.";
+				this.errmsg = 'The selected group must be terminal.';
 				return false;
 			}
 		}
