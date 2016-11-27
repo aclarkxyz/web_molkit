@@ -940,63 +940,6 @@ class MetaVector
 			}
 			else dx += font.MISSING_HORZ;
 		}
-
-/*		
-		{
-			int i = a.txt.charAt(n) - VectorGfxFont.GLYPH_MIN;
-			if (i >= 0 && i < VectorGfxFont.GLYPH_COUNT)
-			{
-				out.println("<use xlink:href=\"#char" + i + "\" fill=\"" + fill + "\"" + alpha + " x=\"" + dx + "\"/>");
-
-				dx += VectorGfxFont.HORIZ_ADV_X[i];
-
-				if (n < a.txt.length() - 1)
-				{
-					int j = a.txt.charAt(n + 1) - VectorGfxFont.GLYPH_MIN;
-					for (int k = 0; k < VectorGfxFont.KERN_K.length; k++)
-						if ((VectorGfxFont.KERN_G1[k] == i && VectorGfxFont.KERN_G2[k] == j) || 
-							(VectorGfxFont.KERN_G1[k] == j && VectorGfxFont.KERN_G2[k] == i))
-					{
-						dx += VectorGfxFont.KERN_K[k];
-						break;
-					}
-				}
-			}
-			else dx += VectorGfxFont.MISSING_HORZ;
-		}
-		
-		out.println("</g></g>");*/
-
-		/* !!
-		for (let n = 0; n < txt.length; n++)
-		{
-			let i = txt.charCodeAt(n) - 32;
-			if (i < 0 || i >= 96)
-			{
-				dx += fd.MISSING_HORZ;
-				continue;
-			}
-
-			let path = fd.getGlyphPath(i);
-			if (path)
-			{
-				ctx.save();
-				ctx.translate(x + dx * scale, y);
-				ctx.scale(scale, -scale);
-				ctx.fillStyle = fill;
-				ctx.fill(path);
-				ctx.restore();
-			}
-			
-			dx += fd.HORIZ_ADV_X[i];
-			if (n < txt.length - 1)
-			{
-				let j = txt.charCodeAt(n + 1) - 32;
-				for (let k = 0; k < fd.KERN_K.length; k++)
-					if ((fd.KERN_G1[k] == i && fd.KERN_G2[k] == j) || (fd.KERN_G1[k] == j && fd.KERN_G2[k] == i))
-						{dx += fd.KERN_K[k]; break;}
-			}
-		}*/
 	}	
 
 	// for a type definition array, see if it exists in the list, and return that index - or if not, push it on

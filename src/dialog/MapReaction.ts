@@ -16,11 +16,9 @@
 ///<reference path='../gfx/MetaVector.ts'/>
 ///<reference path='../data/Molecule.ts'/>
 ///<reference path='Dialog.ts'/>
-///<reference path='../sketcher/Sketcher.ts'/> 
-	// !! above is temporary...
 
 /*
-	Given two sketched out molecules, allows the user to 
+	Given two sketched out molecules, allows the user to map individual atoms interactively. 
 */
 
 class MapReaction extends Dialog

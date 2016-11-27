@@ -49,7 +49,6 @@ const TOOLS_MAIN:ButtonBankItem[] =
 	{'id': 'elementA', 'text': 'A', 'helpText': 'Pick other element.', 'mnemonic': 'O'}
 ];
 
-
 class ToolBank extends ButtonBank
 {
 	initiallySelected = 'arrow';

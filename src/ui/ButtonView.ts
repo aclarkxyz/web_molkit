@@ -133,9 +133,6 @@ class ButtonView extends Widget
 		this.content.mouseover(function(event:JQueryEventObject) {self.mouseOver(event);});
 		this.content.mouseout(function(event:JQueryEventObject) {self.mouseOut(event);});
 		this.content.mousemove(function(event:JQueryEventObject) {self.mouseMove(event);});
-		/*this.content.keypress(function(event:KeyboardEvent) {self.keyPressed(event);});
-		this.content.keydown(function(event:KeyboardEvent) {self.keyDown(event);});
-		this.content.keyup(function(event:KeyboardEvent) {self.keyUp(event);});*/
 	}
 
 	// adds a new molsync.ui.ButtonBank instance to the stack, making it the current one
@@ -1055,18 +1052,6 @@ class ButtonView extends Widget
 
 		//event.stopPropagation();
 	}
-	/*private keyPressed(event:KeyboardEvent):void
-	{
-		// !!
-	}
-	private keyDown(event:KeyboardEvent):void
-	{
-		// !!
-	}
-	private keyUp(event:KeyboardEvent):void
-	{
-		// !!
-	}*/
 
 	// a rather unfortunate hack: raw files from the action button directory have to be patched up so that the viewbox
 	// defines the correct dimensions; this works for SVG files that are edited with inkscape (which these are); it would be

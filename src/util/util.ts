@@ -12,21 +12,10 @@
 
 //import $ from "JQuery";
 
-/*// shorthand for element-by-id
-function node(id)
-{
-	return goog.dom.getElement(id);
-}*/
-
 // creates a new element, with a specific parent (raw or jQuery); returns the child node - the raw DOM element, not the
 // jQuery wrapper
 function newElement(parent:any, tag:string, attr?:any):Element
 {
-	/*if (!goog.isDef(attr)) attr = {};
-	var el = goog.dom.createDom(tag, attr, stuff);
-	goog.dom.appendChild(parent, el);
-	return el;*/
-	
 	let el = $(`<${tag}>`);
 	if (attr) el.attr(attr);
 	$(parent).append(el);
@@ -198,10 +187,6 @@ function eventCoords(event:JQueryEventObject, container:any):number[]
 	var relX = event.pageX - parentOffset.left;
 	var relY = event.pageY - parentOffset.top;
 	return [relX, relY];	
-	
-	/*var epos = goog.style.getClientPosition(event);
-	var cpos = goog.style.getClientPosition(container);
-	return [epos.x - cpos.x, epos.y - cpos.y];*/
 }
 
 // geometry functions
@@ -309,13 +294,6 @@ function maxArray(a:number[]):number
 	return v;
 }
 
-/*
-// returns an array of all the keys within an object
-function getKeys(obj)
-{
-   return goog.object.getKeys(obj);
-}*/
-
 // convenience function: finds a child node by name
 function findNode(parent:Node, name:string):Element
 {
@@ -342,14 +320,6 @@ function findNodes(parent:Node, name:string):Element[]
 	}
 	return list;
 }
-
-/*
-// render an object as a string for debuggering purposes
-function dump(obj)
-{
-	return goog.debug.expose(obj);
-}
-*/
 
 // creates a rounded rectangle path using splines
 function pathRoundedRect(x1:number, y1:number, x2:number, y2:number, rad:number):Path2D

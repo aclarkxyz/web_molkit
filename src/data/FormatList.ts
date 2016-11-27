@@ -12,6 +12,8 @@
 
 /*
 	Provides fixed constants for dataformats.
+
+	(Note: presence in this file does not imply that they are all implemented yet)
 */
 
 class FormatList

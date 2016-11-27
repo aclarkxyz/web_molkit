@@ -69,13 +69,6 @@ class OptionList extends Widget
 	{
 		super.render(parent);
 		
-		/*
-		let span = $('<span></span>').appendTo($(parent));
-		span.css('position', 'relative');
-		span.css('display', 'inline-block');
-		span.attr('tabIndex', -1);
-		*/
-		
 		let table = $('<table class="option-table"></table>').appendTo(this.content /*span*/);
 		let tr = this.isVertical ? null : $('<tr></tr>').appendTo(table);
 		

@@ -86,7 +86,8 @@ class EditCompound extends Dialog
 	private pasteMolecule():void
 	{
 		//this.installFake();
-		// (not sure how to make this work)
+		// (not sure how to make this work: can trap the Ctrl/Cmd-V keystroke and intercept, but grabbing clipboard arbitrarily
+		// is a security problem)
 	}
 	
 	private copyMolecule():void
