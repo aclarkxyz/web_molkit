@@ -30,11 +30,8 @@ enum ActivityType
 {
 	Delete = 1,
 	Clear,
-	Cut,
 	Copy,
-	CopyMDLMOL,
-	CopySMILES,
-	Paste,
+	Cut,
 	SelectAll,
 	SelectNone,
 	SelectPrevComp,
@@ -187,25 +184,15 @@ class MoleculeActivity
 			this.execClear();
 			this.finish();
 		}
-		else if (this.activity == ActivityType.Cut)
-		{
-			// !! TODO			
-		}
 		else if (this.activity == ActivityType.Copy)
 		{
-			// !! TODO			
+			this.execCopy(false);
+			this.finish();
 		}
-		else if (this.activity == ActivityType.CopyMDLMOL)
+		else if (this.activity == ActivityType.Cut)
 		{
-			// !! TODO			
-		}
-		else if (this.activity == ActivityType.CopySMILES)
-		{
-			// !! TODO
-		}
-		else if (this.activity == ActivityType.Paste)
-		{
-			// !! TODO
+			this.execCopy(true);
+			this.finish();
 		}
 		else if (this.activity == ActivityType.SelectAll)
 		{
@@ -414,6 +401,7 @@ class MoleculeActivity
 	// --------------------------------------- private methods ---------------------------------------
 
 	// packages up an RPC request to get the job done
+	/* deprecated: the sketcher originally did its work through this RPC fall, but now everything has been rewired
 	private executeRPC(optype:string, xparam:any = {}):void
 	{
 		let param:any =
@@ -452,7 +440,7 @@ class MoleculeActivity
 			}
 		};
 		new RPC('sketch.' + optype, param, fcn, this).invoke();
-	}
+	}*/
 
 	// call this when execution has finished
 	private finish():void
@@ -499,6 +487,19 @@ class MoleculeActivity
 		
 		// do the deletion
 		for (let n = this.subjectLength - 1; n >= 0; n--) this.output.mol.deleteAtomAndBonds(this.subjectIndex[n]);
+	}
+
+	public execCopy(withCut:boolean):void
+	{
+		let mol = this.input.mol;
+		if (this.subjectLength > 0) mol = MolUtil.subgraphWithAttachments(mol, this.subjectMask);
+		this.owner.performCopy(mol);
+
+		if (withCut)
+		{
+			this.zapSubject();
+			this.output.mol = MolUtil.subgraphMask(this.input.mol, Vec.notMask(this.subjectMask));
+		}
 	}
 	
 	public execClear():void
@@ -1362,9 +1363,7 @@ class MoleculeActivity
 		if (!this.requireSubject()) return;
 		if (!this.checkAbbreviationReady()) return;
 
-		let mask:boolean[] = [];
-		for (let m of this.subjectMask) mask.push(!m);
-		let mol = MolUtil.convertToAbbrev(this.input.mol, mask, '?');
+		let mol = MolUtil.convertToAbbrev(this.input.mol, Vec.notMask(this.subjectMask), '?');
 		if (mol == null)
 		{
 			// (probably already filtered out from above)
@@ -1387,9 +1386,7 @@ class MoleculeActivity
 		let abv = MolUtil.subgraphMask(fixed, this.subjectMask);
 		let formula = MolUtil.molecularFormula(abv, true);
 
-		let mask:boolean[] = [];
-		for (let m of this.subjectMask) mask.push(!m);
-		let mol = MolUtil.convertToAbbrev(this.input.mol, mask, formula);
+		let mol = MolUtil.convertToAbbrev(this.input.mol, Vec.notMask(this.subjectMask), formula);
 		if (mol == null)
 		{
 			// (probably already filtered out from above)

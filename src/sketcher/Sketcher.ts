@@ -115,6 +115,8 @@ class Sketcher extends Widget implements ArrangeMeasurement
 	private currentPerm = 0; // currently viewed permutation (if applicable)
 	private fusionBank:FusionBank = null;
 	
+	private fakeTextArea:HTMLTextAreaElement = null; // for temporarily bogarting the clipboard
+
 	private static UNDO_SIZE = 20;
 
 	constructor(private tokenID:string)
@@ -514,9 +516,26 @@ class Sketcher extends Widget implements ArrangeMeasurement
 	public performCopy(mol:Molecule):void
 	{
 		globalMoleculeClipboard = mol.clone();
-		// (put it on the real clipboard?)
 		let cookies = new Cookies();
 		if (cookies.numMolecules() > 0) cookies.stashMolecule(mol);
+
+		// now place it on the actual system clipboard
+		if (this.fakeTextArea == null)
+		{
+			this.fakeTextArea = document.createElement('textarea');
+			this.fakeTextArea.style.fontSize = '12pt';
+			this.fakeTextArea.style.border = '0';
+			this.fakeTextArea.style.padding = '0';
+			this.fakeTextArea.style.margin = '0';
+			this.fakeTextArea.style.position = 'fixed';
+			this.fakeTextArea.style['left'] = '-9999px';
+			this.fakeTextArea.style.top = (window.pageYOffset || document.documentElement.scrollTop) + 'px';
+			this.fakeTextArea.setAttribute('readonly', '');
+			document.body.appendChild(this.fakeTextArea);
+		}
+		this.fakeTextArea.value = mol.toString();
+		this.fakeTextArea.select();
+		document.execCommand('copy'); 
 	}
 
 	// pasting from clipboard, initiated by the user via non-system commands: this can't just grab the system

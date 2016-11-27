@@ -91,6 +91,8 @@ class EditCompound extends Dialog
 	
 	private copyMolecule():void
 	{
+		// !! TODO: just call sketcher's performCopy...
+
 		this.installFake();
 		this.fakeTextArea.value = this.sketcher.getMolecule().toString();
 		this.fakeTextArea.select();

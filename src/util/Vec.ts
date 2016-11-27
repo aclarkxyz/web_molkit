@@ -127,6 +127,13 @@ class Vec
 		return ret;
 	}
 
+	public static notMask(mask:boolean[]):boolean[]
+	{
+		let ret:boolean[] = new Array(mask.length);
+		for (let n = mask.length - 1; n >= 0; n--) ret[n] = !mask[n];
+		return ret;
+	}
+
     public static idxGet(arr:any[], idx:number[]):any[]
     {
 		let ret:any[] = [];

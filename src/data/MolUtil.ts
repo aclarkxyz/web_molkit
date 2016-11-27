@@ -346,32 +346,32 @@ class MolUtil
 		return frag;
     }
     
-/*	
     // a specialised version of mask subgraph: any atoms which are not in the mask, but are bonded to atoms which are in the
     // mask, are converted to the element "X" and included in the result; this makes them potentially more useful as template fragments
-	public static Molecule subgraphWithAttachments(Molecule mol, boolean[] mask)
+	public static subgraphWithAttachments(mol:Molecule, mask:boolean[]):Molecule
 	{
-		boolean[] xmask = Vec.duplicate(mask);
-		for (int n = 1; n <= mol.numBonds; n++)
+		let xmask = mask.slice(0);
+		for (let n = 1; n <= mol.numBonds; n++)
 		{
-			int bfr = mol.bondFrom(n) - 1, bto = mol.bondTo(n) - 1;
+			let bfr = mol.bondFrom(n) - 1, bto = mol.bondTo(n) - 1;
 			if (mask[bfr] && !mask[bto]) xmask[bto] = true;
 			else if (mask[bto] && !mask[bfr]) xmask[bfr] = true;
 		}
-		Molecule xmol = mol.clone();
-		for (int n = 1; n <= xmol.numAtoms; n++) if (xmask[n - 1] && !mask[n - 1]) xmol.setAtomElement(n, "X");
-		return subgraph(xmol, xmask);
+		let xmol = mol.clone();
+		for (let n = 1; n <= xmol.numAtoms; n++) if (xmask[n - 1] && !mask[n - 1]) xmol.setAtomElement(n, 'X');
+		return MolUtil.subgraphMask(xmol, xmask);
     }
     
     // appends the fragment to the molecule, and makes a token effort to arrange the atom positions so they are along the X-axis
-    public static void append(Molecule mol, Molecule frag)
+    public static append(mol:Molecule, frag:Molecule):void
     {
-    	float dx = mol.maxX() + Molecule.IDEALBOND - frag.minX();
-    	float dy = 0.5f * (mol.minY() + mol.maxY() - frag.minY() - frag.maxY());
-    	int top = mol.numAtoms;
+		let boxm = mol.boundary(), boxf = frag.boundary();
+    	let dx = boxm.maxX() + Molecule.IDEALBOND - boxm.minX();
+    	let dy = 0.5 * (boxm.minY() + boxm.maxY() - boxf.minY() - boxf.maxY());
+    	let top = mol.numAtoms;
     	mol.append(frag);
-    	for (int n = top + 1; n <= mol.numAtoms; n++) mol.setAtomPos(n, mol.atomX(n) + dx, mol.atomY(n) + dy);
-    }*/
+    	for (let n = top + 1; n <= mol.numAtoms; n++) mol.setAtomPos(n, mol.atomX(n) + dx, mol.atomY(n) + dy);
+    }
     
 	/*
     // works similarly to reorderAtoms(..) above, except operates on the order of the bond list; the atoms are unaffected

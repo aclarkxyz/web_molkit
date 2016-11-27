@@ -1433,6 +1433,12 @@ class Vec {
             ret[n] = n + 1;
         return ret;
     }
+    static notMask(mask) {
+        let ret = new Array(mask.length);
+        for (let n = mask.length - 1; n >= 0; n--)
+            ret[n] = !mask[n];
+        return ret;
+    }
     static idxGet(arr, idx) {
         let ret = [];
         for (let n = 0; n < idx.length; n++)
@@ -2633,6 +2639,30 @@ class MolUtil {
             }
         }
         return frag;
+    }
+    static subgraphWithAttachments(mol, mask) {
+        let xmask = mask.slice(0);
+        for (let n = 1; n <= mol.numBonds; n++) {
+            let bfr = mol.bondFrom(n) - 1, bto = mol.bondTo(n) - 1;
+            if (mask[bfr] && !mask[bto])
+                xmask[bto] = true;
+            else if (mask[bto] && !mask[bfr])
+                xmask[bfr] = true;
+        }
+        let xmol = mol.clone();
+        for (let n = 1; n <= xmol.numAtoms; n++)
+            if (xmask[n - 1] && !mask[n - 1])
+                xmol.setAtomElement(n, 'X');
+        return MolUtil.subgraphMask(xmol, xmask);
+    }
+    static append(mol, frag) {
+        let boxm = mol.boundary(), boxf = frag.boundary();
+        let dx = boxm.maxX() + Molecule.IDEALBOND - boxm.minX();
+        let dy = 0.5 * (boxm.minY() + boxm.maxY() - boxf.minY() - boxf.maxY());
+        let top = mol.numAtoms;
+        mol.append(frag);
+        for (let n = top + 1; n <= mol.numAtoms; n++)
+            mol.setAtomPos(n, mol.atomX(n) + dx, mol.atomY(n) + dy);
     }
     static deleteAtoms(mol, idx) {
         let mask = Vec.booleanArray(true, mol.numAtoms);
@@ -13236,51 +13266,48 @@ var ActivityType;
 (function (ActivityType) {
     ActivityType[ActivityType["Delete"] = 1] = "Delete";
     ActivityType[ActivityType["Clear"] = 2] = "Clear";
-    ActivityType[ActivityType["Cut"] = 3] = "Cut";
-    ActivityType[ActivityType["Copy"] = 4] = "Copy";
-    ActivityType[ActivityType["CopyMDLMOL"] = 5] = "CopyMDLMOL";
-    ActivityType[ActivityType["CopySMILES"] = 6] = "CopySMILES";
-    ActivityType[ActivityType["Paste"] = 7] = "Paste";
-    ActivityType[ActivityType["SelectAll"] = 8] = "SelectAll";
-    ActivityType[ActivityType["SelectNone"] = 9] = "SelectNone";
-    ActivityType[ActivityType["SelectPrevComp"] = 10] = "SelectPrevComp";
-    ActivityType[ActivityType["SelectNextComp"] = 11] = "SelectNextComp";
-    ActivityType[ActivityType["SelectSide"] = 12] = "SelectSide";
-    ActivityType[ActivityType["SelectGrow"] = 13] = "SelectGrow";
-    ActivityType[ActivityType["SelectShrink"] = 14] = "SelectShrink";
-    ActivityType[ActivityType["SelectChain"] = 15] = "SelectChain";
-    ActivityType[ActivityType["SelectSmRing"] = 16] = "SelectSmRing";
-    ActivityType[ActivityType["SelectRingBlk"] = 17] = "SelectRingBlk";
-    ActivityType[ActivityType["SelectCurElement"] = 18] = "SelectCurElement";
-    ActivityType[ActivityType["SelectToggle"] = 19] = "SelectToggle";
-    ActivityType[ActivityType["SelectUnCurrent"] = 20] = "SelectUnCurrent";
-    ActivityType[ActivityType["Element"] = 21] = "Element";
-    ActivityType[ActivityType["AtomPos"] = 22] = "AtomPos";
-    ActivityType[ActivityType["Charge"] = 23] = "Charge";
-    ActivityType[ActivityType["Connect"] = 24] = "Connect";
-    ActivityType[ActivityType["Disconnect"] = 25] = "Disconnect";
-    ActivityType[ActivityType["BondOrder"] = 26] = "BondOrder";
-    ActivityType[ActivityType["BondType"] = 27] = "BondType";
-    ActivityType[ActivityType["BondGeom"] = 28] = "BondGeom";
-    ActivityType[ActivityType["BondAtom"] = 29] = "BondAtom";
-    ActivityType[ActivityType["BondSwitch"] = 30] = "BondSwitch";
-    ActivityType[ActivityType["BondAddTwo"] = 31] = "BondAddTwo";
-    ActivityType[ActivityType["BondInsert"] = 32] = "BondInsert";
-    ActivityType[ActivityType["Join"] = 33] = "Join";
-    ActivityType[ActivityType["Nudge"] = 34] = "Nudge";
-    ActivityType[ActivityType["NudgeLots"] = 35] = "NudgeLots";
-    ActivityType[ActivityType["NudgeFar"] = 36] = "NudgeFar";
-    ActivityType[ActivityType["Flip"] = 37] = "Flip";
-    ActivityType[ActivityType["Scale"] = 38] = "Scale";
-    ActivityType[ActivityType["Rotate"] = 39] = "Rotate";
-    ActivityType[ActivityType["Move"] = 40] = "Move";
-    ActivityType[ActivityType["Ring"] = 41] = "Ring";
-    ActivityType[ActivityType["TemplateFusion"] = 42] = "TemplateFusion";
-    ActivityType[ActivityType["AbbrevTempl"] = 43] = "AbbrevTempl";
-    ActivityType[ActivityType["AbbrevGroup"] = 44] = "AbbrevGroup";
-    ActivityType[ActivityType["AbbrevFormula"] = 45] = "AbbrevFormula";
-    ActivityType[ActivityType["AbbrevClear"] = 46] = "AbbrevClear";
-    ActivityType[ActivityType["AbbrevExpand"] = 47] = "AbbrevExpand";
+    ActivityType[ActivityType["Copy"] = 3] = "Copy";
+    ActivityType[ActivityType["Cut"] = 4] = "Cut";
+    ActivityType[ActivityType["SelectAll"] = 5] = "SelectAll";
+    ActivityType[ActivityType["SelectNone"] = 6] = "SelectNone";
+    ActivityType[ActivityType["SelectPrevComp"] = 7] = "SelectPrevComp";
+    ActivityType[ActivityType["SelectNextComp"] = 8] = "SelectNextComp";
+    ActivityType[ActivityType["SelectSide"] = 9] = "SelectSide";
+    ActivityType[ActivityType["SelectGrow"] = 10] = "SelectGrow";
+    ActivityType[ActivityType["SelectShrink"] = 11] = "SelectShrink";
+    ActivityType[ActivityType["SelectChain"] = 12] = "SelectChain";
+    ActivityType[ActivityType["SelectSmRing"] = 13] = "SelectSmRing";
+    ActivityType[ActivityType["SelectRingBlk"] = 14] = "SelectRingBlk";
+    ActivityType[ActivityType["SelectCurElement"] = 15] = "SelectCurElement";
+    ActivityType[ActivityType["SelectToggle"] = 16] = "SelectToggle";
+    ActivityType[ActivityType["SelectUnCurrent"] = 17] = "SelectUnCurrent";
+    ActivityType[ActivityType["Element"] = 18] = "Element";
+    ActivityType[ActivityType["AtomPos"] = 19] = "AtomPos";
+    ActivityType[ActivityType["Charge"] = 20] = "Charge";
+    ActivityType[ActivityType["Connect"] = 21] = "Connect";
+    ActivityType[ActivityType["Disconnect"] = 22] = "Disconnect";
+    ActivityType[ActivityType["BondOrder"] = 23] = "BondOrder";
+    ActivityType[ActivityType["BondType"] = 24] = "BondType";
+    ActivityType[ActivityType["BondGeom"] = 25] = "BondGeom";
+    ActivityType[ActivityType["BondAtom"] = 26] = "BondAtom";
+    ActivityType[ActivityType["BondSwitch"] = 27] = "BondSwitch";
+    ActivityType[ActivityType["BondAddTwo"] = 28] = "BondAddTwo";
+    ActivityType[ActivityType["BondInsert"] = 29] = "BondInsert";
+    ActivityType[ActivityType["Join"] = 30] = "Join";
+    ActivityType[ActivityType["Nudge"] = 31] = "Nudge";
+    ActivityType[ActivityType["NudgeLots"] = 32] = "NudgeLots";
+    ActivityType[ActivityType["NudgeFar"] = 33] = "NudgeFar";
+    ActivityType[ActivityType["Flip"] = 34] = "Flip";
+    ActivityType[ActivityType["Scale"] = 35] = "Scale";
+    ActivityType[ActivityType["Rotate"] = 36] = "Rotate";
+    ActivityType[ActivityType["Move"] = 37] = "Move";
+    ActivityType[ActivityType["Ring"] = 38] = "Ring";
+    ActivityType[ActivityType["TemplateFusion"] = 39] = "TemplateFusion";
+    ActivityType[ActivityType["AbbrevTempl"] = 40] = "AbbrevTempl";
+    ActivityType[ActivityType["AbbrevGroup"] = 41] = "AbbrevGroup";
+    ActivityType[ActivityType["AbbrevFormula"] = 42] = "AbbrevFormula";
+    ActivityType[ActivityType["AbbrevClear"] = 43] = "AbbrevClear";
+    ActivityType[ActivityType["AbbrevExpand"] = 44] = "AbbrevExpand";
 })(ActivityType || (ActivityType = {}));
 class MoleculeActivity {
     constructor(owner, activity, param, override) {
@@ -13340,15 +13367,13 @@ class MoleculeActivity {
             this.execClear();
             this.finish();
         }
-        else if (this.activity == ActivityType.Cut) {
-        }
         else if (this.activity == ActivityType.Copy) {
+            this.execCopy(false);
+            this.finish();
         }
-        else if (this.activity == ActivityType.CopyMDLMOL) {
-        }
-        else if (this.activity == ActivityType.CopySMILES) {
-        }
-        else if (this.activity == ActivityType.Paste) {
+        else if (this.activity == ActivityType.Cut) {
+            this.execCopy(true);
+            this.finish();
         }
         else if (this.activity == ActivityType.SelectAll) {
             this.execSelectAll(true);
@@ -13505,41 +13530,6 @@ class MoleculeActivity {
             this.finish();
         }
     }
-    executeRPC(optype, xparam = {}) {
-        let param = {
-            'tokenID': this.owner.tokenID
-        };
-        param.molNative = this.input.mol.toString();
-        param.currentAtom = this.input.currentAtom;
-        param.currentBond = this.input.currentBond;
-        param.selectedMask = this.input.selectedMask;
-        for (let xp in xparam)
-            param[xp] = xparam[xp];
-        let fcn = function (result, error) {
-            if (!result) {
-                alert('Sketching operation failed: ' + error.message);
-                return;
-            }
-            if (result.molNative != null)
-                this.output.mol = Molecule.fromString(result.molNative);
-            if (result.currentAtom >= 0)
-                this.output.currentAtom = result.currentAtom;
-            if (result.currentBond >= 0)
-                this.output.currentBond = result.currentBond;
-            if (result.selectedMask != null)
-                this.output.selectedMask = result.selectedMask;
-            this.errmsg = result.errmsg;
-            if (this.activity == ActivityType.TemplateFusion && result.permutations != null) {
-                this.owner.setPermutations(result.permutations);
-            }
-            else
-                this.finish();
-            if ((this.activity == ActivityType.Copy || this.activity == ActivityType.Cut) && result.clipNative != null) {
-                this.owner.performCopy(Molecule.fromString(result.clipNative));
-            }
-        };
-        new RPC('sketch.' + optype, param, fcn, this).invoke();
-    }
     finish() {
         if (this.output.mol != null || this.output.currentAtom >= 0 || this.output.currentBond >= 0 || this.output.selectedMask != null) {
             this.owner.setState(this.output, true);
@@ -13572,6 +13562,16 @@ class MoleculeActivity {
         }
         for (let n = this.subjectLength - 1; n >= 0; n--)
             this.output.mol.deleteAtomAndBonds(this.subjectIndex[n]);
+    }
+    execCopy(withCut) {
+        let mol = this.input.mol;
+        if (this.subjectLength > 0)
+            mol = MolUtil.subgraphWithAttachments(mol, this.subjectMask);
+        this.owner.performCopy(mol);
+        if (withCut) {
+            this.zapSubject();
+            this.output.mol = MolUtil.subgraphMask(this.input.mol, Vec.notMask(this.subjectMask));
+        }
     }
     execClear() {
         this.output.mol = new Molecule();
@@ -14244,10 +14244,7 @@ class MoleculeActivity {
             return;
         if (!this.checkAbbreviationReady())
             return;
-        let mask = [];
-        for (let m of this.subjectMask)
-            mask.push(!m);
-        let mol = MolUtil.convertToAbbrev(this.input.mol, mask, '?');
+        let mol = MolUtil.convertToAbbrev(this.input.mol, Vec.notMask(this.subjectMask), '?');
         if (mol == null) {
             this.errmsg = 'Inline abbreviations must be terminal with exactly one attachment point.';
             return;
@@ -14266,10 +14263,7 @@ class MoleculeActivity {
             fixed.setAtomHExplicit(n, fixed.atomHydrogens(n));
         let abv = MolUtil.subgraphMask(fixed, this.subjectMask);
         let formula = MolUtil.molecularFormula(abv, true);
-        let mask = [];
-        for (let m of this.subjectMask)
-            mask.push(!m);
-        let mol = MolUtil.convertToAbbrev(this.input.mol, mask, formula);
+        let mol = MolUtil.convertToAbbrev(this.input.mol, Vec.notMask(this.subjectMask), formula);
         if (mol == null) {
             this.errmsg = 'Inline abbreviations must be terminal with exactly one attachment point.';
             return;
@@ -15388,6 +15382,7 @@ class Sketcher extends Widget {
         this.templatePerms = null;
         this.currentPerm = 0;
         this.fusionBank = null;
+        this.fakeTextArea = null;
     }
     setSize(width, height) {
         this.width = width;
@@ -15672,6 +15667,21 @@ class Sketcher extends Widget {
         let cookies = new Cookies();
         if (cookies.numMolecules() > 0)
             cookies.stashMolecule(mol);
+        if (this.fakeTextArea == null) {
+            this.fakeTextArea = document.createElement('textarea');
+            this.fakeTextArea.style.fontSize = '12pt';
+            this.fakeTextArea.style.border = '0';
+            this.fakeTextArea.style.padding = '0';
+            this.fakeTextArea.style.margin = '0';
+            this.fakeTextArea.style.position = 'fixed';
+            this.fakeTextArea.style['left'] = '-9999px';
+            this.fakeTextArea.style.top = (window.pageYOffset || document.documentElement.scrollTop) + 'px';
+            this.fakeTextArea.setAttribute('readonly', '');
+            document.body.appendChild(this.fakeTextArea);
+        }
+        this.fakeTextArea.value = mol.toString();
+        this.fakeTextArea.select();
+        document.execCommand('copy');
     }
     performPaste() {
         let cookies = new Cookies();
