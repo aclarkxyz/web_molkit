@@ -12,6 +12,8 @@
 
 //import $ from "JQuery";
 
+///<reference path='Vec.ts'/>
+
 // creates a new element, with a specific parent (raw or jQuery); returns the child node - the raw DOM element, not the
 // jQuery wrapper
 function newElement(parent:any, tag:string, attr?:any):Element
