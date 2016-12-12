@@ -13,6 +13,7 @@
 ///<reference path='MoleculeStream.ts'/>
 ///<reference path='Chemistry.ts'/>
 ///<reference path='../util/Vec.ts'/>
+///<reference path='../util/Geom.ts'/>
 
 /*
 	A dynamic representation of a molecule, which is analogous to the com.mmi.core.mol.Molecule class.

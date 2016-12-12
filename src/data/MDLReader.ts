@@ -12,6 +12,7 @@
 
 ///<reference path='../decl/corrections.d.ts'/>
 ///<reference path='../util/util.ts'/>
+///<reference path='../data/CoordUtil.ts'/>
 
 /*
 	MDL Molfile reader: a somewhat flexible input parser that can turn V2000 and V3000 Molfiles into the internal molecule

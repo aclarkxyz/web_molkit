@@ -10,7 +10,9 @@
 	[PKG=webmolkit]
 */
 
+///<reference path='../util/Geom.ts'/>
 ///<reference path='Molecule.ts'/>
+///<reference path='SketchUtil.ts'/>
 
 /*
 	MolUtil: static methods for calculating molecule properties.
