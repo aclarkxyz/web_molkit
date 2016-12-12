@@ -60,7 +60,7 @@ class AssayProvenance extends Aspect
 	public static COLNAME_RELATION = 'Relation'; // string
 	public static COLNAME_SOURCEURI = 'SourceURI'; // string
 
-//	private static final String[] RESERVED_COLUMNS = {COLNAME_MOLECULE, COLNAME_NAME, COLNAME_VALUE, COLNAME_ERROR, COLNAME_UNITS, COLNAME_RELATION, COLNAME_SOURCEURI};
+	//	private static final String[] RESERVED_COLUMNS = {COLNAME_MOLECULE, COLNAME_NAME, COLNAME_VALUE, COLNAME_ERROR, COLNAME_UNITS, COLNAME_RELATION, COLNAME_SOURCEURI};
 
 	// convenient suggestions for unit URIs
 	public static URI_UNIT_M = 'http://purl.obolibrary.org/obo/UO_0000062'; // moles per litre (mol/L)
@@ -320,6 +320,7 @@ class AssayProvenance extends Aspect
     			if (!Number.isNaN(error)) tr.text += ' \u2213 ' + error;
     			if (units) tr.text += ' ' + units;
 			}
+			return tr;
 		}
 		else if (idx == 1)
 		{
@@ -338,6 +339,7 @@ class AssayProvenance extends Aspect
 				break;
 			}
 			tr.text = url;
+			return tr;
 		}
 		
 		return null;		
