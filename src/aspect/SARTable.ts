@@ -219,7 +219,7 @@ class SARTable extends Aspect
 					else if (type == 'substituent') {fields.substituents.push(name); continue;}
 				}
 			}
-			fields.metadata.push(line)
+			fields.metadata.push(line);
 		}
 		
 		return fields;

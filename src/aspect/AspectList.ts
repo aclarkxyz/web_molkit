@@ -13,6 +13,8 @@
 ///<reference path='../util/util.ts'/>
 ///<reference path='../data/DataSheet.ts'/>
 ///<reference path='SARTable.ts'/>
+///<reference path='Experiment.ts'/>
+///<reference path='AssayProvenance.ts'/>
 
 /*
 	The AspectList class is used as a way to fetch all of the recognised aspects that are installed within a given datasheet, without
@@ -30,6 +32,7 @@ class AspectList
 		{
 			SUPPORTED_ASPECTS[SARTable.CODE] = SARTable.NAME;
 			SUPPORTED_ASPECTS[Experiment.CODE] = Experiment.NAME;
+			SUPPORTED_ASPECTS[AssayProvenance.CODE] = AssayProvenance.NAME;
 		}
 	}
 
