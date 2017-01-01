@@ -93,6 +93,13 @@ class ButtonView extends Widget
 		Func.getActionIcons({}, fcn, this);
 	}
 
+	// for future reference, parent boundary size is different
+	public setParentSize(width:number, height:number):void
+	{
+		this.parentWidth = width;
+		this.parentHeight = height;
+	}
+
 	// --------------------------------------- public methods ---------------------------------------
 
 	// returns the current bank, or null if none
@@ -361,7 +368,6 @@ class ButtonView extends Widget
 
 		if (this.position == 'left' || this.position == 'right') this.width += this.gripHeight;
 		else if (this.position == 'top' || this.position == 'bottom') this.height += this.gripHeight;
-
 		this.addGripButton();
 
 		if (popWidth > 0 || popHeight > 0)
