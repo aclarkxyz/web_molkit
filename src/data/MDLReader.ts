@@ -531,6 +531,8 @@ class MDLSDFReader
 		 
 			entry = [];
 		}
+
+		if (ds.numRows == 0) this.ds = null;
 	}
 
     private upcastStringColumns():void
