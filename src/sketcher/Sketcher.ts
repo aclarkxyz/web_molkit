@@ -327,6 +327,28 @@ class Sketcher extends Widget implements ArrangeMeasurement
 		});		
 	}
 
+	// change the size of the sketcher after instantiation
+	public changeSize(width:number, height:number):void
+	{
+		if (width == this.width && height == this.height) return;
+		this.width = width;
+		this.height = height;
+
+		for (let widget of [this.container, this.canvasUnder, this.canvasMolecule, this.canvasOver])
+		{
+			$(widget).css('width', width + 'px');
+			$(widget).css('height', height + 'px');
+		}
+
+		for (let btnv of [this.commandView, this.toolView, this.templateView]) if (btnv)
+		{
+			btnv.setParentSize(width, height);
+			btnv.refreshBank();
+		}
+
+		this.autoScale();
+	}
+
 	// displays a message, which may be an error or just something helpful
 	public showMessage(msg:string, isError:boolean):void
 	{

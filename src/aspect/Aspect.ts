@@ -12,6 +12,8 @@
 
 ///<reference path='../util/util.ts'/>
 ///<reference path='../data/DataSheet.ts'/>
+///<reference path='../gfx/MetaVector.ts'/>
+///<reference path='../gfx/Rendering.ts'/>
 
 /*
 	Abstract base class for all "Aspects".

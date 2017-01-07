@@ -16,6 +16,7 @@
 ///<reference path='../gfx/DrawMolecule.ts'/>
 ///<reference path='../data/Molecule.ts'/>
 ///<reference path='../data/MolUtil.ts'/>
+///<reference path='../data/DataSheetStream.ts'/>
 ///<reference path='../rpc/RPC.ts'/>
 ///<reference path='../rpc/Func.ts'/>
 ///<reference path='../sketcher/MoleculeActivity.ts'/>
