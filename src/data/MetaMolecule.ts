@@ -11,6 +11,7 @@
 */
 
 ///<reference path='Molecule.ts'/>
+///<reference path='Stereochemistry.ts'/>
 
 /*
 	A "meta-molecule" is a container for a molecule which stores derived information about it. This is a compensation for the
