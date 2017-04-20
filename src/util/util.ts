@@ -352,7 +352,7 @@ function drawLine(ctx:CanvasRenderingContext2D, x1:number, y1:number, x2:number,
 
 // for HTML canvas, approximates the conversion of height to ascent ratio (i.e. pass in ascent * ASCENT_FUDGE to the font height)
 const ASCENT_FUDGE = 1.4;
-function fontSansSerif(ascent:number) {return `${ascent * ASCENT_FUDGE}px sans`;}
+function fontSansSerif(ascent:number) {return `${ascent * ASCENT_FUDGE}px sans-serif`;}
 
 // returns the density of pixels, i.e. 1 for a regular screen, 2 for retina, etc.
 function pixelDensity():number

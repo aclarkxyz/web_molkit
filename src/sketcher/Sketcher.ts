@@ -231,6 +231,7 @@ class Sketcher extends Widget implements ArrangeMeasurement
 		this.container.css('background-color', colourCanvas(this.background));
 		this.container.css('border', '1px solid ' + colourCanvas(this.border));
 		this.container.css('border-radius', '4px');
+		this.container.css('outline', 'none');
 		
 		this.container.attr('tabindex', '0');
 		this.container.focus();

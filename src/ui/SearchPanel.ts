@@ -45,29 +45,41 @@ class SearchPanel extends Widget
 	public static TYPE_MOLECULE = 'molecule';
 	public static TYPE_REACTION = 'reaction';
 
-	private HEIGHT = 50;
-	private MOLWIDTH = 80;
-	private ARROWWIDTH = 30;
+	private height = 50;
+	private molWidth = 80;
+	private arrowWidth = 30;
 	private HPADDING = 4;
 	private VPADDING = 2;
 	private COLCYCLE = ['#89A54E', '#71588F', '#4198AF', '#DB843D', '#93A9CF', '#D19392', '#4572A7', '#AA4643'];
+	private emptyMsg1:string = null;
+	private emptyMsg2:string = null;
 
 	constructor(private type:string)
 	{
 		super();
 	}
 
+	// provide additional parameters about how to show the content
+	public configureDisplay(molWidth:number, height:number, emptyMsg1?:string, emptyMsg2?:string):void
+	{
+		this.molWidth = molWidth;
+		this.height = height;
+		this.emptyMsg1 = emptyMsg1;
+		this.emptyMsg2 = emptyMsg2;
+	}
+
+	// get/set molecule, with appropriate rendering updates
 	public getMolecule1():Molecule {return this.mol1;}
 	public getMolecule2():Molecule {return this.mol2;}
 	public setMolecule1(mol:Molecule)
 	{
 		this.mol1 = mol;
-		if (this.drawnMol1 != null) this.renderMolecule(1);
+		this.renderMolecule(1);
 	}
 	public setMolecule2(mol:Molecule)
 	{
 		this.mol2 = mol;
-		if (this.drawnMol2 != null) this.renderMolecule(2);
+		this.renderMolecule(2);
 	}
 
 	// create the objects necessary to render the widget; this function should be called after basic pre-initialisation settings, e.g.
@@ -78,7 +90,7 @@ class SearchPanel extends Widget
 		
 		this.content.addClass('no_selection');
 		
-		const height = this.HEIGHT, molw = this.MOLWIDTH, arrow = this.ARROWWIDTH;
+		const height = this.height, molw = this.molWidth, arrow = this.arrowWidth;
 		const density = pixelDensity();
 		const hpad = this.HPADDING, vpad = this.VPADDING;
 		
@@ -172,7 +184,7 @@ class SearchPanel extends Widget
 		this.pressedMol1 = renderSolid('#00CA59', '#008650', styleMol1);
 		this.drawnMol1 = <HTMLCanvasElement>newElement(div, 'canvas', {'width': molw, 'height': height, 'style': styleMol1Pos});
 		this.drawnMol1.style.cursor = 'pointer';
-		if (this.mol1.numAtoms > 0) this.renderMolecule(1);
+		this.renderMolecule(1);
 		this.thinMol1 = renderBorder(1, styleMol1);
 		this.thickMol1 = renderBorder(2, styleMol1);
 		
@@ -192,7 +204,7 @@ class SearchPanel extends Widget
 			this.pressedMol2 = renderSolid('#00CA59', '#008650', styleMol2);
 			this.drawnMol2 = <HTMLCanvasElement>newElement(div, 'canvas', {'width': molw, 'height': height, 'style': styleMol2Pos});
 			this.drawnMol2.style.cursor = 'pointer';
-			if (this.mol2.numAtoms > 0) this.renderMolecule(2);
+			this.renderMolecule(2);
 			this.thinMol2 = renderBorder(1, styleMol2);
 			this.thickMol2 = renderBorder(2, styleMol2);
 		}
@@ -288,22 +300,60 @@ class SearchPanel extends Widget
 	private renderMolecule(which:number)
 	{
 		let mol = which == 1 ? this.mol1 : this.mol2, canvas = which == 1 ? this.drawnMol1 : this.drawnMol2;
-		if (mol.numAtoms == 0)
+		/*if (mol.numAtoms == 0)
 		{
 			canvas.width = canvas.width; // this is rubric for 'clear'
 			return;
-		}
+		}*/
 		
 		let withMapping = false;
 		if (this.type == SearchPanel.TYPE_REACTION) for (let n = 1; n <= mol.numAtoms; n++) if (mol.atomMapNum(n) > 0) {withMapping = true; break;} 
 		
-		let policy = withMapping ? RenderPolicy.defaultBlackOnWhite() : RenderPolicy.defaultColourOnWhite();
-		let input = {'molNative': mol.toString(), 'policy': policy.data};
+		let width = this.molWidth, height = this.height;
+		let density = pixelDensity();
+		let ctx = canvas.getContext('2d');
+		ctx.save();
+		ctx.scale(density, density);
+		ctx.clearRect(0, 0, width, height);
+		canvas.style.width = width + 'px';
+		canvas.style.height = height + 'px';
+		canvas.width = width * density;
+		canvas.height = height * density;
 
+		if (mol.numAtoms > 0)
+		{
+			let policy = withMapping ? RenderPolicy.defaultBlackOnWhite() : RenderPolicy.defaultColourOnWhite();
+			let measure = new OutlineMeasurement(0, 0, policy.data.pointScale);
+			let layout = new ArrangeMolecule(mol, measure, policy, new RenderEffects());
+			layout.arrange();
+			let metavec = new MetaVector();
+			new DrawMolecule(layout, metavec).draw();
+			metavec.transformIntoBox(new Box(2, 2, width - 4, height - 4));
+			metavec.renderContext(ctx);
+		}
+		else if ((which == 1 && this.emptyMsg1) || (which == 2 && this.emptyMsg2))
+		{
+			let lines = (which == 1 ? this.emptyMsg1 : this.emptyMsg2).split('\n');
+			const fsz = 10, fh = fsz * ASCENT_FUDGE;
+			ctx.font = fontSansSerif(fsz);
+			ctx.fillStyle = 'black';
+			let ty = 0.5 * (height - fh * (lines.length - 1));
+			for (let txt of lines)
+			{
+				let metrics = ctx.measureText(txt);
+				ctx.fillText(txt, 0.5 * (width - metrics.width), ty);
+				ty += fh;
+			}
+		}
+
+		ctx.restore();
+
+		/*
+		let input = {'molNative': mol.toString(), 'policy': policy.data};
 		Func.arrangeMolecule(input, function(result:any, error:ErrorRPC)
 		{
 			let metavec = new MetaVector(result.metavec);
-			let width = this.MOLWIDTH, height = this.HEIGHT;
+			metavec.density = density;
 			
 			let limW = width - 2, limH = height - 2;
 			let natW = metavec.width, natH = metavec.height;
@@ -329,15 +379,7 @@ class SearchPanel extends Widget
 			
 			//metavec.renderCanvas(canvas);		
 			
-			let ctx = canvas.getContext('2d');
-			ctx.clearRect(0, 0, width, height);
-			metavec.density = pixelDensity();
-			canvas.style.width = width + 'px';
-			canvas.style.height = height + 'px';
-			canvas.width = width * metavec.density;
-			canvas.height = height * metavec.density;
-
-			let arrmol = /*<PreArrangeMolecule>*/result.arrmol;
+			let arrmol = result.arrmol;
 			for (let n = 1; n <= mol.numAtoms; n++) if (mol.atomMapNum(n) > 0)
 			{
 				let col = this.COLCYCLE[(mol.atomMapNum(n) - 1) % this.COLCYCLE.length];
@@ -352,9 +394,7 @@ class SearchPanel extends Widget
 			}
 
 			metavec.renderContext(ctx);
-			
-			
-		}, this);
+		}, this);*/
 	}
 
 	// mouse events
@@ -393,15 +433,15 @@ class SearchPanel extends Widget
 	}
 	private editMolecule(which:number)
 	{
-		Account.connectTransient(function(result:any, error:ErrorRPC)
+		/*Account.connectTransient(function(result:any, error:ErrorRPC)
 		{
 			if (!result) throw 'Token acquisition failed: ' + error.message;
-			let tokenID = result.tokenID;
+			let tokenID = result.tokenID;*/
 			
-	        let dlg = new EditCompound(tokenID, which == 1 ? this.mol1 : this.mol2);
-			dlg.onSave(which == 1 ? this.saveMolecule1 : this.saveMolecule2, this);
+	        let dlg = new EditCompound(null, which == 1 ? this.mol1 : this.mol2);
+			dlg.onSave(function() {if (which == 1) this.saveMolecule1(dlg, which); else this.saveMolecule2(dlg, which);}, this);
 	        dlg.open();
-		}, this);
+		//}, this);
 	}
 	private editMapping()
 	{
