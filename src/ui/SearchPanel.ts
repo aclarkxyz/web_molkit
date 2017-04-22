@@ -45,6 +45,7 @@ class SearchPanel extends Widget
 	public static TYPE_MOLECULE = 'molecule';
 	public static TYPE_REACTION = 'reaction';
 
+	private isSketching = false;
 	private height = 50;
 	private molWidth = 80;
 	private arrowWidth = 30;
@@ -247,6 +248,27 @@ class SearchPanel extends Widget
 			addTooltip(this.drawnMol2, 'Edit the product structures.');
 			addTooltip(this.drawnArrow, 'Map the reactant and product atoms, for more precise searches.');
 		}
+
+		// capture paste (when not in sketchmode)
+		document.addEventListener('paste', function(e:any)
+		{
+			if (self.isSketching) return true;
+
+			let wnd = <any>window, txt = '';
+			if (wnd.clipboardData && wnd.clipboardData.getData) txt = wnd.clipboardData.getData('Text');
+			else if (e.clipboardData && e.clipboardData.getData) txt = e.clipboardData.getData('text/plain'); 
+
+			if (!txt) return true;
+			let mol = MoleculeStream.readUnknown(txt);
+			if (!mol) return true;
+
+			let which = this.type == SearchPanel.TYPE_REACTION && !MolUtil.isBlank(this.mol1) && MolUtil.isBlank(this.mol2) ? 2 : 1;
+			if (which == 1) self.setMolecule1(mol); else self.setMolecule2(mol);
+
+			e.preventDefault();
+			return false;
+		});		
+		
 		
 		// setup the drop targets
 		this.drawnMol1.addEventListener('dragover', function(event)
@@ -433,15 +455,11 @@ class SearchPanel extends Widget
 	}
 	private editMolecule(which:number)
 	{
-		/*Account.connectTransient(function(result:any, error:ErrorRPC)
-		{
-			if (!result) throw 'Token acquisition failed: ' + error.message;
-			let tokenID = result.tokenID;*/
-			
-	        let dlg = new EditCompound(null, which == 1 ? this.mol1 : this.mol2);
-			dlg.onSave(function() {if (which == 1) this.saveMolecule1(dlg, which); else this.saveMolecule2(dlg, which);}, this);
-	        dlg.open();
-		//}, this);
+		let dlg = new EditCompound(null, which == 1 ? this.mol1 : this.mol2);
+		this.isSketching = true;
+		dlg.onSave(function() {if (which == 1) this.saveMolecule1(dlg, which); else this.saveMolecule2(dlg, which);}, this);
+		dlg.onClose(function() {this.isSketching = false;}, this);
+		dlg.open();
 	}
 	private editMapping()
 	{
@@ -500,7 +518,7 @@ class SearchPanel extends Widget
 					if (mol != null) 
 					{
 						if (which == 1) self.setMolecule1(mol); else self.setMolecule2(mol);
-					}	
+					}
 					else console.log('Dragged data is not a SketchEl molecule: ' + str);
 				});
 				return;

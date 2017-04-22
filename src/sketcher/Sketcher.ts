@@ -603,7 +603,7 @@ class Sketcher extends Widget implements ArrangeMeasurement
 	// pasted text from clipboard (can be activated from outside the widget, so is public)
 	public pasteText(str:string):void
 	{
-		let mol = Molecule.fromString(str);
+		let mol = MoleculeStream.readUnknown(str);
 		if (mol != null) this.pasteMolecule(mol);
 		else alert('Text from clipboard is not a valid molecule.');
 	}

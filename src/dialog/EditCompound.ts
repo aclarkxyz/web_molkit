@@ -28,8 +28,8 @@ class EditCompound extends Dialog
 	
 	fakeTextArea:HTMLTextAreaElement = null; // for temporarily bogarting the clipboard
 	
-	callbackSave:(source?:EditCompound) => void = null;
-	masterSave:any = null;
+	protected callbackSave:(source?:EditCompound) => void = null;
+	protected masterSave:any = null;
 		
 	constructor(private tokenID:string, private mol:Molecule)
 	{

@@ -374,9 +374,8 @@ class BayesianModel
 			let match = PTN_HASHLINE.exec(line);
 			if (match != null)
 			{
-
-				let hash = parseInt(match[0]);
-				let c = parseFloat(match[1]);
+				let hash = parseInt(match[1]);
+				let c = parseFloat(match[2]);
 				model.contribs[hash] = c;
 			}
 			else if (line.startsWith('training:size=')) model.trainingSize = parseInt(line.substring(14));

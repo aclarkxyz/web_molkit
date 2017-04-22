@@ -23,6 +23,16 @@
 
 class MoleculeStream
 {
+	// tries to read a format-unknown molecule, with whatever tools are currently available
+	public static readUnknown(strData:string):Molecule
+	{
+		let mol = MoleculeStream.readNative(strData);
+		if (mol) return mol;
+		mol = MoleculeStream.readMDLMOL(strData);
+		// (... add others as available ...)
+		return mol;
+	}
+
 	// static method: reads in a string that is presumed to be in SketchEl format, and returns a fully instantiated Molecule; returns
 	// null if anything went wrong
 	public static readNative(strData:string):Molecule

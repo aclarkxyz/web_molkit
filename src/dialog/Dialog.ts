@@ -32,10 +32,19 @@ class Dialog
     protected bodyDiv:JQuery; // the main area, for content
     protected btnClose:JQuery; // the close button, in case anyone wants to know
     
+	protected callbackClose:(source?:EditCompound) => void = null;
+	protected masterClose:any = null;
+
     constructor()
     {
     }
     
+	public onClose(callback:(source?:EditCompound) => void, master:any)
+	{
+		this.callbackClose = callback;
+		this.masterClose = master;
+	}
+
     // creates all the DOM objects and shows the dialog; details such as title should be setup before calling this
     public open():void
     {
@@ -100,6 +109,8 @@ class Dialog
     {
         this.panelBoundary.remove();
         this.obscureBackground.remove();
+
+        if (this.callbackClose) this.callbackClose.call(this.masterClose, this);
     }
     
     // sizes may have changed, so adjust if necessary

@@ -19,7 +19,7 @@ var globalTooltip:Tooltip = null;
 var globalPopWatermark = 0;
 
 // adds a well behaved tooltip to the given node (element or JQuery object)
-function addTooltip(parent:any, bodyHTML:string, titleHTML?:string):void
+function addTooltip(parent:any, bodyHTML:string, titleHTML?:string, delay?:number):void
 {
     let widget = $(parent);
     
@@ -36,7 +36,7 @@ function addTooltip(parent:any, bodyHTML:string, titleHTML?:string):void
         globalPopover.appendTo(document.body);
     }
     
-    const tooltip = new Tooltip(widget, bodyHTML, titleHTML);
+    const tooltip = new Tooltip(widget, bodyHTML, titleHTML, delay == null ? 1000 : delay);
     
     let prevEnter:any = widget.attr('onmouseenter'), prevLeave:any = widget.attr('onmouseleave');
     widget.mouseenter(function(e) {tooltip.start(); if (prevEnter) prevEnter(e);});
@@ -55,7 +55,7 @@ class Tooltip
 {
     watermark:number;
     
-    constructor(private widget:JQuery, private bodyHTML:string, private titleHTML:string)
+    constructor(private widget:JQuery, private bodyHTML:string, private titleHTML:string, private delay:number)
     {
     }
     
@@ -70,7 +70,7 @@ class Tooltip
         window.setTimeout(function()
         {
             if (self.watermark == globalPopWatermark) self.raise(); 
-        }, 1000);
+        }, this.delay);
     }
     
     // lower the tooltip, if it is still owned by this widget
