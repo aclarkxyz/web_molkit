@@ -28,7 +28,7 @@ class MoleculeStream
 	{
 		let mol = MoleculeStream.readNative(strData);
 		if (mol) return mol;
-		mol = MoleculeStream.readMDLMOL(strData);
+		try {mol = MoleculeStream.readMDLMOL(strData);} catch (e) {}
 		// (... add others as available ...)
 		return mol;
 	}

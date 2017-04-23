@@ -325,7 +325,7 @@ class Sketcher extends Widget implements ArrangeMeasurement
 			else if (e.clipboardData && e.clipboardData.getData) self.pasteText(e.clipboardData.getData('text/plain')); 
 			e.preventDefault();
 			return false;
-		});		
+		});
 	}
 
 	// change the size of the sketcher after instantiation
@@ -1965,11 +1965,14 @@ class Sketcher extends Widget implements ArrangeMeasurement
 		
 		let items = transfer.items, files = transfer.files;
 
+		const SUFFIXES = ['.el', '.mol'];
+		const MIMES = ['text/plain', 'chemical/x-sketchel', 'x-mdl-molfile'];
+
 		//console.log('DROP-INTO: items=' +  items.length + ', files=' + files.length);
 
 		for (let n = 0; n < items.length; n++)
 		{
-			if (items[n].type.startsWith('text/plain'))
+			if (items[n].kind == 'string' && MIMES.indexOf(items[n].type) >= 0)
 			{
 				items[n].getAsString(function(str:string)
 				{
@@ -1988,19 +1991,19 @@ class Sketcher extends Widget implements ArrangeMeasurement
 		}
 		for (let n = 0; n < files.length; n++)
 		{
-			if (files[n].name.endsWith('.el'))
+			for (let sfx of SUFFIXES) if (files[n].name.endsWith(sfx))
 			{
 				let reader = new FileReader();
 				reader.onload = function(event)
 				{
 					let str = reader.result;
-					let mol = Molecule.fromString(str);
+					let mol = MoleculeStream.readUnknown(str);
 					if (mol != null) 
 					{
 						// (maybe do an intelligent append/paste, using the coordinates, rather than blowing it away?)
 						self.defineMolecule(mol, true, true);
 					}	
-					else console.log('Dragged file is not a SketchEl molecule: ' + str);
+					else console.log('Dragged file is not a recognised molecule: ' + str);
 				};
 				reader.readAsText(files[n]);
 				return;
