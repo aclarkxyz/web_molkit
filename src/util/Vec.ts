@@ -65,6 +65,13 @@ class Vec
 		for (let n = 0; n < arr1.length; n++) if (arr1[n] != arr2[n]) return false;
 		return true;
 	}
+	public static equivalent(arr1:any[], arr2:any[]):boolean
+	{
+		const len1 = arr1 == null ? 0 : arr1.length, len2 = arr2 == null ? 0 : arr2.length;
+		if (len1 != len2) return false;
+		for (let n = 0; n < len1; n++) if (arr1[n] != arr2[n]) return false;
+		return true;
+	}
 
 	public static booleanArray(val:boolean, sz:number):boolean[]
 	{
