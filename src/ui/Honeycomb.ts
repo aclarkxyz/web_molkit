@@ -52,6 +52,16 @@ class HoneycombHex
 	//    S    		refer to the correct positions...
 	public x:number = null;
 	public y:number = null;
+
+	// rendering state
+	public centre:Pos;
+	public hexSize:number;
+	public lineSize:number;
+	public innerRad:number;
+	public outerRad:number;
+	public edgeLen:number;
+	public frame:Box;
+	public span:JQuery;
 }
 
 class Honeycomb extends Widget
@@ -64,6 +74,8 @@ class Honeycomb extends Widget
 	private hexes:HoneycombHex[] = [];
 	private seed = 0; // starting hex; defaults to first
 	private density = 0.01; // the "density fudge": higher values favour more squished up clusters
+
+	private hexSize = 100; // baseline scale
 
 	// all of the "flower" permutations that are nondegenerate from circular rotation/inversion; favours those with lowest numbers first
 	private FLOWER_PERMS =
@@ -142,14 +154,22 @@ class Honeycomb extends Widget
 		for (let n = 7; n < this.hexes.length; n++) this.placeHex(n);
 
 
-for (let n = 0; n < this.hexes.length; n++)
-{
-	let hex = this.hexes[n];
-	console.log('n='+n+' idx='+hex.molidx+' na='+hex.mol.numAtoms+' x='+hex.x+' y='+hex.y);
-}
+		/*for (let n = 0; n < this.hexes.length; n++)
+		{
+			let hex = this.hexes[n];
+			console.log('n='+n+' idx='+hex.molidx+' na='+hex.mol.numAtoms+' x='+hex.x+' y='+hex.y);
+		}*/
+	
+		// get ready and draw
+		this.prepareLayout();
 
-		// !! roster...
-		// !! check stopped...
+		let backdrop = $('<div></div>').appendTo(this.content);
+		backdrop.css('width', this.size.w + 'px');
+		backdrop.css('height', this.size.h + 'px');
+		backdrop.css('position', 'relative');		
+
+		let roster = Vec.identity0(this.hexes.length);
+		this.renderNext(backdrop, roster);
 	}
 
 	// ------------ private methods ------------
@@ -299,7 +319,257 @@ for (let n = 0; n < this.hexes.length; n++)
 		{
 			return dir == this.HEX_NW || dir == this.HEX_NE ? y - 1 : y;
 		}
-	}	
+	}
+
+	// calculate positional information for all of the hexes: this can be done quickly, before all the rendering happens
+	private prepareLayout():void
+	{
+		const nhex = this.hexes.length;
+		if (nhex == 0) return;
+		let usize = this.hexSize * 1.0 /* zoomscale...*/;
+
+		let hexW = usize * 0.75, hexH = usize * Math.cos(30 * DEGRAD);
+		let innerRad = 0.5 * hexH, outerRad = 0.5 * usize; // inner=closest approach of mid edge, outer=far vertex distance
+		let edgeLen = usize * Math.sin(30 * DEGRAD) // the length of any of the hexagon's edges
+		
+		let cx:number[] = [], cy:number[] = [];
+		//let loX = 0, loY = 0, hiX = 0, hiY = 0;
+		for (let n = 0; n < nhex; n++)
+		{
+			let x = this.hexes[n].x * hexW;
+			let y = this.hexes[n].y * hexH;
+			if ((this.hexes[n].x & 1) == 1) y -= 0.5 * hexH;
+			cx.push(x);
+			cy.push(y);
+		
+			/*if (n == 0) [loX, hiX, loY, hiY] = [x, y, x, y];
+			
+			loX = Math.min(loX, Math.floor(x - 0.5 * usize));
+			loY = Math.min(loY, Math.floor(y - 0.5 * hexH));
+			hiX = Math.max(hiX, Math.ceil(x + 0.5 * usize));
+			hiY = Math.max(hiY, Math.ceil(y + 0.5 * hexH));*/
+		}
+
+		/*loX -= 10; loY -= 10;
+		hiX += 10; hiY += 10;*/
+		Vec.addTo(cx, 0.5 * this.size.w - cx[0]);
+		Vec.addTo(cy, 0.5 * this.size.h - cy[0]); 
+		
+		for (let n = 0; n < nhex; n++)
+		{
+			let x1 = Math.floor(cx[n] - 0.5 * usize - 1.5), y1 = Math.floor(cy[n] - 0.5 * hexH - 1.5);
+			let x2 = Math.ceil(cx[n] + 0.5 * usize + 1.5), y2 = Math.ceil(cy[n] + 0.5 * hexH + 1.5);
+			
+			let hex = this.hexes[n];
+			hex.centre = new Pos(cx[n] - x1, cy[n] - y1);
+			hex.hexSize = usize;
+			hex.lineSize = this.hexSize * 0.01; //scroller.zoomScale
+			hex.innerRad = innerRad;
+			hex.outerRad = outerRad;
+			hex.edgeLen = edgeLen;		
+			hex.frame = new Box(x1, y1, x2 - x1, y2 - y1);
+		}
+		
+		/* ...
+		scroller.frame = bounds
+		let contentW = hiX - loX, contentH = hiY - loY
+		scroller.contentSize = CGSize(width:contentW, height:contentH)
+		canvas.frame = CGRect(x:0, y:0, width:contentW, height:contentH)
+		*/
+		
+		// centre the seed hex
+		/*let sz = bounds.size
+		let seed = indexOf(cluster.seed, indices)
+		let ox = cx[seed] - loX - 0.5 * sz.width
+		let oy = cy[seed] - loY - 0.5 * sz.height
+		scroller.contentOffset = CGPoint(x:ox, y:oy)*/
+		
+		// define the zoom extremities
+		/*let shrinkW = min(1, sz.width / contentW), shrinkH = min(1, sz.height / contentH)
+		scroller.minimumZoomScale = min(shrinkW, shrinkH)
+		let maxZoom = CGFloat(maxMemZoom) / (useScreenScale * useScreenScale * 4 * CGFloat(nhex)  * hexSize * hexSize * 1.5)
+		//println("MAX:\(maxZoom)")
+		scroller.maximumZoomScale = min(5, maxZoom)
+		*/
+	}
+
+	// render the next hex, then continue
+	private renderNext(parent:JQuery, roster:number[])
+	{
+		if (roster.length == 0 || this.stopped) return;
+		
+		let idx = roster.shift(), hex = this.hexes[idx];
+
+		if (!hex.span)
+		{
+			hex.span = $('<span></span>').appendTo(parent);
+			hex.span.css('position', 'absolute');
+			hex.span.css('pointer-events', 'none');
+		}
+
+		hex.span.css('left', hex.frame.x + 'px');
+		hex.span.css('top', hex.frame.y + 'px');
+		hex.span.css('width', hex.frame.w + 'px');
+		hex.span.css('height', hex.frame.h + 'px');
+console.log('IDX:'+idx+' FRAME:'+JSON.stringify(hex.frame));
+
+		//hex.span.css('background-color', 'red');
+
+		let gfx = new MetaVector();
+
+		let edgeX:number[] = [], edgeY:number[] = [];
+		for (let n = 0; n < 6; n++)
+		{
+			let th = (n - 2) * Math.PI * 1.0/3;
+			edgeX.push(hex.centre.x + hex.hexSize * 0.5 * Math.cos(th));
+			edgeY.push(hex.centre.y + hex.hexSize * 0.5 * Math.sin(th));
+		}
+
+		gfx.drawPoly(edgeX, edgeY, 0x000000, hex.lineSize, hex.background, true);
+
+		// rim colour-coding, if any
+		let rimFract = hex.withRim ? 0.15 : 0, mainFract = 1 - rimFract;
+		
+/*
+		if hex.withRim
+		{
+			for i in 0 ..< 6
+			{
+				if hex.rimCols[i] == VectorGfx.NoColour {continue}
+				let j = i == 5 ? 0 : i + 1
+				
+				let p1 = CGPoint(x:centre.x + (edgeX[i] - centre.x) * mainFract, y:centre.y + (edgeY[i] - centre.y) * mainFract)
+				let p2 = CGPoint(x:edgeX[i], y:edgeY[i])
+				let p3 = CGPoint(x:edgeX[j], y:edgeY[j])
+				let p4 = CGPoint(x:centre.x + (edgeX[j] - centre.x) * mainFract, y:centre.y + (edgeY[j] - centre.y) * mainFract)
+				
+				ctx.beginPath()
+				ctx.move(to:CGPoint(x:p1.x, y:p1.y))
+				ctx.addLine(to:CGPoint(x:p2.x, y:p2.y))
+				ctx.addLine(to:CGPoint(x:p3.x, y:p3.y))
+				ctx.addLine(to:CGPoint(x:p4.x, y:p4.y))
+				setContextFillCol(ctx, hex.rimCols[i])
+				ctx.fillPath()
+			}
+		}*/
+		
+		// text annotation
+		let bumpDown = 0;
+	
+		/*if !hex.annotation.isEmpty
+		{
+			let y = centre.y - innerRad * mainFract
+			var font = UIFont.systemFont(ofSize:CGFloat(hex.annotFontSize))
+			var tsz = textSize(hex.annotation, font)
+			if tsz.width > edgeLen
+			{
+				font = fontFitWidth(hex.annotation, font, edgeLen, minSize:2)
+				tsz = textSize(hex.annotation, font)
+			}
+			textDrawPoint(hex.annotation, font, CGPoint(x:centre.x - 0.5 * tsz.width, y:y + 3 - 0.5 * tsz.height), hex.annotCol)
+			bumpDown = font.lineHeight
+		}*/
+		
+		// draw the molecule
+		let cent = new Pos(hex.centre.x, hex.centre.y + 0.5 * bumpDown);
+		let rad = hex.innerRad * mainFract - 1 - bumpDown;
+
+		let policy = RenderPolicy.defaultColourOnWhite(); // !! cache someplace...
+		policy.data.pointScale = 12;
+		let effects = new RenderEffects();
+		let measure = new OutlineMeasurement(0, 0, policy.data.pointScale);
+		let layout = new ArrangeMolecule(hex.mol, measure, policy, effects);
+		layout.arrange();
+
+		let [cx, cy, mrad] = this.determineCircularBoundary(layout);
+		if (mrad > rad)
+		{
+			let downScale = rad / mrad;
+			layout.scaleEverything(downScale);
+			cx *= downScale;
+			cy *= downScale;
+		}
+		layout.offsetEverything(cent.x - cx, cent.y - cy);
+		new DrawMolecule(layout, gfx).draw();
+
+		// blat
+		hex.span.empty();
+		gfx.normalise();
+		$(gfx.createSVG()).appendTo(hex.span);
+
+		const self = this;
+		setTimeout(function() {self.renderNext(parent, roster);}, 1);
+	}
+
+	// fits a molecular layout into a circle
+	private determineCircularBoundary(layout:ArrangeMolecule):[number, number, number]
+	{
+		let npoints = layout.numPoints(), nlines = layout.numLines();
+		if (npoints == 0) return [0, 0, 0];
+
+		let cx = 0, cy = 0;
+		let px:number[] = [], py:number[] = [];
+		for (let n = 0; n < npoints; n++)
+		{
+			let a = layout.getPoint(n);
+			cx += a.oval.cx;
+			cy += a.oval.cy;
+			
+			let r = Math.max(a.oval.rw, a.oval.rh);
+			px.push(a.oval.cx - r); 
+			py.push(a.oval.cy - r);
+
+			if (r == 0) continue;
+
+			px.push(a.oval.cx - r); 
+			py.push(a.oval.cy + r);
+			px.push(a.oval.cx + r); 
+			py.push(a.oval.cy - r);
+			px.push(a.oval.cx + r); 
+			py.push(a.oval.cy + r);
+		}
+		cx /= npoints;
+		cy /= npoints;
+
+		for (let n = 0; n < nlines; n++)
+		{
+			let b = layout.getLine(n);
+			px.push(b.line.x1 - b.size);
+			py.push(b.line.y1 - b.size);
+			px.push(b.line.x1 + b.size); 
+			py.push(b.line.y1 + b.size);
+			px.push(b.line.x2 - b.size); 
+			py.push(b.line.y2 - b.size);
+			px.push(b.line.x2 + b.size); 
+			py.push(b.line.y2 + b.size);
+		}
+
+		// iteratively shift the centre/recalculate the radius until there's no way to reduce it any further
+		let calculateRadiusSq = function(cx:number, cy:number, px:number[], py:number[]):number
+		{
+			let v = 0
+			for (let n = px.length - 1; n >= 0; n--) v = Math.max(v, norm2_xy(px[n] - cx, py[n] - cy));
+			return v;
+		}
+
+		var crsq = calculateRadiusSq(cx, cy, px, py);
+		var step = Math.sqrt(crsq) * 0.1;
+		while (step > 0.01)
+		{
+			let x1 = cx - step, x2 = cx + step, y1 = cy - step, y2 = cy + step;
+			let r1 = calculateRadiusSq(x1, cy, px, py);
+			let r2 = calculateRadiusSq(x2, cy, px, py);
+			let r3 = calculateRadiusSq(cx, y1, px, py);
+			let r4 = calculateRadiusSq(cx, y2, px, py);
+			if (r1 < crsq && r1 < r2 && r1 < r3 && r1 < r4) {cx = x1; crsq = r1;}
+			else if (r2 < crsq && r2 < r3 && r2 < r4 ){cx = x2; crsq = r2;}
+			else if (r3 < crsq && r3 < r4) {cy = y1; crsq = r3;}
+			else if (r4 < crsq) {cy = y2; crsq = r4;}
+			else {step *= 0.5;}
+		}
+
+		return [cx, cy, Math.sqrt(crsq)];
+	}
 }
 
 
