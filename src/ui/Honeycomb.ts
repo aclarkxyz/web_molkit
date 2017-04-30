@@ -26,7 +26,7 @@ interface HoneycombMolecule
 {
 	mol:Molecule;
 	isReference:boolean; // true if this is from the user's provided reference set
-	isActive:boolean; // true if this is from the model dataset and is active
+	rimColour:number; // optional colour for decorating the interior rim
 	fp?:number[]; // ECFP6 fingerprints
 }
 
@@ -38,7 +38,6 @@ class HoneycombHex
 	public background = 0xFFFFFF;
 	public withRim = false; // if true, molecule will be inset, and rimCols (below) used to annotate the edges
 	public rimCols = [-1, -1, -1, -1, -1, -1];
-	public isBold = false; // if true, outline will be emboldened
 	public policy:RenderPolicy = null; // only provide if not default
 	public annotation:string = null; // optional annotation to display in hex
 	public annotCol = 0x000000; // colour of ditto
@@ -126,11 +125,11 @@ class Honeycomb extends Widget
 	// stacking the deck; note that reference molecules should be added first, and the first one is special
 	public addReferenceMolecule(mol:Molecule):void
 	{
-		this.molecules.push({'mol': mol, 'isReference': true, 'isActive': null});
+		this.molecules.push({'mol': mol, 'isReference': true, 'rimColour': null});
 	}
-	public addModelMolecule(mol:Molecule, isActive:boolean):void
+	public addModelMolecule(mol:Molecule, rimColour:number):void
 	{
-		this.molecules.push({'mol': mol, 'isReference': false, 'isActive': isActive});
+		this.molecules.push({'mol': mol, 'isReference': false, 'rimColour': rimColour});
 	}
 
 	// creates the basic outline: does not yet include any of the interesting content
@@ -193,6 +192,11 @@ class Honeycomb extends Widget
 				hex.background = 0x000000;
 				hex.annotCol = 0xFFFFFF;
 				hex.policy = this.policyWhite;
+			}
+			else if (hmol.rimColour != null && hmol.rimColour != MetaVector.NOCOLOUR)
+			{
+				hex.withRim = true;
+				hex.rimCols = Vec.numberArray(hmol.rimColour, 6);
 			}
 			this.hexes.push(hex);
 		}
@@ -396,17 +400,8 @@ class Honeycomb extends Widget
 			if ((this.hexes[n].x & 1) == 1) y -= 0.5 * hexH;
 			cx.push(x);
 			cy.push(y);
-		
-			/*if (n == 0) [loX, hiX, loY, hiY] = [x, y, x, y];
-			
-			loX = Math.min(loX, Math.floor(x - 0.5 * usize));
-			loY = Math.min(loY, Math.floor(y - 0.5 * hexH));
-			hiX = Math.max(hiX, Math.ceil(x + 0.5 * usize));
-			hiY = Math.max(hiY, Math.ceil(y + 0.5 * hexH));*/
 		}
 
-		/*loX -= 10; loY -= 10;
-		hiX += 10; hiY += 10;*/
 		Vec.addTo(cx, 0.5 * this.size.w - cx[0]);
 		Vec.addTo(cy, 0.5 * this.size.h - cy[0]); 
 		
@@ -483,41 +478,34 @@ class Honeycomb extends Widget
 
 		let gfx = new MetaVector();
 
+		let centre = hex.centre;
 		let edgeX:number[] = [], edgeY:number[] = [];
 		for (let n = 0; n < 6; n++)
 		{
 			let th = (n - 2) * Math.PI * 1.0/3;
-			edgeX.push(hex.centre.x + hex.hexSize * 0.5 * Math.cos(th));
-			edgeY.push(hex.centre.y + hex.hexSize * 0.5 * Math.sin(th));
+			edgeX.push(centre.x + hex.hexSize * 0.5 * Math.cos(th));
+			edgeY.push(centre.y + hex.hexSize * 0.5 * Math.sin(th));
 		}
 
 		gfx.drawPoly(edgeX, edgeY, 0x000000, hex.lineSize, hex.background, true);
 
 		// rim colour-coding, if any
-		let rimFract = hex.withRim ? 0.15 : 0, mainFract = 1 - rimFract;
+		let rimFract = hex.withRim ? 0.10 : 0, mainFract = 1 - rimFract;
 		
-/*
-		if hex.withRim
+		if (hex.withRim)
 		{
-			for i in 0 ..< 6
+			for (let i = 0; i < 6; i++)
 			{
-				if hex.rimCols[i] == VectorGfx.NoColour {continue}
-				let j = i == 5 ? 0 : i + 1
+				if (hex.rimCols[i] == MetaVector.NOCOLOUR) continue;
+				let j = i == 5 ? 0 : i + 1;
 				
-				let p1 = CGPoint(x:centre.x + (edgeX[i] - centre.x) * mainFract, y:centre.y + (edgeY[i] - centre.y) * mainFract)
-				let p2 = CGPoint(x:edgeX[i], y:edgeY[i])
-				let p3 = CGPoint(x:edgeX[j], y:edgeY[j])
-				let p4 = CGPoint(x:centre.x + (edgeX[j] - centre.x) * mainFract, y:centre.y + (edgeY[j] - centre.y) * mainFract)
-				
-				ctx.beginPath()
-				ctx.move(to:CGPoint(x:p1.x, y:p1.y))
-				ctx.addLine(to:CGPoint(x:p2.x, y:p2.y))
-				ctx.addLine(to:CGPoint(x:p3.x, y:p3.y))
-				ctx.addLine(to:CGPoint(x:p4.x, y:p4.y))
-				setContextFillCol(ctx, hex.rimCols[i])
-				ctx.fillPath()
+				let p1x = centre.x + (edgeX[i] - centre.x) * mainFract, p1y = centre.y + (edgeY[i] - centre.y) * mainFract;
+				let p2x = edgeX[i], p2y = edgeY[i];
+				let p3x = edgeX[j], p3y = edgeY[j];
+				let p4x = centre.x + (edgeX[j] - centre.x) * mainFract, p4y = centre.y + (edgeY[j] - centre.y) * mainFract;
+				gfx.drawPoly([p1x, p2x, p3x, p4x], [p1y, p2y, p3y, p4y], -1, 0, hex.rimCols[i], true);
 			}
-		}*/
+		}
 		
 		// text annotation
 		let bumpDown = 0;
@@ -537,7 +525,6 @@ class Honeycomb extends Widget
 		}*/
 		
 		// draw the molecule
-		let cent = new Pos(hex.centre.x, hex.centre.y + 0.5 * bumpDown);
 		let rad = hex.innerRad * mainFract - 1 - bumpDown;
 
 		let policy = hex.policy ? hex.policy : this.policyColour;
@@ -552,7 +539,7 @@ class Honeycomb extends Widget
 			cx *= downScale;
 			cy *= downScale;
 		}
-		layout.offsetEverything(cent.x - cx, cent.y - cy);
+		layout.offsetEverything(centre.x - cx, centre.y + 0.5 * bumpDown- cy);
 		new DrawMolecule(layout, gfx).draw();
 
 		// blat
@@ -646,6 +633,7 @@ class Honeycomb extends Widget
 		if (idx >= 0 && idx != this.seed)
 		{
 			this.seed = this.hexes[idx].molidx;
+			this.panDelta = [0, 0];
 			this.populate();
 			//this.renderHexes();
 		}
