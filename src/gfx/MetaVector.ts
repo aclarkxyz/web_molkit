@@ -136,8 +136,8 @@ class MetaVector
 		if (thickness == null) thickness = 1;
 
 		const bump = 0.5 * thickness;
-		this.updateBounds(cx - 0.5 * rw - bump, cy - 0.5 * rh - bump);
-		this.updateBounds(cx + 0.5 * rw + bump, cy + 0.5 * rh + bump);
+		this.updateBounds(cx - rw - bump, cy - rh - bump);
+		this.updateBounds(cx + rw + bump, cy + rh + bump);
 
 		let typeidx = this.findOrCreateType([this.PRIM_OVAL, edgeCol, fillCol, thickness]);
 		this.prims.push([this.PRIM_OVAL, typeidx, cx, cy, rw, rh]);

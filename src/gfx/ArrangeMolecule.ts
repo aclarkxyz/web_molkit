@@ -471,6 +471,28 @@ class ArrangeMolecule
 		this.offsetEverything(x - bounds[0] + 0.5 * (w - bounds[2] + bounds[0]), y - bounds[1] + 0.5 * (h - bounds[3] + bounds[1]));
     }
     
+	// converts all drawing objects to a single colour
+	public monochromate(col:number):void
+	{
+		for (let a of this.points) a.col = col;
+		for (let b of this.lines) b.col = col;
+	}
+
+	// makes a moderately deep copy: the layout metrics can be tinkered with, but not the core ingredients
+	public clone():ArrangeMolecule
+	{
+		let dup = new ArrangeMolecule(this.mol, this.measure, this.policy, this.effects);
+		dup.scale = this.scale;
+		dup.bondSepPix = this.bondSepPix;
+		dup.lineSizePix = this.lineSizePix;
+		dup.fontSizePix = this.fontSizePix;
+		dup.ymul = this.ymul;
+		for (let a of this.points) dup.points.push(clone(a));
+		for (let b of this.lines) dup.lines.push(clone(b));
+		for (let s of this.space) dup.space.push(clone(s));
+		return dup;
+	}
+
 	// --------------------- private methods ---------------------
 		
 	// for a given adjunct to an atom, find a suitable position for it, based on the provided direction (angdir, radians);

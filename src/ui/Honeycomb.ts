@@ -635,10 +635,8 @@ class Honeycomb extends Widget
 			this.seed = this.hexes[idx].molidx;
 			this.panDelta = [0, 0];
 			this.populate();
-			//this.renderHexes();
 		}
 
-		// (do something...)
 		event.stopImmediatePropagation();
 	}
 	private mouseDown(event:JQueryEventObject):void

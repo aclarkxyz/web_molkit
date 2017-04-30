@@ -362,7 +362,7 @@ function pixelDensity():number
 }
 
 // performs a shallow copy of the object: as long as the values are effectively immutable, this will do the trick
-function clone(obj:{[id:string] : any})
+function clone(obj:{[id:string] : any}):any
 {
 	let dup:{[id:string] : any} = {};
 	for (let key in obj) dup[key] = obj[key];

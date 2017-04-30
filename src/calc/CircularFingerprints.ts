@@ -64,6 +64,10 @@ class CircularFingerprints
 	public static CLASS_ECFP4 = 2;
 	public static CLASS_ECFP6 = 3;
 
+	// plugins: interception of fingerprint addition
+	public hookApplyNewFP:(newFP:CircularFP) => void = null;
+	public hookConsiderNewFP:(newFP:CircularFP) => void = null;	
+
 	private identity:number[] = [];
 	private resolvedChiral:boolean[] = [];
 	private atomGroup:number[][] = [];
@@ -297,6 +301,7 @@ class CircularFingerprints
 	// add a new fingerprint, with no duplicate check (initial seed round); is only a separate function so it can be trapped
 	private applyNewFP(newFP:CircularFP):void
 	{
+		if (this.hookApplyNewFP) this.hookApplyNewFP(newFP);
 		this.fplist.push(newFP);
 	}
 	
@@ -304,6 +309,8 @@ class CircularFingerprints
 	// discard it
 	private considerNewFP(newFP:CircularFP):void
 	{
+		if (this.hookConsiderNewFP) this.hookConsiderNewFP(newFP);
+
 		let hit = -1;
 		let fp:CircularFP = null;
 		for (let n = 0; n < this.fplist.length; n++)

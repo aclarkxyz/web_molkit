@@ -180,74 +180,75 @@ class BayesianModel
 		if (this.range == 0) return pred >= this.highThresh ? 1 : 0;
 		return (pred - this.lowThresh) * this.invRange;
 	}
-/*
-	// figure out the proportion of a molecule's fingerprints are represented in the model
-	public double calculateOverlap(Molecule mol)
-	{
-		if (MolUtil.isBlank(mol)) throw new MoleculeCalcException("Molecule cannot be blank or null.");
 
-		MetaMolecule meta = MetaMolecule.createStrictRubric(mol);
-		CircularFingerprints circ = new CircularFingerprints(meta,classType);
+	// figure out the proportion of a molecule's fingerprints are represented in the model
+	public calculateOverlap(mol:Molecule):number
+	{
+		if (MolUtil.isBlank(mol)) throw 'Molecule cannot be blank or null.';
+
+		let meta = MetaMolecule.createStrictRubric(mol);
+		let circ = new CircularFingerprints(meta, this.classType);
 		circ.calculate();
-		int[] hashes = folding == 0 ? circ.getUniqueHashes() : circ.getFoldedHashes(folding);
-		return calculateOverlap(hashes);
+		let hashes = this.folding == 0 ? circ.getUniqueHashes() : circ.getFoldedHashes(this.folding);
+		return this.calculateOverlapFP(hashes);
 	}
 
-	public double calculateOverlap(final int[] hashes)
+	public calculateOverlapFP(hashes:number[]):number
 	{
 		if (hashes.length == 0) return 0;
-
-		int count = 0;
-		for (int h : hashes) if (contribs.containsKey(h)) count++;
-		return hashes.length == 1 ? count : (double) count / hashes.length;
+		let count = 0.0;
+		for (let h of hashes) if (this.contribs[h] != null) count++;
+		return hashes.length == 1 ? count : count / hashes.length;
 	}
 
 	// builds an array of contribution values per atom; the scale is: 0=neutral, -1=very inactive, 1=very active (but not capped)
-	public float[] calculateAtomPredictors(Molecule mol)
+	public calculateAtomPredictors(mol:Molecule):number[]
 	{
-		final int na = mol.numAtoms();
-		float[] atomic = Vec.floatArray(0, na); // (default of zero: is this the best call?)
+		const na = mol.numAtoms
+		let atomic = Vec.numberArray(0, na); // (default of zero: is this the best call?)
 
 		// sum the contributions: for each fingerprint that is defined, smear the contribution equally over all of the atoms that were involved in
 		// a fingerprint with that hash code
-		Set<Integer> predHashes = new HashSet<Integer>();
-		Map<Integer,boolean[]> cover = determineCoverage(mol, predHashes);
-		for (int h : cover.keySet())
+		let predHashes = new Set<number>();
+		let cover = this.determineCoverage(mol, predHashes);
+		for (let h in cover)
 		{
-			Double c = contribs.get(h);
+			let c = this.contribs[h];
 			if (c == null) continue;
-			boolean[] mask = cover.get(h);
-			int msz = Vec.maskCount(mask);
-			double invSz = 1.0f / msz;
-			for (int n = 0; n < na; n++) if (mask[n]) atomic[n] += (float) (c * invSz);
+			let mask = cover[h];
+			let msz = Vec.maskCount(mask);
+			let invSz = 1.0 / msz;
+			for (let n = 0; n < na; n++) if (mask[n]) atomic[n] += c * invSz;
 		}
 
 		// double duty: use the same source material to add up the numeric predictor as well (note that the "coverage" hashes are not necessarily
 		// the same as the approved list)		
-		double pred = 0;
-		for (int h : predHashes)
+		let pred = 0;
+		for (let h in predHashes)
 		{
-			Double c = contribs.get(h);
+			let c = this.contribs[<any>h];
 			if (c != null) pred += c;
 		}
 
 		// adjust the contributions to an average of zero, with a fixed standard deviation
-		final float SCALE_STDDEV_TO = 0.25f;
-		float invN = 1.0f / na;
+		const SCALE_STDDEV_TO = 0.25;
+		const invN = 1.0 / na;
 		Vec.addTo(atomic, -Vec.sum(atomic) * invN);
-		float stdDev = 0;
-		for (float a : atomic) stdDev += a * a;
-		stdDev = Util.sqrt(stdDev * invN);
+		let stdDev = 0;
+		for (let a of atomic) stdDev += a * a;
+		stdDev = Math.sqrt(stdDev * invN);
 
-		if (stdDev > 1E-3f) Vec.mulBy(atomic, SCALE_STDDEV_TO / stdDev);
+		if (stdDev > 1E-3) Vec.mulBy(atomic, SCALE_STDDEV_TO / stdDev);
 
 		// shunt it up so that it is centred around the overal predictor, in the same zero-centred space
-		double scaled = (scalePredictor(pred) - 0.5) * 2; // adjusted to the [-1,1] space
-		if (scaled < -1) scaled = -1;
-		else if (scaled > 1) scaled = 1; // (??)
-		Vec.addTo(atomic, (float) scaled);
+		let scaled = (this.scalePredictor(pred) - 0.5) * 2; // adjusted to the [-1,1] space
+console.log('pred:'+pred+' scaled:'+scaled);
+		if (scaled < -1) scaled = -1; else if (scaled > 1) scaled = 1;
+console.log('then:'+atomic);
+		Vec.addTo(atomic, scaled);
+console.log('now:'+atomic);
 		return atomic;
-	}*/
+	}
 
 	// produces an ROC validation set using the training data, in leave-one-out fashion; note that this is very slow, and scales to O(N^2) relative
 	// to the size of the training set, so should only be used for small collections
@@ -596,60 +597,45 @@ class BayesianModel
 		this.range = 2 * delta;
 		this.invRange = this.range > 0 ? 1 / this.range : 0;
 	}
-/*
+
 	// reapplies the fingerprint generation for a molecule, given that the outgoing indices are known already; it uses this
 	// information to generate a mask for each of the indices, which describes the atoms that could lead to the fingerprint's
 	// creation (including all of the possible redundancies)
 	// note that the "approvedHashes" parameter is optional; it will be used to gather the numeric indices of the hashes
 	// that were approved, i.e. the normal fingerprint list; done for performance reasons, to avoid recalculating
-	public Map<Integer,boolean[]> determineCoverage(final Molecule mol, Set<Integer> approvedHashes)
+	public determineCoverage(mol:Molecule, approvedHashes:Set<number>):{[id:number] : boolean[]}
 	{
-		final int na = mol.numAtoms();
-		final Map<Integer,boolean[]> cover = new HashMap<Integer,boolean[]>();
+		const self = this;
+		const na = mol.numAtoms;
+		let cover:{[id:number] : boolean[]} = {};
+		const andBits = this.folding == 0 ? 0xFFFFFFFF : this.folding - 1;
 
-		final int andBits = folding == 0 ? 0xFFFFFFFF : folding - 1;
+		let meta = MetaMolecule.createStrictRubric(mol);
+		let circ = new CircularFingerprints(meta, this.classType);
 
-		MetaMolecule meta = MetaMolecule.createStrictRubric(mol);
-		CircularFingerprints circ = new CircularFingerprints(meta,classType)
+		let collectFP = function(fp:CircularFP):void
 		{
-			protected void applyNewFP(FP newFP)
+			let idx = fp.hashCode & andBits;
+			if (self.contribs[idx] == null) return; // hash bit not in the model, so abandon it
+			let mask = cover[idx];
+			if (mask == null)
 			{
-				collectFP(newFP);
-				super.applyNewFP(newFP);
+				mask = Vec.booleanArray(false, na);
+				cover[idx] = mask;
 			}
-
-			protected void considerNewFP(FP newFP)
-			{
-				collectFP(newFP);
-				super.considerNewFP(newFP);
-			}
-
-			private void collectFP(FP fp)
-			{
-				Integer idx = fp.hashCode & andBits;
-				if (!contribs.containsKey(idx)) return; // hash bit not in the model, so abandon it
-
-				boolean[] mask = cover.get(idx);
-				if (mask == null)
-				{
-					mask = Vec.booleanArray(false, na);
-					cover.put(idx, mask);
-				}
-
-				for (int a : fp.atoms)
-					mask[a - 1] = true;
-			}
-		};
+			for (let a of fp.atoms) mask[a - 1] = true;
+		}
+		circ.hookApplyNewFP = collectFP;
+		circ.hookConsiderNewFP = collectFP;
 		circ.calculate();
 
 		// collect the "approved" hashes, i.e. the normal operation of the fingerprinter		
 		if (approvedHashes != null)
 		{
-			int[] hashes = folding == 0 ? circ.getUniqueHashes() : circ.getFoldedHashes(folding);
-			for (int h : hashes) approvedHashes.add(h);
+			let hashes = this.folding == 0 ? circ.getUniqueHashes() : circ.getFoldedHashes(this.folding);
+			for (let h of hashes) approvedHashes.add(h);
 		}
 
 		return cover;
 	}
-*/	
 }
