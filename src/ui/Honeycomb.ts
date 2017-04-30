@@ -28,7 +28,6 @@ interface HoneycombMolecule
 	isReference:boolean; // true if this is from the user's provided reference set
 	isActive:boolean; // true if this is from the model dataset and is active
 	fp?:number[]; // ECFP6 fingerprints
-
 }
 
 class HoneycombHex
@@ -66,16 +65,24 @@ class HoneycombHex
 
 class Honeycomb extends Widget
 {
+	private container:JQuery;
+
 	public size:Size = new Size(500, 500); // boundary of the widget
 	public maxHexes = 1000; // if # molecules exceeds this number, go with the most similar
 	public molecules:HoneycombMolecule[] = [];
 	public stopped = false;
+	public watermark = 0;
 
 	private hexes:HoneycombHex[] = [];
 	private seed = 0; // starting hex; defaults to first
 	private density = 0.01; // the "density fudge": higher values favour more squished up clusters
 
 	private hexSize = 100; // baseline scale
+	private zoomFactor = 1;
+	private policyColour:RenderPolicy;
+	private policyWhite:RenderPolicy;
+	private effects:RenderEffects;
+	private measure:ArrangeMeasurement;
 
 	// all of the "flower" permutations that are nondegenerate from circular rotation/inversion; favours those with lowest numbers first
 	private FLOWER_PERMS =
@@ -96,11 +103,24 @@ class Honeycomb extends Widget
 	private HEX_SW = 4;
 	private HEX_SE = 5;
 
+	// interactivity
+	private dragging = false;
+	private mouseFirst:number[] = null;
+	private mouseLast:number[] = null;
+	private panDelta = [0, 0];
+
 	// ------------ public methods ------------
 
 	constructor()
 	{
 		super();
+
+		let scale = 12;
+		this.policyColour = RenderPolicy.defaultColourOnWhite();
+		this.policyColour.data.pointScale = scale;
+		this.policyWhite = RenderPolicy.defaultWhiteOnBlack();
+		this.policyWhite.data.pointScale = scale;
+		this.effects = new RenderEffects();
 	}
 
 	// stacking the deck; note that reference molecules should be added first, and the first one is special
@@ -118,13 +138,35 @@ class Honeycomb extends Widget
 	{
 		super.render(parent);
 		
+		const self = this;
+
 		this.content.css('width', this.size.w + 'px');
 		this.content.css('height', this.size.h + 'px');
+
+		this.container = $('<div></div>').appendTo(this.content);
+		this.container.css('width', this.size.w + 'px');
+		this.container.css('height', this.size.h + 'px');
+		this.container.css('position', 'relative');
+		this.container.css('overflow', 'hidden');
+
+ 		// setup all the interactive events
+		this.container.click(function(event:JQueryEventObject) {self.mouseClick(event);});
+		this.container.dblclick(function(event:JQueryEventObject) {self.mouseDoubleClick(event);});
+		this.container.mousedown(function(event:JQueryEventObject) {event.preventDefault(); self.mouseDown(event);});
+		this.container.mouseup(function(event:JQueryEventObject) {self.mouseUp(event);});
+		this.container.mouseover(function(event:JQueryEventObject) {self.mouseOver(event);});
+		this.container.mouseout(function(event:JQueryEventObject) {self.mouseOut(event);});
+		this.container.mousemove(function(event:JQueryEventObject) {self.mouseMove(event);});
+		this.container.keypress(function(event:JQueryEventObject) {self.keyPressed(event);});
+		this.container.keydown(function(event:JQueryEventObject) {self.keyDown(event);});
+		this.container.keyup(function(event:JQueryEventObject) {self.keyUp(event);});				
 	}
 
 	// performs all the calculations necessary to display the honeycomb, and begins rendering the pieces
 	public populate():void
 	{
+		this.container.empty();
+
 		// make sure all molecules have fingerprints, then create the list of hexes, in placement order
 		for (let hmol of this.molecules) if (!hmol.fp)
 		{
@@ -146,6 +188,12 @@ class Honeycomb extends Widget
 			hex.molidx = order[n];
 			hex.mol = hmol.mol;
 			hex.fp = hmol.fp;
+			if (hmol.isReference)
+			{
+				hex.background = 0x000000;
+				hex.annotCol = 0xFFFFFF;
+				hex.policy = this.policyWhite;
+			}
 			this.hexes.push(hex);
 		}
 
@@ -153,23 +201,30 @@ class Honeycomb extends Widget
 		this.growFlower();
 		for (let n = 7; n < this.hexes.length; n++) this.placeHex(n);
 
-
 		/*for (let n = 0; n < this.hexes.length; n++)
 		{
 			let hex = this.hexes[n];
 			console.log('n='+n+' idx='+hex.molidx+' na='+hex.mol.numAtoms+' x='+hex.x+' y='+hex.y);
 		}*/
 	
-		// get ready and draw
-		this.prepareLayout();
+		this.renderHexes();
+	}
 
-		let backdrop = $('<div></div>').appendTo(this.content);
-		backdrop.css('width', this.size.w + 'px');
-		backdrop.css('height', this.size.h + 'px');
-		backdrop.css('position', 'relative');		
+	// zoom in (>0) or out (<0)
+	public zoom(dir:number):void
+	{
+		if (dir < 0)
+		{
+			if (this.zoomFactor < 0.05) return;
+			this.zoomFactor *= 2/3;
+		}
+		else // dir > 0
+		{
+			if (this.zoomFactor > 20) return;
+			this.zoomFactor *= 3/2;			
+		}
 
-		let roster = Vec.identity0(this.hexes.length);
-		this.renderNext(backdrop, roster);
+		this.renderHexes();
 	}
 
 	// ------------ private methods ------------
@@ -326,7 +381,7 @@ class Honeycomb extends Widget
 	{
 		const nhex = this.hexes.length;
 		if (nhex == 0) return;
-		let usize = this.hexSize * 1.0 /* zoomscale...*/;
+		let usize = this.hexSize * this.zoomFactor;
 
 		let hexW = usize * 0.75, hexH = usize * Math.cos(30 * DEGRAD);
 		let innerRad = 0.5 * hexH, outerRad = 0.5 * usize; // inner=closest approach of mid edge, outer=far vertex distance
@@ -368,8 +423,12 @@ class Honeycomb extends Widget
 			hex.outerRad = outerRad;
 			hex.edgeLen = edgeLen;		
 			hex.frame = new Box(x1, y1, x2 - x1, y2 - y1);
+			if (hex.span) hex.span.remove();
+			hex.span = null;
 		}
 		
+		this.measure = new OutlineMeasurement(0, 0, this.policyColour.data.pointScale * this.zoomFactor);
+
 		/* ...
 		scroller.frame = bounds
 		let contentW = hiX - loX, contentH = hiY - loY
@@ -393,25 +452,32 @@ class Honeycomb extends Widget
 		*/
 	}
 
-	// render the next hex, then continue
-	private renderNext(parent:JQuery, roster:number[])
+	// redraw all the hexes
+	private renderHexes():void
 	{
-		if (roster.length == 0 || this.stopped) return;
+		this.prepareLayout();
+		let roster = Vec.identity0(this.hexes.length);
+		this.renderNext(++this.watermark, roster);
+	}
+
+	// render the next hex, then continue
+	private renderNext(watermark:number, roster:number[])
+	{
+		if (roster.length == 0 || this.stopped || watermark != this.watermark) return;
 		
 		let idx = roster.shift(), hex = this.hexes[idx];
 
 		if (!hex.span)
 		{
-			hex.span = $('<span></span>').appendTo(parent);
+			hex.span = $('<span></span>').appendTo(this.container);
 			hex.span.css('position', 'absolute');
 			hex.span.css('pointer-events', 'none');
 		}
 
-		hex.span.css('left', hex.frame.x + 'px');
-		hex.span.css('top', hex.frame.y + 'px');
+		hex.span.css('left', (hex.frame.x + this.panDelta[0]) + 'px');
+		hex.span.css('top', (hex.frame.y + this.panDelta[1]) + 'px');
 		hex.span.css('width', hex.frame.w + 'px');
 		hex.span.css('height', hex.frame.h + 'px');
-console.log('IDX:'+idx+' FRAME:'+JSON.stringify(hex.frame));
 
 		//hex.span.css('background-color', 'red');
 
@@ -474,11 +540,8 @@ console.log('IDX:'+idx+' FRAME:'+JSON.stringify(hex.frame));
 		let cent = new Pos(hex.centre.x, hex.centre.y + 0.5 * bumpDown);
 		let rad = hex.innerRad * mainFract - 1 - bumpDown;
 
-		let policy = RenderPolicy.defaultColourOnWhite(); // !! cache someplace...
-		policy.data.pointScale = 12;
-		let effects = new RenderEffects();
-		let measure = new OutlineMeasurement(0, 0, policy.data.pointScale);
-		let layout = new ArrangeMolecule(hex.mol, measure, policy, effects);
+		let policy = hex.policy ? hex.policy : this.policyColour;
+		let layout = new ArrangeMolecule(hex.mol, this.measure, policy, this.effects);
 		layout.arrange();
 
 		let [cx, cy, mrad] = this.determineCircularBoundary(layout);
@@ -494,11 +557,11 @@ console.log('IDX:'+idx+' FRAME:'+JSON.stringify(hex.frame));
 
 		// blat
 		hex.span.empty();
-		gfx.normalise();
+		gfx.setSize(Math.ceil(gfx.boundHighX()), Math.ceil(gfx.boundHighY()));	
 		$(gfx.createSVG()).appendTo(hex.span);
 
 		const self = this;
-		setTimeout(function() {self.renderNext(parent, roster);}, 1);
+		setTimeout(function() {self.renderNext(watermark, roster);}, 1);
 	}
 
 	// fits a molecular layout into a circle
@@ -569,6 +632,91 @@ console.log('IDX:'+idx+' FRAME:'+JSON.stringify(hex.frame));
 		}
 
 		return [cx, cy, Math.sqrt(crsq)];
+	}
+
+    // event responses
+	private mouseClick(event:JQueryEventObject):void
+	{
+		this.container.focus(); // just in case it wasn't already
+	}
+	private mouseDoubleClick(event:JQueryEventObject):void
+	{
+		let xy = eventCoords(event, this.container);
+		let idx = this.pickHex(xy[0], xy[1]);
+		if (idx >= 0 && idx != this.seed)
+		{
+			this.seed = this.hexes[idx].molidx;
+			this.populate();
+			//this.renderHexes();
+		}
+
+		// (do something...)
+		event.stopImmediatePropagation();
+	}
+	private mouseDown(event:JQueryEventObject):void
+	{
+		this.dragging = true;
+		this.mouseFirst = this.mouseLast = eventCoords(event, this.container);
+	}
+	private mouseUp(event:JQueryEventObject):void
+	{
+		this.dragging = false;
+		this.mouseFirst = this.mouseLast = null;
+	}
+	private mouseOver(event:JQueryEventObject):void
+	{
+	}
+	private mouseOut(event:JQueryEventObject):void
+	{
+		this.dragging = false;
+	}
+	private mouseMove(event:JQueryEventObject):void
+	{
+		if (this.dragging)
+		{
+			let xy = eventCoords(event, this.container);
+			let dx = xy[0] - this.mouseLast[0], dy = xy[1] - this.mouseLast[1];
+			if (dx != 0 || dy != 0)
+			{
+				this.panContent(dx, dy);
+				this.mouseLast = xy;
+			}
+		}
+	}
+	private keyPressed(event:JQueryEventObject):void
+	{
+
+	}
+	private keyDown(event:JQueryEventObject):void
+	{
+	}
+	private keyUp(event:JQueryEventObject):void
+	{
+	}
+
+	// move everything over by a certain amount
+	private panContent(dx:number, dy:number):void
+	{
+		this.panDelta = [this.panDelta[0] + dx, this.panDelta[1] + dy];
+		for (let hex of this.hexes) if (hex.span)
+		{
+			hex.span.css('left', (hex.frame.x + this.panDelta[0]) + 'px');
+			hex.span.css('top', (hex.frame.y + this.panDelta[1]) + 'px');
+		}
+	}	
+
+	// returns the hex under the given coordinate, if any
+	private pickHex(x:number, y:number):number
+	{
+		let closest = -1, closestDSQ = 0;
+		for (let n = 0; n < this.hexes.length; n++)
+		{
+			const hex = this.hexes[n];
+			let dsq = norm2_xy(hex.frame.x + hex.centre.x + this.panDelta[0] - x, hex.frame.y + hex.centre.y + this.panDelta[1] - y);
+			if (dsq >= hex.outerRad * hex.outerRad) continue;
+			if (closest < 0 || dsq < closestDSQ) {closest = n; closestDSQ = dsq;}
+		}
+		return closest;
 	}
 }
 
