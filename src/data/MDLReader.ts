@@ -13,11 +13,13 @@
 ///<reference path='../decl/corrections.d.ts'/>
 ///<reference path='../util/util.ts'/>
 ///<reference path='../data/CoordUtil.ts'/>
+///<reference path='OpenMolSpec.ts'/>
 
 /*
 	MDL Molfile reader: a somewhat flexible input parser that can turn V2000 and V3000 Molfiles into the internal molecule
 	representation. The molfile format has several official variants, and a much larger number of mutant strains that
-	exist in the wild: mileage may vary.
+	exist in the wild: mileage may vary. If the structure is unreadable, an exception will be thrown. For information on
+	anything interesting that happened during the parsing process, consult the "openmol" member.
 
 	MDL SDfile reader: doing the best it can to pull out the auxiliary fields in SDfiles, which can be abused in endless ways,
 	but one does one's best to deal with it.
@@ -37,6 +39,7 @@ class MDLMOLReader
 	// deliverables
 	public mol:Molecule = null; // the result (or partial result, if not successful)
 	public molName = ""; // molecule name from the header, if any
+	public openmol = new OpenMolSpec();
 	
 	// hydrogen count & resonance bonds supposed to be query-only, but some software abuses them to get around the structural limitations
 	public atomHyd:number[] = null;
@@ -86,6 +89,7 @@ class MDLMOLReader
 			if (this.allowV3000 && version == 'V3000')
 			{
 				this.parseV3000();
+				this.openmol.derive(this.mol);
 				return;
 			}
 			if (version != 'V2000') throw 'Invalid MDL MOL: no Vx000 tag.';
@@ -130,6 +134,8 @@ class MDLMOLReader
     		
 			if (hyd > 0)
 			{
+				this.openmol.addJoin(OpenMolType.QueryHCount, [a]);
+
 				if (this.atomHyd == null) this.atomHyd = Vec.numberArray(Molecule.HEXPLICIT_UNKNOWN, numAtoms);
 				this.atomHyd[n] = hyd - 1;
 			}
@@ -167,6 +173,8 @@ class MDLMOLReader
 	        // to store actual molecules; in this case, it is necessary to either "deresonate" the rings, or to stash the property
 			if (type == 4)
 			{
+				this.openmol.addJoin(OpenMolType.QueryResonance, null, [b]);
+
 				/* todo: handle the technically incorrect 'aromatic' type
 				if (this.keepAromatic) this.mol.setBondTransient(b, Vec.append(mol.bondTransient(b), ForeignMolecule.BOND_AROMATIC));
 				else
@@ -225,6 +233,8 @@ class MDLMOLReader
 	    }
 	    
 	    this.postFix();
+
+		this.openmol.derive(this.mol);
 	}
 	    
 	// performs some intrinsic post-parse fixing
@@ -302,7 +312,7 @@ class MDLMOLReader
 		let numAtoms = parseInt(counts[0]), numBonds = parseInt(counts[1]);
 		if (numAtoms < 0 || numAtoms > lineAtoms.length) throw ERRPFX + 'unreasonable atom count: ' + numAtoms;
 		if (numBonds < 0 || numBonds > lineBonds.length) throw ERRPFX + 'unreasonable bond count: ' + numBonds;
-		
+
 		let atomBits:string[][] = [], bondBits:string[][] = [];
 		
 		for (let n = 0; n < lineAtoms.length; n++)

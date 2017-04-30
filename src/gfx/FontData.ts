@@ -336,7 +336,7 @@ class FontData
 	{
 		path = this.pathCache[idx];
 		if (path != null) return path;
-		var path = new Path2D(this.GLYPH_DATA[idx]);
+		var path = new Path2D(this.GLYPH_DATA[idx] as any);
 		this.pathCache[idx] = path;
 		return path;
 	}

@@ -15,6 +15,7 @@
 ///<reference path='SARTable.ts'/>
 ///<reference path='Experiment.ts'/>
 ///<reference path='AssayProvenance.ts'/>
+///<reference path='BayesianSource.ts'/>
 
 /*
 	The AspectList class is used as a way to fetch all of the recognised aspects that are installed within a given datasheet, without
@@ -33,6 +34,7 @@ class AspectList
 			SUPPORTED_ASPECTS[SARTable.CODE] = SARTable.NAME;
 			SUPPORTED_ASPECTS[Experiment.CODE] = Experiment.NAME;
 			SUPPORTED_ASPECTS[AssayProvenance.CODE] = AssayProvenance.NAME;
+			SUPPORTED_ASPECTS[BayesianSource.CODE] = BayesianSource.NAME;
 		}
 	}
 
@@ -58,6 +60,8 @@ class AspectList
 	{
 		if (code == SARTable.CODE) return new SARTable(this.ds);
 		if (code == Experiment.CODE) return new Experiment(this.ds);
+		if (code == AssayProvenance.CODE) return new AssayProvenance(this.ds);
+		if (code == BayesianSource.CODE) return new BayesianSource(this.ds);
 		return null;
 	}
 
