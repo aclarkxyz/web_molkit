@@ -242,11 +242,8 @@ class BayesianModel
 
 		// shunt it up so that it is centred around the overal predictor, in the same zero-centred space
 		let scaled = (this.scalePredictor(pred) - 0.5) * 2; // adjusted to the [-1,1] space
-console.log('pred:'+pred+' scaled:'+scaled);
 		if (scaled < -1) scaled = -1; else if (scaled > 1) scaled = 1;
-console.log('then:'+atomic);
 		Vec.addTo(atomic, scaled);
-console.log('now:'+atomic);
 		return atomic;
 	}
 
