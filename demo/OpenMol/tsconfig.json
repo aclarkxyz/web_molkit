@@ -1,0 +1,19 @@
+{
+    "compilerOptions": 
+    {
+        "module": "system",
+        "noImplicitAny": true,
+        "removeComments": true,
+        "preserveConstEnums": true,
+        "outFile": "web/openmol.js",
+        "sourceMap": true,
+        "target": "ES6"
+    },
+    "include": 
+    [
+        "src/**/*.ts",
+        
+        // imported from WebMolKit
+        "../../src/**/*.ts"
+    ]
+}

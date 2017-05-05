@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>Open Molecule</title>
+
+	<link href="main.css" rel="stylesheet" type="text/css">
+	<link href="widgets.css" rel="stylesheet" type="text/css">
+	<script src="jquery.js" type="text/javascript"></script>
+	<script src="openmol.js" type="text/javascript"></script>
+</head>
+
+<body>
+	<div id="root">
+		Open Molecule: loading...
+	</div>
+
+</body>
+
+<script type="text/javascript">
+RPC.RESOURCE_URL = 'res';
+new PageOpenMol().build($('#root'));
+</script>
+
+</html>
