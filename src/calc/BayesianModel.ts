@@ -70,6 +70,17 @@ class BayesianModel
 	public trainingSize = 0; // these are serialised, while the actual training set is not
 	public trainingActives = 0;
 
+	// truth-table and derived metrics
+	public truthTP = 0;
+	public truthFP = 0;
+	public truthTN = 0;
+	public truthFN = 0;
+	public precision = Number.NaN;
+	public recall = Number.NaN;
+	public specificity = Number.NaN;
+	public statF1 = Number.NaN;
+	public statKappa = Number.NaN;
+
 	// optional text attributes (serialisable)
 	public noteTitle:string = null;
 	public noteOrigin:string = null;
@@ -255,6 +266,7 @@ class BayesianModel
 		this.estimates = [];
 		for (let n = 0; n < sz; n++) this.estimates.push(this.singleLeaveOneOut(n));
 		this.calculateROC();
+		this.calculateTruth();
 		this.rocType = "leave-one-out";
 	}
 
@@ -315,6 +327,19 @@ class BayesianModel
 			let y = 'roc:y=';
 			for (let n = 0; n < this.rocY.length; n++) y += (n == 0 ? '' : ',') + this.rocY[n];
 			lines.push(y);
+		}
+
+		if (this.truthTP > 0 || this.truthFP > 0 || this.truthTN > 0 || this.truthFP > 0)
+		{
+			lines.push('truth:TP=' + this.truthTP);
+			lines.push('truth:FP=' + this.truthFP);
+			lines.push('truth:TN=' + this.truthTN);
+			lines.push('truth:FN=' + this.truthFN);
+			lines.push('truth:precision=' + this.precision);
+			lines.push('truth:recall=' + this.recall);
+			lines.push('truth:specificity=' + this.specificity);
+			lines.push('truth:statF1=' + this.statF1);
+			lines.push('truth:kappa=' + this.statKappa);
 		}
 
 		// notes: freeform user text
@@ -390,6 +415,15 @@ class BayesianModel
 				model.rocY = [];
 				for (let str of line.substring(6).split(',')) model.rocY.push(parseFloat(str));
 			}
+			else if (line.startsWith("truth:TP=")) model.truthTP = parseInt(line.substring(9), 0);
+			else if (line.startsWith("truth:FP=")) model.truthFP = parseInt(line.substring(9), 0);
+			else if (line.startsWith("truth:TN=")) model.truthTN = parseInt(line.substring(9), 0);
+			else if (line.startsWith("truth:FN=")) model.truthFN = parseInt(line.substring(9), 0);
+			else if (line.startsWith("truth:precision=")) model.precision = parseFloat(line.substring(16));
+			else if (line.startsWith("truth:recall=")) model.recall = parseFloat(line.substring(13));
+			else if (line.startsWith("truth:specificity=")) model.specificity = parseFloat(line.substring(18));
+			else if (line.startsWith("truth:statF1=")) model.statF1 = parseFloat(line.substring(13));
+			else if (line.startsWith("truth:kappa=")) model.statKappa = parseFloat(line.substring(12));
 			else if (line.startsWith("note:title=")) model.noteTitle = line.substring(11);
 			else if (line.startsWith("note:origin=")) model.noteOrigin = line.substring(12);
 			else if (line.startsWith("note:field=")) model.noteField = line.substring(11);
@@ -449,6 +483,7 @@ class BayesianModel
 		this.estimates = Vec.numberArray(0, sz);
 		for (let n = 0; n < sz; n++) this.estimates[order[n]] = this.estimatePartial(order, n, segContribs[n % nsegs]);
 		this.calculateROC();
+		this.calculateTruth();
 	}
 
 	// generates a contribution model based on all the training set for which (n%div)!=seg; e.g. for 5-fold, it would use the 80% of the training set
@@ -576,6 +611,34 @@ class BayesianModel
 		}
 		gx.push(this.rocX[rocT.length - 1]);
 		gy.push(this.rocY[rocT.length - 1]);
+	}
+
+	// builds the "truth table", which uses the calibration threshold to determine which side of the line each input molecule is on (with whichever
+	// cross validation split was used for the ROC); from the 2x2 table, all the other metrics can also be derived
+	private calculateTruth():void
+	{
+		let thresh = 0.5 * (this.lowThresh + this.highThresh);
+		this.truthTP = this.truthFP = this.truthTN = this.truthFN = 0;
+		for (let n = 0; n < this.activity.length; n++)
+		{
+			let actual = this.activity[n], predicted = this.estimates[n] >= thresh;
+			if (actual && predicted) this.truthTP++;
+			else if (!actual && predicted) this.truthFP++;
+			else if (actual && !predicted) this.truthFN++;
+			else if (!actual && !predicted) this.truthTN++;
+		}
+
+		let invSize = 1.0 / this.activity.length;
+
+		this.precision = this.truthTP / (this.truthTP + this.truthFP);
+		this.recall = this.truthTP / (this.truthTP + this.truthFN);
+		this.specificity = this.truthTN / (this.truthTN + this.truthFP);
+		this.statF1 = 2 * (this.precision * this.recall) / (this.precision + this.recall);
+
+		let Pyes = (this.truthTP + this.truthFP) * invSize * (this.truthTP + this.truthFN) * invSize;
+		let Pno = (this.truthFP + this.truthTN) * invSize * (this.truthFN + this.truthTN) * invSize;
+		let P0 = (this.truthTP + this.truthTN) * invSize, Pe = Pyes + Pno;
+		this.statKappa = (P0 - Pe) / (1 - Pe);
 	}
 
 	// rederives the low/high thresholds, using ROC curve data: once the analysis is complete, the midpoint will be the optimum balance 
