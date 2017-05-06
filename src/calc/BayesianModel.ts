@@ -80,6 +80,7 @@ class BayesianModel
 	public specificity = Number.NaN;
 	public statF1 = Number.NaN;
 	public statKappa = Number.NaN;
+	public statMCC = Number.NaN;
 
 	// optional text attributes (serialisable)
 	public noteTitle:string = null;
@@ -338,8 +339,9 @@ class BayesianModel
 			lines.push('truth:precision=' + this.precision);
 			lines.push('truth:recall=' + this.recall);
 			lines.push('truth:specificity=' + this.specificity);
-			lines.push('truth:statF1=' + this.statF1);
+			lines.push('truth:F1=' + this.statF1);
 			lines.push('truth:kappa=' + this.statKappa);
+			lines.push('truth:MCC=' + this.statMCC);
 		}
 
 		// notes: freeform user text
@@ -410,24 +412,25 @@ class BayesianModel
 				model.rocX = [];
 				for (let str of line.substring(6).split(',')) model.rocX.push(parseFloat(str));
 			}
-			else if (line.startsWith("roc:y="))
+			else if (line.startsWith('roc:y='))
 			{
 				model.rocY = [];
 				for (let str of line.substring(6).split(',')) model.rocY.push(parseFloat(str));
 			}
-			else if (line.startsWith("truth:TP=")) model.truthTP = parseInt(line.substring(9), 0);
-			else if (line.startsWith("truth:FP=")) model.truthFP = parseInt(line.substring(9), 0);
-			else if (line.startsWith("truth:TN=")) model.truthTN = parseInt(line.substring(9), 0);
-			else if (line.startsWith("truth:FN=")) model.truthFN = parseInt(line.substring(9), 0);
-			else if (line.startsWith("truth:precision=")) model.precision = parseFloat(line.substring(16));
-			else if (line.startsWith("truth:recall=")) model.recall = parseFloat(line.substring(13));
-			else if (line.startsWith("truth:specificity=")) model.specificity = parseFloat(line.substring(18));
-			else if (line.startsWith("truth:statF1=")) model.statF1 = parseFloat(line.substring(13));
-			else if (line.startsWith("truth:kappa=")) model.statKappa = parseFloat(line.substring(12));
-			else if (line.startsWith("note:title=")) model.noteTitle = line.substring(11);
-			else if (line.startsWith("note:origin=")) model.noteOrigin = line.substring(12);
-			else if (line.startsWith("note:field=")) model.noteField = line.substring(11);
-			else if (line.startsWith("note:comment=")) 
+			else if (line.startsWith('truth:TP=')) model.truthTP = parseInt(line.substring(9), 0);
+			else if (line.startsWith('truth:FP=')) model.truthFP = parseInt(line.substring(9), 0);
+			else if (line.startsWith('truth:TN=')) model.truthTN = parseInt(line.substring(9), 0);
+			else if (line.startsWith('truth:FN=')) model.truthFN = parseInt(line.substring(9), 0);
+			else if (line.startsWith('truth:precision=')) model.precision = parseFloat(line.substring(16));
+			else if (line.startsWith('truth:recall=')) model.recall = parseFloat(line.substring(13));
+			else if (line.startsWith('truth:specificity=')) model.specificity = parseFloat(line.substring(18));
+			else if (line.startsWith('truth:F1=')) model.statF1 = parseFloat(line.substring(9));
+			else if (line.startsWith('truth:kappa=')) model.statKappa = parseFloat(line.substring(12));
+			else if (line.startsWith('truth:MCC=')) model.statMCC = parseFloat(line.substring(10));
+			else if (line.startsWith('note:title=')) model.noteTitle = line.substring(11);
+			else if (line.startsWith('note:origin=')) model.noteOrigin = line.substring(12);
+			else if (line.startsWith('note:field=')) model.noteField = line.substring(11);
+			else if (line.startsWith('note:comment=')) 
 			{
 				if (model.noteComments == null) model.noteComments = [];
 				model.noteComments.push(line.substring(13));
@@ -628,17 +631,26 @@ class BayesianModel
 			else if (!actual && !predicted) this.truthTN++;
 		}
 
+		const TP = this.truthTP, FP = this.truthFP, TN = this.truthTN, FN = this.truthFN;
+
 		let invSize = 1.0 / this.activity.length;
 
-		this.precision = this.truthTP / (this.truthTP + this.truthFP);
-		this.recall = this.truthTP / (this.truthTP + this.truthFN);
-		this.specificity = this.truthTN / (this.truthTN + this.truthFP);
+		// calculate F1 score
+		this.precision = TP / (TP + FP);
+		this.recall = TP / (TP + FN);
+		this.specificity = TN / (TN + FP);
 		this.statF1 = 2 * (this.precision * this.recall) / (this.precision + this.recall);
 
-		let Pyes = (this.truthTP + this.truthFP) * invSize * (this.truthTP + this.truthFN) * invSize;
-		let Pno = (this.truthFP + this.truthTN) * invSize * (this.truthFN + this.truthTN) * invSize;
-		let P0 = (this.truthTP + this.truthTN) * invSize, Pe = Pyes + Pno;
+		// calculate Cohen's kappa
+		let Pyes = (TP + FP) * invSize * (TP + FN) * invSize;
+		let Pno = (FP + TN) * invSize * (FN + TN) * invSize;
+		let P0 = (TP + TN) * invSize, Pe = Pyes + Pno;
 		this.statKappa = (P0 - Pe) / (1 - Pe);
+
+		// calculate Matthews correlation coefficient
+		let mccOver = TP * TN - FP * FN;
+		let mccUnder = (TP + FP) * (TP + FN) * (TN + FP) * (TN + FN);
+		this.statMCC = mccOver / Math.sqrt(mccUnder);
 	}
 
 	// rederives the low/high thresholds, using ROC curve data: once the analysis is complete, the midpoint will be the optimum balance 
