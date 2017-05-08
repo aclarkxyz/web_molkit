@@ -38,7 +38,7 @@ class MDLMOLReader
 
 	// deliverables
 	public mol:Molecule = null; // the result (or partial result, if not successful)
-	public molName = ""; // molecule name from the header, if any
+	public molName = ''; // molecule name from the header, if any
 	public openmol = new OpenMolSpec();
 	
 	// hydrogen count & resonance bonds supposed to be query-only, but some software abuses them to get around the structural limitations
@@ -61,6 +61,11 @@ class MDLMOLReader
 		if (this.parseHeader)
 		{
 			this.molName = this.lines[0];
+			if (this.molName)
+			{
+				let src:OpenMolSource = {'row': 0, 'col': 0, 'len': this.molName.length};
+				this.openmol.add(OpenMolType.MoleculeName, null, null, [src]);
+			}
 			this.pos = 3;
 		}
 		this.parseCTAB();
@@ -173,7 +178,8 @@ class MDLMOLReader
 	        // to store actual molecules; in this case, it is necessary to either "deresonate" the rings, or to stash the property
 			if (type == 4)
 			{
-				this.openmol.addJoin(OpenMolType.QueryResonance, null, [b]);
+				let src:OpenMolSource = {'row': this.pos - 1, 'col': 6, 'len': 3};
+				this.openmol.addJoin(OpenMolType.QueryResonance, null, [b], [src]);
 
 				/* todo: handle the technically incorrect 'aromatic' type
 				if (this.keepAromatic) this.mol.setBondTransient(b, Vec.append(mol.bondTransient(b), ForeignMolecule.BOND_AROMATIC));

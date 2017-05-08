@@ -28,6 +28,7 @@ enum OpenMolType
 	BondCount1000, // molecule has more than 999 bonds
 
 	// invalid features
+	MoleculeName, // name stored in structure field (it shouldn't be)
 	QueryResonance, // aromatic bond style used (query only)
 	QueryHCount, // query field used for hydrogen counts
 }
@@ -44,12 +45,22 @@ const OPENMOL_INVALID =
 	OpenMolType.QueryHCount,
 ]
 
+// refers to a segment of the input file, for tracking purposes
+interface OpenMolSource
+{
+	row:number; // 0-based source row
+	col:number; // 0-based source column
+	len:number; // length (1 or more)
+}
+
+// describes an "issue" with a molecule which is linked to a level designation
 interface OpenMolNote
 {
 	type:OpenMolType;
 	atoms?:number[]; // atoms implicated
 	bonds?:number[]; // bonds implicated
 	level?:number; // level required for this feature
+	source?:OpenMolSource[]; // where in the source file, if known
 }
 
 class OpenMolSpec
@@ -59,9 +70,9 @@ class OpenMolSpec
 	public notes:OpenMolNote[] = [];
 
 	// adding feature notes individually: this is most useful during the parsing process
-	public add(type:OpenMolType, atoms?:number[], bonds?:number[]):void
+	public add(type:OpenMolType, atoms?:number[], bonds?:number[], source?:OpenMolSource[]):void
 	{
-		this.addNote({'type': type, 'atoms': atoms, 'bonds': bonds});
+		this.addNote({'type': type, 'atoms': atoms, 'bonds': bonds, 'source': source});
 	}
 	public addNote(note:OpenMolNote):void
 	{
@@ -75,15 +86,16 @@ class OpenMolSpec
 	}
 
 	// add-or-join feature notes: glue the atom/bond list to an existing one, if possible
-	public addJoin(type:OpenMolType, atoms?:number[], bonds?:number[]):void
+	public addJoin(type:OpenMolType, atoms?:number[], bonds?:number[], source?:OpenMolSource[]):void
 	{
 		for (let note of this.notes) if (note.type == type)
 		{
-			if (atoms && note.atoms) note.atoms = note.atoms.concat(atoms); else note.atoms = atoms;
-			if (bonds && note.bonds) note.bonds = note.bonds.concat(bonds); else note.bonds = bonds;
+			if (atoms && note.atoms) note.atoms = note.atoms.concat(atoms); else if (atoms) note.atoms = atoms;
+			if (bonds && note.bonds) note.bonds = note.bonds.concat(bonds); else if (bonds) note.bonds = bonds;
+			if (source && note.source) note.source = note.source.concat(source); else if (source) note.source = source;
 			return;
 		}
-		this.add(type, atoms, bonds);
+		this.add(type, atoms, bonds, source);
 	}
 
 	// deriving feature notes from an instantiated molecular datastructure

@@ -3107,8 +3107,9 @@ var OpenMolType;
     OpenMolType[OpenMolType["None"] = 0] = "None";
     OpenMolType[OpenMolType["AtomCount1000"] = 1] = "AtomCount1000";
     OpenMolType[OpenMolType["BondCount1000"] = 2] = "BondCount1000";
-    OpenMolType[OpenMolType["QueryResonance"] = 3] = "QueryResonance";
-    OpenMolType[OpenMolType["QueryHCount"] = 4] = "QueryHCount";
+    OpenMolType[OpenMolType["MoleculeName"] = 3] = "MoleculeName";
+    OpenMolType[OpenMolType["QueryResonance"] = 4] = "QueryResonance";
+    OpenMolType[OpenMolType["QueryHCount"] = 5] = "QueryHCount";
 })(OpenMolType || (OpenMolType = {}));
 const OPENMOL_LEVEL_1_1 = [
     OpenMolType.AtomCount1000,
@@ -3124,8 +3125,8 @@ class OpenMolSpec {
         this.invalid = false;
         this.notes = [];
     }
-    add(type, atoms, bonds) {
-        this.addNote({ 'type': type, 'atoms': atoms, 'bonds': bonds });
+    add(type, atoms, bonds, source) {
+        this.addNote({ 'type': type, 'atoms': atoms, 'bonds': bonds, 'source': source });
     }
     addNote(note) {
         this.notes.push(note);
@@ -3135,20 +3136,24 @@ class OpenMolSpec {
         this.level = Math.max(this.level, note.level);
         this.invalid = this.invalid || OPENMOL_INVALID.indexOf(note.type) >= 0;
     }
-    addJoin(type, atoms, bonds) {
+    addJoin(type, atoms, bonds, source) {
         for (let note of this.notes)
             if (note.type == type) {
                 if (atoms && note.atoms)
                     note.atoms = note.atoms.concat(atoms);
-                else
+                else if (atoms)
                     note.atoms = atoms;
                 if (bonds && note.bonds)
                     note.bonds = note.bonds.concat(bonds);
-                else
+                else if (bonds)
                     note.bonds = bonds;
+                if (source && note.source)
+                    note.source = note.source.concat(source);
+                else if (source)
+                    note.source = source;
                 return;
             }
-        this.add(type, atoms, bonds);
+        this.add(type, atoms, bonds, source);
     }
     derive(mol) {
         if (mol.numAtoms >= 1000)
@@ -3167,7 +3172,7 @@ class MDLMOLReader {
         this.keepAromatic = false;
         this.keepParity = false;
         this.mol = null;
-        this.molName = "";
+        this.molName = '';
         this.openmol = new OpenMolSpec();
         this.atomHyd = null;
         this.resBonds = null;
@@ -3177,6 +3182,10 @@ class MDLMOLReader {
     parse() {
         if (this.parseHeader) {
             this.molName = this.lines[0];
+            if (this.molName) {
+                let src = { 'row': 0, 'col': 0, 'len': this.molName.length };
+                this.openmol.add(OpenMolType.MoleculeName, null, null, [src]);
+            }
             this.pos = 3;
         }
         this.parseCTAB();
@@ -3256,7 +3265,8 @@ class MDLMOLReader {
                 style = Molecule.BONDTYPE_DECLINED;
             let b = this.mol.addBond(bfr, bto, order, style);
             if (type == 4) {
-                this.openmol.addJoin(OpenMolType.QueryResonance, null, [b]);
+                let src = { 'row': this.pos - 1, 'col': 6, 'len': 3 };
+                this.openmol.addJoin(OpenMolType.QueryResonance, null, [b], [src]);
             }
         }
         const MBLK_CHG = 1, MBLK_RAD = 2, MBLK_ISO = 3, MBLK_RGP = 4, MBLK_HYD = 5, MBLK_ZCH = 6, MBLK_ZBO = 7;
@@ -8095,6 +8105,8 @@ class PageOpenMol {
         this.showMol = null;
         this.openSpec = null;
         this.errorMsg = null;
+        this.charSpans = {};
+        this.selected = null;
     }
     build(root) {
         const self = this;
@@ -8103,9 +8115,6 @@ class PageOpenMol {
         root.append('<h1>Open Molecule Demo</h1>');
         let p = $('<p></p>').appendTo(root);
         p.text('Drag or paste a molecular structure to analyze it.');
-        p = $('<p></p>').appendTo(root);
-        let btnExample = $('<button class="button button-default">Example</button>').appendTo(p);
-        btnExample.click(function () { self.actionExample(); });
         this.divMain = $('<div></div>').appendTo(root);
         let table = $('<table></table>').appendTo(this.divMain);
         table.css('border-collapse', 'collapse');
@@ -8125,6 +8134,7 @@ class PageOpenMol {
         this.divRawText = $('<div></div>').appendTo(td1);
         this.divMolecule = $('<div></div>').appendTo(td2);
         this.divExplain = $('<div></div>').appendTo(td3);
+        this.divDemo = $('<div></div>').appendTo(root);
         this.redrawState();
         document.addEventListener('paste', function (e) {
             let wnd = window, txt = '';
@@ -8148,30 +8158,31 @@ class PageOpenMol {
             self.dropInto(event.dataTransfer);
         });
     }
-    actionExample() {
-        let molfile = '\nSketchEl molfile\n\n' +
-            ' 10  9  0  0  0  0  0  0  0  0999 V2000\n' +
-            '   -2.0000    3.4500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n' +
-            '   -3.2990    2.7000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n' +
-            '   -0.7010    2.7000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n' +
-            '   -3.2990    1.2000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n' +
-            '   -2.0000    0.4500    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0\n' +
-            '   -0.7010    1.2000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n' +
-            '    0.5981    3.4500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n' +
-            '    1.8971    2.7000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n' +
-            '    0.5981    4.9500    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n' +
-            '    2.1500    2.6000    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0\n' +
-            '  1  2  1  0  0  0  0\n' +
-            '  1  3  2  0  0  0  0\n' +
-            '  2  4  2  0  0  0  0\n' +
-            '  4  5  1  0  0  0  0\n' +
-            '  5  6  2  0  0  0  0\n' +
-            '  6  3  1  0  0  0  0\n' +
-            '  3  7  1  0  0  0  0\n' +
-            '  7  8  1  0  0  0  0\n' +
-            '  7  9  2  0  0  0  0\n' +
-            'M  END';
-        this.pasteContent(molfile);
+    addDemoSection(title, cases) {
+        const self = this;
+        this.divDemo.append('<h2>' + escapeHTML(title) + '</h2>');
+        let ul = $('<ul></ul>').appendTo($('<p></p>').appendTo(this.divDemo));
+        for (let demo of cases) {
+            let li = $('<li></li>').appendTo(ul);
+            let ahref = $('<a></a>').appendTo(li);
+            const fn = '../test/' + demo.fn;
+            ahref.attr('href', fn);
+            ahref.text(demo.title);
+            ahref.click(function () {
+                self.loadMolecule(fn);
+                return false;
+            });
+        }
+    }
+    loadMolecule(fn) {
+        const self = this;
+        $.ajax({
+            'url': fn,
+            'type': 'GET',
+            'dataType': 'text',
+            'success': function (molText) { self.pasteContent(molText); },
+            'error': function () { alert('Unable to load file: ' + fn); }
+        });
     }
     pasteContent(txt) {
         this.rawContent = txt;
@@ -8223,15 +8234,26 @@ class PageOpenMol {
         }
         let lines = this.rawContent.split(/\n/);
         let numsz = Math.ceil(Math.log10(lines.length));
-        for (let n = 0; n < lines.length; n++) {
-            let pfx = (n + 1).toString();
-            while (pfx.length < numsz)
-                pfx = ' ' + pfx;
-            lines[n] = pfx + ': ' + lines[n];
-        }
         let pre = $('<pre></pre>').appendTo(this.divRawText);
         pre.css('padding', '0.5em');
-        pre.text(lines.join('\n'));
+        this.charSpans = {};
+        for (let r = 0; r < lines.length; r++) {
+            let pfx = (r + 1).toString();
+            while (pfx.length < numsz)
+                pfx = ' ' + pfx;
+            let span = $('<span></span>').appendTo(pre);
+            span.text(pfx + ':');
+            span.css('color', '#808080');
+            span.css('background-color', '#D0D0D0');
+            span.css('border-right', 'solid 1px #808080');
+            span.css('margin-right', '0.2em');
+            for (let c = 0; c < lines[r].length; c++) {
+                span = $('<span></span>').appendTo(pre);
+                this.charSpans[`${r}:${c}`] = span;
+                span.text(lines[r].charAt(c));
+            }
+            pre.append('\n');
+        }
     }
     redrawMolecule() {
         this.divMolecule.empty();
@@ -8252,17 +8274,75 @@ class PageOpenMol {
         $(metavec.createSVG()).appendTo(this.divMolecule);
     }
     redrawExplain() {
+        const self = this;
         this.divExplain.empty();
-        let lines = [];
-        if (this.errorMsg)
-            lines.push(this.errorMsg);
+        if (this.errorMsg) {
+            let div = $('<div></div>').appendTo(this.divExplain);
+            div.text(this.errorMsg);
+        }
         if (this.openSpec) {
-            lines.push('OpenMolecule Level ' + this.openSpec.level);
-            for (let note of this.openSpec.notes) {
-                lines.push('Spec#' + note.type + ':' + note.atoms + '/' + note.bonds);
+            let div = $('<div></div>').appendTo(this.divExplain);
+            div.text('OpenMolecule Level ' + this.openSpec.level);
+            for (let n = 0; n < this.openSpec.notes.length; n++) {
+                const note = this.openSpec.notes[n];
+                let div = $('<div></div>').appendTo(this.divExplain), span = $('<span></span>').appendTo(div);
+                span.text(this.describeNote(note));
+                span.mouseenter(function () {
+                    span.css('background-color', '#C0C0FF');
+                    self.activateNote(note);
+                });
+                span.mouseleave(function () {
+                    span.css('background-color', 'transparent');
+                    self.deactivateNote();
+                });
             }
         }
-        this.divExplain.html(lines.join('<br>'));
+    }
+    activateNote(note) {
+        this.deactivateNote();
+        this.selected = note;
+        if (note.source)
+            for (let src of note.source) {
+                for (let n = 0; n < src.len; n++) {
+                    let key = src.row + ':' + (src.col + n);
+                    let span = this.charSpans[key];
+                    if (span)
+                        span.css('background-color', '#C0C0FF');
+                }
+            }
+    }
+    deactivateNote() {
+        if (this.selected != null && this.selected.source != null) {
+            for (let src of this.selected.source) {
+                for (let n = 0; n < src.len; n++) {
+                    let key = src.row + ':' + (src.col + n);
+                    let span = this.charSpans[key];
+                    if (span)
+                        span.css('background-color', 'transparent');
+                }
+            }
+        }
+        this.selected = null;
+    }
+    describeNote(note) {
+        let txt = '?';
+        if (note.type == OpenMolType.AtomCount1000)
+            txt = 'AtomCount>999';
+        else if (note.type == OpenMolType.BondCount1000)
+            txt = 'BondCount>999';
+        else if (note.type == OpenMolType.MoleculeName)
+            txt = 'MoleculeName';
+        else if (note.type == OpenMolType.QueryResonance)
+            txt = 'QueryResonance';
+        else if (note.type == OpenMolType.QueryHCount)
+            txt = 'QueryHCount';
+        if (note.atoms)
+            txt += ' Atoms:' + note.atoms;
+        if (note.bonds)
+            txt += ' Bonds:' + note.bonds;
+        if (note.level)
+            txt += ' Level:' + note.level;
+        return txt;
     }
 }
 class Aspect {
@@ -10676,6 +10756,16 @@ class BayesianModel {
         this.rocAUC = Number.NaN;
         this.trainingSize = 0;
         this.trainingActives = 0;
+        this.truthTP = 0;
+        this.truthFP = 0;
+        this.truthTN = 0;
+        this.truthFN = 0;
+        this.precision = Number.NaN;
+        this.recall = Number.NaN;
+        this.specificity = Number.NaN;
+        this.statF1 = Number.NaN;
+        this.statKappa = Number.NaN;
+        this.statMCC = Number.NaN;
         this.noteTitle = null;
         this.noteOrigin = null;
         this.noteField = null;
@@ -10819,6 +10909,7 @@ class BayesianModel {
         for (let n = 0; n < sz; n++)
             this.estimates.push(this.singleLeaveOneOut(n));
         this.calculateROC();
+        this.calculateTruth();
         this.rocType = "leave-one-out";
     }
     validateFiveFold() {
@@ -10862,6 +10953,18 @@ class BayesianModel {
             for (let n = 0; n < this.rocY.length; n++)
                 y += (n == 0 ? '' : ',') + this.rocY[n];
             lines.push(y);
+        }
+        if (this.truthTP > 0 || this.truthFP > 0 || this.truthTN > 0 || this.truthFP > 0) {
+            lines.push('truth:TP=' + this.truthTP);
+            lines.push('truth:FP=' + this.truthFP);
+            lines.push('truth:TN=' + this.truthTN);
+            lines.push('truth:FN=' + this.truthFN);
+            lines.push('truth:precision=' + this.precision);
+            lines.push('truth:recall=' + this.recall);
+            lines.push('truth:specificity=' + this.specificity);
+            lines.push('truth:F1=' + this.statF1);
+            lines.push('truth:kappa=' + this.statKappa);
+            lines.push('truth:MCC=' + this.statMCC);
         }
         if (this.noteTitle)
             lines.push('note:title=' + this.noteTitle);
@@ -10930,18 +11033,38 @@ class BayesianModel {
                 for (let str of line.substring(6).split(','))
                     model.rocX.push(parseFloat(str));
             }
-            else if (line.startsWith("roc:y=")) {
+            else if (line.startsWith('roc:y=')) {
                 model.rocY = [];
                 for (let str of line.substring(6).split(','))
                     model.rocY.push(parseFloat(str));
             }
-            else if (line.startsWith("note:title="))
+            else if (line.startsWith('truth:TP='))
+                model.truthTP = parseInt(line.substring(9), 0);
+            else if (line.startsWith('truth:FP='))
+                model.truthFP = parseInt(line.substring(9), 0);
+            else if (line.startsWith('truth:TN='))
+                model.truthTN = parseInt(line.substring(9), 0);
+            else if (line.startsWith('truth:FN='))
+                model.truthFN = parseInt(line.substring(9), 0);
+            else if (line.startsWith('truth:precision='))
+                model.precision = parseFloat(line.substring(16));
+            else if (line.startsWith('truth:recall='))
+                model.recall = parseFloat(line.substring(13));
+            else if (line.startsWith('truth:specificity='))
+                model.specificity = parseFloat(line.substring(18));
+            else if (line.startsWith('truth:F1='))
+                model.statF1 = parseFloat(line.substring(9));
+            else if (line.startsWith('truth:kappa='))
+                model.statKappa = parseFloat(line.substring(12));
+            else if (line.startsWith('truth:MCC='))
+                model.statMCC = parseFloat(line.substring(10));
+            else if (line.startsWith('note:title='))
                 model.noteTitle = line.substring(11);
-            else if (line.startsWith("note:origin="))
+            else if (line.startsWith('note:origin='))
                 model.noteOrigin = line.substring(12);
-            else if (line.startsWith("note:field="))
+            else if (line.startsWith('note:field='))
                 model.noteField = line.substring(11);
-            else if (line.startsWith("note:comment=")) {
+            else if (line.startsWith('note:comment=')) {
                 if (model.noteComments == null)
                     model.noteComments = [];
                 model.noteComments.push(line.substring(13));
@@ -10988,6 +11111,7 @@ class BayesianModel {
         for (let n = 0; n < sz; n++)
             this.estimates[order[n]] = this.estimatePartial(order, n, segContribs[n % nsegs]);
         this.calculateROC();
+        this.calculateTruth();
     }
     buildPartial(order, seg, div) {
         const sz = this.training.length;
@@ -11090,6 +11214,34 @@ class BayesianModel {
         }
         gx.push(this.rocX[rocT.length - 1]);
         gy.push(this.rocY[rocT.length - 1]);
+    }
+    calculateTruth() {
+        let thresh = 0.5 * (this.lowThresh + this.highThresh);
+        this.truthTP = this.truthFP = this.truthTN = this.truthFN = 0;
+        for (let n = 0; n < this.activity.length; n++) {
+            let actual = this.activity[n], predicted = this.estimates[n] >= thresh;
+            if (actual && predicted)
+                this.truthTP++;
+            else if (!actual && predicted)
+                this.truthFP++;
+            else if (actual && !predicted)
+                this.truthFN++;
+            else if (!actual && !predicted)
+                this.truthTN++;
+        }
+        const TP = this.truthTP, FP = this.truthFP, TN = this.truthTN, FN = this.truthFN;
+        let invSize = 1.0 / this.activity.length;
+        this.precision = TP / (TP + FP);
+        this.recall = TP / (TP + FN);
+        this.specificity = TN / (TN + FP);
+        this.statF1 = 2 * (this.precision * this.recall) / (this.precision + this.recall);
+        let Pyes = (TP + FP) * invSize * (TP + FN) * invSize;
+        let Pno = (FP + TN) * invSize * (FN + TN) * invSize;
+        let P0 = (TP + TN) * invSize, Pe = Pyes + Pno;
+        this.statKappa = (P0 - Pe) / (1 - Pe);
+        let mccOver = TP * TN - FP * FN;
+        let mccUnder = (TP + FP) * (TP + FN) * (TN + FP) * (TN + FN);
+        this.statMCC = mccOver / Math.sqrt(mccUnder);
     }
     calibrateThresholds(x, y, t) {
         const sz = t.length;
@@ -21083,7 +21235,7 @@ class SearchPanel extends Widget {
         let styleMol1 = styleMol1Pos + 'pointer-events: none;';
         this.normalMol1 = renderSolid('#FFFFFF', '#D0D0D0', styleMol1);
         this.pressedMol1 = renderSolid('#00CA59', '#008650', styleMol1);
-        this.drawnMol1 = newElement(div, 'canvas', { 'width': molw, 'height': height, 'style': styleMol1Pos });
+        this.drawnMol1 = newElement(div, 'canvas', { 'width': molw * density, 'height': height * density, 'style': styleMol1Pos });
         this.drawnMol1.style.cursor = 'pointer';
         this.renderMolecule(1);
         this.thinMol1 = renderBorder(1, styleMol1);
@@ -21098,7 +21250,7 @@ class SearchPanel extends Widget {
             let styleMol2 = styleMol2Pos + 'pointer-events: none;';
             this.normalMol2 = renderSolid('#FFFFFF', '#D0D0D0', styleMol2);
             this.pressedMol2 = renderSolid('#00CA59', '#008650', styleMol2);
-            this.drawnMol2 = newElement(div, 'canvas', { 'width': molw, 'height': height, 'style': styleMol2Pos });
+            this.drawnMol2 = newElement(div, 'canvas', { 'width': molw * density, 'height': height * density, 'style': styleMol2Pos });
             this.drawnMol2.style.cursor = 'pointer';
             this.renderMolecule(2);
             this.thinMol2 = renderBorder(1, styleMol2);
@@ -21208,8 +21360,6 @@ class SearchPanel extends Widget {
         ctx.clearRect(0, 0, width, height);
         canvas.style.width = width + 'px';
         canvas.style.height = height + 'px';
-        canvas.width = width * density;
-        canvas.height = height * density;
         if (mol.numAtoms > 0) {
             let policy = withMapping ? RenderPolicy.defaultBlackOnWhite() : RenderPolicy.defaultColourOnWhite();
             let measure = new OutlineMeasurement(0, 0, policy.data.pointScale);

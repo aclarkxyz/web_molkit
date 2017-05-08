@@ -27,6 +27,12 @@
 	Page controller for interactive Open Molecule demonstration.
 */
 
+interface DemoOpenMolCase
+{
+	fn:string;
+	title:string;
+}
+
 class PageOpenMol
 {
 	private rawContent = '';
@@ -38,6 +44,10 @@ class PageOpenMol
 	private divRawText:JQuery;
 	private divMolecule:JQuery;
 	private divExplain:JQuery;
+	private divDemo:JQuery;
+
+	private charSpans:{[id:string] : JQuery} = {}; // lookup format is '{row}:{col}'
+	private selected:OpenMolNote = null;
 
 	// ------------ public methods ------------
 
@@ -55,9 +65,9 @@ class PageOpenMol
 		let p = $('<p></p>').appendTo(root);
 		p.text('Drag or paste a molecular structure to analyze it.');
 
-		p = $('<p></p>').appendTo(root);
+		/*p = $('<p></p>').appendTo(root);
 		let btnExample = $('<button class="button button-default">Example</button>').appendTo(p);
-		btnExample.click(function() {self.actionExample();});
+		btnExample.click(function() {self.actionExample();});*/
 
 		this.divMain = $('<div></div>').appendTo(root);
 
@@ -84,6 +94,8 @@ class PageOpenMol
 		this.divRawText = $('<div></div>').appendTo(td1);
 		this.divMolecule = $('<div></div>').appendTo(td2);
 		this.divExplain = $('<div></div>').appendTo(td3);
+
+		this.divDemo = $('<div></div>').appendTo(root);
 
 		this.redrawState();
 
@@ -115,34 +127,42 @@ class PageOpenMol
 		});		
 	}
 
+	// add clickable demo molecules
+	public addDemoSection(title:string, cases:DemoOpenMolCase[]):void
+	{
+		const self = this;
+
+		this.divDemo.append('<h2>' + escapeHTML(title) + '</h2>');
+		
+		let ul = $('<ul></ul>').appendTo($('<p></p>').appendTo(this.divDemo));
+		for (let demo of cases)
+		{
+			let li = $('<li></li>').appendTo(ul);
+			let ahref = $('<a></a>').appendTo(li);
+			const fn = '../test/' + demo.fn;
+			ahref.attr('href', fn);
+			ahref.text(demo.title);
+			ahref.click(function():boolean
+			{
+				self.loadMolecule(fn);
+				return false;
+			});
+		}
+	}
+
 	// ------------ private methods ------------
 
-	// fill it in with an example molfile
-	private actionExample():void
+	private loadMolecule(fn:string):void
 	{
-		let molfile = '\nSketchEl molfile\n\n' +
-			' 10  9  0  0  0  0  0  0  0  0999 V2000\n' +
-			'   -2.0000    3.4500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n' +
-			'   -3.2990    2.7000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n' +
-			'   -0.7010    2.7000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n' +
-			'   -3.2990    1.2000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n' +
-			'   -2.0000    0.4500    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0\n' +
-			'   -0.7010    1.2000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n' +
-			'    0.5981    3.4500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n' +
-			'    1.8971    2.7000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n' +
-			'    0.5981    4.9500    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n' +
-			'    2.1500    2.6000    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0\n' +
-			'  1  2  1  0  0  0  0\n' +
-			'  1  3  2  0  0  0  0\n' +
-			'  2  4  2  0  0  0  0\n' +
-			'  4  5  1  0  0  0  0\n' +
-			'  5  6  2  0  0  0  0\n' +
-			'  6  3  1  0  0  0  0\n' +
-			'  3  7  1  0  0  0  0\n' +
-			'  7  8  1  0  0  0  0\n' +
-			'  7  9  2  0  0  0  0\n' +
-			'M  END';
-		this.pasteContent(molfile);
+		const self = this;
+		$.ajax(
+		{
+			'url': fn, 
+			'type': 'GET',
+			'dataType': 'text',
+			'success': function(molText:string) {self.pasteContent(molText);},
+			'error': function() {alert('Unable to load file: ' + fn);}
+		});
 	}
 
 	// bring in text from some arbitrary source
@@ -216,16 +236,32 @@ class PageOpenMol
 
 		let lines:string[] = this.rawContent.split(/\n/);
 		let numsz = Math.ceil(Math.log10(lines.length));
-		for (let n = 0; n < lines.length; n++)
-		{
-			let pfx = (n + 1).toString();
-			while (pfx.length < numsz) pfx = ' ' + pfx;
-			lines[n] = pfx + ': ' + lines[n];
-		}
 
 		let pre = $('<pre></pre>').appendTo(this.divRawText);
 		pre.css('padding', '0.5em');
-		pre.text(lines.join('\n'));
+
+		this.charSpans = {};
+
+		for (let r = 0; r < lines.length; r++)
+		{
+			let pfx = (r + 1).toString();
+			while (pfx.length < numsz) pfx = ' ' + pfx;
+			let span = $('<span></span>').appendTo(pre);
+			span.text(pfx + ':');
+			span.css('color', '#808080');
+			span.css('background-color', '#D0D0D0');
+			span.css('border-right', 'solid 1px #808080');
+			span.css('margin-right', '0.2em');
+
+			for (let c = 0; c < lines[r].length; c++)
+			{
+				span = $('<span></span>').appendTo(pre);
+				this.charSpans[`${r}:${c}`] = span;
+				span.text(lines[r].charAt(c));
+			}
+
+			pre.append('\n');
+		}
 	}
 
 	// redraws the molecular structure as interpreted, if possible
@@ -255,19 +291,86 @@ class PageOpenMol
 	// redraws the explanation of what worked or didn't
 	private redrawExplain():void
 	{
+		const self = this;
+
 		this.divExplain.empty();
 		
-		let lines:string[] = [];
-		if (this.errorMsg) lines.push(this.errorMsg);
+		if (this.errorMsg) 
+		{
+			let div = $('<div></div>').appendTo(this.divExplain);
+			div.text(this.errorMsg);
+		}
 		if (this.openSpec) 
 		{
-			lines.push('OpenMolecule Level ' + this.openSpec.level);
-			for (let note of this.openSpec.notes)
+			let div = $('<div></div>').appendTo(this.divExplain);
+			div.text('OpenMolecule Level ' + this.openSpec.level);
+
+			for (let n = 0; n < this.openSpec.notes.length; n++)
 			{
-				lines.push('Spec#' + note.type + ':' + note.atoms + '/' + note.bonds); // !!
+				const note = this.openSpec.notes[n];
+				let div = $('<div></div>').appendTo(this.divExplain), span = $('<span></span>').appendTo(div);
+				span.text(this.describeNote(note));
+				span.mouseenter(function() 
+				{
+					span.css('background-color', '#C0C0FF');
+					self.activateNote(note);
+				});
+				span.mouseleave(function() 
+				{
+					span.css('background-color', 'transparent');
+					self.deactivateNote();
+				});
 			}
 		}
+	}
 
-		this.divExplain.html(lines.join('<br>'));
+	private activateNote(note:OpenMolNote):void
+	{
+		this.deactivateNote();
+
+		this.selected = note;
+		if (note.source) for (let src of note.source)
+		{
+			for (let n = 0; n < src.len; n++)
+			{
+				let key = src.row + ':' + (src.col + n);
+				let span = this.charSpans[key];
+				if (span) span.css('background-color', '#C0C0FF');
+			}
+		}
+	}
+
+	private deactivateNote():void
+	{
+		if (this.selected != null && this.selected.source != null)
+		{
+			for (let src of this.selected.source)
+			{
+				for (let n = 0; n < src.len; n++)
+				{
+					let key = src.row + ':' + (src.col + n);
+					let span = this.charSpans[key];
+					if (span) span.css('background-color', 'transparent');
+				}
+			}
+		}
+		this.selected = null;
+	}
+
+	// readable text description of a note
+	private describeNote(note:OpenMolNote):string
+	{
+		let txt = '?';
+		if (note.type == OpenMolType.AtomCount1000) txt = 'AtomCount>999';
+		else if (note.type == OpenMolType.BondCount1000) txt = 'BondCount>999';
+		else if (note.type == OpenMolType.MoleculeName) txt = 'MoleculeName';
+		else if (note.type == OpenMolType.QueryResonance) txt = 'QueryResonance';
+		else if (note.type == OpenMolType.QueryHCount) txt = 'QueryHCount';
+
+		if (note.atoms) txt += ' Atoms:' + note.atoms;
+		if (note.bonds) txt += ' Bonds:' + note.bonds;
+		if (note.level) txt += ' Level:' + note.level;
+
+		return txt;
 	}
 } 

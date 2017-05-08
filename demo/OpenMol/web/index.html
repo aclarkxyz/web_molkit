@@ -1,6 +1,17 @@
 <!DOCTYPE html>
 <html>
 
+<!--
+	Demonstration page that takes a structure and renders some of its properties as pertains to its
+	"OpenMolecule" status.
+
+	Note: accesses resources from a different directory hierarchy. This is verboten when browsing local files.
+	One way to work around is to:
+		npm -g install http-server
+		http-server -p 8081 -c-1 ~/path_to_WebMolKit
+		http://localhost:8081/demo/OpenMol/web/index.html
+-->
+
 <head>
 	<title>Open Molecule</title>
 
@@ -18,8 +29,28 @@
 </body>
 
 <script type="text/javascript">
-RPC.RESOURCE_URL = 'res';
-new PageOpenMol().build($('#root'));
+
+RPC.RESOURCE_URL = '../../../res';
+
+var DEMO_EXEMPLARS =
+[
+	{'fn': 'exemplar_benzene.mol', title: 'Benzene'},
+	{'fn': 'exemplar_aniline.mol', title: 'Aniline'},
+	{'fn': 'exemplar_nicotinamide.mol', title: 'Nicotinamide'},
+	{'fn': 'exemplar_ferrocene.mol', title: 'Ferrocene (with zero-order bonds)'},
+];
+
+var DEMO_IMPROPER =
+[
+	{'fn': 'resonance_aniline.mol', title: 'Aniline (with resonance bonds)'},
+	{'fn': 'named_nicotinamide.mol', title: 'Nicotinamide (with embedded name)'},
+];
+
+var page = new PageOpenMol();
+page.build($('#root'));
+page.addDemoSection('Exemplary Structures', DEMO_EXEMPLARS);
+page.addDemoSection('Improper Structures', DEMO_IMPROPER);
+
 </script>
 
 </html>

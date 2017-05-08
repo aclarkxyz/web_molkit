@@ -183,7 +183,7 @@ class SearchPanel extends Widget
 		
 		this.normalMol1 = renderSolid('#FFFFFF', '#D0D0D0', styleMol1);
 		this.pressedMol1 = renderSolid('#00CA59', '#008650', styleMol1);
-		this.drawnMol1 = <HTMLCanvasElement>newElement(div, 'canvas', {'width': molw, 'height': height, 'style': styleMol1Pos});
+		this.drawnMol1 = <HTMLCanvasElement>newElement(div, 'canvas', {'width': molw * density, 'height': height * density, 'style': styleMol1Pos});
 		this.drawnMol1.style.cursor = 'pointer';
 		this.renderMolecule(1);
 		this.thinMol1 = renderBorder(1, styleMol1);
@@ -203,7 +203,7 @@ class SearchPanel extends Widget
 			
 			this.normalMol2 = renderSolid('#FFFFFF', '#D0D0D0', styleMol2);
 			this.pressedMol2 = renderSolid('#00CA59', '#008650', styleMol2);
-			this.drawnMol2 = <HTMLCanvasElement>newElement(div, 'canvas', {'width': molw, 'height': height, 'style': styleMol2Pos});
+			this.drawnMol2 = <HTMLCanvasElement>newElement(div, 'canvas', {'width': molw * density, 'height': height * density, 'style': styleMol2Pos});
 			this.drawnMol2.style.cursor = 'pointer';
 			this.renderMolecule(2);
 			this.thinMol2 = renderBorder(1, styleMol2);
@@ -338,8 +338,6 @@ class SearchPanel extends Widget
 		ctx.clearRect(0, 0, width, height);
 		canvas.style.width = width + 'px';
 		canvas.style.height = height + 'px';
-		canvas.width = width * density;
-		canvas.height = height * density;
 
 		if (mol.numAtoms > 0)
 		{
