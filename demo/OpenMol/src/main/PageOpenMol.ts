@@ -48,6 +48,8 @@ class PageOpenMol
 
 	private charSpans:{[id:string] : JQuery} = {}; // lookup format is '{row}:{col}'
 	private selected:OpenMolNote = null;
+	private atomHighlight:number[] = null;
+	private bondHighlight:number[] = null;
 
 	// ------------ public methods ------------
 
@@ -282,7 +284,12 @@ class PageOpenMol
 		let layout = new ArrangeMolecule(this.showMol, measure, policy, effects);
 		layout.arrange();
 		layout.squeezeInto(0, 0, 500, 500);
+
 		let metavec = new MetaVector();
+
+		if (this.atomHighlight) for (let a of this.atomHighlight) this.drawAtomShade(metavec, layout, a, 0xC0C0FF);
+		if (this.bondHighlight) for (let b of this.bondHighlight) this.drawBondShade(metavec, layout, b, 0xC0C0FF);
+		
 		new DrawMolecule(layout, metavec).draw();
 		metavec.normalise();
 		$(metavec.createSVG()).appendTo(this.divMolecule);
@@ -314,16 +321,39 @@ class PageOpenMol
 				{
 					span.css('background-color', '#C0C0FF');
 					self.activateNote(note);
+					self.refreshMoleculeHighlights();
 				});
 				span.mouseleave(function() 
 				{
 					span.css('background-color', 'transparent');
 					self.deactivateNote();
+					self.refreshMoleculeHighlights();
 				});
 			}
 		}
 	}
 
+	// readable text description of a note
+	private describeNote(note:OpenMolNote):string
+	{
+		let txt = '?';
+		if (note.type == OpenMolType.AtomCount1000) txt = 'AtomCount>999';
+		else if (note.type == OpenMolType.BondCount1000) txt = 'BondCount>999';
+		else if (note.type == OpenMolType.MoleculeName) txt = 'MoleculeName';
+		else if (note.type == OpenMolType.QueryResonance) txt = 'QueryResonance';
+		else if (note.type == OpenMolType.QueryHCount) txt = 'QueryHCount';
+		else if (note.type == OpenMolType.InlineAbbreviations) txt = 'InlineAbbreviations';
+		else if (note.type == OpenMolType.ZeroOrderBonds) txt = 'ZeroOrderBonds';
+		else if (note.type == OpenMolType.HydogenCounting) txt = 'HydogenCounting';
+
+		if (note.atoms) txt += ' Atoms:' + note.atoms;
+		if (note.bonds) txt += ' Bonds:' + note.bonds;
+		if (note.level) txt += ' Level:' + note.level;
+
+		return txt;
+	}	
+
+	// a note has been selected: update the text/molecule highlighting
 	private activateNote(note:OpenMolNote):void
 	{
 		this.deactivateNote();
@@ -340,6 +370,7 @@ class PageOpenMol
 		}
 	}
 
+	// deselect the current note, if any
 	private deactivateNote():void
 	{
 		if (this.selected != null && this.selected.source != null)
@@ -357,20 +388,88 @@ class PageOpenMol
 		this.selected = null;
 	}
 
-	// readable text description of a note
-	private describeNote(note:OpenMolNote):string
+	// see if the selected note is in sync with highlight atoms/bonds, and redraw if not so
+	private refreshMoleculeHighlights():void
 	{
-		let txt = '?';
-		if (note.type == OpenMolType.AtomCount1000) txt = 'AtomCount>999';
-		else if (note.type == OpenMolType.BondCount1000) txt = 'BondCount>999';
-		else if (note.type == OpenMolType.MoleculeName) txt = 'MoleculeName';
-		else if (note.type == OpenMolType.QueryResonance) txt = 'QueryResonance';
-		else if (note.type == OpenMolType.QueryHCount) txt = 'QueryHCount';
+		let atoms = this.selected ? this.selected.atoms : null;
+		let bonds = this.selected ? this.selected.bonds : null;
+		if (Vec.equivalent(atoms, this.atomHighlight) && Vec.equivalent(bonds, this.bondHighlight)) return;
+		this.atomHighlight = atoms;
+		this.bondHighlight = bonds;
+		this.redrawMolecule();
+	}
 
-		if (note.atoms) txt += ' Atoms:' + note.atoms;
-		if (note.bonds) txt += ' Bonds:' + note.bonds;
-		if (note.level) txt += ' Level:' + note.level;
+	// draws an ellipse around an atom/bond, for highlighting purposes
+	private drawAtomShade(metavec:MetaVector, layout:ArrangeMolecule, atom:number, fillCol:number):void
+	{
+		let p:APoint = null;
+		for (let n = 0; n < layout.numPoints(); n++) if (layout.getPoint(n).anum == atom)
+		{
+			p = layout.getPoint(n);
+			break;
+		}
+		if (p == null) return;
 
-		return txt;
+		let scale = layout.getPolicy().data.pointScale;
+		let minRad = 0.2 * scale, minRadSq = sqr(minRad);
+		let cx = p.oval.cx, cy = p.oval.cy;
+		let rad = Math.max(minRad, Math.max(p.oval.rw, p.oval.rh)) + 0.1 * scale;
+
+		metavec.drawOval(cx, cy, rad, rad, -1, 0, fillCol);
+	}
+	private drawBondShade(metavec:MetaVector, layout:ArrangeMolecule, bond:number, fillCol:number):void
+	{
+		let x1 = 0, y1 = 0, x2 = 0, y2 = 0, nb = 0, sz = 0;
+		let scale = layout.getPolicy().data.pointScale;
+		for (let n = 0; n < layout.numLines(); n++) 
+		{
+			let l = layout.getLine(n);
+			if (l.bnum != bond) continue;
+			x1 += l.line.x1; y1 += l.line.y1; x2 += l.line.x2; y2 += l.line.y2;
+			nb++;
+			sz += l.size + 0.2 * scale;
+		}
+		if (nb == 0) return;
+		
+		let invNB = 1 / nb;
+		sz *= invNB;
+		x1 *= invNB;
+		y1 *= invNB;
+		x2 *= invNB;
+		y2 *= invNB;
+
+		let dx = x2 - x1, dy = y2 - y1, invDist = 1 / norm_xy(dx, dy);
+		dx *= invDist; 
+		dy *= invDist;
+		let ox = dy, oy = -dx;
+
+		let px:number[] = [], py:number[] = [], ctrl:boolean[] = [];
+		let plot = function(x:number, y:number, c:boolean) {px.push(x); py.push(y); ctrl.push(c);}
+		
+		let path = new Path2D(), mx:number, my:number, CIRC = 0.8;
+		plot(x1 + ox * sz, y1 + oy * sz, false);
+		
+		mx = x1 + (ox * sz - dx * sz) * CIRC;
+		my = y1 + (oy * sz - dy * sz) * CIRC;
+		plot(mx, my, true);
+		plot(x1 - dx * sz, y1 - dy * sz, false);
+		
+		mx = x1 + (-ox * sz - dx * sz) * CIRC;
+		my = y1 + (-oy * sz - dy * sz) * CIRC;
+		plot(mx, my, true);
+		plot(x1 - ox * sz, y1 - oy * sz, false);
+		plot(x2 - ox * sz, y2 - oy * sz, false);
+		
+		mx = x2 + (-ox * sz + dx * sz) * CIRC;
+		my = y2 + (-oy * sz + dy * sz) * CIRC;
+		plot(mx, my, true);
+		plot(x2 + dx * sz, y2 + dy * sz, false);
+		
+		mx = x2 + (ox * sz + dx * sz) * CIRC;
+		my = y2 + (oy * sz + dy * sz) * CIRC;
+		plot(mx, my, true);
+		plot(x2 + ox * sz, y2 + oy * sz, false);
+
+		metavec.drawPath(px, py, ctrl, true, -1, 0, 0xC0C0FF, false);
 	}
 } 

@@ -3107,13 +3107,23 @@ var OpenMolType;
     OpenMolType[OpenMolType["None"] = 0] = "None";
     OpenMolType[OpenMolType["AtomCount1000"] = 1] = "AtomCount1000";
     OpenMolType[OpenMolType["BondCount1000"] = 2] = "BondCount1000";
-    OpenMolType[OpenMolType["MoleculeName"] = 3] = "MoleculeName";
-    OpenMolType[OpenMolType["QueryResonance"] = 4] = "QueryResonance";
-    OpenMolType[OpenMolType["QueryHCount"] = 5] = "QueryHCount";
+    OpenMolType[OpenMolType["InlineAbbreviations"] = 3] = "InlineAbbreviations";
+    OpenMolType[OpenMolType["ZeroOrderBonds"] = 4] = "ZeroOrderBonds";
+    OpenMolType[OpenMolType["HydogenCounting"] = 5] = "HydogenCounting";
+    OpenMolType[OpenMolType["MoleculeName"] = 6] = "MoleculeName";
+    OpenMolType[OpenMolType["QueryResonance"] = 7] = "QueryResonance";
+    OpenMolType[OpenMolType["QueryHCount"] = 8] = "QueryHCount";
 })(OpenMolType || (OpenMolType = {}));
 const OPENMOL_LEVEL_1_1 = [
     OpenMolType.AtomCount1000,
     OpenMolType.BondCount1000,
+];
+const OPENMOL_LEVEL_1_2 = [
+    OpenMolType.InlineAbbreviations,
+];
+const OPENMOL_LEVEL_1_3 = [
+    OpenMolType.ZeroOrderBonds,
+    OpenMolType.HydogenCounting,
 ];
 const OPENMOL_INVALID = [
     OpenMolType.QueryResonance,
@@ -3133,6 +3143,10 @@ class OpenMolSpec {
         note.level = 1.0;
         if (OPENMOL_LEVEL_1_1.indexOf(note.type) >= 0)
             note.level = 1.1;
+        else if (OPENMOL_LEVEL_1_2.indexOf(note.type) >= 0)
+            note.level = 1.2;
+        else if (OPENMOL_LEVEL_1_3.indexOf(note.type) >= 0)
+            note.level = 1.3;
         this.level = Math.max(this.level, note.level);
         this.invalid = this.invalid || OPENMOL_INVALID.indexOf(note.type) >= 0;
     }
@@ -3314,12 +3328,18 @@ class MDLMOLReader {
                         this.mol.setAtomIsotope(pos, val);
                     else if (type == MBLK_RGP)
                         this.mol.setAtomElement(pos, "R" + val);
-                    else if (type == MBLK_HYD)
+                    else if (type == MBLK_HYD) {
                         this.mol.setAtomHExplicit(pos, val);
+                        let src = { 'row': this.pos - 1, 'col': 9 + 8 * n, 'len': 8 };
+                        this.openmol.addJoin(OpenMolType.HydogenCounting, [pos], null, [src]);
+                    }
                     else if (type == MBLK_ZCH)
                         this.mol.setAtomCharge(pos, val);
-                    else if (type == MBLK_ZBO)
+                    else if (type == MBLK_ZBO) {
                         this.mol.setBondOrder(pos, val);
+                        let src = { 'row': this.pos - 1, 'col': 9 + 8 * n, 'len': 8 };
+                        this.openmol.addJoin(OpenMolType.ZeroOrderBonds, null, [pos], [src]);
+                    }
                 }
             }
         }
@@ -8107,6 +8127,8 @@ class PageOpenMol {
         this.errorMsg = null;
         this.charSpans = {};
         this.selected = null;
+        this.atomHighlight = null;
+        this.bondHighlight = null;
     }
     build(root) {
         const self = this;
@@ -8269,6 +8291,12 @@ class PageOpenMol {
         layout.arrange();
         layout.squeezeInto(0, 0, 500, 500);
         let metavec = new MetaVector();
+        if (this.atomHighlight)
+            for (let a of this.atomHighlight)
+                this.drawAtomShade(metavec, layout, a, 0xC0C0FF);
+        if (this.bondHighlight)
+            for (let b of this.bondHighlight)
+                this.drawBondShade(metavec, layout, b, 0xC0C0FF);
         new DrawMolecule(layout, metavec).draw();
         metavec.normalise();
         $(metavec.createSVG()).appendTo(this.divMolecule);
@@ -8290,13 +8318,41 @@ class PageOpenMol {
                 span.mouseenter(function () {
                     span.css('background-color', '#C0C0FF');
                     self.activateNote(note);
+                    self.refreshMoleculeHighlights();
                 });
                 span.mouseleave(function () {
                     span.css('background-color', 'transparent');
                     self.deactivateNote();
+                    self.refreshMoleculeHighlights();
                 });
             }
         }
+    }
+    describeNote(note) {
+        let txt = '?';
+        if (note.type == OpenMolType.AtomCount1000)
+            txt = 'AtomCount>999';
+        else if (note.type == OpenMolType.BondCount1000)
+            txt = 'BondCount>999';
+        else if (note.type == OpenMolType.MoleculeName)
+            txt = 'MoleculeName';
+        else if (note.type == OpenMolType.QueryResonance)
+            txt = 'QueryResonance';
+        else if (note.type == OpenMolType.QueryHCount)
+            txt = 'QueryHCount';
+        else if (note.type == OpenMolType.InlineAbbreviations)
+            txt = 'InlineAbbreviations';
+        else if (note.type == OpenMolType.ZeroOrderBonds)
+            txt = 'ZeroOrderBonds';
+        else if (note.type == OpenMolType.HydogenCounting)
+            txt = 'HydogenCounting';
+        if (note.atoms)
+            txt += ' Atoms:' + note.atoms;
+        if (note.bonds)
+            txt += ' Bonds:' + note.bonds;
+        if (note.level)
+            txt += ' Level:' + note.level;
+        return txt;
     }
     activateNote(note) {
         this.deactivateNote();
@@ -8324,25 +8380,78 @@ class PageOpenMol {
         }
         this.selected = null;
     }
-    describeNote(note) {
-        let txt = '?';
-        if (note.type == OpenMolType.AtomCount1000)
-            txt = 'AtomCount>999';
-        else if (note.type == OpenMolType.BondCount1000)
-            txt = 'BondCount>999';
-        else if (note.type == OpenMolType.MoleculeName)
-            txt = 'MoleculeName';
-        else if (note.type == OpenMolType.QueryResonance)
-            txt = 'QueryResonance';
-        else if (note.type == OpenMolType.QueryHCount)
-            txt = 'QueryHCount';
-        if (note.atoms)
-            txt += ' Atoms:' + note.atoms;
-        if (note.bonds)
-            txt += ' Bonds:' + note.bonds;
-        if (note.level)
-            txt += ' Level:' + note.level;
-        return txt;
+    refreshMoleculeHighlights() {
+        let atoms = this.selected ? this.selected.atoms : null;
+        let bonds = this.selected ? this.selected.bonds : null;
+        if (Vec.equivalent(atoms, this.atomHighlight) && Vec.equivalent(bonds, this.bondHighlight))
+            return;
+        this.atomHighlight = atoms;
+        this.bondHighlight = bonds;
+        this.redrawMolecule();
+    }
+    drawAtomShade(metavec, layout, atom, fillCol) {
+        let p = null;
+        for (let n = 0; n < layout.numPoints(); n++)
+            if (layout.getPoint(n).anum == atom) {
+                p = layout.getPoint(n);
+                break;
+            }
+        if (p == null)
+            return;
+        let scale = layout.getPolicy().data.pointScale;
+        let minRad = 0.2 * scale, minRadSq = sqr(minRad);
+        let cx = p.oval.cx, cy = p.oval.cy;
+        let rad = Math.max(minRad, Math.max(p.oval.rw, p.oval.rh)) + 0.1 * scale;
+        metavec.drawOval(cx, cy, rad, rad, -1, 0, fillCol);
+    }
+    drawBondShade(metavec, layout, bond, fillCol) {
+        let x1 = 0, y1 = 0, x2 = 0, y2 = 0, nb = 0, sz = 0;
+        let scale = layout.getPolicy().data.pointScale;
+        for (let n = 0; n < layout.numLines(); n++) {
+            let l = layout.getLine(n);
+            if (l.bnum != bond)
+                continue;
+            x1 += l.line.x1;
+            y1 += l.line.y1;
+            x2 += l.line.x2;
+            y2 += l.line.y2;
+            nb++;
+            sz += l.size + 0.2 * scale;
+        }
+        if (nb == 0)
+            return;
+        let invNB = 1 / nb;
+        sz *= invNB;
+        x1 *= invNB;
+        y1 *= invNB;
+        x2 *= invNB;
+        y2 *= invNB;
+        let dx = x2 - x1, dy = y2 - y1, invDist = 1 / norm_xy(dx, dy);
+        dx *= invDist;
+        dy *= invDist;
+        let ox = dy, oy = -dx;
+        let px = [], py = [], ctrl = [];
+        let plot = function (x, y, c) { px.push(x); py.push(y); ctrl.push(c); };
+        let path = new Path2D(), mx, my, CIRC = 0.8;
+        plot(x1 + ox * sz, y1 + oy * sz, false);
+        mx = x1 + (ox * sz - dx * sz) * CIRC;
+        my = y1 + (oy * sz - dy * sz) * CIRC;
+        plot(mx, my, true);
+        plot(x1 - dx * sz, y1 - dy * sz, false);
+        mx = x1 + (-ox * sz - dx * sz) * CIRC;
+        my = y1 + (-oy * sz - dy * sz) * CIRC;
+        plot(mx, my, true);
+        plot(x1 - ox * sz, y1 - oy * sz, false);
+        plot(x2 - ox * sz, y2 - oy * sz, false);
+        mx = x2 + (-ox * sz + dx * sz) * CIRC;
+        my = y2 + (-oy * sz + dy * sz) * CIRC;
+        plot(mx, my, true);
+        plot(x2 + dx * sz, y2 + dy * sz, false);
+        mx = x2 + (ox * sz + dx * sz) * CIRC;
+        my = y2 + (oy * sz + dy * sz) * CIRC;
+        plot(mx, my, true);
+        plot(x2 + ox * sz, y2 + oy * sz, false);
+        metavec.drawPath(px, py, ctrl, true, -1, 0, 0xC0C0FF, false);
     }
 }
 class Aspect {

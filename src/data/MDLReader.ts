@@ -231,9 +231,19 @@ class MDLMOLReader
 					else if (type == MBLK_RAD) this.mol.setAtomUnpaired(pos, val);
 					else if (type == MBLK_ISO) this.mol.setAtomIsotope(pos, val);
 					else if (type == MBLK_RGP) this.mol.setAtomElement(pos, "R" + val);
-					else if (type == MBLK_HYD) this.mol.setAtomHExplicit(pos, val);
+					else if (type == MBLK_HYD) 
+					{
+						this.mol.setAtomHExplicit(pos, val);
+						let src:OpenMolSource = {'row': this.pos - 1, 'col': 9 + 8 * n, 'len': 8};
+						this.openmol.addJoin(OpenMolType.HydogenCounting, [pos], null, [src]);
+					}
 					else if (type == MBLK_ZCH) this.mol.setAtomCharge(pos, val);
-					else if (type == MBLK_ZBO) this.mol.setBondOrder(pos, val);
+					else if (type == MBLK_ZBO) 
+					{
+						this.mol.setBondOrder(pos, val);
+						let src:OpenMolSource = {'row': this.pos - 1, 'col': 9 + 8 * n, 'len': 8};
+						this.openmol.addJoin(OpenMolType.ZeroOrderBonds, null, [pos], [src]);
+					}
 				}
 			}
 	    }

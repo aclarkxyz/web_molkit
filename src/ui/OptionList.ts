@@ -29,12 +29,12 @@
 
 class OptionList extends Widget
 {
-	selidx = 0;
-	buttonDiv:any[] = [];
-	auxCell:any[] = [];
+	public selidx = 0;
+	public buttonDiv:any[] = [];
+	public auxCell:any[] = [];
 	
-	callback:(idx:number, source?:OptionList) => void = null;
-	master:any;
+	public callback:(idx:number, source?:OptionList) => void = null;
+	public master:any;
 	
 	constructor(private options:string[], private isVertical:boolean = false)
 	{
@@ -52,20 +52,20 @@ class OptionList extends Widget
 	public getSelectedIndex():number
 	{
 		return this.selidx;
-	};
+	}
 	public getSelectedValue():string
 	{
 		return this.options[this.selidx];
-	};
+	}
 
 	// requests an "auxiliary cell" for a vertical control, into which additional information may be placed
 	public getAuxiliaryCell(idx:number):Element
 	{
 		return this.auxCell[idx];
-	};
+	}
 
 	// create the underlying structure; the parent parameter must be jQuery-compatible
-	public render(parent:any)
+	public render(parent:any):void
 	{
 		super.render(parent);
 		
@@ -109,20 +109,20 @@ class OptionList extends Widget
 				this.auxCell.push(td);
 			}
 		}
-	};
+	}
 
 	// perform some checks before rendering
-	public clickButton(idx:number)
+	public clickButton(idx:number):void
 	{
 		if (idx == this.selidx) return; // (shouldn't happen)
 		
 		this.setSelectedIndex(idx);
 
 		if (this.callback) this.callback.call(this.master, idx, this);		
-	};	
+	}
 		
 	// change selected index, update widgets
-	public setSelectedIndex(idx:number)
+	public setSelectedIndex(idx:number):void
 	{
 		if (this.selidx == idx) return;
 		
@@ -158,5 +158,10 @@ class OptionList extends Widget
 		div.off('mouseleave');
 		div.off('mousemove');
 		div.off('click');
-	};
+	}
+	public setSelectedValue(val:string):void
+	{
+		let idx = this.options.indexOf(val);
+		if (idx >= 0) this.setSelectedIndex(idx);
+	}
 }
