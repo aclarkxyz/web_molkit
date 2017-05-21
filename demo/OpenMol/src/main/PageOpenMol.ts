@@ -344,7 +344,7 @@ class PageOpenMol
 		else if (note.type == OpenMolType.QueryHCount) txt = 'QueryHCount';
 		else if (note.type == OpenMolType.InlineAbbreviations) txt = 'InlineAbbreviations';
 		else if (note.type == OpenMolType.ZeroOrderBonds) txt = 'ZeroOrderBonds';
-		else if (note.type == OpenMolType.HydogenCounting) txt = 'HydogenCounting';
+		else if (note.type == OpenMolType.HydrogenCounting) txt = 'HydrogenCounting';
 
 		if (note.atoms) txt += ' Atoms:' + note.atoms;
 		if (note.bonds) txt += ' Bonds:' + note.bonds;

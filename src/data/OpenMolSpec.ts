@@ -12,6 +12,7 @@
 
 ///<reference path='../decl/corrections.d.ts'/>
 ///<reference path='../util/util.ts'/>
+///<reference path='Molecule.ts'/>
 
 /*
 	Specifications for Open Molecule: when analyzing a structure, append all of the feature observations that apply. These will
@@ -32,7 +33,7 @@ enum OpenMolType
 
 	// level 1.3
 	ZeroOrderBonds, // use of bonds with order 0
-	HydogenCounting, // explicitly controlling # of virtual hydrogens
+	HydrogenCounting, // explicitly controlling # of virtual hydrogens
 
 	// invalid features
 	MoleculeName, // name stored in structure field (it shouldn't be)
@@ -54,7 +55,7 @@ const OPENMOL_LEVEL_1_2 =
 const OPENMOL_LEVEL_1_3 =
 [
 	OpenMolType.ZeroOrderBonds,
-	OpenMolType.HydogenCounting,
+	OpenMolType.HydrogenCounting,
 ];
 
 const OPENMOL_INVALID =
