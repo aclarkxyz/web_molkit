@@ -68,14 +68,14 @@ class ButtonView extends Widget
 	}
 
 	// static: should be called before making use of buttons; does nothing if they are already defined
-	public static prepare(callback:() => void, master:any)
+	public static prepare(callback:() => void)
 	{
 		// if we have no RPC server, but we do have a resource URL, they're going to be loaded on demand, one file at a time
 		if (RPC.BASE_URL == null && RPC.RESOURCE_URL != null) ButtonView.ACTION_ICONS = {}; 
 
 		if (ButtonView.ACTION_ICONS != null)
 		{
-			callback.call(master);
+			callback();
 			return;
 		}
 		
@@ -88,9 +88,9 @@ class ButtonView extends Widget
 			}
 			ButtonView.ACTION_ICONS = result.actions;
 			
-			callback.call(master);
+			callback();
 		};
-		Func.getActionIcons({}, fcn, this);
+		Func.getActionIcons({}, fcn);
 	}
 
 	// for future reference, parent boundary size is different
@@ -132,14 +132,13 @@ class ButtonView extends Widget
 		this.applyOffset();
 		this.redraw();
 
-		const self = this;		
-		this.content.click(function(event:MouseEvent) {self.mouseClick(event);});
-		this.content.dblclick(function(event:MouseEvent) {self.mouseDoubleClick(event);});
-		this.content.mousedown(function(event:JQueryEventObject) {event.preventDefault(); self.mouseDown(event);});
-		this.content.mouseup(function(event:JQueryEventObject) {self.mouseUp(event);});
-		this.content.mouseover(function(event:JQueryEventObject) {self.mouseOver(event);});
-		this.content.mouseout(function(event:JQueryEventObject) {self.mouseOut(event);});
-		this.content.mousemove(function(event:JQueryEventObject) {self.mouseMove(event);});
+		this.content.click((event:MouseEvent) => this.mouseClick(event));
+		this.content.dblclick((event:MouseEvent) => this.mouseDoubleClick(event));
+		this.content.mousedown((event:JQueryEventObject) => {event.preventDefault(); this.mouseDown(event);});
+		this.content.mouseup((event:JQueryEventObject) => this.mouseUp(event));
+		this.content.mouseover((event:JQueryEventObject) => this.mouseOver(event));
+		this.content.mouseout((event:JQueryEventObject) => this.mouseOut(event));
+		this.content.mousemove((event:JQueryEventObject) => this.mouseMove(event));
 	}
 
 	// adds a new molsync.ui.ButtonBank instance to the stack, making it the current one
@@ -510,8 +509,6 @@ class ButtonView extends Widget
 	{
 		if (!this.content || !this.canvas) return;
 		
-		const self = this;
-
 		// background
 		
 		let density = pixelDensity();
@@ -607,13 +604,13 @@ class ButtonView extends Widget
 				const bx = d.x + Math.floor(0.5 * (d.width - sz));
 				const by = d.y + Math.floor(0.5 * (d.height - sz));
 
-				let putSVG = function(svg:string):void
+				let putSVG = (svg:string):void =>
 				{
 					let extra = 'style="position: absolute; left: ' + bx + 'px; top: ' + by + 'px;' + 
 								' width: ' + sz + 'px; height: ' + sz + 'px; pointer-events: none;"';
 					svg = svg.substring(0, 4) + ' ' + extra + svg.substring(4);
 					d.svgDOM = $(svg)[0];
-					self.content.append(d.svgDOM);
+					this.content.append(d.svgDOM);
 				}
 
 				// SVG icons: if there's an RPC server, they're already in the cache; if not, they have to be loaded individually
@@ -628,9 +625,9 @@ class ButtonView extends Widget
 						'url': url, 
 						'type': 'GET',
 						'dataType': 'text',
-						'success': function(svg:string)
+						'success': (svg:string) =>
 						{
-							svg = self.fixSVGFile(svg);
+							svg = this.fixSVGFile(svg);
 							ButtonView.ACTION_ICONS[b.imageFN] = svg;
 							putSVG(svg); 
 						}
@@ -764,8 +761,7 @@ class ButtonView extends Widget
 	{
 		//let redrawAction = function() {this.redraw();};
 		//new goog.async.Delay(redrawAction, 100, this).start();
-		const self = this;
-		window.setTimeout(function() {self.redraw();}, 100);
+		window.setTimeout(() => this.redraw(), 100);
 	};
 
 	// mapping ID tags into raw/display button objects

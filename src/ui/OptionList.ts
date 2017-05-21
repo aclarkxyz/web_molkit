@@ -33,8 +33,7 @@ class OptionList extends Widget
 	public buttonDiv:any[] = [];
 	public auxCell:any[] = [];
 	
-	public callback:(idx:number, source?:OptionList) => void = null;
-	public master:any;
+	public callbackSelect:(idx:number, source?:OptionList) => void = null;
 	
 	constructor(private options:string[], private isVertical:boolean = false)
 	{
@@ -42,12 +41,6 @@ class OptionList extends Widget
 		if (options.length == 0) throw 'molsync.ui.OptionList: must provide a list of option labels.';
 	}
 	
-	public onSelect(callback:(idx:number, source?:OptionList) => void, master:any)
-	{
-		this.callback = callback;
-		this.master = master;
-	}
-
 	// control over selected index
 	public getSelectedIndex():number
 	{
@@ -97,8 +90,8 @@ class OptionList extends Widget
 				div.mouseleave(function() {$(this).removeClass('option-hover option-active');});
 				div.mousemove(function() {return false;});
 				
-				const idx = n, self = this;
-				div.click(function() {self.clickButton(idx);});
+				const idx = n;
+				div.click(() => this.clickButton(idx));
 			}
 			
 			this.buttonDiv.push(div);
@@ -118,7 +111,7 @@ class OptionList extends Widget
 		
 		this.setSelectedIndex(idx);
 
-		if (this.callback) this.callback.call(this.master, idx, this);		
+		if (this.callbackSelect) this.callbackSelect(idx, this);
 	}
 		
 	// change selected index, update widgets
@@ -133,15 +126,15 @@ class OptionList extends Widget
 		div.attr('class', 'option option-unselected');
 		if (this.options[this.selidx].length == 0) div.text('\u00A0\u00A0\u00A0');
 		
-		div.mouseover(function() {$(this).addClass('option-hover');});
-		div.mouseout(function() {$(this).removeClass('option-hover option-active');});
-		div.mousedown(function() {$(this).addClass('option-active');});
-		div.mouseup(function() {$(this).removeClass('option-active');});
-		div.mouseleave(function() {$(this).removeClass('option-hover option-active');});
-		div.mousemove(function() {return false;});
+		div.mouseover(() => div.addClass('option-hover'));
+		div.mouseout(() => div.removeClass('option-hover option-active'));
+		div.mousedown(() => div.addClass('option-active'));
+		div.mouseup(() => div.removeClass('option-active'));
+		div.mouseleave(() => div.removeClass('option-hover option-active'));
+		div.mousemove(() => false);
 		
-		const clickidx = this.selidx, self = this;
-		div.click(function() {self.clickButton(clickidx);});
+		const clickidx = this.selidx;
+		div.click(() => this.clickButton(clickidx));
 
 		// adorn new selection
 		

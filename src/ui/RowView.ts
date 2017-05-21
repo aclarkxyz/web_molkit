@@ -110,9 +110,9 @@ class RowView extends Widget
 				this.renderNode(td, nodes[n]);
 			}
 
-			if (roster.length > 0) Func.composeDocument({'tokenID': this.tokenID, 'dataXML': roster[0].dataXML, 'subsumeTitle': true}, fcnComposure, this);
+			if (roster.length > 0) Func.composeDocument({'tokenID': this.tokenID, 'dataXML': roster[0].dataXML, 'subsumeTitle': true}, fcnComposure);
 		};
-		if (roster.length > 0) Func.composeDocument({'tokenID': this.tokenID, 'dataXML': roster[0].dataXML, 'subsumeTitle': true}, fcnComposure, this);
+		if (roster.length > 0) Func.composeDocument({'tokenID': this.tokenID, 'dataXML': roster[0].dataXML, 'subsumeTitle': true}, fcnComposure);
 	}
 		
 	// instantiate a composed node, within the HTML hierarchy

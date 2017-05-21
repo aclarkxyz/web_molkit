@@ -64,35 +64,10 @@ class SearchMolecules extends Widget
 	private table:JQuery;
 	private placeholder:JQuery;
 	
-	callbackStop:(source?:SearchMolecules) => void = null;
-	masterStop:any = null;
-	callbackProgress:(progress:number, count:number, source?:SearchMolecules) => void = null;
-	masterProgress:any = null;
-	callbackMol:(moleculeID:number[], mol:Molecule, source?:SearchMolecules) => void = null;
-	masterMol:any = null;
-	callbackDS:(datasheetID:number, source?:SearchMolecules) => void = null;
-	masterDS:any = null;
-
-	public onStop(callback:(source?:SearchMolecules) => void, master:any)
-	{
-		this.callbackStop = callback;
-		this.masterStop = master;
-	}
-	public onProgress(callback:(progress:number, count:number, source?:SearchMolecules) => void, master:any)
-	{
-		this.callbackProgress = callback;
-		this.masterProgress = master;
-	}
-	public onClickMolecule(callback:(moleculeID:number[], mol:Molecule, source?:SearchMolecules) => void, master:any)
-	{
-		this.callbackMol = callback;
-		this.masterMol = master;
-	}
-	public onClickDataSheet(callback:(datasheetID:number, source?:SearchMolecules) => void, master:any)
-	{
-		this.callbackDS = callback;
-		this.masterDS = master;
-	}
+	public callbackStop:(source?:SearchMolecules) => void = null;
+	public callbackProgress:(progress:number, count:number, source?:SearchMolecules) => void = null;
+	public callbackMol:(moleculeID:number[], mol:Molecule, source?:SearchMolecules) => void = null;
+	public callbackDS:(datasheetID:number, source?:SearchMolecules) => void = null;
 	
 	constructor(private tokenID:string)
 	{
@@ -121,7 +96,7 @@ class SearchMolecules extends Widget
 		
 		let molstr = mol == null ? null : mol.toString();
 		let param = {'origin': origin, 'molNative': molstr, 'type': type, 'maxResults': maxResults};
-		Search.startMolSearch(param, function(result:any, error:ErrorRPC)
+		Search.startMolSearch(param, (result:any, error:ErrorRPC) =>
 		{
 			if (error != null) throw 'molsync.ui.SearchMolecules: failed to initiate search: ' + error.message;
 
@@ -132,8 +107,8 @@ class SearchMolecules extends Widget
 			this.started = true;
 			this.finished = false;
 			
-			Search.pollMolSearch({'molsearchToken': this.molsearchToken}, this.batchSearch, this);
-		}, this);
+			Search.pollMolSearch({'molsearchToken': this.molsearchToken}, () => this.batchSearch(result, error));
+		});
 	}
 	
 	// if the search is running, make it not so
@@ -144,7 +119,7 @@ class SearchMolecules extends Widget
 		this.cancelled = true;
 		this.finished = true;
 		
-		if (this.callbackStop) this.callbackStop.call(this.masterStop, this);
+		if (this.callbackStop) this.callbackStop(this);
 	}
 	
 	// returns true if the search is happening right now
@@ -172,12 +147,12 @@ class SearchMolecules extends Widget
 		
 		if (!this.finished) 
 		{
-			Search.pollMolSearch({'molsearchToken': this.molsearchToken}, this.batchSearch, this);
-			if (this.callbackProgress) this.callbackProgress.call(this.masterProgress, this.progress, this.count, this);
+			Search.pollMolSearch({'molsearchToken': this.molsearchToken}, (result:any, error:ErrorRPC) => this.batchSearch(result, error));
+			if (this.callbackProgress) this.callbackProgress(this.progress, this.count, this);
 		}
 		else
 		{
-			if (this.callbackStop) this.callbackStop.call(this.masterStop, this);
+			if (this.callbackStop) this.callbackStop(this);
 		}
 	}
 	
@@ -261,19 +236,18 @@ class SearchMolecules extends Widget
 		vs.backgroundCol2 = 0xE0E0E0;
 		vs.padding = 4;
 		
-		vs.setup(function()
+		vs.setup(() =>
 		{
 			vs.render(parent);
 			vs.content.css('cursor', 'pointer');
 			
-			const self = this;
-			vs.content.click(function()
+			vs.content.click(() =>
 			{
-				if (self.callbackMol) self.callbackMol(moleculeID, Molecule.fromString(molNative), self);
+				if (this.callbackMol) this.callbackMol(moleculeID, Molecule.fromString(molNative));
 			});
 			
 			//vs.addTooltip('Molecule ID#' + entries[n].moleculeID);
-		}, this);
+		});
 		
 		return vs;
 	}

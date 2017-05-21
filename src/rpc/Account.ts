@@ -18,13 +18,13 @@
 
 class Account
 {
-    public static connectTransient(callback:(result:any, error:ErrorRPC) => void, master?:Object):void
+    public static connectTransient(callback:(result:any, error:ErrorRPC) => void):void
     {
-        new RPC('account.connectTransient', {}, callback, master).invoke();
+        new RPC('account.connectTransient', {}, callback).invoke();
     }
-    public static refreshTransient(input:Object, callback:(result:any, error:ErrorRPC) => void, master?:Object):void
+    public static refreshTransient(input:Object, callback:(result:any, error:ErrorRPC) => void):void
     {
-	    new RPC('account.refreshTransient', input, callback, master).invoke();
+	    new RPC('account.refreshTransient', input, callback).invoke();
     }
 }
 

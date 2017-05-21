@@ -66,10 +66,9 @@ class Tooltip
         this.watermark = ++globalPopWatermark;
         //console.log('START:[' + this.bodyHTML + '] watermark=' + this.watermark);
         
-        let self = this;
-        window.setTimeout(function()
+        window.setTimeout(() =>
         {
-            if (self.watermark == globalPopWatermark) self.raise(); 
+            if (this.watermark == globalPopWatermark) this.raise(); 
         }, this.delay);
     }
     

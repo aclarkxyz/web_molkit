@@ -677,7 +677,6 @@ class BayesianModel
 	// that were approved, i.e. the normal fingerprint list; done for performance reasons, to avoid recalculating
 	public determineCoverage(mol:Molecule, approvedHashes:Set<number>):{[id:number] : boolean[]}
 	{
-		const self = this;
 		const na = mol.numAtoms;
 		let cover:{[id:number] : boolean[]} = {};
 		const andBits = this.folding == 0 ? 0xFFFFFFFF : this.folding - 1;
@@ -685,10 +684,10 @@ class BayesianModel
 		let meta = MetaMolecule.createStrictRubric(mol);
 		let circ = new CircularFingerprints(meta, this.classType);
 
-		let collectFP = function(fp:CircularFP):void
+		let collectFP = (fp:CircularFP):void =>
 		{
 			let idx = fp.hashCode & andBits;
-			if (self.contribs[idx] == null) return; // hash bit not in the model, so abandon it
+			if (this.contribs[idx] == null) return; // hash bit not in the model, so abandon it
 			let mask = cover[idx];
 			if (mask == null)
 			{

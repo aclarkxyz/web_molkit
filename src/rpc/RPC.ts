@@ -72,7 +72,7 @@ class RPC
 
 	//molsync.RPC.errorTypeHandlers = [];
 
-	constructor(private request:string, private parameter:Object, private callback:(result:any, error:ErrorRPC) => void, private master:any) {}
+	constructor(private request:string, private parameter:Object, private callback:(result:any, error:ErrorRPC) => void) {}
 	
 	// send the request, associated with the given callback
 	public invoke():void
@@ -82,8 +82,6 @@ class RPC
 
 		let url = RPC.BASE_URL + "/REST/" + this.request;
 		
-		const self = this;
-				
 		$.ajax(
 		{
 			'url': url,
@@ -93,11 +91,8 @@ class RPC
 			'dataType': 'json',
 			//async: true,
 			headers: {'Access-Control-Allow-Origin': '*'},
-			success: function(data:any, textStatus:string, jqXHR:JQueryXHR)
+			success: (data:any, textStatus:string, jqXHR:JQueryXHR) =>
 			{
-				//console.log("!SUCCESS:"+data+","+textStatus);
-				//console.log(JSON.stringify(jqXHR));
-				
 				var result:any = null, error:ErrorRPC = null;
 				
 				if (!data)
@@ -126,13 +121,10 @@ class RPC
 					else result = data.result;
 				}
 				
-				self.callback.call(self.master, result, error);
+				this.callback(result, error);
 			},
 			error: function(jqXHR:JQueryXHR, textStatus:string, errorThrow:string)
 			{
-				//console.log("!FAILURE:"+textStatus+","+errorThrow);
-				//console.log(JSON.stringify(jqXHR));
-				
 				var error:ErrorRPC = 
 				{
 					'message': 'connection failure',
@@ -140,7 +132,8 @@ class RPC
 					type: 0,
 					'detail': `unable to obtain result from service: {$url}`
 				}
-				self.callback.call(self.master, {}, error);
+
+				this.callback({}, error);
 			}
 		});		
 	}

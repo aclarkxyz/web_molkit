@@ -60,8 +60,6 @@ class TemplateBank extends ButtonBank
 	
 	public init()
 	{
-		const self = this;
-
 		// immediately issue a webservice request to fetch the button list
 		let policy = RenderPolicy.defaultBlackOnWhite();
 		policy.data.pointScale = 10;
@@ -85,12 +83,12 @@ class TemplateBank extends ButtonBank
 					this.subgroups = result;
 					this.buttonView.refreshBank();
 				};
-				Func.getDefaultTemplateGroups(input, fcn, this);
+				Func.getDefaultTemplateGroups(input, fcn);
 			}
 			else if (RPC.RESOURCE_URL != null)
 			{
 				if (TemplateBank.RESOURCE_DATA == null)
-					this.loadResourceData(function() {self.prepareSubGroups();})
+					this.loadResourceData(() => this.prepareSubGroups())
 				else
 					this.prepareSubGroups();
 			}
@@ -110,12 +108,12 @@ class TemplateBank extends ButtonBank
 					this.templates = result;
 					this.buttonView.refreshBank();
 				};
-				Func.getDefaultTemplateStructs(input, fcn, this);
+				Func.getDefaultTemplateStructs(input, fcn);
 			}
 			else if (RPC.RESOURCE_URL != null)
 			{
 				if (TemplateBank.RESOURCE_DATA == null)
-					this.loadResourceData(function() {self.prepareTemplates();});
+					this.loadResourceData(() => this.prepareTemplates());
 				else
 					this.prepareTemplates();
 			}

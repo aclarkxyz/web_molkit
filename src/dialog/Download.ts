@@ -84,7 +84,6 @@ class Download extends Dialog
 	protected populate():void
 	{		
 		let body = this.body();
-		const self = this;
 		
 		this.mainArea = $('<p>Setting up...</p>').appendTo(body);
 
@@ -93,7 +92,7 @@ class Download extends Dialog
 
 		this.downloadArea = $('<span style="padding-right: 2em;"></span>').appendTo(paraBtn);
 		this.btnPrepare = $('<button class="button button-primary">Prepare</button>').appendTo(paraBtn);
-		this.btnPrepare.click(function() {self.clickPrepare();});
+		this.btnPrepare.click(() => this.clickPrepare());
 
 		// activate the dialog
 		if (this.mol != null)
@@ -181,7 +180,7 @@ class Download extends Dialog
 		{
 			input.dataXML = DataSheetStream.writeXML(this.ds);
 		}
-		Func.prepareDownloadable(input, this.downloadContent, this);
+		Func.prepareDownloadable(input, (result:any, error:ErrorRPC) => this.downloadContent(result, error));
 	}
 
 	// submits the current content to get it viewed
@@ -198,7 +197,7 @@ class Download extends Dialog
 			input.dataXML = DataSheetStream.writeXML(this.ds);
 			input.dataRow = 0; // !! need to make this configurable: this auto-gimps the feature
 		}
-		Func.renderStructure(input, this.updateStructure, this);
+		Func.renderStructure(input, (result:any, error:ErrorRPC) => this.updateStructure(result, error));
 	}
 
 	// reacts to a rendering of a structure
@@ -277,8 +276,6 @@ class Download extends Dialog
 	// control widgets
 	private buildDisplay():void
 	{
-		const self = this;
-		
 		this.mainArea.empty();
 
 		//let blankURL = RPC.BASE_URL + '/img/blank.gif';
@@ -301,7 +298,7 @@ class Download extends Dialog
 			let k = this.formatKey[n];
 			$(optFormatList.getAuxiliaryCell(n)).append('\u00A0' + FormatList.FORMAT_DESCR[k]);
 		}
-		optFormatList.onSelect(function(idx:number):void {this.changeFormat(idx);}, this);
+		optFormatList.callbackSelect = (idx:number, source?:OptionList) => this.changeFormat(idx);
 		
 		// add in the graphics format options
 		this.graphicArea.append($('<h2 class="tight">Graphic Options</h2>'));
@@ -317,28 +314,24 @@ class Download extends Dialog
 		let optSizeType = new OptionList(['Scale', 'Box'], false);
 		optSizeType.setSelectedIndex(0);
 		optSizeType.render($('<td style="vertical-align: middle;"></td>').appendTo(trSize));
-		optSizeType.onSelect(function(idx:number):void {this.changeSizeType(idx);}, this);
+		optSizeType.callbackSelect = (idx:number, source?:OptionList) => this.changeSizeType(idx);
 		
 		// size details (one for each type)
 		let divSizeScale = $('<div></div>').appendTo(paraSizeSpec);
 		divSizeScale.append('<b>Angstroms-to-Points: </b>');
 		let lineScale = $('<input type="text" size="6"></input>"').appendTo(divSizeScale);
 		lineScale.val('30');
-		//lineScale.change(function() {self.changeRender();});
 
 		let divSizeBox = $('<div style="display: none;"></div>').appendTo(paraSizeSpec);
 		divSizeBox.append('<b>Width: </b>');
 		let lineBoxWidth = $('<input type="text" size="6"></input>"').appendTo(divSizeBox);
 		lineBoxWidth.val('400');
-		//lineBoxWidth.change(function() {self.changeRender();});
 		divSizeBox.append('<b> Height: </b>');
 		let lineBoxHeight = $('<input type="text" size="6"></input>"').appendTo(divSizeBox);
 		lineBoxHeight.val('300');
-		//lineBoxHeight.change(function() {self.changeRender();});
 		divSizeBox.append(' <b>Max Scale: </b>');
 		let lineBoxMaxScale = $('<input type="text" size="6"></input>"').appendTo(divSizeBox);
 		lineBoxMaxScale.val('30');
-		//lineBoxMaxScale.change(function() {self.changeRender();});
 		
 		// rendering policy
 		paraRender.append('<b>Rendering: </b>');
@@ -349,7 +342,7 @@ class Download extends Dialog
 		selectRender.append('<option>Colour-on-Black</option>');
 		selectRender.append('<option>Printed Publication</option>');
 		selectRender.prop('selectedIndex', 1);
-		selectRender.change(function() {self.changeRender();});
+		selectRender.change(() => this.changeRender());
 
 		// record UI objects
 		this.optFormatList = optFormatList;
@@ -364,9 +357,9 @@ class Download extends Dialog
 	}
 
 	// pick a different format
-	private changeFormat():void
+	private changeFormat(idx:number):void
 	{
-		let ftype = this.formatKey[this.optFormatList.getSelectedIndex()];
+		let ftype = this.formatKey[idx];
 		
 		// the document-style formats use a smaller default point size
 		let psz = 30;
@@ -411,7 +404,7 @@ class Download extends Dialog
 			input.dataXML = DataSheetStream.writeXML(this.ds);
 			input.dataRow = 0; // !! need to make this configurable: this auto-gimps the feature
 		}
-		Func.renderStructure(input, this.updateStructure, this);
+		Func.renderStructure(input, () => this.updateStructure);
 	}
 
 	// response from the server regarding the existence of a URL to download the content of interest

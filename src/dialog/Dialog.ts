@@ -32,17 +32,15 @@ class Dialog
     protected bodyDiv:JQuery; // the main area, for content
     protected btnClose:JQuery; // the close button, in case anyone wants to know
     
-	protected callbackClose:(source?:EditCompound) => void = null;
-	protected masterClose:any = null;
+	public callbackClose:(source?:Dialog) => void = null;
 
     constructor()
     {
     }
     
-	public onClose(callback:(source?:EditCompound) => void, master:any)
+	public onClose(callback:(source?:EditCompound) => void)
 	{
 		this.callbackClose = callback;
-		this.masterClose = master;
 	}
 
     // creates all the DOM objects and shows the dialog; details such as title should be setup before calling this
@@ -92,8 +90,7 @@ class Dialog
         
         let tdButtons = $('<td align="right" valign="center"></td>').appendTo(tr);
         this.btnClose = $('<button class="button button-default">Close</button>').appendTo(tdButtons);
-        const self = this;
-        this.btnClose.click(function() {self.close();});
+        this.btnClose.click(() => this.close());
         this.titleButtons = tdButtons; 
 
         this.populate();
@@ -110,7 +107,7 @@ class Dialog
         this.panelBoundary.remove();
         this.obscureBackground.remove();
 
-        if (this.callbackClose) this.callbackClose.call(this.masterClose, this);
+        if (this.callbackClose) this.callbackClose(this);
     }
     
     // sizes may have changed, so adjust if necessary

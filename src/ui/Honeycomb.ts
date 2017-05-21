@@ -137,8 +137,6 @@ class Honeycomb extends Widget
 	{
 		super.render(parent);
 		
-		const self = this;
-
 		this.content.css('width', this.size.w + 'px');
 		this.content.css('height', this.size.h + 'px');
 
@@ -149,16 +147,16 @@ class Honeycomb extends Widget
 		this.container.css('overflow', 'hidden');
 
  		// setup all the interactive events
-		this.container.click(function(event:JQueryEventObject) {self.mouseClick(event);});
-		this.container.dblclick(function(event:JQueryEventObject) {self.mouseDoubleClick(event);});
-		this.container.mousedown(function(event:JQueryEventObject) {event.preventDefault(); self.mouseDown(event);});
-		this.container.mouseup(function(event:JQueryEventObject) {self.mouseUp(event);});
-		this.container.mouseover(function(event:JQueryEventObject) {self.mouseOver(event);});
-		this.container.mouseout(function(event:JQueryEventObject) {self.mouseOut(event);});
-		this.container.mousemove(function(event:JQueryEventObject) {self.mouseMove(event);});
-		this.container.keypress(function(event:JQueryEventObject) {self.keyPressed(event);});
-		this.container.keydown(function(event:JQueryEventObject) {self.keyDown(event);});
-		this.container.keyup(function(event:JQueryEventObject) {self.keyUp(event);});				
+		this.container.click((event:JQueryEventObject) => this.mouseClick(event));
+		this.container.dblclick((event:JQueryEventObject) => this.mouseDoubleClick(event));
+		this.container.mousedown((event:JQueryEventObject) => {event.preventDefault(); this.mouseDown(event);});
+		this.container.mouseup((event:JQueryEventObject) => this.mouseUp(event));
+		this.container.mouseover((event:JQueryEventObject) => this.mouseOver(event));
+		this.container.mouseout((event:JQueryEventObject) => this.mouseOut(event));
+		this.container.mousemove((event:JQueryEventObject) => this.mouseMove(event));
+		this.container.keypress((event:JQueryEventObject) => this.keyPressed(event));
+		this.container.keydown((event:JQueryEventObject) => this.keyDown(event));
+		this.container.keyup((event:JQueryEventObject) => this.keyUp(event));
 	}
 
 	// performs all the calculations necessary to display the honeycomb, and begins rendering the pieces
@@ -547,8 +545,7 @@ class Honeycomb extends Widget
 		gfx.setSize(Math.ceil(gfx.boundHighX()), Math.ceil(gfx.boundHighY()));	
 		$(gfx.createSVG()).appendTo(hex.span);
 
-		const self = this;
-		setTimeout(function() {self.renderNext(watermark, roster);}, 1);
+		setTimeout(() => this.renderNext(watermark, roster), 1);
 	}
 
 	// fits a molecular layout into a circle

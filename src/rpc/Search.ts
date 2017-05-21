@@ -18,20 +18,20 @@
 
 class Search
 {
-	public static startMolSearch(input:Object, callback:(result:any, error:ErrorRPC) => void, master?:Object):void
+	public static startMolSearch(input:Object, callback:(result:any, error:ErrorRPC) => void):void
 	{
-		new RPC('search.startMolSearch', input, callback, master).invoke();
+		new RPC('search.startMolSearch', input, callback).invoke();
 	}
-	public static pollMolSearch(input:Object, callback:(result:any, error:ErrorRPC) => void, master?:Object)
+	public static pollMolSearch(input:Object, callback:(result:any, error:ErrorRPC) => void)
 	{
-		new RPC('search.pollMolSearch', input, callback, master).invoke();
+		new RPC('search.pollMolSearch', input, callback).invoke();
 	}
-	public static startRxnSearch(input:Object, callback:(result:any, error:ErrorRPC) => void, master?:Object):void
+	public static startRxnSearch(input:Object, callback:(result:any, error:ErrorRPC) => void):void
 	{
-		new RPC('search.startRxnSearch', input, callback, master).invoke();
+		new RPC('search.startRxnSearch', input, callback).invoke();
 	}
-	public static pollRxnSearch(input:Object, callback:(result:any, error:ErrorRPC) => void, master?:Object)
+	public static pollRxnSearch(input:Object, callback:(result:any, error:ErrorRPC) => void)
 	{
-		new RPC('search.pollRxnSearch', input, callback, master).invoke();
+		new RPC('search.pollRxnSearch', input, callback).invoke();
 	}
 }

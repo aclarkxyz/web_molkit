@@ -26,8 +26,7 @@ class MapReaction extends Dialog
 	btnClear:JQuery;
 	btnSave:JQuery;
 
-	callbackSave:(source?:MapReaction) => void = null;
-	masterSave:any = null;
+	public callbackSave:(source?:MapReaction) => void = null;
 
 	private mol1:Molecule;
 	private mol2:Molecule;
@@ -80,12 +79,6 @@ class MapReaction extends Dialog
 		this.maxPortionWidth = 95;
 	}
 
-	public onSave(callback:(source?:MapReaction) => void, master:any)
-	{
-		this.callbackSave = callback;
-		this.masterSave = master;
-	}
-
 	// fetch the molecules, which have the atom mappings defined
 	public getMolecule1():Molecule {return this.mol1;}
 	public getMolecule2():Molecule {return this.mol2;}
@@ -94,26 +87,25 @@ class MapReaction extends Dialog
 	protected populate():void
 	{		
 		let buttons = this.buttons(), body = this.body();
-		const self = this;
 		
         this.btnClear = $('<button class="button button-default">Clear</button>').appendTo(buttons);
-		this.btnClear.click(function() {self.clearAllMappings();});
+		this.btnClear.click(() => this.clearAllMappings());
 
 		buttons.append(' ');
 		buttons.append(this.btnClose); // easy way to reorder
 		
 		buttons.append(' ');
         this.btnSave = $('<button class="button button-primary">Save</button>').appendTo(buttons);
-		this.btnSave.click(function() {if (self.callbackSave) self.callbackSave.call(self.masterSave, self);});
+		this.btnSave.click(() => {if (this.callbackSave) this.callbackSave(this);});
 		
-		Func.arrangeMolecule({'policy': this.policy.data, 'molNative': this.mol1.toString()}, function(result:any, error:ErrorRPC)
+		Func.arrangeMolecule({'policy': this.policy.data, 'molNative': this.mol1.toString()}, (result:any, error:ErrorRPC) =>
 		{
 			this.arrmol1 = result.arrmol;
 			this.rawvec1 = result.metavec;
 			this.metavec1 = new MetaVector(result.metavec);
 			this.transform1 = result.transform;
 			
-			Func.arrangeMolecule({'policy': this.policy.data, 'molNative': this.mol2.toString()}, function(result:any, error:ErrorRPC)
+			Func.arrangeMolecule({'policy': this.policy.data, 'molNative': this.mol2.toString()}, (result:any, error:ErrorRPC) =>
 			{
 				this.arrmol2 = result.arrmol;
 				this.rawvec2 = result.metavec;
@@ -121,8 +113,8 @@ class MapReaction extends Dialog
 				this.transform2 = result.transform;
 
 				this.setupPanel();
-			}, this);
-		}, this);
+			});
+		});
 	}
 	
 	// --------------------------------------- private methods ---------------------------------------
@@ -161,12 +153,11 @@ class MapReaction extends Dialog
 		ctx.scale(density, density);
 		this.redrawCanvas();
 		
-		const self = this;
-		$(this.canvas).mousedown(function(event:JQueryEventObject) {event.preventDefault(); self.mouseDown(event);});
-		$(this.canvas).mouseup(function(event:JQueryEventObject) {self.mouseUp(event);});
-		$(this.canvas).mouseenter(function(event:JQueryEventObject) {self.mouseEnter(event);});
-		$(this.canvas).mouseleave(function(event:JQueryEventObject) {self.mouseLeave(event);});
-		$(this.canvas).mousemove(function(event:JQueryEventObject) {self.mouseMove(event);});
+		$(this.canvas).mousedown((event:JQueryEventObject) => {event.preventDefault(); this.mouseDown(event);});
+		$(this.canvas).mouseup((event:JQueryEventObject) => {this.mouseUp(event);});
+		$(this.canvas).mouseenter((event:JQueryEventObject) => {this.mouseEnter(event);});
+		$(this.canvas).mouseleave((event:JQueryEventObject) => {this.mouseLeave(event);});
+		$(this.canvas).mousemove((event:JQueryEventObject) => {this.mouseMove(event);});
 
 		// draw the molecules, which don't change
 		this.drawnMols = <HTMLCanvasElement>newElement(div, 'canvas', {'width': this.canvasW * density, 'height': this.canvasH * density, 'style': styleOverlay});
@@ -405,7 +396,7 @@ class MapReaction extends Dialog
 		// note: if the user does something while the webservice is operating, that's OK: it will only apply mappings that are in addition to
 		// the current state of the molecules
 		
-		Func.atomMapping({'leftNative':this.mol1.toString(), 'rightNative':this.mol2.toString()}, function(result:any, error:ErrorRPC)
+		Func.atomMapping({'leftNative':this.mol1.toString(), 'rightNative':this.mol2.toString()}, (result:any, error:ErrorRPC) =>
 		{
 			if (!result) return; // (silent failure)
 			
@@ -425,7 +416,7 @@ class MapReaction extends Dialog
 			}
 			
 			if (modified) this.redrawCanvas();
-		}, this);
+		});
 	}
 
 	// resets atom mapping numbers

@@ -20,10 +20,8 @@
 
 class PickRecent extends Dialog
 {
-	callbackPick1:(mol:Molecule) => void = null;
-	masterPick1:any = null;
-	callbackPick2:(mol:Molecule) => void = null;
-	masterPick2:any = null;
+	public callbackPick1:(mol:Molecule) => void = null;
+	public callbackPick2:(mol:Molecule) => void = null;
 	
 	tableRows:JQuery[] = [];
 	views:ViewStructure[] = [];
@@ -37,22 +35,10 @@ class PickRecent extends Dialog
 		this.maxPortionWidth = 95;
 	}
 
-	public onPick1(callback:(mol:Molecule) => void, master:any)
-	{
-		this.callbackPick1 = callback;
-		this.masterPick1 = master;
-	}
-	public onPick2(callback:(mol:Molecule) => void, master:any)
-	{
-		this.callbackPick2 = callback;
-		this.masterPick2 = master;
-	}
-
 	// builds the dialog content
 	protected populate():void
 	{
 		let table = $('<table></table>').appendTo(this.body());
-		const self = this;
 		
 		for (let n = 0; n < this.cookies.numMolecules(); n++)
 		{
@@ -74,25 +60,25 @@ class PickRecent extends Dialog
 			vs.backgroundCol1 = 0xF8F8F8;
 			vs.backgroundCol2 = 0xE0E0E0;
 			vs.padding = 4;
-			vs.setup(function() {vs.render(tdMol); this.bump();}, this);
+			vs.setup(() => {vs.render(tdMol); this.bump();});
 			
 			let tdPick = $(tdHTML).appendTo(tr);
 			if (this.sides == 1)
 			{
 				let btnPick = $('<button class="button button-primary">Pick</button>').appendTo(tdPick);
-				btnPick.click(function() {self.pickMolecule(idx, 1);});
+				btnPick.click(() => this.pickMolecule(idx, 1));
 			}
 			else // sides==2: reaction style
 			{
 				let btnPick1 = $('<button class="button button-primary">Reactant</button>').appendTo(tdPick);
 				tdPick.append('&nbsp;');
 				let btnPick2 = $('<button class="button button-primary">Product</button>').appendTo(tdPick);
-				btnPick1.click(function() {self.pickMolecule(idx, 1);});
-				btnPick2.click(function() {self.pickMolecule(idx, 2);});
+				btnPick1.click(() => this.pickMolecule(idx, 1));
+				btnPick2.click(() => this.pickMolecule(idx, 2));
 			}
 			tdPick.append('&nbsp;');
 			let btnDelete = $('<button class="button button-default">Delete</button>').appendTo(tdPick);
-			btnDelete.click(function() {self.deleteMolecule(idx);});
+			btnDelete.click(() => this.deleteMolecule(idx));
 		}
 	}
 	
@@ -101,8 +87,8 @@ class PickRecent extends Dialog
 		let mol:Molecule = this.cookies.getMolecule(idx);
 		this.cookies.promoteToTop(idx);
 		
-		if (which == 1 && this.callbackPick1) this.callbackPick1.call(this.masterPick1, mol);
-		if (which == 2 && this.callbackPick2) this.callbackPick2.call(this.masterPick2, mol);
+		if (which == 1 && this.callbackPick1) this.callbackPick1(mol);
+		if (which == 2 && this.callbackPick2) this.callbackPick2(mol);
 		
 		this.close();
 	}

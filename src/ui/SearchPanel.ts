@@ -212,30 +212,28 @@ class SearchPanel extends Widget
 
 		this.updateLayers();
 		
-		const self = this;
-		
-		$(this.drawnMol1).mouseenter(function() {self.mouseEnter(1);});
-		$(this.drawnMol1).mouseleave(function() {self.mouseLeave(1);});
-		$(this.drawnMol1).mousedown(function() {self.mouseDown(1);});
-		$(this.drawnMol1).mouseup(function() {self.mouseUp(1);});
-		$(this.drawnMol1).attr('ondragstart', function() {return false;});
-		$(this.drawnMol1).click(function() {self.editMolecule(1);});
+		$(this.drawnMol1).mouseenter(() => this.mouseEnter(1));
+		$(this.drawnMol1).mouseleave(() => this.mouseLeave(1));
+		$(this.drawnMol1).mousedown(() => this.mouseDown(1));
+		$(this.drawnMol1).mouseup(() => this.mouseUp(1));
+		$(this.drawnMol1).attr('ondragstart', () => false);
+		$(this.drawnMol1).click(() => this.editMolecule(1));
 		
 		if (isRxn)
 		{
-			$(this.drawnArrow).mouseenter(function() {self.mouseEnter(3);});
-			$(this.drawnArrow).mouseleave(function() {self.mouseLeave(3);});
-			$(this.drawnArrow).mousedown(function() {self.mouseDown(3);});
-			$(this.drawnArrow).mouseup(function() {self.mouseUp(3);});
-			$(this.drawnArrow).attr('ondragstart', function() {return false;});
-			$(this.drawnArrow).click(function() {self.editMapping();});
+			$(this.drawnArrow).mouseenter(() => this.mouseEnter(3));
+			$(this.drawnArrow).mouseleave(() => this.mouseLeave(3));
+			$(this.drawnArrow).mousedown(() => this.mouseDown(3));
+			$(this.drawnArrow).mouseup(() => this.mouseUp(3));
+			$(this.drawnArrow).attr('ondragstart', () => false);
+			$(this.drawnArrow).click(() => this.editMapping());
 
-			$(this.drawnMol2).mouseenter(function() {self.mouseEnter(2);});
-			$(this.drawnMol2).mouseleave(function() {self.mouseLeave(2);});
-			$(this.drawnMol2).mousedown(function() {self.mouseDown(2);});
-			$(this.drawnMol2).mouseup(function() {self.mouseUp(2);});
-			$(this.drawnMol2).attr('ondragstart', function() {return false;});
-			$(this.drawnMol2).click(function() {self.editMolecule(2);});
+			$(this.drawnMol2).mouseenter(() => this.mouseEnter(2));
+			$(this.drawnMol2).mouseleave(() => this.mouseLeave(2));
+			$(this.drawnMol2).mousedown(() => this.mouseDown(2));
+			$(this.drawnMol2).mouseup(() => this.mouseUp(2));
+			$(this.drawnMol2).attr('ondragstart', () => false);
+			$(this.drawnMol2).click(() => this.editMolecule(2));
 		}
 		
 		if (!isRxn)
@@ -250,9 +248,9 @@ class SearchPanel extends Widget
 		}
 
 		// capture paste (when not in sketchmode)
-		document.addEventListener('paste', function(e:any)
+		document.addEventListener('paste', (e:any) =>
 		{
-			if (self.isSketching) return true;
+			if (this.isSketching) return true;
 
 			let wnd = <any>window, txt = '';
 			if (wnd.clipboardData && wnd.clipboardData.getData) txt = wnd.clipboardData.getData('Text');
@@ -263,39 +261,39 @@ class SearchPanel extends Widget
 			if (!mol) return true;
 
 			let which = this.type == SearchPanel.TYPE_REACTION && !MolUtil.isBlank(this.mol1) && MolUtil.isBlank(this.mol2) ? 2 : 1;
-			if (which == 1) self.setMolecule1(mol); else self.setMolecule2(mol);
+			if (which == 1) this.setMolecule1(mol); else this.setMolecule2(mol);
 
 			e.preventDefault();
 			return false;
 		});		
 		
 		// setup the drop targets
-		this.drawnMol1.addEventListener('dragover', function(event)
+		this.drawnMol1.addEventListener('dragover', (event) =>
 		{
 			event.stopPropagation();
 			event.preventDefault();
 			event.dataTransfer.dropEffect = 'copy';
 		});
-		this.drawnMol1.addEventListener('drop', function(event)
+		this.drawnMol1.addEventListener('drop', (event) =>
 		{
 			event.stopPropagation();
 			event.preventDefault();
-			self.dropInto(1, event.dataTransfer);
+			this.dropInto(1, event.dataTransfer);
 		});
 		
 		if (isRxn)
 		{
-			this.drawnMol2.addEventListener('dragover', function(event)
+			this.drawnMol2.addEventListener('dragover', (event) =>
 			{
 				event.stopPropagation();
 				event.preventDefault();
 				event.dataTransfer.dropEffect = 'copy';
 			});
-			this.drawnMol2.addEventListener('drop', function(event)
+			this.drawnMol2.addEventListener('drop', (event) =>
 			{
 				event.stopPropagation();
 				event.preventDefault();
-				self.dropInto(2, event.dataTransfer);
+				this.dropInto(2, event.dataTransfer);
 			});
 		}
 	};
@@ -454,8 +452,8 @@ class SearchPanel extends Widget
 	{
 		let dlg = new EditCompound(null, which == 1 ? this.mol1 : this.mol2);
 		this.isSketching = true;
-		dlg.onSave(function() {if (which == 1) this.saveMolecule1(dlg, which); else this.saveMolecule2(dlg, which);}, this);
-		dlg.onClose(function() {this.isSketching = false;}, this);
+		dlg.onSave(() => {if (which == 1) this.saveMolecule1(dlg); else this.saveMolecule2(dlg);});
+		dlg.onClose(() => this.isSketching = false);
 		dlg.open();
 	}
 	private editMapping()
@@ -466,11 +464,11 @@ class SearchPanel extends Widget
 			return;
 		}
 		let dlg = new MapReaction(this.mol1, this.mol2);
-		dlg.onSave(this.saveMapping, this);
+		dlg.callbackSave = (source?:MapReaction) => this.saveMapping(source);
 		dlg.open();
 	}
 	
-	private saveMolecule1(dlg:EditCompound, which:number):void
+	private saveMolecule1(dlg:EditCompound):void
 	{
 		this.mol1 = dlg.getMolecule();
 		dlg.close();
@@ -499,8 +497,6 @@ class SearchPanel extends Widget
 	
 	private dropInto(which:number, transfer:DataTransfer):void
 	{
-		const self = this;
-		
 		let items = transfer.items, files = transfer.files;
 
 		const SUFFIXES = ['.el', '.mol'];
@@ -512,12 +508,12 @@ class SearchPanel extends Widget
 		{
 			if (items[n].kind == 'string' && MIMES.indexOf(items[n].type) >= 0)
 			{
-				items[n].getAsString(function(str:string)
+				items[n].getAsString((str:string) =>
 				{
 					let mol = Molecule.fromString(str);
 					if (mol != null) 
 					{
-						if (which == 1) self.setMolecule1(mol); else self.setMolecule2(mol);
+						if (which == 1) this.setMolecule1(mol); else this.setMolecule2(mol);
 					}
 					else console.log('Dragged data is not a SketchEl molecule: ' + str);
 				});
@@ -531,13 +527,13 @@ class SearchPanel extends Widget
 			for (let sfx of SUFFIXES) if (files[n].name.endsWith(sfx))
 			{
 				let reader = new FileReader();
-				reader.onload = function(event)
+				reader.onload = (event) =>
 				{
 					let str = reader.result;
 					let mol = MoleculeStream.readUnknown(str);
 					if (mol != null) 
 					{
-						if (which == 1) self.setMolecule1(mol); else self.setMolecule2(mol);
+						if (which == 1) this.setMolecule1(mol); else this.setMolecule2(mol);
 					}	
 					else console.log('Dragged file is not a recognised molecule: ' + str);
 				};

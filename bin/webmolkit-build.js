@@ -53,6 +53,15 @@ class Vec {
                 return false;
         return true;
     }
+    static equivalent(arr1, arr2) {
+        const len1 = arr1 == null ? 0 : arr1.length, len2 = arr2 == null ? 0 : arr2.length;
+        if (len1 != len2)
+            return false;
+        for (let n = 0; n < len1; n++)
+            if (arr1[n] != arr2[n])
+                return false;
+        return true;
+    }
     static booleanArray(val, sz) {
         let arr = new Array(sz);
         for (let n = sz - 1; n >= 0; n--)
@@ -92,6 +101,24 @@ class Vec {
         for (let n = 1; n < arr.length; n++)
             v = Math.max(v, arr[n]);
         return v;
+    }
+    static idxMin(arr) {
+        if (arr == null || arr.length == 0)
+            return -1;
+        let idx = 0;
+        for (let n = 1; n < arr.length; n++)
+            if (arr[n] < arr[idx])
+                idx = n;
+        return idx;
+    }
+    static idxMax(arr) {
+        if (arr == null || arr.length == 0)
+            return -1;
+        let idx = 0;
+        for (let n = 1; n < arr.length; n++)
+            if (arr[n] > arr[idx])
+                idx = n;
+        return idx;
     }
     static reverse(arr) {
         let ret = [];
@@ -611,7 +638,7 @@ function drawLine(ctx, x1, y1, x2, y2) {
     ctx.stroke();
 }
 const ASCENT_FUDGE = 1.4;
-function fontSansSerif(ascent) { return `${ascent * ASCENT_FUDGE}px sans`; }
+function fontSansSerif(ascent) { return `${ascent * ASCENT_FUDGE}px sans-serif`; }
 function pixelDensity() {
     if ('devicePixelRatio' in window && window.devicePixelRatio > 1)
         return window.devicePixelRatio;
@@ -1284,12 +1311,12 @@ class QuickHull {
     }
 }
 class Pos {
+    static zero() { return new Pos(); }
+    static fromArray(src) { return new Pos(src[0], src[1]); }
     constructor(x, y) {
         this.x = x == null ? 0 : x;
         this.y = y == null ? 0 : y;
     }
-    static zero() { return new Pos(); }
-    static fromArray(src) { return new Pos(src[0], src[1]); }
     clone() { return new Pos(this.x, this.y); }
     scaleBy(mag) {
         if (mag == 1)
@@ -1304,12 +1331,12 @@ class Pos {
     toString() { return '[' + this.x + ',' + this.y + ']'; }
 }
 class Size {
+    static zero() { return new Size(); }
+    static fromArray(src) { return new Size(src[0], src[1]); }
     constructor(w, h) {
         this.w = w == null ? 0 : w;
         this.h = h == null ? 0 : h;
     }
-    static zero() { return new Size(); }
-    static fromArray(src) { return new Size(src[0], src[1]); }
     clone() { return new Size(this.w, this.h); }
     scaleBy(mag) {
         if (mag == 1)
@@ -1329,16 +1356,16 @@ class Size {
     toString() { return '[' + this.w + ',' + this.h + ']'; }
 }
 class Box {
+    static zero() { return new Box(); }
+    static fromSize(sz) { return new Box(0, 0, sz.w, sz.h); }
+    static fromOval(oval) { return new Box(oval.cx - oval.rw, oval.cy - oval.rh, 2 * oval.rw, 2 * oval.rh); }
+    static fromArray(src) { return new Box(src[0], src[1], src[2], src[3]); }
     constructor(x, y, w, h) {
         this.x = x == null ? 0 : x;
         this.y = y == null ? 0 : y;
         this.w = w == null ? 0 : w;
         this.h = h == null ? 0 : h;
     }
-    static zero() { return new Box(); }
-    static fromSize(sz) { return new Box(0, 0, sz.w, sz.h); }
-    static fromOval(oval) { return new Box(oval.cx - oval.rw, oval.cy - oval.rh, 2 * oval.rw, 2 * oval.rh); }
-    static fromArray(src) { return new Box(src[0], src[1], src[2], src[3]); }
     clone() { return new Box(this.x, this.y, this.w, this.h); }
     setPos(pos) {
         this.x = pos.x;
@@ -1372,15 +1399,15 @@ class Box {
     toString() { return '[' + this.x + ',' + this.y + ';' + this.w + ',' + this.h + ']'; }
 }
 class Oval {
+    static zero() { return new Oval(); }
+    static fromBox(box) { return new Oval(box.x + 0.5 * box.w, box.y + 0.5 * box.h, 0.5 * box.w, 0.5 * box.h); }
+    static fromArray(src) { return new Oval(src[0], src[1], src[2], src[3]); }
     constructor(cx, cy, rw, rh) {
         this.cx = cx == null ? 0 : cx;
         this.cy = cy == null ? 0 : cy;
         this.rw = rw == null ? 0 : rw;
         this.rh = rh == null ? 0 : rh;
     }
-    static zero() { return new Oval(); }
-    static fromBox(box) { return new Oval(box.x + 0.5 * box.w, box.y + 0.5 * box.h, 0.5 * box.w, 0.5 * box.h); }
-    static fromArray(src) { return new Oval(src[0], src[1], src[2], src[3]); }
     clone() { return new Oval(this.cx, this.cy, this.rw, this.rh); }
     setCentre(pos) {
         this.cx = pos.x;
@@ -1409,13 +1436,13 @@ class Oval {
     toString() { return '[' + this.cx + ',' + this.cy + ';' + this.rw + ',' + this.rh + ']'; }
 }
 class Line {
+    static zero() { return new Line(); }
     constructor(x1, y1, x2, y2) {
         this.x1 = x1 == null ? 0 : x1;
         this.y1 = y1 == null ? 0 : y1;
         this.x2 = x2 == null ? 0 : x2;
         this.y2 = y2 == null ? 0 : y2;
     }
-    static zero() { return new Line(); }
     clone() { return new Line(this.x1, this.y1, this.x2, this.y2); }
     setPos1(pos) {
         this.x1 = pos.x;
@@ -1822,8 +1849,8 @@ class MetaVector {
         if (thickness == null)
             thickness = 1;
         const bump = 0.5 * thickness;
-        this.updateBounds(cx - 0.5 * rw - bump, cy - 0.5 * rh - bump);
-        this.updateBounds(cx + 0.5 * rw + bump, cy + 0.5 * rh + bump);
+        this.updateBounds(cx - rw - bump, cy - rh - bump);
+        this.updateBounds(cx + rw + bump, cy + rh + bump);
         let typeidx = this.findOrCreateType([this.PRIM_OVAL, edgeCol, fillCol, thickness]);
         this.prims.push([this.PRIM_OVAL, typeidx, cx, cy, rw, rh]);
     }
@@ -5483,6 +5510,80 @@ class CoordUtil {
 CoordUtil.OVERLAP_THRESHOLD = 0.2;
 CoordUtil.OVERLAP_THRESHOLD_SQ = CoordUtil.OVERLAP_THRESHOLD * CoordUtil.OVERLAP_THRESHOLD;
 CoordUtil.DEFAULT_EQUIV_TOLERANCE = 0.2;
+var OpenMolType;
+(function (OpenMolType) {
+    OpenMolType[OpenMolType["None"] = 0] = "None";
+    OpenMolType[OpenMolType["AtomCount1000"] = 1] = "AtomCount1000";
+    OpenMolType[OpenMolType["BondCount1000"] = 2] = "BondCount1000";
+    OpenMolType[OpenMolType["InlineAbbreviations"] = 3] = "InlineAbbreviations";
+    OpenMolType[OpenMolType["ZeroOrderBonds"] = 4] = "ZeroOrderBonds";
+    OpenMolType[OpenMolType["HydrogenCounting"] = 5] = "HydrogenCounting";
+    OpenMolType[OpenMolType["MoleculeName"] = 6] = "MoleculeName";
+    OpenMolType[OpenMolType["QueryResonance"] = 7] = "QueryResonance";
+    OpenMolType[OpenMolType["QueryHCount"] = 8] = "QueryHCount";
+})(OpenMolType || (OpenMolType = {}));
+const OPENMOL_LEVEL_1_1 = [
+    OpenMolType.AtomCount1000,
+    OpenMolType.BondCount1000,
+];
+const OPENMOL_LEVEL_1_2 = [
+    OpenMolType.InlineAbbreviations,
+];
+const OPENMOL_LEVEL_1_3 = [
+    OpenMolType.ZeroOrderBonds,
+    OpenMolType.HydrogenCounting,
+];
+const OPENMOL_INVALID = [
+    OpenMolType.QueryResonance,
+    OpenMolType.QueryHCount,
+];
+class OpenMolSpec {
+    constructor() {
+        this.level = 1.0;
+        this.invalid = false;
+        this.notes = [];
+    }
+    add(type, atoms, bonds, source) {
+        this.addNote({ 'type': type, 'atoms': atoms, 'bonds': bonds, 'source': source });
+    }
+    addNote(note) {
+        this.notes.push(note);
+        note.level = 1.0;
+        if (OPENMOL_LEVEL_1_1.indexOf(note.type) >= 0)
+            note.level = 1.1;
+        else if (OPENMOL_LEVEL_1_2.indexOf(note.type) >= 0)
+            note.level = 1.2;
+        else if (OPENMOL_LEVEL_1_3.indexOf(note.type) >= 0)
+            note.level = 1.3;
+        this.level = Math.max(this.level, note.level);
+        this.invalid = this.invalid || OPENMOL_INVALID.indexOf(note.type) >= 0;
+    }
+    addJoin(type, atoms, bonds, source) {
+        for (let note of this.notes)
+            if (note.type == type) {
+                if (atoms && note.atoms)
+                    note.atoms = note.atoms.concat(atoms);
+                else if (atoms)
+                    note.atoms = atoms;
+                if (bonds && note.bonds)
+                    note.bonds = note.bonds.concat(bonds);
+                else if (bonds)
+                    note.bonds = bonds;
+                if (source && note.source)
+                    note.source = note.source.concat(source);
+                else if (source)
+                    note.source = source;
+                return;
+            }
+        this.add(type, atoms, bonds, source);
+    }
+    derive(mol) {
+        if (mol.numAtoms >= 1000)
+            this.add(OpenMolType.AtomCount1000);
+        if (mol.numBonds >= 1000)
+            this.add(OpenMolType.BondCount1000);
+    }
+}
 class MDLMOLReader {
     constructor(strData) {
         this.parseHeader = true;
@@ -5493,7 +5594,8 @@ class MDLMOLReader {
         this.keepAromatic = false;
         this.keepParity = false;
         this.mol = null;
-        this.molName = "";
+        this.molName = '';
+        this.openmol = new OpenMolSpec();
         this.atomHyd = null;
         this.resBonds = null;
         this.pos = 0;
@@ -5502,6 +5604,10 @@ class MDLMOLReader {
     parse() {
         if (this.parseHeader) {
             this.molName = this.lines[0];
+            if (this.molName) {
+                let src = { 'row': 0, 'col': 0, 'len': this.molName.length };
+                this.openmol.add(OpenMolType.MoleculeName, null, null, [src]);
+            }
             this.pos = 3;
         }
         this.parseCTAB();
@@ -5520,6 +5626,7 @@ class MDLMOLReader {
             let version = line.length >= 39 ? line.substring(34, 39) : '';
             if (this.allowV3000 && version == 'V3000') {
                 this.parseV3000();
+                this.openmol.derive(this.mol);
                 return;
             }
             if (version != 'V2000')
@@ -5556,6 +5663,7 @@ class MDLMOLReader {
             }
             this.mol.setAtomMapNum(a, mapnum);
             if (hyd > 0) {
+                this.openmol.addJoin(OpenMolType.QueryHCount, [a]);
                 if (this.atomHyd == null)
                     this.atomHyd = Vec.numberArray(Molecule.HEXPLICIT_UNKNOWN, numAtoms);
                 this.atomHyd[n] = hyd - 1;
@@ -5579,6 +5687,8 @@ class MDLMOLReader {
                 style = Molecule.BONDTYPE_DECLINED;
             let b = this.mol.addBond(bfr, bto, order, style);
             if (type == 4) {
+                let src = { 'row': this.pos - 1, 'col': 6, 'len': 3 };
+                this.openmol.addJoin(OpenMolType.QueryResonance, null, [b], [src]);
             }
         }
         const MBLK_CHG = 1, MBLK_RAD = 2, MBLK_ISO = 3, MBLK_RGP = 4, MBLK_HYD = 5, MBLK_ZCH = 6, MBLK_ZBO = 7;
@@ -5626,16 +5736,23 @@ class MDLMOLReader {
                         this.mol.setAtomIsotope(pos, val);
                     else if (type == MBLK_RGP)
                         this.mol.setAtomElement(pos, "R" + val);
-                    else if (type == MBLK_HYD)
+                    else if (type == MBLK_HYD) {
                         this.mol.setAtomHExplicit(pos, val);
+                        let src = { 'row': this.pos - 1, 'col': 9 + 8 * n, 'len': 8 };
+                        this.openmol.addJoin(OpenMolType.HydrogenCounting, [pos], null, [src]);
+                    }
                     else if (type == MBLK_ZCH)
                         this.mol.setAtomCharge(pos, val);
-                    else if (type == MBLK_ZBO)
+                    else if (type == MBLK_ZBO) {
                         this.mol.setBondOrder(pos, val);
+                        let src = { 'row': this.pos - 1, 'col': 9 + 8 * n, 'len': 8 };
+                        this.openmol.addJoin(OpenMolType.ZeroOrderBonds, null, [pos], [src]);
+                    }
                 }
             }
         }
         this.postFix();
+        this.openmol.derive(this.mol);
     }
     postFix() {
         const mol = this.mol;
@@ -6080,6 +6197,16 @@ class MDLSDFWriter {
     }
 }
 class MoleculeStream {
+    static readUnknown(strData) {
+        let mol = MoleculeStream.readNative(strData);
+        if (mol)
+            return mol;
+        try {
+            mol = MoleculeStream.readMDLMOL(strData);
+        }
+        catch (e) { }
+        return mol;
+    }
     static readNative(strData) {
         let mol = new Molecule();
         mol.keepTransient = true;
@@ -7421,6 +7548,106 @@ AssayProvenance.URI_UNIT_nM = 'http://purl.obolibrary.org/obo/UO_0000065';
 AssayProvenance.URI_UNIT_pM = 'http://purl.obolibrary.org/obo/UO_0000066';
 AssayProvenance.URI_UNIT_logM = 'http://www.bioassayontology.org/bao#BAO_0000101';
 AssayProvenance.URI_UNIT_perM = 'http://www.bioassayontology.org/bao#BAO_0000102';
+class BayesianSourceModel {
+    constructor() {
+        this.colNameMolecule = '';
+        this.colNameValue = '';
+        this.thresholdValue = 0.5;
+        this.thresholdRelation = '>=';
+        this.folding = 0;
+        this.noteField = '';
+        this.noteTitle = '';
+        this.noteOrigin = '';
+        this.noteComment = '';
+    }
+}
+class BayesianSource extends Aspect {
+    constructor(ds, allowModify) {
+        super(ds, allowModify);
+        this.setup();
+    }
+    static isBayesianSource(ds) {
+        for (let n = 0; n < ds.numExtensions; n++)
+            if (ds.getExtType(n) == BayesianSource.CODE)
+                return true;
+        return false;
+    }
+    getModels() {
+        let content = '';
+        for (let n = 0; n < this.ds.numExtensions; n++)
+            if (this.ds.getExtType(n) == BayesianSource.CODE) {
+                content = this.ds.getExtData(n);
+                break;
+            }
+        let models = [];
+        let m = null;
+        for (let line of content.split('\n')) {
+            if (line == 'model:') {
+                if (m != null)
+                    models.push(m);
+                m = {};
+                continue;
+            }
+            if (m == null)
+                continue;
+            let eq = line.indexOf('=');
+            if (eq < 0)
+                continue;
+            if (line.startsWith("colNameMolecule="))
+                m.colNameMolecule = MoleculeStream.sk_unescape(line.substring(eq + 1));
+            else if (line.startsWith("colNameValue="))
+                m.colNameValue = MoleculeStream.sk_unescape(line.substring(eq + 1));
+            else if (line.startsWith("thresholdValue="))
+                m.thresholdValue = parseFloat(line.substring(eq + 1));
+            else if (line.startsWith("thresholdRelation="))
+                m.thresholdRelation = MoleculeStream.sk_unescape(line.substring(eq + 1));
+            else if (line.startsWith("folding="))
+                m.folding = parseInt(line.substring(eq + 1));
+            else if (line.startsWith("noteField="))
+                m.noteField = MoleculeStream.sk_unescape(line.substring(eq + 1));
+            else if (line.startsWith("noteTitle="))
+                m.noteTitle = MoleculeStream.sk_unescape(line.substring(eq + 1));
+            else if (line.startsWith("noteOrigin="))
+                m.noteOrigin = MoleculeStream.sk_unescape(line.substring(eq + 1));
+            else if (line.startsWith("noteComment="))
+                m.noteComment = MoleculeStream.sk_unescape(line.substring(eq + 1));
+        }
+        if (m != null)
+            models.push(m);
+        return models;
+    }
+    setModels(models) {
+        let lines = [];
+        for (let m of models) {
+            lines.push('model:');
+            lines.push('colNameMolecule=' + MoleculeStream.sk_escape(m.colNameMolecule));
+            lines.push('colNameValue=' + MoleculeStream.sk_escape(m.colNameValue));
+            lines.push('thresholdValue=' + m.thresholdValue);
+            lines.push('thresholdRelation=' + MoleculeStream.sk_escape(m.thresholdRelation));
+            lines.push('folding=%d' + m.folding);
+            lines.push('noteField=' + MoleculeStream.sk_escape(m.noteField));
+            lines.push('noteTitle=' + MoleculeStream.sk_escape(m.noteTitle));
+            lines.push('noteOrigin=' + MoleculeStream.sk_escape(m.noteOrigin));
+            lines.push('noteComment=' + MoleculeStream.sk_escape(m.noteComment));
+        }
+        let content = lines.join('\n');
+        for (let n = 0; n < this.ds.numExtensions; n++)
+            if (this.ds.getExtType(n) == BayesianSource.CODE) {
+                this.ds.setExtData(n, content.toString());
+                return;
+            }
+        this.ds.appendExtension("BayesianSource", BayesianSource.CODE, content.toString());
+    }
+    setup() {
+        if (this.allowModify) {
+            let models = this.getModels();
+            this.setModels(models);
+        }
+    }
+    plainHeading() { return BayesianSource.NAME; }
+}
+BayesianSource.CODE = 'org.mmi.aspect.BayesianSource';
+BayesianSource.NAME = 'Bayesian Source';
 let SUPPORTED_ASPECTS = {};
 class AspectList {
     constructor(ds) {
@@ -7429,6 +7656,7 @@ class AspectList {
             SUPPORTED_ASPECTS[SARTable.CODE] = SARTable.NAME;
             SUPPORTED_ASPECTS[Experiment.CODE] = Experiment.NAME;
             SUPPORTED_ASPECTS[AssayProvenance.CODE] = AssayProvenance.NAME;
+            SUPPORTED_ASPECTS[BayesianSource.CODE] = BayesianSource.NAME;
         }
     }
     list() {
@@ -7448,6 +7676,10 @@ class AspectList {
             return new SARTable(this.ds);
         if (code == Experiment.CODE)
             return new Experiment(this.ds);
+        if (code == AssayProvenance.CODE)
+            return new AssayProvenance(this.ds);
+        if (code == BayesianSource.CODE)
+            return new BayesianSource(this.ds);
         return null;
     }
     enumerate() {
@@ -7460,1191 +7692,6 @@ class AspectList {
         return aspects;
     }
 }
-let crc_table = [];
-function make_crc_table() {
-    if (crc_table.length > 0)
-        return;
-    for (let n = 0; n < 256; n++) {
-        let c = n;
-        for (let i = 0; i < 8; i++)
-            if ((c & 1) != 0)
-                c = 0xEDB88320 ^ (c >>> 1);
-            else
-                c = (c >>> 1);
-        crc_table.push(c);
-    }
-}
-const BOOT_CRC = 0xFFFFFFFF;
-function start_crc() { return BOOT_CRC; }
-function feed_crc(crc, byte) {
-    let idx = (crc ^ byte) & 0xFF;
-    return crc_table[idx] ^ (crc >>> 8);
-}
-function end_crc(crc) { return crc ^ BOOT_CRC; }
-class CircularFingerprints {
-    constructor(meta, kind) {
-        this.meta = meta;
-        this.kind = kind;
-        this.identity = [];
-        this.resolvedChiral = [];
-        this.atomGroup = [];
-        this.fplist = [];
-        this.amask = [];
-        this.atomAdj = [];
-        this.bondAdj = [];
-        make_crc_table();
-    }
-    calculate() {
-        let mol = this.meta.mol, na = mol.numAtoms;
-        this.identity = Vec.numberArray(0, na);
-        this.resolvedChiral = Vec.booleanArray(false, na);
-        for (let n = 0; n < na; n++)
-            this.atomGroup.push([]);
-        this.amask = Vec.booleanArray(false, na);
-        for (let n = 0; n < na; n++) {
-            this.amask[n] = mol.atomicNumber(n + 1) >= 2 && !MolUtil.hasAbbrev(mol, n + 1);
-            this.atomAdj.push([]);
-            this.bondAdj.push([]);
-        }
-        for (let n = 0; n < na; n++) {
-            if (!this.amask[n])
-                continue;
-            this.atomAdj[n] = mol.atomAdjList(n + 1);
-            this.bondAdj[n] = mol.atomAdjBonds(n + 1);
-            for (let i = this.atomAdj[n].length - 1; i >= 0; i--)
-                if (!this.amask[this.atomAdj[n][i] - 1]) {
-                    this.atomAdj[n].splice(i, 1);
-                    this.bondAdj[n].splice(i, 1);
-                }
-        }
-        for (let n = 0; n < na; n++)
-            if (this.amask[n]) {
-                this.identity[n] = this.initialIdentityECFP(n + 1);
-                this.atomGroup[n] = [n + 1];
-                this.applyNewFP({ 'hashCode': this.identity[n], 'iteration': 0, 'atoms': this.atomGroup[n] });
-            }
-        let niter = this.kind;
-        for (let iter = 1; iter <= niter; iter++) {
-            let newident = Vec.numberArray(0, na);
-            for (let n = 0; n < na; n++)
-                if (this.amask[n])
-                    newident[n] = this.circularIterate(iter, n + 1);
-            this.identity = newident;
-            for (let n = 0; n < na; n++)
-                if (this.amask[n]) {
-                    this.atomGroup[n] = this.growAtoms(this.atomGroup[n]);
-                    this.considerNewFP({ 'hashCode': this.identity[n], 'iteration': iter, 'atoms': this.atomGroup[n] });
-                }
-        }
-    }
-    static create(meta, kind) {
-        if (meta instanceof Molecule)
-            meta = MetaMolecule.createStrictRubric(meta);
-        let circ = new CircularFingerprints(meta, kind);
-        circ.calculate();
-        return circ;
-    }
-    getMolecule() { return this.meta.mol; }
-    get numFP() { return this.fplist.length; }
-    getFP(idx) { return this.fplist[idx]; }
-    getFingerprints() { return this.fplist.slice(0); }
-    getUniqueHashes() {
-        let hashes = new Set();
-        for (let fp of this.fplist)
-            hashes.add(fp.hashCode);
-        return Vec.sorted(Array.from(hashes));
-    }
-    getFoldedHashes(maxBits) {
-        let andBits = maxBits - 1;
-        let hashes = new Set();
-        for (let fp of this.fplist)
-            hashes.add(fp.hashCode & andBits);
-        return Vec.sorted(Array.from(hashes));
-    }
-    static tanimoto(hash1, hash2) {
-        let shared = 0, total = 0;
-        let sz1 = hash1.length, sz2 = hash2.length;
-        if (sz1 == 0 && sz2 == 0)
-            return 0;
-        let i1 = 0, i2 = 0;
-        while (i1 < sz1 || i2 < sz2) {
-            if (i1 == sz1) {
-                total += sz2 - i2;
-                break;
-            }
-            if (i2 == sz2) {
-                total += sz1 - i1;
-                break;
-            }
-            let v1 = hash1[i1], v2 = hash2[i2];
-            if (v1 == v2) {
-                shared += 1;
-                i1 += 1;
-                i2 += 1;
-            }
-            else if (v1 < v2)
-                i1 += 1;
-            else
-                i2 += 1;
-            total += 1;
-        }
-        return shared / total;
-    }
-    initialIdentityECFP(atom) {
-        const mol = this.meta.mol;
-        let adj = mol.atomAdjList(atom);
-        let nheavy = 0, nhydr = mol.atomHydrogens(atom);
-        for (let a of adj)
-            if (mol.atomElement(a) == 'H')
-                nhydr++;
-            else
-                nheavy++;
-        let atno = mol.atomicNumber(atom);
-        let degree = Math.max(0, Chemistry.ELEMENT_BONDING[atno] - nhydr);
-        let chg = mol.atomCharge(atom);
-        let inring = mol.atomRingBlock(atom) > 0 ? 1 : 0;
-        let crc = start_crc();
-        crc = feed_crc(crc, (nheavy << 4) | degree);
-        crc = feed_crc(crc, atno);
-        crc = feed_crc(crc, chg + 0x80);
-        crc = feed_crc(crc, (nhydr << 4) | inring);
-        return end_crc(crc);
-    }
-    circularIterate(iter, atom) {
-        let adj = this.atomAdj[atom - 1], adjb = this.bondAdj[atom - 1];
-        var seq = Vec.numberArray(0, 2 + 2 * adj.length);
-        seq[0] = iter;
-        seq[1] = this.identity[atom - 1];
-        for (let n = 0; n < adj.length; n++) {
-            seq[2 * n + 2] = this.meta.isBondAromatic(adjb[n]) ? 0xF : this.meta.mol.bondOrder(adjb[n]);
-            seq[2 * n + 3] = this.identity[adj[n] - 1];
-        }
-        let p = 0;
-        while (p < adj.length - 1) {
-            let i = 2 + 2 * p;
-            if (seq[i] > seq[i + 2] || (seq[i] == seq[i + 2] && seq[i + 1] > seq[i + 3])) {
-                Vec.swap(seq, i, i + 2);
-                Vec.swap(seq, i + 1, i + 3);
-                if (p > 0)
-                    p--;
-            }
-            else
-                p++;
-        }
-        var crc = start_crc();
-        for (let n = 0; n < seq.length; n += 2) {
-            crc = feed_crc(crc, seq[n]);
-            let v = seq[n + 1];
-            crc = feed_crc(crc, v >> 24);
-            crc = feed_crc(crc, (v >> 16) & 0xFF);
-            crc = feed_crc(crc, (v >> 8) & 0xFF);
-            crc = feed_crc(crc, v & 0xFF);
-        }
-        if (!this.resolvedChiral[atom - 1] && Vec.arrayLength(this.meta.rubricTetra) > 0 && this.meta.rubricTetra[atom - 1] != null) {
-            let ru = this.meta.rubricTetra[atom - 1];
-            let par = [
-                ru[0] == 0 ? 0 : this.identity[ru[0] - 1],
-                ru[1] == 0 ? 0 : this.identity[ru[1] - 1],
-                ru[2] == 0 ? 0 : this.identity[ru[2] - 1],
-                ru[3] == 0 ? 0 : this.identity[ru[3] - 1]
-            ];
-            if (par[0] != par[1] && par[0] != par[2] && par[0] != par[3] && par[1] != par[2] && par[1] != par[3] && par[2] != par[3]) {
-                crc = feed_crc(crc, Permutation.parityOrder(par) + 1);
-                this.resolvedChiral[atom - 1] = true;
-            }
-        }
-        return end_crc(crc);
-    }
-    growAtoms(atoms) {
-        let mask = Vec.booleanArray(false, this.meta.mol.numAtoms);
-        for (let n = 0; n < atoms.length; n++) {
-            mask[atoms[n] - 1] = true;
-            for (let a of this.atomAdj[atoms[n] - 1])
-                mask[a - 1] = true;
-        }
-        return Vec.add(Vec.maskIdx(mask), 1);
-    }
-    applyNewFP(newFP) {
-        this.fplist.push(newFP);
-    }
-    considerNewFP(newFP) {
-        let hit = -1;
-        let fp = null;
-        for (let n = 0; n < this.fplist.length; n++) {
-            let lookFP = this.fplist[n];
-            if (Vec.equals(lookFP.atoms, newFP.atoms)) {
-                fp = lookFP;
-                hit = n;
-                break;
-            }
-        }
-        if (hit < 0) {
-            this.fplist.push(newFP);
-            return;
-        }
-        if (fp.iteration < newFP.iteration || fp.hashCode < newFP.hashCode)
-            return;
-        this.fplist[hit] = newFP;
-    }
-}
-CircularFingerprints.CLASS_ECFP0 = 0;
-CircularFingerprints.CLASS_ECFP2 = 1;
-CircularFingerprints.CLASS_ECFP4 = 2;
-CircularFingerprints.CLASS_ECFP6 = 3;
-class DataSheetStream {
-    static readXML(strXML) {
-        var xmlDoc = jQuery.parseXML(strXML);
-        if (xmlDoc == null)
-            return null;
-        var root = xmlDoc.documentElement;
-        if (root == null)
-            return null;
-        var ds = new DataSheet();
-        var summary = findNode(root, 'Summary');
-        if (summary == null)
-            return null;
-        ds.setTitle(nodeText(findNode(summary, 'Title')));
-        ds.setDescription(nodeText(findNode(summary, 'Description')));
-        var extRoot = findNode(root, 'Extension');
-        if (extRoot != null) {
-            var extList = findNodes(extRoot, 'Ext');
-            for (var n = 0; n < extList.length; n++) {
-                var ext = extList[n];
-                ds.appendExtension(ext.getAttribute("name"), ext.getAttribute("type"), nodeText(ext));
-            }
-        }
-        var header = findNode(root, 'Header');
-        var numCols = parseInt(header.getAttribute("ncols")), numRows = parseInt(header.getAttribute("nrows"));
-        var colList = findNodes(header, 'Column');
-        if (colList.length != numCols)
-            return null;
-        for (var n = 0; n < numCols; n++) {
-            var col = colList[n];
-            var id = parseInt(col.getAttribute("id"));
-            if (id != n + 1)
-                return null;
-            ds.appendColumn(col.getAttribute("name"), col.getAttribute("type"), nodeText(col));
-        }
-        var row = findNode(root, 'Content').firstElementChild;
-        var rowidx = 0;
-        while (row) {
-            if (parseInt(row.getAttribute("id")) != rowidx + 1)
-                return null;
-            ds.appendRow();
-            var col = row.firstElementChild;
-            while (col) {
-                var colidx = parseInt(col.getAttribute("id")) - 1;
-                var ct = ds.colType(colidx), val = nodeText(col);
-                if (val == '') { }
-                else if (ct == DataSheet.COLTYPE_MOLECULE)
-                    ds.setObject(rowidx, colidx, val);
-                else if (ct == DataSheet.COLTYPE_STRING)
-                    ds.setString(rowidx, colidx, val);
-                else if (ct == DataSheet.COLTYPE_REAL)
-                    ds.setReal(rowidx, colidx, parseFloat(val));
-                else if (ct == DataSheet.COLTYPE_INTEGER)
-                    ds.setInteger(rowidx, colidx, parseInt(val));
-                else if (ct == DataSheet.COLTYPE_BOOLEAN)
-                    ds.setBoolean(rowidx, colidx, val == 'true' ? true : val == 'false' ? false : null);
-                else if (ct == DataSheet.COLTYPE_EXTEND)
-                    ds.setExtend(rowidx, colidx, val);
-                col = col.nextElementSibling;
-                colidx++;
-            }
-            row = row.nextElementSibling;
-            rowidx++;
-        }
-        return ds;
-    }
-    static writeXML(ds) {
-        var xml = new DOMParser().parseFromString('<DataSheet/>', 'text/xml');
-        var summary = xml.createElement('Summary');
-        xml.documentElement.appendChild(summary);
-        var title = xml.createElement('Title'), descr = xml.createElement('Description');
-        summary.appendChild(title);
-        title.appendChild(xml.createTextNode(ds.getTitle()));
-        summary.appendChild(descr);
-        descr.appendChild(xml.createCDATASection(ds.getDescription()));
-        var extension = xml.createElement('Extension');
-        xml.documentElement.appendChild(extension);
-        for (var n = 0; n < ds.numExtensions; n++) {
-            var ext = xml.createElement('Ext');
-            extension.appendChild(ext);
-            ext.setAttribute('name', ds.getExtName(n));
-            ext.setAttribute('type', ds.getExtType(n));
-            ext.appendChild(xml.createCDATASection(ds.getExtData(n)));
-        }
-        var header = xml.createElement('Header');
-        xml.documentElement.appendChild(header);
-        header.setAttribute('nrows', ds.numRows.toString());
-        header.setAttribute('ncols', ds.numCols.toString());
-        for (var n = 0; n < ds.numCols; n++) {
-            var column = xml.createElement('Column');
-            header.appendChild(column);
-            column.setAttribute('id', (n + 1).toString());
-            column.setAttribute('name', ds.colName(n));
-            column.setAttribute('type', ds.colType(n));
-            column.appendChild(xml.createTextNode(ds.colDescr(n)));
-        }
-        var content = xml.createElement('Content');
-        xml.documentElement.appendChild(content);
-        for (var r = 0; r < ds.numRows; r++) {
-            var row = xml.createElement('Row');
-            row.setAttribute('id', (r + 1).toString());
-            content.appendChild(row);
-            for (var c = 0; c < ds.numCols; c++) {
-                var cell = xml.createElement('Cell');
-                cell.setAttribute('id', (c + 1).toString());
-                row.appendChild(cell);
-                var ct = ds.colType(c);
-                var txtNode = null;
-                if (ds.isNull(r, c)) { }
-                else if (ct == DataSheet.COLTYPE_MOLECULE) {
-                    let obj = ds.getObject(r, c);
-                    if (obj instanceof Molecule)
-                        obj = MoleculeStream.writeNative(obj);
-                    txtNode = xml.createCDATASection(obj);
-                }
-                else if (ct == DataSheet.COLTYPE_STRING)
-                    txtNode = xml.createCDATASection(ds.getString(r, c));
-                else if (ct == DataSheet.COLTYPE_REAL)
-                    txtNode = xml.createTextNode(ds.getReal(r, c).toString());
-                else if (ct == DataSheet.COLTYPE_INTEGER)
-                    txtNode = xml.createTextNode(ds.getInteger(r, c).toString());
-                else if (ct == DataSheet.COLTYPE_BOOLEAN)
-                    txtNode = xml.createTextNode(ds.getBoolean(r, c).toString());
-                else if (ct == DataSheet.COLTYPE_EXTEND)
-                    txtNode = xml.createCDATASection(ds.getExtend(r, c));
-                if (txtNode != null)
-                    cell.appendChild(txtNode);
-            }
-        }
-        return new XMLSerializer().serializeToString(xml.documentElement);
-    }
-    ;
-}
-class FormatList {
-}
-FormatList.FMT_NATIVE = 'native';
-FormatList.FMT_XMLDS = 'xmlds';
-FormatList.FMT_MDLMOL = 'mdlmol';
-FormatList.FMT_MDLSDF = 'mdlsdf';
-FormatList.FMT_MDLRDF = 'mdlrdf';
-FormatList.FMT_MDLRXN = 'mdlrxn';
-FormatList.GFX_PNG = 'png';
-FormatList.GFX_PNGZIP = 'pngzip';
-FormatList.GFX_SVG = 'svg';
-FormatList.GFX_SVGZIP = 'svgzip';
-FormatList.GFX_PDF = 'pdf';
-FormatList.GFX_PDFZIP = 'pdfzip';
-FormatList.GFX_EPS = 'eps';
-FormatList.GFX_HTML = 'html';
-FormatList.GFX_OPENDOC_ODG = 'odg';
-FormatList.GFX_OPENDOC_ODT = 'odt';
-FormatList.GFX_OPENDOC_ODS = 'ods';
-FormatList.GFX_OOXML_DOCX = 'docx';
-FormatList.GFX_OOXML_XLSX = 'xlsx';
-FormatList.FORMAT_DESCR = {
-    'native': 'SketchEl Molecule',
-    'xmlds': 'DataSheet XML',
-    'mdlmol': 'MDL MOL (single molecule)',
-    'mdlsdf': 'MDL SDF (molecules + data)',
-    'mdlrdf': 'MDL RDF (reactions + data)',
-    'mdlrxn': 'MDL RXN (single reaction)',
-    'png': 'PNG image (raster)',
-    'pngzip': 'ZIP (multiple PNG files)',
-    'svg': 'SVG picture (vector)',
-    'svgzip': 'ZIP (multiple SVG files)',
-    'pdf': 'PDF diagram (vector)',
-    'pdfzip': 'ZIP (multiple PDF files)',
-    'eps': 'Encapsulated PostScript (vector)',
-    'html': 'HTML with embedded SVG',
-    'odg': 'OpenDocument Graphic',
-    'odt': 'OpenDocument Text',
-    'ods': 'OpenDocument SpreadSheet',
-    'docx': 'Microsoft Word',
-    'xlsx': 'Microsoft Excel'
-};
-FormatList.FORMAT_EXTN = {
-    'native': '.el',
-    'xmlds': '.ds',
-    'mdlmol': '.mol',
-    'mdlsdf': '.sdf',
-    'mdlrdf': '.rdf',
-    'mdlrxn': '.rxn',
-    'png': '.png',
-    'pngzip': '_png.zip',
-    'svg': '.svg',
-    'svgzip': '_svg.zip',
-    'pdf': '.pdf',
-    'pdfzip': '_pdf.zip',
-    'eps': '.eps',
-    'html': '.html',
-    'odg': '.odg',
-    'odt': '.odt',
-    'ods': '.ods',
-    'docx': '.docx',
-    'xlsx': '.xlsx'
-};
-FormatList.FORMAT_MIMETYPE = {
-    'native': 'chemical/x-sketchel',
-    'xmlds': 'chemical/x-datasheet',
-    'mdlmol': 'chemical/x-mdl-molfile',
-    'mdlsdf': 'chemical/x-mdl-sdfile',
-    'mdlrdf': 'chemical/x-mdl-rdfile',
-    'mdlrxn': 'chemical/x-mdl-rxnfile',
-    'png': 'image/png',
-    'pngzip': 'application/zip',
-    'svg': 'image/png',
-    'svgzip': 'application/zip',
-    'pdf': 'application/pdf',
-    'pdfzip': 'application/zip',
-    'eps': 'image/eps',
-    'html': 'text/html',
-    'odg': 'application/vnd.oasis.opendocument.graphics',
-    'odt': 'application/vnd.oasis.opendocument.text',
-    'ods': 'application/vnd.oasis.opendocument.spreadsheet',
-    'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-};
-class MetaMolecule {
-    constructor(mol) {
-        this.mol = mol;
-        this.atomArom = null;
-        this.bondArom = null;
-        this.rubricTetra = null;
-        this.rubricSquare = null;
-        this.rubricOcta = null;
-        this.rubricSides = null;
-        this.hash = null;
-        this.heavyHash = null;
-        this.uniqueElements = null;
-        this.piAtom = null;
-    }
-    calculateStrictAromaticity() {
-        let mol = this.mol;
-        this.atomArom = Vec.booleanArray(false, mol.numAtoms);
-        this.bondArom = Vec.booleanArray(false, mol.numBonds);
-        let rings = mol.findRingsOfSize(6);
-        const nr = rings.length;
-        if (nr == 0)
-            return;
-        this.ensurePiAtoms();
-        let mask = Vec.booleanArray(false, nr);
-        for (let n = 0; n < nr; n++) {
-            for (let i = 0; i < rings[n].length; i++) {
-                let a = rings[n][i];
-                if (!this.piAtom[a - 1]) {
-                    mask[n] = true;
-                    break;
-                }
-                let b = mol.findBond(a, rings[n][i == rings[n].length - 1 ? 0 : i + 1]);
-                let bo = mol.bondOrder(b);
-                if (bo != 1 && bo != 2) {
-                    mask[n] = true;
-                    break;
-                }
-            }
-        }
-        while (true) {
-            let anyChange = false;
-            for (let n = 0; n < nr; n++)
-                if (!mask[n]) {
-                    let phase1 = true, phase2 = true;
-                    for (let i = 0; i < rings[n].length; i++) {
-                        let b = mol.findBond(rings[n][i], rings[n][i == rings[n].length - 1 ? 0 : i + 1]);
-                        if (this.bondArom[b - 1])
-                            continue;
-                        let bo = mol.bondOrder(b);
-                        phase1 = phase1 && bo == (2 - (i & 1));
-                        phase2 = phase2 && bo == (1 + (i & 1));
-                    }
-                    if (!phase1 && !phase2)
-                        continue;
-                    for (let i = 0; i < rings[n].length; i++) {
-                        let b = mol.findBond(rings[n][i], rings[n][i == rings[n].length - 1 ? 0 : i + 1]);
-                        this.bondArom[b - 1] = true;
-                    }
-                    mask[n] = true;
-                    anyChange = true;
-                }
-            if (!anyChange)
-                break;
-        }
-        for (let n = 0; n < this.bondArom.length; n++)
-            if (this.bondArom[n]) {
-                this.atomArom[mol.bondFrom(n + 1) - 1] = true;
-                this.atomArom[mol.bondTo(n + 1) - 1] = true;
-            }
-    }
-    calculateStereoRubric() {
-        const mol = this.mol, na = mol.numAtoms, nb = mol.numBonds;
-        this.rubricTetra = new Array(na);
-        this.rubricSquare = new Array(na);
-        this.rubricOcta = new Array(na);
-        this.rubricSides = new Array(nb);
-        for (let n = 1; n <= na; n++) {
-            let blk = Chemistry.ELEMENT_BLOCKS[mol.atomicNumber(n)];
-            let adjc = mol.atomAdjCount(n), hc = mol.atomHydrogens(n);
-            if (blk == 2 && ((adjc == 3 && hc == 1) || (adjc == 4 && hc == 0))) {
-                this.rubricTetra[n - 1] = Stereochemistry.rubricTetrahedral(mol, n);
-            }
-            if (blk >= 3 && adjc == 4 && hc == 0) {
-                this.rubricSquare[n - 1] = Stereochemistry.rubricSquarePlanar(mol, n);
-            }
-            if (blk >= 3 && (adjc == 5 || adjc == 6) && hc == 0) {
-                this.rubricOcta[n - 1] = Stereochemistry.rubricOctahedral(mol, n);
-            }
-        }
-        for (let n = 1; n <= mol.numBonds; n++) {
-            if (mol.bondOrder(n) != 2 || this.isBondAromatic(n))
-                continue;
-            let bfr = mol.bondFrom(n), bto = mol.bondTo(n);
-            let blk1 = Chemistry.ELEMENT_BLOCKS[mol.atomicNumber(bfr)];
-            let blk2 = Chemistry.ELEMENT_BLOCKS[mol.atomicNumber(bto)];
-            let adjc1 = mol.atomAdjCount(bfr), hc1 = mol.atomHydrogens(bfr);
-            let adjc2 = mol.atomAdjCount(bto), hc2 = mol.atomHydrogens(bto);
-            if (blk1 == 2 && blk2 == 2 && (adjc1 + hc1 == 3 && hc1 <= 1) && (adjc2 + hc2 == 3 && hc2 <= 1)) {
-                this.rubricSides[n - 1] = Stereochemistry.rubricBondSides(mol, n);
-            }
-        }
-    }
-    isAtomAromatic(atom) {
-        return this.atomArom == null ? false : this.atomArom[atom - 1];
-    }
-    isBondAromatic(bond) {
-        return this.bondArom == null ? false : this.bondArom[bond - 1];
-    }
-    bondOrderArom(bond) {
-        return this.bondArom != null && this.bondArom[bond - 1] ? -1 : this.mol.bondOrder(bond);
-    }
-    getAtomAromaticity() {
-        return this.atomArom == null ? null : this.atomArom.slice(0);
-    }
-    getBondAromaticity() {
-        return this.bondArom == null ? null : this.bondArom.slice(0);
-    }
-    getUniqueElements() {
-        if (this.uniqueElements == null) {
-            this.uniqueElements = [];
-            for (let n = 1; n <= this.mol.numAtoms; n++) {
-                let el = this.mol.atomElement(n);
-                if (this.uniqueElements.indexOf(el) < 0)
-                    this.uniqueElements.push(el);
-            }
-        }
-        return this.uniqueElements;
-    }
-    static createRubric(mol) {
-        if (mol == null)
-            return null;
-        let meta = new MetaMolecule(mol);
-        meta.calculateStereoRubric();
-        return meta;
-    }
-    static createStrict(mol) {
-        if (mol == null)
-            return null;
-        let meta = new MetaMolecule(mol);
-        meta.calculateStrictAromaticity();
-        return meta;
-    }
-    static createStrictRubric(mol) {
-        if (mol == null)
-            return null;
-        let meta = new MetaMolecule(mol);
-        meta.calculateStrictAromaticity();
-        meta.calculateStereoRubric();
-        return meta;
-    }
-    ensurePiAtoms() {
-        if (this.piAtom != null)
-            return;
-        this.piAtom = Vec.booleanArray(false, this.mol.numAtoms);
-        for (let n = 1; n <= this.mol.numBonds; n++)
-            if (this.mol.bondOrder(n) == 2) {
-                {
-                    this.piAtom[this.mol.bondFrom(n) - 1] = true;
-                    this.piAtom[this.mol.bondTo(n) - 1] = true;
-                }
-            }
-    }
-}
-class QuantityComp {
-    constructor(comp, step, type, idx) {
-        this.comp = comp;
-        this.step = step;
-        this.type = type;
-        this.idx = idx;
-        this.role = 0;
-        this.molw = 0;
-        this.valueEquiv = 0;
-        this.statEquiv = QuantityCalc.STAT_UNKNOWN;
-        this.valueMass = QuantityCalc.UNSPECIFIED;
-        this.statMass = QuantityCalc.STAT_UNKNOWN;
-        this.valueVolume = QuantityCalc.UNSPECIFIED;
-        this.statVolume = QuantityCalc.STAT_UNKNOWN;
-        this.valueMoles = QuantityCalc.UNSPECIFIED;
-        this.statMoles = QuantityCalc.STAT_UNKNOWN;
-        this.valueDensity = QuantityCalc.UNSPECIFIED;
-        this.statDensity = QuantityCalc.STAT_UNKNOWN;
-        this.valueConc = QuantityCalc.UNSPECIFIED;
-        this.statConc = QuantityCalc.STAT_UNKNOWN;
-        this.valueYield = QuantityCalc.UNSPECIFIED;
-        this.statYield = QuantityCalc.STAT_UNKNOWN;
-    }
-}
-class GreenMetrics {
-    constructor() {
-        this.step = 0;
-        this.idx = 0;
-        this.massReact = [];
-        this.massProd = [];
-        this.massWaste = [];
-        this.massProdWaste = [];
-        this.molwReact = [];
-        this.molwProd = [];
-        this.impliedWaste = 0;
-        this.isBlank = false;
-    }
-}
-class QuantityCalc {
-    constructor(entry) {
-        this.entry = entry;
-        this.quantities = [];
-        this.idxPrimary = [];
-        this.idxYield = [];
-        this.allMassReact = [];
-        this.allMassProd = [];
-        this.allMassWaste = [];
-        this.greenMetrics = [];
-    }
-    static isStoichZero(stoich) {
-        if (this.isStoichUnity(stoich))
-            return false;
-        if (parseFloat(stoich) == 0)
-            return true;
-        return false;
-    }
-    static isStoichUnity(stoich) {
-        if (!stoich || stoich == '1')
-            return true;
-        let [numer, denom] = this.extractStoichFraction(stoich);
-        return numer != 0 && numer == denom;
-    }
-    static extractStoichFraction(stoich) {
-        if (!stoich)
-            return [1, 1];
-        let numer = 1, denom = 1;
-        let i = stoich.indexOf('/');
-        if (i < 0) {
-            let v = parseFloat(stoich);
-            if (v >= 0)
-                numer = v;
-        }
-        else {
-            let v1 = parseFloat(stoich.substring(0, i)), v2 = parseFloat(stoich.substring(i + 1));
-            if (v1 >= 0)
-                numer = v1;
-            if (v2 >= 0)
-                denom = v2;
-        }
-        return [numer, denom];
-    }
-    static extractStoichValue(stoich) {
-        let [numer, denom] = this.extractStoichFraction(stoich);
-        return denom <= 1 ? numer : numer / denom;
-    }
-    static stoichAsRatio(stoich) {
-        let [numer, denom] = this.extractStoichFraction(stoich);
-        if (numer == Math.floor(numer))
-            return [numer, denom];
-        return this.stoichFractAsRatio(numer);
-    }
-    static stoichFractAsRatio(fract) {
-        if (fract == Math.floor(fract))
-            return [fract, 1];
-        const MAX_DENOM = QuantityCalc.MAX_DENOM;
-        if (QuantityCalc.RATIO_FRACT == null) {
-            QuantityCalc.RATIO_FRACT = [];
-            for (let p = 0, j = 2; j <= MAX_DENOM; j++)
-                for (let i = 1; i < j && i < MAX_DENOM - 1; i++)
-                    QuantityCalc.RATIO_FRACT.push(i * 1.0 / j);
-        }
-        let whole = Math.floor(fract);
-        let resid = fract - whole;
-        let bestDiff = Number.MAX_VALUE;
-        let bestOver = 1, bestUnder = 1;
-        for (let p = 0, j = 2; j <= MAX_DENOM; j++)
-            for (let i = 1; i < j && i < MAX_DENOM - 1; i++) {
-                let diff = Math.abs(QuantityCalc.RATIO_FRACT[p++] - resid);
-                if (diff < bestDiff) {
-                    bestDiff = diff;
-                    bestOver = i;
-                    bestUnder = j;
-                }
-            }
-        return [bestOver + (whole * bestUnder), bestUnder];
-    }
-    static impliedReagentStoich(reagent, products) {
-        if (MolUtil.isBlank(reagent.mol) || products.length == 0)
-            return 0;
-        let pstoich = Vec.numberArray(-1, products.length);
-        let rmol = reagent.mol;
-        let highest = 0;
-        for (let n = 1; n <= rmol.numAtoms; n++) {
-            let m = rmol.atomMapNum(n);
-            if (m == 0)
-                continue;
-            let total = 0;
-            for (let i = 0; i < products.length; i++) {
-                let pmol = products[i].mol;
-                if (MolUtil.isBlank(pmol))
-                    continue;
-                let pcount = 0;
-                for (let j = 1; j <= pmol.numAtoms; j++)
-                    if (pmol.atomMapNum(j) == m)
-                        pcount++;
-                if (pcount > 0) {
-                    let rcount = 0;
-                    for (let k = 1; k <= rmol.numAtoms; k++)
-                        if (rmol.atomMapNum(k) == m)
-                            rcount++;
-                    if (pstoich[i] < 0)
-                        pstoich[i] = QuantityCalc.extractStoichValue(products[i].stoich);
-                    total += pcount * pstoich[i] / rcount;
-                }
-            }
-            highest = Math.max(highest, total);
-        }
-        return highest;
-    }
-    calculate() {
-        this.classifyTypes();
-        while (this.calculateSomething()) { }
-        this.allMassReact = [];
-        this.allMassProd = [];
-        this.allMassWaste = [];
-        for (let n = 0; n < this.quantities.length; n++) {
-            let qc = this.quantities[n];
-            if (qc.type == Experiment.REACTANT || qc.type == Experiment.REAGENT) {
-                if (qc.valueEquiv == 0 && qc.type == Experiment.REAGENT)
-                    continue;
-                this.allMassReact.push(qc.valueMass);
-            }
-            else if (qc.type == Experiment.PRODUCT) {
-                if (!qc.comp.waste) {
-                    this.allMassProd.push(qc.valueMass);
-                    this.calculateGreenMetrics(n);
-                }
-                else {
-                    this.allMassWaste.push(qc.valueMass);
-                }
-            }
-        }
-    }
-    get numQuantities() { return this.quantities.length; }
-    getQuantity(idx) { return this.quantities[idx]; }
-    getAllQuantities() { return this.quantities.slice(0); }
-    get numGreenMetrics() { return this.greenMetrics.length; }
-    getGreenMetrics(idx) { return this.greenMetrics[idx]; }
-    getAllGreenMetrics() { return this.greenMetrics.slice(0); }
-    getAllMassReact() { return this.allMassReact.slice(0); }
-    getAllMassProd() { return this.allMassProd.slice(0); }
-    getAllMassWaste() { return this.allMassWaste.slice(0); }
-    findComponent(step, type, idx) {
-        for (let qc of this.quantities)
-            if (qc.step == step && qc.type == type && qc.idx == idx)
-                return qc;
-        return null;
-    }
-    static formatMolWeight(value) {
-        if (value == QuantityCalc.UNSPECIFIED)
-            return '';
-        return formatDouble(value, 6) + ' g/mol';
-    }
-    static formatMass(value) {
-        if (value == QuantityCalc.UNSPECIFIED)
-            return '';
-        if (value <= 1E-6)
-            return formatDouble(value * 1E6, 6) + ' \u03BCg';
-        if (value <= 1E-3)
-            return formatDouble(value * 1E3, 6) + ' mg';
-        if (value >= 1E3)
-            return formatDouble(value * 1E-3, 6) + ' kg';
-        return formatDouble(value, 6) + ' g';
-    }
-    static formatVolume(value) {
-        if (value == QuantityCalc.UNSPECIFIED)
-            return '';
-        if (value <= 1E-6)
-            return formatDouble(value * 1E6, 6) + ' nL';
-        if (value <= 1E-3)
-            return formatDouble(value * 1E3, 6) + ' \u03BCL';
-        if (value >= 1E3)
-            return formatDouble(value * 1E-3, 6) + ' L';
-        return formatDouble(value, 6) + ' mL';
-    }
-    static formatMoles(value) {
-        if (value == QuantityCalc.UNSPECIFIED)
-            return '';
-        if (value <= 1E-9)
-            return formatDouble(value * 1E9, 6) + ' nmol';
-        if (value <= 1E-6)
-            return formatDouble(value * 1E6, 6) + ' \u03BCmol';
-        if (value <= 1E-3)
-            return formatDouble(value * 1E3, 6) + ' mmol';
-        return formatDouble(value, 6) + ' mol';
-    }
-    static formatDensity(value) {
-        if (value == QuantityCalc.UNSPECIFIED)
-            return '';
-        return formatDouble(value, 6) + ' g/mL';
-    }
-    static formatConc(value) {
-        if (value == QuantityCalc.UNSPECIFIED)
-            return '';
-        if (value <= 1E-9)
-            return formatDouble(value * 1E9, 6) + ' nmol/L';
-        if (value <= 1E-6)
-            return formatDouble(value * 1E6, 6) + ' \u03BCmol/L';
-        if (value <= 1E-3)
-            return formatDouble(value * 1E3, 6) + ' mmol/L';
-        return formatDouble(value, 6) + ' mol/L';
-    }
-    static formatPercent(value) {
-        if (value == QuantityCalc.UNSPECIFIED)
-            return '';
-        return formatDouble(value, 6) + '%';
-    }
-    classifyTypes() {
-        for (let s = 0; s < this.entry.steps.length; s++) {
-            let step = this.entry.steps[s];
-            for (let n = 0; n < step.reactants.length; n++)
-                this.quantities.push(new QuantityComp(step.reactants[n], s, Experiment.REACTANT, n));
-            for (let n = 0; n < step.reagents.length; n++)
-                this.quantities.push(new QuantityComp(step.reagents[n], s, Experiment.REAGENT, n));
-            for (let n = 0; n < step.products.length; n++)
-                this.quantities.push(new QuantityComp(step.products[n], s, Experiment.PRODUCT, n));
-        }
-        for (let n = 0; n < this.quantities.length; n++) {
-            let qc = this.quantities[n];
-            if (qc.type == Experiment.REAGENT) {
-                if (qc.comp.equiv != null)
-                    qc.valueEquiv = qc.comp.equiv;
-                else {
-                    let eq = QuantityCalc.impliedReagentStoich(qc.comp, this.entry.steps[qc.step].products);
-                    if (eq > 0)
-                        qc.valueEquiv = eq;
-                }
-            }
-            else {
-                qc.valueEquiv = QuantityCalc.extractStoichValue(qc.comp.stoich);
-            }
-            if (qc.comp.mol != null)
-                qc.molw = MolUtil.molecularWeight(qc.comp.mol);
-            qc.role = QuantityCalc.ROLE_INDEPENDENT;
-            if (qc.step == 0 && qc.type == Experiment.REACTANT) {
-                if (qc.comp.primary) {
-                    qc.role = QuantityCalc.ROLE_PRIMARY;
-                    this.idxPrimary.push(n);
-                }
-                else
-                    qc.role = QuantityCalc.ROLE_SECONDARY;
-            }
-            else if (qc.type == Experiment.REAGENT) {
-                if (qc.valueEquiv > 0)
-                    qc.role = QuantityCalc.ROLE_SECONDARY;
-            }
-            else if (qc.type == Experiment.PRODUCT && !qc.comp.waste) {
-                qc.role = QuantityCalc.ROLE_PRODUCT;
-                this.idxYield.push(n);
-            }
-            else if (qc.valueEquiv > 0) {
-                qc.role = QuantityCalc.ROLE_SECONDARY;
-            }
-            if (qc.comp.mass != null)
-                qc.valueMass = qc.comp.mass;
-            if (qc.comp.volume != null)
-                qc.valueVolume = qc.comp.volume;
-            if (qc.comp.moles != null)
-                qc.valueMoles = qc.comp.moles;
-            if (qc.comp.density != null)
-                qc.valueDensity = qc.comp.density;
-            if (qc.comp.conc != null)
-                qc.valueConc = qc.comp.conc;
-            if (qc.comp.yield != null)
-                qc.valueYield = qc.comp.yield;
-            qc.statEquiv = qc.valueEquiv == QuantityCalc.UNSPECIFIED ? QuantityCalc.STAT_UNKNOWN : QuantityCalc.STAT_ACTUAL;
-            qc.statMass = qc.valueMass == QuantityCalc.UNSPECIFIED ? QuantityCalc.STAT_UNKNOWN : QuantityCalc.STAT_ACTUAL;
-            qc.statVolume = qc.valueVolume == QuantityCalc.UNSPECIFIED ? QuantityCalc.STAT_UNKNOWN : QuantityCalc.STAT_ACTUAL;
-            qc.statMoles = qc.valueMoles == QuantityCalc.UNSPECIFIED ? QuantityCalc.STAT_UNKNOWN : QuantityCalc.STAT_ACTUAL;
-            qc.statDensity = qc.valueDensity == QuantityCalc.UNSPECIFIED ? QuantityCalc.STAT_UNKNOWN : QuantityCalc.STAT_ACTUAL;
-            qc.statConc = qc.valueConc == QuantityCalc.UNSPECIFIED ? QuantityCalc.STAT_UNKNOWN : QuantityCalc.STAT_ACTUAL;
-            qc.statYield = qc.valueYield == QuantityCalc.UNSPECIFIED ? QuantityCalc.STAT_UNKNOWN : QuantityCalc.STAT_ACTUAL;
-        }
-        if (this.idxPrimary.length == 0) {
-            for (let n = 0; n < this.quantities.length; n++) {
-                let qc = this.quantities[n];
-                if (qc.type == Experiment.REACTANT && qc.step == 0) {
-                    qc.role = QuantityCalc.ROLE_PRIMARY;
-                    this.idxPrimary.push(n);
-                }
-            }
-        }
-    }
-    calculateSomething() {
-        let anything = false;
-        for (let qc of this.quantities) {
-            if (qc.molw > 0 && qc.valueMass == QuantityCalc.UNSPECIFIED && qc.statMoles == QuantityCalc.STAT_ACTUAL) {
-                qc.valueMass = qc.valueMoles * qc.molw;
-                qc.statMass = QuantityCalc.STAT_VIRTUAL;
-                anything = true;
-            }
-            if (qc.molw > 0 && qc.valueMass != QuantityCalc.UNSPECIFIED && qc.valueMoles == QuantityCalc.UNSPECIFIED) {
-                qc.valueMoles = qc.valueMass / qc.molw;
-                qc.statMoles = QuantityCalc.STAT_VIRTUAL;
-                anything = true;
-            }
-            if (qc.molw > 0 && qc.statMass == QuantityCalc.STAT_ACTUAL && qc.statMoles == QuantityCalc.STAT_ACTUAL) {
-                let calcMoles = qc.valueMass / qc.molw;
-                if (!this.closeEnough(qc.valueMoles, calcMoles)) {
-                    qc.statMass = QuantityCalc.STAT_CONFLICT;
-                    qc.statMoles = QuantityCalc.STAT_CONFLICT;
-                }
-            }
-            let isSoln = qc.statConc == QuantityCalc.STAT_ACTUAL ||
-                (qc.statVolume == QuantityCalc.STAT_ACTUAL && (qc.statMass == QuantityCalc.STAT_ACTUAL || qc.statMoles == QuantityCalc.STAT_ACTUAL));
-            if (!isSoln) {
-                if (qc.valueDensity > 0 && qc.valueMass == QuantityCalc.UNSPECIFIED && qc.valueVolume != QuantityCalc.UNSPECIFIED) {
-                    qc.valueMass = qc.valueVolume * qc.valueDensity;
-                    qc.statMass = QuantityCalc.STAT_VIRTUAL;
-                    anything = true;
-                }
-                if (qc.valueDensity > 0 && qc.valueMass != QuantityCalc.UNSPECIFIED && qc.valueVolume == QuantityCalc.UNSPECIFIED) {
-                    qc.valueVolume = qc.valueMass / qc.valueDensity;
-                    qc.statVolume = QuantityCalc.STAT_VIRTUAL;
-                    anything = true;
-                }
-                if (qc.valueDensity == QuantityCalc.UNSPECIFIED && qc.valueMass != QuantityCalc.UNSPECIFIED &&
-                    qc.valueVolume != QuantityCalc.UNSPECIFIED && qc.valueConc == QuantityCalc.UNSPECIFIED) {
-                    if (qc.statMass == QuantityCalc.STAT_ACTUAL || qc.statMoles == QuantityCalc.STAT_ACTUAL) {
-                        qc.valueDensity = qc.valueMass / qc.valueVolume;
-                        qc.statDensity = QuantityCalc.STAT_VIRTUAL;
-                        anything = true;
-                    }
-                }
-            }
-            if (isSoln) {
-                if (qc.valueConc > 0 && qc.valueMoles == QuantityCalc.UNSPECIFIED && qc.valueVolume != QuantityCalc.UNSPECIFIED) {
-                    qc.valueMoles = 0.001 * qc.valueVolume * qc.valueConc;
-                    qc.statMoles = QuantityCalc.STAT_VIRTUAL;
-                    anything = true;
-                }
-                if (qc.valueConc > 0 && qc.valueMoles != QuantityCalc.UNSPECIFIED && qc.valueVolume == QuantityCalc.UNSPECIFIED) {
-                    qc.valueVolume = 1000 * qc.valueMoles / qc.valueConc;
-                    qc.statVolume = QuantityCalc.STAT_VIRTUAL;
-                    anything = true;
-                }
-                if (qc.valueConc == QuantityCalc.UNSPECIFIED && qc.valueMass != QuantityCalc.UNSPECIFIED && qc.valueVolume != QuantityCalc.UNSPECIFIED) {
-                    qc.valueConc = 1000 * qc.valueMoles / qc.valueVolume;
-                    qc.statConc = QuantityCalc.STAT_VIRTUAL;
-                    anything = true;
-                }
-                if (qc.statConc == QuantityCalc.STAT_ACTUAL && qc.valueMoles > 0 && qc.statVolume == QuantityCalc.STAT_ACTUAL) {
-                    let calcVolume = 1000 * qc.valueMoles / qc.valueConc;
-                    if (!this.closeEnough(qc.valueVolume, calcVolume)) {
-                        qc.statConc = QuantityCalc.STAT_CONFLICT;
-                        if (qc.statMass == QuantityCalc.STAT_ACTUAL)
-                            qc.statMass = QuantityCalc.STAT_CONFLICT;
-                        if (qc.statMoles == QuantityCalc.STAT_ACTUAL)
-                            qc.statMoles = QuantityCalc.STAT_CONFLICT;
-                        qc.statVolume = QuantityCalc.STAT_CONFLICT;
-                    }
-                }
-            }
-            if (qc.molw > 0 && qc.valueMass == QuantityCalc.UNSPECIFIED && qc.valueMoles != QuantityCalc.UNSPECIFIED) {
-                qc.valueMass = qc.valueMoles * qc.molw;
-                qc.statMass = QuantityCalc.STAT_VIRTUAL;
-                anything = true;
-            }
-            if (qc.statDensity == QuantityCalc.STAT_ACTUAL && qc.statConc == QuantityCalc.STAT_ACTUAL) {
-                qc.statDensity = QuantityCalc.STAT_CONFLICT;
-                qc.statConc = QuantityCalc.STAT_CONFLICT;
-            }
-        }
-        if (anything)
-            return true;
-        let hasRef = false;
-        let numSteps = this.entry.steps.length;
-        let primaryCounts = Vec.numberArray(0, numSteps);
-        let primaryEquivs = Vec.numberArray(0, numSteps);
-        let primaryMoles = Vec.numberArray(0, numSteps);
-        for (let qc of this.quantities) {
-            let ref = -1;
-            if (qc.step == 0 && qc.type == Experiment.REACTANT && qc.comp.primary)
-                ref = qc.step;
-            else if (qc.step < numSteps - 1 && qc.type == Experiment.PRODUCT && !qc.comp.waste)
-                ref = qc.step + 1;
-            else
-                continue;
-            if (primaryEquivs[ref] < 0)
-                continue;
-            if (qc.statMoles == QuantityCalc.STAT_UNKNOWN) {
-                primaryEquivs[ref] = -1;
-                continue;
-            }
-            primaryCounts[ref]++;
-            primaryEquivs[ref] += qc.valueEquiv;
-            primaryMoles[ref] += qc.valueMoles;
-        }
-        if (primaryEquivs[0] <= 0) {
-            primaryCounts[0] = 0;
-            primaryEquivs[0] = 0;
-            primaryMoles[0] = 0;
-            for (let i of this.idxPrimary) {
-                let qc = this.quantities[i];
-                if (qc.statMoles == QuantityCalc.STAT_UNKNOWN) {
-                    primaryCounts[0] = 0;
-                    primaryEquivs[0] = -1;
-                    primaryMoles[0] = 0;
-                    break;
-                }
-                primaryCounts[0]++;
-                primaryEquivs[0] += qc.valueEquiv;
-                primaryMoles[0] += qc.valueMoles;
-            }
-        }
-        let refMoles = Vec.numberArray(0, numSteps);
-        for (let n = 0; n < numSteps; n++) {
-            refMoles[n] = primaryCounts[n] == 0 || primaryEquivs[n] <= 0 ? 0 : primaryMoles[n] / primaryEquivs[n];
-            if (refMoles[n] > 0)
-                hasRef = true;
-        }
-        if (!hasRef) {
-            for (let n = 0; n < numSteps; n++) {
-                let prodMolar = [];
-                for (let qc of this.quantities) {
-                    if (qc.step != n || qc.role != QuantityCalc.ROLE_PRODUCT)
-                        continue;
-                    if (qc.statMoles == QuantityCalc.STAT_UNKNOWN || qc.valueMoles <= 0 || qc.valueEquiv <= 0)
-                        continue;
-                    let yld = qc.valueYield > 0 ? qc.valueYield * 0.01 : 1;
-                    prodMolar.push(qc.valueMoles / (qc.valueEquiv * yld));
-                }
-                if (prodMolar.length > 0) {
-                    refMoles[n] = Vec.sum(prodMolar) / prodMolar.length;
-                    hasRef = true;
-                }
-            }
-        }
-        if (!hasRef)
-            return false;
-        for (let qc of this.quantities) {
-            if (qc.type != Experiment.PRODUCT)
-                continue;
-            if (refMoles[qc.step] == 0)
-                continue;
-            if (qc.valueYield == QuantityCalc.UNSPECIFIED && qc.valueMoles != QuantityCalc.UNSPECIFIED) {
-                qc.valueYield = 100 * qc.valueMoles / (refMoles[qc.step] * qc.valueEquiv);
-                qc.statYield = QuantityCalc.STAT_VIRTUAL;
-                anything = true;
-            }
-            if (qc.valueYield != QuantityCalc.UNSPECIFIED && qc.valueMoles == QuantityCalc.UNSPECIFIED) {
-                qc.valueMoles = qc.valueYield * 0.01 * (refMoles[qc.step] * qc.valueEquiv);
-                qc.statMoles = QuantityCalc.STAT_VIRTUAL;
-                anything = true;
-            }
-            if (qc.valueMoles > 0 && qc.statYield == QuantityCalc.STAT_ACTUAL) {
-                let calcYield = 100 * qc.valueMoles / (refMoles[qc.step] * qc.valueEquiv);
-                if (!this.closeEnough(qc.valueYield, calcYield)) {
-                    if (qc.statMass == QuantityCalc.STAT_ACTUAL)
-                        qc.statMass = QuantityCalc.STAT_CONFLICT;
-                    if (qc.statMoles == QuantityCalc.STAT_ACTUAL)
-                        qc.statMoles = QuantityCalc.STAT_CONFLICT;
-                    qc.statYield = QuantityCalc.STAT_CONFLICT;
-                }
-            }
-        }
-        if (anything)
-            return true;
-        for (let qc of this.quantities) {
-            if (refMoles[qc.step] == 0)
-                continue;
-            if (qc.valueMass == QuantityCalc.UNSPECIFIED && qc.valueMoles == QuantityCalc.UNSPECIFIED && qc.valueEquiv > 0) {
-                qc.valueMoles = refMoles[qc.step] * qc.valueEquiv;
-                qc.statMoles = QuantityCalc.STAT_VIRTUAL;
-                anything = true;
-            }
-            if (qc.valueMoles != QuantityCalc.UNSPECIFIED && qc.valueEquiv == QuantityCalc.UNSPECIFIED) {
-                qc.valueEquiv = qc.valueMoles / refMoles[qc.step];
-                qc.statEquiv = QuantityCalc.STAT_VIRTUAL;
-                anything = true;
-            }
-        }
-        return anything;
-    }
-    calculateGreenMetrics(idx) {
-        let qc = this.quantities[idx];
-        let gm = new GreenMetrics();
-        gm.step = qc.step;
-        gm.idx = idx;
-        gm.isBlank = true;
-        for (let n = 0; n < this.quantities.length; n++) {
-            let sub = this.quantities[n];
-            if (sub.step > gm.step)
-                continue;
-            let eq = sub.valueEquiv;
-            if (eq == 0 && sub.type == Experiment.REAGENT)
-                continue;
-            if (sub.valueMass != QuantityCalc.UNSPECIFIED)
-                gm.isBlank = false;
-            if (sub.type == Experiment.REACTANT || sub.type == Experiment.REAGENT) {
-                gm.massReact.push(sub.valueMass);
-                if (sub.step == gm.step && eq > 0 && sub.molw > 0)
-                    gm.molwReact.push(eq * sub.molw);
-            }
-            else if (sub.type == Experiment.PRODUCT) {
-                if (!sub.comp.waste) {
-                    if (sub.step == gm.step)
-                        gm.massProd.push(sub.valueMass);
-                    if (eq > 0 && sub.molw > 0) {
-                        if (sub.step == gm.step)
-                            gm.molwProd.push(eq * sub.molw);
-                        else if (sub.step == gm.step - 1)
-                            gm.molwReact.push(eq * sub.molw);
-                    }
-                }
-                else {
-                    gm.massWaste.push(sub.valueMass);
-                }
-                if (sub.step == gm.step)
-                    gm.massProdWaste.push(sub.valueMass);
-            }
-        }
-        gm.impliedWaste = Vec.sum(gm.massReact) - Vec.sum(gm.massProdWaste);
-        if (Math.abs(gm.impliedWaste) > 1E-3)
-            gm.impliedWaste = 0;
-        this.greenMetrics.push(gm);
-    }
-    closeEnough(value1, value2) {
-        if (value1 <= 0 || value2 <= 0)
-            return true;
-        let ratio = value1 / value2;
-        return ratio >= 0.99 && ratio <= 1.01;
-    }
-}
-QuantityCalc.UNSPECIFIED = -1;
-QuantityCalc.ROLE_PRIMARY = 1;
-QuantityCalc.ROLE_SECONDARY = 2;
-QuantityCalc.ROLE_PRODUCT = 3;
-QuantityCalc.ROLE_INDEPENDENT = 4;
-QuantityCalc.STAT_UNKNOWN = 0;
-QuantityCalc.STAT_ACTUAL = 1;
-QuantityCalc.STAT_VIRTUAL = 2;
-QuantityCalc.STAT_CONFLICT = 3;
-QuantityCalc.MAX_DENOM = 16;
-QuantityCalc.RATIO_FRACT = null;
 class Stereochemistry {
     constructor(meta) {
         this.meta = meta;
@@ -9256,11 +8303,1762 @@ Stereochemistry.RUBRIC_EQUIV_OCTA = [
     [4, 0, 5, 2, 1, 3], [4, 1, 5, 3, 2, 0], [4, 2, 5, 0, 3, 1], [4, 3, 5, 1, 0, 2],
     [5, 0, 4, 2, 3, 1], [5, 1, 4, 3, 0, 2], [5, 2, 4, 0, 1, 3], [5, 3, 4, 1, 2, 0]
 ];
+class MetaMolecule {
+    constructor(mol) {
+        this.mol = mol;
+        this.atomArom = null;
+        this.bondArom = null;
+        this.rubricTetra = null;
+        this.rubricSquare = null;
+        this.rubricOcta = null;
+        this.rubricSides = null;
+        this.hash = null;
+        this.heavyHash = null;
+        this.uniqueElements = null;
+        this.piAtom = null;
+    }
+    calculateStrictAromaticity() {
+        let mol = this.mol;
+        this.atomArom = Vec.booleanArray(false, mol.numAtoms);
+        this.bondArom = Vec.booleanArray(false, mol.numBonds);
+        let rings = mol.findRingsOfSize(6);
+        const nr = rings.length;
+        if (nr == 0)
+            return;
+        this.ensurePiAtoms();
+        let mask = Vec.booleanArray(false, nr);
+        for (let n = 0; n < nr; n++) {
+            for (let i = 0; i < rings[n].length; i++) {
+                let a = rings[n][i];
+                if (!this.piAtom[a - 1]) {
+                    mask[n] = true;
+                    break;
+                }
+                let b = mol.findBond(a, rings[n][i == rings[n].length - 1 ? 0 : i + 1]);
+                let bo = mol.bondOrder(b);
+                if (bo != 1 && bo != 2) {
+                    mask[n] = true;
+                    break;
+                }
+            }
+        }
+        while (true) {
+            let anyChange = false;
+            for (let n = 0; n < nr; n++)
+                if (!mask[n]) {
+                    let phase1 = true, phase2 = true;
+                    for (let i = 0; i < rings[n].length; i++) {
+                        let b = mol.findBond(rings[n][i], rings[n][i == rings[n].length - 1 ? 0 : i + 1]);
+                        if (this.bondArom[b - 1])
+                            continue;
+                        let bo = mol.bondOrder(b);
+                        phase1 = phase1 && bo == (2 - (i & 1));
+                        phase2 = phase2 && bo == (1 + (i & 1));
+                    }
+                    if (!phase1 && !phase2)
+                        continue;
+                    for (let i = 0; i < rings[n].length; i++) {
+                        let b = mol.findBond(rings[n][i], rings[n][i == rings[n].length - 1 ? 0 : i + 1]);
+                        this.bondArom[b - 1] = true;
+                    }
+                    mask[n] = true;
+                    anyChange = true;
+                }
+            if (!anyChange)
+                break;
+        }
+        for (let n = 0; n < this.bondArom.length; n++)
+            if (this.bondArom[n]) {
+                this.atomArom[mol.bondFrom(n + 1) - 1] = true;
+                this.atomArom[mol.bondTo(n + 1) - 1] = true;
+            }
+    }
+    calculateStereoRubric() {
+        const mol = this.mol, na = mol.numAtoms, nb = mol.numBonds;
+        this.rubricTetra = new Array(na);
+        this.rubricSquare = new Array(na);
+        this.rubricOcta = new Array(na);
+        this.rubricSides = new Array(nb);
+        for (let n = 1; n <= na; n++) {
+            let blk = Chemistry.ELEMENT_BLOCKS[mol.atomicNumber(n)];
+            let adjc = mol.atomAdjCount(n), hc = mol.atomHydrogens(n);
+            if (blk == 2 && ((adjc == 3 && hc == 1) || (adjc == 4 && hc == 0))) {
+                this.rubricTetra[n - 1] = Stereochemistry.rubricTetrahedral(mol, n);
+            }
+            if (blk >= 3 && adjc == 4 && hc == 0) {
+                this.rubricSquare[n - 1] = Stereochemistry.rubricSquarePlanar(mol, n);
+            }
+            if (blk >= 3 && (adjc == 5 || adjc == 6) && hc == 0) {
+                this.rubricOcta[n - 1] = Stereochemistry.rubricOctahedral(mol, n);
+            }
+        }
+        for (let n = 1; n <= mol.numBonds; n++) {
+            if (mol.bondOrder(n) != 2 || this.isBondAromatic(n))
+                continue;
+            let bfr = mol.bondFrom(n), bto = mol.bondTo(n);
+            let blk1 = Chemistry.ELEMENT_BLOCKS[mol.atomicNumber(bfr)];
+            let blk2 = Chemistry.ELEMENT_BLOCKS[mol.atomicNumber(bto)];
+            let adjc1 = mol.atomAdjCount(bfr), hc1 = mol.atomHydrogens(bfr);
+            let adjc2 = mol.atomAdjCount(bto), hc2 = mol.atomHydrogens(bto);
+            if (blk1 == 2 && blk2 == 2 && (adjc1 + hc1 == 3 && hc1 <= 1) && (adjc2 + hc2 == 3 && hc2 <= 1)) {
+                this.rubricSides[n - 1] = Stereochemistry.rubricBondSides(mol, n);
+            }
+        }
+    }
+    isAtomAromatic(atom) {
+        return this.atomArom == null ? false : this.atomArom[atom - 1];
+    }
+    isBondAromatic(bond) {
+        return this.bondArom == null ? false : this.bondArom[bond - 1];
+    }
+    bondOrderArom(bond) {
+        return this.bondArom != null && this.bondArom[bond - 1] ? -1 : this.mol.bondOrder(bond);
+    }
+    getAtomAromaticity() {
+        return this.atomArom == null ? null : this.atomArom.slice(0);
+    }
+    getBondAromaticity() {
+        return this.bondArom == null ? null : this.bondArom.slice(0);
+    }
+    getUniqueElements() {
+        if (this.uniqueElements == null) {
+            this.uniqueElements = [];
+            for (let n = 1; n <= this.mol.numAtoms; n++) {
+                let el = this.mol.atomElement(n);
+                if (this.uniqueElements.indexOf(el) < 0)
+                    this.uniqueElements.push(el);
+            }
+        }
+        return this.uniqueElements;
+    }
+    static createRubric(mol) {
+        if (mol == null)
+            return null;
+        let meta = new MetaMolecule(mol);
+        meta.calculateStereoRubric();
+        return meta;
+    }
+    static createStrict(mol) {
+        if (mol == null)
+            return null;
+        let meta = new MetaMolecule(mol);
+        meta.calculateStrictAromaticity();
+        return meta;
+    }
+    static createStrictRubric(mol) {
+        if (mol == null)
+            return null;
+        let meta = new MetaMolecule(mol);
+        meta.calculateStrictAromaticity();
+        meta.calculateStereoRubric();
+        return meta;
+    }
+    ensurePiAtoms() {
+        if (this.piAtom != null)
+            return;
+        this.piAtom = Vec.booleanArray(false, this.mol.numAtoms);
+        for (let n = 1; n <= this.mol.numBonds; n++)
+            if (this.mol.bondOrder(n) == 2) {
+                {
+                    this.piAtom[this.mol.bondFrom(n) - 1] = true;
+                    this.piAtom[this.mol.bondTo(n) - 1] = true;
+                }
+            }
+    }
+}
+let crc_table = [];
+function make_crc_table() {
+    if (crc_table.length > 0)
+        return;
+    for (let n = 0; n < 256; n++) {
+        let c = n;
+        for (let i = 0; i < 8; i++)
+            if ((c & 1) != 0)
+                c = 0xEDB88320 ^ (c >>> 1);
+            else
+                c = (c >>> 1);
+        crc_table.push(c);
+    }
+}
+const BOOT_CRC = 0xFFFFFFFF;
+function start_crc() { return BOOT_CRC; }
+function feed_crc(crc, byte) {
+    let idx = (crc ^ byte) & 0xFF;
+    return crc_table[idx] ^ (crc >>> 8);
+}
+function end_crc(crc) { return crc ^ BOOT_CRC; }
+class CircularFingerprints {
+    constructor(meta, kind) {
+        this.meta = meta;
+        this.kind = kind;
+        this.hookApplyNewFP = null;
+        this.hookConsiderNewFP = null;
+        this.identity = [];
+        this.resolvedChiral = [];
+        this.atomGroup = [];
+        this.fplist = [];
+        this.amask = [];
+        this.atomAdj = [];
+        this.bondAdj = [];
+        make_crc_table();
+    }
+    calculate() {
+        let mol = this.meta.mol, na = mol.numAtoms;
+        this.identity = Vec.numberArray(0, na);
+        this.resolvedChiral = Vec.booleanArray(false, na);
+        for (let n = 0; n < na; n++)
+            this.atomGroup.push([]);
+        this.amask = Vec.booleanArray(false, na);
+        for (let n = 0; n < na; n++) {
+            this.amask[n] = mol.atomicNumber(n + 1) >= 2 && !MolUtil.hasAbbrev(mol, n + 1);
+            this.atomAdj.push([]);
+            this.bondAdj.push([]);
+        }
+        for (let n = 0; n < na; n++) {
+            if (!this.amask[n])
+                continue;
+            this.atomAdj[n] = mol.atomAdjList(n + 1);
+            this.bondAdj[n] = mol.atomAdjBonds(n + 1);
+            for (let i = this.atomAdj[n].length - 1; i >= 0; i--)
+                if (!this.amask[this.atomAdj[n][i] - 1]) {
+                    this.atomAdj[n].splice(i, 1);
+                    this.bondAdj[n].splice(i, 1);
+                }
+        }
+        for (let n = 0; n < na; n++)
+            if (this.amask[n]) {
+                this.identity[n] = this.initialIdentityECFP(n + 1);
+                this.atomGroup[n] = [n + 1];
+                this.applyNewFP({ 'hashCode': this.identity[n], 'iteration': 0, 'atoms': this.atomGroup[n] });
+            }
+        let niter = this.kind;
+        for (let iter = 1; iter <= niter; iter++) {
+            let newident = Vec.numberArray(0, na);
+            for (let n = 0; n < na; n++)
+                if (this.amask[n])
+                    newident[n] = this.circularIterate(iter, n + 1);
+            this.identity = newident;
+            for (let n = 0; n < na; n++)
+                if (this.amask[n]) {
+                    this.atomGroup[n] = this.growAtoms(this.atomGroup[n]);
+                    this.considerNewFP({ 'hashCode': this.identity[n], 'iteration': iter, 'atoms': this.atomGroup[n] });
+                }
+        }
+    }
+    static create(meta, kind) {
+        if (meta instanceof Molecule)
+            meta = MetaMolecule.createStrictRubric(meta);
+        let circ = new CircularFingerprints(meta, kind);
+        circ.calculate();
+        return circ;
+    }
+    getMolecule() { return this.meta.mol; }
+    get numFP() { return this.fplist.length; }
+    getFP(idx) { return this.fplist[idx]; }
+    getFingerprints() { return this.fplist.slice(0); }
+    getUniqueHashes() {
+        let hashes = new Set();
+        for (let fp of this.fplist)
+            hashes.add(fp.hashCode);
+        return Vec.sorted(Array.from(hashes));
+    }
+    getFoldedHashes(maxBits) {
+        let andBits = maxBits - 1;
+        let hashes = new Set();
+        for (let fp of this.fplist)
+            hashes.add(fp.hashCode & andBits);
+        return Vec.sorted(Array.from(hashes));
+    }
+    static tanimoto(hash1, hash2) {
+        let shared = 0, total = 0;
+        let sz1 = hash1.length, sz2 = hash2.length;
+        if (sz1 == 0 && sz2 == 0)
+            return 0;
+        let i1 = 0, i2 = 0;
+        while (i1 < sz1 || i2 < sz2) {
+            if (i1 == sz1) {
+                total += sz2 - i2;
+                break;
+            }
+            if (i2 == sz2) {
+                total += sz1 - i1;
+                break;
+            }
+            let v1 = hash1[i1], v2 = hash2[i2];
+            if (v1 == v2) {
+                shared += 1;
+                i1 += 1;
+                i2 += 1;
+            }
+            else if (v1 < v2)
+                i1 += 1;
+            else
+                i2 += 1;
+            total += 1;
+        }
+        return shared / total;
+    }
+    initialIdentityECFP(atom) {
+        const mol = this.meta.mol;
+        let adj = mol.atomAdjList(atom);
+        let nheavy = 0, nhydr = mol.atomHydrogens(atom);
+        for (let a of adj)
+            if (mol.atomElement(a) == 'H')
+                nhydr++;
+            else
+                nheavy++;
+        let atno = mol.atomicNumber(atom);
+        let degree = Math.max(0, Chemistry.ELEMENT_BONDING[atno] - nhydr);
+        let chg = mol.atomCharge(atom);
+        let inring = mol.atomRingBlock(atom) > 0 ? 1 : 0;
+        let crc = start_crc();
+        crc = feed_crc(crc, (nheavy << 4) | degree);
+        crc = feed_crc(crc, atno);
+        crc = feed_crc(crc, chg + 0x80);
+        crc = feed_crc(crc, (nhydr << 4) | inring);
+        return end_crc(crc);
+    }
+    circularIterate(iter, atom) {
+        let adj = this.atomAdj[atom - 1], adjb = this.bondAdj[atom - 1];
+        var seq = Vec.numberArray(0, 2 + 2 * adj.length);
+        seq[0] = iter;
+        seq[1] = this.identity[atom - 1];
+        for (let n = 0; n < adj.length; n++) {
+            seq[2 * n + 2] = this.meta.isBondAromatic(adjb[n]) ? 0xF : this.meta.mol.bondOrder(adjb[n]);
+            seq[2 * n + 3] = this.identity[adj[n] - 1];
+        }
+        let p = 0;
+        while (p < adj.length - 1) {
+            let i = 2 + 2 * p;
+            if (seq[i] > seq[i + 2] || (seq[i] == seq[i + 2] && seq[i + 1] > seq[i + 3])) {
+                Vec.swap(seq, i, i + 2);
+                Vec.swap(seq, i + 1, i + 3);
+                if (p > 0)
+                    p--;
+            }
+            else
+                p++;
+        }
+        var crc = start_crc();
+        for (let n = 0; n < seq.length; n += 2) {
+            crc = feed_crc(crc, seq[n]);
+            let v = seq[n + 1];
+            crc = feed_crc(crc, v >> 24);
+            crc = feed_crc(crc, (v >> 16) & 0xFF);
+            crc = feed_crc(crc, (v >> 8) & 0xFF);
+            crc = feed_crc(crc, v & 0xFF);
+        }
+        if (!this.resolvedChiral[atom - 1] && Vec.arrayLength(this.meta.rubricTetra) > 0 && this.meta.rubricTetra[atom - 1] != null) {
+            let ru = this.meta.rubricTetra[atom - 1];
+            let par = [
+                ru[0] == 0 ? 0 : this.identity[ru[0] - 1],
+                ru[1] == 0 ? 0 : this.identity[ru[1] - 1],
+                ru[2] == 0 ? 0 : this.identity[ru[2] - 1],
+                ru[3] == 0 ? 0 : this.identity[ru[3] - 1]
+            ];
+            if (par[0] != par[1] && par[0] != par[2] && par[0] != par[3] && par[1] != par[2] && par[1] != par[3] && par[2] != par[3]) {
+                crc = feed_crc(crc, Permutation.parityOrder(par) + 1);
+                this.resolvedChiral[atom - 1] = true;
+            }
+        }
+        return end_crc(crc);
+    }
+    growAtoms(atoms) {
+        let mask = Vec.booleanArray(false, this.meta.mol.numAtoms);
+        for (let n = 0; n < atoms.length; n++) {
+            mask[atoms[n] - 1] = true;
+            for (let a of this.atomAdj[atoms[n] - 1])
+                mask[a - 1] = true;
+        }
+        return Vec.add(Vec.maskIdx(mask), 1);
+    }
+    applyNewFP(newFP) {
+        if (this.hookApplyNewFP)
+            this.hookApplyNewFP(newFP);
+        this.fplist.push(newFP);
+    }
+    considerNewFP(newFP) {
+        if (this.hookConsiderNewFP)
+            this.hookConsiderNewFP(newFP);
+        let hit = -1;
+        let fp = null;
+        for (let n = 0; n < this.fplist.length; n++) {
+            let lookFP = this.fplist[n];
+            if (Vec.equals(lookFP.atoms, newFP.atoms)) {
+                fp = lookFP;
+                hit = n;
+                break;
+            }
+        }
+        if (hit < 0) {
+            this.fplist.push(newFP);
+            return;
+        }
+        if (fp.iteration < newFP.iteration || fp.hashCode < newFP.hashCode)
+            return;
+        this.fplist[hit] = newFP;
+    }
+}
+CircularFingerprints.CLASS_ECFP0 = 0;
+CircularFingerprints.CLASS_ECFP2 = 1;
+CircularFingerprints.CLASS_ECFP4 = 2;
+CircularFingerprints.CLASS_ECFP6 = 3;
+class BayesianModel {
+    constructor(classType, folding) {
+        this.classType = classType;
+        this.folding = folding;
+        this.numActive = 0;
+        this.inHash = {};
+        this.training = [];
+        this.activity = [];
+        this.contribs = {};
+        this.lowThresh = 0;
+        this.highThresh = 0;
+        this.range = 0;
+        this.invRange = 0;
+        this.estimates = null;
+        this.rocX = null;
+        this.rocY = null;
+        this.rocType = null;
+        this.rocAUC = Number.NaN;
+        this.trainingSize = 0;
+        this.trainingActives = 0;
+        this.truthTP = 0;
+        this.truthFP = 0;
+        this.truthTN = 0;
+        this.truthFN = 0;
+        this.precision = Number.NaN;
+        this.recall = Number.NaN;
+        this.specificity = Number.NaN;
+        this.statF1 = Number.NaN;
+        this.statKappa = Number.NaN;
+        this.statMCC = Number.NaN;
+        this.noteTitle = null;
+        this.noteOrigin = null;
+        this.noteField = null;
+        this.noteComments = null;
+        if (this.folding == null)
+            this.folding = 0;
+    }
+    addMolecule(mol, active, hashes) {
+        if (MolUtil.isBlank(mol) && hashes == null)
+            throw 'Molecule cannot be blank or null.';
+        if (hashes == null) {
+            let meta = MetaMolecule.createStrictRubric(mol);
+            let circ = new CircularFingerprints(meta, this.classType);
+            circ.calculate();
+            hashes = this.folding == 0 ? circ.getUniqueHashes() : circ.getFoldedHashes(this.folding);
+        }
+        if (active)
+            this.numActive++;
+        this.training.push(hashes);
+        this.activity.push(active);
+        for (let h of hashes) {
+            let stash = this.inHash[h];
+            if (stash == null)
+                stash = [0, 0];
+            if (active)
+                stash[0]++;
+            stash[1]++;
+            this.inHash[h] = stash;
+        }
+    }
+    build() {
+        this.trainingSize = this.training.length;
+        this.trainingActives = this.numActive;
+        this.contribs = [];
+        const sz = this.training.length;
+        const invSz = 1.0 / sz;
+        const P_AT = this.numActive * invSz;
+        for (let hashStr in this.inHash) {
+            let hash = parseInt(hashStr);
+            const AT = this.inHash[hash];
+            const A = AT[0], T = AT[1];
+            const Pcorr = (A + 1) / (T * P_AT + 1);
+            const P = Math.log(Pcorr);
+            this.contribs[hash] = P;
+        }
+        this.lowThresh = Number.POSITIVE_INFINITY;
+        this.highThresh = Number.NEGATIVE_INFINITY;
+        for (let fp of this.training) {
+            let val = 0;
+            for (let hash of fp)
+                val += this.contribs[hash];
+            this.lowThresh = Math.min(this.lowThresh, val);
+            this.highThresh = Math.max(this.highThresh, val);
+        }
+        this.range = this.highThresh - this.lowThresh;
+        this.invRange = this.range > 0 ? 1 / this.range : 0;
+    }
+    predictMolecule(mol) {
+        if (MolUtil.isBlank(mol))
+            throw 'Molecule cannot be blank or null.';
+        let meta = MetaMolecule.createStrictRubric(mol);
+        let circ = new CircularFingerprints(meta, this.classType);
+        circ.calculate();
+        let hashes = this.folding == 0 ? circ.getUniqueHashes() : circ.getFoldedHashes(this.folding);
+        return this.predictFP(hashes);
+    }
+    predictFP(hashes) {
+        let val = 0;
+        for (let h of hashes) {
+            let c = this.contribs[h];
+            if (c != null)
+                val += c;
+        }
+        return val;
+    }
+    scalePredictor(pred) {
+        if (this.range == 0)
+            return pred >= this.highThresh ? 1 : 0;
+        return (pred - this.lowThresh) * this.invRange;
+    }
+    calculateOverlap(mol) {
+        if (MolUtil.isBlank(mol))
+            throw 'Molecule cannot be blank or null.';
+        let meta = MetaMolecule.createStrictRubric(mol);
+        let circ = new CircularFingerprints(meta, this.classType);
+        circ.calculate();
+        let hashes = this.folding == 0 ? circ.getUniqueHashes() : circ.getFoldedHashes(this.folding);
+        return this.calculateOverlapFP(hashes);
+    }
+    calculateOverlapFP(hashes) {
+        if (hashes.length == 0)
+            return 0;
+        let count = 0.0;
+        for (let h of hashes)
+            if (this.contribs[h] != null)
+                count++;
+        return hashes.length == 1 ? count : count / hashes.length;
+    }
+    calculateAtomPredictors(mol) {
+        const na = mol.numAtoms;
+        let atomic = Vec.numberArray(0, na);
+        let predHashes = new Set();
+        let cover = this.determineCoverage(mol, predHashes);
+        for (let h in cover) {
+            let c = this.contribs[h];
+            if (c == null)
+                continue;
+            let mask = cover[h];
+            let msz = Vec.maskCount(mask);
+            let invSz = 1.0 / msz;
+            for (let n = 0; n < na; n++)
+                if (mask[n])
+                    atomic[n] += c * invSz;
+        }
+        let pred = 0;
+        for (let h in predHashes) {
+            let c = this.contribs[h];
+            if (c != null)
+                pred += c;
+        }
+        const SCALE_STDDEV_TO = 0.25;
+        const invN = 1.0 / na;
+        Vec.addTo(atomic, -Vec.sum(atomic) * invN);
+        let stdDev = 0;
+        for (let a of atomic)
+            stdDev += a * a;
+        stdDev = Math.sqrt(stdDev * invN);
+        if (stdDev > 1E-3)
+            Vec.mulBy(atomic, SCALE_STDDEV_TO / stdDev);
+        let scaled = (this.scalePredictor(pred) - 0.5) * 2;
+        if (scaled < -1)
+            scaled = -1;
+        else if (scaled > 1)
+            scaled = 1;
+        Vec.addTo(atomic, scaled);
+        return atomic;
+    }
+    validateLeaveOneOut() {
+        const sz = this.training.length;
+        this.estimates = [];
+        for (let n = 0; n < sz; n++)
+            this.estimates.push(this.singleLeaveOneOut(n));
+        this.calculateROC();
+        this.calculateTruth();
+        this.rocType = "leave-one-out";
+    }
+    validateFiveFold() {
+        this.rocType = "five-fold";
+        this.validateNfold(5);
+    }
+    validateThreeFold() {
+        this.rocType = "three-fold";
+        this.validateNfold(3);
+    }
+    clearTraining() {
+        this.training = [];
+        this.activity = [];
+    }
+    serialise() {
+        let lines = [];
+        let fpname = this.classType == CircularFingerprints.CLASS_ECFP0 ? 'ECFP0' : this.classType == CircularFingerprints.CLASS_ECFP2 ? 'ECFP2'
+            : this.classType == CircularFingerprints.CLASS_ECFP4 ? 'ECFP4' : this.classType == CircularFingerprints.CLASS_ECFP6 ? 'ECFP6'
+                : '?';
+        lines.push('Bayesian!(' + fpname + ',' + this.folding + ',' + this.lowThresh + ',' + this.highThresh + ')');
+        let sorted = [];
+        for (let hash in this.contribs)
+            sorted.push(parseInt(hash));
+        Vec.sort(sorted);
+        for (let hash of sorted) {
+            const c = this.contribs[hash];
+            lines.push(hash + '=' + c);
+        }
+        lines.push('training:size=' + this.trainingSize);
+        lines.push('training:actives=' + this.trainingActives);
+        if (!Number.isNaN(this.rocAUC))
+            lines.push('roc:auc=' + this.rocAUC);
+        if (this.rocType != null)
+            lines.push('roc:type=' + this.rocType);
+        if (this.rocX != null && this.rocY != null) {
+            let x = 'roc:x=';
+            for (let n = 0; n < this.rocX.length; n++)
+                x += (n == 0 ? '' : ',') + this.rocX[n];
+            lines.push(x);
+            let y = 'roc:y=';
+            for (let n = 0; n < this.rocY.length; n++)
+                y += (n == 0 ? '' : ',') + this.rocY[n];
+            lines.push(y);
+        }
+        if (this.truthTP > 0 || this.truthFP > 0 || this.truthTN > 0 || this.truthFP > 0) {
+            lines.push('truth:TP=' + this.truthTP);
+            lines.push('truth:FP=' + this.truthFP);
+            lines.push('truth:TN=' + this.truthTN);
+            lines.push('truth:FN=' + this.truthFN);
+            lines.push('truth:precision=' + this.precision);
+            lines.push('truth:recall=' + this.recall);
+            lines.push('truth:specificity=' + this.specificity);
+            lines.push('truth:F1=' + this.statF1);
+            lines.push('truth:kappa=' + this.statKappa);
+            lines.push('truth:MCC=' + this.statMCC);
+        }
+        if (this.noteTitle)
+            lines.push('note:title=' + this.noteTitle);
+        if (this.noteOrigin)
+            lines.push('note:origin=' + this.noteOrigin);
+        if (this.noteField)
+            lines.push('note:field=' + this.noteField);
+        if (this.noteComments)
+            for (let comment of this.noteComments)
+                lines.push('note:comment=' + comment);
+        lines.push('!End');
+        return lines.join('\n');
+    }
+    static deserialise(str) {
+        let lines = str.split('\n');
+        function readLine() { return lines.length == 0 ? null : lines.shift().trim(); }
+        let line = readLine();
+        if (line == null || !line.startsWith('Bayesian!(') || !line.endsWith(')'))
+            throw 'Not a serialised Bayesian model.';
+        let bits = line.substring(10, line.length - 1).split(',');
+        if (bits.length < 4)
+            throw 'Invalid header content';
+        let classType = bits[0] == 'ECFP0' ? CircularFingerprints.CLASS_ECFP0 : bits[0] == 'ECFP2' ? CircularFingerprints.CLASS_ECFP2
+            : bits[0] == 'ECFP4' ? CircularFingerprints.CLASS_ECFP4 : bits[0] == 'ECFP6' ? CircularFingerprints.CLASS_ECFP6
+                : 0;
+        if (classType == 0)
+            throw 'Unknown fingerprint type: ' + bits[0];
+        let folding = parseInt(bits[1]);
+        if (folding > 0)
+            for (let f = folding; f > 0; f = f >> 1) {
+                if ((f & 1) == 1 && f != 1) {
+                    folding = -1;
+                    break;
+                }
+            }
+        if (folding < 0)
+            throw 'Fingerprint folding ' + bits[1] + ' invalid: must be 0 or power of 2.';
+        let model = new BayesianModel(classType, folding);
+        model.lowThresh = parseInt(bits[2]);
+        model.highThresh = parseInt(bits[3]);
+        model.range = model.highThresh - model.lowThresh;
+        model.invRange = model.range > 0 ? 1 / model.range : 0;
+        const PTN_HASHLINE = new RegExp('^(-?\\d+)=([\\d\\.Ee-]+)');
+        while (true) {
+            line = readLine();
+            if (line == null)
+                throw 'Missing correct terminator line.';
+            if (line == '!End')
+                break;
+            let match = PTN_HASHLINE.exec(line);
+            if (match != null) {
+                let hash = parseInt(match[1]);
+                let c = parseFloat(match[2]);
+                model.contribs[hash] = c;
+            }
+            else if (line.startsWith('training:size='))
+                model.trainingSize = parseInt(line.substring(14));
+            else if (line.startsWith('training:actives='))
+                model.trainingActives = parseInt(line.substring(17));
+            else if (line.startsWith('roc:auc='))
+                model.rocAUC = parseFloat(line.substring(8));
+            else if (line.startsWith('roc:type='))
+                model.rocType = line.substring(9);
+            else if (line.startsWith('roc:x=')) {
+                model.rocX = [];
+                for (let str of line.substring(6).split(','))
+                    model.rocX.push(parseFloat(str));
+            }
+            else if (line.startsWith('roc:y=')) {
+                model.rocY = [];
+                for (let str of line.substring(6).split(','))
+                    model.rocY.push(parseFloat(str));
+            }
+            else if (line.startsWith('truth:TP='))
+                model.truthTP = parseInt(line.substring(9), 0);
+            else if (line.startsWith('truth:FP='))
+                model.truthFP = parseInt(line.substring(9), 0);
+            else if (line.startsWith('truth:TN='))
+                model.truthTN = parseInt(line.substring(9), 0);
+            else if (line.startsWith('truth:FN='))
+                model.truthFN = parseInt(line.substring(9), 0);
+            else if (line.startsWith('truth:precision='))
+                model.precision = parseFloat(line.substring(16));
+            else if (line.startsWith('truth:recall='))
+                model.recall = parseFloat(line.substring(13));
+            else if (line.startsWith('truth:specificity='))
+                model.specificity = parseFloat(line.substring(18));
+            else if (line.startsWith('truth:F1='))
+                model.statF1 = parseFloat(line.substring(9));
+            else if (line.startsWith('truth:kappa='))
+                model.statKappa = parseFloat(line.substring(12));
+            else if (line.startsWith('truth:MCC='))
+                model.statMCC = parseFloat(line.substring(10));
+            else if (line.startsWith('note:title='))
+                model.noteTitle = line.substring(11);
+            else if (line.startsWith('note:origin='))
+                model.noteOrigin = line.substring(12);
+            else if (line.startsWith('note:field='))
+                model.noteField = line.substring(11);
+            else if (line.startsWith('note:comment=')) {
+                if (model.noteComments == null)
+                    model.noteComments = [];
+                model.noteComments.push(line.substring(13));
+            }
+        }
+        return model;
+    }
+    singleLeaveOneOut(idx) {
+        let exclActive = this.activity[idx];
+        let exclSet = new Set();
+        for (let fp of this.training[idx])
+            exclSet.add(fp);
+        const sz = this.training.length, szN = sz - 1;
+        const invSzN = 1.0 / szN;
+        const activeN = exclActive ? this.numActive - 1 : this.numActive;
+        const P_AT = activeN * invSzN;
+        let val = 0;
+        for (let hashStr in this.inHash) {
+            const hash = parseInt(hashStr);
+            if (!exclSet.has(hash))
+                continue;
+            const AT = this.inHash[hash];
+            const A = AT[0] - (exclActive ? 1 : 0), T = AT[1] - 1;
+            const Pcorr = (A + 1) / (T * P_AT + 1);
+            const P = Math.log(Pcorr);
+            val += P;
+        }
+        return val;
+    }
+    validateNfold(nsegs) {
+        const sz = this.training.length;
+        let order = Vec.numberArray(0, sz);
+        let p = 0;
+        for (let n = 0; n < sz; n++)
+            if (this.activity[n])
+                order[p++] = n;
+        for (let n = 0; n < sz; n++)
+            if (!this.activity[n])
+                order[p++] = n;
+        let segContribs = [];
+        for (let n = 0; n < nsegs; n++)
+            segContribs.push(this.buildPartial(order, n, nsegs));
+        this.estimates = Vec.numberArray(0, sz);
+        for (let n = 0; n < sz; n++)
+            this.estimates[order[n]] = this.estimatePartial(order, n, segContribs[n % nsegs]);
+        this.calculateROC();
+        this.calculateTruth();
+    }
+    buildPartial(order, seg, div) {
+        const sz = this.training.length;
+        let na = 0, nt = 0;
+        let ih = {};
+        for (let n = 0; n < sz; n++) {
+            if (n % div != seg) {
+                const active = this.activity[order[n]];
+                if (active)
+                    na++;
+                nt++;
+                for (let h of this.training[order[n]]) {
+                    let stash = ih[h];
+                    if (stash == null)
+                        stash = [0, 0];
+                    if (active)
+                        stash[0]++;
+                    stash[1]++;
+                    ih[h] = stash;
+                }
+            }
+        }
+        let segContribs = {};
+        const invSz = 1.0 / nt;
+        const P_AT = na * invSz;
+        for (let hashStr in ih) {
+            let hash = parseInt(hashStr);
+            const AT = ih[hash];
+            const A = AT[0], T = AT[1];
+            const Pcorr = (A + 1) / (T * P_AT + 1);
+            const P = Math.log(Pcorr);
+            segContribs[hash] = P;
+        }
+        return segContribs;
+    }
+    estimatePartial(order, idx, segContrib) {
+        let val = 0;
+        for (let h of this.training[order[idx]]) {
+            let c = segContrib[h];
+            if (c != null)
+                val += c;
+        }
+        return val;
+    }
+    calculateROC() {
+        const sz = this.training.length;
+        let idx = Vec.idxSort(this.estimates);
+        let thresholds = [];
+        thresholds.push(this.lowThresh - 0.01 * this.range);
+        for (let n = 0; n < sz - 1; n++) {
+            const th1 = this.estimates[idx[n]], th2 = this.estimates[idx[n + 1]];
+            if (th1 == th2)
+                continue;
+            thresholds.push(0.5 * (th1 + th2));
+        }
+        thresholds.push(this.highThresh + 0.01 * this.range);
+        this.rocX = [];
+        this.rocY = [];
+        let rocT = [];
+        let posTrue = 0, posFalse = 0, ipos = 0;
+        let invPos = 1.0 / this.numActive, invNeg = 1.0 / (sz - this.numActive);
+        for (let n = 0; n < thresholds.length; n++) {
+            const th = thresholds[n];
+            for (; ipos < sz; ipos++) {
+                if (th < this.estimates[idx[ipos]])
+                    break;
+                if (this.activity[idx[ipos]])
+                    posTrue++;
+                else
+                    posFalse++;
+            }
+            const x = posFalse * invNeg;
+            const y = posTrue * invPos;
+            const rsz = rocT.length;
+            if (rsz > 0 && x == this.rocX[rsz - 1] && y == this.rocY[rsz - 1])
+                continue;
+            this.rocX[rsz] = 1 - x;
+            this.rocY[rsz] = 1 - y;
+            rocT[rsz] = th;
+        }
+        this.rocX = Vec.reverse(this.rocX);
+        this.rocY = Vec.reverse(this.rocY);
+        rocT = Vec.reverse(rocT);
+        this.calibrateThresholds(this.rocX, this.rocY, rocT);
+        this.rocAUC = 0;
+        for (let n = 0; n < rocT.length - 1; n++) {
+            const w = this.rocX[n + 1] - this.rocX[n], h = 0.5 * (this.rocY[n] + this.rocY[n + 1]);
+            this.rocAUC += w * h;
+        }
+        const DIST = 0.002, DSQ = DIST * DIST;
+        let gx = [], gy = [];
+        gx.push(this.rocX[0]);
+        gy.push(this.rocY[0]);
+        for (let i = 1; i < rocT.length - 1; i++) {
+            const dx = this.rocX[i] - gx[gx.length - 1], dy = this.rocY[i] - gy[gy.length - 1];
+            if (norm2_xy(dx, dy) < DSQ)
+                continue;
+            gx.push(this.rocX[i]);
+            gy.push(this.rocY[i]);
+        }
+        gx.push(this.rocX[rocT.length - 1]);
+        gy.push(this.rocY[rocT.length - 1]);
+    }
+    calculateTruth() {
+        let thresh = 0.5 * (this.lowThresh + this.highThresh);
+        this.truthTP = this.truthFP = this.truthTN = this.truthFN = 0;
+        for (let n = 0; n < this.activity.length; n++) {
+            let actual = this.activity[n], predicted = this.estimates[n] >= thresh;
+            if (actual && predicted)
+                this.truthTP++;
+            else if (!actual && predicted)
+                this.truthFP++;
+            else if (actual && !predicted)
+                this.truthFN++;
+            else if (!actual && !predicted)
+                this.truthTN++;
+        }
+        const TP = this.truthTP, FP = this.truthFP, TN = this.truthTN, FN = this.truthFN;
+        let invSize = 1.0 / this.activity.length;
+        this.precision = TP / (TP + FP);
+        this.recall = TP / (TP + FN);
+        this.specificity = TN / (TN + FP);
+        this.statF1 = 2 * (this.precision * this.recall) / (this.precision + this.recall);
+        let Pyes = (TP + FP) * invSize * (TP + FN) * invSize;
+        let Pno = (FP + TN) * invSize * (FN + TN) * invSize;
+        let P0 = (TP + TN) * invSize, Pe = Pyes + Pno;
+        this.statKappa = (P0 - Pe) / (1 - Pe);
+        let mccOver = TP * TN - FP * FN;
+        let mccUnder = (TP + FP) * (TP + FN) * (TN + FP) * (TN + FN);
+        this.statMCC = mccOver / Math.sqrt(mccUnder);
+    }
+    calibrateThresholds(x, y, t) {
+        const sz = t.length;
+        let idx = 0;
+        for (let n = 1; n < sz; n++)
+            if (y[n] - x[n] > y[idx] - x[idx])
+                idx = n;
+        const midThresh = t[idx];
+        let idxX = 0, idxY = sz - 1;
+        for (; idxX < idx - 1; idxX++)
+            if (x[idxX] > 0)
+                break;
+        for (; idxY > idx + 1; idxY--)
+            if (y[idxY] < 1)
+                break;
+        let delta = Math.min(t[idxX] - midThresh, midThresh - t[idxY]);
+        this.lowThresh = midThresh - delta;
+        this.highThresh = midThresh + delta;
+        this.range = 2 * delta;
+        this.invRange = this.range > 0 ? 1 / this.range : 0;
+    }
+    determineCoverage(mol, approvedHashes) {
+        const na = mol.numAtoms;
+        let cover = {};
+        const andBits = this.folding == 0 ? 0xFFFFFFFF : this.folding - 1;
+        let meta = MetaMolecule.createStrictRubric(mol);
+        let circ = new CircularFingerprints(meta, this.classType);
+        let collectFP = (fp) => {
+            let idx = fp.hashCode & andBits;
+            if (this.contribs[idx] == null)
+                return;
+            let mask = cover[idx];
+            if (mask == null) {
+                mask = Vec.booleanArray(false, na);
+                cover[idx] = mask;
+            }
+            for (let a of fp.atoms)
+                mask[a - 1] = true;
+        };
+        circ.hookApplyNewFP = collectFP;
+        circ.hookConsiderNewFP = collectFP;
+        circ.calculate();
+        if (approvedHashes != null) {
+            let hashes = this.folding == 0 ? circ.getUniqueHashes() : circ.getFoldedHashes(this.folding);
+            for (let h of hashes)
+                approvedHashes.add(h);
+        }
+        return cover;
+    }
+}
+class DataSheetStream {
+    static readXML(strXML) {
+        var xmlDoc = jQuery.parseXML(strXML);
+        if (xmlDoc == null)
+            return null;
+        var root = xmlDoc.documentElement;
+        if (root == null)
+            return null;
+        var ds = new DataSheet();
+        var summary = findNode(root, 'Summary');
+        if (summary == null)
+            return null;
+        ds.setTitle(nodeText(findNode(summary, 'Title')));
+        ds.setDescription(nodeText(findNode(summary, 'Description')));
+        var extRoot = findNode(root, 'Extension');
+        if (extRoot != null) {
+            var extList = findNodes(extRoot, 'Ext');
+            for (var n = 0; n < extList.length; n++) {
+                var ext = extList[n];
+                ds.appendExtension(ext.getAttribute("name"), ext.getAttribute("type"), nodeText(ext));
+            }
+        }
+        var header = findNode(root, 'Header');
+        var numCols = parseInt(header.getAttribute("ncols")), numRows = parseInt(header.getAttribute("nrows"));
+        var colList = findNodes(header, 'Column');
+        if (colList.length != numCols)
+            return null;
+        for (var n = 0; n < numCols; n++) {
+            var col = colList[n];
+            var id = parseInt(col.getAttribute("id"));
+            if (id != n + 1)
+                return null;
+            ds.appendColumn(col.getAttribute("name"), col.getAttribute("type"), nodeText(col));
+        }
+        var row = findNode(root, 'Content').firstElementChild;
+        var rowidx = 0;
+        while (row) {
+            if (parseInt(row.getAttribute("id")) != rowidx + 1)
+                return null;
+            ds.appendRow();
+            var col = row.firstElementChild;
+            while (col) {
+                var colidx = parseInt(col.getAttribute("id")) - 1;
+                var ct = ds.colType(colidx), val = nodeText(col);
+                if (val == '') { }
+                else if (ct == DataSheet.COLTYPE_MOLECULE)
+                    ds.setObject(rowidx, colidx, val);
+                else if (ct == DataSheet.COLTYPE_STRING)
+                    ds.setString(rowidx, colidx, val);
+                else if (ct == DataSheet.COLTYPE_REAL)
+                    ds.setReal(rowidx, colidx, parseFloat(val));
+                else if (ct == DataSheet.COLTYPE_INTEGER)
+                    ds.setInteger(rowidx, colidx, parseInt(val));
+                else if (ct == DataSheet.COLTYPE_BOOLEAN)
+                    ds.setBoolean(rowidx, colidx, val == 'true' ? true : val == 'false' ? false : null);
+                else if (ct == DataSheet.COLTYPE_EXTEND)
+                    ds.setExtend(rowidx, colidx, val);
+                col = col.nextElementSibling;
+                colidx++;
+            }
+            row = row.nextElementSibling;
+            rowidx++;
+        }
+        return ds;
+    }
+    static writeXML(ds) {
+        var xml = new DOMParser().parseFromString('<DataSheet/>', 'text/xml');
+        var summary = xml.createElement('Summary');
+        xml.documentElement.appendChild(summary);
+        var title = xml.createElement('Title'), descr = xml.createElement('Description');
+        summary.appendChild(title);
+        title.appendChild(xml.createTextNode(ds.getTitle()));
+        summary.appendChild(descr);
+        descr.appendChild(xml.createCDATASection(ds.getDescription()));
+        var extension = xml.createElement('Extension');
+        xml.documentElement.appendChild(extension);
+        for (var n = 0; n < ds.numExtensions; n++) {
+            var ext = xml.createElement('Ext');
+            extension.appendChild(ext);
+            ext.setAttribute('name', ds.getExtName(n));
+            ext.setAttribute('type', ds.getExtType(n));
+            ext.appendChild(xml.createCDATASection(ds.getExtData(n)));
+        }
+        var header = xml.createElement('Header');
+        xml.documentElement.appendChild(header);
+        header.setAttribute('nrows', ds.numRows.toString());
+        header.setAttribute('ncols', ds.numCols.toString());
+        for (var n = 0; n < ds.numCols; n++) {
+            var column = xml.createElement('Column');
+            header.appendChild(column);
+            column.setAttribute('id', (n + 1).toString());
+            column.setAttribute('name', ds.colName(n));
+            column.setAttribute('type', ds.colType(n));
+            column.appendChild(xml.createTextNode(ds.colDescr(n)));
+        }
+        var content = xml.createElement('Content');
+        xml.documentElement.appendChild(content);
+        for (var r = 0; r < ds.numRows; r++) {
+            var row = xml.createElement('Row');
+            row.setAttribute('id', (r + 1).toString());
+            content.appendChild(row);
+            for (var c = 0; c < ds.numCols; c++) {
+                var cell = xml.createElement('Cell');
+                cell.setAttribute('id', (c + 1).toString());
+                row.appendChild(cell);
+                var ct = ds.colType(c);
+                var txtNode = null;
+                if (ds.isNull(r, c)) { }
+                else if (ct == DataSheet.COLTYPE_MOLECULE) {
+                    let obj = ds.getObject(r, c);
+                    if (obj instanceof Molecule)
+                        obj = MoleculeStream.writeNative(obj);
+                    txtNode = xml.createCDATASection(obj);
+                }
+                else if (ct == DataSheet.COLTYPE_STRING)
+                    txtNode = xml.createCDATASection(ds.getString(r, c));
+                else if (ct == DataSheet.COLTYPE_REAL)
+                    txtNode = xml.createTextNode(ds.getReal(r, c).toString());
+                else if (ct == DataSheet.COLTYPE_INTEGER)
+                    txtNode = xml.createTextNode(ds.getInteger(r, c).toString());
+                else if (ct == DataSheet.COLTYPE_BOOLEAN)
+                    txtNode = xml.createTextNode(ds.getBoolean(r, c).toString());
+                else if (ct == DataSheet.COLTYPE_EXTEND)
+                    txtNode = xml.createCDATASection(ds.getExtend(r, c));
+                if (txtNode != null)
+                    cell.appendChild(txtNode);
+            }
+        }
+        return new XMLSerializer().serializeToString(xml.documentElement);
+    }
+    ;
+}
+class FormatList {
+}
+FormatList.FMT_NATIVE = 'native';
+FormatList.FMT_XMLDS = 'xmlds';
+FormatList.FMT_MDLMOL = 'mdlmol';
+FormatList.FMT_MDLSDF = 'mdlsdf';
+FormatList.FMT_MDLRDF = 'mdlrdf';
+FormatList.FMT_MDLRXN = 'mdlrxn';
+FormatList.GFX_PNG = 'png';
+FormatList.GFX_PNGZIP = 'pngzip';
+FormatList.GFX_SVG = 'svg';
+FormatList.GFX_SVGZIP = 'svgzip';
+FormatList.GFX_PDF = 'pdf';
+FormatList.GFX_PDFZIP = 'pdfzip';
+FormatList.GFX_EPS = 'eps';
+FormatList.GFX_HTML = 'html';
+FormatList.GFX_OPENDOC_ODG = 'odg';
+FormatList.GFX_OPENDOC_ODT = 'odt';
+FormatList.GFX_OPENDOC_ODS = 'ods';
+FormatList.GFX_OOXML_DOCX = 'docx';
+FormatList.GFX_OOXML_XLSX = 'xlsx';
+FormatList.FORMAT_DESCR = {
+    'native': 'SketchEl Molecule',
+    'xmlds': 'DataSheet XML',
+    'mdlmol': 'MDL MOL (single molecule)',
+    'mdlsdf': 'MDL SDF (molecules + data)',
+    'mdlrdf': 'MDL RDF (reactions + data)',
+    'mdlrxn': 'MDL RXN (single reaction)',
+    'png': 'PNG image (raster)',
+    'pngzip': 'ZIP (multiple PNG files)',
+    'svg': 'SVG picture (vector)',
+    'svgzip': 'ZIP (multiple SVG files)',
+    'pdf': 'PDF diagram (vector)',
+    'pdfzip': 'ZIP (multiple PDF files)',
+    'eps': 'Encapsulated PostScript (vector)',
+    'html': 'HTML with embedded SVG',
+    'odg': 'OpenDocument Graphic',
+    'odt': 'OpenDocument Text',
+    'ods': 'OpenDocument SpreadSheet',
+    'docx': 'Microsoft Word',
+    'xlsx': 'Microsoft Excel'
+};
+FormatList.FORMAT_EXTN = {
+    'native': '.el',
+    'xmlds': '.ds',
+    'mdlmol': '.mol',
+    'mdlsdf': '.sdf',
+    'mdlrdf': '.rdf',
+    'mdlrxn': '.rxn',
+    'png': '.png',
+    'pngzip': '_png.zip',
+    'svg': '.svg',
+    'svgzip': '_svg.zip',
+    'pdf': '.pdf',
+    'pdfzip': '_pdf.zip',
+    'eps': '.eps',
+    'html': '.html',
+    'odg': '.odg',
+    'odt': '.odt',
+    'ods': '.ods',
+    'docx': '.docx',
+    'xlsx': '.xlsx'
+};
+FormatList.FORMAT_MIMETYPE = {
+    'native': 'chemical/x-sketchel',
+    'xmlds': 'chemical/x-datasheet',
+    'mdlmol': 'chemical/x-mdl-molfile',
+    'mdlsdf': 'chemical/x-mdl-sdfile',
+    'mdlrdf': 'chemical/x-mdl-rdfile',
+    'mdlrxn': 'chemical/x-mdl-rxnfile',
+    'png': 'image/png',
+    'pngzip': 'application/zip',
+    'svg': 'image/png',
+    'svgzip': 'application/zip',
+    'pdf': 'application/pdf',
+    'pdfzip': 'application/zip',
+    'eps': 'image/eps',
+    'html': 'text/html',
+    'odg': 'application/vnd.oasis.opendocument.graphics',
+    'odt': 'application/vnd.oasis.opendocument.text',
+    'ods': 'application/vnd.oasis.opendocument.spreadsheet',
+    'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+};
+class QuantityComp {
+    constructor(comp, step, type, idx) {
+        this.comp = comp;
+        this.step = step;
+        this.type = type;
+        this.idx = idx;
+        this.role = 0;
+        this.molw = 0;
+        this.valueEquiv = 0;
+        this.statEquiv = QuantityCalc.STAT_UNKNOWN;
+        this.valueMass = QuantityCalc.UNSPECIFIED;
+        this.statMass = QuantityCalc.STAT_UNKNOWN;
+        this.valueVolume = QuantityCalc.UNSPECIFIED;
+        this.statVolume = QuantityCalc.STAT_UNKNOWN;
+        this.valueMoles = QuantityCalc.UNSPECIFIED;
+        this.statMoles = QuantityCalc.STAT_UNKNOWN;
+        this.valueDensity = QuantityCalc.UNSPECIFIED;
+        this.statDensity = QuantityCalc.STAT_UNKNOWN;
+        this.valueConc = QuantityCalc.UNSPECIFIED;
+        this.statConc = QuantityCalc.STAT_UNKNOWN;
+        this.valueYield = QuantityCalc.UNSPECIFIED;
+        this.statYield = QuantityCalc.STAT_UNKNOWN;
+    }
+}
+class GreenMetrics {
+    constructor() {
+        this.step = 0;
+        this.idx = 0;
+        this.massReact = [];
+        this.massProd = [];
+        this.massWaste = [];
+        this.massProdWaste = [];
+        this.molwReact = [];
+        this.molwProd = [];
+        this.impliedWaste = 0;
+        this.isBlank = false;
+    }
+}
+class QuantityCalc {
+    constructor(entry) {
+        this.entry = entry;
+        this.quantities = [];
+        this.idxPrimary = [];
+        this.idxYield = [];
+        this.allMassReact = [];
+        this.allMassProd = [];
+        this.allMassWaste = [];
+        this.greenMetrics = [];
+    }
+    static isStoichZero(stoich) {
+        if (this.isStoichUnity(stoich))
+            return false;
+        if (parseFloat(stoich) == 0)
+            return true;
+        return false;
+    }
+    static isStoichUnity(stoich) {
+        if (!stoich || stoich == '1')
+            return true;
+        let [numer, denom] = this.extractStoichFraction(stoich);
+        return numer != 0 && numer == denom;
+    }
+    static extractStoichFraction(stoich) {
+        if (!stoich)
+            return [1, 1];
+        let numer = 1, denom = 1;
+        let i = stoich.indexOf('/');
+        if (i < 0) {
+            let v = parseFloat(stoich);
+            if (v >= 0)
+                numer = v;
+        }
+        else {
+            let v1 = parseFloat(stoich.substring(0, i)), v2 = parseFloat(stoich.substring(i + 1));
+            if (v1 >= 0)
+                numer = v1;
+            if (v2 >= 0)
+                denom = v2;
+        }
+        return [numer, denom];
+    }
+    static extractStoichValue(stoich) {
+        let [numer, denom] = this.extractStoichFraction(stoich);
+        return denom <= 1 ? numer : numer / denom;
+    }
+    static stoichAsRatio(stoich) {
+        let [numer, denom] = this.extractStoichFraction(stoich);
+        if (numer == Math.floor(numer))
+            return [numer, denom];
+        return this.stoichFractAsRatio(numer);
+    }
+    static stoichFractAsRatio(fract) {
+        if (fract == Math.floor(fract))
+            return [fract, 1];
+        const MAX_DENOM = QuantityCalc.MAX_DENOM;
+        if (QuantityCalc.RATIO_FRACT == null) {
+            QuantityCalc.RATIO_FRACT = [];
+            for (let p = 0, j = 2; j <= MAX_DENOM; j++)
+                for (let i = 1; i < j && i < MAX_DENOM - 1; i++)
+                    QuantityCalc.RATIO_FRACT.push(i * 1.0 / j);
+        }
+        let whole = Math.floor(fract);
+        let resid = fract - whole;
+        let bestDiff = Number.MAX_VALUE;
+        let bestOver = 1, bestUnder = 1;
+        for (let p = 0, j = 2; j <= MAX_DENOM; j++)
+            for (let i = 1; i < j && i < MAX_DENOM - 1; i++) {
+                let diff = Math.abs(QuantityCalc.RATIO_FRACT[p++] - resid);
+                if (diff < bestDiff) {
+                    bestDiff = diff;
+                    bestOver = i;
+                    bestUnder = j;
+                }
+            }
+        return [bestOver + (whole * bestUnder), bestUnder];
+    }
+    static impliedReagentStoich(reagent, products) {
+        if (MolUtil.isBlank(reagent.mol) || products.length == 0)
+            return 0;
+        let pstoich = Vec.numberArray(-1, products.length);
+        let rmol = reagent.mol;
+        let highest = 0;
+        for (let n = 1; n <= rmol.numAtoms; n++) {
+            let m = rmol.atomMapNum(n);
+            if (m == 0)
+                continue;
+            let total = 0;
+            for (let i = 0; i < products.length; i++) {
+                let pmol = products[i].mol;
+                if (MolUtil.isBlank(pmol))
+                    continue;
+                let pcount = 0;
+                for (let j = 1; j <= pmol.numAtoms; j++)
+                    if (pmol.atomMapNum(j) == m)
+                        pcount++;
+                if (pcount > 0) {
+                    let rcount = 0;
+                    for (let k = 1; k <= rmol.numAtoms; k++)
+                        if (rmol.atomMapNum(k) == m)
+                            rcount++;
+                    if (pstoich[i] < 0)
+                        pstoich[i] = QuantityCalc.extractStoichValue(products[i].stoich);
+                    total += pcount * pstoich[i] / rcount;
+                }
+            }
+            highest = Math.max(highest, total);
+        }
+        return highest;
+    }
+    calculate() {
+        this.classifyTypes();
+        while (this.calculateSomething()) { }
+        this.allMassReact = [];
+        this.allMassProd = [];
+        this.allMassWaste = [];
+        for (let n = 0; n < this.quantities.length; n++) {
+            let qc = this.quantities[n];
+            if (qc.type == Experiment.REACTANT || qc.type == Experiment.REAGENT) {
+                if (qc.valueEquiv == 0 && qc.type == Experiment.REAGENT)
+                    continue;
+                this.allMassReact.push(qc.valueMass);
+            }
+            else if (qc.type == Experiment.PRODUCT) {
+                if (!qc.comp.waste) {
+                    this.allMassProd.push(qc.valueMass);
+                    this.calculateGreenMetrics(n);
+                }
+                else {
+                    this.allMassWaste.push(qc.valueMass);
+                }
+            }
+        }
+    }
+    get numQuantities() { return this.quantities.length; }
+    getQuantity(idx) { return this.quantities[idx]; }
+    getAllQuantities() { return this.quantities.slice(0); }
+    get numGreenMetrics() { return this.greenMetrics.length; }
+    getGreenMetrics(idx) { return this.greenMetrics[idx]; }
+    getAllGreenMetrics() { return this.greenMetrics.slice(0); }
+    getAllMassReact() { return this.allMassReact.slice(0); }
+    getAllMassProd() { return this.allMassProd.slice(0); }
+    getAllMassWaste() { return this.allMassWaste.slice(0); }
+    findComponent(step, type, idx) {
+        for (let qc of this.quantities)
+            if (qc.step == step && qc.type == type && qc.idx == idx)
+                return qc;
+        return null;
+    }
+    static formatMolWeight(value) {
+        if (value == QuantityCalc.UNSPECIFIED)
+            return '';
+        return formatDouble(value, 6) + ' g/mol';
+    }
+    static formatMass(value) {
+        if (value == QuantityCalc.UNSPECIFIED)
+            return '';
+        if (value <= 1E-6)
+            return formatDouble(value * 1E6, 6) + ' \u03BCg';
+        if (value <= 1E-3)
+            return formatDouble(value * 1E3, 6) + ' mg';
+        if (value >= 1E3)
+            return formatDouble(value * 1E-3, 6) + ' kg';
+        return formatDouble(value, 6) + ' g';
+    }
+    static formatVolume(value) {
+        if (value == QuantityCalc.UNSPECIFIED)
+            return '';
+        if (value <= 1E-6)
+            return formatDouble(value * 1E6, 6) + ' nL';
+        if (value <= 1E-3)
+            return formatDouble(value * 1E3, 6) + ' \u03BCL';
+        if (value >= 1E3)
+            return formatDouble(value * 1E-3, 6) + ' L';
+        return formatDouble(value, 6) + ' mL';
+    }
+    static formatMoles(value) {
+        if (value == QuantityCalc.UNSPECIFIED)
+            return '';
+        if (value <= 1E-9)
+            return formatDouble(value * 1E9, 6) + ' nmol';
+        if (value <= 1E-6)
+            return formatDouble(value * 1E6, 6) + ' \u03BCmol';
+        if (value <= 1E-3)
+            return formatDouble(value * 1E3, 6) + ' mmol';
+        return formatDouble(value, 6) + ' mol';
+    }
+    static formatDensity(value) {
+        if (value == QuantityCalc.UNSPECIFIED)
+            return '';
+        return formatDouble(value, 6) + ' g/mL';
+    }
+    static formatConc(value) {
+        if (value == QuantityCalc.UNSPECIFIED)
+            return '';
+        if (value <= 1E-9)
+            return formatDouble(value * 1E9, 6) + ' nmol/L';
+        if (value <= 1E-6)
+            return formatDouble(value * 1E6, 6) + ' \u03BCmol/L';
+        if (value <= 1E-3)
+            return formatDouble(value * 1E3, 6) + ' mmol/L';
+        return formatDouble(value, 6) + ' mol/L';
+    }
+    static formatPercent(value) {
+        if (value == QuantityCalc.UNSPECIFIED)
+            return '';
+        return formatDouble(value, 6) + '%';
+    }
+    classifyTypes() {
+        for (let s = 0; s < this.entry.steps.length; s++) {
+            let step = this.entry.steps[s];
+            for (let n = 0; n < step.reactants.length; n++)
+                this.quantities.push(new QuantityComp(step.reactants[n], s, Experiment.REACTANT, n));
+            for (let n = 0; n < step.reagents.length; n++)
+                this.quantities.push(new QuantityComp(step.reagents[n], s, Experiment.REAGENT, n));
+            for (let n = 0; n < step.products.length; n++)
+                this.quantities.push(new QuantityComp(step.products[n], s, Experiment.PRODUCT, n));
+        }
+        for (let n = 0; n < this.quantities.length; n++) {
+            let qc = this.quantities[n];
+            if (qc.type == Experiment.REAGENT) {
+                if (qc.comp.equiv != null)
+                    qc.valueEquiv = qc.comp.equiv;
+                else {
+                    let eq = QuantityCalc.impliedReagentStoich(qc.comp, this.entry.steps[qc.step].products);
+                    if (eq > 0)
+                        qc.valueEquiv = eq;
+                }
+            }
+            else {
+                qc.valueEquiv = QuantityCalc.extractStoichValue(qc.comp.stoich);
+            }
+            if (qc.comp.mol != null)
+                qc.molw = MolUtil.molecularWeight(qc.comp.mol);
+            qc.role = QuantityCalc.ROLE_INDEPENDENT;
+            if (qc.step == 0 && qc.type == Experiment.REACTANT) {
+                if (qc.comp.primary) {
+                    qc.role = QuantityCalc.ROLE_PRIMARY;
+                    this.idxPrimary.push(n);
+                }
+                else
+                    qc.role = QuantityCalc.ROLE_SECONDARY;
+            }
+            else if (qc.type == Experiment.REAGENT) {
+                if (qc.valueEquiv > 0)
+                    qc.role = QuantityCalc.ROLE_SECONDARY;
+            }
+            else if (qc.type == Experiment.PRODUCT && !qc.comp.waste) {
+                qc.role = QuantityCalc.ROLE_PRODUCT;
+                this.idxYield.push(n);
+            }
+            else if (qc.valueEquiv > 0) {
+                qc.role = QuantityCalc.ROLE_SECONDARY;
+            }
+            if (qc.comp.mass != null)
+                qc.valueMass = qc.comp.mass;
+            if (qc.comp.volume != null)
+                qc.valueVolume = qc.comp.volume;
+            if (qc.comp.moles != null)
+                qc.valueMoles = qc.comp.moles;
+            if (qc.comp.density != null)
+                qc.valueDensity = qc.comp.density;
+            if (qc.comp.conc != null)
+                qc.valueConc = qc.comp.conc;
+            if (qc.comp.yield != null)
+                qc.valueYield = qc.comp.yield;
+            qc.statEquiv = qc.valueEquiv == QuantityCalc.UNSPECIFIED ? QuantityCalc.STAT_UNKNOWN : QuantityCalc.STAT_ACTUAL;
+            qc.statMass = qc.valueMass == QuantityCalc.UNSPECIFIED ? QuantityCalc.STAT_UNKNOWN : QuantityCalc.STAT_ACTUAL;
+            qc.statVolume = qc.valueVolume == QuantityCalc.UNSPECIFIED ? QuantityCalc.STAT_UNKNOWN : QuantityCalc.STAT_ACTUAL;
+            qc.statMoles = qc.valueMoles == QuantityCalc.UNSPECIFIED ? QuantityCalc.STAT_UNKNOWN : QuantityCalc.STAT_ACTUAL;
+            qc.statDensity = qc.valueDensity == QuantityCalc.UNSPECIFIED ? QuantityCalc.STAT_UNKNOWN : QuantityCalc.STAT_ACTUAL;
+            qc.statConc = qc.valueConc == QuantityCalc.UNSPECIFIED ? QuantityCalc.STAT_UNKNOWN : QuantityCalc.STAT_ACTUAL;
+            qc.statYield = qc.valueYield == QuantityCalc.UNSPECIFIED ? QuantityCalc.STAT_UNKNOWN : QuantityCalc.STAT_ACTUAL;
+        }
+        if (this.idxPrimary.length == 0) {
+            for (let n = 0; n < this.quantities.length; n++) {
+                let qc = this.quantities[n];
+                if (qc.type == Experiment.REACTANT && qc.step == 0) {
+                    qc.role = QuantityCalc.ROLE_PRIMARY;
+                    this.idxPrimary.push(n);
+                }
+            }
+        }
+    }
+    calculateSomething() {
+        let anything = false;
+        for (let qc of this.quantities) {
+            if (qc.molw > 0 && qc.valueMass == QuantityCalc.UNSPECIFIED && qc.statMoles == QuantityCalc.STAT_ACTUAL) {
+                qc.valueMass = qc.valueMoles * qc.molw;
+                qc.statMass = QuantityCalc.STAT_VIRTUAL;
+                anything = true;
+            }
+            if (qc.molw > 0 && qc.valueMass != QuantityCalc.UNSPECIFIED && qc.valueMoles == QuantityCalc.UNSPECIFIED) {
+                qc.valueMoles = qc.valueMass / qc.molw;
+                qc.statMoles = QuantityCalc.STAT_VIRTUAL;
+                anything = true;
+            }
+            if (qc.molw > 0 && qc.statMass == QuantityCalc.STAT_ACTUAL && qc.statMoles == QuantityCalc.STAT_ACTUAL) {
+                let calcMoles = qc.valueMass / qc.molw;
+                if (!this.closeEnough(qc.valueMoles, calcMoles)) {
+                    qc.statMass = QuantityCalc.STAT_CONFLICT;
+                    qc.statMoles = QuantityCalc.STAT_CONFLICT;
+                }
+            }
+            let isSoln = qc.statConc == QuantityCalc.STAT_ACTUAL ||
+                (qc.statVolume == QuantityCalc.STAT_ACTUAL && (qc.statMass == QuantityCalc.STAT_ACTUAL || qc.statMoles == QuantityCalc.STAT_ACTUAL));
+            if (!isSoln) {
+                if (qc.valueDensity > 0 && qc.valueMass == QuantityCalc.UNSPECIFIED && qc.valueVolume != QuantityCalc.UNSPECIFIED) {
+                    qc.valueMass = qc.valueVolume * qc.valueDensity;
+                    qc.statMass = QuantityCalc.STAT_VIRTUAL;
+                    anything = true;
+                }
+                if (qc.valueDensity > 0 && qc.valueMass != QuantityCalc.UNSPECIFIED && qc.valueVolume == QuantityCalc.UNSPECIFIED) {
+                    qc.valueVolume = qc.valueMass / qc.valueDensity;
+                    qc.statVolume = QuantityCalc.STAT_VIRTUAL;
+                    anything = true;
+                }
+                if (qc.valueDensity == QuantityCalc.UNSPECIFIED && qc.valueMass != QuantityCalc.UNSPECIFIED &&
+                    qc.valueVolume != QuantityCalc.UNSPECIFIED && qc.valueConc == QuantityCalc.UNSPECIFIED) {
+                    if (qc.statMass == QuantityCalc.STAT_ACTUAL || qc.statMoles == QuantityCalc.STAT_ACTUAL) {
+                        qc.valueDensity = qc.valueMass / qc.valueVolume;
+                        qc.statDensity = QuantityCalc.STAT_VIRTUAL;
+                        anything = true;
+                    }
+                }
+            }
+            if (isSoln) {
+                if (qc.valueConc > 0 && qc.valueMoles == QuantityCalc.UNSPECIFIED && qc.valueVolume != QuantityCalc.UNSPECIFIED) {
+                    qc.valueMoles = 0.001 * qc.valueVolume * qc.valueConc;
+                    qc.statMoles = QuantityCalc.STAT_VIRTUAL;
+                    anything = true;
+                }
+                if (qc.valueConc > 0 && qc.valueMoles != QuantityCalc.UNSPECIFIED && qc.valueVolume == QuantityCalc.UNSPECIFIED) {
+                    qc.valueVolume = 1000 * qc.valueMoles / qc.valueConc;
+                    qc.statVolume = QuantityCalc.STAT_VIRTUAL;
+                    anything = true;
+                }
+                if (qc.valueConc == QuantityCalc.UNSPECIFIED && qc.valueMass != QuantityCalc.UNSPECIFIED && qc.valueVolume != QuantityCalc.UNSPECIFIED) {
+                    qc.valueConc = 1000 * qc.valueMoles / qc.valueVolume;
+                    qc.statConc = QuantityCalc.STAT_VIRTUAL;
+                    anything = true;
+                }
+                if (qc.statConc == QuantityCalc.STAT_ACTUAL && qc.valueMoles > 0 && qc.statVolume == QuantityCalc.STAT_ACTUAL) {
+                    let calcVolume = 1000 * qc.valueMoles / qc.valueConc;
+                    if (!this.closeEnough(qc.valueVolume, calcVolume)) {
+                        qc.statConc = QuantityCalc.STAT_CONFLICT;
+                        if (qc.statMass == QuantityCalc.STAT_ACTUAL)
+                            qc.statMass = QuantityCalc.STAT_CONFLICT;
+                        if (qc.statMoles == QuantityCalc.STAT_ACTUAL)
+                            qc.statMoles = QuantityCalc.STAT_CONFLICT;
+                        qc.statVolume = QuantityCalc.STAT_CONFLICT;
+                    }
+                }
+            }
+            if (qc.molw > 0 && qc.valueMass == QuantityCalc.UNSPECIFIED && qc.valueMoles != QuantityCalc.UNSPECIFIED) {
+                qc.valueMass = qc.valueMoles * qc.molw;
+                qc.statMass = QuantityCalc.STAT_VIRTUAL;
+                anything = true;
+            }
+            if (qc.statDensity == QuantityCalc.STAT_ACTUAL && qc.statConc == QuantityCalc.STAT_ACTUAL) {
+                qc.statDensity = QuantityCalc.STAT_CONFLICT;
+                qc.statConc = QuantityCalc.STAT_CONFLICT;
+            }
+        }
+        if (anything)
+            return true;
+        let hasRef = false;
+        let numSteps = this.entry.steps.length;
+        let primaryCounts = Vec.numberArray(0, numSteps);
+        let primaryEquivs = Vec.numberArray(0, numSteps);
+        let primaryMoles = Vec.numberArray(0, numSteps);
+        for (let qc of this.quantities) {
+            let ref = -1;
+            if (qc.step == 0 && qc.type == Experiment.REACTANT && qc.comp.primary)
+                ref = qc.step;
+            else if (qc.step < numSteps - 1 && qc.type == Experiment.PRODUCT && !qc.comp.waste)
+                ref = qc.step + 1;
+            else
+                continue;
+            if (primaryEquivs[ref] < 0)
+                continue;
+            if (qc.statMoles == QuantityCalc.STAT_UNKNOWN) {
+                primaryEquivs[ref] = -1;
+                continue;
+            }
+            primaryCounts[ref]++;
+            primaryEquivs[ref] += qc.valueEquiv;
+            primaryMoles[ref] += qc.valueMoles;
+        }
+        if (primaryEquivs[0] <= 0) {
+            primaryCounts[0] = 0;
+            primaryEquivs[0] = 0;
+            primaryMoles[0] = 0;
+            for (let i of this.idxPrimary) {
+                let qc = this.quantities[i];
+                if (qc.statMoles == QuantityCalc.STAT_UNKNOWN) {
+                    primaryCounts[0] = 0;
+                    primaryEquivs[0] = -1;
+                    primaryMoles[0] = 0;
+                    break;
+                }
+                primaryCounts[0]++;
+                primaryEquivs[0] += qc.valueEquiv;
+                primaryMoles[0] += qc.valueMoles;
+            }
+        }
+        let refMoles = Vec.numberArray(0, numSteps);
+        for (let n = 0; n < numSteps; n++) {
+            refMoles[n] = primaryCounts[n] == 0 || primaryEquivs[n] <= 0 ? 0 : primaryMoles[n] / primaryEquivs[n];
+            if (refMoles[n] > 0)
+                hasRef = true;
+        }
+        if (!hasRef) {
+            for (let n = 0; n < numSteps; n++) {
+                let prodMolar = [];
+                for (let qc of this.quantities) {
+                    if (qc.step != n || qc.role != QuantityCalc.ROLE_PRODUCT)
+                        continue;
+                    if (qc.statMoles == QuantityCalc.STAT_UNKNOWN || qc.valueMoles <= 0 || qc.valueEquiv <= 0)
+                        continue;
+                    let yld = qc.valueYield > 0 ? qc.valueYield * 0.01 : 1;
+                    prodMolar.push(qc.valueMoles / (qc.valueEquiv * yld));
+                }
+                if (prodMolar.length > 0) {
+                    refMoles[n] = Vec.sum(prodMolar) / prodMolar.length;
+                    hasRef = true;
+                }
+            }
+        }
+        if (!hasRef)
+            return false;
+        for (let qc of this.quantities) {
+            if (qc.type != Experiment.PRODUCT)
+                continue;
+            if (refMoles[qc.step] == 0)
+                continue;
+            if (qc.valueYield == QuantityCalc.UNSPECIFIED && qc.valueMoles != QuantityCalc.UNSPECIFIED) {
+                qc.valueYield = 100 * qc.valueMoles / (refMoles[qc.step] * qc.valueEquiv);
+                qc.statYield = QuantityCalc.STAT_VIRTUAL;
+                anything = true;
+            }
+            if (qc.valueYield != QuantityCalc.UNSPECIFIED && qc.valueMoles == QuantityCalc.UNSPECIFIED) {
+                qc.valueMoles = qc.valueYield * 0.01 * (refMoles[qc.step] * qc.valueEquiv);
+                qc.statMoles = QuantityCalc.STAT_VIRTUAL;
+                anything = true;
+            }
+            if (qc.valueMoles > 0 && qc.statYield == QuantityCalc.STAT_ACTUAL) {
+                let calcYield = 100 * qc.valueMoles / (refMoles[qc.step] * qc.valueEquiv);
+                if (!this.closeEnough(qc.valueYield, calcYield)) {
+                    if (qc.statMass == QuantityCalc.STAT_ACTUAL)
+                        qc.statMass = QuantityCalc.STAT_CONFLICT;
+                    if (qc.statMoles == QuantityCalc.STAT_ACTUAL)
+                        qc.statMoles = QuantityCalc.STAT_CONFLICT;
+                    qc.statYield = QuantityCalc.STAT_CONFLICT;
+                }
+            }
+        }
+        if (anything)
+            return true;
+        for (let qc of this.quantities) {
+            if (refMoles[qc.step] == 0)
+                continue;
+            if (qc.valueMass == QuantityCalc.UNSPECIFIED && qc.valueMoles == QuantityCalc.UNSPECIFIED && qc.valueEquiv > 0) {
+                qc.valueMoles = refMoles[qc.step] * qc.valueEquiv;
+                qc.statMoles = QuantityCalc.STAT_VIRTUAL;
+                anything = true;
+            }
+            if (qc.valueMoles != QuantityCalc.UNSPECIFIED && qc.valueEquiv == QuantityCalc.UNSPECIFIED) {
+                qc.valueEquiv = qc.valueMoles / refMoles[qc.step];
+                qc.statEquiv = QuantityCalc.STAT_VIRTUAL;
+                anything = true;
+            }
+        }
+        return anything;
+    }
+    calculateGreenMetrics(idx) {
+        let qc = this.quantities[idx];
+        let gm = new GreenMetrics();
+        gm.step = qc.step;
+        gm.idx = idx;
+        gm.isBlank = true;
+        for (let n = 0; n < this.quantities.length; n++) {
+            let sub = this.quantities[n];
+            if (sub.step > gm.step)
+                continue;
+            let eq = sub.valueEquiv;
+            if (eq == 0 && sub.type == Experiment.REAGENT)
+                continue;
+            if (sub.valueMass != QuantityCalc.UNSPECIFIED)
+                gm.isBlank = false;
+            if (sub.type == Experiment.REACTANT || sub.type == Experiment.REAGENT) {
+                gm.massReact.push(sub.valueMass);
+                if (sub.step == gm.step && eq > 0 && sub.molw > 0)
+                    gm.molwReact.push(eq * sub.molw);
+            }
+            else if (sub.type == Experiment.PRODUCT) {
+                if (!sub.comp.waste) {
+                    if (sub.step == gm.step)
+                        gm.massProd.push(sub.valueMass);
+                    if (eq > 0 && sub.molw > 0) {
+                        if (sub.step == gm.step)
+                            gm.molwProd.push(eq * sub.molw);
+                        else if (sub.step == gm.step - 1)
+                            gm.molwReact.push(eq * sub.molw);
+                    }
+                }
+                else {
+                    gm.massWaste.push(sub.valueMass);
+                }
+                if (sub.step == gm.step)
+                    gm.massProdWaste.push(sub.valueMass);
+            }
+        }
+        gm.impliedWaste = Vec.sum(gm.massReact) - Vec.sum(gm.massProdWaste);
+        if (Math.abs(gm.impliedWaste) > 1E-3)
+            gm.impliedWaste = 0;
+        this.greenMetrics.push(gm);
+    }
+    closeEnough(value1, value2) {
+        if (value1 <= 0 || value2 <= 0)
+            return true;
+        let ratio = value1 / value2;
+        return ratio >= 0.99 && ratio <= 1.01;
+    }
+}
+QuantityCalc.UNSPECIFIED = -1;
+QuantityCalc.ROLE_PRIMARY = 1;
+QuantityCalc.ROLE_SECONDARY = 2;
+QuantityCalc.ROLE_PRODUCT = 3;
+QuantityCalc.ROLE_INDEPENDENT = 4;
+QuantityCalc.STAT_UNKNOWN = 0;
+QuantityCalc.STAT_ACTUAL = 1;
+QuantityCalc.STAT_VIRTUAL = 2;
+QuantityCalc.STAT_CONFLICT = 3;
+QuantityCalc.MAX_DENOM = 16;
+QuantityCalc.RATIO_FRACT = null;
 class Dialog {
     constructor() {
         this.minPortionWidth = 80;
         this.maxPortionWidth = 80;
         this.title = 'Dialog';
+        this.callbackClose = null;
+    }
+    onClose(callback) {
+        this.callbackClose = callback;
     }
     open() {
         let bg = $('<div></div>').appendTo(document.body);
@@ -9303,8 +10101,7 @@ class Dialog {
         tdTitle.append('<b><big>' + escapeHTML(this.title) + '</big></b>');
         let tdButtons = $('<td align="right" valign="center"></td>').appendTo(tr);
         this.btnClose = $('<button class="button button-default">Close</button>').appendTo(tdButtons);
-        const self = this;
-        this.btnClose.click(function () { self.close(); });
+        this.btnClose.click(() => this.close());
         this.titleButtons = tdButtons;
         this.populate();
         this.repositionSize();
@@ -9314,6 +10111,8 @@ class Dialog {
     close() {
         this.panelBoundary.remove();
         this.obscureBackground.remove();
+        if (this.callbackClose)
+            this.callbackClose(this);
     }
     bump() {
         this.repositionSize();
@@ -9331,7 +10130,7 @@ class Dialog {
 var globalPopover = null;
 var globalTooltip = null;
 var globalPopWatermark = 0;
-function addTooltip(parent, bodyHTML, titleHTML) {
+function addTooltip(parent, bodyHTML, titleHTML, delay) {
     let widget = $(parent);
     if (globalPopover == null) {
         globalPopover = $(document.createElement('div'));
@@ -9343,7 +10142,7 @@ function addTooltip(parent, bodyHTML, titleHTML) {
         globalPopover.hide();
         globalPopover.appendTo(document.body);
     }
-    const tooltip = new Tooltip(widget, bodyHTML, titleHTML);
+    const tooltip = new Tooltip(widget, bodyHTML, titleHTML, delay == null ? 1000 : delay);
     let prevEnter = widget.attr('onmouseenter'), prevLeave = widget.attr('onmouseleave');
     widget.mouseenter(function (e) { tooltip.start(); if (prevEnter)
         prevEnter(e); });
@@ -9357,19 +10156,19 @@ function clearTooltip() {
     globalTooltip.lower();
 }
 class Tooltip {
-    constructor(widget, bodyHTML, titleHTML) {
+    constructor(widget, bodyHTML, titleHTML, delay) {
         this.widget = widget;
         this.bodyHTML = bodyHTML;
         this.titleHTML = titleHTML;
+        this.delay = delay;
     }
     start() {
         globalPopover.hide();
         this.watermark = ++globalPopWatermark;
-        let self = this;
-        window.setTimeout(function () {
-            if (self.watermark == globalPopWatermark)
-                self.raise();
-        }, 1000);
+        window.setTimeout(() => {
+            if (this.watermark == globalPopWatermark)
+                this.raise();
+        }, this.delay);
     }
     stop() {
         if (this.watermark == globalPopWatermark)
@@ -9422,26 +10221,19 @@ class OptionList extends Widget {
         this.selidx = 0;
         this.buttonDiv = [];
         this.auxCell = [];
-        this.callback = null;
+        this.callbackSelect = null;
         if (options.length == 0)
             throw 'molsync.ui.OptionList: must provide a list of option labels.';
-    }
-    onSelect(callback, master) {
-        this.callback = callback;
-        this.master = master;
     }
     getSelectedIndex() {
         return this.selidx;
     }
-    ;
     getSelectedValue() {
         return this.options[this.selidx];
     }
-    ;
     getAuxiliaryCell(idx) {
         return this.auxCell[idx];
     }
-    ;
     render(parent) {
         super.render(parent);
         let table = $('<table class="option-table"></table>').appendTo(this.content);
@@ -9469,8 +10261,8 @@ class OptionList extends Widget {
                 div.mouseup(function () { $(this).removeClass('option-active'); });
                 div.mouseleave(function () { $(this).removeClass('option-hover option-active'); });
                 div.mousemove(function () { return false; });
-                const idx = n, self = this;
-                div.click(function () { self.clickButton(idx); });
+                const idx = n;
+                div.click(() => this.clickButton(idx));
             }
             this.buttonDiv.push(div);
             if (this.isVertical) {
@@ -9479,15 +10271,13 @@ class OptionList extends Widget {
             }
         }
     }
-    ;
     clickButton(idx) {
         if (idx == this.selidx)
             return;
         this.setSelectedIndex(idx);
-        if (this.callback)
-            this.callback.call(this.master, idx, this);
+        if (this.callbackSelect)
+            this.callbackSelect(idx, this);
     }
-    ;
     setSelectedIndex(idx) {
         if (this.selidx == idx)
             return;
@@ -9495,14 +10285,14 @@ class OptionList extends Widget {
         div.attr('class', 'option option-unselected');
         if (this.options[this.selidx].length == 0)
             div.text('\u00A0\u00A0\u00A0');
-        div.mouseover(function () { $(this).addClass('option-hover'); });
-        div.mouseout(function () { $(this).removeClass('option-hover option-active'); });
-        div.mousedown(function () { $(this).addClass('option-active'); });
-        div.mouseup(function () { $(this).removeClass('option-active'); });
-        div.mouseleave(function () { $(this).removeClass('option-hover option-active'); });
-        div.mousemove(function () { return false; });
-        const clickidx = this.selidx, self = this;
-        div.click(function () { self.clickButton(clickidx); });
+        div.mouseover(() => div.addClass('option-hover'));
+        div.mouseout(() => div.removeClass('option-hover option-active'));
+        div.mousedown(() => div.addClass('option-active'));
+        div.mouseup(() => div.removeClass('option-active'));
+        div.mouseleave(() => div.removeClass('option-hover option-active'));
+        div.mousemove(() => false);
+        const clickidx = this.selidx;
+        div.click(() => this.clickButton(clickidx));
         this.selidx = idx;
         div = this.buttonDiv[this.selidx];
         div.attr('class', 'option option-selected');
@@ -9516,21 +10306,23 @@ class OptionList extends Widget {
         div.off('mousemove');
         div.off('click');
     }
-    ;
+    setSelectedValue(val) {
+        let idx = this.options.indexOf(val);
+        if (idx >= 0)
+            this.setSelectedIndex(idx);
+    }
 }
 class RPC {
-    constructor(request, parameter, callback, master) {
+    constructor(request, parameter, callback) {
         this.request = request;
         this.parameter = parameter;
         this.callback = callback;
-        this.master = master;
     }
     invoke() {
         let data = this.parameter;
         if (data == null)
             data = {};
         let url = RPC.BASE_URL + "/REST/" + this.request;
-        const self = this;
         $.ajax({
             'url': url,
             'type': 'POST',
@@ -9538,7 +10330,7 @@ class RPC {
             'contentType': 'application/json;charset=utf-8',
             'dataType': 'json',
             headers: { 'Access-Control-Allow-Origin': '*' },
-            success: function (data, textStatus, jqXHR) {
+            success: (data, textStatus, jqXHR) => {
                 var result = null, error = null;
                 if (!data) {
                     error =
@@ -9563,7 +10355,7 @@ class RPC {
                     else
                         result = data.result;
                 }
-                self.callback.call(self.master, result, error);
+                this.callback(result, error);
             },
             error: function (jqXHR, textStatus, errorThrow) {
                 var error = {
@@ -9572,7 +10364,7 @@ class RPC {
                     type: 0,
                     'detail': `unable to obtain result from service: {$url}`
                 };
-                self.callback.call(self.master, {}, error);
+                this.callback({}, error);
             }
         });
     }
@@ -9592,41 +10384,41 @@ RPC.ERRCODE_INVALIDCOMMAND = 6;
 RPC.ERRCODE_ROWDATAUNAVAIL = 7;
 RPC.ERRCODE_MISSINGPARAM = 8;
 class Func {
-    static renderStructure(input, callback, master) {
-        new RPC('func.renderStructure', input, callback, master).invoke();
+    static renderStructure(input, callback) {
+        new RPC('func.renderStructure', input, callback).invoke();
     }
-    static arrangeMolecule(input, callback, master) {
-        new RPC('func.arrangeMolecule', input, callback, master).invoke();
+    static arrangeMolecule(input, callback) {
+        new RPC('func.arrangeMolecule', input, callback).invoke();
     }
-    static renderRowDetail(input, callback, master) {
-        new RPC('func.renderRowDetail', input, callback, master).invoke();
+    static renderRowDetail(input, callback) {
+        new RPC('func.renderRowDetail', input, callback).invoke();
     }
-    static renderYieldDetail(input, callback, master) {
-        new RPC('func.renderYieldDetail', input, callback, master).invoke();
+    static renderYieldDetail(input, callback) {
+        new RPC('func.renderYieldDetail', input, callback).invoke();
     }
-    static composeDocument(input, callback, master) {
-        new RPC('func.composeDocument', input, callback, master).invoke();
+    static composeDocument(input, callback) {
+        new RPC('func.composeDocument', input, callback).invoke();
     }
-    static getMoleculeProperties(input, callback, master) {
-        new RPC('func.getMoleculeProperties', input, callback, master).invoke();
+    static getMoleculeProperties(input, callback) {
+        new RPC('func.getMoleculeProperties', input, callback).invoke();
     }
-    static atomMapping(input, callback, master) {
-        new RPC('func.atomMapping', input, callback, master).invoke();
+    static atomMapping(input, callback) {
+        new RPC('func.atomMapping', input, callback).invoke();
     }
-    static prepareDownloadable(input, callback, master) {
-        new RPC('func.prepareDownloadable', input, callback, master).invoke();
+    static prepareDownloadable(input, callback) {
+        new RPC('func.prepareDownloadable', input, callback).invoke();
     }
-    static downloadFromSource(input, callback, master) {
-        new RPC('func.downloadFromSource', input, callback, master).invoke();
+    static downloadFromSource(input, callback) {
+        new RPC('func.downloadFromSource', input, callback).invoke();
     }
-    static getDefaultTemplateGroups(input, callback, master) {
-        new RPC('func.getDefaultTemplateGroups', input, callback, master).invoke();
+    static getDefaultTemplateGroups(input, callback) {
+        new RPC('func.getDefaultTemplateGroups', input, callback).invoke();
     }
-    static getDefaultTemplateStructs(input, callback, master) {
-        new RPC('func.getDefaultTemplateStructs', input, callback, master).invoke();
+    static getDefaultTemplateStructs(input, callback) {
+        new RPC('func.getDefaultTemplateStructs', input, callback).invoke();
     }
-    static getActionIcons(input, callback, master) {
-        new RPC('func.getActionIcons', input, callback, master).invoke();
+    static getActionIcons(input, callback) {
+        new RPC('func.getActionIcons', input, callback).invoke();
     }
 }
 class Download extends Dialog {
@@ -9650,12 +10442,11 @@ class Download extends Dialog {
     ;
     populate() {
         let body = this.body();
-        const self = this;
         this.mainArea = $('<p>Setting up...</p>').appendTo(body);
         let paraBtn = $('<p align="right"></p>').appendTo(body);
         this.downloadArea = $('<span style="padding-right: 2em;"></span>').appendTo(paraBtn);
         this.btnPrepare = $('<button class="button button-primary">Prepare</button>').appendTo(paraBtn);
-        this.btnPrepare.click(function () { self.clickPrepare(); });
+        this.btnPrepare.click(() => this.clickPrepare());
         if (this.mol != null) {
             this.formatKey.push(FormatList.FMT_NATIVE);
             this.formatGfx.push(false);
@@ -9742,7 +10533,7 @@ class Download extends Dialog {
         else if (this.ds != null) {
             input.dataXML = DataSheetStream.writeXML(this.ds);
         }
-        Func.prepareDownloadable(input, this.downloadContent, this);
+        Func.prepareDownloadable(input, (result, error) => this.downloadContent(result, error));
     }
     fillContent() {
         let input = { 'tokenID': this.tokenID };
@@ -9754,7 +10545,7 @@ class Download extends Dialog {
             input.dataXML = DataSheetStream.writeXML(this.ds);
             input.dataRow = 0;
         }
-        Func.renderStructure(input, this.updateStructure, this);
+        Func.renderStructure(input, (result, error) => this.updateStructure(result, error));
     }
     updateStructure(result, error) {
         if (!result) {
@@ -9821,7 +10612,6 @@ class Download extends Dialog {
     }
     ;
     buildDisplay() {
-        const self = this;
         this.mainArea.empty();
         this.pictureArea = $('<p align="center"></p>').appendTo(this.mainArea);
         this.formatArea = $('<div style="text-align: left;"></div>').appendTo(this.mainArea);
@@ -9837,7 +10627,7 @@ class Download extends Dialog {
             let k = this.formatKey[n];
             $(optFormatList.getAuxiliaryCell(n)).append('\u00A0' + FormatList.FORMAT_DESCR[k]);
         }
-        optFormatList.onSelect(function (idx) { this.changeFormat(idx); }, this);
+        optFormatList.callbackSelect = (idx, source) => this.changeFormat(idx);
         this.graphicArea.append($('<h2 class="tight">Graphic Options</h2>'));
         this.graphicArea.append($('<hr class="thin"></hr>'));
         let paraSizeType = $('<p></p>').appendTo(this.graphicArea);
@@ -9848,7 +10638,7 @@ class Download extends Dialog {
         let optSizeType = new OptionList(['Scale', 'Box'], false);
         optSizeType.setSelectedIndex(0);
         optSizeType.render($('<td style="vertical-align: middle;"></td>').appendTo(trSize));
-        optSizeType.onSelect(function (idx) { this.changeSizeType(idx); }, this);
+        optSizeType.callbackSelect = (idx, source) => this.changeSizeType(idx);
         let divSizeScale = $('<div></div>').appendTo(paraSizeSpec);
         divSizeScale.append('<b>Angstroms-to-Points: </b>');
         let lineScale = $('<input type="text" size="6"></input>"').appendTo(divSizeScale);
@@ -9871,7 +10661,7 @@ class Download extends Dialog {
         selectRender.append('<option>Colour-on-Black</option>');
         selectRender.append('<option>Printed Publication</option>');
         selectRender.prop('selectedIndex', 1);
-        selectRender.change(function () { self.changeRender(); });
+        selectRender.change(() => this.changeRender());
         this.optFormatList = optFormatList;
         this.optSizeType = optSizeType;
         this.divSizeScale = divSizeScale;
@@ -9882,8 +10672,8 @@ class Download extends Dialog {
         this.lineBoxMaxScale = lineBoxMaxScale;
         this.selectRender = selectRender;
     }
-    changeFormat() {
-        let ftype = this.formatKey[this.optFormatList.getSelectedIndex()];
+    changeFormat(idx) {
+        let ftype = this.formatKey[idx];
         let psz = 30;
         if (ftype == FormatList.GFX_OOXML_DOCX || ftype == FormatList.GFX_OOXML_XLSX)
             psz = 10;
@@ -9921,7 +10711,7 @@ class Download extends Dialog {
             input.dataXML = DataSheetStream.writeXML(this.ds);
             input.dataRow = 0;
         }
-        Func.renderStructure(input, this.updateStructure, this);
+        Func.renderStructure(input, () => this.updateStructure);
     }
     downloadContent(result, error) {
         this.btnPrepare.prop('disabled', false);
@@ -10399,6 +11189,27 @@ class ArrangeMolecule {
             Vec.mulBy(bounds, downScale);
         }
         this.offsetEverything(x - bounds[0] + 0.5 * (w - bounds[2] + bounds[0]), y - bounds[1] + 0.5 * (h - bounds[3] + bounds[1]));
+    }
+    monochromate(col) {
+        for (let a of this.points)
+            a.col = col;
+        for (let b of this.lines)
+            b.col = col;
+    }
+    clone() {
+        let dup = new ArrangeMolecule(this.mol, this.measure, this.policy, this.effects);
+        dup.scale = this.scale;
+        dup.bondSepPix = this.bondSepPix;
+        dup.lineSizePix = this.lineSizePix;
+        dup.fontSizePix = this.fontSizePix;
+        dup.ymul = this.ymul;
+        for (let a of this.points)
+            dup.points.push(clone(a));
+        for (let b of this.lines)
+            dup.lines.push(clone(b));
+        for (let s of this.space)
+            dup.space.push(clone(s));
+        return dup;
     }
     placeAdjunct(atom, str, fsz, col, angdir) {
         let wad = this.measure.measureText(str, fsz);
@@ -11821,15 +12632,15 @@ class ViewStructure extends Widget {
     defineRenderPolicy(policy) {
         this.policy = policy;
     }
-    setup(callback, master) {
+    setup(callback) {
         if (this.molstr == null && this.datastr == null)
             throw 'molsync.ui.ViewStructure.setup called without specifying a molecule or datasheet';
         if (this.policy == null)
             this.policy = RenderPolicy.defaultColourOnWhite();
         if (this.molstr != null)
-            this.setupMolecule(callback, master);
+            this.setupMolecule(callback);
         else
-            this.setupData(callback, master);
+            this.setupData(callback);
     }
     render(parent) {
         if (!this.metavec)
@@ -11889,7 +12700,7 @@ class ViewStructure extends Widget {
         this.metavec.renderContext(ctx);
         ctx.restore();
     }
-    setupMolecule(callback, master) {
+    setupMolecule(callback) {
         let mol = Molecule.fromString(this.molstr);
         let effects = new RenderEffects();
         let measure = new OutlineMeasurement(0, 0, this.policy.data.pointScale);
@@ -11905,14 +12716,14 @@ class ViewStructure extends Widget {
         if (this.height == 0)
             this.height = this.naturalHeight + 2 * this.padding;
         if (callback)
-            callback.call(master);
+            callback();
     }
-    setupData(callback, master) {
+    setupData(callback) {
         let input = { 'tokenID': this.tokenID };
         input.policy = this.policy.data;
         input.dataXML = this.datastr;
         input.dataRow = this.datarow;
-        let fcn = function (result, error) {
+        Func.renderStructure(input, (result, error) => {
             if (!result) {
                 alert('Setup of ViewStructure failed: ' + error.message);
                 return;
@@ -11925,9 +12736,8 @@ class ViewStructure extends Widget {
             if (this.height == 0)
                 this.height = this.naturalHeight + 2 * this.padding;
             if (callback)
-                callback.call(master);
-        };
-        Func.renderStructure(input, fcn, this);
+                callback();
+        });
     }
 }
 class PickRecent extends Dialog {
@@ -11936,26 +12746,15 @@ class PickRecent extends Dialog {
         this.cookies = cookies;
         this.sides = sides;
         this.callbackPick1 = null;
-        this.masterPick1 = null;
         this.callbackPick2 = null;
-        this.masterPick2 = null;
         this.tableRows = [];
         this.views = [];
         this.title = "Recent Molecules";
         this.minPortionWidth = 20;
         this.maxPortionWidth = 95;
     }
-    onPick1(callback, master) {
-        this.callbackPick1 = callback;
-        this.masterPick1 = master;
-    }
-    onPick2(callback, master) {
-        this.callbackPick2 = callback;
-        this.masterPick2 = master;
-    }
     populate() {
         let table = $('<table></table>').appendTo(this.body());
-        const self = this;
         for (let n = 0; n < this.cookies.numMolecules(); n++) {
             const idx = n;
             let tr = $('<tr></tr>').appendTo(table);
@@ -11971,31 +12770,31 @@ class PickRecent extends Dialog {
             vs.backgroundCol1 = 0xF8F8F8;
             vs.backgroundCol2 = 0xE0E0E0;
             vs.padding = 4;
-            vs.setup(function () { vs.render(tdMol); this.bump(); }, this);
+            vs.setup(() => { vs.render(tdMol); this.bump(); });
             let tdPick = $(tdHTML).appendTo(tr);
             if (this.sides == 1) {
                 let btnPick = $('<button class="button button-primary">Pick</button>').appendTo(tdPick);
-                btnPick.click(function () { self.pickMolecule(idx, 1); });
+                btnPick.click(() => this.pickMolecule(idx, 1));
             }
             else {
                 let btnPick1 = $('<button class="button button-primary">Reactant</button>').appendTo(tdPick);
                 tdPick.append('&nbsp;');
                 let btnPick2 = $('<button class="button button-primary">Product</button>').appendTo(tdPick);
-                btnPick1.click(function () { self.pickMolecule(idx, 1); });
-                btnPick2.click(function () { self.pickMolecule(idx, 2); });
+                btnPick1.click(() => this.pickMolecule(idx, 1));
+                btnPick2.click(() => this.pickMolecule(idx, 2));
             }
             tdPick.append('&nbsp;');
             let btnDelete = $('<button class="button button-default">Delete</button>').appendTo(tdPick);
-            btnDelete.click(function () { self.deleteMolecule(idx); });
+            btnDelete.click(() => this.deleteMolecule(idx));
         }
     }
     pickMolecule(idx, which) {
         let mol = this.cookies.getMolecule(idx);
         this.cookies.promoteToTop(idx);
         if (which == 1 && this.callbackPick1)
-            this.callbackPick1.call(this.masterPick1, mol);
+            this.callbackPick1(mol);
         if (which == 2 && this.callbackPick2)
-            this.callbackPick2.call(this.masterPick2, mol);
+            this.callbackPick2(mol);
         this.close();
     }
     deleteMolecule(idx) {
@@ -12038,11 +12837,11 @@ class ButtonView extends Widget {
         this.x = 0;
         this.y = 0;
     }
-    static prepare(callback, master) {
+    static prepare(callback) {
         if (RPC.BASE_URL == null && RPC.RESOURCE_URL != null)
             ButtonView.ACTION_ICONS = {};
         if (ButtonView.ACTION_ICONS != null) {
-            callback.call(master);
+            callback();
             return;
         }
         let fcn = function (result, error) {
@@ -12051,9 +12850,9 @@ class ButtonView extends Widget {
                 return;
             }
             ButtonView.ACTION_ICONS = result.actions;
-            callback.call(master);
+            callback();
         };
-        Func.getActionIcons({}, fcn, this);
+        Func.getActionIcons({}, fcn);
     }
     setParentSize(width, height) {
         this.parentWidth = width;
@@ -12077,14 +12876,13 @@ class ButtonView extends Widget {
         this.canvas.style.height = this.height + 'px';
         this.applyOffset();
         this.redraw();
-        const self = this;
-        this.content.click(function (event) { self.mouseClick(event); });
-        this.content.dblclick(function (event) { self.mouseDoubleClick(event); });
-        this.content.mousedown(function (event) { event.preventDefault(); self.mouseDown(event); });
-        this.content.mouseup(function (event) { self.mouseUp(event); });
-        this.content.mouseover(function (event) { self.mouseOver(event); });
-        this.content.mouseout(function (event) { self.mouseOut(event); });
-        this.content.mousemove(function (event) { self.mouseMove(event); });
+        this.content.click((event) => this.mouseClick(event));
+        this.content.dblclick((event) => this.mouseDoubleClick(event));
+        this.content.mousedown((event) => { event.preventDefault(); this.mouseDown(event); });
+        this.content.mouseup((event) => this.mouseUp(event));
+        this.content.mouseover((event) => this.mouseOver(event));
+        this.content.mouseout((event) => this.mouseOut(event));
+        this.content.mousemove((event) => this.mouseMove(event));
     }
     pushBank(bank) {
         bank.buttonView = this;
@@ -12369,7 +13167,6 @@ class ButtonView extends Widget {
     redraw() {
         if (!this.content || !this.canvas)
             return;
-        const self = this;
         let density = pixelDensity();
         this.canvas.width = this.width * density;
         this.canvas.height = this.height * density;
@@ -12443,12 +13240,12 @@ class ButtonView extends Widget {
                 const sz = this.prefabImgSize;
                 const bx = d.x + Math.floor(0.5 * (d.width - sz));
                 const by = d.y + Math.floor(0.5 * (d.height - sz));
-                let putSVG = function (svg) {
+                let putSVG = (svg) => {
                     let extra = 'style="position: absolute; left: ' + bx + 'px; top: ' + by + 'px;' +
                         ' width: ' + sz + 'px; height: ' + sz + 'px; pointer-events: none;"';
                     svg = svg.substring(0, 4) + ' ' + extra + svg.substring(4);
                     d.svgDOM = $(svg)[0];
-                    self.content.append(d.svgDOM);
+                    this.content.append(d.svgDOM);
                 };
                 let svg = ButtonView.ACTION_ICONS[b.imageFN];
                 if (svg)
@@ -12459,8 +13256,8 @@ class ButtonView extends Widget {
                         'url': url,
                         'type': 'GET',
                         'dataType': 'text',
-                        'success': function (svg) {
-                            svg = self.fixSVGFile(svg);
+                        'success': (svg) => {
+                            svg = this.fixSVGFile(svg);
                             ButtonView.ACTION_ICONS[b.imageFN] = svg;
                             putSVG(svg);
                         }
@@ -12575,8 +13372,7 @@ class ButtonView extends Widget {
     }
     ;
     delayedRedraw() {
-        const self = this;
-        window.setTimeout(function () { self.redraw(); }, 100);
+        window.setTimeout(() => this.redraw(), 100);
     }
     ;
     buttonFromID(id) {
@@ -15344,7 +16140,6 @@ class TemplateBank extends ButtonBank {
         this.templates = null;
     }
     init() {
-        const self = this;
         let policy = RenderPolicy.defaultBlackOnWhite();
         policy.data.pointScale = 10;
         policy.data.lineSize *= 1.5;
@@ -15361,11 +16156,11 @@ class TemplateBank extends ButtonBank {
                     this.subgroups = result;
                     this.buttonView.refreshBank();
                 };
-                Func.getDefaultTemplateGroups(input, fcn, this);
+                Func.getDefaultTemplateGroups(input, fcn);
             }
             else if (RPC.RESOURCE_URL != null) {
                 if (TemplateBank.RESOURCE_DATA == null)
-                    this.loadResourceData(function () { self.prepareSubGroups(); });
+                    this.loadResourceData(() => this.prepareSubGroups());
                 else
                     this.prepareSubGroups();
             }
@@ -15381,11 +16176,11 @@ class TemplateBank extends ButtonBank {
                     this.templates = result;
                     this.buttonView.refreshBank();
                 };
-                Func.getDefaultTemplateStructs(input, fcn, this);
+                Func.getDefaultTemplateStructs(input, fcn);
             }
             else if (RPC.RESOURCE_URL != null) {
                 if (TemplateBank.RESOURCE_DATA == null)
-                    this.loadResourceData(function () { self.prepareTemplates(); });
+                    this.loadResourceData(() => this.prepareTemplates());
                 else
                     this.prepareTemplates();
             }
@@ -15717,8 +16512,8 @@ class Sketcher extends Widget {
     }
     clearMolecule() { this.defineMolecule(new Molecule(), true, true); }
     getMolecule() { return this.mol.clone(); }
-    setup(callback, master) {
-        let fcnPrep = function () {
+    setup(callback) {
+        ButtonView.prepare(() => {
             this.beenSetup = true;
             if (this.mol == null)
                 this.mol = new Molecule();
@@ -15733,9 +16528,8 @@ class Sketcher extends Widget {
             this.metavec = new MetaVector();
             new DrawMolecule(this.layout, this.metavec).draw();
             if (callback)
-                callback.call(master);
-        };
-        ButtonView.prepare(fcnPrep, this);
+                callback();
+        });
     }
     render(parent) {
         if (!this.width || !this.height)
@@ -15746,6 +16540,7 @@ class Sketcher extends Widget {
         this.container.css('background-color', colourCanvas(this.background));
         this.container.css('border', '1px solid ' + colourCanvas(this.border));
         this.container.css('border-radius', '4px');
+        this.container.css('outline', 'none');
         this.container.attr('tabindex', '0');
         this.container.focus();
         let canvasStyle = 'position: absolute; left: 0; top: 0;';
@@ -15783,33 +16578,32 @@ class Sketcher extends Widget {
             this.templateView.pushBank(new TemplateBank(this, null));
             this.templateView.render(this.container);
         }
-        const self = this;
-        this.container.click(function (event) { self.mouseClick(event); });
-        this.container.dblclick(function (event) { self.mouseDoubleClick(event); });
-        this.container.mousedown(function (event) { event.preventDefault(); self.mouseDown(event); });
-        this.container.mouseup(function (event) { self.mouseUp(event); });
-        this.container.mouseover(function (event) { self.mouseOver(event); });
-        this.container.mouseout(function (event) { self.mouseOut(event); });
-        this.container.mousemove(function (event) { self.mouseMove(event); });
-        this.container.keypress(function (event) { self.keyPressed(event); });
-        this.container.keydown(function (event) { self.keyDown(event); });
-        this.container.keyup(function (event) { self.keyUp(event); });
-        this.container[0].addEventListener('dragover', function (event) {
+        this.container.click((event) => this.mouseClick(event));
+        this.container.dblclick((event) => this.mouseDoubleClick(event));
+        this.container.mousedown((event) => { event.preventDefault(); this.mouseDown(event); });
+        this.container.mouseup((event) => this.mouseUp(event));
+        this.container.mouseover((event) => this.mouseOver(event));
+        this.container.mouseout((event) => this.mouseOut(event));
+        this.container.mousemove((event) => this.mouseMove(event));
+        this.container.keypress((event) => this.keyPressed(event));
+        this.container.keydown((event) => this.keyDown(event));
+        this.container.keyup((event) => this.keyUp(event));
+        this.container[0].addEventListener('dragover', (event) => {
             event.stopPropagation();
             event.preventDefault();
             event.dataTransfer.dropEffect = 'copy';
         });
-        this.container[0].addEventListener('drop', function (event) {
+        this.container[0].addEventListener('drop', (event) => {
             event.stopPropagation();
             event.preventDefault();
-            self.dropInto(event.dataTransfer);
+            this.dropInto(event.dataTransfer);
         });
-        document.addEventListener('paste', function (e) {
+        document.addEventListener('paste', (e) => {
             let wnd = window;
             if (wnd.clipboardData && wnd.clipboardData.getData)
-                self.pasteText(wnd.clipboardData.getData('Text'));
+                this.pasteText(wnd.clipboardData.getData('Text'));
             else if (e.clipboardData && e.clipboardData.getData)
-                self.pasteText(e.clipboardData.getData('text/plain'));
+                this.pasteText(e.clipboardData.getData('text/plain'));
             e.preventDefault();
             return false;
         });
@@ -15840,10 +16634,9 @@ class Sketcher extends Widget {
         this.divMessage.css('left', szLeft + 'px');
         this.divMessage.css('width', (this.width - szLeft - szRight) + 'px');
         this.divMessage.css('height', (this.height - szBottom) + 'px');
-        const self = this;
-        window.setTimeout(function () {
-            if (watermark == self.fadeWatermark)
-                self.divMessage.text('');
+        window.setTimeout(() => {
+            if (watermark == this.fadeWatermark)
+                this.divMessage.text('');
         }, 5000);
     }
     clearMessage() {
@@ -16000,7 +16793,7 @@ class Sketcher extends Widget {
             return;
         }
         let dlg = new PickRecent(cookies, 1);
-        dlg.onPick1(function (mol) { this.pasteMolecule(mol); }, this);
+        dlg.callbackPick1 = (mol) => this.pasteMolecule(mol);
         dlg.open();
     }
     zoom(mag) {
@@ -16020,7 +16813,7 @@ class Sketcher extends Widget {
         this.delayedRedraw();
     }
     pasteText(str) {
-        let mol = Molecule.fromString(str);
+        let mol = MoleculeStream.readUnknown(str);
         if (mol != null)
             this.pasteMolecule(mol);
         else
@@ -16308,12 +17101,8 @@ class Sketcher extends Widget {
         if (this.canvasMolecule == null)
             return;
         this.filthy = true;
-        let self = this;
-        let redrawAction = function () {
-            if (self.filthy)
-                self.redraw();
-        };
-        window.setTimeout(redrawAction, 10);
+        window.setTimeout(() => { if (this.filthy)
+            this.redraw(); }, 10);
     }
     pickObject(x, y) {
         if (this.layout == null)
@@ -17107,14 +17896,15 @@ class Sketcher extends Widget {
     mouseWheel(event) {
     }
     dropInto(transfer) {
-        const self = this;
         let items = transfer.items, files = transfer.files;
+        const SUFFIXES = ['.el', '.mol'];
+        const MIMES = ['text/plain', 'chemical/x-sketchel', 'x-mdl-molfile'];
         for (let n = 0; n < items.length; n++) {
-            if (items[n].type.startsWith('text/plain')) {
-                items[n].getAsString(function (str) {
+            if (items[n].kind == 'string' && MIMES.indexOf(items[n].type) >= 0) {
+                items[n].getAsString((str) => {
                     let mol = Molecule.fromString(str);
                     if (mol != null) {
-                        self.defineMolecule(mol, true, true);
+                        this.defineMolecule(mol, true, true);
                     }
                     else
                         console.log('Dragged data is not a SketchEl molecule: ' + str);
@@ -17123,20 +17913,21 @@ class Sketcher extends Widget {
             }
         }
         for (let n = 0; n < files.length; n++) {
-            if (files[n].name.endsWith('.el')) {
-                let reader = new FileReader();
-                reader.onload = function (event) {
-                    let str = reader.result;
-                    let mol = Molecule.fromString(str);
-                    if (mol != null) {
-                        self.defineMolecule(mol, true, true);
-                    }
-                    else
-                        console.log('Dragged file is not a SketchEl molecule: ' + str);
-                };
-                reader.readAsText(files[n]);
-                return;
-            }
+            for (let sfx of SUFFIXES)
+                if (files[n].name.endsWith(sfx)) {
+                    let reader = new FileReader();
+                    reader.onload = (event) => {
+                        let str = reader.result;
+                        let mol = MoleculeStream.readUnknown(str);
+                        if (mol != null) {
+                            this.defineMolecule(mol, true, true);
+                        }
+                        else
+                            console.log('Dragged file is not a recognised molecule: ' + str);
+                    };
+                    reader.readAsText(files[n]);
+                    return;
+                }
         }
     }
     sketchEffects() {
@@ -17155,30 +17946,27 @@ class EditCompound extends Dialog {
         this.mol = mol;
         this.fakeTextArea = null;
         this.callbackSave = null;
-        this.masterSave = null;
         this.title = "Edit Compound";
         this.minPortionWidth = 20;
         this.maxPortionWidth = 95;
     }
-    onSave(callback, master) {
+    onSave(callback) {
         this.callbackSave = callback;
-        this.masterSave = master;
     }
     getMolecule() { return this.sketcher.getMolecule(); }
     populate() {
         let buttons = this.buttons(), body = this.body();
-        const self = this;
         this.btnClear = $('<button class="button button-default">Clear</button>').appendTo(buttons);
-        this.btnClear.click(function () { self.sketcher.clearMolecule(); });
+        this.btnClear.click(() => this.sketcher.clearMolecule());
         buttons.append(' ');
         this.btnCopy = $('<button class="button button-default">Copy</button>').appendTo(buttons);
-        this.btnCopy.click(function () { self.copyMolecule(); });
+        this.btnCopy.click(() => this.copyMolecule());
         buttons.append(' ');
         buttons.append(this.btnClose);
         buttons.append(' ');
         this.btnSave = $('<button class="button button-primary">Save</button>').appendTo(buttons);
-        this.btnSave.click(function () { if (self.callbackSave)
-            self.callbackSave.call(self.masterSave, self); });
+        this.btnSave.click(() => { if (this.callbackSave)
+            this.callbackSave(this); });
         let skw = 800, skh = 700;
         let skdiv = $('<div></div>').appendTo(this.body());
         skdiv.css('width', skw + 'px');
@@ -17186,7 +17974,7 @@ class EditCompound extends Dialog {
         this.sketcher = new Sketcher(this.tokenID);
         this.sketcher.setSize(skw, skh);
         this.sketcher.defineMolecule(this.mol);
-        this.sketcher.setup(function () { this.sketcher.render(skdiv); }, this);
+        this.sketcher.setup(() => this.sketcher.render(skdiv));
     }
     pasteMolecule() {
     }
@@ -17215,7 +18003,6 @@ class MapReaction extends Dialog {
     constructor(mol1, mol2) {
         super();
         this.callbackSave = null;
-        this.masterSave = null;
         this.rawvec1 = null;
         this.metavec1 = null;
         this.arrmol1 = null;
@@ -17237,36 +18024,31 @@ class MapReaction extends Dialog {
         this.minPortionWidth = 20;
         this.maxPortionWidth = 95;
     }
-    onSave(callback, master) {
-        this.callbackSave = callback;
-        this.masterSave = master;
-    }
     getMolecule1() { return this.mol1; }
     getMolecule2() { return this.mol2; }
     populate() {
         let buttons = this.buttons(), body = this.body();
-        const self = this;
         this.btnClear = $('<button class="button button-default">Clear</button>').appendTo(buttons);
-        this.btnClear.click(function () { self.clearAllMappings(); });
+        this.btnClear.click(() => this.clearAllMappings());
         buttons.append(' ');
         buttons.append(this.btnClose);
         buttons.append(' ');
         this.btnSave = $('<button class="button button-primary">Save</button>').appendTo(buttons);
-        this.btnSave.click(function () { if (self.callbackSave)
-            self.callbackSave.call(self.masterSave, self); });
-        Func.arrangeMolecule({ 'policy': this.policy.data, 'molNative': this.mol1.toString() }, function (result, error) {
+        this.btnSave.click(() => { if (this.callbackSave)
+            this.callbackSave(this); });
+        Func.arrangeMolecule({ 'policy': this.policy.data, 'molNative': this.mol1.toString() }, (result, error) => {
             this.arrmol1 = result.arrmol;
             this.rawvec1 = result.metavec;
             this.metavec1 = new MetaVector(result.metavec);
             this.transform1 = result.transform;
-            Func.arrangeMolecule({ 'policy': this.policy.data, 'molNative': this.mol2.toString() }, function (result, error) {
+            Func.arrangeMolecule({ 'policy': this.policy.data, 'molNative': this.mol2.toString() }, (result, error) => {
                 this.arrmol2 = result.arrmol;
                 this.rawvec2 = result.metavec;
                 this.metavec2 = new MetaVector(result.metavec);
                 this.transform2 = result.transform;
                 this.setupPanel();
-            }, this);
-        }, this);
+            });
+        });
     }
     setupPanel() {
         let maxWidth = 0.9 * $(window).width(), maxHeight = 0.8 * $(window).height();
@@ -17292,12 +18074,11 @@ class MapReaction extends Dialog {
         let ctx = this.canvas.getContext('2d');
         ctx.scale(density, density);
         this.redrawCanvas();
-        const self = this;
-        $(this.canvas).mousedown(function (event) { event.preventDefault(); self.mouseDown(event); });
-        $(this.canvas).mouseup(function (event) { self.mouseUp(event); });
-        $(this.canvas).mouseenter(function (event) { self.mouseEnter(event); });
-        $(this.canvas).mouseleave(function (event) { self.mouseLeave(event); });
-        $(this.canvas).mousemove(function (event) { self.mouseMove(event); });
+        $(this.canvas).mousedown((event) => { event.preventDefault(); this.mouseDown(event); });
+        $(this.canvas).mouseup((event) => { this.mouseUp(event); });
+        $(this.canvas).mouseenter((event) => { this.mouseEnter(event); });
+        $(this.canvas).mouseleave((event) => { this.mouseLeave(event); });
+        $(this.canvas).mousemove((event) => { this.mouseMove(event); });
         this.drawnMols = newElement(div, 'canvas', { 'width': this.canvasW * density, 'height': this.canvasH * density, 'style': styleOverlay });
         ctx = this.drawnMols.getContext('2d');
         ctx.scale(density, density);
@@ -17487,7 +18268,7 @@ class MapReaction extends Dialog {
         mol2.setAtomMapNum(atom2, map);
     }
     autoConnect() {
-        Func.atomMapping({ 'leftNative': this.mol1.toString(), 'rightNative': this.mol2.toString() }, function (result, error) {
+        Func.atomMapping({ 'leftNative': this.mol1.toString(), 'rightNative': this.mol2.toString() }, (result, error) => {
             if (!result)
                 return;
             let map1 = result.map1, map2 = result.map2;
@@ -17506,7 +18287,7 @@ class MapReaction extends Dialog {
                 }
             if (modified)
                 this.redrawCanvas();
-        }, this);
+        });
     }
     clearAllMappings() {
         let anything = false;
@@ -18223,45 +19004,45 @@ class DrawExperiment {
     }
 }
 class Account {
-    static connectTransient(callback, master) {
-        new RPC('account.connectTransient', {}, callback, master).invoke();
+    static connectTransient(callback) {
+        new RPC('account.connectTransient', {}, callback).invoke();
     }
-    static refreshTransient(input, callback, master) {
-        new RPC('account.refreshTransient', input, callback, master).invoke();
+    static refreshTransient(input, callback) {
+        new RPC('account.refreshTransient', input, callback).invoke();
     }
 }
 class Pile {
-    static uploadMolecule(input, callback, master) {
-        new RPC('pile.uploadMolecule', input, callback, master).invoke();
+    static uploadMolecule(input, callback) {
+        new RPC('pile.uploadMolecule', input, callback).invoke();
     }
-    static uploadDataSheet(input, callback, master) {
-        new RPC('pile.uploadDataSheet', input, callback, master).invoke();
+    static uploadDataSheet(input, callback) {
+        new RPC('pile.uploadDataSheet', input, callback).invoke();
     }
-    static downloadMolecule(input, callback, master) {
-        new RPC('pile.downloadMolecule', input, callback, master).invoke();
+    static downloadMolecule(input, callback) {
+        new RPC('pile.downloadMolecule', input, callback).invoke();
     }
-    static downloadDataSheet(input, callback, master) {
-        new RPC('pile.downloadDataSheet', input, callback, master).invoke();
+    static downloadDataSheet(input, callback) {
+        new RPC('pile.downloadDataSheet', input, callback).invoke();
     }
-    static fetchSelection(input, callback, master) {
-        new RPC('pile.fetchSelection', input, callback, master).invoke();
+    static fetchSelection(input, callback) {
+        new RPC('pile.fetchSelection', input, callback).invoke();
     }
-    static fetchMolecules(input, callback, master) {
-        new RPC('pile.fetchMolecules', input, callback, master).invoke();
+    static fetchMolecules(input, callback) {
+        new RPC('pile.fetchMolecules', input, callback).invoke();
     }
 }
 class Search {
-    static startMolSearch(input, callback, master) {
-        new RPC('search.startMolSearch', input, callback, master).invoke();
+    static startMolSearch(input, callback) {
+        new RPC('search.startMolSearch', input, callback).invoke();
     }
-    static pollMolSearch(input, callback, master) {
-        new RPC('search.pollMolSearch', input, callback, master).invoke();
+    static pollMolSearch(input, callback) {
+        new RPC('search.pollMolSearch', input, callback).invoke();
     }
-    static startRxnSearch(input, callback, master) {
-        new RPC('search.startRxnSearch', input, callback, master).invoke();
+    static startRxnSearch(input, callback) {
+        new RPC('search.startRxnSearch', input, callback).invoke();
     }
-    static pollRxnSearch(input, callback, master) {
-        new RPC('search.pollRxnSearch', input, callback, master).invoke();
+    static pollRxnSearch(input, callback) {
+        new RPC('search.pollRxnSearch', input, callback).invoke();
     }
 }
 class CircleButton extends Widget {
@@ -18279,11 +19060,7 @@ class CircleButton extends Widget {
         this.isHighlight = false;
         this.isPressed = false;
         this.progressFraction = null;
-        this.callback = null;
-    }
-    onAction(callback, master) {
-        this.callback = callback;
-        this.master = master;
+        this.callbackAction = null;
     }
     render(parent) {
         super.render(parent);
@@ -18344,12 +19121,11 @@ class CircleButton extends Widget {
         var svgurl = RPC.BASE_URL + "/img/icons/" + this.icon;
         this.svg = newElement(div, 'object', { 'width': width, 'height': height, 'style': canvasStyle, 'data': svgurl, 'type': 'image/svg+xml' });
         this.updateLayers();
-        const self = this;
-        div.mouseenter(function () { self.mouseEnter(); ; });
-        div.mouseleave(function () { self.mouseLeave(); });
-        div.mousedown(function () { self.mouseDown(); });
-        div.mouseup(function () { self.mouseUp(); });
-        div.click(function () { self.mouseClicked(); });
+        div.mouseenter(() => this.mouseEnter());
+        div.mouseleave(() => this.mouseLeave());
+        div.mousedown(() => this.mouseDown());
+        div.mouseup(() => this.mouseUp());
+        div.click(() => this.mouseClicked());
     }
     ;
     setProgress(fraction) {
@@ -18424,8 +19200,8 @@ class CircleButton extends Widget {
         this.updateLayers();
     }
     mouseClicked() {
-        if (this.callback)
-            this.callback.call(this.master, this);
+        if (this.callbackAction)
+            this.callbackAction(this);
     }
 }
 class EmbedChemistry extends Widget {
@@ -19271,6 +20047,482 @@ class EmbedReaction extends EmbedChemistry {
 EmbedReaction.PTN_DOI1 = /^doi:(\d+\.\d+\/.*)$/;
 EmbedReaction.PTN_DOI2 = /^(\d+\.\d+\/.*)$/;
 EmbedReaction.PTN_ISBN = /^(\d+-\d+-\d+-\d+-\d+)$/;
+class HoneycombHex {
+    constructor() {
+        this.background = 0xFFFFFF;
+        this.withRim = false;
+        this.rimCols = [-1, -1, -1, -1, -1, -1];
+        this.policy = null;
+        this.annotation = null;
+        this.annotCol = 0x000000;
+        this.annotFontSize = 10;
+        this.x = null;
+        this.y = null;
+    }
+}
+class Honeycomb extends Widget {
+    constructor() {
+        super();
+        this.size = new Size(500, 500);
+        this.maxHexes = 1000;
+        this.molecules = [];
+        this.stopped = false;
+        this.watermark = 0;
+        this.hexes = [];
+        this.seed = 0;
+        this.density = 0.01;
+        this.hexSize = 100;
+        this.zoomFactor = 1;
+        this.FLOWER_PERMS = [
+            [0, 1, 2, 3, 4, 5], [0, 1, 2, 3, 5, 4], [0, 1, 2, 4, 3, 5], [0, 1, 2, 4, 5, 3], [0, 1, 2, 5, 3, 4], [0, 1, 2, 5, 4, 3], [0, 1, 3, 2, 4, 5], [0, 1, 3, 2, 5, 4], [0, 1, 3, 4, 2, 5], [0, 1, 3, 4, 5, 2],
+            [0, 1, 3, 5, 2, 4], [0, 1, 3, 5, 4, 2], [0, 1, 4, 2, 3, 5], [0, 1, 4, 2, 5, 3], [0, 1, 4, 3, 2, 5], [0, 1, 4, 3, 5, 2], [0, 1, 4, 5, 2, 3], [0, 1, 4, 5, 3, 2], [0, 1, 5, 2, 3, 4], [0, 1, 5, 2, 4, 3],
+            [0, 1, 5, 3, 2, 4], [0, 1, 5, 3, 4, 2], [0, 1, 5, 4, 2, 3], [0, 1, 5, 4, 3, 2], [0, 2, 1, 3, 4, 5], [0, 2, 1, 3, 5, 4], [0, 2, 1, 4, 3, 5], [0, 2, 1, 4, 5, 3], [0, 2, 1, 5, 3, 4], [0, 2, 1, 5, 4, 3],
+            [0, 2, 3, 1, 4, 5], [0, 2, 3, 1, 5, 4], [0, 2, 3, 4, 1, 5], [0, 2, 3, 5, 1, 4], [0, 2, 4, 1, 3, 5], [0, 2, 4, 1, 5, 3], [0, 2, 4, 3, 1, 5], [0, 2, 4, 5, 1, 3], [0, 2, 5, 1, 3, 4], [0, 2, 5, 1, 4, 3],
+            [0, 2, 5, 3, 1, 4], [0, 2, 5, 4, 1, 3], [0, 3, 1, 2, 4, 5], [0, 3, 1, 2, 5, 4], [0, 3, 1, 4, 2, 5], [0, 3, 1, 5, 2, 4], [0, 3, 2, 1, 4, 5], [0, 3, 2, 1, 5, 4], [0, 3, 2, 4, 1, 5], [0, 3, 2, 5, 1, 4],
+            [0, 3, 4, 1, 2, 5], [0, 3, 4, 2, 1, 5], [0, 3, 5, 1, 2, 4], [0, 3, 5, 2, 1, 4], [0, 4, 1, 2, 3, 5], [0, 4, 1, 3, 2, 5], [0, 4, 2, 1, 3, 5], [0, 4, 2, 3, 1, 5], [0, 4, 3, 1, 2, 5], [0, 4, 3, 2, 1, 5]
+        ];
+        this.HEX_N = 0;
+        this.HEX_S = 1;
+        this.HEX_NW = 2;
+        this.HEX_NE = 3;
+        this.HEX_SW = 4;
+        this.HEX_SE = 5;
+        this.dragging = false;
+        this.mouseFirst = null;
+        this.mouseLast = null;
+        this.panDelta = [0, 0];
+        let scale = 12;
+        this.policyColour = RenderPolicy.defaultColourOnWhite();
+        this.policyColour.data.pointScale = scale;
+        this.policyWhite = RenderPolicy.defaultWhiteOnBlack();
+        this.policyWhite.data.pointScale = scale;
+        this.effects = new RenderEffects();
+    }
+    addReferenceMolecule(mol) {
+        this.molecules.push({ 'mol': mol, 'isReference': true, 'rimColour': null });
+    }
+    addModelMolecule(mol, rimColour) {
+        this.molecules.push({ 'mol': mol, 'isReference': false, 'rimColour': rimColour });
+    }
+    render(parent) {
+        super.render(parent);
+        this.content.css('width', this.size.w + 'px');
+        this.content.css('height', this.size.h + 'px');
+        this.container = $('<div></div>').appendTo(this.content);
+        this.container.css('width', this.size.w + 'px');
+        this.container.css('height', this.size.h + 'px');
+        this.container.css('position', 'relative');
+        this.container.css('overflow', 'hidden');
+        this.container.click((event) => this.mouseClick(event));
+        this.container.dblclick((event) => this.mouseDoubleClick(event));
+        this.container.mousedown((event) => { event.preventDefault(); this.mouseDown(event); });
+        this.container.mouseup((event) => this.mouseUp(event));
+        this.container.mouseover((event) => this.mouseOver(event));
+        this.container.mouseout((event) => this.mouseOut(event));
+        this.container.mousemove((event) => this.mouseMove(event));
+        this.container.keypress((event) => this.keyPressed(event));
+        this.container.keydown((event) => this.keyDown(event));
+        this.container.keyup((event) => this.keyUp(event));
+    }
+    populate() {
+        this.container.empty();
+        for (let hmol of this.molecules)
+            if (!hmol.fp) {
+                let circ = CircularFingerprints.create(hmol.mol, CircularFingerprints.CLASS_ECFP6);
+                hmol.fp = circ.getUniqueHashes();
+            }
+        let pri = [];
+        for (let n = 0; n < this.molecules.length; n++) {
+            let sim = Number.MAX_VALUE;
+            if (n != this.seed)
+                sim = CircularFingerprints.tanimoto(this.molecules[n].fp, this.molecules[this.seed].fp);
+            pri.push(sim);
+        }
+        let order = Vec.idxSort(pri);
+        this.hexes = [];
+        for (let n = order.length - 1; n >= 0 && this.hexes.length < this.maxHexes; n--) {
+            let hex = new HoneycombHex(), hmol = this.molecules[order[n]];
+            hex.molidx = order[n];
+            hex.mol = hmol.mol;
+            hex.fp = hmol.fp;
+            if (hmol.isReference) {
+                hex.background = 0x000000;
+                hex.annotCol = 0xFFFFFF;
+                hex.policy = this.policyWhite;
+            }
+            else if (hmol.rimColour != null && hmol.rimColour != MetaVector.NOCOLOUR) {
+                hex.withRim = true;
+                hex.rimCols = Vec.numberArray(hmol.rimColour, 6);
+            }
+            this.hexes.push(hex);
+        }
+        this.growFlower();
+        for (let n = 7; n < this.hexes.length; n++)
+            this.placeHex(n);
+        this.renderHexes();
+    }
+    zoom(dir) {
+        if (dir < 0) {
+            if (this.zoomFactor < 0.05)
+                return;
+            this.zoomFactor *= 2 / 3;
+        }
+        else {
+            if (this.zoomFactor > 20)
+                return;
+            this.zoomFactor *= 3 / 2;
+        }
+        this.renderHexes();
+    }
+    growFlower() {
+        const sz = this.hexes.length, fsz = Math.min(6, sz - 1);
+        let perm = null, bestScore = 0;
+        for (let p of this.FLOWER_PERMS) {
+            let score = 0;
+            for (let n = 0; n < 6; n++) {
+                const nn = n == 5 ? 0 : n + 1;
+                let pn = p[n] + 1, pnn = p[nn] + 1;
+                if (pn >= sz)
+                    pn = 0;
+                if (pnn >= sz)
+                    pnn = 0;
+                score += CircularFingerprints.tanimoto(this.hexes[pn].fp, this.hexes[pnn].fp);
+            }
+            if (perm == null || score > bestScore) {
+                perm = p;
+                bestScore = score;
+            }
+        }
+        let dir = [this.HEX_N, this.HEX_NE, this.HEX_SE, this.HEX_S, this.HEX_SW, this.HEX_NW];
+        this.hexes[0].x = 0;
+        this.hexes[0].y = 0;
+        for (let n = 0; n < 6; n++) {
+            let idx = perm[n] + 1;
+            if (idx >= sz)
+                continue;
+            this.hexes[idx].x = this.offsetX(0, 0, dir[n]);
+            this.hexes[idx].y = this.offsetY(0, 0, dir[n]);
+        }
+    }
+    placeHex(idx) {
+        const sz = this.hexes.length;
+        let molX = [], molY = [];
+        let loX = this.hexes[0].x, loY = this.hexes[0].y, hiX = loX, hiY = loY;
+        for (let n = 0; n < idx; n++) {
+            let hex = this.hexes[n];
+            molX.push(hex.x);
+            molY.push(hex.y);
+            loX = Math.min(loX, hex.x);
+            loY = Math.min(loY, hex.y);
+            hiX = Math.max(hiX, hex.x);
+            hiY = Math.max(hiY, hex.y);
+        }
+        if ((loX & 1) == 1)
+            loX--;
+        Vec.addTo(molX, -loX);
+        Vec.addTo(molY, -loY);
+        const gridW = hiX - loX + 1, gridH = hiY - loY + 1;
+        let grid = [];
+        for (let n = 0; n < gridH; n++)
+            grid.push(Vec.numberArray(-1, gridW));
+        for (let n = 0; n < idx; n++)
+            grid[molY[n]][molX[n]] = n;
+        let ndiv = [1, 0.5, 1.0 / 3, 0.25, 0.2, 1.0 / 6];
+        let bestX = -1, bestY = -1, bestScore = -1;
+        for (let y = -1; y <= gridH; y++)
+            for (let x = -1; x <= gridW; x++) {
+                if (x >= 0 && x < gridW && y >= 0 && y < gridH && grid[y][x] >= 0)
+                    continue;
+                let nbrs = [], hitDir = -1, hitX = 0, hitY = 0;
+                for (let dir = 0; dir < 6; dir++) {
+                    let ox = this.offsetX(x, y, dir), oy = this.offsetY(x, y, dir);
+                    if (ox < 0 || ox >= gridW || oy < 0 || oy >= gridH)
+                        continue;
+                    let i = grid[oy][ox];
+                    if (i >= 0) {
+                        nbrs.push(i);
+                        if (nbrs.length == 1) {
+                            hitDir = dir;
+                            hitX = ox;
+                            hitY = oy;
+                        }
+                    }
+                }
+                if (nbrs.length == 0)
+                    continue;
+                let score = 0;
+                for (let n = 0; n < nbrs.length; n++)
+                    score += CircularFingerprints.tanimoto(this.hexes[idx].fp, this.hexes[nbrs[n]].fp);
+                score *= ndiv[nbrs.length - 1];
+                score += nbrs.length * this.density;
+                if (nbrs.length == 1) {
+                    for (let look = 5; look <= 7; look++) {
+                        let dir = (hitDir + look) % 6;
+                        let ox = this.offsetX(hitX, hitY, dir), oy = this.offsetY(hitX, hitY, dir);
+                        if (ox < 0 || ox >= gridW || oy < 0 || oy >= gridH)
+                            continue;
+                        let i = grid[oy][ox];
+                        if (i >= 0) {
+                            const mod = look == 6 ? 0.001 : 0.002;
+                            score += mod * CircularFingerprints.tanimoto(this.hexes[idx].fp, this.hexes[i].fp);
+                        }
+                    }
+                }
+                if (score > bestScore) {
+                    bestScore = score;
+                    bestX = x;
+                    bestY = y;
+                }
+            }
+        this.hexes[idx].x = bestX + loX;
+        this.hexes[idx].y = bestY + loY;
+    }
+    offsetX(x, y, dir) {
+        return dir == this.HEX_NW || dir == this.HEX_SW ? x - 1 : dir == this.HEX_NE || dir == this.HEX_SE ? x + 1 : x;
+    }
+    offsetY(x, y, dir) {
+        if (dir == this.HEX_N)
+            return y - 1;
+        if (dir == this.HEX_S)
+            return y + 1;
+        if ((x & 1) == 0) {
+            return dir == this.HEX_NW || dir == this.HEX_NE ? y : y + 1;
+        }
+        else {
+            return dir == this.HEX_NW || dir == this.HEX_NE ? y - 1 : y;
+        }
+    }
+    prepareLayout() {
+        const nhex = this.hexes.length;
+        if (nhex == 0)
+            return;
+        let usize = this.hexSize * this.zoomFactor;
+        let hexW = usize * 0.75, hexH = usize * Math.cos(30 * DEGRAD);
+        let innerRad = 0.5 * hexH, outerRad = 0.5 * usize;
+        let edgeLen = usize * Math.sin(30 * DEGRAD);
+        let cx = [], cy = [];
+        for (let n = 0; n < nhex; n++) {
+            let x = this.hexes[n].x * hexW;
+            let y = this.hexes[n].y * hexH;
+            if ((this.hexes[n].x & 1) == 1)
+                y -= 0.5 * hexH;
+            cx.push(x);
+            cy.push(y);
+        }
+        Vec.addTo(cx, 0.5 * this.size.w - cx[0]);
+        Vec.addTo(cy, 0.5 * this.size.h - cy[0]);
+        for (let n = 0; n < nhex; n++) {
+            let x1 = Math.floor(cx[n] - 0.5 * usize - 1.5), y1 = Math.floor(cy[n] - 0.5 * hexH - 1.5);
+            let x2 = Math.ceil(cx[n] + 0.5 * usize + 1.5), y2 = Math.ceil(cy[n] + 0.5 * hexH + 1.5);
+            let hex = this.hexes[n];
+            hex.centre = new Pos(cx[n] - x1, cy[n] - y1);
+            hex.hexSize = usize;
+            hex.lineSize = this.hexSize * 0.01;
+            hex.innerRad = innerRad;
+            hex.outerRad = outerRad;
+            hex.edgeLen = edgeLen;
+            hex.frame = new Box(x1, y1, x2 - x1, y2 - y1);
+            if (hex.span)
+                hex.span.remove();
+            hex.span = null;
+        }
+        this.measure = new OutlineMeasurement(0, 0, this.policyColour.data.pointScale * this.zoomFactor);
+    }
+    renderHexes() {
+        this.prepareLayout();
+        let roster = Vec.identity0(this.hexes.length);
+        this.renderNext(++this.watermark, roster);
+    }
+    renderNext(watermark, roster) {
+        if (roster.length == 0 || this.stopped || watermark != this.watermark)
+            return;
+        let idx = roster.shift(), hex = this.hexes[idx];
+        if (!hex.span) {
+            hex.span = $('<span></span>').appendTo(this.container);
+            hex.span.css('position', 'absolute');
+            hex.span.css('pointer-events', 'none');
+        }
+        hex.span.css('left', (hex.frame.x + this.panDelta[0]) + 'px');
+        hex.span.css('top', (hex.frame.y + this.panDelta[1]) + 'px');
+        hex.span.css('width', hex.frame.w + 'px');
+        hex.span.css('height', hex.frame.h + 'px');
+        let gfx = new MetaVector();
+        let centre = hex.centre;
+        let edgeX = [], edgeY = [];
+        for (let n = 0; n < 6; n++) {
+            let th = (n - 2) * Math.PI * 1.0 / 3;
+            edgeX.push(centre.x + hex.hexSize * 0.5 * Math.cos(th));
+            edgeY.push(centre.y + hex.hexSize * 0.5 * Math.sin(th));
+        }
+        gfx.drawPoly(edgeX, edgeY, 0x000000, hex.lineSize, hex.background, true);
+        let rimFract = hex.withRim ? 0.10 : 0, mainFract = 1 - rimFract;
+        if (hex.withRim) {
+            for (let i = 0; i < 6; i++) {
+                if (hex.rimCols[i] == MetaVector.NOCOLOUR)
+                    continue;
+                let j = i == 5 ? 0 : i + 1;
+                let p1x = centre.x + (edgeX[i] - centre.x) * mainFract, p1y = centre.y + (edgeY[i] - centre.y) * mainFract;
+                let p2x = edgeX[i], p2y = edgeY[i];
+                let p3x = edgeX[j], p3y = edgeY[j];
+                let p4x = centre.x + (edgeX[j] - centre.x) * mainFract, p4y = centre.y + (edgeY[j] - centre.y) * mainFract;
+                gfx.drawPoly([p1x, p2x, p3x, p4x], [p1y, p2y, p3y, p4y], -1, 0, hex.rimCols[i], true);
+            }
+        }
+        let bumpDown = 0;
+        let rad = hex.innerRad * mainFract - 1 - bumpDown;
+        let policy = hex.policy ? hex.policy : this.policyColour;
+        let layout = new ArrangeMolecule(hex.mol, this.measure, policy, this.effects);
+        layout.arrange();
+        let [cx, cy, mrad] = this.determineCircularBoundary(layout);
+        if (mrad > rad) {
+            let downScale = rad / mrad;
+            layout.scaleEverything(downScale);
+            cx *= downScale;
+            cy *= downScale;
+        }
+        layout.offsetEverything(centre.x - cx, centre.y + 0.5 * bumpDown - cy);
+        new DrawMolecule(layout, gfx).draw();
+        hex.span.empty();
+        gfx.setSize(Math.ceil(gfx.boundHighX()), Math.ceil(gfx.boundHighY()));
+        $(gfx.createSVG()).appendTo(hex.span);
+        setTimeout(() => this.renderNext(watermark, roster), 1);
+    }
+    determineCircularBoundary(layout) {
+        let npoints = layout.numPoints(), nlines = layout.numLines();
+        if (npoints == 0)
+            return [0, 0, 0];
+        let cx = 0, cy = 0;
+        let px = [], py = [];
+        for (let n = 0; n < npoints; n++) {
+            let a = layout.getPoint(n);
+            cx += a.oval.cx;
+            cy += a.oval.cy;
+            let r = Math.max(a.oval.rw, a.oval.rh);
+            px.push(a.oval.cx - r);
+            py.push(a.oval.cy - r);
+            if (r == 0)
+                continue;
+            px.push(a.oval.cx - r);
+            py.push(a.oval.cy + r);
+            px.push(a.oval.cx + r);
+            py.push(a.oval.cy - r);
+            px.push(a.oval.cx + r);
+            py.push(a.oval.cy + r);
+        }
+        cx /= npoints;
+        cy /= npoints;
+        for (let n = 0; n < nlines; n++) {
+            let b = layout.getLine(n);
+            px.push(b.line.x1 - b.size);
+            py.push(b.line.y1 - b.size);
+            px.push(b.line.x1 + b.size);
+            py.push(b.line.y1 + b.size);
+            px.push(b.line.x2 - b.size);
+            py.push(b.line.y2 - b.size);
+            px.push(b.line.x2 + b.size);
+            py.push(b.line.y2 + b.size);
+        }
+        let calculateRadiusSq = function (cx, cy, px, py) {
+            let v = 0;
+            for (let n = px.length - 1; n >= 0; n--)
+                v = Math.max(v, norm2_xy(px[n] - cx, py[n] - cy));
+            return v;
+        };
+        var crsq = calculateRadiusSq(cx, cy, px, py);
+        var step = Math.sqrt(crsq) * 0.1;
+        while (step > 0.01) {
+            let x1 = cx - step, x2 = cx + step, y1 = cy - step, y2 = cy + step;
+            let r1 = calculateRadiusSq(x1, cy, px, py);
+            let r2 = calculateRadiusSq(x2, cy, px, py);
+            let r3 = calculateRadiusSq(cx, y1, px, py);
+            let r4 = calculateRadiusSq(cx, y2, px, py);
+            if (r1 < crsq && r1 < r2 && r1 < r3 && r1 < r4) {
+                cx = x1;
+                crsq = r1;
+            }
+            else if (r2 < crsq && r2 < r3 && r2 < r4) {
+                cx = x2;
+                crsq = r2;
+            }
+            else if (r3 < crsq && r3 < r4) {
+                cy = y1;
+                crsq = r3;
+            }
+            else if (r4 < crsq) {
+                cy = y2;
+                crsq = r4;
+            }
+            else {
+                step *= 0.5;
+            }
+        }
+        return [cx, cy, Math.sqrt(crsq)];
+    }
+    mouseClick(event) {
+        this.container.focus();
+    }
+    mouseDoubleClick(event) {
+        let xy = eventCoords(event, this.container);
+        let idx = this.pickHex(xy[0], xy[1]);
+        if (idx >= 0 && idx != this.seed) {
+            this.seed = this.hexes[idx].molidx;
+            this.panDelta = [0, 0];
+            this.populate();
+        }
+        event.stopImmediatePropagation();
+    }
+    mouseDown(event) {
+        this.dragging = true;
+        this.mouseFirst = this.mouseLast = eventCoords(event, this.container);
+    }
+    mouseUp(event) {
+        this.dragging = false;
+        this.mouseFirst = this.mouseLast = null;
+    }
+    mouseOver(event) {
+    }
+    mouseOut(event) {
+        this.dragging = false;
+    }
+    mouseMove(event) {
+        if (this.dragging) {
+            let xy = eventCoords(event, this.container);
+            let dx = xy[0] - this.mouseLast[0], dy = xy[1] - this.mouseLast[1];
+            if (dx != 0 || dy != 0) {
+                this.panContent(dx, dy);
+                this.mouseLast = xy;
+            }
+        }
+    }
+    keyPressed(event) {
+    }
+    keyDown(event) {
+    }
+    keyUp(event) {
+    }
+    panContent(dx, dy) {
+        this.panDelta = [this.panDelta[0] + dx, this.panDelta[1] + dy];
+        for (let hex of this.hexes)
+            if (hex.span) {
+                hex.span.css('left', (hex.frame.x + this.panDelta[0]) + 'px');
+                hex.span.css('top', (hex.frame.y + this.panDelta[1]) + 'px');
+            }
+    }
+    pickHex(x, y) {
+        let closest = -1, closestDSQ = 0;
+        for (let n = 0; n < this.hexes.length; n++) {
+            const hex = this.hexes[n];
+            let dsq = norm2_xy(hex.frame.x + hex.centre.x + this.panDelta[0] - x, hex.frame.y + hex.centre.y + this.panDelta[1] - y);
+            if (dsq >= hex.outerRad * hex.outerRad)
+                continue;
+            if (closest < 0 || dsq < closestDSQ) {
+                closest = n;
+                closestDSQ = dsq;
+            }
+        }
+        return closest;
+    }
+}
 class RowView extends Widget {
     constructor(tokenID) {
         super();
@@ -19329,10 +20581,10 @@ class RowView extends Widget {
                 this.renderNode(td, nodes[n]);
             }
             if (roster.length > 0)
-                Func.composeDocument({ 'tokenID': this.tokenID, 'dataXML': roster[0].dataXML, 'subsumeTitle': true }, fcnComposure, this);
+                Func.composeDocument({ 'tokenID': this.tokenID, 'dataXML': roster[0].dataXML, 'subsumeTitle': true }, fcnComposure);
         };
         if (roster.length > 0)
-            Func.composeDocument({ 'tokenID': this.tokenID, 'dataXML': roster[0].dataXML, 'subsumeTitle': true }, fcnComposure, this);
+            Func.composeDocument({ 'tokenID': this.tokenID, 'dataXML': roster[0].dataXML, 'subsumeTitle': true }, fcnComposure);
     }
     renderNode(parent, node) {
         if (node.type == 'line')
@@ -19432,29 +20684,9 @@ class SearchMolecules extends Widget {
         this.count = 0;
         this.results = [];
         this.callbackStop = null;
-        this.masterStop = null;
         this.callbackProgress = null;
-        this.masterProgress = null;
         this.callbackMol = null;
-        this.masterMol = null;
         this.callbackDS = null;
-        this.masterDS = null;
-    }
-    onStop(callback, master) {
-        this.callbackStop = callback;
-        this.masterStop = master;
-    }
-    onProgress(callback, master) {
-        this.callbackProgress = callback;
-        this.masterProgress = master;
-    }
-    onClickMolecule(callback, master) {
-        this.callbackMol = callback;
-        this.masterMol = master;
-    }
-    onClickDataSheet(callback, master) {
-        this.callbackDS = callback;
-        this.masterDS = master;
     }
     render(parent) {
         super.render(parent);
@@ -19469,14 +20701,14 @@ class SearchMolecules extends Widget {
         this.placeholder = $('<tr><td>Starting search...</td></tr>').appendTo(this.table);
         let molstr = mol == null ? null : mol.toString();
         let param = { 'origin': origin, 'molNative': molstr, 'type': type, 'maxResults': maxResults };
-        Search.startMolSearch(param, function (result, error) {
+        Search.startMolSearch(param, (result, error) => {
             if (error != null)
                 throw 'molsync.ui.SearchMolecules: failed to initiate search: ' + error.message;
             this.molsearchToken = result.molsearchToken;
             this.started = true;
             this.finished = false;
-            Search.pollMolSearch({ 'molsearchToken': this.molsearchToken }, this.batchSearch, this);
-        }, this);
+            Search.pollMolSearch({ 'molsearchToken': this.molsearchToken }, () => this.batchSearch(result, error));
+        });
     }
     stopSearch() {
         if (this.placeholder) {
@@ -19486,7 +20718,7 @@ class SearchMolecules extends Widget {
         this.cancelled = true;
         this.finished = true;
         if (this.callbackStop)
-            this.callbackStop.call(this.masterStop, this);
+            this.callbackStop(this);
     }
     isRunning() {
         return this.started && !this.finished;
@@ -19506,13 +20738,13 @@ class SearchMolecules extends Widget {
         if (result.modified)
             this.updateResults(result.results);
         if (!this.finished) {
-            Search.pollMolSearch({ 'molsearchToken': this.molsearchToken }, this.batchSearch, this);
+            Search.pollMolSearch({ 'molsearchToken': this.molsearchToken }, (result, error) => this.batchSearch(result, error));
             if (this.callbackProgress)
-                this.callbackProgress.call(this.masterProgress, this.progress, this.count, this);
+                this.callbackProgress(this.progress, this.count, this);
         }
         else {
             if (this.callbackStop)
-                this.callbackStop.call(this.masterStop, this);
+                this.callbackStop(this);
         }
     }
     updateResults(results) {
@@ -19577,15 +20809,14 @@ class SearchMolecules extends Widget {
         vs.backgroundCol1 = 0xF8F8F8;
         vs.backgroundCol2 = 0xE0E0E0;
         vs.padding = 4;
-        vs.setup(function () {
+        vs.setup(() => {
             vs.render(parent);
             vs.content.css('cursor', 'pointer');
-            const self = this;
-            vs.content.click(function () {
-                if (self.callbackMol)
-                    self.callbackMol(moleculeID, Molecule.fromString(molNative), self);
+            vs.content.click(() => {
+                if (this.callbackMol)
+                    this.callbackMol(moleculeID, Molecule.fromString(molNative));
             });
-        }, this);
+        });
         return vs;
     }
 }
@@ -19601,29 +20832,36 @@ class SearchPanel extends Widget {
         this.pressed = 0;
         this.mol1 = new Molecule();
         this.mol2 = new Molecule();
-        this.HEIGHT = 50;
-        this.MOLWIDTH = 80;
-        this.ARROWWIDTH = 30;
+        this.isSketching = false;
+        this.height = 50;
+        this.molWidth = 80;
+        this.arrowWidth = 30;
         this.HPADDING = 4;
         this.VPADDING = 2;
         this.COLCYCLE = ['#89A54E', '#71588F', '#4198AF', '#DB843D', '#93A9CF', '#D19392', '#4572A7', '#AA4643'];
+        this.emptyMsg1 = null;
+        this.emptyMsg2 = null;
+    }
+    configureDisplay(molWidth, height, emptyMsg1, emptyMsg2) {
+        this.molWidth = molWidth;
+        this.height = height;
+        this.emptyMsg1 = emptyMsg1;
+        this.emptyMsg2 = emptyMsg2;
     }
     getMolecule1() { return this.mol1; }
     getMolecule2() { return this.mol2; }
     setMolecule1(mol) {
         this.mol1 = mol;
-        if (this.drawnMol1 != null)
-            this.renderMolecule(1);
+        this.renderMolecule(1);
     }
     setMolecule2(mol) {
         this.mol2 = mol;
-        if (this.drawnMol2 != null)
-            this.renderMolecule(2);
+        this.renderMolecule(2);
     }
     render(parent) {
         super.render(parent);
         this.content.addClass('no_selection');
-        const height = this.HEIGHT, molw = this.MOLWIDTH, arrow = this.ARROWWIDTH;
+        const height = this.height, molw = this.molWidth, arrow = this.arrowWidth;
         const density = pixelDensity();
         const hpad = this.HPADDING, vpad = this.VPADDING;
         let isRxn = this.type == SearchPanel.TYPE_REACTION, isMol = !isRxn;
@@ -19695,10 +20933,9 @@ class SearchPanel extends Widget {
         let styleMol1 = styleMol1Pos + 'pointer-events: none;';
         this.normalMol1 = renderSolid('#FFFFFF', '#D0D0D0', styleMol1);
         this.pressedMol1 = renderSolid('#00CA59', '#008650', styleMol1);
-        this.drawnMol1 = newElement(div, 'canvas', { 'width': molw, 'height': height, 'style': styleMol1Pos });
+        this.drawnMol1 = newElement(div, 'canvas', { 'width': molw * density, 'height': height * density, 'style': styleMol1Pos });
         this.drawnMol1.style.cursor = 'pointer';
-        if (this.mol1.numAtoms > 0)
-            this.renderMolecule(1);
+        this.renderMolecule(1);
         this.thinMol1 = renderBorder(1, styleMol1);
         this.thickMol1 = renderBorder(2, styleMol1);
         if (isRxn) {
@@ -19711,34 +20948,32 @@ class SearchPanel extends Widget {
             let styleMol2 = styleMol2Pos + 'pointer-events: none;';
             this.normalMol2 = renderSolid('#FFFFFF', '#D0D0D0', styleMol2);
             this.pressedMol2 = renderSolid('#00CA59', '#008650', styleMol2);
-            this.drawnMol2 = newElement(div, 'canvas', { 'width': molw, 'height': height, 'style': styleMol2Pos });
+            this.drawnMol2 = newElement(div, 'canvas', { 'width': molw * density, 'height': height * density, 'style': styleMol2Pos });
             this.drawnMol2.style.cursor = 'pointer';
-            if (this.mol2.numAtoms > 0)
-                this.renderMolecule(2);
+            this.renderMolecule(2);
             this.thinMol2 = renderBorder(1, styleMol2);
             this.thickMol2 = renderBorder(2, styleMol2);
         }
         this.updateLayers();
-        const self = this;
-        $(this.drawnMol1).mouseenter(function () { self.mouseEnter(1); });
-        $(this.drawnMol1).mouseleave(function () { self.mouseLeave(1); });
-        $(this.drawnMol1).mousedown(function () { self.mouseDown(1); });
-        $(this.drawnMol1).mouseup(function () { self.mouseUp(1); });
-        $(this.drawnMol1).attr('ondragstart', function () { return false; });
-        $(this.drawnMol1).click(function () { self.editMolecule(1); });
+        $(this.drawnMol1).mouseenter(() => this.mouseEnter(1));
+        $(this.drawnMol1).mouseleave(() => this.mouseLeave(1));
+        $(this.drawnMol1).mousedown(() => this.mouseDown(1));
+        $(this.drawnMol1).mouseup(() => this.mouseUp(1));
+        $(this.drawnMol1).attr('ondragstart', () => false);
+        $(this.drawnMol1).click(() => this.editMolecule(1));
         if (isRxn) {
-            $(this.drawnArrow).mouseenter(function () { self.mouseEnter(3); });
-            $(this.drawnArrow).mouseleave(function () { self.mouseLeave(3); });
-            $(this.drawnArrow).mousedown(function () { self.mouseDown(3); });
-            $(this.drawnArrow).mouseup(function () { self.mouseUp(3); });
-            $(this.drawnArrow).attr('ondragstart', function () { return false; });
-            $(this.drawnArrow).click(function () { self.editMapping(); });
-            $(this.drawnMol2).mouseenter(function () { self.mouseEnter(2); });
-            $(this.drawnMol2).mouseleave(function () { self.mouseLeave(2); });
-            $(this.drawnMol2).mousedown(function () { self.mouseDown(2); });
-            $(this.drawnMol2).mouseup(function () { self.mouseUp(2); });
-            $(this.drawnMol2).attr('ondragstart', function () { return false; });
-            $(this.drawnMol2).click(function () { self.editMolecule(2); });
+            $(this.drawnArrow).mouseenter(() => this.mouseEnter(3));
+            $(this.drawnArrow).mouseleave(() => this.mouseLeave(3));
+            $(this.drawnArrow).mousedown(() => this.mouseDown(3));
+            $(this.drawnArrow).mouseup(() => this.mouseUp(3));
+            $(this.drawnArrow).attr('ondragstart', () => false);
+            $(this.drawnArrow).click(() => this.editMapping());
+            $(this.drawnMol2).mouseenter(() => this.mouseEnter(2));
+            $(this.drawnMol2).mouseleave(() => this.mouseLeave(2));
+            $(this.drawnMol2).mousedown(() => this.mouseDown(2));
+            $(this.drawnMol2).mouseup(() => this.mouseUp(2));
+            $(this.drawnMol2).attr('ondragstart', () => false);
+            $(this.drawnMol2).click(() => this.editMolecule(2));
         }
         if (!isRxn) {
             addTooltip(this.drawnMol1, 'Edit the molecular structure.');
@@ -19748,26 +20983,47 @@ class SearchPanel extends Widget {
             addTooltip(this.drawnMol2, 'Edit the product structures.');
             addTooltip(this.drawnArrow, 'Map the reactant and product atoms, for more precise searches.');
         }
-        this.drawnMol1.addEventListener('dragover', function (event) {
+        document.addEventListener('paste', (e) => {
+            if (this.isSketching)
+                return true;
+            let wnd = window, txt = '';
+            if (wnd.clipboardData && wnd.clipboardData.getData)
+                txt = wnd.clipboardData.getData('Text');
+            else if (e.clipboardData && e.clipboardData.getData)
+                txt = e.clipboardData.getData('text/plain');
+            if (!txt)
+                return true;
+            let mol = MoleculeStream.readUnknown(txt);
+            if (!mol)
+                return true;
+            let which = this.type == SearchPanel.TYPE_REACTION && !MolUtil.isBlank(this.mol1) && MolUtil.isBlank(this.mol2) ? 2 : 1;
+            if (which == 1)
+                this.setMolecule1(mol);
+            else
+                this.setMolecule2(mol);
+            e.preventDefault();
+            return false;
+        });
+        this.drawnMol1.addEventListener('dragover', (event) => {
             event.stopPropagation();
             event.preventDefault();
             event.dataTransfer.dropEffect = 'copy';
         });
-        this.drawnMol1.addEventListener('drop', function (event) {
+        this.drawnMol1.addEventListener('drop', (event) => {
             event.stopPropagation();
             event.preventDefault();
-            self.dropInto(1, event.dataTransfer);
+            this.dropInto(1, event.dataTransfer);
         });
         if (isRxn) {
-            this.drawnMol2.addEventListener('dragover', function (event) {
+            this.drawnMol2.addEventListener('dragover', (event) => {
                 event.stopPropagation();
                 event.preventDefault();
                 event.dataTransfer.dropEffect = 'copy';
             });
-            this.drawnMol2.addEventListener('drop', function (event) {
+            this.drawnMol2.addEventListener('drop', (event) => {
                 event.stopPropagation();
                 event.preventDefault();
-                self.dropInto(2, event.dataTransfer);
+                this.dropInto(2, event.dataTransfer);
             });
         }
     }
@@ -19786,10 +21042,6 @@ class SearchPanel extends Widget {
     }
     renderMolecule(which) {
         let mol = which == 1 ? this.mol1 : this.mol2, canvas = which == 1 ? this.drawnMol1 : this.drawnMol2;
-        if (mol.numAtoms == 0) {
-            canvas.width = canvas.width;
-            return;
-        }
         let withMapping = false;
         if (this.type == SearchPanel.TYPE_REACTION)
             for (let n = 1; n <= mol.numAtoms; n++)
@@ -19797,51 +21049,37 @@ class SearchPanel extends Widget {
                     withMapping = true;
                     break;
                 }
-        let policy = withMapping ? RenderPolicy.defaultBlackOnWhite() : RenderPolicy.defaultColourOnWhite();
-        let input = { 'molNative': mol.toString(), 'policy': policy.data };
-        Func.arrangeMolecule(input, function (result, error) {
-            let metavec = new MetaVector(result.metavec);
-            let width = this.MOLWIDTH, height = this.HEIGHT;
-            let limW = width - 2, limH = height - 2;
-            let natW = metavec.width, natH = metavec.height;
-            let scale = 1;
-            if (natW > limW) {
-                let down = limW / natW;
-                scale *= down;
-                natW *= down;
-                natH *= down;
-            }
-            if (natH > limH) {
-                let down = limH / natH;
-                scale *= down;
-                natW *= down;
-                natH *= down;
-            }
-            metavec.offsetX = 0.5 * (width - natW);
-            metavec.offsetY = 0.5 * (height - natH);
-            metavec.scale = scale;
-            let ctx = canvas.getContext('2d');
-            ctx.clearRect(0, 0, width, height);
-            metavec.density = pixelDensity();
-            canvas.style.width = width + 'px';
-            canvas.style.height = height + 'px';
-            canvas.width = width * metavec.density;
-            canvas.height = height * metavec.density;
-            let arrmol = result.arrmol;
-            for (let n = 1; n <= mol.numAtoms; n++)
-                if (mol.atomMapNum(n) > 0) {
-                    let col = this.COLCYCLE[(mol.atomMapNum(n) - 1) % this.COLCYCLE.length];
-                    let pt = arrmol.points[n - 1];
-                    let cx = metavec.offsetX + pt.cx * metavec.scale, cy = metavec.offsetY + pt.cy * metavec.scale;
-                    let rw = Math.max(0.5 * policy.data.pointScale, pt.rw) * metavec.scale;
-                    let rh = Math.max(0.5 * policy.data.pointScale, pt.rh) * metavec.scale;
-                    ctx.beginPath();
-                    ctx.ellipse(cx, cy, rw, rh, 0, 0, TWOPI, false);
-                    ctx.fillStyle = col;
-                    ctx.fill();
-                }
+        let width = this.molWidth, height = this.height;
+        let density = pixelDensity();
+        let ctx = canvas.getContext('2d');
+        ctx.save();
+        ctx.scale(density, density);
+        ctx.clearRect(0, 0, width, height);
+        canvas.style.width = width + 'px';
+        canvas.style.height = height + 'px';
+        if (mol.numAtoms > 0) {
+            let policy = withMapping ? RenderPolicy.defaultBlackOnWhite() : RenderPolicy.defaultColourOnWhite();
+            let measure = new OutlineMeasurement(0, 0, policy.data.pointScale);
+            let layout = new ArrangeMolecule(mol, measure, policy, new RenderEffects());
+            layout.arrange();
+            let metavec = new MetaVector();
+            new DrawMolecule(layout, metavec).draw();
+            metavec.transformIntoBox(new Box(2, 2, width - 4, height - 4));
             metavec.renderContext(ctx);
-        }, this);
+        }
+        else if ((which == 1 && this.emptyMsg1) || (which == 2 && this.emptyMsg2)) {
+            let lines = (which == 1 ? this.emptyMsg1 : this.emptyMsg2).split('\n');
+            const fsz = 10, fh = fsz * ASCENT_FUDGE;
+            ctx.font = fontSansSerif(fsz);
+            ctx.fillStyle = 'black';
+            let ty = 0.5 * (height - fh * (lines.length - 1));
+            for (let txt of lines) {
+                let metrics = ctx.measureText(txt);
+                ctx.fillText(txt, 0.5 * (width - metrics.width), ty);
+                ty += fh;
+            }
+        }
+        ctx.restore();
     }
     mouseEnter(which) {
         if (this.highlight != which) {
@@ -19869,14 +21107,14 @@ class SearchPanel extends Widget {
         }
     }
     editMolecule(which) {
-        Account.connectTransient(function (result, error) {
-            if (!result)
-                throw 'Token acquisition failed: ' + error.message;
-            let tokenID = result.tokenID;
-            let dlg = new EditCompound(tokenID, which == 1 ? this.mol1 : this.mol2);
-            dlg.onSave(which == 1 ? this.saveMolecule1 : this.saveMolecule2, this);
-            dlg.open();
-        }, this);
+        let dlg = new EditCompound(null, which == 1 ? this.mol1 : this.mol2);
+        this.isSketching = true;
+        dlg.onSave(() => { if (which == 1)
+            this.saveMolecule1(dlg);
+        else
+            this.saveMolecule2(dlg); });
+        dlg.onClose(() => this.isSketching = false);
+        dlg.open();
     }
     editMapping() {
         if (this.mol1.numAtoms == 0 || this.mol2.numAtoms == 0) {
@@ -19884,10 +21122,10 @@ class SearchPanel extends Widget {
             return;
         }
         let dlg = new MapReaction(this.mol1, this.mol2);
-        dlg.onSave(this.saveMapping, this);
+        dlg.callbackSave = (source) => this.saveMapping(source);
         dlg.open();
     }
-    saveMolecule1(dlg, which) {
+    saveMolecule1(dlg) {
         this.mol1 = dlg.getMolecule();
         dlg.close();
         this.renderMolecule(1);
@@ -19911,17 +21149,18 @@ class SearchPanel extends Widget {
         this.renderMolecule(2);
     }
     dropInto(which, transfer) {
-        const self = this;
         let items = transfer.items, files = transfer.files;
+        const SUFFIXES = ['.el', '.mol'];
+        const MIMES = ['text/plain', 'chemical/x-sketchel', 'x-mdl-molfile'];
         for (let n = 0; n < items.length; n++) {
-            if (items[n].type.startsWith('text/plain')) {
-                items[n].getAsString(function (str) {
+            if (items[n].kind == 'string' && MIMES.indexOf(items[n].type) >= 0) {
+                items[n].getAsString((str) => {
                     let mol = Molecule.fromString(str);
                     if (mol != null) {
                         if (which == 1)
-                            self.setMolecule1(mol);
+                            this.setMolecule1(mol);
                         else
-                            self.setMolecule2(mol);
+                            this.setMolecule2(mol);
                     }
                     else
                         console.log('Dragged data is not a SketchEl molecule: ' + str);
@@ -19930,23 +21169,24 @@ class SearchPanel extends Widget {
             }
         }
         for (let n = 0; n < files.length; n++) {
-            if (files[n].name.endsWith('.el')) {
-                let reader = new FileReader();
-                reader.onload = function (event) {
-                    let str = reader.result;
-                    let mol = Molecule.fromString(str);
-                    if (mol != null) {
-                        if (which == 1)
-                            self.setMolecule1(mol);
+            for (let sfx of SUFFIXES)
+                if (files[n].name.endsWith(sfx)) {
+                    let reader = new FileReader();
+                    reader.onload = (event) => {
+                        let str = reader.result;
+                        let mol = MoleculeStream.readUnknown(str);
+                        if (mol != null) {
+                            if (which == 1)
+                                this.setMolecule1(mol);
+                            else
+                                this.setMolecule2(mol);
+                        }
                         else
-                            self.setMolecule2(mol);
-                    }
-                    else
-                        console.log('Dragged file is not a SketchEl molecule: ' + str);
-                };
-                reader.readAsText(files[n]);
-                return;
-            }
+                            console.log('Dragged file is not a recognised molecule: ' + str);
+                    };
+                    reader.readAsText(files[n]);
+                    return;
+                }
         }
     }
 }
@@ -19964,29 +21204,9 @@ class SearchReactions extends Widget {
         this.count = 0;
         this.results = [];
         this.callbackStop = null;
-        this.masterStop = null;
         this.callbackProgress = null;
-        this.masterProgress = null;
         this.callbackRxn = null;
-        this.masterRxn = null;
         this.callbackDS = null;
-        this.masterDS = null;
-    }
-    onStop(callback, master) {
-        this.callbackStop = callback;
-        this.masterStop = master;
-    }
-    onProgress(callback, master) {
-        this.callbackProgress = callback;
-        this.masterProgress = master;
-    }
-    onClickReaction(callback, master) {
-        this.callbackRxn = callback;
-        this.masterRxn = master;
-    }
-    onClickDataSheet(callback, master) {
-        this.callbackDS = callback;
-        this.masterDS = master;
     }
     render(parent) {
         super.render(parent);
@@ -20002,14 +21222,14 @@ class SearchReactions extends Widget {
         let molstr1 = mol1 == null ? null : mol1.toString();
         let molstr2 = mol2 == null ? null : mol2.toString();
         let param = { 'origin': origin, 'molNative1': molstr1, 'molNative2': molstr2, 'type': type, 'maxResults': maxResults };
-        Search.startRxnSearch(param, function (result, error) {
+        Search.startRxnSearch(param, (result, error) => {
             if (error != null)
                 throw 'molsync.ui.SearchReactions: failed to initiate search: ' + error.message;
             this.rxnsearchToken = result.rxnsearchToken;
             this.started = true;
             this.finished = false;
-            Search.pollRxnSearch({ 'rxnsearchToken': this.rxnsearchToken }, this.batchSearch, this);
-        }, this);
+            Search.pollRxnSearch({ 'rxnsearchToken': this.rxnsearchToken }, (result, error) => this.batchSearch(result, error));
+        });
     }
     stopSearch() {
         if (this.placeholder) {
@@ -20019,7 +21239,7 @@ class SearchReactions extends Widget {
         this.cancelled = true;
         this.finished = true;
         if (this.callbackStop)
-            this.callbackStop.call(this.masterStop, this);
+            this.callbackStop(this);
     }
     isRunning() {
         return this.started && !this.finished;
@@ -20040,9 +21260,9 @@ class SearchReactions extends Widget {
             this.updateResults(result.results);
         }
         if (!this.finished) {
-            Search.pollRxnSearch({ 'rxnsearchToken': this.rxnsearchToken }, this.batchSearch, this);
+            Search.pollRxnSearch({ 'rxnsearchToken': this.rxnsearchToken }, (result, error) => this.batchSearch(result, error));
             if (this.callbackProgress)
-                this.callbackProgress.call(this.masterProgress, this.progress, this.count, this);
+                this.callbackProgress(this.progress, this.count, this);
         }
         else {
             if (this.placeholder) {
@@ -20050,7 +21270,7 @@ class SearchReactions extends Widget {
                 this.placeholder = null;
             }
             if (this.callbackStop)
-                this.callbackStop.call(this.masterStop, this);
+                this.callbackStop(this);
         }
     }
     updateResults(results) {
@@ -20112,12 +21332,11 @@ class SearchReactions extends Widget {
         vs.setup(function () {
             vs.render(parent);
             vs.content.css('cursor', 'pointer');
-            const self = this;
-            vs.content.click(function () {
-                if (self.callbackRxn)
-                    self.callbackRxn(dataXML, datasheetID, row, self);
+            vs.content.click(() => {
+                if (this.callbackRxn)
+                    this.callbackRxn(dataXML, datasheetID, row, self);
             });
-        }, this);
+        });
         return vs;
     }
 }

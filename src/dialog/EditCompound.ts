@@ -28,8 +28,7 @@ class EditCompound extends Dialog
 	
 	fakeTextArea:HTMLTextAreaElement = null; // for temporarily bogarting the clipboard
 	
-	protected callbackSave:(source?:EditCompound) => void = null;
-	protected masterSave:any = null;
+	public callbackSave:(source?:EditCompound) => void = null;
 		
 	constructor(private tokenID:string, private mol:Molecule)
 	{
@@ -40,10 +39,9 @@ class EditCompound extends Dialog
 		this.maxPortionWidth = 95;
 	}
 
-	public onSave(callback:(source?:EditCompound) => void, master:any)
+	public onSave(callback:(source?:EditCompound) => void)
 	{
 		this.callbackSave = callback;
-		this.masterSave = master;
 	}
 
 	public getMolecule():Molecule {return this.sketcher.getMolecule();}
@@ -52,25 +50,20 @@ class EditCompound extends Dialog
 	protected populate():void
 	{		
 		let buttons = this.buttons(), body = this.body();
-		const self = this;
 		
         this.btnClear = $('<button class="button button-default">Clear</button>').appendTo(buttons);
-		this.btnClear.click(function() {self.sketcher.clearMolecule();});
-
-		/*buttons.append(' ');
-        this.btnPaste = $('<button class="button button-default">Paste</button>').appendTo(buttons);
-		this.btnPaste.click(function() {self.pasteMolecule();});*/
+		this.btnClear.click(() => this.sketcher.clearMolecule());
 
 		buttons.append(' ');
         this.btnCopy = $('<button class="button button-default">Copy</button>').appendTo(buttons);
-		this.btnCopy.click(function() {self.copyMolecule();});
+		this.btnCopy.click(() => this.copyMolecule());
 
 		buttons.append(' ');
 		buttons.append(this.btnClose); // easy way to reorder
 		
 		buttons.append(' ');
         this.btnSave = $('<button class="button button-primary">Save</button>').appendTo(buttons);
-		this.btnSave.click(function() {if (self.callbackSave) self.callbackSave.call(self.masterSave, self);});
+		this.btnSave.click(() => {if (this.callbackSave) this.callbackSave(this);});
 		
 		let skw = 800, skh = 700;
 		let skdiv = $('<div></div>').appendTo(this.body());
@@ -80,7 +73,7 @@ class EditCompound extends Dialog
 		this.sketcher = new Sketcher(this.tokenID);
 		this.sketcher.setSize(skw, skh);
 		this.sketcher.defineMolecule(this.mol);
-		this.sketcher.setup(function() {this.sketcher.render(skdiv);}, this);
+		this.sketcher.setup(() => this.sketcher.render(skdiv));
 	}
 	
 	private pasteMolecule():void

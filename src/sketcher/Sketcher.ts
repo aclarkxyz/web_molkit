@@ -190,9 +190,9 @@ class Sketcher extends Widget implements ArrangeMeasurement
 	public getMolecule():Molecule {return this.mol.clone();}
 	
 	// instantiates the widget: any of the immutable setup properties are now cast in stone
-	public setup(callback:() => void, master:any):void
+	public setup(callback:() => void):void
 	{
-		let fcnPrep = function()
+		ButtonView.prepare(() =>
 		{
 			this.beenSetup = true;
 			if (this.mol == null) this.mol = new Molecule();
@@ -211,9 +211,8 @@ class Sketcher extends Widget implements ArrangeMeasurement
 			this.metavec = new MetaVector();
 			new DrawMolecule(this.layout, this.metavec).draw();
 
-			if (callback) callback.call(master);
-		}
-		ButtonView.prepare(fcnPrep, this);
+			if (callback) callback();
+		});
 	}
 
 	// create the objects necessary to render the widget; this function should be called after basic pre-initialisation settings, e.g.
@@ -283,19 +282,17 @@ class Sketcher extends Widget implements ArrangeMeasurement
 			this.templateView.render(this.container);
 		}
 
-		const self = this;
-		
 		// setup all the interactive events
-		this.container.click(function(event:JQueryEventObject) {self.mouseClick(event);});
-		this.container.dblclick(function(event:JQueryEventObject) {self.mouseDoubleClick(event);});
-		this.container.mousedown(function(event:JQueryEventObject) {event.preventDefault(); self.mouseDown(event);});
-		this.container.mouseup(function(event:JQueryEventObject) {self.mouseUp(event);});
-		this.container.mouseover(function(event:JQueryEventObject) {self.mouseOver(event);});
-		this.container.mouseout(function(event:JQueryEventObject) {self.mouseOut(event);});
-		this.container.mousemove(function(event:JQueryEventObject) {self.mouseMove(event);});
-		this.container.keypress(function(event:JQueryEventObject) {self.keyPressed(event);});
-		this.container.keydown(function(event:JQueryEventObject) {self.keyDown(event);});
-		this.container.keyup(function(event:JQueryEventObject) {self.keyUp(event);});
+		this.container.click((event:JQueryEventObject) => this.mouseClick(event));
+		this.container.dblclick((event:JQueryEventObject) => this.mouseDoubleClick(event));
+		this.container.mousedown((event:JQueryEventObject) => {event.preventDefault(); this.mouseDown(event);});
+		this.container.mouseup((event:JQueryEventObject) => this.mouseUp(event));
+		this.container.mouseover((event:JQueryEventObject) => this.mouseOver(event));
+		this.container.mouseout((event:JQueryEventObject) => this.mouseOut(event));
+		this.container.mousemove((event:JQueryEventObject) => this.mouseMove(event));
+		this.container.keypress((event:JQueryEventObject) => this.keyPressed(event));
+		this.container.keydown((event:JQueryEventObject) => this.keyDown(event));
+		this.container.keyup((event:JQueryEventObject) => this.keyUp(event));
 
 		// setup the wheel handler
 		/* ...
@@ -304,25 +301,25 @@ class Sketcher extends Widget implements ArrangeMeasurement
 		*/
 
 		// setup drop events
-		this.container[0].addEventListener('dragover', function(event)
+		this.container[0].addEventListener('dragover', (event) =>
 		{
 			event.stopPropagation();
 			event.preventDefault();
 			event.dataTransfer.dropEffect = 'copy';
 		});
-		this.container[0].addEventListener('drop', function(event)
+		this.container[0].addEventListener('drop', (event) =>
 		{
 			event.stopPropagation();
 			event.preventDefault();
-			self.dropInto(event.dataTransfer);
+			this.dropInto(event.dataTransfer);
 		});
 		
 		// pasting: captures the menu/hotkey form
-		document.addEventListener('paste', function(e:any)
+		document.addEventListener('paste', (e:any) =>
 		{
 			let wnd = <any>window;
-			if (wnd.clipboardData && wnd.clipboardData.getData) self.pasteText(wnd.clipboardData.getData('Text'));
-			else if (e.clipboardData && e.clipboardData.getData) self.pasteText(e.clipboardData.getData('text/plain')); 
+			if (wnd.clipboardData && wnd.clipboardData.getData) this.pasteText(wnd.clipboardData.getData('Text'));
+			else if (e.clipboardData && e.clipboardData.getData) this.pasteText(e.clipboardData.getData('text/plain')); 
 			e.preventDefault();
 			return false;
 		});
@@ -364,10 +361,9 @@ class Sketcher extends Widget implements ArrangeMeasurement
 		this.divMessage.css('width', (this.width - szLeft - szRight) + 'px');
 		this.divMessage.css('height', (this.height - szBottom) + 'px');
 		
-		const self = this;
-		window.setTimeout(function()
+		window.setTimeout(() =>
 		{
-			if (watermark == self.fadeWatermark) self.divMessage.text(''); 
+			if (watermark == this.fadeWatermark) this.divMessage.text(''); 
 		}, 5000);
 	}
 	
@@ -573,7 +569,7 @@ class Sketcher extends Widget implements ArrangeMeasurement
 			return;
 		}
 		let dlg = new PickRecent(cookies, 1);
-		dlg.onPick1(function(mol:Molecule) {this.pasteMolecule(mol);}, this);
+		dlg.callbackPick1 = (mol:Molecule) => this.pasteMolecule(mol);
 		dlg.open();
 	}
 
@@ -986,12 +982,7 @@ class Sketcher extends Widget implements ArrangeMeasurement
 	{
 		if (this.canvasMolecule == null) return;
 		this.filthy = true;
-		let self = this;
-		let redrawAction = function() 
-		{
-			if (self.filthy) self.redraw();
-		};
-		window.setTimeout(redrawAction, 10);
+		window.setTimeout(() => {if (this.filthy) this.redraw();}, 10);
 	}
 
 	// locates a molecular object at the given position: returns N for atom, -N for bond, or 0 for nothing
@@ -1961,8 +1952,6 @@ class Sketcher extends Widget implements ArrangeMeasurement
 	// something was dragged into the sketcher area
 	private dropInto(transfer:DataTransfer):void
 	{
-		const self = this;
-		
 		let items = transfer.items, files = transfer.files;
 
 		const SUFFIXES = ['.el', '.mol'];
@@ -1974,13 +1963,13 @@ class Sketcher extends Widget implements ArrangeMeasurement
 		{
 			if (items[n].kind == 'string' && MIMES.indexOf(items[n].type) >= 0)
 			{
-				items[n].getAsString(function(str:string)
+				items[n].getAsString((str:string) =>
 				{
 					let mol = Molecule.fromString(str);
 					if (mol != null) 
 					{
 						// (maybe do an intelligent append/paste, using the coordinates, rather than blowing it away?)
-						self.defineMolecule(mol, true, true);
+						this.defineMolecule(mol, true, true);
 					}	
 					else console.log('Dragged data is not a SketchEl molecule: ' + str);
 				});
@@ -1994,14 +1983,14 @@ class Sketcher extends Widget implements ArrangeMeasurement
 			for (let sfx of SUFFIXES) if (files[n].name.endsWith(sfx))
 			{
 				let reader = new FileReader();
-				reader.onload = function(event)
+				reader.onload = (event) =>
 				{
 					let str = reader.result;
 					let mol = MoleculeStream.readUnknown(str);
 					if (mol != null) 
 					{
 						// (maybe do an intelligent append/paste, using the coordinates, rather than blowing it away?)
-						self.defineMolecule(mol, true, true);
+						this.defineMolecule(mol, true, true);
 					}	
 					else console.log('Dragged file is not a recognised molecule: ' + str);
 				};

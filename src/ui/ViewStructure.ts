@@ -84,15 +84,15 @@ class ViewStructure extends Widget
 	// molecule will be obtained, and information such as natural width & height filled in; note that this function executes an
 	// RPC call, so it will return before the necessary information has been provided... the caller may provide its own callback for
 	// when the details become available (optional)
-	public setup(callback:() => void, master:any):void
+	public setup(callback:() => void):void
 	{
 		if (this.molstr == null && this.datastr == null) throw 'molsync.ui.ViewStructure.setup called without specifying a molecule or datasheet';
 		if (this.policy == null) this.policy = RenderPolicy.defaultColourOnWhite();
 
 		if (this.molstr != null)
-			this.setupMolecule(callback, master);
+			this.setupMolecule(callback);
 		else
-			this.setupData(callback, master);
+			this.setupData(callback);
 	}
 
 	// create the objects necessary to render the widget; this function should be called after basic pre-initialisation settings, e.g.
@@ -176,7 +176,7 @@ class ViewStructure extends Widget
 	// ------------ private methods ------------
 
 	// rendering an individual molecule is done locally
-	private setupMolecule(callback:() => void, master:any):void
+	private setupMolecule(callback:() => void):void
 	{
 		let mol = Molecule.fromString(this.molstr); // note: not very efficient if mol was passed in...
 		let effects = new RenderEffects();
@@ -195,18 +195,18 @@ class ViewStructure extends Widget
 		if (this.width == 0) this.width = this.naturalWidth + 2 * this.padding;
 		if (this.height == 0) this.height = this.naturalHeight + 2 * this.padding;
 
-		if (callback) callback.call(master);
+		if (callback) callback();
 	}
 
 	// when a datasheet snippet is provided, have to pass this off the RPC code
-	private setupData(callback:() => void, master:any):void
+	private setupData(callback:() => void):void
 	{
 		let input:any = {'tokenID':this.tokenID};
 		input.policy = this.policy.data;
 		input.dataXML = this.datastr;
 		input.dataRow = this.datarow;
 		
-		let fcn = function(result:any, error:ErrorRPC)
+		Func.renderStructure(input, (result:any, error:ErrorRPC) =>
 		{
 			if (!result) 
 			{
@@ -221,10 +221,8 @@ class ViewStructure extends Widget
 			if (this.width == 0) this.width = this.naturalWidth + 2 * this.padding;
 			if (this.height == 0) this.height = this.naturalHeight + 2 * this.padding;
 
-			if (callback) callback.call(master);
-		};
-
-		Func.renderStructure(input, fcn, this);
+			if (callback) callback();
+		});
 	}	
 }
 

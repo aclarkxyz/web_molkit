@@ -49,36 +49,11 @@ class SearchReactions extends Widget
 	private table:JQuery;
 	private placeholder:JQuery;
 	
-	callbackStop:(source?:SearchReactions) => void = null;
-	masterStop:any = null;
-	callbackProgress:(progress:number, count:number, source?:SearchReactions) => void = null;
-	masterProgress:any = null;
-	callbackRxn:(dataXML:string, datasheetID:number, row:number, source?:SearchReactions) => void = null;
-	masterRxn:any = null;
-	callbackDS:(datasheetID:number, source?:SearchReactions) => void = null;
-	masterDS:any = null;
+	public callbackStop:(source?:SearchReactions) => void = null;
+	public callbackProgress:(progress:number, count:number, source?:SearchReactions) => void = null;
+	public callbackRxn:(dataXML:string, datasheetID:number, row:number, source?:SearchReactions) => void = null;
+	public callbackDS:(datasheetID:number, source?:SearchReactions) => void = null;
 
-	public onStop(callback:(source?:SearchReactions) => void, master:any)
-	{
-		this.callbackStop = callback;
-		this.masterStop = master;
-	}
-	public onProgress(callback:(progress:number, count:number, source?:SearchReactions) => void, master:any)
-	{
-		this.callbackProgress = callback;
-		this.masterProgress = master;
-	}
-	public onClickReaction(callback:(dataXML:string, datasheetID:number, row:number, source?:SearchReactions) => void, master:any)
-	{
-		this.callbackRxn = callback;
-		this.masterRxn = master;
-	}
-	public onClickDataSheet(callback:(datasheetID:number, source?:SearchReactions) => void, master:any)
-	{
-		this.callbackDS = callback;
-		this.masterDS = master;
-	}
-	
 	constructor(private tokenID:string)
 	{
 		super();
@@ -107,7 +82,7 @@ class SearchReactions extends Widget
 		let molstr1 = mol1 == null ? null : mol1.toString();
 		let molstr2 = mol2 == null ? null : mol2.toString();
 		let param = {'origin': origin, 'molNative1': molstr1, 'molNative2': molstr2, 'type': type, 'maxResults': maxResults};
-		Search.startRxnSearch(param, function(result:any, error:ErrorRPC)
+		Search.startRxnSearch(param, (result:any, error:ErrorRPC) =>
 		{
 			if (error != null) throw 'molsync.ui.SearchReactions: failed to initiate search: ' + error.message;
 
@@ -118,8 +93,8 @@ class SearchReactions extends Widget
 			this.started = true;
 			this.finished = false;
 			
-			Search.pollRxnSearch({'rxnsearchToken': this.rxnsearchToken}, this.batchSearch, this);
-		}, this);
+			Search.pollRxnSearch({'rxnsearchToken': this.rxnsearchToken}, (result:any, error:ErrorRPC) => this.batchSearch(result, error));
+		});
 	}
 	
 	// if the search is running, make it not so
@@ -130,7 +105,7 @@ class SearchReactions extends Widget
 		this.cancelled = true;
 		this.finished = true;
 		
-		if (this.callbackStop) this.callbackStop.call(this.masterStop, this);
+		if (this.callbackStop) this.callbackStop(this);
 	}
 	
 	// returns true if the search is happening right now
@@ -160,13 +135,13 @@ class SearchReactions extends Widget
 		
 		if (!this.finished) 
 		{
-			Search.pollRxnSearch({'rxnsearchToken': this.rxnsearchToken}, this.batchSearch, this);
-			if (this.callbackProgress) this.callbackProgress.call(this.masterProgress, this.progress, this.count, this);
+			Search.pollRxnSearch({'rxnsearchToken': this.rxnsearchToken}, (result:any, error:ErrorRPC) => this.batchSearch(result, error));
+			if (this.callbackProgress) this.callbackProgress(this.progress, this.count, this);
 		}
 		else
 		{
 			if (this.placeholder) {this.placeholder.remove(); this.placeholder = null;}
-			if (this.callbackStop) this.callbackStop.call(this.masterStop, this);
+			if (this.callbackStop) this.callbackStop(this);
 		}
 	}
 	
@@ -249,13 +224,12 @@ class SearchReactions extends Widget
 			vs.render(parent);
 			vs.content.css('cursor', 'pointer');
 			
-			const self = this;
-			vs.content.click(function()
+			vs.content.click(() =>
 			{
-				if (self.callbackRxn) self.callbackRxn(dataXML, datasheetID, row, self);
+				if (this.callbackRxn) this.callbackRxn(dataXML, datasheetID, row, self);
 			});
 			// NOTE: would also be nice to have individual molecules clickable...
-		}, this);
+		});
 		
 		return vs;
 	}

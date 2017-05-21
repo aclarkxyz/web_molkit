@@ -18,28 +18,28 @@
 
 class Pile
 {
-	public static uploadMolecule(input:Object, callback:(result:any, error:ErrorRPC) => void, master?:Object):void
+	public static uploadMolecule(input:Object, callback:(result:any, error:ErrorRPC) => void):void
 	{
-		new RPC('pile.uploadMolecule', input, callback, master).invoke();
+		new RPC('pile.uploadMolecule', input, callback).invoke();
 	}
-	public static uploadDataSheet(input:Object, callback:(result:any, error:ErrorRPC) => void, master?:Object):void
+	public static uploadDataSheet(input:Object, callback:(result:any, error:ErrorRPC) => void):void
 	{
-		new RPC('pile.uploadDataSheet', input, callback, master).invoke();
+		new RPC('pile.uploadDataSheet', input, callback).invoke();
 	}
-	public static downloadMolecule(input:Object, callback:(result:any, error:ErrorRPC) => void, master?:Object):void
+	public static downloadMolecule(input:Object, callback:(result:any, error:ErrorRPC) => void):void
 	{
-		new RPC('pile.downloadMolecule', input, callback, master).invoke();
+		new RPC('pile.downloadMolecule', input, callback).invoke();
 	}
-	public static downloadDataSheet(input:Object, callback:(result:any, error:ErrorRPC) => void, master?:Object):void
+	public static downloadDataSheet(input:Object, callback:(result:any, error:ErrorRPC) => void):void
 	{
-		new RPC('pile.downloadDataSheet', input, callback, master).invoke();
+		new RPC('pile.downloadDataSheet', input, callback).invoke();
 	}
-	public static fetchSelection(input:Object, callback:(result:any, error:ErrorRPC) => void, master?:Object):void
+	public static fetchSelection(input:Object, callback:(result:any, error:ErrorRPC) => void):void
 	{
-		new RPC('pile.fetchSelection', input, callback, master).invoke();
+		new RPC('pile.fetchSelection', input, callback).invoke();
 	}
-	public static fetchMolecules(input:Object, callback:(result:any, error:ErrorRPC) => void, master?:Object):void
+	public static fetchMolecules(input:Object, callback:(result:any, error:ErrorRPC) => void):void
 	{
-		new RPC('pile.fetchMolecules', input, callback, master).invoke();
+		new RPC('pile.fetchMolecules', input, callback).invoke();
 	}
 }

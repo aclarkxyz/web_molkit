@@ -53,20 +53,13 @@ class CircleButton extends Widget
 	
 	progressFraction:number = null;
 	
-	callback:(source?:CircleButton) => void = null;
-	master:any;
+	public callbackAction:(source?:CircleButton) => void = null;
 	
 	constructor(private icon:string)
 	{
 		super();
 	}
 	
-	public onAction(callback:(source?:CircleButton) => void, master:any)
-	{
-		this.callback = callback;
-		this.master = master;
-	}
-
 	// create the underlying structure; the parent parameter must be jQuery-compatible
 	public render(parent:any)
 	{
@@ -143,12 +136,11 @@ class CircleButton extends Widget
 
 		this.updateLayers();
 		
-		const self = this;
-		div.mouseenter(function() {self.mouseEnter();;});
-		div.mouseleave(function() {self.mouseLeave();});
-		div.mousedown(function() {self.mouseDown();});
-		div.mouseup(function() {self.mouseUp();});
-		div.click(function() {self.mouseClicked();});
+		div.mouseenter(() => this.mouseEnter());
+		div.mouseleave(() => this.mouseLeave());
+		div.mousedown(() => this.mouseDown());
+		div.mouseup(() => this.mouseUp());
+		div.click(() => this.mouseClicked());
 	};
 
 	// changes the widget to display a ring around the outside; any range from 0..1 is considered active
@@ -246,6 +238,6 @@ class CircleButton extends Widget
 	}
 	private mouseClicked()
 	{
-		if (this.callback) this.callback.call(this.master, this);		
+		if (this.callbackAction) this.callbackAction(this);
 	}
 }
