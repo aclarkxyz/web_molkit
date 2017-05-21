@@ -235,7 +235,7 @@ class MDLMOLReader
 					{
 						this.mol.setAtomHExplicit(pos, val);
 						let src:OpenMolSource = {'row': this.pos - 1, 'col': 9 + 8 * n, 'len': 8};
-						this.openmol.addJoin(OpenMolType.HydogenCounting, [pos], null, [src]);
+						this.openmol.addJoin(OpenMolType.HydrogenCounting, [pos], null, [src]);
 					}
 					else if (type == MBLK_ZCH) this.mol.setAtomCharge(pos, val);
 					else if (type == MBLK_ZBO) 
