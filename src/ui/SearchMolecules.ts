@@ -1,7 +1,7 @@
 /*
     WebMolKit
 
-    (c) 2010-2016 Molecular Materials Informatics, Inc.
+    (c) 2010-2017 Molecular Materials Informatics, Inc.
 
     All rights reserved
     
@@ -159,8 +159,6 @@ class SearchMolecules extends Widget
 	// results have come in: need to create or reuse content as necessary
 	private updateResults(results:any[]):void
 	{
-		let self = this;
-		
 		for (let n = 0; n < results.length; n++)
 		{
 			let res = results[n];
@@ -190,8 +188,8 @@ class SearchMolecules extends Widget
 			for (let src of res.sources) 
 			{
 				let link = $('<a href="#' + src.datasheetID + '"></a>').appendTo(td);
-				link.mouseenter(function(e:any) {e.target.style.backgroundColor = '#D0D0D0';});
-				link.mouseleave(function(e:any) {e.target.style.backgroundColor = 'transparent';});
+				link.mouseenter((e:any) => e.target.style.backgroundColor = '#D0D0D0');
+				link.mouseleave((e:any) => e.target.style.backgroundColor = 'transparent');
 				
 				let title = src.subTitle ? src.subTitle : src.title ? src.title : 'DataSheet#' + src.datasheetID;
 				
@@ -203,10 +201,7 @@ class SearchMolecules extends Widget
 				body += '<div>Row ' + src.row + '</div>';
 				addTooltip(link, body, escapeHTML(title));
 				
-				link.click(function()
-				{
-					if (self.callbackDS) self.callbackDS(src.datasheetID, self);
-				});
+				link.click(() => {if (this.callbackDS) this.callbackDS(src.datasheetID, this);});
 				td.append(' ');
 			}
 		}

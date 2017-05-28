@@ -1,7 +1,7 @@
 /*
     WebMolKit
 
-    (c) 2010-2016 Molecular Materials Informatics, Inc.
+    (c) 2010-2017 Molecular Materials Informatics, Inc.
 
     All rights reserved
     
@@ -119,7 +119,7 @@ class Sketcher extends Widget implements ArrangeMeasurement
 
 	private static UNDO_SIZE = 20;
 
-	constructor(private tokenID:string)
+	constructor()
 	{
 		super();
 	}

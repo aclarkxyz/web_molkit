@@ -1,7 +1,7 @@
 /*
     WebMolKit
 
-    (c) 2010-2016 Molecular Materials Informatics, Inc.
+    (c) 2010-2017 Molecular Materials Informatics, Inc.
 
     All rights reserved
     
@@ -39,8 +39,8 @@ function addTooltip(parent:any, bodyHTML:string, titleHTML?:string, delay?:numbe
     const tooltip = new Tooltip(widget, bodyHTML, titleHTML, delay == null ? 1000 : delay);
     
     let prevEnter:any = widget.attr('onmouseenter'), prevLeave:any = widget.attr('onmouseleave');
-    widget.mouseenter(function(e) {tooltip.start(); if (prevEnter) prevEnter(e);});
-    widget.mouseleave(function(e) {tooltip.stop(); if (prevLeave) prevLeave(e);}); 
+    widget.mouseenter((e:any) => {tooltip.start(); if (prevEnter) prevEnter(e);});
+    widget.mouseleave((e:any) => {tooltip.stop(); if (prevLeave) prevLeave(e);}); 
 }
 
 // rudely shutdown the tooltip

@@ -1,7 +1,7 @@
 /*
     WebMolKit
 
-    (c) 2010-2016 Molecular Materials Informatics, Inc.
+    (c) 2010-2017 Molecular Materials Informatics, Inc.
 
     All rights reserved
     
@@ -159,12 +159,12 @@ class Molecule
 		return this.atoms.length;
 	}
 
-	public setAtomElement = function(idx:number, element:string)
+	public setAtomElement(idx:number, element:string):void
 	{
 		this.getAtom(idx).element = element;
 		this.trashTransient();
 	}
-	public setAtomPos = function(idx:number, x:number, y:number, z?:number)
+	public setAtomPos(idx:number, x:number, y:number, z?:number):void
 	{
 		let a = this.getAtom(idx);
 		a.x = x;
@@ -172,46 +172,46 @@ class Molecule
 		a.z = z == null ? 0 : z;
 		this.trashTransient();
 	}
-	public setAtomX = function(idx:number, x:number)
+	public setAtomX(idx:number, x:number):void
 	{
 		this.getAtom(idx).x = x;
 		this.trashTransient();
 	}
-	public setAtomY = function(idx:number, y:number)
+	public setAtomY(idx:number, y:number):void
 	{
 		this.getAtom(idx).y = y;
 		this.trashTransient();
 	}
-	public setAtomCharge = function(idx:number, charge:number)
+	public setAtomCharge(idx:number, charge:number):void
 	{
 		this.getAtom(idx).charge = charge;
 		this.trashTransient();
 	}
-	public setAtomUnpaired = function(idx:number, unpaired:number)
+	public setAtomUnpaired(idx:number, unpaired:number):void
 	{
 		this.getAtom(idx).unpaired = unpaired;
 		this.trashTransient();
 	}
-	public setAtomIsotope = function(idx:number, isotope:number)
+	public setAtomIsotope(idx:number, isotope:number):void
 	{
 		this.getAtom(idx).isotope = isotope;
 		this.trashTransient();
 	}
-	public setAtomHExplicit = function(idx:number, hExplicit:number)
+	public setAtomHExplicit(idx:number, hExplicit:number):void
 	{
 		this.getAtom(idx).hExplicit = hExplicit;
 		this.trashTransient();
 	}
-	public setAtomMapNum = function(idx:number, mapNum:number)
+	public setAtomMapNum(idx:number, mapNum:number):void
 	{
 		this.getAtom(idx).mapNum = mapNum;
 		this.trashTransient();
 	}
-	public setAtomExtra = function(idx:number, extra:string[])
+	public setAtomExtra(idx:number, extra:string[]):void
 	{
 		this.getAtom(idx).extra = extra.slice(0);
 	}
-	public setAtomTransient = function(idx:number, transi:string[])
+	public setAtomTransient(idx:number, transi:string[]):void
 	{
 		this.getAtom(idx).transient = transi.slice(0);
 		if (transi.length > 0) this.hasTransient = true;
@@ -234,7 +234,7 @@ class Molecule
 		this.trashTransient();
 	}
 
-	public addBond(from:number, to:number, order:number, type:number = Molecule.BONDTYPE_NORMAL)
+	public addBond(from:number, to:number, order:number, type:number = Molecule.BONDTYPE_NORMAL):number
 	{
 		let b = new Bond();
 		b.from = from;
@@ -249,46 +249,46 @@ class Molecule
 		return this.bonds.length;
 	}
 
-	public setBondFrom(idx:number, bfr:number)
+	public setBondFrom(idx:number, bfr:number):void
 	{
 		this.getBond(idx).from = bfr;
 		this.trashTransient();
 		this.trashGraph();
 	}
-	public setBondTo(idx:number, to:number)
+	public setBondTo(idx:number, to:number):void
 	{
 		this.getBond(idx).to = to;
 		this.trashTransient();
 		this.trashGraph();
 	}
-	public setBondFromTo(idx:number, bfr:number, bto:number)
+	public setBondFromTo(idx:number, bfr:number, bto:number):void
 	{
 		this.getBond(idx).from = bfr;
 		this.getBond(idx).to = bto;
 		this.trashTransient();
 		this.trashGraph();
 	}
-	public setBondOrder(idx:number, order:number)
+	public setBondOrder(idx:number, order:number):void
 	{
 		this.getBond(idx).order = order;
 		this.trashTransient();
 	}
-	public setBondType(idx:number, type:number)
+	public setBondType(idx:number, type:number):void
 	{
 		this.getBond(idx).type = type;
 		this.trashTransient();
 	}
-	public setBondExtra(idx:number, extra:string[])
+	public setBondExtra(idx:number, extra:string[]):void
 	{
 		this.getBond(idx).extra = extra.slice(0);
 	}
-	public setBondTransient(idx:number, transi:string[])
+	public setBondTransient(idx:number, transi:string[]):void
 	{
 		this.getBond(idx).transient = transi.slice(0);
 		if (transi.length > 0) this.hasTransient = true;
 	}
 
-	public deleteAtomAndBonds(idx:number)
+	public deleteAtomAndBonds(idx:number):void
 	{
 		for (let n = this.numBonds; n >= 1; n--)
 		{
@@ -304,7 +304,7 @@ class Molecule
 		this.trashTransient();
 		this.trashGraph();
 	}
-	public deleteBond(idx:number)
+	public deleteBond(idx:number):void
 	{
 		this.bonds.splice(idx - 1, 1);
 		this.trashTransient();
@@ -538,14 +538,14 @@ class Molecule
 	// ------------ private methods ------------
 	
 	// must be called when the molecule's graph changes; do not call for changing labels or coordinates
-	private trashGraph()
+	private trashGraph():void
 	{
 		this.graph = null;
 		this.graphBond = null;
 	}
 
 	// must be called when _any_ change to the molecule is affected; the transient extension fields are cleared out
-	private trashTransient()
+	private trashTransient():void
 	{
 		if (this.keepTransient || !this.hasTransient) return;
 		for (let a of this.atoms) a.transient = [];
@@ -554,7 +554,7 @@ class Molecule
 	}
 	
 	// if the computed graph is not defined, rebuild it
-	private buildGraph()
+	private buildGraph():void
 	{
 		if (this.graph != null && this.graphBond != null) return;
 		

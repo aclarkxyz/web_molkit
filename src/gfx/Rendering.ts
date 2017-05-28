@@ -1,7 +1,7 @@
 /*
     WebMolKit
 
-    (c) 2010-2016 Molecular Materials Informatics, Inc.
+    (c) 2010-2017 Molecular Materials Informatics, Inc.
 
     All rights reserved
     
@@ -60,7 +60,7 @@ class RenderPolicy
 	};
 
 	// static methods for creating new default schemes
-	public static defaultBlackOnWhite = function()
+	public static defaultBlackOnWhite():RenderPolicy
 	{
 		var policy = new RenderPolicy();
 		/* (actually this is what the null constructor does)
@@ -69,7 +69,7 @@ class RenderPolicy
 		for (var n=0;n<=111;n++) policy.data.atomCols[n]=0x000000;*/
 		return policy;
 	};
-	public static defaultWhiteOnBlack = function()
+	public static defaultWhiteOnBlack():RenderPolicy
 	{
 		var policy = new RenderPolicy();
 		policy.data.foreground = 0xFFFFFF;
@@ -77,7 +77,7 @@ class RenderPolicy
 		for (var n = 0; n <= 111; n++) policy.data.atomCols[n] = 0xFFFFFF;
 		return policy;
 	};
-	public static defaultColourOnWhite = function()
+	public static defaultColourOnWhite():RenderPolicy
 	{
 		var policy = RenderPolicy.defaultBlackOnWhite();
 		policy.data.atomCols[0] = 0x404040;
@@ -92,7 +92,7 @@ class RenderPolicy
 		policy.data.atomCols[35] = 0xC04000;
 		return policy;
 	};
-	public static defaultColourOnBlack = function()
+	public static defaultColourOnBlack():RenderPolicy
 	{
 		var policy = RenderPolicy.defaultWhiteOnBlack();
 		policy.data.atomCols[0] = 0xA0A0A0;
@@ -107,7 +107,7 @@ class RenderPolicy
 		policy.data.atomCols[35] = 0xFF8040;
 		return policy;
 	};
-	public static defaultPrintedPublication = function()
+	public static defaultPrintedPublication():RenderPolicy
 	{
 		var policy = RenderPolicy.defaultBlackOnWhite();
 		policy.data.pointScale = 9.6;

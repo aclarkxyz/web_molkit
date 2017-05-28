@@ -1,7 +1,7 @@
 /*
     WebMolKit
 
-    (c) 2010-2016 Molecular Materials Informatics, Inc.
+    (c) 2010-2017 Molecular Materials Informatics, Inc.
 
     All rights reserved
     
@@ -592,7 +592,7 @@ class Honeycomb extends Widget
 		}
 
 		// iteratively shift the centre/recalculate the radius until there's no way to reduce it any further
-		let calculateRadiusSq = function(cx:number, cy:number, px:number[], py:number[]):number
+		let calculateRadiusSq = (cx:number, cy:number, px:number[], py:number[]):number =>
 		{
 			let v = 0
 			for (let n = px.length - 1; n >= 0; n--) v = Math.max(v, norm2_xy(px[n] - cx, py[n] - cy));

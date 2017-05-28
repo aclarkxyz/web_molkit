@@ -1,7 +1,7 @@
 /*
     WebMolKit
 
-    (c) 2010-2016 Molecular Materials Informatics, Inc.
+    (c) 2010-2017 Molecular Materials Informatics, Inc.
 
     All rights reserved
     
@@ -148,8 +148,6 @@ class SearchReactions extends Widget
 	// results have come in: need to create or reuse content as necessary
 	private updateResults(results:any[]):void
 	{
-		let self = this;
-		
 		for (let n = 0; n < results.length; n++)
 		{
 			let res = results[n];
@@ -177,8 +175,8 @@ class SearchReactions extends Widget
 			let td = $('<td></td>').appendTo(tr);
 
 			let link = $('<a href="#' + res.datasheetID + '"></a>').appendTo(td);
-			link.mouseenter(function(e:any) {e.target.style.backgroundColor = '#D0D0D0';});
-			link.mouseleave(function(e:any) {e.target.style.backgroundColor = 'transparent';});
+			link.mouseenter((e:any) => e.target.style.backgroundColor = '#D0D0D0');
+			link.mouseleave((e:any) => e.target.style.backgroundColor = 'transparent');
 			
 			let title = res.subTitle ? res.subTitle : res.title ? res.title : 'DataSheet#' + res.datasheetID;
 			
@@ -190,10 +188,7 @@ class SearchReactions extends Widget
 			//body += '<div>Row ' + res.row + '</div>'; (not applicable: they're always snipped to singletons anyway)
 			addTooltip(link, body, escapeHTML(title));
 			
-			link.click(function()
-			{
-				if (self.callbackDS) self.callbackDS(res.datasheetID, self);
-			});
+			link.click(() => {if (this.callbackDS) this.callbackDS(res.datasheetID, this);});
 			td.append(' ');
 		}
 		
@@ -219,14 +214,14 @@ class SearchReactions extends Widget
 		vs.backgroundCol2 = 0xE0E0E0;
 		vs.padding = 4;
 		
-		vs.setup(function()
+		vs.setup(() =>
 		{
 			vs.render(parent);
 			vs.content.css('cursor', 'pointer');
 			
 			vs.content.click(() =>
 			{
-				if (this.callbackRxn) this.callbackRxn(dataXML, datasheetID, row, self);
+				if (this.callbackRxn) this.callbackRxn(dataXML, datasheetID, row, this);
 			});
 			// NOTE: would also be nice to have individual molecules clickable...
 		});

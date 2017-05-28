@@ -1,7 +1,7 @@
 /*
     WebMolKit
 
-    (c) 2010-2016 Molecular Materials Informatics, Inc.
+    (c) 2010-2017 Molecular Materials Informatics, Inc.
 
     All rights reserved
     
@@ -79,7 +79,7 @@ class ButtonView extends Widget
 			return;
 		}
 		
-		let fcn = function(result:any, error:ErrorRPC)
+		let fcn = (result:any, error:ErrorRPC) =>
 		{
 			if (!result.actions)
 			{
@@ -759,8 +759,6 @@ class ButtonView extends Widget
 	};
 	private delayedRedraw():void
 	{
-		//let redrawAction = function() {this.redraw();};
-		//new goog.async.Delay(redrawAction, 100, this).start();
 		window.setTimeout(() => this.redraw(), 100);
 	};
 

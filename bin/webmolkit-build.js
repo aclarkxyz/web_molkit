@@ -267,11 +267,11 @@ class Vec {
         let idx = new Array(arr.length);
         for (let n = 0; n < arr.length; n++)
             idx[n] = n;
-        idx.sort(function (a, b) { return arr[a] < arr[b] ? -1 : arr[a] > arr[b] ? 1 : 0; });
+        idx.sort((a, b) => arr[a] < arr[b] ? -1 : arr[a] > arr[b] ? 1 : 0);
         return idx;
     }
     static sort(arr) {
-        arr.sort(function (v1, v2) { return v1 - v2; });
+        arr.sort((v1, v2) => v1 - v2);
     }
     static sorted(arr) {
         arr = arr.slice(0);
@@ -654,7 +654,7 @@ function escapeHTML(text) {
     if (!text)
         return '';
     const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
-    return text.replace(/[&<>"']/g, function (m) { return map[m]; });
+    return text.replace(/[&<>"']/g, (m) => map[m]);
 }
 class DataSheet {
     constructor(data) {
@@ -2568,56 +2568,61 @@ class RenderPolicy {
         }
     }
     ;
+    static defaultBlackOnWhite() {
+        var policy = new RenderPolicy();
+        return policy;
+    }
+    ;
+    static defaultWhiteOnBlack() {
+        var policy = new RenderPolicy();
+        policy.data.foreground = 0xFFFFFF;
+        policy.data.background = 0x000000;
+        for (var n = 0; n <= 111; n++)
+            policy.data.atomCols[n] = 0xFFFFFF;
+        return policy;
+    }
+    ;
+    static defaultColourOnWhite() {
+        var policy = RenderPolicy.defaultBlackOnWhite();
+        policy.data.atomCols[0] = 0x404040;
+        policy.data.atomCols[1] = 0x808080;
+        policy.data.atomCols[6] = 0x000000;
+        policy.data.atomCols[7] = 0x0000FF;
+        policy.data.atomCols[8] = 0xFF0000;
+        policy.data.atomCols[9] = 0xFF8080;
+        policy.data.atomCols[15] = 0xFF8000;
+        policy.data.atomCols[16] = 0x808000;
+        policy.data.atomCols[17] = 0x00C000;
+        policy.data.atomCols[35] = 0xC04000;
+        return policy;
+    }
+    ;
+    static defaultColourOnBlack() {
+        var policy = RenderPolicy.defaultWhiteOnBlack();
+        policy.data.atomCols[0] = 0xA0A0A0;
+        policy.data.atomCols[1] = 0x808080;
+        policy.data.atomCols[6] = 0xFFFFFF;
+        policy.data.atomCols[7] = 0x4040FF;
+        policy.data.atomCols[8] = 0xFF4040;
+        policy.data.atomCols[9] = 0xFF8080;
+        policy.data.atomCols[15] = 0xFF8000;
+        policy.data.atomCols[16] = 0xFFFF00;
+        policy.data.atomCols[17] = 0x40FF40;
+        policy.data.atomCols[35] = 0xFF8040;
+        return policy;
+    }
+    ;
+    static defaultPrintedPublication() {
+        var policy = RenderPolicy.defaultBlackOnWhite();
+        policy.data.pointScale = 9.6;
+        policy.data.resolutionDPI = 600;
+        policy.data.fontSize = 0.80;
+        policy.data.bondSep = 0.27;
+        policy.data.lineSize = 0.0625;
+        return policy;
+    }
+    ;
 }
-RenderPolicy.defaultBlackOnWhite = function () {
-    var policy = new RenderPolicy();
-    return policy;
-};
-RenderPolicy.defaultWhiteOnBlack = function () {
-    var policy = new RenderPolicy();
-    policy.data.foreground = 0xFFFFFF;
-    policy.data.background = 0x000000;
-    for (var n = 0; n <= 111; n++)
-        policy.data.atomCols[n] = 0xFFFFFF;
-    return policy;
-};
-RenderPolicy.defaultColourOnWhite = function () {
-    var policy = RenderPolicy.defaultBlackOnWhite();
-    policy.data.atomCols[0] = 0x404040;
-    policy.data.atomCols[1] = 0x808080;
-    policy.data.atomCols[6] = 0x000000;
-    policy.data.atomCols[7] = 0x0000FF;
-    policy.data.atomCols[8] = 0xFF0000;
-    policy.data.atomCols[9] = 0xFF8080;
-    policy.data.atomCols[15] = 0xFF8000;
-    policy.data.atomCols[16] = 0x808000;
-    policy.data.atomCols[17] = 0x00C000;
-    policy.data.atomCols[35] = 0xC04000;
-    return policy;
-};
-RenderPolicy.defaultColourOnBlack = function () {
-    var policy = RenderPolicy.defaultWhiteOnBlack();
-    policy.data.atomCols[0] = 0xA0A0A0;
-    policy.data.atomCols[1] = 0x808080;
-    policy.data.atomCols[6] = 0xFFFFFF;
-    policy.data.atomCols[7] = 0x4040FF;
-    policy.data.atomCols[8] = 0xFF4040;
-    policy.data.atomCols[9] = 0xFF8080;
-    policy.data.atomCols[15] = 0xFF8000;
-    policy.data.atomCols[16] = 0xFFFF00;
-    policy.data.atomCols[17] = 0x40FF40;
-    policy.data.atomCols[35] = 0xFF8040;
-    return policy;
-};
-RenderPolicy.defaultPrintedPublication = function () {
-    var policy = RenderPolicy.defaultBlackOnWhite();
-    policy.data.pointScale = 9.6;
-    policy.data.resolutionDPI = 600;
-    policy.data.fontSize = 0.80;
-    policy.data.bondSep = 0.27;
-    policy.data.lineSize = 0.0625;
-    return policy;
-};
 class RenderEffects {
     constructor() {
         this.colAtom = {};
@@ -2910,53 +2915,6 @@ class Molecule {
         this.ring5 = null;
         this.ring6 = null;
         this.ring7 = null;
-        this.setAtomElement = function (idx, element) {
-            this.getAtom(idx).element = element;
-            this.trashTransient();
-        };
-        this.setAtomPos = function (idx, x, y, z) {
-            let a = this.getAtom(idx);
-            a.x = x;
-            a.y = y;
-            a.z = z == null ? 0 : z;
-            this.trashTransient();
-        };
-        this.setAtomX = function (idx, x) {
-            this.getAtom(idx).x = x;
-            this.trashTransient();
-        };
-        this.setAtomY = function (idx, y) {
-            this.getAtom(idx).y = y;
-            this.trashTransient();
-        };
-        this.setAtomCharge = function (idx, charge) {
-            this.getAtom(idx).charge = charge;
-            this.trashTransient();
-        };
-        this.setAtomUnpaired = function (idx, unpaired) {
-            this.getAtom(idx).unpaired = unpaired;
-            this.trashTransient();
-        };
-        this.setAtomIsotope = function (idx, isotope) {
-            this.getAtom(idx).isotope = isotope;
-            this.trashTransient();
-        };
-        this.setAtomHExplicit = function (idx, hExplicit) {
-            this.getAtom(idx).hExplicit = hExplicit;
-            this.trashTransient();
-        };
-        this.setAtomMapNum = function (idx, mapNum) {
-            this.getAtom(idx).mapNum = mapNum;
-            this.trashTransient();
-        };
-        this.setAtomExtra = function (idx, extra) {
-            this.getAtom(idx).extra = extra.slice(0);
-        };
-        this.setAtomTransient = function (idx, transi) {
-            this.getAtom(idx).transient = transi.slice(0);
-            if (transi.length > 0)
-                this.hasTransient = true;
-        };
     }
     clone() { return Molecule.fromString(this.toString()); }
     static fromString(strData) { return MoleculeStream.readNative(strData); }
@@ -3022,6 +2980,53 @@ class Molecule {
         this.trashTransient();
         this.trashGraph();
         return this.atoms.length;
+    }
+    setAtomElement(idx, element) {
+        this.getAtom(idx).element = element;
+        this.trashTransient();
+    }
+    setAtomPos(idx, x, y, z) {
+        let a = this.getAtom(idx);
+        a.x = x;
+        a.y = y;
+        a.z = z == null ? 0 : z;
+        this.trashTransient();
+    }
+    setAtomX(idx, x) {
+        this.getAtom(idx).x = x;
+        this.trashTransient();
+    }
+    setAtomY(idx, y) {
+        this.getAtom(idx).y = y;
+        this.trashTransient();
+    }
+    setAtomCharge(idx, charge) {
+        this.getAtom(idx).charge = charge;
+        this.trashTransient();
+    }
+    setAtomUnpaired(idx, unpaired) {
+        this.getAtom(idx).unpaired = unpaired;
+        this.trashTransient();
+    }
+    setAtomIsotope(idx, isotope) {
+        this.getAtom(idx).isotope = isotope;
+        this.trashTransient();
+    }
+    setAtomHExplicit(idx, hExplicit) {
+        this.getAtom(idx).hExplicit = hExplicit;
+        this.trashTransient();
+    }
+    setAtomMapNum(idx, mapNum) {
+        this.getAtom(idx).mapNum = mapNum;
+        this.trashTransient();
+    }
+    setAtomExtra(idx, extra) {
+        this.getAtom(idx).extra = extra.slice(0);
+    }
+    setAtomTransient(idx, transi) {
+        this.getAtom(idx).transient = transi.slice(0);
+        if (transi.length > 0)
+            this.hasTransient = true;
     }
     swapAtoms(a1, a2) {
         let a = this.atoms[a1 - 1];
@@ -10144,9 +10149,9 @@ function addTooltip(parent, bodyHTML, titleHTML, delay) {
     }
     const tooltip = new Tooltip(widget, bodyHTML, titleHTML, delay == null ? 1000 : delay);
     let prevEnter = widget.attr('onmouseenter'), prevLeave = widget.attr('onmouseleave');
-    widget.mouseenter(function (e) { tooltip.start(); if (prevEnter)
+    widget.mouseenter((e) => { tooltip.start(); if (prevEnter)
         prevEnter(e); });
-    widget.mouseleave(function (e) { tooltip.stop(); if (prevLeave)
+    widget.mouseleave((e) => { tooltip.stop(); if (prevLeave)
         prevLeave(e); });
 }
 function clearTooltip() {
@@ -10255,12 +10260,12 @@ class OptionList extends Widget {
             else
                 div.append(txt);
             if (n != this.selidx) {
-                div.mouseover(function () { $(this).addClass('option-hover'); });
-                div.mouseout(function () { $(this).removeClass('option-hover option-active'); });
-                div.mousedown(function () { $(this).addClass('option-active'); });
-                div.mouseup(function () { $(this).removeClass('option-active'); });
-                div.mouseleave(function () { $(this).removeClass('option-hover option-active'); });
-                div.mousemove(function () { return false; });
+                div.mouseover(() => div.addClass('option-hover'));
+                div.mouseout(() => div.removeClass('option-hover option-active'));
+                div.mousedown(() => div.addClass('option-active'));
+                div.mouseup(() => div.removeClass('option-active'));
+                div.mouseleave(() => div.removeClass('option-hover option-active'));
+                div.mousemove(() => { return false; });
                 const idx = n;
                 div.click(() => this.clickButton(idx));
             }
@@ -10357,7 +10362,7 @@ class RPC {
                 }
                 this.callback(result, error);
             },
-            error: function (jqXHR, textStatus, errorThrow) {
+            error: (jqXHR, textStatus, errorThrow) => {
                 var error = {
                     'message': 'connection failure',
                     'code': RPC.ERRCODE_NONSPECIFIC,
@@ -10436,6 +10441,14 @@ class Download extends Dialog {
         let dlg = new Download(tokenID);
         dlg.mol = mol;
         dlg.title = 'Download Molecule';
+        dlg.open();
+        return dlg;
+    }
+    ;
+    static openTransientDataSheet(tokenID, ds) {
+        let dlg = new Download(tokenID);
+        dlg.ds = ds;
+        dlg.title = 'Download DataSheet';
         dlg.open();
         return dlg;
     }
@@ -10728,13 +10741,6 @@ class Download extends Dialog {
         addText(newElement(this.downloadArea, 'a', { 'href': url, 'target': '_blank' }), fn);
     }
 }
-Download.openTransientDataSheet = function (tokenID, ds) {
-    let dlg = new Download(tokenID);
-    dlg.ds = ds;
-    dlg.title = 'Download DataSheet';
-    dlg.open();
-    return dlg;
-};
 class Cookies {
     constructor() {
         this.molecules = [];
@@ -12844,7 +12850,7 @@ class ButtonView extends Widget {
             callback();
             return;
         }
-        let fcn = function (result, error) {
+        let fcn = (result, error) => {
             if (!result.actions) {
                 alert('Fetching action icons failed: ' + error.message);
                 return;
@@ -16148,7 +16154,7 @@ class TemplateBank extends ButtonBank {
         if (this.group == null) {
             if (RPC.BASE_URL != null) {
                 let input = { 'tokenID': this.owner.tokenID, 'policy': policy.data, 'size': [sz - 4, sz - 4] };
-                let fcn = function (result, error) {
+                let fcn = (result, error) => {
                     if (!result) {
                         alert('Setup of TemplateBank failed: ' + error.message);
                         return;
@@ -16168,7 +16174,7 @@ class TemplateBank extends ButtonBank {
         else {
             if (RPC.BASE_URL != null) {
                 let input = { 'tokenID': this.owner.tokenID, 'policy': policy.data, 'size': [sz - 4, sz - 4], 'group': this.group };
-                let fcn = function (result, error) {
+                let fcn = (result, error) => {
                     if (!result) {
                         alert('Setup of TemplateBank failed: ' + error.message);
                         return;
@@ -16236,7 +16242,7 @@ class TemplateBank extends ButtonBank {
         ];
         TemplateBank.RESOURCE_LIST = roster.slice(0);
         TemplateBank.RESOURCE_DATA = [];
-        let grabNext = function () {
+        let grabNext = () => {
             if (roster.length == 0) {
                 onComplete();
                 return;
@@ -16246,7 +16252,7 @@ class TemplateBank extends ButtonBank {
                 'url': url,
                 'type': 'GET',
                 'dataType': 'text',
-                'success': function (dsstr) {
+                'success': (dsstr) => {
                     TemplateBank.RESOURCE_DATA.push(DataSheetStream.readXML(dsstr));
                     grabNext();
                 }
@@ -16408,9 +16414,8 @@ var DraggingTool;
 })(DraggingTool || (DraggingTool = {}));
 var globalMoleculeClipboard = null;
 class Sketcher extends Widget {
-    constructor(tokenID) {
+    constructor() {
         super();
-        this.tokenID = tokenID;
         this.mol = null;
         this.policy = null;
         this.width = 0;
@@ -17971,7 +17976,7 @@ class EditCompound extends Dialog {
         let skdiv = $('<div></div>').appendTo(this.body());
         skdiv.css('width', skw + 'px');
         skdiv.css('height', skh + 'px');
-        this.sketcher = new Sketcher(this.tokenID);
+        this.sketcher = new Sketcher();
         this.sketcher.setSize(skw, skh);
         this.sketcher.defineMolecule(this.mol);
         this.sketcher.setup(() => this.sketcher.render(skdiv));
@@ -20422,7 +20427,7 @@ class Honeycomb extends Widget {
             px.push(b.line.x2 + b.size);
             py.push(b.line.y2 + b.size);
         }
-        let calculateRadiusSq = function (cx, cy, px, py) {
+        let calculateRadiusSq = (cx, cy, px, py) => {
             let v = 0;
             for (let n = px.length - 1; n >= 0; n--)
                 v = Math.max(v, norm2_xy(px[n] - cx, py[n] - cy));
@@ -20554,7 +20559,7 @@ class RowView extends Widget {
             entry.watermark = this.watermark;
             roster.push(entry);
         }
-        let fcnComposure = function (result, error) {
+        let fcnComposure = (result, error) => {
             let entry = roster.shift();
             if (entry.watermark != this.watermark)
                 return;
@@ -20748,7 +20753,6 @@ class SearchMolecules extends Widget {
         }
     }
     updateResults(results) {
-        let self = this;
         for (let n = 0; n < results.length; n++) {
             let res = results[n];
             res.tr = $('<tr></tr>').appendTo(this.table);
@@ -20771,8 +20775,8 @@ class SearchMolecules extends Widget {
             let td = $('<td></td>').appendTo(tr);
             for (let src of res.sources) {
                 let link = $('<a href="#' + src.datasheetID + '"></a>').appendTo(td);
-                link.mouseenter(function (e) { e.target.style.backgroundColor = '#D0D0D0'; });
-                link.mouseleave(function (e) { e.target.style.backgroundColor = 'transparent'; });
+                link.mouseenter((e) => e.target.style.backgroundColor = '#D0D0D0');
+                link.mouseleave((e) => e.target.style.backgroundColor = 'transparent');
                 let title = src.subTitle ? src.subTitle : src.title ? src.title : 'DataSheet#' + src.datasheetID;
                 link.text(title);
                 let body = '';
@@ -20782,10 +20786,8 @@ class SearchMolecules extends Widget {
                     body += '<div>Description: <i>' + escapeHTML(src.descr) + '</i></div>';
                 body += '<div>Row ' + src.row + '</div>';
                 addTooltip(link, body, escapeHTML(title));
-                link.click(function () {
-                    if (self.callbackDS)
-                        self.callbackDS(src.datasheetID, self);
-                });
+                link.click(() => { if (this.callbackDS)
+                    this.callbackDS(src.datasheetID, this); });
                 td.append(' ');
             }
         }
@@ -21274,7 +21276,6 @@ class SearchReactions extends Widget {
         }
     }
     updateResults(results) {
-        let self = this;
         for (let n = 0; n < results.length; n++) {
             let res = results[n];
             res.tr = $('<tr></tr>').appendTo(this.table);
@@ -21296,8 +21297,8 @@ class SearchReactions extends Widget {
             }
             let td = $('<td></td>').appendTo(tr);
             let link = $('<a href="#' + res.datasheetID + '"></a>').appendTo(td);
-            link.mouseenter(function (e) { e.target.style.backgroundColor = '#D0D0D0'; });
-            link.mouseleave(function (e) { e.target.style.backgroundColor = 'transparent'; });
+            link.mouseenter((e) => e.target.style.backgroundColor = '#D0D0D0');
+            link.mouseleave((e) => e.target.style.backgroundColor = 'transparent');
             let title = res.subTitle ? res.subTitle : res.title ? res.title : 'DataSheet#' + res.datasheetID;
             link.text(title);
             let body = '';
@@ -21306,10 +21307,8 @@ class SearchReactions extends Widget {
             if (res.descr)
                 body += '<div>Description: <i>' + escapeHTML(res.descr) + '</i></div>';
             addTooltip(link, body, escapeHTML(title));
-            link.click(function () {
-                if (self.callbackDS)
-                    self.callbackDS(res.datasheetID, self);
-            });
+            link.click(() => { if (this.callbackDS)
+                this.callbackDS(res.datasheetID, this); });
             td.append(' ');
         }
         for (let res of this.results)
@@ -21329,12 +21328,12 @@ class SearchReactions extends Widget {
         vs.backgroundCol1 = 0xF8F8F8;
         vs.backgroundCol2 = 0xE0E0E0;
         vs.padding = 4;
-        vs.setup(function () {
+        vs.setup(() => {
             vs.render(parent);
             vs.content.css('cursor', 'pointer');
             vs.content.click(() => {
                 if (this.callbackRxn)
-                    this.callbackRxn(dataXML, datasheetID, row, self);
+                    this.callbackRxn(dataXML, datasheetID, row, this);
             });
         });
         return vs;
