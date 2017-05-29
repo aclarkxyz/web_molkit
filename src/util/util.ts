@@ -376,3 +376,6 @@ function escapeHTML(text:string):string
 	const map:{[id:string] : string} = {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'};
 	return text.replace(/[&<>"']/g, function(m) {return map[m];});
 }
+
+// convenience: make sure a string isn't null
+function orBlank(str:string):string {return str == null ? '' : str;}
