@@ -1,7 +1,7 @@
 /*
     WebMolKit
 
-    (c) 2010-2016 Molecular Materials Informatics, Inc.
+    (c) 2010-2017 Molecular Materials Informatics, Inc.
 
     All rights reserved
     
@@ -70,7 +70,7 @@ class EditCompound extends Dialog
 		skdiv.css('width', skw + 'px');
 		skdiv.css('height', skh + 'px');
 		
-		this.sketcher = new Sketcher(this.tokenID);
+		this.sketcher = new Sketcher();
 		this.sketcher.setSize(skw, skh);
 		this.sketcher.defineMolecule(this.mol);
 		this.sketcher.setup(() => this.sketcher.render(skdiv));

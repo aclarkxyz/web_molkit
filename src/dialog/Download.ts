@@ -1,7 +1,7 @@
 /*
     WebMolKit
 
-    (c) 2010-2016 Molecular Materials Informatics, Inc.
+    (c) 2010-2017 Molecular Materials Informatics, Inc.
 
     All rights reserved
     
@@ -71,7 +71,7 @@ class Download extends Dialog
 
 	// creates a new dialog, using an instance of molsync.data.DataSheet as the subject; the content will be submitted to
 	// the server as a "transient" datum associated with the tokenID
-	public static openTransientDataSheet = function(tokenID:string, ds:DataSheet)
+	public static openTransientDataSheet(tokenID:string, ds:DataSheet):Download
 	{
 		let dlg = new Download(tokenID);
 		dlg.ds = ds;

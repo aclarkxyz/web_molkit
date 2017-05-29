@@ -1,7 +1,7 @@
 /*
     WebMolKit
 
-    (c) 2010-2016 Molecular Materials Informatics, Inc.
+    (c) 2010-2017 Molecular Materials Informatics, Inc.
 
     All rights reserved
     
@@ -12,6 +12,7 @@
 
 ///<reference path='../decl/jquery.d.ts'/>
 ///<reference path='../util/util.ts'/>
+
 
 /*
 	Dialog: base class for popup dialogs.
@@ -38,7 +39,7 @@ class Dialog
     {
     }
     
-	public onClose(callback:(source?:EditCompound) => void)
+	public onClose(callback:(source?:Dialog) => void)
 	{
 		this.callbackClose = callback;
 	}

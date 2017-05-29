@@ -1,7 +1,7 @@
 /*
     WebMolKit
 
-    (c) 2010-2016 Molecular Materials Informatics, Inc.
+    (c) 2010-2017 Molecular Materials Informatics, Inc.
 
     All rights reserved
     
@@ -83,12 +83,12 @@ class OptionList extends Widget
 
 			if (n != this.selidx)
 			{
-				div.mouseover(function() {$(this).addClass('option-hover');});
-				div.mouseout(function() {$(this).removeClass('option-hover option-active');});
-				div.mousedown(function() {$(this).addClass('option-active');});
-				div.mouseup(function() {$(this).removeClass('option-active');});
-				div.mouseleave(function() {$(this).removeClass('option-hover option-active');});
-				div.mousemove(function() {return false;});
+				div.mouseover(() => div.addClass('option-hover'));
+				div.mouseout(() => div.removeClass('option-hover option-active'));
+				div.mousedown(() => div.addClass('option-active'));
+				div.mouseup(() => div.removeClass('option-active'));
+				div.mouseleave(() => div.removeClass('option-hover option-active'));
+				div.mousemove(() => {return false;});
 				
 				const idx = n;
 				div.click(() => this.clickButton(idx));

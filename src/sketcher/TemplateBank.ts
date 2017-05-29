@@ -1,7 +1,7 @@
 /*
     WebMolKit
 
-    (c) 2010-2016 Molecular Materials Informatics, Inc.
+    (c) 2010-2017 Molecular Materials Informatics, Inc.
 
     All rights reserved
     
@@ -73,7 +73,7 @@ class TemplateBank extends ButtonBank
 			if (RPC.BASE_URL != null)
 			{
 				let input = {'tokenID': this.owner.tokenID, 'policy': policy.data, 'size': [sz - 4, sz - 4]};
-				let fcn = function(result:any, error:ErrorRPC)
+				let fcn = (result:any, error:ErrorRPC) =>
 				{
 					if (!result) 
 					{
@@ -98,7 +98,7 @@ class TemplateBank extends ButtonBank
 			if (RPC.BASE_URL != null)
 			{
 				let input:any = {'tokenID': this.owner.tokenID, 'policy': policy.data, 'size': [sz - 4, sz - 4], 'group': this.group};
-				let fcn = function(result:any, error:ErrorRPC)
+				let fcn = (result:any, error:ErrorRPC) =>
 				{
 					if (!result) 
 					{
@@ -194,7 +194,7 @@ class TemplateBank extends ButtonBank
 		TemplateBank.RESOURCE_LIST = roster.slice(0);
 		TemplateBank.RESOURCE_DATA = [];
 
-		let grabNext = function():void
+		let grabNext = ():void =>
 		{
 			if (roster.length == 0)
 			{
@@ -207,7 +207,7 @@ class TemplateBank extends ButtonBank
 				'url': url, 
 				'type': 'GET',
 				'dataType': 'text',
-				'success': function(dsstr:string)
+				'success': (dsstr:string) =>
 				{
 					TemplateBank.RESOURCE_DATA.push(DataSheetStream.readXML(dsstr));
 					grabNext();

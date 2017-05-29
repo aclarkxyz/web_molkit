@@ -1,7 +1,7 @@
 /*
     WebMolKit
 
-    (c) 2010-2016 Molecular Materials Informatics, Inc.
+    (c) 2010-2017 Molecular Materials Informatics, Inc.
 
     All rights reserved
     
@@ -37,6 +37,12 @@
 
 	Note: before anything can happen, an external code block has to set the BASE_URL so that it points to an accessible
 	server that hosts the MolSync RPC functionality.
+
+	------------------------------
+
+	Background: this class and its descendents originate from an earlier incarnation of the WebMolKit project, which
+	employed tight coupling to a server. Due to massive improvements in the viability of the JavaScript runtime,
+	this is no longer the best way to get work done for the most part, and so this approach is largely obsolete.
 */
 
 interface ErrorRPC
@@ -123,7 +129,7 @@ class RPC
 				
 				this.callback(result, error);
 			},
-			error: function(jqXHR:JQueryXHR, textStatus:string, errorThrow:string)
+			error: (jqXHR:JQueryXHR, textStatus:string, errorThrow:string) =>
 			{
 				var error:ErrorRPC = 
 				{

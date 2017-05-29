@@ -1,7 +1,7 @@
 /*
     WebMolKit
 
-    (c) 2010-2016 Molecular Materials Informatics, Inc.
+    (c) 2010-2017 Molecular Materials Informatics, Inc.
 
     All rights reserved
     
@@ -292,14 +292,14 @@ class Vec
 	{
 		let idx:number[] = new Array(arr.length);
 		for (let n = 0; n < arr.length; n++) idx[n] = n;
-		idx.sort(function(a:number, b:number):number {return arr[a] < arr[b] ? -1 : arr[a] > arr[b] ? 1 : 0;});
+		idx.sort((a:number, b:number):number => arr[a] < arr[b] ? -1 : arr[a] > arr[b] ? 1 : 0);
 		return idx;
 	}
 
 	// for some reason the default sorter has a dubious habit of doing a string comparison
 	public static sort(arr:number[])
 	{
-		arr.sort(function(v1:number, v2:number):number {return v1 - v2});
+		arr.sort((v1:number, v2:number):number => v1 - v2);
 	}
 	public static sorted(arr:number[])
 	{

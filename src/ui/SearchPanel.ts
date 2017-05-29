@@ -1,7 +1,7 @@
 /*
     WebMolKit
 
-    (c) 2010-2016 Molecular Materials Informatics, Inc.
+    (c) 2010-2017 Molecular Materials Informatics, Inc.
 
     All rights reserved
     
@@ -364,54 +364,6 @@ class SearchPanel extends Widget
 		}
 
 		ctx.restore();
-
-		/*
-		let input = {'molNative': mol.toString(), 'policy': policy.data};
-		Func.arrangeMolecule(input, function(result:any, error:ErrorRPC)
-		{
-			let metavec = new MetaVector(result.metavec);
-			metavec.density = density;
-			
-			let limW = width - 2, limH = height - 2;
-			let natW = metavec.width, natH = metavec.height;
-			let scale = 1;
-			if (natW > limW)
-			{
-				let down = limW / natW;
-				scale *= down;
-				natW *= down;
-				natH *= down;
-			}
-			if (natH > limH)
-			{
-				let down = limH / natH;
-				scale *= down;
-				natW *= down;
-				natH *= down;
-			}
-
-			metavec.offsetX = 0.5 * (width - natW);
-			metavec.offsetY = 0.5 * (height - natH);
-			metavec.scale = scale;
-			
-			//metavec.renderCanvas(canvas);		
-			
-			let arrmol = result.arrmol;
-			for (let n = 1; n <= mol.numAtoms; n++) if (mol.atomMapNum(n) > 0)
-			{
-				let col = this.COLCYCLE[(mol.atomMapNum(n) - 1) % this.COLCYCLE.length];
-				let pt = arrmol.points[n - 1];
-				let cx = metavec.offsetX + pt.cx * metavec.scale, cy = metavec.offsetY + pt.cy * metavec.scale;
-				let rw = Math.max(0.5 * policy.data.pointScale, pt.rw) * metavec.scale;
-				let rh = Math.max(0.5 * policy.data.pointScale, pt.rh) * metavec.scale;
-				ctx.beginPath();
-				ctx.ellipse(cx, cy, rw, rh, 0, 0, TWOPI, false);  
-				ctx.fillStyle = col;
-				ctx.fill();
-			}
-
-			metavec.renderContext(ctx);
-		}, this);*/
 	}
 
 	// mouse events

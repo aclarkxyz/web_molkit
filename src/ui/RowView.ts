@@ -1,7 +1,7 @@
 /*
     WebMolKit
 
-    (c) 2010-2016 Molecular Materials Informatics, Inc.
+    (c) 2010-2017 Molecular Materials Informatics, Inc.
 
     All rights reserved
     
@@ -80,7 +80,7 @@ class RowView extends Widget
 		}
 		
 		// process each roster line in turn to build the table; will be stopped if the watermark changes in another thread
-		let fcnComposure = function(result:any, error:ErrorRPC):void
+		let fcnComposure = (result:any, error:ErrorRPC):void =>
 		{
 			let entry = roster.shift();
 			if (entry.watermark != this.watermark) return;
@@ -166,26 +166,6 @@ class RowView extends Widget
 		canvas.render(parent);
 		draw.render(canvas);*/
 		draw.renderInto(parent);
-		
-	/*	!! TODO
-	... need to know the ACTUAL TYPE... include the aspect code in the return...
-
-		goog.events.listen(content, goog.events.EventType.MOUSEENTER, this.mouseEnter, false, this);
-		goog.events.listen(content, goog.events.EventType.MOUSELEAVE, this.mouseLeave, false, this);
-	*/	
-		
-		/* ... do this differently...
-		if (node.metaLabel)
-		{
-			let para = newElement(parent, 'p', {'align': 'center'});
-			
-			let btnDL = new goog.ui.Button('Download ' + node.metaLabel,goog.ui.CustomButtonRenderer.getInstance());
-			btnDL.render(para);
-			btnDL.metaMol=node.metaMol;
-			btnDL.metaDS=node.metaDS;
-			let fcnDownload=function(event) {downloadMeta(event.target.metaMol,event.target.metaDS);}
-			goog.events.listen(btnDL,goog.ui.Component.EventType.ACTION,fcnDownload,false,this);
-		}*/
 	}
 
 	// renders a paragraph (a vertical list of objects)

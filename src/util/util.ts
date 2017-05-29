@@ -1,7 +1,7 @@
 /*
     WebMolKit
 
-    (c) 2010-2016 Molecular Materials Informatics, Inc.
+    (c) 2010-2017 Molecular Materials Informatics, Inc.
 
     All rights reserved
     
@@ -374,7 +374,7 @@ function escapeHTML(text:string):string
 {
 	if (!text) return '';
 	const map:{[id:string] : string} = {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'};
-	return text.replace(/[&<>"']/g, function(m) {return map[m];});
+	return text.replace(/[&<>"']/g, (m) => map[m]);
 }
 
 // convenience: make sure a string isn't null
