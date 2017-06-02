@@ -236,7 +236,7 @@ class BayesianModel
 		// double duty: use the same source material to add up the numeric predictor as well (note that the "coverage" hashes are not necessarily
 		// the same as the approved list)		
 		let pred = 0;
-		for (let h in predHashes)
+		for (let h of predHashes)
 		{
 			let c = this.contribs[<any>h];
 			if (c != null) pred += c;
