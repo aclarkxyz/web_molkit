@@ -348,7 +348,7 @@ class Sketcher extends Widget implements ArrangeMeasurement
 	}
 
 	// displays a message, which may be an error or just something helpful
-	public showMessage(msg:string, isError:boolean):void
+	public showMessage(msg:string, isError:boolean = false):void
 	{
 		let watermark = ++this.fadeWatermark;
 
@@ -403,12 +403,14 @@ class Sketcher extends Widget implements ArrangeMeasurement
 		for (let n = 0; n < this.selectedMask.length; n++) if (this.selectedMask[n]) return true;
 		return false;
 	}
+
 	// returns true if atom N is selected (1-based)
 	public getSelected(N:number):boolean
 	{
 		if (this.selectedMask == null || N > this.selectedMask.length) return false;
 		return this.selectedMask[N - 1];
 	}
+
 	// changes selection state for atom N
 	public setSelected(N:number, sel:boolean):void
 	{
@@ -419,7 +421,19 @@ class Sketcher extends Widget implements ArrangeMeasurement
 		}
 		while (this.selectedMask.length < this.mol.numAtoms) {this.selectedMask.push(false);}
 		this.selectedMask[N - 1] = sel;
+		this.delayedRedraw();
 	}
+
+	// select & current are zapped
+	public clearSubject():void
+	{
+		if (this.currentAtom == 0 && this.currentBond == 0 && Vec.allFalse(this.selectedMask)) return;
+		this.currentAtom = 0;
+		this.currentBond = 0;
+		this.selectedMask = Vec.booleanArray(false, this.mol.numAtoms);
+		this.delayedRedraw();
+	}
+
 	// returns true if atom N is grabbed by the lasso, if any (1-based)
 	public getLassoed(N:number):boolean
 	{
@@ -731,10 +745,10 @@ class Sketcher extends Widget implements ArrangeMeasurement
 
 	private redrawUnder():void
 	{
-		let HOVER_COL = 0x80808080;
-		let CURRENT_COL = 0x40FFC0, CURRENT_BORD = 0x00A43C;
-		let SELECT_COL = 0x40C4A8;
-		let LASSO_COL = 0xA0D4C8;
+		let HOVER_COL = 0xE0E0E0;
+		let CURRENT_COL = 0xA0A0A0, CURRENT_BORD = 0x808080;
+		let SELECT_COL = 0xC0C0C0;
+		let LASSO_COL = 0xD0D0D0;
 
 		let density = pixelDensity();
 		this.canvasUnder.width = this.width * density;
@@ -906,10 +920,10 @@ class Sketcher extends Widget implements ArrangeMeasurement
 			for (let n = 1; n < this.lassoX.length; n++) path.lineTo(this.lassoX[n], this.lassoY[n]);
 			path.closePath();
 			
-			ctx.fillStyle = colourCanvas(erasing ? 0xD0FF0000 : 0xD00000FF);
+			ctx.fillStyle = colourCanvas(erasing ? 0xD0FF0000 : 0xF0000000);
 			ctx.fill(path);
 			
-			ctx.strokeStyle = erasing ? '#804040' : '#404080';
+			ctx.strokeStyle = erasing ? '#804040' : '#808080';
 			ctx.lineWidth = 0.5;
 			ctx.stroke(path);
 		}
