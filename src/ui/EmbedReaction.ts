@@ -27,7 +27,7 @@
 	
 	The rendering parameters are quite raw, and presumed to be passed from an un-typed source, directly from the user:
 
-        format: MIME, or shortcuts for "datasheet" or "sdfile"
+        format: MIME, or shortcuts for "datasheet" (... and others?)
 		facet: one of 'header', 'scheme', 'quantity' or 'metrics' (default is 'scheme')
         scheme: molecule colouring schema (wob/cob/bow/cow)
         scale: points per angstrom
@@ -39,6 +39,7 @@
 		stoichiometry: if false, doesn't display non-unit stoichiometry
 		annotations: if true, adds annotations for component types
 		maximumwidth: optionally constrain the width in pixels (guideline only)
+		row: row of first step (default 0)
 
     ... these ones TBD
 		(option to limitW/H?)
@@ -48,6 +49,7 @@
 
 class EmbedReaction extends EmbedChemistry
 {
+	private row = 0;
 	private entry:ExperimentEntry = null;
 	private failmsg = '';
 	private tight = false;
@@ -82,7 +84,10 @@ class EmbedReaction extends EmbedChemistry
 
 		if (xs == null) {this.failmsg = 'Unable to instantiate Experiment aspect.'; return;}
 		if (xs.ds.numRows == 0) {this.failmsg = 'Experiment datasheet has no rows.'; return;}
-		this.entry = xs.getEntry(0);
+
+		if (options.row) this.row = options.row;
+		if (this.row < 0 || this.row >= xs.ds.numRows) {this.failmsg = 'Requested row ' + this.row + ' out of bounds.'; return;}
+		this.entry = xs.getEntry(this.row);
 
 		if (options.facet) this.facet = options.facet;
 
