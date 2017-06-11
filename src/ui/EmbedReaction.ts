@@ -68,17 +68,20 @@ class EmbedReaction extends EmbedChemistry
 		if (options.format == 'datasheet' || options.format == 'chemical/x-datasheet') 
 		{
 			let ds = DataSheetStream.readXML(datastr);
-			if (ds != null && Experiment.isExperiment(ds)) xs = new Experiment(ds);
+			if (ds == null) {this.failmsg = 'Unable to parse raw XML datasheet.'; return;}
+			if (Experiment.isExperiment(ds)) xs = new Experiment(ds);
 		}
 		// (... else MDL formats ...)
 		else // free for all
 		{
 			// (same as explicit DS for now: but later add MDL formats)
 			let ds = DataSheetStream.readXML(datastr);
-			if (ds != null && Experiment.isExperiment(ds)) xs = new Experiment(ds);
+			if (ds == null) {this.failmsg = 'Unable to parse raw XML datasheet.'; return;}
+			if (Experiment.isExperiment(ds)) xs = new Experiment(ds);
 		}
 
-		if (xs == null || xs.ds.numRows == 0) return;
+		if (xs == null) {this.failmsg = 'Unable to instantiate Experiment aspect.'; return;}
+		if (xs.ds.numRows == 0) {this.failmsg = 'Experiment datasheet has no rows.'; return;}
 		this.entry = xs.getEntry(0);
 
 		if (options.facet) this.facet = options.facet;
@@ -136,7 +139,7 @@ class EmbedReaction extends EmbedChemistry
 		else
 		{
 			span.css('color', 'red');
-			span.text('Unable to parse datasheet: ' + this.failmsg);
+			span.text('Failure to acquire data: ' + this.failmsg);
 			let pre = $('<pre></pre>').appendTo(span);
 			pre.css('line-height', '1.1');
 			pre.text(this.datastr);

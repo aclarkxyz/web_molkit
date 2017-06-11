@@ -656,6 +656,7 @@ function escapeHTML(text) {
     const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
     return text.replace(/[&<>"']/g, (m) => map[m]);
 }
+function orBlank(str) { return str == null ? '' : str; }
 class DataSheet {
     constructor(data) {
         if (!data)
@@ -8853,7 +8854,7 @@ class BayesianModel {
                     atomic[n] += c * invSz;
         }
         let pred = 0;
-        for (let h in predHashes) {
+        for (let h of predHashes) {
             let c = this.contribs[h];
             if (c != null)
                 pred += c;
@@ -16629,7 +16630,7 @@ class Sketcher extends Widget {
             }
         this.autoScale();
     }
-    showMessage(msg, isError) {
+    showMessage(msg, isError = false) {
         let watermark = ++this.fadeWatermark;
         this.divMessage.css('color', isError ? '#FF0000' : '#008000');
         this.divMessage.text(msg);
@@ -16684,6 +16685,15 @@ class Sketcher extends Widget {
             this.selectedMask.push(false);
         }
         this.selectedMask[N - 1] = sel;
+        this.delayedRedraw();
+    }
+    clearSubject() {
+        if (this.currentAtom == 0 && this.currentBond == 0 && Vec.allFalse(this.selectedMask))
+            return;
+        this.currentAtom = 0;
+        this.currentBond = 0;
+        this.selectedMask = Vec.booleanArray(false, this.mol.numAtoms);
+        this.delayedRedraw();
     }
     getLassoed(N) {
         if (this.lassoMask == null || N > this.lassoMask.length)
@@ -16911,10 +16921,10 @@ class Sketcher extends Widget {
         this.redrawOver();
     }
     redrawUnder() {
-        let HOVER_COL = 0x80808080;
-        let CURRENT_COL = 0x40FFC0, CURRENT_BORD = 0x00A43C;
-        let SELECT_COL = 0x40C4A8;
-        let LASSO_COL = 0xA0D4C8;
+        let HOVER_COL = 0xE0E0E0;
+        let CURRENT_COL = 0xA0A0A0, CURRENT_BORD = 0x808080;
+        let SELECT_COL = 0xC0C0C0;
+        let LASSO_COL = 0xD0D0D0;
         let density = pixelDensity();
         this.canvasUnder.width = this.width * density;
         this.canvasUnder.height = this.height * density;
@@ -17050,9 +17060,9 @@ class Sketcher extends Widget {
             for (let n = 1; n < this.lassoX.length; n++)
                 path.lineTo(this.lassoX[n], this.lassoY[n]);
             path.closePath();
-            ctx.fillStyle = colourCanvas(erasing ? 0xD0FF0000 : 0xD00000FF);
+            ctx.fillStyle = colourCanvas(erasing ? 0xD0FF0000 : 0xF0000000);
             ctx.fill(path);
-            ctx.strokeStyle = erasing ? '#804040' : '#404080';
+            ctx.strokeStyle = erasing ? '#804040' : '#808080';
             ctx.lineWidth = 0.5;
             ctx.stroke(path);
         }
@@ -19606,16 +19616,30 @@ class EmbedReaction extends EmbedChemistry {
         let xs = null;
         if (options.format == 'datasheet' || options.format == 'chemical/x-datasheet') {
             let ds = DataSheetStream.readXML(datastr);
-            if (ds != null && Experiment.isExperiment(ds))
+            if (ds == null) {
+                this.failmsg = 'Unable to parse raw XML datasheet.';
+                return;
+            }
+            if (Experiment.isExperiment(ds))
                 xs = new Experiment(ds);
         }
         else {
             let ds = DataSheetStream.readXML(datastr);
-            if (ds != null && Experiment.isExperiment(ds))
+            if (ds == null) {
+                this.failmsg = 'Unable to parse raw XML datasheet.';
+                return;
+            }
+            if (Experiment.isExperiment(ds))
                 xs = new Experiment(ds);
         }
-        if (xs == null || xs.ds.numRows == 0)
+        if (xs == null) {
+            this.failmsg = 'Unable to instantiate Experiment aspect.';
             return;
+        }
+        if (xs.ds.numRows == 0) {
+            this.failmsg = 'Experiment datasheet has no rows.';
+            return;
+        }
         this.entry = xs.getEntry(0);
         if (options.facet)
             this.facet = options.facet;
@@ -19675,7 +19699,7 @@ class EmbedReaction extends EmbedChemistry {
         }
         else {
             span.css('color', 'red');
-            span.text('Unable to parse datasheet: ' + this.failmsg);
+            span.text('Failure to acquire data: ' + this.failmsg);
             let pre = $('<pre></pre>').appendTo(span);
             pre.css('line-height', '1.1');
             pre.text(this.datastr);
