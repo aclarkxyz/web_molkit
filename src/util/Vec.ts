@@ -307,6 +307,30 @@ class Vec
 		this.sort(arr);
 		return arr;
 	}
+
+	// uniqueness, in its various permutations
+	public static uniqueUnstable(arr:any[]):any[]
+	{
+		return Array.from(new Set(arr)); // order is basically random
+	}
+	public static uniqueStable(arr:any[]):any[]
+	{
+		let set = new Set<any>(arr), ret:any[] = [];
+		for (let v in arr) if (set.has(v)) {ret.push(v); set.delete(v);}
+		return ret; // original order is preserved, with non-first entries removed
+	}
+	public static maskUnique(arr:any[]):boolean[]
+	{
+		let set = new Set<any>(arr), ret = this.booleanArray(false, arr.length);
+		for (let n = 0; n < arr.length; n++) if (set.has(arr[n])) {ret[n] = true; set.delete(arr[n]);}
+		return ret;
+	}
+	public static idxUnique(arr:any[]):number[]
+	{
+		let set = new Set<any>(arr), ret:number[] = [];
+		for (let n = 0; n < arr.length; n++) if (set.has(arr[n])) {ret.push(n); set.delete(arr[n]);}
+		return ret; // index of first occurence in original array
+	}
 }
 
 /*
