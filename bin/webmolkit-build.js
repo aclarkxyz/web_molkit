@@ -18875,12 +18875,11 @@ ArrangeExperiment.COMP_ANNOT_IMPLIED = 3;
 ArrangeExperiment.COMP_GAP_LEFT = 0.5;
 ArrangeExperiment.COMP_ANNOT_SIZE = 1;
 class AxisLabeller {
-    constructor(width, minVal, maxVal, textWidth, transform, inverse) {
+    constructor(width, minVal, maxVal, textWidth, inverse) {
         this.width = width;
         this.minVal = minVal;
         this.maxVal = maxVal;
         this.textWidth = textWidth;
-        this.transform = transform;
         this.inverse = inverse;
         this.notches = [];
     }
@@ -18893,23 +18892,18 @@ class AxisLabeller {
             });
             return;
         }
-        const width = this.width;
-        let minT = this.transform(this.minVal), maxT = this.transform(this.maxVal);
-        let dir = maxT > minT ? 1 : -1;
-        let rangeT = maxT - minT, invRangeT = 1.0 / rangeT;
-        let position = (valT) => width * (valT - minT) * invRangeT;
+        const width = this.width, minVal = this.minVal, maxVal = this.maxVal;
+        const range = maxVal - minVal, invRange = 1.0 / range;
+        let position = (val) => width * (val - minVal) * invRange;
         let loT = null, hiT = null;
-        const bumpLess = 1 - (dir * 1E-5), bumpMore = 1 + (dir * 1E-5);
-        console.log('TVALUES:' + minT + ',' + maxT + ', DIR=' + dir);
+        const bumpLess = 1 - 1E-5, bumpMore = 1 + 1E-5;
         got: for (let outer = 1E-10; outer <= 1E11; outer *= 10)
             for (let inner of [0.2, 0.5, 1]) {
                 let mag = outer * inner, inv = 1.0 / mag;
-                console.log('outer:' + outer + ' inner:' + inner + ' mag:' + mag);
-                let t1 = Math.floor(minT * mag * bumpLess) * inv, t2 = Math.round(minT * mag) * inv, t3 = Math.ceil(minT * mag * bumpMore) * inv;
-                let t4 = Math.floor(maxT * mag * bumpLess) * inv, t5 = Math.round(maxT * mag) * inv, t6 = Math.ceil(maxT * mag * bumpMore) * inv;
+                let t1 = Math.floor(minVal * mag * bumpLess) * inv, t2 = Math.round(minVal * mag) * inv, t3 = Math.ceil(minVal * mag * bumpMore) * inv;
+                let t4 = Math.floor(maxVal * mag * bumpLess) * inv, t5 = Math.round(maxVal * mag) * inv, t6 = Math.ceil(maxVal * mag * bumpMore) * inv;
                 let p1 = position(t1), p2 = position(t2), p3 = position(t3);
                 let p4 = position(t4), p5 = position(t5), p6 = position(t6);
-                console.log(' t:' + [t1, t2, t3, t4, t5, t6] + ' p:' + [p1, p2, p3, p4, p5, p6]);
                 if ((fltEqual(p1, 0) || p1 >= 0) && p1 <= 0.1 * width)
                     loT = t1;
                 else if ((fltEqual(p2, 0) || p2 >= 0) && p2 <= 0.1 * width)
@@ -18926,12 +18920,13 @@ class AxisLabeller {
                     hiT = t4;
                 else
                     continue;
-                console.log(' GOT:' + loT + ',' + hiT);
                 break got;
             }
         if (loT == null || hiT == null)
             return;
         let loVal = this.inverse(loT), hiVal = this.inverse(hiT);
+        console.log('TVALS:' + loT + ',' + hiT);
+        console.log('RVALS:' + loVal + ',' + hiVal);
         this.notches.push({
             'label': this.formatNumber(loVal),
             'value': loVal,
@@ -18945,10 +18940,10 @@ class AxisLabeller {
     }
     formatNumber(num) {
         let str = num.toPrecision(4);
-        str = str.replace(/^(\d+)\.0+$/, '$1');
-        str = str.replace(/^(\d+\.0*[1-9]+)0+$/, '$1');
-        str = str.replace(/^(\d+)\.0+(e[+\-]\d+)$/, '$1$2');
-        str = str.replace(/^(\d+\.0*[1-9]+)0+(e[+\-]\d+)$/, '$1$2');
+        str = str.replace(/^(-?\d+)\.0+$/, '$1');
+        str = str.replace(/^(-?\d+\.0*[1-9]+)0+$/, '$1');
+        str = str.replace(/^(-?\d+)\.0+(e[\+\-]\d+)$/, '$1$2');
+        str = str.replace(/^(-?\d+\.0*[1-9]+)0+(e[\+\-]\d+)$/, '$1$2');
         return str;
     }
 }
@@ -21540,18 +21535,22 @@ class ValidationHeadlessBasic extends Validation {
         let textWidth = (str) => str.length * 4;
         let tfUnity = (val) => val, tfNegLog = (val) => -Math.log10(val), tfBackLog = (val) => Math.pow(10, -val);
         const TESTCASES = [
-            [100, 1, 100, false, ['10', '100']],
-            [100, 0, 1, false, ['0', '1']],
-            [100, 0.01, 0.02, false, ['0.01', '0.02']],
-            [100, 0.008, 0.022, false, ['0.008', '0.022']],
-            [100, 0.00798, 0.0221, false, ['0.008', '0.022']],
-            [100, 1E-5, 1E4, true, []]
+            [1, 100, false, ['10', '100']],
+            [0, 1, false, ['0', '1']],
+            [0.01, 0.02, false, ['0.01', '0.02']],
+            [0.008, 0.022, false, ['0.008', '0.022']],
+            [0.00798, 0.0221, false, ['0.008', '0.022']],
+            [1E-5, 1E4, true, ['1e+4', '0.00001']],
+            [0.03162277660168379, 100, true, ['100', '0.03162']]
         ];
         for (let test of TESTCASES) {
-            let asLog = test[3];
-            let axis = new AxisLabeller(test[0], test[1], test[2], textWidth, asLog ? tfNegLog : tfUnity, asLog ? tfBackLog : tfUnity);
+            let low = test[0], high = test[1];
+            let asLog = test[2];
+            if (asLog)
+                [low, high] = [tfNegLog(high), tfNegLog(low)];
+            let axis = new AxisLabeller(100, low, high, textWidth, asLog ? tfBackLog : tfUnity);
             axis.calculate();
-            let wanted = test[4];
+            let wanted = test[3];
             let got = [];
             for (let notch of axis.notches)
                 got.push(notch.label);

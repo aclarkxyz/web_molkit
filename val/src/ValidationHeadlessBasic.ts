@@ -44,20 +44,23 @@ class ValidationHeadlessBasic extends Validation
 		const TESTCASES:any[][] =
 		[
 			// pixel width, min value, max value, transform
-			[100, 1, 100, false, ['10', '100']],
-			[100, 0, 1, false, ['0', '1']],
-			[100, 0.01, 0.02, false, ['0.01', '0.02']],
-			[100, 0.008, 0.022, false, ['0.008', '0.022']],
-			[100, 0.00798, 0.0221, false, ['0.008', '0.022']],
-			[100, 1E-5, 1E4, true, ['0.00001', '1e+4']]
+			[1, 100, false, ['10', '100']],
+			[0, 1, false, ['0', '1']],
+			[0.01, 0.02, false, ['0.01', '0.02']],
+			[0.008, 0.022, false, ['0.008', '0.022']],
+			[0.00798, 0.0221, false, ['0.008', '0.022']],
+			[1E-5, 1E4, true, ['1e+4', '0.00001']],
+			[0.03162277660168379, 100, true, ['100', '0.03162']]
 		];
 		for (let test of TESTCASES)
 		{
-			let asLog:boolean = test[3];
-			let axis = new AxisLabeller(test[0], test[1], test[2], textWidth, asLog ? tfNegLog : tfUnity, asLog ? tfBackLog : tfUnity);
+			let low:number = test[0], high:number = test[1];
+			let asLog:boolean = test[2];
+			if (asLog) [low, high] = [tfNegLog(high), tfNegLog(low)];
+			let axis = new AxisLabeller(100, low, high, textWidth, asLog ? tfBackLog : tfUnity);
 			axis.calculate();
 
-			let wanted:string[] = test[4];
+			let wanted:string[] = test[3];
 			let got:string[] = [];
 			for (let notch of axis.notches) got.push(notch.label);
 			if (wanted.length == 0 || !Vec.equals(wanted, got))
