@@ -137,6 +137,8 @@ class DrawMolecule
 		this.drawOverEffects();	
 	}
 
+	// ------------ private methods ------------
+
 	private drawUnderEffects():void
 	{
 		let mol = this.mol, policy = this.policy, effects = this.effects, layout = this.layout, scale = this.scale, vg = this.vg;

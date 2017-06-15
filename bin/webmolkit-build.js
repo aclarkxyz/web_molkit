@@ -526,6 +526,7 @@ function sqr(v) {
     return v * v;
 }
 function invZ(v) { return v == 0 ? 0 : 1.0 / v; }
+function fltEqual(v1, v2) { return v1 == v2 || Math.abs(v1 - v2) <= 1E-7 * Math.max(v1, v2); }
 function realEqual(v1, v2) { return v1 == v2 || Math.abs(v1 - v2) <= 1E-14 * Math.max(v1, v2); }
 const TWOPI = 2 * Math.PI;
 const INV_TWOPI = 1.0 / TWOPI;
@@ -10067,7 +10068,8 @@ class Dialog {
         this.callbackClose = callback;
     }
     open() {
-        let bg = $('<div></div>').appendTo(document.body);
+        let body = $(document.documentElement);
+        let bg = $('<div></div>').appendTo(body);
         bg.css('width', '100%');
         bg.css('height', document.documentElement.clientHeight + 'px');
         bg.css('background-color', 'black');
@@ -10075,8 +10077,9 @@ class Dialog {
         bg.css('position', 'absolute');
         bg.css('left', 0);
         bg.css('top', 0);
+        bg.css('z-index', 999);
         this.obscureBackground = bg;
-        let pb = $('<div></div>').appendTo(document.body);
+        let pb = $('<div></div>').appendTo(body);
         pb.css('min-width', this.minPortionWidth + '%');
         if (this.maxPortionWidth != null)
             pb.css('max-width', this.maxPortionWidth + '%');
@@ -10087,6 +10090,7 @@ class Dialog {
         pb.css('left', (50 - 0.5 * this.minPortionWidth) + '%');
         pb.css('top', (document.body.scrollTop + 50) + 'px');
         pb.css('min-height', '50%');
+        pb.css('z-index', 1000);
         this.panelBoundary = pb;
         let tdiv = $('<div></div>').appendTo(pb);
         tdiv.css('width', '100%');
@@ -10097,15 +10101,19 @@ class Dialog {
         tdiv.css('margin', 0);
         tdiv.css('padding', 0);
         this.titleDiv = tdiv;
-        let bdiv = $('<div"></div>').appendTo(pb);
+        let bdiv = $('<div></div>').appendTo(pb);
         bdiv.css('width', '100%');
         this.bodyDiv = $('<div style="padding: 0.5em;"></div>').appendTo(bdiv);
         let ttlTable = $('<table></table>').appendTo(tdiv), tr = $('<tr></tr>').appendTo(ttlTable);
         ttlTable.attr('width', '100%');
-        ttlTable.css('padding', '0.5em');
         let tdTitle = $('<td valign="center"></td>').appendTo(tr);
-        tdTitle.append('<b><big>' + escapeHTML(this.title) + '</big></b>');
+        tdTitle.css('padding', '0.5em');
+        let ttl = $('<font></font>').appendTo(tdTitle);
+        ttl.css('font-size', '1.5em');
+        ttl.css('font-weight', '600');
+        ttl.text(this.title);
         let tdButtons = $('<td align="right" valign="center"></td>').appendTo(tr);
+        tdButtons.css('padding', '0.5em');
         this.btnClose = $('<button class="button button-default">Close</button>').appendTo(tdButtons);
         this.btnClose.click(() => this.close());
         this.titleButtons = tdButtons;
@@ -17982,7 +17990,7 @@ class EditCompound extends Dialog {
         this.btnSave = $('<button class="button button-primary">Save</button>').appendTo(buttons);
         this.btnSave.click(() => { if (this.callbackSave)
             this.callbackSave(this); });
-        let skw = 800, skh = 700;
+        let skw = 800, skh = 650;
         let skdiv = $('<div></div>').appendTo(this.body());
         skdiv.css('width', skw + 'px');
         skdiv.css('height', skh + 'px');
@@ -18866,6 +18874,84 @@ ArrangeExperiment.COMP_ANNOT_WASTE = 2;
 ArrangeExperiment.COMP_ANNOT_IMPLIED = 3;
 ArrangeExperiment.COMP_GAP_LEFT = 0.5;
 ArrangeExperiment.COMP_ANNOT_SIZE = 1;
+class AxisLabeller {
+    constructor(width, minVal, maxVal, textWidth, transform, inverse) {
+        this.width = width;
+        this.minVal = minVal;
+        this.maxVal = maxVal;
+        this.textWidth = textWidth;
+        this.transform = transform;
+        this.inverse = inverse;
+        this.notches = [];
+    }
+    calculate() {
+        if (this.minVal == this.maxVal) {
+            this.notches.push({
+                'label': this.minVal.toString(),
+                'value': this.minVal,
+                'pos': 0.5 * this.width
+            });
+            return;
+        }
+        const width = this.width;
+        let minT = this.transform(this.minVal), maxT = this.transform(this.maxVal);
+        let dir = maxT > minT ? 1 : -1;
+        let rangeT = maxT - minT, invRangeT = 1.0 / rangeT;
+        let position = (valT) => width * (valT - minT) * invRangeT;
+        let loT = null, hiT = null;
+        const bumpLess = 1 - (dir * 1E-5), bumpMore = 1 + (dir * 1E-5);
+        console.log('TVALUES:' + minT + ',' + maxT + ', DIR=' + dir);
+        got: for (let outer = 1E-10; outer <= 1E11; outer *= 10)
+            for (let inner of [0.2, 0.5, 1]) {
+                let mag = outer * inner, inv = 1.0 / mag;
+                console.log('outer:' + outer + ' inner:' + inner + ' mag:' + mag);
+                let t1 = Math.floor(minT * mag * bumpLess) * inv, t2 = Math.round(minT * mag) * inv, t3 = Math.ceil(minT * mag * bumpMore) * inv;
+                let t4 = Math.floor(maxT * mag * bumpLess) * inv, t5 = Math.round(maxT * mag) * inv, t6 = Math.ceil(maxT * mag * bumpMore) * inv;
+                let p1 = position(t1), p2 = position(t2), p3 = position(t3);
+                let p4 = position(t4), p5 = position(t5), p6 = position(t6);
+                console.log(' t:' + [t1, t2, t3, t4, t5, t6] + ' p:' + [p1, p2, p3, p4, p5, p6]);
+                if ((fltEqual(p1, 0) || p1 >= 0) && p1 <= 0.1 * width)
+                    loT = t1;
+                else if ((fltEqual(p2, 0) || p2 >= 0) && p2 <= 0.1 * width)
+                    loT = t2;
+                else if ((fltEqual(p3, 0) || p3 >= 0) && p3 <= 0.1 * width)
+                    loT = t3;
+                else
+                    continue;
+                if (p6 >= 0.9 * width && (fltEqual(p6, width) || p6 <= width))
+                    hiT = t6;
+                else if (p5 >= 0.9 * width && (fltEqual(p5, width) || p5 <= width))
+                    hiT = t5;
+                else if (p4 >= 0.9 * width && (fltEqual(p4, width) || p4 <= width))
+                    hiT = t4;
+                else
+                    continue;
+                console.log(' GOT:' + loT + ',' + hiT);
+                break got;
+            }
+        if (loT == null || hiT == null)
+            return;
+        let loVal = this.inverse(loT), hiVal = this.inverse(hiT);
+        this.notches.push({
+            'label': this.formatNumber(loVal),
+            'value': loVal,
+            'pos': position(loT)
+        });
+        this.notches.push({
+            'label': this.formatNumber(hiVal),
+            'value': hiVal,
+            'pos': position(hiT)
+        });
+    }
+    formatNumber(num) {
+        let str = num.toPrecision(4);
+        str = str.replace(/^(\d+)\.0+$/, '$1');
+        str = str.replace(/^(\d+\.0*[1-9]+)0+$/, '$1');
+        str = str.replace(/^(\d+)\.0+(e[+\-]\d+)$/, '$1$2');
+        str = str.replace(/^(\d+\.0*[1-9]+)0+(e[+\-]\d+)$/, '$1$2');
+        return str;
+    }
+}
 class DrawExperiment {
     constructor(layout, vg) {
         this.layout = layout;
@@ -19604,6 +19690,7 @@ class EmbedReaction extends EmbedChemistry {
     constructor(datastr, options) {
         super();
         this.datastr = datastr;
+        this.row = 0;
         this.entry = null;
         this.failmsg = '';
         this.tight = false;
@@ -19640,7 +19727,13 @@ class EmbedReaction extends EmbedChemistry {
             this.failmsg = 'Experiment datasheet has no rows.';
             return;
         }
-        this.entry = xs.getEntry(0);
+        if (options.row)
+            this.row = options.row;
+        if (this.row < 0 || this.row >= xs.ds.numRows) {
+            this.failmsg = 'Requested row ' + this.row + ' out of bounds.';
+            return;
+        }
+        this.entry = xs.getEntry(this.row);
         if (options.facet)
             this.facet = options.facet;
         if (options.padding)
@@ -21436,11 +21529,40 @@ class ValidationHeadlessBasic extends Validation {
     constructor() {
         super();
         this.add('Vector index sort', this.vectorIndexSort);
+        this.add('Axis labeller', this.axisLabeller);
     }
     vectorIndexSort() {
         let array = ['b', 'c', 'a'];
         let idx = Vec.idxSort(array);
         this.assert(Vec.equals(idx, [2, 0, 1]));
+    }
+    axisLabeller() {
+        let textWidth = (str) => str.length * 4;
+        let tfUnity = (val) => val, tfNegLog = (val) => -Math.log10(val), tfBackLog = (val) => Math.pow(10, -val);
+        const TESTCASES = [
+            [100, 1, 100, false, ['10', '100']],
+            [100, 0, 1, false, ['0', '1']],
+            [100, 0.01, 0.02, false, ['0.01', '0.02']],
+            [100, 0.008, 0.022, false, ['0.008', '0.022']],
+            [100, 0.00798, 0.0221, false, ['0.008', '0.022']],
+            [100, 1E-5, 1E4, true, []]
+        ];
+        for (let test of TESTCASES) {
+            let asLog = test[3];
+            let axis = new AxisLabeller(test[0], test[1], test[2], textWidth, asLog ? tfNegLog : tfUnity, asLog ? tfBackLog : tfUnity);
+            axis.calculate();
+            let wanted = test[4];
+            let got = [];
+            for (let notch of axis.notches)
+                got.push(notch.label);
+            if (wanted.length == 0 || !Vec.equals(wanted, got)) {
+                console.log('Test:' + JSON.stringify(test));
+                console.log('Notches:' + JSON.stringify(axis.notches));
+                console.log('Wanted:' + JSON.stringify(wanted));
+                console.log('Got:' + JSON.stringify(got));
+                this.fail('Did not get the expected axis labels.');
+            }
+        }
     }
 }
 class ValidationHeadlessMolecule extends Validation {

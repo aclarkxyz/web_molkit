@@ -47,7 +47,11 @@ class Dialog
     // creates all the DOM objects and shows the dialog; details such as title should be setup before calling this
     public open():void
     {
-        let bg = $('<div></div>').appendTo(document.body);
+        let body = $(document.documentElement);
+        /*let bodyW = body.outerWidth(true), margW = 0.5 * (bodyW - body.outerWidth());
+        let bodyH = body.outerHeight(true), margH = 0.5 * (bodyH - body.outerHeight());*/
+        
+        let bg = $('<div></div>').appendTo(body);
         bg.css('width', '100%');
         bg.css('height', document.documentElement.clientHeight + 'px');
         bg.css('background-color', 'black');
@@ -55,9 +59,10 @@ class Dialog
         bg.css('position', 'absolute');
         bg.css('left', 0);
         bg.css('top', 0);
+        bg.css('z-index', 999);
         this.obscureBackground = bg;
         
-        let pb = $('<div></div>').appendTo(document.body);
+        let pb = $('<div></div>').appendTo(body);
         pb.css('min-width', this.minPortionWidth + '%');
         if (this.maxPortionWidth != null) pb.css('max-width', this.maxPortionWidth + '%');
         pb.css('background-color', 'white');
@@ -66,7 +71,8 @@ class Dialog
         pb.css('position', 'absolute');
         pb.css('left', (50 - 0.5 * this.minPortionWidth) + '%');
         pb.css('top', (document.body.scrollTop + 50) + 'px');
-        pb.css('min-height', '50%');        
+        pb.css('min-height', '50%');   
+        pb.css('z-index', 1000);     
         this.panelBoundary = pb;
 
         let tdiv = $('<div></div>').appendTo(pb);
@@ -79,17 +85,22 @@ class Dialog
         tdiv.css('padding', 0);
         this.titleDiv = tdiv;
         
-        let bdiv = $('<div"></div>').appendTo(pb);
+        let bdiv = $('<div></div>').appendTo(pb);
         bdiv.css('width', '100%');
         this.bodyDiv = $('<div style="padding: 0.5em;"></div>').appendTo(bdiv); // (has to be nested, otherwise runs over)
         
         let ttlTable = $('<table></table>').appendTo(tdiv), tr = $('<tr></tr>').appendTo(ttlTable);
         ttlTable.attr('width', '100%');
-        ttlTable.css('padding', '0.5em');
+
         let tdTitle = $('<td valign="center"></td>').appendTo(tr);
-        tdTitle.append('<b><big>' + escapeHTML(this.title) + '</big></b>');
+        tdTitle.css('padding', '0.5em');
+        let ttl = $('<font></font>').appendTo(tdTitle);
+        ttl.css('font-size', '1.5em');
+        ttl.css('font-weight', '600');
+        ttl.text(this.title);
         
         let tdButtons = $('<td align="right" valign="center"></td>').appendTo(tr);
+        tdButtons.css('padding', '0.5em');
         this.btnClose = $('<button class="button button-default">Close</button>').appendTo(tdButtons);
         this.btnClose.click(() => this.close());
         this.titleButtons = tdButtons; 

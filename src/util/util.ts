@@ -216,7 +216,8 @@ function sqr(v:number):number
 }
 function invZ(v:number):number {return v == 0 ? 0 : 1.0 / v;}
 
-// returns true if the numbers are effectively equal, assuming double precision
+// returns true if the numbers are effectively equal, assuming float/double precision
+function fltEqual(v1:number, v2:number) {return v1 == v2 || Math.abs(v1 - v2) <= 1E-7 * Math.max(v1, v2);}
 function realEqual(v1:number, v2:number) {return v1 == v2 || Math.abs(v1 - v2) <= 1E-14 * Math.max(v1, v2);}
 
 // angle helpers
