@@ -57,6 +57,15 @@ class Vec
 		arr[idx2] = v;
 	}
 
+	// null-tolerant array concatenation; always returns an array, always at least a shallow copy
+	public static concat(arr1:any[], arr2:any[]):any[]
+	{
+		if (arr1 == null && arr2 == null) return [];
+		if (arr1 == null) return arr2.slice(0);
+		if (arr2 == null) return arr1.slice();
+		return arr1.concat(arr2);
+	}
+
 	public static equals(arr1:any[], arr2:any[]):boolean
 	{
 		if (arr1 == null && arr2 == null) return true;
