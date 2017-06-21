@@ -25,6 +25,7 @@
 interface HoneycombMolecule
 {
 	mol:Molecule;
+	name:string;
 	isReference:boolean; // true if this is from the user's provided reference set
 	rimColour:number; // optional colour for decorating the interior rim
 	fp?:number[]; // ECFP6 fingerprints
@@ -123,13 +124,13 @@ class Honeycomb extends Widget
 	}
 
 	// stacking the deck; note that reference molecules should be added first, and the first one is special
-	public addReferenceMolecule(mol:Molecule):void
+	public addReferenceMolecule(mol:Molecule, name:string):void
 	{
-		this.molecules.push({'mol': mol, 'isReference': true, 'rimColour': null});
+		this.molecules.push({'mol': mol, 'name': name, 'isReference': true, 'rimColour': null});
 	}
-	public addModelMolecule(mol:Molecule, rimColour:number):void
+	public addModelMolecule(mol:Molecule, name:string, rimColour:number):void
 	{
-		this.molecules.push({'mol': mol, 'isReference': false, 'rimColour': rimColour});
+		this.molecules.push({'mol': mol, 'name': name, 'isReference': false, 'rimColour': rimColour});
 	}
 
 	// creates the basic outline: does not yet include any of the interesting content
@@ -196,6 +197,7 @@ class Honeycomb extends Widget
 				hex.withRim = true;
 				hex.rimCols = Vec.numberArray(hmol.rimColour, 6);
 			}
+			hex.annotation = hmol.name;
 			this.hexes.push(hex);
 		}
 
@@ -506,21 +508,26 @@ class Honeycomb extends Widget
 		}
 		
 		// text annotation
-		let bumpDown = 0;
-	
-		/*if !hex.annotation.isEmpty
+		let bumpDown = 0;	
+		if (hex.annotation)
 		{
-			let y = centre.y - innerRad * mainFract
-			var font = UIFont.systemFont(ofSize:CGFloat(hex.annotFontSize))
-			var tsz = textSize(hex.annotation, font)
-			if tsz.width > edgeLen
+			let txt = hex.annotation, maxW = 0.5 * hex.hexSize;
+			let wad = this.measure.measureText(txt, hex.annotFontSize);
+			if (wad[0] > maxW)
 			{
-				font = fontFitWidth(hex.annotation, font, edgeLen, minSize:2)
-				tsz = textSize(hex.annotation, font)
+				while (txt.length > 0 && wad[0] > maxW)
+				{
+					// TODO: make a utility to do a binary search to find text truncation point
+					txt = txt.substring(0, txt.length - 1);
+					wad = this.measure.measureText(txt + '..', hex.annotFontSize);
+				}
+				txt += '..';
 			}
-			textDrawPoint(hex.annotation, font, CGPoint(x:centre.x - 0.5 * tsz.width, y:y + 3 - 0.5 * tsz.height), hex.annotCol)
-			bumpDown = font.lineHeight
-		}*/
+
+			let y = centre.y - hex.innerRad * mainFract;
+			gfx.drawText(centre.x, y + 2, txt, hex.annotFontSize, hex.annotCol, TextAlign.Centre | TextAlign.Top);
+			bumpDown = wad[1] + wad[2];
+		}
 		
 		// draw the molecule
 		let rad = hex.innerRad * mainFract - 1 - bumpDown;

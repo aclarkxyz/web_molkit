@@ -79,7 +79,7 @@ class EmbedCollection extends EmbedChemistry
 		}
 		else // free for all
 		{
-			ds = DataSheetStream.readXML(datastr);
+			try {ds = DataSheetStream.readXML(datastr);} catch (ex) {}
 			if (ds == null)
 			{
 				try 
