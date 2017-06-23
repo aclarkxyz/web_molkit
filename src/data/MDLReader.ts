@@ -478,6 +478,7 @@ class MDLSDFReader
 	{
 		let ds = this.ds;
 		ds.appendColumn('Molecule', DataSheet.COLTYPE_MOLECULE, 'Molecular structure');
+		let colName = -1;
 		let entry:string[] = [];
 
 		// read the lines from the SD file, and every time a field is encountered, add it as type "string"
@@ -499,7 +500,7 @@ class MDLSDFReader
 				if (line.startsWith('M	END')) break;
 			}
 
-			let mol:Molecule = null;
+			let mol:Molecule = null, name:string = null;
 			try 
 			{
 				if (molstr.length > 0)
@@ -507,6 +508,7 @@ class MDLSDFReader
 					let mdl = new MDLMOLReader(molstr);
 					mdl.parse();
 					mol = mdl.mol;
+					name = mdl.molName;
 				}
 			}
 			catch (ex) 
@@ -517,6 +519,11 @@ class MDLSDFReader
 				// (leave the molecule null
 			}
 			if (mol != null) ds.setMolecule(rn, 0, mol);
+			if (name)
+			{
+				if (colName < 0) colName = ds.appendColumn('Name', DataSheet.COLTYPE_STRING, 'Molecule name');
+				ds.setString(rn, colName, name);
+			}
 			
 			if (rn == 0 && mol != null)
 			{

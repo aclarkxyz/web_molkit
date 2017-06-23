@@ -430,4 +430,25 @@ class DataSheet
 		for (let n = 0; n < this.data.numCols; n++) if (this.data.colData[n].type == type) return n;
 		return -1;
 	}
+
+	// converts a cell to a string by whatever means necessary (or returns null)
+	public toString(row:number, col:number):string
+	{
+		let obj = this.data.rowData[row][col];
+		return obj == null ? null : obj.toString();
+	}
+	
+    // converts a cell to a number; returns null or NaN as appropriate
+	public toInt(row:number, col:number):number
+	{
+		if (!this.colIsPrimitive(col)) return null;
+		let obj = this.data.rowData[row][col];
+		return obj == null ? null : parseInt(obj);
+	}
+	public toReal(row:number, col:number):number
+	{
+		if (!this.colIsPrimitive(col)) return null;
+		let obj = this.data.rowData[row][col];
+		return obj == null ? null : parseFloat(obj);
+	}
 }
