@@ -30,7 +30,7 @@ class EditCompound extends Dialog
 	
 	public callbackSave:(source?:EditCompound) => void = null;
 		
-	constructor(private tokenID:string, private mol:Molecule)
+	constructor(private mol:Molecule)
 	{
 		super();
 		
