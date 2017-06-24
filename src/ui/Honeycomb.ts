@@ -108,6 +108,8 @@ class Honeycomb extends Widget
 	private mouseFirst:number[] = null;
 	private mouseLast:number[] = null;
 	private panDelta = [0, 0];
+	private hoverHex = -1;
+	private hoverSpan:JQuery = null;
 
 	// ------------ public methods ------------
 
@@ -163,6 +165,7 @@ class Honeycomb extends Widget
 	// performs all the calculations necessary to display the honeycomb, and begins rendering the pieces
 	public populate():void
 	{
+		this.changeHover(-1);
 		this.container.empty();
 
 		// make sure all molecules have fingerprints, then create the list of hexes, in placement order
@@ -228,6 +231,7 @@ class Honeycomb extends Widget
 			this.zoomFactor *= 3/2;			
 		}
 
+		this.changeHover(-1);
 		this.renderHexes();
 	}
 
@@ -632,6 +636,7 @@ class Honeycomb extends Widget
 	}
 	private mouseDoubleClick(event:JQueryEventObject):void
 	{
+		this.changeHover(-1);
 		let xy = eventCoords(event, this.container);
 		let idx = this.pickHex(xy[0], xy[1]);
 		if (idx >= 0 && idx != this.seed)
@@ -672,6 +677,11 @@ class Honeycomb extends Widget
 				this.mouseLast = xy;
 			}
 		}
+		else
+		{
+			let xy = eventCoords(event, this.container);
+			this.changeHover(this.pickHex(xy[0], xy[1]));
+		}
 	}
 	private keyPressed(event:JQueryEventObject):void
 	{
@@ -693,6 +703,7 @@ class Honeycomb extends Widget
 			hex.span.css('left', (hex.frame.x + this.panDelta[0]) + 'px');
 			hex.span.css('top', (hex.frame.y + this.panDelta[1]) + 'px');
 		}
+		this.changeHover(-1);
 	}	
 
 	// returns the hex under the given coordinate, if any
@@ -707,6 +718,78 @@ class Honeycomb extends Widget
 			if (closest < 0 || dsq < closestDSQ) {closest = n; closestDSQ = dsq;}
 		}
 		return closest;
+	}
+
+	// reinform which hex the mouse is hovering over, and update the display if necessary
+	private changeHover(hover:number):void
+	{
+		if (hover >= 0 && this.hexes[hover].span == null) hover = -1;
+		if (this.hoverHex == hover) return;
+		this.hoverHex = hover;
+
+		if (hover < 0)
+		{
+			if (this.hoverSpan) this.hoverSpan.remove();
+			this.hoverSpan = null;
+			return;
+		}
+
+		if (this.hoverSpan == null) 
+		{
+			this.hoverSpan = $('<span></span>').appendTo(this.container);
+			this.hoverSpan.css('position', 'absolute');
+			this.hoverSpan.css('pointer-events', 'none');
+			this.hoverSpan.css('zIndex', 1);
+		}
+		else this.hoverSpan.empty();
+
+		let hex = this.hexes[hover];
+		let urad = 0.5 * this.hexSize * this.zoomFactor, udiam = Math.ceil(2 * urad), uspan = 2 * udiam;
+		let x0 = Math.floor(hex.centre.x - udiam), y0 = Math.floor(hex.centre.y - udiam);
+
+		this.hoverSpan.css('left', (hex.frame.x + this.panDelta[0] + x0) + 'px');
+		this.hoverSpan.css('top', (hex.frame.y + this.panDelta[1] + y0) + 'px');
+		this.hoverSpan.css('width', uspan + 'px');
+		this.hoverSpan.css('height', uspan + 'px');
+
+		let gfx = new MetaVector();
+
+		const DEG30 = Math.PI / 6;
+		let ext = urad * (1 - sqr(Math.sin(DEG30))) / Math.cos(DEG30);
+		//gfx.drawOval(hex.centre.x - x0, hex.centre.y - y0, ext, ext, 0x000000, 1, 0x80FF0000);
+
+		// find the adjacent hexes, if any
+		let xNE = this.offsetX(hex.x, hex.y, this.HEX_NE), yNE = this.offsetY(hex.x, hex.y, this.HEX_NE);
+		let xSE = this.offsetX(hex.x, hex.y, this.HEX_SE), ySE = this.offsetY(hex.x, hex.y, this.HEX_SE);
+		let xS = this.offsetX(hex.x, hex.y, this.HEX_S), yS = this.offsetY(hex.x, hex.y, this.HEX_S);
+		let xSW = this.offsetX(hex.x, hex.y, this.HEX_SW), ySW = this.offsetY(hex.x, hex.y, this.HEX_SW);
+		let xNW = this.offsetX(hex.x, hex.y, this.HEX_NW), yNW = this.offsetY(hex.x, hex.y, this.HEX_NW);
+		let xN = this.offsetX(hex.x, hex.y, this.HEX_N), yN = this.offsetY(hex.x, hex.y, this.HEX_N);
+		let adjHexes:HoneycombHex[] = [null, null, null, null, null, null];
+		for (let adj of this.hexes)
+		{
+			if (adj.x == xNE && adj.y == yNE) adjHexes[0] = adj;
+			else if (adj.x == xSE && adj.y == ySE) adjHexes[1] = adj;
+			else if (adj.x == xS && adj.y == yS) adjHexes[2] = adj;
+			else if (adj.x == xSW && adj.y == ySW) adjHexes[3] = adj;
+			else if (adj.x == xNW && adj.y == yNW) adjHexes[4] = adj;
+			else if (adj.x == xN && adj.y == yN) adjHexes[5] = adj;
+		}
+		
+		for (let n = 0; n < 6; n++) if (adjHexes[n])
+		{
+			let th = (n - 0.5) * Math.PI * 1.0/3;
+			//console.log('n='+n+' th='+(RADDEG*th)+' name='+adjHexes[n].annotation);
+			let lx = hex.centre.x - x0 + ext * Math.cos(th);
+			let ly = hex.centre.y - y0 + ext * Math.sin(th);
+			let sim = CircularFingerprints.tanimoto(hex.fp, adjHexes[n].fp);
+			let txt = sim.toFixed(3), wad = this.measure.measureText(txt, hex.annotFontSize);
+			gfx.drawRect(lx - wad[0] * 0.5 - 2, ly - wad[1] * 0.5 - 2, wad[0] + 4, wad[1] + 4, 0x000000, 1, 0xD0D0D0);
+			gfx.drawText(lx, ly + 0.5 * wad[1], txt, hex.annotFontSize, 0x000000, TextAlign.Centre);
+		}
+
+		gfx.setSize(uspan, uspan);
+		$(gfx.createSVG()).appendTo(this.hoverSpan);
 	}
 }
 
