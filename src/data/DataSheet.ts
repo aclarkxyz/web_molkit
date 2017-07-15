@@ -432,8 +432,9 @@ class DataSheet
 	}
 
 	// converts a cell to a string by whatever means necessary (or returns null)
-	public toString(row:number, col:number):string
+	public toString(row:number, col:number | string):string
 	{
+		if (typeof col === 'string') col = this.findColByName(col);
 		let obj = this.data.rowData[row][col];
 		return obj == null ? null : obj.toString();
 	}

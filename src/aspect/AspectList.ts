@@ -16,6 +16,7 @@
 ///<reference path='Experiment.ts'/>
 ///<reference path='AssayProvenance.ts'/>
 ///<reference path='BayesianSource.ts'/>
+///<reference path='BayesianPrediction.ts'/>
 
 /*
 	The AspectList class is used as a way to fetch all of the recognised aspects that are installed within a given datasheet, without
@@ -35,6 +36,7 @@ class AspectList
 			SUPPORTED_ASPECTS[Experiment.CODE] = Experiment.NAME;
 			SUPPORTED_ASPECTS[AssayProvenance.CODE] = AssayProvenance.NAME;
 			SUPPORTED_ASPECTS[BayesianSource.CODE] = BayesianSource.NAME;
+			SUPPORTED_ASPECTS[BayesianPrediction.CODE] = BayesianPrediction.NAME;
 		}
 	}
 

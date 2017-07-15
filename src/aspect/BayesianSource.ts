@@ -41,7 +41,7 @@ class BayesianSource extends Aspect
 
 	// ----------------- public methods -----------------
 
-	// used to test if a datasheet has the appropriate metadata flagging it as a feedstock-containing datasheet
+	// used to test if a datasheet has the appropriate metadata flagging it as this aspect
 	public static isBayesianSource(ds:DataSheet):boolean
 	{
 		for (let n = 0; n < ds.numExtensions; n++) if (ds.getExtType(n) == BayesianSource.CODE) return true;
@@ -80,15 +80,15 @@ class BayesianSource extends Aspect
     		let eq = line.indexOf('=');
     		if (eq < 0) continue;
     		
-			if (line.startsWith("colNameMolecule=")) m.colNameMolecule = MoleculeStream.sk_unescape(line.substring(eq + 1));
-            else if (line.startsWith("colNameValue=")) m.colNameValue = MoleculeStream.sk_unescape(line.substring(eq + 1));
-            else if (line.startsWith("thresholdValue=")) m.thresholdValue = parseFloat(line.substring(eq + 1));
-            else if (line.startsWith("thresholdRelation=")) m.thresholdRelation = MoleculeStream.sk_unescape(line.substring(eq + 1));
-            else if (line.startsWith("folding=")) m.folding = parseInt(line.substring(eq + 1));
-            else if (line.startsWith("noteField=")) m.noteField = MoleculeStream.sk_unescape(line.substring(eq + 1));
-            else if (line.startsWith("noteTitle=")) m.noteTitle = MoleculeStream.sk_unescape(line.substring(eq + 1));
-            else if (line.startsWith("noteOrigin=")) m.noteOrigin = MoleculeStream.sk_unescape(line.substring(eq + 1));
-            else if (line.startsWith("noteComment=")) m.noteComment = MoleculeStream.sk_unescape(line.substring(eq + 1));
+			if (line.startsWith('colNameMolecule=')) m.colNameMolecule = MoleculeStream.sk_unescape(line.substring(eq + 1));
+            else if (line.startsWith('colNameValue=')) m.colNameValue = MoleculeStream.sk_unescape(line.substring(eq + 1));
+            else if (line.startsWith('thresholdValue=')) m.thresholdValue = parseFloat(line.substring(eq + 1));
+            else if (line.startsWith('thresholdRelation=')) m.thresholdRelation = MoleculeStream.sk_unescape(line.substring(eq + 1));
+            else if (line.startsWith('folding=')) m.folding = parseInt(line.substring(eq + 1));
+            else if (line.startsWith('noteField=')) m.noteField = MoleculeStream.sk_unescape(line.substring(eq + 1));
+            else if (line.startsWith('noteTitle=')) m.noteTitle = MoleculeStream.sk_unescape(line.substring(eq + 1));
+            else if (line.startsWith('noteOrigin=')) m.noteOrigin = MoleculeStream.sk_unescape(line.substring(eq + 1));
+            else if (line.startsWith('noteComment=')) m.noteComment = MoleculeStream.sk_unescape(line.substring(eq + 1));
 		}
 		
 		if (m != null) models.push(m);
@@ -118,7 +118,7 @@ class BayesianSource extends Aspect
 			this.ds.setExtData(n, content.toString());
 			return;
 		}
-		this.ds.appendExtension("BayesianSource", BayesianSource.CODE, content.toString());		
+		this.ds.appendExtension('BayesianSource', BayesianSource.CODE, content.toString());		
 	}
 
 	// ----------------- private methods -----------------
