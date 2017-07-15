@@ -402,7 +402,7 @@ class SearchPanel extends Widget
 	}
 	private editMolecule(which:number)
 	{
-		let dlg = new EditCompound(null, which == 1 ? this.mol1 : this.mol2);
+		let dlg = new EditCompound(which == 1 ? this.mol1 : this.mol2);
 		this.isSketching = true;
 		dlg.onSave(() => {if (which == 1) this.saveMolecule1(dlg); else this.saveMolecule2(dlg);});
 		dlg.onClose(() => this.isSketching = false);
