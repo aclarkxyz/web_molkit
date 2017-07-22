@@ -41,6 +41,15 @@ class Vec {
         arr[idx1] = arr[idx2];
         arr[idx2] = v;
     }
+    static concat(arr1, arr2) {
+        if (arr1 == null && arr2 == null)
+            return [];
+        if (arr1 == null)
+            return arr2.slice(0);
+        if (arr2 == null)
+            return arr1.slice();
+        return arr1.concat(arr2);
+    }
     static equals(arr1, arr2) {
         if (arr1 == null && arr2 == null)
             return true;
@@ -277,6 +286,36 @@ class Vec {
         arr = arr.slice(0);
         this.sort(arr);
         return arr;
+    }
+    static uniqueUnstable(arr) {
+        return Array.from(new Set(arr));
+    }
+    static uniqueStable(arr) {
+        let set = new Set(arr), ret = [];
+        for (let v in arr)
+            if (set.has(v)) {
+                ret.push(v);
+                set.delete(v);
+            }
+        return ret;
+    }
+    static maskUnique(arr) {
+        let set = new Set(arr), ret = this.booleanArray(false, arr.length);
+        for (let n = 0; n < arr.length; n++)
+            if (set.has(arr[n])) {
+                ret[n] = true;
+                set.delete(arr[n]);
+            }
+        return ret;
+    }
+    static idxUnique(arr) {
+        let set = new Set(arr), ret = [];
+        for (let n = 0; n < arr.length; n++)
+            if (set.has(arr[n])) {
+                ret.push(n);
+                set.delete(arr[n]);
+            }
+        return ret;
     }
 }
 class Permutation {
@@ -1039,6 +1078,24 @@ class DataSheet {
             if (this.data.colData[n].type == type)
                 return n;
         return -1;
+    }
+    toString(row, col) {
+        if (typeof col === 'string')
+            col = this.findColByName(col);
+        let obj = this.data.rowData[row][col];
+        return obj == null ? null : obj.toString();
+    }
+    toInt(row, col) {
+        if (!this.colIsPrimitive(col))
+            return null;
+        let obj = this.data.rowData[row][col];
+        return obj == null ? null : parseInt(obj);
+    }
+    toReal(row, col) {
+        if (!this.colIsPrimitive(col))
+            return null;
+        let obj = this.data.rowData[row][col];
+        return obj == null ? null : parseFloat(obj);
     }
 }
 DataSheet.COLTYPE_MOLECULE = 'molecule';
@@ -5925,6 +5982,7 @@ class MDLSDFReader {
     parseStream() {
         let ds = this.ds;
         ds.appendColumn('Molecule', DataSheet.COLTYPE_MOLECULE, 'Molecular structure');
+        let colName = -1;
         let entry = [];
         while (this.pos < this.lines.length) {
             let line = this.lines[this.pos++];
@@ -5944,18 +6002,24 @@ class MDLSDFReader {
                 if (line.startsWith('M	END'))
                     break;
             }
-            let mol = null;
+            let mol = null, name = null;
             try {
                 if (molstr.length > 0) {
                     let mdl = new MDLMOLReader(molstr);
                     mdl.parse();
                     mol = mdl.mol;
+                    name = mdl.molName;
                 }
             }
             catch (ex) {
             }
             if (mol != null)
                 ds.setMolecule(rn, 0, mol);
+            if (name) {
+                if (colName < 0)
+                    colName = ds.appendColumn('Name', DataSheet.COLTYPE_STRING, 'Molecule name');
+                ds.setString(rn, colName, name);
+            }
             if (rn == 0 && mol != null) {
                 let str1 = entry[0], str3 = entry[2];
                 if (str1.length >= 7 && str1.startsWith("$name=")) {
@@ -7600,23 +7664,23 @@ class BayesianSource extends Aspect {
             let eq = line.indexOf('=');
             if (eq < 0)
                 continue;
-            if (line.startsWith("colNameMolecule="))
+            if (line.startsWith('colNameMolecule='))
                 m.colNameMolecule = MoleculeStream.sk_unescape(line.substring(eq + 1));
-            else if (line.startsWith("colNameValue="))
+            else if (line.startsWith('colNameValue='))
                 m.colNameValue = MoleculeStream.sk_unescape(line.substring(eq + 1));
-            else if (line.startsWith("thresholdValue="))
+            else if (line.startsWith('thresholdValue='))
                 m.thresholdValue = parseFloat(line.substring(eq + 1));
-            else if (line.startsWith("thresholdRelation="))
+            else if (line.startsWith('thresholdRelation='))
                 m.thresholdRelation = MoleculeStream.sk_unescape(line.substring(eq + 1));
-            else if (line.startsWith("folding="))
+            else if (line.startsWith('folding='))
                 m.folding = parseInt(line.substring(eq + 1));
-            else if (line.startsWith("noteField="))
+            else if (line.startsWith('noteField='))
                 m.noteField = MoleculeStream.sk_unescape(line.substring(eq + 1));
-            else if (line.startsWith("noteTitle="))
+            else if (line.startsWith('noteTitle='))
                 m.noteTitle = MoleculeStream.sk_unescape(line.substring(eq + 1));
-            else if (line.startsWith("noteOrigin="))
+            else if (line.startsWith('noteOrigin='))
                 m.noteOrigin = MoleculeStream.sk_unescape(line.substring(eq + 1));
-            else if (line.startsWith("noteComment="))
+            else if (line.startsWith('noteComment='))
                 m.noteComment = MoleculeStream.sk_unescape(line.substring(eq + 1));
         }
         if (m != null)
@@ -7643,7 +7707,7 @@ class BayesianSource extends Aspect {
                 this.ds.setExtData(n, content.toString());
                 return;
             }
-        this.ds.appendExtension("BayesianSource", BayesianSource.CODE, content.toString());
+        this.ds.appendExtension('BayesianSource', BayesianSource.CODE, content.toString());
     }
     setup() {
         if (this.allowModify) {
@@ -7655,6 +7719,131 @@ class BayesianSource extends Aspect {
 }
 BayesianSource.CODE = 'org.mmi.aspect.BayesianSource';
 BayesianSource.NAME = 'Bayesian Source';
+class BayesianPredictionModel {
+}
+class BayesianPredictionOutcome {
+}
+class BayesianPrediction extends Aspect {
+    constructor(ds, allowModify) {
+        super(ds, allowModify);
+        this.setup();
+    }
+    static isBayesianPrediction(ds) {
+        for (let n = 0; n < ds.numExtensions; n++)
+            if (ds.getExtType(n) == BayesianPrediction.CODE)
+                return true;
+        return false;
+    }
+    getModels() {
+        let content = '';
+        for (let n = 0; n < this.ds.numExtensions; n++)
+            if (this.ds.getExtType(n) == BayesianPrediction.CODE) {
+                content = this.ds.getExtData(n);
+                break;
+            }
+        let models = [];
+        let m = null;
+        for (let line of content.split('\n')) {
+            if (line == 'model:') {
+                if (m != null)
+                    models.push(m);
+                m = {};
+                continue;
+            }
+            if (m == null)
+                continue;
+            let eq = line.indexOf('=');
+            if (eq < 0)
+                continue;
+            if (line.startsWith('colMolecule='))
+                m.colMolecule = MoleculeStream.sk_unescape(line.substring(eq + 1));
+            else if (line.startsWith('colRaw='))
+                m.colRaw = MoleculeStream.sk_unescape(line.substring(eq + 1));
+            else if (line.startsWith('colScaled='))
+                m.colScaled = MoleculeStream.sk_unescape(line.substring(eq + 1));
+            else if (line.startsWith('colArcTan='))
+                m.colArcTan = MoleculeStream.sk_unescape(line.substring(eq + 1));
+            else if (line.startsWith('colDomain='))
+                m.colDomain = MoleculeStream.sk_unescape(line.substring(eq + 1));
+            else if (line.startsWith('colAtoms='))
+                m.colAtoms = MoleculeStream.sk_unescape(line.substring(eq + 1));
+            else if (line.startsWith('name='))
+                m.name = MoleculeStream.sk_unescape(line.substring(eq + 1));
+            else if (line.startsWith('description='))
+                m.description = MoleculeStream.sk_unescape(line.substring(eq + 1));
+            else if (line.startsWith('targetName='))
+                m.targetName = MoleculeStream.sk_unescape(line.substring(eq + 1));
+            else if (line.startsWith('isOffTarget='))
+                m.isOffTarget = line.substring(eq + 1) == 'true';
+        }
+        if (m != null)
+            models.push(m);
+        return models;
+    }
+    setModels(models) {
+        let lines = [];
+        for (let m of models) {
+            lines.push('model:');
+            lines.push('colMolecule=' + MoleculeStream.sk_escape(m.colMolecule));
+            lines.push('colRaw=' + MoleculeStream.sk_escape(m.colRaw));
+            lines.push('colScaled=' + MoleculeStream.sk_escape(m.colScaled));
+            lines.push('colArcTan=' + MoleculeStream.sk_escape(m.colArcTan));
+            lines.push('colDomain=' + MoleculeStream.sk_escape(m.colDomain));
+            lines.push('colAtoms=' + MoleculeStream.sk_escape(m.colAtoms));
+            lines.push('name=' + MoleculeStream.sk_escape(m.name));
+            lines.push('description=' + MoleculeStream.sk_escape(m.description));
+            lines.push('targetName=' + MoleculeStream.sk_escape(m.targetName));
+            lines.push('isOffTarget=' + m.isOffTarget);
+        }
+        let content = lines.join('\n');
+        for (let n = 0; n < this.ds.numExtensions; n++)
+            if (this.ds.getExtType(n) == BayesianSource.CODE) {
+                this.ds.setExtData(n, content.toString());
+                return;
+            }
+        this.ds.appendExtension('BayesianPrediction', BayesianPrediction.CODE, content.toString());
+    }
+    getOutcome(row, model) {
+        let outcome = new BayesianPredictionOutcome();
+        outcome.raw = this.ds.getReal(row, model.colRaw);
+        outcome.scaled = this.ds.getReal(row, model.colScaled);
+        outcome.arctan = this.ds.getReal(row, model.colArcTan);
+        outcome.domain = this.ds.getReal(row, model.colDomain);
+        let strAtoms = this.ds.getString(row, model.colAtoms);
+        if (strAtoms) {
+            outcome.atoms = [];
+            for (let b of strAtoms.split(','))
+                outcome.atoms.push(parseFloat(b));
+        }
+        return outcome;
+    }
+    setOutcome(row, model, outcome) {
+        let col = this.ds.findColByName(model.colRaw, DataSheet.COLTYPE_REAL);
+        if (col >= 0)
+            this.ds.setReal(row, col, outcome.raw);
+        col = this.ds.findColByName(model.colScaled, DataSheet.COLTYPE_REAL);
+        if (col >= 0)
+            this.ds.setReal(row, col, outcome.scaled);
+        col = this.ds.findColByName(model.colArcTan, DataSheet.COLTYPE_REAL);
+        if (col >= 0)
+            this.ds.setReal(row, col, outcome.arctan);
+        col = this.ds.findColByName(model.colDomain, DataSheet.COLTYPE_REAL);
+        if (col >= 0)
+            this.ds.setReal(row, col, outcome.domain);
+        col = this.ds.findColByName(model.colAtoms, DataSheet.COLTYPE_STRING);
+        if (col >= 0)
+            this.ds.setString(row, col, outcome.atoms ? outcome.atoms.toString() : null);
+    }
+    setup() {
+        if (this.allowModify) {
+            let models = this.getModels();
+            this.setModels(models);
+        }
+    }
+    plainHeading() { return BayesianSource.NAME; }
+}
+BayesianPrediction.CODE = 'org.mmi.aspect.BayesianPrediction';
+BayesianPrediction.NAME = 'Bayesian Prediction';
 let SUPPORTED_ASPECTS = {};
 class AspectList {
     constructor(ds) {
@@ -7664,6 +7853,7 @@ class AspectList {
             SUPPORTED_ASPECTS[Experiment.CODE] = Experiment.NAME;
             SUPPORTED_ASPECTS[AssayProvenance.CODE] = AssayProvenance.NAME;
             SUPPORTED_ASPECTS[BayesianSource.CODE] = BayesianSource.NAME;
+            SUPPORTED_ASPECTS[BayesianPrediction.CODE] = BayesianPrediction.NAME;
         }
     }
     list() {
@@ -17963,9 +18153,8 @@ class Sketcher extends Widget {
 }
 Sketcher.UNDO_SIZE = 20;
 class EditCompound extends Dialog {
-    constructor(tokenID, mol) {
+    constructor(mol) {
         super();
-        this.tokenID = tokenID;
         this.mol = mol;
         this.fakeTextArea = null;
         this.callbackSave = null;
@@ -18925,8 +19114,6 @@ class AxisLabeller {
         if (loT == null || hiT == null)
             return;
         let loVal = this.inverse(loT), hiVal = this.inverse(hiT);
-        console.log('TVALS:' + loT + ',' + hiT);
-        console.log('RVALS:' + loVal + ',' + hiVal);
         this.notches.push({
             'label': this.formatNumber(loVal),
             'value': loVal,
@@ -19354,7 +19541,10 @@ class EmbedCollection extends EmbedChemistry {
             }
         }
         else {
-            ds = DataSheetStream.readXML(datastr);
+            try {
+                ds = DataSheetStream.readXML(datastr);
+            }
+            catch (ex) { }
             if (ds == null) {
                 try {
                     let mdl = new MDLSDFReader(datastr);
@@ -20208,6 +20398,8 @@ class Honeycomb extends Widget {
         this.mouseFirst = null;
         this.mouseLast = null;
         this.panDelta = [0, 0];
+        this.hoverHex = -1;
+        this.hoverSpan = null;
         let scale = 12;
         this.policyColour = RenderPolicy.defaultColourOnWhite();
         this.policyColour.data.pointScale = scale;
@@ -20215,11 +20407,11 @@ class Honeycomb extends Widget {
         this.policyWhite.data.pointScale = scale;
         this.effects = new RenderEffects();
     }
-    addReferenceMolecule(mol) {
-        this.molecules.push({ 'mol': mol, 'isReference': true, 'rimColour': null });
+    addReferenceMolecule(mol, name) {
+        this.molecules.push({ 'mol': mol, 'name': name, 'isReference': true, 'rimColour': null });
     }
-    addModelMolecule(mol, rimColour) {
-        this.molecules.push({ 'mol': mol, 'isReference': false, 'rimColour': rimColour });
+    addModelMolecule(mol, name, rimColour) {
+        this.molecules.push({ 'mol': mol, 'name': name, 'isReference': false, 'rimColour': rimColour });
     }
     render(parent) {
         super.render(parent);
@@ -20242,6 +20434,7 @@ class Honeycomb extends Widget {
         this.container.keyup((event) => this.keyUp(event));
     }
     populate() {
+        this.changeHover(-1);
         this.container.empty();
         for (let hmol of this.molecules)
             if (!hmol.fp) {
@@ -20271,6 +20464,7 @@ class Honeycomb extends Widget {
                 hex.withRim = true;
                 hex.rimCols = Vec.numberArray(hmol.rimColour, 6);
             }
+            hex.annotation = hmol.name;
             this.hexes.push(hex);
         }
         this.growFlower();
@@ -20289,6 +20483,7 @@ class Honeycomb extends Widget {
                 return;
             this.zoomFactor *= 3 / 2;
         }
+        this.changeHover(-1);
         this.renderHexes();
     }
     growFlower() {
@@ -20486,6 +20681,20 @@ class Honeycomb extends Widget {
             }
         }
         let bumpDown = 0;
+        if (hex.annotation) {
+            let txt = hex.annotation, maxW = 0.5 * hex.hexSize;
+            let wad = this.measure.measureText(txt, hex.annotFontSize);
+            if (wad[0] > maxW) {
+                while (txt.length > 0 && wad[0] > maxW) {
+                    txt = txt.substring(0, txt.length - 1);
+                    wad = this.measure.measureText(txt + '..', hex.annotFontSize);
+                }
+                txt += '..';
+            }
+            let y = centre.y - hex.innerRad * mainFract;
+            gfx.drawText(centre.x, y + 2, txt, hex.annotFontSize, hex.annotCol, TextAlign.Centre | TextAlign.Top);
+            bumpDown = wad[1] + wad[2];
+        }
         let rad = hex.innerRad * mainFract - 1 - bumpDown;
         let policy = hex.policy ? hex.policy : this.policyColour;
         let layout = new ArrangeMolecule(hex.mol, this.measure, policy, this.effects);
@@ -20579,6 +20788,7 @@ class Honeycomb extends Widget {
         this.container.focus();
     }
     mouseDoubleClick(event) {
+        this.changeHover(-1);
         let xy = eventCoords(event, this.container);
         let idx = this.pickHex(xy[0], xy[1]);
         if (idx >= 0 && idx != this.seed) {
@@ -20610,6 +20820,10 @@ class Honeycomb extends Widget {
                 this.mouseLast = xy;
             }
         }
+        else {
+            let xy = eventCoords(event, this.container);
+            this.changeHover(this.pickHex(xy[0], xy[1]));
+        }
     }
     keyPressed(event) {
     }
@@ -20624,6 +20838,7 @@ class Honeycomb extends Widget {
                 hex.span.css('left', (hex.frame.x + this.panDelta[0]) + 'px');
                 hex.span.css('top', (hex.frame.y + this.panDelta[1]) + 'px');
             }
+        this.changeHover(-1);
     }
     pickHex(x, y) {
         let closest = -1, closestDSQ = 0;
@@ -20638,6 +20853,70 @@ class Honeycomb extends Widget {
             }
         }
         return closest;
+    }
+    changeHover(hover) {
+        if (hover >= 0 && this.hexes[hover].span == null)
+            hover = -1;
+        if (this.hoverHex == hover)
+            return;
+        this.hoverHex = hover;
+        if (hover < 0) {
+            if (this.hoverSpan)
+                this.hoverSpan.remove();
+            this.hoverSpan = null;
+            return;
+        }
+        if (this.hoverSpan == null) {
+            this.hoverSpan = $('<span></span>').appendTo(this.container);
+            this.hoverSpan.css('position', 'absolute');
+            this.hoverSpan.css('pointer-events', 'none');
+            this.hoverSpan.css('zIndex', 1);
+        }
+        else
+            this.hoverSpan.empty();
+        let hex = this.hexes[hover];
+        let urad = 0.5 * this.hexSize * this.zoomFactor, udiam = Math.ceil(2 * urad), uspan = 2 * udiam;
+        let x0 = Math.floor(hex.centre.x - udiam), y0 = Math.floor(hex.centre.y - udiam);
+        this.hoverSpan.css('left', (hex.frame.x + this.panDelta[0] + x0) + 'px');
+        this.hoverSpan.css('top', (hex.frame.y + this.panDelta[1] + y0) + 'px');
+        this.hoverSpan.css('width', uspan + 'px');
+        this.hoverSpan.css('height', uspan + 'px');
+        let gfx = new MetaVector();
+        const DEG30 = Math.PI / 6;
+        let ext = urad * (1 - sqr(Math.sin(DEG30))) / Math.cos(DEG30);
+        let xNE = this.offsetX(hex.x, hex.y, this.HEX_NE), yNE = this.offsetY(hex.x, hex.y, this.HEX_NE);
+        let xSE = this.offsetX(hex.x, hex.y, this.HEX_SE), ySE = this.offsetY(hex.x, hex.y, this.HEX_SE);
+        let xS = this.offsetX(hex.x, hex.y, this.HEX_S), yS = this.offsetY(hex.x, hex.y, this.HEX_S);
+        let xSW = this.offsetX(hex.x, hex.y, this.HEX_SW), ySW = this.offsetY(hex.x, hex.y, this.HEX_SW);
+        let xNW = this.offsetX(hex.x, hex.y, this.HEX_NW), yNW = this.offsetY(hex.x, hex.y, this.HEX_NW);
+        let xN = this.offsetX(hex.x, hex.y, this.HEX_N), yN = this.offsetY(hex.x, hex.y, this.HEX_N);
+        let adjHexes = [null, null, null, null, null, null];
+        for (let adj of this.hexes) {
+            if (adj.x == xNE && adj.y == yNE)
+                adjHexes[0] = adj;
+            else if (adj.x == xSE && adj.y == ySE)
+                adjHexes[1] = adj;
+            else if (adj.x == xS && adj.y == yS)
+                adjHexes[2] = adj;
+            else if (adj.x == xSW && adj.y == ySW)
+                adjHexes[3] = adj;
+            else if (adj.x == xNW && adj.y == yNW)
+                adjHexes[4] = adj;
+            else if (adj.x == xN && adj.y == yN)
+                adjHexes[5] = adj;
+        }
+        for (let n = 0; n < 6; n++)
+            if (adjHexes[n]) {
+                let th = (n - 0.5) * Math.PI * 1.0 / 3;
+                let lx = hex.centre.x - x0 + ext * Math.cos(th);
+                let ly = hex.centre.y - y0 + ext * Math.sin(th);
+                let sim = CircularFingerprints.tanimoto(hex.fp, adjHexes[n].fp);
+                let txt = sim.toFixed(3), wad = this.measure.measureText(txt, hex.annotFontSize);
+                gfx.drawRect(lx - wad[0] * 0.5 - 2, ly - wad[1] * 0.5 - 2, wad[0] + 4, wad[1] + 4, 0x000000, 1, 0xD0D0D0);
+                gfx.drawText(lx, ly + 0.5 * wad[1], txt, hex.annotFontSize, 0x000000, TextAlign.Centre);
+            }
+        gfx.setSize(uspan, uspan);
+        $(gfx.createSVG()).appendTo(this.hoverSpan);
     }
 }
 class RowView extends Widget {
@@ -21221,7 +21500,7 @@ class SearchPanel extends Widget {
         }
     }
     editMolecule(which) {
-        let dlg = new EditCompound(null, which == 1 ? this.mol1 : this.mol2);
+        let dlg = new EditCompound(which == 1 ? this.mol1 : this.mol2);
         this.isSketching = true;
         dlg.onSave(() => { if (which == 1)
             this.saveMolecule1(dlg);
