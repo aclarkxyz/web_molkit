@@ -32,6 +32,7 @@ function addTooltip(parent:any, bodyHTML:string, titleHTML?:string, delay?:numbe
         //globalPopover.css('opacity', 0.9);
         globalPopover.css('border', '1px solid black');
         globalPopover.css('padding', '0.3em');
+        globalPopover.css('z-index', 2000);
         globalPopover.hide();
         globalPopover.appendTo(document.body);
     }
