@@ -10,6 +10,8 @@
 	[PKG=webmolkit]
 */
 
+///<reference path='../decl/jquery.d.ts'/>
+
 /*
 	Tooltips: adding popovers to widgets.
 */
