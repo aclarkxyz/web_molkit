@@ -31,12 +31,8 @@ function addTooltip(parent:any, bodyHTML:string, titleHTML?:string, delay?:numbe
         globalPopover.css('background-image', 'linear-gradient(to right bottom, #FFFFFF, #D0D0FF)');
         globalPopover.css('color', 'black');
         globalPopover.css('border', '1px solid black');
-<<<<<<< HEAD
-        globalPopover.css('padding', '0.3em');
         globalPopover.css('z-index', 2000);
-=======
         globalPopover.css('border-radius', '4px');
->>>>>>> 522fd7e7e5fd24418ebe17fc4022c7812f8e2d49
         globalPopover.hide();
         globalPopover.appendTo(document.body);
     }
