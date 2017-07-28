@@ -383,8 +383,8 @@ class BayesianModel
 		if (folding < 0) throw 'Fingerprint folding ' + bits[1] + ' invalid: must be 0 or power of 2.';
 
 		let model = new BayesianModel(classType, folding);
-		model.lowThresh = parseInt(bits[2]);
-		model.highThresh = parseInt(bits[3]);
+		model.lowThresh = parseFloat(bits[2]);
+		model.highThresh = parseFloat(bits[3]);
 		model.range = model.highThresh - model.lowThresh;
 		model.invRange = model.range > 0 ? 1 / model.range : 0;
 
