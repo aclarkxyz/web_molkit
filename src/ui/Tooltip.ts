@@ -10,6 +10,8 @@
 	[PKG=webmolkit]
 */
 
+///<reference path='../decl/jquery.d.ts'/>
+
 /*
 	Tooltips: adding popovers to widgets.
 */
@@ -31,6 +33,7 @@ function addTooltip(parent:any, bodyHTML:string, titleHTML?:string, delay?:numbe
         globalPopover.css('background-image', 'linear-gradient(to right bottom, #FFFFFF, #D0D0FF)');
         globalPopover.css('color', 'black');
         globalPopover.css('border', '1px solid black');
+        globalPopover.css('z-index', 2000);
         globalPopover.css('border-radius', '4px');
         globalPopover.hide();
         globalPopover.appendTo(document.body);

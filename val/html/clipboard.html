@@ -100,12 +100,12 @@
 			if (kind == 'string') item.getAsString((str) => renderText(ul, type, str));
 			if (kind == 'file')
 			{
-				let file =  item.getAsFile();
+				let file = item.getAsFile();
 				ul.append('<li>file: name=[' + file.name + '] size=' + file.size + '</li>');
 
 				let reader = new FileReader();
 				reader.onload = (event) => renderText(ul, type, reader.result);
-				try {reader.readAsText(files[n]);}
+				try {reader.readAsText(file);}
 				catch (e) {} // silent failure if not a text file
 			}
 		}
