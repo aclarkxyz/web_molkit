@@ -285,7 +285,7 @@ class Sketcher extends Widget implements ArrangeMeasurement
 		// setup all the interactive events
 		this.container.click((event:JQueryEventObject) => this.mouseClick(event));
 		this.container.dblclick((event:JQueryEventObject) => this.mouseDoubleClick(event));
-		this.container.mousedown((event:JQueryEventObject) => {event.preventDefault(); this.mouseDown(event);});
+		this.container.mousedown((event:JQueryEventObject) => this.mouseDown(event));
 		this.container.mouseup((event:JQueryEventObject) => this.mouseUp(event));
 		this.container.mouseover((event:JQueryEventObject) => this.mouseOver(event));
 		this.container.mouseout((event:JQueryEventObject) => this.mouseOut(event));
@@ -1452,6 +1452,8 @@ class Sketcher extends Widget implements ArrangeMeasurement
 	}
 	private mouseDown(event:JQueryEventObject):void
 	{
+		event.preventDefault();
+
 		this.clearMessage();
 
 		this.dragType = DraggingTool.Press;

@@ -10340,9 +10340,10 @@ function addTooltip(parent, bodyHTML, titleHTML, delay) {
         globalPopover = $(document.createElement('div'));
         globalPopover.css('position', 'absolute');
         globalPopover.css('background-color', '#F0F0FF');
+        globalPopover.css('background-image', 'linear-gradient(to right bottom, #FFFFFF, #D0D0FF)');
         globalPopover.css('color', 'black');
         globalPopover.css('border', '1px solid black');
-        globalPopover.css('padding', '0.3em');
+        globalPopover.css('border-radius', '4px');
         globalPopover.hide();
         globalPopover.appendTo(document.body);
     }
@@ -10384,20 +10385,38 @@ class Tooltip {
         let pop = globalPopover;
         pop.css('max-width', '20em');
         pop.empty();
+        let div = $('<div></div>').appendTo(pop);
+        div.css('padding', '0.3em');
         let hasTitle = this.titleHTML != null && this.titleHTML.length > 0, hasBody = this.bodyHTML != null && this.bodyHTML.length > 0;
         if (hasTitle)
-            ($('<div></div>').appendTo(pop)).html('<b>' + this.titleHTML + '</b>');
+            ($('<div></div>').appendTo(div)).html('<b>' + this.titleHTML + '</b>');
         if (hasTitle && hasBody)
-            pop.append('<hr>');
+            div.append('<hr>');
         if (hasBody)
-            ($('<div></div>').appendTo(pop)).html(this.bodyHTML);
-        let popW = pop.width(), popH = pop.height();
-        let wpos = this.widget.offset(), width = this.widget.width(), height = this.widget.height();
-        let posX = wpos.left;
-        let posY = wpos.top + height + 2;
-        pop.css('left', `${posX}px`);
-        pop.css('top', `${posY}px`);
+            ($('<div></div>').appendTo(div)).html(this.bodyHTML);
+        let winW = $(window).width(), winH = $(window).height();
+        const GAP = 2;
+        let wx1 = this.widget.offset().left, wy1 = this.widget.offset().top;
+        let wx2 = wx1 + this.widget.width(), wy2 = wy1 + this.widget.height();
+        let setPosition = () => {
+            let popW = pop.width(), popH = pop.height();
+            let posX = 0, posY = 0;
+            if (wx1 + popW < winW)
+                posX = wx1;
+            else if (popW < wx2)
+                posX = wx2 - popW;
+            if (wy2 + GAP + popH < winH)
+                posY = wy2 + GAP;
+            else if (wy1 - GAP - popH > 0)
+                posY = wy1 - GAP - popH;
+            else
+                posY = wy2 + GAP;
+            pop.css('left', `${posX}px`);
+            pop.css('top', `${posY}px`);
+        };
+        setPosition();
         pop.show();
+        window.setTimeout(setPosition(), 1);
     }
     lower() {
         let pop = globalPopover;
@@ -16784,7 +16803,7 @@ class Sketcher extends Widget {
         }
         this.container.click((event) => this.mouseClick(event));
         this.container.dblclick((event) => this.mouseDoubleClick(event));
-        this.container.mousedown((event) => { event.preventDefault(); this.mouseDown(event); });
+        this.container.mousedown((event) => this.mouseDown(event));
         this.container.mouseup((event) => this.mouseUp(event));
         this.container.mouseover((event) => this.mouseOver(event));
         this.container.mouseout((event) => this.mouseOut(event));
@@ -16811,6 +16830,9 @@ class Sketcher extends Widget {
             e.preventDefault();
             return false;
         });
+        this.contextMenu = $('<menu type="context" id="sketcherMenu"></menu>').appendTo(this.container);
+        this.container.attr('contextmenu', 'sketcherMenu');
+        this.updateContextMenu();
     }
     changeSize(width, height) {
         if (width == this.width && height == this.height)
@@ -17702,6 +17724,10 @@ class Sketcher extends Widget {
         event.stopImmediatePropagation();
     }
     mouseDown(event) {
+        console.log('BTN:' + event.which);
+        if (event.which != 1)
+            return;
+        event.preventDefault();
         this.clearMessage();
         this.dragType = DraggingTool.Press;
         this.opBudged = false;
@@ -18149,6 +18175,12 @@ class Sketcher extends Widget {
             if (MolUtil.hasAbbrev(this.mol, n))
                 effects.dottedRectOutline[n] = 0x808080;
         return effects;
+    }
+    updateContextMenu() {
+        console.log('CONTEXT!');
+        this.contextMenu.empty();
+        let menuZoom = $('<menuitem label="Zoom"></menuitem>').appendTo(this.contextMenu);
+        menuZoom.click(() => alert('foo!'));
     }
 }
 Sketcher.UNDO_SIZE = 20;
