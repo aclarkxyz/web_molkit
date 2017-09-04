@@ -70,6 +70,11 @@ class AssayProvenance extends Aspect
 	public static URI_UNIT_pM = 'http://purl.obolibrary.org/obo/UO_0000066'; // pico-moles per litre
 	public static URI_UNIT_logM = 'http://www.bioassayontology.org/bao#BAO_0000101'; // log10 of mol/L
 	public static URI_UNIT_perM = 'http://www.bioassayontology.org/bao#BAO_0000102'; // -log10 of mol/L
+	public static URI_UNIT_gL = 'http://purl.obolibrary.org/obo/UO_0000175'; // grams per litre (g/L)
+	public static URI_UNIT_mgL = 'http://purl.obolibrary.org/obo/UO_0000273'; // milligrams per litre
+	public static URI_UNIT_ugL = 'http://purl.obolibrary.org/obo/UO_0000275'; // micrograms per litre
+	public static URI_UNIT_binary = 'http://www.bioassayontology.org/bao#BAO_0080023'; // true/false
+
 
 	// ----------------- public methods -----------------
 

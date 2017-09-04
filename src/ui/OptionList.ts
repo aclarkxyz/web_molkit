@@ -32,6 +32,7 @@ class OptionList extends Widget
 	public selidx = 0;
 	public buttonDiv:any[] = [];
 	public auxCell:any[] = [];
+	public padding = 6; // pixels
 	
 	public callbackSelect:(idx:number, source?:OptionList) => void = null;
 	
@@ -70,6 +71,7 @@ class OptionList extends Widget
 			if (this.isVertical) tr = $('<tr></tr>').appendTo(table);
 			let td = $('<td class="option-cell"></td>').appendTo(tr); 
 			let div = $('<div class="option"></div>').appendTo(td);
+			div.css('padding', this.padding + 'px');
 
 			if (n != this.selidx)
 				div.addClass('option-unselected');
