@@ -64,6 +64,12 @@ class DataSheet
 		this.data = data;
 	}
 
+	// make a deep clone of the datasheet that can be safely modified without consequences
+	public clone():DataSheet
+	{
+		return new DataSheet($.extend(true, {}, this.data));
+	}
+
 	// constants
 	public static COLTYPE_MOLECULE = 'molecule';
 	public static COLTYPE_STRING = 'string';
