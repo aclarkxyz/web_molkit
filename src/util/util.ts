@@ -363,11 +363,40 @@ function pixelDensity():number
 }
 
 // performs a shallow copy of the object: as long as the values are effectively immutable, this will do the trick
-function clone(obj:{[id:string] : any}):any
+/*function clone(obj:{[id:string] : any}):any
 {
 	let dup:{[id:string] : any} = {};
 	for (let key in obj) dup[key] = obj[key];
 	return dup;
+}*/
+
+// performs a shallow copy of the object: the top level guarantees new objects, while anything below that may contain
+// duplicate references with potential mutability issues
+function clone<T>(data:T):T
+{
+	if (data == null) return null;
+	if (Array.isArray(data)) return <T>(<any>data).slice(0);
+	if (typeof data != 'object') return data;
+	let result:any = {};
+	for (let key in data) result[key] = data[key];
+	return <T>result;
+}
+
+// performs a deep clone of any kind of object: goes as deep as it has to to make sure everything is immutable; the parameter
+// should not contain functions or host objects
+function deepClone<T>(data:T):T
+{
+	if (data == null) return null;
+	if (typeof data == 'function') return null;
+	if (typeof data != 'object') return data;
+
+	let result:any = Array.isArray(data) ? [] : {};
+	for (let key in data)
+	{
+		let val = data[key];
+		result[key] = typeof val === 'object' ? deepClone(val) : val;
+	}
+	return <T>result;
 }
 
 // HTML-to-escape; gets most of the basics
