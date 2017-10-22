@@ -305,7 +305,7 @@ class Vec
 		return idx;
 	}
 
-	// for some reason the default sorter has a dubious habit of doing a string comparison
+	// for some reason the default sorter has a dubious habit of doing a string comparison; this function is numeric
 	public static sort(arr:number[])
 	{
 		arr.sort((v1:number, v2:number):number => v1 - v2);
