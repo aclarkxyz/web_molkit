@@ -121,7 +121,8 @@ class ArrangeMolecule
     
 	// --------------------- public methods ---------------------
 
-	constructor(private mol:Molecule, private measure:ArrangeMeasurement, private policy:RenderPolicy, private effects:RenderEffects)
+	constructor(private mol:Molecule, private measure:ArrangeMeasurement, private policy:RenderPolicy,
+				private effects:RenderEffects = new RenderEffects())
 	{
 	}
 

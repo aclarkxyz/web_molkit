@@ -480,6 +480,16 @@ class Box
 	{
 		return GeomUtil.rectsIntersect(this.x, this.y, this.w, this.h, other.x, other.y, other.w, other.h);
 	}
+
+	public union(other:Box):Box
+	{
+		let x1 = Math.min(this.x, other.x), x2 = Math.max(this.x + this.w, other.x + other.w);
+		let y1 = Math.min(this.y, other.y), y2 = Math.max(this.y + this.h, other.y + other.h);
+		return new Box(x1, y1, x2 - x1, y2 - y1);
+	}
+
+	public isEmpty():boolean {return this.w == 0 && this.h == 0;}
+	public notEmpty():boolean {return this.w > 0 || this.h > 0;}
 	
 	public toString():string {return '[' + this.x + ',' + this.y + ';' + this.w + ',' + this.h + ']';}	
 }
