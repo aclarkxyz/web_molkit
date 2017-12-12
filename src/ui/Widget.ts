@@ -26,7 +26,7 @@ class Widget
 	constructor() {}
 	
 	// create the underlying structure; the parent parameter must be jQuery-compatible
-	public render(parent:any)
+	public render(parent:any):void
 	{
 		let tag = this.tagType;
 		this.content = $(`<${tag}></${tag}>`).appendTo($(parent));
