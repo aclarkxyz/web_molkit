@@ -34,7 +34,7 @@ class EditCompound extends Dialog
 	{
 		super();
 		
-		this.title = "Edit Compound";
+		this.title = 'Edit Compound';
 		this.minPortionWidth = 20;
 		this.maxPortionWidth = 95;
 	}

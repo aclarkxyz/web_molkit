@@ -315,14 +315,24 @@ class Sketcher extends Widget implements ArrangeMeasurement
 		});
 		
 		// pasting: captures the menu/hotkey form
-		document.addEventListener('paste', (e:any) =>
+		let pasteFunc = (e:any) =>
 		{
+			// if widget no longer visible, detach the paste handler
+			if (!$.contains(document.documentElement, this.container[0]))
+			{
+console.log('DETACHING');
+				document.removeEventListener('paste', pasteFunc);
+				return false;
+			}
+console.log('PASTING');
+
 			let wnd = <any>window;
 			if (wnd.clipboardData && wnd.clipboardData.getData) this.pasteText(wnd.clipboardData.getData('Text'));
 			else if (e.clipboardData && e.clipboardData.getData) this.pasteText(e.clipboardData.getData('text/plain')); 
 			e.preventDefault();
 			return false;
-		});
+		};
+		document.addEventListener('paste', pasteFunc);
 	}
 
 	// change the size of the sketcher after instantiation
@@ -666,7 +676,17 @@ class Sketcher extends Widget implements ArrangeMeasurement
     public yIsUp():boolean {return false;}
 	public measureText(str:string, fontSize:number):number[] {return FontData.main.measureText(str, fontSize);}
 
-	// --------------------------------------- private methods ---------------------------------------
+	// ------------ private methods ------------
+
+	// respond to user-initiated clipboard paste event
+	private pasteEvent(e:any):boolean
+	{
+		let wnd = <any>window;
+		if (wnd.clipboardData && wnd.clipboardData.getData) this.pasteText(wnd.clipboardData.getData('Text'));
+		else if (e.clipboardData && e.clipboardData.getData) this.pasteText(e.clipboardData.getData('text/plain')); 
+		e.preventDefault();
+		return false;
+	}
 
 	// redetermines the offset and scale so that the molecular structure fits cleanly 
 	private centreAndShrink():void
