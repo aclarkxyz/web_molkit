@@ -320,11 +320,9 @@ class Sketcher extends Widget implements ArrangeMeasurement
 			// if widget no longer visible, detach the paste handler
 			if (!$.contains(document.documentElement, this.container[0]))
 			{
-console.log('DETACHING');
 				document.removeEventListener('paste', pasteFunc);
 				return false;
 			}
-console.log('PASTING');
 
 			let wnd = <any>window;
 			if (wnd.clipboardData && wnd.clipboardData.getData) this.pasteText(wnd.clipboardData.getData('Text'));
