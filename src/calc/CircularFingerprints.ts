@@ -135,7 +135,7 @@ class CircularFingerprints
 		}
 	}
 
-	// convenience constructors
+	// convenience constructors; note that molecules should have abbreviations expanded out beforehand
 	public static create(meta:Molecule | MetaMolecule, kind:number):CircularFingerprints
 	{
 		if (meta instanceof Molecule) meta = MetaMolecule.createStrictRubric(meta);
