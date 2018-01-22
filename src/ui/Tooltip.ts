@@ -23,27 +23,26 @@ var globalPopWatermark = 0;
 // adds a well behaved tooltip to the given node (element or JQuery object)
 function addTooltip(parent:any, bodyHTML:string, titleHTML?:string, delay?:number):void
 {
+    Tooltip.ensureGlobal();
+
     let widget = $(parent);
-    
-    if (globalPopover == null)
-    {
-        globalPopover = $(document.createElement('div'));
-        globalPopover.css('position', 'absolute');
-        globalPopover.css('background-color', '#F0F0FF');
-        globalPopover.css('background-image', 'linear-gradient(to right bottom, #FFFFFF, #D0D0FF)');
-        globalPopover.css('color', 'black');
-        globalPopover.css('border', '1px solid black');
-        globalPopover.css('z-index', 2000);
-        globalPopover.css('border-radius', '4px');
-        globalPopover.hide();
-        globalPopover.appendTo(document.body);
-    }
-    
+        
     const tooltip = new Tooltip(widget, bodyHTML, titleHTML, delay == null ? 1000 : delay);
     
     let prevEnter:any = widget.attr('onmouseenter'), prevLeave:any = widget.attr('onmouseleave');
     widget.mouseenter((e:any) => {tooltip.start(); if (prevEnter) prevEnter(e);});
     widget.mouseleave((e:any) => {tooltip.stop(); if (prevLeave) prevLeave(e);}); 
+}
+
+// immediately raise a tooltip, with a position relative to a given widget
+function raiseToolTip(parent:any, avoid:Box, bodyHTML:string, titleHTML?:string):void
+{
+    clearTooltip();
+    Tooltip.ensureGlobal();
+
+    let widget = $(parent);
+
+    new Tooltip(widget, bodyHTML, titleHTML, 0).raise(avoid);
 }
 
 // rudely shutdown the tooltip
@@ -58,6 +57,23 @@ class Tooltip
 {
     watermark:number;
     
+    static ensureGlobal()
+    {
+        if (globalPopover == null)
+        {
+            globalPopover = $(document.createElement('div'));
+            globalPopover.css('position', 'absolute');
+            globalPopover.css('background-color', '#F0F0FF');
+            globalPopover.css('background-image', 'linear-gradient(to right bottom, #FFFFFF, #D0D0FF)');
+            globalPopover.css('color', 'black');
+            globalPopover.css('border', '1px solid black');
+            globalPopover.css('z-index', 2000);
+            globalPopover.css('border-radius', '4px');
+            globalPopover.hide();
+            globalPopover.appendTo(document.body);
+        }
+    }
+
     constructor(private widget:JQuery, private bodyHTML:string, private titleHTML:string, private delay:number)
     {
     }
@@ -83,7 +99,7 @@ class Tooltip
         globalPopWatermark++;
     }
     
-    public raise()
+    public raise(avoid?:Box)
     {
         //let pageWidth = $(document).width(), pageHeight = $(document).height();
         globalTooltip = this;
@@ -106,6 +122,15 @@ class Tooltip
         const GAP = 2;
         let wx1 = this.widget.offset().left, wy1 = this.widget.offset().top;
         let wx2 = wx1 + this.widget.width(), wy2 = wy1 + this.widget.height();
+        
+        // if more specific positioning is requested within the widget, adjust accordingly
+        if (avoid)
+        {
+            wx1 += avoid.x; 
+            wy1 += avoid.y;
+            wx2 = wx1 + avoid.w;
+            wy2 = wy1 + avoid.h;
+        }
 
         let setPosition = () =>
         {
