@@ -684,11 +684,31 @@ function pixelDensity() {
         return window.devicePixelRatio;
     return 1;
 }
-function clone(obj) {
-    let dup = {};
-    for (let key in obj)
-        dup[key] = obj[key];
-    return dup;
+function clone(data) {
+    if (data == null)
+        return null;
+    if (Array.isArray(data))
+        return data.slice(0);
+    if (typeof data != 'object')
+        return data;
+    let result = {};
+    for (let key in data)
+        result[key] = data[key];
+    return result;
+}
+function deepClone(data) {
+    if (data == null)
+        return null;
+    if (typeof data == 'function')
+        return null;
+    if (typeof data != 'object')
+        return data;
+    let result = Array.isArray(data) ? [] : {};
+    for (let key in data) {
+        let val = data[key];
+        result[key] = typeof val === 'object' ? deepClone(val) : val;
+    }
+    return result;
 }
 function escapeHTML(text) {
     if (!text)
@@ -718,6 +738,9 @@ class DataSheet {
         if (data.extData == null)
             data.extData = [];
         this.data = data;
+    }
+    clone() {
+        return new DataSheet($.extend(true, {}, this.data));
     }
     getData() {
         return this.data;
@@ -1455,6 +1478,13 @@ class Box {
     intersects(other) {
         return GeomUtil.rectsIntersect(this.x, this.y, this.w, this.h, other.x, other.y, other.w, other.h);
     }
+    union(other) {
+        let x1 = Math.min(this.x, other.x), x2 = Math.max(this.x + this.w, other.x + other.w);
+        let y1 = Math.min(this.y, other.y), y2 = Math.max(this.y + this.h, other.y + other.h);
+        return new Box(x1, y1, x2 - x1, y2 - y1);
+    }
+    isEmpty() { return this.w == 0 && this.h == 0; }
+    notEmpty() { return this.w > 0 || this.h > 0; }
     toString() { return '[' + this.x + ',' + this.y + ';' + this.w + ',' + this.h + ']'; }
 }
 class Oval {
@@ -7619,6 +7649,10 @@ AssayProvenance.URI_UNIT_nM = 'http://purl.obolibrary.org/obo/UO_0000065';
 AssayProvenance.URI_UNIT_pM = 'http://purl.obolibrary.org/obo/UO_0000066';
 AssayProvenance.URI_UNIT_logM = 'http://www.bioassayontology.org/bao#BAO_0000101';
 AssayProvenance.URI_UNIT_perM = 'http://www.bioassayontology.org/bao#BAO_0000102';
+AssayProvenance.URI_UNIT_gL = 'http://purl.obolibrary.org/obo/UO_0000175';
+AssayProvenance.URI_UNIT_mgL = 'http://purl.obolibrary.org/obo/UO_0000273';
+AssayProvenance.URI_UNIT_ugL = 'http://purl.obolibrary.org/obo/UO_0000275';
+AssayProvenance.URI_UNIT_binary = 'http://www.bioassayontology.org/bao#BAO_0080023';
 class BayesianSourceModel {
     constructor() {
         this.colNameMolecule = '';
@@ -9456,6 +9490,167 @@ class BayesianModel {
         return cover;
     }
 }
+class BuildSMILES {
+    constructor(mol, pri = null) {
+        this.mol = mol;
+        this.pri = pri;
+    }
+    generate() {
+        if (this.mol.numAtoms == 0)
+            return '';
+        this.walkSequence();
+        this.findLinks();
+        return this.assemble();
+    }
+    walkSequence() {
+        const mol = this.mol, na = mol.numAtoms, pri = this.pri;
+        this.seq = [];
+        let visited = Vec.booleanArray(false, na);
+        let pos = 1;
+        if (pri != null)
+            pos = Vec.idxMin(pri) + 1;
+        for (let count = 0; count < na; count++) {
+            this.seq.push(pos);
+            visited[pos - 1] = true;
+            if (count == na - 1)
+                break;
+            let adj = mol.atomAdjList(pos);
+            let cc = mol.atomConnComp(pos);
+            pos = 0;
+            for (let n = 0; n < adj.length; n++)
+                if (!visited[adj[n] - 1]) {
+                    if (pri == null) {
+                        pos = adj[n];
+                        break;
+                    }
+                    if (pos == 0 || pri[adj[n] - 1] < pri[pos - 1])
+                        pos = adj[n];
+                }
+            if (pos > 0)
+                continue;
+            for (let n = 1; n <= na; n++)
+                if (!visited[n - 1] && mol.atomConnComp(n) == cc) {
+                    if (pri == null) {
+                        pos = n;
+                        break;
+                    }
+                    if (pos == 0 || pri[n - 1] < pri[pos - 1])
+                        pos = n;
+                }
+            if (pos > 0)
+                continue;
+            for (let n = 1; n <= na; n++)
+                if (!visited[n - 1]) {
+                    if (pri == null) {
+                        pos = n;
+                        break;
+                    }
+                    if (pos == 0 || pri[n - 1] < pri[pos - 1])
+                        pos = n;
+                }
+            if (pos == 0)
+                throw 'Walk sequence failed.';
+        }
+    }
+    findLinks() {
+        const mol = this.mol, na = mol.numAtoms, pri = this.pri, seq = this.seq;
+        this.link = [];
+        this.conn = [];
+        for (let n = 0; n < na; n++) {
+            this.link.push([]);
+            this.conn.push([]);
+        }
+        let invseq = Vec.numberArray(0, na);
+        for (let n = 0; n < na; n++)
+            invseq[seq[n] - 1] = n;
+        let inPlay = Vec.numberArray(-1, na + 1);
+        for (let n = 0; n < na; n++) {
+            let prev = n > 0 ? seq[n - 1] : 0;
+            let cur = seq[n];
+            let next = n < na - 1 ? seq[n + 1] : 0;
+            for (let i = 1; i <= na; i++)
+                if (inPlay[i] >= 0 && n > inPlay[i])
+                    inPlay[i] = -1;
+            let adj = mol.atomAdjList(cur);
+            if (pri != null)
+                for (let p = 0; p < adj.length - 1;) {
+                    if (invseq[adj[p] - 1] > invseq[adj[p + 1] - 1]) {
+                        Vec.swap(adj, p, p + 1);
+                        if (p > 0)
+                            p--;
+                    }
+                    else
+                        p++;
+                }
+            for (let i = 0; i < adj.length; i++) {
+                if (adj[i] == prev || adj[i] == next)
+                    continue;
+                let nbr = adj[i];
+                if (invseq[cur - 1] > invseq[nbr - 1])
+                    continue;
+                let num = -1;
+                for (let j = 1; j <= na; j++)
+                    if (inPlay[j] < 0) {
+                        num = j;
+                        inPlay[j] = Math.max(invseq[cur - 1], invseq[nbr - 1]);
+                        break;
+                    }
+                this.link[cur - 1].push(num);
+                this.conn[cur - 1].push(nbr);
+                this.link[nbr - 1].push(num);
+                this.conn[nbr - 1].push(cur);
+            }
+        }
+    }
+    assemble() {
+        const mol = this.mol, na = mol.numAtoms, seq = this.seq, link = this.link, conn = this.conn;
+        let smiles = '';
+        const NON_ESCAPED = ['C', 'N', 'O', 'P', 'S'];
+        for (let n = 0; n < na; n++) {
+            let prev = n > 0 ? seq[n - 1] : 0, cur = seq[n];
+            let bidx = prev > 0 ? mol.findBond(prev, cur) : 0;
+            if (prev > 0 && bidx == 0)
+                smiles += '.';
+            if (bidx > 0) {
+                let bo = mol.bondOrder(bidx);
+                if (bo == 2)
+                    smiles += '=';
+                else if (bo == 3)
+                    smiles += '#';
+            }
+            let el = mol.atomElement(cur);
+            if (Chemistry.ELEMENTS.indexOf(el) < 0)
+                el = '*';
+            let chg = mol.atomCharge(cur);
+            if (NON_ESCAPED.indexOf(el) >= 0 && chg == 0) {
+                smiles += el;
+            }
+            else {
+                smiles += '[' + el;
+                if (chg > 0)
+                    smiles += '+' + chg;
+                if (chg < 0)
+                    smiles += chg;
+                smiles += ']';
+            }
+            let num = link[cur - 1];
+            if (num != null)
+                for (let i = 0; i < num.length; i++) {
+                    bidx = mol.findBond(cur, conn[cur - 1][i]);
+                    let bo = mol.bondOrder(bidx);
+                    if (bo == 2)
+                        smiles += '=';
+                    else if (bo == 3)
+                        smiles += '#';
+                    if (num[i] < 10)
+                        smiles += num[i];
+                    else
+                        smiles += '%' + num[i];
+                }
+        }
+        return smiles;
+    }
+}
 class DataSheetStream {
     static readXML(strXML) {
         var xmlDoc = jQuery.parseXML(strXML);
@@ -10445,6 +10640,7 @@ class OptionList extends Widget {
         this.selidx = 0;
         this.buttonDiv = [];
         this.auxCell = [];
+        this.padding = 6;
         this.callbackSelect = null;
         if (options.length == 0)
             throw 'molsync.ui.OptionList: must provide a list of option labels.';
@@ -10467,6 +10663,7 @@ class OptionList extends Widget {
                 tr = $('<tr></tr>').appendTo(table);
             let td = $('<td class="option-cell"></td>').appendTo(tr);
             let div = $('<div class="option"></div>').appendTo(td);
+            div.css('padding', this.padding + 'px');
             if (n != this.selidx)
                 div.addClass('option-unselected');
             else
@@ -11120,7 +11317,7 @@ var BLineType;
     BLineType[BLineType["IncQuadruple"] = 9] = "IncQuadruple";
 })(BLineType || (BLineType = {}));
 class ArrangeMolecule {
-    constructor(mol, measure, policy, effects) {
+    constructor(mol, measure, policy, effects = new RenderEffects()) {
         this.mol = mol;
         this.measure = measure;
         this.policy = policy;

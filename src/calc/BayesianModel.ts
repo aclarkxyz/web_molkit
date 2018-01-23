@@ -193,6 +193,16 @@ class BayesianModel
 		return (pred - this.lowThresh) * this.invRange;
 	}
 
+	// while the scaled predictor (above) is generally between 0..1 ("probability-like"), results can go out of bounds; using the arctan 
+	// function scales it so that the centroid is the same (0.5), but lower/higher values approach 0 or 1 as asymptotes; this is a useful 
+	// way of keeping it within the range without resorting to capping, and has another handy effect of allowing known results to be stored 
+	// in the same field (i.e. 0=known inactive, 1=known active, because these values cannot otherwise be reached)
+	public scaleArcTan(scaled:number):number
+	{
+		const INVPI = 1.0 / Math.PI;
+		return Math.atan(2 * scaled - 1) * INVPI + 0.5;
+	}
+
 	// figure out the proportion of a molecule's fingerprints are represented in the model
 	public calculateOverlap(mol:Molecule):number
 	{
@@ -268,19 +278,19 @@ class BayesianModel
 		for (let n = 0; n < sz; n++) this.estimates.push(this.singleLeaveOneOut(n));
 		this.calculateROC();
 		this.calculateTruth();
-		this.rocType = "leave-one-out";
+		this.rocType = 'leave-one-out';
 	}
 
 	// produces ROC validation, except using an N-pass split, which is much faster than leave-one-out, and is appropriate for reasonably big datasets
 	public validateFiveFold():void
 	{
-		this.rocType = "five-fold";
+		this.rocType = 'five-fold';
 		this.validateNfold(5);
 	}
 
 	public validateThreeFold():void
 	{
-		this.rocType = "three-fold";
+		this.rocType = 'three-fold';
 		this.validateNfold(3);
 	}
 
