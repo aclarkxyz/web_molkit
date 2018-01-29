@@ -1,7 +1,7 @@
 /*
     WebMolKit
 
-    (c) 2010-2017 Molecular Materials Informatics, Inc.
+    (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
     
@@ -241,6 +241,26 @@ class GeomUtil
 		let cosTheta = dot / (mag1 * mag2);
 		cosTheta = Math.max(-1, Math.min(1, cosTheta)); // numeric error can bump it slightly out of -1 .. +1
 		return Math.acos(cosTheta);
+	}
+
+	// given a circle (at origin) of a given radius, and two points at the perimeter, calculates two control points that can be used to draw a
+	// bezier spline of the curved part of the arc; the given points are presumed to be in angular order; if the angle is more than 180 degrees
+	// this won't work (i.e. the caller must split into more than one curve)
+	public static arcControlPoints(rad:number, x1:number, y1:number, x2:number, y2:number):[number, number, number, number]
+	{
+		let t1x = -y1, t1y = x1;
+		let t2x = y2, t2y = -x2;
+		let dx = 0.5 * (x1 + x2);
+		let dy = 0.5 * (y1 + y2);
+		let tx = 3 / 8 * (t1x + t2x);
+		let ty = 3 / 8 * (t1y + t2y);
+		let a = tx * tx + ty * ty;
+		let b = dx * tx + dy * ty;
+		let c = dx * dx + dy * dy - rad * rad;
+		let D = b * b - a * c;
+		let k = (Math.sqrt(D) - b) / a;
+		
+		return [x1 + k * t1x, y1 + k * t1y, x2 + k * t2x, y2 + k * t2y];
 	}	
 }
 
@@ -355,7 +375,6 @@ class QuickHull
 		return maxPos;
 	}
 }
-
 
 /*
 	Pos, Size, Box, Oval, Line: convenient trivial classes which save repetition
