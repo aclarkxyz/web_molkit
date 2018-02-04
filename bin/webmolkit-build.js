@@ -41,13 +41,20 @@ class Vec {
         arr[idx1] = arr[idx2];
         arr[idx2] = v;
     }
+    static append(arr, item) {
+        if (arr == null || arr.length == 0)
+            return [item];
+        arr = arr.slice(0);
+        arr.push(item);
+        return arr;
+    }
     static concat(arr1, arr2) {
         if (arr1 == null && arr2 == null)
             return [];
         if (arr1 == null)
             return arr2.slice(0);
         if (arr2 == null)
-            return arr1.slice();
+            return arr1.slice(0);
         return arr1.concat(arr2);
     }
     static equals(arr1, arr2) {
@@ -1305,6 +1312,20 @@ class GeomUtil {
         cosTheta = Math.max(-1, Math.min(1, cosTheta));
         return Math.acos(cosTheta);
     }
+    static arcControlPoints(rad, x1, y1, x2, y2) {
+        let t1x = -y1, t1y = x1;
+        let t2x = y2, t2y = -x2;
+        let dx = 0.5 * (x1 + x2);
+        let dy = 0.5 * (y1 + y2);
+        let tx = 3 / 8 * (t1x + t2x);
+        let ty = 3 / 8 * (t1y + t2y);
+        let a = tx * tx + ty * ty;
+        let b = dx * tx + dy * ty;
+        let c = dx * dx + dy * dy - rad * rad;
+        let D = b * b - a * c;
+        let k = (Math.sqrt(D) - b) / a;
+        return [x1 + k * t1x, y1 + k * t1y, x2 + k * t2x, y2 + k * t2y];
+    }
 }
 class QuickHull {
     constructor(x, y, threshSq) {
@@ -1959,7 +1980,7 @@ class MetaVector {
                 this.updateBounds(xpoints[n] + bump, ypoints[n] + bump);
         }
         let typeidx = this.findOrCreateType([this.PRIM_PATH, edgeCol, fillCol, thickness, hardEdge]);
-        this.prims.push([this.PRIM_PATH, typeidx, xpoints.length, xpoints, ypoints, ctrlFlags, isClosed]);
+        this.prims.push([this.PRIM_PATH, typeidx, xpoints.length, clone(xpoints), clone(ypoints), clone(ctrlFlags), isClosed]);
     }
     drawPoly(xpoints, ypoints, edgeCol, thickness, fillCol, hardEdge) {
         this.drawPath(xpoints, ypoints, null, true, edgeCol, thickness, fillCol, hardEdge);
@@ -2153,6 +2174,7 @@ class MetaVector {
     createSVG() {
         let svg = $('<svg></svg>');
         svg.attr('xmlns', 'http://www.w3.org/2000/svg');
+        svg.attr('xmlns:xlink', 'http://www.w3.org/1999/xlink');
         svg.attr('width', this.width);
         svg.attr('height', this.height);
         svg.attr('viewBox', '0 0 ' + this.width + ' ' + this.height);
@@ -9044,6 +9066,10 @@ class BayesianModel {
             return pred >= this.highThresh ? 1 : 0;
         return (pred - this.lowThresh) * this.invRange;
     }
+    scaleArcTan(scaled) {
+        const INVPI = 1.0 / Math.PI;
+        return Math.atan(2 * scaled - 1) * INVPI + 0.5;
+    }
     calculateOverlap(mol) {
         if (MolUtil.isBlank(mol))
             throw 'Molecule cannot be blank or null.';
@@ -9108,14 +9134,14 @@ class BayesianModel {
             this.estimates.push(this.singleLeaveOneOut(n));
         this.calculateROC();
         this.calculateTruth();
-        this.rocType = "leave-one-out";
+        this.rocType = 'leave-one-out';
     }
     validateFiveFold() {
-        this.rocType = "five-fold";
+        this.rocType = 'five-fold';
         this.validateNfold(5);
     }
     validateThreeFold() {
-        this.rocType = "three-fold";
+        this.rocType = 'three-fold';
         this.validateNfold(3);
     }
     clearTraining() {
@@ -10530,25 +10556,20 @@ var globalPopover = null;
 var globalTooltip = null;
 var globalPopWatermark = 0;
 function addTooltip(parent, bodyHTML, titleHTML, delay) {
+    Tooltip.ensureGlobal();
     let widget = $(parent);
-    if (globalPopover == null) {
-        globalPopover = $(document.createElement('div'));
-        globalPopover.css('position', 'absolute');
-        globalPopover.css('background-color', '#F0F0FF');
-        globalPopover.css('background-image', 'linear-gradient(to right bottom, #FFFFFF, #D0D0FF)');
-        globalPopover.css('color', 'black');
-        globalPopover.css('border', '1px solid black');
-        globalPopover.css('z-index', 2000);
-        globalPopover.css('border-radius', '4px');
-        globalPopover.hide();
-        globalPopover.appendTo(document.body);
-    }
     const tooltip = new Tooltip(widget, bodyHTML, titleHTML, delay == null ? 1000 : delay);
     let prevEnter = widget.attr('onmouseenter'), prevLeave = widget.attr('onmouseleave');
     widget.mouseenter((e) => { tooltip.start(); if (prevEnter)
         prevEnter(e); });
     widget.mouseleave((e) => { tooltip.stop(); if (prevLeave)
         prevLeave(e); });
+}
+function raiseToolTip(parent, avoid, bodyHTML, titleHTML) {
+    clearTooltip();
+    Tooltip.ensureGlobal();
+    let widget = $(parent);
+    new Tooltip(widget, bodyHTML, titleHTML, 0).raise(avoid);
 }
 function clearTooltip() {
     if (globalTooltip == null)
@@ -10563,6 +10584,20 @@ class Tooltip {
         this.titleHTML = titleHTML;
         this.delay = delay;
     }
+    static ensureGlobal() {
+        if (globalPopover == null) {
+            globalPopover = $(document.createElement('div'));
+            globalPopover.css('position', 'absolute');
+            globalPopover.css('background-color', '#F0F0FF');
+            globalPopover.css('background-image', 'linear-gradient(to right bottom, #FFFFFF, #D0D0FF)');
+            globalPopover.css('color', 'black');
+            globalPopover.css('border', '1px solid black');
+            globalPopover.css('z-index', 2000);
+            globalPopover.css('border-radius', '4px');
+            globalPopover.hide();
+            globalPopover.appendTo(document.body);
+        }
+    }
     start() {
         globalPopover.hide();
         this.watermark = ++globalPopWatermark;
@@ -10576,7 +10611,7 @@ class Tooltip {
             this.lower();
         globalPopWatermark++;
     }
-    raise() {
+    raise(avoid) {
         globalTooltip = this;
         let pop = globalPopover;
         pop.css('max-width', '20em');
@@ -10594,6 +10629,12 @@ class Tooltip {
         const GAP = 2;
         let wx1 = this.widget.offset().left, wy1 = this.widget.offset().top;
         let wx2 = wx1 + this.widget.width(), wy2 = wy1 + this.widget.height();
+        if (avoid) {
+            wx1 += avoid.x;
+            wy1 += avoid.y;
+            wx2 = wx1 + avoid.w;
+            wy2 = wy1 + avoid.h;
+        }
         let setPosition = () => {
             let popW = pop.width(), popH = pop.height();
             let posX = 0, posY = 0;
@@ -17019,7 +17060,11 @@ class Sketcher extends Widget {
             event.preventDefault();
             this.dropInto(event.dataTransfer);
         });
-        document.addEventListener('paste', (e) => {
+        let pasteFunc = (e) => {
+            if (!$.contains(document.documentElement, this.container[0])) {
+                document.removeEventListener('paste', pasteFunc);
+                return false;
+            }
             let wnd = window;
             if (wnd.clipboardData && wnd.clipboardData.getData)
                 this.pasteText(wnd.clipboardData.getData('Text'));
@@ -17027,7 +17072,8 @@ class Sketcher extends Widget {
                 this.pasteText(e.clipboardData.getData('text/plain'));
             e.preventDefault();
             return false;
-        });
+        };
+        document.addEventListener('paste', pasteFunc);
     }
     changeSize(width, height) {
         if (width == this.width && height == this.height)
@@ -17280,6 +17326,15 @@ class Sketcher extends Widget {
     angToScale(ang) { return ang * this.pointScale; }
     yIsUp() { return false; }
     measureText(str, fontSize) { return FontData.main.measureText(str, fontSize); }
+    pasteEvent(e) {
+        let wnd = window;
+        if (wnd.clipboardData && wnd.clipboardData.getData)
+            this.pasteText(wnd.clipboardData.getData('Text'));
+        else if (e.clipboardData && e.clipboardData.getData)
+            this.pasteText(e.clipboardData.getData('text/plain'));
+        e.preventDefault();
+        return false;
+    }
     centreAndShrink() {
         if (this.mol.numAtoms == 0 || this.layout == null) {
             this.offsetX = 0.5 * this.width;
@@ -18376,7 +18431,7 @@ class EditCompound extends Dialog {
         this.mol = mol;
         this.fakeTextArea = null;
         this.callbackSave = null;
-        this.title = "Edit Compound";
+        this.title = 'Edit Compound';
         this.minPortionWidth = 20;
         this.maxPortionWidth = 95;
     }
@@ -20572,571 +20627,6 @@ class EmbedReaction extends EmbedChemistry {
 EmbedReaction.PTN_DOI1 = /^doi:(\d+\.\d+\/.*)$/;
 EmbedReaction.PTN_DOI2 = /^(\d+\.\d+\/.*)$/;
 EmbedReaction.PTN_ISBN = /^(\d+-\d+-\d+-\d+-\d+)$/;
-class HoneycombHex {
-    constructor() {
-        this.background = 0xFFFFFF;
-        this.withRim = false;
-        this.rimCols = [-1, -1, -1, -1, -1, -1];
-        this.policy = null;
-        this.annotation = null;
-        this.annotCol = 0x000000;
-        this.annotFontSize = 10;
-        this.x = null;
-        this.y = null;
-    }
-}
-class Honeycomb extends Widget {
-    constructor() {
-        super();
-        this.size = new Size(500, 500);
-        this.maxHexes = 1000;
-        this.molecules = [];
-        this.stopped = false;
-        this.watermark = 0;
-        this.hexes = [];
-        this.seed = 0;
-        this.density = 0.01;
-        this.hexSize = 100;
-        this.zoomFactor = 1;
-        this.FLOWER_PERMS = [
-            [0, 1, 2, 3, 4, 5], [0, 1, 2, 3, 5, 4], [0, 1, 2, 4, 3, 5], [0, 1, 2, 4, 5, 3], [0, 1, 2, 5, 3, 4], [0, 1, 2, 5, 4, 3], [0, 1, 3, 2, 4, 5], [0, 1, 3, 2, 5, 4], [0, 1, 3, 4, 2, 5], [0, 1, 3, 4, 5, 2],
-            [0, 1, 3, 5, 2, 4], [0, 1, 3, 5, 4, 2], [0, 1, 4, 2, 3, 5], [0, 1, 4, 2, 5, 3], [0, 1, 4, 3, 2, 5], [0, 1, 4, 3, 5, 2], [0, 1, 4, 5, 2, 3], [0, 1, 4, 5, 3, 2], [0, 1, 5, 2, 3, 4], [0, 1, 5, 2, 4, 3],
-            [0, 1, 5, 3, 2, 4], [0, 1, 5, 3, 4, 2], [0, 1, 5, 4, 2, 3], [0, 1, 5, 4, 3, 2], [0, 2, 1, 3, 4, 5], [0, 2, 1, 3, 5, 4], [0, 2, 1, 4, 3, 5], [0, 2, 1, 4, 5, 3], [0, 2, 1, 5, 3, 4], [0, 2, 1, 5, 4, 3],
-            [0, 2, 3, 1, 4, 5], [0, 2, 3, 1, 5, 4], [0, 2, 3, 4, 1, 5], [0, 2, 3, 5, 1, 4], [0, 2, 4, 1, 3, 5], [0, 2, 4, 1, 5, 3], [0, 2, 4, 3, 1, 5], [0, 2, 4, 5, 1, 3], [0, 2, 5, 1, 3, 4], [0, 2, 5, 1, 4, 3],
-            [0, 2, 5, 3, 1, 4], [0, 2, 5, 4, 1, 3], [0, 3, 1, 2, 4, 5], [0, 3, 1, 2, 5, 4], [0, 3, 1, 4, 2, 5], [0, 3, 1, 5, 2, 4], [0, 3, 2, 1, 4, 5], [0, 3, 2, 1, 5, 4], [0, 3, 2, 4, 1, 5], [0, 3, 2, 5, 1, 4],
-            [0, 3, 4, 1, 2, 5], [0, 3, 4, 2, 1, 5], [0, 3, 5, 1, 2, 4], [0, 3, 5, 2, 1, 4], [0, 4, 1, 2, 3, 5], [0, 4, 1, 3, 2, 5], [0, 4, 2, 1, 3, 5], [0, 4, 2, 3, 1, 5], [0, 4, 3, 1, 2, 5], [0, 4, 3, 2, 1, 5]
-        ];
-        this.HEX_N = 0;
-        this.HEX_S = 1;
-        this.HEX_NW = 2;
-        this.HEX_NE = 3;
-        this.HEX_SW = 4;
-        this.HEX_SE = 5;
-        this.dragging = false;
-        this.mouseFirst = null;
-        this.mouseLast = null;
-        this.panDelta = [0, 0];
-        this.hoverHex = -1;
-        this.hoverSpan = null;
-        let scale = 12;
-        this.policyColour = RenderPolicy.defaultColourOnWhite();
-        this.policyColour.data.pointScale = scale;
-        this.policyWhite = RenderPolicy.defaultWhiteOnBlack();
-        this.policyWhite.data.pointScale = scale;
-        this.effects = new RenderEffects();
-    }
-    addReferenceMolecule(mol, name) {
-        this.molecules.push({ 'mol': mol, 'name': name, 'isReference': true, 'rimColour': null });
-    }
-    addModelMolecule(mol, name, rimColour) {
-        this.molecules.push({ 'mol': mol, 'name': name, 'isReference': false, 'rimColour': rimColour });
-    }
-    render(parent) {
-        super.render(parent);
-        this.content.css('width', this.size.w + 'px');
-        this.content.css('height', this.size.h + 'px');
-        this.container = $('<div></div>').appendTo(this.content);
-        this.container.css('width', this.size.w + 'px');
-        this.container.css('height', this.size.h + 'px');
-        this.container.css('position', 'relative');
-        this.container.css('overflow', 'hidden');
-        this.container.click((event) => this.mouseClick(event));
-        this.container.dblclick((event) => this.mouseDoubleClick(event));
-        this.container.mousedown((event) => { event.preventDefault(); this.mouseDown(event); });
-        this.container.mouseup((event) => this.mouseUp(event));
-        this.container.mouseover((event) => this.mouseOver(event));
-        this.container.mouseout((event) => this.mouseOut(event));
-        this.container.mousemove((event) => this.mouseMove(event));
-        this.container.keypress((event) => this.keyPressed(event));
-        this.container.keydown((event) => this.keyDown(event));
-        this.container.keyup((event) => this.keyUp(event));
-    }
-    populate() {
-        this.changeHover(-1);
-        this.container.empty();
-        for (let hmol of this.molecules)
-            if (!hmol.fp) {
-                let circ = CircularFingerprints.create(hmol.mol, CircularFingerprints.CLASS_ECFP6);
-                hmol.fp = circ.getUniqueHashes();
-            }
-        let pri = [];
-        for (let n = 0; n < this.molecules.length; n++) {
-            let sim = Number.MAX_VALUE;
-            if (n != this.seed)
-                sim = CircularFingerprints.tanimoto(this.molecules[n].fp, this.molecules[this.seed].fp);
-            pri.push(sim);
-        }
-        let order = Vec.idxSort(pri);
-        this.hexes = [];
-        for (let n = order.length - 1; n >= 0 && this.hexes.length < this.maxHexes; n--) {
-            let hex = new HoneycombHex(), hmol = this.molecules[order[n]];
-            hex.molidx = order[n];
-            hex.mol = hmol.mol;
-            hex.fp = hmol.fp;
-            if (hmol.isReference) {
-                hex.background = 0x000000;
-                hex.annotCol = 0xFFFFFF;
-                hex.policy = this.policyWhite;
-            }
-            else if (hmol.rimColour != null && hmol.rimColour != MetaVector.NOCOLOUR) {
-                hex.withRim = true;
-                hex.rimCols = Vec.numberArray(hmol.rimColour, 6);
-            }
-            hex.annotation = hmol.name;
-            this.hexes.push(hex);
-        }
-        this.growFlower();
-        for (let n = 7; n < this.hexes.length; n++)
-            this.placeHex(n);
-        this.renderHexes();
-    }
-    zoom(dir) {
-        if (dir < 0) {
-            if (this.zoomFactor < 0.05)
-                return;
-            this.zoomFactor *= 2 / 3;
-        }
-        else {
-            if (this.zoomFactor > 20)
-                return;
-            this.zoomFactor *= 3 / 2;
-        }
-        this.changeHover(-1);
-        this.renderHexes();
-    }
-    growFlower() {
-        const sz = this.hexes.length, fsz = Math.min(6, sz - 1);
-        let perm = null, bestScore = 0;
-        for (let p of this.FLOWER_PERMS) {
-            let score = 0;
-            for (let n = 0; n < 6; n++) {
-                const nn = n == 5 ? 0 : n + 1;
-                let pn = p[n] + 1, pnn = p[nn] + 1;
-                if (pn >= sz)
-                    pn = 0;
-                if (pnn >= sz)
-                    pnn = 0;
-                score += CircularFingerprints.tanimoto(this.hexes[pn].fp, this.hexes[pnn].fp);
-            }
-            if (perm == null || score > bestScore) {
-                perm = p;
-                bestScore = score;
-            }
-        }
-        let dir = [this.HEX_N, this.HEX_NE, this.HEX_SE, this.HEX_S, this.HEX_SW, this.HEX_NW];
-        this.hexes[0].x = 0;
-        this.hexes[0].y = 0;
-        for (let n = 0; n < 6; n++) {
-            let idx = perm[n] + 1;
-            if (idx >= sz)
-                continue;
-            this.hexes[idx].x = this.offsetX(0, 0, dir[n]);
-            this.hexes[idx].y = this.offsetY(0, 0, dir[n]);
-        }
-    }
-    placeHex(idx) {
-        const sz = this.hexes.length;
-        let molX = [], molY = [];
-        let loX = this.hexes[0].x, loY = this.hexes[0].y, hiX = loX, hiY = loY;
-        for (let n = 0; n < idx; n++) {
-            let hex = this.hexes[n];
-            molX.push(hex.x);
-            molY.push(hex.y);
-            loX = Math.min(loX, hex.x);
-            loY = Math.min(loY, hex.y);
-            hiX = Math.max(hiX, hex.x);
-            hiY = Math.max(hiY, hex.y);
-        }
-        if ((loX & 1) == 1)
-            loX--;
-        Vec.addTo(molX, -loX);
-        Vec.addTo(molY, -loY);
-        const gridW = hiX - loX + 1, gridH = hiY - loY + 1;
-        let grid = [];
-        for (let n = 0; n < gridH; n++)
-            grid.push(Vec.numberArray(-1, gridW));
-        for (let n = 0; n < idx; n++)
-            grid[molY[n]][molX[n]] = n;
-        let ndiv = [1, 0.5, 1.0 / 3, 0.25, 0.2, 1.0 / 6];
-        let bestX = -1, bestY = -1, bestScore = -1;
-        for (let y = -1; y <= gridH; y++)
-            for (let x = -1; x <= gridW; x++) {
-                if (x >= 0 && x < gridW && y >= 0 && y < gridH && grid[y][x] >= 0)
-                    continue;
-                let nbrs = [], hitDir = -1, hitX = 0, hitY = 0;
-                for (let dir = 0; dir < 6; dir++) {
-                    let ox = this.offsetX(x, y, dir), oy = this.offsetY(x, y, dir);
-                    if (ox < 0 || ox >= gridW || oy < 0 || oy >= gridH)
-                        continue;
-                    let i = grid[oy][ox];
-                    if (i >= 0) {
-                        nbrs.push(i);
-                        if (nbrs.length == 1) {
-                            hitDir = dir;
-                            hitX = ox;
-                            hitY = oy;
-                        }
-                    }
-                }
-                if (nbrs.length == 0)
-                    continue;
-                let score = 0;
-                for (let n = 0; n < nbrs.length; n++)
-                    score += CircularFingerprints.tanimoto(this.hexes[idx].fp, this.hexes[nbrs[n]].fp);
-                score *= ndiv[nbrs.length - 1];
-                score += nbrs.length * this.density;
-                if (nbrs.length == 1) {
-                    for (let look = 5; look <= 7; look++) {
-                        let dir = (hitDir + look) % 6;
-                        let ox = this.offsetX(hitX, hitY, dir), oy = this.offsetY(hitX, hitY, dir);
-                        if (ox < 0 || ox >= gridW || oy < 0 || oy >= gridH)
-                            continue;
-                        let i = grid[oy][ox];
-                        if (i >= 0) {
-                            const mod = look == 6 ? 0.001 : 0.002;
-                            score += mod * CircularFingerprints.tanimoto(this.hexes[idx].fp, this.hexes[i].fp);
-                        }
-                    }
-                }
-                if (score > bestScore) {
-                    bestScore = score;
-                    bestX = x;
-                    bestY = y;
-                }
-            }
-        this.hexes[idx].x = bestX + loX;
-        this.hexes[idx].y = bestY + loY;
-    }
-    offsetX(x, y, dir) {
-        return dir == this.HEX_NW || dir == this.HEX_SW ? x - 1 : dir == this.HEX_NE || dir == this.HEX_SE ? x + 1 : x;
-    }
-    offsetY(x, y, dir) {
-        if (dir == this.HEX_N)
-            return y - 1;
-        if (dir == this.HEX_S)
-            return y + 1;
-        if ((x & 1) == 0) {
-            return dir == this.HEX_NW || dir == this.HEX_NE ? y : y + 1;
-        }
-        else {
-            return dir == this.HEX_NW || dir == this.HEX_NE ? y - 1 : y;
-        }
-    }
-    prepareLayout() {
-        const nhex = this.hexes.length;
-        if (nhex == 0)
-            return;
-        let usize = this.hexSize * this.zoomFactor;
-        let hexW = usize * 0.75, hexH = usize * Math.cos(30 * DEGRAD);
-        let innerRad = 0.5 * hexH, outerRad = 0.5 * usize;
-        let edgeLen = usize * Math.sin(30 * DEGRAD);
-        let cx = [], cy = [];
-        for (let n = 0; n < nhex; n++) {
-            let x = this.hexes[n].x * hexW;
-            let y = this.hexes[n].y * hexH;
-            if ((this.hexes[n].x & 1) == 1)
-                y -= 0.5 * hexH;
-            cx.push(x);
-            cy.push(y);
-        }
-        Vec.addTo(cx, 0.5 * this.size.w - cx[0]);
-        Vec.addTo(cy, 0.5 * this.size.h - cy[0]);
-        for (let n = 0; n < nhex; n++) {
-            let x1 = Math.floor(cx[n] - 0.5 * usize - 1.5), y1 = Math.floor(cy[n] - 0.5 * hexH - 1.5);
-            let x2 = Math.ceil(cx[n] + 0.5 * usize + 1.5), y2 = Math.ceil(cy[n] + 0.5 * hexH + 1.5);
-            let hex = this.hexes[n];
-            hex.centre = new Pos(cx[n] - x1, cy[n] - y1);
-            hex.hexSize = usize;
-            hex.lineSize = this.hexSize * 0.01;
-            hex.innerRad = innerRad;
-            hex.outerRad = outerRad;
-            hex.edgeLen = edgeLen;
-            hex.frame = new Box(x1, y1, x2 - x1, y2 - y1);
-            if (hex.span)
-                hex.span.remove();
-            hex.span = null;
-        }
-        this.measure = new OutlineMeasurement(0, 0, this.policyColour.data.pointScale * this.zoomFactor);
-    }
-    renderHexes() {
-        this.prepareLayout();
-        let roster = Vec.identity0(this.hexes.length);
-        this.renderNext(++this.watermark, roster);
-    }
-    renderNext(watermark, roster) {
-        if (roster.length == 0 || this.stopped || watermark != this.watermark)
-            return;
-        let idx = roster.shift(), hex = this.hexes[idx];
-        if (!hex.span) {
-            hex.span = $('<span></span>').appendTo(this.container);
-            hex.span.css('position', 'absolute');
-            hex.span.css('pointer-events', 'none');
-        }
-        hex.span.css('left', (hex.frame.x + this.panDelta[0]) + 'px');
-        hex.span.css('top', (hex.frame.y + this.panDelta[1]) + 'px');
-        hex.span.css('width', hex.frame.w + 'px');
-        hex.span.css('height', hex.frame.h + 'px');
-        let gfx = new MetaVector();
-        let centre = hex.centre;
-        let edgeX = [], edgeY = [];
-        for (let n = 0; n < 6; n++) {
-            let th = (n - 2) * Math.PI * 1.0 / 3;
-            edgeX.push(centre.x + hex.hexSize * 0.5 * Math.cos(th));
-            edgeY.push(centre.y + hex.hexSize * 0.5 * Math.sin(th));
-        }
-        gfx.drawPoly(edgeX, edgeY, 0x000000, hex.lineSize, hex.background, true);
-        let rimFract = hex.withRim ? 0.10 : 0, mainFract = 1 - rimFract;
-        if (hex.withRim) {
-            for (let i = 0; i < 6; i++) {
-                if (hex.rimCols[i] == MetaVector.NOCOLOUR)
-                    continue;
-                let j = i == 5 ? 0 : i + 1;
-                let p1x = centre.x + (edgeX[i] - centre.x) * mainFract, p1y = centre.y + (edgeY[i] - centre.y) * mainFract;
-                let p2x = edgeX[i], p2y = edgeY[i];
-                let p3x = edgeX[j], p3y = edgeY[j];
-                let p4x = centre.x + (edgeX[j] - centre.x) * mainFract, p4y = centre.y + (edgeY[j] - centre.y) * mainFract;
-                gfx.drawPoly([p1x, p2x, p3x, p4x], [p1y, p2y, p3y, p4y], -1, 0, hex.rimCols[i], true);
-            }
-        }
-        let bumpDown = 0;
-        if (hex.annotation) {
-            let txt = hex.annotation, maxW = 0.5 * hex.hexSize;
-            let wad = this.measure.measureText(txt, hex.annotFontSize);
-            if (wad[0] > maxW) {
-                while (txt.length > 0 && wad[0] > maxW) {
-                    txt = txt.substring(0, txt.length - 1);
-                    wad = this.measure.measureText(txt + '..', hex.annotFontSize);
-                }
-                txt += '..';
-            }
-            let y = centre.y - hex.innerRad * mainFract;
-            gfx.drawText(centre.x, y + 2, txt, hex.annotFontSize, hex.annotCol, TextAlign.Centre | TextAlign.Top);
-            bumpDown = wad[1] + wad[2];
-        }
-        let rad = hex.innerRad * mainFract - 1 - bumpDown;
-        let policy = hex.policy ? hex.policy : this.policyColour;
-        let layout = new ArrangeMolecule(hex.mol, this.measure, policy, this.effects);
-        layout.arrange();
-        let [cx, cy, mrad] = this.determineCircularBoundary(layout);
-        if (mrad > rad) {
-            let downScale = rad / mrad;
-            layout.scaleEverything(downScale);
-            cx *= downScale;
-            cy *= downScale;
-        }
-        layout.offsetEverything(centre.x - cx, centre.y + 0.5 * bumpDown - cy);
-        new DrawMolecule(layout, gfx).draw();
-        hex.span.empty();
-        gfx.setSize(Math.ceil(gfx.boundHighX()), Math.ceil(gfx.boundHighY()));
-        $(gfx.createSVG()).appendTo(hex.span);
-        setTimeout(() => this.renderNext(watermark, roster), 1);
-    }
-    determineCircularBoundary(layout) {
-        let npoints = layout.numPoints(), nlines = layout.numLines();
-        if (npoints == 0)
-            return [0, 0, 0];
-        let cx = 0, cy = 0;
-        let px = [], py = [];
-        for (let n = 0; n < npoints; n++) {
-            let a = layout.getPoint(n);
-            cx += a.oval.cx;
-            cy += a.oval.cy;
-            let r = Math.max(a.oval.rw, a.oval.rh);
-            px.push(a.oval.cx - r);
-            py.push(a.oval.cy - r);
-            if (r == 0)
-                continue;
-            px.push(a.oval.cx - r);
-            py.push(a.oval.cy + r);
-            px.push(a.oval.cx + r);
-            py.push(a.oval.cy - r);
-            px.push(a.oval.cx + r);
-            py.push(a.oval.cy + r);
-        }
-        cx /= npoints;
-        cy /= npoints;
-        for (let n = 0; n < nlines; n++) {
-            let b = layout.getLine(n);
-            px.push(b.line.x1 - b.size);
-            py.push(b.line.y1 - b.size);
-            px.push(b.line.x1 + b.size);
-            py.push(b.line.y1 + b.size);
-            px.push(b.line.x2 - b.size);
-            py.push(b.line.y2 - b.size);
-            px.push(b.line.x2 + b.size);
-            py.push(b.line.y2 + b.size);
-        }
-        let calculateRadiusSq = (cx, cy, px, py) => {
-            let v = 0;
-            for (let n = px.length - 1; n >= 0; n--)
-                v = Math.max(v, norm2_xy(px[n] - cx, py[n] - cy));
-            return v;
-        };
-        var crsq = calculateRadiusSq(cx, cy, px, py);
-        var step = Math.sqrt(crsq) * 0.1;
-        while (step > 0.01) {
-            let x1 = cx - step, x2 = cx + step, y1 = cy - step, y2 = cy + step;
-            let r1 = calculateRadiusSq(x1, cy, px, py);
-            let r2 = calculateRadiusSq(x2, cy, px, py);
-            let r3 = calculateRadiusSq(cx, y1, px, py);
-            let r4 = calculateRadiusSq(cx, y2, px, py);
-            if (r1 < crsq && r1 < r2 && r1 < r3 && r1 < r4) {
-                cx = x1;
-                crsq = r1;
-            }
-            else if (r2 < crsq && r2 < r3 && r2 < r4) {
-                cx = x2;
-                crsq = r2;
-            }
-            else if (r3 < crsq && r3 < r4) {
-                cy = y1;
-                crsq = r3;
-            }
-            else if (r4 < crsq) {
-                cy = y2;
-                crsq = r4;
-            }
-            else {
-                step *= 0.5;
-            }
-        }
-        return [cx, cy, Math.sqrt(crsq)];
-    }
-    mouseClick(event) {
-        this.container.focus();
-    }
-    mouseDoubleClick(event) {
-        this.changeHover(-1);
-        let xy = eventCoords(event, this.container);
-        let idx = this.pickHex(xy[0], xy[1]);
-        if (idx >= 0 && idx != this.seed) {
-            this.seed = this.hexes[idx].molidx;
-            this.panDelta = [0, 0];
-            this.populate();
-        }
-        event.stopImmediatePropagation();
-    }
-    mouseDown(event) {
-        this.dragging = true;
-        this.mouseFirst = this.mouseLast = eventCoords(event, this.container);
-    }
-    mouseUp(event) {
-        this.dragging = false;
-        this.mouseFirst = this.mouseLast = null;
-    }
-    mouseOver(event) {
-    }
-    mouseOut(event) {
-        this.dragging = false;
-    }
-    mouseMove(event) {
-        if (this.dragging) {
-            let xy = eventCoords(event, this.container);
-            let dx = xy[0] - this.mouseLast[0], dy = xy[1] - this.mouseLast[1];
-            if (dx != 0 || dy != 0) {
-                this.panContent(dx, dy);
-                this.mouseLast = xy;
-            }
-        }
-        else {
-            let xy = eventCoords(event, this.container);
-            this.changeHover(this.pickHex(xy[0], xy[1]));
-        }
-    }
-    keyPressed(event) {
-    }
-    keyDown(event) {
-    }
-    keyUp(event) {
-    }
-    panContent(dx, dy) {
-        this.panDelta = [this.panDelta[0] + dx, this.panDelta[1] + dy];
-        for (let hex of this.hexes)
-            if (hex.span) {
-                hex.span.css('left', (hex.frame.x + this.panDelta[0]) + 'px');
-                hex.span.css('top', (hex.frame.y + this.panDelta[1]) + 'px');
-            }
-        this.changeHover(-1);
-    }
-    pickHex(x, y) {
-        let closest = -1, closestDSQ = 0;
-        for (let n = 0; n < this.hexes.length; n++) {
-            const hex = this.hexes[n];
-            let dsq = norm2_xy(hex.frame.x + hex.centre.x + this.panDelta[0] - x, hex.frame.y + hex.centre.y + this.panDelta[1] - y);
-            if (dsq >= hex.outerRad * hex.outerRad)
-                continue;
-            if (closest < 0 || dsq < closestDSQ) {
-                closest = n;
-                closestDSQ = dsq;
-            }
-        }
-        return closest;
-    }
-    changeHover(hover) {
-        if (hover >= 0 && this.hexes[hover].span == null)
-            hover = -1;
-        if (this.hoverHex == hover)
-            return;
-        this.hoverHex = hover;
-        if (hover < 0) {
-            if (this.hoverSpan)
-                this.hoverSpan.remove();
-            this.hoverSpan = null;
-            return;
-        }
-        if (this.hoverSpan == null) {
-            this.hoverSpan = $('<span></span>').appendTo(this.container);
-            this.hoverSpan.css('position', 'absolute');
-            this.hoverSpan.css('pointer-events', 'none');
-            this.hoverSpan.css('zIndex', 1);
-        }
-        else
-            this.hoverSpan.empty();
-        let hex = this.hexes[hover];
-        let urad = 0.5 * this.hexSize * this.zoomFactor, udiam = Math.ceil(2 * urad), uspan = 2 * udiam;
-        let x0 = Math.floor(hex.centre.x - udiam), y0 = Math.floor(hex.centre.y - udiam);
-        this.hoverSpan.css('left', (hex.frame.x + this.panDelta[0] + x0) + 'px');
-        this.hoverSpan.css('top', (hex.frame.y + this.panDelta[1] + y0) + 'px');
-        this.hoverSpan.css('width', uspan + 'px');
-        this.hoverSpan.css('height', uspan + 'px');
-        let gfx = new MetaVector();
-        const DEG30 = Math.PI / 6;
-        let ext = urad * (1 - sqr(Math.sin(DEG30))) / Math.cos(DEG30);
-        let xNE = this.offsetX(hex.x, hex.y, this.HEX_NE), yNE = this.offsetY(hex.x, hex.y, this.HEX_NE);
-        let xSE = this.offsetX(hex.x, hex.y, this.HEX_SE), ySE = this.offsetY(hex.x, hex.y, this.HEX_SE);
-        let xS = this.offsetX(hex.x, hex.y, this.HEX_S), yS = this.offsetY(hex.x, hex.y, this.HEX_S);
-        let xSW = this.offsetX(hex.x, hex.y, this.HEX_SW), ySW = this.offsetY(hex.x, hex.y, this.HEX_SW);
-        let xNW = this.offsetX(hex.x, hex.y, this.HEX_NW), yNW = this.offsetY(hex.x, hex.y, this.HEX_NW);
-        let xN = this.offsetX(hex.x, hex.y, this.HEX_N), yN = this.offsetY(hex.x, hex.y, this.HEX_N);
-        let adjHexes = [null, null, null, null, null, null];
-        for (let adj of this.hexes) {
-            if (adj.x == xNE && adj.y == yNE)
-                adjHexes[0] = adj;
-            else if (adj.x == xSE && adj.y == ySE)
-                adjHexes[1] = adj;
-            else if (adj.x == xS && adj.y == yS)
-                adjHexes[2] = adj;
-            else if (adj.x == xSW && adj.y == ySW)
-                adjHexes[3] = adj;
-            else if (adj.x == xNW && adj.y == yNW)
-                adjHexes[4] = adj;
-            else if (adj.x == xN && adj.y == yN)
-                adjHexes[5] = adj;
-        }
-        for (let n = 0; n < 6; n++)
-            if (adjHexes[n]) {
-                let th = (n - 0.5) * Math.PI * 1.0 / 3;
-                let lx = hex.centre.x - x0 + ext * Math.cos(th);
-                let ly = hex.centre.y - y0 + ext * Math.sin(th);
-                let sim = CircularFingerprints.tanimoto(hex.fp, adjHexes[n].fp);
-                let txt = sim.toFixed(3), wad = this.measure.measureText(txt, hex.annotFontSize);
-                gfx.drawRect(lx - wad[0] * 0.5 - 2, ly - wad[1] * 0.5 - 2, wad[0] + 4, wad[1] + 4, 0x000000, 1, 0xD0D0D0);
-                gfx.drawText(lx, ly + 0.5 * wad[1], txt, hex.annotFontSize, 0x000000, TextAlign.Centre);
-            }
-        gfx.setSize(uspan, uspan);
-        $(gfx.createSVG()).appendTo(this.hoverSpan);
-    }
-}
 class RowView extends Widget {
     constructor(tokenID) {
         super();
