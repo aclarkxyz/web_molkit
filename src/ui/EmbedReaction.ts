@@ -47,6 +47,14 @@
         (parameters to control interactivity?)
 */
 
+enum EmbedReactionFacet
+{
+	HEADER = 'header',
+	SCHEME = 'scheme',
+	QUANTITY = 'quantity',
+	METRICS = 'metrics'
+}
+
 class EmbedReaction extends EmbedChemistry
 {
 	private row = 0;
@@ -136,10 +144,10 @@ class EmbedReaction extends EmbedChemistry
 
 		if (this.entry != null)
 		{
-			if (this.facet == 'header') this.renderHeader(span);
-			else if (this.facet == 'scheme') this.renderScheme(span); 
-			else if (this.facet == 'quantity') this.renderQuantity(span); 
-			else if (this.facet == 'metrics') this.renderMetrics(span); 
+			if (this.facet == EmbedReactionFacet.HEADER) this.renderHeader(span);
+			else if (this.facet == EmbedReactionFacet.SCHEME) this.renderScheme(span); 
+			else if (this.facet == EmbedReactionFacet.QUANTITY) this.renderQuantity(span); 
+			else if (this.facet == EmbedReactionFacet.METRICS) this.renderMetrics(span); 
 		}
 		else
 		{
