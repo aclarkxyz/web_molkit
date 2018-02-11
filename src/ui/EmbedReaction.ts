@@ -75,7 +75,7 @@ class EmbedReaction extends EmbedChemistry
 
 		if (!options) options = {};
 
-		if (options.encoding == 'base64') datastr = fromUTF8(atob(datastr));
+		if (options.encoding == 'base64') datastr = fromUTF8(atob(datastr.trim()));
 
 		let xs:Experiment = null;
 		if (options.format == 'datasheet' || options.format == 'chemical/x-datasheet') 

@@ -27,6 +27,7 @@
 	The rendering parameters are quite raw, and presumed to be passed from an un-typed source, directly from the user:
 
         format: MIME, or shortcuts for "datasheet" or "sdfile"
+		encoding: raw by default, but can be set to "base64" 
         scheme: molecule colouring schema (wob/cob/bow/cow)
         scale: points per angstrom
         padding: number of pixels to space around the content
@@ -62,6 +63,8 @@ class EmbedCollection extends EmbedChemistry
 		super();
 
 		if (!options) options = {};
+
+		if (options.encoding == 'base64') datastr = fromUTF8(atob(datastr.trim()));
 
 		let ds:DataSheet = null, name:string = options.name;
 		if (options.format == 'datasheet' || options.format == 'chemical/x-datasheet') 
