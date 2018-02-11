@@ -27,7 +27,8 @@
 	
 	The rendering parameters are quite raw, and presumed to be passed from an un-typed source, directly from the user:
 
-        format: MIME, or shortcuts for "datasheet" (... and others?)
+		format: MIME, or shortcuts for "datasheet" (... and others?)
+		encoding: raw by default, but can be set to "base64" 
 		facet: one of 'header', 'scheme', 'quantity' or 'metrics' (default is 'scheme')
         scheme: molecule colouring schema (wob/cob/bow/cow)
         scale: points per angstrom
@@ -73,6 +74,8 @@ class EmbedReaction extends EmbedChemistry
 		super();
 
 		if (!options) options = {};
+
+		if (options.encoding == 'base64') datastr = fromUTF8(atob(datastr));
 
 		let xs:Experiment = null;
 		if (options.format == 'datasheet' || options.format == 'chemical/x-datasheet') 

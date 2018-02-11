@@ -85,7 +85,6 @@ class OptionList extends Widget
 		this.updateButtons();
 	}
 
-
 	// perform some checks before rendering
 	public clickButton(idx:number):void
 	{
