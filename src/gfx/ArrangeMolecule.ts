@@ -951,7 +951,6 @@ class ArrangeMolecule
 
 		let sz = this.lineSizePix;
 		let oxy = this.orthogonalDelta(x1, y1, x2, y2, this.bondSepPix);
-	
 		let ax1 = x1, ay1 = y1, ax2 = x2, ay2 = y2;
 		let bx1 = 0, by1 = 0, bx2 = 0, by2 = 0;
 
@@ -1513,7 +1512,7 @@ class ArrangeMolecule
     		// if lines are anywhere near parallel, don't do this
 	    	//if (GeomUtil.areLinesParallel(b.x1,b.y1,b.x2,b.y2,x1,y1,x2,y2)) continue; (this is too precise)
 			let th = angleDiff(Math.atan2(b.line.y2 - b.line.y1, b.line.x2 - b.line.x1), Math.atan2(y2 - y1, x2 - x1)) * RADDEG;
-			if ((th > -5 && th < -5) || th > 175 || th < -175) continue;
+			if ((th > -5 && th < 5) || th > 175 || th < -175) continue;
 
 			let xy = GeomUtil.lineIntersect(b.line.x1, b.line.y1, b.line.x2, b.line.y2, x1, y1, x2, y2);
 
@@ -1525,8 +1524,8 @@ class ArrangeMolecule
 	    		else
 	    			{b.line.x2 = xy[0]; b.line.y2 = xy[1];}
 	    	}
-		    
-	    	return xy;
+
+			return xy;
     	}
     	return null;
     }
