@@ -62,6 +62,9 @@ class OptionList extends Widget
 	public render(parent:any):void
 	{
 		super.render(parent);
+
+		this.buttonDiv = [];
+		this.auxCell = [];
 		
 		let table = $('<table class="option-table"></table>').appendTo(this.content /*span*/);
 		let tr = this.isVertical ? null : $('<tr></tr>').appendTo(table);
