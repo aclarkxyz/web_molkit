@@ -62,39 +62,19 @@ class OptionList extends Widget
 	public render(parent:any):void
 	{
 		super.render(parent);
+
+		this.buttonDiv = [];
+		this.auxCell = [];
 		
 		let table = $('<table class="option-table"></table>').appendTo(this.content /*span*/);
 		let tr = this.isVertical ? null : $('<tr></tr>').appendTo(table);
 		
-		for (var n = 0; n < this.options.length; n++)
+		for (let n = 0; n < this.options.length; n++)
 		{
 			if (this.isVertical) tr = $('<tr></tr>').appendTo(table);
 			let td = $('<td class="option-cell"></td>').appendTo(tr); 
 			let div = $('<div class="option"></div>').appendTo(td);
 			div.css('padding', this.padding + 'px');
-
-			if (n != this.selidx)
-				div.addClass('option-unselected');
-			else
-				div.addClass('option-selected');
-			
-			let txt = this.options[n];
-			if (txt.length == 0 && n == this.selidx) div.append('\u00A0\u2716\u00A0');
-			else if (txt.length == 0) div.append('\u00A0\u00A0\u00A0');
-			else div.append(txt); 
-
-			if (n != this.selidx)
-			{
-				div.mouseover(() => div.addClass('option-hover'));
-				div.mouseout(() => div.removeClass('option-hover option-active'));
-				div.mousedown(() => div.addClass('option-active'));
-				div.mouseup(() => div.removeClass('option-active'));
-				div.mouseleave(() => div.removeClass('option-hover option-active'));
-				div.mousemove(() => {return false;});
-				
-				const idx = n;
-				div.click(() => this.clickButton(idx));
-			}
 			
 			this.buttonDiv.push(div);
 			
@@ -104,6 +84,8 @@ class OptionList extends Widget
 				this.auxCell.push(td);
 			}
 		}
+
+		this.updateButtons();
 	}
 
 	// perform some checks before rendering
@@ -120,43 +102,51 @@ class OptionList extends Widget
 	public setSelectedIndex(idx:number):void
 	{
 		if (this.selidx == idx) return;
-		
-		// unadorn old selection
-		
-		let div = this.buttonDiv[this.selidx];
-		//this.content = div;
-		div.attr('class', 'option option-unselected');
-		if (this.options[this.selidx].length == 0) div.text('\u00A0\u00A0\u00A0');
-		
-		div.mouseover(() => div.addClass('option-hover'));
-		div.mouseout(() => div.removeClass('option-hover option-active'));
-		div.mousedown(() => div.addClass('option-active'));
-		div.mouseup(() => div.removeClass('option-active'));
-		div.mouseleave(() => div.removeClass('option-hover option-active'));
-		div.mousemove(() => false);
-		
-		const clickidx = this.selidx;
-		div.click(() => this.clickButton(clickidx));
-
-		// adorn new selection
-		
 		this.selidx = idx;
-		div = this.buttonDiv[this.selidx];
-
-		div.attr('class', 'option option-selected');
-		if (this.options[this.selidx].length == 0) div.text('\u00A0\u2716\u00A0');
-
-		div.off('mouseover');
-		div.off('mouseout');
-		div.off('mousedown');
-		div.off('mouseup');
-		div.off('mouseleave');
-		div.off('mousemove');
-		div.off('click');
+		this.updateButtons();
 	}
 	public setSelectedValue(val:string):void
 	{
 		let idx = this.options.indexOf(val);
 		if (idx >= 0) this.setSelectedIndex(idx);
 	}
+
+	// ------------ private methods ------------
+
+	// updates selection state of buttons, either first time or after change
+	private updateButtons():void
+	{
+		for (let n = 0; n < this.options.length && n < this.buttonDiv.length; n++)
+		{
+			let div = this.buttonDiv[n];
+
+			let txt = this.options[n];
+			if (txt.length == 0 && n == this.selidx) div.text('\u00A0\u2716\u00A0');
+			else if (txt.length == 0) div.text('\u00A0\u00A0\u00A0');
+			else div.text(txt); 
+
+			div.off('mouseover');
+			div.off('mouseout');
+			div.off('mousedown');
+			div.off('mouseup');
+			div.off('mouseleave');
+			div.off('mousemove');
+			div.off('click');
+			div.removeClass('option-hover option-active option-unselected option-selected');
+
+			if (n != this.selidx)
+			{
+				div.addClass('option-unselected');
+				div.mouseover(() => div.addClass('option-hover'));
+				div.mouseout(() => div.removeClass('option-hover option-active'));
+				div.mousedown(() => div.addClass('option-active'));
+				div.mouseup(() => div.removeClass('option-active'));
+				div.mouseleave(() => div.removeClass('option-hover option-active'));
+				div.mousemove(() => {return false;});
+				div.click(() => this.clickButton(n));
+			}
+			else div.addClass('option-selected');
+		}
+	}
+
 }

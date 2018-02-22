@@ -409,3 +409,82 @@ function escapeHTML(text:string):string
 
 // convenience: make sure a string isn't null
 function orBlank(str:string):string {return str == null ? '' : str;}
+
+// converts a string (which is stored by JavaScript as UCS2) to UTF8, where each character is guaranteed to be 1 byte
+function toUTF8(str:string):string
+{
+	let data:string[] = [], stripe = '';
+	const sz = str.length;
+	for (let n = 0; n < sz; n++)
+	{
+        var charcode = str.charCodeAt(n);
+        if (charcode < 0x80) stripe += str.charAt(n);
+		else if (charcode < 0x800) 
+		{
+			stripe += String.fromCharCode(0xc0 | (charcode >> 6));
+			stripe += String.fromCharCode(0x80 | (charcode & 0x3F));
+        }
+		else if (charcode < 0xd800 || charcode >= 0xe000) 
+		{
+			stripe += String.fromCharCode(0xe0 | (charcode >> 12));
+			stripe += String.fromCharCode(0x80 | ((charcode >> 6) & 0x3F));
+			stripe += String.fromCharCode(0x80 | (charcode & 0x3F));
+        }
+		else // surrogate pair
+		{
+            n++;
+			charcode = 0x10000 + (((charcode & 0x3FF) << 10) | (str.charCodeAt(n) & 0x3FF));
+			stripe += String.fromCharCode(0xf0 | (charcode >> 18));
+			stripe += String.fromCharCode(0x80 | ((charcode >> 12) & 0x3F));
+			stripe += String.fromCharCode(0x80 | ((charcode >> 6) & 0x3F));
+			stripe += String.fromCharCode(0x80 | (charcode & 0x3F));
+		}
+		if (stripe.length > 100)
+		{
+			data.push(stripe);
+			stripe = '';
+		}
+	}
+	data.push(stripe);
+    return data.join('');
+}
+
+// converts a UTF8 string to a regular JavaScript string (which is UCS2-encoded)
+function fromUTF8(str:string):string
+{
+	let data:string[] = [], stripe = '';
+	const sz = str.length;
+	for (let n = 0; n < sz; n++)
+	{
+		let value = str.charCodeAt(n);
+        if (value < 0x80) stripe += str.charAt(n);
+		else if (value > 0xBF && value < 0xE0) 
+		{
+			stripe += String.fromCharCode((value & 0x1F) << 6 | str.charCodeAt(n + 1) & 0x3F);
+			n++;
+		} 
+		else if (value > 0xDF && value < 0xF0) 
+		{
+			str += String.fromCharCode((value & 0x0F) << 12 | (str.charCodeAt(n + 1) & 0x3F) << 6 | str.charCodeAt(n + 2) & 0x3F);
+			n += 2;
+		} 
+		else // surrogate pair 
+		{
+            let charCode = ((value & 0x07) << 18 | (str.charCodeAt(n + 1) & 0x3F) << 12 | (str.charCodeAt(n + 2) & 0x3F) << 6 | str.charCodeAt(n + 3) & 0x3F) - 0x010000;
+            stripe += String.fromCharCode(charCode >> 10 | 0xD800, charCode & 0x03FF | 0xDC00); 
+            n += 3;
+		}
+		if (stripe.length > 100)
+		{
+			data.push(stripe);
+			stripe = '';
+		}
+    }
+	data.push(stripe);
+    return data.join('');
+}
+/*
+
+
+    return str;
+}*/

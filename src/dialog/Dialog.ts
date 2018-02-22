@@ -59,10 +59,10 @@ class Dialog
         bg.css('position', 'absolute');
         bg.css('left', 0);
         bg.css('top', 0);
-        bg.css('z-index', 999);
+        bg.css('z-index', 9999);
         this.obscureBackground = bg;
         
-        let pb = $('<div></div>').appendTo(body);
+        let pb = $('<div class="wmk-dialog"></div>').appendTo(body);
         pb.css('min-width', this.minPortionWidth + '%');
         if (this.maxPortionWidth != null) pb.css('max-width', this.maxPortionWidth + '%');
         pb.css('background-color', 'white');
@@ -72,7 +72,7 @@ class Dialog
         pb.css('left', (50 - 0.5 * this.minPortionWidth) + '%');
         pb.css('top', (document.body.scrollTop + 50) + 'px');
         pb.css('min-height', '50%');   
-        pb.css('z-index', 1000);     
+        pb.css('z-index', 10000);     
         this.panelBoundary = pb;
 
         let tdiv = $('<div></div>').appendTo(pb);

@@ -27,7 +27,8 @@
 	
 	The rendering parameters are quite raw, and presumed to be passed from an un-typed source, directly from the user:
 
-        format: MIME, or shortcuts for "datasheet" (... and others?)
+		format: MIME, or shortcuts for "datasheet" (... and others?)
+		encoding: raw by default, but can be set to "base64" 
 		facet: one of 'header', 'scheme', 'quantity' or 'metrics' (default is 'scheme')
         scheme: molecule colouring schema (wob/cob/bow/cow)
         scale: points per angstrom
@@ -47,6 +48,14 @@
         (parameters to control interactivity?)
 */
 
+enum EmbedReactionFacet
+{
+	HEADER = 'header',
+	SCHEME = 'scheme',
+	QUANTITY = 'quantity',
+	METRICS = 'metrics'
+}
+
 class EmbedReaction extends EmbedChemistry
 {
 	private row = 0;
@@ -65,6 +74,8 @@ class EmbedReaction extends EmbedChemistry
 		super();
 
 		if (!options) options = {};
+
+		if (options.encoding == 'base64') datastr = fromUTF8(atob(datastr.trim()));
 
 		let xs:Experiment = null;
 		if (options.format == 'datasheet' || options.format == 'chemical/x-datasheet') 
@@ -136,10 +147,10 @@ class EmbedReaction extends EmbedChemistry
 
 		if (this.entry != null)
 		{
-			if (this.facet == 'header') this.renderHeader(span);
-			else if (this.facet == 'scheme') this.renderScheme(span); 
-			else if (this.facet == 'quantity') this.renderQuantity(span); 
-			else if (this.facet == 'metrics') this.renderMetrics(span); 
+			if (this.facet == EmbedReactionFacet.HEADER) this.renderHeader(span);
+			else if (this.facet == EmbedReactionFacet.SCHEME) this.renderScheme(span); 
+			else if (this.facet == EmbedReactionFacet.QUANTITY) this.renderQuantity(span); 
+			else if (this.facet == EmbedReactionFacet.METRICS) this.renderMetrics(span); 
 		}
 		else
 		{

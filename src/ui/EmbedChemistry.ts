@@ -12,6 +12,7 @@
 
 ///<reference path='../util/util.ts'/>
 ///<reference path='../gfx/Rendering.ts'/>
+///<reference path='Widget.ts'/>
 
 /*
 	Base class for various kinds of "embedded" chemistry display objects, such as molecules/reactions/collections. These are intended to be largely

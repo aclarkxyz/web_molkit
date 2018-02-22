@@ -368,8 +368,8 @@ class BayesianModel
 	// transforms string back into model, if possible
 	public static deserialise(str:string):BayesianModel
 	{
-		let lines = str.split('\n');
-		function readLine():string {return lines.length == 0 ? null : lines.shift().trim();}
+		let lines = str.split('\n'), lnum = 0;
+		function readLine() {return lnum >= lines.length ? null : lines[lnum++].trim();}
 
 		let line = readLine();
 		if (line == null || !line.startsWith('Bayesian!(') || !line.endsWith(')')) throw 'Not a serialised Bayesian model.';
