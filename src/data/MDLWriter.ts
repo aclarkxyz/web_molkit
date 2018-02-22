@@ -222,7 +222,7 @@ class MDLSDFWriter
 		for (let i = 0; i < ds.numRows; i++)
 		{
 			let mol = colMol < 0 ? null : ds.getMolecule(i, colMol);
-			if (MolUtil.notBlank(mol))
+			if (mol != null /*MolUtil.notBlank(mol)*/)
 			{
 				let molstr = new MDLMOLWriter(mol).write();
 				lines.push(molstr);
