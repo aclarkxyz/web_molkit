@@ -42,7 +42,7 @@ O=-1.7490,4.8000;0,0,i0
 
 <script>
 	var url = window.location.href.substring(0, window.location.href.lastIndexOf('/'));
-	RPC.RESOURCE_URL = url + '../../../res';
+	initWebMolKit(url + '../../../res');
 	var mol = Molecule.fromString($('#moldata').text());
 	var sketcher = new Sketcher(null);
 	sketcher.setSize(800, 700);

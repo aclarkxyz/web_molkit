@@ -12,11 +12,18 @@
 
 ///<reference path='../decl/jquery.d.ts'/>
 ///<reference path='../util/util.ts'/>
-
+///<reference path='../util/Theme.ts'/>
 
 /*
 	Dialog: base class for popup dialogs.
 */
+
+const CSS_DIALOG = `
+    *.wmk-dialog
+    {
+        font-family: 'Open Sans', sans-serif;
+    }
+`;
 
 class Dialog
 {
@@ -37,6 +44,7 @@ class Dialog
 
     constructor()
     {
+        installInlineCSS('dialog', CSS_DIALOG);
     }
     
 	public onClose(callback:(source?:Dialog) => void)
@@ -101,7 +109,7 @@ class Dialog
         
         let tdButtons = $('<td align="right" valign="center"></td>').appendTo(tr);
         tdButtons.css('padding', '0.5em');
-        this.btnClose = $('<button class="button button-default">Close</button>').appendTo(tdButtons);
+        this.btnClose = $('<button class="wmk-button wmk-button-default">Close</button>').appendTo(tdButtons);
         this.btnClose.click(() => this.close());
         this.titleButtons = tdButtons; 
 

@@ -51,18 +51,18 @@ class EditCompound extends Dialog
 	{		
 		let buttons = this.buttons(), body = this.body();
 		
-        this.btnClear = $('<button class="button button-default">Clear</button>').appendTo(buttons);
+        this.btnClear = $('<button class="wmk-button wmk-button-default">Clear</button>').appendTo(buttons);
 		this.btnClear.click(() => this.sketcher.clearMolecule());
 
 		buttons.append(' ');
-        this.btnCopy = $('<button class="button button-default">Copy</button>').appendTo(buttons);
+        this.btnCopy = $('<button class="wmk-button wmk-button-default">Copy</button>').appendTo(buttons);
 		this.btnCopy.click(() => this.copyMolecule());
 
 		buttons.append(' ');
 		buttons.append(this.btnClose); // easy way to reorder
 		
 		buttons.append(' ');
-        this.btnSave = $('<button class="button button-primary">Save</button>').appendTo(buttons);
+        this.btnSave = $('<button class="wmk-button wmk-button-primary">Save</button>').appendTo(buttons);
 		this.btnSave.click(() => {if (this.callbackSave) this.callbackSave(this);});
 		
 		let skw = 800, skh = 650;

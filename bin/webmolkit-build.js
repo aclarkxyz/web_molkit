@@ -724,6 +724,66 @@ function escapeHTML(text) {
     return text.replace(/[&<>"']/g, (m) => map[m]);
 }
 function orBlank(str) { return str == null ? '' : str; }
+function toUTF8(str) {
+    let data = [], stripe = '';
+    const sz = str.length;
+    for (let n = 0; n < sz; n++) {
+        var charcode = str.charCodeAt(n);
+        if (charcode < 0x80)
+            stripe += str.charAt(n);
+        else if (charcode < 0x800) {
+            stripe += String.fromCharCode(0xc0 | (charcode >> 6));
+            stripe += String.fromCharCode(0x80 | (charcode & 0x3F));
+        }
+        else if (charcode < 0xd800 || charcode >= 0xe000) {
+            stripe += String.fromCharCode(0xe0 | (charcode >> 12));
+            stripe += String.fromCharCode(0x80 | ((charcode >> 6) & 0x3F));
+            stripe += String.fromCharCode(0x80 | (charcode & 0x3F));
+        }
+        else {
+            n++;
+            charcode = 0x10000 + (((charcode & 0x3FF) << 10) | (str.charCodeAt(n) & 0x3FF));
+            stripe += String.fromCharCode(0xf0 | (charcode >> 18));
+            stripe += String.fromCharCode(0x80 | ((charcode >> 12) & 0x3F));
+            stripe += String.fromCharCode(0x80 | ((charcode >> 6) & 0x3F));
+            stripe += String.fromCharCode(0x80 | (charcode & 0x3F));
+        }
+        if (stripe.length > 100) {
+            data.push(stripe);
+            stripe = '';
+        }
+    }
+    data.push(stripe);
+    return data.join('');
+}
+function fromUTF8(str) {
+    let data = [], stripe = '';
+    const sz = str.length;
+    for (let n = 0; n < sz; n++) {
+        let value = str.charCodeAt(n);
+        if (value < 0x80)
+            stripe += str.charAt(n);
+        else if (value > 0xBF && value < 0xE0) {
+            stripe += String.fromCharCode((value & 0x1F) << 6 | str.charCodeAt(n + 1) & 0x3F);
+            n++;
+        }
+        else if (value > 0xDF && value < 0xF0) {
+            str += String.fromCharCode((value & 0x0F) << 12 | (str.charCodeAt(n + 1) & 0x3F) << 6 | str.charCodeAt(n + 2) & 0x3F);
+            n += 2;
+        }
+        else {
+            let charCode = ((value & 0x07) << 18 | (str.charCodeAt(n + 1) & 0x3F) << 12 | (str.charCodeAt(n + 2) & 0x3F) << 6 | str.charCodeAt(n + 3) & 0x3F) - 0x010000;
+            stripe += String.fromCharCode(charCode >> 10 | 0xD800, charCode & 0x03FF | 0xDC00);
+            n += 3;
+        }
+        if (stripe.length > 100) {
+            data.push(stripe);
+            stripe = '';
+        }
+    }
+    data.push(stripe);
+    return data.join('');
+}
 class DataSheet {
     constructor(data) {
         if (!data)
@@ -6289,7 +6349,7 @@ class MDLSDFWriter {
         let colMol = this.ds.firstColOfType(DataSheet.COLTYPE_MOLECULE);
         for (let i = 0; i < ds.numRows; i++) {
             let mol = colMol < 0 ? null : ds.getMolecule(i, colMol);
-            if (MolUtil.notBlank(mol)) {
+            if (mol != null) {
                 let molstr = new MDLMOLWriter(mol).write();
                 lines.push(molstr);
             }
@@ -9203,8 +9263,8 @@ class BayesianModel {
         return lines.join('\n');
     }
     static deserialise(str) {
-        let lines = str.split('\n');
-        function readLine() { return lines.length == 0 ? null : lines.shift().trim(); }
+        let lines = str.split('\n'), lnum = 0;
+        function readLine() { return lnum >= lines.length ? null : lines[lnum++].trim(); }
         let line = readLine();
         if (line == null || !line.startsWith('Bayesian!(') || !line.endsWith(')'))
             throw 'Not a serialised Bayesian model.';
@@ -10468,12 +10528,330 @@ QuantityCalc.STAT_VIRTUAL = 2;
 QuantityCalc.STAT_CONFLICT = 3;
 QuantityCalc.MAX_DENOM = 16;
 QuantityCalc.RATIO_FRACT = null;
+class RPC {
+    constructor(request, parameter, callback) {
+        this.request = request;
+        this.parameter = parameter;
+        this.callback = callback;
+    }
+    invoke() {
+        let data = this.parameter;
+        if (data == null)
+            data = {};
+        let url = RPC.BASE_URL + "/REST/" + this.request;
+        $.ajax({
+            'url': url,
+            'type': 'POST',
+            'data': JSON.stringify(this.parameter),
+            'contentType': 'application/json;charset=utf-8',
+            'dataType': 'json',
+            headers: { 'Access-Control-Allow-Origin': '*' },
+            success: (data, textStatus, jqXHR) => {
+                var result = null, error = null;
+                if (!data) {
+                    error =
+                        {
+                            'message': 'null result',
+                            'code': RPC.ERRCODE_NONSPECIFIC,
+                            type: 0,
+                            'detail': 'unknown failure'
+                        };
+                }
+                else {
+                    if (data.error) {
+                        error =
+                            {
+                                'message': data.error,
+                                'code': data.errorCode,
+                                'type': data.errorType,
+                                'detail': data.errorDetail
+                            };
+                        console.log('RPC error communicating with: ' + url + ', content: ' + JSON.stringify(data.error) + '\nDetail:\n' + data.errorDetail);
+                    }
+                    else
+                        result = data.result;
+                }
+                this.callback(result, error);
+            },
+            error: (jqXHR, textStatus, errorThrow) => {
+                var error = {
+                    'message': 'connection failure',
+                    'code': RPC.ERRCODE_NONSPECIFIC,
+                    type: 0,
+                    'detail': `unable to obtain result from service: {$url}`
+                };
+                this.callback({}, error);
+            }
+        });
+    }
+}
+RPC.BASE_URL = null;
+RPC.RESOURCE_URL = null;
+RPC.ERRCODE_CLIENT_ABORTED = -3;
+RPC.ERRCODE_CLIENT_TIMEOUT = -1;
+RPC.ERRCODE_CLIENT_OTHER = -1;
+RPC.ERRCODE_NONSPECIFIC = 0;
+RPC.ERRCODE_UNKNOWN = 1;
+RPC.ERRCODE_NOSUCHUSER = 2;
+RPC.ERRCODE_INVALIDLOGIN = 3;
+RPC.ERRCODE_INVALIDTOKEN = 4;
+RPC.ERRCODE_DATASHEETUNAVAIL = 5;
+RPC.ERRCODE_INVALIDCOMMAND = 6;
+RPC.ERRCODE_ROWDATAUNAVAIL = 7;
+RPC.ERRCODE_MISSINGPARAM = 8;
+class Theme {
+}
+Theme.foreground = 0x000000;
+Theme.background = 0xFFFFFF;
+Theme.lowlight = 0x24D0D0;
+Theme.lowlightEdge1 = 0x47D5D2;
+Theme.lowlightEdge2 = 0x008FD1;
+Theme.highlight = 0x00FF00;
+Theme.highlightEdge1 = 0x00CA59;
+Theme.highlightEdge2 = 0x008650;
+Theme.error = 0xFF0000;
+function initWebMolKit(resourcePath) {
+    RPC.RESOURCE_URL = resourcePath;
+    installInlineCSS('main', composeMainCSS());
+}
+var cssTagsInstalled = new Set();
+function hasInlineCSS(tag) { return cssTagsInstalled.has(tag); }
+function installInlineCSS(tag, css) {
+    if (cssTagsInstalled.has(tag))
+        return false;
+    let el = document.createElement('style');
+    el.innerHTML = css;
+    document.head.appendChild(el);
+    cssTagsInstalled.add(tag);
+    return true;
+}
+function composeMainCSS() {
+    let lowlight = colourCode(Theme.lowlight), lowlightEdge1 = colourCode(Theme.lowlightEdge1), lowlightEdge2 = colourCode(Theme.lowlightEdge2);
+    let highlight = colourCode(Theme.highlight), highlightEdge1 = colourCode(Theme.highlightEdge1), highlightEdge2 = colourCode(Theme.highlightEdge2);
+    return `
+		.wmk-button
+		{
+			display: inline-block;
+			padding: 6px 12px;
+			margin-bottom: 0;
+			font-family: 'Open Sans', sans-serif;
+			font-size: 14px;
+			font-weight: normal;
+			line-height: 1.42857143;
+			text-align: center;
+			white-space: nowrap;
+			vertical-align: middle;
+			cursor: pointer;
+			background-image: none;
+			border: 1px solid transparent;
+			border-radius: 4px;
+			-ms-touch-action: manipulation; touch-action: manipulation;
+			-webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none;
+		}
+		.wmk-button:focus,
+		.wmk-button:active:focus,
+		.wmk-button.active:focus,
+		.wmk-button.focus,
+		.wmk-button:active.focus,
+		.wmk-button.active.focus 
+		{
+			outline: thin dotted;
+			outline: 5px auto -webkit-focus-ring-color;
+			outline-offset: -2px;
+		}
+		.wmk-button:hover,
+		.wmk-button:focus,
+		.wmk-button.focus 
+		{
+			color: #333;
+			text-decoration: none;
+		}
+		.wmk-button:active,
+		.wmk-button.active 
+		{
+			background-image: none;
+			outline: 0;
+			-webkit-box-shadow: inset 0 3px 5px rgba(0, 0, 0, .125);
+			box-shadow: inset 0 3px 5px rgba(0, 0, 0, .125);
+		}
+		.wmk-button.disabled,
+		.wmk-button[disabled],
+		fieldset[disabled] .wmk-button 
+		{
+			cursor: not-allowed;
+			filter: alpha(opacity=65);
+			-webkit-box-shadow: none;
+			box-shadow: none;
+			opacity: .65;
+		}
+		a.wmk-button.disabled,
+		fieldset[disabled] a.wmk-button 
+		{
+			pointer-events: none;
+		}
+
+		/* shrunken button */
+
+		.wmk-button-small
+		{
+			padding: 2px 4px;
+			line-height: 1;
+			font-size: 12px;
+		}
+
+		/* default button */
+
+		.wmk-button-default 
+		{
+			color: #333;
+			background-color: #fff;
+			background-image: linear-gradient(to right bottom, #FFFFFF, #E0E0E0);
+			border-color: #ccc;
+		}
+		.wmk-button-default:focus,
+		.wmk-button-default.focus 
+		{
+			color: #333;
+			background-color: #e6e6e6;
+			border-color: #8c8c8c;
+		}
+		.wmk-button-default:hover 
+		{
+			color: #333;
+			background-color: #e6e6e6;
+			border-color: #adadad;
+		}
+		.wmk-button-default:active,
+		.wmk-button-default.active,
+		.open > .dropdown-toggle.wmk-button-default 
+		{
+			color: #333;
+			background-color: #e6e6e6;
+			border-color: #adadad;
+		}
+		.wmk-button-default:active:hover,
+		.wmk-button-default.active:hover,
+		.open > .dropdown-toggle.wmk-button-default:hover,
+		.wmk-button-default:active:focus,
+		.wmk-button-default.active:focus,
+		.open > .dropdown-toggle.wmk-button-default:focus,
+		.wmk-button-default:active.focus,
+		.wmk-button-default.active.focus,
+		.open > .dropdown-toggle.wmk-button-default.focus 
+		{
+			color: #333;
+			background-color: #d4d4d4;
+			border-color: #8c8c8c;
+		}
+		.wmk-button-default:active,
+		.wmk-button-default.active,
+		.open > .dropdown-toggle.wmk-button-default 
+		{
+			background-image: none;
+		}
+		.wmk-button-default.disabled:hover,
+		.wmk-button-default[disabled]:hover,
+		fieldset[disabled] .wmk-button-default:hover,
+		.wmk-button-default.disabled:focus,
+		.wmk-button-default[disabled]:focus,
+		fieldset[disabled] .wmk-button-default:focus,
+		.wmk-button-default.disabled.focus,
+		.wmk-button-default[disabled].focus,
+		fieldset[disabled] .wmk-button-default.focus 
+		{
+			background-color: #fff;
+			border-color: #ccc;
+		}
+		.wmk-button-default .badge 
+		{
+			color: #fff;
+			background-color: #333;
+		}
+
+		/* primary button */
+
+		.wmk-button-primary 
+		{
+			color: #fff;
+			background-color: #008FD2;
+			background-image: linear-gradient(to right bottom, ${lowlightEdge1}, ${lowlightEdge2});
+			border-color: #00C0C0;
+		}
+		.wmk-button-primary:focus,
+		.wmk-button-primary.focus 
+		{
+			color: #fff;
+			background-color: ${lowlight};
+			border-color: #122b40;
+		}
+		.wmk-button-primary:hover 
+		{
+			color: #fff;
+			background-color: #286090;
+			border-color: #204d74;
+		}
+		.wmk-button-primary:active,
+		.wmk-button-primary.active,
+		.open > .dropdown-toggle.wmk-button-primary 
+		{
+			color: #fff;
+			background-color: #286090;
+			border-color: #20744d;
+		}
+		.wmk-button-primary:active:hover,
+		.wmk-button-primary.active:hover,
+		.open > .dropdown-toggle.wmk-button-primary:hover,
+		.wmk-button-primary:active:focus,
+		.wmk-button-primary.active:focus,
+		.open > .dropdown-toggle.wmk-button-primary:focus,
+		.wmk-button-primary:active.focus,
+		.wmk-button-primary.active.focus,
+		.open > .dropdown-toggle.wmk-button-primary.focus 
+		{
+			color: #fff;
+			background-color: ${highlight};
+			background-image: linear-gradient(to right bottom, ${highlightEdge1}, ${highlightEdge2});
+			border-color: #12802b;
+		}
+		.wmk-button-primary:active,
+		.wmk-button-primary.active,
+		.open > .dropdown-toggle.wmk-button-primary 
+		{
+			background-image: none;
+		}
+		.wmk-button-primary.disabled:hover,
+		.wmk-button-primary[disabled]:hover,
+		fieldset[disabled] .wmk-button-primary:hover,
+		.wmk-button-primary.disabled:focus,
+		.wmk-button-primary[disabled]:focus,
+		fieldset[disabled] .wmk-button-primary:focus,
+		.wmk-button-primary.disabled.focus,
+		.wmk-button-primary[disabled].focus,
+		fieldset[disabled] .wmk-button-primary.focus 
+		{
+			background-color: #337ab7;
+			border-color: #2ea46d;
+		}
+		.wmk-button-primary .badge 
+		{
+			color: #337ab7;
+			background-color: #fff;
+		}
+	`;
+}
+const CSS_DIALOG = `
+    *.wmk-dialog
+    {
+        font-family: 'Open Sans', sans-serif;
+    }
+`;
 class Dialog {
     constructor() {
         this.minPortionWidth = 80;
         this.maxPortionWidth = 80;
         this.title = 'Dialog';
         this.callbackClose = null;
+        installInlineCSS('dialog', CSS_DIALOG);
     }
     onClose(callback) {
         this.callbackClose = callback;
@@ -10488,9 +10866,9 @@ class Dialog {
         bg.css('position', 'absolute');
         bg.css('left', 0);
         bg.css('top', 0);
-        bg.css('z-index', 999);
+        bg.css('z-index', 9999);
         this.obscureBackground = bg;
-        let pb = $('<div></div>').appendTo(body);
+        let pb = $('<div class="wmk-dialog"></div>').appendTo(body);
         pb.css('min-width', this.minPortionWidth + '%');
         if (this.maxPortionWidth != null)
             pb.css('max-width', this.maxPortionWidth + '%');
@@ -10501,7 +10879,7 @@ class Dialog {
         pb.css('left', (50 - 0.5 * this.minPortionWidth) + '%');
         pb.css('top', (document.body.scrollTop + 50) + 'px');
         pb.css('min-height', '50%');
-        pb.css('z-index', 1000);
+        pb.css('z-index', 10000);
         this.panelBoundary = pb;
         let tdiv = $('<div></div>').appendTo(pb);
         tdiv.css('width', '100%');
@@ -10525,7 +10903,7 @@ class Dialog {
         ttl.text(this.title);
         let tdButtons = $('<td align="right" valign="center"></td>').appendTo(tr);
         tdButtons.css('padding', '0.5em');
-        this.btnClose = $('<button class="button button-default">Close</button>').appendTo(tdButtons);
+        this.btnClose = $('<button class="wmk-button wmk-button-default">Close</button>').appendTo(tdButtons);
         this.btnClose.click(() => this.close());
         this.titleButtons = tdButtons;
         this.populate();
@@ -10592,7 +10970,7 @@ class Tooltip {
             globalPopover.css('background-image', 'linear-gradient(to right bottom, #FFFFFF, #D0D0FF)');
             globalPopover.css('color', 'black');
             globalPopover.css('border', '1px solid black');
-            globalPopover.css('z-index', 2000);
+            globalPopover.css('z-index', 12000);
             globalPopover.css('border-radius', '4px');
             globalPopover.hide();
             globalPopover.appendTo(document.body);
@@ -10685,6 +11063,8 @@ class OptionList extends Widget {
         this.callbackSelect = null;
         if (options.length == 0)
             throw 'molsync.ui.OptionList: must provide a list of option labels.';
+        if (!hasInlineCSS('option'))
+            installInlineCSS('option', this.composeCSS());
     }
     getSelectedIndex() {
         return this.selidx;
@@ -10697,41 +11077,23 @@ class OptionList extends Widget {
     }
     render(parent) {
         super.render(parent);
-        let table = $('<table class="option-table"></table>').appendTo(this.content);
+        this.buttonDiv = [];
+        this.auxCell = [];
+        let table = $('<table class="wmk-option-table"></table>').appendTo(this.content);
         let tr = this.isVertical ? null : $('<tr></tr>').appendTo(table);
-        for (var n = 0; n < this.options.length; n++) {
+        for (let n = 0; n < this.options.length; n++) {
             if (this.isVertical)
                 tr = $('<tr></tr>').appendTo(table);
-            let td = $('<td class="option-cell"></td>').appendTo(tr);
-            let div = $('<div class="option"></div>').appendTo(td);
+            let td = $('<td class="wmk-option-cell"></td>').appendTo(tr);
+            let div = $('<div class="wmk-option"></div>').appendTo(td);
             div.css('padding', this.padding + 'px');
-            if (n != this.selidx)
-                div.addClass('option-unselected');
-            else
-                div.addClass('option-selected');
-            let txt = this.options[n];
-            if (txt.length == 0 && n == this.selidx)
-                div.append('\u00A0\u2716\u00A0');
-            else if (txt.length == 0)
-                div.append('\u00A0\u00A0\u00A0');
-            else
-                div.append(txt);
-            if (n != this.selidx) {
-                div.mouseover(() => div.addClass('option-hover'));
-                div.mouseout(() => div.removeClass('option-hover option-active'));
-                div.mousedown(() => div.addClass('option-active'));
-                div.mouseup(() => div.removeClass('option-active'));
-                div.mouseleave(() => div.removeClass('option-hover option-active'));
-                div.mousemove(() => { return false; });
-                const idx = n;
-                div.click(() => this.clickButton(idx));
-            }
             this.buttonDiv.push(div);
             if (this.isVertical) {
                 td = $('<td style="vertical-align: middle;"></td>').appendTo(tr);
                 this.auxCell.push(td);
             }
         }
+        this.updateButtons();
     }
     clickButton(idx) {
         if (idx == this.selidx)
@@ -10743,108 +11105,104 @@ class OptionList extends Widget {
     setSelectedIndex(idx) {
         if (this.selidx == idx)
             return;
-        let div = this.buttonDiv[this.selidx];
-        div.attr('class', 'option option-unselected');
-        if (this.options[this.selidx].length == 0)
-            div.text('\u00A0\u00A0\u00A0');
-        div.mouseover(() => div.addClass('option-hover'));
-        div.mouseout(() => div.removeClass('option-hover option-active'));
-        div.mousedown(() => div.addClass('option-active'));
-        div.mouseup(() => div.removeClass('option-active'));
-        div.mouseleave(() => div.removeClass('option-hover option-active'));
-        div.mousemove(() => false);
-        const clickidx = this.selidx;
-        div.click(() => this.clickButton(clickidx));
         this.selidx = idx;
-        div = this.buttonDiv[this.selidx];
-        div.attr('class', 'option option-selected');
-        if (this.options[this.selidx].length == 0)
-            div.text('\u00A0\u2716\u00A0');
-        div.off('mouseover');
-        div.off('mouseout');
-        div.off('mousedown');
-        div.off('mouseup');
-        div.off('mouseleave');
-        div.off('mousemove');
-        div.off('click');
+        this.updateButtons();
     }
     setSelectedValue(val) {
         let idx = this.options.indexOf(val);
         if (idx >= 0)
             this.setSelectedIndex(idx);
     }
-}
-class RPC {
-    constructor(request, parameter, callback) {
-        this.request = request;
-        this.parameter = parameter;
-        this.callback = callback;
-    }
-    invoke() {
-        let data = this.parameter;
-        if (data == null)
-            data = {};
-        let url = RPC.BASE_URL + "/REST/" + this.request;
-        $.ajax({
-            'url': url,
-            'type': 'POST',
-            'data': JSON.stringify(this.parameter),
-            'contentType': 'application/json;charset=utf-8',
-            'dataType': 'json',
-            headers: { 'Access-Control-Allow-Origin': '*' },
-            success: (data, textStatus, jqXHR) => {
-                var result = null, error = null;
-                if (!data) {
-                    error =
-                        {
-                            'message': 'null result',
-                            'code': RPC.ERRCODE_NONSPECIFIC,
-                            type: 0,
-                            'detail': 'unknown failure'
-                        };
-                }
-                else {
-                    if (data.error) {
-                        error =
-                            {
-                                'message': data.error,
-                                'code': data.errorCode,
-                                'type': data.errorType,
-                                'detail': data.errorDetail
-                            };
-                        console.log('RPC error communicating with: ' + url + ', content: ' + JSON.stringify(data.error) + '\nDetail:\n' + data.errorDetail);
-                    }
-                    else
-                        result = data.result;
-                }
-                this.callback(result, error);
-            },
-            error: (jqXHR, textStatus, errorThrow) => {
-                var error = {
-                    'message': 'connection failure',
-                    'code': RPC.ERRCODE_NONSPECIFIC,
-                    type: 0,
-                    'detail': `unable to obtain result from service: {$url}`
-                };
-                this.callback({}, error);
+    updateButtons() {
+        for (let n = 0; n < this.options.length && n < this.buttonDiv.length; n++) {
+            let div = this.buttonDiv[n];
+            let txt = this.options[n];
+            if (txt.length == 0 && n == this.selidx)
+                div.text('\u00A0\u2716\u00A0');
+            else if (txt.length == 0)
+                div.text('\u00A0\u00A0\u00A0');
+            else
+                div.text(txt);
+            div.off('mouseover');
+            div.off('mouseout');
+            div.off('mousedown');
+            div.off('mouseup');
+            div.off('mouseleave');
+            div.off('mousemove');
+            div.off('click');
+            div.removeClass('wmk-option-hover wmk-option-active wmk-option-unselected wmk-option-selected');
+            if (n != this.selidx) {
+                div.addClass('wmk-option-unselected');
+                div.mouseover(() => div.addClass('wmk-option-hover'));
+                div.mouseout(() => div.removeClass('wmk-option-hover wmk-option-active'));
+                div.mousedown(() => div.addClass('wmk-option-active'));
+                div.mouseup(() => div.removeClass('wmk-option-active'));
+                div.mouseleave(() => div.removeClass('wmk-option-hover wmk-option-active'));
+                div.mousemove(() => { return false; });
+                div.click(() => this.clickButton(n));
             }
-        });
+            else
+                div.addClass('wmk-option-selected');
+        }
+    }
+    composeCSS() {
+        let lowlight = colourCode(Theme.lowlight), lowlightEdge1 = colourCode(Theme.lowlightEdge1), lowlightEdge2 = colourCode(Theme.lowlightEdge2);
+        let highlight = colourCode(Theme.highlight), highlightEdge1 = colourCode(Theme.highlightEdge1), highlightEdge2 = colourCode(Theme.highlightEdge2);
+        return `
+			.wmk-option
+			{
+				margin-bottom: 0;
+				font-family: 'Open Sans', sans-serif;
+				font-size: 14px;
+				font-weight: normal;
+				text-align: center;
+				white-space: nowrap;
+				vertical-align: middle;
+				-ms-touch-action: manipulation; touch-action: manipulation;
+				cursor: pointer;
+				-webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none;
+			}
+			.wmk-option-selected
+			{
+				color: white;
+				background-color: #008FD2;
+				background-image: linear-gradient(to right bottom, ${lowlightEdge1}, ${lowlightEdge2});
+			}
+			.wmk-option-unselected
+			{
+				color: #333;
+				background-color: white;
+				background-image: linear-gradient(to right bottom, #FFFFFF, #E0E0E0);
+			}
+			.wmk-option-table
+			{
+				margin: 1px;
+				padding: 0;
+				border-width: 0;
+				border-collapse: collapse;
+			}
+			.wmk-option-cell
+			{
+				margin: 0;
+				padding: 0;
+				border-width: 0;
+				border-width: 1px;
+				border-style: solid;
+				border-color: #808080;
+			}
+			.wmk-option-hover
+			{
+				background-color: #808080;
+				background-image: linear-gradient(to right bottom, #F0F0F0, #D0D0D0);
+			}
+			.wmk-option-active
+			{
+				background-color: #00C000;
+				background-image: linear-gradient(to right bottom, ${highlightEdge1}, ${highlightEdge2});
+			}
+		`;
     }
 }
-RPC.BASE_URL = null;
-RPC.RESOURCE_URL = null;
-RPC.ERRCODE_CLIENT_ABORTED = -3;
-RPC.ERRCODE_CLIENT_TIMEOUT = -1;
-RPC.ERRCODE_CLIENT_OTHER = -1;
-RPC.ERRCODE_NONSPECIFIC = 0;
-RPC.ERRCODE_UNKNOWN = 1;
-RPC.ERRCODE_NOSUCHUSER = 2;
-RPC.ERRCODE_INVALIDLOGIN = 3;
-RPC.ERRCODE_INVALIDTOKEN = 4;
-RPC.ERRCODE_DATASHEETUNAVAIL = 5;
-RPC.ERRCODE_INVALIDCOMMAND = 6;
-RPC.ERRCODE_ROWDATAUNAVAIL = 7;
-RPC.ERRCODE_MISSINGPARAM = 8;
 class Func {
     static renderStructure(input, callback) {
         new RPC('func.renderStructure', input, callback).invoke();
@@ -12534,7 +12892,7 @@ class ArrangeMolecule {
             else
                 continue;
             let th = angleDiff(Math.atan2(b.line.y2 - b.line.y1, b.line.x2 - b.line.x1), Math.atan2(y2 - y1, x2 - x1)) * RADDEG;
-            if ((th > -5 && th < -5) || th > 175 || th < -175)
+            if ((th > -5 && th < 5) || th > 175 || th < -175)
                 continue;
             let xy = GeomUtil.lineIntersect(b.line.x1, b.line.y1, b.line.x2, b.line.y2, x1, y1, x2, y2);
             if (this.mol.atomRingBlock(bt) == 0) {
@@ -18441,15 +18799,15 @@ class EditCompound extends Dialog {
     getMolecule() { return this.sketcher.getMolecule(); }
     populate() {
         let buttons = this.buttons(), body = this.body();
-        this.btnClear = $('<button class="button button-default">Clear</button>').appendTo(buttons);
+        this.btnClear = $('<button class="wmk-button wmk-button-default">Clear</button>').appendTo(buttons);
         this.btnClear.click(() => this.sketcher.clearMolecule());
         buttons.append(' ');
-        this.btnCopy = $('<button class="button button-default">Copy</button>').appendTo(buttons);
+        this.btnCopy = $('<button class="wmk-button wmk-button-default">Copy</button>').appendTo(buttons);
         this.btnCopy.click(() => this.copyMolecule());
         buttons.append(' ');
         buttons.append(this.btnClose);
         buttons.append(' ');
-        this.btnSave = $('<button class="button button-primary">Save</button>').appendTo(buttons);
+        this.btnSave = $('<button class="wmk-button wmk-button-primary">Save</button>').appendTo(buttons);
         this.btnSave.click(() => { if (this.callbackSave)
             this.callbackSave(this); });
         let skw = 800, skh = 650;
@@ -19800,6 +20158,8 @@ class EmbedCollection extends EmbedChemistry {
         this.tight = false;
         if (!options)
             options = {};
+        if (options.encoding == 'base64')
+            datastr = fromUTF8(atob(datastr.trim()));
         let ds = null, name = options.name;
         if (options.format == 'datasheet' || options.format == 'chemical/x-datasheet') {
             ds = DataSheetStream.readXML(datastr);
@@ -20144,6 +20504,13 @@ class EmbedMolecule extends EmbedChemistry {
         }
     }
 }
+var EmbedReactionFacet;
+(function (EmbedReactionFacet) {
+    EmbedReactionFacet["HEADER"] = "header";
+    EmbedReactionFacet["SCHEME"] = "scheme";
+    EmbedReactionFacet["QUANTITY"] = "quantity";
+    EmbedReactionFacet["METRICS"] = "metrics";
+})(EmbedReactionFacet || (EmbedReactionFacet = {}));
 class EmbedReaction extends EmbedChemistry {
     constructor(datastr, options) {
         super();
@@ -20158,6 +20525,8 @@ class EmbedReaction extends EmbedChemistry {
         this.includeAnnot = false;
         if (!options)
             options = {};
+        if (options.encoding == 'base64')
+            datastr = fromUTF8(atob(datastr.trim()));
         let xs = null;
         if (options.format == 'datasheet' || options.format == 'chemical/x-datasheet') {
             let ds = DataSheetStream.readXML(datastr);
@@ -20239,13 +20608,13 @@ class EmbedReaction extends EmbedChemistry {
         if (!this.tight)
             span.css('margin-bottom', '1.5em');
         if (this.entry != null) {
-            if (this.facet == 'header')
+            if (this.facet == EmbedReactionFacet.HEADER)
                 this.renderHeader(span);
-            else if (this.facet == 'scheme')
+            else if (this.facet == EmbedReactionFacet.SCHEME)
                 this.renderScheme(span);
-            else if (this.facet == 'quantity')
+            else if (this.facet == EmbedReactionFacet.QUANTITY)
                 this.renderQuantity(span);
-            else if (this.facet == 'metrics')
+            else if (this.facet == EmbedReactionFacet.METRICS)
                 this.renderMetrics(span);
         }
         else {

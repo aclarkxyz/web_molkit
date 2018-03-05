@@ -40,6 +40,8 @@ class OptionList extends Widget
 	{
 		super();
 		if (options.length == 0) throw 'molsync.ui.OptionList: must provide a list of option labels.';
+
+		if (!hasInlineCSS('option')) installInlineCSS('option', this.composeCSS());
 	}
 	
 	// control over selected index
@@ -66,14 +68,14 @@ class OptionList extends Widget
 		this.buttonDiv = [];
 		this.auxCell = [];
 		
-		let table = $('<table class="option-table"></table>').appendTo(this.content /*span*/);
+		let table = $('<table class="wmk-option-table"></table>').appendTo(this.content /*span*/);
 		let tr = this.isVertical ? null : $('<tr></tr>').appendTo(table);
 		
 		for (let n = 0; n < this.options.length; n++)
 		{
 			if (this.isVertical) tr = $('<tr></tr>').appendTo(table);
-			let td = $('<td class="option-cell"></td>').appendTo(tr); 
-			let div = $('<div class="option"></div>').appendTo(td);
+			let td = $('<td class="wmk-option-cell"></td>').appendTo(tr); 
+			let div = $('<div class="wmk-option"></div>').appendTo(td);
 			div.css('padding', this.padding + 'px');
 			
 			this.buttonDiv.push(div);
@@ -132,21 +134,81 @@ class OptionList extends Widget
 			div.off('mouseleave');
 			div.off('mousemove');
 			div.off('click');
-			div.removeClass('option-hover option-active option-unselected option-selected');
+			div.removeClass('wmk-option-hover wmk-option-active wmk-option-unselected wmk-option-selected');
 
 			if (n != this.selidx)
 			{
-				div.addClass('option-unselected');
-				div.mouseover(() => div.addClass('option-hover'));
-				div.mouseout(() => div.removeClass('option-hover option-active'));
-				div.mousedown(() => div.addClass('option-active'));
-				div.mouseup(() => div.removeClass('option-active'));
-				div.mouseleave(() => div.removeClass('option-hover option-active'));
+				div.addClass('wmk-option-unselected');
+				div.mouseover(() => div.addClass('wmk-option-hover'));
+				div.mouseout(() => div.removeClass('wmk-option-hover wmk-option-active'));
+				div.mousedown(() => div.addClass('wmk-option-active'));
+				div.mouseup(() => div.removeClass('wmk-option-active'));
+				div.mouseleave(() => div.removeClass('wmk-option-hover wmk-option-active'));
 				div.mousemove(() => {return false;});
 				div.click(() => this.clickButton(n));
 			}
-			else div.addClass('option-selected');
+			else div.addClass('wmk-option-selected');
 		}
 	}
 
+	// one-time instantiation of necessary styles
+	private composeCSS():string
+	{
+		let lowlight = colourCode(Theme.lowlight), lowlightEdge1 = colourCode(Theme.lowlightEdge1), lowlightEdge2 = colourCode(Theme.lowlightEdge2);
+		let highlight = colourCode(Theme.highlight), highlightEdge1 = colourCode(Theme.highlightEdge1), highlightEdge2 = colourCode(Theme.highlightEdge2);
+
+		return `
+			.wmk-option
+			{
+				margin-bottom: 0;
+				font-family: 'Open Sans', sans-serif;
+				font-size: 14px;
+				font-weight: normal;
+				text-align: center;
+				white-space: nowrap;
+				vertical-align: middle;
+				-ms-touch-action: manipulation; touch-action: manipulation;
+				cursor: pointer;
+				-webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none;
+			}
+			.wmk-option-selected
+			{
+				color: white;
+				background-color: #008FD2;
+				background-image: linear-gradient(to right bottom, ${lowlightEdge1}, ${lowlightEdge2});
+			}
+			.wmk-option-unselected
+			{
+				color: #333;
+				background-color: white;
+				background-image: linear-gradient(to right bottom, #FFFFFF, #E0E0E0);
+			}
+			.wmk-option-table
+			{
+				margin: 1px;
+				padding: 0;
+				border-width: 0;
+				border-collapse: collapse;
+			}
+			.wmk-option-cell
+			{
+				margin: 0;
+				padding: 0;
+				border-width: 0;
+				border-width: 1px;
+				border-style: solid;
+				border-color: #808080;
+			}
+			.wmk-option-hover
+			{
+				background-color: #808080;
+				background-image: linear-gradient(to right bottom, #F0F0F0, #D0D0D0);
+			}
+			.wmk-option-active
+			{
+				background-color: #00C000;
+				background-image: linear-gradient(to right bottom, ${highlightEdge1}, ${highlightEdge2});
+			}
+		`;
+	}
 }
