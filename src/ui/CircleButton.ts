@@ -1,7 +1,7 @@
 /*
     WebMolKit
 
-    (c) 2010-2017 Molecular Materials Informatics, Inc.
+    (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
     
@@ -13,6 +13,8 @@
 ///<reference path='../rpc/RPC.ts'/>
 ///<reference path='../decl/corrections.d.ts'/>
 ///<reference path='Widget.ts'/>
+
+namespace WebMolKit /* BOF */ {
 
 /*
 	CircleButton: a circular button with a vector icon.
@@ -27,7 +29,7 @@
 		.svg: the instantiated icon object
 */
 
-class CircleButton extends Widget
+export class CircleButton extends Widget
 {
 	private BUTTON_DIAMETER = 50;
 	private BUTTON_HPADDING = 4;
@@ -241,3 +243,5 @@ class CircleButton extends Widget
 		if (this.callbackAction) this.callbackAction(this);
 	}
 }
+
+/* EOF */ }

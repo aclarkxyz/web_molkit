@@ -1,7 +1,7 @@
 /*
     WebMolKit
 
-    (c) 2010-2017 Molecular Materials Informatics, Inc.
+    (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
     
@@ -15,6 +15,8 @@
 ///<reference path='../data/Molecule.ts'/>
 ///<reference path='../data/SketchUtil.ts'/>
 ///<reference path='MoleculeActivity.ts'/>
+
+namespace WebMolKit /* BOF */ {
 
 /*
 	CommandBank: the various bank styles that correspond to actions (select-then-do, as opposed to toolbank style which
@@ -182,7 +184,7 @@ const COMMANDS_MOVE:ButtonBankItem[] =
 	{'id': 'grow', 'imageFN': 'MoveGrow', 'helpText': 'Increase subject bond distances.', 'mnemonic': ''}
 ];
 
-class CommandBank extends ButtonBank
+export class CommandBank extends ButtonBank
 {
 	constructor(protected owner:any, protected cmdType = CommandType.Main)
 	{
@@ -343,3 +345,4 @@ class CommandBank extends ButtonBank
 	}
 }
 
+/* EOF */ }

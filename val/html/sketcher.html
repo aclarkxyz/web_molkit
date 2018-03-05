@@ -41,13 +41,14 @@ O=-1.7490,4.8000;0,0,i0
 </p>
 
 <script>
+	let wmk = WebMolKit;
 	var url = window.location.href.substring(0, window.location.href.lastIndexOf('/'));
-	initWebMolKit(url + '../../../res');
-	var mol = Molecule.fromString($('#moldata').text());
-	var sketcher = new Sketcher(null);
+	wmk.initWebMolKit(url + '../../../res');
+	var mol = wmk.Molecule.fromString($('#moldata').text());
+	var sketcher = new wmk.Sketcher(null);
 	sketcher.setSize(800, 700);
 	sketcher.defineMolecule(mol);
-	sketcher.setup(function() {sketcher.render($('#sketcher'));});
+	sketcher.setup(() => sketcher.render($('#sketcher')));
 
 	function demoMolecule()
 	{

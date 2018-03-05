@@ -1,7 +1,7 @@
 /*
     WebMolKit
 
-    (c) 2010-2017 Molecular Materials Informatics, Inc.
+    (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
     
@@ -14,6 +14,8 @@
 ///<reference path='MDLReader.ts'/>
 ///<reference path='MDLWriter.ts'/>
 
+namespace WebMolKit /* BOF */ {
+
 /*
 	Serialisation and deserialisation utilities for the Molecule object.
 
@@ -21,7 +23,7 @@
 	for a large subset of common organic chemistry use-cases, but there is a lot of missing overlap between the two.
 */
 
-class MoleculeStream
+export class MoleculeStream
 {
 	// tries to read a format-unknown molecule, with whatever tools are currently available
 	public static readUnknown(strData:string):Molecule
@@ -182,4 +184,4 @@ class MoleculeStream
 	};
 }
 
-
+/* EOF */ }

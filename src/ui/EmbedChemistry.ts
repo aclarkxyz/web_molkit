@@ -1,7 +1,7 @@
 /*
     WebMolKit
 
-    (c) 2010-2017 Molecular Materials Informatics, Inc.
+    (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
     
@@ -14,13 +14,15 @@
 ///<reference path='../gfx/Rendering.ts'/>
 ///<reference path='Widget.ts'/>
 
+namespace WebMolKit /* BOF */ {
+
 /*
 	Base class for various kinds of "embedded" chemistry display objects, such as molecules/reactions/collections. These are intended to be largely
 	static displays that are dynamically manufactured from embedded content, e.g. upgrading a WordPress "shortcode" with a molecular structure to
 	a picture of the molecule.
 */
 
-class EmbedChemistry extends Widget
+export class EmbedChemistry extends Widget
 {
 	public padding = 4;
 	public borderCol = 0xD0D0D0;
@@ -69,3 +71,4 @@ class EmbedChemistry extends Widget
 
 }
 
+/* EOF */ }

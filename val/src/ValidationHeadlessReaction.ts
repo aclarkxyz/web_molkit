@@ -17,11 +17,13 @@
 ///<reference path='../../src/aspect/Experiment.ts'/>
 ///<reference path='Validation.ts'/>
 
+namespace WebMolKit /* BOF */ {
+
 /*
     Headless validation: reaction tests - validating the Experiment aspect and related functionality
 */
 
-class ValidationHeadlessReaction extends Validation
+export class ValidationHeadlessReaction extends Validation
 {
 	private strExperiment:string;
 
@@ -71,3 +73,5 @@ class ValidationHeadlessReaction extends Validation
 	}
 
 }
+
+/* EOF */ }

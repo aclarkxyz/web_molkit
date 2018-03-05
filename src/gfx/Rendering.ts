@@ -1,7 +1,7 @@
 /*
     WebMolKit
 
-    (c) 2010-2017 Molecular Materials Informatics, Inc.
+    (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
     
@@ -9,6 +9,8 @@
 
 	[PKG=webmolkit]
 */
+
+namespace WebMolKit /* BOF */ {
 
 /*
 	Wraps the RenderPolicy and RenderEffects objects, which are JSON-encoded analogs to the eponymous Java classes.
@@ -28,7 +30,7 @@ interface RenderData
 	atomCols:number[];
 }
 
-class RenderPolicy
+export class RenderPolicy
 {
 	public data:RenderData;
 	
@@ -119,7 +121,7 @@ class RenderPolicy
 	};
 }
 
-class RenderEffects
+export class RenderEffects
 {
 	// optional replacement colours, by object index: to override defaults
 	public colAtom:{[id:number] : number} = {};
@@ -154,3 +156,5 @@ class RenderEffects
 	// list of atom indices which are considered to be "overlapping", i.e. this is bad
 	public overlapAtoms:number[] = []; 
 }
+
+/* EOF */ }

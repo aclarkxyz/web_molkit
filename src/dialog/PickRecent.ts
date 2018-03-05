@@ -1,7 +1,7 @@
 /*
     WebMolKit
 
-    (c) 2010-2017 Molecular Materials Informatics, Inc.
+    (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
     
@@ -14,11 +14,13 @@
 ///<reference path='../ui/ViewStructure.ts'/>
 ///<reference path='Dialog.ts'/>
 
+namespace WebMolKit /* BOF */ {
+
 /*
 	Provides a list of recent molecules (from the cookies) to pick from.
 */
 
-class PickRecent extends Dialog
+export class PickRecent extends Dialog
 {
 	public callbackPick1:(mol:Molecule) => void = null;
 	public callbackPick2:(mol:Molecule) => void = null;
@@ -100,3 +102,5 @@ class PickRecent extends Dialog
 		this.bump();
 	}
 }
+
+/* EOF */ }

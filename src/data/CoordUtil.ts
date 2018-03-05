@@ -1,7 +1,7 @@
 /*
     WebMolKit
 
-    (c) 2010-2017 Molecular Materials Informatics, Inc.
+    (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
     
@@ -15,6 +15,8 @@
 ///<reference path='Graph.ts'/>
 ///<reference path='../util/util.ts'/>
 
+namespace WebMolKit /* BOF */ {
+
 /*
 	Low level utility functions for the manipulation of molecular coordinates. These functions are fairly
 	utilitarian, and don't have a lot of chemical logic encoded within them.
@@ -23,7 +25,7 @@
 	stick to the numbers and do what they're told.
 */
 
-class CoordUtil
+export class CoordUtil
 {
 	public static OVERLAP_THRESHOLD = 0.2;// atoms closer than this are "overlapping" (i.e. this is bad)
 	public static OVERLAP_THRESHOLD_SQ = CoordUtil.OVERLAP_THRESHOLD * CoordUtil.OVERLAP_THRESHOLD;
@@ -414,3 +416,5 @@ class CoordUtil
 		else CoordUtil.rotateMolecule(mol2, x0, y0, deltaA);
 	}
 }
+
+/* EOF */ }

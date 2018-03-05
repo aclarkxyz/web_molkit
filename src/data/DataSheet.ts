@@ -1,7 +1,7 @@
 /*
     WebMolKit
 
-    (c) 2010-2017 Molecular Materials Informatics, Inc.
+    (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
     
@@ -9,6 +9,8 @@
 
 	[PKG=webmolkit]
 */
+
+namespace WebMolKit /* BOF */ {
 
 /*
 	Wraps an object representation of a datasheet with access functions that are analogous to the Java com.mmi.core.ds.DataSheet class.
@@ -39,7 +41,7 @@ interface DataSheetContent
 	extData?:any[];
 }
 
-class DataSheet
+export class DataSheet
 {
 	private data:DataSheetContent;
 	
@@ -459,3 +461,5 @@ class DataSheet
 		return obj == null ? null : parseFloat(obj);
 	}
 }
+
+/* EOF */ }

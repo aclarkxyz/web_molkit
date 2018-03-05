@@ -21,13 +21,14 @@
 <p id="option2"></p>
 
 <script>
+	let wmk = WebMolKit;
 	let url = window.location.href.substring(0, window.location.href.lastIndexOf('/'));
-	initWebMolKit(url + '../../../res');
+	wmk.initWebMolKit(url + '../../../res');
 
-	$('#sketch').click(() => new EditCompound(new Molecule()).open());
+	$('#sketch').click(() => new wmk.EditCompound(new wmk.Molecule()).open());
 
-	new OptionList(['First', 'Second', 'Third']).render($('#option1'));
-	new OptionList(['First', 'Second', 'Third'], true).render($('#option2'));
+	new wmk.OptionList(['First', 'Second', 'Third']).render($('#option1'));
+	new wmk.OptionList(['First', 'Second', 'Third'], true).render($('#option2'));
 </script>
 
 </body>

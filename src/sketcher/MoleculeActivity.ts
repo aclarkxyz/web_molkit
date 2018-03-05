@@ -1,7 +1,7 @@
 /*
     WebMolKit
 
-    (c) 2010-2017 Molecular Materials Informatics, Inc.
+    (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
     
@@ -16,6 +16,8 @@
 ///<reference path='../data/SketchUtil.ts'/>
 ///<reference path='TemplateFusion.ts'/>
 
+namespace WebMolKit /* BOF */ {
+
 /*
 	MoleculeActivity: command-oriented modifications of the current molecular state.
 
@@ -26,7 +28,7 @@
 	execution mode is charged with the duty of updating the EditMolecule state, or reporting any errors that might occur.
 */
 
-enum ActivityType
+export enum ActivityType
 {
 	Delete = 1,
 	Clear,
@@ -76,7 +78,7 @@ enum ActivityType
 	AbbrevExpand
 }
 
-interface SketchState
+export interface SketchState
 {
 	mol:Molecule;
 	currentAtom:number;
@@ -87,7 +89,7 @@ interface SketchState
 	permutations?:FusionPermutation[];
 }
 
-interface TemplatePermutation
+export interface TemplatePermutation
 {
 	mol:string;
 	display:string;
@@ -97,7 +99,7 @@ interface TemplatePermutation
 	metavec?:MetaVector;
 }
 
-class MoleculeActivity
+export class MoleculeActivity
 {
 	public input:SketchState;
 	private subjectMask:boolean[];
@@ -1807,3 +1809,5 @@ class MoleculeActivity
 		return true;
 	}
 }
+
+/* EOF */ }

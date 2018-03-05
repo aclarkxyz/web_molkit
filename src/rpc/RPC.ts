@@ -1,7 +1,7 @@
 /*
     WebMolKit
 
-    (c) 2010-2017 Molecular Materials Informatics, Inc.
+    (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
     
@@ -11,6 +11,8 @@
 */
 
 ///<reference path='../decl/jquery.d.ts'/>
+
+namespace WebMolKit /* BOF */ {
 
 /*
 	RPC: remote procedure calls to the MolSync server, using its RESTful interface.
@@ -45,7 +47,7 @@
 	this is no longer the best way to get work done for the most part, and so this approach is largely obsolete.
 */
 
-interface ErrorRPC
+export interface ErrorRPC
 {
 	message:string;
 	code:number;
@@ -53,7 +55,7 @@ interface ErrorRPC
 	detail:string;	
 }
 
-class RPC
+export class RPC
 {
 	// must be defined before any invocation; this is the URL where all of the standard resources can be found,
 	// e.g. 'http://servername/MolSync'; the REST services hang off of this url: ${BASE_URL}/REST/...
@@ -145,8 +147,4 @@ class RPC
 	}
 }
 
-
-
-
-
-
+/* EOF */ }

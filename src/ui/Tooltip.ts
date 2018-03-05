@@ -1,7 +1,7 @@
 /*
     WebMolKit
 
-    (c) 2010-2017 Molecular Materials Informatics, Inc.
+    (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
     
@@ -12,6 +12,8 @@
 
 ///<reference path='../decl/jquery.d.ts'/>
 
+namespace WebMolKit /* BOF */ {
+
 /*
 	Tooltips: adding popovers to widgets.
 */
@@ -21,7 +23,7 @@ var globalTooltip:Tooltip = null;
 var globalPopWatermark = 0;
 
 // adds a well behaved tooltip to the given node (element or JQuery object)
-function addTooltip(parent:any, bodyHTML:string, titleHTML?:string, delay?:number):void
+export function addTooltip(parent:any, bodyHTML:string, titleHTML?:string, delay?:number):void
 {
     Tooltip.ensureGlobal();
 
@@ -35,7 +37,7 @@ function addTooltip(parent:any, bodyHTML:string, titleHTML?:string, delay?:numbe
 }
 
 // immediately raise a tooltip, with a position relative to a given widget
-function raiseToolTip(parent:any, avoid:Box, bodyHTML:string, titleHTML?:string):void
+export function raiseToolTip(parent:any, avoid:Box, bodyHTML:string, titleHTML?:string):void
 {
     clearTooltip();
     Tooltip.ensureGlobal();
@@ -46,14 +48,14 @@ function raiseToolTip(parent:any, avoid:Box, bodyHTML:string, titleHTML?:string)
 }
 
 // rudely shutdown the tooltip
-function clearTooltip():void
+export function clearTooltip():void
 {
     if (globalTooltip == null) return;
     globalPopWatermark++;
     globalTooltip.lower();
 }
 
-class Tooltip
+export class Tooltip
 {
     watermark:number;
     
@@ -157,3 +159,5 @@ class Tooltip
         pop.hide();
     }
 }
+
+/* EOF */ }

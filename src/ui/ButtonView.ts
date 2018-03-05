@@ -1,7 +1,7 @@
 /*
     WebMolKit
 
-    (c) 2010-2017 Molecular Materials Informatics, Inc.
+    (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
     
@@ -12,13 +12,15 @@
 
 ///<reference path='Widget.ts'/>
 
+namespace WebMolKit /* BOF */ {
+
 /*
 	ButtonView: a container for a stack of ButtonBanks. The ButtonView handles all the display/user interaction parts
 	of a button bank. A ButtonView should be owned by a container object that defines a region of space within which this
 	object can position itself.
 */
 
-interface ButtonViewDisplay
+export interface ButtonViewDisplay
 {
 	id:string;
 	x?:number;
@@ -29,7 +31,7 @@ interface ButtonViewDisplay
 	svgDOM?:Element;
 }
 
-class ButtonView extends Widget
+export class ButtonView extends Widget
 {
 	public idealSize = 50;
 	public width = 0;
@@ -1067,3 +1069,5 @@ class ButtonView extends Widget
 		return svg;	
 	}	
 }
+
+/* EOF */ }

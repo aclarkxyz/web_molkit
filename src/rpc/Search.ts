@@ -1,7 +1,7 @@
 /*
     WebMolKit
 
-    (c) 2010-2017 Molecular Materials Informatics, Inc.
+    (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
     
@@ -12,11 +12,13 @@
 
 ///<reference path='RPC.ts'/>
 
+namespace WebMolKit /* BOF */ {
+
 /*
 	Provides prefabricated RPC functions for the 'Search' category.
 */
 
-class Search
+export class Search
 {
 	public static startMolSearch(input:Object, callback:(result:any, error:ErrorRPC) => void):void
 	{
@@ -35,3 +37,5 @@ class Search
 		new RPC('search.pollRxnSearch', input, callback).invoke();
 	}
 }
+
+/* EOF */ }

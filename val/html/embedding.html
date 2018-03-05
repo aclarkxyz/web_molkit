@@ -621,8 +621,9 @@ C=3.2500,1.2990;0,0,i2
 </DataSheet></script></collection>
 
 <script>
+	let wmk = WebMolKit;
 	var url = window.location.href.substring(0, window.location.href.lastIndexOf('/'));
-	initWebMolKit(url + '../../../res');
+	wmk.initWebMolKit(url + '../../../res');
 	
 	$('molecule').each(function()
 	{
@@ -631,7 +632,7 @@ C=3.2500,1.2990;0,0,i2
 		let molstr = obj.text(), params = {};
 		for (let attr of this.attributes) params[attr.name] = attr.value;
 		obj.remove();
-		new EmbedMolecule(molstr, params).render(div);
+		new wmk.EmbedMolecule(molstr, params).render(div);
 	});
 
 	$('reaction').each(function()
@@ -646,14 +647,14 @@ C=3.2500,1.2990;0,0,i2
 			$.get(obj.attr('source'), function(data)
 			{
 				obj.remove();
-				new EmbedReaction(data, params).render(div);
+				new wmk.EmbedReaction(data, params).render(div);
 			}, 'text');
 		}
 		else
 		{
 			let xml = obj.find('script').html();
 			obj.remove();
-			new EmbedReaction(xml, params).render(div);
+			new wmk.EmbedReaction(xml, params).render(div);
 		}
 	});
 
@@ -664,7 +665,7 @@ C=3.2500,1.2990;0,0,i2
 		let xml = obj.find('script').html(), params = {};
 		for (let attr of this.attributes) params[attr.name] = attr.value;
 		obj.remove();
-		new EmbedCollection(xml, params).render(div);
+		new wmk.EmbedCollection(xml, params).render(div);
 	});
 </script>
 

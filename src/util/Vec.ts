@@ -10,13 +10,13 @@
 	[PKG=webmolkit]
 */
 
-//import $ from "JQuery";
+namespace WebMolKit /* BOF */ {
 
 /*
 	Functions that operate on arrays, for performing routine tasks.
 */
 
-class Vec
+export class Vec
 {
 	public static arrayLength(arr:any[]):number {return arr == null ? 0 : arr.length;}
 	public static arrayNumber(arr:number[]):number[] {return arr == null ? [] : arr;}
@@ -354,7 +354,7 @@ class Vec
 	Permutation functions, operating explicitly on arrays of consecutive integers.
 */
 
-class Permutation
+export class Permutation
 {
 	// for a set of indices that are assumed to be unique and in the range {0 .. N-1}, returns their parity, i.e.
 	// the number of swaps used to permute it from the identity; if the list is sorted, the result is 0
@@ -499,3 +499,5 @@ class Permutation
 		return perms;
 	}
 }
+
+/* EOF */ }

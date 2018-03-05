@@ -1,7 +1,7 @@
 /*
     WebMolKit
 
-    (c) 2010-2017 Molecular Materials Informatics, Inc.
+    (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
     
@@ -17,12 +17,14 @@
 ///<reference path='../data/Graph.ts'/>
 ///<reference path='../sketcher/MoleculeActivity.ts'/>
 
+namespace WebMolKit /* BOF */ {
+
 /*
     Algorithm class that exists for the purpose of generating some number of template-fusion permutations,
 	starting with an edit state (molecule,subject) and a template.
 */
 
-class FusionPermutation
+export class FusionPermutation
 {
 	public mol:Molecule;  // contains the fused result
 	public display:Molecule; // the appended fragment, modified for display
@@ -37,7 +39,7 @@ class FusionPermutation
 	public chainSelect = 0;
 }
 
-class TemplateFusion
+export class TemplateFusion
 {
 	public perms:FusionPermutation[] = [];
 	public numAttach = 0;
@@ -925,3 +927,5 @@ class TemplateFusion
 		return ret;
 	}
 }
+
+/* EOF */ }

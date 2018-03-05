@@ -1,7 +1,7 @@
 /*
     WebMolKit
 
-    (c) 2010-2017 Molecular Materials Informatics, Inc.
+    (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
     
@@ -28,6 +28,8 @@
 ///<reference path='TemplateBank.ts'/>
 ///<reference path='ToolBank.ts'/>
 
+namespace WebMolKit /* BOF */ {
+
 /*
 	Sketcher: a very heavyweight widget that provides 2D structure editing for a molecule.
 */
@@ -51,7 +53,7 @@ enum DraggingTool
 // used as a transient backup in case of access to the clipboard being problematic
 var globalMoleculeClipboard:Molecule = null;
 
-class Sketcher extends Widget implements ArrangeMeasurement
+export class Sketcher extends Widget implements ArrangeMeasurement
 {
 	private mol:Molecule = null;
 	private policy:RenderPolicy = null;
@@ -2045,3 +2047,4 @@ class Sketcher extends Widget implements ArrangeMeasurement
 	}
 }
 
+/* EOF */ }

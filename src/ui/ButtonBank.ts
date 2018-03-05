@@ -1,7 +1,7 @@
 /*
     WebMolKit
 
-    (c) 2010-2017 Molecular Materials Informatics, Inc.
+    (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
     
@@ -9,6 +9,8 @@
 
 	[PKG=webmolkit]
 */
+
+namespace WebMolKit /* BOF */ {
 
 /*
 	ButtonBank: abstract base class for providing a "bank of buttons". The instance is expected to server up a list
@@ -26,7 +28,7 @@
 		.ownerView: the molsync.ui.ButtonView object that owns this buttonbank; gets set after the constructor is called
 */
 
-interface ButtonBankItem
+export interface ButtonBankItem
 {
 	id:string;
 	imageFN?:string;
@@ -37,7 +39,7 @@ interface ButtonBankItem
 	text?:string;
 }
 
-abstract class ButtonBank
+export abstract class ButtonBank
 {
 	public buttonView:any; // the widget parent
 	public isSubLevel = false; // true if it's not the first-on-stack
@@ -102,3 +104,5 @@ abstract class ButtonBank
 		return ch.toLowerCase() == mkey.toLowerCase();
 	}
 }
+
+/* EOF */ }

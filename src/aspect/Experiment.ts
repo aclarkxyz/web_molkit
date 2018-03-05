@@ -1,7 +1,7 @@
 /*
     WebMolKit
 
-    (c) 2010-2017 Molecular Materials Informatics, Inc.
+    (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
     
@@ -15,12 +15,14 @@
 ///<reference path='../data/MoleculeStream.ts'/>
 ///<reference path='Aspect.ts'/>
 
+namespace WebMolKit /* BOF */ {
+
 /*
 	Experiment aspect: transforms groups of rows from a datasheet into a collection of structures that make up a
 	multistep reaction, along with accompanying quantities and other miscellaneous information.
 */
 
-class ExperimentComponent
+export class ExperimentComponent
 {
 	public mol:Molecule = null;
 	public name = '';
@@ -75,7 +77,7 @@ class ExperimentComponent
 	}
 }
 
-class ExperimentStep
+export class ExperimentStep
 {
 	public reactants:ExperimentComponent[] = []; // non-blank only for the first step
 	public reagents:ExperimentComponent[] = [];
@@ -105,7 +107,7 @@ class ExperimentStep
 	}
 }
 
-class ExperimentEntry
+export class ExperimentEntry
 {
 	public title = '';
 	public createDate:Date = null;
@@ -164,7 +166,7 @@ class ExperimentEntry
 	}
 }
 
-class Experiment extends Aspect
+export class Experiment extends Aspect
 {
 	public static CODE = 'org.mmi.aspect.Experiment';
 	public static CODE_RXN = 'org.mmi.aspect.Reaction';
@@ -813,4 +815,5 @@ class Experiment extends Aspect
 		return ret
 	}*/	
 }
-	
+
+/* EOF */ }

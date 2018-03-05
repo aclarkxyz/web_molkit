@@ -18,11 +18,13 @@
 ///<reference path='../../src/data/Stereochemistry.ts'/>
 ///<reference path='Validation.ts'/>
 
+namespace WebMolKit /* BOF */ {
+
 /*
     Headless validation: molecule tests - algorithms that apply to molecular connection tables.
 */
 
-class ValidationHeadlessMolecule extends Validation
+export class ValidationHeadlessMolecule extends Validation
 {
 	private strSketchEl:string;
 	private strMolfile:string;
@@ -184,3 +186,5 @@ class ValidationHeadlessMolecule extends Validation
 		}
 	}
 }
+
+/* EOF */ }

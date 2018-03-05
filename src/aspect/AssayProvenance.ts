@@ -1,7 +1,7 @@
 /*
     WebMolKit
 
-    (c) 2010-2017 Molecular Materials Informatics, Inc.
+    (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
     
@@ -15,6 +15,8 @@
 ///<reference path='../data/MoleculeStream.ts'/>
 ///<reference path='Aspect.ts'/>
 
+namespace WebMolKit /* BOF */ {
+
 /*
 	AssayProvenance: informs that a datasheet originates from a distinct assay measurement of a particular
 	biological target or property, and that each row represents a compound and a measurement. There is some
@@ -22,7 +24,7 @@
 	header.
 */
 
-class AssayProvenanceHeader
+export class AssayProvenanceHeader
 {
 	public prefixes:{[id:string] : string} = {};
 	public targetName = '';
@@ -47,7 +49,7 @@ class AssayProvenanceHeader
 	public unitURIs:string[] = [];
 }
 
-class AssayProvenance extends Aspect
+export class AssayProvenance extends Aspect
 {
 	public static CODE = 'org.mmi.aspect.AssayProvenance';
 	public static NAME = 'Assay Provenance';
@@ -350,3 +352,5 @@ class AssayProvenance extends Aspect
 		return null;		
 	}	
 }
+
+/* EOF */ }

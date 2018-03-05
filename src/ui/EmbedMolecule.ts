@@ -1,7 +1,7 @@
 /*
     WebMolKit
 
-    (c) 2010-2017 Molecular Materials Informatics, Inc.
+    (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
     
@@ -17,6 +17,8 @@
 ///<reference path='../gfx/DrawMolecule.ts'/>
 ///<reference path='../data/Molecule.ts'/>
 ///<reference path='EmbedChemistry.ts'/>
+
+namespace WebMolKit /* BOF */ {
 
 /*
 	Embedded molecule: displays a single molecular structure, with a variety of available rendering options. The structure display is static
@@ -44,7 +46,7 @@
         (parameters to control interactivity?)
 */
 
-class EmbedMolecule extends EmbedChemistry
+export class EmbedMolecule extends EmbedChemistry
 {
 	private mol:Molecule = null;
 	private name = '';
@@ -204,3 +206,4 @@ class EmbedMolecule extends EmbedChemistry
 
 }
 
+/* EOF */ }

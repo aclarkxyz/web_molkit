@@ -1,7 +1,7 @@
 /*
     WebMolKit
 
-    (c) 2010-2017 Molecular Materials Informatics, Inc.
+    (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
     
@@ -23,11 +23,13 @@
 ///<reference path='../gfx/Rendering.ts'/>
 ///<reference path='../gfx/MetaVector.ts'/>
 
+namespace WebMolKit /* BOF */ {
+
 /*
 	Provides the ability to download structured data (molecules, datasheets) in all supported formats.
 */
 
-class Download extends Dialog
+export class Download extends Dialog
 {
 	private btnPrepare:JQuery;
 	private mainArea:JQuery;
@@ -428,3 +430,5 @@ class Download extends Dialog
 		addText(newElement(this.downloadArea, 'a', {'href': url, 'target': '_blank'}), fn);
 	}
 }
+
+/* EOF */ }

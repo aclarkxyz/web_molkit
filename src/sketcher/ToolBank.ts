@@ -1,7 +1,7 @@
 /*
     WebMolKit
 
-    (c) 2010-2017 Molecular Materials Informatics, Inc.
+    (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
     
@@ -11,6 +11,8 @@
 */
 
 ///<reference path='../ui/ButtonBank.ts'/>
+
+namespace WebMolKit /* BOF */ {
 
 /*
 	ToolBank: buttons for the Sketcher main command bank.
@@ -49,7 +51,7 @@ const TOOLS_MAIN:ButtonBankItem[] =
 	{'id': 'elementA', 'text': 'A', 'helpText': 'Pick other element.', 'mnemonic': 'O'}
 ];
 
-class ToolBank extends ButtonBank
+export class ToolBank extends ButtonBank
 {
 	initiallySelected = 'arrow';
 	
@@ -88,3 +90,5 @@ class ToolBank extends ButtonBank
 		return false;
 	}
 }
+
+/* EOF */ }

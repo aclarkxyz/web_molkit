@@ -1,7 +1,7 @@
 /*
     WebMolKit
 
-    (c) 2010-2017 Molecular Materials Informatics, Inc.
+    (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
     
@@ -14,11 +14,13 @@
 ///<reference path='../util/util.ts'/>
 ///<reference path='Tooltip.ts'/>
 
+namespace WebMolKit /* BOF */ {
+
 /*
 	Base class for widgets. Maintains the wrapping <div> element into which everything is rendered.
 */
 
-class Widget
+export class Widget
 {
 	protected tagType = 'div';
 	public content:JQuery = null;
@@ -38,3 +40,5 @@ class Widget
 		addTooltip(this.content, bodyHTML, titleHTML);
 	}
 }
+
+/* EOF */ }

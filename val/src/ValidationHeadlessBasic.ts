@@ -15,11 +15,13 @@
 ///<reference path='../../src/gfx/AxisLabeller.ts'/>
 ///<reference path='Validation.ts'/>
 
+namespace WebMolKit /* BOF */ {
+
 /*
     Headless validation: basic tests - simple things like vector operators and common utilities.
 */
 
-class ValidationHeadlessBasic extends Validation
+export class ValidationHeadlessBasic extends Validation
 {
 	constructor()
 	{
@@ -74,3 +76,5 @@ class ValidationHeadlessBasic extends Validation
 		}
 	}
 }
+
+/* EOF */ }

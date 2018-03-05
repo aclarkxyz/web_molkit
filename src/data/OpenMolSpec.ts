@@ -1,7 +1,7 @@
 /*
     WebMolKit
 
-    (c) 2010-2017 Molecular Materials Informatics, Inc.
+    (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
     
@@ -14,13 +14,15 @@
 ///<reference path='../util/util.ts'/>
 ///<reference path='Molecule.ts'/>
 
+namespace WebMolKit /* BOF */ {
+
 /*
 	Specifications for Open Molecule: when analyzing a structure, append all of the feature observations that apply. These will
 	be used to determine the "level" of compatibility required. The list of possibilities also includes features that are
 	considered invalid, at least for the moment.
 */
 
-enum OpenMolType
+export enum OpenMolType
 {
 	None = 0,
 
@@ -65,7 +67,7 @@ const OPENMOL_INVALID =
 ]
 
 // refers to a segment of the input file, for tracking purposes
-interface OpenMolSource
+export interface OpenMolSource
 {
 	row:number; // 0-based source row
 	col:number; // 0-based source column
@@ -73,7 +75,7 @@ interface OpenMolSource
 }
 
 // describes an "issue" with a molecule which is linked to a level designation
-interface OpenMolNote
+export interface OpenMolNote
 {
 	type:OpenMolType;
 	atoms?:number[]; // atoms implicated
@@ -82,7 +84,7 @@ interface OpenMolNote
 	source?:OpenMolSource[]; // where in the source file, if known
 }
 
-class OpenMolSpec
+export class OpenMolSpec
 {
 	public level = 1.0; // highest level required by any feature
 	public invalid = false; // true if an unsupported feature is used
@@ -126,3 +128,5 @@ class OpenMolSpec
 		if (mol.numBonds >= 1000) this.add(OpenMolType.BondCount1000);
 	}
 }
+
+/* EOF */ }

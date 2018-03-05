@@ -1,7 +1,7 @@
 /*
     WebMolKit
 
-    (c) 2010-2017 Molecular Materials Informatics, Inc.
+    (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
     
@@ -14,6 +14,8 @@
 ///<reference path='../data/DataSheet.ts'/>
 ///<reference path='../data/MoleculeStream.ts'/>
 ///<reference path='Aspect.ts'/>
+
+namespace WebMolKit /* BOF */ {
 
 /*
 	SAR Table: provides scaffold/substituent/molecule equivalence based on fragment placeholders (R-groups).
@@ -46,7 +48,7 @@ interface SARTableEntry
 	substituents:Molecule[];
 }
 
-class SARTable extends Aspect
+export class SARTable extends Aspect
 {
 	public static CODE = 'org.mmi.aspect.SARTable';
 	public static NAME = 'SAR Table';
@@ -388,3 +390,5 @@ class SARTable extends Aspect
 		return [null, null];
 	}
 }
+
+/* EOF */ }

@@ -1,7 +1,7 @@
 /*
     WebMolKit
 
-    (c) 2010-2017 Molecular Materials Informatics, Inc.
+    (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
     
@@ -10,13 +10,15 @@
 	[PKG=webmolkit]
 */
 
+namespace WebMolKit /* BOF */ {
+
 /*
 	Provides fixed constants for dataformats.
 
 	(Note: presence in this file does not imply that they are all implemented yet)
 */
 
-class FormatList
+export class FormatList
 {
 	public static FMT_NATIVE = 'native'; // SketchEl molecule format
 	public static FMT_XMLDS = 'xmlds'; // XML datasheet format
@@ -107,3 +109,5 @@ class FormatList
 		'xlsx':		'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
 	}
 }
+
+/* EOF */ }

@@ -1,7 +1,7 @@
 /*
     WebMolKit
 
-    (c) 2010-2017 Molecular Materials Informatics, Inc.
+    (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
     
@@ -20,6 +20,8 @@
 ///<reference path='../data/DataSheetStream.ts'/>
 ///<reference path='../aspect/Experiment.ts'/>
 ///<reference path='EmbedChemistry.ts'/>
+
+namespace WebMolKit /* BOF */ {
 
 /*
 	Embedded reaction: renders a single reaction Experiment entry (can be multistep). Various formats are acceptable, but only one
@@ -56,7 +58,7 @@ enum EmbedReactionFacet
 	METRICS = 'metrics'
 }
 
-class EmbedReaction extends EmbedChemistry
+export class EmbedReaction extends EmbedChemistry
 {
 	private row = 0;
 	private entry:ExperimentEntry = null;
@@ -605,3 +607,4 @@ class EmbedReaction extends EmbedChemistry
 	}	
 }
 
+/* EOF */ }

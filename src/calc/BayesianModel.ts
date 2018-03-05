@@ -1,7 +1,7 @@
 /*
     WebMolKit
 
-    (c) 2010-2017 Molecular Materials Informatics, Inc.
+    (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
     
@@ -14,6 +14,8 @@
 ///<reference path='../data/MetaMolecule.ts'/>
 ///<reference path='../data/MoleculeStream.ts'/>
 ///<reference path='CircularFingerprints.ts'/>
+
+namespace WebMolKit /* BOF */ {
 
 /*
 	A specialisation of the BayesianModel class, which operates exclusively on Circular (ECFP/FCFP) fingerprints.
@@ -46,7 +48,7 @@
 */
 
 
-class BayesianModel
+export class BayesianModel
 {
 	// incoming hash codes: actual values, and subsumed values are {#active,#total}
 	private numActive = 0;
@@ -720,3 +722,5 @@ class BayesianModel
 		return cover;
 	}
 }
+
+/* EOF */ }

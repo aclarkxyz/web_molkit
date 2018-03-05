@@ -1,7 +1,7 @@
 /*
     WebMolKit
 
-    (c) 2010-2017 Molecular Materials Informatics, Inc.
+    (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
     
@@ -17,11 +17,13 @@
 ///<reference path='../data/Molecule.ts'/>
 ///<reference path='Dialog.ts'/>
 
+namespace WebMolKit /* BOF */ {
+
 /*
 	Given two sketched out molecules, allows the user to map individual atoms interactively. 
 */
 
-class MapReaction extends Dialog
+export class MapReaction extends Dialog
 {
 	btnClear:JQuery;
 	btnSave:JQuery;
@@ -506,3 +508,5 @@ class MapReaction extends Dialog
 		}
 	}
 }
+
+/* EOF */ }

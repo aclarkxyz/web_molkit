@@ -14,11 +14,13 @@
 ///<reference path='../../src/decl/jquery.d.ts'/>
 ///<reference path='Validation.ts'/>
 
+namespace WebMolKit /* BOF */ {
+
 /*
     Validation test execution: runs through all the tests defined in a Validation object, and renders the results into an HTML DOM. 
 */
 
-class WebValExec
+export class WebValExec
 {
 	constructor(private validation:Validation)
 	{
@@ -69,3 +71,5 @@ class WebValExec
 		}
 	}
 }
+
+/* EOF */ }

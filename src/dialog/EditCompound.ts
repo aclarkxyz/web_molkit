@@ -1,7 +1,7 @@
 /*
     WebMolKit
 
-    (c) 2010-2017 Molecular Materials Informatics, Inc.
+    (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
     
@@ -13,12 +13,14 @@
 ///<reference path='Dialog.ts'/>
 ///<reference path='../sketcher/Sketcher.ts'/>
 
+namespace WebMolKit /* BOF */ {
+
 /*
 	Provides a wrapper dialog for the editing of a molecule. The main feature is an instance of molsync.ui.EditMolecule, but it also adds
 	various other widgets.
 */
 
-class EditCompound extends Dialog
+export class EditCompound extends Dialog
 {
 	btnClear:JQuery;
 	btnPaste:JQuery;
@@ -109,3 +111,5 @@ class EditCompound extends Dialog
         document.body.appendChild(this.fakeTextArea);
 	}
 }
+
+/* EOF */ }

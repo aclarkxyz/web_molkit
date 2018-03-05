@@ -1,7 +1,7 @@
 /*
     WebMolKit
 
-    (c) 2010-2017 Molecular Materials Informatics, Inc.
+    (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
     
@@ -12,6 +12,8 @@
 
 ///<reference path='../util/util.ts'/>
 
+namespace WebMolKit /* BOF */ {
+
 /*
 	Determines a series of numeric labels to describe an axis, and makes sure all these labels fit within the given width.
 	The min & max is described in the units of spacing along the axis, i.e. if this is a log scale, the numbers should be
@@ -20,14 +22,14 @@
 	for a Y-axis, typically set the textWidth function to the height of the standard font.
 */
 
-interface AxisLabellerNotch
+export interface AxisLabellerNotch
 {
 	label:string; // what precisely to display (null = just a notch, no label)
 	value:number; // value in the original space
 	pos:number; // axis position of notch, and the centre of the text label
 }
 
-class AxisLabeller
+export class AxisLabeller
 {
 	public notches:AxisLabellerNotch[] = [];
 
@@ -118,3 +120,5 @@ class AxisLabeller
 		return str;
 	}
 }
+
+/* EOF */ }

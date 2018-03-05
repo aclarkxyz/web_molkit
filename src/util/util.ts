@@ -10,13 +10,17 @@
 	[PKG=webmolkit]
 */
 
-//import $ from "JQuery";
-
 ///<reference path='Vec.ts'/>
+
+namespace WebMolKit /* BOF */ {
+
+/*
+	General purpose functions. Note that these are not in the WebMolKit namespace.
+*/
 
 // creates a new element, with a specific parent (raw or jQuery); returns the child node - the raw DOM element, not the
 // jQuery wrapper
-function newElement(parent:any, tag:string, attr?:any):Element
+export function newElement(parent:any, tag:string, attr?:any):Element
 {
 	let el = $(`<${tag}>`);
 	if (attr) el.attr(attr);
@@ -25,7 +29,7 @@ function newElement(parent:any, tag:string, attr?:any):Element
 }
 
 // appends child text to the node
-function addText(parent:any, text:string)
+export function addText(parent:any, text:string)
 {
 	let el:Element = parent instanceof jQuery ? (<JQuery>parent)[0] : <Element>parent;
 	//if (parent instanceof jQuery) el = (<JQuery>parent)[0]; else el = <Element>parent;
@@ -34,19 +38,19 @@ function addText(parent:any, text:string)
 }
 
 // convenience wrapper
-function setVisible(node:any, visible:boolean)
+export function setVisible(node:any, visible:boolean)
 {
 	if (visible) $(node).show(); else $(node).hide();
 }
 
 // convenience function for adding the plural modifier, i.e. "1 thing" vs "N things"
-function plural(count:number):string
+export function plural(count:number):string
 {
 	return count == 1 ? '' : 's';
 }
 
 // turns a number into a floating point representation with a maximum number of significant figures
-function formatDouble(value:number, sigfig:number):string
+export function formatDouble(value:number, sigfig:number):string
 {
 	if (value == null) return '';
 	let str = value.toPrecision(sigfig);
@@ -55,28 +59,28 @@ function formatDouble(value:number, sigfig:number):string
 }
 
 // turns an HTML-style colour (#RRGGBB) into its numeric equivalent (0xRRGGBB), or null if invalid
-function htmlToRGB(col:string):number
+export function htmlToRGB(col:string):number
 {
 	if (col == null || col.charAt(0) != '#' || col.length != 7) return null;
 	return parseInt(col.substring(1), 16);
 }
 
 // converts an integer colour (0xTTRRGGBB) to the HTML style; transparency info is stripped out
-function colourCode(col:number):string
+export function colourCode(col:number):string
 {
 	var hex = (col & 0xFFFFFF).toString(16);
 	while (hex.length < 6) hex = '0' + hex;
 	return '#' + hex;
 }
 // returns the alpha value for a colour, assuming that it is an integer of the 0xTTRRGGBB format
-function colourAlpha(col:number):number
+export function colourAlpha(col:number):number
 {
 	var transp = (col >>> 24) & 0xFF;
 	return transp == 0 ? 1 : transp == 0xFF ? 0 : 1 - (transp * (1.0 / 255));
 }
 // turns a TRGB integer into the style used by the canvas node
 const ONE_OVER_255 = 1.0 / 255;
-function colourCanvas(col:number):string
+export function colourCanvas(col:number):string
 {
 	// simple cases first
 	if (col == 0xFFFFFF) return 'white';
@@ -93,7 +97,7 @@ function colourCanvas(col:number):string
 }
 
 // RGB manipulation: very convenient functions for "smearing" between fractional values
-function blendRGB(fract:number, rgb1:number, rgb2:number, rgb3?:number):number
+export function blendRGB(fract:number, rgb1:number, rgb2:number, rgb3?:number):number
 {
 	fract = Math.max(0, Math.min(1, fract));
 
@@ -154,7 +158,7 @@ function blendRGB(fract:number, rgb1:number, rgb2:number, rgb3?:number):number
 }*/
 
 // goes through all text-node children and splices them together
-function nodeText(node:Node)
+export function nodeText(node:Node)
 {
 	var ret = '';
 	if (!node) return;
@@ -168,22 +172,18 @@ function nodeText(node:Node)
 }
 
 // convenience functions to abstract the unreasonably longwinded closures function
-function isDef(v:any)
+export function isDef(v:any)
 {
 	return !(v === null || typeof v === 'undefined');
 }
-function notDef(v:any)
+export function notDef(v:any)
 {
 	return v === null || typeof v === 'undefined';
 }
-/*function indexOf(obj, arr)
-{
-	return goog.array.indexOf(arr,obj);
-}*/
 
 // given a particular event, picks out the (x,y) coordinates, and offsets them until they are in the space of the given
 // node container, which must be a parent
-function eventCoords(event:JQueryEventObject, container:any):number[]
+export function eventCoords(event:JQueryEventObject, container:any):number[]
 {
 	var parentOffset = $(container).offset(); 
 	var relX = event.pageX - parentOffset.left;
@@ -192,42 +192,42 @@ function eventCoords(event:JQueryEventObject, container:any):number[]
 }
 
 // geometry functions
-function norm_xy(dx:number, dy:number):number
+export function norm_xy(dx:number, dy:number):number
 {
 	return Math.sqrt(dx * dx + dy * dy);
 }
-function norm_xyz(dx:number, dy:number, dz:number):number
+export function norm_xyz(dx:number, dy:number, dz:number):number
 {
 	return Math.sqrt(dx * dx + dy * dy + dz * dz);
 }
-function norm2_xy(dx:number, dy:number):number
+export function norm2_xy(dx:number, dy:number):number
 {
 	return dx * dx + dy * dy;
 }
-function norm2_xyz(dx:number, dy:number, dz:number):number
+export function norm2_xyz(dx:number, dy:number, dz:number):number
 {
 	return dx * dx + dy * dy + dz * dz;
 }
 
 // miscellaneous math
-function sqr(v:number):number
+export function sqr(v:number):number
 {
 	return v * v;
 }
-function invZ(v:number):number {return v == 0 ? 0 : 1.0 / v;}
+export function invZ(v:number):number {return v == 0 ? 0 : 1.0 / v;}
 
 // returns true if the numbers are effectively equal, assuming float/double precision
-function fltEqual(v1:number, v2:number) {return v1 == v2 || Math.abs(v1 - v2) <= 1E-7 * Math.max(v1, v2);}
-function realEqual(v1:number, v2:number) {return v1 == v2 || Math.abs(v1 - v2) <= 1E-14 * Math.max(v1, v2);}
+export function fltEqual(v1:number, v2:number) {return v1 == v2 || Math.abs(v1 - v2) <= 1E-7 * Math.max(v1, v2);}
+export function realEqual(v1:number, v2:number) {return v1 == v2 || Math.abs(v1 - v2) <= 1E-14 * Math.max(v1, v2);}
 
 // angle helpers
-const TWOPI = 2 * Math.PI;
-const INV_TWOPI = 1.0 / TWOPI;
-const DEGRAD = Math.PI / 180;
-const RADDEG = 180 / Math.PI;
+export const TWOPI = 2 * Math.PI;
+export const INV_TWOPI = 1.0 / TWOPI;
+export const DEGRAD = Math.PI / 180;
+export const RADDEG = 180 / Math.PI;
 
 // normalised angle, guaranteed to be -PI <= th < PI
-function angleNorm(th:number):number
+export function angleNorm(th:number):number
 {
 	if (th == -Math.PI) return Math.PI;
 	if (th < -Math.PI) {let mod = Math.ceil((-th - Math.PI) * INV_TWOPI); return th + mod * TWOPI;}
@@ -236,14 +236,14 @@ function angleNorm(th:number):number
 }
 
 // angular difference, guaranteed to be normalised
-function angleDiff(th1:number, th2:number):number
+export function angleDiff(th1:number, th2:number):number
 {
 	let theta = angleNorm(th1) - angleNorm(th2);
 	return theta - (theta > Math.PI ? TWOPI : 0) + (theta <= -Math.PI ? TWOPI : 0);
 }
 
 // angular difference, which is normalised from 0 <= th < 2 * PI 
-function angleDiffPos(th1:number, th2:number):number
+export function angleDiffPos(th1:number, th2:number):number
 {
 	let theta = angleNorm(th1) - angleNorm(th2);
 	return theta + (theta < 0 ? TWOPI : 0);
@@ -251,7 +251,7 @@ function angleDiffPos(th1:number, th2:number):number
 
 // for an array of angles (in radians), sorts them in order; then, rotates the array around as many times as is necessary
 // so that the difference between the first & last angles is >= than the difference between the first & second
-function sortAngles(theta:number[]):number[]
+export function sortAngles(theta:number[]):number[]
 {
 	if (theta == null || theta.length < 2) return theta;
 	theta = theta.slice(0);
@@ -271,7 +271,7 @@ function sortAngles(theta:number[]):number[]
 // angles will be sorted in order, as described by sortAngles(..); note that there is no fancy clustering, so a sequence of 
 // angles which are a bit below the threshold is not guaranteed to be stable; there is also a boundary case which bumps the 
 // sort rotation status slightly out of whack
-function uniqueAngles(theta:number[], threshold:number):number[]
+export function uniqueAngles(theta:number[], threshold:number):number[]
 {
 	theta = sortAngles(theta);
 	for (let n = 1; n < theta.length; n++)
@@ -282,14 +282,14 @@ function uniqueAngles(theta:number[], threshold:number):number[]
 }
 
 // array bounds
-function minArray(a:number[]):number
+export function minArray(a:number[]):number
 {
 	if (a == null || a.length == 0) return 0;
 	var v = a[0];
 	for (var n = 1; n < a.length; n++) v = Math.min(v, a[n]);
 	return v;
 }
-function maxArray(a:number[]):number
+export function maxArray(a:number[]):number
 {
 	if (a == null || a.length == 0) return 0;
 	var v = a[0];
@@ -298,7 +298,7 @@ function maxArray(a:number[]):number
 }
 
 // convenience function: finds a child node by name
-function findNode(parent:Node, name:string):Element
+export function findNode(parent:Node, name:string):Element
 {
 	if (parent == null) return null;
 	var node = parent.firstChild;
@@ -311,7 +311,7 @@ function findNode(parent:Node, name:string):Element
 }
 
 // as above, but returns a list; may be empty
-function findNodes(parent:Node, name:string):Element[]
+export function findNodes(parent:Node, name:string):Element[]
 {
 	if (parent == null) return null;
 	var node = parent.firstChild;
@@ -325,7 +325,7 @@ function findNodes(parent:Node, name:string):Element[]
 }
 
 // creates a rounded rectangle path using splines
-function pathRoundedRect(x1:number, y1:number, x2:number, y2:number, rad:number):Path2D
+export function pathRoundedRect(x1:number, y1:number, x2:number, y2:number, rad:number):Path2D
 {
 	var path = new Path2D();
 	//path.moveTo(x1 + rad, y1);
@@ -343,7 +343,7 @@ function pathRoundedRect(x1:number, y1:number, x2:number, y2:number, rad:number)
 }
 
 // convenience functions
-function drawLine(ctx:CanvasRenderingContext2D, x1:number, y1:number, x2:number, y2:number)
+export function drawLine(ctx:CanvasRenderingContext2D, x1:number, y1:number, x2:number, y2:number)
 {
 	ctx.beginPath();
 	ctx.moveTo(x1, y1);
@@ -352,27 +352,19 @@ function drawLine(ctx:CanvasRenderingContext2D, x1:number, y1:number, x2:number,
 }
 
 // for HTML canvas, approximates the conversion of height to ascent ratio (i.e. pass in ascent * ASCENT_FUDGE to the font height)
-const ASCENT_FUDGE = 1.4;
-function fontSansSerif(ascent:number) {return `${ascent * ASCENT_FUDGE}px sans-serif`;}
+export const ASCENT_FUDGE = 1.4;
+export function fontSansSerif(ascent:number) {return `${ascent * ASCENT_FUDGE}px sans-serif`;}
 
 // returns the density of pixels, i.e. 1 for a regular screen, 2 for retina, etc.
-function pixelDensity():number
+export function pixelDensity():number
 {
     if ('devicePixelRatio' in window && window.devicePixelRatio > 1) return window.devicePixelRatio;
     return 1;
 }
 
-// performs a shallow copy of the object: as long as the values are effectively immutable, this will do the trick
-/*function clone(obj:{[id:string] : any}):any
-{
-	let dup:{[id:string] : any} = {};
-	for (let key in obj) dup[key] = obj[key];
-	return dup;
-}*/
-
 // performs a shallow copy of the object: the top level guarantees new objects, while anything below that may contain
 // duplicate references with potential mutability issues
-function clone<T>(data:T):T
+export function clone<T>(data:T):T
 {
 	if (data == null) return null;
 	if (Array.isArray(data)) return <T>(<any>data).slice(0);
@@ -384,7 +376,7 @@ function clone<T>(data:T):T
 
 // performs a deep clone of any kind of object: goes as deep as it has to to make sure everything is immutable; the parameter
 // should not contain functions or host objects
-function deepClone<T>(data:T):T
+export function deepClone<T>(data:T):T
 {
 	if (data == null) return null;
 	if (typeof data == 'function') return null;
@@ -400,7 +392,7 @@ function deepClone<T>(data:T):T
 }
 
 // HTML-to-escape; gets most of the basics
-function escapeHTML(text:string):string
+export function escapeHTML(text:string):string
 {
 	if (!text) return '';
 	const map:{[id:string] : string} = {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'};
@@ -408,10 +400,10 @@ function escapeHTML(text:string):string
 }
 
 // convenience: make sure a string isn't null
-function orBlank(str:string):string {return str == null ? '' : str;}
+export function orBlank(str:string):string {return str == null ? '' : str;}
 
 // converts a string (which is stored by JavaScript as UCS2) to UTF8, where each character is guaranteed to be 1 byte
-function toUTF8(str:string):string
+export function toUTF8(str:string):string
 {
 	let data:string[] = [], stripe = '';
 	const sz = str.length;
@@ -450,7 +442,7 @@ function toUTF8(str:string):string
 }
 
 // converts a UTF8 string to a regular JavaScript string (which is UCS2-encoded)
-function fromUTF8(str:string):string
+export function fromUTF8(str:string):string
 {
 	let data:string[] = [], stripe = '';
 	const sz = str.length;
@@ -483,8 +475,5 @@ function fromUTF8(str:string):string
 	data.push(stripe);
     return data.join('');
 }
-/*
 
-
-    return str;
-}*/
+/* EOF */ }

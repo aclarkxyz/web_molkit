@@ -1,7 +1,7 @@
 /*
     WebMolKit
 
-    (c) 2010-2017 Molecular Materials Informatics, Inc.
+    (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
     
@@ -10,11 +10,13 @@
 	[PKG=webmolkit]
 */
 
+namespace WebMolKit /* BOF */ {
+
 /*
 	Cookies: handles the caching of recently used molecules, by stashing them in the cookie jar.
 */
 
-class Cookies
+export class Cookies
 {
 	private molecules:Molecule[] = [];
 	
@@ -178,3 +180,5 @@ class Cookies
 		document.cookie = key + '=; expires=Thu, 01 Jan 1970 00:00:00 GMT';
 	}
 }
+
+/* EOF */ }

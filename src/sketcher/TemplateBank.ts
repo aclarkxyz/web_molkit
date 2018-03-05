@@ -1,7 +1,7 @@
 /*
     WebMolKit
 
-    (c) 2010-2017 Molecular Materials Informatics, Inc.
+    (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
     
@@ -20,6 +20,8 @@
 ///<reference path='../rpc/RPC.ts'/>
 ///<reference path='../rpc/Func.ts'/>
 ///<reference path='../sketcher/MoleculeActivity.ts'/>
+
+namespace WebMolKit /* BOF */ {
 
 /*
 	TemplateBank: template list... either the top-level list of template groups, or a single folder full of templates.
@@ -46,7 +48,7 @@ interface TemplateStructs
 	preview:any[];
 }
 
-class TemplateBank extends ButtonBank
+export class TemplateBank extends ButtonBank
 {
 	private static RESOURCE_LIST:string[] = null;
 	private static RESOURCE_DATA:DataSheet[] = null; // templates are derived from these
@@ -298,7 +300,7 @@ class TemplateBank extends ButtonBank
 	}
 }
 
-class FusionBank extends ButtonBank
+export class FusionBank extends ButtonBank
 {
 	constructor(protected owner:any)
 	{
@@ -328,3 +330,5 @@ class FusionBank extends ButtonBank
 		this.owner.clearPermutations();
 	}
 }
+
+/* EOF */ }

@@ -1,7 +1,7 @@
 /*
     WebMolKit
 
-    (c) 2010-2017 Molecular Materials Informatics, Inc.
+    (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
     
@@ -15,6 +15,8 @@
 ///<reference path='../gfx/MetaVector.ts'/>
 ///<reference path='../gfx/Rendering.ts'/>
 
+namespace WebMolKit /* BOF */ {
+	
 /*
 	Abstract base class for all "Aspects".
 
@@ -35,20 +37,20 @@
 	prevent these conflicts, but they should not be relied on.
 */
 
-interface AspectTextRendering
+export interface AspectTextRendering
 {
 	name:string;
 	descr:string;
 	text:string;
 	type:number; // one of Aspect.TEXT_* 
 }
-interface AspectGraphicRendering
+export interface AspectGraphicRendering
 {
 	name:string;
 	metavec:MetaVector;
 }
 
-abstract class Aspect
+export abstract class Aspect
 {
 	public ds:DataSheet;
 	protected allowModify = true; // if set to false, aspect is not allowed to modify any part of the header
@@ -115,3 +117,4 @@ abstract class Aspect
 	public produceHeaderRendering(idx:number):AspectTextRendering {return null;}
 }
 
+/* EOF */ }

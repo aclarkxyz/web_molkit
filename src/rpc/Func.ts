@@ -1,7 +1,7 @@
 /*
     WebMolKit
 
-    (c) 2010-2017 Molecular Materials Informatics, Inc.
+    (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
     
@@ -12,11 +12,13 @@
 
 ///<reference path='RPC.ts'/>
 
+namespace WebMolKit /* BOF */ {
+
 /*
 	Provides prefabricated RPC functions for the 'Func' category.
 */
 
-class Func
+export class Func
 {
 	public static renderStructure(input:Object, callback:(result:any, error:ErrorRPC) => void):void
 	{
@@ -67,3 +69,5 @@ class Func
 		new RPC('func.getActionIcons', input, callback).invoke();
 	}
 }
+
+/* EOF */ }

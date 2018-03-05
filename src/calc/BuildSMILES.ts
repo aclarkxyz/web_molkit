@@ -1,7 +1,7 @@
 /*
     WebMolKit
 
-    (c) 2010-2017 Molecular Materials Informatics, Inc.
+    (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
     
@@ -13,6 +13,8 @@
 ///<reference path='../util/util.ts'/>
 ///<reference path='../util/Vec.ts'/>
 ///<reference path='../data/Molecule.ts'/>
+
+namespace WebMolKit /* BOF */ {
 
 /*
 	Turns a molecule into linear notation, following some of the SMILES string patterns. The output will be recognisable as a
@@ -27,7 +29,7 @@
 		- no query to SMARTS translation
 */
 
-class BuildSMILES
+export class BuildSMILES
 {
 	private seq:number[]; // the walk-order atom sequence
 	private link:number[][]; // a list of the linking-codes between nonsequential atoms
@@ -211,3 +213,5 @@ class BuildSMILES
 	}
 	
 }
+
+/* EOF */ }

@@ -13,11 +13,13 @@
 ///<reference path='../util/util.ts'/>
 ///<reference path='../util/Vec.ts'/>
 
+namespace WebMolKit /* BOF */ {
+
 /*
 	Geometry utilities, which are typically graphics related.
 */
 
-class GeomUtil
+export class GeomUtil
 {
 	// static: returns true if the point (x,y) is inside the given polygon (px,py)
 	public static pointInPolygon(x:number, y:number, px:number[], py:number[]):boolean
@@ -265,7 +267,7 @@ class GeomUtil
 }
 
 // implementation of the "Quick Hull" algorithm
-class QuickHull
+export class QuickHull
 {
 	private hsz = 0;
 
@@ -380,7 +382,7 @@ class QuickHull
 	Pos, Size, Box, Oval, Line: convenient trivial classes which save repetition
 */
 
-class Pos
+export class Pos
 {
 	public x:number;
 	public y:number;
@@ -410,7 +412,7 @@ class Pos
 	public toString():string {return '[' + this.x + ',' + this.y + ']';}
 }
 
-class Size
+export class Size
 {
 	public w:number;
 	public h:number;
@@ -442,7 +444,7 @@ class Size
 	public toString():string {return '[' + this.w + ',' + this.h + ']';}
 }
 
-class Box
+export class Box
 {
 	public x:number;
 	public y:number;
@@ -513,7 +515,7 @@ class Box
 	public toString():string {return '[' + this.x + ',' + this.y + ';' + this.w + ',' + this.h + ']';}	
 }
 
-class Oval
+export class Oval
 {
 	public cx:number;
 	public cy:number;
@@ -566,7 +568,7 @@ class Oval
 	public toString():string {return '[' + this.cx + ',' + this.cy + ';' + this.rw + ',' + this.rh + ']';}	
 }
 
-class Line
+export class Line
 {
 	public x1:number;
 	public y1:number;
@@ -618,3 +620,5 @@ class Line
 	
 	public toString():string {return '[' + this.x1 + ',' + this.y1 + ';' + this.x2 + ',' + this.y2 + ']';}	
 }
+
+/* EOF */ }

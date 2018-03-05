@@ -1,7 +1,7 @@
 /*
     WebMolKit
 
-    (c) 2010-2017 Molecular Materials Informatics, Inc.
+    (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
     
@@ -14,6 +14,8 @@
 ///<reference path='ViewStructure.ts'/>
 ///<reference path='Tooltip.ts'/>
 ///<reference path='../rpc/Search.ts'/>
+
+namespace WebMolKit /* BOF */ {
 
 /*
 	SearchReactions: handles the process of sending reaction search requests and rendering the results.
@@ -31,7 +33,7 @@ interface ResultSearchReaction
 	viewRxn?:ViewStructure;
 }
 
-class SearchReactions extends Widget
+export class SearchReactions extends Widget
 {
 	public static TYPE_COMPONENT = 'component';
 	public static TYPE_TRANSFORM = 'transform';
@@ -230,6 +232,4 @@ class SearchReactions extends Widget
 	}
 }
 
-
-
-
+/* EOF */ }

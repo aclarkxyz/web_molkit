@@ -1,7 +1,7 @@
 /*
     WebMolKit
 
-    (c) 2010-2017 Molecular Materials Informatics, Inc.
+    (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
     
@@ -19,6 +19,8 @@
 ///<reference path='../data/DataSheet.ts'/>
 ///<reference path='../data/DataSheetStream.ts'/>
 ///<reference path='EmbedChemistry.ts'/>
+
+namespace WebMolKit /* BOF */ {
 
 /*
 	Embedded collection: obtains a datasheet representation and displays it as a group of molecules, primitive datatypes, and/or higher
@@ -50,7 +52,7 @@ interface EmbedCollectionColumn
 	idx:number; // primitive: column#; aspect: text/graphic rendering # 
 }
 
-class EmbedCollection extends EmbedChemistry
+export class EmbedCollection extends EmbedChemistry
 {
 	private ds:DataSheet = null;
 	private failmsg = '';
@@ -294,3 +296,4 @@ class EmbedCollection extends EmbedChemistry
 	}
 }
 
+/* EOF */ }

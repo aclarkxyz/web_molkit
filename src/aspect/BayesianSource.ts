@@ -1,7 +1,7 @@
 /*
     WebMolKit
 
-    (c) 2010-2017 Molecular Materials Informatics, Inc.
+    (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
     
@@ -15,12 +15,14 @@
 ///<reference path='../data/MoleculeStream.ts'/>
 ///<reference path='Aspect.ts'/>
 
+namespace WebMolKit /* BOF */ {
+
 /*
 	BayesianSource: tracks some number of numeric columns which can be used to create Bayesian models. Keeps track of various pre-processing
 	requirements (e.g. threshold), parameters (e.g. folding) and metadata (e.g. description).
 */
 
-class BayesianSourceModel
+export class BayesianSourceModel
 {
  	public colNameMolecule = ''; // where to grab the molecules from
 	public colNameValue = ''; // name of column with numeric source content (integer/real/boolean)
@@ -34,7 +36,7 @@ class BayesianSourceModel
 	public noteComment = ''; // totally optional, no default
 }
 
-class BayesianSource extends Aspect
+export class BayesianSource extends Aspect
 {
 	public static CODE = 'org.mmi.aspect.BayesianSource';
 	public static NAME = 'Bayesian Source';
@@ -137,3 +139,5 @@ class BayesianSource extends Aspect
 
 	public plainHeading():string {return BayesianSource.NAME;}
 }
+
+/* EOF */ }

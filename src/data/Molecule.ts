@@ -1,7 +1,7 @@
 /*
     WebMolKit
 
-    (c) 2010-2017 Molecular Materials Informatics, Inc.
+    (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
     
@@ -14,6 +14,8 @@
 ///<reference path='Chemistry.ts'/>
 ///<reference path='../util/Vec.ts'/>
 ///<reference path='../util/Geom.ts'/>
+
+namespace WebMolKit /* BOF */ {
 
 /*
 	A dynamic representation of a molecule, which is analogous to the com.mmi.core.mol.Molecule class.
@@ -47,7 +49,7 @@ class Bond
 	transient:string[];
 }
 
-class Molecule
+export class Molecule
 {
 	private atoms:Atom[] = [];
 	private bonds:Bond[] = [];
@@ -793,3 +795,4 @@ class Molecule
 	}	
 }
 
+/* EOF */ }

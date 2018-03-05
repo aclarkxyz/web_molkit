@@ -1,7 +1,7 @@
 /*
     WebMolKit
 
-    (c) 2010-2017 Molecular Materials Informatics, Inc.
+    (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
     
@@ -14,11 +14,13 @@
 ///<reference path='CoordUtil.ts'/>
 ///<reference path='../util/util.ts'/>
 
+namespace WebMolKit /* BOF */ {
+
 /*
 	SketchUtil: static methods for calculating properties of molecules, typically of the geometric variety.
 */
 
-interface GuidelineSprout
+export interface GuidelineSprout
 {
 	atom:number; // source atom (0 if free-drawing)
 	orders:number[]; // applicable bond orders
@@ -30,7 +32,7 @@ interface GuidelineSprout
 	destY?:number[];
 }
 
-enum Geometry
+export enum Geometry
 {
 	Linear = 0,
 	Bent,
@@ -44,7 +46,7 @@ enum Geometry
 	Octa2
 }
 
-class SketchUtil
+export class SketchUtil
 {
 	public static GEOM_ANGLES =
 	[ // (these match the Geometry* constants)
@@ -1033,3 +1035,5 @@ class SketchUtil
 		return sprouts;
 	}
 }
+
+/* EOF */ }

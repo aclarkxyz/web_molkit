@@ -1,7 +1,7 @@
 /*
     WebMolKit
 
-    (c) 2010-2017 Molecular Materials Informatics, Inc.
+    (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
     
@@ -16,11 +16,13 @@
 ///<reference path='MetaMolecule.ts'/>
 ///<reference path='MolUtil.ts'/>
 
+namespace WebMolKit /* BOF */ {
+
 /*
 	Calculation of the stereochemical properties of a molecule, such as R/S and E/Z isomer labels.
 */
 
-class Stereochemistry
+export class Stereochemistry
 {
 	private mol:Molecule;
 
@@ -800,3 +802,5 @@ class Stereochemistry
 		return ret;
 	}
 }
+
+/* EOF */ }

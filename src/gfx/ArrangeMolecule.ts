@@ -1,7 +1,7 @@
 /*
     WebMolKit
 
-    (c) 2010-2017 Molecular Materials Informatics, Inc.
+    (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
     
@@ -18,13 +18,15 @@
 ///<reference path='ArrangeMeasurement.ts'/>
 ///<reference path='Rendering.ts'/>
 
+namespace WebMolKit /* BOF */ {
+
 /*
 	The algorithm for examining the contents of a molecule representation, and converting this into graphics primitives
 	which are arranged on some virtual canvas, according to layout metrics. Most of the hard work of displaying a
 	molecular structure is done within this class.
 */
 
-interface APoint
+export interface APoint
 {
 	anum:number; // corresponds to molecule atom index
 	text:string; // the primary label, or null if invisible
@@ -34,7 +36,7 @@ interface APoint
 	oval:Oval;
 }
 
-enum BLineType
+export enum BLineType
 {
 	Normal = 1, // a line segment; may be single bond, part of a multiple bond, or dissected bond
 	Inclined, // an up-wedge bond
@@ -47,7 +49,7 @@ enum BLineType
 	IncQuadruple // inclined destination, order=4
 }
 
-interface BLine
+export interface BLine
 {
 	bnum:number; // molecule bond index
 	bfr:number;
@@ -59,7 +61,7 @@ interface BLine
 	col:number;
 }
 
-interface SpaceFiller
+export interface SpaceFiller
 {
 	anum:number; // origin, if any
 	bnum:number;
@@ -68,7 +70,7 @@ interface SpaceFiller
 	py:number[];
 }
 
-class ArrangeMolecule
+export class ArrangeMolecule
 {
 	private scale:number; // extracted from the measurement instance: useful to note when it changes
 
@@ -1720,3 +1722,5 @@ class ArrangeMolecule
 		}
 	}
 }
+
+/* EOF */ }

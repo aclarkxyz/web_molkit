@@ -1,7 +1,7 @@
 /*
     WebMolKit
 
-    (c) 2010-2017 Molecular Materials Informatics, Inc.
+    (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
     
@@ -10,7 +10,9 @@
 	[PKG=webmolkit]
 */
 
-class Chemistry
+namespace WebMolKit /* BOF */ {
+
+export class Chemistry
 {
     // NOTE: the value of ELEMENTS.length is the number of elements supported by MMTk; all atom number indices should be between
     // 1 and this range, or 0 to represent an entity which is not a single specific element
@@ -262,3 +264,5 @@ class Chemistry
 	public static ELEMENT_Rg = 111;
 	public static ELEMENT_Cn = 112;
 }
+
+/* EOF */ }

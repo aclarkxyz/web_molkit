@@ -1,7 +1,7 @@
 /*
     WebMolKit
 
-    (c) 2010-2017 Molecular Materials Informatics, Inc.
+    (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
     
@@ -18,6 +18,8 @@
 ///<reference path='../data/Molecule.ts'/>
 ///<reference path='../rpc/Func.ts'/>
 
+namespace WebMolKit /* BOF */ {
+
 /*
 	ViewStructure: a middleweight widget that renders a 2D structure non-interactively.
 
@@ -27,7 +29,7 @@
 	will display that content.
 */
 
-class ViewStructure extends Widget
+export class ViewStructure extends Widget
 {
 	canvas:HTMLCanvasElement;
 	metavec:any;
@@ -226,3 +228,4 @@ class ViewStructure extends Widget
 	}	
 }
 
+/* EOF */ }

@@ -12,18 +12,20 @@
 
 ///<reference path='../../src/util/util.ts'/>
 
+namespace WebMolKit /* BOF */ {
+
 /*
     Storage class for a sequence of tests. Use pattern: inherit the class, and add each of the tests (callback functions) in the constructor; hand over the 
     instance to an execution environment that calls each of them in turn.
 */
 
-interface ValidationTest
+export interface ValidationTest
 {
     title:string;
     func:() => void;
 }
 
-class Validation
+export class Validation
 {
     // validation tests can use this to store situational data, especially when subsequent tests re-use data from previous tests
     public rec:{[id:string] : any} = {};
@@ -121,3 +123,5 @@ class Validation
     private recentError:string; // what went wrong, or null if no information
     private recentTimeTaken:number; // in seconds
 }
+
+/* EOF */ }

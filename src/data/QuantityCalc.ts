@@ -1,7 +1,7 @@
 /*
     WebMolKit
 
-    (c) 2010-2017 Molecular Materials Informatics, Inc.
+    (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
     
@@ -14,12 +14,14 @@
 ///<reference path='../aspect/Experiment.ts'/>
 ///<reference path='../util/util.ts'/>
 
+namespace WebMolKit /* BOF */ {
+
 /*
 	Quantity interconversions: for an Experiment entry, figure out all of the real-and-converted quantities, and
 	mark them as such for convenient recall.
 */
 
-class QuantityComp
+export class QuantityComp
 {
 	public role = 0;
 	public molw = 0;
@@ -43,7 +45,7 @@ class QuantityComp
 	}
 }
 
-class GreenMetrics
+export class GreenMetrics
 {
 	public step = 0; // reaction step
 	public idx = 0; // index into the overall quantity list
@@ -57,7 +59,7 @@ class GreenMetrics
 	public isBlank = false; // set to true if there's no content (blank entries can still be useful as placeholders)
 }
 
-class QuantityCalc
+export class QuantityCalc
 {
 	public static UNSPECIFIED = -1;
 	
@@ -804,3 +806,5 @@ class QuantityCalc
 		return ratio >= 0.99 && ratio <= 1.01;
 	}
 }
+
+/* EOF */ }

@@ -1,7 +1,7 @@
 /*
     WebMolKit
 
-    (c) 2010-2017 Molecular Materials Informatics, Inc.
+    (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
     
@@ -12,12 +12,14 @@
 
 ///<reference path='../gfx/FontData.ts'/>
 
+namespace WebMolKit /* BOF */ {
+
 /*
 	Interface for providing information about the device onto which a molecule is to be drawn, without it needing to
 	know what the device actually is.
 */
 
-interface ArrangeMeasurement
+export interface ArrangeMeasurement
 {
     // conversion between angstrom units of molecules, and device units
 	scale():number;
@@ -34,7 +36,7 @@ interface ArrangeMeasurement
 }
 
 // a suitable default which is useful for creating offline renderings
-class OutlineMeasurement implements ArrangeMeasurement
+export class OutlineMeasurement implements ArrangeMeasurement
 {
     private invScale:number;
 
@@ -55,3 +57,5 @@ class OutlineMeasurement implements ArrangeMeasurement
     // returns an array of 3 numbers: [ascent, descent, width]
 	public measureText(str:string, fontSize:number):number[] {return FontData.main.measureText(str, fontSize);}
 }
+
+/* EOF */ }

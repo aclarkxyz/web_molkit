@@ -1,7 +1,7 @@
 /*
     WebMolKit
 
-    (c) 2010-2017 Molecular Materials Informatics, Inc.
+    (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
     
@@ -14,6 +14,8 @@
 ///<reference path='../util/util.ts'/>
 ///<reference path='DataSheet.ts'/>
 
+namespace WebMolKit /* BOF */ {
+
 /*
 	Serialisation and deserialisation utilities for the DataSheet object.
 
@@ -21,7 +23,7 @@
 	between the server when a JSON-formatted datasheet is required.
 */
 
-class DataSheetStream
+export class DataSheetStream
 {
 	// static method: reads in a string that is presumed to XML, and converts it to a datasheet, which is returned; returns null if
 	// something went wrong
@@ -178,3 +180,5 @@ class DataSheetStream
 		return new XMLSerializer().serializeToString(xml.documentElement);		
 	};
 }
+
+/* EOF */ }

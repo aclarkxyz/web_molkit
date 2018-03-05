@@ -13,8 +13,9 @@
 </div>
 
 <script>
+	let wmk = WebMolKit;
 	var url = window.location.href.substring(0, window.location.href.lastIndexOf('/'));
-	initWebMolKit(url + '../../../res');
+	wmk.initWebMolKit(url + '../../../res');
 
 	// setup drop events
 	document.addEventListener('dragover', (e) =>
@@ -48,7 +49,7 @@
 		{
 			ul.append('<li>molecule: atoms=' + mol.numAtoms + ', bonds=' + mol.numBonds + '</li>');
 			let para = $('<p></p>').appendTo(ul);
-			new EmbedMolecule(mol.toString(), {}).render(para);
+			new wmk.EmbedMolecule(mol.toString(), {}).render(para);
 		}
 		let renderDataSheet = (ul, ds) =>
 		{
@@ -72,12 +73,12 @@
 				para.html(str);
 			}
 
-			let mol = MoleculeStream.readUnknown(str);
+			let mol = wmk.MoleculeStream.readUnknown(str);
 			if (mol) renderMolecule(ul, mol);
 
 			try
 			{
-				let ds = DataSheetStream.readXML(str);
+				let ds = wmk.DataSheetStream.readXML(str);
 				if (ds != null) renderDataSheet(ul, ds);
 			}
 			catch (e) {}

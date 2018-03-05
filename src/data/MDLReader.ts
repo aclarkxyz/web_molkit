@@ -1,7 +1,7 @@
 /*
     WebMolKit
 
-    (c) 2010-2017 Molecular Materials Informatics, Inc.
+    (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
     
@@ -15,6 +15,8 @@
 ///<reference path='../data/CoordUtil.ts'/>
 ///<reference path='OpenMolSpec.ts'/>
 
+namespace WebMolKit /* BOF */ {
+
 /*
 	MDL Molfile reader: a somewhat flexible input parser that can turn V2000 and V3000 Molfiles into the internal molecule
 	representation. The molfile format has several official variants, and a much larger number of mutant strains that
@@ -25,7 +27,7 @@
 	but one does one's best to deal with it.
 */
 
-class MDLMOLReader
+export class MDLMOLReader
 {
 	// options
 	public parseHeader = true; // if on, the first 3 lines are the pre-ctab header
@@ -449,7 +451,7 @@ class MDLMOLReader
 	}
 }
 
-class MDLSDFReader
+export class MDLSDFReader
 {
 	public ds = new DataSheet();
 	public upcastColumns = true; // if on, tries to decide on column types based on their data values; otherwise leaves as strings
@@ -606,3 +608,5 @@ class MDLSDFReader
     	}
     }	
 }
+
+/* EOF */ }

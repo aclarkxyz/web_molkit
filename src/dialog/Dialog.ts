@@ -1,7 +1,7 @@
 /*
     WebMolKit
 
-    (c) 2010-2017 Molecular Materials Informatics, Inc.
+    (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
     
@@ -14,6 +14,8 @@
 ///<reference path='../util/util.ts'/>
 ///<reference path='../util/Theme.ts'/>
 
+namespace WebMolKit /* BOF */ {
+
 /*
 	Dialog: base class for popup dialogs.
 */
@@ -25,7 +27,7 @@ const CSS_DIALOG = `
     }
 `;
 
-class Dialog
+export class Dialog
 {
     // configuration parameters to modify before opening
     public minPortionWidth = 80; // percentage width of page to occupy
@@ -153,3 +155,5 @@ class Dialog
         this.panelBoundary.css('left', (0.5 * (docW - dlgW)) + 'px');
     }
 }
+
+/* EOF */ }

@@ -1,7 +1,7 @@
 /*
     WebMolKit
 
-    (c) 2010-2017 Molecular Materials Informatics, Inc.
+    (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
     
@@ -11,6 +11,8 @@
 */
 
 ///<reference path='../data/Molecule.ts'/>
+
+namespace WebMolKit /* BOF */ {
 
 /*
 	Circular fingerprints: for generating ECFP-2/4/6 and FCFP-2/4/6 fingerprints. These are described by:
@@ -50,14 +52,14 @@ function feed_crc(crc:number, byte:number):number
 }
 function end_crc(crc:number):number {return crc ^ BOOT_CRC}
 
-interface CircularFP
+export interface CircularFP
 {
 	hashCode:number;
 	iteration:number;
 	atoms:number[];
 }
 
-class CircularFingerprints
+export class CircularFingerprints
 {
 	public static CLASS_ECFP0 = 0;
 	public static CLASS_ECFP2 = 1;
@@ -329,3 +331,5 @@ class CircularFingerprints
 		this.fplist[hit] = newFP;
 	}
 }
+
+/* EOF */ }

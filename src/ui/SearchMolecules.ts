@@ -1,7 +1,7 @@
 /*
     WebMolKit
 
-    (c) 2010-2017 Molecular Materials Informatics, Inc.
+    (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
     
@@ -14,6 +14,8 @@
 ///<reference path='Widget.ts'/>
 ///<reference path='ViewStructure.ts'/>
 ///<reference path='Tooltip.ts'/>
+
+namespace WebMolKit /* BOF */ {
 
 /*
 	SearchMolecules: handles the process of sending molecule search requests to the server, and rendering
@@ -46,7 +48,7 @@ interface ResultSearchMolecule
 	td?:JQuery;
 }
 
-class SearchMolecules extends Widget
+export class SearchMolecules extends Widget
 {
 	public static TYPE_EXACT = 'exact';
 	public static TYPE_SUBSTRUCTURE = 'substructure';
@@ -248,6 +250,4 @@ class SearchMolecules extends Widget
 	}
 }
 
-
-
-
+/* EOF */ }

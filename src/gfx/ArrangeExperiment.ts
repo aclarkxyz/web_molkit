@@ -1,7 +1,7 @@
 /*
     WebMolKit
 
-    (c) 2010-2017 Molecular Materials Informatics, Inc.
+    (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
     
@@ -19,6 +19,8 @@
 ///<reference path='ArrangeMeasurement.ts'/>
 ///<reference path='Rendering.ts'/>
 
+namespace WebMolKit /* BOF */ {
+
 /*
 	Performs the layout of an experiment, which is a reaction that may be multistep, and contains a variety of
 	optional annotations. The flow may be arranged from left-to-right or some combination of horizontal and vertical.
@@ -30,7 +32,7 @@
 	the layout.
 */
 
-class ArrangeComponent
+export class ArrangeComponent
 {
 	public type:number; // one of COMP_*
 	public srcIdx:number; // index in underlying reactionsheet
@@ -68,7 +70,7 @@ class ArrangeComponent
 	}
 }
 
-class ArrangeExperiment
+export class ArrangeExperiment
 {
 	public scale:number;
 	public width = 0;
@@ -671,3 +673,5 @@ class ArrangeExperiment
     	}
     }
 }
+
+/* EOF */ }

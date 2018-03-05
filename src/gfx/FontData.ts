@@ -1,7 +1,7 @@
 /*
     WebMolKit
 
-    (c) 2010-2017 Molecular Materials Informatics, Inc.
+    (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
     
@@ -12,11 +12,13 @@
 
 ///<reference path='../util/Geom.ts'/>
 
+namespace WebMolKit /* BOF */ {
+
 /*
 	FontData: stores information about the general font, sufficient to recreate and layout every glyph.
 */
 
-class FontData
+export class FontData
 {
 	public static main = new FontData();
 	
@@ -345,3 +347,5 @@ class FontData
 	public getOutlineX(idx:number):number[] {return this.OUTLINE_X[idx].slice(0);}
 	public getOutlineY(idx:number):number[] {return this.OUTLINE_Y[idx].slice(0);}
 }
+
+/* EOF */ }

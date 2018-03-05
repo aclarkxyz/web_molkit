@@ -1,7 +1,7 @@
 /*
     WebMolKit
 
-    (c) 2010-2017 Molecular Materials Informatics, Inc.
+    (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
     
@@ -13,6 +13,8 @@
 ///<reference path='../rpc/Func.ts'/>
 ///<reference path='../gfx/MetaVector.ts'/>
 ///<reference path='Widget.ts'/>
+
+namespace WebMolKit /* BOF */ {
 
 /*
 	RowView: a heavyweight widget designed to show a collection of datasheet rows, which can be manipulated fairly easily.
@@ -31,7 +33,7 @@ interface RowViewEntry
 	watermark?:number;
 }
 
-class RowView extends Widget
+export class RowView extends Widget
 {
 	entries:RowViewEntry[] = null;
 	watermark = 0;
@@ -227,6 +229,4 @@ class RowView extends Widget
 	}
 }
 
-
-
-
+/* EOF */ }

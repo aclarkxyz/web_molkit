@@ -14,10 +14,12 @@
 ///<reference path='../rpc/RPC.ts'/>
 ///<reference path='util.ts'/>
 
+namespace WebMolKit /* BOF */ {
+
 // public theme definition: the values for these colours can be customised; they will be converted into CSS as soon as the initialisation
 // function is called (see below); the general idea is a tetrachrome: most content is monochrome (black text on white background by default),
 // with interesting content marked in the "lowlight" colour (turquoise), and active content in "highlight" (green)
-class Theme
+export class Theme
 {
 	// these are open to modification
 	public static foreground = 0x000000;
@@ -47,7 +49,7 @@ class Theme
 }
 
 // to be called as soon as possible from within any environment that uses WebMolKit functionality
-function initWebMolKit(resourcePath:string):void
+export function initWebMolKit(resourcePath:string):void
 {
 	RPC.RESOURCE_URL = resourcePath;
 
@@ -61,10 +63,10 @@ function initWebMolKit(resourcePath:string):void
 */
 
 var cssTagsInstalled = new Set<String>();
-function hasInlineCSS(tag:string):boolean {return cssTagsInstalled.has(tag);}
+export function hasInlineCSS(tag:string):boolean {return cssTagsInstalled.has(tag);}
 
 // makes sure a block of CSS is installed, returning true if it was added, false if it was already there
-function installInlineCSS(tag:string, css:string):boolean
+export function installInlineCSS(tag:string, css:string):boolean
 {
 	if (cssTagsInstalled.has(tag)) return false;
 
@@ -293,3 +295,5 @@ function composeMainCSS():string
 		}
 	`;
 }
+
+/* EOF */ }

@@ -1,7 +1,7 @@
 /*
     WebMolKit
 
-    (c) 2010-2017 Molecular Materials Informatics, Inc.
+    (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
     
@@ -12,6 +12,8 @@
 
 ///<reference path='Molecule.ts'/>
 ///<reference path='Stereochemistry.ts'/>
+
+namespace WebMolKit /* BOF */ {
 
 /*
 	A "meta-molecule" is a container for a molecule which stores derived information about it. This is a compensation for the
@@ -35,7 +37,7 @@
 */
 
 
-class MetaMolecule
+export class MetaMolecule
 {
 	public atomArom:boolean[] = null;
 	public bondArom:boolean[] = null;
@@ -482,3 +484,5 @@ class MetaMolecule
 		}
 	}
 }
+
+/* EOF */ }

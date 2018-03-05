@@ -1,7 +1,7 @@
 /*
     WebMolKit
 
-    (c) 2010-2017 Molecular Materials Informatics, Inc.
+    (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
     
@@ -11,6 +11,8 @@
 */
 
 ///<reference path='Widget.ts'/>
+
+namespace WebMolKit /* BOF */ {
 
 /*
 	OptionList: a replacement for the ghetto native HTML radio buttons. Can be used in either horizontal or vertical mode. Rendering
@@ -27,7 +29,7 @@
 		.auxCell: vertical only; a list of <td> DOM elements for optional associated content
 */
 
-class OptionList extends Widget
+export class OptionList extends Widget
 {
 	public selidx = 0;
 	public buttonDiv:any[] = [];
@@ -212,3 +214,5 @@ class OptionList extends Widget
 		`;
 	}
 }
+
+/* EOF */ }

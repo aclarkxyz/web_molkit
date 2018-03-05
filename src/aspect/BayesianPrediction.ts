@@ -1,7 +1,7 @@
 /*
     WebMolKit
 
-    (c) 2010-2017 Molecular Materials Informatics, Inc.
+    (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
     
@@ -15,12 +15,14 @@
 ///<reference path='../data/MoleculeStream.ts'/>
 ///<reference path='Aspect.ts'/>
 
+namespace WebMolKit /* BOF */ {
+
 /*
 	Bayesian prediction: records some number of outcomes from Bayesian models, noting the columns that hold the predictions themselves and
 	keeping some metadata about each.
 */
 
-class BayesianPredictionModel
+export class BayesianPredictionModel
 {
 	public colMolecule:string;
 	public colRaw:string;
@@ -34,7 +36,7 @@ class BayesianPredictionModel
 	public isOffTarget:boolean;
 }
 
-class BayesianPredictionOutcome
+export class BayesianPredictionOutcome
 {
 	public raw:number;
 	public scaled:number;
@@ -43,7 +45,7 @@ class BayesianPredictionOutcome
 	public atoms:number[];
 }
 
-class BayesianPrediction extends Aspect
+export class BayesianPrediction extends Aspect
 {
 	public static CODE = 'org.mmi.aspect.BayesianPrediction';
 	public static NAME = 'Bayesian Prediction';
@@ -183,3 +185,5 @@ class BayesianPrediction extends Aspect
 
 	public plainHeading():string {return BayesianSource.NAME;}
 }
+
+/* EOF */ }

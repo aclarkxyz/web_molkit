@@ -1,7 +1,7 @@
 /*
     WebMolKit
 
-    (c) 2010-2017 Molecular Materials Informatics, Inc.
+    (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
     
@@ -12,6 +12,8 @@
 
 ///<reference path='Molecule.ts'/>
 ///<reference path='../util/util.ts'/>
+
+namespace WebMolKit /* BOF */ {
 
 /* 
     Representation of a unidirectional graph which has simple node labels, and no edge labels. Connections are stored in neighbour
@@ -27,7 +29,7 @@
 	such as caching.
 */
 
-class Graph
+export class Graph
 {
     private nbrs:number[][] = []; // neighbour-list, one per node
 	private indices:number[] = null; // optional integer value for each node
@@ -518,4 +520,4 @@ class Graph
 	*/
 }
 
-
+/* EOF */ }

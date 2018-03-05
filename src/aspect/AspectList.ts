@@ -1,7 +1,7 @@
 /*
     WebMolKit
 
-    (c) 2010-2017 Molecular Materials Informatics, Inc.
+    (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
     
@@ -18,6 +18,8 @@
 ///<reference path='BayesianSource.ts'/>
 ///<reference path='BayesianPrediction.ts'/>
 
+namespace WebMolKit /* BOF */ {
+	
 /*
 	The AspectList class is used as a way to fetch all of the recognised aspects that are installed within a given datasheet, without
 	having to manually invoke each of the classes individually. Each aspect that is implemented within the toolkit needs to be added
@@ -26,7 +28,7 @@
 
 let SUPPORTED_ASPECTS:{[id:string] : string} = {};
 
-class AspectList
+export class AspectList
 {
 	constructor(public ds:DataSheet)
 	{
@@ -79,3 +81,5 @@ class AspectList
 		return aspects;
 	}
 }
+
+/* EOF */ }

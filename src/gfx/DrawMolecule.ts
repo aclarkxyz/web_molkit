@@ -1,7 +1,7 @@
 /*
     WebMolKit
 
-    (c) 2010-2017 Molecular Materials Informatics, Inc.
+    (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
     
@@ -19,6 +19,8 @@
 ///<reference path='MetaVector.ts'/>
 ///<reference path='Rendering.ts'/>
 
+namespace WebMolKit /* BOF */ {
+
 /*
 	Controlling class for drawing a molecule in a vector graphics format: this turns an "arranged molecule" instance into the series of primitives that
 	can be mapped directly to a rendering engine or output format, as encapsulated by the VectorGfxBuilder subclasses.
@@ -27,7 +29,7 @@
 	called only once during the lifetime of this object.
 */
 
-class DrawMolecule
+export class DrawMolecule
 {
 	private mol:Molecule;
 	private policy:RenderPolicy;
@@ -440,3 +442,5 @@ class DrawMolecule
 		}
 	}
 }
+
+/* EOF */ }

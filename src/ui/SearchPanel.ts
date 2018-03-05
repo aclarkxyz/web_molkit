@@ -1,7 +1,7 @@
 /*
     WebMolKit
 
-    (c) 2010-2017 Molecular Materials Informatics, Inc.
+    (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
     
@@ -15,13 +15,15 @@
 ///<reference path='../rpc/Account.ts'/>
 ///<reference path='Widget.ts'/>
 
+namespace WebMolKit /* BOF */ {
+
 /*
 	SearchPanel: a concise button-height search preparation area that can be used for molecules & reactions.
 	
 	For molecule searches, only mol1 is defined; for reactions, mol1 & mol2 & arrow are all in play.
 */
 
-class SearchPanel extends Widget
+export class SearchPanel extends Widget
 {
 	highlight = 0; // 0=nothing, 1=first molecule, 2=second molecule, 3=arrow
 	pressed = 0; // as above
@@ -497,3 +499,5 @@ class SearchPanel extends Widget
 		}
 	}
 }
+
+/* EOF */ }

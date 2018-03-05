@@ -1,7 +1,7 @@
 /*
     WebMolKit
 
-    (c) 2010-2017 Molecular Materials Informatics, Inc.
+    (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
     
@@ -14,11 +14,13 @@
 ///<reference path='Molecule.ts'/>
 ///<reference path='SketchUtil.ts'/>
 
+namespace WebMolKit /* BOF */ {
+
 /*
 	MolUtil: static methods for calculating molecule properties.
 */
 
-class MolUtil
+export class MolUtil
 {
     public static isBlank(mol:Molecule):boolean
     {
@@ -845,3 +847,5 @@ class MolUtil
     		return [mol.atomX(atom), mol.atomY(atom), 0];
     }
 }
+
+/* EOF */ }

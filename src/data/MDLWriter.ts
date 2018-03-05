@@ -1,7 +1,7 @@
 /*
     WebMolKit
 
-    (c) 2010-2017 Molecular Materials Informatics, Inc.
+    (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
     
@@ -16,6 +16,8 @@
 ///<reference path='../data/MolUtil.ts'/>
 ///<reference path='../data/DataSheet.ts'/>
 
+namespace WebMolKit /* BOF */ {
+
 /*
 	MDL Molfile writer: convert the native structure format to MDL Molfile, V2000. Note that the destination format has legacy
 	problems out the wazoo, and even retroactive improvements (e.g. V3000) tend to be not supported by most implementations. The
@@ -26,7 +28,7 @@
 	molecules; the best strategy is to avoid using it whenever possible, but it is so often not.
 */
 
-class MDLMOLWriter
+export class MDLMOLWriter
 {
 	// options
 	public includeHeader = true; // if on, the 3 line header will be included
@@ -200,7 +202,7 @@ class MDLMOLWriter
 	}
 }
 
-class MDLSDFWriter
+export class MDLSDFWriter
 {
 	// options
 
@@ -261,3 +263,5 @@ class MDLSDFWriter
 	
 	
 }
+
+/* EOF */ }

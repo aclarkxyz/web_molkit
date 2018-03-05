@@ -1,7 +1,7 @@
 /*
     WebMolKit
 
-    (c) 2010-2017 Molecular Materials Informatics, Inc.
+    (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
     
@@ -12,11 +12,13 @@
 
 ///<reference path='RPC.ts'/>
 
+namespace WebMolKit /* BOF */ {
+
 /*
 	Provides prefabricated RPC functions for the 'Account' category.
 */
 
-class Account
+export class Account
 {
     public static connectTransient(callback:(result:any, error:ErrorRPC) => void):void
     {
@@ -28,3 +30,4 @@ class Account
     }
 }
 
+/* EOF */ }
