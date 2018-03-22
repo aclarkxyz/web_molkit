@@ -117,6 +117,7 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 	private currentPerm = 0; // currently viewed permutation (if applicable)
 	private fusionBank:FusionBank = null;
 	
+	private copyBusy = false;
 	private fakeTextArea:HTMLTextAreaElement = null; // for temporarily bogarting the clipboard
 
 	private static UNDO_SIZE = 20;
@@ -333,6 +334,27 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 			return false;
 		};
 		document.addEventListener('paste', pasteFunc);
+
+		// copying: captures the menu/hotkey form
+		let copyFunc = (e:any) =>
+		{
+			if (this.copyBusy) return;
+
+			// if widget no longer visible, detach the copy handler
+			if (!$.contains(document.documentElement, this.container[0]))
+			{
+				document.removeEventListener('copy', copyFunc);
+				return false;
+			}
+
+			document.removeEventListener('copy', copyFunc);
+			this.performCopy();
+			document.addEventListener('copy', copyFunc);
+
+			e.preventDefault();
+			return false;
+		};
+		document.addEventListener('copy', copyFunc);
 	}
 
 	// change the size of the sketcher after instantiation
@@ -556,8 +578,10 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 	}
 	
 	// copying to clipboard: sticks the content in several different places, for subsequent recall
-	public performCopy(mol:Molecule):void
+	public performCopy(mol?:Molecule):void
 	{
+		if (!mol) mol = this.getMolecule();
+
 		globalMoleculeClipboard = mol.clone();
 		let cookies = new Cookies();
 		if (cookies.numMolecules() > 0) cookies.stashMolecule(mol);
@@ -578,7 +602,10 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 		}
 		this.fakeTextArea.value = mol.toString();
 		this.fakeTextArea.select();
-		document.execCommand('copy'); 
+
+		this.copyBusy = true;
+		document.execCommand('copy');
+		this.copyBusy = false;
 	}
 
 	// pasting from clipboard, initiated by the user via non-system commands: this can't just grab the system
@@ -751,7 +778,6 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 		perm.metavec = new MetaVector();
 		new DrawMolecule(layout, perm.metavec).draw();
 	}
-	
 
 	// rebuilds the canvas content
 	private redraw():void

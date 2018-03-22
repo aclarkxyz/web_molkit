@@ -87,28 +87,7 @@ export class EditCompound extends Dialog
 	
 	private copyMolecule():void
 	{
-		// !! TODO: just call sketcher's performCopy...
-
-		this.installFake();
-		this.fakeTextArea.value = this.sketcher.getMolecule().toString();
-		this.fakeTextArea.select();
-		document.execCommand('copy');
-	}
-	
-	private installFake():void
-	{
-		if (this.fakeTextArea != null) return;
-		
-		this.fakeTextArea = document.createElement('textarea');
-        this.fakeTextArea.style.fontSize = '12pt';
-        this.fakeTextArea.style.border = '0';
-        this.fakeTextArea.style.padding = '0';
-        this.fakeTextArea.style.margin = '0';
-        this.fakeTextArea.style.position = 'fixed';
-        this.fakeTextArea.style['left'] = '-9999px';
-        this.fakeTextArea.style.top = (window.pageYOffset || document.documentElement.scrollTop) + 'px';
-        this.fakeTextArea.setAttribute('readonly', '');
-        document.body.appendChild(this.fakeTextArea);
+		this.sketcher.performCopy();
 	}
 }
 
