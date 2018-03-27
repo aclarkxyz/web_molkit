@@ -16,6 +16,7 @@ interface Path2D
     rect(x:number, y:number, w:number, h:number):void;
 }
 
+/* both of these seem to be fixed in TypeScript
 interface Path2DConstructor 
 {
     new ():Path2D;
@@ -24,7 +25,8 @@ interface Path2DConstructor
     prototype:Path2D;
 }
 //declare var Path2D:Path2DConstructor;
-declare var Path2D:{new (path?:Path2D): Path2D; prototype: Path2D; };
+//declare var Path2D:{new (path?:Path2D): string|Path2D; prototype: Path2D;};
+*/
 
 interface CanvasRenderingContext2D 
 {
