@@ -50,7 +50,7 @@ namespace WebMolKit /* BOF */ {
         (parameters to control interactivity?)
 */
 
-enum EmbedReactionFacet
+export enum EmbedReactionFacet
 {
 	HEADER = 'header',
 	SCHEME = 'scheme',
