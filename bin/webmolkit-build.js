@@ -17917,7 +17917,6 @@ var WebMolKit;
                 document.body.appendChild(this.fakeTextArea);
             }
             this.fakeTextArea.value = txt;
-            console.log(txt);
             this.fakeTextArea.select();
             this.copyBusy = true;
             document.execCommand('copy');
