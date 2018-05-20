@@ -586,6 +586,12 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 		let cookies = new Cookies();
 		if (cookies.numMolecules() > 0) cookies.stashMolecule(mol);
 
+		this.performCopyText(mol.toString());
+	}
+
+	// copies exactly what the user asked for onto the clipboard
+	public performCopyText(txt:string):void
+	{
 		// now place it on the actual system clipboard
 		if (this.fakeTextArea == null)
 		{
@@ -600,7 +606,7 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 			this.fakeTextArea.setAttribute('readonly', '');
 			document.body.appendChild(this.fakeTextArea);
 		}
-		this.fakeTextArea.value = mol.toString();
+		this.fakeTextArea.value = txt;
 		this.fakeTextArea.select();
 
 		this.copyBusy = true;

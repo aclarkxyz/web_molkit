@@ -38,10 +38,12 @@ O=-1.7490,4.8000;0,0,i0
 <p id="buttons">
 	<button onClick="sketcher.clearMolecule()">Clear</button>
 	<button onClick="demoMolecule()">Demo Molecule</button>
+	<button onClick="copySketchEl()">Copy SketchEl</button>
+	<button onClick="copyMDLMOL()">Copy MDLMOL</button>
 </p>
 
 <script>
-	let wmk = WebMolKit;
+	var wmk = WebMolKit;
 	var url = window.location.href.substring(0, window.location.href.lastIndexOf('/'));
 	wmk.initWebMolKit(url + '../../../res');
 	var mol = wmk.Molecule.fromString($('#moldata').text());
@@ -50,10 +52,9 @@ O=-1.7490,4.8000;0,0,i0
 	sketcher.defineMolecule(mol);
 	sketcher.setup(() => sketcher.render($('#sketcher')));
 
-	function demoMolecule()
-	{
-		sketcher.defineMolecule(mol);
-	}
+	function demoMolecule() {sketcher.defineMolecule(mol);}
+	function copySketchEl() {sketcher.performCopy();}
+	function copyMDLMOL() {sketcher.performCopyText(new wmk.MDLMOLWriter(sketcher.getMolecule()).write());}
 </script>
 
 </body>

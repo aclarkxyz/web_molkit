@@ -17571,6 +17571,7 @@ var WebMolKit;
             this.templatePerms = null;
             this.currentPerm = 0;
             this.fusionBank = null;
+            this.copyBusy = false;
             this.fakeTextArea = null;
         }
         setSize(width, height) {
@@ -17713,6 +17714,20 @@ var WebMolKit;
                 return false;
             };
             document.addEventListener('paste', pasteFunc);
+            let copyFunc = (e) => {
+                if (this.copyBusy)
+                    return;
+                if (!$.contains(document.documentElement, this.container[0])) {
+                    document.removeEventListener('copy', copyFunc);
+                    return false;
+                }
+                document.removeEventListener('copy', copyFunc);
+                this.performCopy();
+                document.addEventListener('copy', copyFunc);
+                e.preventDefault();
+                return false;
+            };
+            document.addEventListener('copy', copyFunc);
         }
         changeSize(width, height) {
             if (width == this.width && height == this.height)
@@ -17880,10 +17895,15 @@ var WebMolKit;
             this.setState(this.redoStack.pop(), false);
         }
         performCopy(mol) {
+            if (!mol)
+                mol = this.getMolecule();
             globalMoleculeClipboard = mol.clone();
             let cookies = new WebMolKit.Cookies();
             if (cookies.numMolecules() > 0)
                 cookies.stashMolecule(mol);
+            this.performCopyText(mol.toString());
+        }
+        performCopyText(txt) {
             if (this.fakeTextArea == null) {
                 this.fakeTextArea = document.createElement('textarea');
                 this.fakeTextArea.style.fontSize = '12pt';
@@ -17896,9 +17916,12 @@ var WebMolKit;
                 this.fakeTextArea.setAttribute('readonly', '');
                 document.body.appendChild(this.fakeTextArea);
             }
-            this.fakeTextArea.value = mol.toString();
+            this.fakeTextArea.value = txt;
+            console.log(txt);
             this.fakeTextArea.select();
+            this.copyBusy = true;
             document.execCommand('copy');
+            this.copyBusy = false;
         }
         performPaste() {
             let cookies = new WebMolKit.Cookies();
@@ -19107,24 +19130,7 @@ var WebMolKit;
         pasteMolecule() {
         }
         copyMolecule() {
-            this.installFake();
-            this.fakeTextArea.value = this.sketcher.getMolecule().toString();
-            this.fakeTextArea.select();
-            document.execCommand('copy');
-        }
-        installFake() {
-            if (this.fakeTextArea != null)
-                return;
-            this.fakeTextArea = document.createElement('textarea');
-            this.fakeTextArea.style.fontSize = '12pt';
-            this.fakeTextArea.style.border = '0';
-            this.fakeTextArea.style.padding = '0';
-            this.fakeTextArea.style.margin = '0';
-            this.fakeTextArea.style.position = 'fixed';
-            this.fakeTextArea.style['left'] = '-9999px';
-            this.fakeTextArea.style.top = (window.pageYOffset || document.documentElement.scrollTop) + 'px';
-            this.fakeTextArea.setAttribute('readonly', '');
-            document.body.appendChild(this.fakeTextArea);
+            this.sketcher.performCopy();
         }
     }
     WebMolKit.EditCompound = EditCompound;
@@ -20844,7 +20850,7 @@ var WebMolKit;
         EmbedReactionFacet["SCHEME"] = "scheme";
         EmbedReactionFacet["QUANTITY"] = "quantity";
         EmbedReactionFacet["METRICS"] = "metrics";
-    })(EmbedReactionFacet || (EmbedReactionFacet = {}));
+    })(EmbedReactionFacet = WebMolKit.EmbedReactionFacet || (WebMolKit.EmbedReactionFacet = {}));
     class EmbedReaction extends WebMolKit.EmbedChemistry {
         constructor(datastr, options) {
             super();
