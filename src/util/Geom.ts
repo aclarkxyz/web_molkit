@@ -501,6 +501,10 @@ export class Box
 	{
 		return GeomUtil.rectsIntersect(this.x, this.y, this.w, this.h, other.x, other.y, other.w, other.h);
 	}
+	public contains(x:number, y:number):boolean
+	{
+		return x >= this.x && x < this.x + this.w && y >= this.y && y < this.y + this.h;
+	}
 
 	public union(other:Box):Box
 	{
