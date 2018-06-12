@@ -55,16 +55,21 @@ var globalMoleculeClipboard:Molecule = null;
 
 export class Sketcher extends Widget implements ArrangeMeasurement
 {
+	// tweakable properties
+	public useToolBank = true;
+	public lowerToolBank = false;
+	public useCommandBank = true;
+	public lowerCommandBank = false;
+	public useTemplateBank = true;
+	public lowerTemplateBank = false;
+	public debugOutput:any = undefined;
+
 	private mol:Molecule = null;
 	private policy:RenderPolicy = null;
 	private width = 0;
 	private height = 0;
 	private border = 0x808080;
 	private background = 0xF8F8F8;
-	private useToolBank = true;
-	private useCommandBank = true;
-	private useTemplateBank = true;
-	private debugOutput:any = undefined;
 
 	private beenSetup = false;
 	private container:JQuery;
@@ -263,6 +268,7 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 		if (this.useCommandBank)
 		{
 			this.commandView = new ButtonView('bottom', 0, 0, this.width, this.height);
+			if (this.lowerCommandBank) this.commandView.lowerBank();
 			// (put this back) this.commandView.lowerBank();
 			this.commandView.setHasBigButtons(false);
 			this.commandView.pushBank(new CommandBank(this));
@@ -272,6 +278,7 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 		if (this.useToolBank)
 		{
 			this.toolView = new ButtonView('left', 0, 0, this.width, this.height - reserveHeight);
+			if (this.lowerToolBank) this.toolView.lowerBank();
 			this.toolView.setHasBigButtons(false);
 			this.toolView.pushBank(new ToolBank(this));
 			this.toolView.render(this.container);
@@ -279,7 +286,7 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 		if (this.useTemplateBank)
 		{
 			this.templateView = new ButtonView('right', 0, 0, this.width, this.height - reserveHeight);
-			// (put this back) this.templateView.lowerBank();
+			if (this.lowerTemplateBank) this.templateView.lowerBank();
 			this.templateView.setHasBigButtons(true); // big buttons for templates is a good thing
 			this.templateView.pushBank(new TemplateBank(this, null));
 			this.templateView.render(this.container);

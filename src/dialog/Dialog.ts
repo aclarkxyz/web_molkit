@@ -32,6 +32,8 @@ export class Dialog
     // configuration parameters to modify before opening
     public minPortionWidth = 80; // percentage width of page to occupy
     public maxPortionWidth = 80; //  ...
+    public maximumWidth = 0; // optional pixel-specific maximum
+    public maximumHeight = 0; 
     public title = 'Dialog';
     
     // content information that can be accessed after opening
@@ -73,8 +75,12 @@ export class Dialog
         this.obscureBackground = bg;
         
         let pb = $('<div class="wmk-dialog"></div>').appendTo(body);
+
         pb.css('min-width', this.minPortionWidth + '%');
-        if (this.maxPortionWidth != null) pb.css('max-width', this.maxPortionWidth + '%');
+        if (this.maximumWidth > 0) pb.css('max-width', this.maximumWidth + 'px');
+        else if (this.maxPortionWidth != null) pb.css('max-width', this.maxPortionWidth + '%');
+        if (this.maximumHeight > 0) pb.css('max-height', this.maximumHeight + 'px');
+
         pb.css('background-color', 'white');
         pb.css('border-radius', '6px');
         pb.css('border', '1px solid black');
@@ -97,6 +103,7 @@ export class Dialog
         
         let bdiv = $('<div></div>').appendTo(pb);
         bdiv.css('width', '100%');
+
         this.bodyDiv = $('<div style="padding: 0.5em;"></div>').appendTo(bdiv); // (has to be nested, otherwise runs over)
         
         let ttlTable = $('<table></table>').appendTo(tdiv), tr = $('<tr></tr>').appendTo(ttlTable);
