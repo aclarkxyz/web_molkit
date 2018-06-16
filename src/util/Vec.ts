@@ -66,6 +66,13 @@ export class Vec
 		arr.push(item);
 		return arr;
 	}
+	public static prepend<T>(arr:T[], item:any):T[]
+	{
+		if (arr == null || arr.length == 0) return [item];
+		arr = arr.slice(0);
+		arr.unshift(item);
+		return arr;
+	}
 	public static concat<T>(arr1:T[], arr2:T[]):T[]
 	{
 		if (arr1 == null && arr2 == null) return [];
