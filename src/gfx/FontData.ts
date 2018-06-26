@@ -299,7 +299,8 @@ export class FontData
 
 	// for text of a given size, returns [width,ascent,descent]; all of these numbers are positive; text drawing always uses
 	// the left/baseline as the reference position
-	public measureText(txt:string, size:number)
+	public static measureText(txt:string, size:number):number[] {return this.main.measureText(txt, size);}
+	public measureText(txt:string, size:number):number[]
 	{
 		let font = FontData.main;
 		
