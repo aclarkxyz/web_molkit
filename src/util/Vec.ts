@@ -340,8 +340,8 @@ export class Vec
 	public static uniqueStable(arr:any[]):any[]
 	{
 		let set = new Set<any>(arr), ret:any[] = [];
-		for (let v in arr) if (set.has(v)) {ret.push(v); set.delete(v);}
-		return ret; // original order is preserved, with non-first entries removed
+		for (let v of arr) if (set.has(v)) {ret.push(v); set.delete(v);}
+		return ret; // original order is preserved, with non-first entries removed*/
 	}
 	public static maskUnique(arr:any[]):boolean[]
 	{

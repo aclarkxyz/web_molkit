@@ -220,6 +220,13 @@ export function invZ(v:number):number {return v == 0 ? 0 : 1.0 / v;}
 export function fltEqual(v1:number, v2:number) {return v1 == v2 || Math.abs(v1 - v2) <= 1E-7 * Math.max(v1, v2);}
 export function realEqual(v1:number, v2:number) {return v1 == v2 || Math.abs(v1 - v2) <= 1E-14 * Math.max(v1, v2);}
 
+// returns a random integer between 0 and size-1
+export function randomInt(size:number):number
+{
+	if (size <= 1) return 0;
+	return Math.floor(Math.random() * size);
+}
+
 // angle helpers
 export const TWOPI = 2 * Math.PI;
 export const INV_TWOPI = 1.0 / TWOPI;
