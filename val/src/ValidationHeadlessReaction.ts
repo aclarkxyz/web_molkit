@@ -14,6 +14,7 @@
 ///<reference path='../../src/util/Vec.ts'/>
 ///<reference path='../../src/data/Molecule.ts'/>
 ///<reference path='../../src/data/MoleculeStream.ts'/>
+///<reference path='../../src/data/DataSheetStream.ts'/>
 ///<reference path='../../src/aspect/Experiment.ts'/>
 ///<reference path='Validation.ts'/>
 

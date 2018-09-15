@@ -15,6 +15,7 @@
 ///<reference path='../../src/data/Molecule.ts'/>
 ///<reference path='../../src/data/MetaMolecule.ts'/>
 ///<reference path='../../src/data/MoleculeStream.ts'/>
+///<reference path='../../src/data/DataSheetStream.ts'/>
 ///<reference path='../../src/data/Stereochemistry.ts'/>
 ///<reference path='Validation.ts'/>
 
