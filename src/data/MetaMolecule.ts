@@ -134,33 +134,32 @@ export class MetaMolecule
 		}
 	}
 
-/*
 	// relaxed aromaticity: based on strict aromaticity, but extends to other small ring sizes; it is also reasonably
 	// fast - there are no opportunities for exponential graph-walk blowups
-	public void calculateRelaxedAromaticity() throws MoleculeCalcException
+	public calculateRelaxedAromaticity():void
 	{
-		// setup
-
-		atomArom = Vec.booleanArray(false, mol.numAtoms());
-		bondArom = Vec.booleanArray(false, mol.numBonds());
-		ensurePiAtoms();
-		final int na = mol.numAtoms(), nb = mol.numBonds();
-		int[] electrons = new int[mol.numAtoms()]; // # lone pair electrons available for donating into the ring; >=2 qualifies
-		boolean[] exocyclic = Vec.booleanArray(false, na); // true=has a double bond that sticks out of the ring block
-		for (int n = 1; n <= mol.numAtoms(); n++)
+		let mol = this.mol;
+		this.atomArom = Vec.booleanArray(false, mol.numAtoms);
+		this.bondArom = Vec.booleanArray(false, mol.numBonds);
+		
+		this.ensurePiAtoms();
+		const na = mol.numAtoms, nb = mol.numBonds;
+		let electrons = Vec.numberArray(0, na); // # lone pair electrons available for donating into the ring; >=2 qualifies
+		let exocyclic = Vec.booleanArray(false, na); // true=has a double bond that sticks out of the ring block
+		for (let n = 1; n <= na; n++)
 		{
-			int atno = mol.atomicNumber(n);
+			let atno = mol.atomicNumber(n);
 			electrons[n - 1] = (Chemistry.ELEMENT_BLOCKS[atno] == 2 ? Chemistry.ELEMENT_VALENCE[atno] : 0) - mol.atomCharge(n) - mol.atomHydrogens(n)
 							- mol.atomUnpaired(n);
 		}
-		for (int n = 1; n <= mol.numBonds(); n++)
+		for (let n = 1; n <= nb; n++)
 		{
-			final int bfr = mol.bondFrom(n), bto = mol.bondTo(n), bo = mol.bondOrder(n);
+			const bfr = mol.bondFrom(n), bto = mol.bondTo(n), bo = mol.bondOrder(n);
 			electrons[bfr - 1] -= bo;
 			electrons[bto - 1] -= bo;
 			if (bo == 2)
 			{
-				int rblk1 = mol.atomRingBlock(bfr), rblk2 = mol.atomRingBlock(bto);
+				const rblk1 = mol.atomRingBlock(bfr), rblk2 = mol.atomRingBlock(bto);
 				if (rblk1 > 0 && rblk1 != rblk2) exocyclic[bfr - 1] = true;
 				if (rblk2 > 0 && rblk2 != rblk1) exocyclic[bto - 1] = true;
 			}
@@ -168,52 +167,52 @@ export class MetaMolecule
 
 		// compile candidate rings: all atoms must have some potentially qualifying pi-action doing on
 
-		List<int[]> rings = new ArrayList<>();
-		for (int rsz = 3; rsz <= 7; rsz++) for (int[] rng : mol.findRingsOfSize(rsz))
+		let rings:number[][] = [];
+		for (let rsz = 3; rsz <= 7; rsz++) for (let rng of mol.findRingsOfSize(rsz))
 		{
-			boolean valid = true;
-			for (int n = 0; n < rsz; n++)
+			let valid = true;
+			for (let n = 0; n < rsz; n++)
 			{
-				final int a = rng[n];
-				if (!piAtom[a - 1] && electrons[a - 1] < 2 && !exocyclic[a - 1])
+				const a = rng[n];
+				if (!this.piAtom[a - 1] && electrons[a - 1] < 2 && !exocyclic[a - 1])
 				{
 					valid = false;
 					break;
 				}
-				int b = mol.findBond(a, rng[n < rsz - 1 ? n + 1 : 0]);
-				int bo = mol.bondOrder(b);
+				let b = mol.findBond(a, rng[n < rsz - 1 ? n + 1 : 0]);
+				let bo = mol.bondOrder(b);
 				if (bo != 1 && bo != 2)
 				{
 					valid = false;
 					break;
 				}
 			}
-			if (valid) rings.add(rng);
+			if (valid) rings.push(rng);
 		}
 
 		// keep processing rings, until no new ones are found
 
-		while (rings.size() > 0)
+		while (rings.length > 0)
 		{
-			boolean anyChange = false;
+			let anyChange = false;
 
-			for (int n = 0; n < rings.size(); n++)
+			for (let n = 0; n < rings.length; n++)
 			{
-				int[] r = rings.get(n);
+				let r = rings[n];
 
-				int[] paths = new int[]{0};
-				for (int i = 0; i < r.length; i++)
+				let paths = [0];
+				for (let i = 0; i < r.length; i++)
 				{
-					final int a = r[i];
-					final int b1 = mol.findBond(a, r[i < r.length - 1 ? i + 1 : 0]);
-					final int b2 = mol.findBond(a, r[i > 0 ? i - 1 : r.length - 1]);
-					if (bondArom[b1 - 1])
+					const a = r[i];
+					const b1 = mol.findBond(a, r[i < r.length - 1 ? i + 1 : 0]);
+					const b2 = mol.findBond(a, r[i > 0 ? i - 1 : r.length - 1]);
+					if (this.bondArom[b1 - 1])
 					{
 						// contemplate with or without extra pi-bond
-						for (int j = paths.length - 1; j >= 0; j--)
+						for (let j = paths.length - 1; j >= 0; j--)
 						{
-							int e = paths[j] + 2;
-							if (Vec.indexOf(e, paths) < 0) paths = Vec.append(paths, e);
+							const e = paths[j] + 2;
+							if (paths.indexOf(e) < 0) paths = Vec.append(paths, e);
 						}
 					}
 					else if (mol.bondOrder(b1) == 2) Vec.addTo(paths, 2);
@@ -221,8 +220,8 @@ export class MetaMolecule
 				}
 
 				// see if there's anything Hueckel (4N+2) buried in there
-				boolean arom = false;
-				for (int e : paths)
+				let arom = false;
+				for (let e of paths)
 				{
 					if (e == 2 && r.length == 3)
 					{
@@ -238,13 +237,13 @@ export class MetaMolecule
 				}
 				if (arom)
 				{
-					for (int i = 0; i < r.length; i++)
+					for (let i = 0; i < r.length; i++)
 					{
-						int a = r[i], b = mol.findBond(a, r[i < r.length - 1 ? i + 1 : 0]);
-						atomArom[a - 1] = true;
-						bondArom[b - 1] = true;
+						let a = r[i], b = mol.findBond(a, r[i < r.length - 1 ? i + 1 : 0]);
+						this.atomArom[a - 1] = true;
+						this.bondArom[b - 1] = true;
 					}
-					rings.remove(n);
+					rings.splice(n, 1);
 					n--;
 					anyChange = true;
 				}
@@ -254,6 +253,7 @@ export class MetaMolecule
 		}
 	}
 
+	/*
 	// extended Hueckel aromaticity: any ring pathway which meets the 4n+2 PI electron rule, counting double bonds and 
 	// lone pairs, is classified as aromatic
 	public void calculateExtendedAromaticity() throws MoleculeCalcException
@@ -459,14 +459,22 @@ export class MetaMolecule
 		return meta;
 	}
 
-	/*public static createRelaxedRubric(mol:Molecule):MetaMolecule
+	public static createRelaxed(mol:Molecule):MetaMolecule
 	{
 		if (mol == null) return null;
-		MetaMolecule meta = new MetaMolecule(mol);
+		let meta = new MetaMolecule(mol);
+		meta.calculateRelaxedAromaticity();
+		return meta;
+	}
+
+	public static createRelaxedRubric(mol:Molecule):MetaMolecule
+	{
+		if (mol == null) return null;
+		let meta = new MetaMolecule(mol);
 		meta.calculateRelaxedAromaticity();
 		meta.calculateStereoRubric();
 		return meta;
-	}*/
+	}
 
 	// ------------------ private methods --------------------
 
