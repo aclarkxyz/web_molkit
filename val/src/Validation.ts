@@ -27,8 +27,22 @@ export interface ValidationTest
 
 export class Validation
 {
+
+    // the tests themselves 
+    private tests:ValidationTest[] = []; 
+
+	// failure during setup process
+	public setupError:any = null;
+
+    // results from the most recently run test
+    private recentSuccess:boolean; // true if test succeeded
+    private recentError:string; // what went wrong, or null if no information
+    private recentTimeTaken:number; // in seconds
+
     // validation tests can use this to store situational data, especially when subsequent tests re-use data from previous tests
     public rec:{[id:string] : any} = {};
+
+	// ------------ public methods ------------
 
     constructor()
     {
@@ -113,15 +127,7 @@ export class Validation
         throw '!';
     }
 
-	// --------------------------------------- private methods ---------------------------------------
-
-    // the tests themselves 
-    private tests:ValidationTest[] = []; 
-
-    // results from the most recently run test
-    private recentSuccess:boolean; // true if test succeeded
-    private recentError:string; // what went wrong, or null if no information
-    private recentTimeTaken:number; // in seconds
+	// ------------ private methods ------------
 }
 
 /* EOF */ }

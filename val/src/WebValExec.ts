@@ -30,6 +30,14 @@ export class WebValExec
 	{
 		domParent.empty();
 
+		if (this.validation.setupError)
+		{
+			let div = $('<div></div>').appendTo(domParent);
+			div.css('color', 'red');
+			div.text('Setup failed: ' + this.validation.setupError);
+			return;
+		}
+
 		let table = $('<table></table>').appendTo(domParent);
 
 		let tdStatus:JQuery[] = [], tdInfo:JQuery[] = [];
