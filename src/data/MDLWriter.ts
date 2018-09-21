@@ -106,7 +106,8 @@ export class MDLMOLWriter
 			let x = mol.atomX(n), y = mol.atomY(n), z = 0;
 			let line = this.rpad(x.toFixed(4), 10) + this.rpad(y.toFixed(4), 10) + this.rpad(z.toFixed(4), 10);
 
-			let str = mol.atomElement(n);
+			let el = mol.atomElement(n);
+			let str = el;
 			if (str.length > 3) str = str.substring(0, 3);
 			if (str.length > 1 && str.charAt(0) == 'R' && str.charAt(1) >= '0' && str.charAt(1) <= '9')
 			{
@@ -122,16 +123,36 @@ export class MDLMOLWriter
 			else if (chg == 0 && rad == 2) chg = 4;
 			else if (chg >= 1 && chg <= 3) chg = 4 - chg;
 			else chg = 0;
-			line += this.intrpad(chg, 3) + '  0  0  0  0  0  0  0' + this.intrpad(mapnum, 3) + '  0  0';
+
+			// if this molecule has virtual hydrogens, need to attend to the valence: if there's a default valence, often
+			// nothing to do; otherwise, set it explicitly, and hope the reader handles it
+			let val = 0, hyd = mol.atomHydrogens(n);
+			if (hyd > 0)
+			{
+				let chg = mol.atomCharge(n);
+				let chgmod = (el == 'C' || el == 'H') ? Math.abs(chg) : el == 'B' ? -Math.abs(chg) : -chg;
+				let nativeVal = chgmod + mol.atomUnpaired(n) + hyd;
+				for (let b of mol.atomAdjBonds(n)) nativeVal += mol.bondOrder(b);
+				let options = MDLMOL_VALENCE[el];
+				if (!options || options.indexOf(nativeVal) < 0) 
+				{
+					val = nativeVal - chgmod;
+					if (val <= 0 || val > 14) val = 15;
+				}
+			}
+
+			line += this.intrpad(chg, 3) + '  0  0  0' + this.intrpad(val, 3) + '  0  0  0' + this.intrpad(mapnum, 3) + '  0  0';
 
 			this.lines.push(line);
 
 			if (mol.atomCharge(n) != 0) {chgidx.push(n); chgval.push(mol.atomCharge(n));}
-			/*if (this.enhancedFields)
+			if (this.enhancedFields)
 			{
-    	    	if (xmol.atomCharge(n) != mol.atomCharge(n)) {zchidx.add(n); zchval.add(xmol.atomCharge(n));}
-	    	    if (xmol.atomHExplicit(n) != Molecule.HEXPLICIT_UNKNOWN) {hydidx.add(n); hydval.add(xmol.atomHExplicit(n));}
-    	   	}*/
+				if (mol.atomHExplicit(n) != Molecule.HEXPLICIT_UNKNOWN) {hydidx.push(n); hydval.push(mol.atomHExplicit(n));}
+				// these are for retroactive bond separation, not implemented at the moment
+    	    	//if (xmol.atomCharge(n) != mol.atomCharge(n)) {zchidx.push(n); zchval.push(xmol.atomCharge(n));}
+	    	    //if (xmol.atomHExplicit(n) != Molecule.HEXPLICIT_UNKNOWN) {hydidx.push(n); hydval.push(xmol.atomHExplicit(n));}
+    	   	}
 
     	    if (mol.atomUnpaired(n) != 0) {radidx.push(n); radval.push(mol.atomUnpaired(n));}
     	    if (mol.atomIsotope(n) != Molecule.ISOTOPE_NATURAL) {isoidx.push(n); isoval.push(mol.atomIsotope(n));}
@@ -140,7 +161,7 @@ export class MDLMOLWriter
     	// export bonds
 		for (let n = 1; n <= mol.numBonds; n++)
 		{
-			let type = mol.bondOrder(n);
+			let order = mol.bondOrder(n), type = order;
 			let stereo = mol.bondType(n);
 			if (stereo == Molecule.BONDTYPE_NORMAL) {}
     	    else if (stereo == Molecule.BONDTYPE_INCLINED) {stereo = 1; type = 1;}
@@ -152,10 +173,12 @@ export class MDLMOLWriter
 					   this.intrpad(type, 3) + this.intrpad(stereo, 3) + '  0  0  0';
 			this.lines.push(line);
 			
-			/*if (enhancedFields)
+			if (this.enhancedFields)
 			{
-				if (xmol.bondOrder(n) != mol.bondOrder(n)) {zboidx.add(n); zboval.add(xmol.bondOrder(n));}
-			}*/
+				if (order < 1 || order > 3) {zboidx.push(n); zboval.push(order);}
+				// these are for retroactive bond separation, not implemented at the moment
+				//if (xmol.bondOrder(n) != mol.bondOrder(n)) {zboidx.push(n); zboval.push(xmol.bondOrder(n));}
+			}
     	}
 
 		// export the additional blocks

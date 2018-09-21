@@ -50,6 +50,13 @@ var WebMolKit;
             arr.push(item);
             return arr;
         }
+        static prepend(arr, item) {
+            if (arr == null || arr.length == 0)
+                return [item];
+            arr = arr.slice(0);
+            arr.unshift(item);
+            return arr;
+        }
         static concat(arr1, arr2) {
             if (arr1 == null && arr2 == null)
                 return [];
@@ -301,7 +308,7 @@ var WebMolKit;
         }
         static uniqueStable(arr) {
             let set = new Set(arr), ret = [];
-            for (let v in arr)
+            for (let v of arr)
                 if (set.has(v)) {
                     ret.push(v);
                     set.delete(v);
@@ -603,6 +610,12 @@ var WebMolKit;
     WebMolKit.fltEqual = fltEqual;
     function realEqual(v1, v2) { return v1 == v2 || Math.abs(v1 - v2) <= 1E-14 * Math.max(v1, v2); }
     WebMolKit.realEqual = realEqual;
+    function randomInt(size) {
+        if (size <= 1)
+            return 0;
+        return Math.floor(Math.random() * size);
+    }
+    WebMolKit.randomInt = randomInt;
     WebMolKit.TWOPI = 2 * Math.PI;
     WebMolKit.INV_TWOPI = 1.0 / WebMolKit.TWOPI;
     WebMolKit.DEGRAD = Math.PI / 180;
@@ -1618,6 +1631,9 @@ var WebMolKit;
         intersects(other) {
             return GeomUtil.rectsIntersect(this.x, this.y, this.w, this.h, other.x, other.y, other.w, other.h);
         }
+        contains(x, y) {
+            return x >= this.x && x < this.x + this.w && y >= this.y && y < this.y + this.h;
+        }
         union(other) {
             let x1 = Math.min(this.x, other.x), x2 = Math.max(this.x + this.w, other.x + other.w);
             let y1 = Math.min(this.y, other.y), y2 = Math.max(this.y + this.h, other.y + other.h);
@@ -1968,6 +1984,7 @@ var WebMolKit;
                     return this.KERN_K[n];
             return 0;
         }
+        static measureText(txt, size) { return this.main.measureText(txt, size); }
         measureText(txt, size) {
             let font = FontData.main;
             let scale = size / font.UNITS_PER_EM;
@@ -5870,6 +5887,24 @@ var WebMolKit;
 })(WebMolKit || (WebMolKit = {}));
 var WebMolKit;
 (function (WebMolKit) {
+    WebMolKit.MDLMOL_VALENCE = {
+        'H': [1],
+        'B': [3],
+        'C': [4],
+        'Si': [4],
+        'N': [3],
+        'P': [3, 5],
+        'As': [3, 5],
+        'O': [2],
+        'S': [2, 4, 6],
+        'Se': [2, 4, 6],
+        'Te': [2, 4, 6],
+        'F': [1],
+        'Cl': [1, 3, 5, 7],
+        'Br': [1],
+        'I': [1, 3, 5, 7],
+        'At': [1, 3, 5, 7],
+    };
     class MDLMOLReader {
         constructor(strData) {
             this.parseHeader = true;
@@ -5920,6 +5955,7 @@ var WebMolKit;
             }
             let numAtoms = parseInt(line.substring(0, 3).trim());
             let numBonds = parseInt(line.substring(3, 6).trim());
+            let explicitValence = [];
             for (let n = 0; n < numAtoms; n++) {
                 line = this.nextLine();
                 if (line.length < 39)
@@ -5931,6 +5967,7 @@ var WebMolKit;
                 let chg = parseInt(line.substring(36, 39).trim()), rad = 0;
                 let stereo = line.length < 42 ? 0 : parseInt(line.substring(39, 42).trim());
                 let hyd = line.length < 45 ? 0 : parseInt(line.substring(42, 45).trim());
+                let val = line.length < 51 ? 0 : parseInt(line.substring(48, 51).trim());
                 let mapnum = line.length < 63 ? 0 : parseInt(line.substring(60, 63).trim());
                 if (chg >= 1 && chg <= 3)
                     chg = 4 - chg;
@@ -5956,6 +5993,7 @@ var WebMolKit;
                 }
                 if (stereo > 0 && this.keepParity) {
                 }
+                explicitValence.push(val);
             }
             for (let n = 0; n < numBonds; n++) {
                 line = this.nextLine();
@@ -6037,10 +6075,10 @@ var WebMolKit;
                     }
                 }
             }
-            this.postFix();
+            this.postFix(explicitValence);
             this.openmol.derive(this.mol);
         }
-        postFix() {
+        postFix(explicitValence) {
             const mol = this.mol;
             for (let n = 1; n <= mol.numAtoms; n++) {
                 let el = mol.atomElement(n);
@@ -6052,10 +6090,24 @@ var WebMolKit;
                     mol.setAtomElement(n, 'H');
                     mol.setAtomIsotope(n, 3);
                 }
-                if ((el == 'F' || el == 'Cl' || el == 'Br' || el == 'I' || el == 'At') &&
-                    mol.atomCharge(n) == 0 && mol.atomHExplicit(n) == WebMolKit.Molecule.HEXPLICIT_UNKNOWN && mol.atomAdjCount(n) == 0) {
-                    mol.setAtomHExplicit(n, 1);
+                let usedValence = -mol.atomCharge(n) + mol.atomUnpaired(n);
+                for (let b of mol.atomAdjBonds(n))
+                    usedValence += mol.bondOrder(b);
+                let valence = explicitValence[n - 1];
+                if (valence < 0)
+                    valence = 0;
+                else if (valence == 0) {
+                    let options = WebMolKit.MDLMOL_VALENCE[el];
+                    if (options)
+                        for (let v of options)
+                            if (usedValence <= v) {
+                                valence = v;
+                                break;
+                            }
                 }
+                let nativeH = mol.atomHydrogens(n), importedH = Math.max(0, valence - usedValence);
+                if (importedH > 0 && importedH != nativeH)
+                    mol.setAtomHExplicit(n, importedH);
             }
             if (this.considerRescale)
                 WebMolKit.CoordUtil.normaliseBondDistances(mol);
@@ -6133,6 +6185,7 @@ var WebMolKit;
                     throw ERRPFX + 'duplicate bond index: ' + idx;
                 bondBits[idx - 1] = bits;
             }
+            let explicitValence = WebMolKit.Vec.numberArray(0, numAtoms);
             for (let n = 1; n <= numAtoms; n++) {
                 let bits = atomBits[n - 1];
                 if (bits == null)
@@ -6158,6 +6211,8 @@ var WebMolKit;
                         if (stereo > 0 && this.keepParity) {
                         }
                     }
+                    else if (key == 'VAL')
+                        explicitValence[n - 1] = parseInt(val);
                 }
             }
             for (let n = 1; n <= numBonds; n++) {
@@ -6182,7 +6237,7 @@ var WebMolKit;
                     }
                 }
             }
-            this.postFix();
+            this.postFix(explicitValence);
         }
         splitWithQuotes(line) {
             return line.split('\\s+');
@@ -8845,6 +8900,98 @@ var WebMolKit;
                     this.atomArom[mol.bondTo(n + 1) - 1] = true;
                 }
         }
+        calculateRelaxedAromaticity() {
+            let mol = this.mol;
+            this.atomArom = WebMolKit.Vec.booleanArray(false, mol.numAtoms);
+            this.bondArom = WebMolKit.Vec.booleanArray(false, mol.numBonds);
+            this.ensurePiAtoms();
+            const na = mol.numAtoms, nb = mol.numBonds;
+            let electrons = WebMolKit.Vec.numberArray(0, na);
+            let exocyclic = WebMolKit.Vec.booleanArray(false, na);
+            for (let n = 1; n <= na; n++) {
+                let atno = mol.atomicNumber(n);
+                electrons[n - 1] = (WebMolKit.Chemistry.ELEMENT_BLOCKS[atno] == 2 ? WebMolKit.Chemistry.ELEMENT_VALENCE[atno] : 0) - mol.atomCharge(n) - mol.atomHydrogens(n)
+                    - mol.atomUnpaired(n);
+            }
+            for (let n = 1; n <= nb; n++) {
+                const bfr = mol.bondFrom(n), bto = mol.bondTo(n), bo = mol.bondOrder(n);
+                electrons[bfr - 1] -= bo;
+                electrons[bto - 1] -= bo;
+                if (bo == 2) {
+                    const rblk1 = mol.atomRingBlock(bfr), rblk2 = mol.atomRingBlock(bto);
+                    if (rblk1 > 0 && rblk1 != rblk2)
+                        exocyclic[bfr - 1] = true;
+                    if (rblk2 > 0 && rblk2 != rblk1)
+                        exocyclic[bto - 1] = true;
+                }
+            }
+            let rings = [];
+            for (let rsz = 3; rsz <= 7; rsz++)
+                for (let rng of mol.findRingsOfSize(rsz)) {
+                    let valid = true;
+                    for (let n = 0; n < rsz; n++) {
+                        const a = rng[n];
+                        if (!this.piAtom[a - 1] && electrons[a - 1] < 2 && !exocyclic[a - 1]) {
+                            valid = false;
+                            break;
+                        }
+                        let b = mol.findBond(a, rng[n < rsz - 1 ? n + 1 : 0]);
+                        let bo = mol.bondOrder(b);
+                        if (bo != 1 && bo != 2) {
+                            valid = false;
+                            break;
+                        }
+                    }
+                    if (valid)
+                        rings.push(rng);
+                }
+            while (rings.length > 0) {
+                let anyChange = false;
+                for (let n = 0; n < rings.length; n++) {
+                    let r = rings[n];
+                    let paths = [0];
+                    for (let i = 0; i < r.length; i++) {
+                        const a = r[i];
+                        const b1 = mol.findBond(a, r[i < r.length - 1 ? i + 1 : 0]);
+                        const b2 = mol.findBond(a, r[i > 0 ? i - 1 : r.length - 1]);
+                        if (this.bondArom[b1 - 1]) {
+                            for (let j = paths.length - 1; j >= 0; j--) {
+                                const e = paths[j] + 2;
+                                if (paths.indexOf(e) < 0)
+                                    paths = WebMolKit.Vec.append(paths, e);
+                            }
+                        }
+                        else if (mol.bondOrder(b1) == 2)
+                            WebMolKit.Vec.addTo(paths, 2);
+                        else if (electrons[a - 1] >= 2 && mol.bondOrder(b1) == 1 && mol.bondOrder(b2) == 1)
+                            WebMolKit.Vec.addTo(paths, 2);
+                    }
+                    let arom = false;
+                    for (let e of paths) {
+                        if (e == 2 && r.length == 3) {
+                            arom = true;
+                            break;
+                        }
+                        if (e == 6) {
+                            arom = true;
+                            break;
+                        }
+                    }
+                    if (arom) {
+                        for (let i = 0; i < r.length; i++) {
+                            let a = r[i], b = mol.findBond(a, r[i < r.length - 1 ? i + 1 : 0]);
+                            this.atomArom[a - 1] = true;
+                            this.bondArom[b - 1] = true;
+                        }
+                        rings.splice(n, 1);
+                        n--;
+                        anyChange = true;
+                    }
+                }
+                if (!anyChange)
+                    break;
+            }
+        }
         calculateStereoRubric() {
             const mol = this.mol, na = mol.numAtoms, nb = mol.numBonds;
             this.rubricTetra = new Array(na);
@@ -8922,6 +9069,21 @@ var WebMolKit;
                 return null;
             let meta = new MetaMolecule(mol);
             meta.calculateStrictAromaticity();
+            meta.calculateStereoRubric();
+            return meta;
+        }
+        static createRelaxed(mol) {
+            if (mol == null)
+                return null;
+            let meta = new MetaMolecule(mol);
+            meta.calculateRelaxedAromaticity();
+            return meta;
+        }
+        static createRelaxedRubric(mol) {
+            if (mol == null)
+                return null;
+            let meta = new MetaMolecule(mol);
+            meta.calculateRelaxedAromaticity();
             meta.calculateStereoRubric();
             return meta;
         }
@@ -11049,6 +11211,8 @@ var WebMolKit;
         constructor() {
             this.minPortionWidth = 80;
             this.maxPortionWidth = 80;
+            this.maximumWidth = 0;
+            this.maximumHeight = 0;
             this.title = 'Dialog';
             this.callbackClose = null;
             WebMolKit.installInlineCSS('dialog', CSS_DIALOG);
@@ -11070,8 +11234,12 @@ var WebMolKit;
             this.obscureBackground = bg;
             let pb = $('<div class="wmk-dialog"></div>').appendTo(body);
             pb.css('min-width', this.minPortionWidth + '%');
-            if (this.maxPortionWidth != null)
+            if (this.maximumWidth > 0)
+                pb.css('max-width', this.maximumWidth + 'px');
+            else if (this.maxPortionWidth != null)
                 pb.css('max-width', this.maxPortionWidth + '%');
+            if (this.maximumHeight > 0)
+                pb.css('max-height', this.maximumHeight + 'px');
             pb.css('background-color', 'white');
             pb.css('border-radius', '6px');
             pb.css('border', '1px solid black');
@@ -17512,16 +17680,19 @@ var WebMolKit;
     class Sketcher extends WebMolKit.Widget {
         constructor() {
             super();
+            this.useToolBank = true;
+            this.lowerToolBank = false;
+            this.useCommandBank = true;
+            this.lowerCommandBank = false;
+            this.useTemplateBank = true;
+            this.lowerTemplateBank = false;
+            this.debugOutput = undefined;
             this.mol = null;
             this.policy = null;
             this.width = 0;
             this.height = 0;
             this.border = 0x808080;
             this.background = 0xF8F8F8;
-            this.useToolBank = true;
-            this.useCommandBank = true;
-            this.useTemplateBank = true;
-            this.debugOutput = undefined;
             this.beenSetup = false;
             this.undoStack = [];
             this.redoStack = [];
@@ -17663,6 +17834,8 @@ var WebMolKit;
             let reserveHeight = 0;
             if (this.useCommandBank) {
                 this.commandView = new WebMolKit.ButtonView('bottom', 0, 0, this.width, this.height);
+                if (this.lowerCommandBank)
+                    this.commandView.lowerBank();
                 this.commandView.setHasBigButtons(false);
                 this.commandView.pushBank(new WebMolKit.CommandBank(this));
                 this.commandView.render(this.container);
@@ -17670,12 +17843,16 @@ var WebMolKit;
             }
             if (this.useToolBank) {
                 this.toolView = new WebMolKit.ButtonView('left', 0, 0, this.width, this.height - reserveHeight);
+                if (this.lowerToolBank)
+                    this.toolView.lowerBank();
                 this.toolView.setHasBigButtons(false);
                 this.toolView.pushBank(new WebMolKit.ToolBank(this));
                 this.toolView.render(this.container);
             }
             if (this.useTemplateBank) {
                 this.templateView = new WebMolKit.ButtonView('right', 0, 0, this.width, this.height - reserveHeight);
+                if (this.lowerTemplateBank)
+                    this.templateView.lowerBank();
                 this.templateView.setHasBigButtons(true);
                 this.templateView.pushBank(new WebMolKit.TemplateBank(this, null));
                 this.templateView.render(this.container);
@@ -22170,10 +22347,103 @@ var WebMolKit;
 })(WebMolKit || (WebMolKit = {}));
 var WebMolKit;
 (function (WebMolKit) {
+    class XML {
+        static nodeText(el) {
+            let text = '';
+            for (let child of el.childNodes) {
+                if (child.nodeType == Node.TEXT_NODE || child.nodeType == Node.CDATA_SECTION_NODE)
+                    text += child.nodeValue;
+            }
+            return text;
+        }
+        static childText(parent, tagName) {
+            if (parent == null)
+                return null;
+            let el = this.findElement(parent, tagName);
+            if (el == null)
+                return null;
+            return WebMolKit.nodeText(el);
+        }
+        static appendElement(parent, name) {
+            let el = parent.ownerDocument.createElement(name);
+            parent.appendChild(el);
+            return el;
+        }
+        static appendElementAfter(presib, name) {
+            let el = presib.ownerDocument.createElement(name);
+            let postsib = presib.nextSibling;
+            if (postsib == null)
+                presib.parentNode.appendChild(el);
+            else
+                presib.parentNode.insertBefore(el, postsib);
+            return el;
+        }
+        static appendText(parent, text, isCDATA) {
+            if (text == null || text.length == 0)
+                return;
+            if (!isCDATA)
+                parent.appendChild(parent.ownerDocument.createTextNode(text));
+            else
+                parent.appendChild(parent.ownerDocument.createCDATASection(text));
+        }
+        static createTextChild(parent, name, text, isCDATA = false) {
+            let el = parent.ownerDocument.createElement(name);
+            parent.appendChild(el);
+            if (!isCDATA)
+                el.textContent = text;
+            else
+                el.appendChild(parent.ownerDocument.createCDATASection(text));
+        }
+        static setText(parent, text, isCDATA = false) {
+            while (parent.firstChild != null)
+                parent.removeChild(parent.firstChild);
+            this.appendText(parent, text, isCDATA);
+        }
+        static findElement(parent, tagName) {
+            if (parent == null)
+                return null;
+            let node = parent.firstChild;
+            while (node != null) {
+                if (node.nodeType == Node.ELEMENT_NODE && node.nodeName == tagName)
+                    return node;
+                node = node.nextSibling;
+            }
+            return null;
+        }
+        static findChildElements(parent, tagName) {
+            if (parent == null)
+                return [];
+            let list = [];
+            let node = parent.firstChild;
+            while (node != null) {
+                if (node.nodeType == Node.ELEMENT_NODE && node.nodeName === tagName)
+                    list.push(node);
+                node = node.nextSibling;
+            }
+            return list;
+        }
+        static childElements(parent) {
+            if (parent == null)
+                return [];
+            let list = [];
+            let node = parent.firstChild;
+            while (node != null) {
+                if (node.nodeType == Node.ELEMENT_NODE)
+                    list.push(node);
+                node = node.nextSibling;
+            }
+            return list;
+        }
+    }
+    WebMolKit.XML = XML;
+})(WebMolKit || (WebMolKit = {}));
+var WebMolKit;
+(function (WebMolKit) {
     class Validation {
         constructor() {
-            this.rec = {};
             this.tests = [];
+            this.setupError = null;
+            this.rec = {};
         }
         init(donefunc) {
             donefunc.call(this);
@@ -22484,6 +22754,12 @@ var WebMolKit;
         }
         runTests(domParent) {
             domParent.empty();
+            if (this.validation.setupError) {
+                let div = $('<div></div>').appendTo(domParent);
+                div.css('color', 'red');
+                div.text('Setup failed: ' + this.validation.setupError);
+                return;
+            }
             let table = $('<table></table>').appendTo(domParent);
             let tdStatus = [], tdInfo = [];
             for (let n = 0; n < this.validation.count; n++) {

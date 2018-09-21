@@ -18,7 +18,10 @@ namespace WebMolKit /* BOF */ {
 
 export class Vec
 {
+	public static isBlank(arr:any[]):boolean {return arr == null || arr.length == 0;}
+	public static notBlank(arr:any[]):boolean {return arr != null && arr.length > 0;}
 	public static arrayLength(arr:any[]):number {return arr == null ? 0 : arr.length;}
+
 	public static arrayNumber(arr:number[]):number[] {return arr == null ? [] : arr;}
 	public static arrayString(arr:string[]):string[] {return arr == null ? [] : arr;}
 	public static arrayBoolean(arr:boolean[]):boolean[] {return arr == null ? [] : arr;}
@@ -56,7 +59,6 @@ export class Vec
 		arr[idx1] = arr[idx2];
 		arr[idx2] = v;
 	}
-
 
 	// null-tolerant array concatenation; always returns an array, always at least a shallow copy
 	public static append<T>(arr:T[], item:any):T[]

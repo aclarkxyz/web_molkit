@@ -131,7 +131,7 @@ export class MoleculeStream
 
 	// parses a string that is expected to be using MDL Molfile format, and turns it into a molecule; or null if 
 	public static readMDLMOL(strData:string):Molecule
-	{
+	{		
 		let src = new MDLMOLReader(strData);
 		src.parseHeader = true;
 		src.parse();

@@ -784,10 +784,8 @@ export class MolUtil
     // the adjacent heavy atom has its explicit hydrogen count incremented, unless it is set to auto _and_ after removing
     // the hydrogen atom, the calculated value is 1
     // note: the 'force' parameter can be used to make it just chop everything
-    public static stripHydrogens(mol:Molecule, force?:boolean)
+    public static stripHydrogens(mol:Molecule, force:boolean = false)
     {
-		if (force == null) force = false;
-
 		for (let n = mol.numAtoms; n >= 1; n--)
 		{
 			if (mol.atomElement(n) != 'H') continue;
@@ -795,7 +793,7 @@ export class MolUtil
 			{
 				if (mol.atomCharge(n) != 0 || mol.atomUnpaired(n) != 0) continue;
 				if (mol.atomIsotope(n) != Molecule.ISOTOPE_NATURAL) continue;
-				if (mol.atomExtra(n) != null || mol.atomTransient(n) != null) continue;
+				if (Vec.notBlank(mol.atomExtra(n)) || Vec.notBlank(mol.atomTransient(n))) continue;
 				if (mol.atomAdjCount(n) != 1) continue;
 				let other = mol.atomAdjList(n)[0];
 				if (mol.atomElement(other) == 'H') continue;

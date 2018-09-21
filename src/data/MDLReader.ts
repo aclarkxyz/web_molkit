@@ -27,6 +27,27 @@ namespace WebMolKit /* BOF */ {
 	but one does one's best to deal with it.
 */
 
+// valence options used by MDL/CTAB, which is much more promiscuous than the internal format
+export const MDLMOL_VALENCE:{[id:string] : number[]} =
+{
+	'H': [1],
+	'B': [3],
+	'C': [4],
+	'Si': [4],
+	'N': [3],
+	'P': [3, 5],
+	'As': [3, 5],
+	'O': [2],
+	'S': [2, 4, 6],
+	'Se': [2, 4, 6],
+	'Te': [2, 4, 6],
+	'F': [1],
+	'Cl': [1, 3, 5, 7],
+	'Br': [1],
+	'I': [1, 3, 5, 7],
+	'At': [1, 3, 5, 7],
+};
+
 export class MDLMOLReader
 {
 	// options
@@ -103,6 +124,7 @@ export class MDLMOLReader
     	}
 	    let numAtoms = parseInt(line.substring(0, 3).trim());
 	    let numBonds = parseInt(line.substring(3, 6).trim());
+		let explicitValence:number[] = [];
 
 		// read out each atom
 		for (let n = 0; n < numAtoms; n++)
@@ -117,6 +139,7 @@ export class MDLMOLReader
 			let chg = parseInt(line.substring(36, 39).trim()), rad = 0;
 			let stereo = line.length < 42 ? 0 : parseInt(line.substring(39, 42).trim());
 			let hyd = line.length < 45 ? 0 : parseInt(line.substring(42, 45).trim());
+			let val = line.length < 51 ? 0 : parseInt(line.substring(48, 51).trim());
 			let mapnum = line.length < 63 ? 0 : parseInt(line.substring(60,63).trim());
     
 			if (chg >= 1 && chg <= 3) chg = 4 - chg;
@@ -156,6 +179,8 @@ export class MDLMOLReader
 				else if (stereo == 3) this.mol.setAtomTransient(a, Vec.append(trans, ForeignMolecule.ATOM_CHIRAL_MDL_RACEMIC));
 				*/
 			}
+
+			explicitValence.push(val);
 	    }
 
 		// read out each bond
@@ -198,17 +223,17 @@ export class MDLMOLReader
 	    while (true)
 	    {
 			line = this.nextLine();
-			if (line.startsWith("M  END")) break;
+			if (line.startsWith('M  END')) break;
 
 			let type = 0;
-			if (line.startsWith("M  CHG")) type = MBLK_CHG;
-			else if (line.startsWith("M  RAD")) type = MBLK_RAD;
-			else if (line.startsWith("M  ISO")) type = MBLK_ISO;
-			else if (line.startsWith("M  RGP")) type = MBLK_RGP;
-			else if (this.parseExtended && line.startsWith("M  HYD")) type = MBLK_HYD;
-			else if (this.parseExtended && line.startsWith("M  ZCH")) type = MBLK_ZCH;
-			else if (this.parseExtended && line.startsWith("M  ZBO")) type = MBLK_ZBO;
-			else if (line.startsWith("A  ") && line.length >= 6)
+			if (line.startsWith('M  CHG')) type = MBLK_CHG;
+			else if (line.startsWith('M  RAD')) type = MBLK_RAD;
+			else if (line.startsWith('M  ISO')) type = MBLK_ISO;
+			else if (line.startsWith('M  RGP')) type = MBLK_RGP;
+			else if (this.parseExtended && line.startsWith('M  HYD')) type = MBLK_HYD;
+			else if (this.parseExtended && line.startsWith('M  ZCH')) type = MBLK_ZCH;
+			else if (this.parseExtended && line.startsWith('M  ZBO')) type = MBLK_ZBO;
+			else if (line.startsWith('A  ') && line.length >= 6)
     		{
 				let anum = parseInt(line.substring(3, 6).trim());
 				if (anum >= 1 && anum <= this.mol.numAtoms)
@@ -250,13 +275,13 @@ export class MDLMOLReader
 			}
 	    }
 	    
-	    this.postFix();
+	    this.postFix(explicitValence);
 
 		this.openmol.derive(this.mol);
 	}
 	    
 	// performs some intrinsic post-parse fixing
-	private postFix():void
+	private postFix(explicitValence:number[]):void
 	{
 		const mol = this.mol;
 
@@ -269,12 +294,61 @@ export class MDLMOLReader
 	    	if (el == 'D') {mol.setAtomElement(n, 'H'); mol.setAtomIsotope(n, 2);}
 	    	else if (el == 'T') {mol.setAtomElement(n, 'H'); mol.setAtomIsotope(n, 3);}
 
-			// special deal for neutral halogens: these are presumed to have an implicit hydrogen
-			if ((el == 'F' || el == 'Cl' || el == 'Br' || el == 'I' || el == 'At') && 
-				mol.atomCharge(n) == 0 && mol.atomHExplicit(n) == Molecule.HEXPLICIT_UNKNOWN && mol.atomAdjCount(n) == 0)
+			let options = MDLMOL_VALENCE[el], atno = Molecule.elementAtomicNumber(el);
+			// NOTE: have to be parsimonious about when to apply, otherwise interoperability can be a net loss
+			if (options || Chemistry.ELEMENT_BLOCKS[atno] == 2)
 			{
-				// (maybe other checks, e.g. inline abbrevs, if implemented)
-				mol.setAtomHExplicit(n, 1);
+
+				// valence: MDL CTAB has a way to specify valence explicitly, which can be used to calculate the implicit
+				// hydrogens; and by default, it is mapped to a table of valence options; whenever the implied H from the
+				// importation is different from what would be calculated natively, it needs to be explicitly set;
+				// note that B and C are conventional exceptions - not necessarily documented, but C+ & B- have inverse behaviour
+				
+				/*
+				if (!options) options = [Chemistry.ELEMENT_VALENCE[atno]];
+
+				let chg = mol.atomCharge(n);
+				let chgmod = (el == 'C' || el == 'H') ? Math.abs(chg) : el == 'B' ? -Math.abs(chg) : -chg;
+				let usedValence = chgmod + mol.atomUnpaired(n);
+				for (let b of mol.atomAdjBonds(n)) usedValence += mol.bondOrder(b);
+				let valence = explicitValence[n - 1];
+				if (valence < 0 || valence > 14) valence = 0;
+				else if (valence == 0)
+				{
+					valence = null;
+					for (let v of options) if (usedValence <= v) 
+					{
+						valence = v;
+						break;
+					}
+				}*/
+
+				let valence = explicitValence[n - 1], importedH = 0;
+				if (valence == 0)
+				{
+					let chg = mol.atomCharge(n);
+					let chgmod = (el == 'C' || el == 'H') ? Math.abs(chg) : el == 'B' ? -Math.abs(chg) : -chg;
+					let usedValence = chgmod + mol.atomUnpaired(n);
+					for (let b of mol.atomAdjBonds(n)) usedValence += mol.bondOrder(b);
+
+					if (!options) options = [Chemistry.ELEMENT_VALENCE[atno]];
+					for (let v of options) if (usedValence <= v) 
+					{
+						importedH = v - usedValence;
+						break;
+					}
+				}
+				else if (valence > 0 && valence <= 14)
+				{
+					importedH = valence;
+					for (let b of mol.atomAdjBonds(n)) importedH -= mol.bondOrder(b);
+				}
+
+				if (importedH > 0)
+				{
+					let nativeH = mol.atomHydrogens(n);
+					if (importedH != nativeH) mol.setAtomHExplicit(n, importedH);
+				}
 			}
 	    }
 
@@ -325,7 +399,7 @@ export class MDLMOLReader
 			// (silently ignore other stuff; don't care)
 		}
 		
-		let counts = lineCounts.split("\\s+");
+		let counts = lineCounts.split('\\s+');
 		if (counts.length < 2) throw ERRPFX + 'counts line malformatted';
 		let numAtoms = parseInt(counts[0]), numBonds = parseInt(counts[1]);
 		if (numAtoms < 0 || numAtoms > lineAtoms.length) throw ERRPFX + 'unreasonable atom count: ' + numAtoms;
@@ -342,7 +416,6 @@ export class MDLMOLReader
 				line = line.substring(0, line.length - 1) + lineAtoms[n];
 			}
 			let bits = this.splitWithQuotes(line);
-			//Util.writeln("ATOM[" + line + "]:" + Util.arrayStr(bits));
 			if (bits.length < 6) throw ERRPFX + 'atom line has too few components: ' + line;
 			let idx = parseInt(bits[0], 0);
 			if (idx < 1 || idx > numAtoms) throw ERRPFX + 'invalid atom index: ' + bits[0];
@@ -353,13 +426,12 @@ export class MDLMOLReader
 		for (let n = 0; n < lineBonds.length; n++)
 		{
 			let line = lineBonds[n];
-			while (n < lineBonds.length - 1 && line.endsWith("-"))
+			while (n < lineBonds.length - 1 && line.endsWith('-'))
 			{
 				n++;
 				line = line.substring(0, line.length - 1) + lineBonds[n];
 			}
 			let bits = this.splitWithQuotes(line);
-			//Util.writeln("BOND[" + line + "]:" + Util.arrayStr(bits));
 			if (bits.length < 4) throw ERRPFX + 'bond line has too few components: ' + line;
 			let idx = parseInt(bits[0], 0);
 			if (idx < 1 || idx > numBonds) throw ERRPFX + 'invalid bond index: ' + bits[0];
@@ -367,6 +439,8 @@ export class MDLMOLReader
 			bondBits[idx - 1] = bits;
 		}
 		
+		let explicitValence = Vec.numberArray(0, numAtoms);
+
 		for (let n = 1; n <= numAtoms; n++)
 		{
 			let bits = atomBits[n - 1];
@@ -400,6 +474,7 @@ export class MDLMOLReader
 						else if (stereo == 3) mol.setAtomTransient(n, Vec.append(trans, ForeignMolecule.ATOM_CHIRAL_MDL_RACEMIC));*/
 					}
 				}
+				else if (key == 'VAL') explicitValence[n - 1] = parseInt(val);
 			}
 		}
 
@@ -440,7 +515,7 @@ export class MDLMOLReader
 			}
 		}
 	    
-	    this.postFix();
+	    this.postFix(explicitValence);
 	}
 	
 	// takes a line of whitespace-separated stuff and breaks it into pieces
@@ -530,11 +605,11 @@ export class MDLSDFReader
 			if (rn == 0 && mol != null)
 			{
 				let str1 = entry[0], str3 = entry[2];
-				if (str1.length >= 7 && str1.startsWith("$name="))
+				if (str1.length >= 7 && str1.startsWith('$name='))
 				{
 					ds.changeColumnName(0, str1.substring(6), ds.colDescr(0));
 				}
-				if (str3.length >= 8 && str3.startsWith("$title="))
+				if (str3.length >= 8 && str3.startsWith('$title='))
 				{
 					ds.setTitle(str3.substring(7));
 				}
