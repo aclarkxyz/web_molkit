@@ -20,12 +20,13 @@ export class Vec
 {
 	public static isBlank(arr:any[]):boolean {return arr == null || arr.length == 0;}
 	public static notBlank(arr:any[]):boolean {return arr != null && arr.length > 0;}
+	public static safeArray<T>(arr:T[]):T[] {return arr == null ? [] : arr;}
 	public static arrayLength(arr:any[]):number {return arr == null ? 0 : arr.length;}
 
-	public static arrayNumber(arr:number[]):number[] {return arr == null ? [] : arr;}
+	/*public static arrayNumber(arr:number[]):number[] {return arr == null ? [] : arr;}
 	public static arrayString(arr:string[]):string[] {return arr == null ? [] : arr;}
 	public static arrayBoolean(arr:boolean[]):boolean[] {return arr == null ? [] : arr;}
-	public static arrayAny(arr:any[]):any[] {return arr == null ? [] : arr;}
+	public static arrayAny(arr:any[]):any[] {return arr == null ? [] : arr;}*/
 
 	public static anyTrue(arr:boolean[]):boolean
 	{

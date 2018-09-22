@@ -157,6 +157,7 @@ export class Graph
 		this.nbrs[N] = [];
     }
 
+	// keep/remove: modify graph in place by taking out some nodes
     public keepNodesMask(mask:boolean[]):void
     {
 		const oldsz = this.nbrs.length, newsz = Vec.maskCount(mask);
@@ -184,42 +185,39 @@ export class Graph
 		if (this.labels != null) this.labels = Vec.maskGet(this.labels, mask);
 		if (this.props != null) this.props = Vec.maskGet(this.props, mask);
     }
-
-/*
-    public void keepNodesIndex(int[] idx) {keepNodes(Vec.idxMask(idx, numNodes()));}
-
-    public void removeNodes(boolean[] mask) {keepNodes(Vec.not(mask));}
-
-    public void removeNodes(int[] idx) {removeNodes(Vec.idxMask(idx, numNodes()));}
+    public keepNodesIndex(idx:number[]) {this.keepNodesMask(Vec.idxMask(idx, this.numNodes));}
+    public removeNodesMask(mask:boolean[]) {this.keepNodesMask(Vec.notMask(mask));}
+    public removeNodesIndex(idx:number[]) {this.removeNodesMask(Vec.idxMask(idx, this.numNodes));}
     
-    public Graph subgraph(int[] idx)
+	// subgraph: creates a new graph, typically smaller; note that the index version honours the new atom order
+    public subgraphIndex(idx:number[]):Graph
     {
-		final int nsz = idx.length;
-		Graph g = new Graph(nsz);
-		if (indices != null || labels != null || props != null) for (int n = 0; n < nsz; n++)
+		const nsz = idx.length;
+		let g = new Graph(nsz);
+		if (this.indices != null || this.labels != null || this.props != null) for (let n = 0; n < nsz; n++)
 		{
-			if (indices != null) g.setIndex(n, indices[idx[n]]);
-			if (labels != null) g.setLabel(n, labels[idx[n]]);
-			if (props != null) g.setProperty(n, props[idx[n]]);
+			if (this.indices != null) g.setIndex(n, this.indices[idx[n]]);
+			if (this.labels != null) g.setLabel(n, this.labels[idx[n]]);
+			if (this.props != null) g.setProperty(n, this.props[idx[n]]);
 		}
-		for (int i = 0; i < nsz; i++)
+		for (let i = 0; i < nsz; i++)
 		{
-			for (int n : nbrs[idx[i]])
+			for (let n of this.nbrs[idx[i]])
 			{
-				int j = Vec.indexOf(n, idx);
+				let j = idx.indexOf(n);
 				if (j > i) g.addEdge(i, j);
 			}
 		}
     	return g;
     }
-    
-    public Graph subgraph(boolean[] mask)
+    public subgraphMask(mask:boolean[]):Graph
     {
-		Graph g = clone();
-		g.keepNodes(mask);
+		let g = this.clone();
+		g.keepNodesMask(mask);
 		return g;
-    }*/
+    }
     
+	// returns a list of connected component indices, one per node; the numbering system is based on node ordering
     public calculateComponents():number[]
     {
 		const sz = this.nbrs.length;
@@ -251,6 +249,7 @@ export class Graph
 		return cc;
     }
     
+	// returns an array of one group for each connected component
     public calculateComponentGroups():number[][]
     {
 		if (this.nbrs.length == 0) return [];
@@ -401,6 +400,7 @@ export class Graph
 		return rings.toArray(new int[rings.size()][]);
     }*/
     
+	// returns breadth-first-search order
 	public calculateBFS(idx:number):number[]
     {
 		let ret = Vec.numberArray(-1, this.numNodes);

@@ -18,6 +18,18 @@ namespace WebMolKit /* BOF */ {
 	General purpose functions. Note that these are not in the WebMolKit namespace.
 */
 
+// string-to-number: control the behaviour when invalid
+export function safeInt(str:string, def:number = 0):number
+{
+	let val = parseInt(str);
+	return isNaN(val) ? def : val;
+}
+export function safeFloat(str:string, def:number = 0):number
+{
+	let val = parseFloat(str);
+	return isNaN(val) ? def : val;
+}
+
 // creates a new element, with a specific parent (raw or jQuery); returns the child node - the raw DOM element, not the
 // jQuery wrapper
 export function newElement(parent:any, tag:string, attr?:any):Element

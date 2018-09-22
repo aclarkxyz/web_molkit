@@ -7,7 +7,8 @@
         "preserveConstEnums": true,
         "outFile": "bin/webmolkit-build.js",
         "sourceMap": true,
-        "target": "ES6"
+        "target": "ES6",
+        "lib": ["es2017", "dom"]
     },
     "include": 
     [
