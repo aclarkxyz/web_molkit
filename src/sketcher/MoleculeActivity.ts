@@ -75,7 +75,11 @@ export enum ActivityType
 	AbbrevGroup,
 	AbbrevFormula,
 	AbbrevClear,
-	AbbrevExpand
+	AbbrevExpand,
+	BondArtifactPath,
+	BondArtifactRing,
+	BondArtifactArene,
+	BondArtifactClear,
 }
 
 export interface SketchState
@@ -396,6 +400,12 @@ export class MoleculeActivity
 		else if (this.activity == ActivityType.AbbrevExpand)
 		{
 			this.execAbbrevExpand();
+			this.finish();
+		}
+		else if (this.activity == ActivityType.BondArtifactPath || this.activity == ActivityType.BondArtifactRing ||
+				 this.activity == ActivityType.BondArtifactArene || this.activity == ActivityType.BondArtifactClear)
+		{
+			this.execBondArtifact(this.activity);
 			this.finish();
 		}
 	}
@@ -1432,6 +1442,36 @@ export class MoleculeActivity
 		for (let n of idx) MolUtil.expandOneAbbrev(mol, n, true);
 		this.output.mol = mol; 
 	}
+
+	public execBondArtifact(activity:ActivityType):void
+	{
+		if (!this.requireAtoms() || !this.requireSubject()) return;
+		
+		let artif = new BondArtifact(this.input.mol.clone());
+		var subject = this.subjectIndex.slice(0), curAtom = this.input.currentAtom;
+		if (curAtom > 0 && subject.indexOf(curAtom) < 0) subject.push(curAtom);
+		
+		if (activity == ActivityType.BondArtifactPath)
+		{
+			if (!artif.createPath(subject)) {this.errmsg = "Path artifact not suitable."; return;}
+		}
+		else if (activity == ActivityType.BondArtifactRing)
+		{
+			if (!artif.createRing(subject)) {this.errmsg = "Ring artifact not suitable."; return;}
+		}
+		else if (activity == ActivityType.BondArtifactArene)
+		{
+			if (!artif.createArene(subject)) {this.errmsg = "Arene artifact not suitable."; return;}
+		}
+		else if (activity == ActivityType.BondArtifactClear)
+		{
+			if (!artif.removeArtifact(subject)) {this.errmsg = "No artifact removed."; return;}
+		}
+		
+		artif.rewriteMolecule();
+		this.output.mol = artif.mol;
+	}
+
 
 	/*
 	// input: (standard)

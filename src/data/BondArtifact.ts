@@ -55,7 +55,7 @@ export class BondArtifact
 
 	// ------------ public methods ------------
 	
-    constructor(private mol:Molecule)
+    constructor(public mol:Molecule)
 	{
 		// pull out the raw content from the molecule's extra fields
 		for (let n = 1; n <= this.mol.numAtoms; n++)

@@ -16617,6 +16617,10 @@ var WebMolKit;
         ActivityType[ActivityType["AbbrevFormula"] = 42] = "AbbrevFormula";
         ActivityType[ActivityType["AbbrevClear"] = 43] = "AbbrevClear";
         ActivityType[ActivityType["AbbrevExpand"] = 44] = "AbbrevExpand";
+        ActivityType[ActivityType["BondArtifactPath"] = 45] = "BondArtifactPath";
+        ActivityType[ActivityType["BondArtifactRing"] = 46] = "BondArtifactRing";
+        ActivityType[ActivityType["BondArtifactArene"] = 47] = "BondArtifactArene";
+        ActivityType[ActivityType["BondArtifactClear"] = 48] = "BondArtifactClear";
     })(ActivityType = WebMolKit.ActivityType || (WebMolKit.ActivityType = {}));
     class MoleculeActivity {
         constructor(owner, activity, param, override) {
@@ -16836,6 +16840,11 @@ var WebMolKit;
             }
             else if (this.activity == ActivityType.AbbrevExpand) {
                 this.execAbbrevExpand();
+                this.finish();
+            }
+            else if (this.activity == ActivityType.BondArtifactPath || this.activity == ActivityType.BondArtifactRing ||
+                this.activity == ActivityType.BondArtifactArene || this.activity == ActivityType.BondArtifactClear) {
+                this.execBondArtifact(this.activity);
                 this.finish();
             }
         }
@@ -17609,6 +17618,40 @@ var WebMolKit;
                 WebMolKit.MolUtil.expandOneAbbrev(mol, n, true);
             this.output.mol = mol;
         }
+        execBondArtifact(activity) {
+            if (!this.requireAtoms() || !this.requireSubject())
+                return;
+            let artif = new WebMolKit.BondArtifact(this.input.mol.clone());
+            var subject = this.subjectIndex.slice(0), curAtom = this.input.currentAtom;
+            if (curAtom > 0 && subject.indexOf(curAtom) < 0)
+                subject.push(curAtom);
+            if (activity == ActivityType.BondArtifactPath) {
+                if (!artif.createPath(subject)) {
+                    this.errmsg = "Path artifact not suitable.";
+                    return;
+                }
+            }
+            else if (activity == ActivityType.BondArtifactRing) {
+                if (!artif.createRing(subject)) {
+                    this.errmsg = "Ring artifact not suitable.";
+                    return;
+                }
+            }
+            else if (activity == ActivityType.BondArtifactArene) {
+                if (!artif.createArene(subject)) {
+                    this.errmsg = "Arene artifact not suitable.";
+                    return;
+                }
+            }
+            else if (activity == ActivityType.BondArtifactClear) {
+                if (!artif.removeArtifact(subject)) {
+                    this.errmsg = "No artifact removed.";
+                    return;
+                }
+            }
+            artif.rewriteMolecule();
+            this.output.mol = artif.mol;
+        }
         requireSubject() {
             if (this.subjectLength == 0)
                 this.errmsg = 'Subject required: current atom/bond or selected atoms.';
@@ -17945,7 +17988,7 @@ var WebMolKit;
         { 'id': 'atom', 'imageFN': 'MainAtom', 'helpText': 'Open the Atom submenu.', 'isSubMenu': true, 'mnemonic': 'A' },
         { 'id': 'bond', 'imageFN': 'MainBond', 'helpText': 'Open the Bond submenu.', 'isSubMenu': true, 'mnemonic': 'B' },
         { 'id': 'select', 'imageFN': 'MainSelect', 'helpText': 'Open the Selection submenu.', 'isSubMenu': true, 'mnemonic': 'S' },
-        { 'id': 'move', 'imageFN': 'MainMove', 'helpText': 'Open the Move submenu.', 'isSubMenu': true, 'mnemonic': 'M' }
+        { 'id': 'move', 'imageFN': 'MainMove', 'helpText': 'Open the Move submenu.', 'isSubMenu': true, 'mnemonic': 'M' },
     ];
     const COMMANDS_ATOM = [
         { 'id': 'element:C', 'text': 'C', 'helpText': 'Change elements to Carbon.', 'mnemonic': 'Shift-C' },
@@ -17965,7 +18008,7 @@ var WebMolKit;
         { 'id': 'pblock', 'imageFN': 'AtomPBlock', 'helpText': 'Open list of p-block elements.', 'isSubMenu': true, 'mnemonic': 'P' },
         { 'id': 'dblock', 'imageFN': 'AtomDBlock', 'helpText': 'Open list of d-block elements.', 'isSubMenu': true, 'mnemonic': 'D' },
         { 'id': 'fblock', 'imageFN': 'AtomFBlock', 'helpText': 'Open list of f-block elements.', 'isSubMenu': true, 'mnemonic': 'F' },
-        { 'id': 'noble', 'imageFN': 'AtomNoble', 'helpText': 'Open list of noble elements.', 'isSubMenu': true, 'mnemonic': 'Y' }
+        { 'id': 'noble', 'imageFN': 'AtomNoble', 'helpText': 'Open list of noble elements.', 'isSubMenu': true, 'mnemonic': 'Y' },
     ];
     const COMMANDS_BOND = [
         { 'id': 'one', 'imageFN': 'BondOne', 'helpText': 'Create or set bonds to single.', 'mnemonic': '1' },
@@ -17987,7 +18030,11 @@ var WebMolKit;
         { 'id': 'octa1', 'imageFN': 'BondOcta1', 'helpText': 'Apply octahedral geometry #1.', 'mnemonic': 'Shift-Y' },
         { 'id': 'octa2', 'imageFN': 'BondOcta2', 'helpText': 'Apply octahedral geometry #2.', 'mnemonic': 'Shift-U' },
         { 'id': 'connect', 'imageFN': 'BondConnect', 'helpText': 'Connect selected atoms, by proximity.', 'mnemonic': '' },
-        { 'id': 'disconnect', 'imageFN': 'BondDisconnect', 'helpText': 'Disconnect selected atoms.', 'mnemonic': '' }
+        { 'id': 'disconnect', 'imageFN': 'BondDisconnect', 'helpText': 'Disconnect selected atoms.', 'mnemonic': '' },
+        { 'id': 'artifactpath', 'imageFN': 'BondArtifactPath', 'helpText': 'Add a path bond artifact.', 'mnemonic': '' },
+        { 'id': 'artifactring', 'imageFN': 'BondArtifactRing', 'helpText': 'Add a ring bond artifact.', 'mnemonic': '' },
+        { 'id': 'artifactarene', 'imageFN': 'BondArtifactArene', 'helpText': 'Add an arene bond artifact.', 'mnemonic': '' },
+        { 'id': 'artifactclear', 'imageFN': 'BondArtifactClear', 'helpText': 'Remove a bond artifact.', 'mnemonic': '' },
     ];
     const COMMANDS_SELECT = [
         { 'id': 'selgrow', 'imageFN': 'SelectionGrow', 'helpText': 'Add adjacent atoms to selection.', 'mnemonic': '' },
@@ -18005,7 +18052,7 @@ var WebMolKit;
         { 'id': 'inline', 'imageFN': 'AtomInline', 'helpText': 'Make selected atoms into an inline abbreviation.', 'mnemonic': '' },
         { 'id': 'formula', 'imageFN': 'AtomFormula', 'helpText': 'Make selected atoms into their molecule formula.', 'mnemonic': '' },
         { 'id': 'clearabbrev', 'imageFN': 'AtomClearAbbrev', 'helpText': 'Remove inline abbreviation.', 'mnemonic': '' },
-        { 'id': 'expandabbrev', 'imageFN': 'AtomExpandAbbrev', 'helpText': 'Expand out the inline abbreviation.', 'mnemonic': '' }
+        { 'id': 'expandabbrev', 'imageFN': 'AtomExpandAbbrev', 'helpText': 'Expand out the inline abbreviation.', 'mnemonic': '' },
     ];
     const COMMANDS_MOVE = [
         { 'id': 'up', 'imageFN': 'MoveUp', 'helpText': 'Move subject atoms up slightly.', 'mnemonic': '' },
@@ -18031,7 +18078,7 @@ var WebMolKit;
         { 'id': 'hflip', 'imageFN': 'MoveHFlip', 'helpText': 'Flip subject atoms horizontally.', 'mnemonic': '' },
         { 'id': 'vflip', 'imageFN': 'MoveVFlip', 'helpText': 'Flip subject atoms vertically.', 'mnemonic': '' },
         { 'id': 'shrink', 'imageFN': 'MoveShrink', 'helpText': 'Decrease subject bond distances.', 'mnemonic': '' },
-        { 'id': 'grow', 'imageFN': 'MoveGrow', 'helpText': 'Increase subject bond distances.', 'mnemonic': '' }
+        { 'id': 'grow', 'imageFN': 'MoveGrow', 'helpText': 'Increase subject bond distances.', 'mnemonic': '' },
     ];
     class CommandBank extends WebMolKit.ButtonBank {
         constructor(owner, cmdType = CommandType.Main) {
@@ -18192,6 +18239,14 @@ var WebMolKit;
                 actv = WebMolKit.ActivityType.Connect;
             else if (id == 'disconnect')
                 actv = WebMolKit.ActivityType.Disconnect;
+            else if (id == 'artifactpath')
+                actv = WebMolKit.ActivityType.BondArtifactPath;
+            else if (id == 'artifactring')
+                actv = WebMolKit.ActivityType.BondArtifactRing;
+            else if (id == 'artifactarene')
+                actv = WebMolKit.ActivityType.BondArtifactArene;
+            else if (id == 'artifactclear')
+                actv = WebMolKit.ActivityType.BondArtifactClear;
             else if (id == 'addtwo')
                 actv = WebMolKit.ActivityType.BondAddTwo;
             else if (id == 'insert')

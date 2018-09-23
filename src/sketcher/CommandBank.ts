@@ -91,7 +91,7 @@ const COMMANDS_MAIN:ButtonBankItem[] =
 	{'id': 'atom', 'imageFN': 'MainAtom', 'helpText': 'Open the Atom submenu.', 'isSubMenu': true, 'mnemonic': 'A'},
 	{'id': 'bond', 'imageFN': 'MainBond', 'helpText': 'Open the Bond submenu.', 'isSubMenu': true, 'mnemonic': 'B'},
 	{'id': 'select', 'imageFN': 'MainSelect', 'helpText': 'Open the Selection submenu.', 'isSubMenu': true, 'mnemonic': 'S'},
-	{'id': 'move', 'imageFN': 'MainMove', 'helpText': 'Open the Move submenu.', 'isSubMenu': true, 'mnemonic': 'M'}
+	{'id': 'move', 'imageFN': 'MainMove', 'helpText': 'Open the Move submenu.', 'isSubMenu': true, 'mnemonic': 'M'},
 ];
 const COMMANDS_ATOM:ButtonBankItem[] =
 [
@@ -112,7 +112,7 @@ const COMMANDS_ATOM:ButtonBankItem[] =
 	{'id': 'pblock', 'imageFN': 'AtomPBlock', 'helpText': 'Open list of p-block elements.', 'isSubMenu': true, 'mnemonic': 'P'},
 	{'id': 'dblock', 'imageFN': 'AtomDBlock', 'helpText': 'Open list of d-block elements.', 'isSubMenu': true, 'mnemonic': 'D'},
 	{'id': 'fblock', 'imageFN': 'AtomFBlock', 'helpText': 'Open list of f-block elements.', 'isSubMenu': true, 'mnemonic': 'F'},
-	{'id': 'noble', 'imageFN': 'AtomNoble', 'helpText': 'Open list of noble elements.', 'isSubMenu': true, 'mnemonic': 'Y'}
+	{'id': 'noble', 'imageFN': 'AtomNoble', 'helpText': 'Open list of noble elements.', 'isSubMenu': true, 'mnemonic': 'Y'},
 ];
 const COMMANDS_BOND:ButtonBankItem[] =
 [
@@ -135,7 +135,11 @@ const COMMANDS_BOND:ButtonBankItem[] =
 	{'id': 'octa1', 'imageFN': 'BondOcta1', 'helpText': 'Apply octahedral geometry #1.', 'mnemonic': 'Shift-Y'},
 	{'id': 'octa2', 'imageFN': 'BondOcta2', 'helpText': 'Apply octahedral geometry #2.', 'mnemonic': 'Shift-U'},
 	{'id': 'connect', 'imageFN': 'BondConnect', 'helpText': 'Connect selected atoms, by proximity.', 'mnemonic': ''},
-	{'id': 'disconnect', 'imageFN': 'BondDisconnect', 'helpText': 'Disconnect selected atoms.', 'mnemonic': ''}
+	{'id': 'disconnect', 'imageFN': 'BondDisconnect', 'helpText': 'Disconnect selected atoms.', 'mnemonic': ''},
+	{'id': 'artifactpath', 'imageFN': 'BondArtifactPath', 'helpText': 'Add a path bond artifact.', 'mnemonic': ''},
+	{'id': 'artifactring', 'imageFN': 'BondArtifactRing', 'helpText': 'Add a ring bond artifact.', 'mnemonic': ''},
+	{'id': 'artifactarene', 'imageFN': 'BondArtifactArene', 'helpText': 'Add an arene bond artifact.', 'mnemonic': ''},
+	{'id': 'artifactclear', 'imageFN': 'BondArtifactClear', 'helpText': 'Remove a bond artifact.', 'mnemonic': ''},
 ];
 const COMMANDS_SELECT:ButtonBankItem[] =
 [
@@ -154,7 +158,7 @@ const COMMANDS_SELECT:ButtonBankItem[] =
 	{'id': 'inline', 'imageFN': 'AtomInline', 'helpText': 'Make selected atoms into an inline abbreviation.', 'mnemonic': ''},
 	{'id': 'formula', 'imageFN': 'AtomFormula', 'helpText': 'Make selected atoms into their molecule formula.', 'mnemonic': ''},
 	{'id': 'clearabbrev', 'imageFN': 'AtomClearAbbrev', 'helpText': 'Remove inline abbreviation.', 'mnemonic': ''},
-	{'id': 'expandabbrev', 'imageFN': 'AtomExpandAbbrev', 'helpText': 'Expand out the inline abbreviation.', 'mnemonic': ''}
+	{'id': 'expandabbrev', 'imageFN': 'AtomExpandAbbrev', 'helpText': 'Expand out the inline abbreviation.', 'mnemonic': ''},
 ];
 const COMMANDS_MOVE:ButtonBankItem[] =
 [
@@ -181,7 +185,7 @@ const COMMANDS_MOVE:ButtonBankItem[] =
 	{'id': 'hflip', 'imageFN': 'MoveHFlip', 'helpText': 'Flip subject atoms horizontally.', 'mnemonic': ''},
 	{'id': 'vflip', 'imageFN': 'MoveVFlip', 'helpText': 'Flip subject atoms vertically.', 'mnemonic': ''},
 	{'id': 'shrink', 'imageFN': 'MoveShrink', 'helpText': 'Decrease subject bond distances.', 'mnemonic': ''},
-	{'id': 'grow', 'imageFN': 'MoveGrow', 'helpText': 'Increase subject bond distances.', 'mnemonic': ''}
+	{'id': 'grow', 'imageFN': 'MoveGrow', 'helpText': 'Increase subject bond distances.', 'mnemonic': ''},
 ];
 
 export class CommandBank extends ButtonBank
@@ -269,6 +273,10 @@ export class CommandBank extends ButtonBank
 		else if (id == 'switch') actv = ActivityType.BondSwitch;
 		else if (id == 'connect') actv = ActivityType.Connect;
 		else if (id == 'disconnect') actv = ActivityType.Disconnect;
+		else if (id == 'artifactpath') actv = ActivityType.BondArtifactPath;
+		else if (id == 'artifactring') actv = ActivityType.BondArtifactRing;
+		else if (id == 'artifactarene') actv = ActivityType.BondArtifactArene;
+		else if (id == 'artifactclear') actv = ActivityType.BondArtifactClear;
 		else if (id == 'addtwo') actv = ActivityType.BondAddTwo;
 		else if (id == 'insert') actv = ActivityType.BondInsert;
 		else if (id == 'curelement') actv = ActivityType.SelectCurElement;
