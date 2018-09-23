@@ -87,7 +87,7 @@ export class Dialog
         pb.css('position', 'absolute');
         pb.css('left', (50 - 0.5 * this.minPortionWidth) + '%');
         pb.css('top', (document.body.scrollTop + 50) + 'px');
-        pb.css('min-height', '50%');   
+        pb.css('min-height', '20%');   
         pb.css('z-index', 10000);     
         this.panelBoundary = pb;
 

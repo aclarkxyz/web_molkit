@@ -324,31 +324,11 @@ export class MDLMOLReader
 			// NOTE: have to be parsimonious about when to apply, otherwise interoperability can be a net loss
 			if (options || Chemistry.ELEMENT_BLOCKS[atno] == 2)
 			{
-
 				// valence: MDL CTAB has a way to specify valence explicitly, which can be used to calculate the implicit
 				// hydrogens; and by default, it is mapped to a table of valence options; whenever the implied H from the
 				// importation is different from what would be calculated natively, it needs to be explicitly set;
 				// note that B and C are conventional exceptions - not necessarily documented, but C+ & B- have inverse behaviour
 				
-				/*
-				if (!options) options = [Chemistry.ELEMENT_VALENCE[atno]];
-
-				let chg = mol.atomCharge(n);
-				let chgmod = (el == 'C' || el == 'H') ? Math.abs(chg) : el == 'B' ? -Math.abs(chg) : -chg;
-				let usedValence = chgmod + mol.atomUnpaired(n);
-				for (let b of mol.atomAdjBonds(n)) usedValence += mol.bondOrder(b);
-				let valence = explicitValence[n - 1];
-				if (valence < 0 || valence > 14) valence = 0;
-				else if (valence == 0)
-				{
-					valence = null;
-					for (let v of options) if (usedValence <= v) 
-					{
-						valence = v;
-						break;
-					}
-				}*/
-
 				let valence = explicitValence[n - 1], importedH = 0;
 				if (valence == 0)
 				{

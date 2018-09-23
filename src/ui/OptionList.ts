@@ -31,13 +31,15 @@ namespace WebMolKit /* BOF */ {
 
 export class OptionList extends Widget
 {
-	public selidx = 0;
-	public buttonDiv:any[] = [];
-	public auxCell:any[] = [];
-	public padding = 6; // pixels
+	private selidx = 0;
+	private buttonDiv:any[] = [];
+	private auxCell:any[] = [];
+	private padding = 6; // pixels
 	
 	public callbackSelect:(idx:number, source?:OptionList) => void = null;
 	
+	// ------------ public methods ------------
+
 	constructor(private options:string[], private isVertical:boolean = false)
 	{
 		super();
