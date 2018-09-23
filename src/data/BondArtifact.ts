@@ -1,11 +1,11 @@
 /*
-    WebMolKit
+	WebMolKit
 
-    (c) 2010-2018 Molecular Materials Informatics, Inc.
+	(c) 2010-2018 Molecular Materials Informatics, Inc.
 
-    All rights reserved
-    
-    http://molmatinf.com
+	All rights reserved
+	
+	http://molmatinf.com
 
 	[PKG=webmolkit]
 */
@@ -35,27 +35,27 @@ export const BONDARTIFACT_EXTRA_ARENE = 'xARENE:';
 
 export interface BondArtifactResPath
 {
-    atoms:number[]; // line of resonance-style bonding
+	atoms:number[]; // line of resonance-style bonding
 }
 export interface BondArtifactResRing
 {
-    atoms:number[]; // single ring of resonating bonds (ring can be any size)
+	atoms:number[]; // single ring of resonating bonds (ring can be any size)
 }
 export interface BondArtifactArene
 {
-    centre:number; // atom to which the arene is bonded
-    atoms:number[]; // ring (or partial ring) that is side-bonded
+	centre:number; // atom to which the arene is bonded
+	atoms:number[]; // ring (or partial ring) that is side-bonded
 }
 
 export class BondArtifact
 {
-    private resPaths = new Map<number, BondArtifactResPath>();
-    private resRings = new Map<number, BondArtifactResRing>();
-    private arenes = new Map<number, BondArtifactArene>();
+	private resPaths = new Map<number, BondArtifactResPath>();
+	private resRings = new Map<number, BondArtifactResRing>();
+	private arenes = new Map<number, BondArtifactArene>();
 
 	// ------------ public methods ------------
 	
-    constructor(public mol:Molecule)
+	constructor(public mol:Molecule)
 	{
 		// pull out the raw content from the molecule's extra fields
 		for (let n = 1; n <= this.mol.numAtoms; n++)
@@ -69,31 +69,31 @@ export class BondArtifact
 		}
 		
 		// clean each one up, or remove if invalid
-        for (let [blk, res] of this.resPaths.entries())
+		for (let [blk, res] of this.resPaths.entries())
 		{
 			res.atoms = this.pack(res.atoms);
 			if (!this.pathify(res.atoms, false)) this.resPaths.delete(blk);
 		}
-        for (let [blk, res] of this.resRings.entries())
+		for (let [blk, res] of this.resRings.entries())
 		{
 			res.atoms = this.pack(res.atoms);
 			if (!this.pathify(res.atoms, true)) this.resRings.delete(blk);
 		}
-        for (let [blk, res] of this.arenes.entries())
+		for (let [blk, res] of this.arenes.entries())
 		{
 			res.atoms = this.pack(res.atoms);
 			if (res.atoms.length > 1) res.centre = res.atoms.shift();
 			if (!this.pathify(res.atoms, false)) this.arenes.delete(blk);
-        }
+		}
 	}
 
 	// access to resulting content	
 	public getPathBlocks():number[] {return Array.from(this.resPaths.keys());}
 	public getRingBlocks():number[] {return Array.from(this.resRings.keys());}
 	public getAreneBlocks():number[] {return Array.from(this.arenes.keys());}
-    public getResPaths():BondArtifactResPath[] {return Array.from(this.resPaths.values());}
-    public getResRings():BondArtifactResRing[] {return Array.from(this.resRings.values());}
-    public getArenes():BondArtifactArene[] {return Array.from(this.arenes.values());}
+	public getResPaths():BondArtifactResPath[] {return Array.from(this.resPaths.values());}
+	public getResRings():BondArtifactResRing[] {return Array.from(this.resRings.values());}
+	public getArenes():BondArtifactArene[] {return Array.from(this.arenes.values());}
 
 	// replaces all artifact signifiers with those from the current list of content
 	public rewriteMolecule():void
@@ -259,9 +259,9 @@ export class BondArtifact
 	private appendResPath(atom:number, bits:string[]):void
 	{
 		let blk = safeInt(bits[0], 0);
-        if (blk <= 0) return;
+		if (blk <= 0) return;
 
-        let res = this.resPaths.get(blk);
+		let res = this.resPaths.get(blk);
 		if (res == null) this.resPaths.set(blk, res = {'atoms': Vec.numberArray(0, this.mol.numAtoms)});
 
 		let idx = bits.length >= 2 ? safeInt(bits[1], 0) : 0;
@@ -271,7 +271,7 @@ export class BondArtifact
 	private appendResRing(atom:number, bits:string[]):void
 	{
 		let blk = safeInt(bits[0], 0);
-        if (blk <= 0) return;
+		if (blk <= 0) return;
 
 		let res = this.resRings.get(blk);
 		if (res == null) this.resRings.set(blk, res = {'atoms': Vec.numberArray(0, this.mol.numAtoms)});
@@ -283,10 +283,10 @@ export class BondArtifact
 	private appendArene(atom:number, bits:string[]):void
 	{
 		let blk = safeInt(bits[0], 0);
-        if (blk <= 0) return;
+		if (blk <= 0) return;
 
 		let res = this.arenes.get(blk);
-        if (res == null) this.arenes.set(blk, res = {'centre': 0, 'atoms': Vec.numberArray(0, this.mol.numAtoms)});
+		if (res == null) this.arenes.set(blk, res = {'centre': 0, 'atoms': Vec.numberArray(0, this.mol.numAtoms)});
 
 		let idx = bits.length >= 2 ? safeInt(bits[1], 0) : 0;
 		if (res.atoms.indexOf(atom) >= 0) return;
@@ -296,9 +296,9 @@ export class BondArtifact
 	// condense an array by removing zero's
 	private pack(arr:number[]):number[]
 	{
-        let ret:number[] = [];
-        for (let v of arr) if (v != 0) ret.push(v);
-        return ret;
+		let ret:number[] = [];
+		for (let v of arr) if (v != 0) ret.push(v);
+		return ret;
 	}
 	
 	// takes an array of atom indices and makes sure it's a path of some sort; this may involve reordering the atoms; it must be possible to start at
@@ -309,7 +309,7 @@ export class BondArtifact
 		let sz = atoms.length;
 		if (sz < 2) return false;
 		
-        let g = Graph.fromMolecule(this.mol);
+		let g = Graph.fromMolecule(this.mol);
 		for (let n = 0; n < this.mol.numAtoms; n++) g.setIndex(n, n + 1);
 		g = g.subgraphIndex(Vec.add(atoms, -1));
 		let pos = 0;

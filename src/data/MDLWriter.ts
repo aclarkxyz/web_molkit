@@ -1,11 +1,11 @@
 /*
-    WebMolKit
+	WebMolKit
 
-    (c) 2010-2018 Molecular Materials Informatics, Inc.
+	(c) 2010-2018 Molecular Materials Informatics, Inc.
 
-    All rights reserved
-    
-    http://molmatinf.com
+	All rights reserved
+	
+	http://molmatinf.com
 
 	[PKG=webmolkit]
 */
@@ -101,7 +101,7 @@ export class MDLMOLWriter
 		Molecule rmol = MolUtil.reduceBondTypes(mol);
 		if (rmol != null) mol = rmol;*/
 
-    	// export atoms, and make a few notes along the way
+		// export atoms, and make a few notes along the way
 		for (let n = 1; n <= mol.numAtoms; n++)
 		{
 			let x = mol.atomX(n), y = mol.atomY(n), z = 0;
@@ -151,24 +151,24 @@ export class MDLMOLWriter
 			{
 				if (mol.atomHExplicit(n) != Molecule.HEXPLICIT_UNKNOWN) {hydidx.push(n); hydval.push(mol.atomHExplicit(n));}
 				// these are for retroactive bond separation, not implemented at the moment
-    	    	//if (xmol.atomCharge(n) != mol.atomCharge(n)) {zchidx.push(n); zchval.push(xmol.atomCharge(n));}
-	    	    //if (xmol.atomHExplicit(n) != Molecule.HEXPLICIT_UNKNOWN) {hydidx.push(n); hydval.push(xmol.atomHExplicit(n));}
-    	   	}
+				//if (xmol.atomCharge(n) != mol.atomCharge(n)) {zchidx.push(n); zchval.push(xmol.atomCharge(n));}
+				//if (xmol.atomHExplicit(n) != Molecule.HEXPLICIT_UNKNOWN) {hydidx.push(n); hydval.push(xmol.atomHExplicit(n));}
+		   	}
 
-    	    if (mol.atomUnpaired(n) != 0) {radidx.push(n); radval.push(mol.atomUnpaired(n));}
-    	    if (mol.atomIsotope(n) != Molecule.ISOTOPE_NATURAL) {isoidx.push(n); isoval.push(mol.atomIsotope(n));}
-    	}
+			if (mol.atomUnpaired(n) != 0) {radidx.push(n); radval.push(mol.atomUnpaired(n));}
+			if (mol.atomIsotope(n) != Molecule.ISOTOPE_NATURAL) {isoidx.push(n); isoval.push(mol.atomIsotope(n));}
+		}
 
-    	// export bonds
+		// export bonds
 		for (let n = 1; n <= mol.numBonds; n++)
 		{
 			let order = mol.bondOrder(n), type = order;
 			let stereo = mol.bondType(n);
 			if (stereo == Molecule.BONDTYPE_NORMAL) {}
-    	    else if (stereo == Molecule.BONDTYPE_INCLINED) {stereo = 1; type = 1;}
-    	    else if (stereo == Molecule.BONDTYPE_DECLINED) {stereo = 6; type = 1;}
-    	    else if (stereo == Molecule.BONDTYPE_UNKNOWN) {stereo = 4; type = 1;}
-    	    else stereo = 0;
+			else if (stereo == Molecule.BONDTYPE_INCLINED) {stereo = 1; type = 1;}
+			else if (stereo == Molecule.BONDTYPE_DECLINED) {stereo = 6; type = 1;}
+			else if (stereo == Molecule.BONDTYPE_UNKNOWN) {stereo = 4; type = 1;}
+			else stereo = 0;
 
 			let line = this.intrpad(mol.bondFrom(n), 3) + this.intrpad(mol.bondTo(n), 3) + 
 					   this.intrpad(type, 3) + this.intrpad(stereo, 3) + '  0  0  0';
@@ -180,7 +180,7 @@ export class MDLMOLWriter
 				// these are for retroactive bond separation, not implemented at the moment
 				//if (xmol.bondOrder(n) != mol.bondOrder(n)) {zboidx.push(n); zboval.push(xmol.bondOrder(n));}
 			}
-    	}
+		}
 
 		// export the additional blocks
 		this.writeMBlockPair('CHG', chgidx, chgval);
@@ -201,17 +201,17 @@ export class MDLMOLWriter
 			for (let arene of artifacts.getArenes()) this.writeMBlockFlat('ZAR', ++idx, Vec.prepend(arene.atoms, arene.centre));
 		}
 
-    	// export long atom names
+		// export long atom names
 		for (let n = 1; n <= mol.numAtoms; n++) if (mol.atomElement(n).length > 2)
 		{
 			this.lines.push('A  ' + this.intrpad(n, 3));
 			this.lines.push(mol.atomElement(n));
 		}
 
-    	this.lines.push('M  END');
+		this.lines.push('M  END');
    	}
 
-    // writes a specific sub-block, e.g. M__CHG, etc., where each pair of idx/val is a separate entity
+	// writes a specific sub-block, e.g. M__CHG, etc., where each pair of idx/val is a separate entity
 	private writeMBlockPair(token:string, idx:number[], val:number[])
 	{
 		const sz = idx.length;
@@ -222,7 +222,7 @@ export class MDLMOLWriter
 			for (let j = 0; j < count; j++) line += this.intrpad(idx[i + j], 4) + this.intrpad(val[i + j], 4);
 			this.lines.push(line);
 		}
-    }
+	}
 
 	// writes a specific sub-block, whereby the master index corresponds to some number of values; these are split over multiple
 	// lines if necessary
