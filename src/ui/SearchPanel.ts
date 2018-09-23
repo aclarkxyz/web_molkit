@@ -484,7 +484,7 @@ export class SearchPanel extends Widget
 				reader.onload = (event) =>
 				{
 					let str = reader.result;
-					let mol = MoleculeStream.readUnknown(str);
+					let mol = MoleculeStream.readUnknown(str.toString());
 					if (mol != null) 
 					{
 						if (which == 1) this.setMolecule1(mol); else this.setMolecule2(mol);

@@ -22,7 +22,7 @@ export class XML
 	public static nodeText(el:Node):string
 	{
 		let text = '';
-		for (let child of el.childNodes)
+		for (let child of Array.from(el.childNodes))
 		{
 			if (child.nodeType == Node.TEXT_NODE || child.nodeType == Node.CDATA_SECTION_NODE) text += child.nodeValue;
 		}

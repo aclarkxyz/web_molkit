@@ -68,8 +68,8 @@ export class BondArtifact
 			for (let str of this.mol.atomExtra(n))
 			{
 				if (str.startsWith(BONDARTIFACT_EXTRA_RESPATH)) this.appendResPath(n, str.substring(BONDARTIFACT_EXTRA_RESPATH.length).split(':'));
-				else if (str.startsWith(BONDARTIFACT_EXTRA_RESRING)) this.appendResRing(n, str.substring(BONDARTIFACT_EXTRA_RESRING.length).split(''));
-				else if (str.startsWith(BONDARTIFACT_EXTRA_ARENE)) this.appendArene(n, str.substring(BONDARTIFACT_EXTRA_ARENE.length).split(''));
+				else if (str.startsWith(BONDARTIFACT_EXTRA_RESRING)) this.appendResRing(n, str.substring(BONDARTIFACT_EXTRA_RESRING.length).split(':'));
+				else if (str.startsWith(BONDARTIFACT_EXTRA_ARENE)) this.appendArene(n, str.substring(BONDARTIFACT_EXTRA_ARENE.length).split(':'));
 			}
 		}
 		

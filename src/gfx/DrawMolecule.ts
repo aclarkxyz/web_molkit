@@ -88,6 +88,10 @@ export class DrawMolecule
 			else if (b.type == BLineType.IncDouble || b.type == BLineType.IncTriple || b.type == BLineType.IncQuadruple) this.drawBondIncMulti(b);
 		}
 		
+		let fg = policy.data.foreground;
+		for (let r of layout.getRings()) vg.drawOval(r.cx, r.cy, r.rw, r.rh, fg, r.size, MetaVector.NOCOLOUR);
+		for (let p of layout.getPaths()) vg.drawPath(p.px, p.py, p.ctrl, false, fg, p.size, MetaVector.NOCOLOUR, false);
+
 		for (let n = 0; n < layout.numPoints(); n++)
 		{
 			let p = layout.getPoint(n);

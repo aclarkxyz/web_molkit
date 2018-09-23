@@ -61,6 +61,25 @@ export interface BLine
 	col:number;
 }
 
+export interface XRing
+{
+	atoms:number[];
+	cx:number;
+	cy:number;
+	rw:number;
+	rh:number;
+	size:number; // line size
+}
+
+export interface XPath
+{
+	atoms:number[];
+	px:number[];
+	py:number[];
+	ctrl:boolean[];
+	size:number; // line size
+}
+
 export interface SpaceFiller
 {
 	anum:number; // origin, if any
@@ -91,7 +110,20 @@ export class ArrangeMolecule
     // listed after that is arbitrary; the lines are not listed in any kind of order
 	private points:APoint[] = [];
 	private lines:BLine[] = [];
+	private rings:XRing[] = [];
+	private paths:XPath[] = [];
 	private space:SpaceFiller[] = [];
+
+	// bond artifacts: by default they are derived automatically, but can also be disabled; these properties are also used to
+	// override the default rendering of atom/bond properties
+	private wantArtifacts = true;
+	private artifacts:BondArtifact = null;
+	private bondOrder:number[] = []; // replacement bond orders; special case: -1 for do-not-draw
+	private atomCharge:number[] = [];
+	private atomUnpaired:number[] = [];
+	private artifactCharge = new Map<Object, number>();
+	private artifactUnpaired = new Map<Object, number>();
+	private artifactFract = new Map<Object, boolean>()// bond order < 1: replaces the bond itself
 
     // --------------------- static methods ---------------------
     
@@ -135,21 +167,42 @@ export class ArrangeMolecule
     public getEffects():RenderEffects {return this.effects;}
     public getScale():number {return this.scale;} // may be different from measure.scale() if modified after layout
     
+	// bond artifacts: can decide whether they're to be derived, or provide them already
+	public setWantArtifacts(want:boolean) {this.wantArtifacts = want;}
+	public getArtifacts():BondArtifact {return this.artifacts;}
+	public setArtifacts(artifacts:BondArtifact):void {this.artifacts = artifacts;}
+
 	// the action method: call this before accessing any of the resultant data
     public arrange():void
     {
+		const mol = this.mol;
+
 		this.scale = this.measure.scale();
 		this.bondSepPix = this.policy.data.bondSep * this.measure.scale();
 		this.lineSizePix = this.policy.data.lineSize * this.measure.scale();
 		this.fontSizePix = this.policy.data.fontSize * this.measure.scale() * ArrangeMolecule.FONT_CORRECT;
 		this.ymul = this.measure.yIsUp() ? -1 : 1;
 
+		let artmask:boolean[] = null;
+		if (this.wantArtifacts && this.artifacts == null) 
+		{
+			this.artifacts = new BondArtifact(mol);
+			this.artifacts.extract();
+			
+			artmask = Vec.booleanArray(false, mol.numAtoms);
+			for (let path of this.artifacts.getResPaths()) for (let a of path.atoms) artmask[a - 1] = true;
+			for (let ring of this.artifacts.getResRings()) for (let a of ring.atoms) artmask[a - 1] = true;
+			for (let arene of this.artifacts.getArenes()) {artmask[arene.centre - 1] = true; for (let a of arene.atoms) artmask[a - 1] = true;}
+		}
+
+		this.setupBondOrders();
+
     	// fill in each of the atom centres
-		for (let n = 1; n <= this.mol.numAtoms; n++)
+		for (let n = 1; n <= mol.numAtoms; n++)
     	{
     	    // atom symbols which are more than 2 characters long are labels rather than elements, and get different treatment;
     	    // note we put in a null placeholder here, so that the points will be kept in their original atom order
-			if (this.mol.atomElement(n).length > 2 && this.mol.atomHydrogens(n) == 0)
+			if (mol.atomElement(n).length > 2 && mol.atomHydrogens(n) == 0)
 			{
 				this.points.push(null);
 				this.space.push(null);
@@ -160,11 +213,11 @@ export class ArrangeMolecule
 			let a:APoint =
 			{
 				'anum': n,
-	    	    'text': /*this.effects.showCarbon ||*/ this.mol.atomExplicit(n) || this.atomIsWeirdLinear(n) ? this.mol.atomElement(n) : null,
+	    	    'text': /*this.effects.showCarbon ||*/ mol.atomExplicit(n) || this.atomIsWeirdLinear(n) ? mol.atomElement(n) : null,
 				'fsz': this.fontSizePix,
-				'bold': this.mol.atomMapNum(n) > 0,
-				'col': this.policy.data.atomCols[this.mol.atomicNumber(n)],
-				'oval': new Oval(this.measure.angToX(this.mol.atomX(n)), this.measure.angToY(this.mol.atomY(n)), 0, 0)
+				'bold': mol.atomMapNum(n) > 0,
+				'col': this.policy.data.atomCols[mol.atomicNumber(n)],
+				'oval': new Oval(this.measure.angToX(mol.atomX(n)), this.measure.angToY(mol.atomY(n)), 0, 0)
 			};
 			let overCol = this.effects.colAtom[n];
 			if (overCol) a.col = overCol;
@@ -172,13 +225,9 @@ export class ArrangeMolecule
 			//if (policy.mappedColour >= 0 && mol.atomMapNum(n) > 0) a.col = policy.mappedColour;
     
     	    // decide whether this atom is to have a label
-    	    
-			/*
-			if (this.effects.showNumbering == RenderEffects.NUMBERING_INDICES) a.text = String.valueOf(n);
-			else if (this.effects.showNumbering == RenderEffects.NUMBERING_RINGBLOCK) a.text = String.valueOf(mol.atomRingBlock(n));
-			else if (effects.showNumbering==RenderEffects.NUMBERING_PRIORITY) a.text=String.valueOf(mol.atomPriority(n));
-			else if (this.effects.showNumbering == RenderEffects.NUMBERING_MAPPING) a.text = String.valueOf(mol.atomMapNum(n));
-			*/
+			let explicit = mol.atomExplicit(n) /*|| this.effects.showCarbon;*/
+			if (explicit && /*!effects.showCarbon &&*/ mol.atomElement(n) == 'C' && !this.atomIsWeirdLinear(n)) explicit = !artmask[n - 1];
+			a.text = explicit ? mol.atomElement(n) : null;    	    
     	        
     	    // if it has a label, then how big
 			if (a.text != null)
@@ -194,15 +243,17 @@ export class ArrangeMolecule
 		}
 
     	// pick up the label-style elements, and deal with them
-		for (let n = 1; n <= this.mol.numAtoms; n++) if (this.points[n - 1] == null) this.processLabel(n);
+		for (let n = 1; n <= mol.numAtoms; n++) if (this.points[n - 1] == null) this.processLabel(n);
 
     	// resolve the bonds which can be analyzed immediately
-		let bdbl = Vec.booleanArray(false, this.mol.numBonds); // gets set to true if bond is awaiting a double bond assignment
+		let bdbl = Vec.booleanArray(false, mol.numBonds); // gets set to true if bond is awaiting a double bond assignment
 
-		for (let n = 1; n <= this.mol.numBonds; n++)
+		for (let n = 1; n <= mol.numBonds; n++)
 		{
-			let bfr = this.mol.bondFrom(n), bto = this.mol.bondTo(n);
-			let bt = this.mol.bondType(n), bo = this.mol.bondOrder(n);
+			let bfr = mol.bondFrom(n), bto = mol.bondTo(n);
+			let bt = mol.bondType(n), bo = this.bondOrder[n - 1];
+			if (bo < 0) continue; // do not draw
+
 			let col = this.effects.colBond[n];
 			if (!col) col = this.policy.data.foreground;
 
@@ -266,8 +317,8 @@ export class ArrangeMolecule
 				let dx = xy2[0] - xy1[0], dy = xy2[1] - xy1[1];
 				let d = norm_xy(dx, dy), invD = 1 / d;
 				let ox = 0.5 * dx * invD * this.bondSepPix, oy = 0.5 * dy * invD * this.bondSepPix;
-				if (this.mol.atomAdjCount(bfr) > 1) {xy1[0] += ox; xy1[1] += oy;}
-				if (this.mol.atomAdjCount(bto) > 1) {xy2[0] -= ox; xy2[1] -= oy;}
+				if (mol.atomAdjCount(bfr) > 1) {xy1[0] += ox; xy1[1] += oy;}
+				if (mol.atomAdjCount(bto) > 1) {xy2[0] -= ox; xy2[1] -= oy;}
 			}
 
     		// for dotted/declined, swap the sides
@@ -321,7 +372,7 @@ export class ArrangeMolecule
 		{
 			for (let j = 0; j < rings[i].length; j++)
 			{
-				let k = this.mol.findBond(rings[i][j], rings[i][j < rings[i].length - 1 ? j + 1 : 0]);
+				let k = mol.findBond(rings[i][j], rings[i][j < rings[i].length - 1 ? j + 1 : 0]);
 				if (bdbl[k - 1])
 				{
 					this.processDoubleBond(k, rings[i]);
@@ -331,37 +382,63 @@ export class ArrangeMolecule
 		}
 
     	// process all remaining double bonds
-		for (let i = 1; i <= this.mol.numBonds; i++) if (bdbl[i - 1]) this.processDoubleBond(i, this.priorityDoubleSubstit(i));
+		for (let i = 1; i <= mol.numBonds; i++) if (bdbl[i - 1]) this.processDoubleBond(i, this.priorityDoubleSubstit(i));
 
     	// place hydrogen labels as explicit "atom centres"
-		let hcount = Vec.numberArray(0, this.mol.numAtoms);
-		for (let n = 1; n <= this.mol.numAtoms; n++) hcount[n - 1] = /*!effects.showHydrogen ||*/ this.points[n - 1].text == null ? 0 : this.mol.atomHydrogens(n);
-		for (let n = 0; n < this.mol.numAtoms; n++) if (hcount[n] > 0 && this.placeHydrogen(n, hcount[n], true)) hcount[n] = 0;
-		for (let n = 0; n < this.mol.numAtoms; n++) if (hcount[n] > 0) this.placeHydrogen(n, hcount[n], false);
+		let hcount = Vec.numberArray(0, mol.numAtoms);
+		for (let n = 1; n <= mol.numAtoms; n++) hcount[n - 1] = /*!effects.showHydrogen ||*/ this.points[n - 1].text == null ? 0 : mol.atomHydrogens(n);
+		for (let n = 0; n < mol.numAtoms; n++) if (hcount[n] > 0 && this.placeHydrogen(n, hcount[n], true)) hcount[n] = 0;
+		for (let n = 0; n < mol.numAtoms; n++) if (hcount[n] > 0) this.placeHydrogen(n, hcount[n], false);
 
         // look for atoms with isotope labels, and place them
-		for (let n = 1; n <= this.mol.numAtoms; n++) if (this.mol.atomIsotope(n) != Molecule.ISOTOPE_NATURAL)
+		for (let n = 1; n <= mol.numAtoms; n++) if (mol.atomIsotope(n) != Molecule.ISOTOPE_NATURAL)
 		{
-			let isostr = this.mol.atomIsotope(n).toString();
-			let col = this.policy.data.atomCols[this.mol.atomicNumber(n)];
+			let isostr = mol.atomIsotope(n).toString();
+			let col = this.policy.data.atomCols[mol.atomicNumber(n)];
 			this.placeAdjunct(n, isostr, this.fontSizePix * 0.6, col, 150 * DEGRAD);
 		}
 
     	// do atomic charges/radical notation
-		for (let n = 1; n <= this.mol.numAtoms; n++)
+		for (let n = 1; n <= mol.numAtoms; n++)
 		{
 			let str = '';
-			let chg = this.mol.atomCharge(n);
+			let chg = this.atomCharge[n - 1];
 			if (chg == -1) str = '-';
 			else if (chg == 1) str = '+';
 			else if (chg < -1) str = Math.abs(chg) + '-';
 			else if (chg > 1) str = chg + '+';
-			for (let i = this.mol.atomUnpaired(n); i > 0; i--) str += '.';
+			for (let i = this.atomUnpaired[n - 1]; i > 0; i--) str += '.';
 			if (str.length == 0) continue;
-			let col = this.policy.data.atomCols[this.mol.atomicNumber(n)];
+			let col = this.policy.data.atomCols[mol.atomicNumber(n)];
 			this.placeAdjunct(n, str, str.length == 1 ? 0.8 * this.fontSizePix : 0.6 * this.fontSizePix, col, 30 * DEGRAD);
     	}
 	
+		if (this.artifacts != null)
+		{
+			for (let path of this.artifacts.getResPaths()) 
+			{
+				this.createCurvedPath(path.atoms, this.artifactFract.get(path), 0);
+				this.delocalisedAnnotation(path.atoms, this.artifactCharge.get(path), this.artifactUnpaired.get(path));
+			}
+			for (let ring of this.artifacts.getResRings()) 
+			{
+				this.createCircularRing(ring.atoms);
+				this.delocalisedAnnotation(ring.atoms, this.artifactCharge.get(ring), this.artifactUnpaired.get(ring));
+			}
+			for (let arene of this.artifacts.getArenes())
+			{
+				let isRing = arene.atoms.length > 2;
+				if (isRing) for (let n = 0; n < arene.atoms.length; n++)
+				{
+					let nn = n < arene.atoms.length - 1 ? n + 1 : 0;
+					if (mol.findBond(arene.atoms[n], arene.atoms[nn]) == 0) {isRing = false; break;}
+				}
+				this.createBondCentroid(arene.centre, arene.atoms);
+				if (isRing) this.createCircularRing(arene.atoms); else this.createCurvedPath(arene.atoms, false, arene.centre);
+				this.delocalisedAnnotation(arene.atoms, this.artifactCharge.get(arene), this.artifactUnpaired.get(arene));
+			}
+		}
+
     	// perform a pseudo-embedding of the structure to resolve line-crossings
 /* ... to be done....
 		PseudoEmbedding emb = new PseudoEmbedding(mol);
@@ -382,7 +459,15 @@ export class ArrangeMolecule
     // access to bond information; it is _NOT_ valid to read anything into the indices; they do not correlate with bond numbers
     public numLines():number {return this.lines.length;}
     public getLine(idx:number):BLine {return this.lines[idx];}
-    
+
+	// access to extra ring/resonance information
+	public numRings():number {return this.rings.length;}
+	public getRing(idx:number):XRing  {return this.rings[idx];}
+	public getRings():XRing[] {return this.rings;}
+	public numPaths():number {return this.paths.length;}
+	public getPath(idx:number):XPath {return this.paths[idx];}
+	public getPaths():XPath[] {return this.paths;}
+
     // access to space-fillers (useful for calculating bounding boxes)
     public numSpace():number {return this.space.length;}
     public getSpace(idx:number):SpaceFiller {return this.space[idx];}
@@ -392,6 +477,16 @@ export class ArrangeMolecule
 	{
 		for (let a of this.points) a.oval.offsetBy(dx, dy);
 		for (let b of this.lines) b.line.offsetBy(dx, dy);
+		for (let r of this.rings)
+		{
+			r.cx += dx;
+			r.cy += dy;
+		}
+		for (let p of this.paths)
+		{
+			Vec.addTo(p.px, dx);
+			Vec.addTo(p.py, dy);
+		}
 		for (let spc of this.space) 
 		{
 			spc.box.offsetBy(dx, dy);
@@ -414,6 +509,18 @@ export class ArrangeMolecule
 			b.line.scaleBy(scaleBy);
 			b.size *= scaleBy;
 			b.head *= scaleBy;
+		}
+		for (let r of this.rings)
+		{
+			r.cx *= scaleBy;
+			r.cy *= scaleBy;
+			r.rw *= scaleBy;
+			r.rh *= scaleBy;
+		}
+		for (let p of this.paths)
+		{
+			Vec.mulBy(p.px, scaleBy);
+			Vec.mulBy(p.py, scaleBy);
 		}
 		for (let spc of this.space)
 		{
@@ -498,7 +605,78 @@ export class ArrangeMolecule
 
 	// --------------------- private methods ---------------------
 		
-	// for a given adjunct to an atom, find a suitable position for it, based on the provided direction (angdir, radians);
+	// extract bond orders and other artifact-overriden content, and then overwrite them if an artifact applies	
+	private setupBondOrders():void
+	{
+		const mol = this.mol;
+
+		for (let n = 0; n < mol.numBonds; n++) this.bondOrder[n] = mol.bondOrder(n + 1);
+
+		for (let n = 0; n < mol.numAtoms; n++)
+		{
+			this.atomCharge[n] = mol.atomCharge(n + 1);
+			this.atomUnpaired[n] = mol.atomUnpaired(n + 1);
+		}
+		
+		let delocalise = (obj:any, atoms:number[]) =>
+		{
+			let charge = 0, unpaired = 0;
+			for (let a of atoms)
+			{
+				charge += this.atomCharge[a - 1];
+				unpaired += this.atomUnpaired[a - 1];
+				this.atomCharge[a - 1] = this.atomUnpaired[a - 1] = 0;
+			}
+			this.artifactCharge.set(obj, charge);
+			this.artifactUnpaired.set(obj, unpaired);
+		};
+	
+		// any bond that's affected by an artifact gets set to single-order for rendering purposes
+		if (this.artifacts == null) return;
+
+		for (let path of this.artifacts.getResPaths())
+		{
+			// figure out if the average bond order is less than 1 (using the original values)
+			let charge = 0, unpaired = 0, orders = 0;
+			for (let n = 0; n < path.atoms.length; n++)
+			{
+				charge += mol.atomCharge(path.atoms[n]);
+				unpaired += mol.atomUnpaired(path.atoms[n]);
+				let b = mol.findBond(path.atoms[n], path.atoms[n < path.atoms.length - 1 ? n + 1 : 0]);
+				if (b > 0) orders += mol.bondOrder(b);
+			}
+			let fractional = (2 * orders - charge + unpaired) / path.atoms.length < 1;
+			this.artifactFract.set(path, fractional);
+
+			for (let n = 0; n < path.atoms.length - 1; n++)
+			{
+				let b = mol.findBond(path.atoms[n], path.atoms[n + 1]);
+				if (b > 0) this.bondOrder[b - 1] = fractional ? -1 : 1;
+			}
+			delocalise(path, path.atoms);
+		}
+		for (let ring of this.artifacts.getResRings())
+		{
+			for (let n = 0; n < ring.atoms.length; n++)
+			{
+				let b = mol.findBond(ring.atoms[n], ring.atoms[n < ring.atoms.length - 1 ? n + 1 : 0]);
+				if (b > 0) this.bondOrder[b - 1] = 1;
+			}
+			delocalise(ring, ring.atoms);
+		}
+		for (let arene of this.artifacts.getArenes())
+		{
+			for (let n = 0; n < arene.atoms.length; n++)
+			{
+				let b = mol.findBond(arene.atoms[n], arene.atoms[n < arene.atoms.length - 1 ? n + 1 : 0]);
+				if (b > 0) this.bondOrder[b - 1] = 1;
+				b = mol.findBond(arene.centre, arene.atoms[n]);
+				if (b > 0) this.bondOrder[b - 1] = -1;
+			}
+			delocalise(arene, arene.atoms);
+		}
+	}
+		// for a given adjunct to an atom, find a suitable position for it, based on the provided direction (angdir, radians);
 	// the placement algorithm will try pretty hard to find a suitable position which is close to the parent atom, not
 	// overlapping anything, and projected in the requested direction
 	private placeAdjunct(atom:number, str:string, fsz:number, col:number, angdir:number):void
@@ -1721,6 +1899,310 @@ export class ArrangeMolecule
 			if (!anything) break;
 		}
 	}
+
+	// draw a circle at the interior of a group of atoms, as in, ring-style benzene
+	private createCircularRing(atoms:number[]):void
+	{
+		let cx = 0, cy = 0;
+		for (let a of atoms)
+		{
+			let pt = this.points[a - 1];
+			cx += pt.oval.cx;
+			cy += pt.oval.cy;
+		}
+		cx /= atoms.length;
+		cy /= atoms.length;
+		
+		let bx:number[] = [], by:number[] = [];
+		let isRegular = true;
+		let regDist = Number.NaN;
+		for (let a of atoms)
+		{
+			let pt = this.points[a - 1];
+			let x0 = pt.oval.cx - cx, y0 = pt.oval.cy - cy, x1 = x0 - pt.oval.rw, x2 = x0 + pt.oval.rw, y1 = y0 - pt.oval.rh, y2 = y0 + pt.oval.rh;
+			bx.push(x1); by.push(y0);
+			bx.push(x1); by.push(y1);
+			bx.push(x1); by.push(y2);
+			bx.push(x0); by.push(y1);
+			bx.push(x0); by.push(y2);
+			bx.push(x2); by.push(y0);
+			bx.push(x2); by.push(y1);
+			bx.push(x2); by.push(y2);
+			let dist = norm_xy(x0, y0), theta = Math.atan2(y0, x0);
+			const FRACT = 0.7;
+			bx.push(FRACT * dist * Math.cos(theta));
+			by.push(FRACT * dist * Math.sin(theta));
+			
+			for (let b of this.mol.atomAdjList(a)) if (atoms.indexOf(b) >= 0)
+			{
+				let pb = this.points[b - 1];
+				let mx = 0.5 * (pt.oval.cx + pb.oval.cx) - cx, my = 0.5 * (pt.oval.cy + pb.oval.cy) - cy;
+				let mdist = norm_xy(mx, my), mtheta = Math.atan2(my, mx);
+				bx.push(FRACT * mdist * Math.cos(mtheta));
+				by.push(FRACT * mdist * Math.sin(mtheta));
+			}			
+			
+			// check if it's still considered regular
+			if (!isRegular) {}
+			else if (Number.isFinite(regDist)) {if (Math.abs(regDist - dist) > 1) isRegular = false;}
+			else regDist = dist;
+		}
+				
+		let r:XRing = {'atoms': atoms, 'cx': cx, 'cy': cy, 'rw': 0, 'rh': 0, 'size': 0};
+		if (isRegular)
+		{
+			r.rw = r.rh = GeomUtil.fitCircle(bx, by);
+		}
+		else
+		{
+			let lowX = Vec.min(bx) - 10 * Vec.range(bx), highX = Vec.max(bx) + 10 * Vec.range(bx);
+			let lowY = Vec.min(by) - 10 * Vec.range(by), highY = Vec.max(by) + 10 * Vec.range(by);
+			let minX = Number.POSITIVE_INFINITY, maxX = Number.NEGATIVE_INFINITY, minY = Number.POSITIVE_INFINITY, maxY = Number.NEGATIVE_INFINITY;
+			for (let n = 0; n < atoms.length; n++)
+			{
+				let nn = n < atoms.length - 1 ? n + 1 : 0;
+				let p1 = this.points[atoms[n] - 1], p2 = this.points[atoms[nn] - 1];
+				let x1 = p1.oval.cx - cx - 0.1 * (p2.oval.cx - p1.oval.cx), y1 = p1.oval.cy - cy - 0.1 * (p2.oval.cy - p1.oval.cy);
+				let x2 = p2.oval.cx - cx + 0.1 * (p2.oval.cx - p1.oval.cx), y2 = p2.oval.cy - cy + 0.1 * (p2.oval.cy - p1.oval.cy);
+				if (GeomUtil.doLineSegsIntersect(x1, y1, x2, y2, lowX, 0, highX, 0))
+				{
+					let xy = GeomUtil.lineIntersect(x1, y1, x2, y2, lowX, 0, highX, 0);
+					minX = Math.min(minX, xy[0]);
+					maxX = Math.max(maxX, xy[0]);
+				}
+				if (GeomUtil.doLineSegsIntersect(x1, y1, x2, y2, 0, lowY, 0, highY))
+				{
+					let xy = GeomUtil.lineIntersect(x1, y1, x2, y2, 0, lowY, 0, highY);
+					minY = Math.min(minY, xy[1]);
+					maxY = Math.max(maxY, xy[1]);
+				}
+			}
+			
+			let rwh = GeomUtil.fitEllipse(bx, by, minX, minY, maxX, maxY);
+			r.rw = rwh[0];
+			r.rh = rwh[1];
+		}
+		r.size = this.lineSizePix;
+		this.rings.push(r);
+	}
+	
+	// draw a continuous fractional bond for resonance-style paths
+	private createCurvedPath(atoms:number[], fractional:boolean, extAtom:number):void
+	{
+		const sz = atoms.length, szn = sz - 1;
+		let x:number[] = [], y:number[] = [], symbol:boolean[] = [];
+		for (let n = 0; n < sz; n++) 
+		{
+			let pt = this.points[atoms[n] - 1]; 
+			x.push(pt.oval.cx);
+			y.push(pt.oval.cy);
+			symbol.push(pt.text != null);
+		}
+
+		// calculate offsets that can be used (+/-) to put the fraction on one side of the path
+		let ox:number[] = [], oy:number[] = [];
+		const EXT = Molecule.IDEALBOND * 0.25 * this.scale;
+		for (let n = 0; n < sz - 1; n++)
+		{
+			let dx = x[n + 1] - x[n], dy = y[n + 1] - y[n], invD = EXT * invZ(norm_xy(dx, dy));
+			ox.push(dy * invD);
+			oy.push(-dx * invD);
+		}
+		
+		// create two paths with these offsets
+		const FAR = 1.2, CLOSE = 0.7;
+		let sx1 = Vec.numberArray(0, sz), sy1 = Vec.numberArray(0, sz), sx2 = Vec.numberArray(0, sz), sy2 = Vec.numberArray(0, sz);
+		const capA = symbol[0] ? FAR : CLOSE;
+		if (!fractional)
+		{
+			sx1[0] = x[0] + ox[0] * capA; sy1[0] = y[0] + oy[0] * capA;
+			sx2[0] = x[0] - ox[0] * capA; sy2[0] = y[0] - oy[0] * capA;
+		}
+		else
+		{
+			const dx = -oy[0], dy = ox[0];
+			sx1[0] = x[0] + dx * capA; sy1[0] = y[0] + dy * capA;
+			sx2[0] = x[0] + dx * capA; sy2[0] = y[0] + dy * capA;
+		}
+		
+		let ncross1 = 0, ncross2 = 0;
+		for (let n = 1; n < sz - 1; n++)
+		{
+			const fr1 = symbol[n] ? FAR : CLOSE, fr2 = fr1;
+			sx1[n] = x[n] + fr1 * (ox[n - 1] + ox[n]); sy1[n] = y[n] + fr1 * (oy[n - 1] + oy[n]);
+			sx2[n] = x[n] - fr2 * (ox[n - 1] + ox[n]); sy2[n] = y[n] - fr2 * (oy[n - 1] + oy[n]);
+			
+			// every other bond "crosses" one side or the other
+			for (let a of this.mol.atomAdjList(atoms[n])) if (atoms.indexOf(a) < 0 && a != extAtom)
+			{
+				let pt = this.points[a - 1];
+				let dx = pt.oval.cx - x[n], dy = pt.oval.cy - y[n];
+				let dot1 = dx * (sx1[n] - x[n]) + dy * (sy1[n] - x[n]);
+				let dot2 = dy * (sx2[n] - x[n]) + dy * (sy2[n] - x[n]);
+				if (dot1 > dot2) ncross1++; else ncross2++; // higher means that the vectors align, hence this is the crosser
+			}
+		}
+		
+		let nn = sz - 1;
+		let capB = symbol[nn] ? FAR : CLOSE;
+		if (!fractional)
+		{
+			sx1[nn] = x[nn] + ox[nn - 1] * capB; sy1[nn] = y[nn] + oy[nn - 1] * capB;
+			sx2[nn] = x[nn] - ox[nn - 1] * capB; sy2[nn] = y[nn] - oy[nn - 1] * capB;
+		}		
+		else
+		{
+			let dx = -oy[nn - 1], dy = ox[nn - 1];
+			sx1[nn] = x[nn] - dx * capB; sy1[nn] = y[nn] - dy * capB;
+			sx2[nn] = x[nn] - dx * capB; sy2[nn] = y[nn] - dy * capB;
+		}
+		
+		// come up with a score for each one, and pick the best (shortest with fewest bond crossings)
+		let score1 = 0, score2 = 0;
+		for (let n = 0; n < sz - 1; n++)
+		{
+			score1 += norm_xy(sx1[n + 1] - sx1[n], sy1[n + 1] - sy1[n]);
+			score2 += norm_xy(sx2[n + 1] - sx2[n], sy2[n + 1] - sy2[n]);
+		}
+		score1 *= ncross1 + 1;
+		score2 *= ncross2 + 1;
+		
+		let sx = score1 < score2 ? sx1 : sx2;
+		let sy = score1 < score2 ? sy1 : sy2;
+	
+		let p:XPath = {'atoms': atoms, 'px': null, 'py': null, 'ctrl': null, 'size': this.lineSizePix};
+		this.splineInterpolate(p, sx, sy);
+		this.paths.push(p);
+		
+		// NOTE: no spacefiller; consider adding one	
+	}
+
+	// create a bond emerging from an atom to a centroid of multiple atoms
+	private createBondCentroid(from:number, to:number[]):void
+	{
+		let pt = this.points[from - 1];
+		let x1 = pt.oval.cx, y1 = pt.oval.cy, x2 = 0, y2 = 0;
+		for (let a of to)
+		{
+			pt = this.points[a - 1];
+			x2 += pt.oval.cx; 
+			y2 += pt.oval.cy;
+		}
+		x2 /= to.length; y2 /= to.length;
+		
+		// if the "centroid" is a point or line, don't want to hit the middle
+		if (to.length <= 2)
+		{
+			x2 -= 0.1 * (x2 - x1);
+			y2 -= 0.1 * (y2 - y1);
+		}
+		
+		const minDist = this.MINBOND_LINE * this.measure.scale();
+		let xy1 = this.backOffAtom(from, x1, y1, x2, y2, minDist);
+		this.ensureMinimumBondLength(xy1, [x2, y2], x1, y1, x2, y2, minDist);
+
+		let b:BLine = 
+		{
+			'bnum': 0, 'bfr': from, 'bto': 0, 
+			'type': BLineType.Normal, 'line': new Line(xy1[0], xy1[1], x2, y2), 
+			'size': this.lineSizePix, 'head': 0, 'col': this.policy.data.foreground
+		};
+		this.lines.push(b);
+		this.space.push(this.computeSpaceLine(b));
+	}
+
+	// turns a series of points into a smooth spline
+	private splineInterpolate(path:XPath, x:number[], y:number[]):void
+	{
+		const sz = x.length;
+		const scale = 0.25; // empirical
+		for (let n = 0; n < sz; n++)
+		{
+			if (n == 0)
+			{
+				let dx = x[n + 1] - x[n], dy = y[n + 1] - y[n];
+				let qx = x[n] + scale * dx, qy = y[n] + scale * dy;
+				path.px = Vec.append(path.px, x[n]); path.py = Vec.append(path.py, y[n]); path.ctrl = Vec.append(path.ctrl, false);
+				path.px = Vec.append(path.px, qx); path.py = Vec.append(path.py, qy); path.ctrl = Vec.append(path.ctrl, true);
+			}
+			else if (n == sz - 1)
+			{
+				let dx = x[n] - x[n - 1], dy = y[n] - y[n - 1];
+				let qx = x[n] - scale * dx, qy = y[n] - scale * dy;
+				path.px = Vec.append(path.px, qx); path.py = Vec.append(path.py, qy); path.ctrl = Vec.append(path.ctrl, true);
+				path.px = Vec.append(path.px, x[n]); path.py = Vec.append(path.py, y[n]); path.ctrl = Vec.append(path.ctrl, false);
+			}
+			else
+			{
+				let dx = x[n + 1] - x[n - 1], dy = y[n + 1] - y[n - 1];
+				let invD = invZ(norm_xy(dx, dy));
+				dx *= invD; dy *= invD;
+				
+				let d1 = scale * norm_xy(x[n] - x[n - 1], y[n] - y[n - 1]), d2 = scale * norm_xy(x[n + 1] - x[n], y[n + 1] - y[n]);
+				let qx1 = x[n] - dx * d1, qy1 = y[n] - dy * d1;
+				let qx2 = x[n] + dx * d2, qy2 = y[n] + dy * d2;
+				
+				path.px = Vec.append(path.px, qx1); path.py = Vec.append(path.py, qy1); path.ctrl = Vec.append(path.ctrl, true);
+				path.px = Vec.append(path.px, x[n]); path.py = Vec.append(path.py, y[n]); path.ctrl = Vec.append(path.ctrl, false);
+				path.px = Vec.append(path.px, qx2); path.py = Vec.append(path.py, qy2); path.ctrl = Vec.append(path.ctrl, true);
+			}
+		}
+	}
+
+	// create a "delocalised" charge or unpaired state, which hovers in between a sequence of atoms that are resonance related
+	private delocalisedAnnotation(atoms:number[], charge:number, unpaired:number):void
+	{
+		const mol = this.mol;
+
+		let str = '';
+		if (charge == -1) str = '-';
+		else if (charge == 1) str = '+';
+		else if (charge < -1) str = Math.abs(charge) + '-'; 
+		else if (charge > 1) str = charge + '+';
+		if (unpaired > 0) for (let n = 0; n < unpaired; n++) str += '.';
+		if (str.length == 0) return;
+
+		// find the least congested point; overall average is first
+		const sz = atoms.length;
+		let bestX = 0, bestY = 0;
+		for (let a of atoms) {bestX += mol.atomX(a); bestY += mol.atomY(a);}
+		bestX /= sz; bestY /= sz;
+		let bestScore = CoordUtil.congestionPoint(mol, bestX, bestY);
+		
+		for (let n = 1; n < sz - 1; n++)
+		{
+			let x = 0.5 * (mol.atomX(atoms[n - 1]) + mol.atomX(atoms[n + 1])), y = 0.5 * (mol.atomY(atoms[n - 1]) + mol.atomY(atoms[n + 1]));
+			let score = CoordUtil.congestionPoint(mol, x, y);
+			if (score < bestScore) {bestScore = score; bestX = x; bestY = y;}
+		}
+
+		let fsz = 0.8 * this.fontSizePix;
+		let wad = this.measure.measureText(str, fsz);
+		let rw = 0.55 * wad[0], rh = 0.55 * wad[1];
+
+		// create a point for it
+		let a:APoint =
+		{
+			'anum': 0,
+			'text': str, 
+			'fsz': fsz,
+			'bold': false,
+			'col': this.policy.data.foreground,
+			'oval': new Oval(this.measure.angToX(bestX), this.measure.angToY(bestY), rw, rh)
+		};
+		this.points.push(a);
+
+		// create a square spacefiller
+		let spc:SpaceFiller =
+		{
+			'anum': 0,
+			'bnum': 0,
+			'box': new Box(a.oval.cx - rw, a.oval.cy - rh, 2 * rw, 2 * rh),
+			'px': [a.oval.cx - rw, a.oval.cx + rw, a.oval.cx + rw, a.oval.cx - rw],
+			'py': [a.oval.cy - rh, a.oval.cy - rh, a.oval.cy + rh, a.oval.cy + rh]
+		};
+		this.space.push(spc);
+	}	
 }
 
 /* EOF */ }

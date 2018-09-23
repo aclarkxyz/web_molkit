@@ -2061,7 +2061,7 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 				reader.onload = (event) =>
 				{
 					let str = reader.result;
-					let mol = MoleculeStream.readUnknown(str);
+					let mol = MoleculeStream.readUnknown(str.toString());
 					if (mol != null) 
 					{
 						// (maybe do an intelligent append/paste, using the coordinates, rather than blowing it away?)

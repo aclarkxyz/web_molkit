@@ -152,7 +152,19 @@ export class Vec
 		let idx = 0;
 		for (let n = 1; n < arr.length; n++) if (arr[n] > arr[idx]) idx = n;
 		return idx;
-	}	
+	}
+
+	public static range(arr:number[]):number
+	{
+		if (arr == null || arr.length == 0) return 0;
+		let lo = arr[0], hi = arr[0];
+		for (let n = 1; n < arr.length; n++) 
+		{
+			if (arr[n] < lo) lo = arr[n];
+			if (arr[n] > hi) hi = arr[n];
+		}
+		return hi - lo;
+	}
 
     public static reverse(arr:number[]):any[]
     {

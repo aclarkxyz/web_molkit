@@ -263,7 +263,64 @@ export class GeomUtil
 		let k = (Math.sqrt(D) - b) / a;
 		
 		return [x1 + k * t1x, y1 + k * t1y, x2 + k * t2x, y2 + k * t2y];
-	}	
+	}
+
+	// for a set of points that are presumed to be normalised about the origin, determines the radius of the closest approach
+	public static fitCircle(x:number[], y:number[]):number
+	{
+		let dsq = Number.POSITIVE_INFINITY;
+		for (let n = 0; n < x.length; n++) dsq = Math.min(dsq, norm2_xy(x[n], y[n]));
+		return Math.sqrt(dsq);
+	}
+
+	// for a set of points that are presumed to be normalised about the origin, comes up with an ellipse [w,h] that is optimised to be as large as possible without expanding beyond any of
+	// the closing points; note that the solution is an approximation, but it is at least one that can be carried out in a small number of iterations
+	// NOTE: the min/max X/Y parameters are treated as blockers for the axes; this is because the algorithm uses intersection of ellipse-with-points to determine boundaries, which
+	// unfortunately means that sometimes the ellipse can do on a runaway distortion by going *through* one of the axes; these parameters will prevent this, but they must be precalculated;
+	// ideally the algorithm would calculate an "internal convex hull" to derive these points automatically
+	public static fitEllipse(px:number[], py:number[], minX:number, minY:number, maxX:number, maxY:number):number[]
+	{
+		// start with a circle-of-fit, which is the worst case scenario
+		let bestW = 0.5 * this.fitCircle(px, py), bestH = bestW, bestScore = bestW * bestH;
+
+		let x = Vec.concat(px, [minX, maxX, 0, 0]);
+		let y = Vec.concat(py, [0, 0, minY, maxY]);
+		const sz = x.length;
+		
+		let shrinkToFit = (whs:number[]):void =>
+		{
+			let dmin = Number.POSITIVE_INFINITY;
+			let invW2 = 1.0 / (whs[0] * whs[0]), invH2 = 1.0 / (whs[1] * whs[1]);
+			for (let n = 0; n < sz; n++) dmin = Math.min(dmin, Math.sqrt(x[n] * x[n] * invW2 + y[n] * y[n] * invH2));
+			if (dmin < 1)
+			{
+				whs[0] *= dmin;
+				whs[1] *= dmin;
+			}
+			whs[2] = whs[0] * whs[1];
+		};
+	
+		// keep trying to expand on one axis/shrink on both, until subsequent efforts are futile
+		let mul = 1;
+		let whsX = [0, 0, 0], whsY = [0, 0, 0];
+		while (mul > 0.001)
+		{
+			whsX[0] = bestW * (1 + mul);
+			whsX[1] = bestH;
+			shrinkToFit(whsX);
+			
+			whsY[0] = bestW;
+			whsY[1] = bestH * (1 + mul);
+			shrinkToFit(whsY);
+			
+			let anything = false;
+			if (whsX[2] > bestScore) {bestW = whsX[0]; bestH = whsX[1]; bestScore = whsX[2]; anything = true;}
+			if (whsY[2] > bestScore) {bestW = whsY[0]; bestH = whsY[1]; bestScore = whsY[2]; anything = true;}
+			if (!anything) mul *= 0.6;
+		}
+	
+		return [bestW, bestH];
+	}		
 }
 
 // implementation of the "Quick Hull" algorithm
