@@ -1,11 +1,11 @@
 /*
-    WebMolKit
+	WebMolKit
 
-    (c) 2010-2018 Molecular Materials Informatics, Inc.
+	(c) 2010-2018 Molecular Materials Informatics, Inc.
 
-    All rights reserved
-    
-    http://molmatinf.com
+	All rights reserved
+	
+	http://molmatinf.com
 
 	[PKG=webmolkit]
 */
@@ -107,7 +107,7 @@ export class MDLMOLReader
 	private parseCTAB():void
 	{
 		this.mol = new Molecule();
-    	this.mol.keepTransient = true;
+		this.mol.keepTransient = true;
 
 		// check out the counts line
 		let line = this.nextLine();
@@ -121,9 +121,9 @@ export class MDLMOLReader
 				return;
 			}
 			if (version != 'V2000') throw 'Invalid MDL MOL: no Vx000 tag.';
-    	}
-	    let numAtoms = parseInt(line.substring(0, 3).trim());
-	    let numBonds = parseInt(line.substring(3, 6).trim());
+		}
+		let numAtoms = parseInt(line.substring(0, 3).trim());
+		let numBonds = parseInt(line.substring(3, 6).trim());
 		let explicitValence:number[] = [];
 
 		// read out each atom
@@ -141,7 +141,7 @@ export class MDLMOLReader
 			let hyd = line.length < 45 ? 0 : parseInt(line.substring(42, 45).trim());
 			let val = line.length < 51 ? 0 : parseInt(line.substring(48, 51).trim());
 			let mapnum = line.length < 63 ? 0 : parseInt(line.substring(60,63).trim());
-    
+	
 			if (chg >= 1 && chg <= 3) chg = 4 - chg;
 			else if (chg == 4) {chg = 0; rad = 2;}
 			else if (chg >= 5 && chg <= 7) chg = 4 - chg;
@@ -154,14 +154,14 @@ export class MDLMOLReader
 				this.mol.setIs3D(true);
 			}
 			this.mol.setAtomMapNum(a, mapnum);
-    		
+			
 			/* todo: add in Z-support to molecule class
 			if (z != 0)
 			{
 				this.mol.setIs3D(true);
 				this.mol.setAtomZ(a, z);
 			}*/
-    		
+			
 			if (hyd > 0)
 			{
 				this.openmol.addJoin(OpenMolType.QueryHCount, [a]);
@@ -169,7 +169,7 @@ export class MDLMOLReader
 				if (this.atomHyd == null) this.atomHyd = Vec.numberArray(Molecule.HEXPLICIT_UNKNOWN, numAtoms);
 				this.atomHyd[n] = hyd - 1;
 			}
-    		
+			
 			if (stereo > 0 && this.keepParity)
 			{
 				/* todo: retained parity flags
@@ -181,7 +181,7 @@ export class MDLMOLReader
 			}
 
 			explicitValence.push(val);
-	    }
+		}
 
 		// read out each bond
 		for (let n = 0; n < numBonds; n++)
@@ -193,16 +193,16 @@ export class MDLMOLReader
 			let type = parseInt(line.substring(6, 9).trim()), stereo = parseInt(line.substring(9, 12).trim());
 
 			if (bfr == bto || bfr < 1 || bfr > numAtoms || bto < 1 || bto > numAtoms) throw 'Invalid MDL MOL: bond line' + (n +1);
-    
+	
 			let order = type >= 1 && type <= 3 ? type : 1;
 			let style = Molecule.BONDTYPE_NORMAL;
 			if (stereo == 1) style = Molecule.BONDTYPE_INCLINED;
 			else if (stereo == 6) style = Molecule.BONDTYPE_DECLINED;
-    
+	
 			let b = this.mol.addBond(bfr, bto, order, style);
-	        
-	        // type "4" is special: it is defined to be a special query type to match aromatic bonds, but it is sometimes used
-	        // to store actual molecules; in this case, it is necessary to either "deresonate" the rings, or to stash the property
+			
+			// type "4" is special: it is defined to be a special query type to match aromatic bonds, but it is sometimes used
+			// to store actual molecules; in this case, it is necessary to either "deresonate" the rings, or to stash the property
 			if (type == 4)
 			{
 				let src:OpenMolSource = {'row': this.pos - 1, 'col': 6, 'len': 3};
@@ -215,14 +215,14 @@ export class MDLMOLReader
 					if (this.resBonds == null) this.resBonds = Vec.booleanArray(false, numBonds);
 					this.resBonds[n] = true;
 				}*/
-	        }
-	    }    	    
+			}
+		}    	    
 		
 		// examine anything in the M-block
 		const MBLK_CHG = 1, MBLK_RAD = 2, MBLK_ISO = 3, MBLK_RGP = 4, MBLK_HYD = 5, MBLK_ZCH = 6, MBLK_ZBO = 7, MBLK_ZPA = 8, MBLK_ZRI = 9, MBLK_ZAR = 10;
 		let resPaths = new Map<number, number[]>(), resRings = new Map<number, number[]>(), arenes = new Map<number, number[]>();
-	    while (true)
-	    {
+		while (true)
+		{
 			line = this.nextLine();
 			if (line.startsWith('M  END')) break;
 
@@ -238,7 +238,7 @@ export class MDLMOLReader
 			else if (this.parseExtended && line.startsWith('M  ZRI')) type = MBLK_ZRI;
 			else if (this.parseExtended && line.startsWith('M  ZAR')) type = MBLK_ZAR;
 			else if (line.startsWith('A  ') && line.length >= 6)
-    		{
+			{
 				let anum = parseInt(line.substring(3, 6).trim());
 				if (anum >= 1 && anum <= this.mol.numAtoms)
 				{
@@ -247,7 +247,7 @@ export class MDLMOLReader
 					this.mol.setAtomElement(anum, line);
 					continue;
 				}
-    		}
+			}
 
 			if (type == MBLK_ZPA || type == MBLK_ZRI || type == MBLK_ZAR)
 			{
@@ -290,9 +290,9 @@ export class MDLMOLReader
 					}
 				}
 			}
-	    }
-	    
-	    this.postFix(explicitValence);
+		}
+		
+		this.postFix(explicitValence);
 
 		if (this.parseExtended)
 		{
@@ -305,20 +305,20 @@ export class MDLMOLReader
 
 		this.openmol.derive(this.mol);
 	}
-	    
+		
 	// performs some intrinsic post-parse fixing
 	private postFix(explicitValence:number[]):void
 	{
 		const mol = this.mol;
 
-	    // post-fixing
+		// post-fixing
 		for (let n = 1; n <= mol.numAtoms; n++)
 		{
 			let el = mol.atomElement(n);
 
 			// shortcuts for isotope "elements"
-	    	if (el == 'D') {mol.setAtomElement(n, 'H'); mol.setAtomIsotope(n, 2);}
-	    	else if (el == 'T') {mol.setAtomElement(n, 'H'); mol.setAtomIsotope(n, 3);}
+			if (el == 'D') {mol.setAtomElement(n, 'H'); mol.setAtomIsotope(n, 2);}
+			else if (el == 'T') {mol.setAtomElement(n, 'H'); mol.setAtomIsotope(n, 3);}
 
 			let options = MDLMOL_VALENCE[el], atno = Molecule.elementAtomicNumber(el);
 			// NOTE: have to be parsimonious about when to apply, otherwise interoperability can be a net loss
@@ -376,7 +376,7 @@ export class MDLMOLReader
 					if (importedH != nativeH) mol.setAtomHExplicit(n, importedH);
 				}
 			}
-	    }
+		}
 
 		if (this.considerRescale) CoordUtil.normaliseBondDistances(mol);
 		
@@ -540,8 +540,8 @@ export class MDLMOLReader
 				}
 			}
 		}
-	    
-	    this.postFix(explicitValence);
+		
+		this.postFix(explicitValence);
 	}
 	
 	// takes a line of whitespace-separated stuff and breaks it into pieces
@@ -672,42 +672,42 @@ export class MDLSDFReader
 		if (ds.numRows == 0) this.ds = null;
 	}
 
-    private upcastStringColumns():void
-    {
+	private upcastStringColumns():void
+	{
 		let ds = this.ds;
 		for (let i = 0; i < ds.numCols; i++) if (ds.colType(i) == DataSheet.COLTYPE_STRING)
-    	{
+		{
 			let allnull = true, allreal = true, allint = true, allbool = true;
 			for (let j = 0; j < ds.numRows; j++)
-    	    {
+			{
 				if (!allreal && !allint && !allbool) break;
 				if (ds.isNull(j, i)) continue;
-        		
+				
 				allnull = false;
 
 				let val = ds.getString(j, i);
-        		if (allbool)
-        		{
-        		    let lc = val.toLowerCase();
-        		    if (lc != 'true' && lc != 'false') allbool = false;
-        		}
-        		if (allint)
-        		{
+				if (allbool)
+				{
+					let lc = val.toLowerCase();
+					if (lc != 'true' && lc != 'false') allbool = false;
+				}
+				if (allint)
+				{
 					let int = parseInt(val);
-        			if (!isFinite(int) || int != parseFloat(val)) allint = false;
-        		}
-        		if (allreal)
-        		{
+					if (!isFinite(int) || int != parseFloat(val)) allint = false;
+				}
+				if (allreal)
+				{
 					if (!isFinite(parseFloat(val))) allreal = false;
-        		}
-    	    }
+				}
+			}
 
-    	    if (allnull) {} // do nothing
+			if (allnull) {} // do nothing
 			else if (allint) ds.changeColumnType(i, DataSheet.COLTYPE_INTEGER);
 			else if (allreal) ds.changeColumnType(i, DataSheet.COLTYPE_REAL);
 			else if (allbool) ds.changeColumnType(i, DataSheet.COLTYPE_BOOLEAN);
-    	}
-    }	
+		}
+	}	
 }
 
 /* EOF */ }

@@ -1,11 +1,11 @@
 /*
-    WebMolKit
+	WebMolKit
 
-    (c) 2010-2018 Molecular Materials Informatics, Inc.
+	(c) 2010-2018 Molecular Materials Informatics, Inc.
 
-    All rights reserved
-    
-    http://molmatinf.com
+	All rights reserved
+	
+	http://molmatinf.com
 
 	[PKG=webmolkit]
 */
@@ -16,22 +16,22 @@
 namespace WebMolKit /* BOF */ {
 
 /* 
-    Representation of a unidirectional graph which has simple node labels, and no edge labels. Connections are stored in neighbour
-    list form. Construction of the graph is faster if the number of nodes are known ahead of time. Cloning a graph instance, or
-    building it from some other graph datastructure, has minimal overhead.
-    
-    Note that all indices are 0-based.
-    
-    Practical note: the Molecule class has much analogous functionality. The Graph class is intended to be a cleaner and more 
+	Representation of a unidirectional graph which has simple node labels, and no edge labels. Connections are stored in neighbour
+	list form. Construction of the graph is faster if the number of nodes are known ahead of time. Cloning a graph instance, or
+	building it from some other graph datastructure, has minimal overhead.
+	
+	Note that all indices are 0-based.
+	
+	Practical note: the Molecule class has much analogous functionality. The Graph class is intended to be a cleaner and more 
 	lightweight implementation of algorithms which are not necessarily related to a molecular datastructure.
-    The Molecule class has a lot of features such as caching calculated values, which is very useful for general purpose work;
-    the algorithms in the Graph class have more intuitive and predictable performance characteristics, and do not have shortcuts
+	The Molecule class has a lot of features such as caching calculated values, which is very useful for general purpose work;
+	the algorithms in the Graph class have more intuitive and predictable performance characteristics, and do not have shortcuts
 	such as caching.
 */
 
 export class Graph
 {
-    private nbrs:number[][] = []; // neighbour-list, one per node
+	private nbrs:number[][] = []; // neighbour-list, one per node
 	private indices:number[] = null; // optional integer value for each node
 	private labels:string[] = null; // optional string value for each node
 	private props:any[] = null; // optional object for each node; is always a shallow copy
@@ -50,7 +50,7 @@ export class Graph
 			}
 		}
 	}
-    
+	
 	public clone():Graph
 	{
 		let g = new Graph();
@@ -79,8 +79,8 @@ export class Graph
 		return g;
 	}
 	
-    public toString():string
-    {
+	public toString():string
+	{
 		let buff = '#nodes=' + this.nbrs.length;
 		for (let n = 0; n < this.nbrs.length; n++)
 		{
@@ -89,80 +89,80 @@ export class Graph
 			if (n < Vec.arrayLength(this.labels)) buff += '[l=' + this.labels[n] + ']';
 		}
 		return buff;
-    }
+	}
 
-    public get numNodes():number {return this.nbrs.length;}
-    public numEdges(node:number):number {return this.nbrs[node].length;}
-    public getEdge(node:number, edge:number):number {return this.nbrs[node][edge];}
-    public getEdges(node:number):number[] {return this.nbrs[node];}
+	public get numNodes():number {return this.nbrs.length;}
+	public numEdges(node:number):number {return this.nbrs[node].length;}
+	public getEdge(node:number, edge:number):number {return this.nbrs[node][edge];}
+	public getEdges(node:number):number[] {return this.nbrs[node];}
 
-    public getIndex(node:number):number {return this.indices == null ? 0 : this.indices[node];}
+	public getIndex(node:number):number {return this.indices == null ? 0 : this.indices[node];}
 	public setIndex(node:number, idx:number):void
 	{
 		if (this.indices == null) this.indices = Vec.numberArray(0, this.nbrs.length);
 		this.indices[node] = idx;
 	}
-    
-    public getLabel(node:number):string {return this.labels == null ? null : this.labels[node];}
-    public setLabel(node:number, lbl:string):void
-    {
-    	if (this.labels == null) this.labels = Vec.stringArray('', this.nbrs.length);
-    	this.labels[node] = lbl;
-    }
-    
-    public getProperty(node:number):any {return this.props == null ? null : this.props[node];}
-    public setProperty(node:number, prp:any):void
-    {
-    	if (this.props == null) this.props = new Array(this.nbrs.length);
-    	this.props[node] = prp;
-    }
+	
+	public getLabel(node:number):string {return this.labels == null ? null : this.labels[node];}
+	public setLabel(node:number, lbl:string):void
+	{
+		if (this.labels == null) this.labels = Vec.stringArray('', this.nbrs.length);
+		this.labels[node] = lbl;
+	}
+	
+	public getProperty(node:number):any {return this.props == null ? null : this.props[node];}
+	public setProperty(node:number, prp:any):void
+	{
+		if (this.props == null) this.props = new Array(this.nbrs.length);
+		this.props[node] = prp;
+	}
 
-    public addNode():number
-    {
+	public addNode():number
+	{
 		this.nbrs.push([]);
 		if (this.indices != null) this.indices.push(0);
 		if (this.labels != null) this.labels.push('');
 		if (this.props != null) this.props.push(null);
 		return this.nbrs.length - 1;
-    }
-    
-    public hasEdge(node1:number, node2:number):boolean
-    {
-    	if (this.nbrs[node1].length <= this.nbrs[node2].length)
-    	    return this.nbrs[node1].indexOf(node2) >= 0;
-    	else
-    	    return this.nbrs[node2].indexOf(node1) >= 0;
-    }
-    
-    public addEdge(node1:number, node2:number):void
-    {
+	}
+	
+	public hasEdge(node1:number, node2:number):boolean
+	{
+		if (this.nbrs[node1].length <= this.nbrs[node2].length)
+			return this.nbrs[node1].indexOf(node2) >= 0;
+		else
+			return this.nbrs[node2].indexOf(node1) >= 0;
+	}
+	
+	public addEdge(node1:number, node2:number):void
+	{
 		this.nbrs[node1].push(node2);
 		this.nbrs[node2].push(node1);
-    }
+	}
 
-    public removeEdge(node1:number, node2:number):void
-    {
+	public removeEdge(node1:number, node2:number):void
+	{
 		let i1 = this.nbrs[node1].indexOf(node2), i2 = this.nbrs[node2].indexOf(node1);
 		if (i1 >= 0) this.nbrs[node1].splice(i1, 1);
 		if (i2 >= 0) this.nbrs[node2].splice(i2, 1);
-    }
-    
-    public isolateNode(node:number):void
-    {
+	}
+	
+	public isolateNode(node:number):void
+	{
 		for (let o of this.nbrs[node])
 		{
 			let i = this.nbrs[o].indexOf(node);
 			if (i >= 0) this.nbrs[o].splice(i, 1);
 		}
 		this.nbrs[node] = [];
-    }
+	}
 
 	// keep/remove: modify graph in place by taking out some nodes
-    public keepNodesMask(mask:boolean[]):void
-    {
+	public keepNodesMask(mask:boolean[]):void
+	{
 		const oldsz = this.nbrs.length, newsz = Vec.maskCount(mask);
 		if (newsz == oldsz) return;
-    	if (newsz == 0) 
+		if (newsz == 0) 
 		{
 			this.nbrs = []; 
 			this.indices = null; 
@@ -175,23 +175,23 @@ export class Graph
 		let newnbrs:number[][] = [];
 		for (let n = 0; n < newsz; n++) newnbrs.push([]);
 		for (let n = 0, pos = 0; n < oldsz; n++) if (mask[n])
-    	{
+		{
 			for (let i of this.nbrs[n]) if (mask[i]) newnbrs[pos].push(newmap[i]);
 			pos++;
-    	}
+		}
 		this.nbrs = newnbrs;
-    	
+		
 		if (this.indices != null) this.indices = Vec.maskGet(this.indices, mask);
 		if (this.labels != null) this.labels = Vec.maskGet(this.labels, mask);
 		if (this.props != null) this.props = Vec.maskGet(this.props, mask);
-    }
-    public keepNodesIndex(idx:number[]) {this.keepNodesMask(Vec.idxMask(idx, this.numNodes));}
-    public removeNodesMask(mask:boolean[]) {this.keepNodesMask(Vec.notMask(mask));}
-    public removeNodesIndex(idx:number[]) {this.removeNodesMask(Vec.idxMask(idx, this.numNodes));}
-    
+	}
+	public keepNodesIndex(idx:number[]) {this.keepNodesMask(Vec.idxMask(idx, this.numNodes));}
+	public removeNodesMask(mask:boolean[]) {this.keepNodesMask(Vec.notMask(mask));}
+	public removeNodesIndex(idx:number[]) {this.removeNodesMask(Vec.idxMask(idx, this.numNodes));}
+	
 	// subgraph: creates a new graph, typically smaller; note that the index version honours the new atom order
-    public subgraphIndex(idx:number[]):Graph
-    {
+	public subgraphIndex(idx:number[]):Graph
+	{
 		const nsz = idx.length;
 		let g = new Graph(nsz);
 		if (this.indices != null || this.labels != null || this.props != null) for (let n = 0; n < nsz; n++)
@@ -208,18 +208,18 @@ export class Graph
 				if (j > i) g.addEdge(i, j);
 			}
 		}
-    	return g;
-    }
-    public subgraphMask(mask:boolean[]):Graph
-    {
+		return g;
+	}
+	public subgraphMask(mask:boolean[]):Graph
+	{
 		let g = this.clone();
 		g.keepNodesMask(mask);
 		return g;
-    }
-    
+	}
+	
 	// returns a list of connected component indices, one per node; the numbering system is based on node ordering
-    public calculateComponents():number[]
-    {
+	public calculateComponents():number[]
+	{
 		const sz = this.nbrs.length;
 		if (sz == 0) return [];
 
@@ -247,11 +247,11 @@ export class Graph
 		}
 
 		return cc;
-    }
-    
+	}
+	
 	// returns an array of one group for each connected component
-    public calculateComponentGroups():number[][]
-    {
+	public calculateComponentGroups():number[][]
+	{
 		if (this.nbrs.length == 0) return [];
 		let cc = this.calculateComponents();
 		let sz = Vec.max(cc);
@@ -260,11 +260,11 @@ export class Graph
 		for (let n = 0; n < sz; n++) grp.push([]);
 		for (let n = 0; n < cc.length; n++) grp[cc[n] - 1].push(n);
 		return grp;
-    }
-    
+	}
+	
 /*
-    public int calculateRingBlocks(int[] rblk)
-    {
+	public int calculateRingBlocks(int[] rblk)
+	{
 		final int sz = numNodes();
 		if (sz == 0) return 0;
 
@@ -275,19 +275,19 @@ export class Graph
 		
 		while (true)
 		{
-    	    int last, current;
-    
-    	    if (plen == 0)
-    	    {
-    	    	last = -1;
-    	    	for (current = 0; visited[current]; current++) {}
-    	    }
-    	    else
-    	    {
+			int last, current;
+	
+			if (plen == 0)
+			{
+				last = -1;
+				for (current = 0; visited[current]; current++) {}
+			}
+			else
+			{
 				last = path[plen - 1];
 				current = -1;
-    	    	for (int n = 0; n < nbrs[last].length; n++) if (!visited[nbrs[last][n]]) {current = nbrs[last][n]; break;}
-    	    }
+				for (int n = 0; n < nbrs[last].length; n++) if (!visited[nbrs[last][n]]) {current = nbrs[last][n]; break;}
+			}
 
 			if (current >= 0 && plen >= 2) // path is at least 2 items long, so look for any not-previous visited neighbours
 			{
@@ -316,16 +316,16 @@ export class Graph
 				visited[current] = true;
 				path[plen++] = current;
 				numVisited++;
-		    }
-    	    else // otherwise, found nothing and must rewind the path
-    	    {
-    	    	plen--;
-    	    }
-    	    
-    	    if (numVisited == sz) break;
-    	}
+			}
+			else // otherwise, found nothing and must rewind the path
+			{
+				plen--;
+			}
+			
+			if (numVisited == sz) break;
+		}
 
-    	// the ring ID's are not necessarily consecutive, so reassign them to 0=none, 1..NBlocks
+		// the ring ID's are not necessarily consecutive, so reassign them to 0=none, 1..NBlocks
 		int nextID = 0;
 		for (int i = 0; i < sz; i++) if (rblk[i] > 0)
 		{
@@ -334,19 +334,19 @@ export class Graph
 				if (rblk[j] == rblk[i]) rblk[j] = nextID;
 		}
 		for (int i = 0; i < sz; i++) rblk[i] = -rblk[i];
-    	
-    	return -nextID;
-    }
-    
-    public int[] calculateRingBlocks()
-    {
+		
+		return -nextID;
+	}
+	
+	public int[] calculateRingBlocks()
+	{
 		int[] rblk = new int[numNodes()];
 		calculateRingBlocks(rblk);
 		return rblk;
-    }
-    
-    public int[][] calculateRingBlockGroups()
-    {
+	}
+	
+	public int[][] calculateRingBlockGroups()
+	{
 		int[] rblk = new int[numNodes()];
 		int sz = calculateRingBlocks(rblk);
 		if (sz == 0) return new int[0][];
@@ -367,14 +367,14 @@ export class Graph
 			grp[i][cap[i]++] = n;
 		}
 		return grp;
-    }
-    
-    public int[][] findRingsOfSize(int size)
-    {
+	}
+	
+	public int[][] findRingsOfSize(int size)
+	{
 		int[] rblk = new int[numNodes()];
 		int num = calculateRingBlocks(rblk);
 		if (num == 0) return new int[0][];
-    	
+		
 		List<int[]> rings = new ArrayList<>();
 		boolean[] mask = new boolean[numNodes()];
 
@@ -384,11 +384,11 @@ export class Graph
 			int[][] newRings = findRingsOfSize(size, mask);
 			for (int n = 0; n < newRings.length; n++) rings.add(newRings[n]);
 		}
-    	return rings.toArray(new int[rings.size()][]);
-    }
+		return rings.toArray(new int[rings.size()][]);
+	}
 
-    public int[][] findRingsOfSize(int size, boolean[] mask) 
-    {
+	public int[][] findRingsOfSize(int size, boolean[] mask) 
+	{
 		List<int[]> rings = new ArrayList<>();
 		for (int n = 0; n < numNodes(); n++) if (mask[n])
 		{
@@ -398,11 +398,11 @@ export class Graph
 		}
 
 		return rings.toArray(new int[rings.size()][]);
-    }*/
-    
+	}*/
+	
 	// returns breadth-first-search order
 	public calculateBFS(idx:number):number[]
-    {
+	{
 		let ret = Vec.numberArray(-1, this.numNodes);
 		ret[idx] = 0;
 
@@ -431,10 +431,10 @@ export class Graph
 			curnum++;
 		}
 		return ret;
-    }
-    
-    /*public int[] calculateGravity()
-    {
+	}
+	
+	/*public int[] calculateGravity()
+	{
 		final int sz = numNodes();
 		int[] wght = Vec.intArray(1, sz), wmod = new int[sz];
 		for (int n = 0; n < sz; n++)
@@ -444,12 +444,12 @@ export class Graph
 			Vec.setTo(wght, wmod);
 		}
 		return wght;
-    }*/
+	}*/
 
 	// ----------------- private methods -----------------
 
 /*
-    // ring hunter: recursive step; finds, compares and collects
+	// ring hunter: recursive step; finds, compares and collects
 	private void recursiveRingFind(int[] path, int psize, int capacity, boolean[] mask, List<int[]> rings)
 	{
 		// not enough atoms yet, so look for new possibilities
@@ -476,7 +476,7 @@ export class Graph
 			return;
 		}
 	
-    	// path is full, so make sure it eats its tail
+		// path is full, so make sure it eats its tail
 		int last = path[psize - 1];
 		boolean fnd = false;
 		for (int n = 0; n < nbrs[last].length; n++) if (nbrs[last][n] == path[0]) {fnd = true; break;}
@@ -491,7 +491,7 @@ export class Graph
 			if (count != 2) return; // invalid
 		}
 	
-    	// reorder the array then look for duplicates
+		// reorder the array then look for duplicates
 		int first = 0;
 		for (int n = 1; n < psize; n++) if (path[n] < path[first]) first = n;
 		int fm = (first - 1 + psize) % psize, fp = (first + 1) % psize;
@@ -514,9 +514,9 @@ export class Graph
 			}
 			if (same) return;
 		}
-    	
-    	rings.add(path);
-    }
+		
+		rings.add(path);
+	}
 	*/
 }
 

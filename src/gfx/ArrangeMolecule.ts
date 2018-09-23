@@ -1,11 +1,11 @@
 /*
-    WebMolKit
+	WebMolKit
 
-    (c) 2010-2018 Molecular Materials Informatics, Inc.
+	(c) 2010-2018 Molecular Materials Informatics, Inc.
 
-    All rights reserved
-    
-    http://molmatinf.com
+	All rights reserved
+	
+	http://molmatinf.com
 
 	[PKG=webmolkit]
 */
@@ -106,8 +106,8 @@ export class ArrangeMolecule
 	// the angstrom-to-ascent height is corrected by this factor
 	private static FONT_CORRECT = 1.5;
 
-    // note: the first {#atoms} entries in the points array correspond to the atoms - and likewise for the space array; anything
-    // listed after that is arbitrary; the lines are not listed in any kind of order
+	// note: the first {#atoms} entries in the points array correspond to the atoms - and likewise for the space array; anything
+	// listed after that is arbitrary; the lines are not listed in any kind of order
 	private points:APoint[] = [];
 	private lines:BLine[] = [];
 	private rings:XRing[] = [];
@@ -125,12 +125,12 @@ export class ArrangeMolecule
 	private artifactUnpaired = new Map<Object, number>();
 	private artifactFract = new Map<Object, boolean>()// bond order < 1: replaces the bond itself
 
-    // --------------------- static methods ---------------------
-    
-    // when it is necessary to define a boundary box in which to draw a molecule, the only way to get it right is to do a
-    // full arrangement, but this is computationally intensive; this method is fast, and delivers an approximate estimate
-    public static guestimateSize(mol:Molecule, policy:RenderPolicy, maxW?:number, maxH?:number):number[]
-    {
+	// --------------------- static methods ---------------------
+	
+	// when it is necessary to define a boundary box in which to draw a molecule, the only way to get it right is to do a
+	// full arrangement, but this is computationally intensive; this method is fast, and delivers an approximate estimate
+	public static guestimateSize(mol:Molecule, policy:RenderPolicy, maxW?:number, maxH?:number):number[]
+	{
 		let box = mol.boundary();
 		let minX = box.minX(), minY = box.minY(), maxX = box.maxX(), maxY = box.maxY(); 
 		let fontSize = policy.data.fontSize * this.FONT_CORRECT;
@@ -148,11 +148,11 @@ export class ArrangeMolecule
 		}
 		let w = Math.max(1, (maxX - minX)) * policy.data.pointScale;
 		let h = Math.max(1, (maxY - minY)) * policy.data.pointScale;
-    	if (maxW > 0 && w > maxW) {h *= maxW / w; w = maxW;}
-    	if (maxH > 0 && h > maxH) {w *= maxH / h; h = maxH;}
-    	return [w, h];
+		if (maxW > 0 && w > maxW) {h *= maxW / w; w = maxW;}
+		if (maxH > 0 && h > maxH) {w *= maxH / h; h = maxH;}
+		return [w, h];
 	}
-    
+	
 	// --------------------- public methods ---------------------
 
 	constructor(private mol:Molecule, private measure:ArrangeMeasurement, private policy:RenderPolicy,
@@ -161,20 +161,20 @@ export class ArrangeMolecule
 	}
 
 	// access to setup info
-    public getMolecule():Molecule {return this.mol;}
+	public getMolecule():Molecule {return this.mol;}
 	public getMeasure():ArrangeMeasurement  {return this.measure;}
-    public getPolicy():RenderPolicy {return this.policy;}
-    public getEffects():RenderEffects {return this.effects;}
-    public getScale():number {return this.scale;} // may be different from measure.scale() if modified after layout
-    
+	public getPolicy():RenderPolicy {return this.policy;}
+	public getEffects():RenderEffects {return this.effects;}
+	public getScale():number {return this.scale;} // may be different from measure.scale() if modified after layout
+	
 	// bond artifacts: can decide whether they're to be derived, or provide them already
 	public setWantArtifacts(want:boolean) {this.wantArtifacts = want;}
 	public getArtifacts():BondArtifact {return this.artifacts;}
 	public setArtifacts(artifacts:BondArtifact):void {this.artifacts = artifacts;}
 
 	// the action method: call this before accessing any of the resultant data
-    public arrange():void
-    {
+	public arrange():void
+	{
 		const mol = this.mol;
 
 		this.scale = this.measure.scale();
@@ -196,11 +196,11 @@ export class ArrangeMolecule
 
 		this.setupBondOrders();
 
-    	// fill in each of the atom centres
+		// fill in each of the atom centres
 		for (let n = 1; n <= mol.numAtoms; n++)
-    	{
-    	    // atom symbols which are more than 2 characters long are labels rather than elements, and get different treatment;
-    	    // note we put in a null placeholder here, so that the points will be kept in their original atom order
+		{
+			// atom symbols which are more than 2 characters long are labels rather than elements, and get different treatment;
+			// note we put in a null placeholder here, so that the points will be kept in their original atom order
 			if (mol.atomElement(n).length > 2 && mol.atomHydrogens(n) == 0)
 			{
 				this.points.push(null);
@@ -208,11 +208,11 @@ export class ArrangeMolecule
 				continue;
 			}
 	
-    	    // proceed with a regular atom symbol
+			// proceed with a regular atom symbol
 			let a:APoint =
 			{
 				'anum': n,
-	    	    'text': /*this.effects.showCarbon ||*/ mol.atomExplicit(n) || this.atomIsWeirdLinear(n) ? mol.atomElement(n) : null,
+				'text': /*this.effects.showCarbon ||*/ mol.atomExplicit(n) || this.atomIsWeirdLinear(n) ? mol.atomElement(n) : null,
 				'fsz': this.fontSizePix,
 				'bold': mol.atomMapNum(n) > 0,
 				'col': this.policy.data.atomCols[mol.atomicNumber(n)],
@@ -222,13 +222,13 @@ export class ArrangeMolecule
 			if (overCol) a.col = overCol;
 
 			//if (policy.mappedColour >= 0 && mol.atomMapNum(n) > 0) a.col = policy.mappedColour;
-    
-    	    // decide whether this atom is to have a label
+	
+			// decide whether this atom is to have a label
 			let explicit = mol.atomExplicit(n) /*|| this.effects.showCarbon;*/
 			if (explicit && /*!effects.showCarbon &&*/ mol.atomElement(n) == 'C' && !this.atomIsWeirdLinear(n)) explicit = !artmask[n - 1];
 			a.text = explicit ? mol.atomElement(n) : null;    	    
-    	        
-    	    // if it has a label, then how big
+				
+			// if it has a label, then how big
 			if (a.text != null)
 			{
 				let wad = this.measure.measureText(a.text, a.fsz);
@@ -237,14 +237,14 @@ export class ArrangeMolecule
 				a.oval.rh = 0.5 * wad[1] * PADDING;
 			}
 			
-	    	this.points.push(a);
-	    	this.space.push(this.computeSpacePoint(a));
+			this.points.push(a);
+			this.space.push(this.computeSpacePoint(a));
 		}
 
-    	// pick up the label-style elements, and deal with them
+		// pick up the label-style elements, and deal with them
 		for (let n = 1; n <= mol.numAtoms; n++) if (this.points[n - 1] == null) this.processLabel(n);
 
-    	// resolve the bonds which can be analyzed immediately
+		// resolve the bonds which can be analyzed immediately
 		let bdbl = Vec.booleanArray(false, mol.numBonds); // gets set to true if bond is awaiting a double bond assignment
 
 		for (let n = 1; n <= mol.numBonds; n++)
@@ -258,7 +258,7 @@ export class ArrangeMolecule
 
 			//if (this.policy.data.mappedColour >= 0 && mol.atomMapNum(mol.bondFrom(bfr)) > 0 && mol.atomMapNum(mol.bondTo(bto)) > 0) col = policy.mappedColour;
 			bdbl[n - 1] = bo == 2 && (bt == Molecule.BONDTYPE_NORMAL || bt == Molecule.BONDTYPE_UNKNOWN);
-    
+	
 			let a1 = this.points[bfr - 1], a2 = this.points[bto - 1];
 			let x1 = a1.oval.cx, y1 = a1.oval.cy, x2 = a2.oval.cx, y2 = a2.oval.cy;
 
@@ -268,8 +268,8 @@ export class ArrangeMolecule
 				bdbl[n - 1] = false;
 				continue;
 			}
-    	    
-    	    // for non-double bonds, can add the constituents right away
+			
+			// for non-double bonds, can add the constituents right away
 			if (bdbl[n - 1]) continue;
 
 			let minDist = (bo == 1 && bt == Molecule.BONDTYPE_NORMAL ? this.MINBOND_LINE : this.MINBOND_EXOTIC) * this.measure.scale();
@@ -278,7 +278,7 @@ export class ArrangeMolecule
 			this.ensureMinimumBondLength(xy1, xy2, x1, y1, x2, y2, minDist);
 
 			// !! this is not good... make sure that it doesn't happen
-	    	// (handled, above) if (Math.abs(xy1[0]-xy2[0])<=1 && Math.abs(xy1[1]-xy2[1])<=1) continue; // miniscule resolution: no bond line
+			// (handled, above) if (Math.abs(xy1[0]-xy2[0])<=1 && Math.abs(xy1[1]-xy2[1])<=1) continue; // miniscule resolution: no bond line
 
 			let sz = this.lineSizePix, head = 0;
 			//if (mol.atomMapNum(mol.bondFrom(n))>0 && mol.atomMapNum(mol.bondTo(n))>0) sz*=5.0/3;
@@ -310,7 +310,7 @@ export class ArrangeMolecule
 				head = (bo == 2 ? 0.20 : 0.25) * this.measure.scale();
 			}
 
-	    	// for dotted lines, back off intersections if non-terminal
+			// for dotted lines, back off intersections if non-terminal
 			if (bo == 0)
 			{
 				let dx = xy2[0] - xy1[0], dy = xy2[1] - xy1[1];
@@ -320,10 +320,10 @@ export class ArrangeMolecule
 				if (mol.atomAdjCount(bto) > 1) {xy2[0] -= ox; xy2[1] -= oy;}
 			}
 
-    		// for dotted/declined, swap the sides
+			// for dotted/declined, swap the sides
 			if (bo != 1 && bt == Molecule.BONDTYPE_DECLINED) {let tmp = xy1; xy1 = xy2; xy2 = tmp;}
-    	    	
-	    	// for flat multi-order bonds, add multiple lines
+				
+			// for flat multi-order bonds, add multiple lines
 			if (bo > 1 && (bt == Molecule.BONDTYPE_NORMAL || bt == Molecule.BONDTYPE_UNKNOWN))
 			{
 				let oxy = this.orthogonalDelta(xy1[0], xy1[1], xy2[0], xy2[1], this.bondSepPix);
@@ -345,10 +345,10 @@ export class ArrangeMolecule
 					this.lines.push(b);
 					this.space.push(this.computeSpaceLine(b));
 				}
-    		}
-    		else
-    		{
-    		    // just one line, of whatever style was determined
+			}
+			else
+			{
+				// just one line, of whatever style was determined
 				let b:BLine =
 				{
 					'bnum': n,
@@ -362,10 +362,10 @@ export class ArrangeMolecule
 				};				
 				this.lines.push(b);
 				this.space.push(this.computeSpaceLine(b));
-    		}
-    	}
+			}
+		}
 
-    	// process double bonds in rings
+		// process double bonds in rings
 		let rings = this.orderedRingList();
 		for (let i = 0; i < rings.length; i++)
 		{
@@ -380,16 +380,16 @@ export class ArrangeMolecule
 			}
 		}
 
-    	// process all remaining double bonds
+		// process all remaining double bonds
 		for (let i = 1; i <= mol.numBonds; i++) if (bdbl[i - 1]) this.processDoubleBond(i, this.priorityDoubleSubstit(i));
 
-    	// place hydrogen labels as explicit "atom centres"
+		// place hydrogen labels as explicit "atom centres"
 		let hcount = Vec.numberArray(0, mol.numAtoms);
 		for (let n = 1; n <= mol.numAtoms; n++) hcount[n - 1] = /*!effects.showHydrogen ||*/ this.points[n - 1].text == null ? 0 : mol.atomHydrogens(n);
 		for (let n = 0; n < mol.numAtoms; n++) if (hcount[n] > 0 && this.placeHydrogen(n, hcount[n], true)) hcount[n] = 0;
 		for (let n = 0; n < mol.numAtoms; n++) if (hcount[n] > 0) this.placeHydrogen(n, hcount[n], false);
 
-        // look for atoms with isotope labels, and place them
+		// look for atoms with isotope labels, and place them
 		for (let n = 1; n <= mol.numAtoms; n++) if (mol.atomIsotope(n) != Molecule.ISOTOPE_NATURAL)
 		{
 			let isostr = mol.atomIsotope(n).toString();
@@ -397,7 +397,7 @@ export class ArrangeMolecule
 			this.placeAdjunct(n, isostr, this.fontSizePix * 0.6, col, 150 * DEGRAD);
 		}
 
-    	// do atomic charges/radical notation
+		// do atomic charges/radical notation
 		for (let n = 1; n <= mol.numAtoms; n++)
 		{
 			let str = '';
@@ -410,7 +410,7 @@ export class ArrangeMolecule
 			if (str.length == 0) continue;
 			let col = this.policy.data.atomCols[mol.atomicNumber(n)];
 			this.placeAdjunct(n, str, str.length == 1 ? 0.8 * this.fontSizePix : 0.6 * this.fontSizePix, col, 30 * DEGRAD);
-    	}
+		}
 	
 		if (this.artifacts != null)
 		{
@@ -438,7 +438,7 @@ export class ArrangeMolecule
 			}
 		}
 
-    	// perform a pseudo-embedding of the structure to resolve line-crossings
+		// perform a pseudo-embedding of the structure to resolve line-crossings
 /* ... to be done....
 		PseudoEmbedding emb = new PseudoEmbedding(mol);
 		emb.calculateCrossings();
@@ -449,15 +449,15 @@ export class ArrangeMolecule
 			else if (c.higher == 2) resolveLineCrossings(c.bond2, c.bond1);
 		}
 */		
-    }
+	}
 
    	// access to atom information; it is valid to assume that {atomcentre}[N-1] matches {moleculeatom}[N], if N<=mol.numAtoms
-    public numPoints():number {return this.points.length;}
-    public getPoint(idx:number):APoint {return this.points[idx];}
-    
-    // access to bond information; it is _NOT_ valid to read anything into the indices; they do not correlate with bond numbers
-    public numLines():number {return this.lines.length;}
-    public getLine(idx:number):BLine {return this.lines[idx];}
+	public numPoints():number {return this.points.length;}
+	public getPoint(idx:number):APoint {return this.points[idx];}
+	
+	// access to bond information; it is _NOT_ valid to read anything into the indices; they do not correlate with bond numbers
+	public numLines():number {return this.lines.length;}
+	public getLine(idx:number):BLine {return this.lines[idx];}
 
 	// access to extra ring/resonance information
 	public numRings():number {return this.rings.length;}
@@ -467,11 +467,11 @@ export class ArrangeMolecule
 	public getPath(idx:number):XPath {return this.paths[idx];}
 	public getPaths():XPath[] {return this.paths;}
 
-    // access to space-fillers (useful for calculating bounding boxes)
-    public numSpace():number {return this.space.length;}
-    public getSpace(idx:number):SpaceFiller {return this.space[idx];}
-    
-    // goes through all the objects and nudges them by the given offset
+	// access to space-fillers (useful for calculating bounding boxes)
+	public numSpace():number {return this.space.length;}
+	public getSpace(idx:number):SpaceFiller {return this.space[idx];}
+	
+	// goes through all the objects and nudges them by the given offset
 	public offsetEverything(dx:number, dy:number):void
 	{
 		for (let a of this.points) a.oval.offsetBy(dx, dy);
@@ -493,10 +493,10 @@ export class ArrangeMolecule
 			Vec.addTo(spc.py, dy);
 		}
 	}
-    
-    // goes through all of the objects and scales them by the provided factor
-    public scaleEverything(scaleBy:number):void
-    {
+	
+	// goes through all of the objects and scales them by the provided factor
+	public scaleEverything(scaleBy:number):void
+	{
 		this.scale *= scaleBy;
 		for (let a of this.points)
 		{
@@ -527,11 +527,11 @@ export class ArrangeMolecule
 			Vec.mulBy(spc.px, scaleBy);
 			Vec.mulBy(spc.py, scaleBy);
 		}
-    }
-    
-    // goes through all of the primitives and works out {minX,minY,maxX,maxY}
-    public determineBoundary(padding?:number):number[]
-    {
+	}
+	
+	// goes through all of the primitives and works out {minX,minY,maxX,maxY}
+	public determineBoundary(padding?:number):number[]
+	{
 		if (padding == null) padding = 0;
 		if (this.space.length == 0) return [0, 0, 2 * padding, 2 * padding];
 
@@ -550,14 +550,14 @@ export class ArrangeMolecule
 			bounds[2] = Math.max(bounds[2], spc.box.x + spc.box.w);
 			bounds[3] = Math.max(bounds[3], spc.box.y + spc.box.h);
 		}
-    	
-    	// !! factor in the boundary...
-    	
-    	return bounds;
-    }
-    
-    // convenience method: determines the boundaries of the arrangement, and makes sure that it all fits into the given
-    // box; will be scaled down if necessary, but not scaled up
+		
+		// !! factor in the boundary...
+		
+		return bounds;
+	}
+	
+	// convenience method: determines the boundaries of the arrangement, and makes sure that it all fits into the given
+	// box; will be scaled down if necessary, but not scaled up
 	public squeezeInto(x:number, y:number, w:number, h:number, padding?:number):void
 	{
 		if (padding != null && padding > 0)
@@ -578,8 +578,8 @@ export class ArrangeMolecule
 			Vec.mulBy(bounds, downScale);
 		}
 		this.offsetEverything(x - bounds[0] + 0.5 * (w - bounds[2] + bounds[0]), y - bounds[1] + 0.5 * (h - bounds[3] + bounds[1]));
-    }
-    
+	}
+	
 	// converts all drawing objects to a single colour
 	public monochromate(col:number):void
 	{
@@ -742,10 +742,10 @@ export class ArrangeMolecule
 		}
 		this.space.push(spc);
 	}
-    
-    // deals with an atom symbol which is a label rather than an element/short token
-    private processLabel(anum:number):void
-    {
+	
+	// deals with an atom symbol which is a label rather than an element/short token
+	private processLabel(anum:number):void
+	{
 		let ax = this.mol.atomX(anum), ay = this.mol.atomY(anum);
 
 		// decide whether the label goes on the left, or the right, or is centred
@@ -778,7 +778,7 @@ export class ArrangeMolecule
 			if (score1 < 0.5 * score2) side = -1; else side = 1;
 		}
 	
-    	// break up the label, if special characters are being used, and measure each
+		// break up the label, if special characters are being used, and measure each
 		let chunks:string[] = null;
 		let position:number[] = null;
 		let primary:boolean[] = null;
@@ -788,14 +788,14 @@ export class ArrangeMolecule
 		{
 			if (side == 0) chunks = [label];
 			else if (side < 0)
-    	    {
+			{
 				chunks = [label.substring(0, label.length - 1), label.substring(label.length - 1)];
 				refchunk = 1;
-    	    }
+			}
 			else chunks = [label.substring(0, 1), label.substring(1)];
-    	}
-    	else // multiple pieces: split it up
-    	{
+		}
+		else // multiple pieces: split it up
+		{
 			let bits:string[] = [];
 			let bpos:number[] = [];
 			let bpri:boolean[] = [];
@@ -809,14 +809,14 @@ export class ArrangeMolecule
 			}
 			let buff = '';
 			for (let i = 0; i < blocks.length; i++)
-    	    {
+			{
 				let isPrimary = (side >= 0 && i == 0) || (side < 0 && i == blocks.length - 1);
 
 				if (side < 0 && refchunk == 0 && i == blocks.length - 1) refchunk = bits.length;
 				let pos = 0;
 				buff = '';
 				for (let j = 0; j < blocks[i].length; j++)
-        		{
+				{
 					let ch = blocks[i].charAt(j);
 					if (ch == '{' || ch == '}')
 					{
@@ -833,26 +833,26 @@ export class ArrangeMolecule
 					//else if (ch == '\\' && j < blocks[i].length() - 1) {buff.append(blocks[i].charAt(j + 1)); j++;}
 					else if (ch == '^' && pos == -1 && buff.length == 0) pos = 1;
 					else buff += ch;
-        		}
+				}
 				if (buff.length > 0)
 				{
 					bits.push(buff.toString());
 					bpos.push(pos);
 					bpri.push(isPrimary);
 				}
-    	    }
-    	    
+			}
+			
 			chunks = bits;
 			position = bpos;
 			primary = bpri;
 			
 			// in case it leads with sub/superscript
 			while (refchunk < chunks.length - 1 && position[refchunk] != 0) refchunk++;
-    	}
+		}
 	
 		let PADDING = 1.1;
 		let SSFRACT = 0.6;
-    	
+		
 		let chunkw = Vec.numberArray(0, chunks.length);
 		let tw = 0;
 		for (let n = 0; n < chunks.length; n++)
@@ -869,11 +869,11 @@ export class ArrangeMolecule
 			for (let n = 0; n < refchunk; n++) x -= chunkw[n];
 			x -= 0.5 * chunkw[refchunk];
 		}
-    	else //if (side>0)
-    	{
+		else //if (side>0)
+		{
 			x -= 0.5 * chunkw[0];
-    	}
-    	
+		}
+		
 		for (let n = 0; n < chunks.length; n++)
 		{
 			let a:APoint =
@@ -887,15 +887,15 @@ export class ArrangeMolecule
 			};
 
 			if (position != null && position[n] != 0)
-    	    {
+			{
 				a.fsz *= SSFRACT;
 				//a.cy += a.fsz * 0.7f * (measure.yIsUp() ? -1 : 1);
 				
 				if (position[n] <0)
 					a.oval.cy += a.fsz * 0.7 * (this.measure.yIsUp() ? -1 : 1); 
 				else
-                	a.oval.cy -= a.fsz * 0.3 * (this.measure.yIsUp() ? -1 : 1);				
-    	    }
+					a.oval.cy -= a.fsz * 0.3 * (this.measure.yIsUp() ? -1 : 1);				
+			}
 			if (n == refchunk)
 			{
 				this.points[anum - 1] = a;
@@ -906,27 +906,27 @@ export class ArrangeMolecule
 				this.points.push(a);
 				this.space.push(this.computeSpacePoint(a));
 			}
-    	    
+			
 			x += chunkw[n];
-    	}
-    }
-    
-    // returns true if the atom has two neighbours at almost 180 degree separation, such that it is a bit on the unusual side, and
-    // should have its carbon atoms drawn explicitly
-    private atomIsWeirdLinear(idx:number):boolean
-    {
+		}
+	}
+	
+	// returns true if the atom has two neighbours at almost 180 degree separation, such that it is a bit on the unusual side, and
+	// should have its carbon atoms drawn explicitly
+	private atomIsWeirdLinear(idx:number):boolean
+	{
 		let bonds = this.mol.atomAdjBonds(idx);
 		if (bonds.length != 2) return false;
 		for (let n = 0; n < bonds.length; n++) if (this.mol.bondOrder(bonds[n]) == 3) return false; // triple bonds don't trigger this
-    	
+		
 		let adj = this.mol.atomAdjList(idx);
 		let th1 = Math.atan2(this.mol.atomY(adj[0]) - this.mol.atomY(idx), this.mol.atomX(adj[0]) - this.mol.atomX(idx));
 		let th2 = Math.atan2(this.mol.atomY(adj[1]) - this.mol.atomY(idx), this.mol.atomX(adj[1]) - this.mol.atomX(idx));
 		return Math.abs(angleDiff(th1, th2)) >= 175 * DEGRAD;
-    }
-    
-    // given that the position (X,Y) connects with atom N, and is part of a bond that connects at the other end
-    // with (FX,FY), considers the possibility that a new (X,Y) may need to be calculated by backing up along the line;
+	}
+	
+	// given that the position (X,Y) connects with atom N, and is part of a bond that connects at the other end
+	// with (FX,FY), considers the possibility that a new (X,Y) may need to be calculated by backing up along the line;
 	private backOffAtom(atom:number, x:number, y:number, fx:number, fy:number, minDist:number):number[]
 	{
 		if (x == fx && y == fy) return [x, y]; // can happen when really small
@@ -941,7 +941,7 @@ export class ArrangeMolecule
 
 			const sz = spc.px.length;
 			if (sz == 0) continue;
-	    	
+			
 			for (let n = 0; n < sz; n++)
 			{
 				let nn = n < sz - 1 ? n + 1 : 0;
@@ -959,8 +959,8 @@ export class ArrangeMolecule
 				}
 				ext = Math.min(ext, norm_xy(xy[0] - fx, xy[1] - fy));
 			}
-	    }
-    	
+		}
+		
 		if (active)
 		{
 			ext = Math.max(minDist, ext - 0.1 * this.measure.scale());
@@ -968,7 +968,7 @@ export class ArrangeMolecule
 			return [fx + ext * idst * dx, fy + ext * idst * dy];
 		}
 		else return [x, y];
-    }
+	}
 
 	// for bond begin/end points, compares the current distance to the original distance, to make sure that it hasn't been
 	// squished below a certain length, which tends to render badly
@@ -988,28 +988,28 @@ export class ArrangeMolecule
 		xy2[1] += dy * mag2;
 	}
 
-    // produces a list of small rings, ordered in a terminal-first manner, which is to be used as the sequence for assigning sides
-    // of bond orders
-    private orderedRingList():number[][]
-    {
+	// produces a list of small rings, ordered in a terminal-first manner, which is to be used as the sequence for assigning sides
+	// of bond orders
+	private orderedRingList():number[][]
+	{
 		let rings:number[][] = [];
 		let SIZE_ORDER = [6, 5, 7, 4, 3];
 		for (let i = 0; i < SIZE_ORDER.length; i++)
 		{
 			let nring = this.mol.findRingsOfSize(SIZE_ORDER[i]);
 			for (let j = 0; j < nring.length; j++) rings.push(nring[j]);
-    	}
+		}
 		let ringsz = rings.length;
 
-    	// for each atom add up the number of times it occurs in a small ring
+		// for each atom add up the number of times it occurs in a small ring
 		let ringbusy = Vec.numberArray(0, this.mol.numAtoms);
 		for (let n = 0; n < ringsz; n++)
 		{
 			let r = rings[n];
 			for (let i = 0; i < r.length; i++) ringbusy[r[i] - 1]++;
 		}
-    	
-    	// score the rings by the sum of the busy quotient
+		
+		// score the rings by the sum of the busy quotient
 		let ringscore = Vec.numberArray(0, ringsz);
 		for (let n = 0; n < ringsz; n++)
 		{
@@ -1017,11 +1017,11 @@ export class ArrangeMolecule
 			for (let i = 0; i < r.length; i++) ringscore[n] += ringbusy[r[i] - 1];
 		}
 		let ringorder = Vec.idxSort(ringscore);
-    	
-    	// count the number of double bonds in each ring, and use this to override the primary sort order (most=first)
+		
+		// count the number of double bonds in each ring, and use this to override the primary sort order (most=first)
 		let resbcount = Vec.numberArray(0, ringsz), maxbcount = 0;
 		for (let n = 0; n < ringsz; n++)
-    	{
+		{
 			let r = rings[ringorder[n]];
 			for (let i = 0; i < r.length; i++)
 			{
@@ -1029,19 +1029,19 @@ export class ArrangeMolecule
 				if (this.mol.bondOrder(j) == 2) resbcount[n]++;
 			}
 			maxbcount = Math.max(maxbcount, resbcount[n]);
-    	}
-    	
+		}
+		
 		let pos = 0, ret:number[][] = [];
 		for (let sz = maxbcount; sz >= 0; sz--)
 		{
 			for (let n = 0; n < ringsz; n++) if (resbcount[n] == sz) ret.push(rings[ringorder[n]]);
 		}
 
-    	return ret;
-    }
+		return ret;
+	}
 
-    // convenience function which returns {ox,oy} which is orthogonal to the direction of the input vector, of magnitude D; the 
-    // direction of {ox,oy} is to the "left" of the input vector
+	// convenience function which returns {ox,oy} which is orthogonal to the direction of the input vector, of magnitude D; the 
+	// direction of {ox,oy} is to the "left" of the input vector
 	private orthogonalDelta(x1:number, y1:number, x2:number, y2:number, d:number):number[]
 	{
 		let ox = y1 - y2, oy = x2 - x1, dsq = norm2_xy(ox, oy);
@@ -1049,8 +1049,8 @@ export class ArrangeMolecule
 		return [ox * sc, oy * sc];
 	}
 
-    // given the guideline index of a double bond, and some information about the atoms which are on the "important side", creates 
-    // the appropriate line segments
+	// given the guideline index of a double bond, and some information about the atoms which are on the "important side", creates 
+	// the appropriate line segments
 	private processDoubleBond(idx:number, priority:number[]):void
 	{
 		let bfr = this.mol.bondFrom(idx), bto = this.mol.bondTo(idx);
@@ -1064,10 +1064,10 @@ export class ArrangeMolecule
 		let xy2 = this.backOffAtom(bto, x2, y2, x1, y1, minDist);
 		this.ensureMinimumBondLength(xy1, xy2, x1, y1, x2, y2, minDist);
 		x1 = xy1[0]; y1 = xy1[1]; x2 = xy2[0]; y2 = xy2[1];
-    	
+		
 		let dx = x2 - x1, dy = y2 - y1, btheta = Math.atan2(dy, dx);
 	
-    	// count number of priority atoms on either side of the bond vector
+		// count number of priority atoms on either side of the bond vector
 		let countFLeft = 0, countFRight = 0, countTLeft = 0, countTRight = 0;
 		let idxFLeft = 0, idxFRight = 0, idxTLeft = 0, idxTRight = 0;
 		let noshift = false; // true if definitely not alkene-ish
@@ -1093,7 +1093,7 @@ export class ArrangeMolecule
 				if (ispri) countFRight++;
 				idxFRight = nfr[n];
 			}
-    	}
+		}
 		for (let n = 0; n < nto.length; n++) if (nto[n] != bfr)
 		{
 			let bo = this.mol.bondOrder(this.mol.findBond(bto, nto[n]));
@@ -1116,17 +1116,17 @@ export class ArrangeMolecule
 				if (ispri) countTRight++;
 				idxTRight = nto[n];
 			}
-    	}
+		}
 	
-    	// decide which side the bond should be shifted to, if either
+		// decide which side the bond should be shifted to, if either
 		let side = 0;
-    	if (noshift || countFLeft > 1 || countFRight > 1 || countTLeft > 1 || countTRight > 1) {} // inappropriate
-    	else if (countFLeft > 0 && countFRight > 0) {} // ambiguous
-    	else if (countTLeft > 0 && countTRight > 0) {} // ambiguous
-    	else if (countFLeft > 0 || countTLeft > 0) side = 1; // left
-    	else if (countFRight > 0 || countTRight > 0) side = -1; // right
+		if (noshift || countFLeft > 1 || countFRight > 1 || countTLeft > 1 || countTRight > 1) {} // inappropriate
+		else if (countFLeft > 0 && countFRight > 0) {} // ambiguous
+		else if (countTLeft > 0 && countTRight > 0) {} // ambiguous
+		else if (countFLeft > 0 || countTLeft > 0) side = 1; // left
+		else if (countFRight > 0 || countTRight > 0) side = -1; // right
 
-    	// create the bond lines
+		// create the bond lines
 
 		let sz = this.lineSizePix;
 		let oxy = this.orthogonalDelta(x1, y1, x2, y2, this.bondSepPix);
@@ -1156,21 +1156,21 @@ export class ArrangeMolecule
 			if (nfr.length > 1 && this.points[bfr - 1].text == null) {bx1 += oxy[1]; by1 -= oxy[0];}
 			if (nto.length > 1 && this.points[bto - 1].text == null) {bx2 -= oxy[1]; by2 += oxy[0];}
 		}
-    	
-    	// if there's shifting happening, check to see if either end has a terminal heteroatom
+		
+		// if there's shifting happening, check to see if either end has a terminal heteroatom
 		if (side != 0)
-    	{
+		{
 			if (this.mol.atomElement(bfr).length <= 2 && this.mol.atomAdjCount(bfr) == 1 && this.points[bfr - 1].text != null)
-    		{
+			{
 				this.bumpAtomPosition(bfr, 0.5 * oxy[0] * side, 0.5 * oxy[1] * side);
-    		}
+			}
 			if (this.mol.atomElement(bto).length <= 2 && this.mol.atomAdjCount(bto) == 1 && this.points[bto - 1].text != null)
-    		{
+			{
 				this.bumpAtomPosition(bto, 0.5 * oxy[0] * side, 0.5 * oxy[1] * side);
-    		}
-    	}
+			}
+		}
 
-    	// if both sides are evenly balanced, want to make the double bonds intersect with their adjacent bonds
+		// if both sides are evenly balanced, want to make the double bonds intersect with their adjacent bonds
 		if (side == 0 && !noshift)
 		{
 			let xy:number[] = null;
@@ -1188,7 +1188,7 @@ export class ArrangeMolecule
 				xy = this.adjustBondPosition(idxTRight, bto, bx2, by2, bx1, by1);
 				if (xy != null) {bx2 = xy[0]; by2 = xy[1];}
 			}
-    	}
+		}
 
 		let lt = this.mol.bondType(idx) == Molecule.BONDTYPE_UNKNOWN ? BLineType.Unknown : BLineType.Normal;
 		let col = this.effects.colBond[idx];
@@ -1223,8 +1223,8 @@ export class ArrangeMolecule
 		this.lines.push(b2);
 		this.space.push(this.computeSpaceLine(b1));
 		this.space.push(this.computeSpaceLine(b2));
-    }
-    
+	}
+	
 	// for a point index (0-based), attempt to place some number of hydrogen atoms as a label (H, H2, H3, etc.); if the fussy
 	// parameter is set, will insist on placing it in one of the 4 axial directions, starting with the atom's default preference;
 	// will return false if this cannot be accomplished without stepping on something; if fussy is not enabled, will just try to
@@ -1239,22 +1239,22 @@ export class ArrangeMolecule
 		let emscale = a.fsz * font.INV_UNITS_PER_EM;
 		let sub = hcount >= 2 ? hcount.toString() : '';
 
-    	// create polygonal outline: start with the precomputed convex hull of the letter 'H', then grow as necessary
+		// create polygonal outline: start with the precomputed convex hull of the letter 'H', then grow as necessary
 		let outlineX = font.getOutlineX(GLYPH_H), outlineY = font.getOutlineY(GLYPH_H);
 
 		let firstEMW = font.HORIZ_ADV_X[GLYPH_H], emw = firstEMW;
 		for (let n = 0; n < sub.length; n++)
-    	{
+		{
 			let g = sub.charCodeAt(n) - font.GLYPH_MIN;
 			if (n == 0)
 			{
 				emw += font.getKerning(GLYPH_H, g);
 			}
 			else
-    		{
+			{
 				let gp = sub.charCodeAt(n - 1) - font.GLYPH_MIN;
 				emw += font.getKerning(gp, g) * SSFRACT;
-	    	}
+			}
 
 			let extraX = font.getOutlineX(g), extraY = font.getOutlineY(g);
 			Vec.addTo(extraX, emw / SSFRACT);
@@ -1264,7 +1264,7 @@ export class ArrangeMolecule
 			outlineX = outlineX.concat(extraX);
 			outlineY = outlineY.concat(extraY);
 			emw += font.HORIZ_ADV_X[g] * SSFRACT;
-    	}
+		}
 
 		// if multiple, take the convex hull of all of the above
 		if (sub.length > 0) 
@@ -1274,7 +1274,7 @@ export class ArrangeMolecule
 			outlineY = qh.hullY;
 		}
 
-    	// transform the outline into the right position
+		// transform the outline into the right position
 		let emdx = -0.5 * firstEMW, emdy = 0.5 * (font.ASCENT + font.DESCENT);
 		for (let n = 0; n < outlineX.length; n++)
 		{
@@ -1399,7 +1399,7 @@ export class ArrangeMolecule
 			'oval': new Oval(a.oval.cx + dx, a.oval.cy + dy, 0.5 * wad[0] * PADDING, 0.5 * wad[1] * PADDING)
 		};
 		this.points.push(ah);
-    	
+		
 		if (sub.length > 0)
 		{
 			const subFsz = SSFRACT * a.fsz;
@@ -1416,7 +1416,7 @@ export class ArrangeMolecule
 			};
 			this.points.push(an);
 		}
-    	
+		
 		// the space-filler is for the H and its label
 		Vec.addTo(outlineX, dx);
 		Vec.addTo(outlineY, dy);
@@ -1431,8 +1431,8 @@ export class ArrangeMolecule
 		};
 		this.space.push(spc);
 
-    	return true;
-    }
+		return true;
+	}
 
 	// creates a "space filling" outline for a point, which provides sufficient detail to maneuvre other objects around it
 	private computeSpacePoint(a:APoint):SpaceFiller
@@ -1670,16 +1670,16 @@ export class ArrangeMolecule
 		return hits;
 	}
 
-    // considering any bonds between (bf,bt), given that 'bt' is the source of a double bond line at position (x,y) and heading 
-    // out in the direction (dx,dy), make sure that two lines are adjusted to their intersection position; the position of 
-    // the line involving 'bf' is modified directly, while the new position is returned as an array of [x,y], for the caller
+	// considering any bonds between (bf,bt), given that 'bt' is the source of a double bond line at position (x,y) and heading 
+	// out in the direction (dx,dy), make sure that two lines are adjusted to their intersection position; the position of 
+	// the line involving 'bf' is modified directly, while the new position is returned as an array of [x,y], for the caller
 	// to update
 	private adjustBondPosition(bf:number, bt:number, x1:number, y1:number, x2:number, y2:number):number[]
 	{
 		if (bf == 0 || bt == 0) return null;
 
 		for (let n = 0; n < this.lines.length; n++)
-    	{
+		{
 			let b = this.lines[n];
 			if (this.mol.bondOrder(b.bnum) != 1 || this.mol.bondType(b.bnum) != Molecule.BONDTYPE_NORMAL) continue;
 
@@ -1687,33 +1687,33 @@ export class ArrangeMolecule
 			if (this.mol.bondFrom(b.bnum) == bf && this.mol.bondTo(b.bnum) == bt) {}
 			else if (this.mol.bondFrom(b.bnum) == bt && this.mol.bondTo(b.bnum) == bf) alt = true;
 			else continue;
-    		
-    		// if lines are anywhere near parallel, don't do this
-	    	//if (GeomUtil.areLinesParallel(b.x1,b.y1,b.x2,b.y2,x1,y1,x2,y2)) continue; (this is too precise)
+			
+			// if lines are anywhere near parallel, don't do this
+			//if (GeomUtil.areLinesParallel(b.x1,b.y1,b.x2,b.y2,x1,y1,x2,y2)) continue; (this is too precise)
 			let th = angleDiff(Math.atan2(b.line.y2 - b.line.y1, b.line.x2 - b.line.x1), Math.atan2(y2 - y1, x2 - x1)) * RADDEG;
 			if ((th > -5 && th < 5) || th > 175 || th < -175) continue;
 
 			let xy = GeomUtil.lineIntersect(b.line.x1, b.line.y1, b.line.x2, b.line.y2, x1, y1, x2, y2);
 
-	    	// separate the non-double bond attachments (but only if not in a ring)
+			// separate the non-double bond attachments (but only if not in a ring)
 			if (this.mol.atomRingBlock(bt) == 0)
-	    	{
-	    		if (alt)
-	    			{b.line.x1 = xy[0]; b.line.y1 = xy[1];}
-	    		else
-	    			{b.line.x2 = xy[0]; b.line.y2 = xy[1];}
-	    	}
+			{
+				if (alt)
+					{b.line.x1 = xy[0]; b.line.y1 = xy[1];}
+				else
+					{b.line.x2 = xy[0]; b.line.y2 = xy[1];}
+			}
 
 			return xy;
-    	}
-    	return null;
-    }
+		}
+		return null;
+	}
 
-    // for the guideline index of a double bond, determines which side has weighting priority for the drawing of the bond; 
-    // assumes a chain-like bond (though it could still be in a large ring); a null/empty/ambiguous set implies that there 
-    // is no priority, and that the bond should not be drawn in a side-shifted manner...
-    private priorityDoubleSubstit(idx:number):number[]
-    {
+	// for the guideline index of a double bond, determines which side has weighting priority for the drawing of the bond; 
+	// assumes a chain-like bond (though it could still be in a large ring); a null/empty/ambiguous set implies that there 
+	// is no priority, and that the bond should not be drawn in a side-shifted manner...
+	private priorityDoubleSubstit(idx:number):number[]
+	{
 		let bf = this.mol.bondFrom(idx), bt = this.mol.bondTo(idx);
 		let nf = this.mol.atomAdjList(bf), nt = this.mol.atomAdjList(bt);
 		let a1 = this.points[bf - 1], a2 = this.points[bt - 1];
@@ -1723,24 +1723,24 @@ export class ArrangeMolecule
 		let idxFLeft = 0, idxFRight = 0, idxTLeft = 0, idxTRight = 0;
 
 		for (let n = 0; n < nf.length; n++) if (nf[n] != bt)
-    	{
+		{
 			let theta = angleDiff(Math.atan2(this.points[nf[n] - 1].oval.cy - y1, this.points[nf[n] - 1].oval.cx - x1), btheta);
-    	    if (theta > 0) {if (idxFLeft != 0) return null; idxFLeft = nf[n];}
-    	    else {if (idxFRight != 0) return null; idxFRight = nf[n];}
-    	}
+			if (theta > 0) {if (idxFLeft != 0) return null; idxFLeft = nf[n];}
+			else {if (idxFRight != 0) return null; idxFRight = nf[n];}
+		}
 		for (let n = 0; n < nt.length; n++) if (nt[n] != bf)
-    	{
+		{
 			let theta = angleDiff(Math.atan2(this.points[nt[n] - 1].oval.cy - y2, this.points[nt[n] - 1].oval.cx - x2), btheta);
-    	    if (theta > 0) {if (idxTLeft != 0) return null; idxTLeft = nt[n];}
-    	    else {if (idxTRight != 0) return null; idxTRight = nt[n];}
-    	}
+			if (theta > 0) {if (idxTLeft != 0) return null; idxTLeft = nt[n];}
+			else {if (idxTRight != 0) return null; idxTRight = nt[n];}
+		}
 	
 		let sumFrom = (idxFLeft > 0 ? 1 : 0) + (idxFRight > 0 ? 1 : 0), sumTo = (idxTLeft > 0 ? 1 : 0) + (idxTRight > 0 ? 1 : 0);
-    	
+		
 		if (sumFrom == 1 && sumTo == 0) return [idxFLeft > 0 ? idxFLeft : idxFRight];
 		if (sumFrom == 0 && sumTo == 1) return [idxTLeft > 0 ? idxTLeft : idxTRight];
 		if (sumFrom == 1 && sumTo == 1)
-    	{
+		{
 			// cis? if so, then side is obvious
 			if (idxFLeft > 0 && idxTLeft > 0) return [idxFLeft, idxTLeft];
 			if (idxFRight > 0 && idxTRight > 0) return [idxFRight, idxTRight];
@@ -1751,13 +1751,13 @@ export class ArrangeMolecule
 			let congestRight = this.spatialCongestion(0.5 * (x1 + x2) - oxy[0], 0.5 * (y1 + y2) - oxy[1]);
 			if (congestLeft < congestRight) return [idxFLeft > 0 ? idxFLeft : idxTLeft];
 			else return [idxFRight > 0 ? idxFRight : idxTRight];
-    	}
+		}
 		if (sumFrom == 2 && sumTo == 1)
-    	{
-    	    // side with the majority
+		{
+			// side with the majority
 			if (idxTLeft == 0) return [idxFRight, idxTRight];
 			else return [idxFLeft, idxTLeft];
-    	}
+		}
 		if (sumFrom == 1 && sumTo == 2)
 		{
 			// side with the majority
@@ -1765,33 +1765,33 @@ export class ArrangeMolecule
 			else return [idxFLeft, idxTLeft];
 		}
 
-    	return null;
-    }
-    
-    // for a specific location, returns a measure of how "congested" it is; lower values mean that the point is generally far away
-    // from things
-    private spatialCongestion(x:number, y:number, thresh?:number):number
-    {
+		return null;
+	}
+	
+	// for a specific location, returns a measure of how "congested" it is; lower values mean that the point is generally far away
+	// from things
+	private spatialCongestion(x:number, y:number, thresh?:number):number
+	{
 		if (thresh == null) thresh = 0.001;
 		let congest = 0;
 		for (let n = 0; n < this.points.length; n++)
-    	{
+		{
 			let a = this.points[n];
 			if (a == null) continue;
 			let dx = a.oval.cx - x, dy = a.oval.cy - y;
 			congest += 1 / (dx * dx + dy * dy + thresh);
-    	}
-    	return congest;
-    }
+		}
+		return congest;
+	}
 
-    // returns true if the indicated box intersects with any of the currently defined atom centres or bond lines; can optionally
-    // pass masks for the points & lines which we could possibly care about
-    private boxOverlaps(x:number, y:number, w:number, h:number, pointmask?:boolean[], linemask?:boolean[]):boolean
-    {
+	// returns true if the indicated box intersects with any of the currently defined atom centres or bond lines; can optionally
+	// pass masks for the points & lines which we could possibly care about
+	private boxOverlaps(x:number, y:number, w:number, h:number, pointmask?:boolean[], linemask?:boolean[]):boolean
+	{
 		let vx1 = x, vy1 = y, vx2 = x + w, vy2 = y + h;
 
 		for (let n = 0; n < this.points.length; n++)
-    	{
+		{
 			if (pointmask != null && !pointmask[n]) continue;
 
 			let a = this.points[n];
@@ -1801,31 +1801,31 @@ export class ArrangeMolecule
 			if (vx2 < wx1 || vx1 > wx2 || vy2 < wy1 || vy1 > wy2) continue; // no intersection of rectangles
 
 			return true;
-    	}
+		}
 	
 		for (let n = 0; n < this.lines.length; n++)
 		{
 			if (linemask != null && !linemask[n]) continue;
 
 			let b = this.lines[n];
-    	    
+			
 			let wx1 = b.line.x1, wy1 = b.line.y1, wx2 = b.line.x2, wy2 = b.line.y2;
 
 			// test for any intersection with line's rectangle
 			if (vx2 < Math.min(wx1, wx2) || vx1 > Math.max(wx1, wx2) || vy2 < Math.min(wy1, wy2) || vy1 > Math.max(wy1, wy2)) continue; // no intersection of rectangles
-    	    
+			
 			// if either point is completely in the box, then fast-out
 			if (wx1 >= vx1 && wx1 <= vx2 && wy1 >= vy1 && wy1 <= vy2) return true;
 			if (wx2 >= vx1 && wx2 <= vx2 && wy2 >= vy1 && wy2 <= vy2) return true;
-    	    
+			
 			if (GeomUtil.doLineSegsIntersect(wx1, wy1, wx2, wy2, vx1, vy1, vx2, vy1)) return true;
 			if (GeomUtil.doLineSegsIntersect(wx1, wy1, wx2, wy2, vx1, vy2, vx2, vy2)) return true;
 			if (GeomUtil.doLineSegsIntersect(wx1, wy1, wx2, wy2, vx1, vy1, vx1, vy2)) return true;
 			if (GeomUtil.doLineSegsIntersect(wx1, wy1, wx2, wy2, vx2, vy1, vx2, vy2)) return true;
-    	}
+		}
 	
 		return false;
-    }
+	}
 
 	// given the predetermined fact that {bondHigher} crosses {bondLower} with the original coordinates, looks for
 	// arranged lines matching these indices, so that they might be split up
