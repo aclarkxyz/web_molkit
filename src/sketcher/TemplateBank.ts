@@ -181,6 +181,7 @@ export class TemplateBank extends ButtonBank
 			'rings',
 			'termgrp',
 			'funcgrp',
+			'protgrp',
 			'nonplrings',
 			'largerings',
 			'crownethers',

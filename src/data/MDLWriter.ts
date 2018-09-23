@@ -15,6 +15,7 @@
 ///<reference path='../data/Molecule.ts'/>
 ///<reference path='../data/MolUtil.ts'/>
 ///<reference path='../data/DataSheet.ts'/>
+///<reference path='../data/BondArtifact.ts'/>
 
 namespace WebMolKit /* BOF */ {
 
@@ -182,13 +183,23 @@ export class MDLMOLWriter
     	}
 
 		// export the additional blocks
-		this.writeMBlock('CHG', chgidx, chgval);
-		this.writeMBlock('RAD', radidx, radval);
-		this.writeMBlock('ISO', isoidx, isoval);
-		this.writeMBlock('RGP', rgpidx, rgpval);
-		this.writeMBlock('HYD', hydidx, hydval);
-		this.writeMBlock('ZCH', zchidx, zchval);
-		this.writeMBlock('ZBO', zboidx, zboval);
+		this.writeMBlockPair('CHG', chgidx, chgval);
+		this.writeMBlockPair('RAD', radidx, radval);
+		this.writeMBlockPair('ISO', isoidx, isoval);
+		this.writeMBlockPair('RGP', rgpidx, rgpval);
+		this.writeMBlockPair('HYD', hydidx, hydval);
+		this.writeMBlockPair('ZCH', zchidx, zchval);
+		this.writeMBlockPair('ZBO', zboidx, zboval);
+
+		// write bond artifacts, one line each
+		if (this.enhancedFields)
+		{
+			let artifacts = new BondArtifact(this.mol);
+			let idx = 0;
+			for (let path of artifacts.getResPaths()) this.writeMBlockFlat('ZPA', ++idx, path.atoms);
+			for (let ring of artifacts.getResRings()) this.writeMBlockFlat('ZRI', ++idx, ring.atoms);
+			for (let arene of artifacts.getArenes()) this.writeMBlockFlat('ZAR', ++idx, Vec.prepend(arene.atoms, arene.centre));
+		}
 
     	// export long atom names
 		for (let n = 1; n <= mol.numAtoms; n++) if (mol.atomElement(n).length > 2)
@@ -200,8 +211,8 @@ export class MDLMOLWriter
     	this.lines.push('M  END');
    	}
 
-    // writes a specific sub-block, e.g. M__CHG, etc.
-	private writeMBlock(token:string, idx:number[], val:number[])
+    // writes a specific sub-block, e.g. M__CHG, etc., where each pair of idx/val is a separate entity
+	private writeMBlockPair(token:string, idx:number[], val:number[])
 	{
 		const sz = idx.length;
 		for (let i = 0; i < sz; i += 8)
@@ -212,6 +223,21 @@ export class MDLMOLWriter
 			this.lines.push(line);
 		}
     }
+
+	// writes a specific sub-block, whereby the master index corresponds to some number of values; these are split over multiple
+	// lines if necessary
+	private writeMBlockFlat(token:string, idx:number, val:number[])
+	{
+		const sz = val.length;
+		for (let i = 0; i < sz; i += 15)
+		{
+			let count = Math.min(15, sz - i);
+			let line = "M  " + token + this.intrpad(count, 3);
+			line += this.intrpad(idx, 4);
+			for (let j = 0; j < count; j++) line += this.intrpad(val[i + j], 4);
+			this.lines.push(line);
+		}
+	}
 
 	// convenient formatting
 	private intrpad(num:number, sz:number):string

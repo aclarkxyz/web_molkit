@@ -15,6 +15,7 @@
 ///<reference path='../data/CoordUtil.ts'/>
 ///<reference path='../data/SketchUtil.ts'/>
 ///<reference path='../data/Graph.ts'/>
+///<reference path='../data/BondArtifact.ts'/>
 ///<reference path='../sketcher/MoleculeActivity.ts'/>
 
 namespace WebMolKit /* BOF */ {
@@ -56,6 +57,11 @@ export class TemplateFusion
 
 	constructor(public mol:Molecule, public templ:Molecule, public abbrev:string)
 	{
+		// renumber any incoming bond artifacts
+        let artif1 = new BondArtifact(mol), artif2 = new BondArtifact(templ);
+        artif2.harmoniseNumbering(artif1);
+        artif2.rewriteMolecule();
+
 		this.huntForGuides();
 	}
 

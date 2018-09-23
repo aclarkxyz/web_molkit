@@ -30,21 +30,21 @@ namespace WebMolKit /* BOF */ {
 // valence options used by MDL/CTAB, which is much more promiscuous than the internal format
 export const MDLMOL_VALENCE:{[id:string] : number[]} =
 {
-	'H': [1],
-	'B': [3],
-	'C': [4],
+	'H':  [1],
+	'B':  [3],
+	'C':  [4],
 	'Si': [4],
-	'N': [3],
-	'P': [3, 5],
+	'N':  [3],
+	'P':  [3, 5],
 	'As': [3, 5],
-	'O': [2],
-	'S': [2, 4, 6],
+	'O':  [2],
+	'S':  [2, 4, 6],
 	'Se': [2, 4, 6],
 	'Te': [2, 4, 6],
-	'F': [1],
+	'F':  [1],
 	'Cl': [1, 3, 5, 7],
 	'Br': [1],
-	'I': [1, 3, 5, 7],
+	'I':  [1, 3, 5, 7],
 	'At': [1, 3, 5, 7],
 };
 
@@ -219,7 +219,8 @@ export class MDLMOLReader
 	    }    	    
 		
 		// examine anything in the M-block
-		const MBLK_CHG = 1, MBLK_RAD = 2, MBLK_ISO = 3, MBLK_RGP = 4, MBLK_HYD = 5, MBLK_ZCH = 6, MBLK_ZBO = 7;
+		const MBLK_CHG = 1, MBLK_RAD = 2, MBLK_ISO = 3, MBLK_RGP = 4, MBLK_HYD = 5, MBLK_ZCH = 6, MBLK_ZBO = 7, MBLK_ZPA = 8, MBLK_ZRI = 9, MBLK_ZAR = 10;
+		let resPaths = new Map<number, number[]>(), resRings = new Map<number, number[]>(), arenes = new Map<number, number[]>();
 	    while (true)
 	    {
 			line = this.nextLine();
@@ -233,6 +234,9 @@ export class MDLMOLReader
 			else if (this.parseExtended && line.startsWith('M  HYD')) type = MBLK_HYD;
 			else if (this.parseExtended && line.startsWith('M  ZCH')) type = MBLK_ZCH;
 			else if (this.parseExtended && line.startsWith('M  ZBO')) type = MBLK_ZBO;
+			else if (this.parseExtended && line.startsWith('M  ZPA')) type = MBLK_ZPA;
+			else if (this.parseExtended && line.startsWith('M  ZRI')) type = MBLK_ZRI;
+			else if (this.parseExtended && line.startsWith('M  ZAR')) type = MBLK_ZAR;
 			else if (line.startsWith('A  ') && line.length >= 6)
     		{
 				let anum = parseInt(line.substring(3, 6).trim());
@@ -245,7 +249,20 @@ export class MDLMOLReader
 				}
     		}
 
-			if (type > 0)
+			if (type == MBLK_ZPA || type == MBLK_ZRI || type == MBLK_ZAR)
+			{
+				let len = parseInt(line.substring(6, 9).trim()), blk = parseInt(line.substring(9, 13).trim());
+				let map = type == MBLK_ZPA ? resPaths : type == MBLK_ZRI ? resRings : /* type == MBLK_ZAR */ arenes;
+				for (let n = 0; n < len; n++)
+				{
+					let val = parseInt(line.substring(13 + 4 * n, 17 + 4 * n).trim());
+					if (val < 1 || val > numAtoms) throw 'Invalid MDL MOL: M-block';
+					let atoms = map.get(blk);
+					if (!atoms) map.set(blk, atoms = []);
+					atoms.push(val);
+				}
+			}
+			else if (type > 0)
 			{
 				let len = parseInt(line.substring(6, 9).trim());
 				for (let n = 0; n < len; n++)
@@ -276,6 +293,15 @@ export class MDLMOLReader
 	    }
 	    
 	    this.postFix(explicitValence);
+
+		if (this.parseExtended)
+		{
+			let artifacts = new BondArtifact(this.mol);
+			for (let atoms of resPaths.values()) artifacts.createPath(atoms);
+			for (let atoms of resRings.values()) artifacts.createRing(atoms);
+			for (let atoms of arenes.values()) artifacts.createArene(atoms);
+			artifacts.rewriteMolecule();
+		}
 
 		this.openmol.derive(this.mol);
 	}

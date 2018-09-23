@@ -1303,7 +1303,7 @@ export class MoleculeActivity
 		let fusion = new TemplateFusion(mol, frag, '');
 		if (this.subjectLength == 0) fusion.permuteNone();
 		else if (this.subjectLength == 1) fusion.permuteAtom(this.subjectIndex[0]);
-		else if (this.subjectLength == 2 && mol.findBond(this.subjectIndex[0], this.subjectIndex[1]) > 0)
+		else if (this.subjectLength == 2 && mol.findBond(this.subjectIndex[0], this.subjectIndex[1]) > 0) 
 			fusion.permuteBond(this.subjectIndex[0], this.subjectIndex[1]);
 		else fusion.permuteMulti(this.subjectIndex);
 		

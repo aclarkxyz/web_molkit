@@ -92,29 +92,29 @@ export class Graph
     }
 
     public get numNodes():number {return this.nbrs.length;}
-    public numEdges(N:number):number {return this.nbrs[N].length;}
-    public getEdge(N:number, E:number):number {return this.nbrs[N][E];}
-    public getAdj(N:number):number[] {return this.nbrs[N];}
+    public numEdges(node:number):number {return this.nbrs[node].length;}
+    public getEdge(node:number, edge:number):number {return this.nbrs[node][edge];}
+    public getEdges(node:number):number[] {return this.nbrs[node];}
 
-    public getIndex(N:number):number {return this.indices == null ? 0 : this.indices[N];}
-	public setIndex(N:number, idx:number):void
+    public getIndex(node:number):number {return this.indices == null ? 0 : this.indices[node];}
+	public setIndex(node:number, idx:number):void
 	{
 		if (this.indices == null) this.indices = Vec.numberArray(0, this.nbrs.length);
-		this.indices[N] = idx;
+		this.indices[node] = idx;
 	}
     
-    public getLabel(N:number):string {return this.labels == null ? null : this.labels[N];}
-    public setLabel(N:number, lbl:string):void
+    public getLabel(node:number):string {return this.labels == null ? null : this.labels[node];}
+    public setLabel(node:number, lbl:string):void
     {
     	if (this.labels == null) this.labels = Vec.stringArray('', this.nbrs.length);
-    	this.labels[N] = lbl;
+    	this.labels[node] = lbl;
     }
     
-    public getProperty(N:number):any {return this.props == null ? null : this.props[N];}
-    public setProperty(N:number, prp:any):void
+    public getProperty(node:number):any {return this.props == null ? null : this.props[node];}
+    public setProperty(node:number, prp:any):void
     {
     	if (this.props == null) this.props = new Array(this.nbrs.length);
-    	this.props[N] = prp;
+    	this.props[node] = prp;
     }
 
     public addNode():number
@@ -126,35 +126,35 @@ export class Graph
 		return this.nbrs.length - 1;
     }
     
-    public hasEdge(N1:number, N2:number):boolean
+    public hasEdge(node1:number, node2:number):boolean
     {
-    	if (this.nbrs[N1].length <= this.nbrs[N2].length)
-    	    return this.nbrs[N1].indexOf(N2) >= 0;
+    	if (this.nbrs[node1].length <= this.nbrs[node2].length)
+    	    return this.nbrs[node1].indexOf(node2) >= 0;
     	else
-    	    return this.nbrs[N2].indexOf(N1) >= 0;
+    	    return this.nbrs[node2].indexOf(node1) >= 0;
     }
     
-    public addEdge(N1:number, N2:number):void
+    public addEdge(node1:number, node2:number):void
     {
-		this.nbrs[N1].push(N2);
-		this.nbrs[N2].push(N1);
+		this.nbrs[node1].push(node2);
+		this.nbrs[node2].push(node1);
     }
 
-    public removeEdge(N1:number, N2:number):void
+    public removeEdge(node1:number, node2:number):void
     {
-		let i1 = this.nbrs[N1].indexOf(N2), i2 = this.nbrs[N2].indexOf(N1);
-		if (i1 >= 0) this.nbrs[N1].splice(i1, 1);
-		if (i2 >= 0) this.nbrs[N2].splice(i2, 1);
+		let i1 = this.nbrs[node1].indexOf(node2), i2 = this.nbrs[node2].indexOf(node1);
+		if (i1 >= 0) this.nbrs[node1].splice(i1, 1);
+		if (i2 >= 0) this.nbrs[node2].splice(i2, 1);
     }
     
-    public isolateNode(N:number):void
+    public isolateNode(node:number):void
     {
-		for (let o of this.nbrs[N])
+		for (let o of this.nbrs[node])
 		{
-			let i = this.nbrs[o].indexOf(N);
+			let i = this.nbrs[o].indexOf(node);
 			if (i >= 0) this.nbrs[o].splice(i, 1);
 		}
-		this.nbrs[N] = [];
+		this.nbrs[node] = [];
     }
 
 	// keep/remove: modify graph in place by taking out some nodes

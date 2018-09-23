@@ -187,7 +187,6 @@ export class ArrangeMolecule
 		if (this.wantArtifacts && this.artifacts == null) 
 		{
 			this.artifacts = new BondArtifact(mol);
-			this.artifacts.extract();
 			
 			artmask = Vec.booleanArray(false, mol.numAtoms);
 			for (let path of this.artifacts.getResPaths()) for (let a of path.atoms) artmask[a - 1] = true;

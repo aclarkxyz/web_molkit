@@ -84,6 +84,15 @@ export class Vec
 		return arr1.concat(arr2);
 	}
 
+	// array removal, with shallow-copy duplication
+	public static remove<T>(arr:T[], idx:number):T[]
+	{
+		arr = arr.slice(0);
+		arr.splice(idx, 1);
+		return arr;
+	}
+
+	// null-tolerant comparison
 	public static equals(arr1:any[], arr2:any[]):boolean
 	{
 		if (arr1 == null && arr2 == null) return true;

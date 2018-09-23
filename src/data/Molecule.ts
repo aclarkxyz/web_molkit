@@ -113,7 +113,7 @@ export class Molecule
 	public get numAtoms():number {return this.atoms.length;}
 	public getAtom(idx:number):Atom 
 	{
-		if (idx < 1 || idx > this.atoms.length) throw `Molecule.getAtom: index ${idx} out of range (#atoms=${this.atoms.length})`;;
+		if (idx < 1 || idx > this.atoms.length) throw `Molecule.getAtom: index ${idx} out of range (#atoms=${this.atoms.length})`;
 		return this.atoms[idx - 1];
 	}
 	

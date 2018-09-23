@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <DataSheet>
- <Summary>
-  <Title>Large Rings</Title>
-  <Description><![CDATA[]]></Description>
- </Summary>
- <Header nrows="10" ncols="3">
-  <Column name="Molecule" type="molecule" id="1">Molecular structure</Column>
-  <Column name="Name" type="string" id="2">Template name</Column>
-  <Column name="Abbrev" type="string" id="3">Abbreviation code</Column>
- </Header>
- <Content>
-  <Row id="1">
-   <Cell id="1"><![CDATA[SketchEl!(9,9)
+<Summary>
+<Title>Large Rings</Title>
+<Description><![CDATA[]]></Description>
+</Summary>
+<Header nrows="11" ncols="3">
+<Column name="Molecule" type="molecule" id="1">Molecular structure</Column>
+<Column name="Name" type="string" id="2">Template name</Column>
+<Column name="Abbrev" type="string" id="3">Abbreviation code</Column>
+</Header>
+<Content>
+<Row id="1">
+<Cell id="1"><![CDATA[SketchEl!(9,9)
 C=2.0428,-18.6516;0,0,i2
 C=1.7880,-17.1633;0,0,i2
 C=2.5387,-15.8790;0,0,i2
@@ -32,11 +32,11 @@ C=5.3645,-15.8923;0,0,i2
 9-7=1,0
 !End
 ]]></Cell>
-   <Cell id="2"><![CDATA[cyclo-9]]></Cell>
-   <Cell id="3"><![CDATA[]]></Cell>
-  </Row>
-  <Row id="2">
-   <Cell id="1"><![CDATA[SketchEl!(10,10)
+<Cell id="2"><![CDATA[cyclo-9]]></Cell>
+<Cell id="3"></Cell>
+</Row>
+<Row id="2">
+<Cell id="1"><![CDATA[SketchEl!(10,10)
 C=-3.5491,5.1000;0,0,i2
 C=-4.8481,4.3500;0,0,i2
 C=-4.8481,2.8500;0,0,i2
@@ -59,11 +59,11 @@ C=-0.9509,5.1000;0,0,i2
 5-7=1,0
 !End
 ]]></Cell>
-   <Cell id="2"><![CDATA[cyclo-10]]></Cell>
-   <Cell id="3"><![CDATA[]]></Cell>
-  </Row>
-  <Row id="3">
-   <Cell id="1"><![CDATA[SketchEl!(11,11)
+<Cell id="2"><![CDATA[cyclo-10]]></Cell>
+<Cell id="3"></Cell>
+</Row>
+<Row id="3">
+<Cell id="1"><![CDATA[SketchEl!(11,11)
 C=-7.7858,2.5448;0,0,i2
 C=-7.8013,1.1000;0,0,i2
 C=-6.4244,0.8579;0,0,i2
@@ -88,11 +88,42 @@ C=-6.3710,2.8699;0,0,i2
 4-5=1,0
 !End
 ]]></Cell>
-   <Cell id="2"><![CDATA[cyclo-11]]></Cell>
-   <Cell id="3"><![CDATA[]]></Cell>
-  </Row>
-  <Row id="4">
-   <Cell id="1"><![CDATA[SketchEl!(12,12)
+<Cell id="2"><![CDATA[cyclo-11]]></Cell>
+<Cell id="3"></Cell>
+</Row>
+<Row id="4">
+<Cell id="1"><![CDATA[SketchEl!(12,12)
+C=1.1614,6.9975;0,0,i2
+C=2.4604,6.2475;0,0,i2
+C=-0.1376,6.2475;0,0,i2
+C=-0.1376,4.7475;0,0,i2
+C=-1.4367,3.9975;0,0,i2
+C=-1.4367,2.4975;0,0,i2
+C=-0.1376,1.7475;0,0,i2
+C=1.1614,2.4975;0,0,i2
+C=2.4604,1.7475;0,0,i2
+C=3.7595,2.4975;0,0,i2
+C=3.7595,3.9975;0,0,i2
+C=2.4604,4.7475;0,0,i2
+1-2=1,0
+1-3=1,0
+3-4=1,0
+4-5=1,0
+5-6=1,0
+6-7=1,0
+7-8=1,0
+8-9=1,0
+9-10=1,0
+10-11=1,0
+11-12=1,0
+12-2=1,0
+!End
+]]></Cell>
+<Cell id="2"><![CDATA[cyclo-12]]></Cell>
+<Cell id="3"></Cell>
+</Row>
+<Row id="5">
+<Cell id="1"><![CDATA[SketchEl!(12,12)
 C=0.2503,-1.0236;0,0,i2
 C=1.7491,-1.0236;0,0,i2
 C=2.0788,0.4428;0,0,i2
@@ -119,11 +150,11 @@ C=-0.0938,0.4547;0,0,i2
 12-1=1,0
 !End
 ]]></Cell>
-   <Cell id="2"><![CDATA[cyclo-12]]></Cell>
-   <Cell id="3"><![CDATA[]]></Cell>
-  </Row>
-  <Row id="5">
-   <Cell id="1"><![CDATA[SketchEl!(13,13)
+<Cell id="2"><![CDATA[cyclo-12]]></Cell>
+<Cell id="3"></Cell>
+</Row>
+<Row id="6">
+<Cell id="1"><![CDATA[SketchEl!(13,13)
 C=-9.0085,1.2181;0,0,i2
 C=-8.4085,2.6671;0,0,i2
 C=-6.9085,2.6671;0,0,i2
@@ -152,11 +183,11 @@ C=-7.7095,-3.7319;0,0,i2
 13-12=1,0
 !End
 ]]></Cell>
-   <Cell id="2"><![CDATA[cyclo-13]]></Cell>
-   <Cell id="3"><![CDATA[]]></Cell>
-  </Row>
-  <Row id="6">
-   <Cell id="1"><![CDATA[SketchEl!(14,14)
+<Cell id="2"><![CDATA[cyclo-13]]></Cell>
+<Cell id="3"></Cell>
+</Row>
+<Row id="7">
+<Cell id="1"><![CDATA[SketchEl!(14,14)
 C=6.9101,-5.9857;0,0,i2
 C=7.5101,-4.5367;0,0,i2
 C=9.0101,-4.5367;0,0,i2
@@ -187,11 +218,11 @@ C=4.6601,-7.2847;0,0,i2
 14-10=1,0
 !End
 ]]></Cell>
-   <Cell id="2"><![CDATA[cyclo-14]]></Cell>
-   <Cell id="3"><![CDATA[]]></Cell>
-  </Row>
-  <Row id="7">
-   <Cell id="1"><![CDATA[SketchEl!(15,15)
+<Cell id="2"><![CDATA[cyclo-14]]></Cell>
+<Cell id="3"></Cell>
+</Row>
+<Row id="8">
+<Cell id="1"><![CDATA[SketchEl!(15,15)
 C=22.1615,-1.5864;0,0,i2
 C=23.3877,-0.7311;0,0,i2
 C=20.9592,-0.7218;0,0,i2
@@ -224,11 +255,11 @@ C=19.7018,3.0711;0,0,i2
 14-15=1,0
 !End
 ]]></Cell>
-   <Cell id="2"><![CDATA[cyclo-15]]></Cell>
-   <Cell id="3"><![CDATA[]]></Cell>
-  </Row>
-  <Row id="8">
-   <Cell id="1"><![CDATA[SketchEl!(16,16)
+<Cell id="2"><![CDATA[cyclo-15]]></Cell>
+<Cell id="3"></Cell>
+</Row>
+<Row id="9">
+<Cell id="1"><![CDATA[SketchEl!(16,16)
 C=-2.3295,-6.3508;0,0,i2
 C=-2.3295,-7.8765;0,0,i2
 C=-1.0175,-8.6353;0,0,i2
@@ -263,11 +294,11 @@ C=4.2483,-5.5976;0,0,i2
 15-16=1,0
 !End
 ]]></Cell>
-   <Cell id="2"><![CDATA[cyclo-16]]></Cell>
-   <Cell id="3"><![CDATA[]]></Cell>
-  </Row>
-  <Row id="9">
-   <Cell id="1"><![CDATA[SketchEl!(18,18)
+<Cell id="2"><![CDATA[cyclo-16]]></Cell>
+<Cell id="3"></Cell>
+</Row>
+<Row id="10">
+<Cell id="1"><![CDATA[SketchEl!(18,18)
 C=14.0401,-6.5516;0,0,i2
 C=14.7839,-7.8398;0,0,i2
 C=13.8355,-9.0080;0,0,i2
@@ -306,11 +337,11 @@ C=12.5403,-6.7723;0,0,i2
 1-18=1,0
 !End
 ]]></Cell>
-   <Cell id="2"><![CDATA[cyclo-18]]></Cell>
-   <Cell id="3"><![CDATA[]]></Cell>
-  </Row>
-  <Row id="10">
-   <Cell id="1"><![CDATA[SketchEl!(20,20)
+<Cell id="2"><![CDATA[cyclo-18]]></Cell>
+<Cell id="3"></Cell>
+</Row>
+<Row id="11">
+<Cell id="1"><![CDATA[SketchEl!(20,20)
 C=23.0039,-8.7037;0,0,i2
 C=21.6788,-9.4637;0,0,i2
 C=21.6617,-10.9743;0,0,i2
@@ -353,8 +384,8 @@ C=22.9549,-7.2639;0,0,i2
 20-1=1,0
 !End
 ]]></Cell>
-   <Cell id="2"><![CDATA[cyclo-20]]></Cell>
-   <Cell id="3"><![CDATA[]]></Cell>
-  </Row>
- </Content>
+<Cell id="2"><![CDATA[cyclo-20]]></Cell>
+<Cell id="3"></Cell>
+</Row>
+</Content>
 </DataSheet>

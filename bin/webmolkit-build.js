@@ -65,6 +65,11 @@ var WebMolKit;
                 return arr1.slice(0);
             return arr1.concat(arr2);
         }
+        static remove(arr, idx) {
+            arr = arr.slice(0);
+            arr.splice(idx, 1);
+            return arr;
+        }
         static equals(arr1, arr2) {
             if (arr1 == null && arr2 == null)
                 return true;
@@ -3282,7 +3287,6 @@ var WebMolKit;
         getAtom(idx) {
             if (idx < 1 || idx > this.atoms.length)
                 throw `Molecule.getAtom: index ${idx} out of range (#atoms=${this.atoms.length})`;
-            ;
             return this.atoms[idx - 1];
         }
         atomElement(idx) { return this.getAtom(idx).element; }
@@ -4088,6 +4092,7 @@ var WebMolKit;
                                     oldN = i;
                                     newN = j;
                                 }
+                                mol.setAtomExtra(newN, WebMolKit.Vec.concat(mol.atomExtra(oldN), mol.atomExtra(newN)));
                                 for (let n = 1; n <= mol.numBonds; n++) {
                                     if (mol.bondFrom(n) == oldN)
                                         mol.setBondFrom(n, newN);
@@ -5401,26 +5406,26 @@ var WebMolKit;
             return buff;
         }
         get numNodes() { return this.nbrs.length; }
-        numEdges(N) { return this.nbrs[N].length; }
-        getEdge(N, E) { return this.nbrs[N][E]; }
-        getAdj(N) { return this.nbrs[N]; }
-        getIndex(N) { return this.indices == null ? 0 : this.indices[N]; }
-        setIndex(N, idx) {
+        numEdges(node) { return this.nbrs[node].length; }
+        getEdge(node, edge) { return this.nbrs[node][edge]; }
+        getEdges(node) { return this.nbrs[node]; }
+        getIndex(node) { return this.indices == null ? 0 : this.indices[node]; }
+        setIndex(node, idx) {
             if (this.indices == null)
                 this.indices = WebMolKit.Vec.numberArray(0, this.nbrs.length);
-            this.indices[N] = idx;
+            this.indices[node] = idx;
         }
-        getLabel(N) { return this.labels == null ? null : this.labels[N]; }
-        setLabel(N, lbl) {
+        getLabel(node) { return this.labels == null ? null : this.labels[node]; }
+        setLabel(node, lbl) {
             if (this.labels == null)
                 this.labels = WebMolKit.Vec.stringArray('', this.nbrs.length);
-            this.labels[N] = lbl;
+            this.labels[node] = lbl;
         }
-        getProperty(N) { return this.props == null ? null : this.props[N]; }
-        setProperty(N, prp) {
+        getProperty(node) { return this.props == null ? null : this.props[node]; }
+        setProperty(node, prp) {
             if (this.props == null)
                 this.props = new Array(this.nbrs.length);
-            this.props[N] = prp;
+            this.props[node] = prp;
         }
         addNode() {
             this.nbrs.push([]);
@@ -5432,30 +5437,30 @@ var WebMolKit;
                 this.props.push(null);
             return this.nbrs.length - 1;
         }
-        hasEdge(N1, N2) {
-            if (this.nbrs[N1].length <= this.nbrs[N2].length)
-                return this.nbrs[N1].indexOf(N2) >= 0;
+        hasEdge(node1, node2) {
+            if (this.nbrs[node1].length <= this.nbrs[node2].length)
+                return this.nbrs[node1].indexOf(node2) >= 0;
             else
-                return this.nbrs[N2].indexOf(N1) >= 0;
+                return this.nbrs[node2].indexOf(node1) >= 0;
         }
-        addEdge(N1, N2) {
-            this.nbrs[N1].push(N2);
-            this.nbrs[N2].push(N1);
+        addEdge(node1, node2) {
+            this.nbrs[node1].push(node2);
+            this.nbrs[node2].push(node1);
         }
-        removeEdge(N1, N2) {
-            let i1 = this.nbrs[N1].indexOf(N2), i2 = this.nbrs[N2].indexOf(N1);
+        removeEdge(node1, node2) {
+            let i1 = this.nbrs[node1].indexOf(node2), i2 = this.nbrs[node2].indexOf(node1);
             if (i1 >= 0)
-                this.nbrs[N1].splice(i1, 1);
+                this.nbrs[node1].splice(i1, 1);
             if (i2 >= 0)
-                this.nbrs[N2].splice(i2, 1);
+                this.nbrs[node2].splice(i2, 1);
         }
-        isolateNode(N) {
-            for (let o of this.nbrs[N]) {
-                let i = this.nbrs[o].indexOf(N);
+        isolateNode(node) {
+            for (let o of this.nbrs[node]) {
+                let i = this.nbrs[o].indexOf(node);
                 if (i >= 0)
                     this.nbrs[o].splice(i, 1);
             }
-            this.nbrs[N] = [];
+            this.nbrs[node] = [];
         }
         keepNodesMask(mask) {
             const oldsz = this.nbrs.length, newsz = WebMolKit.Vec.maskCount(mask);
@@ -6112,7 +6117,8 @@ var WebMolKit;
                     this.openmol.addJoin(WebMolKit.OpenMolType.QueryResonance, null, [b], [src]);
                 }
             }
-            const MBLK_CHG = 1, MBLK_RAD = 2, MBLK_ISO = 3, MBLK_RGP = 4, MBLK_HYD = 5, MBLK_ZCH = 6, MBLK_ZBO = 7;
+            const MBLK_CHG = 1, MBLK_RAD = 2, MBLK_ISO = 3, MBLK_RGP = 4, MBLK_HYD = 5, MBLK_ZCH = 6, MBLK_ZBO = 7, MBLK_ZPA = 8, MBLK_ZRI = 9, MBLK_ZAR = 10;
+            let resPaths = new Map(), resRings = new Map(), arenes = new Map();
             while (true) {
                 line = this.nextLine();
                 if (line.startsWith('M  END'))
@@ -6132,6 +6138,12 @@ var WebMolKit;
                     type = MBLK_ZCH;
                 else if (this.parseExtended && line.startsWith('M  ZBO'))
                     type = MBLK_ZBO;
+                else if (this.parseExtended && line.startsWith('M  ZPA'))
+                    type = MBLK_ZPA;
+                else if (this.parseExtended && line.startsWith('M  ZRI'))
+                    type = MBLK_ZRI;
+                else if (this.parseExtended && line.startsWith('M  ZAR'))
+                    type = MBLK_ZAR;
                 else if (line.startsWith('A  ') && line.length >= 6) {
                     let anum = parseInt(line.substring(3, 6).trim());
                     if (anum >= 1 && anum <= this.mol.numAtoms) {
@@ -6142,7 +6154,20 @@ var WebMolKit;
                         continue;
                     }
                 }
-                if (type > 0) {
+                if (type == MBLK_ZPA || type == MBLK_ZRI || type == MBLK_ZAR) {
+                    let len = parseInt(line.substring(6, 9).trim()), blk = parseInt(line.substring(9, 13).trim());
+                    let map = type == MBLK_ZPA ? resPaths : type == MBLK_ZRI ? resRings : arenes;
+                    for (let n = 0; n < len; n++) {
+                        let val = parseInt(line.substring(13 + 4 * n, 17 + 4 * n).trim());
+                        if (val < 1 || val > numAtoms)
+                            throw 'Invalid MDL MOL: M-block';
+                        let atoms = map.get(blk);
+                        if (!atoms)
+                            map.set(blk, atoms = []);
+                        atoms.push(val);
+                    }
+                }
+                else if (type > 0) {
                     let len = parseInt(line.substring(6, 9).trim());
                     for (let n = 0; n < len; n++) {
                         let pos = parseInt(line.substring(9 + 8 * n, 13 + 8 * n).trim());
@@ -6173,6 +6198,16 @@ var WebMolKit;
                 }
             }
             this.postFix(explicitValence);
+            if (this.parseExtended) {
+                let artifacts = new WebMolKit.BondArtifact(this.mol);
+                for (let atoms of resPaths.values())
+                    artifacts.createPath(atoms);
+                for (let atoms of resRings.values())
+                    artifacts.createRing(atoms);
+                for (let atoms of arenes.values())
+                    artifacts.createArene(atoms);
+                artifacts.rewriteMolecule();
+            }
             this.openmol.derive(this.mol);
         }
         postFix(explicitValence) {
@@ -6486,6 +6521,348 @@ var WebMolKit;
 })(WebMolKit || (WebMolKit = {}));
 var WebMolKit;
 (function (WebMolKit) {
+    WebMolKit.BONDARTIFACT_EXTRA_RESPATH = 'xRESPATH:';
+    WebMolKit.BONDARTIFACT_EXTRA_RESRING = 'xRESRING:';
+    WebMolKit.BONDARTIFACT_EXTRA_ARENE = 'xARENE:';
+    class BondArtifact {
+        constructor(mol) {
+            this.mol = mol;
+            this.resPaths = new Map();
+            this.resRings = new Map();
+            this.arenes = new Map();
+            for (let n = 1; n <= this.mol.numAtoms; n++) {
+                for (let str of this.mol.atomExtra(n)) {
+                    if (str.startsWith(WebMolKit.BONDARTIFACT_EXTRA_RESPATH))
+                        this.appendResPath(n, str.substring(WebMolKit.BONDARTIFACT_EXTRA_RESPATH.length).split(':'));
+                    else if (str.startsWith(WebMolKit.BONDARTIFACT_EXTRA_RESRING))
+                        this.appendResRing(n, str.substring(WebMolKit.BONDARTIFACT_EXTRA_RESRING.length).split(':'));
+                    else if (str.startsWith(WebMolKit.BONDARTIFACT_EXTRA_ARENE))
+                        this.appendArene(n, str.substring(WebMolKit.BONDARTIFACT_EXTRA_ARENE.length).split(':'));
+                }
+            }
+            for (let [blk, res] of this.resPaths.entries()) {
+                res.atoms = this.pack(res.atoms);
+                if (!this.pathify(res.atoms, false))
+                    this.resPaths.delete(blk);
+            }
+            for (let [blk, res] of this.resRings.entries()) {
+                res.atoms = this.pack(res.atoms);
+                if (!this.pathify(res.atoms, true))
+                    this.resRings.delete(blk);
+            }
+            for (let [blk, res] of this.arenes.entries()) {
+                res.atoms = this.pack(res.atoms);
+                if (res.atoms.length > 1)
+                    res.centre = res.atoms.shift();
+                if (!this.pathify(res.atoms, false))
+                    this.arenes.delete(blk);
+            }
+        }
+        getPathBlocks() { return Array.from(this.resPaths.keys()); }
+        getRingBlocks() { return Array.from(this.resRings.keys()); }
+        getAreneBlocks() { return Array.from(this.arenes.keys()); }
+        getResPaths() { return Array.from(this.resPaths.values()); }
+        getResRings() { return Array.from(this.resRings.values()); }
+        getArenes() { return Array.from(this.arenes.values()); }
+        rewriteMolecule() {
+            const mol = this.mol;
+            for (let n = 1; n <= mol.numAtoms; n++) {
+                var extra = mol.atomExtra(n), modified = false;
+                for (let i = extra.length - 1; i >= 0; i--) {
+                    if (extra[i].startsWith(WebMolKit.BONDARTIFACT_EXTRA_RESPATH) || extra[i].startsWith(WebMolKit.BONDARTIFACT_EXTRA_RESRING) || extra[i].startsWith(WebMolKit.BONDARTIFACT_EXTRA_ARENE)) {
+                        extra.splice(i);
+                        modified = true;
+                    }
+                }
+                if (modified)
+                    mol.setAtomExtra(n, extra);
+            }
+            for (let [blk, path] of this.resPaths.entries()) {
+                for (let n = 0; n < path.atoms.length; n++) {
+                    let extra = mol.atomExtra(path.atoms[n]);
+                    extra.push(WebMolKit.BONDARTIFACT_EXTRA_RESPATH + blk + ':' + (n + 1));
+                    mol.setAtomExtra(path.atoms[n], extra);
+                }
+            }
+            for (let [blk, ring] of this.resRings.entries()) {
+                for (let n = 0; n < ring.atoms.length; n++) {
+                    let extra = mol.atomExtra(ring.atoms[n]);
+                    extra.push(WebMolKit.BONDARTIFACT_EXTRA_RESRING + blk + ':' + (n + 1));
+                    mol.setAtomExtra(ring.atoms[n], extra);
+                }
+            }
+            for (let [blk, arene] of this.arenes.entries()) {
+                for (let n = -1; n < arene.atoms.length; n++) {
+                    let atom = n < 0 ? arene.centre : arene.atoms[n];
+                    let extra = mol.atomExtra(atom);
+                    extra.push(WebMolKit.BONDARTIFACT_EXTRA_ARENE + blk + ':' + (n + 2));
+                    mol.setAtomExtra(atom, extra);
+                }
+            }
+        }
+        harmoniseNumbering(other) {
+            let blocks = other.getPathBlocks();
+            let stashPaths = this.getResPaths();
+            this.resPaths.clear();
+            for (let path of stashPaths) {
+                let blk = this.nextIdentifier(blocks);
+                this.resPaths.set(blk, path);
+                blocks.push(blk);
+            }
+            blocks = other.getRingBlocks();
+            let stashRings = this.getResRings();
+            this.resRings.clear();
+            for (let ring of stashRings) {
+                let blk = this.nextIdentifier(blocks);
+                this.resRings.set(blk, ring);
+                blocks.push(blk);
+            }
+            blocks = other.getAreneBlocks();
+            let stashArenes = this.getArenes();
+            this.arenes.clear();
+            for (let arene of stashArenes) {
+                let blk = this.nextIdentifier(blocks);
+                this.arenes.set(blk, arene);
+                blocks.push(blk);
+            }
+        }
+        createPath(atoms) {
+            if (this.alreadyExists(atoms))
+                return false;
+            let path = this.atomsAsPath(atoms);
+            if (path) {
+                let id = this.nextIdentifier(Array.from(this.resPaths.keys()));
+                this.resPaths.set(id, path);
+                return true;
+            }
+            return false;
+        }
+        createRing(atoms) {
+            if (this.alreadyExists(atoms))
+                return false;
+            let ring = this.atomsAsRing(atoms);
+            if (ring) {
+                let id = this.nextIdentifier(Array.from(this.resRings.keys()));
+                this.resRings.set(id, ring);
+                return true;
+            }
+            return false;
+        }
+        createArene(atoms) {
+            if (this.alreadyExists(atoms))
+                return false;
+            let arene = this.atomsAsArene(atoms);
+            if (arene) {
+                let id = this.nextIdentifier(Array.from(this.arenes.keys()));
+                this.arenes.set(id, arene);
+                return true;
+            }
+            return false;
+        }
+        removeArtifact(atoms) {
+            let type = 0, pick = 0, overlap = 0;
+            for (let [blk, path] of this.resPaths.entries()) {
+                let count = 0;
+                for (let a of path.atoms)
+                    if (atoms.indexOf(a) >= 0)
+                        count++;
+                if (count > overlap) {
+                    type = 1;
+                    pick = blk;
+                    overlap = count;
+                }
+            }
+            for (let [blk, ring] of this.resRings.entries()) {
+                let count = 0;
+                for (let a of ring.atoms)
+                    if (atoms.indexOf(a) >= 0)
+                        count++;
+                if (count > overlap) {
+                    type = 2;
+                    pick = blk;
+                    overlap = count;
+                }
+            }
+            for (let [blk, arene] of this.arenes.entries()) {
+                let count = atoms.indexOf(arene.centre) >= 0 ? 1 : 0;
+                for (let a of arene.atoms)
+                    if (atoms.indexOf(a) >= 0)
+                        count++;
+                if (count > overlap) {
+                    type = 3;
+                    pick = blk;
+                    overlap = count;
+                }
+            }
+            if (type == 0)
+                return false;
+            else if (type == 1)
+                this.resPaths.delete(pick);
+            else if (type == 2)
+                this.resRings.delete(pick);
+            else if (type == 3)
+                this.arenes.delete(pick);
+            return true;
+        }
+        appendResPath(atom, bits) {
+            let blk = WebMolKit.safeInt(bits[0], 0);
+            if (blk <= 0)
+                return;
+            let res = this.resPaths.get(blk);
+            if (res == null)
+                this.resPaths.set(blk, res = { 'atoms': WebMolKit.Vec.numberArray(0, this.mol.numAtoms) });
+            let idx = bits.length >= 2 ? WebMolKit.safeInt(bits[1], 0) : 0;
+            if (res.atoms.indexOf(atom) >= 0)
+                return;
+            if (idx >= 1 && idx <= this.mol.numAtoms)
+                res.atoms[idx - 1] = atom;
+            else
+                res.atoms.push(atom);
+        }
+        appendResRing(atom, bits) {
+            let blk = WebMolKit.safeInt(bits[0], 0);
+            if (blk <= 0)
+                return;
+            let res = this.resRings.get(blk);
+            if (res == null)
+                this.resRings.set(blk, res = { 'atoms': WebMolKit.Vec.numberArray(0, this.mol.numAtoms) });
+            let idx = bits.length >= 2 ? WebMolKit.safeInt(bits[1], 0) : 0;
+            if (res.atoms.indexOf(atom) >= 0)
+                return;
+            if (idx >= 1 && idx <= this.mol.numAtoms)
+                res.atoms[idx - 1] = atom;
+            else
+                res.atoms.push(atom);
+        }
+        appendArene(atom, bits) {
+            let blk = WebMolKit.safeInt(bits[0], 0);
+            if (blk <= 0)
+                return;
+            let res = this.arenes.get(blk);
+            if (res == null)
+                this.arenes.set(blk, res = { 'centre': 0, 'atoms': WebMolKit.Vec.numberArray(0, this.mol.numAtoms) });
+            let idx = bits.length >= 2 ? WebMolKit.safeInt(bits[1], 0) : 0;
+            if (res.atoms.indexOf(atom) >= 0)
+                return;
+            if (idx >= 1 && idx <= this.mol.numAtoms)
+                res.atoms[idx - 1] = atom;
+            else
+                res.atoms.push(atom);
+        }
+        pack(arr) {
+            let ret = [];
+            for (let v of arr)
+                if (v != 0)
+                    ret.push(v);
+            return ret;
+        }
+        pathify(atoms, requireRing) {
+            let sz = atoms.length;
+            if (sz < 2)
+                return false;
+            let g = WebMolKit.Graph.fromMolecule(this.mol);
+            for (let n = 0; n < this.mol.numAtoms; n++)
+                g.setIndex(n, n + 1);
+            g = g.subgraphIndex(WebMolKit.Vec.add(atoms, -1));
+            let pos = 0;
+            for (let n = 1; n < sz; n++)
+                if (g.numEdges(n) < g.numEdges(pos))
+                    pos = n;
+            WebMolKit.Vec.setTo(atoms, -1);
+            for (let n = 0; n < sz; n++) {
+                atoms[n] = pos;
+                if (n == sz - 1) {
+                    if (requireRing)
+                        if (g.getEdges(pos).indexOf(atoms[0]) < 0)
+                            return false;
+                }
+                else {
+                    let next = sz;
+                    for (let i of g.getEdges(pos))
+                        if (atoms.indexOf(i) < 0 && i < next)
+                            next = i;
+                    if (next == sz)
+                        return false;
+                    pos = next;
+                }
+            }
+            for (let n = 0; n < sz; n++)
+                atoms[n] = g.getIndex(atoms[n]);
+            return true;
+        }
+        alreadyExists(atoms) {
+            atoms = WebMolKit.Vec.sorted(atoms);
+            for (let path of this.resPaths.values()) {
+                if (WebMolKit.Vec.equals(atoms, WebMolKit.Vec.sorted(path.atoms)))
+                    return true;
+            }
+            for (let ring of this.resRings.values()) {
+                if (WebMolKit.Vec.equals(atoms, WebMolKit.Vec.sorted(ring.atoms)))
+                    return true;
+            }
+            for (let arene of this.arenes.values()) {
+                let areneAtoms = WebMolKit.Vec.append(arene.atoms, arene.centre);
+                if (WebMolKit.Vec.equals(atoms, WebMolKit.Vec.sorted(areneAtoms)))
+                    return true;
+            }
+            return false;
+        }
+        atomsAsPath(atoms) {
+            if (atoms.length < 2)
+                return null;
+            let path = { 'atoms': atoms };
+            if (!this.pathify(path.atoms, false))
+                return null;
+            return path;
+        }
+        atomsAsRing(atoms) {
+            if (atoms.length < 3)
+                return null;
+            let ring = { 'atoms': atoms };
+            if (!this.pathify(ring.atoms, true))
+                return null;
+            return ring;
+        }
+        atomsAsArene(atoms) {
+            const sz = atoms.length;
+            if (sz < 3)
+                return null;
+            let g = WebMolKit.Graph.fromMolecule(this.mol).subgraphIndex(WebMolKit.Vec.add(atoms, -1));
+            let best = 0;
+            if (sz == 3) {
+                let bsum = [0, 0, 0];
+                for (let n = 0; n < sz; n++) {
+                    if (g.numEdges(n) != 2)
+                        return null;
+                    for (let e of g.getEdges(n))
+                        bsum[n] += this.mol.bondOrder(this.mol.findBond(atoms[n], atoms[e]));
+                    best = WebMolKit.Vec.idxMin(bsum);
+                }
+            }
+            else {
+                for (let n = 1; n < sz; n++)
+                    if (g.numEdges(n) > g.numEdges(best))
+                        best = n;
+            }
+            let arene = { 'centre': atoms[best], 'atoms': WebMolKit.Vec.remove(atoms, best) };
+            if (!this.pathify(arene.atoms, false))
+                return null;
+            return arene;
+        }
+        nextIdentifier(inkeys) {
+            if (inkeys.length == 0)
+                return 1;
+            let keys = WebMolKit.Vec.sorted(inkeys);
+            for (let n = 0; n < keys.length - 1; n++)
+                if (keys[n + 1] != keys[n] + 1)
+                    return keys[n] + 1;
+            return keys[keys.length - 1] + 1;
+        }
+    }
+    WebMolKit.BondArtifact = BondArtifact;
+})(WebMolKit || (WebMolKit = {}));
+var WebMolKit;
+(function (WebMolKit) {
     class MDLMOLWriter {
         constructor(mol) {
             this.mol = mol;
@@ -6610,13 +6987,23 @@ var WebMolKit;
                     }
                 }
             }
-            this.writeMBlock('CHG', chgidx, chgval);
-            this.writeMBlock('RAD', radidx, radval);
-            this.writeMBlock('ISO', isoidx, isoval);
-            this.writeMBlock('RGP', rgpidx, rgpval);
-            this.writeMBlock('HYD', hydidx, hydval);
-            this.writeMBlock('ZCH', zchidx, zchval);
-            this.writeMBlock('ZBO', zboidx, zboval);
+            this.writeMBlockPair('CHG', chgidx, chgval);
+            this.writeMBlockPair('RAD', radidx, radval);
+            this.writeMBlockPair('ISO', isoidx, isoval);
+            this.writeMBlockPair('RGP', rgpidx, rgpval);
+            this.writeMBlockPair('HYD', hydidx, hydval);
+            this.writeMBlockPair('ZCH', zchidx, zchval);
+            this.writeMBlockPair('ZBO', zboidx, zboval);
+            if (this.enhancedFields) {
+                let artifacts = new WebMolKit.BondArtifact(this.mol);
+                let idx = 0;
+                for (let path of artifacts.getResPaths())
+                    this.writeMBlockFlat('ZPA', ++idx, path.atoms);
+                for (let ring of artifacts.getResRings())
+                    this.writeMBlockFlat('ZRI', ++idx, ring.atoms);
+                for (let arene of artifacts.getArenes())
+                    this.writeMBlockFlat('ZAR', ++idx, WebMolKit.Vec.prepend(arene.atoms, arene.centre));
+            }
             for (let n = 1; n <= mol.numAtoms; n++)
                 if (mol.atomElement(n).length > 2) {
                     this.lines.push('A  ' + this.intrpad(n, 3));
@@ -6624,13 +7011,24 @@ var WebMolKit;
                 }
             this.lines.push('M  END');
         }
-        writeMBlock(token, idx, val) {
+        writeMBlockPair(token, idx, val) {
             const sz = idx.length;
             for (let i = 0; i < sz; i += 8) {
                 let count = Math.min(8, sz - i);
                 let line = "M  " + token + this.intrpad(count, 3);
                 for (let j = 0; j < count; j++)
                     line += this.intrpad(idx[i + j], 4) + this.intrpad(val[i + j], 4);
+                this.lines.push(line);
+            }
+        }
+        writeMBlockFlat(token, idx, val) {
+            const sz = val.length;
+            for (let i = 0; i < sz; i += 15) {
+                let count = Math.min(15, sz - i);
+                let line = "M  " + token + this.intrpad(count, 3);
+                line += this.intrpad(idx, 4);
+                for (let j = 0; j < count; j++)
+                    line += this.intrpad(val[i + j], 4);
                 this.lines.push(line);
             }
         }
@@ -10208,139 +10606,6 @@ var WebMolKit;
 })(WebMolKit || (WebMolKit = {}));
 var WebMolKit;
 (function (WebMolKit) {
-    WebMolKit.BONDARTIFACT_EXTRA_RESPATH = 'xRESPATH:';
-    WebMolKit.BONDARTIFACT_EXTRA_RESRING = 'xRESRING:';
-    WebMolKit.BONDARTIFACT_EXTRA_ARENE = 'xARENE:';
-    class BondArtifact {
-        constructor(mol) {
-            this.mol = mol;
-            this.resPaths = new Map();
-            this.resRings = new Map();
-            this.arenes = new Map();
-        }
-        extract() {
-            for (let n = 1; n <= this.mol.numAtoms; n++) {
-                for (let str of this.mol.atomExtra(n)) {
-                    if (str.startsWith(WebMolKit.BONDARTIFACT_EXTRA_RESPATH))
-                        this.appendResPath(n, str.substring(WebMolKit.BONDARTIFACT_EXTRA_RESPATH.length).split(':'));
-                    else if (str.startsWith(WebMolKit.BONDARTIFACT_EXTRA_RESRING))
-                        this.appendResRing(n, str.substring(WebMolKit.BONDARTIFACT_EXTRA_RESRING.length).split(':'));
-                    else if (str.startsWith(WebMolKit.BONDARTIFACT_EXTRA_ARENE))
-                        this.appendArene(n, str.substring(WebMolKit.BONDARTIFACT_EXTRA_ARENE.length).split(':'));
-                }
-            }
-            for (let [blk, res] of this.resPaths.entries()) {
-                res.atoms = this.pack(res.atoms);
-                if (!this.pathify(res.atoms, false))
-                    this.resPaths.delete(blk);
-            }
-            for (let [blk, res] of this.resRings.entries()) {
-                res.atoms = this.pack(res.atoms);
-                if (!this.pathify(res.atoms, true))
-                    this.resRings.delete(blk);
-            }
-            for (let [blk, res] of this.arenes.entries()) {
-                res.atoms = this.pack(res.atoms);
-                if (res.atoms.length > 1)
-                    res.centre = res.atoms.shift();
-                if (!this.pathify(res.atoms, false))
-                    this.arenes.delete(blk);
-            }
-        }
-        getResPaths() { return Array.from(this.resPaths.values()); }
-        getResRings() { return Array.from(this.resRings.values()); }
-        getArenes() { return Array.from(this.arenes.values()); }
-        appendResPath(atom, bits) {
-            let blk = WebMolKit.safeInt(bits[0], 0);
-            if (blk <= 0)
-                return;
-            let res = this.resPaths.get(blk);
-            if (res == null)
-                this.resPaths.set(blk, res = { 'atoms': WebMolKit.Vec.numberArray(0, this.mol.numAtoms) });
-            let idx = bits.length >= 2 ? WebMolKit.safeInt(bits[1], 0) : 0;
-            if (res.atoms.indexOf(atom) >= 0)
-                return;
-            if (idx >= 1 && idx <= this.mol.numAtoms)
-                res.atoms[idx - 1] = atom;
-            else
-                res.atoms.push(atom);
-        }
-        appendResRing(atom, bits) {
-            let blk = WebMolKit.safeInt(bits[0], 0);
-            if (blk <= 0)
-                return;
-            let res = this.resRings.get(blk);
-            if (res == null)
-                this.resRings.set(blk, res = { 'atoms': WebMolKit.Vec.numberArray(0, this.mol.numAtoms) });
-            let idx = bits.length >= 2 ? WebMolKit.safeInt(bits[1], 0) : 0;
-            if (res.atoms.indexOf(atom) >= 0)
-                return;
-            if (idx >= 1 && idx <= this.mol.numAtoms)
-                res.atoms[idx - 1] = atom;
-            else
-                res.atoms.push(atom);
-        }
-        appendArene(atom, bits) {
-            let blk = WebMolKit.safeInt(bits[0], 0);
-            if (blk <= 0)
-                return;
-            let res = this.arenes.get(blk);
-            if (res == null)
-                this.arenes.set(blk, res = { 'centre': 0, 'atoms': WebMolKit.Vec.numberArray(0, this.mol.numAtoms) });
-            let idx = bits.length >= 2 ? WebMolKit.safeInt(bits[1], 0) : 0;
-            if (res.atoms.indexOf(atom) >= 0)
-                return;
-            if (idx >= 1 && idx <= this.mol.numAtoms)
-                res.atoms[idx - 1] = atom;
-            else
-                res.atoms.push(atom);
-        }
-        pack(arr) {
-            let ret = [];
-            for (let v of arr)
-                if (v != 0)
-                    ret.push(v);
-            return ret;
-        }
-        pathify(atoms, requireRing) {
-            let sz = atoms.length;
-            if (sz < 2)
-                return false;
-            let g = WebMolKit.Graph.fromMolecule(this.mol);
-            for (let n = 0; n < this.mol.numAtoms; n++)
-                g.setIndex(n, n + 1);
-            g = g.subgraphIndex(WebMolKit.Vec.add(atoms, -1));
-            let pos = 0;
-            for (let n = 1; n < sz; n++)
-                if (g.numEdges(n) < g.numEdges(pos))
-                    pos = n;
-            WebMolKit.Vec.setTo(atoms, -1);
-            for (let n = 0; n < sz; n++) {
-                atoms[n] = pos;
-                if (n == sz - 1) {
-                    if (requireRing)
-                        if (g.getAdj(pos).indexOf(atoms[0]) < 0)
-                            return false;
-                }
-                else {
-                    let next = sz;
-                    for (let i of g.getAdj(pos))
-                        if (atoms.indexOf(i) < 0 && i < next)
-                            next = i;
-                    if (next == sz)
-                        return false;
-                    pos = next;
-                }
-            }
-            for (let n = 0; n < sz; n++)
-                atoms[n] = g.getIndex(atoms[n]);
-            return true;
-        }
-    }
-    WebMolKit.BondArtifact = BondArtifact;
-})(WebMolKit || (WebMolKit = {}));
-var WebMolKit;
-(function (WebMolKit) {
     class DataSheetStream {
         static readXML(strXML) {
             var xmlDoc = jQuery.parseXML(strXML);
@@ -12452,7 +12717,6 @@ var WebMolKit;
             let artmask = null;
             if (this.wantArtifacts && this.artifacts == null) {
                 this.artifacts = new WebMolKit.BondArtifact(mol);
-                this.artifacts.extract();
                 artmask = WebMolKit.Vec.booleanArray(false, mol.numAtoms);
                 for (let path of this.artifacts.getResPaths())
                     for (let a of path.atoms)
@@ -15585,6 +15849,9 @@ var WebMolKit;
             this.guideidx = [];
             this.guideadj = [];
             this.TIME_LIMIT = 5.0;
+            let artif1 = new WebMolKit.BondArtifact(mol), artif2 = new WebMolKit.BondArtifact(templ);
+            artif2.harmoniseNumbering(artif1);
+            artif2.rewriteMolecule();
             this.huntForGuides();
         }
         permuteNone() {
@@ -18187,6 +18454,7 @@ var WebMolKit;
                 'rings',
                 'termgrp',
                 'funcgrp',
+                'protgrp',
                 'nonplrings',
                 'largerings',
                 'crownethers',

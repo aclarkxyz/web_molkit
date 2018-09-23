@@ -250,6 +250,8 @@ export class SketchUtil
 			} // switch
 			// (any other criteria? [if so, then sync. with above])
 
+			mol.setAtomExtra(newN, Vec.concat(mol.atomExtra(oldN), mol.atomExtra(newN)));
+
 			for (let n = 1; n <= mol.numBonds; n++)
 			{
 				if (mol.bondFrom(n) == oldN) mol.setBondFrom(n, newN);
