@@ -2012,7 +2012,8 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 		}
 
 		// non-modifier keys that don't generate a 'pressed' event		
-		if (key == 37) {} // left
+		if (key == 13) {} // enter
+		else if (key == 37) {} // left
 		else if (key == 39) {} // right
 		else if (key == 38) {} // up
 		else if (key == 40) {} // down

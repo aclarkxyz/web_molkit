@@ -198,6 +198,7 @@ export class MDLMOLReader
 			let style = Molecule.BONDTYPE_NORMAL;
 			if (stereo == 1) style = Molecule.BONDTYPE_INCLINED;
 			else if (stereo == 6) style = Molecule.BONDTYPE_DECLINED;
+			else if (stereo == 4) style = Molecule.BONDTYPE_UNKNOWN;
 	
 			let b = this.mol.addBond(bfr, bto, order, style);
 			
