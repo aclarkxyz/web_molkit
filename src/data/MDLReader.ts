@@ -323,7 +323,8 @@ export class MDLMOLReader
 
 			let options = MDLMOL_VALENCE[el], atno = Molecule.elementAtomicNumber(el);
 			// NOTE: have to be parsimonious about when to apply, otherwise interoperability can be a net loss
-			if (options || Chemistry.ELEMENT_BLOCKS[atno] == 2)
+			let valence = explicitValence[n - 1];
+			if (options || (valence > 0 && Chemistry.ELEMENT_BLOCKS[atno] == 2))
 			{
 				// valence: MDL CTAB has a way to specify valence explicitly, which can be used to calculate the implicit
 				// hydrogens; and by default, it is mapped to a table of valence options; whenever the implied H from the
