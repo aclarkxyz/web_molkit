@@ -18,6 +18,12 @@ namespace WebMolKit /* BOF */ {
 	General purpose functions. Note that these are not in the WebMolKit namespace.
 */
 
+// convenient handling of potentially null strings
+export function safeStr(str:string, def:string = ''):string
+{
+	return str != null ? str : def;
+}
+
 // string-to-number: control the behaviour when invalid
 export function safeInt(str:string, def:number = 0):number
 {

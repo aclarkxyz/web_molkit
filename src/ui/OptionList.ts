@@ -38,7 +38,7 @@ export class OptionList extends Widget
 	
 	public callbackSelect:(idx:number, source?:OptionList) => void = null;
 	
-	constructor(private options:string[], private isVertical:boolean = false)
+	constructor(public options:string[], private isVertical:boolean = false)
 	{
 		super();
 		if (options.length == 0) throw 'molsync.ui.OptionList: must provide a list of option labels.';
