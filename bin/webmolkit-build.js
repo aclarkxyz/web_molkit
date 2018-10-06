@@ -18688,6 +18688,165 @@ var WebMolKit;
 })(WebMolKit || (WebMolKit = {}));
 var WebMolKit;
 (function (WebMolKit) {
+    class TabBar extends WebMolKit.Widget {
+        constructor(options) {
+            super();
+            this.options = options;
+            this.selidx = 0;
+            this.buttonDiv = [];
+            this.padding = 6;
+            this.callbackSelect = null;
+            if (!WebMolKit.hasInlineCSS('tabbar'))
+                WebMolKit.installInlineCSS('tabbar', this.composeCSS());
+        }
+        render(parent) {
+            super.render(parent);
+            let table = $('<table class="wmk-option-table"></table>').appendTo(this.content);
+            let tr = $('<tr></tr>').appendTo(table);
+            for (let n = 0; n < this.options.length; n++) {
+                let td = $('<td class="wmk-option-cell"></td>').appendTo(tr);
+                let div = $('<div class="wmk-option"></div>').appendTo(td);
+                div.css('padding', this.padding + 'px');
+                this.buttonDiv.push(div);
+            }
+            this.updateButtons();
+        }
+        clickButton(idx) {
+            if (idx == this.selidx)
+                return;
+            this.setSelectedIndex(idx);
+            if (this.callbackSelect)
+                this.callbackSelect(idx, this);
+        }
+        setSelectedIndex(idx) {
+            if (this.selidx == idx)
+                return;
+            this.selidx = idx;
+            this.updateButtons();
+        }
+        setSelectedValue(val) {
+            let idx = this.options.indexOf(val);
+            if (idx >= 0)
+                this.setSelectedIndex(idx);
+        }
+        updateButtons() {
+            for (let n = 0; n < this.options.length && n < this.buttonDiv.length; n++) {
+                let div = this.buttonDiv[n];
+                let txt = this.options[n];
+                if (txt.length == 0 && n == this.selidx)
+                    div.text('\u00A0\u2716\u00A0');
+                else if (txt.length == 0)
+                    div.text('\u00A0\u00A0\u00A0');
+                else
+                    div.text(txt);
+                div.off('mouseover');
+                div.off('mouseout');
+                div.off('mousedown');
+                div.off('mouseup');
+                div.off('mouseleave');
+                div.off('mousemove');
+                div.off('click');
+                div.removeClass('wmk-option-hover wmk-option-active wmk-option-unselected wmk-option-selected');
+                if (n != this.selidx) {
+                    div.addClass('wmk-option-unselected');
+                    div.mouseover(() => div.addClass('wmk-option-hover'));
+                    div.mouseout(() => div.removeClass('wmk-option-hover wmk-option-active'));
+                    div.mousedown(() => div.addClass('wmk-option-active'));
+                    div.mouseup(() => div.removeClass('wmk-option-active'));
+                    div.mouseleave(() => div.removeClass('wmk-option-hover wmk-option-active'));
+                    div.mousemove(() => { return false; });
+                    div.click(() => this.clickButton(n));
+                }
+                else
+                    div.addClass('wmk-option-selected');
+            }
+        }
+        composeCSS() {
+            let lowlight = WebMolKit.colourCode(WebMolKit.Theme.lowlight), lowlightEdge1 = WebMolKit.colourCode(WebMolKit.Theme.lowlightEdge1), lowlightEdge2 = WebMolKit.colourCode(WebMolKit.Theme.lowlightEdge2);
+            let highlight = WebMolKit.colourCode(WebMolKit.Theme.highlight), highlightEdge1 = WebMolKit.colourCode(WebMolKit.Theme.highlightEdge1), highlightEdge2 = WebMolKit.colourCode(WebMolKit.Theme.highlightEdge2);
+            return `
+			.wmk-tabbar
+			{
+				margin-bottom: 0;
+				font-family: 'Open Sans', sans-serif;
+				font-size: 14px;
+				font-weight: normal;
+				text-align: center;
+				white-space: nowrap;
+				vertical-align: middle;
+				-ms-touch-action: manipulation; touch-action: manipulation;
+				cursor: pointer;
+				-webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none;
+			}
+			.wmk-tabbar-selected
+			{
+				color: white;
+				background-color: #008FD2;
+				background-image: linear-gradient(to right bottom, ${lowlightEdge1}, ${lowlightEdge2});
+			}
+			.wmk-tabbar-unselected
+			{
+				color: #333;
+				background-color: white;
+				background-image: linear-gradient(to right bottom, #FFFFFF, #E0E0E0);
+			}
+			.wmk-tabbar-table
+			{
+				margin: 1px;
+				padding: 0;
+				border-width: 0;
+				border-collapse: collapse;
+			}
+			.wmk-tabbar-cell
+			{
+				margin: 0;
+				padding: 0;
+				border-width: 0;
+				border-width: 1px;
+				border-style: solid;
+				border-color: #808080;
+			}
+			.wmk-tabbar-hover
+			{
+				background-color: #808080;
+				background-image: linear-gradient(to right bottom, #F0F0F0, #D0D0D0);
+			}
+			.wmk-tabbar-active
+			{
+				background-color: #00C000;
+				background-image: linear-gradient(to right bottom, ${highlightEdge1}, ${highlightEdge2});
+			}
+		`;
+        }
+    }
+    WebMolKit.TabBar = TabBar;
+})(WebMolKit || (WebMolKit = {}));
+var WebMolKit;
+(function (WebMolKit) {
+    class EditAtom extends WebMolKit.Dialog {
+        constructor(mol, atom) {
+            super();
+            this.atom = atom;
+            this.callbackSave = null;
+            this.initMol = mol;
+            this.mol = mol.clone();
+            this.title = 'Edit Atom';
+            this.minPortionWidth = 20;
+            this.maxPortionWidth = 95;
+        }
+        onSave(callback) {
+            this.callbackSave = callback;
+        }
+        populate() {
+            let buttons = this.buttons(), body = this.body();
+            this.tabs = new WebMolKit.TabBar(['Atom', 'Abbreviation', 'Geometry', 'Query', 'Extra']);
+            this.tabs.render(body);
+        }
+    }
+    WebMolKit.EditAtom = EditAtom;
+})(WebMolKit || (WebMolKit = {}));
+var WebMolKit;
+(function (WebMolKit) {
     let DraggingTool;
     (function (DraggingTool) {
         DraggingTool[DraggingTool["None"] = 0] = "None";
@@ -19974,9 +20133,13 @@ var WebMolKit;
                 else if (this.dragType == DraggingTool.Atom) {
                     let element = this.toolAtomSymbol;
                     if (element == 'A') {
-                        element = window.prompt('Enter element symbol:', this.opAtom == 0 ? '' : this.mol.atomElement(this.opAtom));
+                        let dlg = new WebMolKit.EditAtom(this.mol, this.opAtom);
+                        dlg.onSave(() => {
+                            if (this.mol.compareTo(dlg.mol) != 0)
+                                this.defineMolecule(dlg.mol);
+                        });
                     }
-                    if (element) {
+                    else if (element) {
                         let param = { 'element': element, 'keepAbbrev': true };
                         if (this.opAtom == 0) {
                             let x = this.xToAng(this.clickX), y = this.yToAng(this.clickY);

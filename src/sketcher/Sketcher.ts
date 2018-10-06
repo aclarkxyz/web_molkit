@@ -27,6 +27,7 @@
 ///<reference path='CommandBank.ts'/>
 ///<reference path='TemplateBank.ts'/>
 ///<reference path='ToolBank.ts'/>
+///<reference path='EditAtom.ts'/>
 
 namespace WebMolKit /* BOF */ {
 
@@ -1506,8 +1507,25 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 	}
 	private mouseDoubleClick(event:JQueryEventObject):void
 	{
-		// (do something...)
-		event.stopImmediatePropagation();
+		event.preventDefault();
+
+		let xy = eventCoords(event, this.container);
+		let clickObj = this.pickObject(xy[0], xy[1]);
+		if (clickObj > 0)
+		{
+			let atom = clickObj;
+			let dlg = new EditAtom(this.mol, this.opAtom, () =>
+				{
+					if (this.mol.compareTo(dlg.mol) != 0) this.defineMolecule(dlg.mol);
+					dlg.close();
+				});
+			dlg.open();
+		}
+		else
+		{
+			let bond = -clickObj;
+			// TODO: edit bond...
+		}
 	}
 	private mouseDown(event:JQueryEventObject):void
 	{
@@ -1690,9 +1708,15 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 				let element = this.toolAtomSymbol;
 				if (element == 'A')
 				{
-					element = window.prompt('Enter element symbol:', this.opAtom == 0 ? '' : this.mol.atomElement(this.opAtom));
+					// !! element = window.prompt('Enter element symbol:', this.opAtom == 0 ? '' : this.mol.atomElement(this.opAtom));
+					let dlg = new EditAtom(this.mol, this.opAtom, () =>
+						{
+							if (this.mol.compareTo(dlg.mol) != 0) this.defineMolecule(dlg.mol);
+							dlg.close();
+						});
+					dlg.open();
 				}
-				if (element)
+				else if (element)
 				{
 					let param:any = {'element': element, 'keepAbbrev': true};
 					if (this.opAtom == 0)
@@ -1988,7 +2012,8 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 		}
 
 		// non-modifier keys that don't generate a 'pressed' event		
-		if (key == 37) {} // left
+		if (key == 13) {} // enter
+		else if (key == 37) {} // left
 		else if (key == 39) {} // right
 		else if (key == 38) {} // up
 		else if (key == 40) {} // down

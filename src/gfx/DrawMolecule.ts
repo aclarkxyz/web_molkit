@@ -395,7 +395,7 @@ export class DrawMolecule
             ctrl[j + 1] = true;
             ctrl[j + 2] = false;
         }
-        this.vg.drawPath(x, y, ctrl, true, col, size, MetaVector.NOCOLOUR, false);
+        this.vg.drawPath(x, y, ctrl, false, col, size, MetaVector.NOCOLOUR, false);
     }
     private drawBondDotted(b:BLine):void
     {

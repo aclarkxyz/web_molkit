@@ -33,6 +33,7 @@ export class ValidationHeadlessMolecule extends Validation
 	private strSDfile:string;
 	private molStereo:Molecule;
 	private dsCircular:DataSheet;
+	private dsRoundtrip:DataSheet;
 
 	constructor(private urlBase:string)
 	{
@@ -44,34 +45,34 @@ export class ValidationHeadlessMolecule extends Validation
 		this.add('Calculate strict aromaticity', this.calcStrictArom);
 		this.add('Calculate stereochemistry', this.calcStereoChem);
 		this.add('Circular ECFP6 fingerprints', this.calcFingerprints);
+		this.add('Molfile Round-trip', this.molfileRoundTrip);
 	}
 
     public init(donefunc:() => void):void
     {
-		const self = this;
-
-		let FILES = ['molecule.el', 'molecule.mol', 'datasheet.ds', 'datasheet.sdf', 'stereo.el', 'circular.ds'];
+		let FILES = ['molecule.el', 'molecule.mol', 'datasheet.ds', 'datasheet.sdf', 'stereo.el', 'circular.ds', 'roundtrip.ds'];
 		let files = FILES;
 
-		let fetchResult = function(data:string):void
+		let fetchResult = (data:string):void =>
 		{
 			let fn = files.shift();
-			if (fn == 'molecule.el') self.strSketchEl = data;
-			else if (fn == 'molecule.mol') self.strMolfile = data;
-			else if (fn == 'datasheet.ds') self.strDataXML = data;
-			else if (fn == 'datasheet.sdf') self.strSDfile = data;
-			else if (fn == 'stereo.el') self.molStereo = Molecule.fromString(data);
-			else if (fn == 'circular.ds') self.dsCircular = DataSheetStream.readXML(data);
+			if (fn == 'molecule.el') this.strSketchEl = data;
+			else if (fn == 'molecule.mol') this.strMolfile = data;
+			else if (fn == 'datasheet.ds') this.strDataXML = data;
+			else if (fn == 'datasheet.sdf') this.strSDfile = data;
+			else if (fn == 'stereo.el') this.molStereo = Molecule.fromString(data);
+			else if (fn == 'circular.ds') this.dsCircular = DataSheetStream.readXML(data);
+			else if (fn == 'roundtrip.ds') this.dsRoundtrip = DataSheetStream.readXML(data);
 
 			if (files.length > 0)
-				$.get(self.urlBase + files[0], fetchResult);
+				$.get(this.urlBase + files[0], fetchResult);
 			else
-				donefunc.call(self);
+				donefunc.call(this);
 		}
-		$.get(self.urlBase + files[0], fetchResult);
-    }
+		$.get(this.urlBase + files[0], fetchResult);
+    };
 
-	public parseSketchEl()
+	public parseSketchEl():void
 	{
 		this.assert(!!this.strSketchEl, 'molecule not loaded');
 		let mol = MoleculeStream.readNative(this.strSketchEl);
@@ -80,7 +81,7 @@ export class ValidationHeadlessMolecule extends Validation
 		//console.log(this.strSketchEl);
 	}
 
-	public parseMolfile()
+	public parseMolfile():void
 	{
 		this.assert(!!this.strMolfile, 'molecule not loaded');
 		let mol = MoleculeStream.readMDLMOL(this.strMolfile);
@@ -89,7 +90,7 @@ export class ValidationHeadlessMolecule extends Validation
 		//console.log(this.strMolfile);
 	}
 
-	public parseDataXML()
+	public parseDataXML():void
 	{
 		this.assert(!!this.strDataXML, 'datasheet not loaded');
 		let ds = DataSheetStream.readXML(this.strDataXML);
@@ -108,7 +109,7 @@ export class ValidationHeadlessMolecule extends Validation
 		for (let n = 1; n < ds.numCols; n++) this.assert(ds.isNull(1, n), 'row 2, column#' + (n + 1) + ' supposed to be null');		
 	}
 
-	public parseSDfile()
+	public parseSDfile():void
 	{
 		this.assert(!!this.strSDfile, 'datasheet not loaded');
 		let rdr = new MDLSDFReader(this.strSDfile);
@@ -130,7 +131,7 @@ export class ValidationHeadlessMolecule extends Validation
 		for (let n = 1; n < ds.numCols; n++) this.assert(ds.isNull(1, n), 'row 2, column#' + (n + 1) + ' supposed to be null');		
 	}
 
-	public calcStrictArom()
+	public calcStrictArom():void
 	{
 		this.assert(this.molStereo != null, 'molecule not loaded');
 		let meta = MetaMolecule.createStrict(this.molStereo);
@@ -139,7 +140,7 @@ export class ValidationHeadlessMolecule extends Validation
 		for (let n = 1; n <= 10; n++) this.assert(meta.isBondAromatic(n), 'bond #' + n + ' supposed to be aromatic');
 	}
 
-	public calcStereoChem()
+	public calcStereoChem():void
 	{
 		this.assert(this.molStereo != null, 'molecule not loaded');
 		let meta = MetaMolecule.createStrictRubric(this.molStereo);
@@ -157,7 +158,7 @@ export class ValidationHeadlessMolecule extends Validation
 		this.assert(side26 == Stereochemistry.STEREO_NEG, 'bond 26: incorrect stereochemistry, got ' + side26);
 	}
 
-	public calcFingerprints()
+	public calcFingerprints():void
 	{
 		this.assert(this.dsCircular != null, 'datasheet not loaded');
 		
@@ -184,6 +185,47 @@ export class ValidationHeadlessMolecule extends Validation
 			this.assert(Vec.equals(ecfp2, got[1]), 'row#' + (n + 1) + ', iter#1: wanted ' + ecfp2 + ', got ' + got[1]);
 			this.assert(Vec.equals(ecfp4, got[2]), 'row#' + (n + 1) + ', iter#2: wanted ' + ecfp4 + ', got ' + got[2]);
 			this.assert(Vec.equals(ecfp6, got[3]), 'row#' + (n + 1) + ', iter#3: wanted ' + ecfp6 + ', got ' + got[3]);
+		}
+	}
+
+	public molfileRoundTrip():void
+	{
+		const ds = this.dsRoundtrip;
+		for (let n = 0; n < ds.numRows; n++)
+		{
+			let strRow = 'row#' + (n + 1);
+
+			let mol = ds.getMolecule(n, 'Molecule');
+			let mdl = new MDLMOLWriter(mol).write();
+			let alt = new MDLMOLReader(mdl).parse();
+			this.assert(mol.numAtoms == alt.numAtoms && mol.numBonds == alt.numBonds, strRow + ', atom/bond count differs');
+
+			let problems:string[] = [];
+
+			for (let i = 1; i <= mol.numAtoms; i++)
+			{
+				if (mol.atomElement(i) != alt.atomElement(i)) problems.push(strRow + '/atom #' + i + ': elements different');
+				if (mol.atomCharge(i) != alt.atomCharge(i)) problems.push(strRow + '/atom #' + i + ': charges different');
+				if (mol.atomUnpaired(i) != alt.atomUnpaired(i)) problems.push(strRow + '/atom #' + i + ': unpaired different');
+				if (mol.atomIsotope(i) != alt.atomIsotope(i)) problems.push(strRow + '/atom #' + i + ': isotope different');
+				if (mol.atomMapNum(i) != alt.atomMapNum(i)) problems.push(strRow + '/atom #' + i + ': mapnum different');
+				if (mol.atomHydrogens(i) != alt.atomHydrogens(i)) problems.push(strRow + '/atom #' + i + ': hydrogens different');
+			}
+			for (let i = 1; i <= mol.numBonds; i++)
+			{
+				if (mol.bondOrder(i) != alt.bondOrder(i)) problems.push(strRow + '/bond #' + i + ': bond orders different');
+				if (mol.bondType(i) != alt.bondType(i)) problems.push(strRow + '/bond #' + i + ': bond types different');
+			}
+
+			if (problems.length > 0)
+			{
+				console.log('Round trip problems:');
+				for (let p of problems) console.log(p);
+				console.log('Original molecule:\n' + mol);
+				console.log('MDL Molfile CTAB:\n' + mdl);
+				console.log('Parsed back molecule:\n' + alt);
+			}
+			this.assert(problems.length == 0, problems.join('; '));
 		}
 	}
 }
