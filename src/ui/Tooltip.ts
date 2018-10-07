@@ -37,14 +37,11 @@ export function addTooltip(parent:any, bodyHTML:string, titleHTML?:string, delay
 }
 
 // immediately raise a tooltip, with a position relative to a given widget
-export function raiseToolTip(parent:any, avoid:Box, bodyHTML:string, titleHTML?:string):void
+export function raiseToolTip(widget:any, avoid:Box, bodyHTML:string, titleHTML?:string):void
 {
     clearTooltip();
     Tooltip.ensureGlobal();
-
-    let widget = $(parent);
-
-    new Tooltip(widget, bodyHTML, titleHTML, 0).raise(avoid);
+    new Tooltip($(widget), bodyHTML, titleHTML, 0).raise(avoid);
 }
 
 // rudely shutdown the tooltip
@@ -57,7 +54,7 @@ export function clearTooltip():void
 
 export class Tooltip
 {
-    watermark:number;
+    private watermark:number;
     
     static ensureGlobal()
     {

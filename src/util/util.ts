@@ -18,12 +18,6 @@ namespace WebMolKit /* BOF */ {
 	General purpose functions. Note that these are not in the WebMolKit namespace.
 */
 
-// convenient handling of potentially null strings
-export function safeStr(str:string, def:string = ''):string
-{
-	return str != null ? str : def;
-}
-
 // string-to-number: control the behaviour when invalid
 export function safeInt(str:string, def:number = 0):number
 {
@@ -426,6 +420,14 @@ export function escapeHTML(text:string):string
 
 // convenience: make sure a string isn't null
 export function orBlank(str:string):string {return str == null ? '' : str;}
+
+// abstracts values into an array; this will be obsolete once Object.values() makes it into the typescript mappings
+export function dictValues<T>(dict:{[id:string] : T}):T[]
+{
+	let list:T[] = [];
+	for (let key in dict) list.push(dict[key]);
+	return list;
+}
 
 // converts a string (which is stored by JavaScript as UCS2) to UTF8, where each character is guaranteed to be 1 byte
 export function toUTF8(str:string):string

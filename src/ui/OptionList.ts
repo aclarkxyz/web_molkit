@@ -34,7 +34,7 @@ export class OptionList extends Widget
 	private selidx = 0;
 	private buttonDiv:any[] = [];
 	private auxCell:any[] = [];
-	private padding = 6; // pixels
+	public padding = 6; // pixels
 	
 	public callbackSelect:(idx:number, source?:OptionList) => void = null;
 	
