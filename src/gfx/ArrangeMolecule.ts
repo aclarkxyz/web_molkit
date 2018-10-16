@@ -224,9 +224,10 @@ export class ArrangeMolecule
 			//if (policy.mappedColour >= 0 && mol.atomMapNum(n) > 0) a.col = policy.mappedColour;
 	
 			// decide whether this atom is to have a label
-			let explicit = mol.atomExplicit(n) /*|| this.effects.showCarbon;*/
-			if (explicit && /*!effects.showCarbon &&*/ mol.atomElement(n) == 'C' && !this.atomIsWeirdLinear(n)) explicit = !artmask[n - 1];
-			a.text = explicit ? mol.atomElement(n) : null;    	    
+			//let explicit = mol.atomExplicit(n) /*|| this.effects.showCarbon;*/
+			//if (explicit && /*!effects.showCarbon &&*/ mol.atomElement(n) == 'C' && !this.atomIsWeirdLinear(n)) explicit = !artmask[n - 1];
+			//a.text = explicit ? mol.atomElement(n) : null;
+			if (artmask[n - 1] && mol.atomElement(n) == 'C') a.text = null;
 				
 			// if it has a label, then how big
 			if (a.text != null)
