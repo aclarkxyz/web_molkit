@@ -28,13 +28,14 @@ interface Path2DConstructor
 //declare var Path2D:{new (path?:Path2D): string|Path2D; prototype: Path2D;};
 */
 
+/* ... these seem to have been fixed
 interface CanvasRenderingContext2D 
 {
-    fill(path:Path2D):void;
-    stroke(path:Path2D):void;
-    clip(path:Path2D, fillRule?:string):void;
+    fill(path?:Path2D):void;
+    stroke(path?:Path2D):void;
+    clip(path?:Path2D, fillRule?:string):void;
     ellipse(cx:number, cy:number, radX:number, radY:number, rotation:number, startAngle:number, endAngle:number, anticlockwise:boolean):void; 
-}
+}*/
 
 interface JQueryEventObject
 {

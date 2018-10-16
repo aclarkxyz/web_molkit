@@ -6247,7 +6247,9 @@ var WebMolKit;
                         usedValence += mol.bondOrder(b);
                     for (let v of options)
                         if (usedValence <= v) {
-                            mol.setAtomHExplicit(n, v - usedValence);
+                            let hcount = v - usedValence;
+                            if (hcount != mol.atomHydrogens(n))
+                                mol.setAtomHExplicit(n, hcount);
                             break;
                         }
                 }
@@ -12748,10 +12750,8 @@ var WebMolKit;
                 let overCol = this.effects.colAtom[n];
                 if (overCol)
                     a.col = overCol;
-                let explicit = mol.atomExplicit(n);
-                if (explicit && mol.atomElement(n) == 'C' && !this.atomIsWeirdLinear(n))
-                    explicit = !artmask[n - 1];
-                a.text = explicit ? mol.atomElement(n) : null;
+                if (artmask[n - 1] && mol.atomElement(n) == 'C')
+                    a.text = null;
                 if (a.text != null) {
                     let wad = this.measure.measureText(a.text, a.fsz);
                     const PADDING = 1.1;
@@ -24156,6 +24156,8 @@ var WebMolKit;
                         problems.push(strRow + '/atom #' + i + ': mapnum different');
                     if (mol.atomHydrogens(i) != alt.atomHydrogens(i))
                         problems.push(strRow + '/atom #' + i + ': hydrogens different');
+                    if (mol.atomHExplicit(i) != alt.atomHExplicit(i))
+                        problems.push(strRow + '/atom #' + i + ': explicitH different');
                 }
                 for (let i = 1; i <= mol.numBonds; i++) {
                     if (mol.bondOrder(i) != alt.bondOrder(i))

@@ -241,14 +241,15 @@ export class MDLMOLWriter
 	{
 		let hyd = mol.atomHydrogens(atom), el = mol.atomElement(atom);
 		let options = MDLMOL_VALENCE[el];
-		if (options && options.indexOf(hyd) >= 0) return 0; // there's a default that will be derived correctly (one hopes)
-
 		let chg = mol.atomCharge(atom);
 		let chgmod = (el == 'C' || el == 'H') ? Math.abs(chg) : el == 'B' ? -Math.abs(chg) : -chg;
-		let nativeVal = chgmod + mol.atomUnpaired(atom) + hyd;
-		for (let b of mol.atomAdjBonds(atom)) nativeVal += mol.bondOrder(b);
+		let bondSum = 0;
+		for (let b of mol.atomAdjBonds(atom)) bondSum += mol.bondOrder(b);
+		let nativeVal = chgmod + mol.atomUnpaired(atom) + hyd + bondSum;
 
-		let val = nativeVal - chgmod;
+		if (options && options.indexOf(nativeVal) >= 0) return 0; // there's a default that will be derived correctly (one hopes)
+
+		let val = bondSum + hyd; // definition of valence for the file format is different
 		return val <= 0 || val > 14 ? zeroVal : val;
 	}
 }
