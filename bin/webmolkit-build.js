@@ -809,6 +809,13 @@ var WebMolKit;
     WebMolKit.escapeHTML = escapeHTML;
     function orBlank(str) { return str == null ? '' : str; }
     WebMolKit.orBlank = orBlank;
+    function dictValues(dict) {
+        let list = [];
+        for (let key in dict)
+            list.push(dict[key]);
+        return list;
+    }
+    WebMolKit.dictValues = dictValues;
     function toUTF8(str) {
         let data = [], stripe = '';
         const sz = str.length;
@@ -6111,6 +6118,8 @@ var WebMolKit;
                     style = WebMolKit.Molecule.BONDTYPE_INCLINED;
                 else if (stereo == 6)
                     style = WebMolKit.Molecule.BONDTYPE_DECLINED;
+                else if (stereo == 4)
+                    style = WebMolKit.Molecule.BONDTYPE_UNKNOWN;
                 let b = this.mol.addBond(bfr, bto, order, style);
                 if (type == 4) {
                     let src = { 'row': this.pos - 1, 'col': 6, 'len': 3 };
@@ -6222,33 +6231,25 @@ var WebMolKit;
                     mol.setAtomElement(n, 'H');
                     mol.setAtomIsotope(n, 3);
                 }
-                let options = WebMolKit.MDLMOL_VALENCE[el], atno = WebMolKit.Molecule.elementAtomicNumber(el);
-                if (options || WebMolKit.Chemistry.ELEMENT_BLOCKS[atno] == 2) {
-                    let valence = explicitValence[n - 1], importedH = 0;
-                    if (valence == 0) {
-                        let chg = mol.atomCharge(n);
-                        let chgmod = (el == 'C' || el == 'H') ? Math.abs(chg) : el == 'B' ? -Math.abs(chg) : -chg;
-                        let usedValence = chgmod + mol.atomUnpaired(n);
-                        for (let b of mol.atomAdjBonds(n))
-                            usedValence += mol.bondOrder(b);
-                        if (!options)
-                            options = [WebMolKit.Chemistry.ELEMENT_VALENCE[atno]];
-                        for (let v of options)
-                            if (usedValence <= v) {
-                                importedH = v - usedValence;
-                                break;
-                            }
-                    }
-                    else if (valence > 0 && valence <= 14) {
-                        importedH = valence;
-                        for (let b of mol.atomAdjBonds(n))
-                            importedH -= mol.bondOrder(b);
-                    }
-                    if (importedH > 0) {
-                        let nativeH = mol.atomHydrogens(n);
-                        if (importedH != nativeH)
-                            mol.setAtomHExplicit(n, importedH);
-                    }
+                let valence = explicitValence[n - 1], options = WebMolKit.MDLMOL_VALENCE[el];
+                if (valence != 0) {
+                    let hcount = valence < 0 || valence > 14 ? 0 : valence;
+                    for (let b of mol.atomAdjBonds(n))
+                        hcount -= mol.bondOrder(b);
+                    if (hcount != mol.atomHydrogens(n))
+                        mol.setAtomHExplicit(n, hcount);
+                }
+                else if (options) {
+                    let chg = mol.atomCharge(n);
+                    let chgmod = (el == 'C' || el == 'H') ? Math.abs(chg) : el == 'B' ? -Math.abs(chg) : -chg;
+                    let usedValence = chgmod + mol.atomUnpaired(n);
+                    for (let b of mol.atomAdjBonds(n))
+                        usedValence += mol.bondOrder(b);
+                    for (let v of options)
+                        if (usedValence <= v) {
+                            mol.setAtomHExplicit(n, v - usedValence);
+                            break;
+                        }
                 }
             }
             if (this.considerRescale)
@@ -6924,20 +6925,7 @@ var WebMolKit;
                     chg = 4 - chg;
                 else
                     chg = 0;
-                let val = 0, hyd = mol.atomHydrogens(n);
-                if (hyd > 0) {
-                    let chg = mol.atomCharge(n);
-                    let chgmod = (el == 'C' || el == 'H') ? Math.abs(chg) : el == 'B' ? -Math.abs(chg) : -chg;
-                    let nativeVal = chgmod + mol.atomUnpaired(n) + hyd;
-                    for (let b of mol.atomAdjBonds(n))
-                        nativeVal += mol.bondOrder(b);
-                    let options = WebMolKit.MDLMOL_VALENCE[el];
-                    if (!options || options.indexOf(nativeVal) < 0) {
-                        val = nativeVal - chgmod;
-                        if (val <= 0 || val > 14)
-                            val = 15;
-                    }
-                }
+                let val = this.mdlValence(mol, n, 15);
                 line += this.intrpad(chg, 3) + '  0  0  0' + this.intrpad(val, 3) + '  0  0  0' + this.intrpad(mapnum, 3) + '  0  0';
                 this.lines.push(line);
                 if (mol.atomCharge(n) != 0) {
@@ -7039,6 +7027,19 @@ var WebMolKit;
             while (str.length < sz)
                 str = ' ' + str;
             return str;
+        }
+        mdlValence(mol, atom, zeroVal) {
+            let hyd = mol.atomHydrogens(atom), el = mol.atomElement(atom);
+            let options = WebMolKit.MDLMOL_VALENCE[el];
+            if (options && options.indexOf(hyd) >= 0)
+                return 0;
+            let chg = mol.atomCharge(atom);
+            let chgmod = (el == 'C' || el == 'H') ? Math.abs(chg) : el == 'B' ? -Math.abs(chg) : -chg;
+            let nativeVal = chgmod + mol.atomUnpaired(atom) + hyd;
+            for (let b of mol.atomAdjBonds(atom))
+                nativeVal += mol.bondOrder(b);
+            let val = nativeVal - chgmod;
+            return val <= 0 || val > 14 ? zeroVal : val;
         }
     }
     WebMolKit.MDLMOLWriter = MDLMOLWriter;
@@ -11778,7 +11779,7 @@ var WebMolKit;
             pb.css('position', 'absolute');
             pb.css('left', (50 - 0.5 * this.minPortionWidth) + '%');
             pb.css('top', (document.body.scrollTop + 50) + 'px');
-            pb.css('min-height', '50%');
+            pb.css('min-height', '20%');
             pb.css('z-index', 10000);
             this.panelBoundary = pb;
             let tdiv = $('<div></div>').appendTo(pb);
@@ -11848,11 +11849,10 @@ var WebMolKit;
             prevLeave(e); });
     }
     WebMolKit.addTooltip = addTooltip;
-    function raiseToolTip(parent, avoid, bodyHTML, titleHTML) {
+    function raiseToolTip(widget, avoid, bodyHTML, titleHTML) {
         clearTooltip();
         Tooltip.ensureGlobal();
-        let widget = $(parent);
-        new Tooltip(widget, bodyHTML, titleHTML, 0).raise(avoid);
+        new Tooltip($(widget), bodyHTML, titleHTML, 0).raise(avoid);
     }
     WebMolKit.raiseToolTip = raiseToolTip;
     function clearTooltip() {
@@ -14753,7 +14753,7 @@ var WebMolKit;
                 ctrl[j + 1] = true;
                 ctrl[j + 2] = false;
             }
-            this.vg.drawPath(x, y, ctrl, true, col, size, WebMolKit.MetaVector.NOCOLOUR, false);
+            this.vg.drawPath(x, y, ctrl, false, col, size, WebMolKit.MetaVector.NOCOLOUR, false);
         }
         drawBondDotted(b) {
             let x1 = b.line.x1, y1 = b.line.y1, x2 = b.line.x2, y2 = b.line.y2;
@@ -18694,20 +18694,54 @@ var WebMolKit;
             this.options = options;
             this.selidx = 0;
             this.buttonDiv = [];
+            this.panelDiv = [];
             this.padding = 6;
             this.callbackSelect = null;
             if (!WebMolKit.hasInlineCSS('tabbar'))
                 WebMolKit.installInlineCSS('tabbar', this.composeCSS());
         }
+        getSelectedIndex() {
+            return this.selidx;
+        }
+        getSelectedValue() {
+            return this.options[this.selidx];
+        }
+        getPanel(idxOrName) {
+            let idx = typeof idxOrName == 'number' ? idxOrName : this.options.indexOf(idxOrName);
+            if (idx < 0)
+                return null;
+            return this.panelDiv[idx];
+        }
         render(parent) {
             super.render(parent);
-            let table = $('<table class="wmk-option-table"></table>').appendTo(this.content);
-            let tr = $('<tr></tr>').appendTo(table);
+            let grid = $('<div></div>').appendTo(this.content);
+            grid.css('display', 'grid');
+            grid.css('align-items', 'center');
+            grid.css('justify-content', 'start');
+            grid.css('grid-row-gap', '0.5em');
+            let columns = '[start] 1fr ';
+            for (let n = 0; n < this.options.length; n++)
+                columns += '[btn' + n + '] auto ';
+            columns += '[btnX] 1fr [end]';
+            grid.css('grid-template-columns', columns);
+            let underline = $('<div></div>').appendTo(grid);
+            underline.css('grid-column', 'start / end');
+            underline.css('grid-row', '1');
+            underline.css('border-bottom', '1px solid #C0C0C0');
+            underline.css('height', '100%');
             for (let n = 0; n < this.options.length; n++) {
-                let td = $('<td class="wmk-option-cell"></td>').appendTo(tr);
-                let div = $('<div class="wmk-option"></div>').appendTo(td);
-                div.css('padding', this.padding + 'px');
-                this.buttonDiv.push(div);
+                let outline = $('<div class="wmk-tabbar-cell"></div>').appendTo(grid);
+                outline.css('grid-column', 'btn' + n);
+                outline.css('grid-row', '1');
+                let btn = $('<div class="wmk-tabbar"></div>').appendTo(outline);
+                btn.css('padding', this.padding + 'px');
+                this.buttonDiv.push(btn);
+                let panel = $('<div></div>').appendTo(grid);
+                panel.css('grid-column', 'start / end');
+                panel.css('grid-row', '2');
+                panel.css('align-self', 'start');
+                panel.css('justify-self', 'center');
+                this.panelDiv.push(panel);
             }
             this.updateButtons();
         }
@@ -18746,19 +18780,20 @@ var WebMolKit;
                 div.off('mouseleave');
                 div.off('mousemove');
                 div.off('click');
-                div.removeClass('wmk-option-hover wmk-option-active wmk-option-unselected wmk-option-selected');
+                div.removeClass('wmk-tabbar-hover wmk-tabbar-active wmk-tabbar-unselected wmk-tabbar-selected');
                 if (n != this.selidx) {
-                    div.addClass('wmk-option-unselected');
-                    div.mouseover(() => div.addClass('wmk-option-hover'));
-                    div.mouseout(() => div.removeClass('wmk-option-hover wmk-option-active'));
-                    div.mousedown(() => div.addClass('wmk-option-active'));
-                    div.mouseup(() => div.removeClass('wmk-option-active'));
-                    div.mouseleave(() => div.removeClass('wmk-option-hover wmk-option-active'));
+                    div.addClass('wmk-tabbar-unselected');
+                    div.mouseover(() => div.addClass('wmk-tabbar-hover'));
+                    div.mouseout(() => div.removeClass('wmk-tabbar-hover wmk-tabbar-active'));
+                    div.mousedown(() => div.addClass('wmk-tabbar-active'));
+                    div.mouseup(() => div.removeClass('wmk-tabbar-active'));
+                    div.mouseleave(() => div.removeClass('wmk-tabbar-hover wmk-tabbar-active'));
                     div.mousemove(() => { return false; });
                     div.click(() => this.clickButton(n));
                 }
                 else
-                    div.addClass('wmk-option-selected');
+                    div.addClass('wmk-tabbar-selected');
+                this.panelDiv[n].css('visibility', n == this.selidx ? 'visible' : 'hidden');
             }
         }
         composeCSS() {
@@ -18799,7 +18834,7 @@ var WebMolKit;
 			}
 			.wmk-tabbar-cell
 			{
-				margin: 0;
+				margin: 0 -1px -1px 0;
 				padding: 0;
 				border-width: 0;
 				border-width: 1px;
@@ -18824,23 +18859,122 @@ var WebMolKit;
 var WebMolKit;
 (function (WebMolKit) {
     class EditAtom extends WebMolKit.Dialog {
-        constructor(mol, atom) {
+        constructor(mol, atom, callbackApply) {
             super();
             this.atom = atom;
-            this.callbackSave = null;
+            this.callbackApply = callbackApply;
             this.initMol = mol;
             this.mol = mol.clone();
             this.title = 'Edit Atom';
             this.minPortionWidth = 20;
             this.maxPortionWidth = 95;
         }
-        onSave(callback) {
-            this.callbackSave = callback;
-        }
         populate() {
             let buttons = this.buttons(), body = this.body();
+            buttons.append(this.btnClose);
+            buttons.append(' ');
+            this.btnApply = $('<button class="wmk-button wmk-button-primary">Save</button>').appendTo(buttons);
+            this.btnApply.click(() => {
+                this.updateMolecule();
+                if (this.callbackApply)
+                    this.callbackApply(this);
+            });
             this.tabs = new WebMolKit.TabBar(['Atom', 'Abbreviation', 'Geometry', 'Query', 'Extra']);
             this.tabs.render(body);
+            this.populateAtom(this.tabs.getPanel('Atom'));
+            this.populateAbbreviation(this.tabs.getPanel('Abbreviation'));
+            this.populateGeometry(this.tabs.getPanel('Geometry'));
+            this.populateQuery(this.tabs.getPanel('Query'));
+            this.populateExtra(this.tabs.getPanel('Extra'));
+        }
+        populateAtom(panel) {
+            let grid = $('<div></div>').appendTo(panel);
+            grid.css('display', 'grid');
+            grid.css('align-items', 'center');
+            grid.css('justify-content', 'start');
+            grid.css('grid-row-gap', '0.5em');
+            grid.css('grid-column-gap', '0.5em');
+            grid.css('grid-template-columns', '[start col0] auto [col1] auto [col2] auto [col3] auto [col4 end]');
+            grid.append('<div style="grid-area: 1 / col0;">Symbol</div>');
+            this.inputSymbol = $('<input size="20"></input>').appendTo(grid);
+            this.inputSymbol.css('grid-area', '1 / col1 / auto / col4');
+            grid.append('<div style="grid-area: 2 / col0;">Charge</div>');
+            this.inputCharge = $('<input type="number" size="6"></input>').appendTo(grid);
+            this.inputCharge.css('grid-area', '2 / col1');
+            grid.append('<div style="grid-area: 2 / col2;">Unpaired</div>');
+            this.inputUnpaired = $('<input type="number" size="6"></input>').appendTo(grid);
+            this.inputUnpaired.css('grid-area', '2 / col3');
+            grid.append('<div style="grid-area: 3 / col0;">Hydrogens</div>');
+            this.optionHydrogen = new WebMolKit.OptionList(['Auto', 'Explicit']);
+            this.optionHydrogen.render($('<div style="grid-area: 3 / col1 / auto / col3"></div>').appendTo(grid));
+            this.inputHydrogen = $('<input type="number" size="6"></input>').appendTo(grid);
+            this.inputHydrogen.css('grid-area', '3 / col3');
+            grid.append('<div style="grid-area: 4 / col0;">Isotope</div>');
+            this.optionIsotope = new WebMolKit.OptionList(['Natural', 'Enriched']);
+            this.optionIsotope.render($('<div style="grid-area: 4 / col1 / auto / col3"></div>').appendTo(grid));
+            this.inputIsotope = $('<input type="number" size="6"></input>').appendTo(grid);
+            this.inputIsotope.css('grid-area', '4 / col3');
+            grid.append('<div style="grid-area: 5 / col0;">Mapping</div>');
+            this.inputMapping = $('<input type="number" size="6"></input>').appendTo(grid);
+            this.inputMapping.css('grid-area', '5 / col1');
+            grid.append('<div style="grid-area: 5 / col2;">Index</div>');
+            this.inputIndex = $('<input type="number" size="6" readonly="readonly"></input>').appendTo(grid);
+            this.inputIndex.css('grid-area', '5 / col3');
+            grid.find('input').css('font', 'inherit');
+            const mol = this.mol, atom = this.atom;
+            this.inputSymbol.val(mol.atomElement(atom));
+            this.inputCharge.val(mol.atomCharge(atom).toString());
+            this.inputUnpaired.val(mol.atomUnpaired(atom).toString());
+            this.optionHydrogen.setSelectedIndex(mol.atomHExplicit(atom) == WebMolKit.Molecule.HEXPLICIT_UNKNOWN ? 0 : 1);
+            if (mol.atomHExplicit(atom) != WebMolKit.Molecule.HEXPLICIT_UNKNOWN)
+                this.inputHydrogen.val(mol.atomHExplicit(atom).toString());
+            this.optionIsotope.setSelectedIndex(mol.atomIsotope(atom) == WebMolKit.Molecule.ISOTOPE_NATURAL ? 0 : 1);
+            if (mol.atomIsotope(atom) == WebMolKit.Molecule.ISOTOPE_NATURAL)
+                this.inputIsotope.val(mol.atomIsotope(atom).toString());
+            this.inputMapping.val(mol.atomMapNum(atom).toString());
+            this.inputIndex.val(atom.toString());
+            this.inputSymbol.focus();
+        }
+        populateAbbreviation(panel) {
+            panel.append('Abbreviations: TODO');
+        }
+        populateGeometry(panel) {
+            panel.append('Geometry: TODO');
+        }
+        populateQuery(panel) {
+            panel.append('Query: TODO');
+        }
+        populateExtra(panel) {
+            panel.append('Extra: TODO');
+        }
+        updateMolecule() {
+            const mol = this.mol, atom = this.atom;
+            let sym = this.inputSymbol.val();
+            if (sym != '')
+                mol.setAtomElement(atom, sym);
+            let chg = parseInt(this.inputCharge.val());
+            if (chg > -20 && chg < 20)
+                mol.setAtomCharge(atom, chg);
+            let unp = parseInt(this.inputUnpaired.val());
+            if (unp >= 0 && unp < 20)
+                mol.setAtomUnpaired(atom, unp);
+            if (this.optionHydrogen.getSelectedIndex() == 1) {
+                let hyd = parseInt(this.inputHydrogen.val());
+                if (hyd >= 0 && hyd < 20)
+                    mol.setAtomHExplicit(atom, hyd);
+            }
+            else
+                mol.setAtomHExplicit(atom, WebMolKit.Molecule.HEXPLICIT_UNKNOWN);
+            if (this.optionIsotope.getSelectedIndex() == 1) {
+                let iso = parseInt(this.inputIsotope.val());
+                if (iso >= 0 && iso < 300)
+                    mol.setAtomIsotope(atom, iso);
+            }
+            else
+                mol.setAtomIsotope(atom, WebMolKit.Molecule.ISOTOPE_NATURAL);
+            let map = parseInt(this.inputMapping.val());
+            if (!isNaN(map))
+                mol.setAtomMapNum(atom, map);
         }
     }
     WebMolKit.EditAtom = EditAtom;
@@ -19995,7 +20129,21 @@ var WebMolKit;
             this.container.focus();
         }
         mouseDoubleClick(event) {
-            event.stopImmediatePropagation();
+            event.preventDefault();
+            let xy = WebMolKit.eventCoords(event, this.container);
+            let clickObj = this.pickObject(xy[0], xy[1]);
+            if (clickObj > 0) {
+                let atom = clickObj;
+                let dlg = new WebMolKit.EditAtom(this.mol, this.opAtom, () => {
+                    if (this.mol.compareTo(dlg.mol) != 0)
+                        this.defineMolecule(dlg.mol);
+                    dlg.close();
+                });
+                dlg.open();
+            }
+            else {
+                let bond = -clickObj;
+            }
         }
         mouseDown(event) {
             event.preventDefault();
@@ -20133,11 +20281,12 @@ var WebMolKit;
                 else if (this.dragType == DraggingTool.Atom) {
                     let element = this.toolAtomSymbol;
                     if (element == 'A') {
-                        let dlg = new WebMolKit.EditAtom(this.mol, this.opAtom);
-                        dlg.onSave(() => {
+                        let dlg = new WebMolKit.EditAtom(this.mol, this.opAtom, () => {
                             if (this.mol.compareTo(dlg.mol) != 0)
                                 this.defineMolecule(dlg.mol);
+                            dlg.close();
                         });
+                        dlg.open();
                     }
                     else if (element) {
                         let param = { 'element': element, 'keepAbbrev': true };
@@ -20386,7 +20535,8 @@ var WebMolKit;
                         return;
                     }
             }
-            if (key == 37) { }
+            if (key == 13) { }
+            else if (key == 37) { }
             else if (key == 39) { }
             else if (key == 38) { }
             else if (key == 40) { }
@@ -22706,6 +22856,96 @@ var WebMolKit;
 })(WebMolKit || (WebMolKit = {}));
 var WebMolKit;
 (function (WebMolKit) {
+    const CSS_POPUP = `
+    *.wmk-popup
+    {
+        font-family: 'Open Sans', sans-serif;
+    }
+`;
+    class Popup {
+        constructor(parent) {
+            this.parent = parent;
+            this.callbackClose = null;
+            this.callbackPopulate = null;
+            WebMolKit.installInlineCSS('popup', CSS_POPUP);
+        }
+        onClose(callback) {
+            this.callbackClose = callback;
+        }
+        open() {
+            let body = $(document.documentElement);
+            let bg = this.obscureBackground = $('<div></div>').appendTo(body);
+            bg.css('width', '100%');
+            bg.css('height', document.documentElement.clientHeight + 'px');
+            bg.css('background-color', 'black');
+            bg.css('opacity', 0.2);
+            bg.css('position', 'absolute');
+            bg.css('left', 0);
+            bg.css('top', 0);
+            bg.css('z-index', 9999);
+            bg.click(() => this.close());
+            this.obscureBackground = bg;
+            let pb = this.panelBoundary = $('<div class="wmk-popup"></div>').appendTo(body);
+            pb.click((event) => event.stopPropagation());
+            pb.css('background-color', 'white');
+            pb.css('border', '1px solid black');
+            pb.css('position', 'absolute');
+            pb.css('z-index', 10000);
+            let bd = this.bodyDiv = $('<div></div>').appendTo(pb);
+            bd.css('padding', '0.5em');
+            bg.show();
+            this.populate();
+            this.positionAndShow();
+        }
+        close() {
+            this.panelBoundary.remove();
+            this.obscureBackground.remove();
+            if (this.callbackClose)
+                this.callbackClose(this);
+        }
+        bump() {
+            this.positionAndShow();
+        }
+        body() { return this.bodyDiv; }
+        populate() {
+            if (this.callbackPopulate)
+                this.callbackPopulate(this);
+            else
+                this.body().text('Empty popup.');
+        }
+        positionAndShow() {
+            let winW = $(window).width(), winH = $(window).height();
+            const GAP = 2;
+            let wx1 = this.parent.offset().left, wy1 = this.parent.offset().top;
+            let wx2 = wx1 + this.parent.width(), wy2 = wy1 + this.parent.height();
+            let pb = this.panelBoundary;
+            let maxW = Math.max(wx1, winW - wx2) - 4;
+            pb.css('max-width', maxW + '.px');
+            let setPosition = () => {
+                let popW = pb.width(), popH = pb.height();
+                let posX = 0, posY = 0;
+                if (wx1 + popW < winW)
+                    posX = wx1;
+                else if (popW < wx2)
+                    posX = wx2 - popW;
+                if (wy2 + GAP + popH < winH)
+                    posY = wy2 + GAP;
+                else if (wy1 - GAP - popH > 0)
+                    posY = wy1 - GAP - popH;
+                else
+                    posY = wy2 + GAP;
+                pb.css('left', `${posX}px`);
+                pb.css('top', `${posY}px`);
+            };
+            setPosition();
+            pb.show();
+            window.setTimeout(setPosition());
+        }
+    }
+    WebMolKit.Popup = Popup;
+})(WebMolKit || (WebMolKit = {}));
+var WebMolKit;
+(function (WebMolKit) {
     class RowView extends WebMolKit.Widget {
         constructor(tokenID) {
             super();
@@ -23758,32 +23998,35 @@ var WebMolKit;
             this.add('Calculate strict aromaticity', this.calcStrictArom);
             this.add('Calculate stereochemistry', this.calcStereoChem);
             this.add('Circular ECFP6 fingerprints', this.calcFingerprints);
+            this.add('Molfile Round-trip', this.molfileRoundTrip);
         }
         init(donefunc) {
-            const self = this;
-            let FILES = ['molecule.el', 'molecule.mol', 'datasheet.ds', 'datasheet.sdf', 'stereo.el', 'circular.ds'];
+            let FILES = ['molecule.el', 'molecule.mol', 'datasheet.ds', 'datasheet.sdf', 'stereo.el', 'circular.ds', 'roundtrip.ds'];
             let files = FILES;
-            let fetchResult = function (data) {
+            let fetchResult = (data) => {
                 let fn = files.shift();
                 if (fn == 'molecule.el')
-                    self.strSketchEl = data;
+                    this.strSketchEl = data;
                 else if (fn == 'molecule.mol')
-                    self.strMolfile = data;
+                    this.strMolfile = data;
                 else if (fn == 'datasheet.ds')
-                    self.strDataXML = data;
+                    this.strDataXML = data;
                 else if (fn == 'datasheet.sdf')
-                    self.strSDfile = data;
+                    this.strSDfile = data;
                 else if (fn == 'stereo.el')
-                    self.molStereo = WebMolKit.Molecule.fromString(data);
+                    this.molStereo = WebMolKit.Molecule.fromString(data);
                 else if (fn == 'circular.ds')
-                    self.dsCircular = WebMolKit.DataSheetStream.readXML(data);
+                    this.dsCircular = WebMolKit.DataSheetStream.readXML(data);
+                else if (fn == 'roundtrip.ds')
+                    this.dsRoundtrip = WebMolKit.DataSheetStream.readXML(data);
                 if (files.length > 0)
-                    $.get(self.urlBase + files[0], fetchResult);
+                    $.get(this.urlBase + files[0], fetchResult);
                 else
-                    donefunc.call(self);
+                    donefunc.call(this);
             };
-            $.get(self.urlBase + files[0], fetchResult);
+            $.get(this.urlBase + files[0], fetchResult);
         }
+        ;
         parseSketchEl() {
             this.assert(!!this.strSketchEl, 'molecule not loaded');
             let mol = WebMolKit.MoleculeStream.readNative(this.strSketchEl);
@@ -23889,6 +24132,46 @@ var WebMolKit;
                 this.assert(WebMolKit.Vec.equals(ecfp2, got[1]), 'row#' + (n + 1) + ', iter#1: wanted ' + ecfp2 + ', got ' + got[1]);
                 this.assert(WebMolKit.Vec.equals(ecfp4, got[2]), 'row#' + (n + 1) + ', iter#2: wanted ' + ecfp4 + ', got ' + got[2]);
                 this.assert(WebMolKit.Vec.equals(ecfp6, got[3]), 'row#' + (n + 1) + ', iter#3: wanted ' + ecfp6 + ', got ' + got[3]);
+            }
+        }
+        molfileRoundTrip() {
+            const ds = this.dsRoundtrip;
+            for (let n = 0; n < ds.numRows; n++) {
+                let strRow = 'row#' + (n + 1);
+                let mol = ds.getMolecule(n, 'Molecule');
+                let mdl = new WebMolKit.MDLMOLWriter(mol).write();
+                let alt = new WebMolKit.MDLMOLReader(mdl).parse();
+                this.assert(mol.numAtoms == alt.numAtoms && mol.numBonds == alt.numBonds, strRow + ', atom/bond count differs');
+                let problems = [];
+                for (let i = 1; i <= mol.numAtoms; i++) {
+                    if (mol.atomElement(i) != alt.atomElement(i))
+                        problems.push(strRow + '/atom #' + i + ': elements different');
+                    if (mol.atomCharge(i) != alt.atomCharge(i))
+                        problems.push(strRow + '/atom #' + i + ': charges different');
+                    if (mol.atomUnpaired(i) != alt.atomUnpaired(i))
+                        problems.push(strRow + '/atom #' + i + ': unpaired different');
+                    if (mol.atomIsotope(i) != alt.atomIsotope(i))
+                        problems.push(strRow + '/atom #' + i + ': isotope different');
+                    if (mol.atomMapNum(i) != alt.atomMapNum(i))
+                        problems.push(strRow + '/atom #' + i + ': mapnum different');
+                    if (mol.atomHydrogens(i) != alt.atomHydrogens(i))
+                        problems.push(strRow + '/atom #' + i + ': hydrogens different');
+                }
+                for (let i = 1; i <= mol.numBonds; i++) {
+                    if (mol.bondOrder(i) != alt.bondOrder(i))
+                        problems.push(strRow + '/bond #' + i + ': bond orders different');
+                    if (mol.bondType(i) != alt.bondType(i))
+                        problems.push(strRow + '/bond #' + i + ': bond types different');
+                }
+                if (problems.length > 0) {
+                    console.log('Round trip problems:');
+                    for (let p of problems)
+                        console.log(p);
+                    console.log('Original molecule:\n' + mol);
+                    console.log('MDL Molfile CTAB:\n' + mdl);
+                    console.log('Parsed back molecule:\n' + alt);
+                }
+                this.assert(problems.length == 0, problems.join('; '));
             }
         }
     }

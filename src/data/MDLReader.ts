@@ -321,41 +321,24 @@ export class MDLMOLReader
 			if (el == 'D') {mol.setAtomElement(n, 'H'); mol.setAtomIsotope(n, 2);}
 			else if (el == 'T') {mol.setAtomElement(n, 'H'); mol.setAtomIsotope(n, 3);}
 
-			let options = MDLMOL_VALENCE[el], atno = Molecule.elementAtomicNumber(el);
-			// NOTE: have to be parsimonious about when to apply, otherwise interoperability can be a net loss
-			let valence = explicitValence[n - 1];
-			if (options || (valence > 0 && Chemistry.ELEMENT_BLOCKS[atno] == 2))
+			// valence, two correction scenarios: (1) if set to explicit, make the hydrogens
+			let valence = explicitValence[n - 1], options = MDLMOL_VALENCE[el];
+			if (valence != 0)
 			{
-				// valence: MDL CTAB has a way to specify valence explicitly, which can be used to calculate the implicit
-				// hydrogens; and by default, it is mapped to a table of valence options; whenever the implied H from the
-				// importation is different from what would be calculated natively, it needs to be explicitly set;
-				// note that B and C are conventional exceptions - not necessarily documented, but C+ & B- have inverse behaviour
-				
-				let valence = explicitValence[n - 1], importedH = 0;
-				if (valence == 0)
+				let hcount = valence < 0 || valence > 14 ? 0 : valence;
+				for (let b of mol.atomAdjBonds(n)) hcount -= mol.bondOrder(b);
+				if (hcount != mol.atomHydrogens(n)) mol.setAtomHExplicit(n, hcount);
+			}
+			else if (options)
+			{
+				let chg = mol.atomCharge(n);
+				let chgmod = (el == 'C' || el == 'H') ? Math.abs(chg) : el == 'B' ? -Math.abs(chg) : -chg;
+				let usedValence = chgmod + mol.atomUnpaired(n);
+				for (let b of mol.atomAdjBonds(n)) usedValence += mol.bondOrder(b);
+				for (let v of options) if (usedValence <= v) 
 				{
-					let chg = mol.atomCharge(n);
-					let chgmod = (el == 'C' || el == 'H') ? Math.abs(chg) : el == 'B' ? -Math.abs(chg) : -chg;
-					let usedValence = chgmod + mol.atomUnpaired(n);
-					for (let b of mol.atomAdjBonds(n)) usedValence += mol.bondOrder(b);
-
-					if (!options) options = [Chemistry.ELEMENT_VALENCE[atno]];
-					for (let v of options) if (usedValence <= v) 
-					{
-						importedH = v - usedValence;
-						break;
-					}
-				}
-				else if (valence > 0 && valence <= 14)
-				{
-					importedH = valence;
-					for (let b of mol.atomAdjBonds(n)) importedH -= mol.bondOrder(b);
-				}
-
-				if (importedH > 0)
-				{
-					let nativeH = mol.atomHydrogens(n);
-					if (importedH != nativeH) mol.setAtomHExplicit(n, importedH);
+					mol.setAtomHExplicit(n, v - usedValence);
+					break;
 				}
 			}
 		}

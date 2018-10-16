@@ -125,22 +125,7 @@ export class MDLMOLWriter
 			else if (chg >= 1 && chg <= 3) chg = 4 - chg;
 			else chg = 0;
 
-			// if this molecule has virtual hydrogens, need to attend to the valence: if there's a default valence, often
-			// nothing to do; otherwise, set it explicitly, and hope the reader handles it
-			let val = 0, hyd = mol.atomHydrogens(n);
-			if (hyd > 0)
-			{
-				let chg = mol.atomCharge(n);
-				let chgmod = (el == 'C' || el == 'H') ? Math.abs(chg) : el == 'B' ? -Math.abs(chg) : -chg;
-				let nativeVal = chgmod + mol.atomUnpaired(n) + hyd;
-				for (let b of mol.atomAdjBonds(n)) nativeVal += mol.bondOrder(b);
-				let options = MDLMOL_VALENCE[el];
-				if (!options || options.indexOf(nativeVal) < 0) 
-				{
-					val = nativeVal - chgmod;
-					if (val <= 0 || val > 14) val = 15;
-				}
-			}
+			let val = this.mdlValence(mol, n, 15);
 
 			line += this.intrpad(chg, 3) + '  0  0  0' + this.intrpad(val, 3) + '  0  0  0' + this.intrpad(mapnum, 3) + '  0  0';
 
@@ -249,6 +234,23 @@ export class MDLMOLWriter
 		while (str.length < sz) str = ' ' + str;
 		return str;
 	}
+
+	// figures out the MDL valence override, if any; a return value of 0 means that the calculated default will suffice; if the value
+	// needs to be explicitly zero, the 'zeroVal' parameter is returned (should be 15 for V2000, -1 for V3000)
+	private mdlValence(mol:Molecule, atom:number, zeroVal:number):number
+	{
+		let hyd = mol.atomHydrogens(atom), el = mol.atomElement(atom);
+		let options = MDLMOL_VALENCE[el];
+		if (options && options.indexOf(hyd) >= 0) return 0; // there's a default that will be derived correctly (one hopes)
+
+		let chg = mol.atomCharge(atom);
+		let chgmod = (el == 'C' || el == 'H') ? Math.abs(chg) : el == 'B' ? -Math.abs(chg) : -chg;
+		let nativeVal = chgmod + mol.atomUnpaired(atom) + hyd;
+		for (let b of mol.atomAdjBonds(atom)) nativeVal += mol.bondOrder(b);
+
+		let val = nativeVal - chgmod;
+		return val <= 0 || val > 14 ? zeroVal : val;
+	}
 }
 
 export class MDLSDFWriter
@@ -309,8 +311,6 @@ export class MDLSDFWriter
 	}
 	
 	// ----------------- private methods -----------------
-	
-	
 }
 
 /* EOF */ }
