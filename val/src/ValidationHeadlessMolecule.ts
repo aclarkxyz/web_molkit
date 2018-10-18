@@ -210,6 +210,7 @@ export class ValidationHeadlessMolecule extends Validation
 				if (mol.atomIsotope(i) != alt.atomIsotope(i)) problems.push(strRow + '/atom #' + i + ': isotope different');
 				if (mol.atomMapNum(i) != alt.atomMapNum(i)) problems.push(strRow + '/atom #' + i + ': mapnum different');
 				if (mol.atomHydrogens(i) != alt.atomHydrogens(i)) problems.push(strRow + '/atom #' + i + ': hydrogens different');
+				if (mol.atomHExplicit(i) != alt.atomHExplicit(i)) problems.push(strRow + '/atom #' + i + ': explicitH different');
 			}
 			for (let i = 1; i <= mol.numBonds; i++)
 			{

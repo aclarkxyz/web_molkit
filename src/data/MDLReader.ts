@@ -337,7 +337,8 @@ export class MDLMOLReader
 				for (let b of mol.atomAdjBonds(n)) usedValence += mol.bondOrder(b);
 				for (let v of options) if (usedValence <= v) 
 				{
-					mol.setAtomHExplicit(n, v - usedValence);
+					let hcount = v - usedValence;
+					if (hcount != mol.atomHydrogens(n)) mol.setAtomHExplicit(n, hcount);
 					break;
 				}
 			}
