@@ -4,7 +4,7 @@
   <Title></Title>
   <Description><![CDATA[]]></Description>
  </Summary>
- <Header nrows="6" ncols="1">
+ <Header nrows="17" ncols="1">
   <Column name="Molecule" type="molecule" id="1">Molecular structure</Column>
  </Header>
  <Content>
@@ -93,6 +93,76 @@ Cl=-3.7000,1.5000;0,0,i0
    <Cell id="1"><![CDATA[SketchEl!(2,0)
 K=-5.2000,1.5000;1,0,i0
 Cl=-3.7000,1.5000;-1,0,i0
+!End
+]]></Cell>
+  </Row>
+  <Row id="7">
+   <Cell id="1"><![CDATA[SketchEl!(1,0)
+P=-1.5500,1.0500;0,0,e0
+!End
+]]></Cell>
+  </Row>
+  <Row id="8">
+   <Cell id="1"><![CDATA[SketchEl!(1,0)
+P=-1.5500,1.0500;0,0,i3
+!End
+]]></Cell>
+  </Row>
+  <Row id="9">
+   <Cell id="1"><![CDATA[SketchEl!(1,0)
+S=-1.1000,0.6000;0,0,e0
+!End
+]]></Cell>
+  </Row>
+  <Row id="10">
+   <Cell id="1"><![CDATA[SketchEl!(1,0)
+S=-1.1000,0.6000;0,0,i2
+!End
+]]></Cell>
+  </Row>
+  <Row id="11">
+   <Cell id="1"><![CDATA[SketchEl!(1,0)
+S=-1.1000,0.6000;0,0,e4
+!End
+]]></Cell>
+  </Row>
+  <Row id="12">
+   <Cell id="1"><![CDATA[SketchEl!(1,0)
+S=-1.1000,0.6000;0,0,e6
+!End
+]]></Cell>
+  </Row>
+  <Row id="13">
+   <Cell id="1"><![CDATA[SketchEl!(3,2)
+S=-1.1000,0.6000;1,0,i1
+C=-1.8500,1.8990;0,0,i3
+C=-1.8500,-0.6990;0,0,i3
+1-2=1,0
+1-3=1,0
+!End
+]]></Cell>
+  </Row>
+  <Row id="14">
+   <Cell id="1"><![CDATA[SketchEl!(1,0)
+Se=-0.1000,2.3000;0,0,i0
+!End
+]]></Cell>
+  </Row>
+  <Row id="15">
+   <Cell id="1"><![CDATA[SketchEl!(1,0)
+Se=-0.1000,2.3000;0,0,e2
+!End
+]]></Cell>
+  </Row>
+  <Row id="16">
+   <Cell id="1"><![CDATA[SketchEl!(1,0)
+Si=-0.1000,2.3000;0,0,i0
+!End
+]]></Cell>
+  </Row>
+  <Row id="17">
+   <Cell id="1"><![CDATA[SketchEl!(1,0)
+Si=-0.1000,2.3000;0,0,e4
 !End
 ]]></Cell>
   </Row>

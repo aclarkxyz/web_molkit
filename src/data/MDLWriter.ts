@@ -241,12 +241,21 @@ export class MDLMOLWriter
 	{
 		let hyd = mol.atomHydrogens(atom), el = mol.atomElement(atom);
 		let options = MDLMOL_VALENCE[el];
-		if (options && options.indexOf(hyd) >= 0) return 0; // there's a default that will be derived correctly (one hopes)
+		
+		// if no implicit valence, and no hydrogens: no need
+		if (options == null && hyd == 0) return 0;
+
+		// if just one H-count option, and this is it, then it should work out naturally
+		if (options && options.length == 1 && options[0] == hyd) return 0;
 
 		let chg = mol.atomCharge(atom);
 		let chgmod = (el == 'C' || el == 'H') ? Math.abs(chg) : el == 'B' ? -Math.abs(chg) : -chg;
 		let nativeVal = chgmod + mol.atomUnpaired(atom) + hyd;
 		for (let b of mol.atomAdjBonds(atom)) nativeVal += mol.bondOrder(b);
+
+		// NOTE: in cases with multiple valence options, like S[2,4,6], it would be possible to leave the valence unmarked
+		// when the previous state is indicated, e.g. for S{val=3} ==> +1 H to get to val=4; or we could just mark the
+		// valence, since the first one is always overwhelmingly the default
 
 		let val = nativeVal - chgmod;
 		return val <= 0 || val > 14 ? zeroVal : val;

@@ -7031,7 +7031,9 @@ var WebMolKit;
         mdlValence(mol, atom, zeroVal) {
             let hyd = mol.atomHydrogens(atom), el = mol.atomElement(atom);
             let options = WebMolKit.MDLMOL_VALENCE[el];
-            if (options && options.indexOf(hyd) >= 0)
+            if (options == null && hyd == 0)
+                return 0;
+            if (options && options.length == 1 && options[0] == hyd)
                 return 0;
             let chg = mol.atomCharge(atom);
             let chgmod = (el == 'C' || el == 'H') ? Math.abs(chg) : el == 'B' ? -Math.abs(chg) : -chg;
