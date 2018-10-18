@@ -6950,7 +6950,7 @@ var WebMolKit;
                 }
             }
             for (let n = 1; n <= mol.numBonds; n++) {
-                let order = mol.bondOrder(n), type = order;
+                let order = mol.bondOrder(n), type = Math.max(1, Math.min(3, order));
                 let stereo = mol.bondType(n);
                 if (stereo == WebMolKit.Molecule.BONDTYPE_NORMAL) { }
                 else if (stereo == WebMolKit.Molecule.BONDTYPE_INCLINED) {
@@ -7043,8 +7043,6 @@ var WebMolKit;
             for (let b of mol.atomAdjBonds(atom))
                 bondSum += mol.bondOrder(b);
             let nativeVal = chgmod + mol.atomUnpaired(atom) + hyd + bondSum;
-            if (options && options.indexOf(nativeVal) >= 0)
-                return 0;
             let val = nativeVal - chgmod;
             return val <= 0 || val > 14 ? zeroVal : val;
         }

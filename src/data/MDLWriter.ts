@@ -254,8 +254,6 @@ export class MDLMOLWriter
 		for (let b of mol.atomAdjBonds(atom)) bondSum += mol.bondOrder(b);
 		let nativeVal = chgmod + mol.atomUnpaired(atom) + hyd + bondSum;
 
-		if (options && options.indexOf(nativeVal) >= 0) return 0; // there's a default that will be derived correctly (one hopes)
-
 		// NOTE: in cases with multiple valence options, like S[2,4,6], it would be possible to leave the valence unmarked
 		// when the previous state is indicated, e.g. for S{val=3} ==> +1 H to get to val=4; or we could just mark the
 		// valence, since the first one is always overwhelmingly the default
