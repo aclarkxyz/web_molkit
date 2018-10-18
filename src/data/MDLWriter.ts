@@ -147,7 +147,7 @@ export class MDLMOLWriter
 		// export bonds
 		for (let n = 1; n <= mol.numBonds; n++)
 		{
-			let order = mol.bondOrder(n), type = order;
+			let order = mol.bondOrder(n), type = Math.max(1, Math.min(3, order));
 			let stereo = mol.bondType(n);
 			if (stereo == Molecule.BONDTYPE_NORMAL) {}
 			else if (stereo == Molecule.BONDTYPE_INCLINED) {stereo = 1; type = 1;}
