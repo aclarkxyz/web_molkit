@@ -25,37 +25,41 @@ namespace WebMolKit /* BOF */ {
 
 export class SearchPanel extends Widget
 {
-	highlight = 0; // 0=nothing, 1=first molecule, 2=second molecule, 3=arrow
-	pressed = 0; // as above
-	mol1 = new Molecule();
-	mol2 = new Molecule();
-
-	normalMol1:HTMLCanvasElement;
-	pressedMol1:HTMLCanvasElement;
-	drawnMol1:HTMLCanvasElement;
-	thinMol1:HTMLCanvasElement;
-	thickMol1:HTMLCanvasElement;
-	hoverArrow:HTMLCanvasElement;
-	pressedArrow:HTMLCanvasElement;
-	drawnArrow:HTMLCanvasElement;
-	normalMol2:HTMLCanvasElement;	
-	pressedMol2:HTMLCanvasElement;
-	drawnMol2:HTMLCanvasElement;
-	thinMol2:HTMLCanvasElement;
-	thickMol2:HTMLCanvasElement;
-	
 	public static TYPE_MOLECULE = 'molecule';
 	public static TYPE_REACTION = 'reaction';
 
+	public onChange:(widget?:SearchPanel) => void = null;
+
+	private highlight = 0; // 0=nothing, 1=first molecule, 2=second molecule, 3=arrow
+	private pressed = 0; // as above
+	private mol1 = new Molecule();
+	private mol2 = new Molecule();
+
+	private normalMol1:HTMLCanvasElement;
+	private pressedMol1:HTMLCanvasElement;
+	private drawnMol1:HTMLCanvasElement;
+	private thinMol1:HTMLCanvasElement;
+	private thickMol1:HTMLCanvasElement;
+	private hoverArrow:HTMLCanvasElement;
+	private pressedArrow:HTMLCanvasElement;
+	private drawnArrow:HTMLCanvasElement;
+	private normalMol2:HTMLCanvasElement;	
+	private pressedMol2:HTMLCanvasElement;
+	private drawnMol2:HTMLCanvasElement;
+	private thinMol2:HTMLCanvasElement;
+	private thickMol2:HTMLCanvasElement;
+	
 	private isSketching = false;
 	private height = 50;
 	private molWidth = 80;
 	private arrowWidth = 30;
 	private HPADDING = 4;
 	private VPADDING = 2;
-	private COLCYCLE = ['#89A54E', '#71588F', '#4198AF', '#DB843D', '#93A9CF', '#D19392', '#4572A7', '#AA4643'];
+	//private COLCYCLE = ['#89A54E', '#71588F', '#4198AF', '#DB843D', '#93A9CF', '#D19392', '#4572A7', '#AA4643'];
 	private emptyMsg1:string = null;
 	private emptyMsg2:string = null;
+
+	// -------- public methods ------------
 
 	constructor(private type:string)
 	{
@@ -108,7 +112,7 @@ export class SearchPanel extends Widget
 		div.css('height', (height + 2 * vpad) + 'px');
 		div.css('position', 'relative');
 		
-		function renderSolid(col1:string, col2:string, style:string):HTMLCanvasElement
+		let renderSolid = (col1:string, col2:string, style:string):HTMLCanvasElement =>
 		{
 			let node = <HTMLCanvasElement>newElement(div, 'canvas', {'width': molw * density, 'height': height * density, 'style': style});
 			node.style.width = molw + 'px';
@@ -123,8 +127,8 @@ export class SearchPanel extends Widget
 			ctx.fillRect(0, 0, molw, height);
 			
 			return node;
-		}
-		function renderBorder(lw:number, style:string):HTMLCanvasElement
+		};
+		let renderBorder = (lw:number, style:string):HTMLCanvasElement =>
 		{
 			let node = <HTMLCanvasElement>newElement(div, 'canvas', {'width': molw * density, 'height': height * density, 'style': style});
 			node.style.width = molw + 'px';
@@ -137,8 +141,8 @@ export class SearchPanel extends Widget
 			ctx.strokeRect(0.5 * lw, 0.5 * lw, molw - lw, height - lw);
 			
 			return node;
-		}
-		function renderArrow(style:string):HTMLCanvasElement
+		};
+		let renderArrow = (style:string):HTMLCanvasElement =>
 		{
 			let node = <HTMLCanvasElement>newElement(div, 'canvas', {'width': arrow * density, 'height': height * density, 'style': style});
 			node.style.width = arrow + 'px';
@@ -162,8 +166,8 @@ export class SearchPanel extends Widget
 			ctx.fill();
 			
 			return node;
-		}
-		function renderOutlineArrow(style:string, col:string):HTMLCanvasElement
+		};
+		let renderOutlineArrow = (style:string, col:string):HTMLCanvasElement =>
 		{
 			let node = <HTMLCanvasElement>newElement(div, 'canvas', {'width': arrow * density, 'height': height * density, 'style': style});
 			node.style.width = arrow + 'px';
@@ -177,7 +181,7 @@ export class SearchPanel extends Widget
 			ctx.fill(path); 
 			
 			return node;
-		}
+		};
 		
 		// first molecule: always present
 		let styleMol1Pos = 'position: absolute; left: ' + hpad + 'px; top: ' + vpad + 'px;';
@@ -264,8 +268,10 @@ export class SearchPanel extends Widget
 
 			let which = this.type == SearchPanel.TYPE_REACTION && !MolUtil.isBlank(this.mol1) && MolUtil.isBlank(this.mol2) ? 2 : 1;
 			if (which == 1) this.setMolecule1(mol); else this.setMolecule2(mol);
-
 			e.preventDefault();
+
+			if (this.onChange) this.onChange(this);
+
 			return false;
 		});		
 		
@@ -430,6 +436,8 @@ export class SearchPanel extends Widget
 		
 		let cookies = new Cookies();
 		if (cookies.numMolecules() > 0) cookies.stashMolecule(this.mol1);
+
+		if (this.onChange) this.onChange(this);
 	}
 	private saveMolecule2(dlg:EditCompound):void
 	{
@@ -439,6 +447,8 @@ export class SearchPanel extends Widget
 
 		let cookies = new Cookies();
 		if (cookies.numMolecules() > 0) cookies.stashMolecule(this.mol2);
+
+		if (this.onChange) this.onChange(this);
 	}
 	private saveMapping(dlg:MapReaction):void
 	{
@@ -468,6 +478,7 @@ export class SearchPanel extends Widget
 					if (mol != null) 
 					{
 						if (which == 1) this.setMolecule1(mol); else this.setMolecule2(mol);
+						if (this.onChange) this.onChange(this);
 					}
 					else console.log('Dragged data is not a SketchEl molecule: ' + str);
 				});
@@ -488,6 +499,7 @@ export class SearchPanel extends Widget
 					if (mol != null) 
 					{
 						if (which == 1) this.setMolecule1(mol); else this.setMolecule2(mol);
+						if (this.onChange) this.onChange(this);
 					}	
 					else console.log('Dragged file is not a recognised molecule: ' + str);
 				};

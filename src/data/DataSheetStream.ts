@@ -29,49 +29,50 @@ export class DataSheetStream
 	// something went wrong
 	public static readXML(strXML:string):DataSheet
 	{
-		var xmlDoc = jQuery.parseXML(strXML);
+		//let xmlDoc = jQuery.parseXML(strXML);
+		let xmlDoc = new DOMParser().parseFromString(strXML, 'application/xml');
 		if (xmlDoc == null) return null;
-		var root = xmlDoc.documentElement;
+		let root = xmlDoc.documentElement;
 		if (root == null) return null;
 
-		var ds = new DataSheet();
+		let ds = new DataSheet();
 
 		// overview
-		var summary = findNode(root, 'Summary');
+		let summary = findNode(root, 'Summary');
 		if (summary == null) return null;
 		ds.setTitle(nodeText(findNode(summary, 'Title')));
 		ds.setDescription(nodeText(findNode(summary, 'Description')));
 		
 		// extensions
-		var extRoot = findNode(root, 'Extension');
+		let extRoot = findNode(root, 'Extension');
 		if (extRoot != null)
 		{
-			//var extList=goog.dom.xml.selectNodes(extRoot,'Ext');
-			var extList = findNodes(extRoot, 'Ext');
-			for (var n = 0; n < extList.length; n++)
+			//let extList=goog.dom.xml.selectNodes(extRoot,'Ext');
+			let extList = findNodes(extRoot, 'Ext');
+			for (let n = 0; n < extList.length; n++)
 			{
-				var ext = extList[n];
+				let ext = extList[n];
 				//ds.appendExtension(ext.attributes.name.value,ext.attributes.type.value,nodeText(ext));
 				ds.appendExtension(ext.getAttribute("name"), ext.getAttribute("type"), nodeText(ext));
 			}
 		}
 
 		// header: columns
-		var header = findNode(root, 'Header');
-		var numCols = parseInt(header.getAttribute("ncols")), numRows = parseInt(header.getAttribute("nrows"));
-		var colList = findNodes(header, 'Column');
+		let header = findNode(root, 'Header');
+		let numCols = parseInt(header.getAttribute("ncols")), numRows = parseInt(header.getAttribute("nrows"));
+		let colList = findNodes(header, 'Column');
 		if (colList.length != numCols) return null;
-		for (var n = 0; n < numCols; n++)
+		for (let n = 0; n < numCols; n++)
 		{
-			var col = colList[n];
-			var id = parseInt(col.getAttribute("id"));
+			let col = colList[n];
+			let id = parseInt(col.getAttribute("id"));
 			if (id != n + 1) return null;
 			ds.appendColumn(col.getAttribute("name"), col.getAttribute("type"), nodeText(col));
 		}
 		
 		// rows
-		var row = findNode(root, 'Content').firstElementChild; 
-		var rowidx = 0;
+		let row = findNode(root, 'Content').firstElementChild; 
+		let rowidx = 0;
 		while (row)
 		{
 			//if (parseInt(row.attributes.id.value)!=rowidx+1) return null;
@@ -79,11 +80,11 @@ export class DataSheetStream
 			
 			ds.appendRow();
 			
-			var col = row.firstElementChild;
+			let col = row.firstElementChild;
 			while (col)
 			{
-				var colidx = parseInt(col.getAttribute("id")) - 1;
-				var ct = ds.colType(colidx), val = nodeText(col);
+				let colidx = parseInt(col.getAttribute("id")) - 1;
+				let ct = ds.colType(colidx), val = nodeText(col);
 
 				if (val == '') {}
 				else if (ct == DataSheet.COLTYPE_MOLECULE) ds.setObject(rowidx, colidx, val);
@@ -107,21 +108,21 @@ export class DataSheetStream
 	// static method: converts a datasheet into an XML-formatted string
 	public static writeXML(ds:DataSheet):string
 	{
-		var xml = new DOMParser().parseFromString('<DataSheet/>', 'text/xml');
+		let xml = new DOMParser().parseFromString('<DataSheet/>', 'text/xml');
 		
 		// summary area
-		var summary = xml.createElement('Summary');
+		let summary = xml.createElement('Summary');
 		xml.documentElement.appendChild(summary);
-		var title = xml.createElement('Title'), descr = xml.createElement('Description');
+		let title = xml.createElement('Title'), descr = xml.createElement('Description');
 		summary.appendChild(title); title.appendChild(xml.createTextNode(ds.getTitle()));
 		summary.appendChild(descr); descr.appendChild(xml.createCDATASection(ds.getDescription()));
 		
 		// extras
-		var extension = xml.createElement('Extension');
+		let extension = xml.createElement('Extension');
 		xml.documentElement.appendChild(extension);
-		for (var n = 0; n < ds.numExtensions; n++)
+		for (let n = 0; n < ds.numExtensions; n++)
 		{
-			var ext = xml.createElement('Ext');
+			let ext = xml.createElement('Ext');
 			extension.appendChild(ext);
 			ext.setAttribute('name', ds.getExtName(n));
 			ext.setAttribute('type', ds.getExtType(n));
@@ -129,13 +130,13 @@ export class DataSheetStream
 		}
 		
 		// columns
-		var header = xml.createElement('Header');
+		let header = xml.createElement('Header');
 		xml.documentElement.appendChild(header);
 		header.setAttribute('nrows', ds.numRows.toString());
 		header.setAttribute('ncols', ds.numCols.toString());
-		for (var n = 0; n < ds.numCols; n++)
+		for (let n = 0; n < ds.numCols; n++)
 		{
-			var column = xml.createElement('Column');
+			let column = xml.createElement('Column');
 			header.appendChild(column);
 			column.setAttribute('id', (n + 1).toString());
 			column.setAttribute('name', ds.colName(n));
@@ -144,22 +145,22 @@ export class DataSheetStream
 		}
 		
 		// rows
-		var content = xml.createElement('Content');
+		let content = xml.createElement('Content');
 		xml.documentElement.appendChild(content);
-		for (var r = 0; r < ds.numRows; r++)
+		for (let r = 0; r < ds.numRows; r++)
 		{
-			var row = xml.createElement('Row');
+			let row = xml.createElement('Row');
 			row.setAttribute('id', (r + 1).toString());
 			content.appendChild(row);
 
-			for (var c = 0; c < ds.numCols; c++)
+			for (let c = 0; c < ds.numCols; c++)
 			{
-				var cell = xml.createElement('Cell');
+				let cell = xml.createElement('Cell');
 				cell.setAttribute('id', (c + 1).toString());
 				row.appendChild(cell);
-				var ct = ds.colType(c);
+				let ct = ds.colType(c);
 				
-				var txtNode:Node = null;
+				let txtNode:Node = null;
 				if (ds.isNull(r, c)) {}
 				else if (ct == DataSheet.COLTYPE_MOLECULE) 
 				{
