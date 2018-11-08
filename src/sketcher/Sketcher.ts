@@ -23,6 +23,7 @@
 ///<reference path='../gfx/MetaVector.ts'/>
 ///<reference path='../gfx/ArrangeMolecule.ts'/>
 ///<reference path='../ui/ButtonView.ts'/>
+///<reference path='../ui/ClipboardProxy.ts'/>
 ///<reference path='MoleculeActivity.ts'/>
 ///<reference path='CommandBank.ts'/>
 ///<reference path='TemplateBank.ts'/>
@@ -123,9 +124,7 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 	private currentPerm = 0; // currently viewed permutation (if applicable)
 	private fusionBank:FusionBank = null;
 	
-	private copyBusy = false;
-	private fakeTextArea:HTMLTextAreaElement = null; // for temporarily bogarting the clipboard
-
+	private proxyClip:ClipboardProxy = null;
 	private static UNDO_SIZE = 20;
 
 	constructor()
@@ -177,6 +176,22 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 			this.delayedRedraw();
 		}
 		else this.autoScale();
+	}
+
+	// provides the mechanism for interacting with the clipboard (which is quite different for web vs. app mode)
+	public defineClipboard(proxy:ClipboardProxy):void
+	{
+		this.proxyClip = proxy;
+		proxy.copyEvent = ():string => 
+		{
+			return this.getMolecule.toString();
+		};
+		proxy.pasteEvent = (proxy:ClipboardProxy):boolean =>
+		{
+			this.pasteText(proxy.getString());
+			return true;
+		};
+		if (this.container) proxy.install(this.container);
 	}
 
 	// define the molecule as a SketchEl-formatted string
@@ -325,6 +340,7 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 			this.dropInto(event.dataTransfer);
 		});
 		
+		/* ... deprecated
 		// pasting: captures the menu/hotkey form
 		let pasteFunc = (e:any) =>
 		{
@@ -362,7 +378,9 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 			e.preventDefault();
 			return false;
 		};
-		document.addEventListener('copy', copyFunc);
+		document.addEventListener('copy', copyFunc);*/
+
+		if (this.proxyClip) this.proxyClip.install(this.container);
 	}
 
 	// change the size of the sketcher after instantiation
@@ -594,38 +612,31 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 		let cookies = new Cookies();
 		if (cookies.numMolecules() > 0) cookies.stashMolecule(mol);
 
-		this.performCopyText(mol.toString());
+		if (this.proxyClip) this.proxyClip.setString(mol.toString());
 	}
 
-	// copies exactly what the user asked for onto the clipboard
-	public performCopyText(txt:string):void
+	// perform a more surgical copy/cut operation
+	public performCopySelection(andCut:boolean):void
 	{
-		// now place it on the actual system clipboard
-		if (this.fakeTextArea == null)
-		{
-			this.fakeTextArea = document.createElement('textarea');
-			this.fakeTextArea.style.fontSize = '12pt';
-			this.fakeTextArea.style.border = '0';
-			this.fakeTextArea.style.padding = '0';
-			this.fakeTextArea.style.margin = '0';
-			this.fakeTextArea.style.position = 'fixed';
-			this.fakeTextArea.style['left'] = '-9999px';
-			this.fakeTextArea.style.top = (window.pageYOffset || document.documentElement.scrollTop) + 'px';
-			this.fakeTextArea.setAttribute('readonly', '');
-			document.body.appendChild(this.fakeTextArea);
-		}
-		this.fakeTextArea.value = txt;
-		this.fakeTextArea.select();
-
-		this.copyBusy = true;
-		document.execCommand('copy');
-		this.copyBusy = false;
+		new MoleculeActivity(this, andCut ? ActivityType.Cut : ActivityType.Copy, {}).execute();
 	}
 
-	// pasting from clipboard, initiated by the user via non-system commands: this can't just grab the system
+	// pasting from clipboard, initiated by the user via non-system commands: this can't necessarily grab the system
 	// clipboard, so have to get a bit more creative
 	public performPaste():void
 	{
+		// see if we have access to the system clipboard
+		if (this.proxyClip && this.proxyClip.canAlwaysGet())
+		{
+			let txt = this.proxyClip.getString();
+			if (txt != null)
+			{
+				let mol = MoleculeStream.readUnknown(txt);
+				if (mol) {this.pasteMolecule(mol); return;}
+			}
+		}
+
+		// otherwise raid the cookie jar
 		let cookies = new Cookies();
 		if (cookies.numMolecules() == 0)
 		{

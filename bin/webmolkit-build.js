@@ -10614,48 +10614,48 @@ var WebMolKit;
 (function (WebMolKit) {
     class DataSheetStream {
         static readXML(strXML) {
-            var xmlDoc = jQuery.parseXML(strXML);
+            let xmlDoc = new DOMParser().parseFromString(strXML, 'application/xml');
             if (xmlDoc == null)
                 return null;
-            var root = xmlDoc.documentElement;
+            let root = xmlDoc.documentElement;
             if (root == null)
                 return null;
-            var ds = new WebMolKit.DataSheet();
-            var summary = WebMolKit.findNode(root, 'Summary');
+            let ds = new WebMolKit.DataSheet();
+            let summary = WebMolKit.findNode(root, 'Summary');
             if (summary == null)
                 return null;
             ds.setTitle(WebMolKit.nodeText(WebMolKit.findNode(summary, 'Title')));
             ds.setDescription(WebMolKit.nodeText(WebMolKit.findNode(summary, 'Description')));
-            var extRoot = WebMolKit.findNode(root, 'Extension');
+            let extRoot = WebMolKit.findNode(root, 'Extension');
             if (extRoot != null) {
-                var extList = WebMolKit.findNodes(extRoot, 'Ext');
-                for (var n = 0; n < extList.length; n++) {
-                    var ext = extList[n];
+                let extList = WebMolKit.findNodes(extRoot, 'Ext');
+                for (let n = 0; n < extList.length; n++) {
+                    let ext = extList[n];
                     ds.appendExtension(ext.getAttribute("name"), ext.getAttribute("type"), WebMolKit.nodeText(ext));
                 }
             }
-            var header = WebMolKit.findNode(root, 'Header');
-            var numCols = parseInt(header.getAttribute("ncols")), numRows = parseInt(header.getAttribute("nrows"));
-            var colList = WebMolKit.findNodes(header, 'Column');
+            let header = WebMolKit.findNode(root, 'Header');
+            let numCols = parseInt(header.getAttribute("ncols")), numRows = parseInt(header.getAttribute("nrows"));
+            let colList = WebMolKit.findNodes(header, 'Column');
             if (colList.length != numCols)
                 return null;
-            for (var n = 0; n < numCols; n++) {
-                var col = colList[n];
-                var id = parseInt(col.getAttribute("id"));
+            for (let n = 0; n < numCols; n++) {
+                let col = colList[n];
+                let id = parseInt(col.getAttribute("id"));
                 if (id != n + 1)
                     return null;
                 ds.appendColumn(col.getAttribute("name"), col.getAttribute("type"), WebMolKit.nodeText(col));
             }
-            var row = WebMolKit.findNode(root, 'Content').firstElementChild;
-            var rowidx = 0;
+            let row = WebMolKit.findNode(root, 'Content').firstElementChild;
+            let rowidx = 0;
             while (row) {
                 if (parseInt(row.getAttribute("id")) != rowidx + 1)
                     return null;
                 ds.appendRow();
-                var col = row.firstElementChild;
+                let col = row.firstElementChild;
                 while (col) {
-                    var colidx = parseInt(col.getAttribute("id")) - 1;
-                    var ct = ds.colType(colidx), val = WebMolKit.nodeText(col);
+                    let colidx = parseInt(col.getAttribute("id")) - 1;
+                    let ct = ds.colType(colidx), val = WebMolKit.nodeText(col);
                     if (val == '') { }
                     else if (ct == WebMolKit.DataSheet.COLTYPE_MOLECULE)
                         ds.setObject(rowidx, colidx, val);
@@ -10678,47 +10678,47 @@ var WebMolKit;
             return ds;
         }
         static writeXML(ds) {
-            var xml = new DOMParser().parseFromString('<DataSheet/>', 'text/xml');
-            var summary = xml.createElement('Summary');
+            let xml = new DOMParser().parseFromString('<DataSheet/>', 'text/xml');
+            let summary = xml.createElement('Summary');
             xml.documentElement.appendChild(summary);
-            var title = xml.createElement('Title'), descr = xml.createElement('Description');
+            let title = xml.createElement('Title'), descr = xml.createElement('Description');
             summary.appendChild(title);
             title.appendChild(xml.createTextNode(ds.getTitle()));
             summary.appendChild(descr);
             descr.appendChild(xml.createCDATASection(ds.getDescription()));
-            var extension = xml.createElement('Extension');
+            let extension = xml.createElement('Extension');
             xml.documentElement.appendChild(extension);
-            for (var n = 0; n < ds.numExtensions; n++) {
-                var ext = xml.createElement('Ext');
+            for (let n = 0; n < ds.numExtensions; n++) {
+                let ext = xml.createElement('Ext');
                 extension.appendChild(ext);
                 ext.setAttribute('name', ds.getExtName(n));
                 ext.setAttribute('type', ds.getExtType(n));
                 ext.appendChild(xml.createCDATASection(ds.getExtData(n)));
             }
-            var header = xml.createElement('Header');
+            let header = xml.createElement('Header');
             xml.documentElement.appendChild(header);
             header.setAttribute('nrows', ds.numRows.toString());
             header.setAttribute('ncols', ds.numCols.toString());
-            for (var n = 0; n < ds.numCols; n++) {
-                var column = xml.createElement('Column');
+            for (let n = 0; n < ds.numCols; n++) {
+                let column = xml.createElement('Column');
                 header.appendChild(column);
                 column.setAttribute('id', (n + 1).toString());
                 column.setAttribute('name', ds.colName(n));
                 column.setAttribute('type', ds.colType(n));
                 column.appendChild(xml.createTextNode(ds.colDescr(n)));
             }
-            var content = xml.createElement('Content');
+            let content = xml.createElement('Content');
             xml.documentElement.appendChild(content);
-            for (var r = 0; r < ds.numRows; r++) {
-                var row = xml.createElement('Row');
+            for (let r = 0; r < ds.numRows; r++) {
+                let row = xml.createElement('Row');
                 row.setAttribute('id', (r + 1).toString());
                 content.appendChild(row);
-                for (var c = 0; c < ds.numCols; c++) {
-                    var cell = xml.createElement('Cell');
+                for (let c = 0; c < ds.numCols; c++) {
+                    let cell = xml.createElement('Cell');
                     cell.setAttribute('id', (c + 1).toString());
                     row.appendChild(cell);
-                    var ct = ds.colType(c);
-                    var txtNode = null;
+                    let ct = ds.colType(c);
+                    let txtNode = null;
                     if (ds.isNull(r, c)) { }
                     else if (ct == WebMolKit.DataSheet.COLTYPE_MOLECULE) {
                         let obj = ds.getObject(r, c);
@@ -19065,8 +19065,7 @@ var WebMolKit;
             this.templatePerms = null;
             this.currentPerm = 0;
             this.fusionBank = null;
-            this.copyBusy = false;
-            this.fakeTextArea = null;
+            this.proxyClip = null;
         }
         setSize(width, height) {
             this.width = width;
@@ -19098,6 +19097,18 @@ var WebMolKit;
             }
             else
                 this.autoScale();
+        }
+        defineClipboard(proxy) {
+            this.proxyClip = proxy;
+            proxy.copyEvent = () => {
+                return '!fnord';
+            };
+            proxy.pasteEvent = (proxy) => {
+                this.pasteText(proxy.getString());
+                return true;
+            };
+            if (this.container)
+                proxy.install(this.container);
         }
         defineMoleculeString(molsk, withAutoScale, withStashUndo) {
             this.defineMolecule(WebMolKit.Molecule.fromString(molsk), withAutoScale, withStashUndo);
@@ -19200,34 +19211,8 @@ var WebMolKit;
                 event.preventDefault();
                 this.dropInto(event.dataTransfer);
             });
-            let pasteFunc = (e) => {
-                if (!$.contains(document.documentElement, this.container[0])) {
-                    document.removeEventListener('paste', pasteFunc);
-                    return false;
-                }
-                let wnd = window;
-                if (wnd.clipboardData && wnd.clipboardData.getData)
-                    this.pasteText(wnd.clipboardData.getData('Text'));
-                else if (e.clipboardData && e.clipboardData.getData)
-                    this.pasteText(e.clipboardData.getData('text/plain'));
-                e.preventDefault();
-                return false;
-            };
-            document.addEventListener('paste', pasteFunc);
-            let copyFunc = (e) => {
-                if (this.copyBusy)
-                    return;
-                if (!$.contains(document.documentElement, this.container[0])) {
-                    document.removeEventListener('copy', copyFunc);
-                    return false;
-                }
-                document.removeEventListener('copy', copyFunc);
-                this.performCopy();
-                document.addEventListener('copy', copyFunc);
-                e.preventDefault();
-                return false;
-            };
-            document.addEventListener('copy', copyFunc);
+            if (this.proxyClip)
+                this.proxyClip.install(this.container);
         }
         changeSize(width, height) {
             if (width == this.width && height == this.height)
@@ -19401,28 +19386,20 @@ var WebMolKit;
             let cookies = new WebMolKit.Cookies();
             if (cookies.numMolecules() > 0)
                 cookies.stashMolecule(mol);
-            this.performCopyText(mol.toString());
-        }
-        performCopyText(txt) {
-            if (this.fakeTextArea == null) {
-                this.fakeTextArea = document.createElement('textarea');
-                this.fakeTextArea.style.fontSize = '12pt';
-                this.fakeTextArea.style.border = '0';
-                this.fakeTextArea.style.padding = '0';
-                this.fakeTextArea.style.margin = '0';
-                this.fakeTextArea.style.position = 'fixed';
-                this.fakeTextArea.style['left'] = '-9999px';
-                this.fakeTextArea.style.top = (window.pageYOffset || document.documentElement.scrollTop) + 'px';
-                this.fakeTextArea.setAttribute('readonly', '');
-                document.body.appendChild(this.fakeTextArea);
-            }
-            this.fakeTextArea.value = txt;
-            this.fakeTextArea.select();
-            this.copyBusy = true;
-            document.execCommand('copy');
-            this.copyBusy = false;
+            if (this.proxyClip)
+                this.proxyClip.setString(mol.toString());
         }
         performPaste() {
+            if (this.proxyClip && this.proxyClip.canAlwaysGet()) {
+                let txt = this.proxyClip.getString();
+                if (txt != null) {
+                    let mol = WebMolKit.MoleculeStream.readUnknown(txt);
+                    if (mol) {
+                        this.pasteMolecule(mol);
+                        return;
+                    }
+                }
+            }
             let cookies = new WebMolKit.Cookies();
             if (cookies.numMolecules() == 0) {
                 if (WebMolKit.MolUtil.notBlank(globalMoleculeClipboard))
@@ -21965,6 +21942,105 @@ var WebMolKit;
 })(WebMolKit || (WebMolKit = {}));
 var WebMolKit;
 (function (WebMolKit) {
+    class ClipboardProxy {
+        constructor() {
+            this.copyEvent = null;
+            this.pasteEvent = null;
+        }
+        install(container) { }
+        uninstall() { }
+        getString() { return null; }
+        setString(str) { }
+        canAlwaysGet() { return false; }
+    }
+    WebMolKit.ClipboardProxy = ClipboardProxy;
+    class ClipboardProxyWeb extends ClipboardProxy {
+        constructor() {
+            super(...arguments);
+            this.lastContent = null;
+            this.busy = false;
+            this.copyFunc = null;
+            this.pasteFunc = null;
+            this.fakeTextArea = null;
+        }
+        install(container) {
+            if (!container)
+                throw 'ClipboardProxy: need a container to install to';
+            this.copyFunc = (e) => {
+                if (this.busy)
+                    return;
+                let content = this.copyEvent();
+                if (content == null)
+                    return;
+                if (!$.contains(document.documentElement, container[0])) {
+                    this.uninstall();
+                    return false;
+                }
+                document.removeEventListener('copy', this.copyFunc);
+                this.performCopy(content);
+                document.addEventListener('copy', this.copyFunc);
+                e.preventDefault();
+                return false;
+            };
+            document.addEventListener('copy', this.copyFunc);
+            this.pasteFunc = (e) => {
+                if (!$.contains(document.documentElement, container[0])) {
+                    this.uninstall();
+                    return false;
+                }
+                let wnd = window;
+                this.lastContent = null;
+                if (wnd.clipboardData && wnd.clipboardData.getData)
+                    this.lastContent = wnd.clipboardData.getData('Text');
+                else if (e.clipboardData && e.clipboardData.getData)
+                    this.lastContent = e.clipboardData.getData('text/plain');
+                this.pasteEvent(this);
+                this.lastContent = null;
+                e.preventDefault();
+                return false;
+            };
+            document.addEventListener('paste', this.pasteFunc);
+        }
+        uninstall() {
+            if (this.copyFunc) {
+                document.removeEventListener('copy', this.copyFunc);
+                this.copyFunc = null;
+            }
+            if (this.pasteFunc) {
+                document.removeEventListener('paste', this.pasteFunc);
+                this.pasteFunc = null;
+            }
+        }
+        getString() {
+            return this.lastContent;
+        }
+        setString(str) {
+            this.performCopy(str);
+        }
+        performCopy(content) {
+            if (this.fakeTextArea == null) {
+                this.fakeTextArea = document.createElement('textarea');
+                this.fakeTextArea.style.fontSize = '12pt';
+                this.fakeTextArea.style.border = '0';
+                this.fakeTextArea.style.padding = '0';
+                this.fakeTextArea.style.margin = '0';
+                this.fakeTextArea.style.position = 'fixed';
+                this.fakeTextArea.style['left'] = '-9999px';
+                this.fakeTextArea.style.top = (window.pageYOffset || document.documentElement.scrollTop) + 'px';
+                this.fakeTextArea.setAttribute('readonly', '');
+                document.body.appendChild(this.fakeTextArea);
+            }
+            this.fakeTextArea.value = content;
+            this.fakeTextArea.select();
+            this.busy = true;
+            document.execCommand('copy');
+            this.busy = false;
+        }
+    }
+    WebMolKit.ClipboardProxyWeb = ClipboardProxyWeb;
+})(WebMolKit || (WebMolKit = {}));
+var WebMolKit;
+(function (WebMolKit) {
     class EmbedChemistry extends WebMolKit.Widget {
         constructor() {
             super();
@@ -23259,6 +23335,7 @@ var WebMolKit;
         constructor(type) {
             super();
             this.type = type;
+            this.onChange = null;
             this.highlight = 0;
             this.pressed = 0;
             this.mol1 = new WebMolKit.Molecule();
@@ -23269,7 +23346,6 @@ var WebMolKit;
             this.arrowWidth = 30;
             this.HPADDING = 4;
             this.VPADDING = 2;
-            this.COLCYCLE = ['#89A54E', '#71588F', '#4198AF', '#DB843D', '#93A9CF', '#D19392', '#4572A7', '#AA4643'];
             this.emptyMsg1 = null;
             this.emptyMsg2 = null;
         }
@@ -23303,7 +23379,7 @@ var WebMolKit;
                 div.css('width', (2 * molw + arrow + 4 * hpad) + 'px');
             div.css('height', (height + 2 * vpad) + 'px');
             div.css('position', 'relative');
-            function renderSolid(col1, col2, style) {
+            let renderSolid = (col1, col2, style) => {
                 let node = WebMolKit.newElement(div, 'canvas', { 'width': molw * density, 'height': height * density, 'style': style });
                 node.style.width = molw + 'px';
                 node.style.height = height + 'px';
@@ -23315,8 +23391,8 @@ var WebMolKit;
                 ctx.fillStyle = grad;
                 ctx.fillRect(0, 0, molw, height);
                 return node;
-            }
-            function renderBorder(lw, style) {
+            };
+            let renderBorder = (lw, style) => {
                 let node = WebMolKit.newElement(div, 'canvas', { 'width': molw * density, 'height': height * density, 'style': style });
                 node.style.width = molw + 'px';
                 node.style.height = height + 'px';
@@ -23326,8 +23402,8 @@ var WebMolKit;
                 ctx.lineWidth = lw;
                 ctx.strokeRect(0.5 * lw, 0.5 * lw, molw - lw, height - lw);
                 return node;
-            }
-            function renderArrow(style) {
+            };
+            let renderArrow = (style) => {
                 let node = WebMolKit.newElement(div, 'canvas', { 'width': arrow * density, 'height': height * density, 'style': style });
                 node.style.width = arrow + 'px';
                 node.style.height = height + 'px';
@@ -23347,8 +23423,8 @@ var WebMolKit;
                 ctx.fillStyle = 'black';
                 ctx.fill();
                 return node;
-            }
-            function renderOutlineArrow(style, col) {
+            };
+            let renderOutlineArrow = (style, col) => {
                 let node = WebMolKit.newElement(div, 'canvas', { 'width': arrow * density, 'height': height * density, 'style': style });
                 node.style.width = arrow + 'px';
                 node.style.height = height + 'px';
@@ -23359,7 +23435,7 @@ var WebMolKit;
                 ctx.fillStyle = col;
                 ctx.fill(path);
                 return node;
-            }
+            };
             let styleMol1Pos = 'position: absolute; left: ' + hpad + 'px; top: ' + vpad + 'px;';
             let styleMol1 = styleMol1Pos + 'pointer-events: none;';
             this.normalMol1 = renderSolid('#FFFFFF', '#D0D0D0', styleMol1);
@@ -23433,6 +23509,8 @@ var WebMolKit;
                 else
                     this.setMolecule2(mol);
                 e.preventDefault();
+                if (this.onChange)
+                    this.onChange(this);
                 return false;
             });
             this.drawnMol1.addEventListener('dragover', (event) => {
@@ -23563,6 +23641,8 @@ var WebMolKit;
             let cookies = new WebMolKit.Cookies();
             if (cookies.numMolecules() > 0)
                 cookies.stashMolecule(this.mol1);
+            if (this.onChange)
+                this.onChange(this);
         }
         saveMolecule2(dlg) {
             this.mol2 = dlg.getMolecule();
@@ -23571,6 +23651,8 @@ var WebMolKit;
             let cookies = new WebMolKit.Cookies();
             if (cookies.numMolecules() > 0)
                 cookies.stashMolecule(this.mol2);
+            if (this.onChange)
+                this.onChange(this);
         }
         saveMapping(dlg) {
             this.mol1 = dlg.getMolecule1();
@@ -23592,6 +23674,8 @@ var WebMolKit;
                                 this.setMolecule1(mol);
                             else
                                 this.setMolecule2(mol);
+                            if (this.onChange)
+                                this.onChange(this);
                         }
                         else
                             console.log('Dragged data is not a SketchEl molecule: ' + str);
@@ -23611,6 +23695,8 @@ var WebMolKit;
                                     this.setMolecule1(mol);
                                 else
                                     this.setMolecule2(mol);
+                                if (this.onChange)
+                                    this.onChange(this);
                             }
                             else
                                 console.log('Dragged file is not a recognised molecule: ' + str);

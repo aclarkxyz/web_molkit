@@ -22,16 +22,16 @@ namespace WebMolKit /* BOF */ {
 
 export class EditCompound extends Dialog
 {
-	btnClear:JQuery;
-	btnPaste:JQuery;
-	btnCopy:JQuery;
-	btnSave:JQuery;
-	sketcher:Sketcher;
+	private btnClear:JQuery;
+	private btnPaste:JQuery;
+	private btnCopy:JQuery;
+	private btnSave:JQuery;
+	private sketcher = new Sketcher();
 	
-	fakeTextArea:HTMLTextAreaElement = null; // for temporarily bogarting the clipboard
-	
-	public callbackSave:(source?:EditCompound) => void = null;
-		
+	private callbackSave:(source?:EditCompound) => void = null;
+
+	// ------------ public methods ------------
+
 	constructor(private mol:Molecule)
 	{
 		super();
@@ -48,6 +48,11 @@ export class EditCompound extends Dialog
 
 	public getMolecule():Molecule {return this.sketcher.getMolecule();}
 
+	public defineClipboard(proxy:ClipboardProxy):void
+	{
+		this.sketcher.defineClipboard(proxy);
+	}	
+
 	// builds the dialog content
 	protected populate():void
 	{		
@@ -58,7 +63,7 @@ export class EditCompound extends Dialog
 
 		buttons.append(' ');
         this.btnCopy = $('<button class="wmk-button wmk-button-default">Copy</button>').appendTo(buttons);
-		this.btnCopy.click(() => this.copyMolecule());
+		this.btnCopy.click(() => this.actionCopy());
 
 		buttons.append(' ');
 		buttons.append(this.btnClose); // easy way to reorder
@@ -72,23 +77,34 @@ export class EditCompound extends Dialog
 		skdiv.css('width', skw + 'px');
 		skdiv.css('height', skh + 'px');
 		
-		this.sketcher = new Sketcher();
 		this.sketcher.setSize(skw, skh);
 		this.sketcher.defineMolecule(this.mol);
 		this.sketcher.setup(() => this.sketcher.render(skdiv));
 	}
-	
-	private pasteMolecule():void
+
+	public actionCopy():void
 	{
-		//this.installFake();
-		// (not sure how to make this work: can trap the Ctrl/Cmd-V keystroke and intercept, but grabbing clipboard arbitrarily
-		// is a security problem)
+		this.sketcher.performCopySelection(false);
 	}
-	
-	private copyMolecule():void
+	public actionCut():void
 	{
-		this.sketcher.performCopy();
+		this.sketcher.performCopySelection(true);
 	}
+	public actionPaste():void
+	{
+		this.sketcher.performPaste();
+	}
+	public actionUndo():void 
+	{
+		this.sketcher.performUndo();
+	}
+	public actionRedo():void
+	{
+		this.sketcher.performRedo();
+	}
+
+	// ------------ private methods ------------
+		
 }
 
 /* EOF */ }

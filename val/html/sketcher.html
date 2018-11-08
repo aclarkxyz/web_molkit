@@ -47,14 +47,16 @@ O=-1.7490,4.8000;0,0,i0
 	var url = window.location.href.substring(0, window.location.href.lastIndexOf('/'));
 	wmk.initWebMolKit(url + '../../../res');
 	var mol = wmk.Molecule.fromString($('#moldata').text());
-	var sketcher = new wmk.Sketcher(null);
+	var sketcher = new wmk.Sketcher();
 	sketcher.setSize(800, 700);
 	sketcher.defineMolecule(mol);
+	let proxy = new wmk.ClipboardProxyWeb();
+	sketcher.defineClipboard(proxy);
 	sketcher.setup(() => sketcher.render($('#sketcher')));
 
 	function demoMolecule() {sketcher.defineMolecule(mol);}
 	function copySketchEl() {sketcher.performCopy();}
-	function copyMDLMOL() {sketcher.performCopyText(new wmk.MDLMOLWriter(sketcher.getMolecule()).write());}
+	function copyMDLMOL() {proxy.setString(new wmk.MDLMOLWriter(sketcher.getMolecule()).write());}
 </script>
 
 </body>
