@@ -197,6 +197,7 @@ export class ValidationHeadlessMolecule extends Validation
 
 			let mol = ds.getMolecule(n, 'Molecule');
 			let mdl = new MDLMOLWriter(mol).write();
+
 			let alt = new MDLMOLReader(mdl).parse();
 			this.assert(mol.numAtoms == alt.numAtoms && mol.numBonds == alt.numBonds, strRow + ', atom/bond count differs');
 
@@ -227,6 +228,14 @@ export class ValidationHeadlessMolecule extends Validation
 				console.log('Parsed back molecule:\n' + alt);
 			}
 			this.assert(problems.length == 0, problems.join('; '));
+
+			let wantMDL = ds.getString(n, 'Molfile')
+			if (mdl.trim() != orBlank(wantMDL).trim())
+			{
+				if (wantMDL) console.log('Molfile missing from validation data.'); else console.log('Desired Molfile:\n' + wantMDL);
+				console.log('Got Molfile:\n' + mdl);
+				this.assert(false, strRow + ': initial Molfile invalid');
+			}
 		}
 	}
 }

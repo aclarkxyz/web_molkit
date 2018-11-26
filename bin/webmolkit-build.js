@@ -7035,14 +7035,14 @@ var WebMolKit;
             let options = WebMolKit.MDLMOL_VALENCE[el];
             if (options == null && hyd == 0)
                 return 0;
-            if (options && options.length == 1 && options[0] == hyd)
-                return 0;
             let chg = mol.atomCharge(atom);
             let chgmod = (el == 'C' || el == 'H') ? Math.abs(chg) : el == 'B' ? -Math.abs(chg) : -chg;
             let bondSum = 0;
             for (let b of mol.atomAdjBonds(atom))
                 bondSum += mol.bondOrder(b);
             let nativeVal = chgmod + mol.atomUnpaired(atom) + hyd + bondSum;
+            if (options && options[0] == nativeVal)
+                return 0;
             let val = nativeVal - chgmod;
             return val <= 0 || val > 14 ? zeroVal : val;
         }
@@ -15830,6 +15830,105 @@ var WebMolKit;
 })(WebMolKit || (WebMolKit = {}));
 var WebMolKit;
 (function (WebMolKit) {
+    class ClipboardProxy {
+        constructor() {
+            this.copyEvent = null;
+            this.pasteEvent = null;
+        }
+        install(container) { }
+        uninstall() { }
+        getString() { return null; }
+        setString(str) { }
+        canAlwaysGet() { return false; }
+    }
+    WebMolKit.ClipboardProxy = ClipboardProxy;
+    class ClipboardProxyWeb extends ClipboardProxy {
+        constructor() {
+            super(...arguments);
+            this.lastContent = null;
+            this.busy = false;
+            this.copyFunc = null;
+            this.pasteFunc = null;
+            this.fakeTextArea = null;
+        }
+        install(container) {
+            if (!container)
+                throw 'ClipboardProxy: need a container to install to';
+            this.copyFunc = (e) => {
+                if (this.busy)
+                    return;
+                let content = this.copyEvent();
+                if (content == null)
+                    return;
+                if (!$.contains(document.documentElement, container[0])) {
+                    this.uninstall();
+                    return false;
+                }
+                document.removeEventListener('copy', this.copyFunc);
+                this.performCopy(content);
+                document.addEventListener('copy', this.copyFunc);
+                e.preventDefault();
+                return false;
+            };
+            document.addEventListener('copy', this.copyFunc);
+            this.pasteFunc = (e) => {
+                if (!$.contains(document.documentElement, container[0])) {
+                    this.uninstall();
+                    return false;
+                }
+                let wnd = window;
+                this.lastContent = null;
+                if (wnd.clipboardData && wnd.clipboardData.getData)
+                    this.lastContent = wnd.clipboardData.getData('Text');
+                else if (e.clipboardData && e.clipboardData.getData)
+                    this.lastContent = e.clipboardData.getData('text/plain');
+                this.pasteEvent(this);
+                this.lastContent = null;
+                e.preventDefault();
+                return false;
+            };
+            document.addEventListener('paste', this.pasteFunc);
+        }
+        uninstall() {
+            if (this.copyFunc) {
+                document.removeEventListener('copy', this.copyFunc);
+                this.copyFunc = null;
+            }
+            if (this.pasteFunc) {
+                document.removeEventListener('paste', this.pasteFunc);
+                this.pasteFunc = null;
+            }
+        }
+        getString() {
+            return this.lastContent;
+        }
+        setString(str) {
+            this.performCopy(str);
+        }
+        performCopy(content) {
+            if (this.fakeTextArea == null) {
+                this.fakeTextArea = document.createElement('textarea');
+                this.fakeTextArea.style.fontSize = '12pt';
+                this.fakeTextArea.style.border = '0';
+                this.fakeTextArea.style.padding = '0';
+                this.fakeTextArea.style.margin = '0';
+                this.fakeTextArea.style.position = 'fixed';
+                this.fakeTextArea.style['left'] = '-9999px';
+                this.fakeTextArea.style.top = (window.pageYOffset || document.documentElement.scrollTop) + 'px';
+                this.fakeTextArea.setAttribute('readonly', '');
+                document.body.appendChild(this.fakeTextArea);
+            }
+            this.fakeTextArea.value = content;
+            this.fakeTextArea.select();
+            this.busy = true;
+            document.execCommand('copy');
+            this.busy = false;
+        }
+    }
+    WebMolKit.ClipboardProxyWeb = ClipboardProxyWeb;
+})(WebMolKit || (WebMolKit = {}));
+var WebMolKit;
+(function (WebMolKit) {
     class FusionPermutation {
         constructor() {
             this.attdist = 0;
@@ -19101,7 +19200,7 @@ var WebMolKit;
         defineClipboard(proxy) {
             this.proxyClip = proxy;
             proxy.copyEvent = () => {
-                return '!fnord';
+                return this.getMolecule.toString();
             };
             proxy.pasteEvent = (proxy) => {
                 this.pasteText(proxy.getString());
@@ -19388,6 +19487,9 @@ var WebMolKit;
                 cookies.stashMolecule(mol);
             if (this.proxyClip)
                 this.proxyClip.setString(mol.toString());
+        }
+        performCopySelection(andCut) {
+            new WebMolKit.MoleculeActivity(this, andCut ? WebMolKit.ActivityType.Cut : WebMolKit.ActivityType.Copy, {}).execute();
         }
         performPaste() {
             if (this.proxyClip && this.proxyClip.canAlwaysGet()) {
@@ -20591,7 +20693,7 @@ var WebMolKit;
         constructor(mol) {
             super();
             this.mol = mol;
-            this.fakeTextArea = null;
+            this.sketcher = new WebMolKit.Sketcher();
             this.callbackSave = null;
             this.title = 'Edit Compound';
             this.minPortionWidth = 20;
@@ -20601,13 +20703,16 @@ var WebMolKit;
             this.callbackSave = callback;
         }
         getMolecule() { return this.sketcher.getMolecule(); }
+        defineClipboard(proxy) {
+            this.sketcher.defineClipboard(proxy);
+        }
         populate() {
             let buttons = this.buttons(), body = this.body();
             this.btnClear = $('<button class="wmk-button wmk-button-default">Clear</button>').appendTo(buttons);
             this.btnClear.click(() => this.sketcher.clearMolecule());
             buttons.append(' ');
             this.btnCopy = $('<button class="wmk-button wmk-button-default">Copy</button>').appendTo(buttons);
-            this.btnCopy.click(() => this.copyMolecule());
+            this.btnCopy.click(() => this.actionCopy());
             buttons.append(' ');
             buttons.append(this.btnClose);
             buttons.append(' ');
@@ -20618,15 +20723,24 @@ var WebMolKit;
             let skdiv = $('<div></div>').appendTo(this.body());
             skdiv.css('width', skw + 'px');
             skdiv.css('height', skh + 'px');
-            this.sketcher = new WebMolKit.Sketcher();
             this.sketcher.setSize(skw, skh);
             this.sketcher.defineMolecule(this.mol);
             this.sketcher.setup(() => this.sketcher.render(skdiv));
         }
-        pasteMolecule() {
+        actionCopy() {
+            this.sketcher.performCopySelection(false);
         }
-        copyMolecule() {
-            this.sketcher.performCopy();
+        actionCut() {
+            this.sketcher.performCopySelection(true);
+        }
+        actionPaste() {
+            this.sketcher.performPaste();
+        }
+        actionUndo() {
+            this.sketcher.performUndo();
+        }
+        actionRedo() {
+            this.sketcher.performRedo();
         }
     }
     WebMolKit.EditCompound = EditCompound;
@@ -21939,105 +22053,6 @@ var WebMolKit;
         }
     }
     WebMolKit.CircleButton = CircleButton;
-})(WebMolKit || (WebMolKit = {}));
-var WebMolKit;
-(function (WebMolKit) {
-    class ClipboardProxy {
-        constructor() {
-            this.copyEvent = null;
-            this.pasteEvent = null;
-        }
-        install(container) { }
-        uninstall() { }
-        getString() { return null; }
-        setString(str) { }
-        canAlwaysGet() { return false; }
-    }
-    WebMolKit.ClipboardProxy = ClipboardProxy;
-    class ClipboardProxyWeb extends ClipboardProxy {
-        constructor() {
-            super(...arguments);
-            this.lastContent = null;
-            this.busy = false;
-            this.copyFunc = null;
-            this.pasteFunc = null;
-            this.fakeTextArea = null;
-        }
-        install(container) {
-            if (!container)
-                throw 'ClipboardProxy: need a container to install to';
-            this.copyFunc = (e) => {
-                if (this.busy)
-                    return;
-                let content = this.copyEvent();
-                if (content == null)
-                    return;
-                if (!$.contains(document.documentElement, container[0])) {
-                    this.uninstall();
-                    return false;
-                }
-                document.removeEventListener('copy', this.copyFunc);
-                this.performCopy(content);
-                document.addEventListener('copy', this.copyFunc);
-                e.preventDefault();
-                return false;
-            };
-            document.addEventListener('copy', this.copyFunc);
-            this.pasteFunc = (e) => {
-                if (!$.contains(document.documentElement, container[0])) {
-                    this.uninstall();
-                    return false;
-                }
-                let wnd = window;
-                this.lastContent = null;
-                if (wnd.clipboardData && wnd.clipboardData.getData)
-                    this.lastContent = wnd.clipboardData.getData('Text');
-                else if (e.clipboardData && e.clipboardData.getData)
-                    this.lastContent = e.clipboardData.getData('text/plain');
-                this.pasteEvent(this);
-                this.lastContent = null;
-                e.preventDefault();
-                return false;
-            };
-            document.addEventListener('paste', this.pasteFunc);
-        }
-        uninstall() {
-            if (this.copyFunc) {
-                document.removeEventListener('copy', this.copyFunc);
-                this.copyFunc = null;
-            }
-            if (this.pasteFunc) {
-                document.removeEventListener('paste', this.pasteFunc);
-                this.pasteFunc = null;
-            }
-        }
-        getString() {
-            return this.lastContent;
-        }
-        setString(str) {
-            this.performCopy(str);
-        }
-        performCopy(content) {
-            if (this.fakeTextArea == null) {
-                this.fakeTextArea = document.createElement('textarea');
-                this.fakeTextArea.style.fontSize = '12pt';
-                this.fakeTextArea.style.border = '0';
-                this.fakeTextArea.style.padding = '0';
-                this.fakeTextArea.style.margin = '0';
-                this.fakeTextArea.style.position = 'fixed';
-                this.fakeTextArea.style['left'] = '-9999px';
-                this.fakeTextArea.style.top = (window.pageYOffset || document.documentElement.scrollTop) + 'px';
-                this.fakeTextArea.setAttribute('readonly', '');
-                document.body.appendChild(this.fakeTextArea);
-            }
-            this.fakeTextArea.value = content;
-            this.fakeTextArea.select();
-            this.busy = true;
-            document.execCommand('copy');
-            this.busy = false;
-        }
-    }
-    WebMolKit.ClipboardProxyWeb = ClipboardProxyWeb;
 })(WebMolKit || (WebMolKit = {}));
 var WebMolKit;
 (function (WebMolKit) {
@@ -24227,8 +24242,17 @@ var WebMolKit;
             const ds = this.dsRoundtrip;
             for (let n = 0; n < ds.numRows; n++) {
                 let strRow = 'row#' + (n + 1);
-                let mol = ds.getMolecule(n, 'Molecule');
+                let mol = ds.getMolecule(n, 'Molecule'), wantMDL = ds.getString(n, 'Molfile');
+                console.log('--' + wantMDL.length + '--' + wantMDL);
                 let mdl = new WebMolKit.MDLMOLWriter(mol).write();
+                if (mdl.trim() != WebMolKit.orBlank(wantMDL).trim()) {
+                    if (wantMDL)
+                        console.log('Molfile missing from validation data.');
+                    else
+                        console.log('Desired Molfile:\n' + wantMDL);
+                    console.log('Got Molfile:\n' + mdl);
+                    this.assert(false, 'initial Molfile invalid');
+                }
                 let alt = new WebMolKit.MDLMOLReader(mdl).parse();
                 this.assert(mol.numAtoms == alt.numAtoms && mol.numBonds == alt.numBonds, strRow + ', atom/bond count differs');
                 let problems = [];
