@@ -1234,7 +1234,7 @@ export class ArrangeMolecule
 	{
 		let font = FontData.main;
 		const SSFRACT = 0.6;
-		const GLYPH_H = 'H'.charCodeAt(0) - font.GLYPH_MIN;
+		const GLYPH_H = font.getIndex('H');
 
 		let a = this.points[idx];
 		let emscale = a.fsz * font.INV_UNITS_PER_EM;
@@ -1246,15 +1246,15 @@ export class ArrangeMolecule
 		let firstEMW = font.HORIZ_ADV_X[GLYPH_H], emw = firstEMW;
 		for (let n = 0; n < sub.length; n++)
 		{
-			let g = sub.charCodeAt(n) - font.GLYPH_MIN;
+			let ch = sub.charAt(n), g = font.getIndex(ch);
 			if (n == 0)
 			{
-				emw += font.getKerning(GLYPH_H, g);
+				emw += font.getKerning('H', ch);
 			}
 			else
 			{
-				let gp = sub.charCodeAt(n - 1) - font.GLYPH_MIN;
-				emw += font.getKerning(gp, g) * SSFRACT;
+				let chp = sub.charAt(n - 1);
+				emw += font.getKerning(chp, ch) * SSFRACT;
 			}
 
 			let extraX = font.getOutlineX(g), extraY = font.getOutlineY(g);
@@ -1454,8 +1454,9 @@ export class ArrangeMolecule
 		{
 			for (let n = 0; n < a.text.length; n++)
 			{
-				let i = a.text.charCodeAt(n) - font.GLYPH_MIN;
-				if (i >= 0 && i < font.GLYPH_COUNT)
+				let ch1 = a.text.charAt(n);
+				let i = font.getIndex(ch1);
+				if (i >= 0)
 				{
 					if (emw == 0)
 					{
@@ -1480,13 +1481,8 @@ export class ArrangeMolecule
 				
 				if (n < a.text.length - 1)
 				{
-					let j = a.text.charCodeAt(n + 1) - font.GLYPH_MIN;
-					for (let k = 0; k < font.KERN_K.length; k++)
-						if ((font.KERN_G1[k] == i && font.KERN_G2[k] == j) || (font.KERN_G1[k] == j && font.KERN_G2[k] == i))
-					{
-						emw += font.KERN_K[k];
-						break;
-					}
+					let ch2 = a.text.charAt(n + 1);
+					emw += font.getKerning(ch1, ch2);
 				}
 			}
 		}

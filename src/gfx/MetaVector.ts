@@ -59,9 +59,9 @@ export class MetaVector
 	
 	public static NOCOLOUR = -1;
 
-	types:any[] = [];
-	prims:any[] = [];
-	typeObj:any[];
+	private types:any[] = [];
+	private prims:any[] = [];
+	private typeObj:any[];
 	public width:number = 0;
 	public height:number = 0;
 	public offsetX = 0;
@@ -69,11 +69,12 @@ export class MetaVector
 	public scale = 1;
 	public density = 1;
 	
-	charMask:boolean[];
-	lowX:number = null;
-	lowY:number = null;
-	highX:number = null;
-	highY:number = null;
+	private charMask:boolean[];
+	private charMissing = false;
+	private lowX:number = null;
+	private lowY:number = null;
+	private highX:number = null;
+	private highY:number = null;
 
 	// ------------ public methods ------------
 
@@ -81,7 +82,7 @@ export class MetaVector
 	{
 		const font = FontData.main;
 
-		this.charMask = Vec.booleanArray(false, font.GLYPH_COUNT);
+		this.charMask = Vec.booleanArray(false, font.UNICODE.length);
 
 		if (vec != null)
 		{
@@ -99,8 +100,8 @@ export class MetaVector
 				let txt = p[4];
 				for (let n = 0; n < txt.length; n++)
 				{
-					let i = txt.charCodeAt(n) - font.GLYPH_MIN;
-					if (i >= 0 && i < font.GLYPH_COUNT) this.charMask[i] = true;
+					let i = font.getIndex(txt.charAt(n));
+					if (i >= 0) this.charMask[i] = true; else this.charMissing = true;
 				} 
 			}
 		}
@@ -172,8 +173,8 @@ export class MetaVector
 		const font = FontData.main;
 		for (let n = 0; n < txt.length; n++)
 		{
-			let i = txt.charCodeAt(n);
-			if (i >= font.GLYPH_MIN && i <= font.GLYPH_MAX) this.charMask[i - font.GLYPH_MIN] = true;
+			let i = font.getIndex(txt.charAt(n));
+			if (i >= 0) this.charMask[i] = true; else this.charMissing = true;
 		}
 
 		let metrics = font.measureText(txt, size);
@@ -193,8 +194,9 @@ export class MetaVector
 		let dx = 0;
 		for (let n = 0; n < txt.length; n++)
 		{
-			let i = txt.charCodeAt(n) - font.GLYPH_MIN;
-			if (i >= 0 && i < font.GLYPH_COUNT)
+			let ch = txt.charAt(n);
+			let i = font.getIndex(ch);
+			if (i >= 0)
 			{
 				let outlineX = font.getOutlineX(i), outlineY = font.getOutlineY(i);
 				x1 = Math.min(x1, dx + Vec.min(outlineX));
@@ -203,12 +205,7 @@ export class MetaVector
 				y2 = Math.max(y2, -Vec.min(outlineY));
 
 				dx += font.HORIZ_ADV_X[i];
-
-				if (n < txt.length - 1)
-				{
-					let j = txt.charCodeAt(n + 1) - font.GLYPH_MIN;
-					dx += font.getKerning(i, j);
-				}
+				if (n < txt.length - 1) dx += font.getKerning(ch, txt.charAt(n + 1));
 			}
 			else dx += font.MISSING_HORZ;
 		}
@@ -417,7 +414,14 @@ export class MetaVector
 
 		const font = FontData.main;
 		let defs = $('<defs></defs>').appendTo(svg);
-		for (let n = 0; n < font.GLYPH_COUNT; n++) if (this.charMask[n])
+		if (this.charMissing)
+		{
+			let path = $('<path></path>').appendTo(defs);
+			path.attr('id', 'missing');
+			path.attr('d', font.MISSING_DATA);
+			path.attr('edge', 'none');
+		}
+		for (let n = 0; n < font.UNICODE.length; n++) if (this.charMask[n])
 		{
 			let path = $('<path></path>').appendTo(defs);
 			path.attr('id', 'char' + n);
@@ -645,14 +649,16 @@ export class MetaVector
 		let dx = 0;
 		for (let n = 0; n < txt.length; n++)
 		{
-			let i = txt.charCodeAt(n) - 32;
-			if (i < 0 || i >= 96)
+			let ch = txt.charAt(n);
+			let i = font.getIndex(ch);
+			let path:Path2D = null;
+			if (i < 0)
 			{
 				dx += font.MISSING_HORZ;
-				continue;
+				path = font.getMissingPath();
 			}
+			else path = font.getGlyphPath(i);
 
-			let path = font.getGlyphPath(i);
 			if (path)
 			{
 				ctx.save();
@@ -664,11 +670,7 @@ export class MetaVector
 			}
 			
 			dx += font.HORIZ_ADV_X[i];
-			if (n < txt.length - 1)
-			{
-				let j = txt.charCodeAt(n + 1) - 32;
-				dx += font.getKerning(i, j);
-			}
+			if (n < txt.length - 1) font.getKerning(ch, txt.charAt(n + 1));
 		}
 	}
 
@@ -926,20 +928,18 @@ export class MetaVector
 		let dx = 0;
 		for (let n = 0; n < txt.length; n++)
 		{
-			let i = txt.charCodeAt(n) - font.GLYPH_MIN;
-			
-			if (i >= 0 && i < font.GLYPH_COUNT)
-			{
-				let use = $('<use></use>').appendTo(gscale);
-				use.attr('xlink:href', '#char' + i);
-				use.attr('x', dx);
+			let ch = txt.charAt(n);
+			let i = font.getIndex(ch);
+						
+			let use = $('<use></use>').appendTo(gscale);
+			let ref = i < 0 ? '#missing' : '#char' + i;
+			use.attr('xlink:href', ref);
+			use.attr('x', dx);
 
+			if (i >= 0)
+			{
 				dx += font.HORIZ_ADV_X[i];
-				if (n < txt.length - 1)
-				{
-					let j = txt.charAt(n + 1) - font.GLYPH_MIN;
-					dx += font.getKerning(i, j);
-				}
+				if (n < txt.length - 1) dx += font.getKerning(ch, txt.charAt(n + 1));
 			}
 			else dx += font.MISSING_HORZ;
 		}
