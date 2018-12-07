@@ -101,7 +101,7 @@ export class XML
 		while (node != null)
 		{
 			if (node.nodeType == Node.ELEMENT_NODE && node.nodeName == tagName) return <Element>node;
-			node = node.nextSibling;
+			node = <any>node.nextSibling;
 		}
 		return null;
 	}
@@ -115,7 +115,7 @@ export class XML
 		while (node != null)
 		{
 			if (node.nodeType == Node.ELEMENT_NODE && node.nodeName === tagName) list.push(<Element>node);
-			node = node.nextSibling;
+			node = <any>node.nextSibling;
 		}
 		return list;
 	}
@@ -129,7 +129,7 @@ export class XML
 		while (node != null)
 		{
 			if (node.nodeType == Node.ELEMENT_NODE) list.push(<Element>node);
-			node = node.nextSibling;
+			node = <any>node.nextSibling;
 		}
 		return list;
 	}

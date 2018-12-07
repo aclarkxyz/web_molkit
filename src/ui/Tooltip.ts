@@ -147,7 +147,7 @@ export class Tooltip
 
         setPosition();
         pop.show();
-        window.setTimeout(setPosition(), 1);
+        window.setTimeout(() => setPosition(), 1);
     }
     
     public lower()

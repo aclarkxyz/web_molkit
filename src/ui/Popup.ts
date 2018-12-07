@@ -121,9 +121,9 @@ export class Popup
 		let pb = this.panelBoundary;
 
 		let maxW = Math.max(wx1, winW - wx2) - 4;
-		pb.css('max-width', maxW + '.px');
+		pb.css('max-width', maxW + 'px');
 
-        let setPosition = () =>
+        let setPosition = ():void =>
         {
             let popW = pb.width(), popH = pb.height();
             let posX = 0, posY = 0;
@@ -139,7 +139,7 @@ export class Popup
 
         setPosition();
         pb.show();
-        window.setTimeout(setPosition());
+        window.setTimeout(() => setPosition());
     }
 }
 

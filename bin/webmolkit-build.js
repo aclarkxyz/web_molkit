@@ -2441,6 +2441,7 @@ var WebMolKit;
             this.offsetY = 0;
             this.scale = 1;
             this.density = 1;
+            this.charMissing = false;
             this.lowX = null;
             this.lowY = null;
             this.highX = null;
@@ -2463,6 +2464,8 @@ var WebMolKit;
                             let i = font.getIndex(txt.charAt(n));
                             if (i >= 0)
                                 this.charMask[i] = true;
+                            else
+                                this.charMissing = true;
                         }
                     }
             }
@@ -2531,6 +2534,8 @@ var WebMolKit;
                 let i = font.getIndex(txt.charAt(n));
                 if (i >= 0)
                     this.charMask[i] = true;
+                else
+                    this.charMissing = true;
             }
             let metrics = font.measureText(txt, size);
             let bx = 0, by = 0;
@@ -2724,6 +2729,12 @@ var WebMolKit;
             this.typeObj = [];
             const font = WebMolKit.FontData.main;
             let defs = $('<defs></defs>').appendTo(svg);
+            if (this.charMissing) {
+                let path = $('<path></path>').appendTo(defs);
+                path.attr('id', 'missing');
+                path.attr('d', font.MISSING_DATA);
+                path.attr('edge', 'none');
+            }
             for (let n = 0; n < font.UNICODE.length; n++)
                 if (this.charMask[n]) {
                     let path = $('<path></path>').appendTo(defs);
@@ -3148,10 +3159,11 @@ var WebMolKit;
             for (let n = 0; n < txt.length; n++) {
                 let ch = txt.charAt(n);
                 let i = font.getIndex(ch);
+                let use = $('<use></use>').appendTo(gscale);
+                let ref = i < 0 ? '#missing' : '#char' + i;
+                use.attr('xlink:href', ref);
+                use.attr('x', dx);
                 if (i >= 0) {
-                    let use = $('<use></use>').appendTo(gscale);
-                    use.attr('xlink:href', '#char' + i);
-                    use.attr('x', dx);
                     dx += font.HORIZ_ADV_X[i];
                     if (n < txt.length - 1)
                         dx += font.getKerning(ch, txt.charAt(n + 1));
@@ -12252,7 +12264,7 @@ var WebMolKit;
             };
             setPosition();
             pop.show();
-            window.setTimeout(setPosition(), 1);
+            window.setTimeout(() => setPosition(), 1);
         }
         lower() {
             let pop = globalPopover;
@@ -23320,7 +23332,7 @@ var WebMolKit;
             let wx2 = wx1 + this.parent.width(), wy2 = wy1 + this.parent.height();
             let pb = this.panelBoundary;
             let maxW = Math.max(wx1, winW - wx2) - 4;
-            pb.css('max-width', maxW + '.px');
+            pb.css('max-width', maxW + 'px');
             let setPosition = () => {
                 let popW = pb.width(), popH = pb.height();
                 let posX = 0, posY = 0;
@@ -23339,7 +23351,7 @@ var WebMolKit;
             };
             setPosition();
             pb.show();
-            window.setTimeout(setPosition());
+            window.setTimeout(() => setPosition());
         }
     }
     WebMolKit.Popup = Popup;
@@ -24184,6 +24196,103 @@ var WebMolKit;
     SearchReactions.TYPE_SIMILARITY = 'similarity';
     SearchReactions.TYPE_RANDOM = 'random';
     WebMolKit.SearchReactions = SearchReactions;
+})(WebMolKit || (WebMolKit = {}));
+var WebMolKit;
+(function (WebMolKit) {
+    const CSS_WEBMENU = `
+    *.wmk-webmenubar
+    {
+        font-family: 'Open Sans', sans-serif;
+        background-color: black;
+        color: white;
+        width: 100%;
+    }
+    *.wmk-webmenudrop
+    {
+        font-family: 'Open Sans', sans-serif;
+        background-color: rgba(0,0,0,0.7);
+        color: white;
+    }
+    *.wmk-webmenuitem
+    {
+        font-family: 'Open Sans', sans-serif;
+        color: white;
+        padding: 0 0.5em 0 0.5em;
+    }
+    *.wmk-webmenuitem:hover
+    {
+        background-color: #0000FF;
+        cursor: pointer;
+    }
+`;
+    class WebMenu extends WebMolKit.Widget {
+        constructor(barItems) {
+            super();
+            this.barItems = barItems;
+            this.topItems = [];
+            if (!WebMolKit.hasInlineCSS('webmenu'))
+                WebMolKit.installInlineCSS('webmenu', CSS_WEBMENU);
+        }
+        render(parent) {
+            super.render(parent);
+            this.content.addClass('wmk-webmenubar');
+            for (let item of this.barItems) {
+                let dom = $('<span></span>').appendTo(this.content);
+                dom.addClass('wmk-webmenuitem');
+                dom.text(item.label ? item.label : '?');
+                dom.click((event) => { this.activateMenu(dom, item); event.preventDefault(); });
+                dom.dblclick((event) => event.preventDefault());
+            }
+        }
+        activateMenu(parent, item) {
+            if (item.click) {
+                item.click();
+                return;
+            }
+            if (WebMolKit.Vec.arrayLength(item.submenu) == 0) {
+                return;
+            }
+            let wx1 = parent.offset().left, wy1 = parent.offset().top;
+            let wx2 = wx1 + parent.width(), wy2 = wy1 + parent.height();
+            let menuX = 0, menuY = 0;
+            if (this.obscureBackground) {
+                menuX = wx2;
+                menuY = wy1;
+            }
+            else {
+                menuX = wx1;
+                menuY = wy2;
+                let bg = this.obscureBackground = $('<span></span>').appendTo($(document.documentElement));
+                bg.css('width', '100%');
+                bg.css('height', document.documentElement.clientHeight + 'px');
+                bg.css('position', 'absolute');
+                bg.css('left', 0);
+                bg.css('top', 0);
+                bg.css('z-index', 9999);
+                bg.click(() => this.deactivateMenu());
+                bg.show();
+                this.obscureBackground = bg;
+            }
+            let container = $('<div></div>');
+            container.addClass('wmk-webmenudrop');
+            container.css('position', 'absolute');
+            container.css('left', `${menuX}px`);
+            container.css('top', `${menuY}px`);
+            for (let subitem of item.submenu) {
+                let dom = $('<div></div>').appendTo(container);
+                dom.addClass('wmk-webmenuitem');
+                dom.text(subitem.label ? subitem.label : '?');
+                dom.click((event) => { this.activateMenu(dom, subitem); event.preventDefault(); });
+                dom.dblclick((event) => event.preventDefault());
+            }
+            this.obscureBackground.append(container);
+        }
+        deactivateMenu() {
+            this.obscureBackground.remove();
+            this.obscureBackground = null;
+        }
+    }
+    WebMolKit.WebMenu = WebMenu;
 })(WebMolKit || (WebMolKit = {}));
 var WebMolKit;
 (function (WebMolKit) {

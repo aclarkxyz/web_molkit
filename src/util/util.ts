@@ -324,7 +324,7 @@ export function findNode(parent:Node, name:string):Element
 	while (node)
 	{
 		if (node.nodeType == Node.ELEMENT_NODE && node.nodeName == name) return <Element>node;
-		node = node.nextSibling;
+		node = <any>node.nextSibling;
 	}
 	return null;
 }
@@ -338,7 +338,7 @@ export function findNodes(parent:Node, name:string):Element[]
 	while (node)
 	{
 		if (node.nodeType == Node.ELEMENT_NODE && node.nodeName == name) list.push(<Element>node);
-		node = node.nextSibling;
+		node = <any>node.nextSibling;
 	}
 	return list;
 }
