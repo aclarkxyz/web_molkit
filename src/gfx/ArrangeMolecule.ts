@@ -1276,7 +1276,7 @@ export class ArrangeMolecule
 		}
 
 		// transform the outline into the right position
-		let emdx = -0.5 * firstEMW, emdy = 0.5 * (font.ASCENT + font.DESCENT);
+		let emdx = -0.5 * firstEMW, emdy = 0.5 * font.ASCENT;
 		for (let n = 0; n < outlineX.length; n++)
 		{
 			outlineX[n] = a.oval.cx + (emdx + outlineX[n]) * emscale;
@@ -1496,7 +1496,7 @@ export class ArrangeMolecule
 				outlineY = qh.hullY;
 			}
 
-			let emdx = -0.5 * emw, emdy = 0.5 * (font.ASCENT + font.DESCENT);
+			let emdx = -0.5 * emw, emdy = 0.5 * font.ASCENT;
 			let emscale = a.fsz * font.INV_UNITS_PER_EM;
 			for (let n = 0; n < outlineX.length; n++)
 			{

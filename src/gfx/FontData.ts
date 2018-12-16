@@ -293,7 +293,7 @@ export class FontData
 	public DESCENT = -410;
 	public MISSING_HORZ = 2048;
 	public MISSING_DATA = 'M256 0v1536h1536v-1536h-1536zM384 128h1280v1280h-1280v-1280z';
-	public ASCENT_FUDGE = 0.75;
+	public ASCENT_FUDGE = 0.9;
 	public UNICODE = 
 	[
 		' ', '!', '"', '#', '$', '%', '&', '\'', '(', ')', '*', '+', ',', '-', '.', '/', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', ':', ';', '<', 

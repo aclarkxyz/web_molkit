@@ -1814,7 +1814,7 @@ var WebMolKit;
             this.DESCENT = -410;
             this.MISSING_HORZ = 2048;
             this.MISSING_DATA = 'M256 0v1536h1536v-1536h-1536zM384 128h1280v1280h-1280v-1280z';
-            this.ASCENT_FUDGE = 0.75;
+            this.ASCENT_FUDGE = 0.9;
             this.UNICODE = [
                 ' ', '!', '"', '#', '$', '%', '&', '\'', '(', ')', '*', '+', ',', '-', '.', '/', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', ':', ';', '<',
                 '=', '>', '?', '@', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
@@ -13976,7 +13976,7 @@ var WebMolKit;
                 outlineX = qh.hullX;
                 outlineY = qh.hullY;
             }
-            let emdx = -0.5 * firstEMW, emdy = 0.5 * (font.ASCENT + font.DESCENT);
+            let emdx = -0.5 * firstEMW, emdy = 0.5 * font.ASCENT;
             for (let n = 0; n < outlineX.length; n++) {
                 outlineX[n] = a.oval.cx + (emdx + outlineX[n]) * emscale;
                 outlineY[n] = a.oval.cy + (emdy - outlineY[n]) * emscale * this.ymul;
@@ -14160,7 +14160,7 @@ var WebMolKit;
                     outlineX = qh.hullX;
                     outlineY = qh.hullY;
                 }
-                let emdx = -0.5 * emw, emdy = 0.5 * (font.ASCENT + font.DESCENT);
+                let emdx = -0.5 * emw, emdy = 0.5 * font.ASCENT;
                 let emscale = a.fsz * font.INV_UNITS_PER_EM;
                 for (let n = 0; n < outlineX.length; n++) {
                     outlineX[n] = a.oval.cx + (emdx + outlineX[n]) * emscale;
