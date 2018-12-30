@@ -729,7 +729,7 @@ export class Experiment extends Aspect
 	// render the experiment in scheme form
 	// TODO: other forms can be rendered (summary, metrics, quantity)
 	public numGraphicRenderings(row:number):number {return 1;}
-	public produceGraphicRendering(row:number, idx:number, policy:RenderPolicy):[string, MetaVector]
+	public produceGraphicRendering(row:number, idx:number, policy:RenderPolicy):AspectGraphicRendering
 	{
 		let measure = new OutlineMeasurement(0, 0, policy.data.pointScale);
 		let layout = new ArrangeExperiment(this.getEntry(row), measure, policy);
@@ -744,7 +744,7 @@ export class Experiment extends Aspect
 		new DrawExperiment(layout, metavec).draw();
 		metavec.normalise();
 
-		return ['Scheme', metavec];
+		return {'name': 'Scheme', 'metavec': metavec};
 	}
 	
 

@@ -266,7 +266,7 @@ export class SARTable extends Aspect
 		let fields = this.getFields();
 		return 2 + fields.substituents.length;
 	}
-	public produceGraphicRendering(row:number, idx:number, policy:RenderPolicy):[string, MetaVector] 
+	public produceGraphicRendering(row:number, idx:number, policy:RenderPolicy):AspectGraphicRendering
 	{
 		let fields = this.getFields(), ds = this.ds;
 
@@ -297,7 +297,7 @@ export class SARTable extends Aspect
 			else metavec.drawText(0, 0, '?', 15, 0x000000);
 
 			metavec.normalise();
-			return [fields.construct, metavec];
+			return {'name': fields.construct, 'metavec': metavec};
 		}
 		else if (idx == SARTable.RENDER_SCAFFOLD)
 		{
@@ -336,7 +336,7 @@ export class SARTable extends Aspect
 			else metavec.drawText(0, 0, '?', 15, 0x000000);
 
 			metavec.normalise();
-			return [fields.scaffold, metavec];
+			return {'name': fields.scaffold, 'metavec': metavec};
 		}
 		else if (idx >= SARTable.RENDER_SUBSTITUENT && idx < SARTable.RENDER_SUBSTITUENT + fields.substituents.length)
 		{
@@ -384,10 +384,10 @@ export class SARTable extends Aspect
 			}
 
 			metavec.normalise();
-			return [sname, metavec];
+			return {'name': sname, 'metavec': metavec};
 		}
 
-		return [null, null];
+		return null;
 	}
 }
 

@@ -109,7 +109,7 @@ export abstract class Aspect
 	// colour); the returned object provides additional metadata: the vector graphics builder object is typically the
 	// same object as provided as the parameter
 	public numGraphicRenderings(row:number):number {return 0;}
-	public produceGraphicRendering(row:number, idx:number, policy:RenderPolicy):[string, MetaVector] {return [null, null];}
+	public produceGraphicRendering(row:number, idx:number, policy:RenderPolicy):AspectGraphicRendering {return null;}
 	
 	// header rendering: some number of text items that describe the datasheet overall; these are typically {name:value} pairs, which
 	// are shown at the beginning of the datasheet, and supplement the universal title & description fields
