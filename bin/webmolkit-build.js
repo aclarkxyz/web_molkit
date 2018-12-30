@@ -903,8 +903,13 @@ var WebMolKit;
                 data.extData = [];
             this.data = data;
         }
-        clone() {
-            return new DataSheet($.extend(true, {}, this.data));
+        clone(withRows = true) {
+            let dup = new DataSheet(WebMolKit.deepClone(this.data));
+            if (!withRows) {
+                dup.data.numRows = 0;
+                dup.data.rowData = [];
+            }
+            return dup;
         }
         getData() {
             return this.data;
@@ -3347,7 +3352,7 @@ var WebMolKit;
         numTextRenderings(row) { return 0; }
         produceTextRendering(row, idx) { return null; }
         numGraphicRenderings(row) { return 0; }
-        produceGraphicRendering(row, idx, policy) { return [null, null]; }
+        produceGraphicRendering(row, idx, policy) { return null; }
         numHeaderRenderings() { return 0; }
         produceHeaderRendering(idx) { return null; }
     }
@@ -7763,7 +7768,7 @@ var WebMolKit;
                 else
                     metavec.drawText(0, 0, '?', 15, 0x000000);
                 metavec.normalise();
-                return [fields.construct, metavec];
+                return { 'name': fields.construct, 'metavec': metavec };
             }
             else if (idx == SARTable.RENDER_SCAFFOLD) {
                 let mol = ds.getMolecule(row, fields.scaffold);
@@ -7794,7 +7799,7 @@ var WebMolKit;
                 else
                     metavec.drawText(0, 0, '?', 15, 0x000000);
                 metavec.normalise();
-                return [fields.scaffold, metavec];
+                return { 'name': fields.scaffold, 'metavec': metavec };
             }
             else if (idx >= SARTable.RENDER_SUBSTITUENT && idx < SARTable.RENDER_SUBSTITUENT + fields.substituents.length) {
                 let sidx = idx - SARTable.RENDER_SUBSTITUENT, sname = fields.substituents[sidx];
@@ -7838,9 +7843,9 @@ var WebMolKit;
                     metavec.drawText(0, 0, txt, 15, 0x000000);
                 }
                 metavec.normalise();
-                return [sname, metavec];
+                return { 'name': sname, 'metavec': metavec };
             }
-            return [null, null];
+            return null;
         }
     }
     SARTable.CODE = 'org.mmi.aspect.SARTable';
@@ -7853,6 +7858,3062 @@ var WebMolKit;
     SARTable.RENDER_SCAFFOLD = 1;
     SARTable.RENDER_SUBSTITUENT = 2;
     WebMolKit.SARTable = SARTable;
+})(WebMolKit || (WebMolKit = {}));
+var WebMolKit;
+(function (WebMolKit) {
+    class QuantityComp {
+        constructor(comp, step, type, idx) {
+            this.comp = comp;
+            this.step = step;
+            this.type = type;
+            this.idx = idx;
+            this.role = 0;
+            this.molw = 0;
+            this.valueEquiv = 0;
+            this.statEquiv = QuantityCalc.STAT_UNKNOWN;
+            this.valueMass = QuantityCalc.UNSPECIFIED;
+            this.statMass = QuantityCalc.STAT_UNKNOWN;
+            this.valueVolume = QuantityCalc.UNSPECIFIED;
+            this.statVolume = QuantityCalc.STAT_UNKNOWN;
+            this.valueMoles = QuantityCalc.UNSPECIFIED;
+            this.statMoles = QuantityCalc.STAT_UNKNOWN;
+            this.valueDensity = QuantityCalc.UNSPECIFIED;
+            this.statDensity = QuantityCalc.STAT_UNKNOWN;
+            this.valueConc = QuantityCalc.UNSPECIFIED;
+            this.statConc = QuantityCalc.STAT_UNKNOWN;
+            this.valueYield = QuantityCalc.UNSPECIFIED;
+            this.statYield = QuantityCalc.STAT_UNKNOWN;
+        }
+    }
+    WebMolKit.QuantityComp = QuantityComp;
+    class GreenMetrics {
+        constructor() {
+            this.step = 0;
+            this.idx = 0;
+            this.massReact = [];
+            this.massProd = [];
+            this.massWaste = [];
+            this.massProdWaste = [];
+            this.molwReact = [];
+            this.molwProd = [];
+            this.impliedWaste = 0;
+            this.isBlank = false;
+        }
+    }
+    WebMolKit.GreenMetrics = GreenMetrics;
+    class QuantityCalc {
+        constructor(entry) {
+            this.entry = entry;
+            this.quantities = [];
+            this.idxPrimary = [];
+            this.idxYield = [];
+            this.allMassReact = [];
+            this.allMassProd = [];
+            this.allMassWaste = [];
+            this.greenMetrics = [];
+        }
+        static isStoichZero(stoich) {
+            if (this.isStoichUnity(stoich))
+                return false;
+            if (parseFloat(stoich) == 0)
+                return true;
+            return false;
+        }
+        static isStoichUnity(stoich) {
+            if (!stoich || stoich == '1')
+                return true;
+            let [numer, denom] = this.extractStoichFraction(stoich);
+            return numer != 0 && numer == denom;
+        }
+        static extractStoichFraction(stoich) {
+            if (!stoich)
+                return [1, 1];
+            let numer = 1, denom = 1;
+            let i = stoich.indexOf('/');
+            if (i < 0) {
+                let v = parseFloat(stoich);
+                if (v >= 0)
+                    numer = v;
+            }
+            else {
+                let v1 = parseFloat(stoich.substring(0, i)), v2 = parseFloat(stoich.substring(i + 1));
+                if (v1 >= 0)
+                    numer = v1;
+                if (v2 >= 0)
+                    denom = v2;
+            }
+            return [numer, denom];
+        }
+        static extractStoichValue(stoich) {
+            let [numer, denom] = this.extractStoichFraction(stoich);
+            return denom <= 1 ? numer : numer / denom;
+        }
+        static stoichAsRatio(stoich) {
+            let [numer, denom] = this.extractStoichFraction(stoich);
+            if (numer == Math.floor(numer))
+                return [numer, denom];
+            return this.stoichFractAsRatio(numer);
+        }
+        static stoichFractAsRatio(fract) {
+            if (fract == Math.floor(fract))
+                return [fract, 1];
+            const MAX_DENOM = QuantityCalc.MAX_DENOM;
+            if (QuantityCalc.RATIO_FRACT == null) {
+                QuantityCalc.RATIO_FRACT = [];
+                for (let p = 0, j = 2; j <= MAX_DENOM; j++)
+                    for (let i = 1; i < j && i < MAX_DENOM - 1; i++)
+                        QuantityCalc.RATIO_FRACT.push(i * 1.0 / j);
+            }
+            let whole = Math.floor(fract);
+            let resid = fract - whole;
+            let bestDiff = Number.MAX_VALUE;
+            let bestOver = 1, bestUnder = 1;
+            for (let p = 0, j = 2; j <= MAX_DENOM; j++)
+                for (let i = 1; i < j && i < MAX_DENOM - 1; i++) {
+                    let diff = Math.abs(QuantityCalc.RATIO_FRACT[p++] - resid);
+                    if (diff < bestDiff) {
+                        bestDiff = diff;
+                        bestOver = i;
+                        bestUnder = j;
+                    }
+                }
+            return [bestOver + (whole * bestUnder), bestUnder];
+        }
+        static impliedReagentStoich(reagent, products) {
+            if (WebMolKit.MolUtil.isBlank(reagent.mol) || products.length == 0)
+                return 0;
+            let pstoich = WebMolKit.Vec.numberArray(-1, products.length);
+            let rmol = reagent.mol;
+            let highest = 0;
+            for (let n = 1; n <= rmol.numAtoms; n++) {
+                let m = rmol.atomMapNum(n);
+                if (m == 0)
+                    continue;
+                let total = 0;
+                for (let i = 0; i < products.length; i++) {
+                    let pmol = products[i].mol;
+                    if (WebMolKit.MolUtil.isBlank(pmol))
+                        continue;
+                    let pcount = 0;
+                    for (let j = 1; j <= pmol.numAtoms; j++)
+                        if (pmol.atomMapNum(j) == m)
+                            pcount++;
+                    if (pcount > 0) {
+                        let rcount = 0;
+                        for (let k = 1; k <= rmol.numAtoms; k++)
+                            if (rmol.atomMapNum(k) == m)
+                                rcount++;
+                        if (pstoich[i] < 0)
+                            pstoich[i] = QuantityCalc.extractStoichValue(products[i].stoich);
+                        total += pcount * pstoich[i] / rcount;
+                    }
+                }
+                highest = Math.max(highest, total);
+            }
+            return highest;
+        }
+        calculate() {
+            this.classifyTypes();
+            while (this.calculateSomething()) { }
+            this.allMassReact = [];
+            this.allMassProd = [];
+            this.allMassWaste = [];
+            for (let n = 0; n < this.quantities.length; n++) {
+                let qc = this.quantities[n];
+                if (qc.type == WebMolKit.Experiment.REACTANT || qc.type == WebMolKit.Experiment.REAGENT) {
+                    if (qc.valueEquiv == 0 && qc.type == WebMolKit.Experiment.REAGENT)
+                        continue;
+                    this.allMassReact.push(qc.valueMass);
+                }
+                else if (qc.type == WebMolKit.Experiment.PRODUCT) {
+                    if (!qc.comp.waste) {
+                        this.allMassProd.push(qc.valueMass);
+                        this.calculateGreenMetrics(n);
+                    }
+                    else {
+                        this.allMassWaste.push(qc.valueMass);
+                    }
+                }
+            }
+        }
+        get numQuantities() { return this.quantities.length; }
+        getQuantity(idx) { return this.quantities[idx]; }
+        getAllQuantities() { return this.quantities.slice(0); }
+        get numGreenMetrics() { return this.greenMetrics.length; }
+        getGreenMetrics(idx) { return this.greenMetrics[idx]; }
+        getAllGreenMetrics() { return this.greenMetrics.slice(0); }
+        getAllMassReact() { return this.allMassReact.slice(0); }
+        getAllMassProd() { return this.allMassProd.slice(0); }
+        getAllMassWaste() { return this.allMassWaste.slice(0); }
+        findComponent(step, type, idx) {
+            for (let qc of this.quantities)
+                if (qc.step == step && qc.type == type && qc.idx == idx)
+                    return qc;
+            return null;
+        }
+        static formatMolWeight(value) {
+            if (value == QuantityCalc.UNSPECIFIED)
+                return '';
+            return WebMolKit.formatDouble(value, 6) + ' g/mol';
+        }
+        static formatMass(value) {
+            if (value == QuantityCalc.UNSPECIFIED)
+                return '';
+            if (value <= 1E-6)
+                return WebMolKit.formatDouble(value * 1E6, 6) + ' \u03BCg';
+            if (value <= 1E-3)
+                return WebMolKit.formatDouble(value * 1E3, 6) + ' mg';
+            if (value >= 1E3)
+                return WebMolKit.formatDouble(value * 1E-3, 6) + ' kg';
+            return WebMolKit.formatDouble(value, 6) + ' g';
+        }
+        static formatVolume(value) {
+            if (value == QuantityCalc.UNSPECIFIED)
+                return '';
+            if (value <= 1E-6)
+                return WebMolKit.formatDouble(value * 1E6, 6) + ' nL';
+            if (value <= 1E-3)
+                return WebMolKit.formatDouble(value * 1E3, 6) + ' \u03BCL';
+            if (value >= 1E3)
+                return WebMolKit.formatDouble(value * 1E-3, 6) + ' L';
+            return WebMolKit.formatDouble(value, 6) + ' mL';
+        }
+        static formatMoles(value) {
+            if (value == QuantityCalc.UNSPECIFIED)
+                return '';
+            if (value <= 1E-9)
+                return WebMolKit.formatDouble(value * 1E9, 6) + ' nmol';
+            if (value <= 1E-6)
+                return WebMolKit.formatDouble(value * 1E6, 6) + ' \u03BCmol';
+            if (value <= 1E-3)
+                return WebMolKit.formatDouble(value * 1E3, 6) + ' mmol';
+            return WebMolKit.formatDouble(value, 6) + ' mol';
+        }
+        static formatDensity(value) {
+            if (value == QuantityCalc.UNSPECIFIED)
+                return '';
+            return WebMolKit.formatDouble(value, 6) + ' g/mL';
+        }
+        static formatConc(value) {
+            if (value == QuantityCalc.UNSPECIFIED)
+                return '';
+            if (value <= 1E-9)
+                return WebMolKit.formatDouble(value * 1E9, 6) + ' nmol/L';
+            if (value <= 1E-6)
+                return WebMolKit.formatDouble(value * 1E6, 6) + ' \u03BCmol/L';
+            if (value <= 1E-3)
+                return WebMolKit.formatDouble(value * 1E3, 6) + ' mmol/L';
+            return WebMolKit.formatDouble(value, 6) + ' mol/L';
+        }
+        static formatPercent(value) {
+            if (value == QuantityCalc.UNSPECIFIED)
+                return '';
+            return WebMolKit.formatDouble(value, 6) + '%';
+        }
+        classifyTypes() {
+            for (let s = 0; s < this.entry.steps.length; s++) {
+                let step = this.entry.steps[s];
+                for (let n = 0; n < step.reactants.length; n++)
+                    this.quantities.push(new QuantityComp(step.reactants[n], s, WebMolKit.Experiment.REACTANT, n));
+                for (let n = 0; n < step.reagents.length; n++)
+                    this.quantities.push(new QuantityComp(step.reagents[n], s, WebMolKit.Experiment.REAGENT, n));
+                for (let n = 0; n < step.products.length; n++)
+                    this.quantities.push(new QuantityComp(step.products[n], s, WebMolKit.Experiment.PRODUCT, n));
+            }
+            for (let n = 0; n < this.quantities.length; n++) {
+                let qc = this.quantities[n];
+                if (qc.type == WebMolKit.Experiment.REAGENT) {
+                    if (qc.comp.equiv != null)
+                        qc.valueEquiv = qc.comp.equiv;
+                    else {
+                        let eq = QuantityCalc.impliedReagentStoich(qc.comp, this.entry.steps[qc.step].products);
+                        if (eq > 0)
+                            qc.valueEquiv = eq;
+                    }
+                }
+                else {
+                    qc.valueEquiv = QuantityCalc.extractStoichValue(qc.comp.stoich);
+                }
+                if (qc.comp.mol != null)
+                    qc.molw = WebMolKit.MolUtil.molecularWeight(qc.comp.mol);
+                qc.role = QuantityCalc.ROLE_INDEPENDENT;
+                if (qc.step == 0 && qc.type == WebMolKit.Experiment.REACTANT) {
+                    if (qc.comp.primary) {
+                        qc.role = QuantityCalc.ROLE_PRIMARY;
+                        this.idxPrimary.push(n);
+                    }
+                    else
+                        qc.role = QuantityCalc.ROLE_SECONDARY;
+                }
+                else if (qc.type == WebMolKit.Experiment.REAGENT) {
+                    if (qc.valueEquiv > 0)
+                        qc.role = QuantityCalc.ROLE_SECONDARY;
+                }
+                else if (qc.type == WebMolKit.Experiment.PRODUCT && !qc.comp.waste) {
+                    qc.role = QuantityCalc.ROLE_PRODUCT;
+                    this.idxYield.push(n);
+                }
+                else if (qc.valueEquiv > 0) {
+                    qc.role = QuantityCalc.ROLE_SECONDARY;
+                }
+                if (qc.comp.mass != null)
+                    qc.valueMass = qc.comp.mass;
+                if (qc.comp.volume != null)
+                    qc.valueVolume = qc.comp.volume;
+                if (qc.comp.moles != null)
+                    qc.valueMoles = qc.comp.moles;
+                if (qc.comp.density != null)
+                    qc.valueDensity = qc.comp.density;
+                if (qc.comp.conc != null)
+                    qc.valueConc = qc.comp.conc;
+                if (qc.comp.yield != null)
+                    qc.valueYield = qc.comp.yield;
+                qc.statEquiv = qc.valueEquiv == QuantityCalc.UNSPECIFIED ? QuantityCalc.STAT_UNKNOWN : QuantityCalc.STAT_ACTUAL;
+                qc.statMass = qc.valueMass == QuantityCalc.UNSPECIFIED ? QuantityCalc.STAT_UNKNOWN : QuantityCalc.STAT_ACTUAL;
+                qc.statVolume = qc.valueVolume == QuantityCalc.UNSPECIFIED ? QuantityCalc.STAT_UNKNOWN : QuantityCalc.STAT_ACTUAL;
+                qc.statMoles = qc.valueMoles == QuantityCalc.UNSPECIFIED ? QuantityCalc.STAT_UNKNOWN : QuantityCalc.STAT_ACTUAL;
+                qc.statDensity = qc.valueDensity == QuantityCalc.UNSPECIFIED ? QuantityCalc.STAT_UNKNOWN : QuantityCalc.STAT_ACTUAL;
+                qc.statConc = qc.valueConc == QuantityCalc.UNSPECIFIED ? QuantityCalc.STAT_UNKNOWN : QuantityCalc.STAT_ACTUAL;
+                qc.statYield = qc.valueYield == QuantityCalc.UNSPECIFIED ? QuantityCalc.STAT_UNKNOWN : QuantityCalc.STAT_ACTUAL;
+            }
+            if (this.idxPrimary.length == 0) {
+                for (let n = 0; n < this.quantities.length; n++) {
+                    let qc = this.quantities[n];
+                    if (qc.type == WebMolKit.Experiment.REACTANT && qc.step == 0) {
+                        qc.role = QuantityCalc.ROLE_PRIMARY;
+                        this.idxPrimary.push(n);
+                    }
+                }
+            }
+        }
+        calculateSomething() {
+            let anything = false;
+            for (let qc of this.quantities) {
+                if (qc.molw > 0 && qc.valueMass == QuantityCalc.UNSPECIFIED && qc.statMoles == QuantityCalc.STAT_ACTUAL) {
+                    qc.valueMass = qc.valueMoles * qc.molw;
+                    qc.statMass = QuantityCalc.STAT_VIRTUAL;
+                    anything = true;
+                }
+                if (qc.molw > 0 && qc.valueMass != QuantityCalc.UNSPECIFIED && qc.valueMoles == QuantityCalc.UNSPECIFIED) {
+                    qc.valueMoles = qc.valueMass / qc.molw;
+                    qc.statMoles = QuantityCalc.STAT_VIRTUAL;
+                    anything = true;
+                }
+                if (qc.molw > 0 && qc.statMass == QuantityCalc.STAT_ACTUAL && qc.statMoles == QuantityCalc.STAT_ACTUAL) {
+                    let calcMoles = qc.valueMass / qc.molw;
+                    if (!this.closeEnough(qc.valueMoles, calcMoles)) {
+                        qc.statMass = QuantityCalc.STAT_CONFLICT;
+                        qc.statMoles = QuantityCalc.STAT_CONFLICT;
+                    }
+                }
+                let isSoln = qc.statConc == QuantityCalc.STAT_ACTUAL ||
+                    (qc.statVolume == QuantityCalc.STAT_ACTUAL && (qc.statMass == QuantityCalc.STAT_ACTUAL || qc.statMoles == QuantityCalc.STAT_ACTUAL));
+                if (!isSoln) {
+                    if (qc.valueDensity > 0 && qc.valueMass == QuantityCalc.UNSPECIFIED && qc.valueVolume != QuantityCalc.UNSPECIFIED) {
+                        qc.valueMass = qc.valueVolume * qc.valueDensity;
+                        qc.statMass = QuantityCalc.STAT_VIRTUAL;
+                        anything = true;
+                    }
+                    if (qc.valueDensity > 0 && qc.valueMass != QuantityCalc.UNSPECIFIED && qc.valueVolume == QuantityCalc.UNSPECIFIED) {
+                        qc.valueVolume = qc.valueMass / qc.valueDensity;
+                        qc.statVolume = QuantityCalc.STAT_VIRTUAL;
+                        anything = true;
+                    }
+                    if (qc.valueDensity == QuantityCalc.UNSPECIFIED && qc.valueMass != QuantityCalc.UNSPECIFIED &&
+                        qc.valueVolume != QuantityCalc.UNSPECIFIED && qc.valueConc == QuantityCalc.UNSPECIFIED) {
+                        if (qc.statMass == QuantityCalc.STAT_ACTUAL || qc.statMoles == QuantityCalc.STAT_ACTUAL) {
+                            qc.valueDensity = qc.valueMass / qc.valueVolume;
+                            qc.statDensity = QuantityCalc.STAT_VIRTUAL;
+                            anything = true;
+                        }
+                    }
+                }
+                if (isSoln) {
+                    if (qc.valueConc > 0 && qc.valueMoles == QuantityCalc.UNSPECIFIED && qc.valueVolume != QuantityCalc.UNSPECIFIED) {
+                        qc.valueMoles = 0.001 * qc.valueVolume * qc.valueConc;
+                        qc.statMoles = QuantityCalc.STAT_VIRTUAL;
+                        anything = true;
+                    }
+                    if (qc.valueConc > 0 && qc.valueMoles != QuantityCalc.UNSPECIFIED && qc.valueVolume == QuantityCalc.UNSPECIFIED) {
+                        qc.valueVolume = 1000 * qc.valueMoles / qc.valueConc;
+                        qc.statVolume = QuantityCalc.STAT_VIRTUAL;
+                        anything = true;
+                    }
+                    if (qc.valueConc == QuantityCalc.UNSPECIFIED && qc.valueMass != QuantityCalc.UNSPECIFIED && qc.valueVolume != QuantityCalc.UNSPECIFIED) {
+                        qc.valueConc = 1000 * qc.valueMoles / qc.valueVolume;
+                        qc.statConc = QuantityCalc.STAT_VIRTUAL;
+                        anything = true;
+                    }
+                    if (qc.statConc == QuantityCalc.STAT_ACTUAL && qc.valueMoles > 0 && qc.statVolume == QuantityCalc.STAT_ACTUAL) {
+                        let calcVolume = 1000 * qc.valueMoles / qc.valueConc;
+                        if (!this.closeEnough(qc.valueVolume, calcVolume)) {
+                            qc.statConc = QuantityCalc.STAT_CONFLICT;
+                            if (qc.statMass == QuantityCalc.STAT_ACTUAL)
+                                qc.statMass = QuantityCalc.STAT_CONFLICT;
+                            if (qc.statMoles == QuantityCalc.STAT_ACTUAL)
+                                qc.statMoles = QuantityCalc.STAT_CONFLICT;
+                            qc.statVolume = QuantityCalc.STAT_CONFLICT;
+                        }
+                    }
+                }
+                if (qc.molw > 0 && qc.valueMass == QuantityCalc.UNSPECIFIED && qc.valueMoles != QuantityCalc.UNSPECIFIED) {
+                    qc.valueMass = qc.valueMoles * qc.molw;
+                    qc.statMass = QuantityCalc.STAT_VIRTUAL;
+                    anything = true;
+                }
+                if (qc.statDensity == QuantityCalc.STAT_ACTUAL && qc.statConc == QuantityCalc.STAT_ACTUAL) {
+                    qc.statDensity = QuantityCalc.STAT_CONFLICT;
+                    qc.statConc = QuantityCalc.STAT_CONFLICT;
+                }
+            }
+            if (anything)
+                return true;
+            let hasRef = false;
+            let numSteps = this.entry.steps.length;
+            let primaryCounts = WebMolKit.Vec.numberArray(0, numSteps);
+            let primaryEquivs = WebMolKit.Vec.numberArray(0, numSteps);
+            let primaryMoles = WebMolKit.Vec.numberArray(0, numSteps);
+            for (let qc of this.quantities) {
+                let ref = -1;
+                if (qc.step == 0 && qc.type == WebMolKit.Experiment.REACTANT && qc.comp.primary)
+                    ref = qc.step;
+                else if (qc.step < numSteps - 1 && qc.type == WebMolKit.Experiment.PRODUCT && !qc.comp.waste)
+                    ref = qc.step + 1;
+                else
+                    continue;
+                if (primaryEquivs[ref] < 0)
+                    continue;
+                if (qc.statMoles == QuantityCalc.STAT_UNKNOWN) {
+                    primaryEquivs[ref] = -1;
+                    continue;
+                }
+                primaryCounts[ref]++;
+                primaryEquivs[ref] += qc.valueEquiv;
+                primaryMoles[ref] += qc.valueMoles;
+            }
+            if (primaryEquivs[0] <= 0) {
+                primaryCounts[0] = 0;
+                primaryEquivs[0] = 0;
+                primaryMoles[0] = 0;
+                for (let i of this.idxPrimary) {
+                    let qc = this.quantities[i];
+                    if (qc.statMoles == QuantityCalc.STAT_UNKNOWN) {
+                        primaryCounts[0] = 0;
+                        primaryEquivs[0] = -1;
+                        primaryMoles[0] = 0;
+                        break;
+                    }
+                    primaryCounts[0]++;
+                    primaryEquivs[0] += qc.valueEquiv;
+                    primaryMoles[0] += qc.valueMoles;
+                }
+            }
+            let refMoles = WebMolKit.Vec.numberArray(0, numSteps);
+            for (let n = 0; n < numSteps; n++) {
+                refMoles[n] = primaryCounts[n] == 0 || primaryEquivs[n] <= 0 ? 0 : primaryMoles[n] / primaryEquivs[n];
+                if (refMoles[n] > 0)
+                    hasRef = true;
+            }
+            if (!hasRef) {
+                for (let n = 0; n < numSteps; n++) {
+                    let prodMolar = [];
+                    for (let qc of this.quantities) {
+                        if (qc.step != n || qc.role != QuantityCalc.ROLE_PRODUCT)
+                            continue;
+                        if (qc.statMoles == QuantityCalc.STAT_UNKNOWN || qc.valueMoles <= 0 || qc.valueEquiv <= 0)
+                            continue;
+                        let yld = qc.valueYield > 0 ? qc.valueYield * 0.01 : 1;
+                        prodMolar.push(qc.valueMoles / (qc.valueEquiv * yld));
+                    }
+                    if (prodMolar.length > 0) {
+                        refMoles[n] = WebMolKit.Vec.sum(prodMolar) / prodMolar.length;
+                        hasRef = true;
+                    }
+                }
+            }
+            if (!hasRef)
+                return false;
+            for (let qc of this.quantities) {
+                if (qc.type != WebMolKit.Experiment.PRODUCT)
+                    continue;
+                if (refMoles[qc.step] == 0)
+                    continue;
+                if (qc.valueYield == QuantityCalc.UNSPECIFIED && qc.valueMoles != QuantityCalc.UNSPECIFIED) {
+                    qc.valueYield = 100 * qc.valueMoles / (refMoles[qc.step] * qc.valueEquiv);
+                    qc.statYield = QuantityCalc.STAT_VIRTUAL;
+                    anything = true;
+                }
+                if (qc.valueYield != QuantityCalc.UNSPECIFIED && qc.valueMoles == QuantityCalc.UNSPECIFIED) {
+                    qc.valueMoles = qc.valueYield * 0.01 * (refMoles[qc.step] * qc.valueEquiv);
+                    qc.statMoles = QuantityCalc.STAT_VIRTUAL;
+                    anything = true;
+                }
+                if (qc.valueMoles > 0 && qc.statYield == QuantityCalc.STAT_ACTUAL) {
+                    let calcYield = 100 * qc.valueMoles / (refMoles[qc.step] * qc.valueEquiv);
+                    if (!this.closeEnough(qc.valueYield, calcYield)) {
+                        if (qc.statMass == QuantityCalc.STAT_ACTUAL)
+                            qc.statMass = QuantityCalc.STAT_CONFLICT;
+                        if (qc.statMoles == QuantityCalc.STAT_ACTUAL)
+                            qc.statMoles = QuantityCalc.STAT_CONFLICT;
+                        qc.statYield = QuantityCalc.STAT_CONFLICT;
+                    }
+                }
+            }
+            if (anything)
+                return true;
+            for (let qc of this.quantities) {
+                if (refMoles[qc.step] == 0)
+                    continue;
+                if (qc.valueMass == QuantityCalc.UNSPECIFIED && qc.valueMoles == QuantityCalc.UNSPECIFIED && qc.valueEquiv > 0) {
+                    qc.valueMoles = refMoles[qc.step] * qc.valueEquiv;
+                    qc.statMoles = QuantityCalc.STAT_VIRTUAL;
+                    anything = true;
+                }
+                if (qc.valueMoles != QuantityCalc.UNSPECIFIED && qc.valueEquiv == QuantityCalc.UNSPECIFIED) {
+                    qc.valueEquiv = qc.valueMoles / refMoles[qc.step];
+                    qc.statEquiv = QuantityCalc.STAT_VIRTUAL;
+                    anything = true;
+                }
+            }
+            return anything;
+        }
+        calculateGreenMetrics(idx) {
+            let qc = this.quantities[idx];
+            let gm = new GreenMetrics();
+            gm.step = qc.step;
+            gm.idx = idx;
+            gm.isBlank = true;
+            for (let n = 0; n < this.quantities.length; n++) {
+                let sub = this.quantities[n];
+                if (sub.step > gm.step)
+                    continue;
+                let eq = sub.valueEquiv;
+                if (eq == 0 && sub.type == WebMolKit.Experiment.REAGENT)
+                    continue;
+                if (sub.valueMass != QuantityCalc.UNSPECIFIED)
+                    gm.isBlank = false;
+                if (sub.type == WebMolKit.Experiment.REACTANT || sub.type == WebMolKit.Experiment.REAGENT) {
+                    gm.massReact.push(sub.valueMass);
+                    if (sub.step == gm.step && eq > 0 && sub.molw > 0)
+                        gm.molwReact.push(eq * sub.molw);
+                }
+                else if (sub.type == WebMolKit.Experiment.PRODUCT) {
+                    if (!sub.comp.waste) {
+                        if (sub.step == gm.step)
+                            gm.massProd.push(sub.valueMass);
+                        if (eq > 0 && sub.molw > 0) {
+                            if (sub.step == gm.step)
+                                gm.molwProd.push(eq * sub.molw);
+                            else if (sub.step == gm.step - 1)
+                                gm.molwReact.push(eq * sub.molw);
+                        }
+                    }
+                    else {
+                        gm.massWaste.push(sub.valueMass);
+                    }
+                    if (sub.step == gm.step)
+                        gm.massProdWaste.push(sub.valueMass);
+                }
+            }
+            gm.impliedWaste = WebMolKit.Vec.sum(gm.massReact) - WebMolKit.Vec.sum(gm.massProdWaste);
+            if (Math.abs(gm.impliedWaste) > 1E-3)
+                gm.impliedWaste = 0;
+            this.greenMetrics.push(gm);
+        }
+        closeEnough(value1, value2) {
+            if (value1 <= 0 || value2 <= 0)
+                return true;
+            let ratio = value1 / value2;
+            return ratio >= 0.99 && ratio <= 1.01;
+        }
+    }
+    QuantityCalc.UNSPECIFIED = -1;
+    QuantityCalc.ROLE_PRIMARY = 1;
+    QuantityCalc.ROLE_SECONDARY = 2;
+    QuantityCalc.ROLE_PRODUCT = 3;
+    QuantityCalc.ROLE_INDEPENDENT = 4;
+    QuantityCalc.STAT_UNKNOWN = 0;
+    QuantityCalc.STAT_ACTUAL = 1;
+    QuantityCalc.STAT_VIRTUAL = 2;
+    QuantityCalc.STAT_CONFLICT = 3;
+    QuantityCalc.MAX_DENOM = 16;
+    QuantityCalc.RATIO_FRACT = null;
+    WebMolKit.QuantityCalc = QuantityCalc;
+})(WebMolKit || (WebMolKit = {}));
+var WebMolKit;
+(function (WebMolKit) {
+    class OutlineMeasurement {
+        constructor(offsetX, offsetY, pointScale) {
+            this.offsetX = offsetX;
+            this.offsetY = offsetY;
+            this.pointScale = pointScale;
+            this.invScale = 1 / pointScale;
+        }
+        scale() { return this.pointScale; }
+        angToX(ax) { return ax * this.pointScale + this.offsetX; }
+        angToY(ay) { return ay * -this.pointScale + this.offsetY; }
+        xToAng(px) { return (px - this.offsetX) * this.invScale; }
+        yToAng(py) { return (py - this.offsetY) * -this.invScale; }
+        yIsUp() { return false; }
+        measureText(str, fontSize) { return WebMolKit.FontData.main.measureText(str, fontSize); }
+    }
+    WebMolKit.OutlineMeasurement = OutlineMeasurement;
+})(WebMolKit || (WebMolKit = {}));
+var WebMolKit;
+(function (WebMolKit) {
+    class ArrangeComponent {
+        constructor() {
+            this.annot = ArrangeExperiment.COMP_ANNOT_NONE;
+            this.box = new WebMolKit.Box();
+        }
+        clone() {
+            let dup = new ArrangeComponent();
+            dup.type = this.type;
+            dup.srcIdx = this.srcIdx;
+            dup.step = this.step;
+            dup.side = this.side;
+            dup.refIdx = this.refIdx;
+            dup.mol = this.mol;
+            dup.text = this.text;
+            dup.leftNumer = this.leftNumer;
+            dup.leftDenom = this.leftDenom;
+            dup.fszText = this.fszText;
+            dup.fszLeft = this.fszLeft;
+            dup.annot = this.annot;
+            dup.box = this.box.clone();
+            dup.padding = this.padding;
+            return dup;
+        }
+    }
+    WebMolKit.ArrangeComponent = ArrangeComponent;
+    class ArrangeExperiment {
+        constructor(entry, measure, policy) {
+            this.entry = entry;
+            this.measure = measure;
+            this.policy = policy;
+            this.width = 0;
+            this.height = 0;
+            this.components = [];
+            this.limitTotalW = 1000;
+            this.limitTotalH = 1000;
+            this.limitStructW = 0;
+            this.limitStructH = 0;
+            this.includeReagents = true;
+            this.includeNames = false;
+            this.includeStoich = true;
+            this.includeAnnot = false;
+            this.includeBlank = false;
+            this.PADDING = 0.25;
+            this.PLUSSZ = 0.5;
+            this.ARROW_W = 2;
+            this.ARROW_H = 0.5;
+            this.REAGENT_SCALE = 0.7;
+            this.PLACEHOLDER_W = 2;
+            this.PLACEHOLDER_H = 2;
+            this.scale = policy.data.pointScale;
+            this.limitStructW = this.limitStructH = this.scale * 10;
+        }
+        arrange() {
+            this.createComponents();
+            let fszText = this.scale * this.policy.data.fontSize, fszLeft = this.scale * this.policy.data.fontSize * 1.5;
+            let padding = this.PADDING * this.scale;
+            for (let xc of this.components) {
+                if (xc.type == ArrangeExperiment.COMP_PLUS)
+                    xc.box = new WebMolKit.Box(0, 0, this.scale * this.PLUSSZ, this.scale * this.PLUSSZ);
+                else if (xc.type == ArrangeExperiment.COMP_ARROW) { }
+                else {
+                    let w = 0, h = 0;
+                    if (WebMolKit.MolUtil.notBlank(xc.mol)) {
+                        let sz = WebMolKit.Size.fromArray(WebMolKit.ArrangeMolecule.guestimateSize(xc.mol, this.policy));
+                        if (xc.type == ArrangeExperiment.COMP_REAGENT)
+                            sz.scaleBy(this.REAGENT_SCALE);
+                        if (xc.leftNumer) {
+                            xc.fszLeft = fszLeft;
+                            let wad = this.measure.measureText(xc.leftNumer, fszLeft);
+                            let lw = wad[0], lh = wad[1] + wad[2];
+                            if (xc.leftDenom)
+                                lw = Math.max(lw, this.measure.measureText(xc.leftDenom, fszLeft)[0]);
+                            sz.w += lw + ArrangeExperiment.COMP_GAP_LEFT * lh;
+                            sz.h = Math.max(sz.h, lh * (xc.leftDenom ? 2 : 1));
+                        }
+                        sz.fitInto(this.limitStructW, this.limitStructH);
+                        w = sz.w;
+                        h = sz.h;
+                    }
+                    if (xc.text) {
+                        xc.fszText = fszText;
+                        let wad = this.measure.measureText(xc.text, fszText);
+                        w = Math.max(w, wad[0]);
+                        h += wad[1] + wad[2];
+                    }
+                    if (xc.annot != 0)
+                        w += ArrangeExperiment.COMP_ANNOT_SIZE * this.scale;
+                    if (this.includeBlank || w == 0 || h == 0) {
+                        w = Math.max(w, this.PLACEHOLDER_W * this.scale);
+                        h = Math.max(h, this.PLACEHOLDER_H * this.scale);
+                    }
+                    xc.box = new WebMolKit.Box(0, 0, w, h);
+                }
+                xc.padding = padding;
+                xc.box = new WebMolKit.Box(0, 0, xc.box.w + 2 * padding, xc.box.h + 2 * padding);
+            }
+            let best = null;
+            let bestScore = 0;
+            for (let bend = this.entry.steps.length + 1; bend >= 1; bend--)
+                for (let vert = 0; vert <= 1; vert++) {
+                    let trial = [];
+                    for (let xc of this.components)
+                        trial.push(xc.clone());
+                    this.arrangeComponents(trial, bend, vert > 0);
+                    let score = this.scoreArrangement(trial);
+                    if (best == null || score > bestScore) {
+                        best = trial;
+                        bestScore = score;
+                    }
+                }
+            this.components = best;
+            this.width = this.height = 0;
+            for (let xc of this.components) {
+                this.width = Math.max(this.width, xc.box.maxX());
+                this.height = Math.max(this.height, xc.box.maxY());
+            }
+        }
+        get numComponents() { return this.components.length; }
+        getComponent(idx) { return this.components[idx]; }
+        scaleComponents(modScale) {
+            if (modScale == 1)
+                return;
+            this.scale *= modScale;
+            this.width *= modScale;
+            this.height *= modScale;
+            for (let xc of this.components) {
+                xc.box.scaleBy(modScale);
+                xc.fszText *= modScale;
+                xc.fszLeft *= modScale;
+                xc.padding *= modScale;
+            }
+        }
+        createComponents() {
+            for (let n = 0; n < this.entry.steps[0].reactants.length; n++) {
+                if (n > 0)
+                    this.createSegregator(ArrangeExperiment.COMP_PLUS, 0, -1);
+                this.createReactant(n, 0);
+            }
+            if (this.components.length == 0 && this.includeBlank)
+                this.createBlank(ArrangeExperiment.COMP_REACTANT, 0);
+            for (let s = 0; s < this.entry.steps.length; s++) {
+                this.createSegregator(ArrangeExperiment.COMP_ARROW, s, 0);
+                if (this.includeReagents) {
+                    let any = false;
+                    for (let n = 0; n < this.entry.steps[s].reagents.length; n++) {
+                        this.createReagent(n, s);
+                        any = true;
+                    }
+                    if (!any && this.includeBlank)
+                        this.createBlank(ArrangeExperiment.COMP_REAGENT, s);
+                }
+                let any = false;
+                for (let n = 0; n < this.entry.steps[s].products.length; n++) {
+                    if (n > 0)
+                        this.createSegregator(ArrangeExperiment.COMP_PLUS, s, 1);
+                    this.createProduct(n, s);
+                    any = true;
+                }
+                if (!any && this.includeBlank)
+                    this.createBlank(ArrangeExperiment.COMP_PRODUCT, s);
+            }
+        }
+        createReactant(idx, step) {
+            let comp = this.entry.steps[step].reactants[idx];
+            let xc = new ArrangeComponent();
+            xc.type = ArrangeExperiment.COMP_REACTANT;
+            xc.srcIdx = idx;
+            xc.step = step;
+            xc.side = -1;
+            if (WebMolKit.MolUtil.notBlank(comp.mol))
+                xc.mol = comp.mol;
+            if (name && (this.includeNames || WebMolKit.MolUtil.isBlank(comp.mol)))
+                xc.text = name;
+            if (WebMolKit.MolUtil.isBlank(xc.mol) && !xc.text)
+                xc.text = '?';
+            if (this.includeStoich && !WebMolKit.QuantityCalc.isStoichZero(comp.stoich) && !WebMolKit.QuantityCalc.isStoichUnity(comp.stoich)) {
+                let slash = comp.stoich.indexOf('/');
+                if (slash >= 0) {
+                    xc.leftNumer = comp.stoich.substring(0, slash);
+                    xc.leftDenom = comp.stoich.substring(slash + 1);
+                }
+                else
+                    xc.leftNumer = comp.stoich;
+            }
+            if (this.includeAnnot && WebMolKit.MolUtil.notBlank(comp.mol) && comp.primary)
+                xc.annot = ArrangeExperiment.COMP_ANNOT_PRIMARY;
+            this.components.push(xc);
+        }
+        createReagent(idx, step) {
+            let comp = this.entry.steps[step].reagents[idx];
+            let xc = new ArrangeComponent();
+            xc.type = ArrangeExperiment.COMP_REAGENT;
+            xc.srcIdx = idx;
+            xc.step = step;
+            xc.side = 0;
+            if (WebMolKit.MolUtil.notBlank(comp.mol))
+                xc.mol = comp.mol;
+            if (name && (this.includeNames || WebMolKit.MolUtil.isBlank(comp.mol)))
+                xc.text = name;
+            if (WebMolKit.MolUtil.isBlank(xc.mol) && !xc.text)
+                xc.text = '?';
+            if (this.includeAnnot) {
+                let stoich = WebMolKit.QuantityCalc.impliedReagentStoich(comp, this.entry.steps[step].products);
+                if (stoich > 0)
+                    xc.annot = ArrangeExperiment.COMP_ANNOT_IMPLIED;
+                if (stoich > 0 && stoich != 1) {
+                    if (WebMolKit.realEqual(stoich, Math.round(stoich)))
+                        xc.leftNumer = Math.round(stoich).toString();
+                    else
+                        xc.leftNumer = stoich.toString();
+                }
+            }
+            this.components.push(xc);
+        }
+        createProduct(idx, step) {
+            let comp = this.entry.steps[step].products[idx];
+            let xc = new ArrangeComponent();
+            xc.type = ArrangeExperiment.COMP_PRODUCT;
+            xc.srcIdx = idx;
+            xc.step = step;
+            xc.side = 1;
+            if (WebMolKit.MolUtil.notBlank(comp.mol))
+                xc.mol = comp.mol;
+            if (name && (this.includeNames || WebMolKit.MolUtil.isBlank(comp.mol)))
+                xc.text = comp.name;
+            if (WebMolKit.MolUtil.isBlank(xc.mol) && !xc.text)
+                xc.text = '?';
+            if (this.includeStoich && !WebMolKit.QuantityCalc.isStoichZero(comp.stoich) && !WebMolKit.QuantityCalc.isStoichUnity(comp.stoich)) {
+                let slash = comp.stoich.indexOf('/');
+                if (slash >= 0) {
+                    xc.leftNumer = comp.stoich.substring(0, slash);
+                    xc.leftDenom = comp.stoich.substring(slash + 1);
+                }
+                else
+                    xc.leftNumer = comp.stoich;
+            }
+            if (this.includeAnnot && WebMolKit.MolUtil.notBlank(comp.mol) && comp.waste)
+                xc.annot = ArrangeExperiment.COMP_ANNOT_WASTE;
+            this.components.push(xc);
+        }
+        createSegregator(type, step, side) {
+            let xc = new ArrangeComponent();
+            xc.type = type;
+            xc.step = step;
+            xc.side = side;
+            this.components.push(xc);
+        }
+        createBlank(type, step) {
+            let xc = new ArrangeComponent();
+            xc.type = type;
+            xc.step = step;
+            xc.side = type == ArrangeExperiment.COMP_REACTANT ? -1 : type == ArrangeExperiment.COMP_PRODUCT ? 1 : 0;
+            xc.srcIdx = -1;
+            this.components.push(xc);
+        }
+        arrangeComponents(comps, bendStep, vertComp) {
+            let blkMain = [];
+            let blkArrow = [];
+            let szMain = [], szArrow = [];
+            let midMain = [], midArrow = [];
+            blkMain.push(this.gatherBlock(comps, 0, -1));
+            szMain.push(this.arrangeMainBlock(blkMain[0], vertComp));
+            midMain.push(this.findMidBlock(blkMain[0], szMain[0]));
+            for (let n = 0; n < this.entry.steps.length; n++) {
+                let bent = n + 1 >= bendStep;
+                blkMain.push(this.gatherBlock(comps, n, 1));
+                szMain.push(this.arrangeMainBlock(blkMain[n + 1], vertComp && !bent));
+                midMain.push(this.findMidBlock(blkMain[n + 1], szMain[n + 1]));
+                blkArrow.push(this.gatherBlock(comps, n, 0));
+                if (!bent)
+                    szArrow.push(this.arrangeHorizontalArrowBlock(blkArrow[n]));
+                else
+                    szArrow.push(this.arrangeVerticalArrowBlock(blkArrow[n]));
+                midArrow.push(this.findMidBlock(blkArrow[n], szArrow[n]));
+            }
+            let midH = 0;
+            for (let n = 0; n < bendStep; n++) {
+                midH = Math.max(midH, midMain[n].y);
+                if (n > 0)
+                    midH = Math.max(midH, midArrow[n - 1].y);
+            }
+            let sz = WebMolKit.Size.zero();
+            for (let n = 0; n < bendStep; n++) {
+                sz.w += szMain[n].w;
+                sz.h = Math.max(sz.h, midH + (szMain[n].h - midMain[n].y));
+                if (n > 0) {
+                    sz.w += szArrow[n - 1].w;
+                    sz.h = Math.max(sz.h, midH + (szArrow[n - 1].h - midArrow[n - 1].y));
+                }
+            }
+            let x = 0, arrowX = 0;
+            for (let n = 0; n < bendStep; n++) {
+                if (n > 0) {
+                    this.originateBlock(blkArrow[n - 1], x, midH - midArrow[n - 1].y);
+                    x += szArrow[n - 1].w;
+                }
+                this.originateBlock(blkMain[n], x, midH - midMain[n].y);
+                arrowX = x + midMain[n].x;
+                x += szMain[n].w;
+            }
+            let y = sz.h, lowX = 0;
+            for (let n = bendStep; n <= this.entry.steps.length; n++) {
+                x = arrowX - midArrow[n - 1].x;
+                lowX = Math.min(lowX, x);
+                this.originateBlock(blkArrow[n - 1], x, y);
+                y += szArrow[n - 1].h;
+                sz.w = Math.max(sz.w, x + szArrow[n - 1].w);
+                x = arrowX - midMain[n].x;
+                lowX = Math.min(lowX, x);
+                this.originateBlock(blkMain[n], x, y);
+                y += szMain[n].h;
+                sz.w = Math.max(sz.w, x + szMain[n].w);
+            }
+            if (lowX < 0) {
+                for (let xc of comps)
+                    xc.box.x -= lowX;
+            }
+        }
+        gatherBlock(comps, step, side) {
+            let block = [];
+            for (let xc of comps)
+                if (xc.side == side && xc.step == step)
+                    block.push(xc);
+            return block;
+        }
+        arrangeMainBlock(block, vertComp) {
+            let sz = WebMolKit.Size.zero();
+            if (!vertComp) {
+                for (let xc of block) {
+                    sz.w += xc.box.w;
+                    sz.h = Math.max(sz.h, xc.box.h);
+                }
+            }
+            else {
+                for (let xc of block) {
+                    sz.w = Math.max(sz.w, xc.box.w);
+                    sz.h += xc.box.h;
+                }
+            }
+            sz.w = Math.max(sz.w, this.scale * 2.0);
+            sz.h = Math.max(sz.h, this.scale * 2.0);
+            if (!vertComp) {
+                let x = 0;
+                for (let xc of block) {
+                    xc.box.x = x;
+                    xc.box.y = 0.5 * (sz.h - xc.box.h);
+                    x += xc.box.w;
+                }
+            }
+            else {
+                let y = 0;
+                for (let xc of block) {
+                    xc.box.x = 0.5 * (sz.w - xc.box.w);
+                    xc.box.y = y;
+                    y += xc.box.h;
+                }
+            }
+            return sz;
+        }
+        arrangeHorizontalArrowBlock(block) {
+            let arrow = null;
+            for (let xc of block)
+                if (xc.type == ArrangeExperiment.COMP_ARROW) {
+                    arrow = xc;
+                    xc.box.w = this.ARROW_W * this.scale + 2 * xc.padding;
+                    xc.box.h = this.ARROW_H * this.scale + 2 * xc.padding;
+                }
+            let mid = block.length >> 1;
+            for (let xc of block)
+                arrow.box.w = Math.max(xc.box.w, arrow.box.w);
+            let sz = WebMolKit.Size.zero();
+            let n = 0;
+            let y = 0;
+            let arrowPlaced = false;
+            for (let xc of block)
+                if (xc.type != ArrangeExperiment.COMP_ARROW) {
+                    xc.box.x = 0.5 * (arrow.box.w - xc.box.w);
+                    xc.box.y = y;
+                    y += xc.box.h;
+                    n++;
+                    if (n == mid) {
+                        arrow.box.x = 0;
+                        arrow.box.y = y;
+                        y += arrow.box.h;
+                        arrowPlaced = true;
+                    }
+                }
+            if (!arrowPlaced) {
+                arrow.box.x = 0;
+                arrow.box.y = y;
+                y += arrow.box.h;
+            }
+            sz.w = arrow.box.w;
+            sz.h = y;
+            return sz;
+        }
+        arrangeVerticalArrowBlock(block) {
+            let arrow = null;
+            for (let xc of block)
+                if (xc.type == ArrangeExperiment.COMP_ARROW) {
+                    arrow = xc;
+                    xc.box.w = this.ARROW_H * this.scale + 2 * xc.padding;
+                    xc.box.h = this.ARROW_W * this.scale + 2 * xc.padding;
+                }
+            let mid = block.length >> 1;
+            let sz1 = WebMolKit.Size.zero(), sz2 = WebMolKit.Size.zero();
+            let n = 0;
+            for (let xc of block)
+                if (xc.type != ArrangeExperiment.COMP_ARROW) {
+                    if (n < mid) {
+                        sz1.w = Math.max(sz1.w, xc.box.w);
+                        sz1.h += xc.box.h;
+                    }
+                    else {
+                        sz2.w = Math.max(sz2.w, xc.box.w);
+                        sz2.h += xc.box.h;
+                    }
+                    n++;
+                }
+            let sz = new WebMolKit.Size(sz1.w + sz2.w + arrow.box.w, Math.max(arrow.box.h, Math.max(sz1.h, sz2.h)));
+            arrow.box = new WebMolKit.Box(sz1.w, 0, arrow.box.w, sz.h);
+            let y1 = 0.5 * (sz.h - sz1.h), y2 = 0.5 * (sz.h - sz2.h);
+            n = 0;
+            for (let xc of block)
+                if (xc.type != ArrangeExperiment.COMP_ARROW) {
+                    if (n < mid) {
+                        xc.box.x = sz1.w - xc.box.w;
+                        xc.box.y = y1;
+                        y1 += xc.box.h;
+                    }
+                    else {
+                        xc.box.x = sz.w - sz2.w;
+                        xc.box.y = y2;
+                        y2 += xc.box.h;
+                    }
+                    n++;
+                }
+            return sz;
+        }
+        findMidBlock(block, sz) {
+            let count = 0;
+            let mid = WebMolKit.Pos.zero();
+            for (let xc of block)
+                if (xc.type == ArrangeExperiment.COMP_PLUS || xc.type == ArrangeExperiment.COMP_ARROW) {
+                    mid.x += xc.box.midX();
+                    mid.y += xc.box.midY();
+                    count++;
+                }
+            if (count == 0) {
+                mid.x = 0.5 * sz.w;
+                mid.y = 0.5 * sz.h;
+            }
+            else if (count > 1) {
+                let inv = 1.0 / count;
+                mid.x *= inv;
+                mid.y *= inv;
+            }
+            return mid;
+        }
+        scoreArrangement(comps) {
+            let w = 0;
+            for (let xc of comps)
+                w = Math.max(w, xc.box.maxX());
+            let score = 0;
+            score -= Math.abs(w - this.limitTotalW);
+            return score;
+        }
+        originateBlock(block, x, y) {
+            for (let xc of block) {
+                xc.box.x += x;
+                xc.box.y += y;
+            }
+        }
+    }
+    ArrangeExperiment.COMP_ARROW = 1;
+    ArrangeExperiment.COMP_PLUS = 2;
+    ArrangeExperiment.COMP_REACTANT = 3;
+    ArrangeExperiment.COMP_REAGENT = 4;
+    ArrangeExperiment.COMP_PRODUCT = 5;
+    ArrangeExperiment.COMP_ANNOT_NONE = 0;
+    ArrangeExperiment.COMP_ANNOT_PRIMARY = 1;
+    ArrangeExperiment.COMP_ANNOT_WASTE = 2;
+    ArrangeExperiment.COMP_ANNOT_IMPLIED = 3;
+    ArrangeExperiment.COMP_GAP_LEFT = 0.5;
+    ArrangeExperiment.COMP_ANNOT_SIZE = 1;
+    WebMolKit.ArrangeExperiment = ArrangeExperiment;
+})(WebMolKit || (WebMolKit = {}));
+var WebMolKit;
+(function (WebMolKit) {
+    let BLineType;
+    (function (BLineType) {
+        BLineType[BLineType["Normal"] = 1] = "Normal";
+        BLineType[BLineType["Inclined"] = 2] = "Inclined";
+        BLineType[BLineType["Declined"] = 3] = "Declined";
+        BLineType[BLineType["Unknown"] = 4] = "Unknown";
+        BLineType[BLineType["Dotted"] = 5] = "Dotted";
+        BLineType[BLineType["DotDir"] = 6] = "DotDir";
+        BLineType[BLineType["IncDouble"] = 7] = "IncDouble";
+        BLineType[BLineType["IncTriple"] = 8] = "IncTriple";
+        BLineType[BLineType["IncQuadruple"] = 9] = "IncQuadruple";
+    })(BLineType = WebMolKit.BLineType || (WebMolKit.BLineType = {}));
+    class ArrangeMolecule {
+        constructor(mol, measure, policy, effects = new WebMolKit.RenderEffects()) {
+            this.mol = mol;
+            this.measure = measure;
+            this.policy = policy;
+            this.effects = effects;
+            this.MINBOND_LINE = 0.25;
+            this.MINBOND_EXOTIC = 0.5;
+            this.points = [];
+            this.lines = [];
+            this.rings = [];
+            this.paths = [];
+            this.space = [];
+            this.wantArtifacts = true;
+            this.artifacts = null;
+            this.bondOrder = [];
+            this.atomCharge = [];
+            this.atomUnpaired = [];
+            this.artifactCharge = new Map();
+            this.artifactUnpaired = new Map();
+            this.artifactFract = new Map();
+        }
+        static guestimateSize(mol, policy, maxW, maxH) {
+            let box = mol.boundary();
+            let minX = box.minX(), minY = box.minY(), maxX = box.maxX(), maxY = box.maxY();
+            let fontSize = policy.data.fontSize * this.FONT_CORRECT;
+            for (let n = 1; n <= mol.numAtoms; n++)
+                if (mol.atomExplicit(n)) {
+                    let plusH = mol.atomHydrogens(n) > 0 ? 1 : 0;
+                    const aw = 0.5 * 0.7 * fontSize * (mol.atomElement(n).length + plusH);
+                    const ah = 0.5 * fontSize * (1 + plusH);
+                    const ax = mol.atomX(n), ay = mol.atomY(n);
+                    minX = Math.min(minX, ax - aw);
+                    maxX = Math.max(maxX, ax + aw);
+                    minY = Math.min(minY, ay - ah);
+                    maxY = Math.max(maxY, ay + ah);
+                }
+            let w = Math.max(1, (maxX - minX)) * policy.data.pointScale;
+            let h = Math.max(1, (maxY - minY)) * policy.data.pointScale;
+            if (maxW > 0 && w > maxW) {
+                h *= maxW / w;
+                w = maxW;
+            }
+            if (maxH > 0 && h > maxH) {
+                w *= maxH / h;
+                h = maxH;
+            }
+            return [w, h];
+        }
+        getMolecule() { return this.mol; }
+        getMeasure() { return this.measure; }
+        getPolicy() { return this.policy; }
+        getEffects() { return this.effects; }
+        getScale() { return this.scale; }
+        setWantArtifacts(want) { this.wantArtifacts = want; }
+        getArtifacts() { return this.artifacts; }
+        setArtifacts(artifacts) { this.artifacts = artifacts; }
+        arrange() {
+            const mol = this.mol;
+            this.scale = this.measure.scale();
+            this.bondSepPix = this.policy.data.bondSep * this.measure.scale();
+            this.lineSizePix = this.policy.data.lineSize * this.measure.scale();
+            this.fontSizePix = this.policy.data.fontSize * this.measure.scale() * ArrangeMolecule.FONT_CORRECT;
+            this.ymul = this.measure.yIsUp() ? -1 : 1;
+            let artmask = null;
+            if (this.wantArtifacts && this.artifacts == null) {
+                this.artifacts = new WebMolKit.BondArtifact(mol);
+                artmask = WebMolKit.Vec.booleanArray(false, mol.numAtoms);
+                for (let path of this.artifacts.getResPaths())
+                    for (let a of path.atoms)
+                        artmask[a - 1] = true;
+                for (let ring of this.artifacts.getResRings())
+                    for (let a of ring.atoms)
+                        artmask[a - 1] = true;
+                for (let arene of this.artifacts.getArenes()) {
+                    artmask[arene.centre - 1] = true;
+                    for (let a of arene.atoms)
+                        artmask[a - 1] = true;
+                }
+            }
+            this.setupBondOrders();
+            for (let n = 1; n <= mol.numAtoms; n++) {
+                if (mol.atomElement(n).length > 2 && mol.atomHydrogens(n) == 0) {
+                    this.points.push(null);
+                    this.space.push(null);
+                    continue;
+                }
+                let a = {
+                    'anum': n,
+                    'text': mol.atomExplicit(n) || this.atomIsWeirdLinear(n) ? mol.atomElement(n) : null,
+                    'fsz': this.fontSizePix,
+                    'bold': mol.atomMapNum(n) > 0,
+                    'col': this.policy.data.atomCols[mol.atomicNumber(n)],
+                    'oval': new WebMolKit.Oval(this.measure.angToX(mol.atomX(n)), this.measure.angToY(mol.atomY(n)), 0, 0)
+                };
+                let overCol = this.effects.colAtom[n];
+                if (overCol)
+                    a.col = overCol;
+                if (artmask[n - 1] && mol.atomElement(n) == 'C')
+                    a.text = null;
+                if (a.text != null) {
+                    let wad = this.measure.measureText(a.text, a.fsz);
+                    const PADDING = 1.1;
+                    a.oval.rw = 0.5 * wad[0] * PADDING;
+                    a.oval.rh = 0.5 * wad[1] * PADDING;
+                }
+                this.points.push(a);
+                this.space.push(this.computeSpacePoint(a));
+            }
+            for (let n = 1; n <= mol.numAtoms; n++)
+                if (this.points[n - 1] == null)
+                    this.processLabel(n);
+            let bdbl = WebMolKit.Vec.booleanArray(false, mol.numBonds);
+            for (let n = 1; n <= mol.numBonds; n++) {
+                let bfr = mol.bondFrom(n), bto = mol.bondTo(n);
+                let bt = mol.bondType(n), bo = this.bondOrder[n - 1];
+                if (bo < 0)
+                    continue;
+                let col = this.effects.colBond[n];
+                if (!col)
+                    col = this.policy.data.foreground;
+                bdbl[n - 1] = bo == 2 && (bt == WebMolKit.Molecule.BONDTYPE_NORMAL || bt == WebMolKit.Molecule.BONDTYPE_UNKNOWN);
+                let a1 = this.points[bfr - 1], a2 = this.points[bto - 1];
+                let x1 = a1.oval.cx, y1 = a1.oval.cy, x2 = a2.oval.cx, y2 = a2.oval.cy;
+                if (Math.abs(x2 - x1) <= 1 && Math.abs(y2 - y1) <= 1) {
+                    bdbl[n - 1] = false;
+                    continue;
+                }
+                if (bdbl[n - 1])
+                    continue;
+                let minDist = (bo == 1 && bt == WebMolKit.Molecule.BONDTYPE_NORMAL ? this.MINBOND_LINE : this.MINBOND_EXOTIC) * this.measure.scale();
+                let xy1 = this.backOffAtom(bfr, x1, y1, x2, y2, minDist);
+                let xy2 = this.backOffAtom(bto, x2, y2, x1, y1, minDist);
+                this.ensureMinimumBondLength(xy1, xy2, x1, y1, x2, y2, minDist);
+                let sz = this.lineSizePix, head = 0;
+                let ltype = BLineType.Normal;
+                if (bo == 1 && bt == WebMolKit.Molecule.BONDTYPE_INCLINED) {
+                    ltype = BLineType.Inclined;
+                    head = 0.15 * this.measure.scale();
+                }
+                else if (bo == 1 && bt == WebMolKit.Molecule.BONDTYPE_DECLINED) {
+                    ltype = BLineType.Declined;
+                    head = 0.15 * this.measure.scale();
+                }
+                else if (bt == WebMolKit.Molecule.BONDTYPE_UNKNOWN) {
+                    ltype = BLineType.Unknown;
+                    head = 0.2 * this.measure.scale();
+                }
+                else if (bo == 0) {
+                    if (bt == WebMolKit.Molecule.BONDTYPE_INCLINED || bt == WebMolKit.Molecule.BONDTYPE_DECLINED)
+                        ltype = BLineType.DotDir;
+                    else
+                        ltype = BLineType.Dotted;
+                }
+                else if ((bo == 2 || bo == 3 || bo == 4) && (bt == WebMolKit.Molecule.BONDTYPE_INCLINED || bt == WebMolKit.Molecule.BONDTYPE_DECLINED)) {
+                    ltype = bo == 2 ? BLineType.IncDouble : bo == 3 ? BLineType.IncTriple : BLineType.IncQuadruple;
+                    head = (bo == 2 ? 0.20 : 0.25) * this.measure.scale();
+                }
+                if (bo == 0) {
+                    let dx = xy2[0] - xy1[0], dy = xy2[1] - xy1[1];
+                    let d = WebMolKit.norm_xy(dx, dy), invD = 1 / d;
+                    let ox = 0.5 * dx * invD * this.bondSepPix, oy = 0.5 * dy * invD * this.bondSepPix;
+                    if (mol.atomAdjCount(bfr) > 1) {
+                        xy1[0] += ox;
+                        xy1[1] += oy;
+                    }
+                    if (mol.atomAdjCount(bto) > 1) {
+                        xy2[0] -= ox;
+                        xy2[1] -= oy;
+                    }
+                }
+                if (bo != 1 && bt == WebMolKit.Molecule.BONDTYPE_DECLINED) {
+                    let tmp = xy1;
+                    xy1 = xy2;
+                    xy2 = tmp;
+                }
+                if (bo > 1 && (bt == WebMolKit.Molecule.BONDTYPE_NORMAL || bt == WebMolKit.Molecule.BONDTYPE_UNKNOWN)) {
+                    let oxy = this.orthogonalDelta(xy1[0], xy1[1], xy2[0], xy2[1], this.bondSepPix);
+                    let v = -0.5 * (bo - 1);
+                    for (let i = 0; i < bo; i++, v++) {
+                        let lx1 = xy1[0] + v * oxy[0], ly1 = xy1[1] + v * oxy[1], lx2 = xy2[0] + v * oxy[0], ly2 = xy2[1] + v * oxy[1];
+                        let b = {
+                            'bnum': n,
+                            'bfr': bfr,
+                            'bto': bto,
+                            'type': ltype,
+                            'line': new WebMolKit.Line(lx1, ly1, lx2, ly2),
+                            'size': sz,
+                            'head': 0,
+                            'col': col
+                        };
+                        this.lines.push(b);
+                        this.space.push(this.computeSpaceLine(b));
+                    }
+                }
+                else {
+                    let b = {
+                        'bnum': n,
+                        'bfr': bfr,
+                        'bto': bto,
+                        'type': ltype,
+                        'line': new WebMolKit.Line(xy1[0], xy1[1], xy2[0], xy2[1]),
+                        'size': sz,
+                        'head': head,
+                        'col': col
+                    };
+                    this.lines.push(b);
+                    this.space.push(this.computeSpaceLine(b));
+                }
+            }
+            let rings = this.orderedRingList();
+            for (let i = 0; i < rings.length; i++) {
+                for (let j = 0; j < rings[i].length; j++) {
+                    let k = mol.findBond(rings[i][j], rings[i][j < rings[i].length - 1 ? j + 1 : 0]);
+                    if (bdbl[k - 1]) {
+                        this.processDoubleBond(k, rings[i]);
+                        bdbl[k - 1] = false;
+                    }
+                }
+            }
+            for (let i = 1; i <= mol.numBonds; i++)
+                if (bdbl[i - 1])
+                    this.processDoubleBond(i, this.priorityDoubleSubstit(i));
+            let hcount = WebMolKit.Vec.numberArray(0, mol.numAtoms);
+            for (let n = 1; n <= mol.numAtoms; n++)
+                hcount[n - 1] = this.points[n - 1].text == null ? 0 : mol.atomHydrogens(n);
+            for (let n = 0; n < mol.numAtoms; n++)
+                if (hcount[n] > 0 && this.placeHydrogen(n, hcount[n], true))
+                    hcount[n] = 0;
+            for (let n = 0; n < mol.numAtoms; n++)
+                if (hcount[n] > 0)
+                    this.placeHydrogen(n, hcount[n], false);
+            for (let n = 1; n <= mol.numAtoms; n++)
+                if (mol.atomIsotope(n) != WebMolKit.Molecule.ISOTOPE_NATURAL) {
+                    let isostr = mol.atomIsotope(n).toString();
+                    let col = this.policy.data.atomCols[mol.atomicNumber(n)];
+                    this.placeAdjunct(n, isostr, this.fontSizePix * 0.6, col, 150 * WebMolKit.DEGRAD);
+                }
+            for (let n = 1; n <= mol.numAtoms; n++) {
+                let str = '';
+                let chg = this.atomCharge[n - 1];
+                if (chg == -1)
+                    str = '-';
+                else if (chg == 1)
+                    str = '+';
+                else if (chg < -1)
+                    str = Math.abs(chg) + '-';
+                else if (chg > 1)
+                    str = chg + '+';
+                for (let i = this.atomUnpaired[n - 1]; i > 0; i--)
+                    str += '.';
+                if (str.length == 0)
+                    continue;
+                let col = this.policy.data.atomCols[mol.atomicNumber(n)];
+                this.placeAdjunct(n, str, str.length == 1 ? 0.8 * this.fontSizePix : 0.6 * this.fontSizePix, col, 30 * WebMolKit.DEGRAD);
+            }
+            if (this.artifacts != null) {
+                for (let path of this.artifacts.getResPaths()) {
+                    this.createCurvedPath(path.atoms, this.artifactFract.get(path), 0);
+                    this.delocalisedAnnotation(path.atoms, this.artifactCharge.get(path), this.artifactUnpaired.get(path));
+                }
+                for (let ring of this.artifacts.getResRings()) {
+                    this.createCircularRing(ring.atoms);
+                    this.delocalisedAnnotation(ring.atoms, this.artifactCharge.get(ring), this.artifactUnpaired.get(ring));
+                }
+                for (let arene of this.artifacts.getArenes()) {
+                    let isRing = arene.atoms.length > 2;
+                    if (isRing)
+                        for (let n = 0; n < arene.atoms.length; n++) {
+                            let nn = n < arene.atoms.length - 1 ? n + 1 : 0;
+                            if (mol.findBond(arene.atoms[n], arene.atoms[nn]) == 0) {
+                                isRing = false;
+                                break;
+                            }
+                        }
+                    this.createBondCentroid(arene.centre, arene.atoms);
+                    if (isRing)
+                        this.createCircularRing(arene.atoms);
+                    else
+                        this.createCurvedPath(arene.atoms, false, arene.centre);
+                    this.delocalisedAnnotation(arene.atoms, this.artifactCharge.get(arene), this.artifactUnpaired.get(arene));
+                }
+            }
+        }
+        numPoints() { return this.points.length; }
+        getPoint(idx) { return this.points[idx]; }
+        numLines() { return this.lines.length; }
+        getLine(idx) { return this.lines[idx]; }
+        numRings() { return this.rings.length; }
+        getRing(idx) { return this.rings[idx]; }
+        getRings() { return this.rings; }
+        numPaths() { return this.paths.length; }
+        getPath(idx) { return this.paths[idx]; }
+        getPaths() { return this.paths; }
+        numSpace() { return this.space.length; }
+        getSpace(idx) { return this.space[idx]; }
+        offsetEverything(dx, dy) {
+            for (let a of this.points)
+                a.oval.offsetBy(dx, dy);
+            for (let b of this.lines)
+                b.line.offsetBy(dx, dy);
+            for (let r of this.rings) {
+                r.cx += dx;
+                r.cy += dy;
+            }
+            for (let p of this.paths) {
+                WebMolKit.Vec.addTo(p.px, dx);
+                WebMolKit.Vec.addTo(p.py, dy);
+            }
+            for (let spc of this.space) {
+                spc.box.offsetBy(dx, dy);
+                WebMolKit.Vec.addTo(spc.px, dx);
+                WebMolKit.Vec.addTo(spc.py, dy);
+            }
+        }
+        scaleEverything(scaleBy) {
+            this.scale *= scaleBy;
+            for (let a of this.points) {
+                a.oval.scaleBy(scaleBy);
+                a.fsz *= scaleBy;
+            }
+            for (let b of this.lines) {
+                b.line.scaleBy(scaleBy);
+                b.size *= scaleBy;
+                b.head *= scaleBy;
+            }
+            for (let r of this.rings) {
+                r.cx *= scaleBy;
+                r.cy *= scaleBy;
+                r.rw *= scaleBy;
+                r.rh *= scaleBy;
+            }
+            for (let p of this.paths) {
+                WebMolKit.Vec.mulBy(p.px, scaleBy);
+                WebMolKit.Vec.mulBy(p.py, scaleBy);
+            }
+            for (let spc of this.space) {
+                spc.box.scaleBy(scaleBy);
+                WebMolKit.Vec.mulBy(spc.px, scaleBy);
+                WebMolKit.Vec.mulBy(spc.py, scaleBy);
+            }
+        }
+        determineBoundary(padding) {
+            if (padding == null)
+                padding = 0;
+            if (this.space.length == 0)
+                return [0, 0, 2 * padding, 2 * padding];
+            let bounds = WebMolKit.Vec.numberArray(0, 4);
+            let spc = this.space[0];
+            bounds[0] = spc.box.x;
+            bounds[1] = spc.box.y;
+            bounds[2] = spc.box.x + spc.box.w;
+            bounds[3] = spc.box.y + spc.box.h;
+            for (let n = this.space.length - 1; n > 0; n--) {
+                spc = this.space[n];
+                bounds[0] = Math.min(bounds[0], spc.box.x);
+                bounds[1] = Math.min(bounds[1], spc.box.y);
+                bounds[2] = Math.max(bounds[2], spc.box.x + spc.box.w);
+                bounds[3] = Math.max(bounds[3], spc.box.y + spc.box.h);
+            }
+            return bounds;
+        }
+        squeezeInto(x, y, w, h, padding) {
+            if (padding != null && padding > 0) {
+                x += padding;
+                y += padding;
+                w -= 2 * padding;
+                h -= 2 * padding;
+            }
+            let bounds = this.determineBoundary(0);
+            let bw = bounds[2] - bounds[0], bh = bounds[3] - bounds[1];
+            if (bw > w || bh > h) {
+                let downScale = 1;
+                if (bw > w)
+                    downScale = w / bw;
+                if (bh > h)
+                    downScale = Math.min(downScale, h / bh);
+                this.scaleEverything(downScale);
+                WebMolKit.Vec.mulBy(bounds, downScale);
+            }
+            this.offsetEverything(x - bounds[0] + 0.5 * (w - bounds[2] + bounds[0]), y - bounds[1] + 0.5 * (h - bounds[3] + bounds[1]));
+        }
+        monochromate(col) {
+            for (let a of this.points)
+                a.col = col;
+            for (let b of this.lines)
+                b.col = col;
+        }
+        clone() {
+            let dup = new ArrangeMolecule(this.mol, this.measure, this.policy, this.effects);
+            dup.scale = this.scale;
+            dup.bondSepPix = this.bondSepPix;
+            dup.lineSizePix = this.lineSizePix;
+            dup.fontSizePix = this.fontSizePix;
+            dup.ymul = this.ymul;
+            for (let a of this.points)
+                dup.points.push(WebMolKit.clone(a));
+            for (let b of this.lines)
+                dup.lines.push(WebMolKit.clone(b));
+            for (let s of this.space)
+                dup.space.push(WebMolKit.clone(s));
+            return dup;
+        }
+        setupBondOrders() {
+            const mol = this.mol;
+            for (let n = 0; n < mol.numBonds; n++)
+                this.bondOrder[n] = mol.bondOrder(n + 1);
+            for (let n = 0; n < mol.numAtoms; n++) {
+                this.atomCharge[n] = mol.atomCharge(n + 1);
+                this.atomUnpaired[n] = mol.atomUnpaired(n + 1);
+            }
+            let delocalise = (obj, atoms) => {
+                let charge = 0, unpaired = 0;
+                for (let a of atoms) {
+                    charge += this.atomCharge[a - 1];
+                    unpaired += this.atomUnpaired[a - 1];
+                    this.atomCharge[a - 1] = this.atomUnpaired[a - 1] = 0;
+                }
+                this.artifactCharge.set(obj, charge);
+                this.artifactUnpaired.set(obj, unpaired);
+            };
+            if (this.artifacts == null)
+                return;
+            for (let path of this.artifacts.getResPaths()) {
+                let charge = 0, unpaired = 0, orders = 0;
+                for (let n = 0; n < path.atoms.length; n++) {
+                    charge += mol.atomCharge(path.atoms[n]);
+                    unpaired += mol.atomUnpaired(path.atoms[n]);
+                    let b = mol.findBond(path.atoms[n], path.atoms[n < path.atoms.length - 1 ? n + 1 : 0]);
+                    if (b > 0)
+                        orders += mol.bondOrder(b);
+                }
+                let fractional = (2 * orders - charge + unpaired) / path.atoms.length < 1;
+                this.artifactFract.set(path, fractional);
+                for (let n = 0; n < path.atoms.length - 1; n++) {
+                    let b = mol.findBond(path.atoms[n], path.atoms[n + 1]);
+                    if (b > 0)
+                        this.bondOrder[b - 1] = fractional ? -1 : 1;
+                }
+                delocalise(path, path.atoms);
+            }
+            for (let ring of this.artifacts.getResRings()) {
+                for (let n = 0; n < ring.atoms.length; n++) {
+                    let b = mol.findBond(ring.atoms[n], ring.atoms[n < ring.atoms.length - 1 ? n + 1 : 0]);
+                    if (b > 0)
+                        this.bondOrder[b - 1] = 1;
+                }
+                delocalise(ring, ring.atoms);
+            }
+            for (let arene of this.artifacts.getArenes()) {
+                for (let n = 0; n < arene.atoms.length; n++) {
+                    let b = mol.findBond(arene.atoms[n], arene.atoms[n < arene.atoms.length - 1 ? n + 1 : 0]);
+                    if (b > 0)
+                        this.bondOrder[b - 1] = 1;
+                    b = mol.findBond(arene.centre, arene.atoms[n]);
+                    if (b > 0)
+                        this.bondOrder[b - 1] = -1;
+                }
+                delocalise(arene, arene.atoms);
+            }
+        }
+        placeAdjunct(atom, str, fsz, col, angdir) {
+            let wad = this.measure.measureText(str, fsz);
+            let a = this.points[atom - 1];
+            let cx = a.oval.cx, cy = a.oval.cy, rw = 0.55 * wad[0], rh = 0.55 * wad[1];
+            let bestScore = 0, bestDX = 0, bestDY = 0;
+            let px = WebMolKit.Vec.numberArray(0, 4), py = WebMolKit.Vec.numberArray(0, 4);
+            let angThresh = 10;
+            let shorted = false;
+            for (let ext = 0.5 * (a.oval.rw + a.oval.rh); !shorted && ext < 1.5 * this.measure.scale(); ext += 0.1 * this.measure.scale()) {
+                const DELTA = 5 * WebMolKit.DEGRAD;
+                for (let d = 0; !shorted && d < Math.PI - 0.0001; d += DELTA)
+                    for (let s = -1; s <= 1; s += 2) {
+                        let dang = d * s + (s > 0 ? DELTA : 0), ang = angdir + dang;
+                        let dx = ext * Math.cos(ang), dy = ext * Math.sin(ang) * -this.ymul;
+                        let x1 = cx + dx - rw, x2 = cx + dx + rw, y1 = cy + dy - rh, y2 = cy + dy + rh;
+                        px[0] = x1;
+                        py[0] = y1;
+                        px[1] = x2;
+                        py[1] = y1;
+                        px[2] = x2;
+                        py[2] = y2;
+                        px[3] = x1;
+                        py[3] = y2;
+                        let viol = this.countPolyViolations(px, py, false);
+                        let score = 10 * viol + Math.abs(dang) + 10 * ext;
+                        let shortCircuit = viol == 0 && Math.abs(dang) < (angThresh + 1) * WebMolKit.DEGRAD;
+                        if (bestScore == 0 || shortCircuit || score < bestScore) {
+                            bestScore = score;
+                            bestDX = dx;
+                            bestDY = dy;
+                        }
+                        if (shortCircuit) {
+                            shorted = true;
+                            break;
+                        }
+                    }
+                angThresh += 5;
+            }
+            a =
+                {
+                    'anum': 0,
+                    'text': str,
+                    'fsz': fsz,
+                    'bold': false,
+                    'col': col,
+                    'oval': new WebMolKit.Oval(cx + bestDX, cy + bestDY, rw, rh)
+                };
+            this.points.push(a);
+            let spc = {
+                'anum': 0,
+                'bnum': 0,
+                'box': new WebMolKit.Box(a.oval.cx - rw, a.oval.cy - rh, 2 * rw, 2 * rh),
+                'px': [a.oval.cx - rw, a.oval.cx + rw, a.oval.cx + rw, a.oval.cx - rw],
+                'py': [a.oval.cy - rh, a.oval.cy - rh, a.oval.cy + rh, a.oval.cy + rh]
+            };
+            this.space.push(spc);
+        }
+        processLabel(anum) {
+            let ax = this.mol.atomX(anum), ay = this.mol.atomY(anum);
+            let left = 0, right = 0;
+            let adj = this.mol.atomAdjList(anum);
+            for (let n = 0; n < adj.length; n++) {
+                let theta = Math.atan2(this.mol.atomY(adj[n]) - ay, this.mol.atomX(adj[n]) - ax) * WebMolKit.RADDEG;
+                if (theta >= -15 && theta <= 15)
+                    right += 3;
+                else if (theta >= -85 && theta <= 85)
+                    right++;
+                else if (theta > 85 && theta < 95) { }
+                else if (theta < -85 && theta > -95) { }
+                else if (theta > 165 || theta < -165)
+                    left += 3;
+                else
+                    left++;
+            }
+            let label = this.mol.atomElement(anum);
+            let ibar = label.indexOf('|'), ibrace = label.indexOf('{');
+            let side = 0;
+            if (left == 0 && right == 0 && ibar < 0 && ibrace < 0) { }
+            else if (left < right)
+                side = -1;
+            else if (right < left)
+                side = 1;
+            else {
+                let score1 = WebMolKit.CoordUtil.congestionPoint(this.mol, ax - 1, ay);
+                let score2 = WebMolKit.CoordUtil.congestionPoint(this.mol, ax + 1, ay);
+                if (score1 < 0.5 * score2)
+                    side = -1;
+                else
+                    side = 1;
+            }
+            let chunks = null;
+            let position = null;
+            let primary = null;
+            let refchunk = 0;
+            if (ibar < 0 && ibrace < 0) {
+                if (side == 0)
+                    chunks = [label];
+                else if (side < 0) {
+                    chunks = [label.substring(0, label.length - 1), label.substring(label.length - 1)];
+                    refchunk = 1;
+                }
+                else
+                    chunks = [label.substring(0, 1), label.substring(1)];
+            }
+            else {
+                let bits = [];
+                let bpos = [];
+                let bpri = [];
+                let blocks = label.split('|');
+                if (side < 0) {
+                    let oldblk = blocks;
+                    blocks = [];
+                    for (let i = oldblk.length - 1; i >= 0; i--)
+                        blocks.push(oldblk[i]);
+                }
+                let buff = '';
+                for (let i = 0; i < blocks.length; i++) {
+                    let isPrimary = (side >= 0 && i == 0) || (side < 0 && i == blocks.length - 1);
+                    if (side < 0 && refchunk == 0 && i == blocks.length - 1)
+                        refchunk = bits.length;
+                    let pos = 0;
+                    buff = '';
+                    for (let j = 0; j < blocks[i].length; j++) {
+                        let ch = blocks[i].charAt(j);
+                        if (ch == '{' || ch == '}') {
+                            if (buff.length > 0) {
+                                bits.push(buff.toString());
+                                bpos.push(pos);
+                                bpri.push(isPrimary);
+                            }
+                            buff = '';
+                            pos = ch == '{' ? -1 : 0;
+                        }
+                        else if (ch == '^' && pos == -1 && buff.length == 0)
+                            pos = 1;
+                        else
+                            buff += ch;
+                    }
+                    if (buff.length > 0) {
+                        bits.push(buff.toString());
+                        bpos.push(pos);
+                        bpri.push(isPrimary);
+                    }
+                }
+                chunks = bits;
+                position = bpos;
+                primary = bpri;
+                while (refchunk < chunks.length - 1 && position[refchunk] != 0)
+                    refchunk++;
+            }
+            let PADDING = 1.1;
+            let SSFRACT = 0.6;
+            let chunkw = WebMolKit.Vec.numberArray(0, chunks.length);
+            let tw = 0;
+            for (let n = 0; n < chunks.length; n++) {
+                chunkw[n] = this.measure.measureText(chunks[n], this.fontSizePix)[0];
+                if (position != null && position[n] != 0)
+                    chunkw[n] *= SSFRACT;
+                tw += chunkw[n];
+            }
+            let x = this.measure.angToX(ax), y = this.measure.angToY(ay);
+            if (side == 0)
+                x -= 0.5 * chunkw[0];
+            else if (side < 0) {
+                for (let n = 0; n < refchunk; n++)
+                    x -= chunkw[n];
+                x -= 0.5 * chunkw[refchunk];
+            }
+            else {
+                x -= 0.5 * chunkw[0];
+            }
+            for (let n = 0; n < chunks.length; n++) {
+                let a = {
+                    'anum': (n == refchunk || (primary != null && primary[n])) ? anum : 0,
+                    'text': chunks[n],
+                    'fsz': this.fontSizePix,
+                    'bold': false,
+                    'col': this.policy.data.atomCols[this.mol.atomicNumber(anum)],
+                    'oval': new WebMolKit.Oval(x + 0.5 * chunkw[n], y, 0.5 * chunkw[n] * PADDING, 0.5 * this.fontSizePix * PADDING)
+                };
+                if (position != null && position[n] != 0) {
+                    a.fsz *= SSFRACT;
+                    if (position[n] < 0)
+                        a.oval.cy += a.fsz * 0.7 * (this.measure.yIsUp() ? -1 : 1);
+                    else
+                        a.oval.cy -= a.fsz * 0.3 * (this.measure.yIsUp() ? -1 : 1);
+                }
+                if (n == refchunk) {
+                    this.points[anum - 1] = a;
+                    this.space[anum - 1] = this.computeSpacePoint(a);
+                }
+                else {
+                    this.points.push(a);
+                    this.space.push(this.computeSpacePoint(a));
+                }
+                x += chunkw[n];
+            }
+        }
+        atomIsWeirdLinear(idx) {
+            let bonds = this.mol.atomAdjBonds(idx);
+            if (bonds.length != 2)
+                return false;
+            for (let n = 0; n < bonds.length; n++)
+                if (this.mol.bondOrder(bonds[n]) == 3)
+                    return false;
+            let adj = this.mol.atomAdjList(idx);
+            let th1 = Math.atan2(this.mol.atomY(adj[0]) - this.mol.atomY(idx), this.mol.atomX(adj[0]) - this.mol.atomX(idx));
+            let th2 = Math.atan2(this.mol.atomY(adj[1]) - this.mol.atomY(idx), this.mol.atomX(adj[1]) - this.mol.atomX(idx));
+            return Math.abs(WebMolKit.angleDiff(th1, th2)) >= 175 * WebMolKit.DEGRAD;
+        }
+        backOffAtom(atom, x, y, fx, fy, minDist) {
+            if (x == fx && y == fy)
+                return [x, y];
+            let active = false;
+            let dx = 0, dy = 0, dst = 0, ext = 0;
+            for (let s = 0; s < this.space.length; s++) {
+                let spc = this.space[s];
+                if (spc.anum != atom)
+                    continue;
+                const sz = spc.px.length;
+                if (sz == 0)
+                    continue;
+                for (let n = 0; n < sz; n++) {
+                    let nn = n < sz - 1 ? n + 1 : 0;
+                    let x1 = spc.px[n], y1 = spc.py[n], x2 = spc.px[nn], y2 = spc.py[nn];
+                    if (!WebMolKit.GeomUtil.doLineSegsIntersect(x, y, fx, fy, x1, y1, x2, y2))
+                        continue;
+                    let xy = WebMolKit.GeomUtil.lineIntersect(x, y, fx, fy, x1, y1, x2, y2);
+                    if (!active) {
+                        dx = x - fx;
+                        dy = y - fy;
+                        dst = WebMolKit.norm_xy(dx, dy);
+                        ext = dst;
+                        active = true;
+                    }
+                    ext = Math.min(ext, WebMolKit.norm_xy(xy[0] - fx, xy[1] - fy));
+                }
+            }
+            if (active) {
+                ext = Math.max(minDist, ext - 0.1 * this.measure.scale());
+                let idst = 1.0 / dst;
+                return [fx + ext * idst * dx, fy + ext * idst * dy];
+            }
+            else
+                return [x, y];
+        }
+        ensureMinimumBondLength(xy1, xy2, x1, y1, x2, y2, minDist) {
+            let dx = xy2[0] - xy1[0], dy = xy2[1] - xy1[1];
+            let dsq = WebMolKit.norm2_xy(dx, dy);
+            minDist = Math.min(minDist, WebMolKit.norm_xy(x2 - x1, y2 - y1));
+            if (dsq >= WebMolKit.sqr(minDist - 0.0001))
+                return;
+            let d12 = Math.sqrt(dsq), d1 = WebMolKit.norm_xy(xy1[0] - x1, xy1[1] - y1), d2 = WebMolKit.norm_xy(x2 - xy2[0], y2 - xy2[1]);
+            let mag = 1 - minDist / d12, invD12 = 1.0 / (d1 + d2), mag1 = d1 * mag * invD12, mag2 = d2 * mag * invD12;
+            xy1[0] -= dx * mag1;
+            xy1[1] -= dy * mag1;
+            xy2[0] += dx * mag2;
+            xy2[1] += dy * mag2;
+        }
+        orderedRingList() {
+            let rings = [];
+            let SIZE_ORDER = [6, 5, 7, 4, 3];
+            for (let i = 0; i < SIZE_ORDER.length; i++) {
+                let nring = this.mol.findRingsOfSize(SIZE_ORDER[i]);
+                for (let j = 0; j < nring.length; j++)
+                    rings.push(nring[j]);
+            }
+            let ringsz = rings.length;
+            let ringbusy = WebMolKit.Vec.numberArray(0, this.mol.numAtoms);
+            for (let n = 0; n < ringsz; n++) {
+                let r = rings[n];
+                for (let i = 0; i < r.length; i++)
+                    ringbusy[r[i] - 1]++;
+            }
+            let ringscore = WebMolKit.Vec.numberArray(0, ringsz);
+            for (let n = 0; n < ringsz; n++) {
+                let r = rings[n];
+                for (let i = 0; i < r.length; i++)
+                    ringscore[n] += ringbusy[r[i] - 1];
+            }
+            let ringorder = WebMolKit.Vec.idxSort(ringscore);
+            let resbcount = WebMolKit.Vec.numberArray(0, ringsz), maxbcount = 0;
+            for (let n = 0; n < ringsz; n++) {
+                let r = rings[ringorder[n]];
+                for (let i = 0; i < r.length; i++) {
+                    let j = this.mol.findBond(r[i], r[i + 1 < r.length ? i + 1 : 0]);
+                    if (this.mol.bondOrder(j) == 2)
+                        resbcount[n]++;
+                }
+                maxbcount = Math.max(maxbcount, resbcount[n]);
+            }
+            let pos = 0, ret = [];
+            for (let sz = maxbcount; sz >= 0; sz--) {
+                for (let n = 0; n < ringsz; n++)
+                    if (resbcount[n] == sz)
+                        ret.push(rings[ringorder[n]]);
+            }
+            return ret;
+        }
+        orthogonalDelta(x1, y1, x2, y2, d) {
+            let ox = y1 - y2, oy = x2 - x1, dsq = WebMolKit.norm2_xy(ox, oy);
+            let sc = dsq > 0 ? d / Math.sqrt(dsq) : 1;
+            return [ox * sc, oy * sc];
+        }
+        processDoubleBond(idx, priority) {
+            let bfr = this.mol.bondFrom(idx), bto = this.mol.bondTo(idx);
+            let nfr = this.mol.atomAdjList(bfr), nto = this.mol.atomAdjList(bto);
+            let a1 = this.points[bfr - 1], a2 = this.points[bto - 1];
+            let x1 = a1.oval.cx, y1 = a1.oval.cy, x2 = a2.oval.cx, y2 = a2.oval.cy;
+            const minDist = this.MINBOND_EXOTIC * this.measure.scale();
+            let xy1 = this.backOffAtom(bfr, x1, y1, x2, y2, minDist);
+            let xy2 = this.backOffAtom(bto, x2, y2, x1, y1, minDist);
+            this.ensureMinimumBondLength(xy1, xy2, x1, y1, x2, y2, minDist);
+            x1 = xy1[0];
+            y1 = xy1[1];
+            x2 = xy2[0];
+            y2 = xy2[1];
+            let dx = x2 - x1, dy = y2 - y1, btheta = Math.atan2(dy, dx);
+            let countFLeft = 0, countFRight = 0, countTLeft = 0, countTRight = 0;
+            let idxFLeft = 0, idxFRight = 0, idxTLeft = 0, idxTRight = 0;
+            let noshift = false;
+            for (let n = 0; n < nfr.length; n++)
+                if (nfr[n] != bto) {
+                    let bo = this.mol.bondOrder(this.mol.findBond(bfr, nfr[n]));
+                    if (bo == 0)
+                        continue;
+                    if (bo > 1) {
+                        noshift = true;
+                        break;
+                    }
+                    let ispri = false;
+                    for (let i = 0; i < (priority == null ? 0 : priority.length); i++)
+                        if (priority[i] == nfr[n])
+                            ispri = true;
+                    let theta = WebMolKit.angleDiff(Math.atan2(this.points[nfr[n] - 1].oval.cy - y1, this.points[nfr[n] - 1].oval.cx - x1), btheta);
+                    if (Math.abs(theta) * WebMolKit.RADDEG > 175) {
+                        noshift = true;
+                        break;
+                    }
+                    if (theta > 0) {
+                        if (ispri)
+                            countFLeft++;
+                        idxFLeft = nfr[n];
+                    }
+                    else {
+                        if (ispri)
+                            countFRight++;
+                        idxFRight = nfr[n];
+                    }
+                }
+            for (let n = 0; n < nto.length; n++)
+                if (nto[n] != bfr) {
+                    let bo = this.mol.bondOrder(this.mol.findBond(bto, nto[n]));
+                    if (bo == 0)
+                        continue;
+                    if (bo > 1) {
+                        noshift = true;
+                        break;
+                    }
+                    let ispri = false;
+                    for (let i = 0; i < (priority == null ? 0 : priority.length); i++)
+                        if (priority[i] == nto[n])
+                            ispri = true;
+                    let theta = WebMolKit.angleDiff(Math.atan2(this.points[nto[n] - 1].oval.cy - y2, this.points[nto[n] - 1].oval.cx - x2), btheta);
+                    if (Math.abs(theta) * WebMolKit.RADDEG > 175) {
+                        noshift = true;
+                        break;
+                    }
+                    if (theta > 0) {
+                        if (ispri)
+                            countTLeft++;
+                        idxTLeft = nto[n];
+                    }
+                    else {
+                        if (ispri)
+                            countTRight++;
+                        idxTRight = nto[n];
+                    }
+                }
+            let side = 0;
+            if (noshift || countFLeft > 1 || countFRight > 1 || countTLeft > 1 || countTRight > 1) { }
+            else if (countFLeft > 0 && countFRight > 0) { }
+            else if (countTLeft > 0 && countTRight > 0) { }
+            else if (countFLeft > 0 || countTLeft > 0)
+                side = 1;
+            else if (countFRight > 0 || countTRight > 0)
+                side = -1;
+            let sz = this.lineSizePix;
+            let oxy = this.orthogonalDelta(x1, y1, x2, y2, this.bondSepPix);
+            let ax1 = x1, ay1 = y1, ax2 = x2, ay2 = y2;
+            let bx1 = 0, by1 = 0, bx2 = 0, by2 = 0;
+            if (side == 0) {
+                ax1 = x1 + 0.5 * oxy[0];
+                ay1 = y1 + 0.5 * oxy[1];
+                ax2 = x2 + 0.5 * oxy[0];
+                ay2 = y2 + 0.5 * oxy[1];
+                bx1 = x1 - 0.5 * oxy[0];
+                by1 = y1 - 0.5 * oxy[1];
+                bx2 = x2 - 0.5 * oxy[0];
+                by2 = y2 - 0.5 * oxy[1];
+            }
+            else if (side > 0) {
+                bx1 = x1 + oxy[0];
+                by1 = y1 + oxy[1];
+                bx2 = x2 + oxy[0];
+                by2 = y2 + oxy[1];
+                if (nfr.length > 1 && this.points[bfr - 1].text == null) {
+                    bx1 += oxy[1];
+                    by1 -= oxy[0];
+                }
+                if (nto.length > 1 && this.points[bto - 1].text == null) {
+                    bx2 -= oxy[1];
+                    by2 += oxy[0];
+                }
+            }
+            else if (side < 0) {
+                bx1 = x1 - oxy[0];
+                by1 = y1 - oxy[1];
+                bx2 = x2 - oxy[0];
+                by2 = y2 - oxy[1];
+                if (nfr.length > 1 && this.points[bfr - 1].text == null) {
+                    bx1 += oxy[1];
+                    by1 -= oxy[0];
+                }
+                if (nto.length > 1 && this.points[bto - 1].text == null) {
+                    bx2 -= oxy[1];
+                    by2 += oxy[0];
+                }
+            }
+            if (side != 0) {
+                if (this.mol.atomElement(bfr).length <= 2 && this.mol.atomAdjCount(bfr) == 1 && this.points[bfr - 1].text != null) {
+                    this.bumpAtomPosition(bfr, 0.5 * oxy[0] * side, 0.5 * oxy[1] * side);
+                }
+                if (this.mol.atomElement(bto).length <= 2 && this.mol.atomAdjCount(bto) == 1 && this.points[bto - 1].text != null) {
+                    this.bumpAtomPosition(bto, 0.5 * oxy[0] * side, 0.5 * oxy[1] * side);
+                }
+            }
+            if (side == 0 && !noshift) {
+                let xy = null;
+                if (this.points[bfr - 1].text == null && !this.mol.bondInRing(idx)) {
+                    xy = this.adjustBondPosition(idxFLeft, bfr, ax1, ay1, ax2, ay2);
+                    if (xy != null) {
+                        ax1 = xy[0];
+                        ay1 = xy[1];
+                    }
+                    xy = this.adjustBondPosition(idxFRight, bfr, bx1, by1, bx2, by2);
+                    if (xy != null) {
+                        bx1 = xy[0];
+                        by1 = xy[1];
+                    }
+                }
+                if (this.points[bto - 1].text == null && !this.mol.bondInRing(idx)) {
+                    xy = this.adjustBondPosition(idxTLeft, bto, ax2, ay2, ax1, ay1);
+                    if (xy != null) {
+                        ax2 = xy[0];
+                        ay2 = xy[1];
+                    }
+                    xy = this.adjustBondPosition(idxTRight, bto, bx2, by2, bx1, by1);
+                    if (xy != null) {
+                        bx2 = xy[0];
+                        by2 = xy[1];
+                    }
+                }
+            }
+            let lt = this.mol.bondType(idx) == WebMolKit.Molecule.BONDTYPE_UNKNOWN ? BLineType.Unknown : BLineType.Normal;
+            let col = this.effects.colBond[idx];
+            if (!col)
+                col = this.policy.data.foreground;
+            let b1 = {
+                'bnum': idx,
+                'bfr': bfr,
+                'bto': bto,
+                'type': lt,
+                'line': new WebMolKit.Line(ax1, ay1, ax2, ay2),
+                'size': sz,
+                'head': 0,
+                'col': col
+            };
+            let b2 = {
+                'bnum': idx,
+                'bfr': bfr,
+                'bto': bto,
+                'type': lt,
+                'line': new WebMolKit.Line(bx1, by1, bx2, by2),
+                'size': sz,
+                'head': 0,
+                'col': col
+            };
+            this.lines.push(b1);
+            this.lines.push(b2);
+            this.space.push(this.computeSpaceLine(b1));
+            this.space.push(this.computeSpaceLine(b2));
+        }
+        placeHydrogen(idx, hcount, fussy) {
+            let font = WebMolKit.FontData.main;
+            const SSFRACT = 0.6;
+            const GLYPH_H = font.getIndex('H');
+            let a = this.points[idx];
+            let emscale = a.fsz * font.INV_UNITS_PER_EM;
+            let sub = hcount >= 2 ? hcount.toString() : '';
+            let outlineX = font.getOutlineX(GLYPH_H), outlineY = font.getOutlineY(GLYPH_H);
+            let firstEMW = font.HORIZ_ADV_X[GLYPH_H], emw = firstEMW;
+            for (let n = 0; n < sub.length; n++) {
+                let ch = sub.charAt(n), g = font.getIndex(ch);
+                if (n == 0) {
+                    emw += font.getKerning('H', ch);
+                }
+                else {
+                    let chp = sub.charAt(n - 1);
+                    emw += font.getKerning(chp, ch) * SSFRACT;
+                }
+                let extraX = font.getOutlineX(g), extraY = font.getOutlineY(g);
+                WebMolKit.Vec.addTo(extraX, emw / SSFRACT);
+                WebMolKit.Vec.addTo(extraY, (SSFRACT - 1) * font.ASCENT);
+                WebMolKit.Vec.mulBy(extraX, SSFRACT);
+                WebMolKit.Vec.mulBy(extraY, SSFRACT);
+                outlineX = outlineX.concat(extraX);
+                outlineY = outlineY.concat(extraY);
+                emw += font.HORIZ_ADV_X[g] * SSFRACT;
+            }
+            if (sub.length > 0) {
+                let qh = new WebMolKit.QuickHull(outlineX, outlineY, 0);
+                outlineX = qh.hullX;
+                outlineY = qh.hullY;
+            }
+            let emdx = -0.5 * firstEMW, emdy = 0.5 * font.ASCENT;
+            for (let n = 0; n < outlineX.length; n++) {
+                outlineX[n] = a.oval.cx + (emdx + outlineX[n]) * emscale;
+                outlineY[n] = a.oval.cy + (emdy - outlineY[n]) * emscale * this.ymul;
+            }
+            let dx = 0, dy = 0;
+            let srcWAD = this.measure.measureText(a.text, a.fsz);
+            if (fussy) {
+                let RIGHTLEFT = [0, 1, 2, 3];
+                let LEFTRIGHT = [1, 0, 2, 3];
+                let UPDOWN = [2, 3, 0, 1];
+                let DOWNUP = [3, 2, 0, 1];
+                let quad = RIGHTLEFT, adj = this.mol.atomAdjList(a.anum);
+                if (adj.length == 0) {
+                    let LEFTIES = ["O", "S", "F", "Cl", "Br", "I"];
+                    if (this.mol.atomCharge(a.anum) == 0 && this.mol.atomUnpaired(a.anum) == 0 &&
+                        LEFTIES.indexOf(this.mol.atomElement(a.anum)) >= 0)
+                        quad = LEFTRIGHT;
+                    else
+                        quad = RIGHTLEFT;
+                }
+                else {
+                    let allLeft = true, allRight = true, allUp = true, allDown = true;
+                    const ax = this.mol.atomX(a.anum), ay = this.mol.atomY(a.anum);
+                    for (let n = 0; n < adj.length; n++) {
+                        const bx = this.mol.atomX(adj[n]), by = this.mol.atomY(adj[n]);
+                        if (bx > ax + 0.01)
+                            allLeft = false;
+                        if (bx < ax - 0.01)
+                            allRight = false;
+                        if (by < ay - 0.01)
+                            allUp = false;
+                        if (by > ay + 0.01)
+                            allDown = false;
+                    }
+                    if (allLeft) { }
+                    else if (allRight)
+                        quad = LEFTRIGHT;
+                    else if (allUp)
+                        quad = DOWNUP;
+                    else if (allDown)
+                        quad = UPDOWN;
+                }
+                for (let n = 0; n < 4; n++) {
+                    let tx = 0, ty = 0;
+                    if (quad[n] == 0)
+                        tx = 0.5 * srcWAD[0] + 0.5 * firstEMW * emscale;
+                    else if (quad[n] == 1)
+                        tx = -0.5 * srcWAD[0] - (emw - 0.5 * firstEMW) * emscale;
+                    else if (quad[n] == 2)
+                        ty = (1.1 * srcWAD[1] + 0.5 * srcWAD[2]) * -this.ymul;
+                    else if (quad[n] == 3)
+                        ty = (1.1 * srcWAD[1] + 0.5 * srcWAD[2]) * this.ymul;
+                    WebMolKit.Vec.addTo(outlineX, tx);
+                    WebMolKit.Vec.addTo(outlineY, ty);
+                    let viol = this.countPolyViolations(outlineX, outlineY, true);
+                    WebMolKit.Vec.addTo(outlineX, -tx);
+                    WebMolKit.Vec.addTo(outlineY, -ty);
+                    if (viol == 0) {
+                        dx = tx;
+                        dy = ty;
+                        break;
+                    }
+                }
+                if (dx == 0 && dy == 0)
+                    return false;
+            }
+            else {
+                const mx1 = WebMolKit.Vec.min(outlineY), mx2 = WebMolKit.Vec.max(outlineX), my1 = WebMolKit.Vec.min(outlineY), my2 = WebMolKit.Vec.max(outlineY), cx = 0.5 * (mx1 + mx2), cy = 0.5 * (my1 + my2);
+                const mag = 1 + this.measure.scale() * this.policy.data.fontSize * ArrangeMolecule.FONT_CORRECT * 0.1 / Math.max(mx2 - cx, my2 - cy);
+                const psz = outlineX.length;
+                let magPX = outlineX.slice(0), magPY = outlineY.slice(0);
+                for (let n = 0; n < psz; n++) {
+                    magPX[n] = (magPX[n] - cx) * mag + cx;
+                    magPY[n] = (magPY[n] - cy) * mag + cy;
+                }
+                let bestScore = 0, bestExt = 0, bestAng = 0;
+                for (let ext = 0.5 * (a.oval.rw + a.oval.rh); ext < 1.5 * this.measure.scale(); ext += 0.1 * this.measure.scale()) {
+                    let anyNoClash = false;
+                    for (let ang = 0; ang < 2 * Math.PI; ang += 5 * WebMolKit.DEGRAD) {
+                        let tx = ext * Math.cos(ang), ty = ext * Math.sin(ang);
+                        WebMolKit.Vec.addTo(magPX, tx);
+                        WebMolKit.Vec.addTo(magPY, ty);
+                        let viol = this.countPolyViolations(magPX, magPY, false);
+                        WebMolKit.Vec.addTo(magPX, -tx);
+                        WebMolKit.Vec.addTo(magPY, -ty);
+                        if (viol == 0)
+                            anyNoClash = true;
+                        let score = 10 * viol + this.spatialCongestion(a.oval.cx + tx, a.oval.cy + ty, 0.5) + 2 * ext;
+                        if (bestScore == 0 || score < bestScore) {
+                            bestScore = score;
+                            bestExt = ext;
+                            bestAng = ang;
+                            dx = tx;
+                            dy = ty;
+                        }
+                    }
+                    if (anyNoClash)
+                        break;
+                }
+            }
+            let wad = this.measure.measureText("H", a.fsz);
+            const PADDING = 1.1;
+            let ah = {
+                'anum': 0,
+                'text': 'H',
+                'fsz': a.fsz,
+                'bold': a.bold,
+                'col': a.col,
+                'oval': new WebMolKit.Oval(a.oval.cx + dx, a.oval.cy + dy, 0.5 * wad[0] * PADDING, 0.5 * wad[1] * PADDING)
+            };
+            this.points.push(ah);
+            if (sub.length > 0) {
+                const subFsz = SSFRACT * a.fsz;
+                wad = this.measure.measureText(sub, subFsz);
+                let an = {
+                    'anum': 0,
+                    'text': sub,
+                    'fsz': subFsz,
+                    'bold': a.bold,
+                    'col': a.col,
+                    'oval': new WebMolKit.Oval(ah.oval.cx + 0.5 * firstEMW * a.fsz * font.INV_UNITS_PER_EM + 0.5 * wad[0], ah.oval.cy + (1 - SSFRACT) * a.fsz, 0.5 * wad[0] * PADDING, 0.5 * wad[1] * PADDING)
+                };
+                this.points.push(an);
+            }
+            WebMolKit.Vec.addTo(outlineX, dx);
+            WebMolKit.Vec.addTo(outlineY, dy);
+            let minX = WebMolKit.Vec.min(outlineX), minY = WebMolKit.Vec.min(outlineY);
+            let spc = {
+                'anum': 0,
+                'bnum': 0,
+                'box': new WebMolKit.Box(minX, minY, WebMolKit.Vec.max(outlineX) - minX, WebMolKit.Vec.max(outlineY) - minY),
+                'px': outlineX,
+                'py': outlineY
+            };
+            this.space.push(spc);
+            return true;
+        }
+        computeSpacePoint(a) {
+            let s = {
+                'anum': a.anum,
+                'bnum': 0,
+                'box': new WebMolKit.Box(),
+                'px': [],
+                'py': []
+            };
+            const font = WebMolKit.FontData.main;
+            let outlineX = [], outlineY = [];
+            let emw = 0, nglyphs = 0;
+            if (a.text != null) {
+                for (let n = 0; n < a.text.length; n++) {
+                    let ch1 = a.text.charAt(n);
+                    let i = font.getIndex(ch1);
+                    if (i >= 0) {
+                        if (emw == 0) {
+                            outlineX = font.getOutlineX(i);
+                            outlineY = font.getOutlineY(i);
+                            nglyphs = 1;
+                        }
+                        else {
+                            let extraX = font.getOutlineX(i), extraY = font.getOutlineY(i);
+                            if (extraX.length > 0) {
+                                WebMolKit.Vec.addTo(extraX, emw);
+                                outlineX = outlineX.concat(extraX);
+                                outlineY = outlineY.concat(extraY);
+                                nglyphs++;
+                            }
+                        }
+                        emw += font.HORIZ_ADV_X[i];
+                    }
+                    else
+                        emw += font.MISSING_HORZ;
+                    if (n < a.text.length - 1) {
+                        let ch2 = a.text.charAt(n + 1);
+                        emw += font.getKerning(ch1, ch2);
+                    }
+                }
+            }
+            if (outlineX.length > 0) {
+                if (nglyphs > 1) {
+                    let qh = new WebMolKit.QuickHull(outlineX, outlineY, 0);
+                    outlineX = qh.hullX;
+                    outlineY = qh.hullY;
+                }
+                let emdx = -0.5 * emw, emdy = 0.5 * font.ASCENT;
+                let emscale = a.fsz * font.INV_UNITS_PER_EM;
+                for (let n = 0; n < outlineX.length; n++) {
+                    outlineX[n] = a.oval.cx + (emdx + outlineX[n]) * emscale;
+                    outlineY[n] = a.oval.cy + (emdy - outlineY[n]) * emscale * this.ymul;
+                }
+                s.px = outlineX;
+                s.py = outlineY;
+                let minX = WebMolKit.Vec.min(outlineX), minY = WebMolKit.Vec.min(outlineY);
+                s.box = new WebMolKit.Box(minX, minY, WebMolKit.Vec.max(outlineX) - minX, WebMolKit.Vec.max(outlineY) - minY);
+            }
+            else {
+                s.box = WebMolKit.Box.fromOval(a.oval);
+                if (s.box.w > 0 && s.box.h > 0) {
+                    s.px = [s.box.minX(), s.box.maxX(), s.box.maxX(), s.box.minX()];
+                    s.py = [s.box.minY(), s.box.minY(), s.box.maxY(), s.box.maxY()];
+                }
+            }
+            return s;
+        }
+        computeSpaceLine(b) {
+            let s = {
+                'anum': 0,
+                'bnum': b.bnum,
+                'box': new WebMolKit.Box(),
+                'px': [],
+                'py': []
+            };
+            if (b.type == BLineType.Normal || b.type == BLineType.Dotted || b.type == BLineType.DotDir) {
+                s.px = [b.line.x1, b.line.x2];
+                s.py = [b.line.y1, b.line.y2];
+            }
+            else {
+                const dx = b.line.x2 - b.line.x1, dy = b.line.y2 - b.line.y1;
+                const norm = b.head / Math.sqrt(dx * dx + dy * dy);
+                const ox = norm * dy, oy = -norm * dx;
+                if (b.type == BLineType.Unknown) {
+                    s.px = [b.line.x1 + ox, b.line.x1 - ox, b.line.x2 - ox, b.line.x2 + ox];
+                    s.py = [b.line.y1 + oy, b.line.y1 - oy, b.line.y2 - oy, b.line.y2 + oy];
+                }
+                else {
+                    s.px = [b.line.x1, b.line.x2 - ox, b.line.x2 + ox];
+                    s.py = [b.line.y1, b.line.y2 - oy, b.line.y2 + oy];
+                }
+            }
+            s.box.x = WebMolKit.Vec.min(s.px) - b.size;
+            s.box.y = WebMolKit.Vec.min(s.py) - b.size;
+            s.box.w = WebMolKit.Vec.max(s.px) - s.box.x + b.size;
+            s.box.h = WebMolKit.Vec.max(s.py) - s.box.y + b.size;
+            return s;
+        }
+        bumpAtomPosition(atom, dx, dy) {
+            let p = this.points[atom - 1];
+            p.oval.cx += dx;
+            p.oval.cy += dy;
+            for (let n = this.space.length - 1; n >= 0; n--) {
+                let s = this.space[n - 1];
+                if (s == null || s.anum != atom)
+                    continue;
+                s.box.x += dx;
+                s.box.y += dy;
+                WebMolKit.Vec.addTo(s.px, dx);
+                WebMolKit.Vec.addTo(s.py, dy);
+            }
+        }
+        countPolyViolations(px, py, shortCircuit) {
+            let hits = 0;
+            const psz = px.length, nspc = this.space.length;
+            let pr = new WebMolKit.Box(), sr = new WebMolKit.Box();
+            for (let i1 = 0; i1 < psz; i1++) {
+                let i2 = i1 < psz - 1 ? i1 + 1 : 0;
+                pr.x = Math.min(px[i1], px[i2]) - 1;
+                pr.y = Math.min(py[i1], py[i2]) - 1;
+                pr.w = Math.max(px[i1], px[i2]) - pr.x + 2;
+                pr.h = Math.max(py[i1], py[i2]) - pr.y + 2;
+                for (let j = 0; j < nspc; j++) {
+                    let spc = this.space[j];
+                    if (spc.px == null)
+                        continue;
+                    sr.x = spc.box.x - 1;
+                    sr.y = spc.box.y - 1;
+                    sr.w = spc.box.w + 1;
+                    sr.h = spc.box.h + 1;
+                    if (!pr.intersects(sr))
+                        continue;
+                    let ssz = spc.px.length;
+                    for (let j1 = 0; j1 < ssz; j1++) {
+                        let j2 = j1 < ssz - 1 ? j1 + 1 : 0;
+                        sr.x = Math.min(spc.px[j1], spc.px[j2]) - 1;
+                        sr.y = Math.min(spc.py[j1], spc.py[j2]) - 1;
+                        sr.w = Math.max(spc.px[j1], spc.px[j2]) - sr.x + 2;
+                        sr.h = Math.max(spc.py[j1], spc.py[j2]) - sr.y + 2;
+                        if (!pr.intersects(sr))
+                            continue;
+                        if (WebMolKit.GeomUtil.doLineSegsIntersect(px[i1], py[i1], px[i2], py[i2], spc.px[j1], spc.py[j1], spc.px[j2], spc.py[j2])) {
+                            if (shortCircuit)
+                                return 1;
+                            hits++;
+                            break;
+                        }
+                        if (ssz == 1)
+                            break;
+                    }
+                }
+            }
+            pr.x = WebMolKit.Vec.min(px);
+            pr.y = WebMolKit.Vec.min(py);
+            pr.w = WebMolKit.Vec.max(px) - pr.x;
+            pr.h = WebMolKit.Vec.max(py) - pr.y;
+            for (let n = nspc - 1; n >= 0; n--) {
+                let spc = this.space[n];
+                sr.x = spc.box.x;
+                sr.y = spc.box.y;
+                sr.w = spc.box.w;
+                sr.h = spc.box.h;
+                if (!pr.intersects(sr))
+                    continue;
+                for (let i = spc.px.length - 1; i >= 0; i--)
+                    if (WebMolKit.GeomUtil.pointInPolygon(spc.px[i], spc.py[i], px, py)) {
+                        if (shortCircuit)
+                            return 1;
+                        hits++;
+                        break;
+                    }
+                for (let i = 0; i < psz; i++)
+                    if (WebMolKit.GeomUtil.pointInPolygon(px[i], py[i], spc.px, spc.py)) {
+                        if (shortCircuit)
+                            return 1;
+                        hits++;
+                        break;
+                    }
+            }
+            return hits;
+        }
+        adjustBondPosition(bf, bt, x1, y1, x2, y2) {
+            if (bf == 0 || bt == 0)
+                return null;
+            for (let n = 0; n < this.lines.length; n++) {
+                let b = this.lines[n];
+                if (this.mol.bondOrder(b.bnum) != 1 || this.mol.bondType(b.bnum) != WebMolKit.Molecule.BONDTYPE_NORMAL)
+                    continue;
+                let alt = false;
+                if (this.mol.bondFrom(b.bnum) == bf && this.mol.bondTo(b.bnum) == bt) { }
+                else if (this.mol.bondFrom(b.bnum) == bt && this.mol.bondTo(b.bnum) == bf)
+                    alt = true;
+                else
+                    continue;
+                let th = WebMolKit.angleDiff(Math.atan2(b.line.y2 - b.line.y1, b.line.x2 - b.line.x1), Math.atan2(y2 - y1, x2 - x1)) * WebMolKit.RADDEG;
+                if ((th > -5 && th < 5) || th > 175 || th < -175)
+                    continue;
+                let xy = WebMolKit.GeomUtil.lineIntersect(b.line.x1, b.line.y1, b.line.x2, b.line.y2, x1, y1, x2, y2);
+                if (this.mol.atomRingBlock(bt) == 0) {
+                    if (alt) {
+                        b.line.x1 = xy[0];
+                        b.line.y1 = xy[1];
+                    }
+                    else {
+                        b.line.x2 = xy[0];
+                        b.line.y2 = xy[1];
+                    }
+                }
+                return xy;
+            }
+            return null;
+        }
+        priorityDoubleSubstit(idx) {
+            let bf = this.mol.bondFrom(idx), bt = this.mol.bondTo(idx);
+            let nf = this.mol.atomAdjList(bf), nt = this.mol.atomAdjList(bt);
+            let a1 = this.points[bf - 1], a2 = this.points[bt - 1];
+            let x1 = a1.oval.cx, y1 = a1.oval.cy, x2 = a2.oval.cx, y2 = a2.oval.cy;
+            let dx = x2 - x1, dy = y2 - y1, btheta = Math.atan2(dy, dx);
+            let idxFLeft = 0, idxFRight = 0, idxTLeft = 0, idxTRight = 0;
+            for (let n = 0; n < nf.length; n++)
+                if (nf[n] != bt) {
+                    let theta = WebMolKit.angleDiff(Math.atan2(this.points[nf[n] - 1].oval.cy - y1, this.points[nf[n] - 1].oval.cx - x1), btheta);
+                    if (theta > 0) {
+                        if (idxFLeft != 0)
+                            return null;
+                        idxFLeft = nf[n];
+                    }
+                    else {
+                        if (idxFRight != 0)
+                            return null;
+                        idxFRight = nf[n];
+                    }
+                }
+            for (let n = 0; n < nt.length; n++)
+                if (nt[n] != bf) {
+                    let theta = WebMolKit.angleDiff(Math.atan2(this.points[nt[n] - 1].oval.cy - y2, this.points[nt[n] - 1].oval.cx - x2), btheta);
+                    if (theta > 0) {
+                        if (idxTLeft != 0)
+                            return null;
+                        idxTLeft = nt[n];
+                    }
+                    else {
+                        if (idxTRight != 0)
+                            return null;
+                        idxTRight = nt[n];
+                    }
+                }
+            let sumFrom = (idxFLeft > 0 ? 1 : 0) + (idxFRight > 0 ? 1 : 0), sumTo = (idxTLeft > 0 ? 1 : 0) + (idxTRight > 0 ? 1 : 0);
+            if (sumFrom == 1 && sumTo == 0)
+                return [idxFLeft > 0 ? idxFLeft : idxFRight];
+            if (sumFrom == 0 && sumTo == 1)
+                return [idxTLeft > 0 ? idxTLeft : idxTRight];
+            if (sumFrom == 1 && sumTo == 1) {
+                if (idxFLeft > 0 && idxTLeft > 0)
+                    return [idxFLeft, idxTLeft];
+                if (idxFRight > 0 && idxTRight > 0)
+                    return [idxFRight, idxTRight];
+                let oxy = this.orthogonalDelta(x1, y1, x2, y2, this.bondSepPix);
+                let congestLeft = this.spatialCongestion(0.5 * (x1 + x2) + oxy[0], 0.5 * (y1 + y2) + oxy[1]);
+                let congestRight = this.spatialCongestion(0.5 * (x1 + x2) - oxy[0], 0.5 * (y1 + y2) - oxy[1]);
+                if (congestLeft < congestRight)
+                    return [idxFLeft > 0 ? idxFLeft : idxTLeft];
+                else
+                    return [idxFRight > 0 ? idxFRight : idxTRight];
+            }
+            if (sumFrom == 2 && sumTo == 1) {
+                if (idxTLeft == 0)
+                    return [idxFRight, idxTRight];
+                else
+                    return [idxFLeft, idxTLeft];
+            }
+            if (sumFrom == 1 && sumTo == 2) {
+                if (idxFLeft == 0)
+                    return [idxFRight, idxTRight];
+                else
+                    return [idxFLeft, idxTLeft];
+            }
+            return null;
+        }
+        spatialCongestion(x, y, thresh) {
+            if (thresh == null)
+                thresh = 0.001;
+            let congest = 0;
+            for (let n = 0; n < this.points.length; n++) {
+                let a = this.points[n];
+                if (a == null)
+                    continue;
+                let dx = a.oval.cx - x, dy = a.oval.cy - y;
+                congest += 1 / (dx * dx + dy * dy + thresh);
+            }
+            return congest;
+        }
+        boxOverlaps(x, y, w, h, pointmask, linemask) {
+            let vx1 = x, vy1 = y, vx2 = x + w, vy2 = y + h;
+            for (let n = 0; n < this.points.length; n++) {
+                if (pointmask != null && !pointmask[n])
+                    continue;
+                let a = this.points[n];
+                let wx1 = a.oval.cx - a.oval.rw, wy1 = a.oval.cy - a.oval.rh, wx2 = a.oval.cx + a.oval.rw, wy2 = a.oval.cy + a.oval.rh;
+                if (vx2 < wx1 || vx1 > wx2 || vy2 < wy1 || vy1 > wy2)
+                    continue;
+                return true;
+            }
+            for (let n = 0; n < this.lines.length; n++) {
+                if (linemask != null && !linemask[n])
+                    continue;
+                let b = this.lines[n];
+                let wx1 = b.line.x1, wy1 = b.line.y1, wx2 = b.line.x2, wy2 = b.line.y2;
+                if (vx2 < Math.min(wx1, wx2) || vx1 > Math.max(wx1, wx2) || vy2 < Math.min(wy1, wy2) || vy1 > Math.max(wy1, wy2))
+                    continue;
+                if (wx1 >= vx1 && wx1 <= vx2 && wy1 >= vy1 && wy1 <= vy2)
+                    return true;
+                if (wx2 >= vx1 && wx2 <= vx2 && wy2 >= vy1 && wy2 <= vy2)
+                    return true;
+                if (WebMolKit.GeomUtil.doLineSegsIntersect(wx1, wy1, wx2, wy2, vx1, vy1, vx2, vy1))
+                    return true;
+                if (WebMolKit.GeomUtil.doLineSegsIntersect(wx1, wy1, wx2, wy2, vx1, vy2, vx2, vy2))
+                    return true;
+                if (WebMolKit.GeomUtil.doLineSegsIntersect(wx1, wy1, wx2, wy2, vx1, vy1, vx1, vy2))
+                    return true;
+                if (WebMolKit.GeomUtil.doLineSegsIntersect(wx1, wy1, wx2, wy2, vx2, vy1, vx2, vy2))
+                    return true;
+            }
+            return false;
+        }
+        resolveLineCrossings(bondHigher, bondLower) {
+            while (true) {
+                let anything = false;
+                for (let i1 = 0; i1 < this.lines.length; i1++) {
+                    let b1 = this.lines[i1];
+                    if (b1.bnum != bondHigher)
+                        continue;
+                    if (b1.type != BLineType.Normal && b1.type != BLineType.Dotted && b1.type != BLineType.DotDir)
+                        continue;
+                    for (let i2 = 0; i2 < this.lines.length; i2++) {
+                        let b2 = this.lines[i2];
+                        if (b2.bnum != bondLower)
+                            continue;
+                        if (b2.type == BLineType.DotDir)
+                            b2.type = BLineType.Dotted;
+                        if (b2.type != BLineType.Normal && b2.type != BLineType.Dotted)
+                            continue;
+                        if (b1.bfr == b2.bfr || b1.bfr == b2.bto || b1.bto == b2.bfr || b1.bto == b2.bto)
+                            continue;
+                        if (!WebMolKit.GeomUtil.doLineSegsIntersect(b1.line.x1, b1.line.y1, b1.line.x2, b1.line.y2, b2.line.x1, b2.line.y1, b2.line.x2, b2.line.y2))
+                            continue;
+                        let xy = WebMolKit.GeomUtil.lineIntersect(b1.line.x1, b1.line.y1, b1.line.x2, b1.line.y2, b2.line.x1, b2.line.y1, b2.line.x2, b2.line.y2);
+                        let dx = b2.line.x2 - b2.line.x1, dy = b2.line.y2 - b2.line.y1;
+                        let ext = Math.abs(dx) > Math.abs(dy) ? (xy[0] - b2.line.x1) / dx : (xy[1] - b2.line.y1) / dy;
+                        let dist = WebMolKit.norm_xy(dx, dy);
+                        let delta = b2.size / dist * (b2.type == BLineType.Normal ? 2 : 4);
+                        if (ext > delta && ext < 1 - delta) {
+                            let b3 = {
+                                'bnum': b2.bnum,
+                                'bfr': b2.bfr,
+                                'bto': b2.bto,
+                                'type': b2.type,
+                                'line': b2.line.clone(),
+                                'size': b2.size,
+                                'head': b2.head,
+                                'col': b2.col
+                            };
+                            this.lines.push(b3);
+                            b2.line.x2 = b2.line.x1 + dx * (ext - delta);
+                            b2.line.y2 = b2.line.y1 + dy * (ext - delta);
+                            b3.line.x1 = b3.line.x1 + dx * (ext + delta);
+                            b3.line.y1 = b3.line.y1 + dy * (ext + delta);
+                            anything = true;
+                        }
+                        else if (ext > delta) {
+                            b2.line.x2 = b2.line.x1 + dx * (ext - delta);
+                            b2.line.y2 = b2.line.y1 + dy * (ext - delta);
+                            anything = true;
+                        }
+                        else if (ext < 1 - delta) {
+                            b2.line.x1 = b2.line.x1 + dx * (ext + delta);
+                            b2.line.y1 = b2.line.y1 + dy * (ext + delta);
+                            anything = true;
+                        }
+                    }
+                }
+                if (!anything)
+                    break;
+            }
+        }
+        createCircularRing(atoms) {
+            let cx = 0, cy = 0;
+            for (let a of atoms) {
+                let pt = this.points[a - 1];
+                cx += pt.oval.cx;
+                cy += pt.oval.cy;
+            }
+            cx /= atoms.length;
+            cy /= atoms.length;
+            let bx = [], by = [];
+            let isRegular = true;
+            let regDist = Number.NaN;
+            for (let a of atoms) {
+                let pt = this.points[a - 1];
+                let x0 = pt.oval.cx - cx, y0 = pt.oval.cy - cy, x1 = x0 - pt.oval.rw, x2 = x0 + pt.oval.rw, y1 = y0 - pt.oval.rh, y2 = y0 + pt.oval.rh;
+                bx.push(x1);
+                by.push(y0);
+                bx.push(x1);
+                by.push(y1);
+                bx.push(x1);
+                by.push(y2);
+                bx.push(x0);
+                by.push(y1);
+                bx.push(x0);
+                by.push(y2);
+                bx.push(x2);
+                by.push(y0);
+                bx.push(x2);
+                by.push(y1);
+                bx.push(x2);
+                by.push(y2);
+                let dist = WebMolKit.norm_xy(x0, y0), theta = Math.atan2(y0, x0);
+                const FRACT = 0.7;
+                bx.push(FRACT * dist * Math.cos(theta));
+                by.push(FRACT * dist * Math.sin(theta));
+                for (let b of this.mol.atomAdjList(a))
+                    if (atoms.indexOf(b) >= 0) {
+                        let pb = this.points[b - 1];
+                        let mx = 0.5 * (pt.oval.cx + pb.oval.cx) - cx, my = 0.5 * (pt.oval.cy + pb.oval.cy) - cy;
+                        let mdist = WebMolKit.norm_xy(mx, my), mtheta = Math.atan2(my, mx);
+                        bx.push(FRACT * mdist * Math.cos(mtheta));
+                        by.push(FRACT * mdist * Math.sin(mtheta));
+                    }
+                if (!isRegular) { }
+                else if (Number.isFinite(regDist)) {
+                    if (Math.abs(regDist - dist) > 1)
+                        isRegular = false;
+                }
+                else
+                    regDist = dist;
+            }
+            let r = { 'atoms': atoms, 'cx': cx, 'cy': cy, 'rw': 0, 'rh': 0, 'size': 0 };
+            if (isRegular) {
+                r.rw = r.rh = WebMolKit.GeomUtil.fitCircle(bx, by);
+            }
+            else {
+                let lowX = WebMolKit.Vec.min(bx) - 10 * WebMolKit.Vec.range(bx), highX = WebMolKit.Vec.max(bx) + 10 * WebMolKit.Vec.range(bx);
+                let lowY = WebMolKit.Vec.min(by) - 10 * WebMolKit.Vec.range(by), highY = WebMolKit.Vec.max(by) + 10 * WebMolKit.Vec.range(by);
+                let minX = Number.POSITIVE_INFINITY, maxX = Number.NEGATIVE_INFINITY, minY = Number.POSITIVE_INFINITY, maxY = Number.NEGATIVE_INFINITY;
+                for (let n = 0; n < atoms.length; n++) {
+                    let nn = n < atoms.length - 1 ? n + 1 : 0;
+                    let p1 = this.points[atoms[n] - 1], p2 = this.points[atoms[nn] - 1];
+                    let x1 = p1.oval.cx - cx - 0.1 * (p2.oval.cx - p1.oval.cx), y1 = p1.oval.cy - cy - 0.1 * (p2.oval.cy - p1.oval.cy);
+                    let x2 = p2.oval.cx - cx + 0.1 * (p2.oval.cx - p1.oval.cx), y2 = p2.oval.cy - cy + 0.1 * (p2.oval.cy - p1.oval.cy);
+                    if (WebMolKit.GeomUtil.doLineSegsIntersect(x1, y1, x2, y2, lowX, 0, highX, 0)) {
+                        let xy = WebMolKit.GeomUtil.lineIntersect(x1, y1, x2, y2, lowX, 0, highX, 0);
+                        minX = Math.min(minX, xy[0]);
+                        maxX = Math.max(maxX, xy[0]);
+                    }
+                    if (WebMolKit.GeomUtil.doLineSegsIntersect(x1, y1, x2, y2, 0, lowY, 0, highY)) {
+                        let xy = WebMolKit.GeomUtil.lineIntersect(x1, y1, x2, y2, 0, lowY, 0, highY);
+                        minY = Math.min(minY, xy[1]);
+                        maxY = Math.max(maxY, xy[1]);
+                    }
+                }
+                let rwh = WebMolKit.GeomUtil.fitEllipse(bx, by, minX, minY, maxX, maxY);
+                r.rw = rwh[0];
+                r.rh = rwh[1];
+            }
+            r.size = this.lineSizePix;
+            this.rings.push(r);
+        }
+        createCurvedPath(atoms, fractional, extAtom) {
+            const sz = atoms.length, szn = sz - 1;
+            let x = [], y = [], symbol = [];
+            for (let n = 0; n < sz; n++) {
+                let pt = this.points[atoms[n] - 1];
+                x.push(pt.oval.cx);
+                y.push(pt.oval.cy);
+                symbol.push(pt.text != null);
+            }
+            let ox = [], oy = [];
+            const EXT = WebMolKit.Molecule.IDEALBOND * 0.25 * this.scale;
+            for (let n = 0; n < sz - 1; n++) {
+                let dx = x[n + 1] - x[n], dy = y[n + 1] - y[n], invD = EXT * WebMolKit.invZ(WebMolKit.norm_xy(dx, dy));
+                ox.push(dy * invD);
+                oy.push(-dx * invD);
+            }
+            const FAR = 1.2, CLOSE = 0.7;
+            let sx1 = WebMolKit.Vec.numberArray(0, sz), sy1 = WebMolKit.Vec.numberArray(0, sz), sx2 = WebMolKit.Vec.numberArray(0, sz), sy2 = WebMolKit.Vec.numberArray(0, sz);
+            const capA = symbol[0] ? FAR : CLOSE;
+            if (!fractional) {
+                sx1[0] = x[0] + ox[0] * capA;
+                sy1[0] = y[0] + oy[0] * capA;
+                sx2[0] = x[0] - ox[0] * capA;
+                sy2[0] = y[0] - oy[0] * capA;
+            }
+            else {
+                const dx = -oy[0], dy = ox[0];
+                sx1[0] = x[0] + dx * capA;
+                sy1[0] = y[0] + dy * capA;
+                sx2[0] = x[0] + dx * capA;
+                sy2[0] = y[0] + dy * capA;
+            }
+            let ncross1 = 0, ncross2 = 0;
+            for (let n = 1; n < sz - 1; n++) {
+                const fr1 = symbol[n] ? FAR : CLOSE, fr2 = fr1;
+                sx1[n] = x[n] + fr1 * (ox[n - 1] + ox[n]);
+                sy1[n] = y[n] + fr1 * (oy[n - 1] + oy[n]);
+                sx2[n] = x[n] - fr2 * (ox[n - 1] + ox[n]);
+                sy2[n] = y[n] - fr2 * (oy[n - 1] + oy[n]);
+                for (let a of this.mol.atomAdjList(atoms[n]))
+                    if (atoms.indexOf(a) < 0 && a != extAtom) {
+                        let pt = this.points[a - 1];
+                        let dx = pt.oval.cx - x[n], dy = pt.oval.cy - y[n];
+                        let dot1 = dx * (sx1[n] - x[n]) + dy * (sy1[n] - x[n]);
+                        let dot2 = dy * (sx2[n] - x[n]) + dy * (sy2[n] - x[n]);
+                        if (dot1 > dot2)
+                            ncross1++;
+                        else
+                            ncross2++;
+                    }
+            }
+            let nn = sz - 1;
+            let capB = symbol[nn] ? FAR : CLOSE;
+            if (!fractional) {
+                sx1[nn] = x[nn] + ox[nn - 1] * capB;
+                sy1[nn] = y[nn] + oy[nn - 1] * capB;
+                sx2[nn] = x[nn] - ox[nn - 1] * capB;
+                sy2[nn] = y[nn] - oy[nn - 1] * capB;
+            }
+            else {
+                let dx = -oy[nn - 1], dy = ox[nn - 1];
+                sx1[nn] = x[nn] - dx * capB;
+                sy1[nn] = y[nn] - dy * capB;
+                sx2[nn] = x[nn] - dx * capB;
+                sy2[nn] = y[nn] - dy * capB;
+            }
+            let score1 = 0, score2 = 0;
+            for (let n = 0; n < sz - 1; n++) {
+                score1 += WebMolKit.norm_xy(sx1[n + 1] - sx1[n], sy1[n + 1] - sy1[n]);
+                score2 += WebMolKit.norm_xy(sx2[n + 1] - sx2[n], sy2[n + 1] - sy2[n]);
+            }
+            score1 *= ncross1 + 1;
+            score2 *= ncross2 + 1;
+            let sx = score1 < score2 ? sx1 : sx2;
+            let sy = score1 < score2 ? sy1 : sy2;
+            let p = { 'atoms': atoms, 'px': null, 'py': null, 'ctrl': null, 'size': this.lineSizePix };
+            this.splineInterpolate(p, sx, sy);
+            this.paths.push(p);
+        }
+        createBondCentroid(from, to) {
+            let pt = this.points[from - 1];
+            let x1 = pt.oval.cx, y1 = pt.oval.cy, x2 = 0, y2 = 0;
+            for (let a of to) {
+                pt = this.points[a - 1];
+                x2 += pt.oval.cx;
+                y2 += pt.oval.cy;
+            }
+            x2 /= to.length;
+            y2 /= to.length;
+            if (to.length <= 2) {
+                x2 -= 0.1 * (x2 - x1);
+                y2 -= 0.1 * (y2 - y1);
+            }
+            const minDist = this.MINBOND_LINE * this.measure.scale();
+            let xy1 = this.backOffAtom(from, x1, y1, x2, y2, minDist);
+            this.ensureMinimumBondLength(xy1, [x2, y2], x1, y1, x2, y2, minDist);
+            let b = {
+                'bnum': 0, 'bfr': from, 'bto': 0,
+                'type': BLineType.Normal, 'line': new WebMolKit.Line(xy1[0], xy1[1], x2, y2),
+                'size': this.lineSizePix, 'head': 0, 'col': this.policy.data.foreground
+            };
+            this.lines.push(b);
+            this.space.push(this.computeSpaceLine(b));
+        }
+        splineInterpolate(path, x, y) {
+            const sz = x.length;
+            const scale = 0.25;
+            for (let n = 0; n < sz; n++) {
+                if (n == 0) {
+                    let dx = x[n + 1] - x[n], dy = y[n + 1] - y[n];
+                    let qx = x[n] + scale * dx, qy = y[n] + scale * dy;
+                    path.px = WebMolKit.Vec.append(path.px, x[n]);
+                    path.py = WebMolKit.Vec.append(path.py, y[n]);
+                    path.ctrl = WebMolKit.Vec.append(path.ctrl, false);
+                    path.px = WebMolKit.Vec.append(path.px, qx);
+                    path.py = WebMolKit.Vec.append(path.py, qy);
+                    path.ctrl = WebMolKit.Vec.append(path.ctrl, true);
+                }
+                else if (n == sz - 1) {
+                    let dx = x[n] - x[n - 1], dy = y[n] - y[n - 1];
+                    let qx = x[n] - scale * dx, qy = y[n] - scale * dy;
+                    path.px = WebMolKit.Vec.append(path.px, qx);
+                    path.py = WebMolKit.Vec.append(path.py, qy);
+                    path.ctrl = WebMolKit.Vec.append(path.ctrl, true);
+                    path.px = WebMolKit.Vec.append(path.px, x[n]);
+                    path.py = WebMolKit.Vec.append(path.py, y[n]);
+                    path.ctrl = WebMolKit.Vec.append(path.ctrl, false);
+                }
+                else {
+                    let dx = x[n + 1] - x[n - 1], dy = y[n + 1] - y[n - 1];
+                    let invD = WebMolKit.invZ(WebMolKit.norm_xy(dx, dy));
+                    dx *= invD;
+                    dy *= invD;
+                    let d1 = scale * WebMolKit.norm_xy(x[n] - x[n - 1], y[n] - y[n - 1]), d2 = scale * WebMolKit.norm_xy(x[n + 1] - x[n], y[n + 1] - y[n]);
+                    let qx1 = x[n] - dx * d1, qy1 = y[n] - dy * d1;
+                    let qx2 = x[n] + dx * d2, qy2 = y[n] + dy * d2;
+                    path.px = WebMolKit.Vec.append(path.px, qx1);
+                    path.py = WebMolKit.Vec.append(path.py, qy1);
+                    path.ctrl = WebMolKit.Vec.append(path.ctrl, true);
+                    path.px = WebMolKit.Vec.append(path.px, x[n]);
+                    path.py = WebMolKit.Vec.append(path.py, y[n]);
+                    path.ctrl = WebMolKit.Vec.append(path.ctrl, false);
+                    path.px = WebMolKit.Vec.append(path.px, qx2);
+                    path.py = WebMolKit.Vec.append(path.py, qy2);
+                    path.ctrl = WebMolKit.Vec.append(path.ctrl, true);
+                }
+            }
+        }
+        delocalisedAnnotation(atoms, charge, unpaired) {
+            const mol = this.mol;
+            let str = '';
+            if (charge == -1)
+                str = '-';
+            else if (charge == 1)
+                str = '+';
+            else if (charge < -1)
+                str = Math.abs(charge) + '-';
+            else if (charge > 1)
+                str = charge + '+';
+            if (unpaired > 0)
+                for (let n = 0; n < unpaired; n++)
+                    str += '.';
+            if (str.length == 0)
+                return;
+            const sz = atoms.length;
+            let bestX = 0, bestY = 0;
+            for (let a of atoms) {
+                bestX += mol.atomX(a);
+                bestY += mol.atomY(a);
+            }
+            bestX /= sz;
+            bestY /= sz;
+            let bestScore = WebMolKit.CoordUtil.congestionPoint(mol, bestX, bestY);
+            for (let n = 1; n < sz - 1; n++) {
+                let x = 0.5 * (mol.atomX(atoms[n - 1]) + mol.atomX(atoms[n + 1])), y = 0.5 * (mol.atomY(atoms[n - 1]) + mol.atomY(atoms[n + 1]));
+                let score = WebMolKit.CoordUtil.congestionPoint(mol, x, y);
+                if (score < bestScore) {
+                    bestScore = score;
+                    bestX = x;
+                    bestY = y;
+                }
+            }
+            let fsz = 0.8 * this.fontSizePix;
+            let wad = this.measure.measureText(str, fsz);
+            let rw = 0.55 * wad[0], rh = 0.55 * wad[1];
+            let a = {
+                'anum': 0,
+                'text': str,
+                'fsz': fsz,
+                'bold': false,
+                'col': this.policy.data.foreground,
+                'oval': new WebMolKit.Oval(this.measure.angToX(bestX), this.measure.angToY(bestY), rw, rh)
+            };
+            this.points.push(a);
+            let spc = {
+                'anum': 0,
+                'bnum': 0,
+                'box': new WebMolKit.Box(a.oval.cx - rw, a.oval.cy - rh, 2 * rw, 2 * rh),
+                'px': [a.oval.cx - rw, a.oval.cx + rw, a.oval.cx + rw, a.oval.cx - rw],
+                'py': [a.oval.cy - rh, a.oval.cy - rh, a.oval.cy + rh, a.oval.cy + rh]
+            };
+            this.space.push(spc);
+        }
+    }
+    ArrangeMolecule.FONT_CORRECT = 1.5;
+    WebMolKit.ArrangeMolecule = ArrangeMolecule;
+})(WebMolKit || (WebMolKit = {}));
+var WebMolKit;
+(function (WebMolKit) {
+    class DrawExperiment {
+        constructor(layout, vg) {
+            this.layout = layout;
+            this.vg = vg;
+            this.entry = layout.entry;
+            this.measure = layout.measure;
+            this.policy = layout.policy;
+            this.scale = layout.scale;
+            this.invScale = 1.0 / this.scale;
+        }
+        draw() {
+            for (let xc of this.layout.components) {
+                if (xc.type == WebMolKit.ArrangeExperiment.COMP_ARROW)
+                    this.drawSymbolArrow(xc);
+                else if (xc.type == WebMolKit.ArrangeExperiment.COMP_PLUS)
+                    this.drawSymbolPlus(xc);
+                else
+                    this.drawComponent(xc);
+            }
+        }
+        drawComponent(xc) {
+            let vg = this.vg, policy = this.policy;
+            let bx = xc.box.x + xc.padding, by = xc.box.y + xc.padding;
+            let bw = xc.box.w - 2 * xc.padding, bh = xc.box.h - 2 * xc.padding;
+            if (xc.text) {
+                let wad = this.measure.measureText(xc.text, xc.fszText);
+                vg.drawText(bx + 0.5 * bw, by + bh, xc.text, xc.fszText, policy.data.foreground, WebMolKit.TextAlign.Bottom | WebMolKit.TextAlign.Centre);
+                bh -= wad[1] + wad[2];
+            }
+            if (xc.leftNumer) {
+                let wad1 = this.measure.measureText(xc.leftNumer, xc.fszLeft);
+                if (!xc.leftDenom) {
+                    vg.drawText(bx, by + 0.5 * bh, xc.leftNumer, xc.fszLeft, policy.data.foreground, WebMolKit.TextAlign.Left | WebMolKit.TextAlign.Middle);
+                    let useW = wad1[0] + WebMolKit.ArrangeExperiment.COMP_GAP_LEFT * (wad1[1] + wad1[2]);
+                    bx += useW;
+                    bw -= useW;
+                }
+                else {
+                    let wad2 = this.measure.measureText(xc.leftDenom, xc.fszLeft);
+                    let tw = Math.max(wad1[0], wad2[0]);
+                    let x = bx + 0.5 * tw, y = by + 0.5 * bh;
+                    vg.drawText(x, y, xc.leftNumer, xc.fszLeft, policy.data.foreground, WebMolKit.TextAlign.Centre | WebMolKit.TextAlign.Bottom);
+                    vg.drawText(x, y + wad1[2], xc.leftDenom, xc.fszLeft, policy.data.foreground, WebMolKit.TextAlign.Centre | WebMolKit.TextAlign.Top);
+                    vg.drawLine(bx, y, bx + tw, y, policy.data.foreground, this.scale * 0.03);
+                    let useW = tw + WebMolKit.ArrangeExperiment.COMP_GAP_LEFT * (wad1[1] + wad1[2]);
+                    bx += useW;
+                    bw -= useW;
+                }
+            }
+            if (xc.annot != 0) {
+                let aw = WebMolKit.ArrangeExperiment.COMP_ANNOT_SIZE * this.scale;
+                bw -= aw;
+                this.drawAnnotation(xc.annot, bx + bw, by, aw, bh);
+            }
+            if (WebMolKit.MolUtil.notBlank(xc.mol)) {
+                let arrmol = new WebMolKit.ArrangeMolecule(xc.mol, this.layout.measure, policy, new WebMolKit.RenderEffects());
+                arrmol.arrange();
+                arrmol.squeezeInto(bx, by, bw, bh, 0);
+                let drawmol = new WebMolKit.DrawMolecule(arrmol, vg);
+                drawmol.draw();
+            }
+            if (xc.srcIdx < 0) {
+                let fsz = 0.5 * bh;
+                vg.drawText(bx + 0.5 * bw, by + 0.5 * bh, '?', fsz, policy.data.foreground, WebMolKit.TextAlign.Centre | WebMolKit.TextAlign.Middle);
+            }
+        }
+        drawSymbolArrow(xc) {
+            let bx = xc.box.x + xc.padding, by = xc.box.y + xc.padding;
+            let bw = xc.box.w - 2 * xc.padding, bh = xc.box.h - 2 * xc.padding;
+            if (bw > bh)
+                this.drawArrow(bx, by + 0.5 * bh, bx + bw, by + 0.5 * bh, bh, this.policy.data.foreground, this.scale * 0.05);
+            else
+                this.drawArrow(bx + 0.5 * bw, by, bx + 0.5 * bw, by + bh, bw, this.policy.data.foreground, this.scale * 0.05);
+        }
+        drawSymbolPlus(xc) {
+            let vg = this.vg, policy = this.policy;
+            let x1 = xc.box.x + xc.padding, y1 = xc.box.y + xc.padding;
+            let x3 = x1 + xc.box.w - 2 * xc.padding, y3 = y1 + xc.box.h - 2 * xc.padding;
+            let x2 = 0.5 * (x1 + x3), y2 = 0.5 * (y1 + y3);
+            let lw = 0.2 * 0.5 * (x3 - x1 + y3 - y1);
+            vg.drawLine(x1, y2, x3, y2, policy.data.foreground, lw);
+            vg.drawLine(x2, y1, x2, y3, policy.data.foreground, lw);
+        }
+        drawAnnotation(annot, bx, by, bw, bh) {
+            let vg = this.vg, policy = this.policy;
+            let sz = bw, x2 = bx + bw, y2 = by + bh, x1 = x2 - sz, y1 = by;
+            if (annot == WebMolKit.ArrangeExperiment.COMP_ANNOT_PRIMARY)
+                y2 = y1 + sz;
+            else if (annot == WebMolKit.ArrangeExperiment.COMP_ANNOT_WASTE)
+                y1 = y2 - sz;
+            if (annot == WebMolKit.ArrangeExperiment.COMP_ANNOT_PRIMARY) {
+                let cx = 0.5 * (x1 + x2), cy = 0.5 * (y1 + y2), ext = 0.25 * sz;
+                let px = [cx, cx + 0.866 * ext, cx + 0.866 * ext, cx, cx - 0.866 * ext, cx - 0.866 * ext];
+                let py = [cy - ext, cy - 0.5 * ext, cy + 0.5 * ext, cy + ext, cy + 0.5 * ext, cy - 0.5 * ext];
+                let lw = 0.05 * this.scale;
+                vg.drawLine(px[0], py[0], px[3], py[3], policy.data.foreground, lw);
+                vg.drawLine(px[1], py[1], px[4], py[4], policy.data.foreground, lw);
+                vg.drawLine(px[2], py[2], px[5], py[5], policy.data.foreground, lw);
+                let inset = 0.1 * sz;
+                vg.drawOval(x1 + 0.5 * sz, y1 + 0.5 * sz, 0.5 * sz - inset, 0.5 * sz - inset, policy.data.foreground, lw, WebMolKit.MetaVector.NOCOLOUR);
+            }
+            else if (annot == WebMolKit.ArrangeExperiment.COMP_ANNOT_WASTE) {
+                let cx = x1 + 0.7 * sz, cy = 0.5 * (y1 + y2), quart = 0.25 * sz;
+                let lw = 0.05 * this.scale;
+                let px = [x1 + 0.1 * sz, cx - quart, cx, cx, cx];
+                let py = [y1, y1, y1, cy - quart, cy];
+                let ctrl = [false, false, true, false, false];
+                vg.drawPath(px, py, ctrl, false, policy.data.foreground, lw, WebMolKit.MetaVector.NOCOLOUR, false);
+                for (let n = 0; n < 4; n++) {
+                    let y = cy + n * 0.45 * sz * (1.0 / 3), dw = (3.1 - n) * 0.1 * sz;
+                    vg.drawLine(cx - dw, y, cx + dw, y, policy.data.foreground, lw);
+                }
+            }
+            else if (annot == WebMolKit.ArrangeExperiment.COMP_ANNOT_IMPLIED) {
+                let tw = 0.5 * sz, th = 0.75 * sz;
+                let cx = x2 - 0.5 * tw, cy = y1 + 0.5 * th;
+                let ty = y1 + 0.25 * th, dsz = sz * 0.1, hsz = 0.5 * dsz;
+                let lw = 0.05 * this.scale, fg = policy.data.foreground;
+                vg.drawLine(cx, y1, cx, y1 + th, fg, lw);
+                vg.drawLine(x2 - tw, ty, x2, ty, fg, lw);
+                vg.drawLine(x2 - tw, cy, x2, cy, fg, lw);
+                vg.drawOval(x2 - tw + hsz, y1 + th - hsz, hsz, hsz, 0, 0, fg);
+                vg.drawOval(x2 - hsz, y1 + th - hsz, hsz, hsz, 0, 0, fg);
+            }
+        }
+        drawArrow(x1, y1, x2, y2, headsz, colour, linesz) {
+            let dx = x2 - x1, dy = y2 - y1, invD = WebMolKit.invZ(WebMolKit.norm_xy(dx, dy));
+            dx *= invD;
+            dy *= invD;
+            let ox = dy, oy = -dx;
+            let hx = x2 - dx * headsz, hy = y2 - dy * headsz;
+            let px = [
+                x1 + ox * 0.5 * linesz,
+                hx + ox * 0.5 * linesz,
+                hx + ox * 0.5 * headsz,
+                x2,
+                hx - ox * 0.5 * headsz,
+                hx - ox * 0.5 * linesz,
+                x1 - ox * 0.5 * linesz
+            ];
+            let py = [
+                y1 + oy * 0.5 * linesz,
+                hy + oy * 0.5 * linesz,
+                hy + oy * 0.5 * headsz,
+                y2,
+                hy - oy * 0.5 * headsz,
+                hy - oy * 0.5 * linesz,
+                y1 - oy * 0.5 * linesz
+            ];
+            this.vg.drawPoly(px, py, WebMolKit.MetaVector.NOCOLOUR, 0, colour, true);
+        }
+    }
+    WebMolKit.DrawExperiment = DrawExperiment;
 })(WebMolKit || (WebMolKit = {}));
 var WebMolKit;
 (function (WebMolKit) {
@@ -8461,6 +11522,20 @@ var WebMolKit;
                     }
             }
             return resv;
+        }
+        numGraphicRenderings(row) { return 1; }
+        produceGraphicRendering(row, idx, policy) {
+            let measure = new WebMolKit.OutlineMeasurement(0, 0, policy.data.pointScale);
+            let layout = new WebMolKit.ArrangeExperiment(this.getEntry(row), measure, policy);
+            layout.limitTotalW = 50 * policy.data.pointScale;
+            layout.limitTotalH = 50 * policy.data.pointScale;
+            layout.includeStoich = true;
+            layout.includeAnnot = false;
+            layout.arrange();
+            let metavec = new WebMolKit.MetaVector();
+            new WebMolKit.DrawExperiment(layout, metavec).draw();
+            metavec.normalise();
+            return { 'name': 'Scheme', 'metavec': metavec };
         }
     }
     Experiment.CODE = 'org.mmi.aspect.Experiment';
@@ -11171,587 +14246,6 @@ var WebMolKit;
 })(WebMolKit || (WebMolKit = {}));
 var WebMolKit;
 (function (WebMolKit) {
-    class QuantityComp {
-        constructor(comp, step, type, idx) {
-            this.comp = comp;
-            this.step = step;
-            this.type = type;
-            this.idx = idx;
-            this.role = 0;
-            this.molw = 0;
-            this.valueEquiv = 0;
-            this.statEquiv = QuantityCalc.STAT_UNKNOWN;
-            this.valueMass = QuantityCalc.UNSPECIFIED;
-            this.statMass = QuantityCalc.STAT_UNKNOWN;
-            this.valueVolume = QuantityCalc.UNSPECIFIED;
-            this.statVolume = QuantityCalc.STAT_UNKNOWN;
-            this.valueMoles = QuantityCalc.UNSPECIFIED;
-            this.statMoles = QuantityCalc.STAT_UNKNOWN;
-            this.valueDensity = QuantityCalc.UNSPECIFIED;
-            this.statDensity = QuantityCalc.STAT_UNKNOWN;
-            this.valueConc = QuantityCalc.UNSPECIFIED;
-            this.statConc = QuantityCalc.STAT_UNKNOWN;
-            this.valueYield = QuantityCalc.UNSPECIFIED;
-            this.statYield = QuantityCalc.STAT_UNKNOWN;
-        }
-    }
-    WebMolKit.QuantityComp = QuantityComp;
-    class GreenMetrics {
-        constructor() {
-            this.step = 0;
-            this.idx = 0;
-            this.massReact = [];
-            this.massProd = [];
-            this.massWaste = [];
-            this.massProdWaste = [];
-            this.molwReact = [];
-            this.molwProd = [];
-            this.impliedWaste = 0;
-            this.isBlank = false;
-        }
-    }
-    WebMolKit.GreenMetrics = GreenMetrics;
-    class QuantityCalc {
-        constructor(entry) {
-            this.entry = entry;
-            this.quantities = [];
-            this.idxPrimary = [];
-            this.idxYield = [];
-            this.allMassReact = [];
-            this.allMassProd = [];
-            this.allMassWaste = [];
-            this.greenMetrics = [];
-        }
-        static isStoichZero(stoich) {
-            if (this.isStoichUnity(stoich))
-                return false;
-            if (parseFloat(stoich) == 0)
-                return true;
-            return false;
-        }
-        static isStoichUnity(stoich) {
-            if (!stoich || stoich == '1')
-                return true;
-            let [numer, denom] = this.extractStoichFraction(stoich);
-            return numer != 0 && numer == denom;
-        }
-        static extractStoichFraction(stoich) {
-            if (!stoich)
-                return [1, 1];
-            let numer = 1, denom = 1;
-            let i = stoich.indexOf('/');
-            if (i < 0) {
-                let v = parseFloat(stoich);
-                if (v >= 0)
-                    numer = v;
-            }
-            else {
-                let v1 = parseFloat(stoich.substring(0, i)), v2 = parseFloat(stoich.substring(i + 1));
-                if (v1 >= 0)
-                    numer = v1;
-                if (v2 >= 0)
-                    denom = v2;
-            }
-            return [numer, denom];
-        }
-        static extractStoichValue(stoich) {
-            let [numer, denom] = this.extractStoichFraction(stoich);
-            return denom <= 1 ? numer : numer / denom;
-        }
-        static stoichAsRatio(stoich) {
-            let [numer, denom] = this.extractStoichFraction(stoich);
-            if (numer == Math.floor(numer))
-                return [numer, denom];
-            return this.stoichFractAsRatio(numer);
-        }
-        static stoichFractAsRatio(fract) {
-            if (fract == Math.floor(fract))
-                return [fract, 1];
-            const MAX_DENOM = QuantityCalc.MAX_DENOM;
-            if (QuantityCalc.RATIO_FRACT == null) {
-                QuantityCalc.RATIO_FRACT = [];
-                for (let p = 0, j = 2; j <= MAX_DENOM; j++)
-                    for (let i = 1; i < j && i < MAX_DENOM - 1; i++)
-                        QuantityCalc.RATIO_FRACT.push(i * 1.0 / j);
-            }
-            let whole = Math.floor(fract);
-            let resid = fract - whole;
-            let bestDiff = Number.MAX_VALUE;
-            let bestOver = 1, bestUnder = 1;
-            for (let p = 0, j = 2; j <= MAX_DENOM; j++)
-                for (let i = 1; i < j && i < MAX_DENOM - 1; i++) {
-                    let diff = Math.abs(QuantityCalc.RATIO_FRACT[p++] - resid);
-                    if (diff < bestDiff) {
-                        bestDiff = diff;
-                        bestOver = i;
-                        bestUnder = j;
-                    }
-                }
-            return [bestOver + (whole * bestUnder), bestUnder];
-        }
-        static impliedReagentStoich(reagent, products) {
-            if (WebMolKit.MolUtil.isBlank(reagent.mol) || products.length == 0)
-                return 0;
-            let pstoich = WebMolKit.Vec.numberArray(-1, products.length);
-            let rmol = reagent.mol;
-            let highest = 0;
-            for (let n = 1; n <= rmol.numAtoms; n++) {
-                let m = rmol.atomMapNum(n);
-                if (m == 0)
-                    continue;
-                let total = 0;
-                for (let i = 0; i < products.length; i++) {
-                    let pmol = products[i].mol;
-                    if (WebMolKit.MolUtil.isBlank(pmol))
-                        continue;
-                    let pcount = 0;
-                    for (let j = 1; j <= pmol.numAtoms; j++)
-                        if (pmol.atomMapNum(j) == m)
-                            pcount++;
-                    if (pcount > 0) {
-                        let rcount = 0;
-                        for (let k = 1; k <= rmol.numAtoms; k++)
-                            if (rmol.atomMapNum(k) == m)
-                                rcount++;
-                        if (pstoich[i] < 0)
-                            pstoich[i] = QuantityCalc.extractStoichValue(products[i].stoich);
-                        total += pcount * pstoich[i] / rcount;
-                    }
-                }
-                highest = Math.max(highest, total);
-            }
-            return highest;
-        }
-        calculate() {
-            this.classifyTypes();
-            while (this.calculateSomething()) { }
-            this.allMassReact = [];
-            this.allMassProd = [];
-            this.allMassWaste = [];
-            for (let n = 0; n < this.quantities.length; n++) {
-                let qc = this.quantities[n];
-                if (qc.type == WebMolKit.Experiment.REACTANT || qc.type == WebMolKit.Experiment.REAGENT) {
-                    if (qc.valueEquiv == 0 && qc.type == WebMolKit.Experiment.REAGENT)
-                        continue;
-                    this.allMassReact.push(qc.valueMass);
-                }
-                else if (qc.type == WebMolKit.Experiment.PRODUCT) {
-                    if (!qc.comp.waste) {
-                        this.allMassProd.push(qc.valueMass);
-                        this.calculateGreenMetrics(n);
-                    }
-                    else {
-                        this.allMassWaste.push(qc.valueMass);
-                    }
-                }
-            }
-        }
-        get numQuantities() { return this.quantities.length; }
-        getQuantity(idx) { return this.quantities[idx]; }
-        getAllQuantities() { return this.quantities.slice(0); }
-        get numGreenMetrics() { return this.greenMetrics.length; }
-        getGreenMetrics(idx) { return this.greenMetrics[idx]; }
-        getAllGreenMetrics() { return this.greenMetrics.slice(0); }
-        getAllMassReact() { return this.allMassReact.slice(0); }
-        getAllMassProd() { return this.allMassProd.slice(0); }
-        getAllMassWaste() { return this.allMassWaste.slice(0); }
-        findComponent(step, type, idx) {
-            for (let qc of this.quantities)
-                if (qc.step == step && qc.type == type && qc.idx == idx)
-                    return qc;
-            return null;
-        }
-        static formatMolWeight(value) {
-            if (value == QuantityCalc.UNSPECIFIED)
-                return '';
-            return WebMolKit.formatDouble(value, 6) + ' g/mol';
-        }
-        static formatMass(value) {
-            if (value == QuantityCalc.UNSPECIFIED)
-                return '';
-            if (value <= 1E-6)
-                return WebMolKit.formatDouble(value * 1E6, 6) + ' \u03BCg';
-            if (value <= 1E-3)
-                return WebMolKit.formatDouble(value * 1E3, 6) + ' mg';
-            if (value >= 1E3)
-                return WebMolKit.formatDouble(value * 1E-3, 6) + ' kg';
-            return WebMolKit.formatDouble(value, 6) + ' g';
-        }
-        static formatVolume(value) {
-            if (value == QuantityCalc.UNSPECIFIED)
-                return '';
-            if (value <= 1E-6)
-                return WebMolKit.formatDouble(value * 1E6, 6) + ' nL';
-            if (value <= 1E-3)
-                return WebMolKit.formatDouble(value * 1E3, 6) + ' \u03BCL';
-            if (value >= 1E3)
-                return WebMolKit.formatDouble(value * 1E-3, 6) + ' L';
-            return WebMolKit.formatDouble(value, 6) + ' mL';
-        }
-        static formatMoles(value) {
-            if (value == QuantityCalc.UNSPECIFIED)
-                return '';
-            if (value <= 1E-9)
-                return WebMolKit.formatDouble(value * 1E9, 6) + ' nmol';
-            if (value <= 1E-6)
-                return WebMolKit.formatDouble(value * 1E6, 6) + ' \u03BCmol';
-            if (value <= 1E-3)
-                return WebMolKit.formatDouble(value * 1E3, 6) + ' mmol';
-            return WebMolKit.formatDouble(value, 6) + ' mol';
-        }
-        static formatDensity(value) {
-            if (value == QuantityCalc.UNSPECIFIED)
-                return '';
-            return WebMolKit.formatDouble(value, 6) + ' g/mL';
-        }
-        static formatConc(value) {
-            if (value == QuantityCalc.UNSPECIFIED)
-                return '';
-            if (value <= 1E-9)
-                return WebMolKit.formatDouble(value * 1E9, 6) + ' nmol/L';
-            if (value <= 1E-6)
-                return WebMolKit.formatDouble(value * 1E6, 6) + ' \u03BCmol/L';
-            if (value <= 1E-3)
-                return WebMolKit.formatDouble(value * 1E3, 6) + ' mmol/L';
-            return WebMolKit.formatDouble(value, 6) + ' mol/L';
-        }
-        static formatPercent(value) {
-            if (value == QuantityCalc.UNSPECIFIED)
-                return '';
-            return WebMolKit.formatDouble(value, 6) + '%';
-        }
-        classifyTypes() {
-            for (let s = 0; s < this.entry.steps.length; s++) {
-                let step = this.entry.steps[s];
-                for (let n = 0; n < step.reactants.length; n++)
-                    this.quantities.push(new QuantityComp(step.reactants[n], s, WebMolKit.Experiment.REACTANT, n));
-                for (let n = 0; n < step.reagents.length; n++)
-                    this.quantities.push(new QuantityComp(step.reagents[n], s, WebMolKit.Experiment.REAGENT, n));
-                for (let n = 0; n < step.products.length; n++)
-                    this.quantities.push(new QuantityComp(step.products[n], s, WebMolKit.Experiment.PRODUCT, n));
-            }
-            for (let n = 0; n < this.quantities.length; n++) {
-                let qc = this.quantities[n];
-                if (qc.type == WebMolKit.Experiment.REAGENT) {
-                    if (qc.comp.equiv != null)
-                        qc.valueEquiv = qc.comp.equiv;
-                    else {
-                        let eq = QuantityCalc.impliedReagentStoich(qc.comp, this.entry.steps[qc.step].products);
-                        if (eq > 0)
-                            qc.valueEquiv = eq;
-                    }
-                }
-                else {
-                    qc.valueEquiv = QuantityCalc.extractStoichValue(qc.comp.stoich);
-                }
-                if (qc.comp.mol != null)
-                    qc.molw = WebMolKit.MolUtil.molecularWeight(qc.comp.mol);
-                qc.role = QuantityCalc.ROLE_INDEPENDENT;
-                if (qc.step == 0 && qc.type == WebMolKit.Experiment.REACTANT) {
-                    if (qc.comp.primary) {
-                        qc.role = QuantityCalc.ROLE_PRIMARY;
-                        this.idxPrimary.push(n);
-                    }
-                    else
-                        qc.role = QuantityCalc.ROLE_SECONDARY;
-                }
-                else if (qc.type == WebMolKit.Experiment.REAGENT) {
-                    if (qc.valueEquiv > 0)
-                        qc.role = QuantityCalc.ROLE_SECONDARY;
-                }
-                else if (qc.type == WebMolKit.Experiment.PRODUCT && !qc.comp.waste) {
-                    qc.role = QuantityCalc.ROLE_PRODUCT;
-                    this.idxYield.push(n);
-                }
-                else if (qc.valueEquiv > 0) {
-                    qc.role = QuantityCalc.ROLE_SECONDARY;
-                }
-                if (qc.comp.mass != null)
-                    qc.valueMass = qc.comp.mass;
-                if (qc.comp.volume != null)
-                    qc.valueVolume = qc.comp.volume;
-                if (qc.comp.moles != null)
-                    qc.valueMoles = qc.comp.moles;
-                if (qc.comp.density != null)
-                    qc.valueDensity = qc.comp.density;
-                if (qc.comp.conc != null)
-                    qc.valueConc = qc.comp.conc;
-                if (qc.comp.yield != null)
-                    qc.valueYield = qc.comp.yield;
-                qc.statEquiv = qc.valueEquiv == QuantityCalc.UNSPECIFIED ? QuantityCalc.STAT_UNKNOWN : QuantityCalc.STAT_ACTUAL;
-                qc.statMass = qc.valueMass == QuantityCalc.UNSPECIFIED ? QuantityCalc.STAT_UNKNOWN : QuantityCalc.STAT_ACTUAL;
-                qc.statVolume = qc.valueVolume == QuantityCalc.UNSPECIFIED ? QuantityCalc.STAT_UNKNOWN : QuantityCalc.STAT_ACTUAL;
-                qc.statMoles = qc.valueMoles == QuantityCalc.UNSPECIFIED ? QuantityCalc.STAT_UNKNOWN : QuantityCalc.STAT_ACTUAL;
-                qc.statDensity = qc.valueDensity == QuantityCalc.UNSPECIFIED ? QuantityCalc.STAT_UNKNOWN : QuantityCalc.STAT_ACTUAL;
-                qc.statConc = qc.valueConc == QuantityCalc.UNSPECIFIED ? QuantityCalc.STAT_UNKNOWN : QuantityCalc.STAT_ACTUAL;
-                qc.statYield = qc.valueYield == QuantityCalc.UNSPECIFIED ? QuantityCalc.STAT_UNKNOWN : QuantityCalc.STAT_ACTUAL;
-            }
-            if (this.idxPrimary.length == 0) {
-                for (let n = 0; n < this.quantities.length; n++) {
-                    let qc = this.quantities[n];
-                    if (qc.type == WebMolKit.Experiment.REACTANT && qc.step == 0) {
-                        qc.role = QuantityCalc.ROLE_PRIMARY;
-                        this.idxPrimary.push(n);
-                    }
-                }
-            }
-        }
-        calculateSomething() {
-            let anything = false;
-            for (let qc of this.quantities) {
-                if (qc.molw > 0 && qc.valueMass == QuantityCalc.UNSPECIFIED && qc.statMoles == QuantityCalc.STAT_ACTUAL) {
-                    qc.valueMass = qc.valueMoles * qc.molw;
-                    qc.statMass = QuantityCalc.STAT_VIRTUAL;
-                    anything = true;
-                }
-                if (qc.molw > 0 && qc.valueMass != QuantityCalc.UNSPECIFIED && qc.valueMoles == QuantityCalc.UNSPECIFIED) {
-                    qc.valueMoles = qc.valueMass / qc.molw;
-                    qc.statMoles = QuantityCalc.STAT_VIRTUAL;
-                    anything = true;
-                }
-                if (qc.molw > 0 && qc.statMass == QuantityCalc.STAT_ACTUAL && qc.statMoles == QuantityCalc.STAT_ACTUAL) {
-                    let calcMoles = qc.valueMass / qc.molw;
-                    if (!this.closeEnough(qc.valueMoles, calcMoles)) {
-                        qc.statMass = QuantityCalc.STAT_CONFLICT;
-                        qc.statMoles = QuantityCalc.STAT_CONFLICT;
-                    }
-                }
-                let isSoln = qc.statConc == QuantityCalc.STAT_ACTUAL ||
-                    (qc.statVolume == QuantityCalc.STAT_ACTUAL && (qc.statMass == QuantityCalc.STAT_ACTUAL || qc.statMoles == QuantityCalc.STAT_ACTUAL));
-                if (!isSoln) {
-                    if (qc.valueDensity > 0 && qc.valueMass == QuantityCalc.UNSPECIFIED && qc.valueVolume != QuantityCalc.UNSPECIFIED) {
-                        qc.valueMass = qc.valueVolume * qc.valueDensity;
-                        qc.statMass = QuantityCalc.STAT_VIRTUAL;
-                        anything = true;
-                    }
-                    if (qc.valueDensity > 0 && qc.valueMass != QuantityCalc.UNSPECIFIED && qc.valueVolume == QuantityCalc.UNSPECIFIED) {
-                        qc.valueVolume = qc.valueMass / qc.valueDensity;
-                        qc.statVolume = QuantityCalc.STAT_VIRTUAL;
-                        anything = true;
-                    }
-                    if (qc.valueDensity == QuantityCalc.UNSPECIFIED && qc.valueMass != QuantityCalc.UNSPECIFIED &&
-                        qc.valueVolume != QuantityCalc.UNSPECIFIED && qc.valueConc == QuantityCalc.UNSPECIFIED) {
-                        if (qc.statMass == QuantityCalc.STAT_ACTUAL || qc.statMoles == QuantityCalc.STAT_ACTUAL) {
-                            qc.valueDensity = qc.valueMass / qc.valueVolume;
-                            qc.statDensity = QuantityCalc.STAT_VIRTUAL;
-                            anything = true;
-                        }
-                    }
-                }
-                if (isSoln) {
-                    if (qc.valueConc > 0 && qc.valueMoles == QuantityCalc.UNSPECIFIED && qc.valueVolume != QuantityCalc.UNSPECIFIED) {
-                        qc.valueMoles = 0.001 * qc.valueVolume * qc.valueConc;
-                        qc.statMoles = QuantityCalc.STAT_VIRTUAL;
-                        anything = true;
-                    }
-                    if (qc.valueConc > 0 && qc.valueMoles != QuantityCalc.UNSPECIFIED && qc.valueVolume == QuantityCalc.UNSPECIFIED) {
-                        qc.valueVolume = 1000 * qc.valueMoles / qc.valueConc;
-                        qc.statVolume = QuantityCalc.STAT_VIRTUAL;
-                        anything = true;
-                    }
-                    if (qc.valueConc == QuantityCalc.UNSPECIFIED && qc.valueMass != QuantityCalc.UNSPECIFIED && qc.valueVolume != QuantityCalc.UNSPECIFIED) {
-                        qc.valueConc = 1000 * qc.valueMoles / qc.valueVolume;
-                        qc.statConc = QuantityCalc.STAT_VIRTUAL;
-                        anything = true;
-                    }
-                    if (qc.statConc == QuantityCalc.STAT_ACTUAL && qc.valueMoles > 0 && qc.statVolume == QuantityCalc.STAT_ACTUAL) {
-                        let calcVolume = 1000 * qc.valueMoles / qc.valueConc;
-                        if (!this.closeEnough(qc.valueVolume, calcVolume)) {
-                            qc.statConc = QuantityCalc.STAT_CONFLICT;
-                            if (qc.statMass == QuantityCalc.STAT_ACTUAL)
-                                qc.statMass = QuantityCalc.STAT_CONFLICT;
-                            if (qc.statMoles == QuantityCalc.STAT_ACTUAL)
-                                qc.statMoles = QuantityCalc.STAT_CONFLICT;
-                            qc.statVolume = QuantityCalc.STAT_CONFLICT;
-                        }
-                    }
-                }
-                if (qc.molw > 0 && qc.valueMass == QuantityCalc.UNSPECIFIED && qc.valueMoles != QuantityCalc.UNSPECIFIED) {
-                    qc.valueMass = qc.valueMoles * qc.molw;
-                    qc.statMass = QuantityCalc.STAT_VIRTUAL;
-                    anything = true;
-                }
-                if (qc.statDensity == QuantityCalc.STAT_ACTUAL && qc.statConc == QuantityCalc.STAT_ACTUAL) {
-                    qc.statDensity = QuantityCalc.STAT_CONFLICT;
-                    qc.statConc = QuantityCalc.STAT_CONFLICT;
-                }
-            }
-            if (anything)
-                return true;
-            let hasRef = false;
-            let numSteps = this.entry.steps.length;
-            let primaryCounts = WebMolKit.Vec.numberArray(0, numSteps);
-            let primaryEquivs = WebMolKit.Vec.numberArray(0, numSteps);
-            let primaryMoles = WebMolKit.Vec.numberArray(0, numSteps);
-            for (let qc of this.quantities) {
-                let ref = -1;
-                if (qc.step == 0 && qc.type == WebMolKit.Experiment.REACTANT && qc.comp.primary)
-                    ref = qc.step;
-                else if (qc.step < numSteps - 1 && qc.type == WebMolKit.Experiment.PRODUCT && !qc.comp.waste)
-                    ref = qc.step + 1;
-                else
-                    continue;
-                if (primaryEquivs[ref] < 0)
-                    continue;
-                if (qc.statMoles == QuantityCalc.STAT_UNKNOWN) {
-                    primaryEquivs[ref] = -1;
-                    continue;
-                }
-                primaryCounts[ref]++;
-                primaryEquivs[ref] += qc.valueEquiv;
-                primaryMoles[ref] += qc.valueMoles;
-            }
-            if (primaryEquivs[0] <= 0) {
-                primaryCounts[0] = 0;
-                primaryEquivs[0] = 0;
-                primaryMoles[0] = 0;
-                for (let i of this.idxPrimary) {
-                    let qc = this.quantities[i];
-                    if (qc.statMoles == QuantityCalc.STAT_UNKNOWN) {
-                        primaryCounts[0] = 0;
-                        primaryEquivs[0] = -1;
-                        primaryMoles[0] = 0;
-                        break;
-                    }
-                    primaryCounts[0]++;
-                    primaryEquivs[0] += qc.valueEquiv;
-                    primaryMoles[0] += qc.valueMoles;
-                }
-            }
-            let refMoles = WebMolKit.Vec.numberArray(0, numSteps);
-            for (let n = 0; n < numSteps; n++) {
-                refMoles[n] = primaryCounts[n] == 0 || primaryEquivs[n] <= 0 ? 0 : primaryMoles[n] / primaryEquivs[n];
-                if (refMoles[n] > 0)
-                    hasRef = true;
-            }
-            if (!hasRef) {
-                for (let n = 0; n < numSteps; n++) {
-                    let prodMolar = [];
-                    for (let qc of this.quantities) {
-                        if (qc.step != n || qc.role != QuantityCalc.ROLE_PRODUCT)
-                            continue;
-                        if (qc.statMoles == QuantityCalc.STAT_UNKNOWN || qc.valueMoles <= 0 || qc.valueEquiv <= 0)
-                            continue;
-                        let yld = qc.valueYield > 0 ? qc.valueYield * 0.01 : 1;
-                        prodMolar.push(qc.valueMoles / (qc.valueEquiv * yld));
-                    }
-                    if (prodMolar.length > 0) {
-                        refMoles[n] = WebMolKit.Vec.sum(prodMolar) / prodMolar.length;
-                        hasRef = true;
-                    }
-                }
-            }
-            if (!hasRef)
-                return false;
-            for (let qc of this.quantities) {
-                if (qc.type != WebMolKit.Experiment.PRODUCT)
-                    continue;
-                if (refMoles[qc.step] == 0)
-                    continue;
-                if (qc.valueYield == QuantityCalc.UNSPECIFIED && qc.valueMoles != QuantityCalc.UNSPECIFIED) {
-                    qc.valueYield = 100 * qc.valueMoles / (refMoles[qc.step] * qc.valueEquiv);
-                    qc.statYield = QuantityCalc.STAT_VIRTUAL;
-                    anything = true;
-                }
-                if (qc.valueYield != QuantityCalc.UNSPECIFIED && qc.valueMoles == QuantityCalc.UNSPECIFIED) {
-                    qc.valueMoles = qc.valueYield * 0.01 * (refMoles[qc.step] * qc.valueEquiv);
-                    qc.statMoles = QuantityCalc.STAT_VIRTUAL;
-                    anything = true;
-                }
-                if (qc.valueMoles > 0 && qc.statYield == QuantityCalc.STAT_ACTUAL) {
-                    let calcYield = 100 * qc.valueMoles / (refMoles[qc.step] * qc.valueEquiv);
-                    if (!this.closeEnough(qc.valueYield, calcYield)) {
-                        if (qc.statMass == QuantityCalc.STAT_ACTUAL)
-                            qc.statMass = QuantityCalc.STAT_CONFLICT;
-                        if (qc.statMoles == QuantityCalc.STAT_ACTUAL)
-                            qc.statMoles = QuantityCalc.STAT_CONFLICT;
-                        qc.statYield = QuantityCalc.STAT_CONFLICT;
-                    }
-                }
-            }
-            if (anything)
-                return true;
-            for (let qc of this.quantities) {
-                if (refMoles[qc.step] == 0)
-                    continue;
-                if (qc.valueMass == QuantityCalc.UNSPECIFIED && qc.valueMoles == QuantityCalc.UNSPECIFIED && qc.valueEquiv > 0) {
-                    qc.valueMoles = refMoles[qc.step] * qc.valueEquiv;
-                    qc.statMoles = QuantityCalc.STAT_VIRTUAL;
-                    anything = true;
-                }
-                if (qc.valueMoles != QuantityCalc.UNSPECIFIED && qc.valueEquiv == QuantityCalc.UNSPECIFIED) {
-                    qc.valueEquiv = qc.valueMoles / refMoles[qc.step];
-                    qc.statEquiv = QuantityCalc.STAT_VIRTUAL;
-                    anything = true;
-                }
-            }
-            return anything;
-        }
-        calculateGreenMetrics(idx) {
-            let qc = this.quantities[idx];
-            let gm = new GreenMetrics();
-            gm.step = qc.step;
-            gm.idx = idx;
-            gm.isBlank = true;
-            for (let n = 0; n < this.quantities.length; n++) {
-                let sub = this.quantities[n];
-                if (sub.step > gm.step)
-                    continue;
-                let eq = sub.valueEquiv;
-                if (eq == 0 && sub.type == WebMolKit.Experiment.REAGENT)
-                    continue;
-                if (sub.valueMass != QuantityCalc.UNSPECIFIED)
-                    gm.isBlank = false;
-                if (sub.type == WebMolKit.Experiment.REACTANT || sub.type == WebMolKit.Experiment.REAGENT) {
-                    gm.massReact.push(sub.valueMass);
-                    if (sub.step == gm.step && eq > 0 && sub.molw > 0)
-                        gm.molwReact.push(eq * sub.molw);
-                }
-                else if (sub.type == WebMolKit.Experiment.PRODUCT) {
-                    if (!sub.comp.waste) {
-                        if (sub.step == gm.step)
-                            gm.massProd.push(sub.valueMass);
-                        if (eq > 0 && sub.molw > 0) {
-                            if (sub.step == gm.step)
-                                gm.molwProd.push(eq * sub.molw);
-                            else if (sub.step == gm.step - 1)
-                                gm.molwReact.push(eq * sub.molw);
-                        }
-                    }
-                    else {
-                        gm.massWaste.push(sub.valueMass);
-                    }
-                    if (sub.step == gm.step)
-                        gm.massProdWaste.push(sub.valueMass);
-                }
-            }
-            gm.impliedWaste = WebMolKit.Vec.sum(gm.massReact) - WebMolKit.Vec.sum(gm.massProdWaste);
-            if (Math.abs(gm.impliedWaste) > 1E-3)
-                gm.impliedWaste = 0;
-            this.greenMetrics.push(gm);
-        }
-        closeEnough(value1, value2) {
-            if (value1 <= 0 || value2 <= 0)
-                return true;
-            let ratio = value1 / value2;
-            return ratio >= 0.99 && ratio <= 1.01;
-        }
-    }
-    QuantityCalc.UNSPECIFIED = -1;
-    QuantityCalc.ROLE_PRIMARY = 1;
-    QuantityCalc.ROLE_SECONDARY = 2;
-    QuantityCalc.ROLE_PRODUCT = 3;
-    QuantityCalc.ROLE_INDEPENDENT = 4;
-    QuantityCalc.STAT_UNKNOWN = 0;
-    QuantityCalc.STAT_ACTUAL = 1;
-    QuantityCalc.STAT_VIRTUAL = 2;
-    QuantityCalc.STAT_CONFLICT = 3;
-    QuantityCalc.MAX_DENOM = 16;
-    QuantityCalc.RATIO_FRACT = null;
-    WebMolKit.QuantityCalc = QuantityCalc;
-})(WebMolKit || (WebMolKit = {}));
-var WebMolKit;
-(function (WebMolKit) {
     class RPC {
         constructor(request, parameter, callback) {
             this.request = request;
@@ -12956,1836 +15450,6 @@ var WebMolKit;
         }
     }
     WebMolKit.Cookies = Cookies;
-})(WebMolKit || (WebMolKit = {}));
-var WebMolKit;
-(function (WebMolKit) {
-    class OutlineMeasurement {
-        constructor(offsetX, offsetY, pointScale) {
-            this.offsetX = offsetX;
-            this.offsetY = offsetY;
-            this.pointScale = pointScale;
-            this.invScale = 1 / pointScale;
-        }
-        scale() { return this.pointScale; }
-        angToX(ax) { return ax * this.pointScale + this.offsetX; }
-        angToY(ay) { return ay * -this.pointScale + this.offsetY; }
-        xToAng(px) { return (px - this.offsetX) * this.invScale; }
-        yToAng(py) { return (py - this.offsetY) * -this.invScale; }
-        yIsUp() { return false; }
-        measureText(str, fontSize) { return WebMolKit.FontData.main.measureText(str, fontSize); }
-    }
-    WebMolKit.OutlineMeasurement = OutlineMeasurement;
-})(WebMolKit || (WebMolKit = {}));
-var WebMolKit;
-(function (WebMolKit) {
-    let BLineType;
-    (function (BLineType) {
-        BLineType[BLineType["Normal"] = 1] = "Normal";
-        BLineType[BLineType["Inclined"] = 2] = "Inclined";
-        BLineType[BLineType["Declined"] = 3] = "Declined";
-        BLineType[BLineType["Unknown"] = 4] = "Unknown";
-        BLineType[BLineType["Dotted"] = 5] = "Dotted";
-        BLineType[BLineType["DotDir"] = 6] = "DotDir";
-        BLineType[BLineType["IncDouble"] = 7] = "IncDouble";
-        BLineType[BLineType["IncTriple"] = 8] = "IncTriple";
-        BLineType[BLineType["IncQuadruple"] = 9] = "IncQuadruple";
-    })(BLineType = WebMolKit.BLineType || (WebMolKit.BLineType = {}));
-    class ArrangeMolecule {
-        constructor(mol, measure, policy, effects = new WebMolKit.RenderEffects()) {
-            this.mol = mol;
-            this.measure = measure;
-            this.policy = policy;
-            this.effects = effects;
-            this.MINBOND_LINE = 0.25;
-            this.MINBOND_EXOTIC = 0.5;
-            this.points = [];
-            this.lines = [];
-            this.rings = [];
-            this.paths = [];
-            this.space = [];
-            this.wantArtifacts = true;
-            this.artifacts = null;
-            this.bondOrder = [];
-            this.atomCharge = [];
-            this.atomUnpaired = [];
-            this.artifactCharge = new Map();
-            this.artifactUnpaired = new Map();
-            this.artifactFract = new Map();
-        }
-        static guestimateSize(mol, policy, maxW, maxH) {
-            let box = mol.boundary();
-            let minX = box.minX(), minY = box.minY(), maxX = box.maxX(), maxY = box.maxY();
-            let fontSize = policy.data.fontSize * this.FONT_CORRECT;
-            for (let n = 1; n <= mol.numAtoms; n++)
-                if (mol.atomExplicit(n)) {
-                    let plusH = mol.atomHydrogens(n) > 0 ? 1 : 0;
-                    const aw = 0.5 * 0.7 * fontSize * (mol.atomElement(n).length + plusH);
-                    const ah = 0.5 * fontSize * (1 + plusH);
-                    const ax = mol.atomX(n), ay = mol.atomY(n);
-                    minX = Math.min(minX, ax - aw);
-                    maxX = Math.max(maxX, ax + aw);
-                    minY = Math.min(minY, ay - ah);
-                    maxY = Math.max(maxY, ay + ah);
-                }
-            let w = Math.max(1, (maxX - minX)) * policy.data.pointScale;
-            let h = Math.max(1, (maxY - minY)) * policy.data.pointScale;
-            if (maxW > 0 && w > maxW) {
-                h *= maxW / w;
-                w = maxW;
-            }
-            if (maxH > 0 && h > maxH) {
-                w *= maxH / h;
-                h = maxH;
-            }
-            return [w, h];
-        }
-        getMolecule() { return this.mol; }
-        getMeasure() { return this.measure; }
-        getPolicy() { return this.policy; }
-        getEffects() { return this.effects; }
-        getScale() { return this.scale; }
-        setWantArtifacts(want) { this.wantArtifacts = want; }
-        getArtifacts() { return this.artifacts; }
-        setArtifacts(artifacts) { this.artifacts = artifacts; }
-        arrange() {
-            const mol = this.mol;
-            this.scale = this.measure.scale();
-            this.bondSepPix = this.policy.data.bondSep * this.measure.scale();
-            this.lineSizePix = this.policy.data.lineSize * this.measure.scale();
-            this.fontSizePix = this.policy.data.fontSize * this.measure.scale() * ArrangeMolecule.FONT_CORRECT;
-            this.ymul = this.measure.yIsUp() ? -1 : 1;
-            let artmask = null;
-            if (this.wantArtifacts && this.artifacts == null) {
-                this.artifacts = new WebMolKit.BondArtifact(mol);
-                artmask = WebMolKit.Vec.booleanArray(false, mol.numAtoms);
-                for (let path of this.artifacts.getResPaths())
-                    for (let a of path.atoms)
-                        artmask[a - 1] = true;
-                for (let ring of this.artifacts.getResRings())
-                    for (let a of ring.atoms)
-                        artmask[a - 1] = true;
-                for (let arene of this.artifacts.getArenes()) {
-                    artmask[arene.centre - 1] = true;
-                    for (let a of arene.atoms)
-                        artmask[a - 1] = true;
-                }
-            }
-            this.setupBondOrders();
-            for (let n = 1; n <= mol.numAtoms; n++) {
-                if (mol.atomElement(n).length > 2 && mol.atomHydrogens(n) == 0) {
-                    this.points.push(null);
-                    this.space.push(null);
-                    continue;
-                }
-                let a = {
-                    'anum': n,
-                    'text': mol.atomExplicit(n) || this.atomIsWeirdLinear(n) ? mol.atomElement(n) : null,
-                    'fsz': this.fontSizePix,
-                    'bold': mol.atomMapNum(n) > 0,
-                    'col': this.policy.data.atomCols[mol.atomicNumber(n)],
-                    'oval': new WebMolKit.Oval(this.measure.angToX(mol.atomX(n)), this.measure.angToY(mol.atomY(n)), 0, 0)
-                };
-                let overCol = this.effects.colAtom[n];
-                if (overCol)
-                    a.col = overCol;
-                if (artmask[n - 1] && mol.atomElement(n) == 'C')
-                    a.text = null;
-                if (a.text != null) {
-                    let wad = this.measure.measureText(a.text, a.fsz);
-                    const PADDING = 1.1;
-                    a.oval.rw = 0.5 * wad[0] * PADDING;
-                    a.oval.rh = 0.5 * wad[1] * PADDING;
-                }
-                this.points.push(a);
-                this.space.push(this.computeSpacePoint(a));
-            }
-            for (let n = 1; n <= mol.numAtoms; n++)
-                if (this.points[n - 1] == null)
-                    this.processLabel(n);
-            let bdbl = WebMolKit.Vec.booleanArray(false, mol.numBonds);
-            for (let n = 1; n <= mol.numBonds; n++) {
-                let bfr = mol.bondFrom(n), bto = mol.bondTo(n);
-                let bt = mol.bondType(n), bo = this.bondOrder[n - 1];
-                if (bo < 0)
-                    continue;
-                let col = this.effects.colBond[n];
-                if (!col)
-                    col = this.policy.data.foreground;
-                bdbl[n - 1] = bo == 2 && (bt == WebMolKit.Molecule.BONDTYPE_NORMAL || bt == WebMolKit.Molecule.BONDTYPE_UNKNOWN);
-                let a1 = this.points[bfr - 1], a2 = this.points[bto - 1];
-                let x1 = a1.oval.cx, y1 = a1.oval.cy, x2 = a2.oval.cx, y2 = a2.oval.cy;
-                if (Math.abs(x2 - x1) <= 1 && Math.abs(y2 - y1) <= 1) {
-                    bdbl[n - 1] = false;
-                    continue;
-                }
-                if (bdbl[n - 1])
-                    continue;
-                let minDist = (bo == 1 && bt == WebMolKit.Molecule.BONDTYPE_NORMAL ? this.MINBOND_LINE : this.MINBOND_EXOTIC) * this.measure.scale();
-                let xy1 = this.backOffAtom(bfr, x1, y1, x2, y2, minDist);
-                let xy2 = this.backOffAtom(bto, x2, y2, x1, y1, minDist);
-                this.ensureMinimumBondLength(xy1, xy2, x1, y1, x2, y2, minDist);
-                let sz = this.lineSizePix, head = 0;
-                let ltype = BLineType.Normal;
-                if (bo == 1 && bt == WebMolKit.Molecule.BONDTYPE_INCLINED) {
-                    ltype = BLineType.Inclined;
-                    head = 0.15 * this.measure.scale();
-                }
-                else if (bo == 1 && bt == WebMolKit.Molecule.BONDTYPE_DECLINED) {
-                    ltype = BLineType.Declined;
-                    head = 0.15 * this.measure.scale();
-                }
-                else if (bt == WebMolKit.Molecule.BONDTYPE_UNKNOWN) {
-                    ltype = BLineType.Unknown;
-                    head = 0.2 * this.measure.scale();
-                }
-                else if (bo == 0) {
-                    if (bt == WebMolKit.Molecule.BONDTYPE_INCLINED || bt == WebMolKit.Molecule.BONDTYPE_DECLINED)
-                        ltype = BLineType.DotDir;
-                    else
-                        ltype = BLineType.Dotted;
-                }
-                else if ((bo == 2 || bo == 3 || bo == 4) && (bt == WebMolKit.Molecule.BONDTYPE_INCLINED || bt == WebMolKit.Molecule.BONDTYPE_DECLINED)) {
-                    ltype = bo == 2 ? BLineType.IncDouble : bo == 3 ? BLineType.IncTriple : BLineType.IncQuadruple;
-                    head = (bo == 2 ? 0.20 : 0.25) * this.measure.scale();
-                }
-                if (bo == 0) {
-                    let dx = xy2[0] - xy1[0], dy = xy2[1] - xy1[1];
-                    let d = WebMolKit.norm_xy(dx, dy), invD = 1 / d;
-                    let ox = 0.5 * dx * invD * this.bondSepPix, oy = 0.5 * dy * invD * this.bondSepPix;
-                    if (mol.atomAdjCount(bfr) > 1) {
-                        xy1[0] += ox;
-                        xy1[1] += oy;
-                    }
-                    if (mol.atomAdjCount(bto) > 1) {
-                        xy2[0] -= ox;
-                        xy2[1] -= oy;
-                    }
-                }
-                if (bo != 1 && bt == WebMolKit.Molecule.BONDTYPE_DECLINED) {
-                    let tmp = xy1;
-                    xy1 = xy2;
-                    xy2 = tmp;
-                }
-                if (bo > 1 && (bt == WebMolKit.Molecule.BONDTYPE_NORMAL || bt == WebMolKit.Molecule.BONDTYPE_UNKNOWN)) {
-                    let oxy = this.orthogonalDelta(xy1[0], xy1[1], xy2[0], xy2[1], this.bondSepPix);
-                    let v = -0.5 * (bo - 1);
-                    for (let i = 0; i < bo; i++, v++) {
-                        let lx1 = xy1[0] + v * oxy[0], ly1 = xy1[1] + v * oxy[1], lx2 = xy2[0] + v * oxy[0], ly2 = xy2[1] + v * oxy[1];
-                        let b = {
-                            'bnum': n,
-                            'bfr': bfr,
-                            'bto': bto,
-                            'type': ltype,
-                            'line': new WebMolKit.Line(lx1, ly1, lx2, ly2),
-                            'size': sz,
-                            'head': 0,
-                            'col': col
-                        };
-                        this.lines.push(b);
-                        this.space.push(this.computeSpaceLine(b));
-                    }
-                }
-                else {
-                    let b = {
-                        'bnum': n,
-                        'bfr': bfr,
-                        'bto': bto,
-                        'type': ltype,
-                        'line': new WebMolKit.Line(xy1[0], xy1[1], xy2[0], xy2[1]),
-                        'size': sz,
-                        'head': head,
-                        'col': col
-                    };
-                    this.lines.push(b);
-                    this.space.push(this.computeSpaceLine(b));
-                }
-            }
-            let rings = this.orderedRingList();
-            for (let i = 0; i < rings.length; i++) {
-                for (let j = 0; j < rings[i].length; j++) {
-                    let k = mol.findBond(rings[i][j], rings[i][j < rings[i].length - 1 ? j + 1 : 0]);
-                    if (bdbl[k - 1]) {
-                        this.processDoubleBond(k, rings[i]);
-                        bdbl[k - 1] = false;
-                    }
-                }
-            }
-            for (let i = 1; i <= mol.numBonds; i++)
-                if (bdbl[i - 1])
-                    this.processDoubleBond(i, this.priorityDoubleSubstit(i));
-            let hcount = WebMolKit.Vec.numberArray(0, mol.numAtoms);
-            for (let n = 1; n <= mol.numAtoms; n++)
-                hcount[n - 1] = this.points[n - 1].text == null ? 0 : mol.atomHydrogens(n);
-            for (let n = 0; n < mol.numAtoms; n++)
-                if (hcount[n] > 0 && this.placeHydrogen(n, hcount[n], true))
-                    hcount[n] = 0;
-            for (let n = 0; n < mol.numAtoms; n++)
-                if (hcount[n] > 0)
-                    this.placeHydrogen(n, hcount[n], false);
-            for (let n = 1; n <= mol.numAtoms; n++)
-                if (mol.atomIsotope(n) != WebMolKit.Molecule.ISOTOPE_NATURAL) {
-                    let isostr = mol.atomIsotope(n).toString();
-                    let col = this.policy.data.atomCols[mol.atomicNumber(n)];
-                    this.placeAdjunct(n, isostr, this.fontSizePix * 0.6, col, 150 * WebMolKit.DEGRAD);
-                }
-            for (let n = 1; n <= mol.numAtoms; n++) {
-                let str = '';
-                let chg = this.atomCharge[n - 1];
-                if (chg == -1)
-                    str = '-';
-                else if (chg == 1)
-                    str = '+';
-                else if (chg < -1)
-                    str = Math.abs(chg) + '-';
-                else if (chg > 1)
-                    str = chg + '+';
-                for (let i = this.atomUnpaired[n - 1]; i > 0; i--)
-                    str += '.';
-                if (str.length == 0)
-                    continue;
-                let col = this.policy.data.atomCols[mol.atomicNumber(n)];
-                this.placeAdjunct(n, str, str.length == 1 ? 0.8 * this.fontSizePix : 0.6 * this.fontSizePix, col, 30 * WebMolKit.DEGRAD);
-            }
-            if (this.artifacts != null) {
-                for (let path of this.artifacts.getResPaths()) {
-                    this.createCurvedPath(path.atoms, this.artifactFract.get(path), 0);
-                    this.delocalisedAnnotation(path.atoms, this.artifactCharge.get(path), this.artifactUnpaired.get(path));
-                }
-                for (let ring of this.artifacts.getResRings()) {
-                    this.createCircularRing(ring.atoms);
-                    this.delocalisedAnnotation(ring.atoms, this.artifactCharge.get(ring), this.artifactUnpaired.get(ring));
-                }
-                for (let arene of this.artifacts.getArenes()) {
-                    let isRing = arene.atoms.length > 2;
-                    if (isRing)
-                        for (let n = 0; n < arene.atoms.length; n++) {
-                            let nn = n < arene.atoms.length - 1 ? n + 1 : 0;
-                            if (mol.findBond(arene.atoms[n], arene.atoms[nn]) == 0) {
-                                isRing = false;
-                                break;
-                            }
-                        }
-                    this.createBondCentroid(arene.centre, arene.atoms);
-                    if (isRing)
-                        this.createCircularRing(arene.atoms);
-                    else
-                        this.createCurvedPath(arene.atoms, false, arene.centre);
-                    this.delocalisedAnnotation(arene.atoms, this.artifactCharge.get(arene), this.artifactUnpaired.get(arene));
-                }
-            }
-        }
-        numPoints() { return this.points.length; }
-        getPoint(idx) { return this.points[idx]; }
-        numLines() { return this.lines.length; }
-        getLine(idx) { return this.lines[idx]; }
-        numRings() { return this.rings.length; }
-        getRing(idx) { return this.rings[idx]; }
-        getRings() { return this.rings; }
-        numPaths() { return this.paths.length; }
-        getPath(idx) { return this.paths[idx]; }
-        getPaths() { return this.paths; }
-        numSpace() { return this.space.length; }
-        getSpace(idx) { return this.space[idx]; }
-        offsetEverything(dx, dy) {
-            for (let a of this.points)
-                a.oval.offsetBy(dx, dy);
-            for (let b of this.lines)
-                b.line.offsetBy(dx, dy);
-            for (let r of this.rings) {
-                r.cx += dx;
-                r.cy += dy;
-            }
-            for (let p of this.paths) {
-                WebMolKit.Vec.addTo(p.px, dx);
-                WebMolKit.Vec.addTo(p.py, dy);
-            }
-            for (let spc of this.space) {
-                spc.box.offsetBy(dx, dy);
-                WebMolKit.Vec.addTo(spc.px, dx);
-                WebMolKit.Vec.addTo(spc.py, dy);
-            }
-        }
-        scaleEverything(scaleBy) {
-            this.scale *= scaleBy;
-            for (let a of this.points) {
-                a.oval.scaleBy(scaleBy);
-                a.fsz *= scaleBy;
-            }
-            for (let b of this.lines) {
-                b.line.scaleBy(scaleBy);
-                b.size *= scaleBy;
-                b.head *= scaleBy;
-            }
-            for (let r of this.rings) {
-                r.cx *= scaleBy;
-                r.cy *= scaleBy;
-                r.rw *= scaleBy;
-                r.rh *= scaleBy;
-            }
-            for (let p of this.paths) {
-                WebMolKit.Vec.mulBy(p.px, scaleBy);
-                WebMolKit.Vec.mulBy(p.py, scaleBy);
-            }
-            for (let spc of this.space) {
-                spc.box.scaleBy(scaleBy);
-                WebMolKit.Vec.mulBy(spc.px, scaleBy);
-                WebMolKit.Vec.mulBy(spc.py, scaleBy);
-            }
-        }
-        determineBoundary(padding) {
-            if (padding == null)
-                padding = 0;
-            if (this.space.length == 0)
-                return [0, 0, 2 * padding, 2 * padding];
-            let bounds = WebMolKit.Vec.numberArray(0, 4);
-            let spc = this.space[0];
-            bounds[0] = spc.box.x;
-            bounds[1] = spc.box.y;
-            bounds[2] = spc.box.x + spc.box.w;
-            bounds[3] = spc.box.y + spc.box.h;
-            for (let n = this.space.length - 1; n > 0; n--) {
-                spc = this.space[n];
-                bounds[0] = Math.min(bounds[0], spc.box.x);
-                bounds[1] = Math.min(bounds[1], spc.box.y);
-                bounds[2] = Math.max(bounds[2], spc.box.x + spc.box.w);
-                bounds[3] = Math.max(bounds[3], spc.box.y + spc.box.h);
-            }
-            return bounds;
-        }
-        squeezeInto(x, y, w, h, padding) {
-            if (padding != null && padding > 0) {
-                x += padding;
-                y += padding;
-                w -= 2 * padding;
-                h -= 2 * padding;
-            }
-            let bounds = this.determineBoundary(0);
-            let bw = bounds[2] - bounds[0], bh = bounds[3] - bounds[1];
-            if (bw > w || bh > h) {
-                let downScale = 1;
-                if (bw > w)
-                    downScale = w / bw;
-                if (bh > h)
-                    downScale = Math.min(downScale, h / bh);
-                this.scaleEverything(downScale);
-                WebMolKit.Vec.mulBy(bounds, downScale);
-            }
-            this.offsetEverything(x - bounds[0] + 0.5 * (w - bounds[2] + bounds[0]), y - bounds[1] + 0.5 * (h - bounds[3] + bounds[1]));
-        }
-        monochromate(col) {
-            for (let a of this.points)
-                a.col = col;
-            for (let b of this.lines)
-                b.col = col;
-        }
-        clone() {
-            let dup = new ArrangeMolecule(this.mol, this.measure, this.policy, this.effects);
-            dup.scale = this.scale;
-            dup.bondSepPix = this.bondSepPix;
-            dup.lineSizePix = this.lineSizePix;
-            dup.fontSizePix = this.fontSizePix;
-            dup.ymul = this.ymul;
-            for (let a of this.points)
-                dup.points.push(WebMolKit.clone(a));
-            for (let b of this.lines)
-                dup.lines.push(WebMolKit.clone(b));
-            for (let s of this.space)
-                dup.space.push(WebMolKit.clone(s));
-            return dup;
-        }
-        setupBondOrders() {
-            const mol = this.mol;
-            for (let n = 0; n < mol.numBonds; n++)
-                this.bondOrder[n] = mol.bondOrder(n + 1);
-            for (let n = 0; n < mol.numAtoms; n++) {
-                this.atomCharge[n] = mol.atomCharge(n + 1);
-                this.atomUnpaired[n] = mol.atomUnpaired(n + 1);
-            }
-            let delocalise = (obj, atoms) => {
-                let charge = 0, unpaired = 0;
-                for (let a of atoms) {
-                    charge += this.atomCharge[a - 1];
-                    unpaired += this.atomUnpaired[a - 1];
-                    this.atomCharge[a - 1] = this.atomUnpaired[a - 1] = 0;
-                }
-                this.artifactCharge.set(obj, charge);
-                this.artifactUnpaired.set(obj, unpaired);
-            };
-            if (this.artifacts == null)
-                return;
-            for (let path of this.artifacts.getResPaths()) {
-                let charge = 0, unpaired = 0, orders = 0;
-                for (let n = 0; n < path.atoms.length; n++) {
-                    charge += mol.atomCharge(path.atoms[n]);
-                    unpaired += mol.atomUnpaired(path.atoms[n]);
-                    let b = mol.findBond(path.atoms[n], path.atoms[n < path.atoms.length - 1 ? n + 1 : 0]);
-                    if (b > 0)
-                        orders += mol.bondOrder(b);
-                }
-                let fractional = (2 * orders - charge + unpaired) / path.atoms.length < 1;
-                this.artifactFract.set(path, fractional);
-                for (let n = 0; n < path.atoms.length - 1; n++) {
-                    let b = mol.findBond(path.atoms[n], path.atoms[n + 1]);
-                    if (b > 0)
-                        this.bondOrder[b - 1] = fractional ? -1 : 1;
-                }
-                delocalise(path, path.atoms);
-            }
-            for (let ring of this.artifacts.getResRings()) {
-                for (let n = 0; n < ring.atoms.length; n++) {
-                    let b = mol.findBond(ring.atoms[n], ring.atoms[n < ring.atoms.length - 1 ? n + 1 : 0]);
-                    if (b > 0)
-                        this.bondOrder[b - 1] = 1;
-                }
-                delocalise(ring, ring.atoms);
-            }
-            for (let arene of this.artifacts.getArenes()) {
-                for (let n = 0; n < arene.atoms.length; n++) {
-                    let b = mol.findBond(arene.atoms[n], arene.atoms[n < arene.atoms.length - 1 ? n + 1 : 0]);
-                    if (b > 0)
-                        this.bondOrder[b - 1] = 1;
-                    b = mol.findBond(arene.centre, arene.atoms[n]);
-                    if (b > 0)
-                        this.bondOrder[b - 1] = -1;
-                }
-                delocalise(arene, arene.atoms);
-            }
-        }
-        placeAdjunct(atom, str, fsz, col, angdir) {
-            let wad = this.measure.measureText(str, fsz);
-            let a = this.points[atom - 1];
-            let cx = a.oval.cx, cy = a.oval.cy, rw = 0.55 * wad[0], rh = 0.55 * wad[1];
-            let bestScore = 0, bestDX = 0, bestDY = 0;
-            let px = WebMolKit.Vec.numberArray(0, 4), py = WebMolKit.Vec.numberArray(0, 4);
-            let angThresh = 10;
-            let shorted = false;
-            for (let ext = 0.5 * (a.oval.rw + a.oval.rh); !shorted && ext < 1.5 * this.measure.scale(); ext += 0.1 * this.measure.scale()) {
-                const DELTA = 5 * WebMolKit.DEGRAD;
-                for (let d = 0; !shorted && d < Math.PI - 0.0001; d += DELTA)
-                    for (let s = -1; s <= 1; s += 2) {
-                        let dang = d * s + (s > 0 ? DELTA : 0), ang = angdir + dang;
-                        let dx = ext * Math.cos(ang), dy = ext * Math.sin(ang) * -this.ymul;
-                        let x1 = cx + dx - rw, x2 = cx + dx + rw, y1 = cy + dy - rh, y2 = cy + dy + rh;
-                        px[0] = x1;
-                        py[0] = y1;
-                        px[1] = x2;
-                        py[1] = y1;
-                        px[2] = x2;
-                        py[2] = y2;
-                        px[3] = x1;
-                        py[3] = y2;
-                        let viol = this.countPolyViolations(px, py, false);
-                        let score = 10 * viol + Math.abs(dang) + 10 * ext;
-                        let shortCircuit = viol == 0 && Math.abs(dang) < (angThresh + 1) * WebMolKit.DEGRAD;
-                        if (bestScore == 0 || shortCircuit || score < bestScore) {
-                            bestScore = score;
-                            bestDX = dx;
-                            bestDY = dy;
-                        }
-                        if (shortCircuit) {
-                            shorted = true;
-                            break;
-                        }
-                    }
-                angThresh += 5;
-            }
-            a =
-                {
-                    'anum': 0,
-                    'text': str,
-                    'fsz': fsz,
-                    'bold': false,
-                    'col': col,
-                    'oval': new WebMolKit.Oval(cx + bestDX, cy + bestDY, rw, rh)
-                };
-            this.points.push(a);
-            let spc = {
-                'anum': 0,
-                'bnum': 0,
-                'box': new WebMolKit.Box(a.oval.cx - rw, a.oval.cy - rh, 2 * rw, 2 * rh),
-                'px': [a.oval.cx - rw, a.oval.cx + rw, a.oval.cx + rw, a.oval.cx - rw],
-                'py': [a.oval.cy - rh, a.oval.cy - rh, a.oval.cy + rh, a.oval.cy + rh]
-            };
-            this.space.push(spc);
-        }
-        processLabel(anum) {
-            let ax = this.mol.atomX(anum), ay = this.mol.atomY(anum);
-            let left = 0, right = 0;
-            let adj = this.mol.atomAdjList(anum);
-            for (let n = 0; n < adj.length; n++) {
-                let theta = Math.atan2(this.mol.atomY(adj[n]) - ay, this.mol.atomX(adj[n]) - ax) * WebMolKit.RADDEG;
-                if (theta >= -15 && theta <= 15)
-                    right += 3;
-                else if (theta >= -85 && theta <= 85)
-                    right++;
-                else if (theta > 85 && theta < 95) { }
-                else if (theta < -85 && theta > -95) { }
-                else if (theta > 165 || theta < -165)
-                    left += 3;
-                else
-                    left++;
-            }
-            let label = this.mol.atomElement(anum);
-            let ibar = label.indexOf('|'), ibrace = label.indexOf('{');
-            let side = 0;
-            if (left == 0 && right == 0 && ibar < 0 && ibrace < 0) { }
-            else if (left < right)
-                side = -1;
-            else if (right < left)
-                side = 1;
-            else {
-                let score1 = WebMolKit.CoordUtil.congestionPoint(this.mol, ax - 1, ay);
-                let score2 = WebMolKit.CoordUtil.congestionPoint(this.mol, ax + 1, ay);
-                if (score1 < 0.5 * score2)
-                    side = -1;
-                else
-                    side = 1;
-            }
-            let chunks = null;
-            let position = null;
-            let primary = null;
-            let refchunk = 0;
-            if (ibar < 0 && ibrace < 0) {
-                if (side == 0)
-                    chunks = [label];
-                else if (side < 0) {
-                    chunks = [label.substring(0, label.length - 1), label.substring(label.length - 1)];
-                    refchunk = 1;
-                }
-                else
-                    chunks = [label.substring(0, 1), label.substring(1)];
-            }
-            else {
-                let bits = [];
-                let bpos = [];
-                let bpri = [];
-                let blocks = label.split('|');
-                if (side < 0) {
-                    let oldblk = blocks;
-                    blocks = [];
-                    for (let i = oldblk.length - 1; i >= 0; i--)
-                        blocks.push(oldblk[i]);
-                }
-                let buff = '';
-                for (let i = 0; i < blocks.length; i++) {
-                    let isPrimary = (side >= 0 && i == 0) || (side < 0 && i == blocks.length - 1);
-                    if (side < 0 && refchunk == 0 && i == blocks.length - 1)
-                        refchunk = bits.length;
-                    let pos = 0;
-                    buff = '';
-                    for (let j = 0; j < blocks[i].length; j++) {
-                        let ch = blocks[i].charAt(j);
-                        if (ch == '{' || ch == '}') {
-                            if (buff.length > 0) {
-                                bits.push(buff.toString());
-                                bpos.push(pos);
-                                bpri.push(isPrimary);
-                            }
-                            buff = '';
-                            pos = ch == '{' ? -1 : 0;
-                        }
-                        else if (ch == '^' && pos == -1 && buff.length == 0)
-                            pos = 1;
-                        else
-                            buff += ch;
-                    }
-                    if (buff.length > 0) {
-                        bits.push(buff.toString());
-                        bpos.push(pos);
-                        bpri.push(isPrimary);
-                    }
-                }
-                chunks = bits;
-                position = bpos;
-                primary = bpri;
-                while (refchunk < chunks.length - 1 && position[refchunk] != 0)
-                    refchunk++;
-            }
-            let PADDING = 1.1;
-            let SSFRACT = 0.6;
-            let chunkw = WebMolKit.Vec.numberArray(0, chunks.length);
-            let tw = 0;
-            for (let n = 0; n < chunks.length; n++) {
-                chunkw[n] = this.measure.measureText(chunks[n], this.fontSizePix)[0];
-                if (position != null && position[n] != 0)
-                    chunkw[n] *= SSFRACT;
-                tw += chunkw[n];
-            }
-            let x = this.measure.angToX(ax), y = this.measure.angToY(ay);
-            if (side == 0)
-                x -= 0.5 * chunkw[0];
-            else if (side < 0) {
-                for (let n = 0; n < refchunk; n++)
-                    x -= chunkw[n];
-                x -= 0.5 * chunkw[refchunk];
-            }
-            else {
-                x -= 0.5 * chunkw[0];
-            }
-            for (let n = 0; n < chunks.length; n++) {
-                let a = {
-                    'anum': (n == refchunk || (primary != null && primary[n])) ? anum : 0,
-                    'text': chunks[n],
-                    'fsz': this.fontSizePix,
-                    'bold': false,
-                    'col': this.policy.data.atomCols[this.mol.atomicNumber(anum)],
-                    'oval': new WebMolKit.Oval(x + 0.5 * chunkw[n], y, 0.5 * chunkw[n] * PADDING, 0.5 * this.fontSizePix * PADDING)
-                };
-                if (position != null && position[n] != 0) {
-                    a.fsz *= SSFRACT;
-                    if (position[n] < 0)
-                        a.oval.cy += a.fsz * 0.7 * (this.measure.yIsUp() ? -1 : 1);
-                    else
-                        a.oval.cy -= a.fsz * 0.3 * (this.measure.yIsUp() ? -1 : 1);
-                }
-                if (n == refchunk) {
-                    this.points[anum - 1] = a;
-                    this.space[anum - 1] = this.computeSpacePoint(a);
-                }
-                else {
-                    this.points.push(a);
-                    this.space.push(this.computeSpacePoint(a));
-                }
-                x += chunkw[n];
-            }
-        }
-        atomIsWeirdLinear(idx) {
-            let bonds = this.mol.atomAdjBonds(idx);
-            if (bonds.length != 2)
-                return false;
-            for (let n = 0; n < bonds.length; n++)
-                if (this.mol.bondOrder(bonds[n]) == 3)
-                    return false;
-            let adj = this.mol.atomAdjList(idx);
-            let th1 = Math.atan2(this.mol.atomY(adj[0]) - this.mol.atomY(idx), this.mol.atomX(adj[0]) - this.mol.atomX(idx));
-            let th2 = Math.atan2(this.mol.atomY(adj[1]) - this.mol.atomY(idx), this.mol.atomX(adj[1]) - this.mol.atomX(idx));
-            return Math.abs(WebMolKit.angleDiff(th1, th2)) >= 175 * WebMolKit.DEGRAD;
-        }
-        backOffAtom(atom, x, y, fx, fy, minDist) {
-            if (x == fx && y == fy)
-                return [x, y];
-            let active = false;
-            let dx = 0, dy = 0, dst = 0, ext = 0;
-            for (let s = 0; s < this.space.length; s++) {
-                let spc = this.space[s];
-                if (spc.anum != atom)
-                    continue;
-                const sz = spc.px.length;
-                if (sz == 0)
-                    continue;
-                for (let n = 0; n < sz; n++) {
-                    let nn = n < sz - 1 ? n + 1 : 0;
-                    let x1 = spc.px[n], y1 = spc.py[n], x2 = spc.px[nn], y2 = spc.py[nn];
-                    if (!WebMolKit.GeomUtil.doLineSegsIntersect(x, y, fx, fy, x1, y1, x2, y2))
-                        continue;
-                    let xy = WebMolKit.GeomUtil.lineIntersect(x, y, fx, fy, x1, y1, x2, y2);
-                    if (!active) {
-                        dx = x - fx;
-                        dy = y - fy;
-                        dst = WebMolKit.norm_xy(dx, dy);
-                        ext = dst;
-                        active = true;
-                    }
-                    ext = Math.min(ext, WebMolKit.norm_xy(xy[0] - fx, xy[1] - fy));
-                }
-            }
-            if (active) {
-                ext = Math.max(minDist, ext - 0.1 * this.measure.scale());
-                let idst = 1.0 / dst;
-                return [fx + ext * idst * dx, fy + ext * idst * dy];
-            }
-            else
-                return [x, y];
-        }
-        ensureMinimumBondLength(xy1, xy2, x1, y1, x2, y2, minDist) {
-            let dx = xy2[0] - xy1[0], dy = xy2[1] - xy1[1];
-            let dsq = WebMolKit.norm2_xy(dx, dy);
-            minDist = Math.min(minDist, WebMolKit.norm_xy(x2 - x1, y2 - y1));
-            if (dsq >= WebMolKit.sqr(minDist - 0.0001))
-                return;
-            let d12 = Math.sqrt(dsq), d1 = WebMolKit.norm_xy(xy1[0] - x1, xy1[1] - y1), d2 = WebMolKit.norm_xy(x2 - xy2[0], y2 - xy2[1]);
-            let mag = 1 - minDist / d12, invD12 = 1.0 / (d1 + d2), mag1 = d1 * mag * invD12, mag2 = d2 * mag * invD12;
-            xy1[0] -= dx * mag1;
-            xy1[1] -= dy * mag1;
-            xy2[0] += dx * mag2;
-            xy2[1] += dy * mag2;
-        }
-        orderedRingList() {
-            let rings = [];
-            let SIZE_ORDER = [6, 5, 7, 4, 3];
-            for (let i = 0; i < SIZE_ORDER.length; i++) {
-                let nring = this.mol.findRingsOfSize(SIZE_ORDER[i]);
-                for (let j = 0; j < nring.length; j++)
-                    rings.push(nring[j]);
-            }
-            let ringsz = rings.length;
-            let ringbusy = WebMolKit.Vec.numberArray(0, this.mol.numAtoms);
-            for (let n = 0; n < ringsz; n++) {
-                let r = rings[n];
-                for (let i = 0; i < r.length; i++)
-                    ringbusy[r[i] - 1]++;
-            }
-            let ringscore = WebMolKit.Vec.numberArray(0, ringsz);
-            for (let n = 0; n < ringsz; n++) {
-                let r = rings[n];
-                for (let i = 0; i < r.length; i++)
-                    ringscore[n] += ringbusy[r[i] - 1];
-            }
-            let ringorder = WebMolKit.Vec.idxSort(ringscore);
-            let resbcount = WebMolKit.Vec.numberArray(0, ringsz), maxbcount = 0;
-            for (let n = 0; n < ringsz; n++) {
-                let r = rings[ringorder[n]];
-                for (let i = 0; i < r.length; i++) {
-                    let j = this.mol.findBond(r[i], r[i + 1 < r.length ? i + 1 : 0]);
-                    if (this.mol.bondOrder(j) == 2)
-                        resbcount[n]++;
-                }
-                maxbcount = Math.max(maxbcount, resbcount[n]);
-            }
-            let pos = 0, ret = [];
-            for (let sz = maxbcount; sz >= 0; sz--) {
-                for (let n = 0; n < ringsz; n++)
-                    if (resbcount[n] == sz)
-                        ret.push(rings[ringorder[n]]);
-            }
-            return ret;
-        }
-        orthogonalDelta(x1, y1, x2, y2, d) {
-            let ox = y1 - y2, oy = x2 - x1, dsq = WebMolKit.norm2_xy(ox, oy);
-            let sc = dsq > 0 ? d / Math.sqrt(dsq) : 1;
-            return [ox * sc, oy * sc];
-        }
-        processDoubleBond(idx, priority) {
-            let bfr = this.mol.bondFrom(idx), bto = this.mol.bondTo(idx);
-            let nfr = this.mol.atomAdjList(bfr), nto = this.mol.atomAdjList(bto);
-            let a1 = this.points[bfr - 1], a2 = this.points[bto - 1];
-            let x1 = a1.oval.cx, y1 = a1.oval.cy, x2 = a2.oval.cx, y2 = a2.oval.cy;
-            const minDist = this.MINBOND_EXOTIC * this.measure.scale();
-            let xy1 = this.backOffAtom(bfr, x1, y1, x2, y2, minDist);
-            let xy2 = this.backOffAtom(bto, x2, y2, x1, y1, minDist);
-            this.ensureMinimumBondLength(xy1, xy2, x1, y1, x2, y2, minDist);
-            x1 = xy1[0];
-            y1 = xy1[1];
-            x2 = xy2[0];
-            y2 = xy2[1];
-            let dx = x2 - x1, dy = y2 - y1, btheta = Math.atan2(dy, dx);
-            let countFLeft = 0, countFRight = 0, countTLeft = 0, countTRight = 0;
-            let idxFLeft = 0, idxFRight = 0, idxTLeft = 0, idxTRight = 0;
-            let noshift = false;
-            for (let n = 0; n < nfr.length; n++)
-                if (nfr[n] != bto) {
-                    let bo = this.mol.bondOrder(this.mol.findBond(bfr, nfr[n]));
-                    if (bo == 0)
-                        continue;
-                    if (bo > 1) {
-                        noshift = true;
-                        break;
-                    }
-                    let ispri = false;
-                    for (let i = 0; i < (priority == null ? 0 : priority.length); i++)
-                        if (priority[i] == nfr[n])
-                            ispri = true;
-                    let theta = WebMolKit.angleDiff(Math.atan2(this.points[nfr[n] - 1].oval.cy - y1, this.points[nfr[n] - 1].oval.cx - x1), btheta);
-                    if (Math.abs(theta) * WebMolKit.RADDEG > 175) {
-                        noshift = true;
-                        break;
-                    }
-                    if (theta > 0) {
-                        if (ispri)
-                            countFLeft++;
-                        idxFLeft = nfr[n];
-                    }
-                    else {
-                        if (ispri)
-                            countFRight++;
-                        idxFRight = nfr[n];
-                    }
-                }
-            for (let n = 0; n < nto.length; n++)
-                if (nto[n] != bfr) {
-                    let bo = this.mol.bondOrder(this.mol.findBond(bto, nto[n]));
-                    if (bo == 0)
-                        continue;
-                    if (bo > 1) {
-                        noshift = true;
-                        break;
-                    }
-                    let ispri = false;
-                    for (let i = 0; i < (priority == null ? 0 : priority.length); i++)
-                        if (priority[i] == nto[n])
-                            ispri = true;
-                    let theta = WebMolKit.angleDiff(Math.atan2(this.points[nto[n] - 1].oval.cy - y2, this.points[nto[n] - 1].oval.cx - x2), btheta);
-                    if (Math.abs(theta) * WebMolKit.RADDEG > 175) {
-                        noshift = true;
-                        break;
-                    }
-                    if (theta > 0) {
-                        if (ispri)
-                            countTLeft++;
-                        idxTLeft = nto[n];
-                    }
-                    else {
-                        if (ispri)
-                            countTRight++;
-                        idxTRight = nto[n];
-                    }
-                }
-            let side = 0;
-            if (noshift || countFLeft > 1 || countFRight > 1 || countTLeft > 1 || countTRight > 1) { }
-            else if (countFLeft > 0 && countFRight > 0) { }
-            else if (countTLeft > 0 && countTRight > 0) { }
-            else if (countFLeft > 0 || countTLeft > 0)
-                side = 1;
-            else if (countFRight > 0 || countTRight > 0)
-                side = -1;
-            let sz = this.lineSizePix;
-            let oxy = this.orthogonalDelta(x1, y1, x2, y2, this.bondSepPix);
-            let ax1 = x1, ay1 = y1, ax2 = x2, ay2 = y2;
-            let bx1 = 0, by1 = 0, bx2 = 0, by2 = 0;
-            if (side == 0) {
-                ax1 = x1 + 0.5 * oxy[0];
-                ay1 = y1 + 0.5 * oxy[1];
-                ax2 = x2 + 0.5 * oxy[0];
-                ay2 = y2 + 0.5 * oxy[1];
-                bx1 = x1 - 0.5 * oxy[0];
-                by1 = y1 - 0.5 * oxy[1];
-                bx2 = x2 - 0.5 * oxy[0];
-                by2 = y2 - 0.5 * oxy[1];
-            }
-            else if (side > 0) {
-                bx1 = x1 + oxy[0];
-                by1 = y1 + oxy[1];
-                bx2 = x2 + oxy[0];
-                by2 = y2 + oxy[1];
-                if (nfr.length > 1 && this.points[bfr - 1].text == null) {
-                    bx1 += oxy[1];
-                    by1 -= oxy[0];
-                }
-                if (nto.length > 1 && this.points[bto - 1].text == null) {
-                    bx2 -= oxy[1];
-                    by2 += oxy[0];
-                }
-            }
-            else if (side < 0) {
-                bx1 = x1 - oxy[0];
-                by1 = y1 - oxy[1];
-                bx2 = x2 - oxy[0];
-                by2 = y2 - oxy[1];
-                if (nfr.length > 1 && this.points[bfr - 1].text == null) {
-                    bx1 += oxy[1];
-                    by1 -= oxy[0];
-                }
-                if (nto.length > 1 && this.points[bto - 1].text == null) {
-                    bx2 -= oxy[1];
-                    by2 += oxy[0];
-                }
-            }
-            if (side != 0) {
-                if (this.mol.atomElement(bfr).length <= 2 && this.mol.atomAdjCount(bfr) == 1 && this.points[bfr - 1].text != null) {
-                    this.bumpAtomPosition(bfr, 0.5 * oxy[0] * side, 0.5 * oxy[1] * side);
-                }
-                if (this.mol.atomElement(bto).length <= 2 && this.mol.atomAdjCount(bto) == 1 && this.points[bto - 1].text != null) {
-                    this.bumpAtomPosition(bto, 0.5 * oxy[0] * side, 0.5 * oxy[1] * side);
-                }
-            }
-            if (side == 0 && !noshift) {
-                let xy = null;
-                if (this.points[bfr - 1].text == null && !this.mol.bondInRing(idx)) {
-                    xy = this.adjustBondPosition(idxFLeft, bfr, ax1, ay1, ax2, ay2);
-                    if (xy != null) {
-                        ax1 = xy[0];
-                        ay1 = xy[1];
-                    }
-                    xy = this.adjustBondPosition(idxFRight, bfr, bx1, by1, bx2, by2);
-                    if (xy != null) {
-                        bx1 = xy[0];
-                        by1 = xy[1];
-                    }
-                }
-                if (this.points[bto - 1].text == null && !this.mol.bondInRing(idx)) {
-                    xy = this.adjustBondPosition(idxTLeft, bto, ax2, ay2, ax1, ay1);
-                    if (xy != null) {
-                        ax2 = xy[0];
-                        ay2 = xy[1];
-                    }
-                    xy = this.adjustBondPosition(idxTRight, bto, bx2, by2, bx1, by1);
-                    if (xy != null) {
-                        bx2 = xy[0];
-                        by2 = xy[1];
-                    }
-                }
-            }
-            let lt = this.mol.bondType(idx) == WebMolKit.Molecule.BONDTYPE_UNKNOWN ? BLineType.Unknown : BLineType.Normal;
-            let col = this.effects.colBond[idx];
-            if (!col)
-                col = this.policy.data.foreground;
-            let b1 = {
-                'bnum': idx,
-                'bfr': bfr,
-                'bto': bto,
-                'type': lt,
-                'line': new WebMolKit.Line(ax1, ay1, ax2, ay2),
-                'size': sz,
-                'head': 0,
-                'col': col
-            };
-            let b2 = {
-                'bnum': idx,
-                'bfr': bfr,
-                'bto': bto,
-                'type': lt,
-                'line': new WebMolKit.Line(bx1, by1, bx2, by2),
-                'size': sz,
-                'head': 0,
-                'col': col
-            };
-            this.lines.push(b1);
-            this.lines.push(b2);
-            this.space.push(this.computeSpaceLine(b1));
-            this.space.push(this.computeSpaceLine(b2));
-        }
-        placeHydrogen(idx, hcount, fussy) {
-            let font = WebMolKit.FontData.main;
-            const SSFRACT = 0.6;
-            const GLYPH_H = font.getIndex('H');
-            let a = this.points[idx];
-            let emscale = a.fsz * font.INV_UNITS_PER_EM;
-            let sub = hcount >= 2 ? hcount.toString() : '';
-            let outlineX = font.getOutlineX(GLYPH_H), outlineY = font.getOutlineY(GLYPH_H);
-            let firstEMW = font.HORIZ_ADV_X[GLYPH_H], emw = firstEMW;
-            for (let n = 0; n < sub.length; n++) {
-                let ch = sub.charAt(n), g = font.getIndex(ch);
-                if (n == 0) {
-                    emw += font.getKerning('H', ch);
-                }
-                else {
-                    let chp = sub.charAt(n - 1);
-                    emw += font.getKerning(chp, ch) * SSFRACT;
-                }
-                let extraX = font.getOutlineX(g), extraY = font.getOutlineY(g);
-                WebMolKit.Vec.addTo(extraX, emw / SSFRACT);
-                WebMolKit.Vec.addTo(extraY, (SSFRACT - 1) * font.ASCENT);
-                WebMolKit.Vec.mulBy(extraX, SSFRACT);
-                WebMolKit.Vec.mulBy(extraY, SSFRACT);
-                outlineX = outlineX.concat(extraX);
-                outlineY = outlineY.concat(extraY);
-                emw += font.HORIZ_ADV_X[g] * SSFRACT;
-            }
-            if (sub.length > 0) {
-                let qh = new WebMolKit.QuickHull(outlineX, outlineY, 0);
-                outlineX = qh.hullX;
-                outlineY = qh.hullY;
-            }
-            let emdx = -0.5 * firstEMW, emdy = 0.5 * font.ASCENT;
-            for (let n = 0; n < outlineX.length; n++) {
-                outlineX[n] = a.oval.cx + (emdx + outlineX[n]) * emscale;
-                outlineY[n] = a.oval.cy + (emdy - outlineY[n]) * emscale * this.ymul;
-            }
-            let dx = 0, dy = 0;
-            let srcWAD = this.measure.measureText(a.text, a.fsz);
-            if (fussy) {
-                let RIGHTLEFT = [0, 1, 2, 3];
-                let LEFTRIGHT = [1, 0, 2, 3];
-                let UPDOWN = [2, 3, 0, 1];
-                let DOWNUP = [3, 2, 0, 1];
-                let quad = RIGHTLEFT, adj = this.mol.atomAdjList(a.anum);
-                if (adj.length == 0) {
-                    let LEFTIES = ["O", "S", "F", "Cl", "Br", "I"];
-                    if (this.mol.atomCharge(a.anum) == 0 && this.mol.atomUnpaired(a.anum) == 0 &&
-                        LEFTIES.indexOf(this.mol.atomElement(a.anum)) >= 0)
-                        quad = LEFTRIGHT;
-                    else
-                        quad = RIGHTLEFT;
-                }
-                else {
-                    let allLeft = true, allRight = true, allUp = true, allDown = true;
-                    const ax = this.mol.atomX(a.anum), ay = this.mol.atomY(a.anum);
-                    for (let n = 0; n < adj.length; n++) {
-                        const bx = this.mol.atomX(adj[n]), by = this.mol.atomY(adj[n]);
-                        if (bx > ax + 0.01)
-                            allLeft = false;
-                        if (bx < ax - 0.01)
-                            allRight = false;
-                        if (by < ay - 0.01)
-                            allUp = false;
-                        if (by > ay + 0.01)
-                            allDown = false;
-                    }
-                    if (allLeft) { }
-                    else if (allRight)
-                        quad = LEFTRIGHT;
-                    else if (allUp)
-                        quad = DOWNUP;
-                    else if (allDown)
-                        quad = UPDOWN;
-                }
-                for (let n = 0; n < 4; n++) {
-                    let tx = 0, ty = 0;
-                    if (quad[n] == 0)
-                        tx = 0.5 * srcWAD[0] + 0.5 * firstEMW * emscale;
-                    else if (quad[n] == 1)
-                        tx = -0.5 * srcWAD[0] - (emw - 0.5 * firstEMW) * emscale;
-                    else if (quad[n] == 2)
-                        ty = (1.1 * srcWAD[1] + 0.5 * srcWAD[2]) * -this.ymul;
-                    else if (quad[n] == 3)
-                        ty = (1.1 * srcWAD[1] + 0.5 * srcWAD[2]) * this.ymul;
-                    WebMolKit.Vec.addTo(outlineX, tx);
-                    WebMolKit.Vec.addTo(outlineY, ty);
-                    let viol = this.countPolyViolations(outlineX, outlineY, true);
-                    WebMolKit.Vec.addTo(outlineX, -tx);
-                    WebMolKit.Vec.addTo(outlineY, -ty);
-                    if (viol == 0) {
-                        dx = tx;
-                        dy = ty;
-                        break;
-                    }
-                }
-                if (dx == 0 && dy == 0)
-                    return false;
-            }
-            else {
-                const mx1 = WebMolKit.Vec.min(outlineY), mx2 = WebMolKit.Vec.max(outlineX), my1 = WebMolKit.Vec.min(outlineY), my2 = WebMolKit.Vec.max(outlineY), cx = 0.5 * (mx1 + mx2), cy = 0.5 * (my1 + my2);
-                const mag = 1 + this.measure.scale() * this.policy.data.fontSize * ArrangeMolecule.FONT_CORRECT * 0.1 / Math.max(mx2 - cx, my2 - cy);
-                const psz = outlineX.length;
-                let magPX = outlineX.slice(0), magPY = outlineY.slice(0);
-                for (let n = 0; n < psz; n++) {
-                    magPX[n] = (magPX[n] - cx) * mag + cx;
-                    magPY[n] = (magPY[n] - cy) * mag + cy;
-                }
-                let bestScore = 0, bestExt = 0, bestAng = 0;
-                for (let ext = 0.5 * (a.oval.rw + a.oval.rh); ext < 1.5 * this.measure.scale(); ext += 0.1 * this.measure.scale()) {
-                    let anyNoClash = false;
-                    for (let ang = 0; ang < 2 * Math.PI; ang += 5 * WebMolKit.DEGRAD) {
-                        let tx = ext * Math.cos(ang), ty = ext * Math.sin(ang);
-                        WebMolKit.Vec.addTo(magPX, tx);
-                        WebMolKit.Vec.addTo(magPY, ty);
-                        let viol = this.countPolyViolations(magPX, magPY, false);
-                        WebMolKit.Vec.addTo(magPX, -tx);
-                        WebMolKit.Vec.addTo(magPY, -ty);
-                        if (viol == 0)
-                            anyNoClash = true;
-                        let score = 10 * viol + this.spatialCongestion(a.oval.cx + tx, a.oval.cy + ty, 0.5) + 2 * ext;
-                        if (bestScore == 0 || score < bestScore) {
-                            bestScore = score;
-                            bestExt = ext;
-                            bestAng = ang;
-                            dx = tx;
-                            dy = ty;
-                        }
-                    }
-                    if (anyNoClash)
-                        break;
-                }
-            }
-            let wad = this.measure.measureText("H", a.fsz);
-            const PADDING = 1.1;
-            let ah = {
-                'anum': 0,
-                'text': 'H',
-                'fsz': a.fsz,
-                'bold': a.bold,
-                'col': a.col,
-                'oval': new WebMolKit.Oval(a.oval.cx + dx, a.oval.cy + dy, 0.5 * wad[0] * PADDING, 0.5 * wad[1] * PADDING)
-            };
-            this.points.push(ah);
-            if (sub.length > 0) {
-                const subFsz = SSFRACT * a.fsz;
-                wad = this.measure.measureText(sub, subFsz);
-                let an = {
-                    'anum': 0,
-                    'text': sub,
-                    'fsz': subFsz,
-                    'bold': a.bold,
-                    'col': a.col,
-                    'oval': new WebMolKit.Oval(ah.oval.cx + 0.5 * firstEMW * a.fsz * font.INV_UNITS_PER_EM + 0.5 * wad[0], ah.oval.cy + (1 - SSFRACT) * a.fsz, 0.5 * wad[0] * PADDING, 0.5 * wad[1] * PADDING)
-                };
-                this.points.push(an);
-            }
-            WebMolKit.Vec.addTo(outlineX, dx);
-            WebMolKit.Vec.addTo(outlineY, dy);
-            let minX = WebMolKit.Vec.min(outlineX), minY = WebMolKit.Vec.min(outlineY);
-            let spc = {
-                'anum': 0,
-                'bnum': 0,
-                'box': new WebMolKit.Box(minX, minY, WebMolKit.Vec.max(outlineX) - minX, WebMolKit.Vec.max(outlineY) - minY),
-                'px': outlineX,
-                'py': outlineY
-            };
-            this.space.push(spc);
-            return true;
-        }
-        computeSpacePoint(a) {
-            let s = {
-                'anum': a.anum,
-                'bnum': 0,
-                'box': new WebMolKit.Box(),
-                'px': [],
-                'py': []
-            };
-            const font = WebMolKit.FontData.main;
-            let outlineX = [], outlineY = [];
-            let emw = 0, nglyphs = 0;
-            if (a.text != null) {
-                for (let n = 0; n < a.text.length; n++) {
-                    let ch1 = a.text.charAt(n);
-                    let i = font.getIndex(ch1);
-                    if (i >= 0) {
-                        if (emw == 0) {
-                            outlineX = font.getOutlineX(i);
-                            outlineY = font.getOutlineY(i);
-                            nglyphs = 1;
-                        }
-                        else {
-                            let extraX = font.getOutlineX(i), extraY = font.getOutlineY(i);
-                            if (extraX.length > 0) {
-                                WebMolKit.Vec.addTo(extraX, emw);
-                                outlineX = outlineX.concat(extraX);
-                                outlineY = outlineY.concat(extraY);
-                                nglyphs++;
-                            }
-                        }
-                        emw += font.HORIZ_ADV_X[i];
-                    }
-                    else
-                        emw += font.MISSING_HORZ;
-                    if (n < a.text.length - 1) {
-                        let ch2 = a.text.charAt(n + 1);
-                        emw += font.getKerning(ch1, ch2);
-                    }
-                }
-            }
-            if (outlineX.length > 0) {
-                if (nglyphs > 1) {
-                    let qh = new WebMolKit.QuickHull(outlineX, outlineY, 0);
-                    outlineX = qh.hullX;
-                    outlineY = qh.hullY;
-                }
-                let emdx = -0.5 * emw, emdy = 0.5 * font.ASCENT;
-                let emscale = a.fsz * font.INV_UNITS_PER_EM;
-                for (let n = 0; n < outlineX.length; n++) {
-                    outlineX[n] = a.oval.cx + (emdx + outlineX[n]) * emscale;
-                    outlineY[n] = a.oval.cy + (emdy - outlineY[n]) * emscale * this.ymul;
-                }
-                s.px = outlineX;
-                s.py = outlineY;
-                let minX = WebMolKit.Vec.min(outlineX), minY = WebMolKit.Vec.min(outlineY);
-                s.box = new WebMolKit.Box(minX, minY, WebMolKit.Vec.max(outlineX) - minX, WebMolKit.Vec.max(outlineY) - minY);
-            }
-            else {
-                s.box = WebMolKit.Box.fromOval(a.oval);
-                if (s.box.w > 0 && s.box.h > 0) {
-                    s.px = [s.box.minX(), s.box.maxX(), s.box.maxX(), s.box.minX()];
-                    s.py = [s.box.minY(), s.box.minY(), s.box.maxY(), s.box.maxY()];
-                }
-            }
-            return s;
-        }
-        computeSpaceLine(b) {
-            let s = {
-                'anum': 0,
-                'bnum': b.bnum,
-                'box': new WebMolKit.Box(),
-                'px': [],
-                'py': []
-            };
-            if (b.type == BLineType.Normal || b.type == BLineType.Dotted || b.type == BLineType.DotDir) {
-                s.px = [b.line.x1, b.line.x2];
-                s.py = [b.line.y1, b.line.y2];
-            }
-            else {
-                const dx = b.line.x2 - b.line.x1, dy = b.line.y2 - b.line.y1;
-                const norm = b.head / Math.sqrt(dx * dx + dy * dy);
-                const ox = norm * dy, oy = -norm * dx;
-                if (b.type == BLineType.Unknown) {
-                    s.px = [b.line.x1 + ox, b.line.x1 - ox, b.line.x2 - ox, b.line.x2 + ox];
-                    s.py = [b.line.y1 + oy, b.line.y1 - oy, b.line.y2 - oy, b.line.y2 + oy];
-                }
-                else {
-                    s.px = [b.line.x1, b.line.x2 - ox, b.line.x2 + ox];
-                    s.py = [b.line.y1, b.line.y2 - oy, b.line.y2 + oy];
-                }
-            }
-            s.box.x = WebMolKit.Vec.min(s.px) - b.size;
-            s.box.y = WebMolKit.Vec.min(s.py) - b.size;
-            s.box.w = WebMolKit.Vec.max(s.px) - s.box.x + b.size;
-            s.box.h = WebMolKit.Vec.max(s.py) - s.box.y + b.size;
-            return s;
-        }
-        bumpAtomPosition(atom, dx, dy) {
-            let p = this.points[atom - 1];
-            p.oval.cx += dx;
-            p.oval.cy += dy;
-            for (let n = this.space.length - 1; n >= 0; n--) {
-                let s = this.space[n - 1];
-                if (s == null || s.anum != atom)
-                    continue;
-                s.box.x += dx;
-                s.box.y += dy;
-                WebMolKit.Vec.addTo(s.px, dx);
-                WebMolKit.Vec.addTo(s.py, dy);
-            }
-        }
-        countPolyViolations(px, py, shortCircuit) {
-            let hits = 0;
-            const psz = px.length, nspc = this.space.length;
-            let pr = new WebMolKit.Box(), sr = new WebMolKit.Box();
-            for (let i1 = 0; i1 < psz; i1++) {
-                let i2 = i1 < psz - 1 ? i1 + 1 : 0;
-                pr.x = Math.min(px[i1], px[i2]) - 1;
-                pr.y = Math.min(py[i1], py[i2]) - 1;
-                pr.w = Math.max(px[i1], px[i2]) - pr.x + 2;
-                pr.h = Math.max(py[i1], py[i2]) - pr.y + 2;
-                for (let j = 0; j < nspc; j++) {
-                    let spc = this.space[j];
-                    if (spc.px == null)
-                        continue;
-                    sr.x = spc.box.x - 1;
-                    sr.y = spc.box.y - 1;
-                    sr.w = spc.box.w + 1;
-                    sr.h = spc.box.h + 1;
-                    if (!pr.intersects(sr))
-                        continue;
-                    let ssz = spc.px.length;
-                    for (let j1 = 0; j1 < ssz; j1++) {
-                        let j2 = j1 < ssz - 1 ? j1 + 1 : 0;
-                        sr.x = Math.min(spc.px[j1], spc.px[j2]) - 1;
-                        sr.y = Math.min(spc.py[j1], spc.py[j2]) - 1;
-                        sr.w = Math.max(spc.px[j1], spc.px[j2]) - sr.x + 2;
-                        sr.h = Math.max(spc.py[j1], spc.py[j2]) - sr.y + 2;
-                        if (!pr.intersects(sr))
-                            continue;
-                        if (WebMolKit.GeomUtil.doLineSegsIntersect(px[i1], py[i1], px[i2], py[i2], spc.px[j1], spc.py[j1], spc.px[j2], spc.py[j2])) {
-                            if (shortCircuit)
-                                return 1;
-                            hits++;
-                            break;
-                        }
-                        if (ssz == 1)
-                            break;
-                    }
-                }
-            }
-            pr.x = WebMolKit.Vec.min(px);
-            pr.y = WebMolKit.Vec.min(py);
-            pr.w = WebMolKit.Vec.max(px) - pr.x;
-            pr.h = WebMolKit.Vec.max(py) - pr.y;
-            for (let n = nspc - 1; n >= 0; n--) {
-                let spc = this.space[n];
-                sr.x = spc.box.x;
-                sr.y = spc.box.y;
-                sr.w = spc.box.w;
-                sr.h = spc.box.h;
-                if (!pr.intersects(sr))
-                    continue;
-                for (let i = spc.px.length - 1; i >= 0; i--)
-                    if (WebMolKit.GeomUtil.pointInPolygon(spc.px[i], spc.py[i], px, py)) {
-                        if (shortCircuit)
-                            return 1;
-                        hits++;
-                        break;
-                    }
-                for (let i = 0; i < psz; i++)
-                    if (WebMolKit.GeomUtil.pointInPolygon(px[i], py[i], spc.px, spc.py)) {
-                        if (shortCircuit)
-                            return 1;
-                        hits++;
-                        break;
-                    }
-            }
-            return hits;
-        }
-        adjustBondPosition(bf, bt, x1, y1, x2, y2) {
-            if (bf == 0 || bt == 0)
-                return null;
-            for (let n = 0; n < this.lines.length; n++) {
-                let b = this.lines[n];
-                if (this.mol.bondOrder(b.bnum) != 1 || this.mol.bondType(b.bnum) != WebMolKit.Molecule.BONDTYPE_NORMAL)
-                    continue;
-                let alt = false;
-                if (this.mol.bondFrom(b.bnum) == bf && this.mol.bondTo(b.bnum) == bt) { }
-                else if (this.mol.bondFrom(b.bnum) == bt && this.mol.bondTo(b.bnum) == bf)
-                    alt = true;
-                else
-                    continue;
-                let th = WebMolKit.angleDiff(Math.atan2(b.line.y2 - b.line.y1, b.line.x2 - b.line.x1), Math.atan2(y2 - y1, x2 - x1)) * WebMolKit.RADDEG;
-                if ((th > -5 && th < 5) || th > 175 || th < -175)
-                    continue;
-                let xy = WebMolKit.GeomUtil.lineIntersect(b.line.x1, b.line.y1, b.line.x2, b.line.y2, x1, y1, x2, y2);
-                if (this.mol.atomRingBlock(bt) == 0) {
-                    if (alt) {
-                        b.line.x1 = xy[0];
-                        b.line.y1 = xy[1];
-                    }
-                    else {
-                        b.line.x2 = xy[0];
-                        b.line.y2 = xy[1];
-                    }
-                }
-                return xy;
-            }
-            return null;
-        }
-        priorityDoubleSubstit(idx) {
-            let bf = this.mol.bondFrom(idx), bt = this.mol.bondTo(idx);
-            let nf = this.mol.atomAdjList(bf), nt = this.mol.atomAdjList(bt);
-            let a1 = this.points[bf - 1], a2 = this.points[bt - 1];
-            let x1 = a1.oval.cx, y1 = a1.oval.cy, x2 = a2.oval.cx, y2 = a2.oval.cy;
-            let dx = x2 - x1, dy = y2 - y1, btheta = Math.atan2(dy, dx);
-            let idxFLeft = 0, idxFRight = 0, idxTLeft = 0, idxTRight = 0;
-            for (let n = 0; n < nf.length; n++)
-                if (nf[n] != bt) {
-                    let theta = WebMolKit.angleDiff(Math.atan2(this.points[nf[n] - 1].oval.cy - y1, this.points[nf[n] - 1].oval.cx - x1), btheta);
-                    if (theta > 0) {
-                        if (idxFLeft != 0)
-                            return null;
-                        idxFLeft = nf[n];
-                    }
-                    else {
-                        if (idxFRight != 0)
-                            return null;
-                        idxFRight = nf[n];
-                    }
-                }
-            for (let n = 0; n < nt.length; n++)
-                if (nt[n] != bf) {
-                    let theta = WebMolKit.angleDiff(Math.atan2(this.points[nt[n] - 1].oval.cy - y2, this.points[nt[n] - 1].oval.cx - x2), btheta);
-                    if (theta > 0) {
-                        if (idxTLeft != 0)
-                            return null;
-                        idxTLeft = nt[n];
-                    }
-                    else {
-                        if (idxTRight != 0)
-                            return null;
-                        idxTRight = nt[n];
-                    }
-                }
-            let sumFrom = (idxFLeft > 0 ? 1 : 0) + (idxFRight > 0 ? 1 : 0), sumTo = (idxTLeft > 0 ? 1 : 0) + (idxTRight > 0 ? 1 : 0);
-            if (sumFrom == 1 && sumTo == 0)
-                return [idxFLeft > 0 ? idxFLeft : idxFRight];
-            if (sumFrom == 0 && sumTo == 1)
-                return [idxTLeft > 0 ? idxTLeft : idxTRight];
-            if (sumFrom == 1 && sumTo == 1) {
-                if (idxFLeft > 0 && idxTLeft > 0)
-                    return [idxFLeft, idxTLeft];
-                if (idxFRight > 0 && idxTRight > 0)
-                    return [idxFRight, idxTRight];
-                let oxy = this.orthogonalDelta(x1, y1, x2, y2, this.bondSepPix);
-                let congestLeft = this.spatialCongestion(0.5 * (x1 + x2) + oxy[0], 0.5 * (y1 + y2) + oxy[1]);
-                let congestRight = this.spatialCongestion(0.5 * (x1 + x2) - oxy[0], 0.5 * (y1 + y2) - oxy[1]);
-                if (congestLeft < congestRight)
-                    return [idxFLeft > 0 ? idxFLeft : idxTLeft];
-                else
-                    return [idxFRight > 0 ? idxFRight : idxTRight];
-            }
-            if (sumFrom == 2 && sumTo == 1) {
-                if (idxTLeft == 0)
-                    return [idxFRight, idxTRight];
-                else
-                    return [idxFLeft, idxTLeft];
-            }
-            if (sumFrom == 1 && sumTo == 2) {
-                if (idxFLeft == 0)
-                    return [idxFRight, idxTRight];
-                else
-                    return [idxFLeft, idxTLeft];
-            }
-            return null;
-        }
-        spatialCongestion(x, y, thresh) {
-            if (thresh == null)
-                thresh = 0.001;
-            let congest = 0;
-            for (let n = 0; n < this.points.length; n++) {
-                let a = this.points[n];
-                if (a == null)
-                    continue;
-                let dx = a.oval.cx - x, dy = a.oval.cy - y;
-                congest += 1 / (dx * dx + dy * dy + thresh);
-            }
-            return congest;
-        }
-        boxOverlaps(x, y, w, h, pointmask, linemask) {
-            let vx1 = x, vy1 = y, vx2 = x + w, vy2 = y + h;
-            for (let n = 0; n < this.points.length; n++) {
-                if (pointmask != null && !pointmask[n])
-                    continue;
-                let a = this.points[n];
-                let wx1 = a.oval.cx - a.oval.rw, wy1 = a.oval.cy - a.oval.rh, wx2 = a.oval.cx + a.oval.rw, wy2 = a.oval.cy + a.oval.rh;
-                if (vx2 < wx1 || vx1 > wx2 || vy2 < wy1 || vy1 > wy2)
-                    continue;
-                return true;
-            }
-            for (let n = 0; n < this.lines.length; n++) {
-                if (linemask != null && !linemask[n])
-                    continue;
-                let b = this.lines[n];
-                let wx1 = b.line.x1, wy1 = b.line.y1, wx2 = b.line.x2, wy2 = b.line.y2;
-                if (vx2 < Math.min(wx1, wx2) || vx1 > Math.max(wx1, wx2) || vy2 < Math.min(wy1, wy2) || vy1 > Math.max(wy1, wy2))
-                    continue;
-                if (wx1 >= vx1 && wx1 <= vx2 && wy1 >= vy1 && wy1 <= vy2)
-                    return true;
-                if (wx2 >= vx1 && wx2 <= vx2 && wy2 >= vy1 && wy2 <= vy2)
-                    return true;
-                if (WebMolKit.GeomUtil.doLineSegsIntersect(wx1, wy1, wx2, wy2, vx1, vy1, vx2, vy1))
-                    return true;
-                if (WebMolKit.GeomUtil.doLineSegsIntersect(wx1, wy1, wx2, wy2, vx1, vy2, vx2, vy2))
-                    return true;
-                if (WebMolKit.GeomUtil.doLineSegsIntersect(wx1, wy1, wx2, wy2, vx1, vy1, vx1, vy2))
-                    return true;
-                if (WebMolKit.GeomUtil.doLineSegsIntersect(wx1, wy1, wx2, wy2, vx2, vy1, vx2, vy2))
-                    return true;
-            }
-            return false;
-        }
-        resolveLineCrossings(bondHigher, bondLower) {
-            while (true) {
-                let anything = false;
-                for (let i1 = 0; i1 < this.lines.length; i1++) {
-                    let b1 = this.lines[i1];
-                    if (b1.bnum != bondHigher)
-                        continue;
-                    if (b1.type != BLineType.Normal && b1.type != BLineType.Dotted && b1.type != BLineType.DotDir)
-                        continue;
-                    for (let i2 = 0; i2 < this.lines.length; i2++) {
-                        let b2 = this.lines[i2];
-                        if (b2.bnum != bondLower)
-                            continue;
-                        if (b2.type == BLineType.DotDir)
-                            b2.type = BLineType.Dotted;
-                        if (b2.type != BLineType.Normal && b2.type != BLineType.Dotted)
-                            continue;
-                        if (b1.bfr == b2.bfr || b1.bfr == b2.bto || b1.bto == b2.bfr || b1.bto == b2.bto)
-                            continue;
-                        if (!WebMolKit.GeomUtil.doLineSegsIntersect(b1.line.x1, b1.line.y1, b1.line.x2, b1.line.y2, b2.line.x1, b2.line.y1, b2.line.x2, b2.line.y2))
-                            continue;
-                        let xy = WebMolKit.GeomUtil.lineIntersect(b1.line.x1, b1.line.y1, b1.line.x2, b1.line.y2, b2.line.x1, b2.line.y1, b2.line.x2, b2.line.y2);
-                        let dx = b2.line.x2 - b2.line.x1, dy = b2.line.y2 - b2.line.y1;
-                        let ext = Math.abs(dx) > Math.abs(dy) ? (xy[0] - b2.line.x1) / dx : (xy[1] - b2.line.y1) / dy;
-                        let dist = WebMolKit.norm_xy(dx, dy);
-                        let delta = b2.size / dist * (b2.type == BLineType.Normal ? 2 : 4);
-                        if (ext > delta && ext < 1 - delta) {
-                            let b3 = {
-                                'bnum': b2.bnum,
-                                'bfr': b2.bfr,
-                                'bto': b2.bto,
-                                'type': b2.type,
-                                'line': b2.line.clone(),
-                                'size': b2.size,
-                                'head': b2.head,
-                                'col': b2.col
-                            };
-                            this.lines.push(b3);
-                            b2.line.x2 = b2.line.x1 + dx * (ext - delta);
-                            b2.line.y2 = b2.line.y1 + dy * (ext - delta);
-                            b3.line.x1 = b3.line.x1 + dx * (ext + delta);
-                            b3.line.y1 = b3.line.y1 + dy * (ext + delta);
-                            anything = true;
-                        }
-                        else if (ext > delta) {
-                            b2.line.x2 = b2.line.x1 + dx * (ext - delta);
-                            b2.line.y2 = b2.line.y1 + dy * (ext - delta);
-                            anything = true;
-                        }
-                        else if (ext < 1 - delta) {
-                            b2.line.x1 = b2.line.x1 + dx * (ext + delta);
-                            b2.line.y1 = b2.line.y1 + dy * (ext + delta);
-                            anything = true;
-                        }
-                    }
-                }
-                if (!anything)
-                    break;
-            }
-        }
-        createCircularRing(atoms) {
-            let cx = 0, cy = 0;
-            for (let a of atoms) {
-                let pt = this.points[a - 1];
-                cx += pt.oval.cx;
-                cy += pt.oval.cy;
-            }
-            cx /= atoms.length;
-            cy /= atoms.length;
-            let bx = [], by = [];
-            let isRegular = true;
-            let regDist = Number.NaN;
-            for (let a of atoms) {
-                let pt = this.points[a - 1];
-                let x0 = pt.oval.cx - cx, y0 = pt.oval.cy - cy, x1 = x0 - pt.oval.rw, x2 = x0 + pt.oval.rw, y1 = y0 - pt.oval.rh, y2 = y0 + pt.oval.rh;
-                bx.push(x1);
-                by.push(y0);
-                bx.push(x1);
-                by.push(y1);
-                bx.push(x1);
-                by.push(y2);
-                bx.push(x0);
-                by.push(y1);
-                bx.push(x0);
-                by.push(y2);
-                bx.push(x2);
-                by.push(y0);
-                bx.push(x2);
-                by.push(y1);
-                bx.push(x2);
-                by.push(y2);
-                let dist = WebMolKit.norm_xy(x0, y0), theta = Math.atan2(y0, x0);
-                const FRACT = 0.7;
-                bx.push(FRACT * dist * Math.cos(theta));
-                by.push(FRACT * dist * Math.sin(theta));
-                for (let b of this.mol.atomAdjList(a))
-                    if (atoms.indexOf(b) >= 0) {
-                        let pb = this.points[b - 1];
-                        let mx = 0.5 * (pt.oval.cx + pb.oval.cx) - cx, my = 0.5 * (pt.oval.cy + pb.oval.cy) - cy;
-                        let mdist = WebMolKit.norm_xy(mx, my), mtheta = Math.atan2(my, mx);
-                        bx.push(FRACT * mdist * Math.cos(mtheta));
-                        by.push(FRACT * mdist * Math.sin(mtheta));
-                    }
-                if (!isRegular) { }
-                else if (Number.isFinite(regDist)) {
-                    if (Math.abs(regDist - dist) > 1)
-                        isRegular = false;
-                }
-                else
-                    regDist = dist;
-            }
-            let r = { 'atoms': atoms, 'cx': cx, 'cy': cy, 'rw': 0, 'rh': 0, 'size': 0 };
-            if (isRegular) {
-                r.rw = r.rh = WebMolKit.GeomUtil.fitCircle(bx, by);
-            }
-            else {
-                let lowX = WebMolKit.Vec.min(bx) - 10 * WebMolKit.Vec.range(bx), highX = WebMolKit.Vec.max(bx) + 10 * WebMolKit.Vec.range(bx);
-                let lowY = WebMolKit.Vec.min(by) - 10 * WebMolKit.Vec.range(by), highY = WebMolKit.Vec.max(by) + 10 * WebMolKit.Vec.range(by);
-                let minX = Number.POSITIVE_INFINITY, maxX = Number.NEGATIVE_INFINITY, minY = Number.POSITIVE_INFINITY, maxY = Number.NEGATIVE_INFINITY;
-                for (let n = 0; n < atoms.length; n++) {
-                    let nn = n < atoms.length - 1 ? n + 1 : 0;
-                    let p1 = this.points[atoms[n] - 1], p2 = this.points[atoms[nn] - 1];
-                    let x1 = p1.oval.cx - cx - 0.1 * (p2.oval.cx - p1.oval.cx), y1 = p1.oval.cy - cy - 0.1 * (p2.oval.cy - p1.oval.cy);
-                    let x2 = p2.oval.cx - cx + 0.1 * (p2.oval.cx - p1.oval.cx), y2 = p2.oval.cy - cy + 0.1 * (p2.oval.cy - p1.oval.cy);
-                    if (WebMolKit.GeomUtil.doLineSegsIntersect(x1, y1, x2, y2, lowX, 0, highX, 0)) {
-                        let xy = WebMolKit.GeomUtil.lineIntersect(x1, y1, x2, y2, lowX, 0, highX, 0);
-                        minX = Math.min(minX, xy[0]);
-                        maxX = Math.max(maxX, xy[0]);
-                    }
-                    if (WebMolKit.GeomUtil.doLineSegsIntersect(x1, y1, x2, y2, 0, lowY, 0, highY)) {
-                        let xy = WebMolKit.GeomUtil.lineIntersect(x1, y1, x2, y2, 0, lowY, 0, highY);
-                        minY = Math.min(minY, xy[1]);
-                        maxY = Math.max(maxY, xy[1]);
-                    }
-                }
-                let rwh = WebMolKit.GeomUtil.fitEllipse(bx, by, minX, minY, maxX, maxY);
-                r.rw = rwh[0];
-                r.rh = rwh[1];
-            }
-            r.size = this.lineSizePix;
-            this.rings.push(r);
-        }
-        createCurvedPath(atoms, fractional, extAtom) {
-            const sz = atoms.length, szn = sz - 1;
-            let x = [], y = [], symbol = [];
-            for (let n = 0; n < sz; n++) {
-                let pt = this.points[atoms[n] - 1];
-                x.push(pt.oval.cx);
-                y.push(pt.oval.cy);
-                symbol.push(pt.text != null);
-            }
-            let ox = [], oy = [];
-            const EXT = WebMolKit.Molecule.IDEALBOND * 0.25 * this.scale;
-            for (let n = 0; n < sz - 1; n++) {
-                let dx = x[n + 1] - x[n], dy = y[n + 1] - y[n], invD = EXT * WebMolKit.invZ(WebMolKit.norm_xy(dx, dy));
-                ox.push(dy * invD);
-                oy.push(-dx * invD);
-            }
-            const FAR = 1.2, CLOSE = 0.7;
-            let sx1 = WebMolKit.Vec.numberArray(0, sz), sy1 = WebMolKit.Vec.numberArray(0, sz), sx2 = WebMolKit.Vec.numberArray(0, sz), sy2 = WebMolKit.Vec.numberArray(0, sz);
-            const capA = symbol[0] ? FAR : CLOSE;
-            if (!fractional) {
-                sx1[0] = x[0] + ox[0] * capA;
-                sy1[0] = y[0] + oy[0] * capA;
-                sx2[0] = x[0] - ox[0] * capA;
-                sy2[0] = y[0] - oy[0] * capA;
-            }
-            else {
-                const dx = -oy[0], dy = ox[0];
-                sx1[0] = x[0] + dx * capA;
-                sy1[0] = y[0] + dy * capA;
-                sx2[0] = x[0] + dx * capA;
-                sy2[0] = y[0] + dy * capA;
-            }
-            let ncross1 = 0, ncross2 = 0;
-            for (let n = 1; n < sz - 1; n++) {
-                const fr1 = symbol[n] ? FAR : CLOSE, fr2 = fr1;
-                sx1[n] = x[n] + fr1 * (ox[n - 1] + ox[n]);
-                sy1[n] = y[n] + fr1 * (oy[n - 1] + oy[n]);
-                sx2[n] = x[n] - fr2 * (ox[n - 1] + ox[n]);
-                sy2[n] = y[n] - fr2 * (oy[n - 1] + oy[n]);
-                for (let a of this.mol.atomAdjList(atoms[n]))
-                    if (atoms.indexOf(a) < 0 && a != extAtom) {
-                        let pt = this.points[a - 1];
-                        let dx = pt.oval.cx - x[n], dy = pt.oval.cy - y[n];
-                        let dot1 = dx * (sx1[n] - x[n]) + dy * (sy1[n] - x[n]);
-                        let dot2 = dy * (sx2[n] - x[n]) + dy * (sy2[n] - x[n]);
-                        if (dot1 > dot2)
-                            ncross1++;
-                        else
-                            ncross2++;
-                    }
-            }
-            let nn = sz - 1;
-            let capB = symbol[nn] ? FAR : CLOSE;
-            if (!fractional) {
-                sx1[nn] = x[nn] + ox[nn - 1] * capB;
-                sy1[nn] = y[nn] + oy[nn - 1] * capB;
-                sx2[nn] = x[nn] - ox[nn - 1] * capB;
-                sy2[nn] = y[nn] - oy[nn - 1] * capB;
-            }
-            else {
-                let dx = -oy[nn - 1], dy = ox[nn - 1];
-                sx1[nn] = x[nn] - dx * capB;
-                sy1[nn] = y[nn] - dy * capB;
-                sx2[nn] = x[nn] - dx * capB;
-                sy2[nn] = y[nn] - dy * capB;
-            }
-            let score1 = 0, score2 = 0;
-            for (let n = 0; n < sz - 1; n++) {
-                score1 += WebMolKit.norm_xy(sx1[n + 1] - sx1[n], sy1[n + 1] - sy1[n]);
-                score2 += WebMolKit.norm_xy(sx2[n + 1] - sx2[n], sy2[n + 1] - sy2[n]);
-            }
-            score1 *= ncross1 + 1;
-            score2 *= ncross2 + 1;
-            let sx = score1 < score2 ? sx1 : sx2;
-            let sy = score1 < score2 ? sy1 : sy2;
-            let p = { 'atoms': atoms, 'px': null, 'py': null, 'ctrl': null, 'size': this.lineSizePix };
-            this.splineInterpolate(p, sx, sy);
-            this.paths.push(p);
-        }
-        createBondCentroid(from, to) {
-            let pt = this.points[from - 1];
-            let x1 = pt.oval.cx, y1 = pt.oval.cy, x2 = 0, y2 = 0;
-            for (let a of to) {
-                pt = this.points[a - 1];
-                x2 += pt.oval.cx;
-                y2 += pt.oval.cy;
-            }
-            x2 /= to.length;
-            y2 /= to.length;
-            if (to.length <= 2) {
-                x2 -= 0.1 * (x2 - x1);
-                y2 -= 0.1 * (y2 - y1);
-            }
-            const minDist = this.MINBOND_LINE * this.measure.scale();
-            let xy1 = this.backOffAtom(from, x1, y1, x2, y2, minDist);
-            this.ensureMinimumBondLength(xy1, [x2, y2], x1, y1, x2, y2, minDist);
-            let b = {
-                'bnum': 0, 'bfr': from, 'bto': 0,
-                'type': BLineType.Normal, 'line': new WebMolKit.Line(xy1[0], xy1[1], x2, y2),
-                'size': this.lineSizePix, 'head': 0, 'col': this.policy.data.foreground
-            };
-            this.lines.push(b);
-            this.space.push(this.computeSpaceLine(b));
-        }
-        splineInterpolate(path, x, y) {
-            const sz = x.length;
-            const scale = 0.25;
-            for (let n = 0; n < sz; n++) {
-                if (n == 0) {
-                    let dx = x[n + 1] - x[n], dy = y[n + 1] - y[n];
-                    let qx = x[n] + scale * dx, qy = y[n] + scale * dy;
-                    path.px = WebMolKit.Vec.append(path.px, x[n]);
-                    path.py = WebMolKit.Vec.append(path.py, y[n]);
-                    path.ctrl = WebMolKit.Vec.append(path.ctrl, false);
-                    path.px = WebMolKit.Vec.append(path.px, qx);
-                    path.py = WebMolKit.Vec.append(path.py, qy);
-                    path.ctrl = WebMolKit.Vec.append(path.ctrl, true);
-                }
-                else if (n == sz - 1) {
-                    let dx = x[n] - x[n - 1], dy = y[n] - y[n - 1];
-                    let qx = x[n] - scale * dx, qy = y[n] - scale * dy;
-                    path.px = WebMolKit.Vec.append(path.px, qx);
-                    path.py = WebMolKit.Vec.append(path.py, qy);
-                    path.ctrl = WebMolKit.Vec.append(path.ctrl, true);
-                    path.px = WebMolKit.Vec.append(path.px, x[n]);
-                    path.py = WebMolKit.Vec.append(path.py, y[n]);
-                    path.ctrl = WebMolKit.Vec.append(path.ctrl, false);
-                }
-                else {
-                    let dx = x[n + 1] - x[n - 1], dy = y[n + 1] - y[n - 1];
-                    let invD = WebMolKit.invZ(WebMolKit.norm_xy(dx, dy));
-                    dx *= invD;
-                    dy *= invD;
-                    let d1 = scale * WebMolKit.norm_xy(x[n] - x[n - 1], y[n] - y[n - 1]), d2 = scale * WebMolKit.norm_xy(x[n + 1] - x[n], y[n + 1] - y[n]);
-                    let qx1 = x[n] - dx * d1, qy1 = y[n] - dy * d1;
-                    let qx2 = x[n] + dx * d2, qy2 = y[n] + dy * d2;
-                    path.px = WebMolKit.Vec.append(path.px, qx1);
-                    path.py = WebMolKit.Vec.append(path.py, qy1);
-                    path.ctrl = WebMolKit.Vec.append(path.ctrl, true);
-                    path.px = WebMolKit.Vec.append(path.px, x[n]);
-                    path.py = WebMolKit.Vec.append(path.py, y[n]);
-                    path.ctrl = WebMolKit.Vec.append(path.ctrl, false);
-                    path.px = WebMolKit.Vec.append(path.px, qx2);
-                    path.py = WebMolKit.Vec.append(path.py, qy2);
-                    path.ctrl = WebMolKit.Vec.append(path.ctrl, true);
-                }
-            }
-        }
-        delocalisedAnnotation(atoms, charge, unpaired) {
-            const mol = this.mol;
-            let str = '';
-            if (charge == -1)
-                str = '-';
-            else if (charge == 1)
-                str = '+';
-            else if (charge < -1)
-                str = Math.abs(charge) + '-';
-            else if (charge > 1)
-                str = charge + '+';
-            if (unpaired > 0)
-                for (let n = 0; n < unpaired; n++)
-                    str += '.';
-            if (str.length == 0)
-                return;
-            const sz = atoms.length;
-            let bestX = 0, bestY = 0;
-            for (let a of atoms) {
-                bestX += mol.atomX(a);
-                bestY += mol.atomY(a);
-            }
-            bestX /= sz;
-            bestY /= sz;
-            let bestScore = WebMolKit.CoordUtil.congestionPoint(mol, bestX, bestY);
-            for (let n = 1; n < sz - 1; n++) {
-                let x = 0.5 * (mol.atomX(atoms[n - 1]) + mol.atomX(atoms[n + 1])), y = 0.5 * (mol.atomY(atoms[n - 1]) + mol.atomY(atoms[n + 1]));
-                let score = WebMolKit.CoordUtil.congestionPoint(mol, x, y);
-                if (score < bestScore) {
-                    bestScore = score;
-                    bestX = x;
-                    bestY = y;
-                }
-            }
-            let fsz = 0.8 * this.fontSizePix;
-            let wad = this.measure.measureText(str, fsz);
-            let rw = 0.55 * wad[0], rh = 0.55 * wad[1];
-            let a = {
-                'anum': 0,
-                'text': str,
-                'fsz': fsz,
-                'bold': false,
-                'col': this.policy.data.foreground,
-                'oval': new WebMolKit.Oval(this.measure.angToX(bestX), this.measure.angToY(bestY), rw, rh)
-            };
-            this.points.push(a);
-            let spc = {
-                'anum': 0,
-                'bnum': 0,
-                'box': new WebMolKit.Box(a.oval.cx - rw, a.oval.cy - rh, 2 * rw, 2 * rh),
-                'px': [a.oval.cx - rw, a.oval.cx + rw, a.oval.cx + rw, a.oval.cx - rw],
-                'py': [a.oval.cy - rh, a.oval.cy - rh, a.oval.cy + rh, a.oval.cy + rh]
-            };
-            this.space.push(spc);
-        }
-    }
-    ArrangeMolecule.FONT_CORRECT = 1.5;
-    WebMolKit.ArrangeMolecule = ArrangeMolecule;
 })(WebMolKit || (WebMolKit = {}));
 var WebMolKit;
 (function (WebMolKit) {
@@ -21451,495 +22115,6 @@ var WebMolKit;
 })(WebMolKit || (WebMolKit = {}));
 var WebMolKit;
 (function (WebMolKit) {
-    class ArrangeComponent {
-        constructor() {
-            this.annot = ArrangeExperiment.COMP_ANNOT_NONE;
-            this.box = new WebMolKit.Box();
-        }
-        clone() {
-            let dup = new ArrangeComponent();
-            dup.type = this.type;
-            dup.srcIdx = this.srcIdx;
-            dup.step = this.step;
-            dup.side = this.side;
-            dup.refIdx = this.refIdx;
-            dup.mol = this.mol;
-            dup.text = this.text;
-            dup.leftNumer = this.leftNumer;
-            dup.leftDenom = this.leftDenom;
-            dup.fszText = this.fszText;
-            dup.fszLeft = this.fszLeft;
-            dup.annot = this.annot;
-            dup.box = this.box.clone();
-            dup.padding = this.padding;
-            return dup;
-        }
-    }
-    WebMolKit.ArrangeComponent = ArrangeComponent;
-    class ArrangeExperiment {
-        constructor(entry, measure, policy) {
-            this.entry = entry;
-            this.measure = measure;
-            this.policy = policy;
-            this.width = 0;
-            this.height = 0;
-            this.components = [];
-            this.limitTotalW = 1000;
-            this.limitTotalH = 1000;
-            this.limitStructW = 0;
-            this.limitStructH = 0;
-            this.includeReagents = true;
-            this.includeNames = false;
-            this.includeStoich = true;
-            this.includeAnnot = false;
-            this.includeBlank = false;
-            this.PADDING = 0.25;
-            this.PLUSSZ = 0.5;
-            this.ARROW_W = 2;
-            this.ARROW_H = 0.5;
-            this.REAGENT_SCALE = 0.7;
-            this.PLACEHOLDER_W = 2;
-            this.PLACEHOLDER_H = 2;
-            this.scale = policy.data.pointScale;
-            this.limitStructW = this.limitStructH = this.scale * 10;
-        }
-        arrange() {
-            this.createComponents();
-            let fszText = this.scale * this.policy.data.fontSize, fszLeft = this.scale * this.policy.data.fontSize * 1.5;
-            let padding = this.PADDING * this.scale;
-            for (let xc of this.components) {
-                if (xc.type == ArrangeExperiment.COMP_PLUS)
-                    xc.box = new WebMolKit.Box(0, 0, this.scale * this.PLUSSZ, this.scale * this.PLUSSZ);
-                else if (xc.type == ArrangeExperiment.COMP_ARROW) { }
-                else {
-                    let w = 0, h = 0;
-                    if (WebMolKit.MolUtil.notBlank(xc.mol)) {
-                        let sz = WebMolKit.Size.fromArray(WebMolKit.ArrangeMolecule.guestimateSize(xc.mol, this.policy));
-                        if (xc.type == ArrangeExperiment.COMP_REAGENT)
-                            sz.scaleBy(this.REAGENT_SCALE);
-                        if (xc.leftNumer) {
-                            xc.fszLeft = fszLeft;
-                            let wad = this.measure.measureText(xc.leftNumer, fszLeft);
-                            let lw = wad[0], lh = wad[1] + wad[2];
-                            if (xc.leftDenom)
-                                lw = Math.max(lw, this.measure.measureText(xc.leftDenom, fszLeft)[0]);
-                            sz.w += lw + ArrangeExperiment.COMP_GAP_LEFT * lh;
-                            sz.h = Math.max(sz.h, lh * (xc.leftDenom ? 2 : 1));
-                        }
-                        sz.fitInto(this.limitStructW, this.limitStructH);
-                        w = sz.w;
-                        h = sz.h;
-                    }
-                    if (xc.text) {
-                        xc.fszText = fszText;
-                        let wad = this.measure.measureText(xc.text, fszText);
-                        w = Math.max(w, wad[0]);
-                        h += wad[1] + wad[2];
-                    }
-                    if (xc.annot != 0)
-                        w += ArrangeExperiment.COMP_ANNOT_SIZE * this.scale;
-                    if (this.includeBlank || w == 0 || h == 0) {
-                        w = Math.max(w, this.PLACEHOLDER_W * this.scale);
-                        h = Math.max(h, this.PLACEHOLDER_H * this.scale);
-                    }
-                    xc.box = new WebMolKit.Box(0, 0, w, h);
-                }
-                xc.padding = padding;
-                xc.box = new WebMolKit.Box(0, 0, xc.box.w + 2 * padding, xc.box.h + 2 * padding);
-            }
-            let best = null;
-            let bestScore = 0;
-            for (let bend = this.entry.steps.length + 1; bend >= 1; bend--)
-                for (let vert = 0; vert <= 1; vert++) {
-                    let trial = [];
-                    for (let xc of this.components)
-                        trial.push(xc.clone());
-                    this.arrangeComponents(trial, bend, vert > 0);
-                    let score = this.scoreArrangement(trial);
-                    if (best == null || score > bestScore) {
-                        best = trial;
-                        bestScore = score;
-                    }
-                }
-            this.components = best;
-            this.width = this.height = 0;
-            for (let xc of this.components) {
-                this.width = Math.max(this.width, xc.box.maxX());
-                this.height = Math.max(this.height, xc.box.maxY());
-            }
-        }
-        get numComponents() { return this.components.length; }
-        getComponent(idx) { return this.components[idx]; }
-        scaleComponents(modScale) {
-            if (modScale == 1)
-                return;
-            this.scale *= modScale;
-            this.width *= modScale;
-            this.height *= modScale;
-            for (let xc of this.components) {
-                xc.box.scaleBy(modScale);
-                xc.fszText *= modScale;
-                xc.fszLeft *= modScale;
-                xc.padding *= modScale;
-            }
-        }
-        createComponents() {
-            for (let n = 0; n < this.entry.steps[0].reactants.length; n++) {
-                if (n > 0)
-                    this.createSegregator(ArrangeExperiment.COMP_PLUS, 0, -1);
-                this.createReactant(n, 0);
-            }
-            if (this.components.length == 0 && this.includeBlank)
-                this.createBlank(ArrangeExperiment.COMP_REACTANT, 0);
-            for (let s = 0; s < this.entry.steps.length; s++) {
-                this.createSegregator(ArrangeExperiment.COMP_ARROW, s, 0);
-                if (this.includeReagents) {
-                    let any = false;
-                    for (let n = 0; n < this.entry.steps[s].reagents.length; n++) {
-                        this.createReagent(n, s);
-                        any = true;
-                    }
-                    if (!any && this.includeBlank)
-                        this.createBlank(ArrangeExperiment.COMP_REAGENT, s);
-                }
-                let any = false;
-                for (let n = 0; n < this.entry.steps[s].products.length; n++) {
-                    if (n > 0)
-                        this.createSegregator(ArrangeExperiment.COMP_PLUS, s, 1);
-                    this.createProduct(n, s);
-                    any = true;
-                }
-                if (!any && this.includeBlank)
-                    this.createBlank(ArrangeExperiment.COMP_PRODUCT, s);
-            }
-        }
-        createReactant(idx, step) {
-            let comp = this.entry.steps[step].reactants[idx];
-            let xc = new ArrangeComponent();
-            xc.type = ArrangeExperiment.COMP_REACTANT;
-            xc.srcIdx = idx;
-            xc.step = step;
-            xc.side = -1;
-            if (WebMolKit.MolUtil.notBlank(comp.mol))
-                xc.mol = comp.mol;
-            if (name && (this.includeNames || WebMolKit.MolUtil.isBlank(comp.mol)))
-                xc.text = name;
-            if (WebMolKit.MolUtil.isBlank(xc.mol) && !xc.text)
-                xc.text = '?';
-            if (this.includeStoich && !WebMolKit.QuantityCalc.isStoichZero(comp.stoich) && !WebMolKit.QuantityCalc.isStoichUnity(comp.stoich)) {
-                let slash = comp.stoich.indexOf('/');
-                if (slash >= 0) {
-                    xc.leftNumer = comp.stoich.substring(0, slash);
-                    xc.leftDenom = comp.stoich.substring(slash + 1);
-                }
-                else
-                    xc.leftNumer = comp.stoich;
-            }
-            if (this.includeAnnot && WebMolKit.MolUtil.notBlank(comp.mol) && comp.primary)
-                xc.annot = ArrangeExperiment.COMP_ANNOT_PRIMARY;
-            this.components.push(xc);
-        }
-        createReagent(idx, step) {
-            let comp = this.entry.steps[step].reagents[idx];
-            let xc = new ArrangeComponent();
-            xc.type = ArrangeExperiment.COMP_REAGENT;
-            xc.srcIdx = idx;
-            xc.step = step;
-            xc.side = 0;
-            if (WebMolKit.MolUtil.notBlank(comp.mol))
-                xc.mol = comp.mol;
-            if (name && (this.includeNames || WebMolKit.MolUtil.isBlank(comp.mol)))
-                xc.text = name;
-            if (WebMolKit.MolUtil.isBlank(xc.mol) && !xc.text)
-                xc.text = '?';
-            if (this.includeAnnot) {
-                let stoich = WebMolKit.QuantityCalc.impliedReagentStoich(comp, this.entry.steps[step].products);
-                if (stoich > 0)
-                    xc.annot = ArrangeExperiment.COMP_ANNOT_IMPLIED;
-                if (stoich > 0 && stoich != 1) {
-                    if (WebMolKit.realEqual(stoich, Math.round(stoich)))
-                        xc.leftNumer = Math.round(stoich).toString();
-                    else
-                        xc.leftNumer = stoich.toString();
-                }
-            }
-            this.components.push(xc);
-        }
-        createProduct(idx, step) {
-            let comp = this.entry.steps[step].products[idx];
-            let xc = new ArrangeComponent();
-            xc.type = ArrangeExperiment.COMP_PRODUCT;
-            xc.srcIdx = idx;
-            xc.step = step;
-            xc.side = 1;
-            if (WebMolKit.MolUtil.notBlank(comp.mol))
-                xc.mol = comp.mol;
-            if (name && (this.includeNames || WebMolKit.MolUtil.isBlank(comp.mol)))
-                xc.text = comp.name;
-            if (WebMolKit.MolUtil.isBlank(xc.mol) && !xc.text)
-                xc.text = '?';
-            if (this.includeStoich && !WebMolKit.QuantityCalc.isStoichZero(comp.stoich) && !WebMolKit.QuantityCalc.isStoichUnity(comp.stoich)) {
-                let slash = comp.stoich.indexOf('/');
-                if (slash >= 0) {
-                    xc.leftNumer = comp.stoich.substring(0, slash);
-                    xc.leftDenom = comp.stoich.substring(slash + 1);
-                }
-                else
-                    xc.leftNumer = comp.stoich;
-            }
-            if (this.includeAnnot && WebMolKit.MolUtil.notBlank(comp.mol) && comp.waste)
-                xc.annot = ArrangeExperiment.COMP_ANNOT_WASTE;
-            this.components.push(xc);
-        }
-        createSegregator(type, step, side) {
-            let xc = new ArrangeComponent();
-            xc.type = type;
-            xc.step = step;
-            xc.side = side;
-            this.components.push(xc);
-        }
-        createBlank(type, step) {
-            let xc = new ArrangeComponent();
-            xc.type = type;
-            xc.step = step;
-            xc.side = type == ArrangeExperiment.COMP_REACTANT ? -1 : type == ArrangeExperiment.COMP_PRODUCT ? 1 : 0;
-            xc.srcIdx = -1;
-            this.components.push(xc);
-        }
-        arrangeComponents(comps, bendStep, vertComp) {
-            let blkMain = [];
-            let blkArrow = [];
-            let szMain = [], szArrow = [];
-            let midMain = [], midArrow = [];
-            blkMain.push(this.gatherBlock(comps, 0, -1));
-            szMain.push(this.arrangeMainBlock(blkMain[0], vertComp));
-            midMain.push(this.findMidBlock(blkMain[0], szMain[0]));
-            for (let n = 0; n < this.entry.steps.length; n++) {
-                let bent = n + 1 >= bendStep;
-                blkMain.push(this.gatherBlock(comps, n, 1));
-                szMain.push(this.arrangeMainBlock(blkMain[n + 1], vertComp && !bent));
-                midMain.push(this.findMidBlock(blkMain[n + 1], szMain[n + 1]));
-                blkArrow.push(this.gatherBlock(comps, n, 0));
-                if (!bent)
-                    szArrow.push(this.arrangeHorizontalArrowBlock(blkArrow[n]));
-                else
-                    szArrow.push(this.arrangeVerticalArrowBlock(blkArrow[n]));
-                midArrow.push(this.findMidBlock(blkArrow[n], szArrow[n]));
-            }
-            let midH = 0;
-            for (let n = 0; n < bendStep; n++) {
-                midH = Math.max(midH, midMain[n].y);
-                if (n > 0)
-                    midH = Math.max(midH, midArrow[n - 1].y);
-            }
-            let sz = WebMolKit.Size.zero();
-            for (let n = 0; n < bendStep; n++) {
-                sz.w += szMain[n].w;
-                sz.h = Math.max(sz.h, midH + (szMain[n].h - midMain[n].y));
-                if (n > 0) {
-                    sz.w += szArrow[n - 1].w;
-                    sz.h = Math.max(sz.h, midH + (szArrow[n - 1].h - midArrow[n - 1].y));
-                }
-            }
-            let x = 0, arrowX = 0;
-            for (let n = 0; n < bendStep; n++) {
-                if (n > 0) {
-                    this.originateBlock(blkArrow[n - 1], x, midH - midArrow[n - 1].y);
-                    x += szArrow[n - 1].w;
-                }
-                this.originateBlock(blkMain[n], x, midH - midMain[n].y);
-                arrowX = x + midMain[n].x;
-                x += szMain[n].w;
-            }
-            let y = sz.h, lowX = 0;
-            for (let n = bendStep; n <= this.entry.steps.length; n++) {
-                x = arrowX - midArrow[n - 1].x;
-                lowX = Math.min(lowX, x);
-                this.originateBlock(blkArrow[n - 1], x, y);
-                y += szArrow[n - 1].h;
-                sz.w = Math.max(sz.w, x + szArrow[n - 1].w);
-                x = arrowX - midMain[n].x;
-                lowX = Math.min(lowX, x);
-                this.originateBlock(blkMain[n], x, y);
-                y += szMain[n].h;
-                sz.w = Math.max(sz.w, x + szMain[n].w);
-            }
-            if (lowX < 0) {
-                for (let xc of comps)
-                    xc.box.x -= lowX;
-            }
-        }
-        gatherBlock(comps, step, side) {
-            let block = [];
-            for (let xc of comps)
-                if (xc.side == side && xc.step == step)
-                    block.push(xc);
-            return block;
-        }
-        arrangeMainBlock(block, vertComp) {
-            let sz = WebMolKit.Size.zero();
-            if (!vertComp) {
-                for (let xc of block) {
-                    sz.w += xc.box.w;
-                    sz.h = Math.max(sz.h, xc.box.h);
-                }
-            }
-            else {
-                for (let xc of block) {
-                    sz.w = Math.max(sz.w, xc.box.w);
-                    sz.h += xc.box.h;
-                }
-            }
-            sz.w = Math.max(sz.w, this.scale * 2.0);
-            sz.h = Math.max(sz.h, this.scale * 2.0);
-            if (!vertComp) {
-                let x = 0;
-                for (let xc of block) {
-                    xc.box.x = x;
-                    xc.box.y = 0.5 * (sz.h - xc.box.h);
-                    x += xc.box.w;
-                }
-            }
-            else {
-                let y = 0;
-                for (let xc of block) {
-                    xc.box.x = 0.5 * (sz.w - xc.box.w);
-                    xc.box.y = y;
-                    y += xc.box.h;
-                }
-            }
-            return sz;
-        }
-        arrangeHorizontalArrowBlock(block) {
-            let arrow = null;
-            for (let xc of block)
-                if (xc.type == ArrangeExperiment.COMP_ARROW) {
-                    arrow = xc;
-                    xc.box.w = this.ARROW_W * this.scale + 2 * xc.padding;
-                    xc.box.h = this.ARROW_H * this.scale + 2 * xc.padding;
-                }
-            let mid = block.length >> 1;
-            for (let xc of block)
-                arrow.box.w = Math.max(xc.box.w, arrow.box.w);
-            let sz = WebMolKit.Size.zero();
-            let n = 0;
-            let y = 0;
-            let arrowPlaced = false;
-            for (let xc of block)
-                if (xc.type != ArrangeExperiment.COMP_ARROW) {
-                    xc.box.x = 0.5 * (arrow.box.w - xc.box.w);
-                    xc.box.y = y;
-                    y += xc.box.h;
-                    n++;
-                    if (n == mid) {
-                        arrow.box.x = 0;
-                        arrow.box.y = y;
-                        y += arrow.box.h;
-                        arrowPlaced = true;
-                    }
-                }
-            if (!arrowPlaced) {
-                arrow.box.x = 0;
-                arrow.box.y = y;
-                y += arrow.box.h;
-            }
-            sz.w = arrow.box.w;
-            sz.h = y;
-            return sz;
-        }
-        arrangeVerticalArrowBlock(block) {
-            let arrow = null;
-            for (let xc of block)
-                if (xc.type == ArrangeExperiment.COMP_ARROW) {
-                    arrow = xc;
-                    xc.box.w = this.ARROW_H * this.scale + 2 * xc.padding;
-                    xc.box.h = this.ARROW_W * this.scale + 2 * xc.padding;
-                }
-            let mid = block.length >> 1;
-            let sz1 = WebMolKit.Size.zero(), sz2 = WebMolKit.Size.zero();
-            let n = 0;
-            for (let xc of block)
-                if (xc.type != ArrangeExperiment.COMP_ARROW) {
-                    if (n < mid) {
-                        sz1.w = Math.max(sz1.w, xc.box.w);
-                        sz1.h += xc.box.h;
-                    }
-                    else {
-                        sz2.w = Math.max(sz2.w, xc.box.w);
-                        sz2.h += xc.box.h;
-                    }
-                    n++;
-                }
-            let sz = new WebMolKit.Size(sz1.w + sz2.w + arrow.box.w, Math.max(arrow.box.h, Math.max(sz1.h, sz2.h)));
-            arrow.box = new WebMolKit.Box(sz1.w, 0, arrow.box.w, sz.h);
-            let y1 = 0.5 * (sz.h - sz1.h), y2 = 0.5 * (sz.h - sz2.h);
-            n = 0;
-            for (let xc of block)
-                if (xc.type != ArrangeExperiment.COMP_ARROW) {
-                    if (n < mid) {
-                        xc.box.x = sz1.w - xc.box.w;
-                        xc.box.y = y1;
-                        y1 += xc.box.h;
-                    }
-                    else {
-                        xc.box.x = sz.w - sz2.w;
-                        xc.box.y = y2;
-                        y2 += xc.box.h;
-                    }
-                    n++;
-                }
-            return sz;
-        }
-        findMidBlock(block, sz) {
-            let count = 0;
-            let mid = WebMolKit.Pos.zero();
-            for (let xc of block)
-                if (xc.type == ArrangeExperiment.COMP_PLUS || xc.type == ArrangeExperiment.COMP_ARROW) {
-                    mid.x += xc.box.midX();
-                    mid.y += xc.box.midY();
-                    count++;
-                }
-            if (count == 0) {
-                mid.x = 0.5 * sz.w;
-                mid.y = 0.5 * sz.h;
-            }
-            else if (count > 1) {
-                let inv = 1.0 / count;
-                mid.x *= inv;
-                mid.y *= inv;
-            }
-            return mid;
-        }
-        scoreArrangement(comps) {
-            let w = 0;
-            for (let xc of comps)
-                w = Math.max(w, xc.box.maxX());
-            let score = 0;
-            score -= Math.abs(w - this.limitTotalW);
-            return score;
-        }
-        originateBlock(block, x, y) {
-            for (let xc of block) {
-                xc.box.x += x;
-                xc.box.y += y;
-            }
-        }
-    }
-    ArrangeExperiment.COMP_ARROW = 1;
-    ArrangeExperiment.COMP_PLUS = 2;
-    ArrangeExperiment.COMP_REACTANT = 3;
-    ArrangeExperiment.COMP_REAGENT = 4;
-    ArrangeExperiment.COMP_PRODUCT = 5;
-    ArrangeExperiment.COMP_ANNOT_NONE = 0;
-    ArrangeExperiment.COMP_ANNOT_PRIMARY = 1;
-    ArrangeExperiment.COMP_ANNOT_WASTE = 2;
-    ArrangeExperiment.COMP_ANNOT_IMPLIED = 3;
-    ArrangeExperiment.COMP_GAP_LEFT = 0.5;
-    ArrangeExperiment.COMP_ANNOT_SIZE = 1;
-    WebMolKit.ArrangeExperiment = ArrangeExperiment;
-})(WebMolKit || (WebMolKit = {}));
-var WebMolKit;
-(function (WebMolKit) {
     class AxisLabeller {
         constructor(width, minVal, maxVal, textWidth, inverse) {
             this.width = width;
@@ -22012,162 +22187,6 @@ var WebMolKit;
         }
     }
     WebMolKit.AxisLabeller = AxisLabeller;
-})(WebMolKit || (WebMolKit = {}));
-var WebMolKit;
-(function (WebMolKit) {
-    class DrawExperiment {
-        constructor(layout, vg) {
-            this.layout = layout;
-            this.vg = vg;
-            this.entry = layout.entry;
-            this.measure = layout.measure;
-            this.policy = layout.policy;
-            this.scale = layout.scale;
-            this.invScale = 1.0 / this.scale;
-        }
-        draw() {
-            for (let xc of this.layout.components) {
-                if (xc.type == WebMolKit.ArrangeExperiment.COMP_ARROW)
-                    this.drawSymbolArrow(xc);
-                else if (xc.type == WebMolKit.ArrangeExperiment.COMP_PLUS)
-                    this.drawSymbolPlus(xc);
-                else
-                    this.drawComponent(xc);
-            }
-        }
-        drawComponent(xc) {
-            let vg = this.vg, policy = this.policy;
-            let bx = xc.box.x + xc.padding, by = xc.box.y + xc.padding;
-            let bw = xc.box.w - 2 * xc.padding, bh = xc.box.h - 2 * xc.padding;
-            if (xc.text) {
-                let wad = this.measure.measureText(xc.text, xc.fszText);
-                vg.drawText(bx + 0.5 * bw, by + bh, xc.text, xc.fszText, policy.data.foreground, WebMolKit.TextAlign.Bottom | WebMolKit.TextAlign.Centre);
-                bh -= wad[1] + wad[2];
-            }
-            if (xc.leftNumer) {
-                let wad1 = this.measure.measureText(xc.leftNumer, xc.fszLeft);
-                if (xc.leftDenom) {
-                    vg.drawText(bx, by + 0.5 * bh, xc.leftNumer, xc.fszLeft, policy.data.foreground, WebMolKit.TextAlign.Left | WebMolKit.TextAlign.Middle);
-                    let useW = wad1[0] + WebMolKit.ArrangeExperiment.COMP_GAP_LEFT * (wad1[1] + wad1[2]);
-                    bx += useW;
-                    bw -= useW;
-                }
-                else {
-                    let wad2 = this.measure.measureText(xc.leftDenom, xc.fszLeft);
-                    let tw = Math.max(wad1[0], wad2[0]);
-                    let x = bx + 0.5 * tw, y = by + 0.5 * bh;
-                    vg.drawText(x, y, xc.leftNumer, xc.fszLeft, policy.data.foreground, WebMolKit.TextAlign.Centre | WebMolKit.TextAlign.Bottom);
-                    vg.drawText(x, y + wad1[2], xc.leftDenom, xc.fszLeft, policy.data.foreground, WebMolKit.TextAlign.Centre | WebMolKit.TextAlign.Top);
-                    vg.drawLine(bx, y, bx + tw, y, policy.data.foreground, this.scale * 0.03);
-                    let useW = tw + WebMolKit.ArrangeExperiment.COMP_GAP_LEFT * (wad1[1] + wad1[2]);
-                    bx += useW;
-                    bw -= useW;
-                }
-            }
-            if (xc.annot != 0) {
-                let aw = WebMolKit.ArrangeExperiment.COMP_ANNOT_SIZE * this.scale;
-                bw -= aw;
-                this.drawAnnotation(xc.annot, bx + bw, by, aw, bh);
-            }
-            if (WebMolKit.MolUtil.notBlank(xc.mol)) {
-                let arrmol = new WebMolKit.ArrangeMolecule(xc.mol, this.layout.measure, policy, new WebMolKit.RenderEffects());
-                arrmol.arrange();
-                arrmol.squeezeInto(bx, by, bw, bh, 0);
-                let drawmol = new WebMolKit.DrawMolecule(arrmol, vg);
-                drawmol.draw();
-            }
-            if (xc.srcIdx < 0) {
-                let fsz = 0.5 * bh;
-                vg.drawText(bx + 0.5 * bw, by + 0.5 * bh, '?', fsz, policy.data.foreground, WebMolKit.TextAlign.Centre | WebMolKit.TextAlign.Middle);
-            }
-        }
-        drawSymbolArrow(xc) {
-            let bx = xc.box.x + xc.padding, by = xc.box.y + xc.padding;
-            let bw = xc.box.w - 2 * xc.padding, bh = xc.box.h - 2 * xc.padding;
-            if (bw > bh)
-                this.drawArrow(bx, by + 0.5 * bh, bx + bw, by + 0.5 * bh, bh, this.policy.data.foreground, this.scale * 0.05);
-            else
-                this.drawArrow(bx + 0.5 * bw, by, bx + 0.5 * bw, by + bh, bw, this.policy.data.foreground, this.scale * 0.05);
-        }
-        drawSymbolPlus(xc) {
-            let vg = this.vg, policy = this.policy;
-            let x1 = xc.box.x + xc.padding, y1 = xc.box.y + xc.padding;
-            let x3 = x1 + xc.box.w - 2 * xc.padding, y3 = y1 + xc.box.h - 2 * xc.padding;
-            let x2 = 0.5 * (x1 + x3), y2 = 0.5 * (y1 + y3);
-            let lw = 0.2 * 0.5 * (x3 - x1 + y3 - y1);
-            vg.drawLine(x1, y2, x3, y2, policy.data.foreground, lw);
-            vg.drawLine(x2, y1, x2, y3, policy.data.foreground, lw);
-        }
-        drawAnnotation(annot, bx, by, bw, bh) {
-            let vg = this.vg, policy = this.policy;
-            let sz = bw, x2 = bx + bw, y2 = by + bh, x1 = x2 - sz, y1 = by;
-            if (annot == WebMolKit.ArrangeExperiment.COMP_ANNOT_PRIMARY)
-                y2 = y1 + sz;
-            else if (annot == WebMolKit.ArrangeExperiment.COMP_ANNOT_WASTE)
-                y1 = y2 - sz;
-            if (annot == WebMolKit.ArrangeExperiment.COMP_ANNOT_PRIMARY) {
-                let cx = 0.5 * (x1 + x2), cy = 0.5 * (y1 + y2), ext = 0.25 * sz;
-                let px = [cx, cx + 0.866 * ext, cx + 0.866 * ext, cx, cx - 0.866 * ext, cx - 0.866 * ext];
-                let py = [cy - ext, cy - 0.5 * ext, cy + 0.5 * ext, cy + ext, cy + 0.5 * ext, cy - 0.5 * ext];
-                let lw = 0.05 * this.scale;
-                vg.drawLine(px[0], py[0], px[3], py[3], policy.data.foreground, lw);
-                vg.drawLine(px[1], py[1], px[4], py[4], policy.data.foreground, lw);
-                vg.drawLine(px[2], py[2], px[5], py[5], policy.data.foreground, lw);
-                let inset = 0.1 * sz;
-                vg.drawOval(x1 + 0.5 * sz, y1 + 0.5 * sz, 0.5 * sz - inset, 0.5 * sz - inset, policy.data.foreground, lw, WebMolKit.MetaVector.NOCOLOUR);
-            }
-            else if (annot == WebMolKit.ArrangeExperiment.COMP_ANNOT_WASTE) {
-                let cx = x1 + 0.7 * sz, cy = 0.5 * (y1 + y2), quart = 0.25 * sz;
-                let lw = 0.05 * this.scale;
-                let px = [x1 + 0.1 * sz, cx - quart, cx, cx, cx];
-                let py = [y1, y1, y1, cy - quart, cy];
-                let ctrl = [false, false, true, false, false];
-                vg.drawPath(px, py, ctrl, false, policy.data.foreground, lw, WebMolKit.MetaVector.NOCOLOUR, false);
-                for (let n = 0; n < 4; n++) {
-                    let y = cy + n * 0.45 * sz * (1.0 / 3), dw = (3.1 - n) * 0.1 * sz;
-                    vg.drawLine(cx - dw, y, cx + dw, y, policy.data.foreground, lw);
-                }
-            }
-            else if (annot == WebMolKit.ArrangeExperiment.COMP_ANNOT_IMPLIED) {
-                let tw = 0.5 * sz, th = 0.75 * sz;
-                let cx = x2 - 0.5 * tw, cy = y1 + 0.5 * th;
-                let ty = y1 + 0.25 * th, dsz = sz * 0.1, hsz = 0.5 * dsz;
-                let lw = 0.05 * this.scale, fg = policy.data.foreground;
-                vg.drawLine(cx, y1, cx, y1 + th, fg, lw);
-                vg.drawLine(x2 - tw, ty, x2, ty, fg, lw);
-                vg.drawLine(x2 - tw, cy, x2, cy, fg, lw);
-                vg.drawOval(x2 - tw + hsz, y1 + th - hsz, hsz, hsz, 0, 0, fg);
-                vg.drawOval(x2 - hsz, y1 + th - hsz, hsz, hsz, 0, 0, fg);
-            }
-        }
-        drawArrow(x1, y1, x2, y2, headsz, colour, linesz) {
-            let dx = x2 - x1, dy = y2 - y1, invD = WebMolKit.invZ(WebMolKit.norm_xy(dx, dy));
-            dx *= invD;
-            dy *= invD;
-            let ox = dy, oy = -dx;
-            let hx = x2 - dx * headsz, hy = y2 - dy * headsz;
-            let px = [
-                x1 + ox * 0.5 * linesz,
-                hx + ox * 0.5 * linesz,
-                hx + ox * 0.5 * headsz,
-                x2,
-                hx - ox * 0.5 * headsz,
-                hx - ox * 0.5 * linesz,
-                x1 - ox * 0.5 * linesz
-            ];
-            let py = [
-                y1 + oy * 0.5 * linesz,
-                hy + oy * 0.5 * linesz,
-                hy + oy * 0.5 * headsz,
-                y2,
-                hy - oy * 0.5 * headsz,
-                hy - oy * 0.5 * linesz,
-                y1 - oy * 0.5 * linesz
-            ];
-            this.vg.drawPoly(px, py, WebMolKit.MetaVector.NOCOLOUR, 0, colour, true);
-        }
-    }
-    WebMolKit.DrawExperiment = DrawExperiment;
 })(WebMolKit || (WebMolKit = {}));
 var WebMolKit;
 (function (WebMolKit) {
@@ -22575,7 +22594,7 @@ var WebMolKit;
                     }
                 if (ds.numRows > 0)
                     for (let n = 0, num = aspect.numGraphicRenderings(0); n < num; n++) {
-                        let title = aspect.produceGraphicRendering(0, n, this.policy)[0];
+                        let title = aspect.produceGraphicRendering(0, n, this.policy).name;
                         columns.push({ 'name': title, 'aspect': aspect, 'type': 'graphic', 'idx': n });
                     }
                 let claimed = aspect.areColumnsReserved(names);
@@ -22629,7 +22648,7 @@ var WebMolKit;
                 td.html(rend.text);
         }
         renderGraphicAspect(td, row, aspect, idx) {
-            let [name, metavec] = aspect.produceGraphicRendering(row, idx, this.policy);
+            let metavec = aspect.produceGraphicRendering(row, idx, this.policy).metavec;
             if (metavec == null) {
                 td.text(' ');
                 return;

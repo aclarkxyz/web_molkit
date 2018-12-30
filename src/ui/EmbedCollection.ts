@@ -228,7 +228,7 @@ export class EmbedCollection extends EmbedChemistry
 			}
 			if (ds.numRows > 0) for (let n = 0, num = aspect.numGraphicRenderings(0); n < num; n++)
 			{
-				let title = aspect.produceGraphicRendering(0, n, this.policy)[0];
+				let title = aspect.produceGraphicRendering(0, n, this.policy).name;
 				columns.push({'name': title, 'aspect': aspect, 'type': 'graphic', 'idx': n});
 			}
 
@@ -272,7 +272,7 @@ export class EmbedCollection extends EmbedChemistry
 		metavec.normalise();
 		let svg = $(metavec.createSVG()).appendTo(td);
 	}
-	private renderTextAspect(td:JQuery, row:number, aspect:Aspect, idx:number)
+	private renderTextAspect(td:JQuery, row:number, aspect:Aspect, idx:number):void
 	{
 		let rend = aspect.produceTextRendering(row, idx);
 		if (!rend.text) td.text(' ');
@@ -285,9 +285,9 @@ export class EmbedCollection extends EmbedChemistry
 		}
 		else if (rend.type == Aspect.TEXT_HTML) td.html(rend.text);
 	}
-	private renderGraphicAspect(td:JQuery, row:number, aspect:Aspect, idx:number)
+	private renderGraphicAspect(td:JQuery, row:number, aspect:Aspect, idx:number):void
 	{
-		let [name, metavec] = aspect.produceGraphicRendering(row, idx, this.policy);
+		let metavec = aspect.produceGraphicRendering(row, idx, this.policy).metavec;
 		if (metavec == null) {td.text(' '); return;}
 
 		td.css('text-align', 'center');
