@@ -13,6 +13,8 @@
 ///<reference path='../util/util.ts'/>
 ///<reference path='../data/DataSheet.ts'/>
 ///<reference path='../data/MoleculeStream.ts'/>
+///<reference path='../gfx/ArrangeExperiment.ts'/>
+///<reference path='../gfx/DrawExperiment.ts'/>
 ///<reference path='Aspect.ts'/>
 
 namespace WebMolKit /* BOF */ {
@@ -724,7 +726,28 @@ export class Experiment extends Aspect
 		return resv;		
 	}
 	
+	// render the experiment in scheme form
+	// TODO: other forms can be rendered (summary, metrics, quantity)
+	public numGraphicRenderings(row:number):number {return 1;}
+	public produceGraphicRendering(row:number, idx:number, policy:RenderPolicy):[string, MetaVector]
+	{
+		let measure = new OutlineMeasurement(0, 0, policy.data.pointScale);
+		let layout = new ArrangeExperiment(this.getEntry(row), measure, policy);
+		layout.limitTotalW = 50 * policy.data.pointScale;
+		layout.limitTotalH = 50 * policy.data.pointScale;
+		layout.includeStoich = true;
+		layout.includeAnnot = false;
+
+		layout.arrange();
+
+		let metavec = new MetaVector();
+		new DrawExperiment(layout, metavec).draw();
+		metavec.normalise();
+
+		return ['Scheme', metavec];
+	}
 	
+
 /*	open override func numTextRenderings(row:Int) -> Int {return 1}
 	open override func produceTextRendering(row:Int, idx:Int) -> (name:String, descr:String, text:String)
 	{
@@ -796,23 +819,6 @@ export class Experiment extends Aspect
 			layout.render(vg)
 		}
 		return (name:"", vg:vg)
-	}
-
-	// creating a new row: need to set the ExperimentCreateDate in order to demarck the multistep boundary
-	open override func initiateNewRow(ds:DataSheet, ops:[DataContainer.Op], row:Int) -> [DataContainer.Op]
-	{
-		let ds = DataSheetHolder(ds:ds, inclData:false, inclExtn:false)
-		DataContainer.applyColumnOperations(ds:ds, ops:ops)
-		
-		var ncols = ds.numCols
-		var ret:[DataContainer.Op] = self.forceColumn(ds, ncols:&ncols, name:ColName.ExperimentCreateDate, suffix:0, type:ColType.Real)
-		DataContainer.applyColumnOperations(ds:ds, ops:ret)
-
-		let colidx = ds.findColByName(ColName.ExperimentCreateDate, type:ColType.Real)
-		let createReal:Double = Date().timeIntervalSince1970
-		ret.append(DataContainer.Op.makeSetCell(row:row, col:colidx, datum:createReal))
-		
-		return ret
 	}*/	
 }
 

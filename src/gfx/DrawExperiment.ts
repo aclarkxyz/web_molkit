@@ -89,7 +89,7 @@ export class DrawExperiment
 		if (xc.leftNumer)
 		{
 			let wad1 = this.measure.measureText(xc.leftNumer, xc.fszLeft);
-			if (xc.leftDenom)
+			if (!xc.leftDenom)
 			{
 				vg.drawText(bx, by + 0.5 * bh, xc.leftNumer, xc.fszLeft, policy.data.foreground, TextAlign.Left | TextAlign.Middle);
 				let useW = wad1[0] + ArrangeExperiment.COMP_GAP_LEFT * (wad1[1] + wad1[2]);
