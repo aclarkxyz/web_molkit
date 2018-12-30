@@ -67,9 +67,15 @@ export class DataSheet
 	}
 
 	// make a deep clone of the datasheet that can be safely modified without consequences
-	public clone():DataSheet
+	public clone(withRows = true):DataSheet
 	{
-		return new DataSheet($.extend(true, {}, this.data));
+		let dup = new DataSheet(deepClone(this.data));
+		if (!withRows) 
+		{
+			dup.data.numRows = 0;
+			dup.data.rowData = [];
+		}
+		return dup;
 	}
 
 	// constants
