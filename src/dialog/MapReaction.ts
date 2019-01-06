@@ -11,8 +11,9 @@
 */
 
 ///<reference path='../util/util.ts'/>
-///<reference path='../rpc/Func.ts'/>
+///<reference path='../util/Geom.ts'/>
 ///<reference path='../gfx/Rendering.ts'/>
+///<reference path='../gfx/ArrangeMolecule.ts'/>
 ///<reference path='../gfx/MetaVector.ts'/>
 ///<reference path='../data/Molecule.ts'/>
 ///<reference path='Dialog.ts'/>
@@ -25,25 +26,22 @@ namespace WebMolKit /* BOF */ {
 
 export class MapReaction extends Dialog
 {
-	btnClear:JQuery;
-	btnSave:JQuery;
+	private btnClear:JQuery;
+	private btnSave:JQuery;
 
 	public callbackSave:(source?:MapReaction) => void = null;
 
 	private mol1:Molecule;
 	private mol2:Molecule;
 
-	policy:RenderPolicy;
+	private policy:RenderPolicy;
 		
 	// layout information about both molecules, and how to position them
-	private rawvec1:any = null;
-	private metavec1:MetaVector = null;
-	private arrmol1:any/*PreArrangeMolecule*/ = null;
-	private transform1:number[] = null;
-	private rawvec2:any = null;
-	private metavec2:MetaVector = null;
-	private arrmol2:any/*PreArrangeMolecule*/ = null;
-	private transform2:number[] = null;
+	private layout1:ArrangeMolecule;
+	private layout2:ArrangeMolecule;
+	private box1:Box;
+	private box2:Box;
+	private boxArrow:Box;
 	private padding:number;
 	private scale = 1;
 	private offsetX1:number;
@@ -76,7 +74,7 @@ export class MapReaction extends Dialog
 		this.policy = RenderPolicy.defaultBlackOnWhite();
 		this.policy.data.pointScale = 40;
 		
-		this.title = "Map Reaction Atoms";
+		this.title = 'Map Reaction Atoms';
 		this.minPortionWidth = 20;
 		this.maxPortionWidth = 95;
 	}
@@ -100,23 +98,14 @@ export class MapReaction extends Dialog
         this.btnSave = $('<button class="button button-primary">Save</button>').appendTo(buttons);
 		this.btnSave.click(() => {if (this.callbackSave) this.callbackSave(this);});
 		
-		Func.arrangeMolecule({'policy': this.policy.data, 'molNative': this.mol1.toString()}, (result:any, error:ErrorRPC) =>
-		{
-			this.arrmol1 = result.arrmol;
-			this.rawvec1 = result.metavec;
-			this.metavec1 = new MetaVector(result.metavec);
-			this.transform1 = result.transform;
-			
-			Func.arrangeMolecule({'policy': this.policy.data, 'molNative': this.mol2.toString()}, (result:any, error:ErrorRPC) =>
-			{
-				this.arrmol2 = result.arrmol;
-				this.rawvec2 = result.metavec;
-				this.metavec2 = new MetaVector(result.metavec);
-				this.transform2 = result.transform;
+		let measure = new OutlineMeasurement(0, 0, this.policy.data.pointScale);
+		let effects = new RenderEffects();
+		this.layout1 = new ArrangeMolecule(this.mol1, measure, this.policy, effects);
+		this.layout1.arrange();
+		this.layout2 = new ArrangeMolecule(this.mol2, measure, this.policy, effects);
+		this.layout2.arrange();
 
-				this.setupPanel();
-			});
-		});
+		this.setupPanel();
 	}
 	
 	// --------------------------------------- private methods ---------------------------------------
@@ -124,20 +113,29 @@ export class MapReaction extends Dialog
 	// given that both molecules have been arranged, positions and draws everything
 	private setupPanel():void
 	{
-		let maxWidth = 0.9 * $(window).width(), maxHeight = 0.8 * $(window).height();	
+		let bounds1 = this.layout1.determineBoundary(), w1 = bounds1[2] - bounds1[0], h1 = bounds1[3] - bounds1[1];
+		let bounds2 = this.layout2.determineBoundary(), w2 = bounds2[2] - bounds2[0], h2 = bounds2[3] - bounds2[1];
 
+		let maxWidth = 0.9 * $(window).width(), maxHeight = 0.8 * $(window).height();	
 		this.padding = 1 * this.policy.data.pointScale;
-		let scale1 = (maxWidth - this.ARROWWIDTH) / (this.metavec1.width + this.metavec2.width + 4 * this.padding);
-		let scale2 = maxHeight / (this.metavec1.height + 2 * this.padding);
-		let scale3 = maxHeight / (this.metavec2.height + 2 * this.padding);
+
+		let scale1 = (maxWidth - this.ARROWWIDTH) / (w1 + w2 + 4 * this.padding);
+		let scale2 = maxHeight / (h1 + 2 * this.padding);
+		let scale3 = maxHeight / (bounds2[3] - bounds2[1] + 2 * this.padding);
 		this.scale = Math.min(1, Math.min(scale1, Math.min(scale2, scale3)));
+
+		this.canvasW = Math.ceil((w1 + w2 + 4 * this.padding) * this.scale + this.ARROWWIDTH);
+		this.canvasH = Math.ceil((Math.max(h1, h2) + 2 * this.padding) * this.scale);
+		this.box1 = new Box(0, 0, w1 + 2 * this.padding, this.canvasH);
+		this.boxArrow = new Box(this.box1.maxX(), 0, this.ARROWWIDTH, this.canvasH);
+		this.box2 = new Box(this.boxArrow.maxX(), 0, w2 + 2 * this.padding, this.canvasH);
+		this.layout1.squeezeInto(this.box1.x, this.box1.y, this.box1.w, this.box1.h);
+		this.layout2.squeezeInto(this.box2.x, this.box2.y, this.box2.w, this.box2.h);
 		
-		this.canvasW = Math.ceil((this.metavec1.width + this.metavec2.width + 4 * this.padding) * this.scale + this.ARROWWIDTH);
-		this.canvasH = Math.ceil((Math.max(this.metavec1.height, this.metavec2.height) + 2 * this.padding) * this.scale);
-		this.offsetX1 = this.padding * this.scale;
-		this.offsetY1 = 0.5 * (this.canvasH - this.metavec1.height * this.scale);
-		this.offsetX2 = (this.metavec1.width + 3 * this.padding) * this.scale + this.ARROWWIDTH;
-		this.offsetY2 = 0.5 * (this.canvasH - this.metavec2.height * this.scale);
+		/*this.offsetX1 = this.padding * this.scale;
+		this.offsetY1 = 0.5 * (this.canvasH - h1 * this.scale);
+		this.offsetX2 = (w1 + 3 * this.padding) * this.scale + this.ARROWWIDTH;
+		this.offsetY2 = 0.5 * (this.canvasH - h2 * this.scale);*/
 
 		let div = $('<div></div>').appendTo(this.body());
 		div.css('position', 'relative');
@@ -156,17 +154,24 @@ export class MapReaction extends Dialog
 		this.redrawCanvas();
 		
 		$(this.canvas).mousedown((event:JQueryEventObject) => {event.preventDefault(); this.mouseDown(event);});
-		$(this.canvas).mouseup((event:JQueryEventObject) => {this.mouseUp(event);});
-		$(this.canvas).mouseenter((event:JQueryEventObject) => {this.mouseEnter(event);});
-		$(this.canvas).mouseleave((event:JQueryEventObject) => {this.mouseLeave(event);});
-		$(this.canvas).mousemove((event:JQueryEventObject) => {this.mouseMove(event);});
+		$(this.canvas).mouseup((event:JQueryEventObject) => this.mouseUp(event));
+		$(this.canvas).mouseenter((event:JQueryEventObject) => this.mouseEnter(event));
+		$(this.canvas).mouseleave((event:JQueryEventObject) => this.mouseLeave(event));
+		$(this.canvas).mousemove((event:JQueryEventObject) => this.mouseMove(event));
 
 		// draw the molecules, which don't change
 		this.drawnMols = <HTMLCanvasElement>newElement(div, 'canvas', {'width': this.canvasW * density, 'height': this.canvasH * density, 'style': styleOverlay});
 		ctx = this.drawnMols.getContext('2d');
 		ctx.scale(density, density);
 
-		let draw = new MetaVector(this.rawvec1);
+		let vg1 = new MetaVector(), vg2 = new MetaVector();
+		new DrawMolecule(this.layout1, vg1).draw();
+		new DrawMolecule(this.layout2, vg2).draw();
+		vg1.renderContext(ctx);
+		vg2.renderContext(ctx);
+
+
+		/*let draw = new MetaVector(this.rawvec1);
 		draw.offsetX = this.offsetX1;
 		draw.offsetY = this.offsetY1;
 		draw.scale = this.scale;
@@ -175,7 +180,7 @@ export class MapReaction extends Dialog
 		draw.offsetX = this.offsetX2;
 		draw.offsetY = this.offsetY2;
 		draw.scale = this.scale;
-		draw.renderContext(ctx);
+		draw.renderContext(ctx);*/
 		
 		this.bump();
 	}
@@ -186,12 +191,7 @@ export class MapReaction extends Dialog
 		let w = this.canvasW, h = this.canvasH;
 		ctx.clearRect(0, 0, w, h);
 		
-		//ctx.fillStyle = '#D0D0D0';
-		//ctx.fillRect(0, 0, w, h);
-
-		let arrowX1 = (2 * this.padding + this.metavec1.width) * this.scale;
-		let arrowX2 = arrowX1 + this.ARROWWIDTH;
-		let arrowY = 0.5 * this.canvasH;
+		let arrowX1 = this.boxArrow.minX(), arrowX2 = this.boxArrow.maxX(), arrowY = this.boxArrow.midY();
 
 		ctx.beginPath();
 		ctx.moveTo(arrowX1, arrowY);
@@ -271,7 +271,7 @@ export class MapReaction extends Dialog
 	private drawHighlights(ctx:CanvasRenderingContext2D, side:number, highlight:number):void
 	{
 		const mol = side == 1 ? this.mol1 : this.mol2;
-		const arrmol = side == 1 ? this.arrmol1 : this.arrmol2;
+		const layout = side == 1 ? this.layout1 : this.layout2;
 		const offsetX = side == 1 ? this.offsetX1 : this.offsetX2;
 		const offsetY = side == 1 ? this.offsetY1 : this.offsetY2;
 		const scale = this.scale;
@@ -280,9 +280,7 @@ export class MapReaction extends Dialog
 		{
 			let mapnum = mol.atomMapNum(n);
 			if (mapnum == 0 && n != highlight) continue;
-			let pt = arrmol.points[n - 1];
-			let cx = offsetX + pt.cx * scale, cy = offsetY + pt.cy * scale;
-			let rw = Math.max(0.5 * this.policy.data.pointScale, pt.rw) * scale, rh = Math.max(0.5 * this.policy.data.pointScale, pt.rh) * scale;			
+			let [cx, cy, rw, rh] = this.getAtomPos(side, n);
 			if (mapnum > 0)
 			{
 				let col = this.COLCYCLE[(mapnum - 1) % this.COLCYCLE.length];
@@ -322,23 +320,24 @@ export class MapReaction extends Dialog
 	{
 		let ret = [0, 0];
 		
-		const scale = this.scale, thresh2 = sqr(this.scale * 1.0 * this.policy.data.pointScale);
 		let bestDist = Number.POSITIVE_INFINITY;
-		for (let n = 1; n <= this.mol1.numAtoms; n++)
+		
+		let threshsq = sqr(this.layout1.getScale() * 1.0 * this.policy.data.pointScale);
+		for (let n = 0; n < this.mol1.numAtoms; n++)
 		{
-			if (mask1 != null && !mask1[n - 1]) continue;
-			let pt = this.arrmol1.points[n - 1];
-			let cx = this.offsetX1 + pt.cx * scale, cy = this.offsetY1 + pt.cy * scale;
-			let dsq = norm2_xy(x - cx, y - cy);
-			if (dsq < thresh2 && dsq < bestDist) {ret = [1, n]; bestDist = dsq;}
+			if (mask1 && !mask1[n]) continue;
+			let pt = this.layout1.getPoint(n);
+			let dsq = norm2_xy(x - pt.oval.cx, y - pt.oval.cy);
+			if (dsq < threshsq && dsq < bestDist) {ret = [1, n + 1]; bestDist = dsq;}
 		}
-		for (let n = 1; n <= this.mol2.numAtoms; n++)
+
+		threshsq = sqr(this.layout2.getScale() * 1.0 * this.policy.data.pointScale);
+		for (let n = 0; n < this.mol2.numAtoms; n++)
 		{
-			if (mask2 != null && !mask2[n - 1]) continue;
-			let pt = this.arrmol2.points[n - 1];
-			let cx = this.offsetX2 + pt.cx * scale, cy = this.offsetY2 + pt.cy * scale;
-			let dsq = norm2_xy(x - cx, y - cy);
-			if (dsq < thresh2 && dsq < bestDist) {ret = [2, n]; bestDist = dsq;}
+			if (mask2 && !mask2[n]) continue;
+			let pt = this.layout2.getPoint(n);
+			let dsq = norm2_xy(x - pt.oval.cx, y - pt.oval.cy);
+			if (dsq < threshsq && dsq < bestDist) {ret = [2, n + 1]; bestDist = dsq;}
 		}
 		
 		return ret;
@@ -347,12 +346,11 @@ export class MapReaction extends Dialog
 	// digs around in the given atom container for the screen position and recommended bounding size
 	private getAtomPos(side:number, atom:number):[number, number, number, number]
 	{
-		let arrmol = side == 1 ? this.arrmol1 : this.arrmol2;
+		let layout = side == 1 ? this.layout1 : this.layout2;
 		let ox = side == 1 ? this.offsetX1 : this.offsetX2, oy = side == 1 ? this.offsetY1 : this.offsetY2; 
-		let pt = arrmol.points[atom - 1];
-		let cx = ox + pt.cx * this.scale, cy = oy + pt.cy * this.scale;
-		let rw = Math.max(0.5 * this.policy.data.pointScale, pt.rw) * this.scale, rh = Math.max(0.5 * this.policy.data.pointScale, pt.rh) * this.scale;
-		return [cx, cy, rw, rh];
+		let pt = layout.getPoint(atom - 1);
+		let rw = Math.max(0.5 * this.policy.data.pointScale, pt.oval.rw) * this.scale, rh = Math.max(0.5 * this.policy.data.pointScale, pt.oval.rh) * this.scale;
+		return [pt.oval.cx, pt.oval.cy, rw, rh];
 	}
 	
 	// returns a mask for whether or not atoms on the other side are compatible with each other
