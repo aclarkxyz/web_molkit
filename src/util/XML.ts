@@ -18,6 +18,16 @@ namespace WebMolKit /* BOF */ {
 
 export class XML
 {
+	// DOM <--> String
+	public static parseXML(xml:string):Document
+	{
+		return $.parseXML(xml);
+	}
+	public static toString(doc:Document):string
+	{
+		return new XMLSerializer().serializeToString(doc);
+	}
+
 	// composes all of the text nodes and returns them
 	public static nodeText(el:Node):string
 	{
@@ -61,7 +71,7 @@ export class XML
 
 	// creates and appends text, maybe in a CDATA section
 	//public static appendText(Node parent, String text):void {appendText(parent, text, false);}
-	public static appendText(parent:Node, text:string, isCDATA:boolean):void
+	public static appendText(parent:Node, text:string, isCDATA:boolean = false):void
 	{
 		if (text == null || text.length == 0) return;
 		if (!isCDATA)
