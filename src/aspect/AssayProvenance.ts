@@ -90,6 +90,7 @@ export class AssayProvenance extends Aspect
 	constructor(ds?:DataSheet, allowModify?:boolean)
 	{
 		super(ds, allowModify);
+		this.id = AssayProvenance.CODE;
 		this.setup();
 	}
 

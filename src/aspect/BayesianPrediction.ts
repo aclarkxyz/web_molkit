@@ -62,6 +62,7 @@ export class BayesianPrediction extends Aspect
 	constructor(ds?:DataSheet, allowModify?:boolean)
 	{
 		super(ds, allowModify);
+		this.id = BayesianPrediction.CODE;
 		this.setup();
 	}
 

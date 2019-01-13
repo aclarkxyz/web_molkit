@@ -52,6 +52,7 @@ export interface AspectGraphicRendering
 
 export abstract class Aspect
 {
+	public id:string = null; // identifier: full class name (Java-style reverse domain)
 	public ds:DataSheet;
 	protected allowModify = true; // if set to false, aspect is not allowed to modify any part of the header
 

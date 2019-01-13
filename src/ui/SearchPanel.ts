@@ -347,7 +347,8 @@ export class SearchPanel extends Widget
 
 		if (mol.numAtoms > 0)
 		{
-			let policy = withMapping ? RenderPolicy.defaultBlackOnWhite() : RenderPolicy.defaultColourOnWhite();
+			// NOTE: should probably show the mapping in the main view, in which case using black'n'white scheme is probably a better backdrop
+			let policy = /*withMapping ? RenderPolicy.defaultBlackOnWhite() :*/ RenderPolicy.defaultColourOnWhite();
 			let measure = new OutlineMeasurement(0, 0, policy.data.pointScale);
 			let layout = new ArrangeMolecule(mol, measure, policy, new RenderEffects());
 			layout.arrange();
@@ -457,6 +458,8 @@ export class SearchPanel extends Widget
 		dlg.close();
 		this.renderMolecule(1);
 		this.renderMolecule(2);
+
+		if (this.onChange) this.onChange(this);		
 	}
 	
 	private dropInto(which:number, transfer:DataTransfer):void

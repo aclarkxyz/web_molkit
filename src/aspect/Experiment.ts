@@ -233,6 +233,7 @@ export class Experiment extends Aspect
 	constructor(ds?:DataSheet, allowModify?:boolean)
 	{
 		super(ds, allowModify);
+		this.id = Experiment.CODE;
 
 		if ($.isEmptyObject(Experiment.COLUMN_DESCRIPTIONS))
 		{
