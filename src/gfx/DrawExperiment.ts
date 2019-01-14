@@ -41,6 +41,10 @@ export class DrawExperiment
 	private scale:number;
 	private invScale:number;
 	
+	// optional hooks to intercept rendering
+	public preDrawMolecule:(vg:MetaVector, idx:number, xc:ArrangeComponent, arrmol:ArrangeMolecule) => void = null;
+	public postDrawMolecule:(vg:MetaVector, idx:number, xc:ArrangeComponent, arrmol:ArrangeMolecule) => void = null;
+
 	// --------------------- public methods ---------------------
 	
 	constructor(private layout:ArrangeExperiment, private vg:MetaVector)
@@ -58,17 +62,18 @@ export class DrawExperiment
 		// debug: draw outlines of components
 		//for (let xc of this.layout.components) this.vg.drawRect(xc.box.x, xc.box.y, xc.box.w, xc.box.h, MetaVector.NOCOLOUR, 0, 0xF0000000); 
 
-		for (let xc of this.layout.components)
+		for (let n = 0; n < this.layout.components.length; n++)
 		{
+			let xc = this.layout.components[n];
 			if (xc.type == ArrangeExperiment.COMP_ARROW) this.drawSymbolArrow(xc);
 			else if (xc.type == ArrangeExperiment.COMP_PLUS) this.drawSymbolPlus(xc);
-			else this.drawComponent(xc);
+			else this.drawComponent(n, xc);
 		}
 	}
 
 	// --------------------- private methods ---------------------
 	
-	private drawComponent(xc:ArrangeComponent):void
+	private drawComponent(idx:number, xc:ArrangeComponent):void
     {
 		let vg = this.vg, policy = this.policy;
 		let bx = xc.box.x + xc.padding, by = xc.box.y + xc.padding;
@@ -122,8 +127,12 @@ export class DrawExperiment
 			arrmol.arrange();
 			arrmol.squeezeInto(bx, by, bw, bh, 0);
 
-			let drawmol = new DrawMolecule(arrmol,vg);
+			if (this.preDrawMolecule) this.preDrawMolecule(vg, idx, xc, arrmol);
+
+			let drawmol = new DrawMolecule(arrmol, vg);
 			drawmol.draw();
+
+			if (this.postDrawMolecule) this.postDrawMolecule(vg, idx, xc, arrmol);
 		}
 
 		if (xc.srcIdx < 0)

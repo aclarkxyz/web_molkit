@@ -24,6 +24,13 @@ namespace WebMolKit /* BOF */ {
 	multistep reaction, along with accompanying quantities and other miscellaneous information.
 */
 
+export enum ExperimentComponentType
+{
+	Reactant,
+	Reagent,
+	Product,
+}
+
 export class ExperimentComponent
 {
 	public mol:Molecule = null;
