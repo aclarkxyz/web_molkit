@@ -21,11 +21,14 @@ namespace WebMolKit /* BOF */ {
 // string-to-number: control the behaviour when invalid
 export function safeInt(str:string, def:number = 0):number
 {
-	let val = parseInt(str);
+	if (str == null || str.length == 0) return def;
+	let val = str.startsWith('0x') ? parseInt(str.substring(2), 16) :
+			  str.startsWith('#') ? parseInt(str.substring(1), 16) : parseInt(str);
 	return isNaN(val) ? def : val;
 }
 export function safeFloat(str:string, def:number = 0):number
 {
+	if (str == null || str.length == 0) return def;
 	let val = parseFloat(str);
 	return isNaN(val) ? def : val;
 }
