@@ -59,12 +59,17 @@ export class DrawMolecule
     {
         // debugging: draw the "space filling" areas-to-avoid
         let DRAW_SPACE = false;
-        if (DRAW_SPACE) for (let n = 0; n < this.layout.numSpace(); n++)
-        {
-            let spc = this.layout.getSpace(n);
-            this.vg.drawRect(spc.box.x, spc.box.y, spc.box.w, spc.box.h, MetaVector.NOCOLOUR, 0, 0xE0E0E0);
-            if (spc.px != null && spc.py != null && spc.px.length > 2) this.vg.drawPoly(spc.px, spc.py, 0x000000, 1, 0x808080FF, true);
-        }
+        if (DRAW_SPACE) 
+		{
+			let bounds = this.layout.determineBoundary();
+			this.vg.drawRect(bounds[0], bounds[1], bounds[2] - bounds[0], bounds[3] - bounds[1], 0xFF0000, 1, MetaVector.NOCOLOUR);
+			for (let n = 0; n < this.layout.numSpace(); n++)
+			{
+				let spc = this.layout.getSpace(n);
+				this.vg.drawRect(spc.box.x, spc.box.y, spc.box.w, spc.box.h, MetaVector.NOCOLOUR, 0, 0xE0E0E0);
+				if (spc.px != null && spc.py != null && spc.px.length > 2) this.vg.drawPoly(spc.px, spc.py, 0x000000, 1, 0x808080FF, true);
+			}
+		}
 
         this.drawUnderEffects();
 

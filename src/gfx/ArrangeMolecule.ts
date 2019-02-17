@@ -455,10 +455,12 @@ export class ArrangeMolecule
    	// access to atom information; it is valid to assume that {atomcentre}[N-1] matches {moleculeatom}[N], if N<=mol.numAtoms
 	public numPoints():number {return this.points.length;}
 	public getPoint(idx:number):APoint {return this.points[idx];}
+	public getPoints():APoint[] {return this.points;}
 	
 	// access to bond information; it is _NOT_ valid to read anything into the indices; they do not correlate with bond numbers
 	public numLines():number {return this.lines.length;}
 	public getLine(idx:number):BLine {return this.lines[idx];}
+	public getLines():BLine[] {return this.lines;}
 
 	// access to extra ring/resonance information
 	public numRings():number {return this.rings.length;}
@@ -471,6 +473,7 @@ export class ArrangeMolecule
 	// access to space-fillers (useful for calculating bounding boxes)
 	public numSpace():number {return this.space.length;}
 	public getSpace(idx:number):SpaceFiller {return this.space[idx];}
+	public getSpaces():SpaceFiller[] {return this.space;}
 	
 	// goes through all the objects and nudges them by the given offset
 	public offsetEverything(dx:number, dy:number):void
@@ -493,6 +496,13 @@ export class ArrangeMolecule
 			Vec.addTo(spc.px, dx);
 			Vec.addTo(spc.py, dy);
 		}
+	}
+
+	// ensure that the origin is at (0,0)
+	public offsetOrigin():void
+	{
+		let bounds = this.determineBoundary();
+		if (bounds[0] != 0 || bounds[1] != 0) this.offsetEverything(-bounds[0], -bounds[1]);
 	}
 	
 	// goes through all of the objects and scales them by the provided factor

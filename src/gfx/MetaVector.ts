@@ -222,6 +222,7 @@ export class MetaVector
 	public boundLowY():number {return this.lowY;}
 	public boundHighX():number {return this.highX;}
 	public boundHighY():number {return this.highY;}
+	public getBounds():Box {return new Box(this.lowX, this.lowY, this.highX - this.lowX, this.highY - this.lowY);}
 
 	// update width/height (this isn't done automatically, as it can be considered a parameter)
 	public measure():void

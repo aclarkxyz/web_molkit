@@ -205,8 +205,9 @@ export class ArrangeExperiment
 	}
 
 	// access to content
-	public get numComponents() {return this.components.length;}
-	public getComponent(idx:number) {return this.components[idx];}
+	public get numComponents():number {return this.components.length;}
+	public getComponent(idx:number):ArrangeComponent {return this.components[idx];}
+	public getComponents():ArrangeComponent[] {return this.components;}
 
 	// resize the whole thing
 	public scaleComponents(modScale:number):void
