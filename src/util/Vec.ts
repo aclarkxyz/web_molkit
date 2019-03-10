@@ -62,14 +62,14 @@ export class Vec
 	}
 
 	// null-tolerant array concatenation; always returns an array, always at least a shallow copy
-	public static append<T>(arr:T[], item:any):T[]
+	public static append<T>(arr:T[], item:T):T[]
 	{
 		if (arr == null || arr.length == 0) return [item];
 		arr = arr.slice(0);
 		arr.push(item);
 		return arr;
 	}
-	public static prepend<T>(arr:T[], item:any):T[]
+	public static prepend<T>(arr:T[], item:T):T[]
 	{
 		if (arr == null || arr.length == 0) return [item];
 		arr = arr.slice(0);
