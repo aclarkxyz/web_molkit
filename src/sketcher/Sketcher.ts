@@ -1337,16 +1337,16 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 	private determineDragGuide(order:number):GuidelineSprout[]
 	{
 		// special deal: if no atom clicked, create a fake one with 30 degree angles from the click position
-		if (this.opAtom == 0)
+		if (this.opAtom == 0 || this.mol.atomAdjCount(this.opAtom) == 0)
 		{
 			let g:GuidelineSprout =
 			{
-				'atom': 0,
+				'atom': this.opAtom,
 				'orders': [order],
 				'x': [],
 				'y': [],
-				'sourceX': this.clickX,
-				'sourceY': this.clickY,
+				'sourceX': this.opAtom == 0 ? this.clickX : this.angToX(this.mol.atomX(this.opAtom)),
+				'sourceY': this.opAtom == 0 ? this.clickY : this.angToY(this.mol.atomY(this.opAtom)),
 				'destX': [],
 				'destY': []
 			}
