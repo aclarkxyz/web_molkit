@@ -462,15 +462,15 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 		return false;
 	}
 
-	// returns true if atom N is selected (1-based)
-	public getSelected(N:number):boolean
+	// returns true if atom is selected (1-based)
+	public getSelected(atom:number):boolean
 	{
-		if (this.selectedMask == null || N > this.selectedMask.length) return false;
-		return this.selectedMask[N - 1];
+		if (this.selectedMask == null || atom > this.selectedMask.length) return false;
+		return this.selectedMask[atom - 1];
 	}
 
-	// changes selection state for atom N
-	public setSelected(N:number, sel:boolean):void
+	// changes selection state for atom
+	public setSelected(atom:number, sel:boolean):void
 	{
 		if (this.selectedMask == null) 
 		{
@@ -478,7 +478,7 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 			for (let n = this.selectedMask.length - 1; n >= 0; n--) this.selectedMask[n] = false;
 		}
 		while (this.selectedMask.length < this.mol.numAtoms) {this.selectedMask.push(false);}
-		this.selectedMask[N - 1] = sel;
+		this.selectedMask[atom - 1] = sel;
 		this.delayedRedraw();
 	}
 
@@ -492,11 +492,11 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 		this.delayedRedraw();
 	}
 
-	// returns true if atom N is grabbed by the lasso, if any (1-based)
-	public getLassoed(N:number):boolean
+	// returns true if atom is grabbed by the lasso, if any (1-based)
+	public getLassoed(atom:number):boolean
 	{
-		if (this.lassoMask == null || N > this.lassoMask.length) return false;
-		return this.lassoMask[N - 1];
+		if (this.lassoMask == null || atom > this.lassoMask.length) return false;
+		return this.lassoMask[atom - 1];
 	}
 
 	// gets the current state, as an associative array
@@ -513,8 +513,7 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 	}
 
 	// sets the current state; see getState() function above for the format of the object; the 'withStashUndo' parameter is a
-	// flag, which defaults to true: determines whether the current state will be pushed onto the undo-stack before making the
-	// change
+	// flag, which defaults to true: determines whether the current state will be pushed onto the undo-stack before making the change
 	public setState(state:SketchState, withStashUndo:boolean = true):void
 	{
 		if (withStashUndo) this.stashUndo();
@@ -731,14 +730,14 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 	// ------------ private methods ------------
 
 	// respond to user-initiated clipboard paste event
-	private pasteEvent(e:any):boolean
+	/*private pasteEvent(e:any):boolean
 	{
 		let wnd = <any>window;
 		if (wnd.clipboardData && wnd.clipboardData.getData) this.pasteText(wnd.clipboardData.getData('Text'));
 		else if (e.clipboardData && e.clipboardData.getData) this.pasteText(e.clipboardData.getData('text/plain')); 
 		e.preventDefault();
 		return false;
-	}
+	}*/
 
 	// redetermines the offset and scale so that the molecular structure fits cleanly 
 	private centreAndShrink():void
