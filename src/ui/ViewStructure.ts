@@ -37,7 +37,7 @@ export class ViewStructure extends Widget
 	private naturalHeight = 0;
 	private width = 0;
 	private height = 0;
-	private padding = 2;
+	public padding = 2;
 	public borderCol = 0x000000;
 	private borderRadius = 8; // for rounded rects
 	public backgroundCol1 = 0xFFFFFF;
