@@ -16,7 +16,7 @@
 ///<reference path='../gfx/Rendering.ts'/>
 
 namespace WebMolKit /* BOF */ {
-	
+
 /*
 	Abstract base class for all "Aspects".
 
@@ -61,7 +61,7 @@ export abstract class Aspect
 	constructor(ds?:DataSheet, allowModify?:boolean)
 	{
 		this.ds = ds ? ds : new DataSheet();
-		if (allowModify != null) this.allowModify = allowModify; 
+		if (allowModify != null) this.allowModify = allowModify;
 	}
 
 	// must return a simple, short string describing the aspect
@@ -75,9 +75,9 @@ export abstract class Aspect
 	// a bulk version of above: override this only if is overhead per determination
 	public areColumnsReserved(colNames:string[]):boolean[]
 	{
-		let reserved = Vec.booleanArray(false, colNames.length);
-		for (let n = 0; n < colNames.length; n++) reserved[n] = this.isColumnReserved(colNames[n]);
-		return reserved;
+		let resMask = Vec.booleanArray(false, colNames.length);
+		for (let n = 0; n < colNames.length; n++) resMask[n] = this.isColumnReserved(colNames[n]);
+		return resMask;
 	}	
 	
 	// some aspects reserve multiple rows as a "block" (e.g. multistep reaction experiments); the following two methods must

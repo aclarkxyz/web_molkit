@@ -53,21 +53,21 @@ export class DataSheetStream
 			{
 				let ext = extList[n];
 				//ds.appendExtension(ext.attributes.name.value,ext.attributes.type.value,nodeText(ext));
-				ds.appendExtension(ext.getAttribute("name"), ext.getAttribute("type"), nodeText(ext));
+				ds.appendExtension(ext.getAttribute('name'), ext.getAttribute('type'), nodeText(ext));
 			}
 		}
 
 		// header: columns
 		let header = findNode(root, 'Header');
-		let numCols = parseInt(header.getAttribute("ncols")), numRows = parseInt(header.getAttribute("nrows"));
+		let numCols = parseInt(header.getAttribute('ncols')), numRows = parseInt(header.getAttribute('nrows'));
 		let colList = findNodes(header, 'Column');
 		if (colList.length != numCols) return null;
 		for (let n = 0; n < numCols; n++)
 		{
 			let col = colList[n];
-			let id = parseInt(col.getAttribute("id"));
+			let id = parseInt(col.getAttribute('id'));
 			if (id != n + 1) return null;
-			ds.appendColumn(col.getAttribute("name"), col.getAttribute("type"), nodeText(col));
+			ds.appendColumn(col.getAttribute('name'), col.getAttribute('type'), nodeText(col));
 		}
 		
 		// rows
@@ -76,14 +76,14 @@ export class DataSheetStream
 		while (row)
 		{
 			//if (parseInt(row.attributes.id.value)!=rowidx+1) return null;
-			if (parseInt(row.getAttribute("id")) != rowidx + 1) return null;
+			if (parseInt(row.getAttribute('id')) != rowidx + 1) return null;
 			
 			ds.appendRow();
 			
 			let col = row.firstElementChild;
 			while (col)
 			{
-				let colidx = parseInt(col.getAttribute("id")) - 1;
+				let colidx = parseInt(col.getAttribute('id')) - 1;
 				let ct = ds.colType(colidx), val = nodeText(col);
 
 				if (val == '') {}
@@ -166,7 +166,7 @@ export class DataSheetStream
 				{
 					let obj = ds.getObject(r, c);
 					if (obj instanceof Molecule) obj = MoleculeStream.writeNative(obj);
-					txtNode = xml.createCDATASection(<string>obj);
+					txtNode = xml.createCDATASection(obj as string);
 				}
 				else if (ct == DataSheet.COLTYPE_STRING) txtNode = xml.createCDATASection(ds.getString(r, c));
 				else if (ct == DataSheet.COLTYPE_REAL) txtNode = xml.createTextNode(ds.getReal(r, c).toString());
@@ -179,7 +179,7 @@ export class DataSheetStream
 		}
 		
 		return new XMLSerializer().serializeToString(xml.documentElement);		
-	};
+	}
 }
 
 /* EOF */ }

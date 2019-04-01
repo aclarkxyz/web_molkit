@@ -23,7 +23,7 @@ export function safeInt(str:string, def:number = 0):number
 {
 	if (str == null || str.length == 0) return def;
 	let val = str.startsWith('0x') ? parseInt(str.substring(2), 16) :
-			  str.startsWith('#') ? parseInt(str.substring(1), 16) : parseInt(str);
+			str.startsWith('#') ? parseInt(str.substring(1), 16) : parseInt(str);
 	return isNaN(val) ? def : val;
 }
 export function safeFloat(str:string, def:number = 0):number
@@ -46,9 +46,7 @@ export function newElement(parent:any, tag:string, attr?:any):Element
 // appends child text to the node
 export function addText(parent:any, text:string)
 {
-	let el:Element = parent instanceof jQuery ? (<JQuery>parent)[0] : <Element>parent;
-	//if (parent instanceof jQuery) el = (<JQuery>parent)[0]; else el = <Element>parent;
-	//let el:Element = parent instanceof JQuery ? (<JQuery>parent[0]) : <Element>parent;
+	let el:Element = parent instanceof jQuery ? (parent as JQuery)[0] : parent as Element;
 	el.appendChild(document.createTextNode(text)); 
 }
 
@@ -83,14 +81,14 @@ export function htmlToRGB(col:string):number
 // converts an integer colour (0xTTRRGGBB) to the HTML style; transparency info is stripped out
 export function colourCode(col:number):string
 {
-	var hex = (col & 0xFFFFFF).toString(16);
+	let hex = (col & 0xFFFFFF).toString(16);
 	while (hex.length < 6) hex = '0' + hex;
 	return '#' + hex;
 }
 // returns the alpha value for a colour, assuming that it is an integer of the 0xTTRRGGBB format
 export function colourAlpha(col:number):number
 {
-	var transp = (col >>> 24) & 0xFF;
+	let transp = (col >>> 24) & 0xFF;
 	return transp == 0 ? 1 : transp == 0xFF ? 0 : 1 - (transp * (1.0 / 255));
 }
 // turns a TRGB integer into the style used by the canvas node
@@ -122,29 +120,29 @@ export function blendRGB(fract:number, rgb1:number, rgb2:number, rgb3?:number):n
 
 	if (rgb3 == null)
 	{
-        let f1 = 1 - fract, f2 = fract;
-        R = Math.round(0xFF * (f1 * r1 + f2 * r2));
-        G = Math.round(0xFF * (f1 * g1 + f2 * g2));
-        B = Math.round(0xFF * (f1 * b1 + f2 * b2));
+		let f1 = 1 - fract, f2 = fract;
+		R = Math.round(0xFF * (f1 * r1 + f2 * r2));
+		G = Math.round(0xFF * (f1 * g1 + f2 * g2));
+		B = Math.round(0xFF * (f1 * b1 + f2 * b2));
 	}
 	else
 	{
-        let r3 = ((rgb3 >> 16) & 0xFF) * ONE_OVER_255, g3 = ((rgb3 >> 8) & 0xFF) * ONE_OVER_255, b3 = (rgb3 & 0xFF) * ONE_OVER_255;
-        
-        if (fract < 0.5)
-        {
+		let r3 = ((rgb3 >> 16) & 0xFF) * ONE_OVER_255, g3 = ((rgb3 >> 8) & 0xFF) * ONE_OVER_255, b3 = (rgb3 & 0xFF) * ONE_OVER_255;
+		
+		if (fract < 0.5)
+		{
 			let f2 = fract * 2, f1 = 1 - f2;
 			R = Math.round(0xFF * (f1 * r1 + f2 * r2));
 			G = Math.round(0xFF * (f1 * g1 + f2 * g2));
 			B = Math.round(0xFF * (f1 * b1 + f2 * b2));
-        }
-        else
-        {
+		}
+		else
+		{
 			let f2 = (fract - 0.5) * 2, f1 = 1 - f2;
 			R = Math.round(0xFF * (f1 * r2 + f2 * r3));
 			G = Math.round(0xFF * (f1 * g2 + f2 * g3));
 			B = Math.round(0xFF * (f1 * b2 + f2 * b3));
-        }	
+		}	
 	}
 
 	return (R << 16) | (G << 8) | B;
@@ -175,7 +173,7 @@ export function blendRGB(fract:number, rgb1:number, rgb2:number, rgb3?:number):n
 // goes through all text-node children and splices them together
 export function nodeText(node:Node)
 {
-	var ret = '';
+	let ret = '';
 	if (!node) return;
 	node = node.firstChild;
 	while (node)
@@ -200,9 +198,9 @@ export function notDef(v:any)
 // node container, which must be a parent
 export function eventCoords(event:JQueryEventObject, container:any):number[]
 {
-	var parentOffset = $(container).offset(); 
-	var relX = event.pageX - parentOffset.left;
-	var relY = event.pageY - parentOffset.top;
+	let parentOffset = $(container).offset(); 
+	let relX = event.pageX - parentOffset.left;
+	let relY = event.pageY - parentOffset.top;
 	return [relX, relY];	
 }
 
@@ -307,15 +305,15 @@ export function uniqueAngles(theta:number[], threshold:number):number[]
 export function minArray(a:number[]):number
 {
 	if (a == null || a.length == 0) return 0;
-	var v = a[0];
-	for (var n = 1; n < a.length; n++) v = Math.min(v, a[n]);
+	let v = a[0];
+	for (let n = 1; n < a.length; n++) v = Math.min(v, a[n]);
 	return v;
 }
 export function maxArray(a:number[]):number
 {
 	if (a == null || a.length == 0) return 0;
-	var v = a[0];
-	for (var n = 1; n < a.length; n++) v = Math.max(v, a[n]);
+	let v = a[0];
+	for (let n = 1; n < a.length; n++) v = Math.max(v, a[n]);
 	return v;
 }
 
@@ -323,11 +321,11 @@ export function maxArray(a:number[]):number
 export function findNode(parent:Node, name:string):Element
 {
 	if (parent == null) return null;
-	var node = parent.firstChild;
+	let node = parent.firstChild;
 	while (node)
 	{
-		if (node.nodeType == Node.ELEMENT_NODE && node.nodeName == name) return <Element>node;
-		node = <any>node.nextSibling;
+		if (node.nodeType == Node.ELEMENT_NODE && node.nodeName == name) return node as Element;
+		node = node.nextSibling as any;
 	}
 	return null;
 }
@@ -336,12 +334,12 @@ export function findNode(parent:Node, name:string):Element
 export function findNodes(parent:Node, name:string):Element[]
 {
 	if (parent == null) return null;
-	var node = parent.firstChild;
-	var list:Element[] = [];
+	let node = parent.firstChild;
+	let list:Element[] = [];
 	while (node)
 	{
-		if (node.nodeType == Node.ELEMENT_NODE && node.nodeName == name) list.push(<Element>node);
-		node = <any>node.nextSibling;
+		if (node.nodeType == Node.ELEMENT_NODE && node.nodeName == name) list.push(node as Element);
+		node = node.nextSibling as any;
 	}
 	return list;
 }
@@ -349,9 +347,7 @@ export function findNodes(parent:Node, name:string):Element[]
 // creates a rounded rectangle path using splines
 export function pathRoundedRect(x1:number, y1:number, x2:number, y2:number, rad:number):Path2D
 {
-	var path = new Path2D();
-	//path.moveTo(x1 + rad, y1);
-	//path.lineTo(x2 - rad, y1);
+	let path = new Path2D();
 	path.moveTo(x2 - rad, y1);
 	path.quadraticCurveTo(x2, y1, x2, y1 + rad);
 	path.lineTo(x2, y2 - rad);
@@ -380,8 +376,8 @@ export function fontSansSerif(ascent:number) {return `${ascent * ASCENT_FUDGE}px
 // returns the density of pixels, i.e. 1 for a regular screen, 2 for retina, etc.
 export function pixelDensity():number
 {
-    if ('devicePixelRatio' in window && window.devicePixelRatio > 1) return window.devicePixelRatio;
-    return 1;
+	if ('devicePixelRatio' in window && window.devicePixelRatio > 1) return window.devicePixelRatio;
+	return 1;
 }
 
 // performs a shallow copy of the object: the top level guarantees new objects, while anything below that may contain
@@ -389,11 +385,11 @@ export function pixelDensity():number
 export function clone<T>(data:T):T
 {
 	if (data == null) return null;
-	if (Array.isArray(data)) return <T>(<any>data).slice(0);
+	if (Array.isArray(data)) return (data as any).slice(0) as T;
 	if (typeof data != 'object') return data;
 	let result:any = {};
 	for (let key in data) result[key] = data[key];
-	return <T>result;
+	return result as T;
 }
 
 // performs a deep clone of any kind of object: goes as deep as it has to to make sure everything is immutable; the parameter
@@ -410,7 +406,7 @@ export function deepClone<T>(data:T):T
 		let val = data[key];
 		result[key] = typeof val === 'object' ? deepClone(val) : val;
 	}
-	return <T>result;
+	return result as T;
 }
 
 // HTML-to-escape; gets most of the basics
@@ -439,22 +435,22 @@ export function toUTF8(str:string):string
 	const sz = str.length;
 	for (let n = 0; n < sz; n++)
 	{
-        var charcode = str.charCodeAt(n);
-        if (charcode < 0x80) stripe += str.charAt(n);
+		let charcode = str.charCodeAt(n);
+		if (charcode < 0x80) stripe += str.charAt(n);
 		else if (charcode < 0x800) 
 		{
 			stripe += String.fromCharCode(0xc0 | (charcode >> 6));
 			stripe += String.fromCharCode(0x80 | (charcode & 0x3F));
-        }
+		}
 		else if (charcode < 0xd800 || charcode >= 0xe000) 
 		{
 			stripe += String.fromCharCode(0xe0 | (charcode >> 12));
 			stripe += String.fromCharCode(0x80 | ((charcode >> 6) & 0x3F));
 			stripe += String.fromCharCode(0x80 | (charcode & 0x3F));
-        }
+		}
 		else // surrogate pair
 		{
-            n++;
+			n++;
 			charcode = 0x10000 + (((charcode & 0x3FF) << 10) | (str.charCodeAt(n) & 0x3FF));
 			stripe += String.fromCharCode(0xf0 | (charcode >> 18));
 			stripe += String.fromCharCode(0x80 | ((charcode >> 12) & 0x3F));
@@ -468,7 +464,7 @@ export function toUTF8(str:string):string
 		}
 	}
 	data.push(stripe);
-    return data.join('');
+	return data.join('');
 }
 
 // converts a UTF8 string to a regular JavaScript string (which is UCS2-encoded)
@@ -479,7 +475,7 @@ export function fromUTF8(str:string):string
 	for (let n = 0; n < sz; n++)
 	{
 		let value = str.charCodeAt(n);
-        if (value < 0x80) stripe += str.charAt(n);
+		if (value < 0x80) stripe += str.charAt(n);
 		else if (value > 0xBF && value < 0xE0) 
 		{
 			stripe += String.fromCharCode((value & 0x1F) << 6 | str.charCodeAt(n + 1) & 0x3F);
@@ -492,18 +488,18 @@ export function fromUTF8(str:string):string
 		} 
 		else // surrogate pair 
 		{
-            let charCode = ((value & 0x07) << 18 | (str.charCodeAt(n + 1) & 0x3F) << 12 | (str.charCodeAt(n + 2) & 0x3F) << 6 | str.charCodeAt(n + 3) & 0x3F) - 0x010000;
-            stripe += String.fromCharCode(charCode >> 10 | 0xD800, charCode & 0x03FF | 0xDC00); 
-            n += 3;
+			let charCode = ((value & 0x07) << 18 | (str.charCodeAt(n + 1) & 0x3F) << 12 | (str.charCodeAt(n + 2) & 0x3F) << 6 | str.charCodeAt(n + 3) & 0x3F) - 0x010000;
+			stripe += String.fromCharCode(charCode >> 10 | 0xD800, charCode & 0x03FF | 0xDC00); 
+			n += 3;
 		}
 		if (stripe.length > 100)
 		{
 			data.push(stripe);
 			stripe = '';
 		}
-    }
+	}
 	data.push(stripe);
-    return data.join('');
+	return data.join('');
 }
 
 /* EOF */ }

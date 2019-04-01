@@ -192,7 +192,7 @@ export class MDLMOLReader
 			let bfr = parseInt(line.substring(0, 3).trim()), bto = parseInt(line.substring(3, 6).trim());
 			let type = parseInt(line.substring(6, 9).trim()), stereo = parseInt(line.substring(9, 12).trim());
 
-			if (bfr == bto || bfr < 1 || bfr > numAtoms || bto < 1 || bto > numAtoms) throw 'Invalid MDL MOL: bond line' + (n +1);
+			if (bfr == bto || bfr < 1 || bfr > numAtoms || bto < 1 || bto > numAtoms) throw 'Invalid MDL MOL: bond line' + (n + 1);
 	
 			let order = type >= 1 && type <= 3 ? type : 1;
 			let style = Molecule.BONDTYPE_NORMAL;
@@ -275,7 +275,7 @@ export class MDLMOLReader
 					if (type == MBLK_CHG) this.mol.setAtomCharge(pos, val);
 					else if (type == MBLK_RAD) this.mol.setAtomUnpaired(pos, val);
 					else if (type == MBLK_ISO) this.mol.setAtomIsotope(pos, val);
-					else if (type == MBLK_RGP) this.mol.setAtomElement(pos, "R" + val);
+					else if (type == MBLK_RGP) this.mol.setAtomElement(pos, 'R' + val);
 					else if (type == MBLK_HYD) 
 					{
 						this.mol.setAtomHExplicit(pos, val);

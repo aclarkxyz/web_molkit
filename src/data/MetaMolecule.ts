@@ -36,7 +36,6 @@ namespace WebMolKit /* BOF */ {
 	Can also be used as a convenient storage place for the "skeleton hash", which is useful for screening isomorphisms.
 */
 
-
 export class MetaMolecule
 {
 	public atomArom:boolean[] = null;
@@ -50,7 +49,6 @@ export class MetaMolecule
 	public uniqueElements:string[] = null;
 
 	private piAtom:boolean[] = null; // true for all atoms that have at least one double bond attached
-
 
 	// --------------------- public methods ---------------------
 

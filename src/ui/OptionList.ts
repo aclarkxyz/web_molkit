@@ -140,7 +140,7 @@ export class OptionList extends Widget
 			div.off('click');
 			div.removeClass('wmk-option-hover wmk-option-active wmk-option-unselected wmk-option-selected');
 
-			if (n != this.selidx)
+			if (n != this.selidx) 
 			{
 				div.addClass('wmk-option-unselected');
 				div.mouseover(() => div.addClass('wmk-option-hover'));
@@ -148,7 +148,7 @@ export class OptionList extends Widget
 				div.mousedown(() => div.addClass('wmk-option-active'));
 				div.mouseup(() => div.removeClass('wmk-option-active'));
 				div.mouseleave(() => div.removeClass('wmk-option-hover wmk-option-active'));
-				div.mousemove(() => {return false;});
+				div.mousemove(() => false);
 				div.click(() => this.clickButton(n));
 			}
 			else div.addClass('wmk-option-selected');

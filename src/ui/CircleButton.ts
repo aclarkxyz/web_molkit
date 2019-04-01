@@ -38,22 +38,20 @@ export class CircleButton extends Widget
 	private STATE_SELECTED = 'selected';
 	private STATE_DISABLED = 'disabled';
 
-	content:JQuery = null;
-
-	state:string = this.STATE_NORMAL;
-	isHighlight = false;
-	isPressed = false;
+	private state = this.STATE_NORMAL;
+	private isHighlight = false;
+	private isPressed = false;
 	
-	normalBackgr:HTMLCanvasElement;
-	selectedBackgr:HTMLCanvasElement;
-	pressedBackgr:HTMLCanvasElement;
-	disabledBackgr:HTMLCanvasElement;
-	ringProgress:HTMLCanvasElement;
-	thinBorder:HTMLCanvasElement;
-	thickBorder:HTMLCanvasElement;
-	svg:Element;
+	private normalBackgr:HTMLCanvasElement;
+	private selectedBackgr:HTMLCanvasElement;
+	private pressedBackgr:HTMLCanvasElement;
+	private disabledBackgr:HTMLCanvasElement;
+	private ringProgress:HTMLCanvasElement;
+	private thinBorder:HTMLCanvasElement;
+	private thickBorder:HTMLCanvasElement;
+	private svg:Element;
 	
-	progressFraction:number = null;
+	private progressFraction:number = null;
 	
 	public callbackAction:(source?:CircleButton) => void = null;
 	
@@ -84,7 +82,7 @@ export class CircleButton extends Widget
 
 		function renderSolid(col1:any, col2:any):HTMLCanvasElement
 		{
-			let node = <HTMLCanvasElement>newElement(div, 'canvas', {'width': width * density, 'height': height * density, 'style': canvasStyle});
+			let node = newElement(div, 'canvas', {'width': width * density, 'height': height * density, 'style': canvasStyle}) as HTMLCanvasElement;
 			node.style.width = width + 'px';
 			node.style.height = height + 'px';
 			let ctx = node.getContext('2d');
@@ -103,10 +101,10 @@ export class CircleButton extends Widget
 		}
 		function renderBorder(lw:number):HTMLCanvasElement
 		{
-			let node = <HTMLCanvasElement>newElement(div, 'canvas', {'width': width * density, 'height': height * density, 'style': canvasStyle});
+			let node = newElement(div, 'canvas', {'width': width * density, 'height': height * density, 'style': canvasStyle}) as HTMLCanvasElement;
 			node.style.width = width + 'px';
 			node.style.height = height + 'px';
-			var ctx = node.getContext('2d');
+			let ctx = node.getContext('2d');
 			ctx.save();
 			ctx.scale(density, density);
 			ctx.beginPath();
@@ -123,7 +121,7 @@ export class CircleButton extends Widget
 		this.pressedBackgr = renderSolid('#00CA59', '#008650');
 		this.disabledBackgr = renderSolid('white', 'white');
 
-		this.ringProgress = <HTMLCanvasElement>newElement(div, 'canvas', {'width': width * density, 'height': height * density, 'style': canvasStyle});
+		this.ringProgress = newElement(div, 'canvas', {'width': width * density, 'height': height * density, 'style': canvasStyle}) as HTMLCanvasElement;
 		this.ringProgress.style.width = width + 'px';
 		this.ringProgress.style.height = height + 'px';
 		this.ringProgress.getContext('2d').scale(density, density);
@@ -132,7 +130,7 @@ export class CircleButton extends Widget
 		this.thinBorder = renderBorder(1);
 		this.thickBorder = renderBorder(2);
 		
-		var svgurl = RPC.BASE_URL + "/img/icons/" + this.icon;
+		let svgurl = RPC.BASE_URL + '/img/icons/' + this.icon;
 			
 		this.svg = newElement(div, 'object', {'width': width, 'height': height, 'style': canvasStyle, 'data': svgurl, 'type': 'image/svg+xml'});
 
@@ -143,7 +141,7 @@ export class CircleButton extends Widget
 		div.mousedown(() => this.mouseDown());
 		div.mouseup(() => this.mouseUp());
 		div.click(() => this.mouseClicked());
-	};
+	}
 
 	// changes the widget to display a ring around the outside; any range from 0..1 is considered active
 	public setProgress(fraction:number):void
@@ -154,7 +152,7 @@ export class CircleButton extends Widget
 		this.ringProgress.hidden = false;
 
 		let diameter = this.BUTTON_DIAMETER, mid = 0.5 * diameter, outer = mid - 1, inner = 0.8 * mid;
-		var ctx = this.ringProgress.getContext('2d');
+		let ctx = this.ringProgress.getContext('2d');
 		ctx.clearRect(0, 0, diameter, diameter);
 				
 		ctx.strokeStyle = 'rgba(80,80,80,0.5)';
@@ -204,7 +202,7 @@ export class CircleButton extends Widget
 		setVisible(this.selectedBackgr, !this.isPressed && this.state == this.STATE_SELECTED);
 		setVisible(this.disabledBackgr, !this.isPressed && this.state == this.STATE_DISABLED);
 
-		var highlight = this.isHighlight;
+		let highlight = this.isHighlight;
 		if (this.state == this.STATE_DISABLED)
 		{
 			highlight = false;

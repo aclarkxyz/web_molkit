@@ -21,7 +21,7 @@
 namespace WebMolKit /* BOF */ {
 
 /*
-    Headless validation: reaction tests - validating the Experiment aspect and related functionality
+	Headless validation: reaction tests - validating the Experiment aspect and related functionality
 */
 
 export class ValidationHeadlessReaction extends Validation
@@ -34,14 +34,14 @@ export class ValidationHeadlessReaction extends Validation
 		this.add('Experiment aspect', this.confirmAspect);
 	}
 
-    public init(donefunc:() => void):void
-    {
+	public init(donefunc:() => void):void
+	{
 		const self = this;
 
 		let FILES = ['experiment.ds'];
 		let files = FILES;
 
-		let fetchResult = function(data:string):void
+		let fetchResult = (data:string):void =>
 		{
 			let fn = files.shift();
 			if (fn == 'experiment.ds') self.strExperiment = data;
@@ -50,9 +50,9 @@ export class ValidationHeadlessReaction extends Validation
 				$.get(self.urlBase + files[0], fetchResult);
 			else
 				donefunc.call(self);
-		}
+		};
 		$.get(self.urlBase + files[0], fetchResult);
-    }
+	}
 
 	public confirmAspect()
 	{
@@ -72,7 +72,6 @@ export class ValidationHeadlessReaction extends Validation
 		this.assert(entry.steps[1].reagents.length == 1, 'require step 2: #reagents = 1'); 
 		this.assert(entry.steps[1].products.length == 2, 'require step 2: #products = 2'); 
 	}
-
 }
 
 /* EOF */ }

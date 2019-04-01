@@ -196,7 +196,7 @@ export class DataSheet
 	{
 		if (typeof col === 'string') col = this.findColByName(col);
 		if (col < 0) return null;
-		let str = <string>this.data.rowData[row][col]; 
+		let str = this.data.rowData[row][col] as string;
 		return str == null ? '' : str;
 	}
 	public getInteger(row:number, col:number | string):number
@@ -329,8 +329,8 @@ export class DataSheet
 		let oldType = this.colType(col);
 		if (oldType == newType) return;
 
-    	let incompatible = oldType == DataSheet.COLTYPE_MOLECULE || newType == DataSheet.COLTYPE_MOLECULE ||
-    	    	    	   oldType == DataSheet.COLTYPE_EXTEND || newType == DataSheet.COLTYPE_EXTEND;
+		let incompatible = oldType == DataSheet.COLTYPE_MOLECULE || newType == DataSheet.COLTYPE_MOLECULE ||
+						   oldType == DataSheet.COLTYPE_EXTEND || newType == DataSheet.COLTYPE_EXTEND;
 		
 		for (let n = this.data.rowData.length - 1; n >= 0; n--)
 		{
@@ -339,13 +339,13 @@ export class DataSheet
 			if (incompatible) {row[col] = null; continue;}
 
 			let val = '';
-			if (oldType == DataSheet.COLTYPE_STRING) val = <string>row[col];
-			else if (oldType == DataSheet.COLTYPE_INTEGER) val = (<number>row[col]).toString();
-			else if (oldType == DataSheet.COLTYPE_REAL) val = (<number>row[col]).toString();
-			else if (oldType == DataSheet.COLTYPE_BOOLEAN) val = <boolean>row[col] ? 'true' : 'false';
+			if (oldType == DataSheet.COLTYPE_STRING) val = row[col] as string;
+			else if (oldType == DataSheet.COLTYPE_INTEGER) val = (row[col] as number).toString();
+			else if (oldType == DataSheet.COLTYPE_REAL) val = (row[col] as number).toString();
+			else if (oldType == DataSheet.COLTYPE_BOOLEAN) val = row[col] as boolean ? 'true' : 'false';
 
 			row[col] = null;
-    	    
+
 			if (newType == DataSheet.COLTYPE_STRING) row[col] = val;
 			else if (newType == DataSheet.COLTYPE_INTEGER) {let num = parseInt(val); row[col] = isFinite(num) ? num : null;} 
 			else if (newType == DataSheet.COLTYPE_REAL) {let num = parseFloat(val); row[col] = isFinite(num) ? num : null;}
@@ -453,7 +453,7 @@ export class DataSheet
 		return obj == null ? null : obj.toString();
 	}
 	
-    // converts a cell to a number; returns null or NaN as appropriate
+	// converts a cell to a number; returns null or NaN as appropriate
 	public toInt(row:number, col:number):number
 	{
 		if (!this.colIsPrimitive(col)) return null;

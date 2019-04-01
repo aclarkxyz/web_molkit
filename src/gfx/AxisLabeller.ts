@@ -34,7 +34,7 @@ export class AxisLabeller
 	public notches:AxisLabellerNotch[] = [];
 
 	constructor(private width:number, private minVal:number, private maxVal:number,
-			    public textWidth?:(str:string) => number, public inverse?:(val:number) => number)
+				public textWidth?:(str:string) => number, public inverse?:(val:number) => number)
 	{
 	}
 

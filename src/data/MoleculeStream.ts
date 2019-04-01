@@ -150,7 +150,7 @@ export class MoleculeStream
 		let ret = '', match:RegExpMatchArray;
 		while (match = str.match(/^(.*?)\\([0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f])(.*)/))
 		{
-			ret += match[1] + String.fromCharCode(parseInt("0x" + match[2]));
+			ret += match[1] + String.fromCharCode(parseInt('0x' + match[2]));
 			str = match[3];
 		}
 		return ret + str;
@@ -181,7 +181,7 @@ export class MoleculeStream
 		let ret = '';
 		for (let n = 0; n < extra.length; n++) ret += ',' + MoleculeStream.sk_escape(extra[n]);
 		return ret;
-	};
+	}
 }
 
 /* EOF */ }

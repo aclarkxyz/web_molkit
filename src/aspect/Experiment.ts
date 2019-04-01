@@ -92,7 +92,7 @@ export class ExperimentStep
 	public reagents:ExperimentComponent[] = [];
 	public products:ExperimentComponent[] = [];
 	
-	contructor() {}
+	constructor() {}
 	
 	// makes a deep copy (assuming that molecules are treated as immutable)
 	public clone():ExperimentStep
@@ -112,7 +112,7 @@ export class ExperimentStep
 		for (let n = 0; n < this.reactants.length; n++) if (!this.reactants[n].equals(other.reactants[n])) return false;
 		for (let n = 0; n < this.reagents.length; n++) if (!this.reagents[n].equals(other.reagents[n])) return false;
 		for (let n = 0; n < this.products.length; n++) if (!this.products[n].equals(other.products[n])) return false;
-		return true
+		return true;
 	}
 }
 
@@ -345,7 +345,7 @@ export class Experiment extends Aspect
 			entry.steps.push(step);
 		}
 
-		return entry
+		return entry;
 	}
 	public setEntry(row:number, entry:ExperimentEntry):void
 	{
@@ -373,9 +373,9 @@ export class Experiment extends Aspect
 		this.parseAndCorrect();
 	}
 
-    // assuming that the underlying datasheet definitely is a datasheet, makes any necessary corrections to force it into compliance
+	// assuming that the underlying datasheet definitely is a datasheet, makes any necessary corrections to force it into compliance
 	private parseAndCorrect():void
-    {
+	{
 		let ds = this.ds;
 		let idxRxn = -1, idxYld = -1, idxExp = -1;
 		let extRxn = '', extYld = '', extExp = '';
@@ -387,7 +387,7 @@ export class Experiment extends Aspect
 		}
 		
 		// note: the implied Reaction aspect is the only metadata field that actually holds content
-		let [nreactants, nproducts, nreagents] = this.parseReactionMetaData(extRxn)
+		let [nreactants, nproducts, nreagents] = this.parseReactionMetaData(extRxn);
 		let meta = `nreactants=${nreactants}\nnproducts=${nproducts}\nnreagents=${nreagents}\n`;
 		if (idxRxn >= 0) ds.setExtData(idxRxn, meta); else ds.appendExtension(Experiment.NAME_RXN, Experiment.CODE_RXN, meta); 
 		if (idxYld >= 0) ds.setExtData(idxYld, ''); else ds.appendExtension(Experiment.NAME_YLD, Experiment.CODE_YLD, '');
@@ -401,7 +401,7 @@ export class Experiment extends Aspect
 		for (let n = 1; n <= nreactants; n++) this.forceReactantColumns(n);
 		for (let n = 1; n <= nreagents; n++) this.forceReagentColumns(n);
 		for (let n = 1; n <= nproducts; n++) this.forceProductColumns(n);
-    }
+	}
 
 	// force-adds respective groups of columns as necessary
 	private forceColumn(colName:string, type:string, suffix?:number):void
@@ -531,7 +531,7 @@ export class Experiment extends Aspect
 	{
 		// make sure the metadata is in place
 		let [preactants, pproducts, preagents] = this.countComponents();
-		var [nreactants, nproducts, nreagents] = [preactants, pproducts, preagents];
+		let [nreactants, nproducts, nreagents] = [preactants, pproducts, preagents];
 		for (let step of entry.steps)
 		{
 			nreactants = Math.max(nreactants, step.reactants.length);
@@ -663,7 +663,7 @@ export class Experiment extends Aspect
 		}
 	}
 
-    // ------------------ aspect implementation --------------------
+	// ------------------ aspect implementation --------------------
 
 	public plainHeading():string {return Experiment.NAME;}
 	
@@ -755,7 +755,6 @@ export class Experiment extends Aspect
 		return {'name': 'Scheme', 'metavec': metavec};
 	}
 	
-
 /*	open override func numTextRenderings(row:Int) -> Int {return 1}
 	open override func produceTextRendering(row:Int, idx:Int) -> (name:String, descr:String, text:String)
 	{

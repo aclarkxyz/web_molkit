@@ -26,27 +26,27 @@ namespace WebMolKit /* BOF */ {
 
 class Atom
 {
-	element:string;
-	x:number;
-	y:number;
-	z:number;
-	charge:number;
-	unpaired:number;
-	isotope:number;
-	hExplicit:number;
-	mapNum:number;
-	extra:string[];
-	transient:string[];
+	public element:string;
+	public x:number;
+	public y:number;
+	public z:number;
+	public charge:number;
+	public unpaired:number;
+	public isotope:number;
+	public hExplicit:number;
+	public mapNum:number;
+	public extra:string[];
+	public transient:string[];
 }
 
 class Bond
 {
-	from:number;
-	to:number;
-	order:number;
-	type:number;
-	extra:string[];
-	transient:string[];
+	public from:number;
+	public to:number;
+	public order:number;
+	public type:number;
+	public extra:string[];
+	public transient:string[];
 }
 
 export class Molecule
@@ -76,8 +76,8 @@ export class Molecule
 	public static BONDTYPE_DECLINED = 2;
 	public static BONDTYPE_UNKNOWN = 3;
 
-	public static HYVALENCE_EL = ['C','N','O','S','P'];
-	public static HYVALENCE_VAL =[ 4,  3,  2,  2,  3 ];
+	public static HYVALENCE_EL =  ['C','N','O','S','P'];
+	public static HYVALENCE_VAL = [ 4,  3,  2,  2,  3 ];
 
 	// ------------ public methods ------------
 
@@ -109,7 +109,6 @@ export class Molecule
 		this.trashTransient();
 	}
 
-
 	public get numAtoms():number {return this.atoms.length;}
 	public getAtom(idx:number):Atom 
 	{
@@ -131,7 +130,7 @@ export class Molecule
 	public get numBonds():number {return this.bonds.length;}
 	public getBond(idx:number):Bond 
 	{
-		if (idx < 1 || idx > this.bonds.length) throw `Molecule.getBond: index ${idx} out of range (#bonds=${this.bonds.length})`;;
+		if (idx < 1 || idx > this.bonds.length) throw `Molecule.getBond: index ${idx} out of range (#bonds=${this.bonds.length})`;
 		return this.bonds[idx - 1];
 	}
 	
@@ -391,7 +390,6 @@ export class Molecule
 		if (this.compID == null) this.buildConnComp();
 		return this.compID[idx - 1];
 	}
-
 
 	// returns the number of neighbours of an atom
 	// NOTE: uncached==>slow

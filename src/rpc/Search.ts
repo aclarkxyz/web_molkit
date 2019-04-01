@@ -20,19 +20,19 @@ namespace WebMolKit /* BOF */ {
 
 export class Search
 {
-	public static startMolSearch(input:Object, callback:(result:any, error:ErrorRPC) => void):void
+	public static startMolSearch(input:any, callback:(result:any, error:ErrorRPC) => void):void
 	{
 		new RPC('search.startMolSearch', input, callback).invoke();
 	}
-	public static pollMolSearch(input:Object, callback:(result:any, error:ErrorRPC) => void)
+	public static pollMolSearch(input:any, callback:(result:any, error:ErrorRPC) => void)
 	{
 		new RPC('search.pollMolSearch', input, callback).invoke();
 	}
-	public static startRxnSearch(input:Object, callback:(result:any, error:ErrorRPC) => void):void
+	public static startRxnSearch(input:any, callback:(result:any, error:ErrorRPC) => void):void
 	{
 		new RPC('search.startRxnSearch', input, callback).invoke();
 	}
-	public static pollRxnSearch(input:Object, callback:(result:any, error:ErrorRPC) => void)
+	public static pollRxnSearch(input:any, callback:(result:any, error:ErrorRPC) => void)
 	{
 		new RPC('search.pollRxnSearch', input, callback).invoke();
 	}

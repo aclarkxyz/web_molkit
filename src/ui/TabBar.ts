@@ -49,7 +49,7 @@ export class TabBar extends Widget
 	// return the panel: each of these needs to be individually filled
 	public getPanel(idxOrName:number | string):JQuery
 	{
-		let idx = typeof idxOrName == 'number' ? <number>idxOrName : this.options.indexOf(idxOrName);
+		let idx = typeof idxOrName == 'number' ? idxOrName as number : this.options.indexOf(idxOrName);
 		if (idx < 0) return null;
 		return this.panelDiv[idx];
 	}
@@ -149,7 +149,7 @@ export class TabBar extends Widget
 				div.mousedown(() => div.addClass('wmk-tabbar-active'));
 				div.mouseup(() => div.removeClass('wmk-tabbar-active'));
 				div.mouseleave(() => div.removeClass('wmk-tabbar-hover wmk-tabbar-active'));
-				div.mousemove(() => {return false;});
+				div.mousemove(() => false);
 				div.click(() => this.clickButton(n));
 			}
 			else div.addClass('wmk-tabbar-selected');

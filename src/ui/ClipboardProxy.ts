@@ -29,7 +29,7 @@ export class ClipboardProxy
 
 	// an external menu operation has activated a paste operation; for the duration of this callback, it is for sure
 	// valid to fetch the clipboard content (using getString)
-	public pasteEvent:(proxy:ClipboardProxyWeb) => boolean =null;
+	public pasteEvent:(proxy:ClipboardProxyWeb) => boolean = null;
 
 	// attach the clipboard proxy to a container, and make sure events are trapped; the uninstall should be gracefully
 	// automatic, but calling it explicitly on cleanup is ideal
@@ -102,8 +102,8 @@ export class ClipboardProxyWeb extends ClipboardProxy
 				return false;
 			}
 
-			let wnd = <any>window;
-			this.lastContent = null
+			let wnd = window as any;
+			this.lastContent = null;
 			if (wnd.clipboardData && wnd.clipboardData.getData) this.lastContent = wnd.clipboardData.getData('Text');
 			else if (e.clipboardData && e.clipboardData.getData) this.lastContent = e.clipboardData.getData('text/plain'); 
 			this.pasteEvent(this);

@@ -77,30 +77,30 @@ export class BayesianPrediction extends Aspect
 
 		let models:BayesianPredictionModel[] = [];
 		let m:BayesianPredictionModel = null;
-    	
-    	for (let line of content.split('\n'))
-    	{
-    		if (line == 'model:')
-    		{
-    			if (m != null) models.push(m);
-				m = <BayesianPredictionModel>{};
-    			continue;
-    		}
-    		
-    		if (m == null) continue;
-    		let eq = line.indexOf('=');
-    		if (eq < 0) continue;
-    		
-            if (line.startsWith('colMolecule=')) m.colMolecule = MoleculeStream.sk_unescape(line.substring(eq + 1));
-            else if (line.startsWith('colRaw=')) m.colRaw = MoleculeStream.sk_unescape(line.substring(eq + 1));
-            else if (line.startsWith('colScaled=')) m.colScaled = MoleculeStream.sk_unescape(line.substring(eq + 1));
-            else if (line.startsWith('colArcTan=')) m.colArcTan = MoleculeStream.sk_unescape(line.substring(eq + 1));
-            else if (line.startsWith('colDomain=')) m.colDomain = MoleculeStream.sk_unescape(line.substring(eq + 1));
-            else if (line.startsWith('colAtoms=')) m.colAtoms = MoleculeStream.sk_unescape(line.substring(eq + 1));
-            else if (line.startsWith('name=')) m.name = MoleculeStream.sk_unescape(line.substring(eq + 1));
-            else if (line.startsWith('description=')) m.description = MoleculeStream.sk_unescape(line.substring(eq + 1));
-            else if (line.startsWith('targetName=')) m.targetName = MoleculeStream.sk_unescape(line.substring(eq + 1));
-            else if (line.startsWith('isOffTarget=')) m.isOffTarget = line.substring(eq + 1) == 'true';
+		
+		for (let line of content.split('\n'))
+		{
+			if (line == 'model:')
+			{
+				if (m != null) models.push(m);
+				m = {} as BayesianPredictionModel;
+				continue;
+			}
+			
+			if (m == null) continue;
+			let eq = line.indexOf('=');
+			if (eq < 0) continue;
+			
+			if (line.startsWith('colMolecule=')) m.colMolecule = MoleculeStream.sk_unescape(line.substring(eq + 1));
+			else if (line.startsWith('colRaw=')) m.colRaw = MoleculeStream.sk_unescape(line.substring(eq + 1));
+			else if (line.startsWith('colScaled=')) m.colScaled = MoleculeStream.sk_unescape(line.substring(eq + 1));
+			else if (line.startsWith('colArcTan=')) m.colArcTan = MoleculeStream.sk_unescape(line.substring(eq + 1));
+			else if (line.startsWith('colDomain=')) m.colDomain = MoleculeStream.sk_unescape(line.substring(eq + 1));
+			else if (line.startsWith('colAtoms=')) m.colAtoms = MoleculeStream.sk_unescape(line.substring(eq + 1));
+			else if (line.startsWith('name=')) m.name = MoleculeStream.sk_unescape(line.substring(eq + 1));
+			else if (line.startsWith('description=')) m.description = MoleculeStream.sk_unescape(line.substring(eq + 1));
+			else if (line.startsWith('targetName=')) m.targetName = MoleculeStream.sk_unescape(line.substring(eq + 1));
+			else if (line.startsWith('isOffTarget=')) m.isOffTarget = line.substring(eq + 1) == 'true';
 		}
 		
 		if (m != null) models.push(m);
@@ -113,16 +113,16 @@ export class BayesianPrediction extends Aspect
 		for (let m of models)
 		{		
 			lines.push('model:');
-            lines.push('colMolecule=' + MoleculeStream.sk_escape(m.colMolecule));
-            lines.push('colRaw=' + MoleculeStream.sk_escape(m.colRaw));
-            lines.push('colScaled=' + MoleculeStream.sk_escape(m.colScaled));
-            lines.push('colArcTan=' + MoleculeStream.sk_escape(m.colArcTan));
-            lines.push('colDomain=' + MoleculeStream.sk_escape(m.colDomain));
-            lines.push('colAtoms=' + MoleculeStream.sk_escape(m.colAtoms));
-            lines.push('name=' + MoleculeStream.sk_escape(m.name));
-            lines.push('description=' + MoleculeStream.sk_escape(m.description));
-            lines.push('targetName=' + MoleculeStream.sk_escape(m.targetName));
-            lines.push('isOffTarget=' + m.isOffTarget);
+			lines.push('colMolecule=' + MoleculeStream.sk_escape(m.colMolecule));
+			lines.push('colRaw=' + MoleculeStream.sk_escape(m.colRaw));
+			lines.push('colScaled=' + MoleculeStream.sk_escape(m.colScaled));
+			lines.push('colArcTan=' + MoleculeStream.sk_escape(m.colArcTan));
+			lines.push('colDomain=' + MoleculeStream.sk_escape(m.colDomain));
+			lines.push('colAtoms=' + MoleculeStream.sk_escape(m.colAtoms));
+			lines.push('name=' + MoleculeStream.sk_escape(m.name));
+			lines.push('description=' + MoleculeStream.sk_escape(m.description));
+			lines.push('targetName=' + MoleculeStream.sk_escape(m.targetName));
+			lines.push('isOffTarget=' + m.isOffTarget);
 		}
 		
 		let content = lines.join('\n');
@@ -182,7 +182,7 @@ export class BayesianPrediction extends Aspect
 		}
 	}
 
-    // ------------------ aspect implementation --------------------
+	// ------------------ aspect implementation --------------------
 
 	public plainHeading():string {return BayesianSource.NAME;}
 }

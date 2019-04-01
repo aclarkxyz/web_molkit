@@ -33,26 +33,26 @@ const ELEMENTS_S_BLOCK:string[] =
 	'Li', 'Na', 'K',  'Rb', 'Cs', 'Fr', 'Sc',
 	'Be', 'Mg', 'Ca', 'Sr', 'Ba', 'Ra', 'Y'
 ];
-    
+	
 const ELEMENTS_P_BLOCK:string[] =
 [
 	'B',  'Al', 'Si', 'Ga', 'Ge', 'As', 'Se',
 	'In', 'Sn', 'Sb', 'Te', 'Tl', 'Pb', 'Bi', 'Po', 'At'
 ];
-    
+	
 const ELEMENTS_D_BLOCK:string[] =
 [
 	'Ti', 'V' , 'Cr', 'Mn', 'Fe', 'Co', 'Ni', 'Cu', 'Zn',
 	'Zr', 'Nb', 'Mo', 'Tc', 'Ru', 'Rh', 'Pd', 'Ag', 'Cd',
 	'Hf', 'Ta', 'W',  'Re', 'Os', 'Ir', 'Pt', 'Au', 'Hg'
 ];
-    
+	
 const ELEMENTS_F_BLOCK:string[] =
 [
 	'La', 'Ce', 'Pr', 'Nd', 'Sm', 'Eu', 'Gd', 'Tb', 'Dy',
 	'Ho', 'Er', 'Tm', 'Yb', 'Lu', 'Ac', 'Th', 'Pa', 'U'
 ];
-    
+	
 const ELEMENTS_ABBREV:string[] =
 [
 	'X',  'Y',  'Z',  'Q',  'M',  'L',  'E',  'A',  'R',

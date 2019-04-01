@@ -51,7 +51,6 @@ export class EditAtom extends Dialog
 		this.maxPortionWidth = 95;
 	}
 
-
 	// builds the dialog content
 	protected populate():void
 	{		
@@ -59,7 +58,7 @@ export class EditAtom extends Dialog
 
 		buttons.append(this.btnClose); // easy way to reorder
 		buttons.append(' ');
-        this.btnApply = $('<button class="wmk-button wmk-button-primary">Save</button>').appendTo(buttons);
+		this.btnApply = $('<button class="wmk-button wmk-button-primary">Save</button>').appendTo(buttons);
 		this.btnApply.click(() => 
 		{
 			this.updateMolecule();

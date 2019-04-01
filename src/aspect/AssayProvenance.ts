@@ -7,7 +7,7 @@
     
     http://molmatinf.com
 
-	[PKG=webmolkit]
+    [PKG=webmolkit]
 */
 
 ///<reference path='../util/util.ts'/>
@@ -76,7 +76,6 @@ export class AssayProvenance extends Aspect
 	public static URI_UNIT_mgL = 'http://purl.obolibrary.org/obo/UO_0000273'; // milligrams per litre
 	public static URI_UNIT_ugL = 'http://purl.obolibrary.org/obo/UO_0000275'; // micrograms per litre
 	public static URI_UNIT_binary = 'http://www.bioassayontology.org/bao#BAO_0080023'; // true/false
-
 
 	// ----------------- public methods -----------------
 
@@ -195,9 +194,9 @@ export class AssayProvenance extends Aspect
 		this.parseAndCorrect();
 	}
 
-    // assuming that the underlying datasheet definitely is a datasheet, makes any necessary corrections to force it into compliance
+	// assuming that the underlying datasheet definitely is a datasheet, makes any necessary corrections to force it into compliance
 	private parseAndCorrect():void
-    {
+	{
 		let header = new AssayProvenanceHeader(); 
 
 		let got = false;
@@ -221,13 +220,13 @@ export class AssayProvenance extends Aspect
 			let content = this.formatMetaData(header);
 			this.ds.appendExtension(AssayProvenance.NAME, AssayProvenance.CODE, content);
 		}
-    }
+	}
 	
-    // interprets the string metadata from the extensions
+	// interprets the string metadata from the extensions
 	private parseMetaData(content:string):AssayProvenanceHeader
-    {
+	{
 		let header = new AssayProvenanceHeader();
-	
+
 		for (let line of content.split(/\r?\n/))
 		{
 			let eq = line.indexOf('=');
@@ -259,9 +258,9 @@ export class AssayProvenance extends Aspect
 		}
 		
 		return header;
-    }
+	}
 
-    // deserialises the header metadata
+	// deserialises the header metadata
 	private formatMetaData(header:AssayProvenanceHeader):string
 	{
 		let content = '';
@@ -289,19 +288,19 @@ export class AssayProvenance extends Aspect
 			content += 'unit:' + MoleculeStream.sk_escape(header.unitNames[n]) + '=' + MoleculeStream.sk_escape(header.unitURIs[n]) + '\n';
 
 		return content;
-    }
+	}
 
-    // ------------------ aspect implementation --------------------
+	// ------------------ aspect implementation --------------------
 
 	public plainHeading():string {return AssayProvenance.NAME;}
-	
+
 	public isColumnReserved(colName:string):boolean 
 	{
 		return colName == AssayProvenance.COLNAME_VALUE || colName == AssayProvenance.COLNAME_ERROR || 
-			   colName == AssayProvenance.COLNAME_UNITS || colName == AssayProvenance.COLNAME_RELATION || 
-			   colName == AssayProvenance.COLNAME_SOURCEURI;
+				colName == AssayProvenance.COLNAME_UNITS || colName == AssayProvenance.COLNAME_RELATION || 
+				colName == AssayProvenance.COLNAME_SOURCEURI;
 	}
-	
+
 	public numTextRenderings(row:number):number {return 2;}
 	public produceTextRendering(row:number, idx:number):AspectTextRendering
 	{
@@ -314,7 +313,7 @@ export class AssayProvenance extends Aspect
 				'name': 'Activity',
 				'descr': 'Activity measurement details for this record',
 				'text': '',
-				'type': Aspect.TEXT_PLAIN 
+				'type': Aspect.TEXT_PLAIN
 			};
 
 			let val = this.getValue(row), error = this.getError(row);
@@ -323,10 +322,10 @@ export class AssayProvenance extends Aspect
 			tr.text = '';
 			if (!Number.isNaN(val))
 			{
-    			if (rel) tr.text += rel + ' ';
-    			tr.text += val;
-    			if (!Number.isNaN(error)) tr.text += ' \u2213 ' + error;
-    			if (units) tr.text += ' ' + units;
+				if (rel) tr.text += rel + ' ';
+				tr.text += val;
+				if (!Number.isNaN(error)) tr.text += ' \u2213 ' + error;
+				if (units) tr.text += ' ' + units;
 			}
 			return tr;
 		}

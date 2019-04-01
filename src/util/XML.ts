@@ -91,7 +91,7 @@ export class XML
 	// creates an element child with a particular name and populates it with text
 	public static createTextChild(parent:Node, name:string, text:string, isCDATA:boolean = false):void
 	{
-		let el = <Element>parent.ownerDocument.createElement(name);
+		let el = parent.ownerDocument.createElement(name) as Element;
 		parent.appendChild(el);
 		if (!isCDATA) el.textContent = text; else el.appendChild(parent.ownerDocument.createCDATASection(text));
 	}
@@ -110,8 +110,8 @@ export class XML
 		let node = parent.firstChild;
 		while (node != null)
 		{
-			if (node.nodeType == Node.ELEMENT_NODE && node.nodeName == tagName) return <Element>node;
-			node = <any>node.nextSibling;
+			if (node.nodeType == Node.ELEMENT_NODE && node.nodeName == tagName) return node as Element;
+			node = node.nextSibling as any;
 		}
 		return null;
 	}
@@ -124,8 +124,8 @@ export class XML
 		let node = parent.firstChild;
 		while (node != null)
 		{
-			if (node.nodeType == Node.ELEMENT_NODE && node.nodeName === tagName) list.push(<Element>node);
-			node = <any>node.nextSibling;
+			if (node.nodeType == Node.ELEMENT_NODE && node.nodeName === tagName) list.push(node as Element);
+			node = node.nextSibling as any;
 		}
 		return list;
 	}
@@ -138,8 +138,8 @@ export class XML
 		let node = parent.firstChild;
 		while (node != null)
 		{
-			if (node.nodeType == Node.ELEMENT_NODE) list.push(<Element>node);
-			node = <any>node.nextSibling;
+			if (node.nodeType == Node.ELEMENT_NODE) list.push(node as Element);
+			node = node.nextSibling as any;
 		}
 		return list;
 	}

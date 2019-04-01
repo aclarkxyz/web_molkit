@@ -43,7 +43,7 @@ export abstract class ButtonBank
 {
 	public buttonView:any; // the widget parent
 	public isSubLevel = false; // true if it's not the first-on-stack
-	buttons:ButtonBankItem[] = [];
+	public buttons:ButtonBankItem[] = [];
 	
 	constructor() {}
 

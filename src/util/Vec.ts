@@ -175,8 +175,8 @@ export class Vec
 		return hi - lo;
 	}
 
-    public static reverse(arr:number[]):any[]
-    {
+	public static reverse(arr:number[]):any[]
+	{
 		let ret:any[] = [];
 		for (let n = arr.length - 1; n >= 0; n--) ret.push(arr[n]);
 		return ret;
@@ -188,7 +188,7 @@ export class Vec
 		for (let n = 0; n < sz; n++) ret[n] = n;
 		return ret;
 	}
-    
+	
 	public static identity1(sz:number):number[]
 	{
 		let ret:number[] = new Array(sz);
@@ -203,60 +203,60 @@ export class Vec
 		return ret;
 	}
 
-    public static idxGet(arr:any[], idx:number[]):any[]
-    {
+	public static idxGet(arr:any[], idx:number[]):any[]
+	{
 		let ret:any[] = [];
 		for (let n = 0; n < idx.length; n++) ret.push(arr[idx[n]]);
 		return ret;
-    }
+	}
 
-    public static maskCount(mask:boolean[]):number 
-    {
+	public static maskCount(mask:boolean[]):number 
+	{
 		let c = 0;
 		for (let n = mask.length - 1; n >= 0; n--) if (mask[n]) c++;
 		return c;
-    }
+	}
 
-	    // converts the mask into indices (0-based)
-    public static maskIdx(mask:boolean[]):number[] 
-    {
+		// converts the mask into indices (0-based)
+	public static maskIdx(mask:boolean[]):number[] 
+	{
 		let idx:number[] = [];
 		for (let n = 0; n < mask.length; n++) if (mask[n]) idx.push(n);
 		return idx;
 	}
 	
-    // converts the index into a mask (0-based index)
-    public static idxMask(idx:number[], sz:number):boolean[]
+	// converts the index into a mask (0-based index)
+	public static idxMask(idx:number[], sz:number):boolean[]
 	{
 		let mask = Vec.booleanArray(false, sz);
 		for (let n of idx) mask[n] = true;
 		return mask;
 	}
-    
-    // converts a mask into an index map: if mask[n] is true, then idx[n] is a 0-based index into an equivalent array composed only
-    // of entries for which mask is true; for the rest, the value is -1
-    public static maskMap(mask:boolean[]):number[]
-    {
+	
+	// converts a mask into an index map: if mask[n] is true, then idx[n] is a 0-based index into an equivalent array composed only
+	// of entries for which mask is true; for the rest, the value is -1
+	public static maskMap(mask:boolean[]):number[]
+	{
 		let ret:number[] = [];
 		for (let n = 0, pos = 0; n < mask.length; n++) ret.push(mask[n] ? pos++ : -1);
 		return ret;
-    }
-    
-    // returns members of an array for which the value of mask is true
-    public static maskGet(arr:any[], mask:boolean[]):any[]
+	}
+	
+	// returns members of an array for which the value of mask is true
+	public static maskGet(arr:any[], mask:boolean[]):any[]
 	{
 		let ret:number[] = [];
 		for (let n = 0, p = 0; n < arr.length; n++) if (mask[n]) ret.push(arr[n]);
 		return ret;
 	}
-    
-    // return a mask of elements which are equal on both sides (with unit extension on the right)
-    public static maskEqual(arr1:any[], val:any):boolean[]
+	
+	// return a mask of elements which are equal on both sides (with unit extension on the right)
+	public static maskEqual(arr1:any[], val:any):boolean[]
 	{
 		let ret:boolean[] = [];
 		if (val.constructor === Array)
 		{
-			let arr2 = <number[]>val;
+			let arr2 = val as number[];
 			for (let n = 0; n < arr1.length; n++) ret.push(arr1[n] == arr2[n]);
 		}
 		else
@@ -279,7 +279,7 @@ export class Vec
 		let ret:any[] = [];
 		if (val.constructor === Array)
 		{
-			let arr2 = <number[]>val;
+			let arr2 = val as number[];
 			for (let n = 0; n < arr1.length; n++) ret.push(arr1[n] + arr2[n]);
 		}
 		else
@@ -294,7 +294,7 @@ export class Vec
 		let ret:any[] = [];
 		if (val.constructor === Array)
 		{
-			let arr2 = <number[]>val;
+			let arr2 = val as number[];
 			for (let n = 0; n < arr1.length; n++) ret.push(arr1[n] - arr2[n]);
 		}
 		else
@@ -309,7 +309,7 @@ export class Vec
 		let ret:any[] = [];
 		if (val.constructor === Array)
 		{
-			let arr2 = <number[]>val;
+			let arr2 = val as number[];
 			for (let n = 0; n < arr1.length; n++) ret.push(arr1[n] * arr2[n]);
 		}
 		else
@@ -326,7 +326,7 @@ export class Vec
 		return ret;
 	}
 
-    // bulk direct operations
+	// bulk direct operations
 	public static setTo(arr:any[], val:any) {for (let n = arr == null ? -1 : arr.length - 1; n >= 0; n--) arr[n] = val;}
 	public static addTo(arr:number[], val:number) {for (let n = arr == null ? -1 : arr.length - 1; n >= 0; n--) arr[n] += val;}
 	public static mulBy(arr:number[], val:number) {for (let n = arr == null ? -1 : arr.length - 1; n >= 0; n--) arr[n] *= val;}
@@ -504,25 +504,25 @@ export class Permutation
 			nonunique: while (idx[0] < sz)
 			{
 				// increment the "digits"
-    			idx[sz - 1]++;
-    			for (let i = sz - 1; i > 0; i --)
-    			{
-    				if (idx[i] < sz) break;
-    				idx[i] = 0;
-    				idx[i - 1]++;
-    			}
-    			
-    			// skip the loop if digits have any degeneracy
-    			Vec.setTo(mask, false);
-    			for (let i of idx)
-    			{
-    				if (mask[i]) continue nonunique;
-    				mask[i] = true;
-    			}
-    			
-    			// this is a new unique combo, so poke it in
-    			perms[n] = idx.slice(0);
-    			break;
+				idx[sz - 1]++;
+				for (let i = sz - 1; i > 0; i --)
+				{
+					if (idx[i] < sz) break;
+					idx[i] = 0;
+					idx[i - 1]++;
+				}
+				
+				// skip the loop if digits have any degeneracy
+				Vec.setTo(mask, false);
+				for (let i of idx)
+				{
+					if (mask[i]) continue nonunique;
+					mask[i] = true;
+				}
+				
+				// this is a new unique combo, so poke it in
+				perms[n] = idx.slice(0);
+				break;
 			}
 		}
 		

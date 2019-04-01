@@ -47,7 +47,6 @@ namespace WebMolKit /* BOF */ {
 	{low} and {high} are the boundaries of the response value for the training set.
 */
 
-
 export class BayesianModel
 {
 	// incoming hash codes: actual values, and subsumed values are {#active,#total}
@@ -228,7 +227,7 @@ export class BayesianModel
 	// builds an array of contribution values per atom; the scale is: 0=neutral, -1=very inactive, 1=very active (but not capped)
 	public calculateAtomPredictors(mol:Molecule):number[]
 	{
-		const na = mol.numAtoms
+		const na = mol.numAtoms;
 		let atomic = Vec.numberArray(0, na); // (default of zero: is this the best call?)
 
 		// sum the contributions: for each fingerprint that is defined, smear the contribution equally over all of the atoms that were involved in
@@ -250,7 +249,7 @@ export class BayesianModel
 		let pred = 0;
 		for (let h of predHashes)
 		{
-			let c = this.contribs[<any>h];
+			let c = this.contribs[h as any];
 			if (c != null) pred += c;
 		}
 
@@ -307,7 +306,6 @@ export class BayesianModel
 	public serialise():string
 	{
 		let lines:string[] = [];
-
 
 		let fpname = this.classType == CircularFingerprints.CLASS_ECFP0 ? 'ECFP0' : this.classType == CircularFingerprints.CLASS_ECFP2 ? 'ECFP2' 
 				   : this.classType == CircularFingerprints.CLASS_ECFP4 ? 'ECFP4' : this.classType == CircularFingerprints.CLASS_ECFP6 ? 'ECFP6'
@@ -422,12 +420,12 @@ export class BayesianModel
 			else if (line.startsWith('roc:x='))
 			{
 				model.rocX = [];
-				for (let str of line.substring(6).split(',')) model.rocX.push(parseFloat(str));
+				for (let s of line.substring(6).split(',')) model.rocX.push(parseFloat(s));
 			}
 			else if (line.startsWith('roc:y='))
 			{
 				model.rocY = [];
-				for (let str of line.substring(6).split(',')) model.rocY.push(parseFloat(str));
+				for (let s of line.substring(6).split(',')) model.rocY.push(parseFloat(s));
 			}
 			else if (line.startsWith('truth:TP=')) model.truthTP = parseInt(line.substring(9), 0);
 			else if (line.startsWith('truth:FP=')) model.truthFP = parseInt(line.substring(9), 0);
@@ -707,7 +705,7 @@ export class BayesianModel
 				cover[idx] = mask;
 			}
 			for (let a of fp.atoms) mask[a - 1] = true;
-		}
+		};
 		circ.hookApplyNewFP = collectFP;
 		circ.hookConsiderNewFP = collectFP;
 		circ.calculate();

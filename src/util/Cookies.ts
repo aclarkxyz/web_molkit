@@ -83,13 +83,13 @@ export class Cookies
 		'1-14=1,0\n' +
 		'!End';
 
-	MAX_MOL_STASH = 20; // when more than this many molecules is accumulate, drop things off the edge  
+	private MAX_MOL_STASH = 20; // when more than this many molecules is accumulate, drop things off the edge  
 	
 	// --------------------------------------- public methods ---------------------------------------
 
 	constructor() 
 	{
-		for (var idx = 0; ; idx++)
+		for (let idx = 0; ; idx++)
 		{
 			let str = this.get('mol' + idx);
 			if (str == null) break;
@@ -164,9 +164,9 @@ export class Cookies
 
 	private get(key:string):string
 	{
-		let value = "; " + document.cookie;
-  		let parts = value.split("; " + key + "=");
-		if (parts.length == 2) return decodeURIComponent(parts.pop().split(";").shift());
+		let value = '; ' + document.cookie;
+  		let parts = value.split('; ' + key + '=');
+		if (parts.length == 2) return decodeURIComponent(parts.pop().split(';').shift());
 		return null;
 	}
 	

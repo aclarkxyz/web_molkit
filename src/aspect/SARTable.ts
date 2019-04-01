@@ -1,11 +1,11 @@
 /*
-    WebMolKit
+	WebMolKit
 
-    (c) 2010-2018 Molecular Materials Informatics, Inc.
+	(c) 2010-2018 Molecular Materials Informatics, Inc.
 
-    All rights reserved
-    
-    http://molmatinf.com
+	All rights reserved
+
+	http://molmatinf.com
 
 	[PKG=webmolkit]
 */
@@ -128,7 +128,7 @@ export class SARTable extends Aspect
 		 
 		for (let n = 0; n < fields.substituents.length; n++)
 		{
-			let colSubst = this.ds.findColByName(fields.substituents[n], DataSheet.COLTYPE_MOLECULE)
+			let colSubst = this.ds.findColByName(fields.substituents[n], DataSheet.COLTYPE_MOLECULE);
 			if (colSubst >= 0) this.ds.setMolecule(row, colSubst, entry.substituents[n]);
 		}
 	}
@@ -164,9 +164,9 @@ export class SARTable extends Aspect
 		this.parseAndCorrect();
 	}
 
-    // assuming that the underlying datasheet definitely is a datasheet, makes any necessary corrections to force it into compliance
+	// assuming that the underlying datasheet definitely is a datasheet, makes any necessary corrections to force it into compliance
 	private parseAndCorrect():void
-    {
+	{
 		let fields:SARTableFields =
 		{
 			'construct': 'Molecule',
@@ -194,13 +194,13 @@ export class SARTable extends Aspect
 			let content = this.formatMetaData(fields);
 			this.ds.appendExtension(SARTable.NAME, SARTable.CODE, content);
 		}
-    }
-	
-    // interprets the string metadata from the extensions
+	}
+
+	// interprets the string metadata from the extensions
 	private parseMetaData(content:string):SARTableFields
-    {
-		let fields:SARTableFields = {'construct': null, 'locked': null, 'scaffold': null, 'substituents':[], metadata: []};
-	
+	{
+		let fields:SARTableFields = {'construct': null, 'locked': null, 'scaffold': null, 'substituents':[], 'metadata': []};
+
 		for (let line of content.split(/\r?\n/))
 		{
 			let pos = line.indexOf('=');
@@ -226,9 +226,9 @@ export class SARTable extends Aspect
 		}
 		
 		return fields;
-    }
+	}
 
-    // deserialises the header metadata
+	// deserialises the header metadata
 	private formatMetaData(fields:SARTableFields):string
 	{
 		let content = '';
@@ -237,9 +237,9 @@ export class SARTable extends Aspect
 		for (let subst of fields.substituents) content += 'field=substituent,' + MoleculeStream.sk_escape(subst) + ',\n';
 		for (let meta of fields.metadata) content += meta + '\n';
 		return content;
-    }
+	}
 
-    // ------------------ aspect implementation --------------------
+	// ------------------ aspect implementation --------------------
 
 	public plainHeading():string {return SARTable.NAME;}
 	
@@ -251,7 +251,7 @@ export class SARTable extends Aspect
 	public areColumnsReserved(colNames:string[]):boolean[]
 	{
 		let fields = this.getFields();
-		var used = new Set<String>();
+		let used = new Set<string>();
 		used.add(fields.construct);
 		used.add(fields.locked);
 		used.add(fields.scaffold);
@@ -324,8 +324,8 @@ export class SARTable extends Aspect
 							break outer;
 						}
 					}
-					effects.colAtom[n] = isDefined ? 0x096E6F : 0xFF0000
-					effects.dottedRectOutline[n] = isDefined ? 0x808080 : 0xFF0000
+					effects.colAtom[n] = isDefined ? 0x096E6F : 0xFF0000;
+					effects.dottedRectOutline[n] = isDefined ? 0x808080 : 0xFF0000;
 				}
 
 				let measure = new OutlineMeasurement(0, 0, policy.data.pointScale);

@@ -125,8 +125,8 @@ export class MoleculeActivity
 			'selectedMask': null
 		};
 
-		let altInput = <{[id:string] : any}>this.input;
-		for (let k in override) altInput[k]= override[k];
+		let altInput = this.input as {[id:string] : any};
+		for (let k in override) altInput[k] = override[k];
 
 		let na = this.input.mol.numAtoms;
 		if (this.input.selectedMask == null) this.input.selectedMask = Vec.booleanArray(false, na);
@@ -151,7 +151,7 @@ export class MoleculeActivity
 				this.subjectLength = 2;
 				this.subjectMask[b1 - 1] = true;
 				this.subjectMask[b2 - 1] = true;
-				this.subjectIndex =[b1, b2];
+				this.subjectIndex = [b1, b2];
 			}
 		}
 		else
@@ -403,7 +403,7 @@ export class MoleculeActivity
 			this.finish();
 		}
 		else if (this.activity == ActivityType.BondArtifactPath || this.activity == ActivityType.BondArtifactRing ||
-				 this.activity == ActivityType.BondArtifactArene || this.activity == ActivityType.BondArtifactClear)
+				this.activity == ActivityType.BondArtifactArene || this.activity == ActivityType.BondArtifactClear)
 		{
 			this.execBondArtifact(this.activity);
 			this.finish();
@@ -530,7 +530,7 @@ export class MoleculeActivity
 		}
 		if (same)
 		{
-			this.errmsg = all ? "All atoms already selected." : "All atoms already deselected.";
+			this.errmsg = all ? 'All atoms already selected.' : 'All atoms already deselected.';
 			return;
 		}
 		this.output.selectedMask = Vec.booleanArray(all, this.input.mol.numAtoms);
@@ -782,7 +782,7 @@ export class MoleculeActivity
 	{
 		if (!this.requireSubject()) return;
 
-		this.output.mol = this.input.mol.clone()
+		this.output.mol = this.input.mol.clone();
 		for (let n = 0; n < this.subjectLength; n++)
 		{
 			let chg = Math.max(-20, Math.min(20, this.input.mol.atomCharge(this.subjectIndex[n]) + delta));
@@ -949,7 +949,7 @@ export class MoleculeActivity
 			return;
 		}
 		
-		var ang = SketchUtil.calculateNewBondAngles(this.input.mol, atom, 1);
+		let ang = SketchUtil.calculateNewBondAngles(this.input.mol, atom, 1);
 		if (ang.length == 0) ang = SketchUtil.exitVectors(this.input.mol, atom);
 		if (ang.length == 0)
 		{
@@ -957,8 +957,8 @@ export class MoleculeActivity
 			return;
 		}
 
-		var baseAng = ang[0];
-		let cx = this.input.mol.atomX(atom), cy = this.input.mol.atomY(atom)
+		let baseAng = ang[0];
+		let cx = this.input.mol.atomX(atom), cy = this.input.mol.atomY(atom);
 		if (ang.length > 1)
 		{
 			let best = 0;
@@ -1272,37 +1272,37 @@ export class MoleculeActivity
 			if (bonds[n] == 0) bonds[n] = outmol.addBond(atoms[n], atoms[nn], 1);
 		}
 		
-        // if aromaticity is desired, do an extremely crude Kekulisation
-        if (aromatic)
-        {
-        	let valence = Vec.numberArray(0, rsz);
-        	let pi = Vec.booleanArray(false, rsz);
-            for (let n = 0; n < rsz; n++)
-            {
-                valence[n] = Chemistry.ELEMENT_BONDING[outmol.atomicNumber(atoms[n])] + outmol.atomCharge(atoms[n]);
-                if (outmol.atomHExplicit(atoms[n]) != Molecule.HEXPLICIT_UNKNOWN) valence[n] -= outmol.atomHExplicit(atoms[n]);
-                for (let b of outmol.atomAdjBonds(atoms[n])) valence[n] -= outmol.bondOrder(b);
-                if (outmol.bondOrder(bonds[n]) >= 2)
-                {
-                    pi[n] = true;
-                    if (n < rsz - 1) {pi[n] = true; n++;} else pi[0] = true;
-                }
-            }
+		// if aromaticity is desired, do an extremely crude Kekulisation
+		if (aromatic)
+		{
+			let valence = Vec.numberArray(0, rsz);
+			let pi = Vec.booleanArray(false, rsz);
 			for (let n = 0; n < rsz; n++)
-            {
-                let nn = n < rsz - 1 ? n + 1 : 0;
-                if (pi[n] || pi[nn]) continue;
-                
-                if (valence[n] > 0 && valence[nn] > 0)
-                {
-                    outmol.setBondOrder(bonds[n], 2);
-                    pi[n] = true;
-                    pi[nn] = true;
-                    valence[n]--;
-                    valence[nn]--;
-                }
-            }
-        }
+			{
+				valence[n] = Chemistry.ELEMENT_BONDING[outmol.atomicNumber(atoms[n])] + outmol.atomCharge(atoms[n]);
+				if (outmol.atomHExplicit(atoms[n]) != Molecule.HEXPLICIT_UNKNOWN) valence[n] -= outmol.atomHExplicit(atoms[n]);
+				for (let b of outmol.atomAdjBonds(atoms[n])) valence[n] -= outmol.bondOrder(b);
+				if (outmol.bondOrder(bonds[n]) >= 2)
+				{
+					pi[n] = true;
+					if (n < rsz - 1) {pi[n] = true; n++;} else pi[0] = true;
+				}
+			}
+			for (let n = 0; n < rsz; n++)
+			{
+				let nn = n < rsz - 1 ? n + 1 : 0;
+				if (pi[n] || pi[nn]) continue;
+				
+				if (valence[n] > 0 && valence[nn] > 0)
+				{
+					outmol.setBondOrder(bonds[n], 2);
+					pi[n] = true;
+					pi[nn] = true;
+					valence[n]--;
+					valence[nn]--;
+				}
+			}
+		}
 
 		this.output.mol = outmol;
 	}
@@ -1329,7 +1329,7 @@ export class MoleculeActivity
 			obj['srcidx'] = perm.srcidx;
 			permutations.push(obj);
 		}
-		this.output.permutations = permutations
+		this.output.permutations = permutations;
 	}
 
 	public execAbbrevTempl():void
@@ -1448,30 +1448,29 @@ export class MoleculeActivity
 		if (!this.requireAtoms() || !this.requireSubject()) return;
 		
 		let artif = new BondArtifact(this.input.mol.clone());
-		var subject = this.subjectIndex.slice(0), curAtom = this.input.currentAtom;
+		let subject = this.subjectIndex.slice(0), curAtom = this.input.currentAtom;
 		if (curAtom > 0 && subject.indexOf(curAtom) < 0) subject.push(curAtom);
 		
 		if (activity == ActivityType.BondArtifactPath)
 		{
-			if (!artif.createPath(subject)) {this.errmsg = "Path artifact not suitable."; return;}
+			if (!artif.createPath(subject)) {this.errmsg = 'Path artifact not suitable.'; return;}
 		}
 		else if (activity == ActivityType.BondArtifactRing)
 		{
-			if (!artif.createRing(subject)) {this.errmsg = "Ring artifact not suitable."; return;}
+			if (!artif.createRing(subject)) {this.errmsg = 'Ring artifact not suitable.'; return;}
 		}
 		else if (activity == ActivityType.BondArtifactArene)
 		{
-			if (!artif.createArene(subject)) {this.errmsg = "Arene artifact not suitable."; return;}
+			if (!artif.createArene(subject)) {this.errmsg = 'Arene artifact not suitable.'; return;}
 		}
 		else if (activity == ActivityType.BondArtifactClear)
 		{
-			if (!artif.removeArtifact(subject)) {this.errmsg = "No artifact removed."; return;}
+			if (!artif.removeArtifact(subject)) {this.errmsg = 'No artifact removed.'; return;}
 		}
 		
 		artif.rewriteMolecule();
 		this.output.mol = artif.mol;
 	}
-
 
 	/*
 	// input: (standard)
@@ -1828,7 +1827,7 @@ export class MoleculeActivity
 			let atom = 0;
 
 			if ((subjmask[b1 - 1] && !subjmask[b2 - 1] && MolUtil.hasAbbrev(mol, b1)) ||
-			    (subjmask[b2 - 1] && !subjmask[b1 - 1] && MolUtil.hasAbbrev(mol, b2)))
+				(subjmask[b2 - 1] && !subjmask[b1 - 1] && MolUtil.hasAbbrev(mol, b2)))
 			{
 				this.errmsg = 'Already an abbreviation.';
 				return false;

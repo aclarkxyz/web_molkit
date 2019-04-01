@@ -64,7 +64,7 @@ const OPENMOL_INVALID =
 [
 	OpenMolType.QueryResonance,
 	OpenMolType.QueryHCount,
-]
+];
 
 // refers to a segment of the input file, for tracking purposes
 export interface OpenMolSource

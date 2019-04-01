@@ -40,7 +40,7 @@ export class Download extends Dialog
 	private optFormatList:OptionList;
 	private optSizeType:OptionList;
 	private divSizeScale:JQuery;
-	private divSizeBox:JQuery
+	private divSizeBox:JQuery;
 	private lineScale:JQuery;
 	private lineBoxWidth:JQuery;
 	private lineBoxHeight:JQuery;
@@ -57,8 +57,7 @@ export class Download extends Dialog
 	constructor(private tokenID:string)
 	{
 		super();
-
-	};
+	}
 
 	// creates a new dialog, using an instance of molsync.data.Molecule as the subject; the content will be submitted to
 	// the server as a "transient" datum associated with the tokenID
@@ -69,7 +68,7 @@ export class Download extends Dialog
 		dlg.title = 'Download Molecule';
 		dlg.open();
 		return dlg;
-	};
+	}
 
 	// creates a new dialog, using an instance of molsync.data.DataSheet as the subject; the content will be submitted to
 	// the server as a "transient" datum associated with the tokenID
@@ -80,7 +79,7 @@ export class Download extends Dialog
 		dlg.title = 'Download DataSheet';
 		dlg.open();
 		return dlg;
-	};
+	}
 
 	// builds the dialog content
 	protected populate():void
@@ -222,7 +221,7 @@ export class Download extends Dialog
 		let cw = Math.ceil(w) + 2 * padding, ch = Math.ceil(h) + 2 * padding;
 		
 		// background widget
-		let canvas = <HTMLCanvasElement>newElement(this.pictureArea, 'canvas', {'width': cw, 'height': ch});
+		let canvas = newElement(this.pictureArea, 'canvas', {'width': cw, 'height': ch}) as HTMLCanvasElement;
 
 		let density = pixelDensity();
 		canvas.width = cw * density;
@@ -272,7 +271,7 @@ export class Download extends Dialog
 		}
 		
 		ctx.restore();
-	};
+	}
 
 	// replaces the "please wait" temporary content with a placeholder for the rendered picture, and fills in the
 	// control widgets
@@ -367,7 +366,7 @@ export class Download extends Dialog
 		let psz = 30;
 		if (ftype == FormatList.GFX_OOXML_DOCX || ftype == FormatList.GFX_OOXML_XLSX) psz = 10;
 		this.lineScale.val(psz.toString());
-	};
+	}
 
 	// alter sizing type
 	private changeSizeType(idx:number):void
@@ -423,7 +422,7 @@ export class Download extends Dialog
 		let format = this.formatKey[this.optFormatList.getSelectedIndex()];
 		let id = result.transientID;
 		let fn = 'download' + FormatList.FORMAT_EXTN[format];
-		let url =RPC.BASE_URL + '/Download/' + fn + '?transientID=' + id;
+		let url = RPC.BASE_URL + '/Download/' + fn + '?transientID=' + id;
 
 		this.downloadArea.empty();
 		addText(this.downloadArea, 'Temporary download link: ');

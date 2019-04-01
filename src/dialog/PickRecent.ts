@@ -25,14 +25,14 @@ export class PickRecent extends Dialog
 	public callbackPick1:(mol:Molecule) => void = null;
 	public callbackPick2:(mol:Molecule) => void = null;
 	
-	tableRows:JQuery[] = [];
-	views:ViewStructure[] = [];
+	private tableRows:JQuery[] = [];
+	private views:ViewStructure[] = [];
 		
 	constructor(private cookies:Cookies, private sides:number)
 	{
 		super();
 		
-		this.title = "Recent Molecules";
+		this.title = 'Recent Molecules';
 		this.minPortionWidth = 20;
 		this.maxPortionWidth = 95;
 	}

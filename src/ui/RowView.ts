@@ -35,8 +35,8 @@ interface RowViewEntry
 
 export class RowView extends Widget
 {
-	entries:RowViewEntry[] = null;
-	watermark = 0;
+	private entries:RowViewEntry[] = null;
+	private watermark = 0;
 	
 	constructor(private tokenID:string)
 	{
@@ -73,7 +73,7 @@ export class RowView extends Widget
 			entry.tr = $('<tr></tr>').appendTo(table);
 			
 			// make a copy for pushing onto the roster
-			entry = <RowViewEntry>clone(entry);
+			entry = clone(entry) as RowViewEntry;
 			entry.tdStyle = '';
 			if (n > 0) entry.tdStyle += 'border-top: 1px solid #80C080;';
 			if (n < this.entries.length - 1) entry.tdStyle += 'border-bottom: 1px solid #80C080;';

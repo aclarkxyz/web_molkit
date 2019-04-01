@@ -287,7 +287,7 @@ export class FontData
 	];*/
 
 	public UNITS_PER_EM = 2048;
-	public INV_UNITS_PER_EM = 1.0 / this.UNITS_PER_EM
+	public INV_UNITS_PER_EM = 1.0 / this.UNITS_PER_EM;
 	public PANOSE_1 = '2 11 6 4 3 5 4 4 2 4';
 	public ASCENT = 1638;
 	public DESCENT = -410;
@@ -861,7 +861,7 @@ export class FontData
 
 	constructor()
 	{
-		for (var n = this.GLYPH_DATA.length - 1; n >= 0; n--) this.pathCache[n] = null;
+		for (let n = this.GLYPH_DATA.length - 1; n >= 0; n--) this.pathCache[n] = null;
 	}
 
 	// returns the advance value between two glyphs, with kerning included
@@ -917,14 +917,14 @@ export class FontData
 	public getRawGlyph(idx:number):string
 	{
 		return this.GLYPH_DATA[idx];
-	};
+	}
 
 	// returns canvas path object for the glyph (cached in case the constructor is rate limiting)
 	public getGlyphPath(idx:number):Path2D
 	{
-		path = this.pathCache[idx];
+		let path = this.pathCache[idx];
 		if (path != null) return path;
-		var path = new Path2D(this.GLYPH_DATA[idx]);
+		path = new Path2D(this.GLYPH_DATA[idx]);
 		this.pathCache[idx] = path;
 		return path;
 	}

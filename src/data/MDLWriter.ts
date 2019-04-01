@@ -203,7 +203,7 @@ export class MDLMOLWriter
 		for (let i = 0; i < sz; i += 8)
 		{
 			let count = Math.min(8, sz - i);
-			let line = "M  " + token + this.intrpad(count, 3);
+			let line = 'M  ' + token + this.intrpad(count, 3);
 			for (let j = 0; j < count; j++) line += this.intrpad(idx[i + j], 4) + this.intrpad(val[i + j], 4);
 			this.lines.push(line);
 		}
@@ -217,7 +217,7 @@ export class MDLMOLWriter
 		for (let i = 0; i < sz; i += 15)
 		{
 			let count = Math.min(15, sz - i);
-			let line = "M  " + token + this.intrpad(count, 3);
+			let line = 'M  ' + token + this.intrpad(count, 3);
 			line += this.intrpad(idx, 4);
 			for (let j = 0; j < count; j++) line += this.intrpad(val[i + j], 4);
 			this.lines.push(line);

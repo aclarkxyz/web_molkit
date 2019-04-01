@@ -14,126 +14,126 @@ namespace WebMolKit /* BOF */ {
 
 export class Chemistry
 {
-    // NOTE: the value of ELEMENTS.length is the number of elements supported by MMTk; all atom number indices should be between
-    // 1 and this range, or 0 to represent an entity which is not a single specific element
+	// NOTE: the value of ELEMENTS.length is the number of elements supported by MMTk; all atom number indices should be between
+	// 1 and this range, or 0 to represent an entity which is not a single specific element
 
-    public static ELEMENTS =
-    [
-    	null,
-    	"H",                                                                                 "He",
-    	"Li","Be",                                                  "B", "C", "N", "O", "F", "Ne",
-    	"Na","Mg",                                                  "Al","Si","P", "S", "Cl","Ar",
-    	"K", "Ca","Sc","Ti","V" ,"Cr","Mn","Fe","Co","Ni","Cu","Zn","Ga","Ge","As","Se","Br","Kr",
-    	"Rb","Sr","Y", "Zr","Nb","Mo","Tc","Ru","Rh","Pd","Ag","Cd","In","Sn","Sb","Te","I", "Xe",
-    	"Cs","Ba",
-				"La","Ce","Pr","Nd","Pm","Sm","Eu","Gd","Tb","Dy","Ho","Er","Tm","Yb",
-		  			"Lu","Hf","Ta","W", "Re","Os","Ir","Pt","Au","Hg","Tl","Pb","Bi","Po","At","Rn",
-		"Fr","Ra",
-				"Ac","Th","Pa","U", "Np","Pu","Am","Cm","Bk","Cf","Es","Fm","Md","No",
-		  			"Lr","Rf","Db","Sg","Bh","Hs","Mt","Ds","Rg","Cn"
+	public static ELEMENTS =
+	[
+		null,
+		'H',                                                                                 'He',
+		'Li','Be',                                                  'B', 'C', 'N', 'O', 'F', 'Ne',
+		'Na','Mg',                                                  'Al','Si','P', 'S', 'Cl','Ar',
+		'K', 'Ca','Sc','Ti','V' ,'Cr','Mn','Fe','Co','Ni','Cu','Zn','Ga','Ge','As','Se','Br','Kr',
+		'Rb','Sr','Y', 'Zr','Nb','Mo','Tc','Ru','Rh','Pd','Ag','Cd','In','Sn','Sb','Te','I', 'Xe',
+		'Cs','Ba',
+				'La','Ce','Pr','Nd','Pm','Sm','Eu','Gd','Tb','Dy','Ho','Er','Tm','Yb',
+					 'Lu','Hf','Ta','W', 'Re','Os','Ir','Pt','Au','Hg','Tl','Pb','Bi','Po','At','Rn',
+		'Fr','Ra',
+				'Ac','Th','Pa','U', 'Np','Pu','Am','Cm','Bk','Cf','Es','Fm','Md','No',
+					 'Lr','Rf','Db','Sg','Bh','Hs','Mt','Ds','Rg','Cn'
 	];
 
-    // which group of the periodic table each element belongs to, where the lanthanoids & actanoids are group III
-    public static ELEMENT_GROUPS =
-    [
-    	0,
-    	1,                                        18,
-    	1,2,                       13,14,15,16,17,18,
-    	1,2,                       13,14,15,16,17,18,
-    	1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,
-    	1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,
-    	1,2,
-    				    3,3,3,3,3,3,3,3,3,3,3,3,3,3,
-    	    3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,
-    	1,2,
-    				    3,3,3,3,3,3,3,3,3,3,3,3,3,3,
-    	    3,4,5,6,7,8,9,10,11,12
+	// which group of the periodic table each element belongs to, where the lanthanoids & actanoids are group III
+	public static ELEMENT_GROUPS =
+	[
+		0,
+		1,                                        18,
+		1,2,                       13,14,15,16,17,18,
+		1,2,                       13,14,15,16,17,18,
+		1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,
+		1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,
+		1,2,
+						3,3,3,3,3,3,3,3,3,3,3,3,3,3,
+			3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,
+		1,2,
+						3,3,3,3,3,3,3,3,3,3,3,3,3,3,
+			3,4,5,6,7,8,9,10,11,12
 	];
 
-    // which row of the periodic table each element belongs to, where lanthanoids & actanoids take their parent row
-    public static ELEMENT_ROWS =
-    [
-    	0,
-    	1,                                1,
-    	2,2,                    2,2,2,2,2,2,
-    	3,3,                    3,3,3,3,3,3,
-    	4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,
-    	5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,
-    	6,6,
-    				    6,6,6,6,6,6,6,6,6,6,6,6,6,6,
-    	    6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,
-    	7,7,
-    				    7,7,7,7,7,7,7,7,7,7,7,7,7,7,
-    	    7,7,7,7,7,7,7,7,7,7
+	// which row of the periodic table each element belongs to, where lanthanoids & actanoids take their parent row
+	public static ELEMENT_ROWS =
+	[
+		0,
+		1,                                1,
+		2,2,                    2,2,2,2,2,2,
+		3,3,                    3,3,3,3,3,3,
+		4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,
+		5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,
+		6,6,
+						6,6,6,6,6,6,6,6,6,6,6,6,6,6,
+			6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,
+		7,7,
+						7,7,7,7,7,7,7,7,7,7,7,7,7,7,
+			7,7,7,7,7,7,7,7,7,7
 	];
 
-    // which block of the periodic table each element belongs to, where 1=s-block, 2=p-block, 3=d-block, 4=f-block
-    public static ELEMENT_BLOCKS =
-    [
-    	0,
-    	1,                                2,
-    	1,1,                    2,2,2,2,2,2,
-    	1,1,                    2,2,2,2,2,2,
-    	1,1,3,3,3,3,3,3,3,3,3,3,2,2,2,2,2,2,
-    	1,1,3,3,3,3,3,3,3,3,3,3,2,2,2,2,2,2,
-    	1,1,
-    				    4,4,4,4,4,4,4,4,4,4,4,4,4,4,
-    	    3,3,3,3,3,3,3,3,3,3,2,2,2,2,2,2,
-    	1,1,
-    				    4,4,4,4,4,4,4,4,4,4,4,4,4,4,
-    	    3,3,3,3,3,3,3,3,3,3
-    ];
+	// which block of the periodic table each element belongs to, where 1=s-block, 2=p-block, 3=d-block, 4=f-block
+	public static ELEMENT_BLOCKS =
+	[
+		0,
+		1,                                2,
+		1,1,                    2,2,2,2,2,2,
+		1,1,                    2,2,2,2,2,2,
+		1,1,3,3,3,3,3,3,3,3,3,3,2,2,2,2,2,2,
+		1,1,3,3,3,3,3,3,3,3,3,3,2,2,2,2,2,2,
+		1,1,
+						4,4,4,4,4,4,4,4,4,4,4,4,4,4,
+			3,3,3,3,3,3,3,3,3,3,2,2,2,2,2,2,
+		1,1,
+						4,4,4,4,4,4,4,4,4,4,4,4,4,4,
+			3,3,3,3,3,3,3,3,3,3
+	];
 
-	// the number of "valence" electrons possessed by an individual uncharged atom
-    public static ELEMENT_VALENCE =
-    [
-    	0,
-    	1,                                   2,
-    	1,2,                       3,4,5,6,7,8,
-    	1,2,                       3,4,5,6,7,8,
-    	1,2,3,4,5,6,7,8,9,10,11,12,3,4,5,6,7,8,
-    	1,2,3,4,5,6,7,8,9,10,11,12,3,4,5,6,7,8,
-    	1,2,
-    				    4,4,4,4,4,4,4,4,4,4,4,4,4,4,
-    	    3,4,5,6,7,8,9,10,11,12,3,4,5,6,7,8,
-    	1,1,
-    				    4,4,4,4,4,4,4,4,4,4,4,4,4,4,
-    	    3,4,5,6,7,8,9,10,11,12
+	// the number of 'valence' electrons possessed by an individual uncharged atom
+	public static ELEMENT_VALENCE =
+	[
+		0,
+		1,                                   2,
+		1,2,                       3,4,5,6,7,8,
+		1,2,                       3,4,5,6,7,8,
+		1,2,3,4,5,6,7,8,9,10,11,12,3,4,5,6,7,8,
+		1,2,3,4,5,6,7,8,9,10,11,12,3,4,5,6,7,8,
+		1,2,
+						4,4,4,4,4,4,4,4,4,4,4,4,4,4,
+			3,4,5,6,7,8,9,10,11,12,3,4,5,6,7,8,
+		1,1,
+						4,4,4,4,4,4,4,4,4,4,4,4,4,4,
+			3,4,5,6,7,8,9,10,11,12
 	];
 
 	// the number of valence electrons typically involved in bonding, i.e. ELEMENT_VALENCE minus
 	// the electrons dedicated to lone pairs; the concept is only really valid for main blocks
-    public static ELEMENT_BONDING =
-    [
-    	0,
-    	1,                                   0,
-    	1,2,                       3,4,3,2,1,0,
-    	1,2,                       3,4,3,2,1,0,
-    	1,2,3,4,5,6,7,8,9,10,11,12,3,4,3,2,1,0,
-    	1,2,3,4,5,6,7,8,9,10,11,12,3,4,3,2,1,0,
-    	1,2,
-    				    4,4,4,4,4,4,4,4,4,4,4,4,4,4,
-    	    3,4,5,6,7,8,9,10,11,12,3,4,3,2,1,0,
-    	1,1,
-    				    4,4,4,4,4,4,4,4,4,4,4,4,4,4,
-    	    3,4,5,6,7,8,9,10,11,12
+	public static ELEMENT_BONDING =
+	[
+		0,
+		1,                                   0,
+		1,2,                       3,4,3,2,1,0,
+		1,2,                       3,4,3,2,1,0,
+		1,2,3,4,5,6,7,8,9,10,11,12,3,4,3,2,1,0,
+		1,2,3,4,5,6,7,8,9,10,11,12,3,4,3,2,1,0,
+		1,2,
+						4,4,4,4,4,4,4,4,4,4,4,4,4,4,
+			3,4,5,6,7,8,9,10,11,12,3,4,3,2,1,0,
+		1,1,
+						4,4,4,4,4,4,4,4,4,4,4,4,4,4,
+			3,4,5,6,7,8,9,10,11,12
 	];
 
-	// the total number of "valence" electrons required to make up a full "valence shell"
-    public static ELEMENT_SHELL =
-    [
-    	0,
-    	2,                                          2,
-    	8,8,                              8,8,8,8,8,8,
-    	8,8,                              8,8,8,8,8,8,
-    	8,8,18,18,18,18,18,18,18,18,18,18,8,8,8,8,8,8,
-    	8,8,18,18,18,18,18,18,18,18,18,18,8,8,8,8,8,8,
-    	8,8,
-    				    18,18,18,18,18,18,18,18,18,18,18,18,18,18,
-    	    18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,
-    	8,8,
-    				    18,18,18,18,18,18,18,18,18,18,18,18,18,18,
-    	    18,18,18,18,18,18,18,18,18,18
+	// the total number of 'valence' electrons required to make up a full 'valence shell'
+	public static ELEMENT_SHELL =
+	[
+		0,
+		2,                                          2,
+		8,8,                              8,8,8,8,8,8,
+		8,8,                              8,8,8,8,8,8,
+		8,8,18,18,18,18,18,18,18,18,18,18,8,8,8,8,8,8,
+		8,8,18,18,18,18,18,18,18,18,18,18,8,8,8,8,8,8,
+		8,8,
+						18,18,18,18,18,18,18,18,18,18,18,18,18,18,
+			18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,18,
+		8,8,
+						18,18,18,18,18,18,18,18,18,18,18,18,18,18,
+			18,18,18,18,18,18,18,18,18,18
 	];
 
 	public static NATURAL_ATOMIC_WEIGHTS = 
@@ -149,7 +149,7 @@ export class Chemistry
 		209,210,222,223,226,227,230.0331266,231.03588,233.039628,237,244,243,247,247,251,252,257,
 		258,259,262,261,262,266,264,277,268,271,272,285
 	];
-    
+	
 	// readable constants for elements
 	public static ELEMENT_H = 1;
 	public static ELEMENT_He = 2;

@@ -53,8 +53,6 @@ const TOOLS_MAIN:ButtonBankItem[] =
 
 export class ToolBank extends ButtonBank
 {
-	initiallySelected = 'arrow';
-	
 	constructor(protected owner:any)
 	{
 		super();
@@ -63,10 +61,10 @@ export class ToolBank extends ButtonBank
 	// populate the buttons
 	public update():void
 	{
-		 for (let btn of TOOLS_MAIN) this.buttons.push(btn);		
+		for (let btn of TOOLS_MAIN) this.buttons.push(btn);		
 		
 		this.buttonView.setSelectedButton('arrow');
-	};
+	}
 
 	// react to a button click
 	public hitButton(id:string):void

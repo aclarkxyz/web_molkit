@@ -63,7 +63,7 @@ export class FormatList
 		'ods':		'OpenDocument SpreadSheet',
 		'docx':		'Microsoft Word',
 		'xlsx':		'Microsoft Excel'
-	}
+	};
 	public static FORMAT_EXTN:{[id:string] : string} =
 	{
 		'native':	'.el',
@@ -85,7 +85,7 @@ export class FormatList
 		'ods':		'.ods',
 		'docx':		'.docx',
 		'xlsx':		'.xlsx'
-	}
+	};
 	public static FORMAT_MIMETYPE:{[id:string] : string} =
 	{
 		'native':	'chemical/x-sketchel',
@@ -107,7 +107,7 @@ export class FormatList
 		'ods':		'application/vnd.oasis.opendocument.spreadsheet',
 		'docx':		'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
 		'xlsx':		'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-	}
+	};
 }
 
 /* EOF */ }

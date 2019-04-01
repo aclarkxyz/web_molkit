@@ -133,9 +133,9 @@ export class ArrangeExperiment
 		for (let xc of this.components)
 		{
 			if (xc.type == ArrangeExperiment.COMP_PLUS) xc.box = new Box(0, 0, this.scale * this.PLUSSZ, this.scale * this.PLUSSZ);
-    		else if (xc.type == ArrangeExperiment.COMP_ARROW) {} // directional
-    		else
-    		{
+			else if (xc.type == ArrangeExperiment.COMP_ARROW) {} // directional
+			else
+			{
 				let w = 0, h = 0;
 				if (MolUtil.notBlank(xc.mol))
 				{
@@ -160,7 +160,7 @@ export class ArrangeExperiment
 					let wad = this.measure.measureText(xc.text, fszText);
 					w = Math.max(w, wad[0]);
 					h += wad[1] + wad[2];
-    			}
+				}
 				if (xc.annot != 0) w += ArrangeExperiment.COMP_ANNOT_SIZE * this.scale;
 				if (this.includeBlank || w == 0 || h == 0)
 				{
@@ -168,19 +168,19 @@ export class ArrangeExperiment
 					h = Math.max(h, this.PLACEHOLDER_H * this.scale);
 				}
 				xc.box = new Box(0, 0, w, h);
-    		}
-    
-    		// give it breathing room
+			}
+	
+			// give it breathing room
 			xc.padding = padding;
 			xc.box = new Box(0, 0, xc.box.w + 2 * padding, xc.box.h + 2 * padding);
-    	}
+		}
 	
-    	// build several permutations; take the best one
-    	// note: bend=1 for completely vertical, bend=2 for switch after first step, bend=#steps+1 for linear
+		// build several permutations; take the best one
+		// note: bend=1 for completely vertical, bend=2 for switch after first step, bend=#steps+1 for linear
 		let best:ArrangeComponent[] = null;
 		let bestScore = 0;
 		for (let bend = this.entry.steps.length + 1; bend >= 1; bend--) for (let vert = 0; vert <= 1; vert++)
-    	{
+		{
 			let trial:ArrangeComponent[] = [];
 			for (let xc of this.components) trial.push(xc.clone());
 			this.arrangeComponents(trial, bend, vert > 0);
@@ -191,11 +191,11 @@ export class ArrangeExperiment
 				best = trial;
 				bestScore = score;
 			}
-    	}
-    
+		}
+	
 		this.components = best;
-    		
-    	// ascertain the limits
+			
+		// ascertain the limits
 		this.width = this.height = 0;
 		for (let xc of this.components)
 		{
@@ -257,8 +257,8 @@ export class ArrangeExperiment
 			this.createReactant(n, 0);
 		}
 		if (this.components.length == 0 && this.includeBlank) this.createBlank(ArrangeExperiment.COMP_REACTANT, 0);
-    	
-    	// reagents & products for each step
+		
+		// reagents & products for each step
 		for (let s = 0; s < this.entry.steps.length; s++)
 		{
 			this.createSegregator(ArrangeExperiment.COMP_ARROW, s, 0);
@@ -272,7 +272,7 @@ export class ArrangeExperiment
 				}
 				if (!any && this.includeBlank) this.createBlank(ArrangeExperiment.COMP_REAGENT, s);
 			}
-    		
+			
 			let any = false;
 			for (let n = 0; n < this.entry.steps[s].products.length; n++)
 			{
@@ -281,7 +281,7 @@ export class ArrangeExperiment
 				any = true;
 			}
 			if (!any && this.includeBlank) this.createBlank(ArrangeExperiment.COMP_PRODUCT, s);
-    	}
+		}
 	}
 
 	private createReactant(idx:number, step:number):void
@@ -311,7 +311,7 @@ export class ArrangeExperiment
 	}
 	private createReagent(idx:number, step:number):void
 	{
-		let comp = this.entry.steps[step].reagents[idx]
+		let comp = this.entry.steps[step].reagents[idx];
 
 		let xc = new ArrangeComponent();
 		xc.type = ArrangeExperiment.COMP_REAGENT;
@@ -350,7 +350,7 @@ export class ArrangeExperiment
 		if (name && (this.includeNames || MolUtil.isBlank(comp.mol))) xc.text = comp.name;
 		if (MolUtil.isBlank(xc.mol) && !xc.text) xc.text = '?';
 		if (this.includeStoich && !QuantityCalc.isStoichZero(comp.stoich) && !QuantityCalc.isStoichUnity(comp.stoich))
-    	{
+		{
 			let slash = comp.stoich.indexOf('/');
 			if (slash >= 0)
 			{
@@ -358,7 +358,7 @@ export class ArrangeExperiment
 				xc.leftDenom = comp.stoich.substring(slash + 1);
 			}
 			else xc.leftNumer = comp.stoich;
-    	}
+		}
 		if (this.includeAnnot && MolUtil.notBlank(comp.mol) && comp.waste) xc.annot = ArrangeExperiment.COMP_ANNOT_WASTE;
 		this.components.push(xc);
 	}
@@ -390,7 +390,7 @@ export class ArrangeExperiment
 		blkMain.push(this.gatherBlock(comps, 0, -1));
 		szMain.push(this.arrangeMainBlock(blkMain[0], vertComp));
 		midMain.push(this.findMidBlock(blkMain[0], szMain[0]));
-    	
+		
 		for (let n = 0; n < this.entry.steps.length; n++)
 		{
 			let bent = n + 1 >= bendStep;
@@ -398,17 +398,17 @@ export class ArrangeExperiment
 			blkMain.push(this.gatherBlock(comps, n, 1));
 			szMain.push(this.arrangeMainBlock(blkMain[n + 1], vertComp && !bent));
 			midMain.push(this.findMidBlock(blkMain[n + 1], szMain[n + 1]));
-    		
+			
 			blkArrow.push(this.gatherBlock(comps, n, 0));
 			if (!bent) 
 				szArrow.push(this.arrangeHorizontalArrowBlock(blkArrow[n]));
 			else 
 				szArrow.push(this.arrangeVerticalArrowBlock(blkArrow[n]));
 			midArrow.push(this.findMidBlock(blkArrow[n], szArrow[n]));
-    	}
-    	
-    	// part 1: arrange the first step(s) left-to-right
-    	
+		}
+		
+		// part 1: arrange the first step(s) left-to-right
+		
 		let midH = 0;
 		for (let n = 0; n < bendStep; n++)
 		{
@@ -425,8 +425,8 @@ export class ArrangeExperiment
 				sz.w += szArrow[n - 1].w;
 				sz.h = Math.max(sz.h, midH + (szArrow[n - 1].h - midArrow[n - 1].y));
 			}
-    	}
-    	
+		}
+		
 		let x = 0, arrowX = 0;
 		for (let n = 0; n < bendStep; n++)
 		{
@@ -440,9 +440,9 @@ export class ArrangeExperiment
 			arrowX = x + midMain[n].x;
 			x += szMain[n].w;
 		}
-    
-    	// part 2: arrange the remaining steps top-down
-    	
+	
+		// part 2: arrange the remaining steps top-down
+		
 		let y = sz.h, lowX = 0;
 		for (let n = bendStep; n <= this.entry.steps.length; n++)
 		{
@@ -494,7 +494,7 @@ export class ArrangeExperiment
 				sz.h += xc.box.h;
 			}
 		}
-    	
+		
 		sz.w = Math.max(sz.w, this.scale * 2.0);
 		sz.h = Math.max(sz.h, this.scale * 2.0);
 
@@ -520,8 +520,8 @@ export class ArrangeExperiment
 		}
 
 		return sz;
-    }
-    
+	}
+	
 	// arrange an arrow, and the associated reagents
 	private arrangeHorizontalArrowBlock(block:ArrangeComponent[]):Size
 	{
@@ -543,7 +543,7 @@ export class ArrangeExperiment
 		let y = 0;
 		let arrowPlaced = false;
 		for (let xc of block) if (xc.type != ArrangeExperiment.COMP_ARROW)
-    	{
+		{
 			xc.box.x = 0.5 * (arrow.box.w - xc.box.w);
 			xc.box.y = y;
 			y += xc.box.h;
@@ -556,7 +556,7 @@ export class ArrangeExperiment
 				y += arrow.box.h;
 				arrowPlaced = true;
 			}
-    	}
+		}
 		if (!arrowPlaced)
 		{
 			arrow.box.x = 0;
@@ -565,12 +565,12 @@ export class ArrangeExperiment
 		}
 		sz.w = arrow.box.w;
 		sz.h = y;
-    	
-    	return sz;
-    }
+		
+		return sz;
+	}
 
 	private arrangeVerticalArrowBlock(block:ArrangeComponent[]):Size
-    {
+	{
 		let arrow:ArrangeComponent = null;
 		for (let xc of block) if (xc.type == ArrangeExperiment.COMP_ARROW)
 		{
@@ -597,14 +597,14 @@ export class ArrangeExperiment
 			}
 			n++;
 		}
-    
+	
 		let sz = new Size(sz1.w + sz2.w + arrow.box.w, Math.max(arrow.box.h, Math.max(sz1.h, sz2.h)));
 		arrow.box = new Box(sz1.w, 0, arrow.box.w, sz.h);
-    	
+		
 		let y1 = 0.5 * (sz.h - sz1.h), y2 = 0.5 * (sz.h - sz2.h);
 		n = 0;
 		for (let xc of block) if (xc.type != ArrangeExperiment.COMP_ARROW)
-    	{
+		{
 			if (n < mid)
 			{
 				xc.box.x = sz1.w - xc.box.w;
@@ -617,13 +617,13 @@ export class ArrangeExperiment
 				xc.box.y = y2;
 				y2 += xc.box.h;
 			}
-    		n++;
-    	}
-    	
-    	return sz;
-    }
-    
-    // find the "reference middle" of a block, which is based on pluses and arrows
+			n++;
+		}
+		
+		return sz;
+	}
+	
+	// find the "reference middle" of a block, which is based on pluses and arrows
 	private findMidBlock(block:ArrangeComponent[], sz:Size):Pos
 	{
 		let count = 0;
@@ -647,22 +647,22 @@ export class ArrangeExperiment
 		}
 		return mid;
 	}
-    
-    // determine how good a particular arrangement is
+	
+	// determine how good a particular arrangement is
 	private scoreArrangement(comps:ArrangeComponent[]):number
-    {
-    	let w = 0;
+	{
+		let w = 0;
 		for (let xc of comps) w = Math.max(w, xc.box.maxX());
-    	
+		
 		let score = 0;
 
 		// want the width to be as close as possible to the limiting width
 		score -= Math.abs(w - this.limitTotalW);
 
-    	// (anything else that matters?)
-    
-    	return score;
-    }
+		// (anything else that matters?)
+	
+		return score;
+	}
 
 	// moves all components in a block
 	private originateBlock(block:ArrangeComponent[], x:number, y:number):void
@@ -671,8 +671,8 @@ export class ArrangeExperiment
 		{
 			xc.box.x += x;
 			xc.box.y += y;
-    	}
-    }
+		}
+	}
 }
 
 /* EOF */ }

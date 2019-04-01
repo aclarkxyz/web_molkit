@@ -34,7 +34,7 @@ export class FusionPermutation
 	public srcidx:number[];  // for each atom in mol, >0=present in original molecule, 0=not so
 
 	public attdist = 0;
-	public guided = false
+	public guided = false;
 	public bridged = false;
 	public scoreModifier = 0;
 	public chainSelect = 0;
@@ -53,25 +53,25 @@ export class TemplateFusion
 	public TIME_LIMIT = 5.0; // number of seconds after which template fusion should quit with what it has
 	public static RESERVED_GUIDESYMBOL = 'XXX';
 
-    // ------------------ public methods --------------------
+	// ------------------ public methods --------------------
 
 	constructor(public mol:Molecule, public templ:Molecule, public abbrev:string)
 	{
 		// renumber any incoming bond artifacts
-        let artif1 = new BondArtifact(mol), artif2 = new BondArtifact(templ);
-        artif2.harmoniseNumbering(artif1);
-        artif2.rewriteMolecule();
+		let artif1 = new BondArtifact(mol), artif2 = new BondArtifact(templ);
+		artif2.harmoniseNumbering(artif1);
+		artif2.rewriteMolecule();
 
 		this.huntForGuides();
 	}
 
 	// place the template with no reference anchor
-    public permuteNone():void
-    {
+	public permuteNone():void
+	{
 		let numAttach = 0;
 
 		let oldmol = this.mol.clone(), newmol = this.templ.clone();
-    	
+		
 		if (oldmol.numAtoms > 0)
 		{
 			let oldbox = oldmol.boundary(), newbox = newmol.boundary();
@@ -84,7 +84,7 @@ export class TemplateFusion
 			let newbox = newmol.boundary();
 			CoordUtil.translateMolecule(newmol, -newbox.midX(), -newbox.midY());
 		}
-    	
+		
 		let oldbox = oldmol.boundary(), newbox = newmol.boundary();
 		let cx = newbox.midX(), cy = newbox.midY();
 		let ROTN = [0, 30, 45, 60, 90, 120, 135, 150, 180, 210, 225, 240, 270, 300, 315, 330];
@@ -105,7 +105,7 @@ export class TemplateFusion
 			p.guided = false;
 			this.perms.push(p);
 		}
-    }
+	}
 
 	// generate permutations with one atom reference point
 	public permuteAtom(atom:number):void
@@ -117,37 +117,37 @@ export class TemplateFusion
 		let newperms:FusionPermutation[] = [];
 
 		if (this.guidetempl != null)
-    	{
+		{
 			let fliptempl = this.guidetempl.clone();
 			CoordUtil.mirrorImage(fliptempl);
-    		
+			
 			for (let n = 0; n < this.guideidx.length; n++)
-    		{
-    			if (new Date().getTime() - timeStart > this.TIME_LIMIT * 1000) break;
-    
+			{
+				if (new Date().getTime() - timeStart > this.TIME_LIMIT * 1000) break;
+	
 				this.composeGuidedOne(newperms, oldmol, this.guidetempl, atom, this.guideidx[n]);
 				this.composeGuidedOne(newperms, oldmol, fliptempl, atom, this.guideidx[n]);
-    		}
-    	}
+			}
+		}
 
-    	if (!this.withGuideOnly)
-    	{
-    		let flipmol = newmol.clone();
-    		CoordUtil.mirrorImage(flipmol);
-    		
+		if (!this.withGuideOnly)
+		{
+			let flipmol = newmol.clone();
+			CoordUtil.mirrorImage(flipmol);
+			
 			for (let n = 1; n <= newmol.numAtoms; n++)
-    		{
+			{
 				if (new Date().getTime() - timeStart > this.TIME_LIMIT * 1000) break;
-    
+	
 				this.composeDirectOne(newperms, oldmol, newmol, atom, n);
 				this.composeDirectOne(newperms, oldmol, flipmol, atom, n);
 
 				this.composeBridge(newperms, oldmol, newmol, atom, n);
 				this.composeBridge(newperms, oldmol, flipmol, atom, n);
-    		}
-    	}
+			}
+		}
 
-    	this.affixRawPermutations(newperms);
+		this.affixRawPermutations(newperms);
 	}
 	
 	// generate permutations with a bond reference point
@@ -166,11 +166,11 @@ export class TemplateFusion
 			for (let i = 0; i < this.guideidx.length; i++)
 			{
 				if (new Date().getTime() - timeStart > this.TIME_LIMIT * 1000) break;
-    			
+				
 				let g1 = this.guideidx[i];
 				let adj = this.guidetempl.atomAdjList(g1);
 				for (let j = 0; j < adj.length; j++)
-    			{
+				{
 					let g2 = adj[j];
 
 					this.composeGuidedTwo(newperms, oldmol, this.guidetempl, a1, a2, g1, g2, true);
@@ -182,28 +182,28 @@ export class TemplateFusion
 					this.composeGuidedTwo(newperms, oldmol, this.guidetempl, a2, a1, g1, g2, false);
 					this.composeGuidedTwo(newperms, oldmol, fliptempl, a1, a2, g1, g2, false);
 					this.composeGuidedTwo(newperms, oldmol, fliptempl, a2, a1, g1, g2, false);
-    			}
-    		}
-    	}
+				}
+			}
+		}
 
-    	if (!this.withGuideOnly)
-    	{
+		if (!this.withGuideOnly)
+		{
 			let flipmol = newmol.clone();
 			CoordUtil.mirrorImage(flipmol);
 
 			for (let n = 1; n <= newmol.numBonds; n++)
 			{
 				if (new Date().getTime() - timeStart > this.TIME_LIMIT * 1000) break;
-    
+	
 				let nfr = newmol.bondFrom(n), nto = newmol.bondTo(n);
 				this.composeDirectTwo(newperms, oldmol, newmol, a1, a2, nfr, nto);
 				this.composeDirectTwo(newperms, oldmol, flipmol, a1, a2, nfr, nto);
 				this.composeDirectTwo(newperms, oldmol, newmol, a1, a2, nto, nfr);
 				this.composeDirectTwo(newperms, oldmol, flipmol, a1, a2, nto, nfr);
-    		}
-    	}
-    
-    	this.affixRawPermutations(newperms);
+			}
+		}
+	
+		this.affixRawPermutations(newperms);
 	}
 
 	// generate permutations with many reference points
@@ -214,11 +214,11 @@ export class TemplateFusion
 		let timeStart = new Date().getTime();
 		let oldmol = this.mol.clone(), newmol = this.templ.clone();
 		let newperms:FusionPermutation[] = [];
-    
-    	if (this.guidetempl != null)
-    	{
-    		let fliptempl = this.guidetempl.clone();
-    		CoordUtil.mirrorImage(fliptempl);
+	
+		if (this.guidetempl != null)
+		{
+			let fliptempl = this.guidetempl.clone();
+			CoordUtil.mirrorImage(fliptempl);
 
 			if (this.guideidx.length == atoms.length)
 			{
@@ -230,12 +230,12 @@ export class TemplateFusion
 				this.composeGuidedMulti(newperms, oldmol, this.guidetempl, atoms, this.guideadj, false);
 				this.composeGuidedMulti(newperms, oldmol, fliptempl, atoms, this.guideadj, false);
 			}
-    	}
+		}
 
-    	if (!this.withGuideOnly)
-    	{
+		if (!this.withGuideOnly)
+		{
 			let flipmol = newmol.clone();
-    		CoordUtil.mirrorImage(flipmol);
+			CoordUtil.mirrorImage(flipmol);
 
 			for (let n = 1; n <= newmol.numAtoms; n++)
 			{
@@ -243,13 +243,13 @@ export class TemplateFusion
 
 				this.composeDirectMulti(newperms, oldmol, newmol, atoms, n);
 				this.composeDirectMulti(newperms, oldmol, flipmol, atoms, n);
-    		}
-    	}
-    
-    	this.affixRawPermutations(newperms);	
+			}
+		}
+	
+		this.affixRawPermutations(newperms);	
 	}
 
-    // ------------------ private methods --------------------
+	// ------------------ private methods --------------------
 
 	private huntForGuides():void
 	{
@@ -274,7 +274,7 @@ export class TemplateFusion
 		let ocurrent = CoordUtil.atomBondAngles(oldmol, o1);
 		let ncurrent = CoordUtil.atomBondAngles(newmol, n1);
 
-    	// create the list of angle matches to try out
+		// create the list of angle matches to try out
 		let theta1:number[] = [], theta2:number[] = [], scoreMod:number[] = [];
 
 		for (let i = 0; i < ocurrent.length; i++) for (let j = 0; j < ntheta.length; j++)
@@ -296,11 +296,11 @@ export class TemplateFusion
 			scoreMod.push(0);
 		}
 		
-    	// now combine them
+		// now combine them
 		let bfs = Graph.fromMolecule(newmol).calculateBFS(0);
 		let ox = oldmol.atomX(o1), oy = oldmol.atomY(o1), nx = newmol.atomX(n1), ny = newmol.atomY(n1);
 		for (let n = 0; n < theta1.length; n++)
-    	{
+		{
 			let dth = angleDiff(theta1[n], theta2[n]);
 			let frag = newmol.clone();
 			CoordUtil.translateMolecule(frag, ox - nx, oy - ny);
@@ -332,23 +332,23 @@ export class TemplateFusion
 		let oth = Math.atan2(oldmol.atomY(o2) - oldmol.atomY(o1), oldmol.atomX(o2) - oldmol.atomX(o1));
 		let nth = Math.atan2(newmol.atomY(n2) - newmol.atomY(n1), newmol.atomX(n2) - newmol.atomX(n1));
 		let cx = 0.5 * (oldmol.atomX(o1) + oldmol.atomX(o2)), cy = 0.5 * (oldmol.atomY(o1) + oldmol.atomY(o2));
-    	
+		
 		let frag = newmol.clone();
 		CoordUtil.translateMolecule(frag, cx - 0.5 * (newmol.atomX(n1) + newmol.atomX(n2)), cy - 0.5 * (newmol.atomY(n1) + newmol.atomY(n2)));
 		CoordUtil.rotateMolecule(frag, oth - nth, cx, cy);
 		frag.setAtomPos(n1, oldmol.atomX(o1), oldmol.atomY(o1));
 		frag.setAtomPos(n2, oldmol.atomX(o2), oldmol.atomY(o2));
-    	
+		
 		let pmol = oldmol.clone();
 		let osz = pmol.numAtoms;
 		pmol.append(frag);
 		let srcidx = this.sourceIndex(pmol, oldmol);
 		SketchUtil.mergeFragmentsMask(pmol, this.asMask(srcidx));
-    
+	
 		if (pmol.numAtoms == osz) return;
-    
+	
 		let bfs = Graph.fromMolecule(newmol).calculateBFS(0);
-    
+	
 		let p = new FusionPermutation();
 		p.mol = pmol;
 		p.display = frag;
@@ -359,7 +359,7 @@ export class TemplateFusion
 		p.guided = false;
 		this.removeExtraGuides(p, oldmol);
 		list.push(p);
-    }
+	}
 	private composeDirectMulti(list:FusionPermutation[], oldmol:Molecule, newmol:Molecule, oidx:number[], n1:number):void
 	{
 		let frag = newmol.clone();
@@ -378,9 +378,9 @@ export class TemplateFusion
 			if (Math.abs(nrad - orad) > 0.1) continue; // no point in trying to map {o1,o2} to {n1,n2}
 			let ntheta = Math.atan2(ny, nx);
 			CoordUtil.rotateMolecule(frag, otheta - ntheta, x0, y0);
-    		
-    		nidx = [n1, n2];
-    		
+			
+			nidx = [n1, n2];
+			
 			for (let i = 2; i < oidx.length; i++)
 			{
 				let hit = false;
@@ -393,12 +393,12 @@ export class TemplateFusion
 				}
 				if (!hit) break;
 			}
-    		
+			
 			if (nidx.length < oidx.length) continue;
 
 			let lowbfs = bfs.length;
 			for (let n = 0; n < nidx.length; n++) lowbfs = Math.min(lowbfs, bfs[nidx[n] - 1]);
-    		
+			
 			let dx = 0, dy = 0;
 			for (let n = 0; n < oidx.length; n++)
 			{
@@ -409,7 +409,7 @@ export class TemplateFusion
 			dx *= invsz;
 			dy *= invsz;
 			CoordUtil.translateMolecule(frag, dx, dy);
-    		
+			
 			let pmol = oldmol.clone();
 			let osz = pmol.numAtoms;
 			pmol.append(frag);
@@ -422,7 +422,7 @@ export class TemplateFusion
 			}
 			SketchUtil.mergeFragmentsMask(pmol, this.asMask(srcidx));
 			if (pmol.numAtoms == osz) continue;
-    		
+			
 			let p = new FusionPermutation();
 			p.mol = pmol;
 			p.display = frag.clone();
@@ -433,21 +433,21 @@ export class TemplateFusion
 			p.guided = false;
 			this.removeExtraGuides(p, oldmol);
 			list.push(p);
-    	}
+		}
 	}
 	private composeBridge(list:FusionPermutation[], oldmol:Molecule, newmol:Molecule, o1:number, n1:number):void
 	{
 		let busy1 = oldmol.atomRingBlock(o1) != 0 || oldmol.atomAdjCount(o1) >= 3;
 		let busy2 = newmol.atomRingBlock(n1) != 0 || newmol.atomAdjCount(n1) >= 3;
 		if (!busy1 || !busy2) return;
-    	
+		
 		let otheta = SketchUtil.primeDirections(oldmol, o1);
 		let ntheta = SketchUtil.primeDirections(newmol, n1);
 
 		let bfs = Graph.fromMolecule(newmol).calculateBFS(0);
 
 		for (let i = 0; i < otheta.length; i++) for (let j = 0; j < ntheta.length; j++)
-    	{
+		{
 			let ox = oldmol.atomX(o1), oy = oldmol.atomY(o1), nx = newmol.atomX(n1), ny = newmol.atomY(n1);
 			let dx = Molecule.IDEALBOND * Math.cos(otheta[i]), dy = Molecule.IDEALBOND * Math.sin(otheta[i]);
 			let dth = angleDiff(otheta[i], Math.PI + ntheta[j]);
@@ -487,8 +487,8 @@ export class TemplateFusion
 
 		let otheta = SketchUtil.primeDirections(oldmol, oidx);
 
-    	// special deal: if the attachment is multidentate, make sure there is an out-jutting angle that is the simple average of the other
-    	// constituents' opposites, since regular bond angles are less definitively useful
+		// special deal: if the attachment is multidentate, make sure there is an out-jutting angle that is the simple average of the other
+		// constituents' opposites, since regular bond angles are less definitively useful
 		if (newmol.atomAdjCount(gidx) > 1 && oldmol.atomAdjCount(oidx) > 0)
 		{
 			let ox = 0, oy = 0;
@@ -519,14 +519,14 @@ export class TemplateFusion
 		dx /= adj.length;
 		dy /= adj.length;
 		let ntheta = Math.atan2(dy, dx);
-    	
+		
 		let homoPenalty = 0;
 		if (adj.length == 1)
 		{
 			let oel = oldmol.atomElement(oidx), nel = newmol.atomElement(adj[0]);
 			if (oel != 'C' && oel == nel) homoPenalty = 1; // penalty points for het-het joining
 		}
-    	
+		
 		for (let n = 0; n < otheta.length; n++)
 		{
 			let frag = newmol.clone();
@@ -550,8 +550,8 @@ export class TemplateFusion
 			let srcidx = this.sourceIndex(pmol, oldmol);
 			SketchUtil.mergeFragmentsMask(pmol, this.asMask(srcidx));
 			if (pmol.numAtoms == osz) continue;
-    		
-    		// look for a next-current option
+			
+			// look for a next-current option
 			let sel = 0;
 			for (let i = 1; i <= pmol.numAtoms; i++) if (pmol.atomElement(i) == TemplateFusion.RESERVED_GUIDESYMBOL)
 			{
@@ -565,7 +565,7 @@ export class TemplateFusion
 				srcidx.splice(i - 1, 1);
 				break;
 			}
-    		
+			
 			let p = new FusionPermutation();
 			p.mol = pmol;
 			p.display = frag;
@@ -578,10 +578,10 @@ export class TemplateFusion
 			p.chainSelect = sel;
 			this.removeExtraGuides(p, oldmol);
 			list.push(p);
-    	}
+		}
 	}
 	private composeGuidedTwo(list:FusionPermutation[], oldmol:Molecule, newmol:Molecule,
-							 o1:number, o2:number, gidx:number, nidx:number, snapToGuide:boolean):void
+							o1:number, o2:number, gidx:number, nidx:number, snapToGuide:boolean):void
 	{
 		let ox = oldmol.atomX(o1), oy = oldmol.atomY(o1);
 		let gx = newmol.atomX(gidx), gy = newmol.atomY(gidx);
@@ -604,13 +604,13 @@ export class TemplateFusion
 			CoordUtil.translateMolecule(frag, oldmol.atomX(o2) - frag.atomX(nidx), oldmol.atomY(o2) - frag.atomY(nidx));
 			frag.setAtomPos(gidx, ox, oy);
 		}
-    
+	
 		let osz = pmol.numAtoms;
 		pmol.append(frag);
 		let srcidx = this.sourceIndex(pmol, oldmol);
 		SketchUtil.mergeFragmentsMask(pmol, this.asMask(srcidx));
 		if (pmol.numAtoms == osz) return;
-    
+	
 		let p = new FusionPermutation();
 		p.mol = pmol;
 		p.display = frag;
@@ -639,7 +639,7 @@ export class TemplateFusion
 		cy1 /= oidx.length;
 		cx2 /= gidx.length;
 		cy2 /= gidx.length;
-    	
+		
 		let osz = oldmol.numAtoms;
 
 		for (let i = 0; i < oidx.length; i++) for (let j = 0; j < gidx.length; j++)
@@ -696,7 +696,7 @@ export class TemplateFusion
 
 				frag.setAtomPos(tidx[g], pmol.atomX(closest), pmol.atomY(closest));
 			}
-    		
+			
 			for (let n = pmol.numAtoms; n > osz; n--) if (pmol.atomElement(n) == 'X')
 			{
 				pmol.deleteAtomAndBonds(n);
@@ -708,7 +708,7 @@ export class TemplateFusion
 				//[frag deleteAtomAndBonds:n];
 				frag.setAtomElement(n, 'C');
 			}
-    		
+			
 			let p = new FusionPermutation();
 			p.mol = pmol;
 			p.display = frag;
@@ -730,7 +730,7 @@ export class TemplateFusion
 
 		let umask = Vec.booleanArray(true, npsz);
 		for (let i = 0; i < npsz - 1; i++) if (umask[i])
-    	{ 
+		{ 
 			let p1 = list[i];
 			for (let j = i + 1; j < npsz; j++) if (umask[j])
 			{
@@ -745,8 +745,8 @@ export class TemplateFusion
 					umask[j] = false;
 				}
 			}
-    	}
-    	
+		}
+		
 		let score = Vec.numberArray(0, npsz);
 		let numKeep = 0;
 		for (let n = 0; n < npsz; n++)
@@ -758,9 +758,9 @@ export class TemplateFusion
 			}
 			else score[n] = 0;
 		}
-    	
+		
 		if (numKeep > 0) for (let n = 0; n < npsz; n++) if (umask[n] && score[n] >= 1000) umask[n] = false;
-    
+	
 		let uscore:number[] = [], uidx:number[] = [];
 		for (let n = 0; n < npsz; n++) if (umask[n])
 		{
@@ -768,7 +768,7 @@ export class TemplateFusion
 			uidx.push(n);
 		}
 		let sidx = Vec.idxSort(uscore);
-    	
+		
 		for (let n = 0; n < sidx.length; n++)
 		{
 			let p = list[uidx[sidx[n]]];
@@ -817,9 +817,9 @@ export class TemplateFusion
 	}
 
 	private scorePermutation(perm:FusionPermutation):number
-    {
-    	// note: lower is better
-    
+	{
+		// note: lower is better
+	
 		let mol = this.mol, tmol = perm.display, tunion = perm.mol; // (clarity)
 
 		let score = 0.2 * perm.attdist + perm.scoreModifier;
@@ -882,8 +882,8 @@ export class TemplateFusion
 				if (Math.abs(theta - wantTheta) > 5) score += 50; // penalty
 			}
 		}
-    
-    	// look for creation of hypervalent lighter atoms, which is considered a big faux pas
+	
+		// look for creation of hypervalent lighter atoms, which is considered a big faux pas
 		for (let n = 1; n <= tunion.numAtoms; n++) if (tunion.atomElement(n) == 'C' || tunion.atomElement(n) == 'N')
 		{
 			let adjb = tunion.atomAdjBonds(n);
@@ -900,7 +900,7 @@ export class TemplateFusion
 			}
 			if (totalBO > 4) score += 1000;
 		}
-    
+	
 		// match bond orders, whenever possible
 		if (perm.molidx.length >= 2)
 		{
@@ -916,9 +916,9 @@ export class TemplateFusion
 				if (mol.bondOrder(n) != tmol.bondOrder(tn)) score += 1;
 			}
 		}
-    
-    	return score;
-    }
+	
+		return score;
+	}
 
 	private sourceIndex(xmol:Molecule, wmol:Molecule):number[]
 	{

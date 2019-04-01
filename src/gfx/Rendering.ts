@@ -23,7 +23,7 @@ interface RenderData
 	resolutionDPI:number;
 	fontSize:number;
 	lineSize:number;
-	bondSep:number,
+	bondSep:number;
 	defaultPadding:number;
 	foreground:number;
 	background:number;
@@ -51,37 +51,33 @@ export class RenderPolicy
 				'foreground': 0x000000,
 				'background': 0xFFFFFF,
 				'atomCols': new Array(112)
-			}
-			for (var n = 0; n <= 111; n++) data.atomCols[n] = 0x000000;
-			this.data=data;
+			};
+			for (let n = 0; n <= 111; n++) data.atomCols[n] = 0x000000;
+			this.data = data;
 		}
 		else
 		{
-			this.data = <RenderData>clone(data);
+			this.data = clone(data) as RenderData;
 		}
-	};
+	}
 
 	// static methods for creating new default schemes
 	public static defaultBlackOnWhite():RenderPolicy
 	{
-		var policy = new RenderPolicy();
-		/* (actually this is what the null constructor does)
-		policy.data.foreground=0x000000;
-		policy.data.background=0xFFFFFF;
-		for (var n=0;n<=111;n++) policy.data.atomCols[n]=0x000000;*/
+		let policy = new RenderPolicy();
 		return policy;
-	};
+	}
 	public static defaultWhiteOnBlack():RenderPolicy
 	{
-		var policy = new RenderPolicy();
+		let policy = new RenderPolicy();
 		policy.data.foreground = 0xFFFFFF;
 		policy.data.background = 0x000000;
-		for (var n = 0; n <= 111; n++) policy.data.atomCols[n] = 0xFFFFFF;
+		for (let n = 0; n <= 111; n++) policy.data.atomCols[n] = 0xFFFFFF;
 		return policy;
-	};
+	}
 	public static defaultColourOnWhite():RenderPolicy
 	{
-		var policy = RenderPolicy.defaultBlackOnWhite();
+		let policy = RenderPolicy.defaultBlackOnWhite();
 		policy.data.atomCols[0] = 0x404040;
 		policy.data.atomCols[1] = 0x808080;
 		policy.data.atomCols[6] = 0x000000;
@@ -93,10 +89,10 @@ export class RenderPolicy
 		policy.data.atomCols[17] = 0x00C000;
 		policy.data.atomCols[35] = 0xC04000;
 		return policy;
-	};
+	}
 	public static defaultColourOnBlack():RenderPolicy
 	{
-		var policy = RenderPolicy.defaultWhiteOnBlack();
+		let policy = RenderPolicy.defaultWhiteOnBlack();
 		policy.data.atomCols[0] = 0xA0A0A0;
 		policy.data.atomCols[1] = 0x808080;
 		policy.data.atomCols[6] = 0xFFFFFF;
@@ -108,17 +104,17 @@ export class RenderPolicy
 		policy.data.atomCols[17] = 0x40FF40;
 		policy.data.atomCols[35] = 0xFF8040;
 		return policy;
-	};
+	}
 	public static defaultPrintedPublication():RenderPolicy
 	{
-		var policy = RenderPolicy.defaultBlackOnWhite();
+		let policy = RenderPolicy.defaultBlackOnWhite();
 		policy.data.pointScale = 9.6;
 		policy.data.resolutionDPI = 600;
 		policy.data.fontSize = 0.80;
 		policy.data.bondSep = 0.27;
 		policy.data.lineSize = 0.0625;
 		return policy;
-	};
+	}
 }
 
 export class RenderEffects
@@ -143,7 +139,7 @@ export class RenderEffects
 	
 	// solid dots to draw over top of atoms
 	public atomCircleSz:number[] = [];
-	public atomCircleCol:number[] = []
+	public atomCircleCol:number[] = [];
 	
 	// atom & bond decoration: text to display, colour, and font size (in Angstrom units)
 	public atomDecoText:string[] = []; 

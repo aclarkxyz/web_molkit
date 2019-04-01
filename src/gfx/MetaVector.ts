@@ -334,7 +334,7 @@ export class MetaVector
 	// renders the meta vector by creating a new canvas
 	public renderInto(parent:any)
 	{
-		let canvas = <HTMLCanvasElement>newElement(parent, 'canvas', {'width': this.width, 'height': this.height});
+		let canvas = newElement(parent, 'canvas', {'width': this.width, 'height': this.height}) as HTMLCanvasElement;
 		this.renderCanvas(canvas);
 		return canvas;
 	}

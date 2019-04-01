@@ -38,7 +38,7 @@ function make_crc_table():number
 	if (crc_table.length > 0) return;
 	for (let n = 0; n < 256; n++)
 	{
-		let c = n
+		let c = n;
 		for (let i = 0; i < 8; i++) if ((c & 1) != 0) c = 0xEDB88320 ^ (c >>> 1); else c = (c >>> 1);
 		crc_table.push(c);
 	}
@@ -50,7 +50,7 @@ function feed_crc(crc:number, byte:number):number
 	let idx = (crc ^ byte) & 0xFF;
 	return crc_table[idx] ^ (crc >>> 8);
 }
-function end_crc(crc:number):number {return crc ^ BOOT_CRC}
+function end_crc(crc:number):number {return crc ^ BOOT_CRC;}
 
 export interface CircularFP
 {
@@ -82,7 +82,7 @@ export class CircularFingerprints
 
 	constructor(private meta:MetaMolecule, private kind:number)
 	{
-		make_crc_table() // (nop if already made)
+		make_crc_table(); // (nop if already made)
 	}
 
 	// performs the calculation; after completion, the results may be fetched
@@ -97,7 +97,7 @@ export class CircularFingerprints
 		this.amask = Vec.booleanArray(false, na);
 		for (let n = 0; n < na; n++) 
 		{
-			this.amask[n] = mol.atomicNumber(n + 1) >= 2 && !MolUtil.hasAbbrev(mol, n+1);
+			this.amask[n] = mol.atomicNumber(n + 1) >= 2 && !MolUtil.hasAbbrev(mol, n + 1);
 			this.atomAdj.push([]);
 			this.bondAdj.push([]);
 		}
@@ -126,12 +126,12 @@ export class CircularFingerprints
 		for (let iter = 1; iter <= niter; iter++)
 		{
 			let newident = Vec.numberArray(0, na);
-			for (let n = 0; n < na; n++) if (this.amask[n]) newident[n] = this.circularIterate(iter, n+1);
+			for (let n = 0; n < na; n++) if (this.amask[n]) newident[n] = this.circularIterate(iter, n + 1);
 			this.identity = newident;
 
 			for (let n = 0; n < na; n++) if (this.amask[n])
 			{
-				this.atomGroup[n] = this.growAtoms(this.atomGroup[n])
+				this.atomGroup[n] = this.growAtoms(this.atomGroup[n]);
 				this.considerNewFP({'hashCode': this.identity[n], 'iteration': iter, 'atoms': this.atomGroup[n]});
 			}
 		}
@@ -174,17 +174,17 @@ export class CircularFingerprints
 	public static tanimoto(hash1:number[], hash2:number[]):number
 	{
 		let shared = 0, total = 0;
-		let sz1 = hash1.length, sz2 = hash2.length
+		let sz1 = hash1.length, sz2 = hash2.length;
 		if (sz1 == 0 && sz2 == 0) return 0;
 		let i1 = 0, i2 = 0;
 		while (i1 < sz1 || i2 < sz2)
 		{
-			if (i1 == sz1) {total += sz2-i2; break;}
-			if (i2 == sz2) {total += sz1-i1; break;}
+			if (i1 == sz1) {total += sz2 - i2; break;}
+			if (i2 == sz2) {total += sz1 - i1; break;}
 			let v1 = hash1[i1], v2 = hash2[i2];
 			if (v1 == v2) {shared += 1; i1 += 1; i2 += 1;}
 			else if (v1 < v2) i1 += 1; else i2 += 1;
-			total += 1
+			total += 1;
 		}
 		return shared / total;
 	}
@@ -207,7 +207,7 @@ export class CircularFingerprints
 				(6) whether the atom is in a ring
 		*/
 
-        let nheavy = 0, nhydr = mol.atomHydrogens(atom);
+		let nheavy = 0, nhydr = mol.atomHydrogens(atom);
 		for (let a of adj) if (mol.atomElement(a) == 'H') nhydr++; else nheavy++;
 
 		let atno = mol.atomicNumber(atom);
@@ -216,11 +216,11 @@ export class CircularFingerprints
 		let inring = mol.atomRingBlock(atom) > 0 ? 1 : 0;
 		
 		let crc = start_crc();
-        crc = feed_crc(crc, (nheavy << 4) | degree);
-        crc = feed_crc(crc, atno);
-        crc = feed_crc(crc, chg + 0x80);
-        crc = feed_crc(crc, (nhydr << 4) | inring);
-        return end_crc(crc);
+		crc = feed_crc(crc, (nheavy << 4) | degree);
+		crc = feed_crc(crc, atno);
+		crc = feed_crc(crc, chg + 0x80);
+		crc = feed_crc(crc, (nhydr << 4) | inring);
+		return end_crc(crc);
 	}
 
 	// takes the current identity values
@@ -230,7 +230,7 @@ export class CircularFingerprints
 		
 		// build out a sequence, formulated as
 		//     {iteration,original#, adj0-bondorder,adj0-identity, ..., [chiral?]}
-		var seq = Vec.numberArray(0, 2 + 2 * adj.length);
+		let seq = Vec.numberArray(0, 2 + 2 * adj.length);
 		seq[0] = iter;
 		seq[1] = this.identity[atom - 1];
 		for (let n = 0; n < adj.length; n++)
@@ -240,21 +240,21 @@ export class CircularFingerprints
 		}
 		
 		// now sort the adjacencies by bond order first, then identity second
-		let p = 0
+		let p = 0;
 		while (p < adj.length - 1)
 		{
 			let i = 2 + 2 * p;
-			if (seq[i] > seq[i+2] || (seq[i] == seq[i + 2] && seq[i + 1] > seq[i + 3]))
+			if (seq[i] > seq[i + 2] || (seq[i] == seq[i + 2] && seq[i + 1] > seq[i + 3]))
 			{
-				Vec.swap(seq, i, i+2)
-				Vec.swap(seq, i+1, i+3)
+				Vec.swap(seq, i, i + 2);
+				Vec.swap(seq, i + 1, i + 3);
 				if (p > 0) p--;
 			}
 			else p++;
 		}
 
 		// roll it up into a hash code
-		var crc = start_crc();
+		let crc = start_crc();
 		for (let n = 0; n < seq.length; n += 2)
 		{
 			crc = feed_crc(crc, seq[n]);
@@ -271,10 +271,10 @@ export class CircularFingerprints
 			let ru = this.meta.rubricTetra[atom - 1];
 			let par =
 			[
-    			ru[0] == 0 ? 0 : this.identity[ru[0] - 1],
-    			ru[1] == 0 ? 0 : this.identity[ru[1] - 1],
-    			ru[2] == 0 ? 0 : this.identity[ru[2] - 1],
-    			ru[3] == 0 ? 0 : this.identity[ru[3] - 1]
+				ru[0] == 0 ? 0 : this.identity[ru[0] - 1],
+				ru[1] == 0 ? 0 : this.identity[ru[1] - 1],
+				ru[2] == 0 ? 0 : this.identity[ru[2] - 1],
+				ru[3] == 0 ? 0 : this.identity[ru[3] - 1]
 			];
 			if (par[0] != par[1] && par[0] != par[2] && par[0] != par[3] && par[1] != par[2] && par[1] != par[3] && par[2] != par[3])
 			{
@@ -297,7 +297,7 @@ export class CircularFingerprints
 			mask[atoms[n] - 1] = true;
 			for (let a of this.atomAdj[atoms[n] - 1]) mask[a - 1] = true;
 		}
-		return Vec.add(Vec.maskIdx(mask), 1)
+		return Vec.add(Vec.maskIdx(mask), 1);
 	}
 
 	// add a new fingerprint, with no duplicate check (initial seed round); is only a separate function so it can be trapped
@@ -318,12 +318,12 @@ export class CircularFingerprints
 		for (let n = 0; n < this.fplist.length; n++)
 		{
 			let lookFP = this.fplist[n];
-			if (Vec.equals(lookFP.atoms, newFP.atoms)) {fp = lookFP; hit = n; break}
+			if (Vec.equals(lookFP.atoms, newFP.atoms)) {fp = lookFP; hit = n; break;}
 		}
 		if (hit < 0)
 		{
 			this.fplist.push(newFP);
-			return
+			return;
 		}
 		
 		// if the preexisting fingerprint is from an earlier iteration, or has a lower hashcode, discard

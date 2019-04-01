@@ -62,7 +62,7 @@ export function initWebMolKit(resourcePath:string):void
 	that can be used to make sure that each of these CSS blocks are installed just once.
 */
 
-var cssTagsInstalled = new Set<String>();
+let cssTagsInstalled = new Set<string>();
 export function hasInlineCSS(tag:string):boolean {return cssTagsInstalled.has(tag);}
 
 // makes sure a block of CSS is installed, returning true if it was added, false if it was already there

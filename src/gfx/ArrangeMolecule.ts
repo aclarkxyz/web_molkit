@@ -121,9 +121,9 @@ export class ArrangeMolecule
 	private bondOrder:number[] = []; // replacement bond orders; special case: -1 for do-not-draw
 	private atomCharge:number[] = [];
 	private atomUnpaired:number[] = [];
-	private artifactCharge = new Map<Object, number>();
-	private artifactUnpaired = new Map<Object, number>();
-	private artifactFract = new Map<Object, boolean>()// bond order < 1: replaces the bond itself
+	private artifactCharge = new Map<object, number>();
+	private artifactUnpaired = new Map<object, number>();
+	private artifactFract = new Map<object, boolean>();// bond order < 1: replaces the bond itself
 
 	// --------------------- static methods ---------------------
 	
@@ -750,7 +750,7 @@ export class ArrangeMolecule
 			'box': new Box(a.oval.cx - rw, a.oval.cy - rh, 2 * rw, 2 * rh),
 			'px': [a.oval.cx - rw, a.oval.cx + rw, a.oval.cx + rw, a.oval.cx - rw],
 			'py': [a.oval.cy - rh, a.oval.cy - rh, a.oval.cy + rh, a.oval.cy + rh]
-		}
+		};
 		this.space.push(spc);
 	}
 	
@@ -902,7 +902,7 @@ export class ArrangeMolecule
 				a.fsz *= SSFRACT;
 				//a.cy += a.fsz * 0.7f * (measure.yIsUp() ? -1 : 1);
 				
-				if (position[n] <0)
+				if (position[n] < 0)
 					a.oval.cy += a.fsz * 0.7 * (this.measure.yIsUp() ? -1 : 1); 
 				else
 					a.oval.cy -= a.fsz * 0.3 * (this.measure.yIsUp() ? -1 : 1);				
@@ -1307,7 +1307,7 @@ export class ArrangeMolecule
 
 			if (adj.length == 0)
 			{
-				let LEFTIES = ["O", "S", "F", "Cl", "Br", "I"];
+				let LEFTIES = ['O', 'S', 'F', 'Cl', 'Br', 'I'];
 				if (this.mol.atomCharge(a.anum) == 0 && this.mol.atomUnpaired(a.anum) == 0 && 
 					LEFTIES.indexOf(this.mol.atomElement(a.anum)) >= 0) quad = LEFTRIGHT; // e.g. H2O, H2S
 				else quad = RIGHTLEFT; // e.g. NH3, -OH
@@ -1398,7 +1398,7 @@ export class ArrangeMolecule
 		}
 
 		// apply the result
-		let wad = this.measure.measureText("H", a.fsz);
+		let wad = this.measure.measureText('H', a.fsz);
 		const PADDING = 1.1;
 		let ah:APoint =
 		{

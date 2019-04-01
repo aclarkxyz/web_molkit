@@ -318,8 +318,8 @@ export class QuantityCalc
 		this.allMassProd = [];
 		this.allMassWaste = [];
 		for (let n = 0; n < this.quantities.length; n++)
-    	{
-    		let qc = this.quantities[n];
+		{
+			let qc = this.quantities[n];
 			if (qc.type == Experiment.REACTANT || qc.type == Experiment.REAGENT)
 			{
 				if (qc.valueEquiv == 0 && qc.type == Experiment.REAGENT) continue;
@@ -360,59 +360,59 @@ export class QuantityCalc
 
 	// convenience formatting tools, which pick appropriate units
 	public static formatMolWeight(value:number):string
-    {
-    	if (value == QuantityCalc.UNSPECIFIED) return '';
-    	return formatDouble(value,6) + ' g/mol';
-    }
+	{
+		if (value == QuantityCalc.UNSPECIFIED) return '';
+		return formatDouble(value,6) + ' g/mol';
+	}
 	public static formatMass(value:number):string
-    {
-    	if (value == QuantityCalc.UNSPECIFIED) return '';
-    	if (value <= 1E-6) return formatDouble(value*1E6,6) + ' \u03BCg';
-    	if (value <= 1E-3) return formatDouble(value*1E3,6) + ' mg';
-    	if (value >= 1E3) return formatDouble(value*1E-3,6) + ' kg';
-    	return formatDouble(value,6) + ' g';
-    }
+	{
+		if (value == QuantityCalc.UNSPECIFIED) return '';
+		if (value <= 1E-6) return formatDouble(value * 1E6,6) + ' \u03BCg';
+		if (value <= 1E-3) return formatDouble(value * 1E3,6) + ' mg';
+		if (value >= 1E3) return formatDouble(value * 1E-3,6) + ' kg';
+		return formatDouble(value,6) + ' g';
+	}
 	public static formatVolume(value:number):string
-    {
+	{
 		if (value == QuantityCalc.UNSPECIFIED) return '';
 		if (value <= 1E-6) return formatDouble(value * 1E6, 6) + ' nL';
 		if (value <= 1E-3) return formatDouble(value * 1E3, 6) + ' \u03BCL';
 		if (value >= 1E3) return formatDouble(value * 1E-3, 6) + ' L';
 		return formatDouble(value, 6) + ' mL';
-    }
+	}
 	public static formatMoles(value:number):string
-    {
+	{
 		if (value == QuantityCalc.UNSPECIFIED) return '';
 		if (value <= 1E-9) return formatDouble(value * 1E9, 6) + ' nmol';
 		if (value <= 1E-6) return formatDouble(value * 1E6, 6) + ' \u03BCmol';
 		if (value <= 1E-3) return formatDouble(value * 1E3, 6) + ' mmol';
 		return formatDouble(value, 6) + ' mol';
-    }
+	}
 	public static formatDensity(value:number):string
-    {
+	{
 		if (value == QuantityCalc.UNSPECIFIED) return '';
 		return formatDouble(value, 6) + ' g/mL';
-    }
+	}
 	public static formatConc(value:number):string
-    {
+	{
 		if (value == QuantityCalc.UNSPECIFIED) return '';
 		if (value <= 1E-9) return formatDouble(value * 1E9, 6) + ' nmol/L';
 		if (value <= 1E-6) return formatDouble(value * 1E6, 6) + ' \u03BCmol/L';
 		if (value <= 1E-3) return formatDouble(value * 1E3, 6) + ' mmol/L';
 		return formatDouble(value, 6) + ' mol/L';
-    }
+	}
 	public static formatPercent(value:number):string
-    {
+	{
 		if (value == QuantityCalc.UNSPECIFIED) return '';
 		return formatDouble(value, 6) + '%';
-    }
+	}
 
 	// ---------------- private methods -----------------
 
 	// do a first pass of pulling out the raw data
 	private classifyTypes():void
-    {
-    	for (let s = 0; s < this.entry.steps.length; s++)
+	{
+		for (let s = 0; s < this.entry.steps.length; s++)
 		{
 			let step = this.entry.steps[s];
 			for (let n = 0; n < step.reactants.length; n++) this.quantities.push(new QuantityComp(step.reactants[n], s, Experiment.REACTANT, n));
@@ -495,12 +495,12 @@ export class QuantityCalc
 				}
 			}
 		}
-    }
+	}
 	
-    // attempt to replace at least one unknown value with an inferred value; returns true if anything happened, which
-    // signals that another round should be repeated, in case more possibilities come online
-    private calculateSomething():boolean
-    {
+	// attempt to replace at least one unknown value with an inferred value; returns true if anything happened, which
+	// signals that another round should be repeated, in case more possibilities come online
+	private calculateSomething():boolean
+	{
 		let anything = false;
 
 		// ---- part 1: look for any interconversions that are internal to a component
@@ -528,14 +528,14 @@ export class QuantityCalc
 					qc.statMass = QuantityCalc.STAT_CONFLICT;
 					qc.statMoles = QuantityCalc.STAT_CONFLICT;
 				}
-    		}
+			}
 			
 			let isSoln = qc.statConc == QuantityCalc.STAT_ACTUAL ||
 				(qc.statVolume == QuantityCalc.STAT_ACTUAL && (qc.statMass == QuantityCalc.STAT_ACTUAL || qc.statMoles == QuantityCalc.STAT_ACTUAL));
 
-    		// non solutions, mass/density/volume
-    		if (!isSoln)
-    		{
+			// non solutions, mass/density/volume
+			if (!isSoln)
+			{
 				if (qc.valueDensity > 0 && qc.valueMass == QuantityCalc.UNSPECIFIED && qc.valueVolume != QuantityCalc.UNSPECIFIED)
 				{
 					qc.valueMass = qc.valueVolume * qc.valueDensity;
@@ -558,11 +558,11 @@ export class QuantityCalc
 						anything = true;
 					}
 				}
-    		}
-    		
-    		// solutions, moles/conc/volume
-    		if (isSoln)
-    		{
+			}
+			
+			// solutions, moles/conc/volume
+			if (isSoln)
+			{
 				if (qc.valueConc > 0 && qc.valueMoles == QuantityCalc.UNSPECIFIED && qc.valueVolume != QuantityCalc.UNSPECIFIED)
 				{
 					qc.valueMoles = 0.001 * qc.valueVolume * qc.valueConc;
@@ -592,7 +592,7 @@ export class QuantityCalc
 						qc.statVolume = QuantityCalc.STAT_CONFLICT;
 					}
 				}
-    		}
+			}
 			
 			// calculating mass from virtual molar mass
 			if (qc.molw > 0 && qc.valueMass == QuantityCalc.UNSPECIFIED && qc.valueMoles != QuantityCalc.UNSPECIFIED)
@@ -602,26 +602,26 @@ export class QuantityCalc
 				anything = true;
 			}
 			
-    		// providing a concentration and density is disallowed
+			// providing a concentration and density is disallowed
 			if (qc.statDensity == QuantityCalc.STAT_ACTUAL && qc.statConc == QuantityCalc.STAT_ACTUAL)
 			{
 				qc.statDensity = QuantityCalc.STAT_CONFLICT;
 				qc.statConc = QuantityCalc.STAT_CONFLICT;
 			}
-    	}
+		}
 	
-    	if (anything) return true; // want to make it cycle over all the reactants before moving on
-    	
-    	// ---- part 2: determine the molar quantity baseline, for each step, where applicable
-    	
+		if (anything) return true; // want to make it cycle over all the reactants before moving on
+		
+		// ---- part 2: determine the molar quantity baseline, for each step, where applicable
+		
 		let hasRef = false;
 		let numSteps = this.entry.steps.length;
 		let primaryCounts = Vec.numberArray(0, numSteps);
 		let primaryEquivs = Vec.numberArray(0, numSteps);
 		let primaryMoles = Vec.numberArray(0, numSteps);
-    	
-    	// go over components: first step uses reactants; next steps use products from previous
-    	for (let qc of this.quantities)
+		
+		// go over components: first step uses reactants; next steps use products from previous
+		for (let qc of this.quantities)
 		{
 			let ref = -1;
 			if (qc.step == 0 && qc.type == Experiment.REACTANT && qc.comp.primary) ref = qc.step;
@@ -638,9 +638,9 @@ export class QuantityCalc
 			primaryCounts[ref]++;
 			primaryEquivs[ref] += qc.valueEquiv;
 			primaryMoles[ref] += qc.valueMoles;
-    	}
-    	
-    	// special deal: if no primary reactants, use all of the primaries
+		}
+		
+		// special deal: if no primary reactants, use all of the primaries
 		if (primaryEquivs[0] <= 0)
 		{
 			primaryCounts[0] = 0;
@@ -691,7 +691,7 @@ export class QuantityCalc
 		
 		if (!hasRef) return false; // can't do anything else
 		
-    	// ---- part 3: look for ways to apply the yield
+		// ---- part 3: look for ways to apply the yield
 		
 		for (let qc of this.quantities)
 		{
@@ -720,12 +720,12 @@ export class QuantityCalc
 					if (qc.statMoles == QuantityCalc.STAT_ACTUAL) qc.statMoles = QuantityCalc.STAT_CONFLICT;
 					qc.statYield = QuantityCalc.STAT_CONFLICT;
 				}
-    		}
-    	}
-    
-    	if (anything) return true;
-    	
-    	// ---- part 4: look for stoichiometric components where molarity can be filled in
+			}
+		}
+	
+		if (anything) return true;
+		
+		// ---- part 4: look for stoichiometric components where molarity can be filled in
 
 		for (let qc of this.quantities)
 		{
@@ -745,14 +745,14 @@ export class QuantityCalc
 			}
 		}
 
-    	return anything;
-    }
+		return anything;
+	}
 
 	// work out all available green metrics for a particular product index
 	private calculateGreenMetrics(idx:number):void
-    {
+	{
 		let qc = this.quantities[idx];
-    	let gm = new GreenMetrics();
+		let gm = new GreenMetrics();
 
 		gm.step = qc.step;
 		gm.idx = idx;
@@ -795,7 +795,7 @@ export class QuantityCalc
 		gm.impliedWaste = Vec.sum(gm.massReact) - Vec.sum(gm.massProdWaste);
 		if (Math.abs(gm.impliedWaste) > 1E-3) gm.impliedWaste = 0;
 
-    	this.greenMetrics.push(gm);
+		this.greenMetrics.push(gm);
 	}
 
 	// figure out if two values are not in conflict

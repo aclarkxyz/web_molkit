@@ -20,51 +20,51 @@ namespace WebMolKit /* BOF */ {
 
 export class Func
 {
-	public static renderStructure(input:Object, callback:(result:any, error:ErrorRPC) => void):void
+	public static renderStructure(input:any, callback:(result:any, error:ErrorRPC) => void):void
 	{
 		new RPC('func.renderStructure', input, callback).invoke();
 	}
-	public static arrangeMolecule(input:Object, callback:(result:any, error:ErrorRPC) => void):void
+	public static arrangeMolecule(input:any, callback:(result:any, error:ErrorRPC) => void):void
 	{
 		new RPC('func.arrangeMolecule', input, callback).invoke();
 	}
-	public static renderRowDetail(input:Object, callback:(result:any, error:ErrorRPC) => void):void
+	public static renderRowDetail(input:any, callback:(result:any, error:ErrorRPC) => void):void
 	{
 		new RPC('func.renderRowDetail', input, callback).invoke();
 	}
-	public static renderYieldDetail(input:Object, callback:(result:any, error:ErrorRPC) => void):void
+	public static renderYieldDetail(input:any, callback:(result:any, error:ErrorRPC) => void):void
 	{
 		new RPC('func.renderYieldDetail', input, callback).invoke();
 	}
-	public static composeDocument(input:Object, callback:(result:any, error:ErrorRPC) => void):void
+	public static composeDocument(input:any, callback:(result:any, error:ErrorRPC) => void):void
 	{
 		new RPC('func.composeDocument', input, callback).invoke();
 	}
-	public static getMoleculeProperties(input:Object, callback:(result:any, error:ErrorRPC) => void):void
+	public static getMoleculeProperties(input:any, callback:(result:any, error:ErrorRPC) => void):void
 	{
 		new RPC('func.getMoleculeProperties', input, callback).invoke();
 	}
-	public static atomMapping(input:Object, callback:(result:any, error:ErrorRPC) => void):void
+	public static atomMapping(input:any, callback:(result:any, error:ErrorRPC) => void):void
 	{
 		new RPC('func.atomMapping', input, callback).invoke();
 	}
-	public static prepareDownloadable(input:Object, callback:(result:any, error:ErrorRPC) => void):void
+	public static prepareDownloadable(input:any, callback:(result:any, error:ErrorRPC) => void):void
 	{
 		new RPC('func.prepareDownloadable', input, callback).invoke();
 	}
-	public static downloadFromSource(input:Object, callback:(result:any, error:ErrorRPC) => void):void
+	public static downloadFromSource(input:any, callback:(result:any, error:ErrorRPC) => void):void
 	{
 		new RPC('func.downloadFromSource', input, callback).invoke();
 	}
-	public static getDefaultTemplateGroups(input:Object, callback:(result:any, error:ErrorRPC) => void):void
+	public static getDefaultTemplateGroups(input:any, callback:(result:any, error:ErrorRPC) => void):void
 	{
 		new RPC('func.getDefaultTemplateGroups', input, callback).invoke();
 	}
-	public static getDefaultTemplateStructs(input:Object, callback:(result:any, error:ErrorRPC) => void):void
+	public static getDefaultTemplateStructs(input:any, callback:(result:any, error:ErrorRPC) => void):void
 	{
 		new RPC('func.getDefaultTemplateStructs', input, callback).invoke();
 	}
-	public static getActionIcons(input:Object, callback:(result:any, error:ErrorRPC) => void):void
+	public static getActionIcons(input:any, callback:(result:any, error:ErrorRPC) => void):void
 	{
 		new RPC('func.getActionIcons', input, callback).invoke();
 	}

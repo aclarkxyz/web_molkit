@@ -50,19 +50,19 @@ export class SketchUtil
 {
 	public static GEOM_ANGLES =
 	[ // (these match the Geometry* constants)
-    	[0, 180*DEGRAD],
-    	[0, 120*DEGRAD],
-    	[0, 120*DEGRAD, 240*DEGRAD],
-    	[0, 90*DEGRAD, 150*DEGRAD, 240*DEGRAD],
-    	[0, 120*DEGRAD, 180*DEGRAD, 240*DEGRAD],
-    	[0, 90*DEGRAD, 180*DEGRAD, 270*DEGRAD],
-    	[0, 90*DEGRAD, 150*DEGRAD, 210*DEGRAD, 270*DEGRAD],
-    	[0, 60*DEGRAD, 90*DEGRAD, 180*DEGRAD, 210*DEGRAD],
-    	[0, 60*DEGRAD, 120*DEGRAD, 180*DEGRAD, 240*DEGRAD, 300*DEGRAD],
-    	[0, 45*DEGRAD, 90*DEGRAD, 180*DEGRAD, 225*DEGRAD, 270*DEGRAD]
+		[0, 180 * DEGRAD],
+		[0, 120 * DEGRAD],
+		[0, 120 * DEGRAD, 240 * DEGRAD],
+		[0, 90 * DEGRAD, 150 * DEGRAD, 240 * DEGRAD],
+		[0, 120 * DEGRAD, 180 * DEGRAD, 240 * DEGRAD],
+		[0, 90 * DEGRAD, 180 * DEGRAD, 270 * DEGRAD],
+		[0, 90 * DEGRAD, 150 * DEGRAD, 210 * DEGRAD, 270 * DEGRAD],
+		[0, 60 * DEGRAD, 90 * DEGRAD, 180 * DEGRAD, 210 * DEGRAD],
+		[0, 60 * DEGRAD, 120 * DEGRAD, 180 * DEGRAD, 240 * DEGRAD, 300 * DEGRAD],
+		[0, 45 * DEGRAD, 90 * DEGRAD, 180 * DEGRAD, 225 * DEGRAD, 270 * DEGRAD]
 	];
 
- 	// adds a new atom to the molecule, and returns its index; the new atom is placed in a reasonable position
+	// adds a new atom to the molecule, and returns its index; the new atom is placed in a reasonable position
 	public static placeNewAtom(mol:Molecule, el:string):number
 	{
 		let box = mol.boundary();
@@ -72,19 +72,19 @@ export class SketchUtil
 	}
 	
 	// finds a nice place to put the new fragment which does not overlap existing content, then appends the atoms & bonds to
-    // the mol parameter
+	// the mol parameter
 	public static placeNewFragment(mol:Molecule, frag:Molecule):void
 	{
 		if (frag.numAtoms == 0) return;
 
 		let dirX = [1, 0, -1, 1, -1, 1, 0, -1], dirY = [1, 1, 1, 0, 0, -1, -1, -1];
 		let dx = Vec.numberArray(0, 8), dy = Vec.numberArray(0, 8), score = Vec.numberArray(0, 8);
-		let mbox = mol.boundary(), fbox = frag.boundary()
+		let mbox = mol.boundary(), fbox = frag.boundary();
 	
 		for (let n = 0; n < 8; n++)
 		{
 			let vx = dirX[n], vy = dirY[n];
-    
+	
 			if (n == 0 || n == 3 || n == 5) dx[n] = mbox.minX() - fbox.maxX();
 			else if (n == 2 || n == 4 || n == 7) dx[n] = mbox.maxX() - fbox.minX();
 			else dx[n] = 0.5 * (mbox.minX() + mbox.maxX() - fbox.minX() - fbox.maxX());
@@ -92,21 +92,21 @@ export class SketchUtil
 			if (n == 5 || n == 6 || n == 7) dy[n] = mbox.minY() - fbox.maxY();
 			else if (n == 0 || n == 1 || n == 2) dy[n] = mbox.maxY() - fbox.minY();
 			else dy[n] = 0.5 * (mbox.minY() + mbox.maxY() - fbox.minY() - fbox.maxY());
-    	    
+			
 			dx[n] -= vx;
 			dy[n] -= vy;
 			score[n] = SketchUtil.fragPosScore(mol, frag, dx[n], dy[n]);
-    	    
+			
 			vx *= 0.25;
 			vy *= 0.25;
 			for (let iter = 100; iter > 0; iter--)
-    	    {
+			{
 				let iscore = SketchUtil.fragPosScore(mol, frag, dx[n] + vx, dy[n] + vy);
 				if (iscore <= score[n]) break;
 				score[n] = iscore;
 				dx[n] += vx;
 				dy[n] += vy;
-    	    }
+			}
 			for (let iter = 100; iter > 0; iter--) for (let d = 0; d < 8; d++)
 			{
 				vx = dirX[d] * 0.1;
@@ -117,19 +117,19 @@ export class SketchUtil
 				dx[n] += vx;
 				dy[n] += vy;
 			}
-    	}
-    	
+		}
+		
 		let best = 0;
 		for (let n = 1; n < 8; n++) if (score[n] > score[best]) best = n;
 
 		frag = frag.clone();
 		for (let n = 1; n <= frag.numAtoms; n++) frag.setAtomPos(n, frag.atomX(n) + dx[best], frag.atomY(n) + dy[best]);
-    	
-    	mol.append(frag);
-    }
+		
+		mol.append(frag);
+	}
 
-    // scoring function for above: more congested is better, but any two atoms < 1A = zero; post-biased to favour square 
-    // aspect ratio
+	// scoring function for above: more congested is better, but any two atoms < 1A = zero; post-biased to favour square 
+	// aspect ratio
 	private static fragPosScore(mol:Molecule, frag:Molecule, dx:number, dy:number):number
 	{
 		let score = 0;
@@ -141,29 +141,29 @@ export class SketchUtil
 			score += 1 / dist2;
 		}
 
-		let mbox = mol.boundary(), fbox = frag.boundary()
+		let mbox = mol.boundary(), fbox = frag.boundary();
 		let minX = Math.min(fbox.minX() + dx, mbox.minX()), maxX = Math.max(fbox.maxX() + dx, mbox.maxX());
 		let minY = Math.min(fbox.minY() + dy, mbox.minY()), maxY = Math.max(fbox.maxY() + dy, mbox.maxY());
 
 		let rangeX = Math.max(1, maxX - minX), rangeY = Math.max(1, maxY - minY);
 		let ratio = Math.max(rangeX / rangeY, rangeY / rangeX);
 		return score / ratio;
-    }
+	}
 
 	// reduces the number of atoms until there are none that are really close together
 	public static mergeOverlappingAtoms(mol:Molecule):number[] 
 	{
 		return SketchUtil.mergeFragmentsDiv(mol, 0);
 	}
-    
-    // for a molecule which has been put together from two fragments, looks for atoms which overlap; the molecule is divided up
-    // into {1 .. div} and {div+1 .. #atoms}, and which are matched against each other; whenever two atoms are found to overlap,
-    // they are merged together; non-carbon atoms are more likely to be retained
-    // the return value is a re-mapping index, i.e. ret[old_atom_number-1]=new_atom_number; whenever two atoms are merged, they both
-    // end up with the same new-atom-number.
-    // NOTE: special case where div==0, which makes all atoms fair game, i.e. there is no partition
-    public static mergeFragmentsDiv(mol:Molecule, div:number):number[]
-    {
+	
+	// for a molecule which has been put together from two fragments, looks for atoms which overlap; the molecule is divided up
+	// into {1 .. div} and {div+1 .. #atoms}, and which are matched against each other; whenever two atoms are found to overlap,
+	// they are merged together; non-carbon atoms are more likely to be retained
+	// the return value is a re-mapping index, i.e. ret[old_atom_number-1]=new_atom_number; whenever two atoms are merged, they both
+	// end up with the same new-atom-number.
+	// NOTE: special case where div==0, which makes all atoms fair game, i.e. there is no partition
+	public static mergeFragmentsDiv(mol:Molecule, div:number):number[]
+	{
 		const na = mol.numAtoms;
 		let omask = CoordUtil.overlappingAtomMask(mol);
 
@@ -172,15 +172,15 @@ export class SketchUtil
 
 		let remap:number[] = [];
 		for (let n = 0; n < na; n++) remap.push(n + 1);
-    	
+		
 		let div1 = div, div2 = div + 1;
 		if (div == 0) div1 = na;
-    	
-    	// any atoms which overlap each other in space are made into the same
+		
+		// any atoms which overlap each other in space are made into the same
 		for (let i = 1; i <= div1; i++) if (omask[i - 1] && !chopmask[i - 1])
 		{
 			if (div == 0) div2 = i + 1;
-    		
+			
 			for (let j = div2; j <= na; j++) if (omask[j - 1] && !chopmask[j - 1])
 			{
 				if (norm2_xy(mx[i - 1] - mx[j - 1], my[i - 1] - my[j - 1]) > CoordUtil.OVERLAP_THRESHOLD_SQ) continue;
@@ -189,19 +189,19 @@ export class SketchUtil
 				// want to keep the more exotic of the two
 				let exotic = [0, 0];
 				for (let k = 0; k < 2; k++)
-        		{
+				{
 					let a = k == 0 ? i : j;
-        			exotic[k] = (mol.atomElement(a) == 'C' ? 0 : 1)
-            				  + (mol.atomElement(a) == 'X' ? -100 : 0)
-            				  + (mol.atomCharge(a) != 0 ? 1 : 0)
-            				  + (mol.atomUnpaired(a) != 0 ? 1 : 0)
-            				  + (mol.atomIsotope(a) != Molecule.ISOTOPE_NATURAL ? 1 : 0)
-            				  + (mol.atomHExplicit(a) != Molecule.HEXPLICIT_UNKNOWN ? 1 : 0)
-            				  + (MolUtil.hasAbbrev(mol, a) ? 1000 : 0);
-        		}
-        		
-        		if (exotic[1] > exotic[0]) {oldN = i; newN = j;}
-        	    
+					exotic[k] = (mol.atomElement(a) == 'C' ? 0 : 1)
+							+ (mol.atomElement(a) == 'X' ? -100 : 0)
+							+ (mol.atomCharge(a) != 0 ? 1 : 0)
+							+ (mol.atomUnpaired(a) != 0 ? 1 : 0)
+							+ (mol.atomIsotope(a) != Molecule.ISOTOPE_NATURAL ? 1 : 0)
+							+ (mol.atomHExplicit(a) != Molecule.HEXPLICIT_UNKNOWN ? 1 : 0)
+							+ (MolUtil.hasAbbrev(mol, a) ? 1000 : 0);
+				}
+				
+				if (exotic[1] > exotic[0]) {oldN = i; newN = j;}
+				
 				for (let n = 1; n <= mol.numBonds; n++)
 				{
 					if (mol.bondFrom(n) == oldN) mol.setBondFrom(n, newN);
@@ -209,10 +209,10 @@ export class SketchUtil
 				}
 				chopmask[oldN - 1] = true;
 				remap[oldN - 1] = newN;
-    	    }
-    	}
+			}
+		}
 
-    	// do the actual surgery
+		// do the actual surgery
 		for (let n = na; n >= 1; n--) if (chopmask[n - 1])
 		{
 			if (n <= div) div--;
@@ -224,24 +224,24 @@ export class SketchUtil
 			mol.deleteAtomAndBonds(n);
 			for (let i = 0; i < na; i++) if (remap[i] > n) remap[i]--;
 		}
-    	
-    	MolUtil.removeDuplicateBonds(mol);
-    	
-    	return remap;
-    }
-    
-    // another variation on the merge theme: the atoms indicated by 'mask' are fair-game for joining to the atoms in the rest 
-    // of the molecule
-    public static mergeFragmentsMask(mol:Molecule, mask:boolean[]):void
-    {
+		
+		MolUtil.removeDuplicateBonds(mol);
+		
+		return remap;
+	}
+	
+	// another variation on the merge theme: the atoms indicated by 'mask' are fair-game for joining to the atoms in the rest 
+	// of the molecule
+	public static mergeFragmentsMask(mol:Molecule, mask:boolean[]):void
+	{
 		let chopmask = Vec.booleanArray(false, mol.numAtoms);
 		let na = mol.numAtoms;
 		let mx = MolUtil.arrayAtomX(mol), my = MolUtil.arrayAtomY(mol);
-    	
+		
 		for (let i = 1; i <= na; i++)
 			if (mask[i - 1]) for (let j = 1; j <= na; j++)
 				if (!mask[j - 1] && !chopmask[j - 1]) if (norm2_xy(mx[i - 1] - mx[j - 1], my[i - 1] - my[j - 1]) < CoordUtil.OVERLAP_THRESHOLD_SQ)
-    	{
+		{
 			let oldN = j, newN = i; // remove the later one, by default
 			if (mol.atomElement(i) == 'C' && mol.atomElement(j) != 'C' && mol.atomElement(j) != 'X')
 			{
@@ -259,14 +259,14 @@ export class SketchUtil
 			}
 
 			chopmask[oldN - 1] = true;
-    	}
+		}
 		for (let n = chopmask.length; n >= 1; n--) if (chopmask[n - 1]) mol.deleteAtomAndBonds(n);
 		MolUtil.removeDuplicateBonds(mol);
-    }
-    
-    // returns whether or not there is any way in which the given values of theta can match the indicated geometry
-    public static matchAngleGeometry(geom:number, theta:number[]):boolean
-    {
+	}
+	
+	// returns whether or not there is any way in which the given values of theta can match the indicated geometry
+	public static matchAngleGeometry(geom:number, theta:number[]):boolean
+	{
 		if (theta.length <= 1) return true; // always possible
 
 		let match = SketchUtil.GEOM_ANGLES[geom], mtheta = Vec.numberArray(0, theta.length);
@@ -289,9 +289,9 @@ export class SketchUtil
 			}
 			if (gotall) return true;
 		}
-    	
-    	return false;
-    }
+		
+		return false;
+	}
 
 	// for a particular atom, figures out the outgoing angles that are most likely to be good for placing a new atom+bond; these
 	// are found by postulating where a single bond might be drawn based on common geometries for the hybridisation, and using
@@ -341,9 +341,9 @@ export class SketchUtil
 		{
 			let atno = mol.atomicNumber(atom), atblk = Chemistry.ELEMENT_BLOCKS[atno];
 			if (atblk <= 2)
-				return [0, 90*DEGRAD, 180*DEGRAD, -90*DEGRAD];
+				return [0, 90 * DEGRAD, 180 * DEGRAD, -90 * DEGRAD];
 			else
-				return [90*DEGRAD, -90*DEGRAD, 30*DEGRAD, 150*DEGRAD, 210*DEGRAD, -30*DEGRAD, 180*DEGRAD, 0*DEGRAD];
+				return [90 * DEGRAD, -90 * DEGRAD, 30 * DEGRAD, 150 * DEGRAD, 210 * DEGRAD, -30 * DEGRAD, 180 * DEGRAD, 0 * DEGRAD];
 		}
 	
 		// obtain the "guessed" geometry options based on hybridisation, and try to map each of them onto the current
@@ -520,9 +520,9 @@ export class SketchUtil
 		return vac;	
 	}
 
-    // for a given molecule, ensures that a specific atom fits a given geometry template; if so, returns null; if not, looks for
-    // a way to fit the bonds into the geometry template with minimum perturbation, and applies the result by rotating the
-    // bonds as necessary; bonds that occur in rings constrain the options significantly
+	// for a given molecule, ensures that a specific atom fits a given geometry template; if so, returns null; if not, looks for
+	// a way to fit the bonds into the geometry template with minimum perturbation, and applies the result by rotating the
+	// bonds as necessary; bonds that occur in rings constrain the options significantly
 	public static refitAtomGeometry(mol:Molecule, atom:number, geom:number):Molecule
 	{
 		let gtheta = SketchUtil.GEOM_ANGLES[geom];
@@ -559,16 +559,16 @@ export class SketchUtil
 				let best = -1;
 				let bdiff = 0;
 				for (let n2 = 0; n2 < gsz; n2++) if (!mask[n2])
-    			{
-    				let th = angleNorm(gtheta[n2] * s - gtheta[i] + ang[j]);
-    				let diff = Math.abs(angleDiff(th, ang[n1]));
-    				if (best < 0 || diff < bdiff)
-    				{
-    					best = n2;
-    					bdiff = diff;
-    					newAng[n1] = th;
-    				}
-    			}
+				{
+					let th = angleNorm(gtheta[n2] * s - gtheta[i] + ang[j]);
+					let diff = Math.abs(angleDiff(th, ang[n1]));
+					if (best < 0 || diff < bdiff)
+					{
+						best = n2;
+						bdiff = diff;
+						newAng[n1] = th;
+					}
+				}
 				mask[best] = true;
 			}
 			
@@ -600,7 +600,7 @@ export class SketchUtil
 		mol = mol.clone();
 		for (let n = 0; n < asz; n++) if (!inRing[n]) CoordUtil.rotateBond(mol, atom, adj[n], bestAng[n] - ang[n]);
 		return mol;
-    }
+	}
 
 	// for a given source atom, and one-or-more adjacent atoms, and a list of possible geometries, propose
 	// a molecule in which one of the adjacent atoms has been rotated around to lock into the next geometry-valid
@@ -656,7 +656,7 @@ export class SketchUtil
 		mol = mol.clone();
 		mol.setAtomPos(bestAtom, bestX, bestY);
 		return mol;
-    }
+	}
 
 	// for a list of atoms, consider all pairwise combinations for potentially connecting up; the basic idea is that atoms which are not
 	// bonded, but are very near the ideal bond distance, always get connected; if there are none of these, it picks the two atoms which
@@ -708,9 +708,9 @@ export class SketchUtil
 			if (score < bestScore) {bestTheta = theta[n]; bestScore = score;}
 		}
 		return bestTheta;
-    }
+	}
 
-    // for atoms qualifying with the given mask, any group of more than one atom that overlap, merges them together
+	// for atoms qualifying with the given mask, any group of more than one atom that overlap, merges them together
 	public static joinOverlappingAtoms(mol:Molecule, mask:boolean[]):Molecule
 	{
 		mol = mol.clone();
@@ -820,12 +820,12 @@ export class SketchUtil
 	{
 		let base = mol.numAtoms;
 		const x0 = mol.atomX(atom), y0 = mol.atomY(atom);
-    
+	
 		let adj = mol.atomAdjList(atom);
 
 		// special deal: adding 2 hydrogens to a divalent atom in bent form
 		if (adj.length == 2 && numH == 2)
-    	{
+		{
 			const th1 = Math.atan2(mol.atomY(adj[0]) - y0, mol.atomX(adj[0]) - x0);
 			const th2 = Math.atan2(mol.atomY(adj[1]) - y0, mol.atomX(adj[1]) - x0);
 			if (Math.abs(angleDiff(th1, th2)) < 170 * DEGRAD)
@@ -833,76 +833,76 @@ export class SketchUtil
 				//float theta=GeomUtil.emergentAngle(new float[]{th1,th2})+Util.PI_F;
 				let theta = 0.5 * (th1 + th2) + Math.PI;
 				let th3 = theta - 30 * DEGRAD, th4 = theta + 30 * DEGRAD;
-				mol.addAtom("H", x0 + Molecule.IDEALBOND * Math.cos(th3), y0 + Molecule.IDEALBOND * Math.sin(th3));
-				mol.addAtom("H", x0 + Molecule.IDEALBOND * Math.cos(th4), y0 + Molecule.IDEALBOND * Math.sin(th4));
+				mol.addAtom('H', x0 + Molecule.IDEALBOND * Math.cos(th3), y0 + Molecule.IDEALBOND * Math.sin(th3));
+				mol.addAtom('H', x0 + Molecule.IDEALBOND * Math.cos(th4), y0 + Molecule.IDEALBOND * Math.sin(th4));
 				mol.addBond(atom, base + 1, 1);
 				mol.addBond(atom, base + 2, 1);
 				return;
 			}
 		}
-    	
-    	// special deal: adding 3 hydrogens to a terminal atom
+		
+		// special deal: adding 3 hydrogens to a terminal atom
 		if (adj.length == 1 && numH == 3)
 		{
 			let th1 = Math.atan2(mol.atomY(adj[0]) - y0, mol.atomX(adj[0]) - x0);
 			let th2 = th1 + 90 * DEGRAD, th3 = th1 + 180 * DEGRAD, th4 = th1 + 270 * DEGRAD;
-			mol.addAtom("H", x0 + Molecule.IDEALBOND * Math.cos(th2), y0 + Molecule.IDEALBOND * Math.sin(th2));
-			mol.addAtom("H", x0 + Molecule.IDEALBOND * Math.cos(th3), y0 + Molecule.IDEALBOND * Math.sin(th3));
-			mol.addAtom("H", x0 + Molecule.IDEALBOND * Math.cos(th4), y0 + Molecule.IDEALBOND * Math.sin(th4));
+			mol.addAtom('H', x0 + Molecule.IDEALBOND * Math.cos(th2), y0 + Molecule.IDEALBOND * Math.sin(th2));
+			mol.addAtom('H', x0 + Molecule.IDEALBOND * Math.cos(th3), y0 + Molecule.IDEALBOND * Math.sin(th3));
+			mol.addAtom('H', x0 + Molecule.IDEALBOND * Math.cos(th4), y0 + Molecule.IDEALBOND * Math.sin(th4));
 			mol.addBond(atom, base + 1, 1);
 			mol.addBond(atom, base + 2, 1);
 			mol.addBond(atom, base + 3, 1);
 			return;
 		}
-    	
+		
 		// otherwise: add one, then recurse
 		let theta = SketchUtil.pickNewAtomDirection(mol, atom, SketchUtil.primeDirections(mol, atom));
-		mol.addAtom("H", x0 + Molecule.IDEALBOND * Math.cos(theta), y0 + Molecule.IDEALBOND * Math.sin(theta));
+		mol.addAtom('H', x0 + Molecule.IDEALBOND * Math.cos(theta), y0 + Molecule.IDEALBOND * Math.sin(theta));
 		mol.addBond(atom, base + 1, 1);
 		if (numH > 1) SketchUtil.placeAdditionalHydrogens(mol, atom, numH - 1);
-    }
+	}
 
-    // returns a list of outgoing angles; unlike primeDirections, which tries to narrow the list as much as possible, this function
-    // tries to be generous and include anything remotely plausible: the intent is for helping out an interactive session where a precise
-    // pointing device is available
-    public static allViableDirections(mol:Molecule, atom:number, order:number):number[]
-    {
-        if (mol.atomAdjCount(atom) == 0)
-        {
+	// returns a list of outgoing angles; unlike primeDirections, which tries to narrow the list as much as possible, this function
+	// tries to be generous and include anything remotely plausible: the intent is for helping out an interactive session where a precise
+	// pointing device is available
+	public static allViableDirections(mol:Molecule, atom:number, order:number):number[]
+	{
+		if (mol.atomAdjCount(atom) == 0)
+		{
 			let angles:number[] = [];
 			for (let n = 0; n < 12; n++) angles.push(30 * DEGRAD);
-        	return angles;
-        }
+			return angles;
+		}
 
-        // all that applies
-        let adj = mol.atomAdjList(atom);
-        let angles = SketchUtil.exitVectors(mol, atom);
-        
-        let geom = SketchUtil.guessAtomGeometry(mol, atom, order);
-        if (adj.length == 1 && geom.indexOf(Geometry.Linear) < 0) geom.push(Geometry.Linear);
+		// all that applies
+		let adj = mol.atomAdjList(atom);
+		let angles = SketchUtil.exitVectors(mol, atom);
+		
+		let geom = SketchUtil.guessAtomGeometry(mol, atom, order);
+		if (adj.length == 1 && geom.indexOf(Geometry.Linear) < 0) geom.push(Geometry.Linear);
 		let bndang = CoordUtil.atomBondAngles(mol, atom, adj);
-        for (let g of geom)
-        {
+		for (let g of geom)
+		{
 			let map = SketchUtil.mapAngleSubstituent(g, bndang);
 			if (map != null) for (let th of map) angles.push(th);
-        }
-        
-        return GeomUtil.uniqueAngles(angles, 2 * DEGRAD);    
+		}
+		
+		return GeomUtil.uniqueAngles(angles, 2 * DEGRAD);    
 	}
-    
-    // simple new rings grafted onto existing components, or not
-    public static proposeNewRing(mol:Molecule, rsz:number, x:number, y:number, dx:number, dy:number, snap:boolean):[number[], number[]]
-    {
-		let theta = Math.atan2(dy, dx)
+	
+	// simple new rings grafted onto existing components, or not
+	public static proposeNewRing(mol:Molecule, rsz:number, x:number, y:number, dx:number, dy:number, snap:boolean):[number[], number[]]
+	{
+		let theta = Math.atan2(dy, dx);
 		if (snap)
 		{
-            const chunk = 30 * DEGRAD;
+			const chunk = 30 * DEGRAD;
 			theta = Math.round(theta / chunk) * chunk;
 		}
-		return SketchUtil.positionSimpleRing(mol, rsz, x, y, theta)
-    }
-    public static proposeAtomRing(mol:Molecule, rsz:number, atom:number, dx:number, dy:number):[number[], number[]]
-    {
+		return SketchUtil.positionSimpleRing(mol, rsz, x, y, theta);
+	}
+	public static proposeAtomRing(mol:Molecule, rsz:number, atom:number, dx:number, dy:number):[number[], number[]]
+	{
 		/*
 		var thsnap:number[] = SketchUtil.allViableDirections(mol, atom, 1);
 		if (mol.atomAdjCount(atom) == 1)
@@ -913,44 +913,44 @@ export class SketchUtil
 			thsnap = uniqueAngles(thsnap, 2.0 * DEGRAD);
 		}
 		// (tempting to have it snap to sidebonds, but the correct way to do that is to drag from the bond rather than the atom)
-        */
-        
-        let thsnap:number[] = [];
-        let cx = mol.atomX(atom), cy = mol.atomY(atom);
-        if (mol.atomAdjCount(atom) == 0)
-        {
-            for (let n = 0; n < 12; n++) thsnap.push(TWOPI * n / 12);
-        }
-        else if (mol.atomAdjCount(atom) == 1)
-        {
-            let nbr = mol.atomAdjList(atom)[0];
-            thsnap.push(angleNorm(Math.atan2(mol.atomY(nbr) - cy, mol.atomX(nbr) - cx) + Math.PI));
-        }
-        else
-        {
-            let angs:number[] = [];
-            for (let nbr of mol.atomAdjList(atom)) angs.push(Math.atan2(mol.atomY(nbr) - cy, mol.atomX(nbr) - cx));
-            angs = sortAngles(angs);
-            for (let n = 0; n < angs.length; n++)
-            {
-                let th1 = angs[n], th2 = angs[n < angs.length - 1 ? n + 1 : 0];
-                thsnap.push(th1 + 0.5 * angleDiffPos(th2, th1));
-            } 
-        }
+		*/
+		
+		let thsnap:number[] = [];
+		let cx = mol.atomX(atom), cy = mol.atomY(atom);
+		if (mol.atomAdjCount(atom) == 0)
+		{
+			for (let n = 0; n < 12; n++) thsnap.push(TWOPI * n / 12);
+		}
+		else if (mol.atomAdjCount(atom) == 1)
+		{
+			let nbr = mol.atomAdjList(atom)[0];
+			thsnap.push(angleNorm(Math.atan2(mol.atomY(nbr) - cy, mol.atomX(nbr) - cx) + Math.PI));
+		}
+		else
+		{
+			let angs:number[] = [];
+			for (let nbr of mol.atomAdjList(atom)) angs.push(Math.atan2(mol.atomY(nbr) - cy, mol.atomX(nbr) - cx));
+			angs = sortAngles(angs);
+			for (let n = 0; n < angs.length; n++)
+			{
+				let th1 = angs[n], th2 = angs[n < angs.length - 1 ? n + 1 : 0];
+				thsnap.push(th1 + 0.5 * angleDiffPos(th2, th1));
+			} 
+		}
 
-        let theta = Math.atan2(dy, dx);
-		var bestTheta = 0, bestDelta = Number.MAX_VALUE
+		let theta = Math.atan2(dy, dx);
+		let bestTheta = 0, bestDelta = Number.MAX_VALUE;
 		for (let th of thsnap)
 		{
 			let delta = Math.abs(angleDiff(th, theta));
 			if (delta < bestDelta) {bestTheta = th; bestDelta = delta;}
 		}
-        
+		
 		return SketchUtil.positionSimpleRing(mol, rsz, mol.atomX(atom), mol.atomY(atom), bestTheta);
-    }
-    public static proposeBondRing(mol:Molecule, rsz:number, bond:number, dx:number, dy:number):[number[], number[]]
-    { 
-        let bfr = mol.bondFrom(bond), bto = mol.bondTo(bond);
+	}
+	public static proposeBondRing(mol:Molecule, rsz:number, bond:number, dx:number, dy:number):[number[], number[]]
+	{ 
+		let bfr = mol.bondFrom(bond), bto = mol.bondTo(bond);
 		let bx = mol.atomX(bto) - mol.atomX(bfr), by = mol.atomY(bto) - mol.atomY(bfr);
 		let sign = dx * by - dy * bx;
 		
@@ -963,7 +963,7 @@ export class SketchUtil
 		let cy = 0.5 * (mol.atomY(bfr) + mol.atomY(bto)) + brad * Math.sin(theta);
 		
 		let rx:number[] = [], ry:number[] = [];
-        for (let n = 0; n < rsz; n++)
+		for (let n = 0; n < rsz; n++)
 		{
 			let th = theta - Math.PI + (n - 0.5) * dth;
 			rx.push(cx + Math.cos(th) * rad);
@@ -983,15 +983,15 @@ export class SketchUtil
 	// points for the ring that ought to be created from these parameters; note
 	public static positionSimpleRing(mol:Molecule, rsz:number, x:number, y:number, theta:number):[number[], number[]]
 	{
-        let dth = TWOPI / rsz;
-        let rad = Molecule.IDEALBOND / (2 * Math.sin(0.5 * dth));
+		let dth = TWOPI / rsz;
+		let rad = Molecule.IDEALBOND / (2 * Math.sin(0.5 * dth));
 		let cx = x + rad * Math.cos(theta), cy = y + rad * Math.sin(theta);
 		
-        let rx:number[] = [], ry:number[] = [];
-        for (let n = 0; n < rsz; n++)
+		let rx:number[] = [], ry:number[] = [];
+		for (let n = 0; n < rsz; n++)
 		{
-            let th = theta - Math.PI + n * dth;
-            rx.push(cx + Math.cos(th) * rad);
+			let th = theta - Math.PI + n * dth;
+			rx.push(cx + Math.cos(th) * rad);
 			ry.push(cy + Math.sin(th) * rad);
 		}
 		

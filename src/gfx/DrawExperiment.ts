@@ -74,7 +74,7 @@ export class DrawExperiment
 	// --------------------- private methods ---------------------
 	
 	private drawComponent(idx:number, xc:ArrangeComponent):void
-    {
+	{
 		let vg = this.vg, policy = this.policy;
 		let bx = xc.box.x + xc.padding, by = xc.box.y + xc.padding;
 		let bw = xc.box.w - 2 * xc.padding, bh = xc.box.h - 2 * xc.padding;
@@ -113,7 +113,7 @@ export class DrawExperiment
 				bx += useW;
 				bw -= useW;
 			}
-    	}
+		}
 		if (xc.annot != 0)
 		{
 			let aw = ArrangeExperiment.COMP_ANNOT_SIZE * this.scale;
@@ -140,9 +140,9 @@ export class DrawExperiment
 			let fsz = 0.5 * bh;
 			vg.drawText(bx + 0.5 * bw, by + 0.5 * bh, '?', fsz, policy.data.foreground, TextAlign.Centre | TextAlign.Middle);
 		}
-    }
-    private drawSymbolArrow(xc:ArrangeComponent):void
-    {
+	}
+	private drawSymbolArrow(xc:ArrangeComponent):void
+	{
 		let bx = xc.box.x + xc.padding, by = xc.box.y + xc.padding;
 		let bw = xc.box.w - 2 * xc.padding, bh = xc.box.h - 2 * xc.padding;
 
@@ -150,9 +150,9 @@ export class DrawExperiment
 			this.drawArrow(bx, by + 0.5 * bh, bx + bw, by + 0.5 * bh, bh, this.policy.data.foreground, this.scale * 0.05);
 		else
 			this.drawArrow(bx + 0.5 * bw, by, bx + 0.5 * bw, by + bh, bw, this.policy.data.foreground, this.scale * 0.05);
-    }	
+	}	
 	private drawSymbolPlus(xc:ArrangeComponent):void
-    {
+	{
 		let vg = this.vg, policy = this.policy;
 		let x1 = xc.box.x + xc.padding, y1 = xc.box.y + xc.padding;
 		let x3 = x1 + xc.box.w - 2 * xc.padding, y3 = y1 + xc.box.h - 2 * xc.padding;
@@ -161,16 +161,16 @@ export class DrawExperiment
 
 		vg.drawLine(x1, y2, x3, y2, policy.data.foreground, lw);
 		vg.drawLine(x2, y1, x2, y3, policy.data.foreground, lw);
-    }
+	}
 	private drawAnnotation(annot:number, bx:number, by:number, bw:number, bh:number):void
 	{
 		let vg = this.vg, policy = this.policy;
 		let sz = bw, x2 = bx + bw, y2 = by + bh, x1 = x2 - sz, y1 = by;
 		if (annot == ArrangeExperiment.COMP_ANNOT_PRIMARY) y2 = y1 + sz;
 		else if (annot == ArrangeExperiment.COMP_ANNOT_WASTE) y1 = y2 - sz;
-    	
-    	//vg.drawRect(x1,y1,x2-x1,y2-y1,0x000000,1,NOCOLOUR);
-    	
+		
+		//vg.drawRect(x1,y1,x2-x1,y2-y1,0x000000,1,NOCOLOUR);
+		
 		if (annot == ArrangeExperiment.COMP_ANNOT_PRIMARY)
 		{
 			let cx = 0.5 * (x1 + x2), cy = 0.5 * (y1 + y2), ext = 0.25 * sz;
@@ -212,7 +212,7 @@ export class DrawExperiment
 			vg.drawOval(x2 - tw + hsz, y1 + th - hsz, hsz, hsz, 0, 0, fg);
 			vg.drawOval(x2 - hsz, y1 + th - hsz, hsz, hsz, 0, 0, fg);
 		}
-    }
+	}
 
 	private drawArrow(x1:number, y1:number, x2:number, y2:number, headsz:number, colour:number, linesz:number):void
 	{
@@ -225,20 +225,20 @@ export class DrawExperiment
 		[
 			x1 + ox * 0.5 * linesz,
 			hx + ox * 0.5 * linesz,
-     		hx + ox * 0.5 * headsz,
-     		x2,
-     		hx - ox * 0.5 * headsz,
-     		hx - ox * 0.5 * linesz,
+			hx + ox * 0.5 * headsz,
+			x2,
+			hx - ox * 0.5 * headsz,
+			hx - ox * 0.5 * linesz,
 			x1 - ox * 0.5 * linesz
 		];
 		let py = 
 		[
 			y1 + oy * 0.5 * linesz,
 			hy + oy * 0.5 * linesz,
-     		hy + oy * 0.5 * headsz,
-     		y2,
-     		hy - oy * 0.5 * headsz,
-     		hy - oy * 0.5 * linesz,
+			hy + oy * 0.5 * headsz,
+			y2,
+			hy - oy * 0.5 * headsz,
+			hy - oy * 0.5 * linesz,
 			y1 - oy * 0.5 * linesz
 		];
 		this.vg.drawPoly(px, py, MetaVector.NOCOLOUR, 0, colour, true);

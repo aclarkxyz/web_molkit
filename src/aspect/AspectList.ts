@@ -60,7 +60,7 @@ export class AspectList
 	// instantiates an aspect by creating the class instance that matches the given code; if the code is not in the supported list,
 	// returns null; note that calling this function takes action that can modify the datasheet: it will be inducted if it does not
 	// already exist; if it does exist, it is given the chance to make corrective changes to the content
-	public instantiate(code:String):Aspect
+	public instantiate(code:string):Aspect
 	{
 		if (code == SARTable.CODE) return new SARTable(this.ds);
 		if (code == Experiment.CODE) return new Experiment(this.ds);

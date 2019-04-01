@@ -103,7 +103,7 @@ export class BondArtifact
 		// delete everything
 		for (let n = 1; n <= mol.numAtoms; n++)
 		{
-			var extra = mol.atomExtra(n), modified = false;
+			let extra = mol.atomExtra(n), modified = false;
 			for (let i = extra.length - 1; i >= 0; i--)
 			{
 				if (extra[i].startsWith(BONDARTIFACT_EXTRA_RESPATH) || extra[i].startsWith(BONDARTIFACT_EXTRA_RESRING) || extra[i].startsWith(BONDARTIFACT_EXTRA_ARENE))
@@ -114,7 +114,6 @@ export class BondArtifact
 			}
 			if (modified) mol.setAtomExtra(n, extra);
 		}
-
 		
 		// write back our datastructures
 		for (let [blk, path] of this.resPaths.entries())
@@ -170,14 +169,14 @@ export class BondArtifact
 			blocks.push(blk);
 		}
 
-		blocks = other.getAreneBlocks()
+		blocks = other.getAreneBlocks();
 		let stashArenes = this.getArenes();
 		this.arenes.clear();
 		for (let arene of stashArenes)
 		{
 			let blk = this.nextIdentifier(blocks);
 			this.arenes.set(blk, arene);
-			blocks.push(blk)
+			blocks.push(blk);
 		}
 	}
 	
@@ -353,7 +352,7 @@ export class BondArtifact
 			let areneAtoms = Vec.append(arene.atoms, arene.centre);
 			if (Vec.equals(atoms, Vec.sorted(areneAtoms))) return true;
 		}
-		return false
+		return false;
 	}
 	
 	// make a list of atoms (arbitrary order) into an artifact of the given type
@@ -376,7 +375,7 @@ export class BondArtifact
 		const sz = atoms.length;
 		if (sz < 3) return null;
 
-		let g = Graph.fromMolecule(this.mol).subgraphIndex(Vec.add(atoms, -1))
+		let g = Graph.fromMolecule(this.mol).subgraphIndex(Vec.add(atoms, -1));
 		let best = 0;
 		if (sz == 3)
 		{

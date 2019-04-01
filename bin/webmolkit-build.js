@@ -475,11 +475,16 @@ var WebMolKit;
 var WebMolKit;
 (function (WebMolKit) {
     function safeInt(str, def = 0) {
-        let val = parseInt(str);
+        if (str == null || str.length == 0)
+            return def;
+        let val = str.startsWith('0x') ? parseInt(str.substring(2), 16) :
+            str.startsWith('#') ? parseInt(str.substring(1), 16) : parseInt(str);
         return isNaN(val) ? def : val;
     }
     WebMolKit.safeInt = safeInt;
     function safeFloat(str, def = 0) {
+        if (str == null || str.length == 0)
+            return def;
         let val = parseFloat(str);
         return isNaN(val) ? def : val;
     }
@@ -2378,7 +2383,7 @@ var WebMolKit;
             ];
             this.pathCache = [];
             this.pathMissing = null;
-            for (var n = this.GLYPH_DATA.length - 1; n >= 0; n--)
+            for (let n = this.GLYPH_DATA.length - 1; n >= 0; n--)
                 this.pathCache[n] = null;
         }
         getKerning(ch1, ch2) {
@@ -2412,12 +2417,11 @@ var WebMolKit;
         getRawGlyph(idx) {
             return this.GLYPH_DATA[idx];
         }
-        ;
         getGlyphPath(idx) {
-            path = this.pathCache[idx];
+            let path = this.pathCache[idx];
             if (path != null)
                 return path;
-            var path = new Path2D(this.GLYPH_DATA[idx]);
+            path = new Path2D(this.GLYPH_DATA[idx]);
             this.pathCache[idx] = path;
             return path;
         }
@@ -2597,6 +2601,7 @@ var WebMolKit;
         boundLowY() { return this.lowY; }
         boundHighX() { return this.highX; }
         boundHighY() { return this.highY; }
+        getBounds() { return new WebMolKit.Box(this.lowX, this.lowY, this.highX - this.lowX, this.highY - this.lowY); }
         measure() {
             this.width = Math.ceil(this.highX - this.lowX);
             this.height = Math.ceil(this.highY - this.lowY);
@@ -3242,7 +3247,7 @@ var WebMolKit;
                         'background': 0xFFFFFF,
                         'atomCols': new Array(112)
                     };
-                for (var n = 0; n <= 111; n++)
+                for (let n = 0; n <= 111; n++)
                     data.atomCols[n] = 0x000000;
                 this.data = data;
             }
@@ -3250,23 +3255,20 @@ var WebMolKit;
                 this.data = WebMolKit.clone(data);
             }
         }
-        ;
         static defaultBlackOnWhite() {
-            var policy = new RenderPolicy();
+            let policy = new RenderPolicy();
             return policy;
         }
-        ;
         static defaultWhiteOnBlack() {
-            var policy = new RenderPolicy();
+            let policy = new RenderPolicy();
             policy.data.foreground = 0xFFFFFF;
             policy.data.background = 0x000000;
-            for (var n = 0; n <= 111; n++)
+            for (let n = 0; n <= 111; n++)
                 policy.data.atomCols[n] = 0xFFFFFF;
             return policy;
         }
-        ;
         static defaultColourOnWhite() {
-            var policy = RenderPolicy.defaultBlackOnWhite();
+            let policy = RenderPolicy.defaultBlackOnWhite();
             policy.data.atomCols[0] = 0x404040;
             policy.data.atomCols[1] = 0x808080;
             policy.data.atomCols[6] = 0x000000;
@@ -3279,9 +3281,8 @@ var WebMolKit;
             policy.data.atomCols[35] = 0xC04000;
             return policy;
         }
-        ;
         static defaultColourOnBlack() {
-            var policy = RenderPolicy.defaultWhiteOnBlack();
+            let policy = RenderPolicy.defaultWhiteOnBlack();
             policy.data.atomCols[0] = 0xA0A0A0;
             policy.data.atomCols[1] = 0x808080;
             policy.data.atomCols[6] = 0xFFFFFF;
@@ -3294,9 +3295,8 @@ var WebMolKit;
             policy.data.atomCols[35] = 0xFF8040;
             return policy;
         }
-        ;
         static defaultPrintedPublication() {
-            var policy = RenderPolicy.defaultBlackOnWhite();
+            let policy = RenderPolicy.defaultBlackOnWhite();
             policy.data.pointScale = 9.6;
             policy.data.resolutionDPI = 600;
             policy.data.fontSize = 0.80;
@@ -3304,7 +3304,6 @@ var WebMolKit;
             policy.data.lineSize = 0.0625;
             return policy;
         }
-        ;
     }
     WebMolKit.RenderPolicy = RenderPolicy;
     class RenderEffects {
@@ -3334,6 +3333,7 @@ var WebMolKit;
 (function (WebMolKit) {
     class Aspect {
         constructor(ds, allowModify) {
+            this.id = null;
             this.allowModify = true;
             this.ds = ds ? ds : new WebMolKit.DataSheet();
             if (allowModify != null)
@@ -3341,10 +3341,10 @@ var WebMolKit;
         }
         isColumnReserved(colName) { return false; }
         areColumnsReserved(colNames) {
-            let reserved = WebMolKit.Vec.booleanArray(false, colNames.length);
+            let resMask = WebMolKit.Vec.booleanArray(false, colNames.length);
             for (let n = 0; n < colNames.length; n++)
-                reserved[n] = this.isColumnReserved(colNames[n]);
-            return reserved;
+                resMask[n] = this.isColumnReserved(colNames[n]);
+            return resMask;
         }
         rowFirstBlock(row) { return true; }
         rowBlockCount(row) { return 1; }
@@ -3367,17 +3367,17 @@ var WebMolKit;
     }
     Chemistry.ELEMENTS = [
         null,
-        "H", "He",
-        "Li", "Be", "B", "C", "N", "O", "F", "Ne",
-        "Na", "Mg", "Al", "Si", "P", "S", "Cl", "Ar",
-        "K", "Ca", "Sc", "Ti", "V", "Cr", "Mn", "Fe", "Co", "Ni", "Cu", "Zn", "Ga", "Ge", "As", "Se", "Br", "Kr",
-        "Rb", "Sr", "Y", "Zr", "Nb", "Mo", "Tc", "Ru", "Rh", "Pd", "Ag", "Cd", "In", "Sn", "Sb", "Te", "I", "Xe",
-        "Cs", "Ba",
-        "La", "Ce", "Pr", "Nd", "Pm", "Sm", "Eu", "Gd", "Tb", "Dy", "Ho", "Er", "Tm", "Yb",
-        "Lu", "Hf", "Ta", "W", "Re", "Os", "Ir", "Pt", "Au", "Hg", "Tl", "Pb", "Bi", "Po", "At", "Rn",
-        "Fr", "Ra",
-        "Ac", "Th", "Pa", "U", "Np", "Pu", "Am", "Cm", "Bk", "Cf", "Es", "Fm", "Md", "No",
-        "Lr", "Rf", "Db", "Sg", "Bh", "Hs", "Mt", "Ds", "Rg", "Cn"
+        'H', 'He',
+        'Li', 'Be', 'B', 'C', 'N', 'O', 'F', 'Ne',
+        'Na', 'Mg', 'Al', 'Si', 'P', 'S', 'Cl', 'Ar',
+        'K', 'Ca', 'Sc', 'Ti', 'V', 'Cr', 'Mn', 'Fe', 'Co', 'Ni', 'Cu', 'Zn', 'Ga', 'Ge', 'As', 'Se', 'Br', 'Kr',
+        'Rb', 'Sr', 'Y', 'Zr', 'Nb', 'Mo', 'Tc', 'Ru', 'Rh', 'Pd', 'Ag', 'Cd', 'In', 'Sn', 'Sb', 'Te', 'I', 'Xe',
+        'Cs', 'Ba',
+        'La', 'Ce', 'Pr', 'Nd', 'Pm', 'Sm', 'Eu', 'Gd', 'Tb', 'Dy', 'Ho', 'Er', 'Tm', 'Yb',
+        'Lu', 'Hf', 'Ta', 'W', 'Re', 'Os', 'Ir', 'Pt', 'Au', 'Hg', 'Tl', 'Pb', 'Bi', 'Po', 'At', 'Rn',
+        'Fr', 'Ra',
+        'Ac', 'Th', 'Pa', 'U', 'Np', 'Pu', 'Am', 'Cm', 'Bk', 'Cf', 'Es', 'Fm', 'Md', 'No',
+        'Lr', 'Rf', 'Db', 'Sg', 'Bh', 'Hs', 'Mt', 'Ds', 'Rg', 'Cn'
     ];
     Chemistry.ELEMENT_GROUPS = [
         0,
@@ -3650,7 +3650,6 @@ var WebMolKit;
         getBond(idx) {
             if (idx < 1 || idx > this.bonds.length)
                 throw `Molecule.getBond: index ${idx} out of range (#bonds=${this.bonds.length})`;
-            ;
             return this.bonds[idx - 1];
         }
         bondFrom(idx) { return this.getBond(idx).from; }
@@ -4920,8 +4919,8 @@ var WebMolKit;
                 if (Math.abs(WebMolKit.angleDiff(th1, th2)) < 170 * WebMolKit.DEGRAD) {
                     let theta = 0.5 * (th1 + th2) + Math.PI;
                     let th3 = theta - 30 * WebMolKit.DEGRAD, th4 = theta + 30 * WebMolKit.DEGRAD;
-                    mol.addAtom("H", x0 + WebMolKit.Molecule.IDEALBOND * Math.cos(th3), y0 + WebMolKit.Molecule.IDEALBOND * Math.sin(th3));
-                    mol.addAtom("H", x0 + WebMolKit.Molecule.IDEALBOND * Math.cos(th4), y0 + WebMolKit.Molecule.IDEALBOND * Math.sin(th4));
+                    mol.addAtom('H', x0 + WebMolKit.Molecule.IDEALBOND * Math.cos(th3), y0 + WebMolKit.Molecule.IDEALBOND * Math.sin(th3));
+                    mol.addAtom('H', x0 + WebMolKit.Molecule.IDEALBOND * Math.cos(th4), y0 + WebMolKit.Molecule.IDEALBOND * Math.sin(th4));
                     mol.addBond(atom, base + 1, 1);
                     mol.addBond(atom, base + 2, 1);
                     return;
@@ -4930,16 +4929,16 @@ var WebMolKit;
             if (adj.length == 1 && numH == 3) {
                 let th1 = Math.atan2(mol.atomY(adj[0]) - y0, mol.atomX(adj[0]) - x0);
                 let th2 = th1 + 90 * WebMolKit.DEGRAD, th3 = th1 + 180 * WebMolKit.DEGRAD, th4 = th1 + 270 * WebMolKit.DEGRAD;
-                mol.addAtom("H", x0 + WebMolKit.Molecule.IDEALBOND * Math.cos(th2), y0 + WebMolKit.Molecule.IDEALBOND * Math.sin(th2));
-                mol.addAtom("H", x0 + WebMolKit.Molecule.IDEALBOND * Math.cos(th3), y0 + WebMolKit.Molecule.IDEALBOND * Math.sin(th3));
-                mol.addAtom("H", x0 + WebMolKit.Molecule.IDEALBOND * Math.cos(th4), y0 + WebMolKit.Molecule.IDEALBOND * Math.sin(th4));
+                mol.addAtom('H', x0 + WebMolKit.Molecule.IDEALBOND * Math.cos(th2), y0 + WebMolKit.Molecule.IDEALBOND * Math.sin(th2));
+                mol.addAtom('H', x0 + WebMolKit.Molecule.IDEALBOND * Math.cos(th3), y0 + WebMolKit.Molecule.IDEALBOND * Math.sin(th3));
+                mol.addAtom('H', x0 + WebMolKit.Molecule.IDEALBOND * Math.cos(th4), y0 + WebMolKit.Molecule.IDEALBOND * Math.sin(th4));
                 mol.addBond(atom, base + 1, 1);
                 mol.addBond(atom, base + 2, 1);
                 mol.addBond(atom, base + 3, 1);
                 return;
             }
             let theta = SketchUtil.pickNewAtomDirection(mol, atom, SketchUtil.primeDirections(mol, atom));
-            mol.addAtom("H", x0 + WebMolKit.Molecule.IDEALBOND * Math.cos(theta), y0 + WebMolKit.Molecule.IDEALBOND * Math.sin(theta));
+            mol.addAtom('H', x0 + WebMolKit.Molecule.IDEALBOND * Math.cos(theta), y0 + WebMolKit.Molecule.IDEALBOND * Math.sin(theta));
             mol.addBond(atom, base + 1, 1);
             if (numH > 1)
                 SketchUtil.placeAdditionalHydrogens(mol, atom, numH - 1);
@@ -4995,7 +4994,7 @@ var WebMolKit;
                 }
             }
             let theta = Math.atan2(dy, dx);
-            var bestTheta = 0, bestDelta = Number.MAX_VALUE;
+            let bestTheta = 0, bestDelta = Number.MAX_VALUE;
             for (let th of thsnap) {
                 let delta = Math.abs(WebMolKit.angleDiff(th, theta));
                 if (delta < bestDelta) {
@@ -5114,7 +5113,7 @@ var WebMolKit;
         static getAbbrev(mol, atom) {
             let extra = mol.atomExtra(atom);
             for (let n = 0; n < (extra != null ? extra.length : 0); n++)
-                if (extra[n].startsWith("a")) {
+                if (extra[n].startsWith('a')) {
                     return WebMolKit.Molecule.fromString(extra[n].substring(1));
                 }
             return null;
@@ -5144,13 +5143,13 @@ var WebMolKit;
             let extra = mol.atomExtra(atom);
             let idx = -1;
             for (let n = 0; n < (extra != null ? extra.length : 0); n++)
-                if (extra[n].startsWith("a")) {
+                if (extra[n].startsWith('a')) {
                     idx = n;
                     break;
                 }
             if (idx < 0)
                 idx = extra.push(null) - 1;
-            extra[idx] = "a" + frag.toString();
+            extra[idx] = 'a' + frag.toString();
             mol.setAtomExtra(atom, extra);
         }
         static validateAbbrevs(mol) {
@@ -5280,7 +5279,7 @@ var WebMolKit;
         static clearAbbrev(mol, atom) {
             let extra = mol.atomExtra(atom);
             for (let n = 0; n < (extra != null ? extra.length : 0); n++)
-                if (extra[n].startsWith("a")) {
+                if (extra[n].startsWith('a')) {
                     extra.splice(n, 1);
                     mol.setAtomExtra(atom, extra);
                     mol.setAtomElement(atom, 'C');
@@ -5680,7 +5679,7 @@ var WebMolKit;
                     mol.setAtomHExplicit(n, 0);
                 if (!position) {
                     for (; hc > 0; hc--) {
-                        let a = mol.addAtom("H", mol.atomX(n), mol.atomY(n));
+                        let a = mol.addAtom('H', mol.atomX(n), mol.atomY(n));
                         mol.addBond(n, a, 1);
                     }
                 }
@@ -6530,7 +6529,7 @@ var WebMolKit;
                         else if (type == MBLK_ISO)
                             this.mol.setAtomIsotope(pos, val);
                         else if (type == MBLK_RGP)
-                            this.mol.setAtomElement(pos, "R" + val);
+                            this.mol.setAtomElement(pos, 'R' + val);
                         else if (type == MBLK_HYD) {
                             this.mol.setAtomHExplicit(pos, val);
                             let src = { 'row': this.pos - 1, 'col': 9 + 8 * n, 'len': 8 };
@@ -6910,7 +6909,7 @@ var WebMolKit;
         rewriteMolecule() {
             const mol = this.mol;
             for (let n = 1; n <= mol.numAtoms; n++) {
-                var extra = mol.atomExtra(n), modified = false;
+                let extra = mol.atomExtra(n), modified = false;
                 for (let i = extra.length - 1; i >= 0; i--) {
                     if (extra[i].startsWith(WebMolKit.BONDARTIFACT_EXTRA_RESPATH) || extra[i].startsWith(WebMolKit.BONDARTIFACT_EXTRA_RESRING) || extra[i].startsWith(WebMolKit.BONDARTIFACT_EXTRA_ARENE)) {
                         extra.splice(i);
@@ -7345,7 +7344,7 @@ var WebMolKit;
             const sz = idx.length;
             for (let i = 0; i < sz; i += 8) {
                 let count = Math.min(8, sz - i);
-                let line = "M  " + token + this.intrpad(count, 3);
+                let line = 'M  ' + token + this.intrpad(count, 3);
                 for (let j = 0; j < count; j++)
                     line += this.intrpad(idx[i + j], 4) + this.intrpad(val[i + j], 4);
                 this.lines.push(line);
@@ -7355,7 +7354,7 @@ var WebMolKit;
             const sz = val.length;
             for (let i = 0; i < sz; i += 15) {
                 let count = Math.min(15, sz - i);
-                let line = "M  " + token + this.intrpad(count, 3);
+                let line = 'M  ' + token + this.intrpad(count, 3);
                 line += this.intrpad(idx, 4);
                 for (let j = 0; j < count; j++)
                     line += this.intrpad(val[i + j], 4);
@@ -7546,7 +7545,7 @@ var WebMolKit;
         static sk_unescape(str) {
             let ret = '', match;
             while (match = str.match(/^(.*?)\\([0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f])(.*)/)) {
-                ret += match[1] + String.fromCharCode(parseInt("0x" + match[2]));
+                ret += match[1] + String.fromCharCode(parseInt('0x' + match[2]));
                 str = match[3];
             }
             return ret + str;
@@ -7573,7 +7572,6 @@ var WebMolKit;
                 ret += ',' + MoleculeStream.sk_escape(extra[n]);
             return ret;
         }
-        ;
     }
     WebMolKit.MoleculeStream = MoleculeStream;
 })(WebMolKit || (WebMolKit = {}));
@@ -7582,6 +7580,7 @@ var WebMolKit;
     class SARTable extends WebMolKit.Aspect {
         constructor(ds, allowModify) {
             super(ds, allowModify);
+            this.id = SARTable.CODE;
             this.setup();
         }
         static isSARTable(ds) {
@@ -7683,7 +7682,7 @@ var WebMolKit;
             }
         }
         parseMetaData(content) {
-            let fields = { 'construct': null, 'locked': null, 'scaffold': null, 'substituents': [], metadata: [] };
+            let fields = { 'construct': null, 'locked': null, 'scaffold': null, 'substituents': [], 'metadata': [] };
             for (let line of content.split(/\r?\n/)) {
                 let pos = line.indexOf('=');
                 if (pos < 0)
@@ -7728,7 +7727,7 @@ var WebMolKit;
         }
         areColumnsReserved(colNames) {
             let fields = this.getFields();
-            var used = new Set();
+            let used = new Set();
             used.add(fields.construct);
             used.add(fields.locked);
             used.add(fields.scaffold);
@@ -8580,6 +8579,7 @@ var WebMolKit;
         }
         get numComponents() { return this.components.length; }
         getComponent(idx) { return this.components[idx]; }
+        getComponents() { return this.components; }
         scaleComponents(modScale) {
             if (modScale == 1)
                 return;
@@ -9248,8 +9248,10 @@ var WebMolKit;
         }
         numPoints() { return this.points.length; }
         getPoint(idx) { return this.points[idx]; }
+        getPoints() { return this.points; }
         numLines() { return this.lines.length; }
         getLine(idx) { return this.lines[idx]; }
+        getLines() { return this.lines; }
         numRings() { return this.rings.length; }
         getRing(idx) { return this.rings[idx]; }
         getRings() { return this.rings; }
@@ -9258,6 +9260,7 @@ var WebMolKit;
         getPaths() { return this.paths; }
         numSpace() { return this.space.length; }
         getSpace(idx) { return this.space[idx]; }
+        getSpaces() { return this.space; }
         offsetEverything(dx, dy) {
             for (let a of this.points)
                 a.oval.offsetBy(dx, dy);
@@ -9276,6 +9279,11 @@ var WebMolKit;
                 WebMolKit.Vec.addTo(spc.px, dx);
                 WebMolKit.Vec.addTo(spc.py, dy);
             }
+        }
+        offsetOrigin() {
+            let bounds = this.determineBoundary();
+            if (bounds[0] != 0 || bounds[1] != 0)
+                this.offsetEverything(-bounds[0], -bounds[1]);
         }
         scaleEverything(scaleBy) {
             this.scale *= scaleBy;
@@ -9962,7 +9970,7 @@ var WebMolKit;
                 let DOWNUP = [3, 2, 0, 1];
                 let quad = RIGHTLEFT, adj = this.mol.atomAdjList(a.anum);
                 if (adj.length == 0) {
-                    let LEFTIES = ["O", "S", "F", "Cl", "Br", "I"];
+                    let LEFTIES = ['O', 'S', 'F', 'Cl', 'Br', 'I'];
                     if (this.mol.atomCharge(a.anum) == 0 && this.mol.atomUnpaired(a.anum) == 0 &&
                         LEFTIES.indexOf(this.mol.atomElement(a.anum)) >= 0)
                         quad = LEFTRIGHT;
@@ -10049,7 +10057,7 @@ var WebMolKit;
                         break;
                 }
             }
-            let wad = this.measure.measureText("H", a.fsz);
+            let wad = this.measure.measureText('H', a.fsz);
             const PADDING = 1.1;
             let ah = {
                 'anum': 0,
@@ -10765,6 +10773,8 @@ var WebMolKit;
         constructor(layout, vg) {
             this.layout = layout;
             this.vg = vg;
+            this.preDrawMolecule = null;
+            this.postDrawMolecule = null;
             this.entry = layout.entry;
             this.measure = layout.measure;
             this.policy = layout.policy;
@@ -10772,16 +10782,17 @@ var WebMolKit;
             this.invScale = 1.0 / this.scale;
         }
         draw() {
-            for (let xc of this.layout.components) {
+            for (let n = 0; n < this.layout.components.length; n++) {
+                let xc = this.layout.components[n];
                 if (xc.type == WebMolKit.ArrangeExperiment.COMP_ARROW)
                     this.drawSymbolArrow(xc);
                 else if (xc.type == WebMolKit.ArrangeExperiment.COMP_PLUS)
                     this.drawSymbolPlus(xc);
                 else
-                    this.drawComponent(xc);
+                    this.drawComponent(n, xc);
             }
         }
-        drawComponent(xc) {
+        drawComponent(idx, xc) {
             let vg = this.vg, policy = this.policy;
             let bx = xc.box.x + xc.padding, by = xc.box.y + xc.padding;
             let bw = xc.box.w - 2 * xc.padding, bh = xc.box.h - 2 * xc.padding;
@@ -10819,8 +10830,12 @@ var WebMolKit;
                 let arrmol = new WebMolKit.ArrangeMolecule(xc.mol, this.layout.measure, policy, new WebMolKit.RenderEffects());
                 arrmol.arrange();
                 arrmol.squeezeInto(bx, by, bw, bh, 0);
+                if (this.preDrawMolecule)
+                    this.preDrawMolecule(vg, idx, xc, arrmol);
                 let drawmol = new WebMolKit.DrawMolecule(arrmol, vg);
                 drawmol.draw();
+                if (this.postDrawMolecule)
+                    this.postDrawMolecule(vg, idx, xc, arrmol);
             }
             if (xc.srcIdx < 0) {
                 let fsz = 0.5 * bh;
@@ -10917,6 +10932,12 @@ var WebMolKit;
 })(WebMolKit || (WebMolKit = {}));
 var WebMolKit;
 (function (WebMolKit) {
+    let ExperimentComponentType;
+    (function (ExperimentComponentType) {
+        ExperimentComponentType[ExperimentComponentType["Reactant"] = 0] = "Reactant";
+        ExperimentComponentType[ExperimentComponentType["Reagent"] = 1] = "Reagent";
+        ExperimentComponentType[ExperimentComponentType["Product"] = 2] = "Product";
+    })(ExperimentComponentType = WebMolKit.ExperimentComponentType || (WebMolKit.ExperimentComponentType = {}));
     class ExperimentComponent {
         constructor(mol, name) {
             this.mol = null;
@@ -10973,7 +10994,6 @@ var WebMolKit;
             this.reagents = [];
             this.products = [];
         }
-        contructor() { }
         clone() {
             let dup = new ExperimentStep();
             for (let c of this.reactants)
@@ -11069,6 +11089,7 @@ var WebMolKit;
     class Experiment extends WebMolKit.Aspect {
         constructor(ds, allowModify) {
             super(ds, allowModify);
+            this.id = Experiment.CODE;
             if ($.isEmptyObject(Experiment.COLUMN_DESCRIPTIONS)) {
                 let v = Experiment.COLUMN_DESCRIPTIONS;
                 v[Experiment.COLNAME_EXPERIMENT_TITLE] = 'Title description for the experiment';
@@ -11350,7 +11371,7 @@ var WebMolKit;
         }
         putEntry(row, entry, replace) {
             let [preactants, pproducts, preagents] = this.countComponents();
-            var [nreactants, nproducts, nreagents] = [preactants, pproducts, preagents];
+            let [nreactants, nproducts, nreagents] = [preactants, pproducts, preagents];
             for (let step of entry.steps) {
                 nreactants = Math.max(nreactants, step.reactants.length);
                 nproducts = Math.max(nproducts, step.products.length);
@@ -11612,6 +11633,7 @@ var WebMolKit;
     class AssayProvenance extends WebMolKit.Aspect {
         constructor(ds, allowModify) {
             super(ds, allowModify);
+            this.id = AssayProvenance.CODE;
             this.setup();
         }
         static isAssayProvenance(ds) {
@@ -11895,6 +11917,7 @@ var WebMolKit;
     class BayesianSource extends WebMolKit.Aspect {
         constructor(ds, allowModify) {
             super(ds, allowModify);
+            this.id = BayesianSource.CODE;
             this.setup();
         }
         static isBayesianSource(ds) {
@@ -11992,6 +12015,7 @@ var WebMolKit;
     class BayesianPrediction extends WebMolKit.Aspect {
         constructor(ds, allowModify) {
             super(ds, allowModify);
+            this.id = BayesianPrediction.CODE;
             this.setup();
         }
         static isBayesianPrediction(ds) {
@@ -13206,7 +13230,7 @@ var WebMolKit;
         }
         circularIterate(iter, atom) {
             let adj = this.atomAdj[atom - 1], adjb = this.bondAdj[atom - 1];
-            var seq = WebMolKit.Vec.numberArray(0, 2 + 2 * adj.length);
+            let seq = WebMolKit.Vec.numberArray(0, 2 + 2 * adj.length);
             seq[0] = iter;
             seq[1] = this.identity[atom - 1];
             for (let n = 0; n < adj.length; n++) {
@@ -13225,7 +13249,7 @@ var WebMolKit;
                 else
                     p++;
             }
-            var crc = start_crc();
+            let crc = start_crc();
             for (let n = 0; n < seq.length; n += 2) {
                 crc = feed_crc(crc, seq[n]);
                 let v = seq[n + 1];
@@ -13591,13 +13615,13 @@ var WebMolKit;
                     model.rocType = line.substring(9);
                 else if (line.startsWith('roc:x=')) {
                     model.rocX = [];
-                    for (let str of line.substring(6).split(','))
-                        model.rocX.push(parseFloat(str));
+                    for (let s of line.substring(6).split(','))
+                        model.rocX.push(parseFloat(s));
                 }
                 else if (line.startsWith('roc:y=')) {
                     model.rocY = [];
-                    for (let str of line.substring(6).split(','))
-                        model.rocY.push(parseFloat(str));
+                    for (let s of line.substring(6).split(','))
+                        model.rocY.push(parseFloat(s));
                 }
                 else if (line.startsWith('truth:TP='))
                     model.truthTP = parseInt(line.substring(9), 0);
@@ -14041,30 +14065,30 @@ var WebMolKit;
                 let extList = WebMolKit.findNodes(extRoot, 'Ext');
                 for (let n = 0; n < extList.length; n++) {
                     let ext = extList[n];
-                    ds.appendExtension(ext.getAttribute("name"), ext.getAttribute("type"), WebMolKit.nodeText(ext));
+                    ds.appendExtension(ext.getAttribute('name'), ext.getAttribute('type'), WebMolKit.nodeText(ext));
                 }
             }
             let header = WebMolKit.findNode(root, 'Header');
-            let numCols = parseInt(header.getAttribute("ncols")), numRows = parseInt(header.getAttribute("nrows"));
+            let numCols = parseInt(header.getAttribute('ncols')), numRows = parseInt(header.getAttribute('nrows'));
             let colList = WebMolKit.findNodes(header, 'Column');
             if (colList.length != numCols)
                 return null;
             for (let n = 0; n < numCols; n++) {
                 let col = colList[n];
-                let id = parseInt(col.getAttribute("id"));
+                let id = parseInt(col.getAttribute('id'));
                 if (id != n + 1)
                     return null;
-                ds.appendColumn(col.getAttribute("name"), col.getAttribute("type"), WebMolKit.nodeText(col));
+                ds.appendColumn(col.getAttribute('name'), col.getAttribute('type'), WebMolKit.nodeText(col));
             }
             let row = WebMolKit.findNode(root, 'Content').firstElementChild;
             let rowidx = 0;
             while (row) {
-                if (parseInt(row.getAttribute("id")) != rowidx + 1)
+                if (parseInt(row.getAttribute('id')) != rowidx + 1)
                     return null;
                 ds.appendRow();
                 let col = row.firstElementChild;
                 while (col) {
-                    let colidx = parseInt(col.getAttribute("id")) - 1;
+                    let colidx = parseInt(col.getAttribute('id')) - 1;
                     let ct = ds.colType(colidx), val = WebMolKit.nodeText(col);
                     if (val == '') { }
                     else if (ct == WebMolKit.DataSheet.COLTYPE_MOLECULE)
@@ -14152,7 +14176,6 @@ var WebMolKit;
             }
             return new XMLSerializer().serializeToString(xml.documentElement);
         }
-        ;
     }
     WebMolKit.DataSheetStream = DataSheetStream;
 })(WebMolKit || (WebMolKit = {}));
@@ -14256,22 +14279,22 @@ var WebMolKit;
             let data = this.parameter;
             if (data == null)
                 data = {};
-            let url = RPC.BASE_URL + "/REST/" + this.request;
+            let url = RPC.BASE_URL + '/REST/' + this.request;
             $.ajax({
                 'url': url,
                 'type': 'POST',
                 'data': JSON.stringify(this.parameter),
                 'contentType': 'application/json;charset=utf-8',
                 'dataType': 'json',
-                headers: { 'Access-Control-Allow-Origin': '*' },
-                success: (data, textStatus, jqXHR) => {
-                    var result = null, error = null;
+                'headers': { 'Access-Control-Allow-Origin': '*' },
+                'success': (data, textStatus, jqXHR) => {
+                    let result = null, error = null;
                     if (!data) {
                         error =
                             {
                                 'message': 'null result',
                                 'code': RPC.ERRCODE_NONSPECIFIC,
-                                type: 0,
+                                'type': 0,
                                 'detail': 'unknown failure'
                             };
                     }
@@ -14291,12 +14314,12 @@ var WebMolKit;
                     }
                     this.callback(result, error);
                 },
-                error: (jqXHR, textStatus, errorThrow) => {
-                    var error = {
+                'error': (jqXHR, textStatus, errorThrow) => {
+                    let error = {
                         'message': 'connection failure',
                         'code': RPC.ERRCODE_NONSPECIFIC,
-                        type: 0,
-                        'detail': `unable to obtain result from service: {$url}`
+                        'type': 0,
+                        'detail': `unable to obtain result from service: ${url}`
                     };
                     this.callback({}, error);
                 }
@@ -14826,6 +14849,7 @@ var WebMolKit;
         }
         render(parent) {
             super.render(parent);
+            this.content.css('display', 'inline-block');
             this.buttonDiv = [];
             this.auxCell = [];
             let table = $('<table class="wmk-option-table"></table>').appendTo(this.content);
@@ -15008,7 +15032,6 @@ var WebMolKit;
             this.formatKey = [];
             this.formatGfx = [];
         }
-        ;
         static openTransientMolecule(tokenID, mol) {
             let dlg = new Download(tokenID);
             dlg.mol = mol;
@@ -15016,7 +15039,6 @@ var WebMolKit;
             dlg.open();
             return dlg;
         }
-        ;
         static openTransientDataSheet(tokenID, ds) {
             let dlg = new Download(tokenID);
             dlg.ds = ds;
@@ -15024,7 +15046,6 @@ var WebMolKit;
             dlg.open();
             return dlg;
         }
-        ;
         populate() {
             let body = this.body();
             this.mainArea = $('<p>Setting up...</p>').appendTo(body);
@@ -15195,7 +15216,6 @@ var WebMolKit;
             }
             ctx.restore();
         }
-        ;
         buildDisplay() {
             this.mainArea.empty();
             this.pictureArea = $('<p align="center"></p>').appendTo(this.mainArea);
@@ -15264,7 +15284,6 @@ var WebMolKit;
                 psz = 10;
             this.lineScale.val(psz.toString());
         }
-        ;
         changeSizeType(idx) {
             if (idx == 0) {
                 this.divSizeScale.css('display', 'block');
@@ -15470,13 +15489,16 @@ var WebMolKit;
         getEffects() { return this.effects; }
         draw() {
             let DRAW_SPACE = false;
-            if (DRAW_SPACE)
+            if (DRAW_SPACE) {
+                let bounds = this.layout.determineBoundary();
+                this.vg.drawRect(bounds[0], bounds[1], bounds[2] - bounds[0], bounds[3] - bounds[1], 0xFF0000, 1, WebMolKit.MetaVector.NOCOLOUR);
                 for (let n = 0; n < this.layout.numSpace(); n++) {
                     let spc = this.layout.getSpace(n);
                     this.vg.drawRect(spc.box.x, spc.box.y, spc.box.w, spc.box.h, WebMolKit.MetaVector.NOCOLOUR, 0, 0xE0E0E0);
                     if (spc.px != null && spc.py != null && spc.px.length > 2)
                         this.vg.drawPoly(spc.px, spc.py, 0x000000, 1, 0x808080FF, true);
                 }
+            }
             this.drawUnderEffects();
             let layout = this.layout, effects = this.effects, policy = this.policy, vg = this.vg;
             for (let n = 0; n < layout.numLines(); n++) {
@@ -15586,7 +15608,7 @@ var WebMolKit;
             }
             for (let key in effects.dottedBondCross) {
                 let bond = parseInt(key), col = effects.dottedBondCross[key];
-                var x1 = 0, y1 = 0, x2 = 0, y2 = 0, bcount = 0;
+                let x1 = 0, y1 = 0, x2 = 0, y2 = 0, bcount = 0;
                 for (let n = 0; n < layout.numLines(); n++) {
                     let b = layout.getLine(n);
                     if (b.bnum == bond) {
@@ -15952,7 +15974,7 @@ var WebMolKit;
             this.callbackPick2 = null;
             this.tableRows = [];
             this.views = [];
-            this.title = "Recent Molecules";
+            this.title = 'Recent Molecules';
             this.minPortionWidth = 20;
             this.maxPortionWidth = 95;
         }
@@ -18001,7 +18023,7 @@ var WebMolKit;
                     break;
                 }
             if (same) {
-                this.errmsg = all ? "All atoms already selected." : "All atoms already deselected.";
+                this.errmsg = all ? 'All atoms already selected.' : 'All atoms already deselected.';
                 return;
             }
             this.output.selectedMask = WebMolKit.Vec.booleanArray(all, this.input.mol.numAtoms);
@@ -18338,14 +18360,14 @@ var WebMolKit;
                 this.errmsg = 'Subject atom must already have at least 2 bonds.';
                 return;
             }
-            var ang = WebMolKit.SketchUtil.calculateNewBondAngles(this.input.mol, atom, 1);
+            let ang = WebMolKit.SketchUtil.calculateNewBondAngles(this.input.mol, atom, 1);
             if (ang.length == 0)
                 ang = WebMolKit.SketchUtil.exitVectors(this.input.mol, atom);
             if (ang.length == 0) {
                 this.errmsg = 'Could not find a suitable geometry for new substituents.';
                 return;
             }
-            var baseAng = ang[0];
+            let baseAng = ang[0];
             let cx = this.input.mol.atomX(atom), cy = this.input.mol.atomY(atom);
             if (ang.length > 1) {
                 let best = 0;
@@ -18720,30 +18742,30 @@ var WebMolKit;
             if (!this.requireAtoms() || !this.requireSubject())
                 return;
             let artif = new WebMolKit.BondArtifact(this.input.mol.clone());
-            var subject = this.subjectIndex.slice(0), curAtom = this.input.currentAtom;
+            let subject = this.subjectIndex.slice(0), curAtom = this.input.currentAtom;
             if (curAtom > 0 && subject.indexOf(curAtom) < 0)
                 subject.push(curAtom);
             if (activity == ActivityType.BondArtifactPath) {
                 if (!artif.createPath(subject)) {
-                    this.errmsg = "Path artifact not suitable.";
+                    this.errmsg = 'Path artifact not suitable.';
                     return;
                 }
             }
             else if (activity == ActivityType.BondArtifactRing) {
                 if (!artif.createRing(subject)) {
-                    this.errmsg = "Ring artifact not suitable.";
+                    this.errmsg = 'Ring artifact not suitable.';
                     return;
                 }
             }
             else if (activity == ActivityType.BondArtifactArene) {
                 if (!artif.createArene(subject)) {
-                    this.errmsg = "Arene artifact not suitable.";
+                    this.errmsg = 'Arene artifact not suitable.';
                     return;
                 }
             }
             else if (activity == ActivityType.BondArtifactClear) {
                 if (!artif.removeArtifact(subject)) {
-                    this.errmsg = "No artifact removed.";
+                    this.errmsg = 'No artifact removed.';
                     return;
                 }
             }
@@ -19677,10 +19699,10 @@ var WebMolKit;
             policy.data.pointScale = 12;
             let effects = new WebMolKit.RenderEffects();
             let measure = new WebMolKit.OutlineMeasurement(0, 0, policy.data.pointScale);
-            let colMol = ds.findColByName("Molecule");
-            let colName = ds.findColByName("Name");
-            let colAbbrev = ds.findColByName("Abbrev");
-            let colMnemonic = ds.findColByName("Mnemonic");
+            let colMol = ds.findColByName('Molecule');
+            let colName = ds.findColByName('Name');
+            let colAbbrev = ds.findColByName('Abbrev');
+            let colMnemonic = ds.findColByName('Mnemonic');
             for (let n = 0; n < ds.numRows; n++) {
                 let mol = ds.getMolecule(n, colMol);
                 this.templates.molecules.push(mol.toString());
@@ -19761,7 +19783,6 @@ var WebMolKit;
         constructor(owner) {
             super();
             this.owner = owner;
-            this.initiallySelected = 'arrow';
         }
         update() {
             for (let btn of TOOLS_MAIN)
@@ -20094,7 +20115,7 @@ var WebMolKit;
         DraggingTool[DraggingTool["Charge"] = 10] = "Charge";
         DraggingTool[DraggingTool["Ring"] = 11] = "Ring";
     })(DraggingTool || (DraggingTool = {}));
-    var globalMoleculeClipboard = null;
+    let globalMoleculeClipboard = null;
     class Sketcher extends WebMolKit.Widget {
         constructor() {
             super();
@@ -20365,12 +20386,12 @@ var WebMolKit;
                     return true;
             return false;
         }
-        getSelected(N) {
-            if (this.selectedMask == null || N > this.selectedMask.length)
+        getSelected(atom) {
+            if (this.selectedMask == null || atom > this.selectedMask.length)
                 return false;
-            return this.selectedMask[N - 1];
+            return this.selectedMask[atom - 1];
         }
-        setSelected(N, sel) {
+        setSelected(atom, sel) {
             if (this.selectedMask == null) {
                 this.selectedMask = new Array(this.mol.numAtoms);
                 for (let n = this.selectedMask.length - 1; n >= 0; n--)
@@ -20379,7 +20400,7 @@ var WebMolKit;
             while (this.selectedMask.length < this.mol.numAtoms) {
                 this.selectedMask.push(false);
             }
-            this.selectedMask[N - 1] = sel;
+            this.selectedMask[atom - 1] = sel;
             this.delayedRedraw();
         }
         clearSubject() {
@@ -20390,10 +20411,10 @@ var WebMolKit;
             this.selectedMask = WebMolKit.Vec.booleanArray(false, this.mol.numAtoms);
             this.delayedRedraw();
         }
-        getLassoed(N) {
-            if (this.lassoMask == null || N > this.lassoMask.length)
+        getLassoed(atom) {
+            if (this.lassoMask == null || atom > this.lassoMask.length)
                 return false;
-            return this.lassoMask[N - 1];
+            return this.lassoMask[atom - 1];
         }
         getState() {
             let state = {
@@ -20562,15 +20583,6 @@ var WebMolKit;
         angToScale(ang) { return ang * this.pointScale; }
         yIsUp() { return false; }
         measureText(str, fontSize) { return WebMolKit.FontData.main.measureText(str, fontSize); }
-        pasteEvent(e) {
-            let wnd = window;
-            if (wnd.clipboardData && wnd.clipboardData.getData)
-                this.pasteText(wnd.clipboardData.getData('Text'));
-            else if (e.clipboardData && e.clipboardData.getData)
-                this.pasteText(e.clipboardData.getData('text/plain'));
-            e.preventDefault();
-            return false;
-        }
         centreAndShrink() {
             if (this.mol.numAtoms == 0 || this.layout == null) {
                 this.offsetX = 0.5 * this.width;
@@ -20885,7 +20897,7 @@ var WebMolKit;
         drawAtomShade(ctx, atom, fillCol, borderCol, anghalo) {
             if (this.layout == null)
                 return;
-            let p = undefined;
+            let p = null;
             for (let n = 0; n < this.layout.numPoints(); n++)
                 if (this.layout.getPoint(n).anum == atom) {
                     p = this.layout.getPoint(n);
@@ -21037,14 +21049,14 @@ var WebMolKit;
             }
         }
         determineDragGuide(order) {
-            if (this.opAtom == 0) {
+            if (this.opAtom == 0 || this.mol.atomAdjCount(this.opAtom) == 0) {
                 let g = {
-                    'atom': 0,
+                    'atom': this.opAtom,
                     'orders': [order],
                     'x': [],
                     'y': [],
-                    'sourceX': this.clickX,
-                    'sourceY': this.clickY,
+                    'sourceX': this.opAtom == 0 ? this.clickX : this.angToX(this.mol.atomX(this.opAtom)),
+                    'sourceY': this.opAtom == 0 ? this.clickY : this.angToY(this.mol.atomY(this.opAtom)),
                     'destX': [],
                     'destY': []
                 };
@@ -21142,15 +21154,12 @@ var WebMolKit;
             let x2 = this.xToAng(this.mouseX), y2 = this.yToAng(this.mouseY), dx = x2 - x1, dy = y2 - y1;
             let rsz = Math.min(9, Math.round(WebMolKit.norm_xy(dx, dy) * 2 / WebMolKit.Molecule.IDEALBOND) + 2);
             if (rsz < 3) { }
-            else if (bond > 0) {
+            else if (bond > 0)
                 return WebMolKit.SketchUtil.proposeBondRing(mol, rsz, bond, dx, dy);
-            }
-            else if (atom > 0 && mol.atomAdjCount(atom) > 0 && !this.toolRingFreeform) {
+            else if (atom > 0 && mol.atomAdjCount(atom) > 0 && !this.toolRingFreeform)
                 return WebMolKit.SketchUtil.proposeAtomRing(mol, rsz, atom, dx, dy);
-            }
-            else {
+            else
                 return WebMolKit.SketchUtil.proposeNewRing(mol, rsz, x1, y1, dx, dy, !this.toolRingFreeform);
-            }
             return [null, null];
         }
         snapToGuide(x, y) {
@@ -21501,7 +21510,7 @@ var WebMolKit;
                     let param = {
                         'order': this.toolBondOrder,
                         'type': this.toolBondType,
-                        'element': "C",
+                        'element': 'C',
                         'x1': this.opAtom == 0 ? this.xToAng(this.clickX) : this.mol.atomX(this.opAtom),
                         'y1': this.opAtom == 0 ? this.yToAng(this.clickY) : this.mol.atomY(this.opAtom),
                         'x2': this.xToAng(x2),
@@ -21747,14 +21756,6 @@ var WebMolKit;
         constructor(mol1, mol2) {
             super();
             this.callbackSave = null;
-            this.rawvec1 = null;
-            this.metavec1 = null;
-            this.arrmol1 = null;
-            this.transform1 = null;
-            this.rawvec2 = null;
-            this.metavec2 = null;
-            this.arrmol2 = null;
-            this.transform2 = null;
             this.scale = 1;
             this.ARROWWIDTH = 30;
             this.COLCYCLE = ['#89A54E', '#71588F', '#4198AF', '#DB843D', '#93A9CF', '#D19392', '#4572A7', '#AA4643'];
@@ -21764,7 +21765,7 @@ var WebMolKit;
             this.mol2 = mol2.clone();
             this.policy = WebMolKit.RenderPolicy.defaultBlackOnWhite();
             this.policy.data.pointScale = 40;
-            this.title = "Map Reaction Atoms";
+            this.title = 'Map Reaction Atoms';
             this.minPortionWidth = 20;
             this.maxPortionWidth = 95;
         }
@@ -21780,33 +21781,30 @@ var WebMolKit;
             this.btnSave = $('<button class="button button-primary">Save</button>').appendTo(buttons);
             this.btnSave.click(() => { if (this.callbackSave)
                 this.callbackSave(this); });
-            WebMolKit.Func.arrangeMolecule({ 'policy': this.policy.data, 'molNative': this.mol1.toString() }, (result, error) => {
-                this.arrmol1 = result.arrmol;
-                this.rawvec1 = result.metavec;
-                this.metavec1 = new WebMolKit.MetaVector(result.metavec);
-                this.transform1 = result.transform;
-                WebMolKit.Func.arrangeMolecule({ 'policy': this.policy.data, 'molNative': this.mol2.toString() }, (result, error) => {
-                    this.arrmol2 = result.arrmol;
-                    this.rawvec2 = result.metavec;
-                    this.metavec2 = new WebMolKit.MetaVector(result.metavec);
-                    this.transform2 = result.transform;
-                    this.setupPanel();
-                });
-            });
+            let measure = new WebMolKit.OutlineMeasurement(0, 0, this.policy.data.pointScale);
+            let effects = new WebMolKit.RenderEffects();
+            this.layout1 = new WebMolKit.ArrangeMolecule(this.mol1, measure, this.policy, effects);
+            this.layout1.arrange();
+            this.layout2 = new WebMolKit.ArrangeMolecule(this.mol2, measure, this.policy, effects);
+            this.layout2.arrange();
+            this.setupPanel();
         }
         setupPanel() {
+            let bounds1 = this.layout1.determineBoundary(), w1 = bounds1[2] - bounds1[0], h1 = bounds1[3] - bounds1[1];
+            let bounds2 = this.layout2.determineBoundary(), w2 = bounds2[2] - bounds2[0], h2 = bounds2[3] - bounds2[1];
             let maxWidth = 0.9 * $(window).width(), maxHeight = 0.8 * $(window).height();
             this.padding = 1 * this.policy.data.pointScale;
-            let scale1 = (maxWidth - this.ARROWWIDTH) / (this.metavec1.width + this.metavec2.width + 4 * this.padding);
-            let scale2 = maxHeight / (this.metavec1.height + 2 * this.padding);
-            let scale3 = maxHeight / (this.metavec2.height + 2 * this.padding);
+            let scale1 = (maxWidth - this.ARROWWIDTH) / (w1 + w2 + 4 * this.padding);
+            let scale2 = maxHeight / (h1 + 2 * this.padding);
+            let scale3 = maxHeight / (bounds2[3] - bounds2[1] + 2 * this.padding);
             this.scale = Math.min(1, Math.min(scale1, Math.min(scale2, scale3)));
-            this.canvasW = Math.ceil((this.metavec1.width + this.metavec2.width + 4 * this.padding) * this.scale + this.ARROWWIDTH);
-            this.canvasH = Math.ceil((Math.max(this.metavec1.height, this.metavec2.height) + 2 * this.padding) * this.scale);
-            this.offsetX1 = this.padding * this.scale;
-            this.offsetY1 = 0.5 * (this.canvasH - this.metavec1.height * this.scale);
-            this.offsetX2 = (this.metavec1.width + 3 * this.padding) * this.scale + this.ARROWWIDTH;
-            this.offsetY2 = 0.5 * (this.canvasH - this.metavec2.height * this.scale);
+            this.canvasW = Math.ceil((w1 + w2 + 4 * this.padding) * this.scale + this.ARROWWIDTH);
+            this.canvasH = Math.ceil((Math.max(h1, h2) + 2 * this.padding) * this.scale);
+            this.box1 = new WebMolKit.Box(0, 0, w1 + 2 * this.padding, this.canvasH);
+            this.boxArrow = new WebMolKit.Box(this.box1.maxX(), 0, this.ARROWWIDTH, this.canvasH);
+            this.box2 = new WebMolKit.Box(this.boxArrow.maxX(), 0, w2 + 2 * this.padding, this.canvasH);
+            this.layout1.squeezeInto(this.box1.x, this.box1.y, this.box1.w, this.box1.h);
+            this.layout2.squeezeInto(this.box2.x, this.box2.y, this.box2.w, this.box2.h);
             let div = $('<div></div>').appendTo(this.body());
             div.css('position', 'relative');
             div.css('width', this.canvasW + 'px');
@@ -21819,32 +21817,25 @@ var WebMolKit;
             ctx.scale(density, density);
             this.redrawCanvas();
             $(this.canvas).mousedown((event) => { event.preventDefault(); this.mouseDown(event); });
-            $(this.canvas).mouseup((event) => { this.mouseUp(event); });
-            $(this.canvas).mouseenter((event) => { this.mouseEnter(event); });
-            $(this.canvas).mouseleave((event) => { this.mouseLeave(event); });
-            $(this.canvas).mousemove((event) => { this.mouseMove(event); });
+            $(this.canvas).mouseup((event) => this.mouseUp(event));
+            $(this.canvas).mouseenter((event) => this.mouseEnter(event));
+            $(this.canvas).mouseleave((event) => this.mouseLeave(event));
+            $(this.canvas).mousemove((event) => this.mouseMove(event));
             this.drawnMols = WebMolKit.newElement(div, 'canvas', { 'width': this.canvasW * density, 'height': this.canvasH * density, 'style': styleOverlay });
             ctx = this.drawnMols.getContext('2d');
             ctx.scale(density, density);
-            let draw = new WebMolKit.MetaVector(this.rawvec1);
-            draw.offsetX = this.offsetX1;
-            draw.offsetY = this.offsetY1;
-            draw.scale = this.scale;
-            draw.renderContext(ctx);
-            draw = new WebMolKit.MetaVector(this.rawvec2);
-            draw.offsetX = this.offsetX2;
-            draw.offsetY = this.offsetY2;
-            draw.scale = this.scale;
-            draw.renderContext(ctx);
+            let vg1 = new WebMolKit.MetaVector(), vg2 = new WebMolKit.MetaVector();
+            new WebMolKit.DrawMolecule(this.layout1, vg1).draw();
+            new WebMolKit.DrawMolecule(this.layout2, vg2).draw();
+            vg1.renderContext(ctx);
+            vg2.renderContext(ctx);
             this.bump();
         }
         redrawCanvas() {
             let ctx = this.canvas.getContext('2d');
             let w = this.canvasW, h = this.canvasH;
             ctx.clearRect(0, 0, w, h);
-            let arrowX1 = (2 * this.padding + this.metavec1.width) * this.scale;
-            let arrowX2 = arrowX1 + this.ARROWWIDTH;
-            let arrowY = 0.5 * this.canvasH;
+            let arrowX1 = this.boxArrow.minX(), arrowX2 = this.boxArrow.maxX(), arrowY = this.boxArrow.midY();
             ctx.beginPath();
             ctx.moveTo(arrowX1, arrowY);
             ctx.lineTo(arrowX2 - 2, arrowY);
@@ -21907,7 +21898,7 @@ var WebMolKit;
         }
         drawHighlights(ctx, side, highlight) {
             const mol = side == 1 ? this.mol1 : this.mol2;
-            const arrmol = side == 1 ? this.arrmol1 : this.arrmol2;
+            const layout = side == 1 ? this.layout1 : this.layout2;
             const offsetX = side == 1 ? this.offsetX1 : this.offsetX2;
             const offsetY = side == 1 ? this.offsetY1 : this.offsetY2;
             const scale = this.scale;
@@ -21915,9 +21906,7 @@ var WebMolKit;
                 let mapnum = mol.atomMapNum(n);
                 if (mapnum == 0 && n != highlight)
                     continue;
-                let pt = arrmol.points[n - 1];
-                let cx = offsetX + pt.cx * scale, cy = offsetY + pt.cy * scale;
-                let rw = Math.max(0.5 * this.policy.data.pointScale, pt.rw) * scale, rh = Math.max(0.5 * this.policy.data.pointScale, pt.rh) * scale;
+                let [cx, cy, rw, rh] = this.getAtomPos(side, n);
                 if (mapnum > 0) {
                     let col = this.COLCYCLE[(mapnum - 1) % this.COLCYCLE.length];
                     ctx.beginPath();
@@ -21949,39 +21938,37 @@ var WebMolKit;
         }
         pickAtom(x, y, mask1, mask2) {
             let ret = [0, 0];
-            const scale = this.scale, thresh2 = WebMolKit.sqr(this.scale * 1.0 * this.policy.data.pointScale);
             let bestDist = Number.POSITIVE_INFINITY;
-            for (let n = 1; n <= this.mol1.numAtoms; n++) {
-                if (mask1 != null && !mask1[n - 1])
+            let threshsq = WebMolKit.sqr(this.layout1.getScale() * 1.0 * this.policy.data.pointScale);
+            for (let n = 0; n < this.mol1.numAtoms; n++) {
+                if (mask1 && !mask1[n])
                     continue;
-                let pt = this.arrmol1.points[n - 1];
-                let cx = this.offsetX1 + pt.cx * scale, cy = this.offsetY1 + pt.cy * scale;
-                let dsq = WebMolKit.norm2_xy(x - cx, y - cy);
-                if (dsq < thresh2 && dsq < bestDist) {
-                    ret = [1, n];
+                let pt = this.layout1.getPoint(n);
+                let dsq = WebMolKit.norm2_xy(x - pt.oval.cx, y - pt.oval.cy);
+                if (dsq < threshsq && dsq < bestDist) {
+                    ret = [1, n + 1];
                     bestDist = dsq;
                 }
             }
-            for (let n = 1; n <= this.mol2.numAtoms; n++) {
-                if (mask2 != null && !mask2[n - 1])
+            threshsq = WebMolKit.sqr(this.layout2.getScale() * 1.0 * this.policy.data.pointScale);
+            for (let n = 0; n < this.mol2.numAtoms; n++) {
+                if (mask2 && !mask2[n])
                     continue;
-                let pt = this.arrmol2.points[n - 1];
-                let cx = this.offsetX2 + pt.cx * scale, cy = this.offsetY2 + pt.cy * scale;
-                let dsq = WebMolKit.norm2_xy(x - cx, y - cy);
-                if (dsq < thresh2 && dsq < bestDist) {
-                    ret = [2, n];
+                let pt = this.layout2.getPoint(n);
+                let dsq = WebMolKit.norm2_xy(x - pt.oval.cx, y - pt.oval.cy);
+                if (dsq < threshsq && dsq < bestDist) {
+                    ret = [2, n + 1];
                     bestDist = dsq;
                 }
             }
             return ret;
         }
         getAtomPos(side, atom) {
-            let arrmol = side == 1 ? this.arrmol1 : this.arrmol2;
+            let layout = side == 1 ? this.layout1 : this.layout2;
             let ox = side == 1 ? this.offsetX1 : this.offsetX2, oy = side == 1 ? this.offsetY1 : this.offsetY2;
-            let pt = arrmol.points[atom - 1];
-            let cx = ox + pt.cx * this.scale, cy = oy + pt.cy * this.scale;
-            let rw = Math.max(0.5 * this.policy.data.pointScale, pt.rw) * this.scale, rh = Math.max(0.5 * this.policy.data.pointScale, pt.rh) * this.scale;
-            return [cx, cy, rw, rh];
+            let pt = layout.getPoint(atom - 1);
+            let rw = Math.max(0.5 * this.policy.data.pointScale, pt.oval.rw) * this.scale, rh = Math.max(0.5 * this.policy.data.pointScale, pt.oval.rh) * this.scale;
+            return [pt.oval.cx, pt.oval.cy, rw, rh];
         }
         compatibilityMask(side, atom) {
             let mask = [];
@@ -23933,7 +23920,7 @@ var WebMolKit;
             canvas.style.width = width + 'px';
             canvas.style.height = height + 'px';
             if (mol.numAtoms > 0) {
-                let policy = withMapping ? WebMolKit.RenderPolicy.defaultBlackOnWhite() : WebMolKit.RenderPolicy.defaultColourOnWhite();
+                let policy = WebMolKit.RenderPolicy.defaultColourOnWhite();
                 let measure = new WebMolKit.OutlineMeasurement(0, 0, policy.data.pointScale);
                 let layout = new WebMolKit.ArrangeMolecule(mol, measure, policy, new WebMolKit.RenderEffects());
                 layout.arrange();
@@ -24026,6 +24013,8 @@ var WebMolKit;
             dlg.close();
             this.renderMolecule(1);
             this.renderMolecule(2);
+            if (this.onChange)
+                this.onChange(this);
         }
         dropInto(which, transfer) {
             let items = transfer.items, files = transfer.files;
@@ -24330,6 +24319,12 @@ var WebMolKit;
 var WebMolKit;
 (function (WebMolKit) {
     class XML {
+        static parseXML(xml) {
+            return $.parseXML(xml);
+        }
+        static toString(doc) {
+            return new XMLSerializer().serializeToString(doc);
+        }
         static nodeText(el) {
             let text = '';
             for (let child of Array.from(el.childNodes)) {
@@ -24360,7 +24355,7 @@ var WebMolKit;
                 presib.parentNode.insertBefore(el, postsib);
             return el;
         }
-        static appendText(parent, text, isCDATA) {
+        static appendText(parent, text, isCDATA = false) {
             if (text == null || text.length == 0)
                 return;
             if (!isCDATA)

@@ -35,7 +35,7 @@ export class BuildSMILES
 	private link:number[][]; // a list of the linking-codes between nonsequential atoms
 	private conn:number[][]; // a list of the "other atom" indices corresponding to above
 
-    // ------------------ public methods --------------------
+	// ------------------ public methods --------------------
 
 	// note: pri is an optional parameter that can be used to specify the walk-order preference
 	constructor(private mol:Molecule, private pri:number[] = null)
@@ -52,7 +52,7 @@ export class BuildSMILES
 		return this.assemble();
 	}
 	
-    // ------------------ private methods --------------------
+	// ------------------ private methods --------------------
 
 	// orders the atoms by walking down the list
 	private walkSequence():void

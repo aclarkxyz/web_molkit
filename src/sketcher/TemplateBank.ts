@@ -90,7 +90,7 @@ export class TemplateBank extends ButtonBank
 			else if (RPC.RESOURCE_URL != null)
 			{
 				if (TemplateBank.RESOURCE_DATA == null)
-					this.loadResourceData(() => this.prepareSubGroups())
+					this.loadResourceData(() => this.prepareSubGroups());
 				else
 					this.prepareSubGroups();
 			}
@@ -216,7 +216,7 @@ export class TemplateBank extends ButtonBank
 					grabNext();
 				}
 			});
-		}
+		};
 		grabNext();	
 	}
 
@@ -274,10 +274,10 @@ export class TemplateBank extends ButtonBank
 		let effects = new RenderEffects();
 		let measure = new OutlineMeasurement(0, 0, policy.data.pointScale);
 
-		let colMol = ds.findColByName("Molecule");
-		let colName = ds.findColByName("Name");
-		let colAbbrev = ds.findColByName("Abbrev");
-		let colMnemonic = ds.findColByName("Mnemonic");
+		let colMol = ds.findColByName('Molecule');
+		let colName = ds.findColByName('Name');
+		let colAbbrev = ds.findColByName('Abbrev');
+		let colMnemonic = ds.findColByName('Mnemonic');
 
 		for (let n = 0; n < ds.numRows; n++)
 		{

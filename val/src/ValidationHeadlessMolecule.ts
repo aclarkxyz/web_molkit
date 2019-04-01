@@ -22,7 +22,7 @@
 namespace WebMolKit /* BOF */ {
 
 /*
-    Headless validation: molecule tests - algorithms that apply to molecular connection tables.
+	Headless validation: molecule tests - algorithms that apply to molecular connection tables.
 */
 
 export class ValidationHeadlessMolecule extends Validation
@@ -48,8 +48,8 @@ export class ValidationHeadlessMolecule extends Validation
 		this.add('Molfile Round-trip', this.molfileRoundTrip);
 	}
 
-    public init(donefunc:() => void):void
-    {
+	public init(donefunc:() => void):void
+	{
 		let FILES = ['molecule.el', 'molecule.mol', 'datasheet.ds', 'datasheet.sdf', 'stereo.el', 'circular.ds', 'roundtrip.ds'];
 		let files = FILES;
 
@@ -68,9 +68,9 @@ export class ValidationHeadlessMolecule extends Validation
 				$.get(this.urlBase + files[0], fetchResult);
 			else
 				donefunc.call(this);
-		}
+		};
 		$.get(this.urlBase + files[0], fetchResult);
-    };
+	}
 
 	public parseSketchEl():void
 	{
@@ -229,7 +229,7 @@ export class ValidationHeadlessMolecule extends Validation
 			}
 			this.assert(problems.length == 0, problems.join('; '));
 
-			let wantMDL = ds.getString(n, 'Molfile')
+			let wantMDL = ds.getString(n, 'Molfile');
 			if (mdl.trim() != orBlank(wantMDL).trim())
 			{
 				if (wantMDL) console.log('Molfile missing from validation data.'); else console.log('Desired Molfile:\n' + wantMDL);

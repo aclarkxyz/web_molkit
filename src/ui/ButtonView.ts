@@ -127,7 +127,7 @@ export class ButtonView extends Widget
 		
 		let canvasStyle = 'position: absolute; left: 0; top: 0;';
 		canvasStyle += 'pointer-events: none;';
-		this.canvas = <HTMLCanvasElement>newElement(this.content, 'canvas', {'width': this.width, 'height': this.height, 'style': canvasStyle});
+		this.canvas = newElement(this.content, 'canvas', {'width': this.width, 'height': this.height, 'style': canvasStyle}) as HTMLCanvasElement;
 		this.canvas.style.width = this.width + 'px';
 		this.canvas.style.height = this.height + 'px';
 		
@@ -233,13 +233,13 @@ export class ButtonView extends Widget
 	public getHasBigButtons():boolean
 	{
 		return this.hasBigButtons;
-	};
+	}
 	public setHasBigButtons(flag:boolean)
 	{
 		this.hasBigButtons = flag;
 		this.prefabImgSize = flag ? 44 : 36;
 		this.idealSize = flag ? 50 : 40;
-	};
+	}
 	
 	// returns true if the coordinate is (more or less) within the button outline, which is necessary for propagating mouse events;
 	// it's also sometimes handy for exterior code to check if the position is covered
@@ -270,7 +270,7 @@ export class ButtonView extends Widget
 			return y > gh || (x > mx - hg && x < mx + hg);
 		}
 		return true;
-	};
+	}
 
 	// --------------------------------------- private methods ---------------------------------------
 
@@ -456,7 +456,7 @@ export class ButtonView extends Widget
 				
 		let canvasStyle = 'position: absolute; left: 0; top: 0;';
 		canvasStyle += 'pointer-events: none;';
-		this.canvas = <HTMLCanvasElement>newElement(this.content, 'canvas', {'width': this.width, 'height': this.height, 'style': canvasStyle});
+		this.canvas = newElement(this.content, 'canvas', {'width': this.width, 'height': this.height, 'style': canvasStyle}) as HTMLCanvasElement;
 	}
 
 	// removes all the display buttons, making sure to delete the HTML objects as necessary
@@ -613,7 +613,7 @@ export class ButtonView extends Widget
 					svg = svg.substring(0, 4) + ' ' + extra + svg.substring(4);
 					d.svgDOM = $(svg)[0];
 					this.content.append(d.svgDOM);
-				}
+				};
 
 				// SVG icons: if there's an RPC server, they're already in the cache; if not, they have to be loaded individually
 				// the first time, and after that, they're cached
@@ -639,7 +639,7 @@ export class ButtonView extends Widget
 			}
 			else if (b.metavec != null)
 			{
-				let draw = b.metavec instanceof MetaVector ? <MetaVector>b.metavec : new MetaVector(b.metavec);
+				let draw = b.metavec instanceof MetaVector ? b.metavec as MetaVector : new MetaVector(b.metavec);
 				draw.offsetX = d.x + Math.floor(0.5 * (d.width - draw.width));
 				draw.offsetY = d.y + Math.floor(0.5 * (d.height - draw.height));
 				draw.renderContext(ctx);
@@ -758,11 +758,11 @@ export class ButtonView extends Widget
 		}
 		
 		ctx.restore();
-	};
+	}
 	private delayedRedraw():void
 	{
 		window.setTimeout(() => this.redraw(), 100);
-	};
+	}
 
 	// mapping ID tags into raw/display button objects
 	private buttonFromID(id:string):ButtonBankItem

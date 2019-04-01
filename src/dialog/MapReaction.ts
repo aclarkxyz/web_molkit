@@ -88,14 +88,14 @@ export class MapReaction extends Dialog
 	{		
 		let buttons = this.buttons(), body = this.body();
 		
-        this.btnClear = $('<button class="button button-default">Clear</button>').appendTo(buttons);
+		this.btnClear = $('<button class="button button-default">Clear</button>').appendTo(buttons);
 		this.btnClear.click(() => this.clearAllMappings());
 
 		buttons.append(' ');
 		buttons.append(this.btnClose); // easy way to reorder
 		
 		buttons.append(' ');
-        this.btnSave = $('<button class="button button-primary">Save</button>').appendTo(buttons);
+		this.btnSave = $('<button class="button button-primary">Save</button>').appendTo(buttons);
 		this.btnSave.click(() => {if (this.callbackSave) this.callbackSave(this);});
 		
 		let measure = new OutlineMeasurement(0, 0, this.policy.data.pointScale);
@@ -148,7 +148,7 @@ export class MapReaction extends Dialog
 		let styleOverlay = styleCanvas + 'pointer-events: none;';
 		
 		// setup the canvas, for redrawing the interactive elements
-		this.canvas = <HTMLCanvasElement>newElement(div, 'canvas', {'width': this.canvasW * density, 'height': this.canvasH * density, 'style': styleCanvas});
+		this.canvas = newElement(div, 'canvas', {'width': this.canvasW * density, 'height': this.canvasH * density, 'style': styleCanvas}) as HTMLCanvasElement;
 		let ctx = this.canvas.getContext('2d');
 		ctx.scale(density, density);
 		this.redrawCanvas();
@@ -160,7 +160,7 @@ export class MapReaction extends Dialog
 		$(this.canvas).mousemove((event:JQueryEventObject) => this.mouseMove(event));
 
 		// draw the molecules, which don't change
-		this.drawnMols = <HTMLCanvasElement>newElement(div, 'canvas', {'width': this.canvasW * density, 'height': this.canvasH * density, 'style': styleOverlay});
+		this.drawnMols = newElement(div, 'canvas', {'width': this.canvasW * density, 'height': this.canvasH * density, 'style': styleOverlay}) as HTMLCanvasElement;
 		ctx = this.drawnMols.getContext('2d');
 		ctx.scale(density, density);
 
@@ -169,7 +169,6 @@ export class MapReaction extends Dialog
 		new DrawMolecule(this.layout2, vg2).draw();
 		vg1.renderContext(ctx);
 		vg2.renderContext(ctx);
-
 
 		/*let draw = new MetaVector(this.rawvec1);
 		draw.offsetX = this.offsetX1;

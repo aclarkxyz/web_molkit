@@ -31,21 +31,21 @@ namespace WebMolKit /* BOF */ {
 
 export class ViewStructure extends Widget
 {
-	canvas:HTMLCanvasElement;
-	metavec:any;
-	naturalWidth = 0;
-	naturalHeight = 0;
-	width = 0;
-	height = 0;
-	padding = 2;
-	borderCol = 0x000000;
-	borderRadius = 8; // for rounded rects
-	backgroundCol1 = 0xFFFFFF;
-	backgroundCol2 = 0xE0E0E0;
-	molstr:string = null;
-	datastr:string = null;
-	datarow = 0;
-	policy:RenderPolicy = null;
+	private canvas:HTMLCanvasElement;
+	private metavec:any;
+	private naturalWidth = 0;
+	private naturalHeight = 0;
+	private width = 0;
+	private height = 0;
+	private padding = 2;
+	public borderCol = 0x000000;
+	private borderRadius = 8; // for rounded rects
+	public backgroundCol1 = 0xFFFFFF;
+	public backgroundCol2 = 0xE0E0E0;
+	private molstr:string = null;
+	private datastr:string = null;
+	private datarow = 0;
+	private policy:RenderPolicy = null;
 	
 	// ------------ public methods ------------
 
@@ -105,7 +105,7 @@ export class ViewStructure extends Widget
 
 		super.render(parent);
 
-		let canvas = <HTMLCanvasElement>newElement(this.content /*parent*/, 'canvas', {'width': this.width, 'height': this.height});
+		let canvas = newElement(this.content /*parent*/, 'canvas', {'width': this.width, 'height': this.height}) as HTMLCanvasElement;
 		
 		let density = pixelDensity();
 		canvas.width = this.width * density;
@@ -134,7 +134,7 @@ export class ViewStructure extends Widget
 			}
 			else
 			{
-				var grad = ctx.createLinearGradient(0, 0, this.width, this.height);
+				let grad = ctx.createLinearGradient(0, 0, this.width, this.height);
 				grad.addColorStop(0, colourCanvas(this.backgroundCol1));
 				grad.addColorStop(1, colourCanvas(this.backgroundCol2));
 				ctx.fillStyle = grad;

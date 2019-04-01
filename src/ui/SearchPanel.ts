@@ -101,7 +101,7 @@ export class SearchPanel extends Widget
 		const density = pixelDensity();
 		const hpad = this.HPADDING, vpad = this.VPADDING;
 		
-		let isRxn = this.type == SearchPanel.TYPE_REACTION, isMol = !isRxn
+		let isRxn = this.type == SearchPanel.TYPE_REACTION, isMol = !isRxn;
 		
 		let div = this.content;
 		
@@ -114,7 +114,7 @@ export class SearchPanel extends Widget
 		
 		let renderSolid = (col1:string, col2:string, style:string):HTMLCanvasElement =>
 		{
-			let node = <HTMLCanvasElement>newElement(div, 'canvas', {'width': molw * density, 'height': height * density, 'style': style});
+			let node = newElement(div, 'canvas', {'width': molw * density, 'height': height * density, 'style': style}) as HTMLCanvasElement;
 			node.style.width = molw + 'px';
 			node.style.height = height + 'px';
 			let ctx = node.getContext('2d');
@@ -130,7 +130,7 @@ export class SearchPanel extends Widget
 		};
 		let renderBorder = (lw:number, style:string):HTMLCanvasElement =>
 		{
-			let node = <HTMLCanvasElement>newElement(div, 'canvas', {'width': molw * density, 'height': height * density, 'style': style});
+			let node = newElement(div, 'canvas', {'width': molw * density, 'height': height * density, 'style': style}) as HTMLCanvasElement;
 			node.style.width = molw + 'px';
 			node.style.height = height + 'px';
 			let ctx = node.getContext('2d');
@@ -144,7 +144,7 @@ export class SearchPanel extends Widget
 		};
 		let renderArrow = (style:string):HTMLCanvasElement =>
 		{
-			let node = <HTMLCanvasElement>newElement(div, 'canvas', {'width': arrow * density, 'height': height * density, 'style': style});
+			let node = newElement(div, 'canvas', {'width': arrow * density, 'height': height * density, 'style': style}) as HTMLCanvasElement;
 			node.style.width = arrow + 'px';
 			node.style.height = height + 'px';
 			let ctx = node.getContext('2d');
@@ -169,14 +169,14 @@ export class SearchPanel extends Widget
 		};
 		let renderOutlineArrow = (style:string, col:string):HTMLCanvasElement =>
 		{
-			let node = <HTMLCanvasElement>newElement(div, 'canvas', {'width': arrow * density, 'height': height * density, 'style': style});
+			let node = newElement(div, 'canvas', {'width': arrow * density, 'height': height * density, 'style': style}) as HTMLCanvasElement;
 			node.style.width = arrow + 'px';
 			node.style.height = height + 'px';
 			let ctx = node.getContext('2d');
 			ctx.scale(density, density);
 			
 			let midY = Math.round(0.5 * height);
-			var path = pathRoundedRect(0, midY - 8, arrow, midY + 8, 4);
+			let path = pathRoundedRect(0, midY - 8, arrow, midY + 8, 4);
 			ctx.fillStyle = col;
 			ctx.fill(path); 
 			
@@ -189,7 +189,7 @@ export class SearchPanel extends Widget
 		
 		this.normalMol1 = renderSolid('#FFFFFF', '#D0D0D0', styleMol1);
 		this.pressedMol1 = renderSolid('#00CA59', '#008650', styleMol1);
-		this.drawnMol1 = <HTMLCanvasElement>newElement(div, 'canvas', {'width': molw * density, 'height': height * density, 'style': styleMol1Pos});
+		this.drawnMol1 = newElement(div, 'canvas', {'width': molw * density, 'height': height * density, 'style': styleMol1Pos}) as HTMLCanvasElement;
 		this.drawnMol1.style.cursor = 'pointer';
 		this.renderMolecule(1);
 		this.thinMol1 = renderBorder(1, styleMol1);
@@ -209,7 +209,7 @@ export class SearchPanel extends Widget
 			
 			this.normalMol2 = renderSolid('#FFFFFF', '#D0D0D0', styleMol2);
 			this.pressedMol2 = renderSolid('#00CA59', '#008650', styleMol2);
-			this.drawnMol2 = <HTMLCanvasElement>newElement(div, 'canvas', {'width': molw * density, 'height': height * density, 'style': styleMol2Pos});
+			this.drawnMol2 = newElement(div, 'canvas', {'width': molw * density, 'height': height * density, 'style': styleMol2Pos}) as HTMLCanvasElement;
 			this.drawnMol2.style.cursor = 'pointer';
 			this.renderMolecule(2);
 			this.thinMol2 = renderBorder(1, styleMol2);
@@ -258,7 +258,7 @@ export class SearchPanel extends Widget
 		{
 			if (this.isSketching) return true;
 
-			let wnd = <any>window, txt = '';
+			let wnd = window as any, txt = '';
 			if (wnd.clipboardData && wnd.clipboardData.getData) txt = wnd.clipboardData.getData('Text');
 			else if (e.clipboardData && e.clipboardData.getData) txt = e.clipboardData.getData('text/plain'); 
 
@@ -304,7 +304,7 @@ export class SearchPanel extends Widget
 				this.dropInto(2, event.dataTransfer);
 			});
 		}
-	};
+	}
 
 	// switches the layers on or off depending on the state
 	private updateLayers()
