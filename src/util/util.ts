@@ -502,4 +502,30 @@ export function fromUTF8(str:string):string
 	return data.join('');
 }
 
+// returns a pretty-printed JSON representation with tabs and aligned braces (Allman/ANSI-style) rather than the kack-braced default
+export function jsonPrettyPrint(json:any):string
+{
+	let lines = JSON.stringify(json, null, 1).split(/\n/);
+	for (let n = 0; n < lines.length; n++)
+	{
+		lines[n] = lines[n].trim();
+		if (lines[n].length > 1 && lines[n].endsWith('{') || lines[n].endsWith('['))
+		{
+			let ch = lines[n].charAt(lines[n].length - 1);
+			lines[n] = lines[n].substring(0, lines[n].length - 1);
+			lines.splice(n + 1, 0, ch);
+			n--;
+		}
+	}
+	let indent = 0;
+	for (let n = 0; n < lines.length; n++)
+	{
+		let orig = lines[n];
+		if (orig == ']' || orig == '}') indent--;
+		lines[n] = '\t'.repeat(indent) + orig;
+		if (orig == '[' || orig == '{') indent++;
+	}
+	return lines.join('\n');
+}
+
 /* EOF */ }
