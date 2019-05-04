@@ -27,6 +27,27 @@ export class XML
 	{
 		return new XMLSerializer().serializeToString(doc);
 	}
+	public static toPrettyString(doc:Document):string
+	{
+		let xslt =
+		[
+			'<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform">',
+			'  <xsl:strip-space elements="*"/>',
+			'  <xsl:template match="para[content-style][not(text())]">',
+			'    <xsl:value-of select="normalize-space(.)"/>',
+			'  </xsl:template>',
+			'  <xsl:template match="node()|@*">',
+			'    <xsl:copy><xsl:apply-templates select="node()|@*"/></xsl:copy>',
+			'  </xsl:template>',
+			'  <xsl:output indent="yes"/>',
+			'</xsl:stylesheet>',
+		].join('\n');
+		let xsltDoc = new DOMParser().parseFromString(xslt, 'application/xml');
+		let xsltProc = new XSLTProcessor();    
+		xsltProc.importStylesheet(xsltDoc);
+		var resultDoc = xsltProc.transformToDocument(doc);
+		return new XMLSerializer().serializeToString(resultDoc);
+	}
 
 	// composes all of the text nodes and returns them
 	public static nodeText(el:Node):string
