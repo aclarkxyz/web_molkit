@@ -24,6 +24,8 @@ namespace WebMolKit /* BOF */ {
 export class EditAtom extends Dialog
 {
 	public mol:Molecule; // copy of original: may or may not be different
+	public newX = 0;
+	public newY = 0;
 
 	private initMol:Molecule;
 	private btnApply:JQuery;
@@ -73,6 +75,8 @@ export class EditAtom extends Dialog
 		this.populateGeometry(this.tabs.getPanel('Geometry'));
 		this.populateQuery(this.tabs.getPanel('Query'));
 		this.populateExtra(this.tabs.getPanel('Extra'));
+
+		setTimeout(() => this.inputSymbol.focus(), 1);
 	}
 
 	// ------------ private methods ------------
@@ -122,15 +126,18 @@ export class EditAtom extends Dialog
 		grid.find('input').css('font', 'inherit');
 
 		const mol = this.mol, atom = this.atom;
-		this.inputSymbol.val(mol.atomElement(atom));
-		this.inputCharge.val(mol.atomCharge(atom).toString());
-		this.inputUnpaired.val(mol.atomUnpaired(atom).toString());
-		this.optionHydrogen.setSelectedIndex(mol.atomHExplicit(atom) == Molecule.HEXPLICIT_UNKNOWN ? 0 : 1);
-		if (mol.atomHExplicit(atom) != Molecule.HEXPLICIT_UNKNOWN) this.inputHydrogen.val(mol.atomHExplicit(atom).toString());
-		this.optionIsotope.setSelectedIndex(mol.atomIsotope(atom) == Molecule.ISOTOPE_NATURAL ? 0 : 1);
-		if (mol.atomIsotope(atom) == Molecule.ISOTOPE_NATURAL) this.inputIsotope.val(mol.atomIsotope(atom).toString());
-		this.inputMapping.val(mol.atomMapNum(atom).toString());
-		this.inputIndex.val(atom.toString());
+		if (atom > 0)
+		{
+			this.inputSymbol.val(mol.atomElement(atom));
+			this.inputCharge.val(mol.atomCharge(atom).toString());
+			this.inputUnpaired.val(mol.atomUnpaired(atom).toString());
+			this.optionHydrogen.setSelectedIndex(mol.atomHExplicit(atom) == Molecule.HEXPLICIT_UNKNOWN ? 0 : 1);
+			if (mol.atomHExplicit(atom) != Molecule.HEXPLICIT_UNKNOWN) this.inputHydrogen.val(mol.atomHExplicit(atom).toString());
+			this.optionIsotope.setSelectedIndex(mol.atomIsotope(atom) == Molecule.ISOTOPE_NATURAL ? 0 : 1);
+			if (mol.atomIsotope(atom) == Molecule.ISOTOPE_NATURAL) this.inputIsotope.val(mol.atomIsotope(atom).toString());
+			this.inputMapping.val(mol.atomMapNum(atom).toString());
+			this.inputIndex.val(atom.toString());
+		}
 
 		this.inputSymbol.focus();
 	}
@@ -158,7 +165,9 @@ export class EditAtom extends Dialog
 	// read everything back in from the dialog objects
 	private updateMolecule():void
 	{
-		const mol = this.mol, atom = this.atom;
+		let mol = this.mol, atom = this.atom;
+
+		if (atom == 0) atom = mol.addAtom('C', this.newX, this.newY);
 
 		let sym = this.inputSymbol.val();
 		if (sym != '') mol.setAtomElement(atom, sym);

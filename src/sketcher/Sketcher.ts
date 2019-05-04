@@ -1718,12 +1718,17 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 				let element = this.toolAtomSymbol;
 				if (element == 'A')
 				{
-					// !! element = window.prompt('Enter element symbol:', this.opAtom == 0 ? '' : this.mol.atomElement(this.opAtom));
 					let dlg = new EditAtom(this.mol, this.opAtom, () =>
 						{
-							if (this.mol.compareTo(dlg.mol) != 0) this.defineMolecule(dlg.mol);
+							let autoscale = this.mol.numAtoms == 0;
+							if (this.mol.compareTo(dlg.mol) != 0) this.defineMolecule(dlg.mol, autoscale);
 							dlg.close();
 						});
+					if (this.opAtom == 0)
+					{
+						dlg.newX = this.xToAng(this.clickX);
+						dlg.newY = this.yToAng(this.clickY);
+					}
 					dlg.open();
 				}
 				else if (element)
