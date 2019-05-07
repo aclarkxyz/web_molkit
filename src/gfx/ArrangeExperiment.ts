@@ -32,9 +32,26 @@ namespace WebMolKit /* BOF */ {
 	the layout.
 */
 
+export enum ArrangeComponentType
+{
+	Arrow = 1, // side separator (horizontal or vertical)
+	Plus = 2, // component separator
+	Reactant = 3, // primary reactant: molecule or name
+	Reagent = 4, // primary reagent: molecule or name
+	Product = 5, // primary product: molecule or name
+}
+
+export enum ArrangeComponentAnnot
+{
+	None = 0,
+	Primary = 1,
+	Waste = 2,
+	Implied = 3,
+}
+
 export class ArrangeComponent
 {
-	public type:number; // one of COMP_*
+	public type:ArrangeComponentType;
 	public srcIdx:number; // index in underlying reactionsheet
 	public step:number;	// which step it belongs to
 	public side:number; // which side of the reaction
@@ -45,7 +62,7 @@ export class ArrangeComponent
 	public leftDenom:string; 
 	public fszText:number; // text font sizes, if applicable
 	public fszLeft:number;
-	public annot = ArrangeExperiment.COMP_ANNOT_NONE; // annotation glyph on the right (COMP_ANNOT_*)
+	public annot = ArrangeComponentAnnot.None; // annotation glyph on the right
 	public box = new Box(); // bounding box
 	public padding:number; // how much padding around the outer boundary
 	
@@ -76,19 +93,6 @@ export class ArrangeExperiment
 	public width = 0;
 	public height = 0;
 
-	// types of components	
-	public static COMP_ARROW = 1; // side separator (horizontal or vertical)
-	public static COMP_PLUS = 2; // component separator
-	public static COMP_REACTANT = 3; // primary reactant: molecule or name
-	public static COMP_REAGENT = 4; // primary reagent: molecule or name
-	public static COMP_PRODUCT = 5; // primary product: molecule or name
-
-	// component annotations	
-	public static COMP_ANNOT_NONE = 0;
-	public static COMP_ANNOT_PRIMARY = 1;
-	public static COMP_ANNOT_WASTE = 2;
-	public static COMP_ANNOT_IMPLIED = 3;
-
 	public components:ArrangeComponent[] = [];
 
 	// parameters to influence the drawing
@@ -100,7 +104,7 @@ export class ArrangeExperiment
 	public includeNames = false; // including names of components alongside structures
 	public includeStoich = true; // whether to include non-unity stoichiometry labels
 	public includeAnnot = false; // whether to add annotations like primary/waste
-	public includeBlank = false; // any section with no components gets a blank placeholder
+	public includeBlank = false; // any section with no components gets a blank placeholder	
 
 	private PADDING = 0.25;
 	private PLUSSZ = 0.5;
@@ -132,15 +136,15 @@ export class ArrangeExperiment
 		// do an initial sizing of most of the components
 		for (let xc of this.components)
 		{
-			if (xc.type == ArrangeExperiment.COMP_PLUS) xc.box = new Box(0, 0, this.scale * this.PLUSSZ, this.scale * this.PLUSSZ);
-			else if (xc.type == ArrangeExperiment.COMP_ARROW) {} // directional
+			if (xc.type == ArrangeComponentType.Plus) xc.box = new Box(0, 0, this.scale * this.PLUSSZ, this.scale * this.PLUSSZ);
+			else if (xc.type == ArrangeComponentType.Arrow) {} // directional
 			else
 			{
 				let w = 0, h = 0;
 				if (MolUtil.notBlank(xc.mol))
 				{
 					let sz = Size.fromArray(ArrangeMolecule.guestimateSize(xc.mol, this.policy));
-					if (xc.type == ArrangeExperiment.COMP_REAGENT) sz.scaleBy(this.REAGENT_SCALE);
+					if (xc.type == ArrangeComponentType.Reagent) sz.scaleBy(this.REAGENT_SCALE);
 					if (xc.leftNumer)
 					{
 						xc.fszLeft = fszLeft;
@@ -253,15 +257,15 @@ export class ArrangeExperiment
 		// step 0: the only place where reactants come from
 		for (let n = 0; n < this.entry.steps[0].reactants.length; n++)
 		{
-			if (n > 0) this.createSegregator(ArrangeExperiment.COMP_PLUS, 0, -1);
+			if (n > 0) this.createSegregator(ArrangeComponentType.Plus, 0, -1);
 			this.createReactant(n, 0);
 		}
-		if (this.components.length == 0 && this.includeBlank) this.createBlank(ArrangeExperiment.COMP_REACTANT, 0);
+		if (this.components.length == 0 && this.includeBlank) this.createBlank(ArrangeComponentType.Reactant, 0);
 		
 		// reagents & products for each step
 		for (let s = 0; s < this.entry.steps.length; s++)
 		{
-			this.createSegregator(ArrangeExperiment.COMP_ARROW, s, 0);
+			this.createSegregator(ArrangeComponentType.Arrow, s, 0);
 			if (this.includeReagents)
 			{
 				let any = false;
@@ -270,17 +274,17 @@ export class ArrangeExperiment
 					this.createReagent(n, s);
 					any = true;
 				}
-				if (!any && this.includeBlank) this.createBlank(ArrangeExperiment.COMP_REAGENT, s);
+				if (!any && this.includeBlank) this.createBlank(ArrangeComponentType.Reagent, s);
 			}
 			
 			let any = false;
 			for (let n = 0; n < this.entry.steps[s].products.length; n++)
 			{
-				if (n > 0) this.createSegregator(ArrangeExperiment.COMP_PLUS, s, 1);
+				if (n > 0) this.createSegregator(ArrangeComponentType.Plus, s, 1);
 				this.createProduct(n, s);
 				any = true;
 			}
-			if (!any && this.includeBlank) this.createBlank(ArrangeExperiment.COMP_PRODUCT, s);
+			if (!any && this.includeBlank) this.createBlank(ArrangeComponentType.Product, s);
 		}
 	}
 
@@ -289,7 +293,7 @@ export class ArrangeExperiment
 		let comp = this.entry.steps[step].reactants[idx];
 
 		let xc = new ArrangeComponent();
-		xc.type = ArrangeExperiment.COMP_REACTANT;
+		xc.type = ArrangeComponentType.Reactant;
 		xc.srcIdx = idx;
 		xc.step = step;
 		xc.side = -1;
@@ -306,7 +310,7 @@ export class ArrangeExperiment
 			}
 			else xc.leftNumer = comp.stoich;
 		}
-		if (this.includeAnnot && MolUtil.notBlank(comp.mol) && comp.primary) xc.annot = ArrangeExperiment.COMP_ANNOT_PRIMARY;
+		if (this.includeAnnot && MolUtil.notBlank(comp.mol) && comp.primary) xc.annot = ArrangeComponentAnnot.Primary;
 		this.components.push(xc);
 	}
 	private createReagent(idx:number, step:number):void
@@ -314,7 +318,7 @@ export class ArrangeExperiment
 		let comp = this.entry.steps[step].reagents[idx];
 
 		let xc = new ArrangeComponent();
-		xc.type = ArrangeExperiment.COMP_REAGENT;
+		xc.type = ArrangeComponentType.Reagent;
 		xc.srcIdx = idx;
 		xc.step = step;
 		xc.side = 0;
@@ -325,7 +329,7 @@ export class ArrangeExperiment
 		if (this.includeAnnot)
 		{
 			let stoich = QuantityCalc.impliedReagentStoich(comp, this.entry.steps[step].products);
-			if (stoich > 0) xc.annot = ArrangeExperiment.COMP_ANNOT_IMPLIED;
+			if (stoich > 0) xc.annot = ArrangeComponentAnnot.Implied;
 			if (stoich > 0 && stoich != 1)
 			{
 				if (realEqual(stoich, Math.round(stoich)))
@@ -342,7 +346,7 @@ export class ArrangeExperiment
 		let comp = this.entry.steps[step].products[idx];
 
 		let xc = new ArrangeComponent();
-		xc.type = ArrangeExperiment.COMP_PRODUCT;
+		xc.type = ArrangeComponentType.Product;
 		xc.srcIdx = idx;
 		xc.step = step;
 		xc.side = 1;
@@ -359,7 +363,7 @@ export class ArrangeExperiment
 			}
 			else xc.leftNumer = comp.stoich;
 		}
-		if (this.includeAnnot && MolUtil.notBlank(comp.mol) && comp.waste) xc.annot = ArrangeExperiment.COMP_ANNOT_WASTE;
+		if (this.includeAnnot && MolUtil.notBlank(comp.mol) && comp.waste) xc.annot = ArrangeComponentAnnot.Waste;
 		this.components.push(xc);
 	}
 	private createSegregator(type:number, step:number, side:number):void
@@ -375,7 +379,7 @@ export class ArrangeExperiment
 		let xc = new ArrangeComponent();
 		xc.type = type;
 		xc.step = step;
-		xc.side = type == ArrangeExperiment.COMP_REACTANT ? -1 : type == ArrangeExperiment.COMP_PRODUCT ? 1 : 0;
+		xc.side = type == ArrangeComponentType.Reactant ? -1 : type == ArrangeComponentType.Product ? 1 : 0;
 		xc.srcIdx = -1;
 		this.components.push(xc);
 	}
@@ -526,7 +530,7 @@ export class ArrangeExperiment
 	private arrangeHorizontalArrowBlock(block:ArrangeComponent[]):Size
 	{
 		let arrow:ArrangeComponent = null;
-		for (let xc of block) if (xc.type == ArrangeExperiment.COMP_ARROW)
+		for (let xc of block) if (xc.type == ArrangeComponentType.Arrow)
 		{
 			arrow = xc;
 			xc.box.w = this.ARROW_W * this.scale + 2 * xc.padding;
@@ -542,7 +546,7 @@ export class ArrangeExperiment
 		let n = 0;
 		let y = 0;
 		let arrowPlaced = false;
-		for (let xc of block) if (xc.type != ArrangeExperiment.COMP_ARROW)
+		for (let xc of block) if (xc.type != ArrangeComponentType.Arrow)
 		{
 			xc.box.x = 0.5 * (arrow.box.w - xc.box.w);
 			xc.box.y = y;
@@ -572,7 +576,7 @@ export class ArrangeExperiment
 	private arrangeVerticalArrowBlock(block:ArrangeComponent[]):Size
 	{
 		let arrow:ArrangeComponent = null;
-		for (let xc of block) if (xc.type == ArrangeExperiment.COMP_ARROW)
+		for (let xc of block) if (xc.type == ArrangeComponentType.Arrow)
 		{
 			arrow = xc;
 			xc.box.w = this.ARROW_H * this.scale + 2 * xc.padding;
@@ -583,7 +587,7 @@ export class ArrangeExperiment
 
 		let sz1 = Size.zero(), sz2 = Size.zero();
 		let n = 0;
-		for (let xc of block) if (xc.type != ArrangeExperiment.COMP_ARROW)
+		for (let xc of block) if (xc.type != ArrangeComponentType.Arrow)
 		{
 			if (n < mid)
 			{
@@ -603,7 +607,7 @@ export class ArrangeExperiment
 		
 		let y1 = 0.5 * (sz.h - sz1.h), y2 = 0.5 * (sz.h - sz2.h);
 		n = 0;
-		for (let xc of block) if (xc.type != ArrangeExperiment.COMP_ARROW)
+		for (let xc of block) if (xc.type != ArrangeComponentType.Arrow)
 		{
 			if (n < mid)
 			{
@@ -628,7 +632,7 @@ export class ArrangeExperiment
 	{
 		let count = 0;
 		let mid = Pos.zero();
-		for (let xc of block) if (xc.type == ArrangeExperiment.COMP_PLUS || xc.type == ArrangeExperiment.COMP_ARROW)
+		for (let xc of block) if (xc.type == ArrangeComponentType.Plus || xc.type == ArrangeComponentType.Arrow)
 		{
 			mid.x += xc.box.midX();
 			mid.y += xc.box.midY();

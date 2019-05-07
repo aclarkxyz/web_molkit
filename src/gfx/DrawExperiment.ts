@@ -65,8 +65,8 @@ export class DrawExperiment
 		for (let n = 0; n < this.layout.components.length; n++)
 		{
 			let xc = this.layout.components[n];
-			if (xc.type == ArrangeExperiment.COMP_ARROW) this.drawSymbolArrow(xc);
-			else if (xc.type == ArrangeExperiment.COMP_PLUS) this.drawSymbolPlus(xc);
+			if (xc.type == ArrangeComponentType.Arrow) this.drawSymbolArrow(xc);
+			else if (xc.type == ArrangeComponentType.Plus) this.drawSymbolPlus(xc);
 			else this.drawComponent(n, xc);
 		}
 	}
@@ -166,12 +166,12 @@ export class DrawExperiment
 	{
 		let vg = this.vg, policy = this.policy;
 		let sz = bw, x2 = bx + bw, y2 = by + bh, x1 = x2 - sz, y1 = by;
-		if (annot == ArrangeExperiment.COMP_ANNOT_PRIMARY) y2 = y1 + sz;
-		else if (annot == ArrangeExperiment.COMP_ANNOT_WASTE) y1 = y2 - sz;
+		if (annot == ArrangeComponentAnnot.Primary) y2 = y1 + sz;
+		else if (annot == ArrangeComponentAnnot.Waste) y1 = y2 - sz;
 		
 		//vg.drawRect(x1,y1,x2-x1,y2-y1,0x000000,1,NOCOLOUR);
 		
-		if (annot == ArrangeExperiment.COMP_ANNOT_PRIMARY)
+		if (annot == ArrangeComponentAnnot.Primary)
 		{
 			let cx = 0.5 * (x1 + x2), cy = 0.5 * (y1 + y2), ext = 0.25 * sz;
 			let px = [cx, cx + 0.866 * ext, cx + 0.866 * ext, cx, cx - 0.866 * ext, cx - 0.866 * ext];
@@ -183,7 +183,7 @@ export class DrawExperiment
 			let inset = 0.1 * sz;
 			vg.drawOval(x1 + 0.5 * sz, y1 + 0.5 * sz, 0.5 * sz - inset, 0.5 * sz - inset, policy.data.foreground, lw, MetaVector.NOCOLOUR);
 		}
-		else if (annot == ArrangeExperiment.COMP_ANNOT_WASTE)
+		else if (annot == ArrangeComponentAnnot.Waste)
 		{
 			let cx = x1 + 0.7 * sz, cy = 0.5 * (y1 + y2), quart = 0.25 * sz;
 			let lw = 0.05 * this.scale;
@@ -199,7 +199,7 @@ export class DrawExperiment
 				vg.drawLine(cx - dw, y, cx + dw, y, policy.data.foreground, lw);
 			}
 		}
-		else if (annot == ArrangeExperiment.COMP_ANNOT_IMPLIED)
+		else if (annot == ArrangeComponentAnnot.Implied)
 		{
 			let tw = 0.5 * sz, th = 0.75 * sz;
 			let cx = x2 - 0.5 * tw, cy = y1 + 0.5 * th;

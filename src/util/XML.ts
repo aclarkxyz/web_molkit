@@ -45,7 +45,7 @@ export class XML
 		let xsltDoc = new DOMParser().parseFromString(xslt, 'application/xml');
 		let xsltProc = new XSLTProcessor();    
 		xsltProc.importStylesheet(xsltDoc);
-		var resultDoc = xsltProc.transformToDocument(doc);
+		let resultDoc = xsltProc.transformToDocument(doc);
 		return new XMLSerializer().serializeToString(resultDoc);
 	}
 
