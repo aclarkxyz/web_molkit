@@ -62,7 +62,7 @@ export class ButtonView extends Widget
 	private y = 0;
 
 	// static cache: needs to be filled out just once; will contain the {icon:svg} pairs that can be used in the buttons
-	private static ACTION_ICONS:{[id:string] : string} = null;
+	private static ACTION_ICONS:{[id:string] : string} = {};
 		
 	constructor(private position:string, private parentX:number, private parentY:number, private parentWidth:number, private parentHeight:number)
 	{
@@ -70,6 +70,7 @@ export class ButtonView extends Widget
 	}
 
 	// static: should be called before making use of buttons; does nothing if they are already defined
+	/* no longer necessary
 	public static prepare(callback:() => void)
 	{
 		// if we have no RPC server, but we do have a resource URL, they're going to be loaded on demand, one file at a time
@@ -93,7 +94,7 @@ export class ButtonView extends Widget
 			callback();
 		};
 		Func.getActionIcons({}, fcn);
-	}
+	}*/
 
 	// for future reference, parent boundary size is different
 	public setParentSize(width:number, height:number):void
@@ -270,6 +271,12 @@ export class ButtonView extends Widget
 			return y > gh || (x > mx - hg && x < mx + hg);
 		}
 		return true;
+	}
+
+	// returns the space taken up by the "grip"; this is the value of the "height", which will have been rotated for left/right banks
+	public gripSize():number
+	{
+		return this.gripHeight;
 	}
 
 	// --------------------------------------- private methods ---------------------------------------

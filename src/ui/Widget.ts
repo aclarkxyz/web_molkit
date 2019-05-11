@@ -34,6 +34,13 @@ export class Widget
 		this.content = $(`<${tag}></${tag}>`).appendTo($(parent));
 	}
 
+	// deconstructs the widget; this is not a hook, rather it is for the benefit of calling code that wants the widget gone
+	public remove():void
+	{
+		if (this.content) this.content.remove();
+		this.content = null;
+	}
+
 	// convenience function: attaches a tooltip to the main content element, after rendering	
 	public addTooltip(bodyHTML:string, titleHTML?:string):void
 	{

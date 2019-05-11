@@ -216,27 +216,24 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 	// instantiates the widget: any of the immutable setup properties are now cast in stone
 	public setup(callback:() => void):void
 	{
-		ButtonView.prepare(() =>
+		this.beenSetup = true;
+		if (this.mol == null) this.mol = new Molecule();
+		if (this.policy == null) 
 		{
-			this.beenSetup = true;
-			if (this.mol == null) this.mol = new Molecule();
-			if (this.policy == null) 
-			{
-				this.policy = RenderPolicy.defaultColourOnWhite();
-				this.pointScale = this.policy.data.pointScale;
-			}
-		
-			let effects = this.sketchEffects();
-			this.layout = new ArrangeMolecule(this.mol, this, this.policy, effects);
-			this.layout.arrange();
+			this.policy = RenderPolicy.defaultColourOnWhite();
+			this.pointScale = this.policy.data.pointScale;
+		}
+	
+		let effects = this.sketchEffects();
+		this.layout = new ArrangeMolecule(this.mol, this, this.policy, effects);
+		this.layout.arrange();
 
-			this.centreAndShrink();
+		this.centreAndShrink();
 
-			this.metavec = new MetaVector();
-			new DrawMolecule(this.layout, this.metavec).draw();
+		this.metavec = new MetaVector();
+		new DrawMolecule(this.layout, this.metavec).draw();
 
-			if (callback) callback();
-		});
+		if (callback) callback();
 	}
 
 	// create the objects necessary to render the widget; this function should be called after basic pre-initialisation settings, e.g.

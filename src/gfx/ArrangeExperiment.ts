@@ -104,7 +104,8 @@ export class ArrangeExperiment
 	public includeNames = false; // including names of components alongside structures
 	public includeStoich = true; // whether to include non-unity stoichiometry labels
 	public includeAnnot = false; // whether to add annotations like primary/waste
-	public includeBlank = false; // any section with no components gets a blank placeholder	
+	public includeBlank = false; // any section with no components gets a blank placeholder
+	public padding = 0;
 
 	private PADDING = 0.25;
 	private PLUSSZ = 0.5;
@@ -123,6 +124,7 @@ export class ArrangeExperiment
 	{
 		this.scale = policy.data.pointScale;
 		this.limitStructW = this.limitStructH = this.scale * 10;
+		this.padding = this.PADDING * this.scale;
 	}
 
 	// carries out the arrangement
@@ -131,7 +133,6 @@ export class ArrangeExperiment
 		this.createComponents();
 		
 		let fszText = this.scale * this.policy.data.fontSize, fszLeft = this.scale * this.policy.data.fontSize * 1.5;
-		let padding = this.PADDING * this.scale;
 
 		// do an initial sizing of most of the components
 		for (let xc of this.components)
@@ -175,8 +176,8 @@ export class ArrangeExperiment
 			}
 	
 			// give it breathing room
-			xc.padding = padding;
-			xc.box = new Box(0, 0, xc.box.w + 2 * padding, xc.box.h + 2 * padding);
+			xc.padding = this.padding;
+			xc.box = new Box(0, 0, xc.box.w + 2 * this.padding, xc.box.h + 2 * this.padding);
 		}
 	
 		// build several permutations; take the best one
