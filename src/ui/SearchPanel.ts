@@ -13,6 +13,7 @@
 ///<reference path='../dialog/EditCompound.ts'/>
 ///<reference path='../dialog/MapReaction.ts'/>
 ///<reference path='../rpc/Account.ts'/>
+///<reference path='../ui/ClipboardProxy.ts'/>
 ///<reference path='Widget.ts'/>
 
 namespace WebMolKit /* BOF */ {
@@ -59,6 +60,8 @@ export class SearchPanel extends Widget
 	private emptyMsg1:string = null;
 	private emptyMsg2:string = null;
 
+	private proxyClip:ClipboardProxy = null;
+
 	// -------- public methods ------------
 
 	constructor(private type:string)
@@ -74,6 +77,11 @@ export class SearchPanel extends Widget
 		this.emptyMsg1 = emptyMsg1;
 		this.emptyMsg2 = emptyMsg2;
 	}
+
+	public defineClipboard(proxy:ClipboardProxy):void
+	{
+		this.proxyClip = proxy;
+	}	
 
 	// get/set molecule, with appropriate rendering updates
 	public getMolecule1():Molecule {return this.mol1;}
@@ -413,6 +421,7 @@ export class SearchPanel extends Widget
 	{
 		let dlg = new EditCompound(which == 1 ? this.mol1 : this.mol2);
 		this.isSketching = true;
+		if (this.proxyClip) dlg.defineClipboard(this.proxyClip);
 		dlg.onSave(() => {if (which == 1) this.saveMolecule1(dlg); else this.saveMolecule2(dlg);});
 		dlg.onClose(() => this.isSketching = false);
 		dlg.open();

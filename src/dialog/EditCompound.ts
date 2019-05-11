@@ -23,7 +23,7 @@ namespace WebMolKit /* BOF */ {
 export class EditCompound extends Dialog
 {
 	private btnClear:JQuery;
-	private btnPaste:JQuery;
+	//private btnPaste:JQuery; // (restore this when proxy allows paste on request?)
 	private btnCopy:JQuery;
 	private btnSave:JQuery;
 	private sketcher = new Sketcher();

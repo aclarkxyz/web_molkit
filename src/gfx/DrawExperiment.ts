@@ -79,6 +79,13 @@ export class DrawExperiment
 		let bx = xc.box.x + xc.padding, by = xc.box.y + xc.padding;
 		let bw = xc.box.w - 2 * xc.padding, bh = xc.box.h - 2 * xc.padding;
 
+		if (xc.srcIdx < 0 || (MolUtil.isBlank(xc.mol) && !xc.text))
+		{
+			let fsz = 0.5 * bh;
+			vg.drawText(bx + 0.5 * bw, by + 0.5 * bh, '?', fsz, policy.data.foreground, TextAlign.Centre | TextAlign.Middle);
+			return;
+		}
+
 		//vg.drawRect(bx,by,bw,bh,0x000000,1,NOCOLOUR);
 
 		if (xc.text)
@@ -133,12 +140,6 @@ export class DrawExperiment
 			drawmol.draw();
 
 			if (this.postDrawMolecule) this.postDrawMolecule(vg, idx, xc, arrmol);
-		}
-
-		if (xc.srcIdx < 0)
-		{
-			let fsz = 0.5 * bh;
-			vg.drawText(bx + 0.5 * bw, by + 0.5 * bh, '?', fsz, policy.data.foreground, TextAlign.Centre | TextAlign.Middle);
 		}
 	}
 	private drawSymbolArrow(xc:ArrangeComponent):void
