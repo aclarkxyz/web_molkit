@@ -45,6 +45,9 @@ export class Dialog
 	protected btnClose:JQuery; // the close button, in case anyone wants to know
 	
 	public callbackClose:(source?:Dialog) => void = null;
+	public callbackShown:(source?:Dialog) => void = null;
+
+	// ------------ public methods ------------
 
 	constructor()
 	{
@@ -54,6 +57,11 @@ export class Dialog
 	public onClose(callback:(source?:Dialog) => void)
 	{
 		this.callbackClose = callback;
+	}
+
+	public onShown(callback:(source?:Dialog) => void)
+	{
+		this.callbackShown = callback;
 	}
 
 	// creates all the DOM objects and shows the dialog; details such as title should be setup before calling this
@@ -128,6 +136,8 @@ export class Dialog
 
 		bg.show();
 		pb.show();
+
+		if (this.callbackShown) this.callbackShown(this); // currently there's no delay so it's fine to just call it
 	}
 	
 	// closes and hides the dialog
@@ -155,6 +165,8 @@ export class Dialog
 		this.body().text('Empty dialog box.');
 	}
 	
+	// ------------ private methods ------------
+
 	// have this called when the size may have changed, and need to update position
 	private repositionSize():void
 	{
