@@ -528,4 +528,12 @@ export function jsonPrettyPrint(json:any):string
 	return lines.join('\n');
 }
 
+// installs a handler on both of the <input> line chokepoints: change & keyup are both necessary for many functions, because this
+// gets keyboard events and things like pasting in content
+export function inputChanged(domInput:JQuery, callback:() => void):void
+{
+	domInput.keyup(callback);
+	domInput.change(callback);
+}
+
 /* EOF */ }

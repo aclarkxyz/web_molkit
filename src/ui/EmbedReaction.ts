@@ -293,7 +293,7 @@ export class EmbedReaction extends EmbedChemistry
 	}
 
 	// renders lines representing the component's text-like properties
-	private renderComponentText(parent:JQuery, qc:QuantityComp)
+	private renderComponentText(parent:JQuery, qc:QuantityCalcComp)
 	{
 		let title:string[] = [], content:string[] = [];
 
@@ -315,56 +315,56 @@ export class EmbedReaction extends EmbedChemistry
 		if (qc.valueEquiv > 0)
 		{
 			let text = qc.valueEquiv.toString(), stat = qc.statEquiv;
-			if (stat == QuantityCalc.STAT_VIRTUAL) text = '<i>(' + text + ')</i>';
-			else if (stat == QuantityCalc.STAT_CONFLICT) text += ' (conflicting)';
+			if (stat == QuantityCalcStat.Virtual) text = '<i>(' + text + ')</i>';
+			else if (stat == QuantityCalcStat.Conflict) text += ' (conflicting)';
 			title.push('Stoichiometry');
 			content.push(text);
 		}
 		if (qc.valueMass > 0)
 		{
 			let text = QuantityCalc.formatMass(qc.valueMass), stat = qc.statMass;
-			if (stat == QuantityCalc.STAT_VIRTUAL) text = '<i>(' + text + ')</i>';
-			else if (stat == QuantityCalc.STAT_CONFLICT) text += ' (conflicting)';
+			if (stat == QuantityCalcStat.Virtual) text = '<i>(' + text + ')</i>';
+			else if (stat == QuantityCalcStat.Conflict) text += ' (conflicting)';
 			title.push('Mass');
 			content.push(text);
 		}
 		if (qc.valueVolume > 0)
 		{
 			let text = QuantityCalc.formatVolume(qc.valueVolume), stat = qc.statVolume;
-			if (stat == QuantityCalc.STAT_VIRTUAL) text = '<i>(' + text + ')</i>';
-			else if (stat == QuantityCalc.STAT_CONFLICT) text += ' (conflicting)';
+			if (stat == QuantityCalcStat.Virtual) text = '<i>(' + text + ')</i>';
+			else if (stat == QuantityCalcStat.Conflict) text += ' (conflicting)';
 			title.push('Volume');
 			content.push(text);
 		}
 		if (qc.valueMoles > 0)
 		{
 			let text = QuantityCalc.formatMoles(qc.valueMoles), stat = qc.statMoles;
-			if (stat == QuantityCalc.STAT_VIRTUAL) text = '<i>(' + text + ')</i>';
-			else if (stat == QuantityCalc.STAT_CONFLICT) text += ' (conflicting)';
+			if (stat == QuantityCalcStat.Virtual) text = '<i>(' + text + ')</i>';
+			else if (stat == QuantityCalcStat.Conflict) text += ' (conflicting)';
 			title.push('Moles');
 			content.push(text);
 		}
 		if (qc.valueDensity > 0)
 		{
 			let text = QuantityCalc.formatDensity(qc.valueDensity), stat = qc.statDensity;
-			if (stat == QuantityCalc.STAT_VIRTUAL) text = '<i>(' + text + ')</i>';
-			else if (stat == QuantityCalc.STAT_CONFLICT) text += ' (conflicting)';
+			if (stat == QuantityCalcStat.Virtual) text = '<i>(' + text + ')</i>';
+			else if (stat == QuantityCalcStat.Conflict) text += ' (conflicting)';
 			title.push('Density');
 			content.push(text);
 		}
 		if (qc.valueConc > 0)
 		{
 			let text = QuantityCalc.formatConc(qc.valueConc), stat = qc.statConc;
-			if (stat == QuantityCalc.STAT_VIRTUAL) text = '<i>(' + text + ')</i>';
-			else if (stat == QuantityCalc.STAT_CONFLICT) text += ' (conflicting)';
+			if (stat == QuantityCalcStat.Virtual) text = '<i>(' + text + ')</i>';
+			else if (stat == QuantityCalcStat.Conflict) text += ' (conflicting)';
 			title.push('Concentration');
 			content.push(text);
 		}
 		if (qc.valueYield > 0 && !qc.comp.waste)
 		{
 			let text = QuantityCalc.formatPercent(qc.valueYield), stat = qc.statYield;
-			if (stat == QuantityCalc.STAT_VIRTUAL) text = '<i>(' + text + ')</i>';
-			else if (stat == QuantityCalc.STAT_CONFLICT) text += ' (conflicting)';
+			if (stat == QuantityCalcStat.Virtual) text = '<i>(' + text + ')</i>';
+			else if (stat == QuantityCalcStat.Conflict) text += ' (conflicting)';
 			title.push('Yield');
 			content.push(text);
 		}

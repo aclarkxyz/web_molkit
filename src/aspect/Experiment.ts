@@ -166,11 +166,11 @@ export class ExperimentEntry
 	}
 	
 	// convenience: saves a switch
-	public getComponent(step:number, type:number, idx:number):ExperimentComponent
+	public getComponent(step:number, type:ExperimentComponentType, idx:number):ExperimentComponent
 	{
-		if (type == Experiment.REACTANT) return this.steps[step].reactants[idx];
-		if (type == Experiment.REAGENT) return this.steps[step].reagents[idx];
-		if (type == Experiment.PRODUCT) return this.steps[step].products[idx];
+		if (type == ExperimentComponentType.Reactant) return this.steps[step].reactants[idx];
+		if (type == ExperimentComponentType.Reagent) return this.steps[step].reagents[idx];
+		if (type == ExperimentComponentType.Product) return this.steps[step].products[idx];
 		return new ExperimentComponent();
 	}
 }
@@ -183,10 +183,6 @@ export class Experiment extends Aspect
 	public static NAME = 'Experiment';
 	public static NAME_RXN = 'Reaction';
 	public static NAME_YLD = 'Yield';
-
-	public static REACTANT = 1;
-	public static REAGENT = 2;
-	public static PRODUCT = 3;
 
 	public static COLNAME_EXPERIMENT_TITLE = 'ExperimentTitle';
 	public static COLNAME_EXPERIMENT_CREATEDATE = 'ExperimentCreateDate';

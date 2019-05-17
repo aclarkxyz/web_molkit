@@ -62,6 +62,12 @@ export class OptionList extends Widget
 		return this.auxCell[idx];
 	}
 
+	// provide the change of state handler
+	public onSelect(callback:(idx:number, source?:OptionList) => void):void
+	{
+		this.callbackSelect = callback;
+	}
+
 	// create the underlying structure; the parent parameter must be jQuery-compatible
 	public render(parent:any):void
 	{
@@ -171,6 +177,7 @@ export class OptionList extends Widget
 				text-align: center;
 				white-space: nowrap;
 				vertical-align: middle;
+				line-height: 1.2em;
 				-ms-touch-action: manipulation; touch-action: manipulation;
 				cursor: pointer;
 				-webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none;
