@@ -45,6 +45,8 @@ export class DrawExperiment
 	public preDrawMolecule:(vg:MetaVector, idx:number, xc:ArrangeComponent, arrmol:ArrangeMolecule) => void = null;
 	public postDrawMolecule:(vg:MetaVector, idx:number, xc:ArrangeComponent, arrmol:ArrangeMolecule) => void = null;
 
+	public molDrawn:ArrangeMolecule[] = []; // useful to obtain later, sometimes
+
 	// --------------------- public methods ---------------------
 	
 	constructor(private layout:ArrangeExperiment, private vg:MetaVector)
@@ -61,6 +63,8 @@ export class DrawExperiment
 	{
 		// debug: draw outlines of components
 		//for (let xc of this.layout.components) this.vg.drawRect(xc.box.x, xc.box.y, xc.box.w, xc.box.h, MetaVector.NOCOLOUR, 0, 0xF0000000); 
+
+		this.molDrawn = Vec.anyArray(null, this.layout.components.length);
 
 		for (let n = 0; n < this.layout.components.length; n++)
 		{
@@ -140,6 +144,8 @@ export class DrawExperiment
 			drawmol.draw();
 
 			if (this.postDrawMolecule) this.postDrawMolecule(vg, idx, xc, arrmol);
+
+			this.molDrawn[idx] = arrmol;
 		}
 	}
 	private drawSymbolArrow(xc:ArrangeComponent):void

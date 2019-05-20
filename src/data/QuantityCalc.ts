@@ -261,50 +261,45 @@ export class QuantityCalc
 		}
 		
 		return new Molecule[]{mol1, mol2};
-	}
+	}*/
 	
 	// for a given step, works out the integral stoichiometry of {reactants, reagents, components}
-	public static int[][] componentRatio(Experiment.Entry entry, int step)
+	public static componentRatio(entry:ExperimentEntry, step:number):[number[], number[], number[]]
 	{
-		IntVector numer = new IntVector(), denom = new IntVector();
+		let numer:number[] = [], denom:number[] = [];
+
+		let reactants = step == 0 ? entry.steps[0].reactants : entry.steps[step - 1].products;
+		for (let comp of reactants)
+		{
+			let [num, den] = this.stoichAsRatio(comp.stoich);
+			numer.push(num);
+			denom.push(den);
+		}
+		for (let comp of entry.steps[step].reagents)
+		{
+			let fract = this.impliedReagentStoich(comp, entry.steps[step].products);
+			let [num, den] = fract == 0 ? [0, 1] : this.stoichFractAsRatio(fract);
+			numer.push(num == 0 ? 1 : num);
+			denom.push(den);
+		}
+		for (let comp of entry.steps[step].products)
+		{
+			let [num, den] = this.stoichAsRatio(comp.stoich);
+			numer.push(num == 0 ? 1 : num);
+			denom.push(den);
+		}
 		
-		Component[] reactants = step == 0 ? entry.steps[0].reactants : entry.steps[step - 1].products;
-		for (Component comp : reactants)
-		{
-			PairTwoInt ratio = stoichAsRatio(comp.stoich);
-			numer.add(ratio.val1 == 0 ? 1 : ratio.val1);
-			denom.add(ratio.val2);
-		}
-		for (Component comp : entry.steps[step].reagents)
-		{
-			float fract = impliedReagentStoich(comp, entry.steps[step].products);
-			PairTwoInt ratio = fract == 0 ? new PairTwoInt(1, 1) : stoichAsRatio(fract);
-			numer.add(ratio.val1 == 0 ? 1 : ratio.val1);
-			denom.add(ratio.val2);
-		}
-		for (Component comp : entry.steps[step].products)
-		{
-			PairTwoInt ratio = stoichAsRatio(comp.stoich);
-			numer.add(ratio.val1 == 0 ? 1 : ratio.val1);
-			denom.add(ratio.val2);
-		}
-		
-		int bigDenom = 1;
-		for (int n = 0; n < numer.size(); n++)
-		{
-			int d = denom.get(n);
-			if (d == 1) continue;
-			if (bigDenom % d != 0) bigDenom *= d;
-		}
-		// (any way to bring it back down?)
-		
-		int[] ratio1 = new int[reactants.length], ratio2 = new int[entry.steps[step].reagents.length], ratio3 = new int[entry.steps[step].products.length];
-		int p = 0;
-		for (int n = 0; n < ratio1.length; n++, p++) ratio1[n] = numer.get(p) * bigDenom / denom.get(p);
-		for (int n = 0; n < ratio2.length; n++, p++) ratio2[n] = numer.get(p) * bigDenom / denom.get(p);
-		for (int n = 0; n < ratio3.length; n++, p++) ratio3[n] = numer.get(p) * bigDenom / denom.get(p);
-		return new int[][]{ratio1, ratio2, ratio3};
-	}*/
+		let bigDenom = 1;
+		for (let n = 0; n < numer.length; n++) if (denom[n] > 1 && bigDenom % denom[n] != 0) bigDenom *= denom[n];
+
+		let ratioReactants:number[] = [], ratioReagents:number[] = [], ratioProducts:number[] = [];
+		let p = 0;
+		for (let n = 0; n < reactants.length; n++, p++) ratioReactants.push(numer[p] * bigDenom / denom[p]);
+		for (let n = 0; n < entry.steps[step].reagents.length; n++, p++) ratioReagents.push(numer[p] * bigDenom / denom[p]);
+		for (let n = 0; n < entry.steps[step].products.length; n++, p++) ratioProducts.push(numer[p] * bigDenom / denom[p]);
+	
+		return [ratioReactants, ratioReagents, ratioProducts];
+	}
 
 	// ---------------- public methods -----------------
 
