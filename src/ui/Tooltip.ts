@@ -32,7 +32,7 @@ export function addTooltip(parent:any, bodyHTML:string, titleHTML?:string, delay
 	const tooltip = new Tooltip(widget, bodyHTML, titleHTML, delay == null ? 1000 : delay);
 
 	widget.mouseenter(() => tooltip.start());
-	widget.mouseleave(() => tooltip.stop())
+	widget.mouseleave(() => tooltip.stop());
 }
 
 // immediately raise a tooltip, with a position relative to a given widget
