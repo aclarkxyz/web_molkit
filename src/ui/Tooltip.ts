@@ -30,10 +30,9 @@ export function addTooltip(parent:any, bodyHTML:string, titleHTML?:string, delay
 	let widget = $(parent);
 		
 	const tooltip = new Tooltip(widget, bodyHTML, titleHTML, delay == null ? 1000 : delay);
-	
-	let prevEnter:any = widget.attr('onmouseenter'), prevLeave:any = widget.attr('onmouseleave');
-	widget.mouseenter((e:any) => {tooltip.start(); if (prevEnter) prevEnter(e);});
-	widget.mouseleave((e:any) => {tooltip.stop(); if (prevLeave) prevLeave(e);}); 
+
+	widget.mouseenter(() => tooltip.start());
+	widget.mouseleave(() => tooltip.stop())
 }
 
 // immediately raise a tooltip, with a position relative to a given widget

@@ -45,6 +45,9 @@ export class ClipboardProxy
 
 	// returns true if it is possible to fetch from the clipboard anytime (false when running in a web browser)
 	public canAlwaysGet():boolean {return false;}
+
+	// instantiate the downloading of a string, with a given default filename
+	public downloadString(str:string, fn:string):void {}
 }
 
 /*
