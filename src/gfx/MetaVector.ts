@@ -121,8 +121,8 @@ export class MetaVector
 	}
 	public drawRect(x:number, y:number, w:number, h:number, edgeCol:number, thickness:number, fillCol:number)
 	{
-		if (edgeCol == null) edgeCol = -1;
-		if (fillCol == null) fillCol = -1;
+		if (edgeCol == null) edgeCol = MetaVector.NOCOLOUR;
+		if (fillCol == null) fillCol = MetaVector.NOCOLOUR;
 		if (thickness == null) thickness = 1;
 		let typeidx = this.findOrCreateType([this.PRIM_RECT, edgeCol, fillCol, thickness]);
 
@@ -134,8 +134,8 @@ export class MetaVector
 	}
 	public drawOval(cx:number, cy:number, rw:number, rh:number, edgeCol:number, thickness:number, fillCol:number)
 	{
-		if (edgeCol == null) edgeCol = -1;
-		if (fillCol == null) fillCol = -1;
+		if (edgeCol == null) edgeCol = MetaVector.NOCOLOUR;
+		if (fillCol == null) fillCol = MetaVector.NOCOLOUR;
 		if (thickness == null) thickness = 1;
 
 		const bump = 0.5 * thickness;
@@ -147,8 +147,8 @@ export class MetaVector
 	}
 	public drawPath(xpoints:number[], ypoints:number[], ctrlFlags:boolean[], isClosed:boolean, edgeCol:number, thickness:number, fillCol:number, hardEdge:boolean)
 	{
-		if (edgeCol == null) edgeCol = -1;
-		if (fillCol == null) fillCol = -1;
+		if (edgeCol == null) edgeCol = MetaVector.NOCOLOUR;
+		if (fillCol == null) fillCol = MetaVector.NOCOLOUR;
 		if (thickness == null) thickness = 1;
 		if (hardEdge == null) hardEdge = false;		
 
@@ -468,39 +468,39 @@ export class MetaVector
 	// ------------ private methods ------------
 
 	// transform stored types into renderables
-	public setupTypeLine(t:any[])
+	public setupTypeLine(t:any[]):any
 	{
 		let thickness = t[1] * this.scale;
 		let colour = t[2];
-		return {'thickness': thickness, 'colour': colourCanvas(colour)};
+		return {'thickness': thickness, 'colour': colour};
 	}
-	public setupTypeRect(t:any[])
+	public setupTypeRect(t:any[]):any
 	{
 		let edgeCol = t[1];
 		let fillCol = t[2];
 		let thickness = t[3] * this.scale;
-		return {'edgeCol': colourCanvas(edgeCol), 'fillCol': colourCanvas(fillCol), 'thickness': thickness};
+		return {'edgeCol': edgeCol, 'fillCol': fillCol, 'thickness': thickness};
 	}
-	public setupTypeOval(t:any[])
+	public setupTypeOval(t:any[]):any
 	{
 		let edgeCol = t[1];
 		let fillCol = t[2];
 		let thickness = t[3] * this.scale;
-		return {'edgeCol': colourCanvas(edgeCol), 'fillCol': colourCanvas(fillCol), 'thickness': thickness};
+		return {'edgeCol': edgeCol, 'fillCol': fillCol, 'thickness': thickness};
 	}
-	public setupTypePath(t:any[])
+	public setupTypePath(t:any[]):any
 	{
 		let edgeCol = t[1];
 		let fillCol = t[2];
 		let thickness = t[3] * this.scale;
 		let hardEdge = t[4];
-		return {'edgeCol': colourCanvas(edgeCol), 'fillCol': colourCanvas(fillCol), 'thickness': thickness, 'hardEdge': hardEdge};
+		return {'edgeCol': edgeCol, 'fillCol': fillCol, 'thickness': thickness, 'hardEdge': hardEdge};
 	}
-	public setupTypeText(t:any[])
+	public setupTypeText(t:any[]):any
 	{
 		let sz = t[1] * this.scale;
 		let colour = t[2];
-		return {'colour': colourCanvas(colour), 'size': sz};
+		return {'colour': colour, 'size': sz};
 	}
 
 	// perform actual rendering for the primitives
@@ -519,7 +519,7 @@ export class MetaVector
 			ctx.beginPath();
 			ctx.moveTo(x1, y1);
 			ctx.lineTo(x2, y2);
-			ctx.strokeStyle = type.colour;
+			ctx.strokeStyle = colourCanvas(type.colour);
 			ctx.lineWidth = type.thickness;
 			ctx.lineCap = 'round';
 			ctx.stroke();
@@ -538,12 +538,12 @@ export class MetaVector
 
 		if (type.fillCol != null)
 		{
-			ctx.fillStyle = type.fillCol;
+			ctx.fillStyle = colourCanvas(type.fillCol);
 			ctx.fillRect(x, y, w, h);
 		}
 		if (type.edgeCol != null)
 		{
-			ctx.strokeStyle = type.edgeCol;
+			ctx.strokeStyle = colourCanvas(type.edgeCol);
 			ctx.lineWidth = type.thickness;
 			ctx.lineCap = 'square';
 			ctx.strokeRect(x, y, w, h);
@@ -562,14 +562,14 @@ export class MetaVector
 		
 		if (type.fillCol != null)
 		{
-			ctx.fillStyle = type.fillCol;
+			ctx.fillStyle = colourCanvas(type.fillCol);
 			ctx.beginPath();
 			ctx.ellipse(cx, cy, rw, rh, 0, 0, 2 * Math.PI, true);
 			ctx.fill();
 		}
 		if (type.edgeCol != null)
 		{
-			ctx.strokeStyle = type.edgeCol;
+			ctx.strokeStyle = colourCanvas(type.edgeCol);
 			ctx.lineWidth = type.thickness;
 			ctx.beginPath();
 			ctx.ellipse(cx, cy, rw, rh, 0, 0, 2 * Math.PI, true);
@@ -593,8 +593,8 @@ export class MetaVector
 
 		for (let layer = 1; layer <= 2; layer++)
 		{
-			if (layer == 1 && type.fillCol == null) continue;
-			if (layer == 2 && type.edgeCol == null) continue;
+			if (layer == 1 && type.fillCol == MetaVector.NOCOLOUR) continue;
+			if (layer == 2 && type.edgeCol == MetaVector.NOCOLOUR) continue;
 				
 			ctx.beginPath();
 			ctx.moveTo(x[0], y[0]);
@@ -619,12 +619,12 @@ export class MetaVector
 		
 			if (layer == 1)
 			{
-				ctx.fillStyle = type.fillCol;
+				ctx.fillStyle = colourCanvas(type.fillCol);
 				ctx.fill();
 			}
 			else
 			{
-				ctx.strokeStyle = type.edgeCol;
+				ctx.strokeStyle = colourCanvas(type.edgeCol);
 				ctx.lineWidth = type.thickness;
 				ctx.lineCap = type.hardEdge ? 'square' : 'round';
 				ctx.lineJoin = type.hardEdge ? 'miter' : 'round';
@@ -639,7 +639,7 @@ export class MetaVector
 		let txt = p[4];
 		
 		let sz = type.size;
-		let fill = type.colour;
+		let fill = colourCanvas(type.colour);
 
 		x = this.offsetX + this.scale * x;
 		y = this.offsetY + this.scale * y;
@@ -688,14 +688,14 @@ export class MetaVector
 		x2 = this.offsetX + this.scale * x2;
 		y2 = this.offsetY + this.scale * y2;
 		
-		if (type.colour != null)
+		if (type.colour != MetaVector.NOCOLOUR)
 		{
 			let line = $('<line></line>').appendTo(svg);
 			line.attr('x1', x1);
 			line.attr('y1', y1);
 			line.attr('x2', x2);
 			line.attr('y2', y2);
-			line.attr('stroke', type.colour);
+			this.defineSVGStroke(line, type.colour);
 			line.attr('stroke-width', type.thickness);
 			line.attr('stroke-linecap', 'round');
 		}
@@ -703,10 +703,10 @@ export class MetaVector
 	public svgLineN(svg:JQuery, p:any, pos:number, sz:number)
 	{
 		let type = this.typeObj[p[1]];
-		if (type.colour == null) return;
+		if (type.colour == MetaVector.NOCOLOUR) return;
 
 		let g = $('<g></g>').appendTo(svg);
-		g.attr('stroke', type.colour);
+		this.defineSVGStroke(g, type.colour);
 		g.attr('stroke-width', type.thickness);
 		g.attr('stroke-linecap', 'round');
 
@@ -745,15 +745,13 @@ export class MetaVector
 		rect.attr('width', w);
 		rect.attr('height', h);
 
-		if (type.edgeCol != null)
+		this.defineSVGStroke(rect, type.edgeCol);
+		if (type.edgeCol != MetaVector.NOCOLOUR)
 		{
-			rect.attr('stroke', type.edgeCol);
 			rect.attr('stroke-width', type.thickness);
 			rect.attr('stroke-linecap', 'square');
 		}
-		else rect.attr('stroke', 'none');
-
-		rect.attr('fill', type.fillCol == null ? 'none' : type.fillCol);
+		this.defineSVGFill(rect, type.fillCol);
 	}
 	public svgRectN(svg:JQuery, p:any, pos:number, sz:number)
 	{
@@ -761,15 +759,13 @@ export class MetaVector
 
 		let g = $('<g></g>').appendTo(svg);
 		
-		if (type.edgeCol != null)
+		this.defineSVGStroke(g, type.edgeCol);
+		if (type.edgeCol != MetaVector.NOCOLOUR)
 		{
-			g.attr('stroke', type.edgeCol);
 			g.attr('stroke-width', type.thickness);
 			g.attr('stroke-linecap', 'square');
 		}
-		else g.attr('stroke', 'none');
-
-		g.attr('fill', type.fillCol == null ? 'none' : type.fillCol);
+		this.defineSVGFill(g, type.fillCol);
 
 		for (let n = 0; n < sz; n++)
 		{
@@ -806,15 +802,12 @@ export class MetaVector
 		oval.attr('rx', rw);
 		oval.attr('ry', rh);
 
-		if (type.edgeCol != null)
+		this.defineSVGStroke(oval, type.edgeCol);
+		if (type.edgeCol != MetaVector.NOCOLOUR)
 		{
-			oval.attr('stroke', type.edgeCol);
 			oval.attr('stroke-width', type.thickness);
-			oval.attr('stroke-linecap', 'square');
 		}
-		else oval.attr('stroke', 'none');
-
-		oval.attr('fill', type.fillCol == null ? 'none' : type.fillCol);
+		this.defineSVGFill(oval, type.fillCol);
 	}
 	public svgOvalN(svg:JQuery, p:any, pos:number, sz:number)
 	{
@@ -824,15 +817,12 @@ export class MetaVector
 
 		let g = $('<g></g>').appendTo(svg);
 		
-		if (type.edgeCol != null)
+		this.defineSVGStroke(g, type.edgeCol);
+		if (type.edgeCol != MetaVector.NOCOLOUR)
 		{
-			g.attr('stroke', type.edgeCol);
 			g.attr('stroke-width', type.thickness);
-			g.attr('stroke-linecap', 'square');
 		}
-		else g.attr('stroke', 'none');
-
-		g.attr('fill', type.fillCol == null ? 'none' : type.fillCol);
+		this.defineSVGFill(g, type.fillCol);
 
 		for (let n = 0; n < sz; n++)
 		{
@@ -893,16 +883,14 @@ export class MetaVector
 		let path = $('<path></path>').appendTo(svg);
 		path.attr('d', shape);
 
-		if (type.edgeCol != null)
+		this.defineSVGStroke(path, type.edgeCol);
+		if (type.edgeCol != MetaVector.NOCOLOUR)
 		{
-			path.attr('stroke', type.edgeCol);
 			path.attr('stroke-width', type.thickness);
 			path.attr('stroke-linejoin', type.hardEdge ? 'miter' : 'round');
-			path.attr('stroke-linecap', type.hardEdge ? 'square' : 'round');
+			path.attr('stroke-linecap', 'square');
 		}
-		else path.attr('stroke', 'none');
-
-		path.attr('fill', type.fillCol == null ? 'none' : type.fillCol);
+		this.defineSVGFill(path, type.fillCol);
 	}
 	private svgText(svg:JQuery, p:any)
 	{
@@ -911,7 +899,6 @@ export class MetaVector
 		let txt = p[4];
 		
 		let sz = type.size;
-		let fill = type.colour;
 
 		x = this.offsetX + this.scale * x;
 		y = this.offsetY + this.scale * y;
@@ -922,7 +909,7 @@ export class MetaVector
 		
 		let gdelta = $('<g></g>').appendTo(svg);
 		gdelta.attr('transform', 'translate(' + x + ',' + y + ')');
-		gdelta.attr('fill', fill);
+		this.defineSVGFill(gdelta, type.colour);
 		let gscale = $('<g></g>').appendTo(gdelta);
 		gscale.attr('transform', 'scale(' + scale + ',' + (-scale) + ')');
 		
@@ -945,6 +932,31 @@ export class MetaVector
 			else dx += font.MISSING_HORZ;
 		}
 	}	
+
+	// utility for SVG
+	private defineSVGStroke(obj:JQuery, col:number):void
+	{
+		if (col == MetaVector.NOCOLOUR)
+		{
+			obj.attr('stroke-opacity', '0');
+			return;
+		}
+		obj.attr('stroke', colourCode(col));
+		let alpha = colourAlpha(col);
+		if (alpha != 1) obj.attr('stroke-opacity', alpha.toString());
+
+	}
+	private defineSVGFill(obj:JQuery, col:number):void
+	{
+		if (col == MetaVector.NOCOLOUR)
+		{
+			obj.attr('fill-opacity', '0');
+			return;
+		}
+		obj.attr('fill', colourCode(col));
+		let alpha = colourAlpha(col);
+		if (alpha != 1) obj.attr('fill-opacity', alpha.toString());
+	}
 
 	// for a type definition array, see if it exists in the list, and return that index - or if not, push it on
 	private findOrCreateType(typeDef:any)

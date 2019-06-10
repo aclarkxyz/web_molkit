@@ -43,6 +43,10 @@ export class ClipboardProxy
 	// places the clipboard content with the indicated string; this is allowed at any time
 	public setString(str:string):void {}
 
+	// places HTML content onto the clipboard, if available
+	public canSetHTML():boolean {return false;}
+	public setHTML(html:string):void {}
+
 	// returns true if it is possible to fetch from the clipboard anytime (false when running in a web browser)
 	public canAlwaysGet():boolean {return false;}
 
