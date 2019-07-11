@@ -509,17 +509,18 @@ export class MetaVector
 		let type = this.typeObj[p[1]];
 		let x1 = p[2], y1 = p[3];
 		let x2 = p[4], y2 = p[5];
+		let colour:number = type.colour;
 		
 		x1 = this.offsetX + this.scale * x1;
 		y1 = this.offsetY + this.scale * y1;
 		x2 = this.offsetX + this.scale * x2;
 		y2 = this.offsetY + this.scale * y2;
-		if (type.colour != null)
+		if (colour != null)
 		{
 			ctx.beginPath();
 			ctx.moveTo(x1, y1);
 			ctx.lineTo(x2, y2);
-			ctx.strokeStyle = colourCanvas(type.colour);
+			ctx.strokeStyle = colourCanvas(colour);
 			ctx.lineWidth = type.thickness;
 			ctx.lineCap = 'round';
 			ctx.stroke();
@@ -530,20 +531,21 @@ export class MetaVector
 		let type = this.typeObj[p[1]];
 		let x = p[2], y = p[3];
 		let w = p[4], h = p[5];
+		let edgeCol:number = type.edgeCol, fillCol:number = type.fillCol;
 
 		x = this.offsetX + this.scale * x;
 		y = this.offsetY + this.scale * y;
 		w *= this.scale;
 		h *= this.scale;
 
-		if (type.fillCol != null)
+		if (fillCol != MetaVector.NOCOLOUR)
 		{
-			ctx.fillStyle = colourCanvas(type.fillCol);
+			ctx.fillStyle = colourCanvas(fillCol);
 			ctx.fillRect(x, y, w, h);
 		}
-		if (type.edgeCol != null)
+		if (edgeCol != MetaVector.NOCOLOUR)
 		{
-			ctx.strokeStyle = colourCanvas(type.edgeCol);
+			ctx.strokeStyle = colourCanvas(edgeCol);
 			ctx.lineWidth = type.thickness;
 			ctx.lineCap = 'square';
 			ctx.strokeRect(x, y, w, h);
@@ -554,22 +556,23 @@ export class MetaVector
 		let type = this.typeObj[p[1]];
 		let cx = p[2], cy = p[3];
 		let rw = p[4], rh = p[5];
+		let edgeCol:number = type.edgeCol, fillCol:number = type.fillCol;
 
 		cx = this.offsetX + this.scale * cx;
 		cy = this.offsetY + this.scale * cy;
 		rw *= this.scale;
 		rh *= this.scale;
 		
-		if (type.fillCol != null)
+		if (fillCol != MetaVector.NOCOLOUR)
 		{
-			ctx.fillStyle = colourCanvas(type.fillCol);
+			ctx.fillStyle = colourCanvas(fillCol);
 			ctx.beginPath();
 			ctx.ellipse(cx, cy, rw, rh, 0, 0, 2 * Math.PI, true);
 			ctx.fill();
 		}
-		if (type.edgeCol != null)
+		if (edgeCol != MetaVector.NOCOLOUR)
 		{
-			ctx.strokeStyle = colourCanvas(type.edgeCol);
+			ctx.strokeStyle = colourCanvas(edgeCol);
 			ctx.lineWidth = type.thickness;
 			ctx.beginPath();
 			ctx.ellipse(cx, cy, rw, rh, 0, 0, 2 * Math.PI, true);
@@ -584,6 +587,7 @@ export class MetaVector
 		let x = p[3], y = p[4];
 		let ctrl = p[5];
 		let isClosed = p[6];
+		let edgeCol:number = type.edgeCol, fillCol:number = type.fillCol;
 		
 		for (let n = 0; n < npts; n++)
 		{
@@ -593,8 +597,8 @@ export class MetaVector
 
 		for (let layer = 1; layer <= 2; layer++)
 		{
-			if (layer == 1 && type.fillCol == MetaVector.NOCOLOUR) continue;
-			if (layer == 2 && type.edgeCol == MetaVector.NOCOLOUR) continue;
+			if (layer == 1 && fillCol == MetaVector.NOCOLOUR) continue;
+			if (layer == 2 && edgeCol == MetaVector.NOCOLOUR) continue;
 				
 			ctx.beginPath();
 			ctx.moveTo(x[0], y[0]);
