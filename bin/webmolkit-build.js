@@ -530,14 +530,14 @@ var WebMolKit;
     }
     WebMolKit.htmlToRGB = htmlToRGB;
     function colourCode(col) {
-        var hex = (col & 0xFFFFFF).toString(16);
+        let hex = (col & 0xFFFFFF).toString(16);
         while (hex.length < 6)
             hex = '0' + hex;
         return '#' + hex;
     }
     WebMolKit.colourCode = colourCode;
     function colourAlpha(col) {
-        var transp = (col >>> 24) & 0xFF;
+        let transp = (col >>> 24) & 0xFF;
         return transp == 0 ? 1 : transp == 0xFF ? 0 : 1 - (transp * (1.0 / 255));
     }
     WebMolKit.colourAlpha = colourAlpha;
@@ -588,7 +588,7 @@ var WebMolKit;
     }
     WebMolKit.blendRGB = blendRGB;
     function nodeText(node) {
-        var ret = '';
+        let ret = '';
         if (!node)
             return;
         node = node.firstChild;
@@ -609,9 +609,9 @@ var WebMolKit;
     }
     WebMolKit.notDef = notDef;
     function eventCoords(event, container) {
-        var parentOffset = $(container).offset();
-        var relX = event.pageX - parentOffset.left;
-        var relY = event.pageY - parentOffset.top;
+        let parentOffset = $(container).offset();
+        let relX = event.pageX - parentOffset.left;
+        let relY = event.pageY - parentOffset.top;
         return [relX, relY];
     }
     WebMolKit.eventCoords = eventCoords;
@@ -707,8 +707,8 @@ var WebMolKit;
     function minArray(a) {
         if (a == null || a.length == 0)
             return 0;
-        var v = a[0];
-        for (var n = 1; n < a.length; n++)
+        let v = a[0];
+        for (let n = 1; n < a.length; n++)
             v = Math.min(v, a[n]);
         return v;
     }
@@ -716,8 +716,8 @@ var WebMolKit;
     function maxArray(a) {
         if (a == null || a.length == 0)
             return 0;
-        var v = a[0];
-        for (var n = 1; n < a.length; n++)
+        let v = a[0];
+        for (let n = 1; n < a.length; n++)
             v = Math.max(v, a[n]);
         return v;
     }
@@ -725,7 +725,7 @@ var WebMolKit;
     function findNode(parent, name) {
         if (parent == null)
             return null;
-        var node = parent.firstChild;
+        let node = parent.firstChild;
         while (node) {
             if (node.nodeType == Node.ELEMENT_NODE && node.nodeName == name)
                 return node;
@@ -737,8 +737,8 @@ var WebMolKit;
     function findNodes(parent, name) {
         if (parent == null)
             return null;
-        var node = parent.firstChild;
-        var list = [];
+        let node = parent.firstChild;
+        let list = [];
         while (node) {
             if (node.nodeType == Node.ELEMENT_NODE && node.nodeName == name)
                 list.push(node);
@@ -748,7 +748,7 @@ var WebMolKit;
     }
     WebMolKit.findNodes = findNodes;
     function pathRoundedRect(x1, y1, x2, y2, rad) {
-        var path = new Path2D();
+        let path = new Path2D();
         path.moveTo(x2 - rad, y1);
         path.quadraticCurveTo(x2, y1, x2, y1 + rad);
         path.lineTo(x2, y2 - rad);
@@ -825,7 +825,7 @@ var WebMolKit;
         let data = [], stripe = '';
         const sz = str.length;
         for (let n = 0; n < sz; n++) {
-            var charcode = str.charCodeAt(n);
+            let charcode = str.charCodeAt(n);
             if (charcode < 0x80)
                 stripe += str.charAt(n);
             else if (charcode < 0x800) {
@@ -883,6 +883,34 @@ var WebMolKit;
         return data.join('');
     }
     WebMolKit.fromUTF8 = fromUTF8;
+    function jsonPrettyPrint(json) {
+        let lines = JSON.stringify(json, null, 1).split(/\n/);
+        for (let n = 0; n < lines.length; n++) {
+            lines[n] = lines[n].trim();
+            if (lines[n].length > 1 && lines[n].endsWith('{') || lines[n].endsWith('[')) {
+                let ch = lines[n].charAt(lines[n].length - 1);
+                lines[n] = lines[n].substring(0, lines[n].length - 1);
+                lines.splice(n + 1, 0, ch);
+                n--;
+            }
+        }
+        let indent = 0;
+        for (let n = 0; n < lines.length; n++) {
+            let orig = lines[n];
+            if (orig == ']' || orig == '}')
+                indent--;
+            lines[n] = '\t'.repeat(indent) + orig;
+            if (orig == '[' || orig == '{')
+                indent++;
+        }
+        return lines.join('\n');
+    }
+    WebMolKit.jsonPrettyPrint = jsonPrettyPrint;
+    function inputChanged(domInput, callback) {
+        domInput.keyup(callback);
+        domInput.change(callback);
+    }
+    WebMolKit.inputChanged = inputChanged;
 })(WebMolKit || (WebMolKit = {}));
 var WebMolKit;
 (function (WebMolKit) {
@@ -1545,6 +1573,10 @@ var WebMolKit;
                     mul *= 0.6;
             }
             return [bestW, bestH];
+        }
+        static convexHull(x, y, flatness) {
+            let algo = new QuickHull(x, y, WebMolKit.sqr(flatness * 0.1));
+            return [algo.hullX, algo.hullY];
         }
     }
     WebMolKit.GeomUtil = GeomUtil;
@@ -2504,9 +2536,9 @@ var WebMolKit;
         }
         drawRect(x, y, w, h, edgeCol, thickness, fillCol) {
             if (edgeCol == null)
-                edgeCol = -1;
+                edgeCol = MetaVector.NOCOLOUR;
             if (fillCol == null)
-                fillCol = -1;
+                fillCol = MetaVector.NOCOLOUR;
             if (thickness == null)
                 thickness = 1;
             let typeidx = this.findOrCreateType([this.PRIM_RECT, edgeCol, fillCol, thickness]);
@@ -2517,9 +2549,9 @@ var WebMolKit;
         }
         drawOval(cx, cy, rw, rh, edgeCol, thickness, fillCol) {
             if (edgeCol == null)
-                edgeCol = -1;
+                edgeCol = MetaVector.NOCOLOUR;
             if (fillCol == null)
-                fillCol = -1;
+                fillCol = MetaVector.NOCOLOUR;
             if (thickness == null)
                 thickness = 1;
             const bump = 0.5 * thickness;
@@ -2530,9 +2562,9 @@ var WebMolKit;
         }
         drawPath(xpoints, ypoints, ctrlFlags, isClosed, edgeCol, thickness, fillCol, hardEdge) {
             if (edgeCol == null)
-                edgeCol = -1;
+                edgeCol = MetaVector.NOCOLOUR;
             if (fillCol == null)
-                fillCol = -1;
+                fillCol = MetaVector.NOCOLOUR;
             if (thickness == null)
                 thickness = 1;
             if (hardEdge == null)
@@ -2814,45 +2846,46 @@ var WebMolKit;
         setupTypeLine(t) {
             let thickness = t[1] * this.scale;
             let colour = t[2];
-            return { 'thickness': thickness, 'colour': WebMolKit.colourCanvas(colour) };
+            return { 'thickness': thickness, 'colour': colour };
         }
         setupTypeRect(t) {
             let edgeCol = t[1];
             let fillCol = t[2];
             let thickness = t[3] * this.scale;
-            return { 'edgeCol': WebMolKit.colourCanvas(edgeCol), 'fillCol': WebMolKit.colourCanvas(fillCol), 'thickness': thickness };
+            return { 'edgeCol': edgeCol, 'fillCol': fillCol, 'thickness': thickness };
         }
         setupTypeOval(t) {
             let edgeCol = t[1];
             let fillCol = t[2];
             let thickness = t[3] * this.scale;
-            return { 'edgeCol': WebMolKit.colourCanvas(edgeCol), 'fillCol': WebMolKit.colourCanvas(fillCol), 'thickness': thickness };
+            return { 'edgeCol': edgeCol, 'fillCol': fillCol, 'thickness': thickness };
         }
         setupTypePath(t) {
             let edgeCol = t[1];
             let fillCol = t[2];
             let thickness = t[3] * this.scale;
             let hardEdge = t[4];
-            return { 'edgeCol': WebMolKit.colourCanvas(edgeCol), 'fillCol': WebMolKit.colourCanvas(fillCol), 'thickness': thickness, 'hardEdge': hardEdge };
+            return { 'edgeCol': edgeCol, 'fillCol': fillCol, 'thickness': thickness, 'hardEdge': hardEdge };
         }
         setupTypeText(t) {
             let sz = t[1] * this.scale;
             let colour = t[2];
-            return { 'colour': WebMolKit.colourCanvas(colour), 'size': sz };
+            return { 'colour': colour, 'size': sz };
         }
         renderLine(ctx, p) {
             let type = this.typeObj[p[1]];
             let x1 = p[2], y1 = p[3];
             let x2 = p[4], y2 = p[5];
+            let colour = type.colour;
             x1 = this.offsetX + this.scale * x1;
             y1 = this.offsetY + this.scale * y1;
             x2 = this.offsetX + this.scale * x2;
             y2 = this.offsetY + this.scale * y2;
-            if (type.colour != null) {
+            if (colour != null) {
                 ctx.beginPath();
                 ctx.moveTo(x1, y1);
                 ctx.lineTo(x2, y2);
-                ctx.strokeStyle = type.colour;
+                ctx.strokeStyle = WebMolKit.colourCanvas(colour);
                 ctx.lineWidth = type.thickness;
                 ctx.lineCap = 'round';
                 ctx.stroke();
@@ -2862,16 +2895,17 @@ var WebMolKit;
             let type = this.typeObj[p[1]];
             let x = p[2], y = p[3];
             let w = p[4], h = p[5];
+            let edgeCol = type.edgeCol, fillCol = type.fillCol;
             x = this.offsetX + this.scale * x;
             y = this.offsetY + this.scale * y;
             w *= this.scale;
             h *= this.scale;
-            if (type.fillCol != null) {
-                ctx.fillStyle = type.fillCol;
+            if (fillCol != MetaVector.NOCOLOUR) {
+                ctx.fillStyle = WebMolKit.colourCanvas(fillCol);
                 ctx.fillRect(x, y, w, h);
             }
-            if (type.edgeCol != null) {
-                ctx.strokeStyle = type.edgeCol;
+            if (edgeCol != MetaVector.NOCOLOUR) {
+                ctx.strokeStyle = WebMolKit.colourCanvas(edgeCol);
                 ctx.lineWidth = type.thickness;
                 ctx.lineCap = 'square';
                 ctx.strokeRect(x, y, w, h);
@@ -2881,18 +2915,19 @@ var WebMolKit;
             let type = this.typeObj[p[1]];
             let cx = p[2], cy = p[3];
             let rw = p[4], rh = p[5];
+            let edgeCol = type.edgeCol, fillCol = type.fillCol;
             cx = this.offsetX + this.scale * cx;
             cy = this.offsetY + this.scale * cy;
             rw *= this.scale;
             rh *= this.scale;
-            if (type.fillCol != null) {
-                ctx.fillStyle = type.fillCol;
+            if (fillCol != MetaVector.NOCOLOUR) {
+                ctx.fillStyle = WebMolKit.colourCanvas(fillCol);
                 ctx.beginPath();
                 ctx.ellipse(cx, cy, rw, rh, 0, 0, 2 * Math.PI, true);
                 ctx.fill();
             }
-            if (type.edgeCol != null) {
-                ctx.strokeStyle = type.edgeCol;
+            if (edgeCol != MetaVector.NOCOLOUR) {
+                ctx.strokeStyle = WebMolKit.colourCanvas(edgeCol);
                 ctx.lineWidth = type.thickness;
                 ctx.beginPath();
                 ctx.ellipse(cx, cy, rw, rh, 0, 0, 2 * Math.PI, true);
@@ -2907,14 +2942,15 @@ var WebMolKit;
             let x = p[3], y = p[4];
             let ctrl = p[5];
             let isClosed = p[6];
+            let edgeCol = type.edgeCol, fillCol = type.fillCol;
             for (let n = 0; n < npts; n++) {
                 x[n] = this.offsetX + this.scale * x[n];
                 y[n] = this.offsetY + this.scale * y[n];
             }
             for (let layer = 1; layer <= 2; layer++) {
-                if (layer == 1 && type.fillCol == null)
+                if (layer == 1 && fillCol == MetaVector.NOCOLOUR)
                     continue;
-                if (layer == 2 && type.edgeCol == null)
+                if (layer == 2 && edgeCol == MetaVector.NOCOLOUR)
                     continue;
                 ctx.beginPath();
                 ctx.moveTo(x[0], y[0]);
@@ -2934,11 +2970,11 @@ var WebMolKit;
                 if (isClosed)
                     ctx.closePath();
                 if (layer == 1) {
-                    ctx.fillStyle = type.fillCol;
+                    ctx.fillStyle = WebMolKit.colourCanvas(type.fillCol);
                     ctx.fill();
                 }
                 else {
-                    ctx.strokeStyle = type.edgeCol;
+                    ctx.strokeStyle = WebMolKit.colourCanvas(type.edgeCol);
                     ctx.lineWidth = type.thickness;
                     ctx.lineCap = type.hardEdge ? 'square' : 'round';
                     ctx.lineJoin = type.hardEdge ? 'miter' : 'round';
@@ -2951,7 +2987,7 @@ var WebMolKit;
             let x = p[2], y = p[3];
             let txt = p[4];
             let sz = type.size;
-            let fill = type.colour;
+            let fill = WebMolKit.colourCanvas(type.colour);
             x = this.offsetX + this.scale * x;
             y = this.offsetY + this.scale * y;
             let font = WebMolKit.FontData.main;
@@ -2988,23 +3024,23 @@ var WebMolKit;
             y1 = this.offsetY + this.scale * y1;
             x2 = this.offsetX + this.scale * x2;
             y2 = this.offsetY + this.scale * y2;
-            if (type.colour != null) {
+            if (type.colour != MetaVector.NOCOLOUR) {
                 let line = $('<line></line>').appendTo(svg);
                 line.attr('x1', x1);
                 line.attr('y1', y1);
                 line.attr('x2', x2);
                 line.attr('y2', y2);
-                line.attr('stroke', type.colour);
+                this.defineSVGStroke(line, type.colour);
                 line.attr('stroke-width', type.thickness);
                 line.attr('stroke-linecap', 'round');
             }
         }
         svgLineN(svg, p, pos, sz) {
             let type = this.typeObj[p[1]];
-            if (type.colour == null)
+            if (type.colour == MetaVector.NOCOLOUR)
                 return;
             let g = $('<g></g>').appendTo(svg);
-            g.attr('stroke', type.colour);
+            this.defineSVGStroke(g, type.colour);
             g.attr('stroke-width', type.thickness);
             g.attr('stroke-linecap', 'round');
             for (let n = 0; n < sz; n++) {
@@ -3035,26 +3071,22 @@ var WebMolKit;
             rect.attr('y', y);
             rect.attr('width', w);
             rect.attr('height', h);
-            if (type.edgeCol != null) {
-                rect.attr('stroke', type.edgeCol);
+            this.defineSVGStroke(rect, type.edgeCol);
+            if (type.edgeCol != MetaVector.NOCOLOUR) {
                 rect.attr('stroke-width', type.thickness);
                 rect.attr('stroke-linecap', 'square');
             }
-            else
-                rect.attr('stroke', 'none');
-            rect.attr('fill', type.fillCol == null ? 'none' : type.fillCol);
+            this.defineSVGFill(rect, type.fillCol);
         }
         svgRectN(svg, p, pos, sz) {
             let type = this.typeObj[p[1]];
             let g = $('<g></g>').appendTo(svg);
-            if (type.edgeCol != null) {
-                g.attr('stroke', type.edgeCol);
+            this.defineSVGStroke(g, type.edgeCol);
+            if (type.edgeCol != MetaVector.NOCOLOUR) {
                 g.attr('stroke-width', type.thickness);
                 g.attr('stroke-linecap', 'square');
             }
-            else
-                g.attr('stroke', 'none');
-            g.attr('fill', type.fillCol == null ? 'none' : type.fillCol);
+            this.defineSVGFill(g, type.fillCol);
             for (let n = 0; n < sz; n++) {
                 let p = this.prims[pos + n];
                 let x = p[2], y = p[3];
@@ -3083,28 +3115,22 @@ var WebMolKit;
             oval.attr('cy', cy);
             oval.attr('rx', rw);
             oval.attr('ry', rh);
-            if (type.edgeCol != null) {
-                oval.attr('stroke', type.edgeCol);
+            this.defineSVGStroke(oval, type.edgeCol);
+            if (type.edgeCol != MetaVector.NOCOLOUR) {
                 oval.attr('stroke-width', type.thickness);
-                oval.attr('stroke-linecap', 'square');
             }
-            else
-                oval.attr('stroke', 'none');
-            oval.attr('fill', type.fillCol == null ? 'none' : type.fillCol);
+            this.defineSVGFill(oval, type.fillCol);
         }
         svgOvalN(svg, p, pos, sz) {
             let type = this.typeObj[p[1]];
             let x = p[2], y = p[3];
             let w = p[4], h = p[5];
             let g = $('<g></g>').appendTo(svg);
-            if (type.edgeCol != null) {
-                g.attr('stroke', type.edgeCol);
+            this.defineSVGStroke(g, type.edgeCol);
+            if (type.edgeCol != MetaVector.NOCOLOUR) {
                 g.attr('stroke-width', type.thickness);
-                g.attr('stroke-linecap', 'square');
             }
-            else
-                g.attr('stroke', 'none');
-            g.attr('fill', type.fillCol == null ? 'none' : type.fillCol);
+            this.defineSVGFill(g, type.fillCol);
             for (let n = 0; n < sz; n++) {
                 let p = this.prims[pos + n];
                 let cx = p[2], cy = p[3];
@@ -3154,29 +3180,26 @@ var WebMolKit;
                 shape += ' Z';
             let path = $('<path></path>').appendTo(svg);
             path.attr('d', shape);
-            if (type.edgeCol != null) {
-                path.attr('stroke', type.edgeCol);
+            this.defineSVGStroke(path, type.edgeCol);
+            if (type.edgeCol != MetaVector.NOCOLOUR) {
                 path.attr('stroke-width', type.thickness);
                 path.attr('stroke-linejoin', type.hardEdge ? 'miter' : 'round');
-                path.attr('stroke-linecap', type.hardEdge ? 'square' : 'round');
+                path.attr('stroke-linecap', 'square');
             }
-            else
-                path.attr('stroke', 'none');
-            path.attr('fill', type.fillCol == null ? 'none' : type.fillCol);
+            this.defineSVGFill(path, type.fillCol);
         }
         svgText(svg, p) {
             let type = this.typeObj[p[1]];
             let x = p[2], y = p[3];
             let txt = p[4];
             let sz = type.size;
-            let fill = type.colour;
             x = this.offsetX + this.scale * x;
             y = this.offsetY + this.scale * y;
             let font = WebMolKit.FontData.main;
             let scale = sz / font.UNITS_PER_EM;
             let gdelta = $('<g></g>').appendTo(svg);
             gdelta.attr('transform', 'translate(' + x + ',' + y + ')');
-            gdelta.attr('fill', fill);
+            this.defineSVGFill(gdelta, type.colour);
             let gscale = $('<g></g>').appendTo(gdelta);
             gscale.attr('transform', 'scale(' + scale + ',' + (-scale) + ')');
             let dx = 0;
@@ -3195,6 +3218,26 @@ var WebMolKit;
                 else
                     dx += font.MISSING_HORZ;
             }
+        }
+        defineSVGStroke(obj, col) {
+            if (col == MetaVector.NOCOLOUR) {
+                obj.attr('stroke-opacity', '0');
+                return;
+            }
+            obj.attr('stroke', WebMolKit.colourCode(col));
+            let alpha = WebMolKit.colourAlpha(col);
+            if (alpha != 1)
+                obj.attr('stroke-opacity', alpha.toString());
+        }
+        defineSVGFill(obj, col) {
+            if (col == MetaVector.NOCOLOUR) {
+                obj.attr('fill-opacity', '0');
+                return;
+            }
+            obj.attr('fill', WebMolKit.colourCode(col));
+            let alpha = WebMolKit.colourAlpha(col);
+            if (alpha != 1)
+                obj.attr('fill-opacity', alpha.toString());
         }
         findOrCreateType(typeDef) {
             for (let i = 0; i < this.types.length; i++) {
@@ -7860,7 +7903,21 @@ var WebMolKit;
 })(WebMolKit || (WebMolKit = {}));
 var WebMolKit;
 (function (WebMolKit) {
-    class QuantityComp {
+    let QuantityCalcRole;
+    (function (QuantityCalcRole) {
+        QuantityCalcRole[QuantityCalcRole["Primary"] = 1] = "Primary";
+        QuantityCalcRole[QuantityCalcRole["Secondary"] = 2] = "Secondary";
+        QuantityCalcRole[QuantityCalcRole["Product"] = 3] = "Product";
+        QuantityCalcRole[QuantityCalcRole["Independent"] = 4] = "Independent";
+    })(QuantityCalcRole = WebMolKit.QuantityCalcRole || (WebMolKit.QuantityCalcRole = {}));
+    let QuantityCalcStat;
+    (function (QuantityCalcStat) {
+        QuantityCalcStat[QuantityCalcStat["Unknown"] = 0] = "Unknown";
+        QuantityCalcStat[QuantityCalcStat["Actual"] = 1] = "Actual";
+        QuantityCalcStat[QuantityCalcStat["Virtual"] = 2] = "Virtual";
+        QuantityCalcStat[QuantityCalcStat["Conflict"] = 3] = "Conflict";
+    })(QuantityCalcStat = WebMolKit.QuantityCalcStat || (WebMolKit.QuantityCalcStat = {}));
+    class QuantityCalcComp {
         constructor(comp, step, type, idx) {
             this.comp = comp;
             this.step = step;
@@ -7869,22 +7926,22 @@ var WebMolKit;
             this.role = 0;
             this.molw = 0;
             this.valueEquiv = 0;
-            this.statEquiv = QuantityCalc.STAT_UNKNOWN;
+            this.statEquiv = 0;
             this.valueMass = QuantityCalc.UNSPECIFIED;
-            this.statMass = QuantityCalc.STAT_UNKNOWN;
+            this.statMass = 0;
             this.valueVolume = QuantityCalc.UNSPECIFIED;
-            this.statVolume = QuantityCalc.STAT_UNKNOWN;
+            this.statVolume = 0;
             this.valueMoles = QuantityCalc.UNSPECIFIED;
-            this.statMoles = QuantityCalc.STAT_UNKNOWN;
+            this.statMoles = 0;
             this.valueDensity = QuantityCalc.UNSPECIFIED;
-            this.statDensity = QuantityCalc.STAT_UNKNOWN;
+            this.statDensity = 0;
             this.valueConc = QuantityCalc.UNSPECIFIED;
-            this.statConc = QuantityCalc.STAT_UNKNOWN;
+            this.statConc = 0;
             this.valueYield = QuantityCalc.UNSPECIFIED;
-            this.statYield = QuantityCalc.STAT_UNKNOWN;
+            this.statYield = 0;
         }
     }
-    WebMolKit.QuantityComp = QuantityComp;
+    WebMolKit.QuantityCalcComp = QuantityCalcComp;
     class GreenMetrics {
         constructor() {
             this.step = 0;
@@ -8011,6 +8068,39 @@ var WebMolKit;
             }
             return highest;
         }
+        static componentRatio(entry, step) {
+            let numer = [], denom = [];
+            let reactants = step == 0 ? entry.steps[0].reactants : entry.steps[step - 1].products;
+            for (let comp of reactants) {
+                let [num, den] = this.stoichAsRatio(comp.stoich);
+                numer.push(num);
+                denom.push(den);
+            }
+            for (let comp of entry.steps[step].reagents) {
+                let fract = this.impliedReagentStoich(comp, entry.steps[step].products);
+                let [num, den] = fract == 0 ? [0, 1] : this.stoichFractAsRatio(fract);
+                numer.push(num == 0 ? 1 : num);
+                denom.push(den);
+            }
+            for (let comp of entry.steps[step].products) {
+                let [num, den] = this.stoichAsRatio(comp.stoich);
+                numer.push(num == 0 ? 1 : num);
+                denom.push(den);
+            }
+            let bigDenom = 1;
+            for (let n = 0; n < numer.length; n++)
+                if (denom[n] > 1 && bigDenom % denom[n] != 0)
+                    bigDenom *= denom[n];
+            let ratioReactants = [], ratioReagents = [], ratioProducts = [];
+            let p = 0;
+            for (let n = 0; n < reactants.length; n++, p++)
+                ratioReactants.push(numer[p] * bigDenom / denom[p]);
+            for (let n = 0; n < entry.steps[step].reagents.length; n++, p++)
+                ratioReagents.push(numer[p] * bigDenom / denom[p]);
+            for (let n = 0; n < entry.steps[step].products.length; n++, p++)
+                ratioProducts.push(numer[p] * bigDenom / denom[p]);
+            return [ratioReactants, ratioReagents, ratioProducts];
+        }
         calculate() {
             this.classifyTypes();
             while (this.calculateSomething()) { }
@@ -8019,12 +8109,12 @@ var WebMolKit;
             this.allMassWaste = [];
             for (let n = 0; n < this.quantities.length; n++) {
                 let qc = this.quantities[n];
-                if (qc.type == WebMolKit.Experiment.REACTANT || qc.type == WebMolKit.Experiment.REAGENT) {
-                    if (qc.valueEquiv == 0 && qc.type == WebMolKit.Experiment.REAGENT)
+                if (qc.type == WebMolKit.ExperimentComponentType.Reactant || qc.type == WebMolKit.ExperimentComponentType.Reagent) {
+                    if (qc.valueEquiv == 0 && qc.type == WebMolKit.ExperimentComponentType.Reagent)
                         continue;
                     this.allMassReact.push(qc.valueMass);
                 }
-                else if (qc.type == WebMolKit.Experiment.PRODUCT) {
+                else if (qc.type == WebMolKit.ExperimentComponentType.Product) {
                     if (!qc.comp.waste) {
                         this.allMassProd.push(qc.valueMass);
                         this.calculateGreenMetrics(n);
@@ -8113,15 +8203,15 @@ var WebMolKit;
             for (let s = 0; s < this.entry.steps.length; s++) {
                 let step = this.entry.steps[s];
                 for (let n = 0; n < step.reactants.length; n++)
-                    this.quantities.push(new QuantityComp(step.reactants[n], s, WebMolKit.Experiment.REACTANT, n));
+                    this.quantities.push(new QuantityCalcComp(step.reactants[n], s, WebMolKit.ExperimentComponentType.Reactant, n));
                 for (let n = 0; n < step.reagents.length; n++)
-                    this.quantities.push(new QuantityComp(step.reagents[n], s, WebMolKit.Experiment.REAGENT, n));
+                    this.quantities.push(new QuantityCalcComp(step.reagents[n], s, WebMolKit.ExperimentComponentType.Reagent, n));
                 for (let n = 0; n < step.products.length; n++)
-                    this.quantities.push(new QuantityComp(step.products[n], s, WebMolKit.Experiment.PRODUCT, n));
+                    this.quantities.push(new QuantityCalcComp(step.products[n], s, WebMolKit.ExperimentComponentType.Product, n));
             }
             for (let n = 0; n < this.quantities.length; n++) {
                 let qc = this.quantities[n];
-                if (qc.type == WebMolKit.Experiment.REAGENT) {
+                if (qc.type == WebMolKit.ExperimentComponentType.Reagent) {
                     if (qc.comp.equiv != null)
                         qc.valueEquiv = qc.comp.equiv;
                     else {
@@ -8135,25 +8225,25 @@ var WebMolKit;
                 }
                 if (qc.comp.mol != null)
                     qc.molw = WebMolKit.MolUtil.molecularWeight(qc.comp.mol);
-                qc.role = QuantityCalc.ROLE_INDEPENDENT;
-                if (qc.step == 0 && qc.type == WebMolKit.Experiment.REACTANT) {
+                qc.role = 4;
+                if (qc.step == 0 && qc.type == WebMolKit.ExperimentComponentType.Reactant) {
                     if (qc.comp.primary) {
-                        qc.role = QuantityCalc.ROLE_PRIMARY;
+                        qc.role = 1;
                         this.idxPrimary.push(n);
                     }
                     else
-                        qc.role = QuantityCalc.ROLE_SECONDARY;
+                        qc.role = 2;
                 }
-                else if (qc.type == WebMolKit.Experiment.REAGENT) {
+                else if (qc.type == WebMolKit.ExperimentComponentType.Reagent) {
                     if (qc.valueEquiv > 0)
-                        qc.role = QuantityCalc.ROLE_SECONDARY;
+                        qc.role = 2;
                 }
-                else if (qc.type == WebMolKit.Experiment.PRODUCT && !qc.comp.waste) {
-                    qc.role = QuantityCalc.ROLE_PRODUCT;
+                else if (qc.type == WebMolKit.ExperimentComponentType.Product && !qc.comp.waste) {
+                    qc.role = 3;
                     this.idxYield.push(n);
                 }
                 else if (qc.valueEquiv > 0) {
-                    qc.role = QuantityCalc.ROLE_SECONDARY;
+                    qc.role = 2;
                 }
                 if (qc.comp.mass != null)
                     qc.valueMass = qc.comp.mass;
@@ -8167,19 +8257,19 @@ var WebMolKit;
                     qc.valueConc = qc.comp.conc;
                 if (qc.comp.yield != null)
                     qc.valueYield = qc.comp.yield;
-                qc.statEquiv = qc.valueEquiv == QuantityCalc.UNSPECIFIED ? QuantityCalc.STAT_UNKNOWN : QuantityCalc.STAT_ACTUAL;
-                qc.statMass = qc.valueMass == QuantityCalc.UNSPECIFIED ? QuantityCalc.STAT_UNKNOWN : QuantityCalc.STAT_ACTUAL;
-                qc.statVolume = qc.valueVolume == QuantityCalc.UNSPECIFIED ? QuantityCalc.STAT_UNKNOWN : QuantityCalc.STAT_ACTUAL;
-                qc.statMoles = qc.valueMoles == QuantityCalc.UNSPECIFIED ? QuantityCalc.STAT_UNKNOWN : QuantityCalc.STAT_ACTUAL;
-                qc.statDensity = qc.valueDensity == QuantityCalc.UNSPECIFIED ? QuantityCalc.STAT_UNKNOWN : QuantityCalc.STAT_ACTUAL;
-                qc.statConc = qc.valueConc == QuantityCalc.UNSPECIFIED ? QuantityCalc.STAT_UNKNOWN : QuantityCalc.STAT_ACTUAL;
-                qc.statYield = qc.valueYield == QuantityCalc.UNSPECIFIED ? QuantityCalc.STAT_UNKNOWN : QuantityCalc.STAT_ACTUAL;
+                qc.statEquiv = qc.valueEquiv == QuantityCalc.UNSPECIFIED ? 0 : 1;
+                qc.statMass = qc.valueMass == QuantityCalc.UNSPECIFIED ? 0 : 1;
+                qc.statVolume = qc.valueVolume == QuantityCalc.UNSPECIFIED ? 0 : 1;
+                qc.statMoles = qc.valueMoles == QuantityCalc.UNSPECIFIED ? 0 : 1;
+                qc.statDensity = qc.valueDensity == QuantityCalc.UNSPECIFIED ? 0 : 1;
+                qc.statConc = qc.valueConc == QuantityCalc.UNSPECIFIED ? 0 : 1;
+                qc.statYield = qc.valueYield == QuantityCalc.UNSPECIFIED ? 0 : 1;
             }
             if (this.idxPrimary.length == 0) {
                 for (let n = 0; n < this.quantities.length; n++) {
                     let qc = this.quantities[n];
-                    if (qc.type == WebMolKit.Experiment.REACTANT && qc.step == 0) {
-                        qc.role = QuantityCalc.ROLE_PRIMARY;
+                    if (qc.type == WebMolKit.ExperimentComponentType.Reactant && qc.step == 0) {
+                        qc.role = 1;
                         this.idxPrimary.push(n);
                     }
                 }
@@ -8188,41 +8278,41 @@ var WebMolKit;
         calculateSomething() {
             let anything = false;
             for (let qc of this.quantities) {
-                if (qc.molw > 0 && qc.valueMass == QuantityCalc.UNSPECIFIED && qc.statMoles == QuantityCalc.STAT_ACTUAL) {
+                if (qc.molw > 0 && qc.valueMass == QuantityCalc.UNSPECIFIED && qc.statMoles == 1) {
                     qc.valueMass = qc.valueMoles * qc.molw;
-                    qc.statMass = QuantityCalc.STAT_VIRTUAL;
+                    qc.statMass = 2;
                     anything = true;
                 }
                 if (qc.molw > 0 && qc.valueMass != QuantityCalc.UNSPECIFIED && qc.valueMoles == QuantityCalc.UNSPECIFIED) {
                     qc.valueMoles = qc.valueMass / qc.molw;
-                    qc.statMoles = QuantityCalc.STAT_VIRTUAL;
+                    qc.statMoles = 2;
                     anything = true;
                 }
-                if (qc.molw > 0 && qc.statMass == QuantityCalc.STAT_ACTUAL && qc.statMoles == QuantityCalc.STAT_ACTUAL) {
+                if (qc.molw > 0 && qc.statMass == 1 && qc.statMoles == 1) {
                     let calcMoles = qc.valueMass / qc.molw;
                     if (!this.closeEnough(qc.valueMoles, calcMoles)) {
-                        qc.statMass = QuantityCalc.STAT_CONFLICT;
-                        qc.statMoles = QuantityCalc.STAT_CONFLICT;
+                        qc.statMass = 3;
+                        qc.statMoles = 3;
                     }
                 }
-                let isSoln = qc.statConc == QuantityCalc.STAT_ACTUAL ||
-                    (qc.statVolume == QuantityCalc.STAT_ACTUAL && (qc.statMass == QuantityCalc.STAT_ACTUAL || qc.statMoles == QuantityCalc.STAT_ACTUAL));
+                let isSoln = qc.statConc == 1 ||
+                    (qc.statVolume == 1 && (qc.statMass == 1 || qc.statMoles == 1));
                 if (!isSoln) {
                     if (qc.valueDensity > 0 && qc.valueMass == QuantityCalc.UNSPECIFIED && qc.valueVolume != QuantityCalc.UNSPECIFIED) {
                         qc.valueMass = qc.valueVolume * qc.valueDensity;
-                        qc.statMass = QuantityCalc.STAT_VIRTUAL;
+                        qc.statMass = 2;
                         anything = true;
                     }
                     if (qc.valueDensity > 0 && qc.valueMass != QuantityCalc.UNSPECIFIED && qc.valueVolume == QuantityCalc.UNSPECIFIED) {
                         qc.valueVolume = qc.valueMass / qc.valueDensity;
-                        qc.statVolume = QuantityCalc.STAT_VIRTUAL;
+                        qc.statVolume = 2;
                         anything = true;
                     }
                     if (qc.valueDensity == QuantityCalc.UNSPECIFIED && qc.valueMass != QuantityCalc.UNSPECIFIED &&
                         qc.valueVolume != QuantityCalc.UNSPECIFIED && qc.valueConc == QuantityCalc.UNSPECIFIED) {
-                        if (qc.statMass == QuantityCalc.STAT_ACTUAL || qc.statMoles == QuantityCalc.STAT_ACTUAL) {
+                        if (qc.statMass == 1 || qc.statMoles == 1) {
                             qc.valueDensity = qc.valueMass / qc.valueVolume;
-                            qc.statDensity = QuantityCalc.STAT_VIRTUAL;
+                            qc.statDensity = 2;
                             anything = true;
                         }
                     }
@@ -8230,39 +8320,39 @@ var WebMolKit;
                 if (isSoln) {
                     if (qc.valueConc > 0 && qc.valueMoles == QuantityCalc.UNSPECIFIED && qc.valueVolume != QuantityCalc.UNSPECIFIED) {
                         qc.valueMoles = 0.001 * qc.valueVolume * qc.valueConc;
-                        qc.statMoles = QuantityCalc.STAT_VIRTUAL;
+                        qc.statMoles = 2;
                         anything = true;
                     }
                     if (qc.valueConc > 0 && qc.valueMoles != QuantityCalc.UNSPECIFIED && qc.valueVolume == QuantityCalc.UNSPECIFIED) {
                         qc.valueVolume = 1000 * qc.valueMoles / qc.valueConc;
-                        qc.statVolume = QuantityCalc.STAT_VIRTUAL;
+                        qc.statVolume = 2;
                         anything = true;
                     }
                     if (qc.valueConc == QuantityCalc.UNSPECIFIED && qc.valueMass != QuantityCalc.UNSPECIFIED && qc.valueVolume != QuantityCalc.UNSPECIFIED) {
                         qc.valueConc = 1000 * qc.valueMoles / qc.valueVolume;
-                        qc.statConc = QuantityCalc.STAT_VIRTUAL;
+                        qc.statConc = 2;
                         anything = true;
                     }
-                    if (qc.statConc == QuantityCalc.STAT_ACTUAL && qc.valueMoles > 0 && qc.statVolume == QuantityCalc.STAT_ACTUAL) {
+                    if (qc.statConc == 1 && qc.valueMoles > 0 && qc.statVolume == 1) {
                         let calcVolume = 1000 * qc.valueMoles / qc.valueConc;
                         if (!this.closeEnough(qc.valueVolume, calcVolume)) {
-                            qc.statConc = QuantityCalc.STAT_CONFLICT;
-                            if (qc.statMass == QuantityCalc.STAT_ACTUAL)
-                                qc.statMass = QuantityCalc.STAT_CONFLICT;
-                            if (qc.statMoles == QuantityCalc.STAT_ACTUAL)
-                                qc.statMoles = QuantityCalc.STAT_CONFLICT;
-                            qc.statVolume = QuantityCalc.STAT_CONFLICT;
+                            qc.statConc = 3;
+                            if (qc.statMass == 1)
+                                qc.statMass = 3;
+                            if (qc.statMoles == 1)
+                                qc.statMoles = 3;
+                            qc.statVolume = 3;
                         }
                     }
                 }
                 if (qc.molw > 0 && qc.valueMass == QuantityCalc.UNSPECIFIED && qc.valueMoles != QuantityCalc.UNSPECIFIED) {
                     qc.valueMass = qc.valueMoles * qc.molw;
-                    qc.statMass = QuantityCalc.STAT_VIRTUAL;
+                    qc.statMass = 2;
                     anything = true;
                 }
-                if (qc.statDensity == QuantityCalc.STAT_ACTUAL && qc.statConc == QuantityCalc.STAT_ACTUAL) {
-                    qc.statDensity = QuantityCalc.STAT_CONFLICT;
-                    qc.statConc = QuantityCalc.STAT_CONFLICT;
+                if (qc.statDensity == 1 && qc.statConc == 1) {
+                    qc.statDensity = 3;
+                    qc.statConc = 3;
                 }
             }
             if (anything)
@@ -8274,15 +8364,15 @@ var WebMolKit;
             let primaryMoles = WebMolKit.Vec.numberArray(0, numSteps);
             for (let qc of this.quantities) {
                 let ref = -1;
-                if (qc.step == 0 && qc.type == WebMolKit.Experiment.REACTANT && qc.comp.primary)
+                if (qc.step == 0 && qc.type == WebMolKit.ExperimentComponentType.Reactant && qc.comp.primary)
                     ref = qc.step;
-                else if (qc.step < numSteps - 1 && qc.type == WebMolKit.Experiment.PRODUCT && !qc.comp.waste)
+                else if (qc.step < numSteps - 1 && qc.type == WebMolKit.ExperimentComponentType.Product && !qc.comp.waste)
                     ref = qc.step + 1;
                 else
                     continue;
                 if (primaryEquivs[ref] < 0)
                     continue;
-                if (qc.statMoles == QuantityCalc.STAT_UNKNOWN) {
+                if (qc.statMoles == 1) {
                     primaryEquivs[ref] = -1;
                     continue;
                 }
@@ -8296,7 +8386,7 @@ var WebMolKit;
                 primaryMoles[0] = 0;
                 for (let i of this.idxPrimary) {
                     let qc = this.quantities[i];
-                    if (qc.statMoles == QuantityCalc.STAT_UNKNOWN) {
+                    if (qc.statMoles == 1) {
                         primaryCounts[0] = 0;
                         primaryEquivs[0] = -1;
                         primaryMoles[0] = 0;
@@ -8317,9 +8407,9 @@ var WebMolKit;
                 for (let n = 0; n < numSteps; n++) {
                     let prodMolar = [];
                     for (let qc of this.quantities) {
-                        if (qc.step != n || qc.role != QuantityCalc.ROLE_PRODUCT)
+                        if (qc.step != n || qc.role != 3)
                             continue;
-                        if (qc.statMoles == QuantityCalc.STAT_UNKNOWN || qc.valueMoles <= 0 || qc.valueEquiv <= 0)
+                        if (qc.statMoles == 1 || qc.valueMoles <= 0 || qc.valueEquiv <= 0)
                             continue;
                         let yld = qc.valueYield > 0 ? qc.valueYield * 0.01 : 1;
                         prodMolar.push(qc.valueMoles / (qc.valueEquiv * yld));
@@ -8333,28 +8423,28 @@ var WebMolKit;
             if (!hasRef)
                 return false;
             for (let qc of this.quantities) {
-                if (qc.type != WebMolKit.Experiment.PRODUCT)
+                if (qc.type != WebMolKit.ExperimentComponentType.Product)
                     continue;
                 if (refMoles[qc.step] == 0)
                     continue;
                 if (qc.valueYield == QuantityCalc.UNSPECIFIED && qc.valueMoles != QuantityCalc.UNSPECIFIED) {
                     qc.valueYield = 100 * qc.valueMoles / (refMoles[qc.step] * qc.valueEquiv);
-                    qc.statYield = QuantityCalc.STAT_VIRTUAL;
+                    qc.statYield = 2;
                     anything = true;
                 }
                 if (qc.valueYield != QuantityCalc.UNSPECIFIED && qc.valueMoles == QuantityCalc.UNSPECIFIED) {
                     qc.valueMoles = qc.valueYield * 0.01 * (refMoles[qc.step] * qc.valueEquiv);
-                    qc.statMoles = QuantityCalc.STAT_VIRTUAL;
+                    qc.statMoles = 2;
                     anything = true;
                 }
-                if (qc.valueMoles > 0 && qc.statYield == QuantityCalc.STAT_ACTUAL) {
+                if (qc.valueMoles > 0 && qc.statYield == 1) {
                     let calcYield = 100 * qc.valueMoles / (refMoles[qc.step] * qc.valueEquiv);
                     if (!this.closeEnough(qc.valueYield, calcYield)) {
-                        if (qc.statMass == QuantityCalc.STAT_ACTUAL)
-                            qc.statMass = QuantityCalc.STAT_CONFLICT;
-                        if (qc.statMoles == QuantityCalc.STAT_ACTUAL)
-                            qc.statMoles = QuantityCalc.STAT_CONFLICT;
-                        qc.statYield = QuantityCalc.STAT_CONFLICT;
+                        if (qc.statMass == 1)
+                            qc.statMass = 3;
+                        if (qc.statMoles == 1)
+                            qc.statMoles = 3;
+                        qc.statYield = 3;
                     }
                 }
             }
@@ -8365,12 +8455,12 @@ var WebMolKit;
                     continue;
                 if (qc.valueMass == QuantityCalc.UNSPECIFIED && qc.valueMoles == QuantityCalc.UNSPECIFIED && qc.valueEquiv > 0) {
                     qc.valueMoles = refMoles[qc.step] * qc.valueEquiv;
-                    qc.statMoles = QuantityCalc.STAT_VIRTUAL;
+                    qc.statMoles = 2;
                     anything = true;
                 }
                 if (qc.valueMoles != QuantityCalc.UNSPECIFIED && qc.valueEquiv == QuantityCalc.UNSPECIFIED) {
                     qc.valueEquiv = qc.valueMoles / refMoles[qc.step];
-                    qc.statEquiv = QuantityCalc.STAT_VIRTUAL;
+                    qc.statEquiv = 2;
                     anything = true;
                 }
             }
@@ -8387,16 +8477,16 @@ var WebMolKit;
                 if (sub.step > gm.step)
                     continue;
                 let eq = sub.valueEquiv;
-                if (eq == 0 && sub.type == WebMolKit.Experiment.REAGENT)
+                if (eq == 0 && sub.type == WebMolKit.ExperimentComponentType.Reagent)
                     continue;
                 if (sub.valueMass != QuantityCalc.UNSPECIFIED)
                     gm.isBlank = false;
-                if (sub.type == WebMolKit.Experiment.REACTANT || sub.type == WebMolKit.Experiment.REAGENT) {
+                if (sub.type == WebMolKit.ExperimentComponentType.Reactant || sub.type == WebMolKit.ExperimentComponentType.Reagent) {
                     gm.massReact.push(sub.valueMass);
                     if (sub.step == gm.step && eq > 0 && sub.molw > 0)
                         gm.molwReact.push(eq * sub.molw);
                 }
-                else if (sub.type == WebMolKit.Experiment.PRODUCT) {
+                else if (sub.type == WebMolKit.ExperimentComponentType.Product) {
                     if (!sub.comp.waste) {
                         if (sub.step == gm.step)
                             gm.massProd.push(sub.valueMass);
@@ -8427,14 +8517,6 @@ var WebMolKit;
         }
     }
     QuantityCalc.UNSPECIFIED = -1;
-    QuantityCalc.ROLE_PRIMARY = 1;
-    QuantityCalc.ROLE_SECONDARY = 2;
-    QuantityCalc.ROLE_PRODUCT = 3;
-    QuantityCalc.ROLE_INDEPENDENT = 4;
-    QuantityCalc.STAT_UNKNOWN = 0;
-    QuantityCalc.STAT_ACTUAL = 1;
-    QuantityCalc.STAT_VIRTUAL = 2;
-    QuantityCalc.STAT_CONFLICT = 3;
     QuantityCalc.MAX_DENOM = 16;
     QuantityCalc.RATIO_FRACT = null;
     WebMolKit.QuantityCalc = QuantityCalc;
@@ -8460,9 +8542,24 @@ var WebMolKit;
 })(WebMolKit || (WebMolKit = {}));
 var WebMolKit;
 (function (WebMolKit) {
+    let ArrangeComponentType;
+    (function (ArrangeComponentType) {
+        ArrangeComponentType[ArrangeComponentType["Arrow"] = 1] = "Arrow";
+        ArrangeComponentType[ArrangeComponentType["Plus"] = 2] = "Plus";
+        ArrangeComponentType[ArrangeComponentType["Reactant"] = 3] = "Reactant";
+        ArrangeComponentType[ArrangeComponentType["Reagent"] = 4] = "Reagent";
+        ArrangeComponentType[ArrangeComponentType["Product"] = 5] = "Product";
+    })(ArrangeComponentType = WebMolKit.ArrangeComponentType || (WebMolKit.ArrangeComponentType = {}));
+    let ArrangeComponentAnnot;
+    (function (ArrangeComponentAnnot) {
+        ArrangeComponentAnnot[ArrangeComponentAnnot["None"] = 0] = "None";
+        ArrangeComponentAnnot[ArrangeComponentAnnot["Primary"] = 1] = "Primary";
+        ArrangeComponentAnnot[ArrangeComponentAnnot["Waste"] = 2] = "Waste";
+        ArrangeComponentAnnot[ArrangeComponentAnnot["Implied"] = 3] = "Implied";
+    })(ArrangeComponentAnnot = WebMolKit.ArrangeComponentAnnot || (WebMolKit.ArrangeComponentAnnot = {}));
     class ArrangeComponent {
         constructor() {
-            this.annot = ArrangeExperiment.COMP_ANNOT_NONE;
+            this.annot = ArrangeComponentAnnot.None;
             this.box = new WebMolKit.Box();
         }
         clone() {
@@ -8502,6 +8599,7 @@ var WebMolKit;
             this.includeStoich = true;
             this.includeAnnot = false;
             this.includeBlank = false;
+            this.padding = 0;
             this.PADDING = 0.25;
             this.PLUSSZ = 0.5;
             this.ARROW_W = 2;
@@ -8511,20 +8609,20 @@ var WebMolKit;
             this.PLACEHOLDER_H = 2;
             this.scale = policy.data.pointScale;
             this.limitStructW = this.limitStructH = this.scale * 10;
+            this.padding = this.PADDING * this.scale;
         }
         arrange() {
             this.createComponents();
             let fszText = this.scale * this.policy.data.fontSize, fszLeft = this.scale * this.policy.data.fontSize * 1.5;
-            let padding = this.PADDING * this.scale;
             for (let xc of this.components) {
-                if (xc.type == ArrangeExperiment.COMP_PLUS)
+                if (xc.type == ArrangeComponentType.Plus)
                     xc.box = new WebMolKit.Box(0, 0, this.scale * this.PLUSSZ, this.scale * this.PLUSSZ);
-                else if (xc.type == ArrangeExperiment.COMP_ARROW) { }
+                else if (xc.type == ArrangeComponentType.Arrow) { }
                 else {
                     let w = 0, h = 0;
                     if (WebMolKit.MolUtil.notBlank(xc.mol)) {
                         let sz = WebMolKit.Size.fromArray(WebMolKit.ArrangeMolecule.guestimateSize(xc.mol, this.policy));
-                        if (xc.type == ArrangeExperiment.COMP_REAGENT)
+                        if (xc.type == ArrangeComponentType.Reagent)
                             sz.scaleBy(this.REAGENT_SCALE);
                         if (xc.leftNumer) {
                             xc.fszLeft = fszLeft;
@@ -8553,8 +8651,8 @@ var WebMolKit;
                     }
                     xc.box = new WebMolKit.Box(0, 0, w, h);
                 }
-                xc.padding = padding;
-                xc.box = new WebMolKit.Box(0, 0, xc.box.w + 2 * padding, xc.box.h + 2 * padding);
+                xc.padding = this.padding;
+                xc.box = new WebMolKit.Box(0, 0, xc.box.w + 2 * this.padding, xc.box.h + 2 * this.padding);
             }
             let best = null;
             let bestScore = 0;
@@ -8596,13 +8694,13 @@ var WebMolKit;
         createComponents() {
             for (let n = 0; n < this.entry.steps[0].reactants.length; n++) {
                 if (n > 0)
-                    this.createSegregator(ArrangeExperiment.COMP_PLUS, 0, -1);
+                    this.createSegregator(ArrangeComponentType.Plus, 0, -1);
                 this.createReactant(n, 0);
             }
             if (this.components.length == 0 && this.includeBlank)
-                this.createBlank(ArrangeExperiment.COMP_REACTANT, 0);
+                this.createBlank(ArrangeComponentType.Reactant, 0);
             for (let s = 0; s < this.entry.steps.length; s++) {
-                this.createSegregator(ArrangeExperiment.COMP_ARROW, s, 0);
+                this.createSegregator(ArrangeComponentType.Arrow, s, 0);
                 if (this.includeReagents) {
                     let any = false;
                     for (let n = 0; n < this.entry.steps[s].reagents.length; n++) {
@@ -8610,23 +8708,23 @@ var WebMolKit;
                         any = true;
                     }
                     if (!any && this.includeBlank)
-                        this.createBlank(ArrangeExperiment.COMP_REAGENT, s);
+                        this.createBlank(ArrangeComponentType.Reagent, s);
                 }
                 let any = false;
                 for (let n = 0; n < this.entry.steps[s].products.length; n++) {
                     if (n > 0)
-                        this.createSegregator(ArrangeExperiment.COMP_PLUS, s, 1);
+                        this.createSegregator(ArrangeComponentType.Plus, s, 1);
                     this.createProduct(n, s);
                     any = true;
                 }
                 if (!any && this.includeBlank)
-                    this.createBlank(ArrangeExperiment.COMP_PRODUCT, s);
+                    this.createBlank(ArrangeComponentType.Product, s);
             }
         }
         createReactant(idx, step) {
             let comp = this.entry.steps[step].reactants[idx];
             let xc = new ArrangeComponent();
-            xc.type = ArrangeExperiment.COMP_REACTANT;
+            xc.type = ArrangeComponentType.Reactant;
             xc.srcIdx = idx;
             xc.step = step;
             xc.side = -1;
@@ -8634,8 +8732,6 @@ var WebMolKit;
                 xc.mol = comp.mol;
             if (name && (this.includeNames || WebMolKit.MolUtil.isBlank(comp.mol)))
                 xc.text = name;
-            if (WebMolKit.MolUtil.isBlank(xc.mol) && !xc.text)
-                xc.text = '?';
             if (this.includeStoich && !WebMolKit.QuantityCalc.isStoichZero(comp.stoich) && !WebMolKit.QuantityCalc.isStoichUnity(comp.stoich)) {
                 let slash = comp.stoich.indexOf('/');
                 if (slash >= 0) {
@@ -8646,13 +8742,13 @@ var WebMolKit;
                     xc.leftNumer = comp.stoich;
             }
             if (this.includeAnnot && WebMolKit.MolUtil.notBlank(comp.mol) && comp.primary)
-                xc.annot = ArrangeExperiment.COMP_ANNOT_PRIMARY;
+                xc.annot = ArrangeComponentAnnot.Primary;
             this.components.push(xc);
         }
         createReagent(idx, step) {
             let comp = this.entry.steps[step].reagents[idx];
             let xc = new ArrangeComponent();
-            xc.type = ArrangeExperiment.COMP_REAGENT;
+            xc.type = ArrangeComponentType.Reagent;
             xc.srcIdx = idx;
             xc.step = step;
             xc.side = 0;
@@ -8660,12 +8756,10 @@ var WebMolKit;
                 xc.mol = comp.mol;
             if (name && (this.includeNames || WebMolKit.MolUtil.isBlank(comp.mol)))
                 xc.text = name;
-            if (WebMolKit.MolUtil.isBlank(xc.mol) && !xc.text)
-                xc.text = '?';
             if (this.includeAnnot) {
                 let stoich = WebMolKit.QuantityCalc.impliedReagentStoich(comp, this.entry.steps[step].products);
                 if (stoich > 0)
-                    xc.annot = ArrangeExperiment.COMP_ANNOT_IMPLIED;
+                    xc.annot = ArrangeComponentAnnot.Implied;
                 if (stoich > 0 && stoich != 1) {
                     if (WebMolKit.realEqual(stoich, Math.round(stoich)))
                         xc.leftNumer = Math.round(stoich).toString();
@@ -8678,7 +8772,7 @@ var WebMolKit;
         createProduct(idx, step) {
             let comp = this.entry.steps[step].products[idx];
             let xc = new ArrangeComponent();
-            xc.type = ArrangeExperiment.COMP_PRODUCT;
+            xc.type = ArrangeComponentType.Product;
             xc.srcIdx = idx;
             xc.step = step;
             xc.side = 1;
@@ -8686,8 +8780,6 @@ var WebMolKit;
                 xc.mol = comp.mol;
             if (name && (this.includeNames || WebMolKit.MolUtil.isBlank(comp.mol)))
                 xc.text = comp.name;
-            if (WebMolKit.MolUtil.isBlank(xc.mol) && !xc.text)
-                xc.text = '?';
             if (this.includeStoich && !WebMolKit.QuantityCalc.isStoichZero(comp.stoich) && !WebMolKit.QuantityCalc.isStoichUnity(comp.stoich)) {
                 let slash = comp.stoich.indexOf('/');
                 if (slash >= 0) {
@@ -8698,7 +8790,7 @@ var WebMolKit;
                     xc.leftNumer = comp.stoich;
             }
             if (this.includeAnnot && WebMolKit.MolUtil.notBlank(comp.mol) && comp.waste)
-                xc.annot = ArrangeExperiment.COMP_ANNOT_WASTE;
+                xc.annot = ArrangeComponentAnnot.Waste;
             this.components.push(xc);
         }
         createSegregator(type, step, side) {
@@ -8712,7 +8804,7 @@ var WebMolKit;
             let xc = new ArrangeComponent();
             xc.type = type;
             xc.step = step;
-            xc.side = type == ArrangeExperiment.COMP_REACTANT ? -1 : type == ArrangeExperiment.COMP_PRODUCT ? 1 : 0;
+            xc.side = type == ArrangeComponentType.Reactant ? -1 : type == ArrangeComponentType.Product ? 1 : 0;
             xc.srcIdx = -1;
             this.components.push(xc);
         }
@@ -8823,7 +8915,7 @@ var WebMolKit;
         arrangeHorizontalArrowBlock(block) {
             let arrow = null;
             for (let xc of block)
-                if (xc.type == ArrangeExperiment.COMP_ARROW) {
+                if (xc.type == ArrangeComponentType.Arrow) {
                     arrow = xc;
                     xc.box.w = this.ARROW_W * this.scale + 2 * xc.padding;
                     xc.box.h = this.ARROW_H * this.scale + 2 * xc.padding;
@@ -8836,7 +8928,7 @@ var WebMolKit;
             let y = 0;
             let arrowPlaced = false;
             for (let xc of block)
-                if (xc.type != ArrangeExperiment.COMP_ARROW) {
+                if (xc.type != ArrangeComponentType.Arrow) {
                     xc.box.x = 0.5 * (arrow.box.w - xc.box.w);
                     xc.box.y = y;
                     y += xc.box.h;
@@ -8860,7 +8952,7 @@ var WebMolKit;
         arrangeVerticalArrowBlock(block) {
             let arrow = null;
             for (let xc of block)
-                if (xc.type == ArrangeExperiment.COMP_ARROW) {
+                if (xc.type == ArrangeComponentType.Arrow) {
                     arrow = xc;
                     xc.box.w = this.ARROW_H * this.scale + 2 * xc.padding;
                     xc.box.h = this.ARROW_W * this.scale + 2 * xc.padding;
@@ -8869,7 +8961,7 @@ var WebMolKit;
             let sz1 = WebMolKit.Size.zero(), sz2 = WebMolKit.Size.zero();
             let n = 0;
             for (let xc of block)
-                if (xc.type != ArrangeExperiment.COMP_ARROW) {
+                if (xc.type != ArrangeComponentType.Arrow) {
                     if (n < mid) {
                         sz1.w = Math.max(sz1.w, xc.box.w);
                         sz1.h += xc.box.h;
@@ -8885,7 +8977,7 @@ var WebMolKit;
             let y1 = 0.5 * (sz.h - sz1.h), y2 = 0.5 * (sz.h - sz2.h);
             n = 0;
             for (let xc of block)
-                if (xc.type != ArrangeExperiment.COMP_ARROW) {
+                if (xc.type != ArrangeComponentType.Arrow) {
                     if (n < mid) {
                         xc.box.x = sz1.w - xc.box.w;
                         xc.box.y = y1;
@@ -8904,7 +8996,7 @@ var WebMolKit;
             let count = 0;
             let mid = WebMolKit.Pos.zero();
             for (let xc of block)
-                if (xc.type == ArrangeExperiment.COMP_PLUS || xc.type == ArrangeExperiment.COMP_ARROW) {
+                if (xc.type == ArrangeComponentType.Plus || xc.type == ArrangeComponentType.Arrow) {
                     mid.x += xc.box.midX();
                     mid.y += xc.box.midY();
                     count++;
@@ -8935,15 +9027,6 @@ var WebMolKit;
             }
         }
     }
-    ArrangeExperiment.COMP_ARROW = 1;
-    ArrangeExperiment.COMP_PLUS = 2;
-    ArrangeExperiment.COMP_REACTANT = 3;
-    ArrangeExperiment.COMP_REAGENT = 4;
-    ArrangeExperiment.COMP_PRODUCT = 5;
-    ArrangeExperiment.COMP_ANNOT_NONE = 0;
-    ArrangeExperiment.COMP_ANNOT_PRIMARY = 1;
-    ArrangeExperiment.COMP_ANNOT_WASTE = 2;
-    ArrangeExperiment.COMP_ANNOT_IMPLIED = 3;
     ArrangeExperiment.COMP_GAP_LEFT = 0.5;
     ArrangeExperiment.COMP_ANNOT_SIZE = 1;
     WebMolKit.ArrangeExperiment = ArrangeExperiment;
@@ -10775,6 +10858,7 @@ var WebMolKit;
             this.vg = vg;
             this.preDrawMolecule = null;
             this.postDrawMolecule = null;
+            this.molDrawn = [];
             this.entry = layout.entry;
             this.measure = layout.measure;
             this.policy = layout.policy;
@@ -10782,11 +10866,12 @@ var WebMolKit;
             this.invScale = 1.0 / this.scale;
         }
         draw() {
+            this.molDrawn = WebMolKit.Vec.anyArray(null, this.layout.components.length);
             for (let n = 0; n < this.layout.components.length; n++) {
                 let xc = this.layout.components[n];
-                if (xc.type == WebMolKit.ArrangeExperiment.COMP_ARROW)
+                if (xc.type == WebMolKit.ArrangeComponentType.Arrow)
                     this.drawSymbolArrow(xc);
-                else if (xc.type == WebMolKit.ArrangeExperiment.COMP_PLUS)
+                else if (xc.type == WebMolKit.ArrangeComponentType.Plus)
                     this.drawSymbolPlus(xc);
                 else
                     this.drawComponent(n, xc);
@@ -10796,6 +10881,11 @@ var WebMolKit;
             let vg = this.vg, policy = this.policy;
             let bx = xc.box.x + xc.padding, by = xc.box.y + xc.padding;
             let bw = xc.box.w - 2 * xc.padding, bh = xc.box.h - 2 * xc.padding;
+            if (xc.srcIdx < 0 || (WebMolKit.MolUtil.isBlank(xc.mol) && !xc.text)) {
+                let fsz = 0.5 * bh;
+                vg.drawText(bx + 0.5 * bw, by + 0.5 * bh, '?', fsz, policy.data.foreground, WebMolKit.TextAlign.Centre | WebMolKit.TextAlign.Middle);
+                return;
+            }
             if (xc.text) {
                 let wad = this.measure.measureText(xc.text, xc.fszText);
                 vg.drawText(bx + 0.5 * bw, by + bh, xc.text, xc.fszText, policy.data.foreground, WebMolKit.TextAlign.Bottom | WebMolKit.TextAlign.Centre);
@@ -10836,10 +10926,7 @@ var WebMolKit;
                 drawmol.draw();
                 if (this.postDrawMolecule)
                     this.postDrawMolecule(vg, idx, xc, arrmol);
-            }
-            if (xc.srcIdx < 0) {
-                let fsz = 0.5 * bh;
-                vg.drawText(bx + 0.5 * bw, by + 0.5 * bh, '?', fsz, policy.data.foreground, WebMolKit.TextAlign.Centre | WebMolKit.TextAlign.Middle);
+                this.molDrawn[idx] = arrmol;
             }
         }
         drawSymbolArrow(xc) {
@@ -10862,11 +10949,11 @@ var WebMolKit;
         drawAnnotation(annot, bx, by, bw, bh) {
             let vg = this.vg, policy = this.policy;
             let sz = bw, x2 = bx + bw, y2 = by + bh, x1 = x2 - sz, y1 = by;
-            if (annot == WebMolKit.ArrangeExperiment.COMP_ANNOT_PRIMARY)
+            if (annot == WebMolKit.ArrangeComponentAnnot.Primary)
                 y2 = y1 + sz;
-            else if (annot == WebMolKit.ArrangeExperiment.COMP_ANNOT_WASTE)
+            else if (annot == WebMolKit.ArrangeComponentAnnot.Waste)
                 y1 = y2 - sz;
-            if (annot == WebMolKit.ArrangeExperiment.COMP_ANNOT_PRIMARY) {
+            if (annot == WebMolKit.ArrangeComponentAnnot.Primary) {
                 let cx = 0.5 * (x1 + x2), cy = 0.5 * (y1 + y2), ext = 0.25 * sz;
                 let px = [cx, cx + 0.866 * ext, cx + 0.866 * ext, cx, cx - 0.866 * ext, cx - 0.866 * ext];
                 let py = [cy - ext, cy - 0.5 * ext, cy + 0.5 * ext, cy + ext, cy + 0.5 * ext, cy - 0.5 * ext];
@@ -10877,7 +10964,7 @@ var WebMolKit;
                 let inset = 0.1 * sz;
                 vg.drawOval(x1 + 0.5 * sz, y1 + 0.5 * sz, 0.5 * sz - inset, 0.5 * sz - inset, policy.data.foreground, lw, WebMolKit.MetaVector.NOCOLOUR);
             }
-            else if (annot == WebMolKit.ArrangeExperiment.COMP_ANNOT_WASTE) {
+            else if (annot == WebMolKit.ArrangeComponentAnnot.Waste) {
                 let cx = x1 + 0.7 * sz, cy = 0.5 * (y1 + y2), quart = 0.25 * sz;
                 let lw = 0.05 * this.scale;
                 let px = [x1 + 0.1 * sz, cx - quart, cx, cx, cx];
@@ -10889,7 +10976,7 @@ var WebMolKit;
                     vg.drawLine(cx - dw, y, cx + dw, y, policy.data.foreground, lw);
                 }
             }
-            else if (annot == WebMolKit.ArrangeExperiment.COMP_ANNOT_IMPLIED) {
+            else if (annot == WebMolKit.ArrangeComponentAnnot.Implied) {
                 let tw = 0.5 * sz, th = 0.75 * sz;
                 let cx = x2 - 0.5 * tw, cy = y1 + 0.5 * th;
                 let ty = y1 + 0.25 * th, dsz = sz * 0.1, hsz = 0.5 * dsz;
@@ -11076,11 +11163,11 @@ var WebMolKit;
             return true;
         }
         getComponent(step, type, idx) {
-            if (type == Experiment.REACTANT)
+            if (type == ExperimentComponentType.Reactant)
                 return this.steps[step].reactants[idx];
-            if (type == Experiment.REAGENT)
+            if (type == ExperimentComponentType.Reagent)
                 return this.steps[step].reagents[idx];
-            if (type == Experiment.PRODUCT)
+            if (type == ExperimentComponentType.Product)
                 return this.steps[step].products[idx];
             return new ExperimentComponent();
         }
@@ -11565,9 +11652,6 @@ var WebMolKit;
     Experiment.NAME = 'Experiment';
     Experiment.NAME_RXN = 'Reaction';
     Experiment.NAME_YLD = 'Yield';
-    Experiment.REACTANT = 1;
-    Experiment.REAGENT = 2;
-    Experiment.PRODUCT = 3;
     Experiment.COLNAME_EXPERIMENT_TITLE = 'ExperimentTitle';
     Experiment.COLNAME_EXPERIMENT_CREATEDATE = 'ExperimentCreateDate';
     Experiment.COLNAME_EXPERIMENT_MODIFYDATE = 'ExperimentModifyDate';
@@ -14181,6 +14265,231 @@ var WebMolKit;
 })(WebMolKit || (WebMolKit = {}));
 var WebMolKit;
 (function (WebMolKit) {
+    let DotPathBond;
+    (function (DotPathBond) {
+        DotPathBond[DotPathBond["O0"] = 0] = "O0";
+        DotPathBond[DotPathBond["O01"] = 1] = "O01";
+        DotPathBond[DotPathBond["O1"] = 2] = "O1";
+        DotPathBond[DotPathBond["O12"] = 3] = "O12";
+        DotPathBond[DotPathBond["O2"] = 4] = "O2";
+        DotPathBond[DotPathBond["O23"] = 5] = "O23";
+        DotPathBond[DotPathBond["O3"] = 6] = "O3";
+        DotPathBond[DotPathBond["O3X"] = 7] = "O3X";
+    })(DotPathBond || (DotPathBond = {}));
+    let DotPathCharge;
+    (function (DotPathCharge) {
+        DotPathCharge[DotPathCharge["N1X"] = -3] = "N1X";
+        DotPathCharge[DotPathCharge["N1"] = -2] = "N1";
+        DotPathCharge[DotPathCharge["N01"] = -1] = "N01";
+        DotPathCharge[DotPathCharge["Z0"] = 0] = "Z0";
+        DotPathCharge[DotPathCharge["P01"] = 1] = "P01";
+        DotPathCharge[DotPathCharge["P1"] = 2] = "P1";
+        DotPathCharge[DotPathCharge["P1X"] = 3] = "P1X";
+    })(DotPathCharge || (DotPathCharge = {}));
+    class DotPath {
+        constructor(mol) {
+            this.mol = mol;
+            this.paths = [];
+            if (mol)
+                this.calculate();
+        }
+        clone() {
+            var dup = new DotPath(null);
+            dup.mol = this.mol;
+            dup.maskBlock = this.maskBlock;
+            dup.paths = this.paths.slice(0);
+            return dup;
+        }
+        getBondOrders() {
+            const mol = this.mol;
+            let orders = [];
+            for (let n = 1; n <= mol.numBonds; n++)
+                orders.push(mol.bondOrder(n));
+            for (let path of this.paths) {
+                let fract = path.numer / path.denom;
+                for (let n = 1; n <= 5; n++)
+                    if (WebMolKit.fltEqual(fract, n))
+                        fract = n;
+                for (let b of path.bonds)
+                    orders[b - 1] = fract;
+            }
+            return orders;
+        }
+        getBondClasses() {
+            const mol = this.mol;
+            let classes = [];
+            for (let n = 1; n <= mol.numBonds; n++) {
+                let bo = mol.bondOrder(n);
+                classes.push(bo == 0 ? DotPathBond.O0 :
+                    bo == 1 ? DotPathBond.O1 :
+                        bo == 2 ? DotPathBond.O2 :
+                            bo == 3 ? DotPathBond.O3 : DotPathBond.O3X);
+            }
+            for (let path of this.paths) {
+                let fract = path.numer / path.denom;
+                let bcls = WebMolKit.fltEqual(fract, 0) ? DotPathBond.O0 :
+                    WebMolKit.fltEqual(fract, 1) ? DotPathBond.O1 :
+                        WebMolKit.fltEqual(fract, 2) ? DotPathBond.O2 :
+                            WebMolKit.fltEqual(fract, 3) ? DotPathBond.O3 :
+                                fract < 1 ? DotPathBond.O01 :
+                                    fract < 2 ? DotPathBond.O12 :
+                                        fract < 3 ? DotPathBond.O23 : DotPathBond.O3X;
+                for (let b of path.bonds)
+                    classes[b - 1] = bcls;
+            }
+            return classes;
+        }
+        getChargeClasses() {
+            const mol = this.mol;
+            let classes = [];
+            for (let n = 1; n <= mol.numAtoms; n++) {
+                let chg = mol.atomCharge(n);
+                classes.push(chg == 0 ? DotPathCharge.Z0 :
+                    chg == -1 ? DotPathCharge.N1 :
+                        chg == 1 ? DotPathCharge.P1 :
+                            chg < -1 ? DotPathCharge.N1X : DotPathCharge.P1X);
+            }
+            for (let path of this.paths) {
+                let chg = 0;
+                for (let a of path.atoms)
+                    chg += mol.atomCharge(a);
+                chg /= path.atoms.length;
+                let ccls = WebMolKit.fltEqual(chg, 0) ? DotPathCharge.Z0 :
+                    WebMolKit.fltEqual(chg, -1) ? DotPathCharge.N1 :
+                        WebMolKit.fltEqual(chg, 1) ? DotPathCharge.P1 :
+                            chg > -1 && chg < 0 ? DotPathCharge.N01 :
+                                chg > 0 && chg < 1 ? DotPathCharge.P01 :
+                                    chg < -1 ? DotPathCharge.N1X : DotPathCharge.P1X;
+                for (let a of path.atoms)
+                    classes[a - 1] = ccls;
+            }
+            return classes;
+        }
+        getAggregateCharges() {
+            const mol = this.mol;
+            let chg = [];
+            for (let n = 1; n <= mol.numAtoms; n++)
+                chg[n - 1] = mol.atomCharge(n);
+            for (let path of this.paths) {
+                let total = 0;
+                for (let a of path.atoms)
+                    total += chg[a - 1];
+                for (let a of path.atoms)
+                    chg[a - 1] = total;
+            }
+            return chg;
+        }
+        toString() {
+            let str = 'blocking=' + JSON.stringify(this.maskBlock) + '; paths=' + this.paths.length;
+            for (let p of this.paths)
+                str += ' [' + p.numer + '/' + p.denom + ';a=' + JSON.stringify(p.atoms) + ';b=' + JSON.stringify(p.bonds) + ']';
+            return str;
+        }
+        calculate() {
+            const mol = this.mol, na = mol.numAtoms, nb = mol.numBonds;
+            let nonsingle = WebMolKit.Vec.booleanArray(false, na), pibonded = WebMolKit.Vec.booleanArray(false, na);
+            let bondsum = WebMolKit.Vec.numberArray(0, na);
+            for (let n = 0; n < na; n++)
+                bondsum[n] = mol.atomHydrogens(n + 1);
+            for (let n = 1; n <= nb; n++) {
+                let bo = mol.bondOrder(n), bfr = mol.bondFrom(n), bto = mol.bondTo(n);
+                if (bo != 1) {
+                    nonsingle[bfr - 1] = true;
+                    nonsingle[bto - 1] = true;
+                }
+                if (bo >= 2) {
+                    pibonded[bfr - 1] = true;
+                    pibonded[bto - 1] = true;
+                }
+                bondsum[bfr - 1] += bo;
+                bondsum[bto - 1] += bo;
+            }
+            this.maskBlock = WebMolKit.Vec.booleanArray(false, na);
+            let maskMaybe = WebMolKit.Vec.booleanArray(false, na);
+            let COULD_BLOCK = [
+                WebMolKit.Chemistry.ELEMENT_B, WebMolKit.Chemistry.ELEMENT_C, WebMolKit.Chemistry.ELEMENT_N, WebMolKit.Chemistry.ELEMENT_O, WebMolKit.Chemistry.ELEMENT_F,
+                WebMolKit.Chemistry.ELEMENT_Al, WebMolKit.Chemistry.ELEMENT_Si, WebMolKit.Chemistry.ELEMENT_P, WebMolKit.Chemistry.ELEMENT_S, WebMolKit.Chemistry.ELEMENT_Cl,
+                WebMolKit.Chemistry.ELEMENT_Ga, WebMolKit.Chemistry.ELEMENT_Ge, WebMolKit.Chemistry.ELEMENT_As, WebMolKit.Chemistry.ELEMENT_Se, WebMolKit.Chemistry.ELEMENT_Br,
+                WebMolKit.Chemistry.ELEMENT_In, WebMolKit.Chemistry.ELEMENT_Sn, WebMolKit.Chemistry.ELEMENT_Sb, WebMolKit.Chemistry.ELEMENT_Te, WebMolKit.Chemistry.ELEMENT_I,
+                WebMolKit.Chemistry.ELEMENT_Tl, WebMolKit.Chemistry.ELEMENT_Pb, WebMolKit.Chemistry.ELEMENT_Bi, WebMolKit.Chemistry.ELEMENT_Po, WebMolKit.Chemistry.ELEMENT_At,
+            ];
+            for (let n = 0; n < na; n++) {
+                const a = n + 1;
+                if (nonsingle[n])
+                    continue;
+                if (mol.atomCharge(a) != 0 || mol.atomUnpaired(a) != 0)
+                    continue;
+                const atno = mol.atomicNumber(a);
+                if (atno == 0) {
+                    this.maskBlock[n] = true;
+                    continue;
+                }
+                if (COULD_BLOCK.indexOf(atno) < 0)
+                    continue;
+                if (bondsum[n] != WebMolKit.Chemistry.ELEMENT_BONDING[atno])
+                    continue;
+                maskMaybe[n] = true;
+                if (atno == WebMolKit.Chemistry.ELEMENT_C) {
+                    let adjpi = 0;
+                    let hasMetal = false;
+                    for (let adj of mol.atomAdjList(a)) {
+                        if (pibonded[adj - 1])
+                            adjpi++;
+                        if (COULD_BLOCK.indexOf(mol.atomicNumber(adj)) < 0)
+                            hasMetal = true;
+                    }
+                    if (adjpi < 2 && !hasMetal)
+                        this.maskBlock[n] = true;
+                }
+            }
+            skip: for (let n = 0; n < na; n++)
+                if (maskMaybe[n] && !this.maskBlock[n]) {
+                    for (let a of mol.atomAdjList(n + 1))
+                        if (!maskMaybe[a - 1])
+                            continue skip;
+                    this.maskBlock[n] = true;
+                }
+            let g = WebMolKit.Graph.fromMolecule(mol);
+            for (let n = 0; n < na; n++)
+                if (this.maskBlock[n])
+                    g.isolateNode(n);
+            for (let cc of g.calculateComponentGroups()) {
+                if (cc.length == 1)
+                    continue;
+                let amask = WebMolKit.Vec.idxMask(cc, na);
+                WebMolKit.Vec.addTo(cc, 1);
+                let p = {
+                    'atoms': cc,
+                    'bonds': [],
+                    'numer': 0,
+                    'denom': 0
+                };
+                for (let n = 1; n <= nb; n++)
+                    if (amask[mol.bondFrom(n) - 1] && amask[mol.bondTo(n) - 1])
+                        p.bonds.push(n);
+                let totalHave = 0, totalWant = 0;
+                for (let a of p.atoms) {
+                    let others = mol.atomHydrogens(a);
+                    for (let o of mol.atomAdjList(a))
+                        if (!amask[o - 1])
+                            others++;
+                    let atno = mol.atomicNumber(a);
+                    let have = WebMolKit.Chemistry.ELEMENT_VALENCE[atno] - mol.atomCharge(a) - others;
+                    let want = WebMolKit.Chemistry.ELEMENT_SHELL[atno] - WebMolKit.Chemistry.ELEMENT_VALENCE[atno] - others;
+                    totalHave += have;
+                    totalWant += want;
+                }
+                let electrons = Math.min(totalHave, totalWant);
+                p.numer = electrons;
+                p.denom = 2 * p.bonds.length;
+                this.paths.push(p);
+            }
+        }
+    }
+    WebMolKit.DotPath = DotPath;
+})(WebMolKit || (WebMolKit = {}));
+var WebMolKit;
+(function (WebMolKit) {
     class FormatList {
     }
     FormatList.FMT_NATIVE = 'native';
@@ -14361,7 +14670,7 @@ var WebMolKit;
         installInlineCSS('main', composeMainCSS());
     }
     WebMolKit.initWebMolKit = initWebMolKit;
-    var cssTagsInstalled = new Set();
+    let cssTagsInstalled = new Set();
     function hasInlineCSS(tag) { return cssTagsInstalled.has(tag); }
     WebMolKit.hasInlineCSS = hasInlineCSS;
     function installInlineCSS(tag, css) {
@@ -14605,10 +14914,14 @@ var WebMolKit;
             this.maximumHeight = 0;
             this.title = 'Dialog';
             this.callbackClose = null;
+            this.callbackShown = null;
             WebMolKit.installInlineCSS('dialog', CSS_DIALOG);
         }
         onClose(callback) {
             this.callbackClose = callback;
+        }
+        onShown(callback) {
+            this.callbackShown = callback;
         }
         open() {
             let body = $(document.documentElement);
@@ -14668,6 +14981,8 @@ var WebMolKit;
             this.repositionSize();
             bg.show();
             pb.show();
+            if (this.callbackShown)
+                this.callbackShown(this);
         }
         close() {
             this.panelBoundary.remove();
@@ -14692,18 +15007,15 @@ var WebMolKit;
 })(WebMolKit || (WebMolKit = {}));
 var WebMolKit;
 (function (WebMolKit) {
-    var globalPopover = null;
-    var globalTooltip = null;
-    var globalPopWatermark = 0;
+    let globalPopover = null;
+    let globalTooltip = null;
+    let globalPopWatermark = 0;
     function addTooltip(parent, bodyHTML, titleHTML, delay) {
         Tooltip.ensureGlobal();
         let widget = $(parent);
         const tooltip = new Tooltip(widget, bodyHTML, titleHTML, delay == null ? 1000 : delay);
-        let prevEnter = widget.attr('onmouseenter'), prevLeave = widget.attr('onmouseleave');
-        widget.mouseenter((e) => { tooltip.start(); if (prevEnter)
-            prevEnter(e); });
-        widget.mouseleave((e) => { tooltip.stop(); if (prevLeave)
-            prevLeave(e); });
+        widget.mouseenter(() => tooltip.start());
+        widget.mouseleave(() => tooltip.stop());
     }
     WebMolKit.addTooltip = addTooltip;
     function raiseToolTip(widget, avoid, bodyHTML, titleHTML) {
@@ -14815,6 +15127,11 @@ var WebMolKit;
             let tag = this.tagType;
             this.content = $(`<${tag}></${tag}>`).appendTo($(parent));
         }
+        remove() {
+            if (this.content)
+                this.content.remove();
+            this.content = null;
+        }
         addTooltip(bodyHTML, titleHTML) {
             WebMolKit.addTooltip(this.content, bodyHTML, titleHTML);
         }
@@ -14846,6 +15163,9 @@ var WebMolKit;
         }
         getAuxiliaryCell(idx) {
             return this.auxCell[idx];
+        }
+        onSelect(callback) {
+            this.callbackSelect = callback;
         }
         render(parent) {
             super.render(parent);
@@ -14911,7 +15231,7 @@ var WebMolKit;
                     div.mousedown(() => div.addClass('wmk-option-active'));
                     div.mouseup(() => div.removeClass('wmk-option-active'));
                     div.mouseleave(() => div.removeClass('wmk-option-hover wmk-option-active'));
-                    div.mousemove(() => { return false; });
+                    div.mousemove(() => false);
                     div.click(() => this.clickButton(n));
                 }
                 else
@@ -14931,6 +15251,7 @@ var WebMolKit;
 				text-align: center;
 				white-space: nowrap;
 				vertical-align: middle;
+				line-height: 1.2em;
 				-ms-touch-action: manipulation; touch-action: manipulation;
 				cursor: pointer;
 				-webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none;
@@ -15399,7 +15720,7 @@ var WebMolKit;
                 '1-14=1,0\n' +
                 '!End';
             this.MAX_MOL_STASH = 20;
-            for (var idx = 0;; idx++) {
+            for (let idx = 0;; idx++) {
                 let str = this.get('mol' + idx);
                 if (str == null)
                     break;
@@ -15455,10 +15776,10 @@ var WebMolKit;
             this.remove('mol' + this.molecules.length);
         }
         get(key) {
-            let value = "; " + document.cookie;
-            let parts = value.split("; " + key + "=");
+            let value = '; ' + document.cookie;
+            let parts = value.split('; ' + key + '=');
             if (parts.length == 2)
-                return decodeURIComponent(parts.pop().split(";").shift());
+                return decodeURIComponent(parts.pop().split(';').shift());
             return null;
         }
         set(key, val) {
@@ -15888,7 +16209,7 @@ var WebMolKit;
                     ctx.fillStyle = WebMolKit.colourCanvas(this.backgroundCol1);
                 }
                 else {
-                    var grad = ctx.createLinearGradient(0, 0, this.width, this.height);
+                    let grad = ctx.createLinearGradient(0, 0, this.width, this.height);
                     grad.addColorStop(0, WebMolKit.colourCanvas(this.backgroundCol1));
                     grad.addColorStop(1, WebMolKit.colourCanvas(this.backgroundCol2));
                     ctx.fillStyle = grad;
@@ -16066,23 +16387,6 @@ var WebMolKit;
             this.x = 0;
             this.y = 0;
         }
-        static prepare(callback) {
-            if (WebMolKit.RPC.BASE_URL == null && WebMolKit.RPC.RESOURCE_URL != null)
-                ButtonView.ACTION_ICONS = {};
-            if (ButtonView.ACTION_ICONS != null) {
-                callback();
-                return;
-            }
-            let fcn = (result, error) => {
-                if (!result.actions) {
-                    alert('Fetching action icons failed: ' + error.message);
-                    return;
-                }
-                ButtonView.ACTION_ICONS = result.actions;
-                callback();
-            };
-            WebMolKit.Func.getActionIcons({}, fcn);
-        }
         setParentSize(width, height) {
             this.parentWidth = width;
             this.parentHeight = height;
@@ -16179,13 +16483,11 @@ var WebMolKit;
         getHasBigButtons() {
             return this.hasBigButtons;
         }
-        ;
         setHasBigButtons(flag) {
             this.hasBigButtons = flag;
             this.prefabImgSize = flag ? 44 : 36;
             this.idealSize = flag ? 50 : 40;
         }
-        ;
         withinOutline(x, y) {
             let w = this.width, h = this.height;
             if (x < 0 || x > w || y < 0 || y > h)
@@ -16210,7 +16512,9 @@ var WebMolKit;
             }
             return true;
         }
-        ;
+        gripSize() {
+            return this.gripHeight;
+        }
         layoutButtons() {
             if (this.content == null)
                 return;
@@ -16599,11 +16903,9 @@ var WebMolKit;
             }
             ctx.restore();
         }
-        ;
         delayedRedraw() {
             window.setTimeout(() => this.redraw(), 100);
         }
-        ;
         buttonFromID(id) {
             let bank = this.stack[this.stack.length - 1];
             for (let n = 0; n < bank.buttons.length; n++)
@@ -16843,7 +17145,7 @@ var WebMolKit;
             return svg;
         }
     }
-    ButtonView.ACTION_ICONS = null;
+    ButtonView.ACTION_ICONS = {};
     WebMolKit.ButtonView = ButtonView;
 })(WebMolKit || (WebMolKit = {}));
 var WebMolKit;
@@ -16857,7 +17159,10 @@ var WebMolKit;
         uninstall() { }
         getString() { return null; }
         setString(str) { }
+        canSetHTML() { return false; }
+        setHTML(html) { }
         canAlwaysGet() { return false; }
+        downloadString(str, fn) { }
     }
     WebMolKit.ClipboardProxy = ClipboardProxy;
     class ClipboardProxyWeb extends ClipboardProxy {
@@ -19789,7 +20094,6 @@ var WebMolKit;
                 this.buttons.push(btn);
             this.buttonView.setSelectedButton('arrow');
         }
-        ;
         hitButton(id) {
             this.buttonView.setSelectedButton(id);
         }
@@ -19907,7 +20211,7 @@ var WebMolKit;
                     div.mousedown(() => div.addClass('wmk-tabbar-active'));
                     div.mouseup(() => div.removeClass('wmk-tabbar-active'));
                     div.mouseleave(() => div.removeClass('wmk-tabbar-hover wmk-tabbar-active'));
-                    div.mousemove(() => { return false; });
+                    div.mousemove(() => false);
                     div.click(() => this.clickButton(n));
                 }
                 else
@@ -19982,6 +20286,8 @@ var WebMolKit;
             super();
             this.atom = atom;
             this.callbackApply = callbackApply;
+            this.newX = 0;
+            this.newY = 0;
             this.initMol = mol;
             this.mol = mol.clone();
             this.title = 'Edit Atom';
@@ -20005,6 +20311,7 @@ var WebMolKit;
             this.populateGeometry(this.tabs.getPanel('Geometry'));
             this.populateQuery(this.tabs.getPanel('Query'));
             this.populateExtra(this.tabs.getPanel('Extra'));
+            setTimeout(() => this.inputSymbol.focus(), 1);
         }
         populateAtom(panel) {
             let grid = $('<div></div>').appendTo(panel);
@@ -20041,17 +20348,19 @@ var WebMolKit;
             this.inputIndex.css('grid-area', '5 / col3');
             grid.find('input').css('font', 'inherit');
             const mol = this.mol, atom = this.atom;
-            this.inputSymbol.val(mol.atomElement(atom));
-            this.inputCharge.val(mol.atomCharge(atom).toString());
-            this.inputUnpaired.val(mol.atomUnpaired(atom).toString());
-            this.optionHydrogen.setSelectedIndex(mol.atomHExplicit(atom) == WebMolKit.Molecule.HEXPLICIT_UNKNOWN ? 0 : 1);
-            if (mol.atomHExplicit(atom) != WebMolKit.Molecule.HEXPLICIT_UNKNOWN)
-                this.inputHydrogen.val(mol.atomHExplicit(atom).toString());
-            this.optionIsotope.setSelectedIndex(mol.atomIsotope(atom) == WebMolKit.Molecule.ISOTOPE_NATURAL ? 0 : 1);
-            if (mol.atomIsotope(atom) == WebMolKit.Molecule.ISOTOPE_NATURAL)
-                this.inputIsotope.val(mol.atomIsotope(atom).toString());
-            this.inputMapping.val(mol.atomMapNum(atom).toString());
-            this.inputIndex.val(atom.toString());
+            if (atom > 0) {
+                this.inputSymbol.val(mol.atomElement(atom));
+                this.inputCharge.val(mol.atomCharge(atom).toString());
+                this.inputUnpaired.val(mol.atomUnpaired(atom).toString());
+                this.optionHydrogen.setSelectedIndex(mol.atomHExplicit(atom) == WebMolKit.Molecule.HEXPLICIT_UNKNOWN ? 0 : 1);
+                if (mol.atomHExplicit(atom) != WebMolKit.Molecule.HEXPLICIT_UNKNOWN)
+                    this.inputHydrogen.val(mol.atomHExplicit(atom).toString());
+                this.optionIsotope.setSelectedIndex(mol.atomIsotope(atom) == WebMolKit.Molecule.ISOTOPE_NATURAL ? 0 : 1);
+                if (mol.atomIsotope(atom) == WebMolKit.Molecule.ISOTOPE_NATURAL)
+                    this.inputIsotope.val(mol.atomIsotope(atom).toString());
+                this.inputMapping.val(mol.atomMapNum(atom).toString());
+                this.inputIndex.val(atom.toString());
+            }
             this.inputSymbol.focus();
         }
         populateAbbreviation(panel) {
@@ -20067,7 +20376,9 @@ var WebMolKit;
             panel.append('Extra: TODO');
         }
         updateMolecule() {
-            const mol = this.mol, atom = this.atom;
+            let mol = this.mol, atom = this.atom;
+            if (atom == 0)
+                atom = mol.addAtom('C', this.newX, this.newY);
             let sym = this.inputSymbol.val();
             if (sym != '')
                 mol.setAtomElement(atom, sym);
@@ -20236,23 +20547,21 @@ var WebMolKit;
         clearMolecule() { this.defineMolecule(new WebMolKit.Molecule(), true, true); }
         getMolecule() { return this.mol.clone(); }
         setup(callback) {
-            WebMolKit.ButtonView.prepare(() => {
-                this.beenSetup = true;
-                if (this.mol == null)
-                    this.mol = new WebMolKit.Molecule();
-                if (this.policy == null) {
-                    this.policy = WebMolKit.RenderPolicy.defaultColourOnWhite();
-                    this.pointScale = this.policy.data.pointScale;
-                }
-                let effects = this.sketchEffects();
-                this.layout = new WebMolKit.ArrangeMolecule(this.mol, this, this.policy, effects);
-                this.layout.arrange();
-                this.centreAndShrink();
-                this.metavec = new WebMolKit.MetaVector();
-                new WebMolKit.DrawMolecule(this.layout, this.metavec).draw();
-                if (callback)
-                    callback();
-            });
+            this.beenSetup = true;
+            if (this.mol == null)
+                this.mol = new WebMolKit.Molecule();
+            if (this.policy == null) {
+                this.policy = WebMolKit.RenderPolicy.defaultColourOnWhite();
+                this.pointScale = this.policy.data.pointScale;
+            }
+            let effects = this.sketchEffects();
+            this.layout = new WebMolKit.ArrangeMolecule(this.mol, this, this.policy, effects);
+            this.layout.arrange();
+            this.centreAndShrink();
+            this.metavec = new WebMolKit.MetaVector();
+            new WebMolKit.DrawMolecule(this.layout, this.metavec).draw();
+            if (callback)
+                callback();
         }
         render(parent) {
             if (!this.width || !this.height)
@@ -21369,10 +21678,15 @@ var WebMolKit;
                     let element = this.toolAtomSymbol;
                     if (element == 'A') {
                         let dlg = new WebMolKit.EditAtom(this.mol, this.opAtom, () => {
+                            let autoscale = this.mol.numAtoms == 0;
                             if (this.mol.compareTo(dlg.mol) != 0)
-                                this.defineMolecule(dlg.mol);
+                                this.defineMolecule(dlg.mol, autoscale);
                             dlg.close();
                         });
+                        if (this.opAtom == 0) {
+                            dlg.newX = this.xToAng(this.clickX);
+                            dlg.newY = this.yToAng(this.clickY);
+                        }
                         dlg.open();
                     }
                     else if (element) {
@@ -22241,7 +22555,6 @@ var WebMolKit;
             this.STATE_NORMAL = 'normal';
             this.STATE_SELECTED = 'selected';
             this.STATE_DISABLED = 'disabled';
-            this.content = null;
             this.state = this.STATE_NORMAL;
             this.isHighlight = false;
             this.isPressed = false;
@@ -22282,7 +22595,7 @@ var WebMolKit;
                 let node = WebMolKit.newElement(div, 'canvas', { 'width': width * density, 'height': height * density, 'style': canvasStyle });
                 node.style.width = width + 'px';
                 node.style.height = height + 'px';
-                var ctx = node.getContext('2d');
+                let ctx = node.getContext('2d');
                 ctx.save();
                 ctx.scale(density, density);
                 ctx.beginPath();
@@ -22304,7 +22617,7 @@ var WebMolKit;
             this.ringProgress.hidden = true;
             this.thinBorder = renderBorder(1);
             this.thickBorder = renderBorder(2);
-            var svgurl = WebMolKit.RPC.BASE_URL + "/img/icons/" + this.icon;
+            let svgurl = WebMolKit.RPC.BASE_URL + '/img/icons/' + this.icon;
             this.svg = WebMolKit.newElement(div, 'object', { 'width': width, 'height': height, 'style': canvasStyle, 'data': svgurl, 'type': 'image/svg+xml' });
             this.updateLayers();
             div.mouseenter(() => this.mouseEnter());
@@ -22313,14 +22626,13 @@ var WebMolKit;
             div.mouseup(() => this.mouseUp());
             div.click(() => this.mouseClicked());
         }
-        ;
         setProgress(fraction) {
             if (this.progressFraction == fraction)
                 return;
             this.progressFraction = fraction;
             this.ringProgress.hidden = false;
             let diameter = this.BUTTON_DIAMETER, mid = 0.5 * diameter, outer = mid - 1, inner = 0.8 * mid;
-            var ctx = this.ringProgress.getContext('2d');
+            let ctx = this.ringProgress.getContext('2d');
             ctx.clearRect(0, 0, diameter, diameter);
             ctx.strokeStyle = 'rgba(80,80,80,0.5)';
             ctx.lineWidth = 1;
@@ -22358,7 +22670,7 @@ var WebMolKit;
             WebMolKit.setVisible(this.normalBackgr, !this.isPressed && this.state == this.STATE_NORMAL);
             WebMolKit.setVisible(this.selectedBackgr, !this.isPressed && this.state == this.STATE_SELECTED);
             WebMolKit.setVisible(this.disabledBackgr, !this.isPressed && this.state == this.STATE_DISABLED);
-            var highlight = this.isHighlight;
+            let highlight = this.isHighlight;
             if (this.state == this.STATE_DISABLED) {
                 highlight = false;
                 this.content.css('cursor', 'no-drop');
@@ -23027,64 +23339,64 @@ var WebMolKit;
             }
             if (qc.valueEquiv > 0) {
                 let text = qc.valueEquiv.toString(), stat = qc.statEquiv;
-                if (stat == WebMolKit.QuantityCalc.STAT_VIRTUAL)
-                    text = "<i>(" + text + ")</i>";
-                else if (stat == WebMolKit.QuantityCalc.STAT_CONFLICT)
-                    text += " (conflicting)";
+                if (stat == 2)
+                    text = '<i>(' + text + ')</i>';
+                else if (stat == 3)
+                    text += ' (conflicting)';
                 title.push('Stoichiometry');
                 content.push(text);
             }
             if (qc.valueMass > 0) {
                 let text = WebMolKit.QuantityCalc.formatMass(qc.valueMass), stat = qc.statMass;
-                if (stat == WebMolKit.QuantityCalc.STAT_VIRTUAL)
-                    text = "<i>(" + text + ")</i>";
-                else if (stat == WebMolKit.QuantityCalc.STAT_CONFLICT)
-                    text += " (conflicting)";
+                if (stat == 2)
+                    text = '<i>(' + text + ')</i>';
+                else if (stat == 3)
+                    text += ' (conflicting)';
                 title.push('Mass');
                 content.push(text);
             }
             if (qc.valueVolume > 0) {
                 let text = WebMolKit.QuantityCalc.formatVolume(qc.valueVolume), stat = qc.statVolume;
-                if (stat == WebMolKit.QuantityCalc.STAT_VIRTUAL)
-                    text = "<i>(" + text + ")</i>";
-                else if (stat == WebMolKit.QuantityCalc.STAT_CONFLICT)
-                    text += " (conflicting)";
+                if (stat == 2)
+                    text = '<i>(' + text + ')</i>';
+                else if (stat == 3)
+                    text += ' (conflicting)';
                 title.push('Volume');
                 content.push(text);
             }
             if (qc.valueMoles > 0) {
                 let text = WebMolKit.QuantityCalc.formatMoles(qc.valueMoles), stat = qc.statMoles;
-                if (stat == WebMolKit.QuantityCalc.STAT_VIRTUAL)
-                    text = "<i>(" + text + ")</i>";
-                else if (stat == WebMolKit.QuantityCalc.STAT_CONFLICT)
-                    text += " (conflicting)";
+                if (stat == 2)
+                    text = '<i>(' + text + ')</i>';
+                else if (stat == 3)
+                    text += ' (conflicting)';
                 title.push('Moles');
                 content.push(text);
             }
             if (qc.valueDensity > 0) {
                 let text = WebMolKit.QuantityCalc.formatDensity(qc.valueDensity), stat = qc.statDensity;
-                if (stat == WebMolKit.QuantityCalc.STAT_VIRTUAL)
-                    text = "<i>(" + text + ")</i>";
-                else if (stat == WebMolKit.QuantityCalc.STAT_CONFLICT)
-                    text += " (conflicting)";
+                if (stat == 2)
+                    text = '<i>(' + text + ')</i>';
+                else if (stat == 3)
+                    text += ' (conflicting)';
                 title.push('Density');
                 content.push(text);
             }
             if (qc.valueConc > 0) {
                 let text = WebMolKit.QuantityCalc.formatConc(qc.valueConc), stat = qc.statConc;
-                if (stat == WebMolKit.QuantityCalc.STAT_VIRTUAL)
-                    text = "<i>(" + text + ")</i>";
-                else if (stat == WebMolKit.QuantityCalc.STAT_CONFLICT)
-                    text += " (conflicting)";
+                if (stat == 2)
+                    text = '<i>(' + text + ')</i>';
+                else if (stat == 3)
+                    text += ' (conflicting)';
                 title.push('Concentration');
                 content.push(text);
             }
             if (qc.valueYield > 0 && !qc.comp.waste) {
                 let text = WebMolKit.QuantityCalc.formatPercent(qc.valueYield), stat = qc.statYield;
-                if (stat == WebMolKit.QuantityCalc.STAT_VIRTUAL)
-                    text = "<i>(" + text + ")</i>";
-                else if (stat == WebMolKit.QuantityCalc.STAT_CONFLICT)
-                    text += " (conflicting)";
+                if (stat == 2)
+                    text = '<i>(' + text + ')</i>';
+                else if (stat == 3)
+                    text += ' (conflicting)';
                 title.push('Yield');
                 content.push(text);
             }
@@ -23288,11 +23600,19 @@ var WebMolKit;
 })(WebMolKit || (WebMolKit = {}));
 var WebMolKit;
 (function (WebMolKit) {
-    const CSS_POPUP = `
-    *.wmk-popup
-    {
-        font-family: 'Open Sans', sans-serif;
+    class MenuProxy {
+        hasContextMenu() { return false; }
+        openContextMenu(menuItems, event) { }
     }
+    WebMolKit.MenuProxy = MenuProxy;
+})(WebMolKit || (WebMolKit = {}));
+var WebMolKit;
+(function (WebMolKit) {
+    const CSS_POPUP = `
+	*.wmk-popup
+	{
+		font-family: 'Open Sans', sans-serif;
+	}
 `;
     class Popup {
         constructor(parent) {
@@ -23701,12 +24021,16 @@ var WebMolKit;
             this.VPADDING = 2;
             this.emptyMsg1 = null;
             this.emptyMsg2 = null;
+            this.proxyClip = null;
         }
         configureDisplay(molWidth, height, emptyMsg1, emptyMsg2) {
             this.molWidth = molWidth;
             this.height = height;
             this.emptyMsg1 = emptyMsg1;
             this.emptyMsg2 = emptyMsg2;
+        }
+        defineClipboard(proxy) {
+            this.proxyClip = proxy;
         }
         getMolecule1() { return this.mol1; }
         getMolecule2() { return this.mol2; }
@@ -23784,7 +24108,7 @@ var WebMolKit;
                 let ctx = node.getContext('2d');
                 ctx.scale(density, density);
                 let midY = Math.round(0.5 * height);
-                var path = WebMolKit.pathRoundedRect(0, midY - 8, arrow, midY + 8, 4);
+                let path = WebMolKit.pathRoundedRect(0, midY - 8, arrow, midY + 8, 4);
                 ctx.fillStyle = col;
                 ctx.fill(path);
                 return node;
@@ -23889,7 +24213,6 @@ var WebMolKit;
                 });
             }
         }
-        ;
         updateLayers() {
             WebMolKit.setVisible(this.normalMol1, this.pressed != 1);
             WebMolKit.setVisible(this.pressedMol1, this.pressed == 1);
@@ -23971,6 +24294,8 @@ var WebMolKit;
         editMolecule(which) {
             let dlg = new WebMolKit.EditCompound(which == 1 ? this.mol1 : this.mol2);
             this.isSketching = true;
+            if (this.proxyClip)
+                dlg.defineClipboard(this.proxyClip);
             dlg.onSave(() => { if (which == 1)
                 this.saveMolecule1(dlg);
             else
@@ -24222,30 +24547,30 @@ var WebMolKit;
 var WebMolKit;
 (function (WebMolKit) {
     const CSS_WEBMENU = `
-    *.wmk-webmenubar
-    {
-        font-family: 'Open Sans', sans-serif;
-        background-color: black;
-        color: white;
-        width: 100%;
-    }
-    *.wmk-webmenudrop
-    {
-        font-family: 'Open Sans', sans-serif;
-        background-color: rgba(0,0,0,0.7);
-        color: white;
-    }
-    *.wmk-webmenuitem
-    {
-        font-family: 'Open Sans', sans-serif;
-        color: white;
-        padding: 0 0.5em 0 0.5em;
-    }
-    *.wmk-webmenuitem:hover
-    {
-        background-color: #0000FF;
-        cursor: pointer;
-    }
+	*.wmk-webmenubar
+	{
+		font-family: 'Open Sans', sans-serif;
+		background-color: black;
+		color: white;
+		width: 100%;
+	}
+	*.wmk-webmenudrop
+	{
+		font-family: 'Open Sans', sans-serif;
+		background-color: rgba(0,0,0,0.7);
+		color: white;
+	}
+	*.wmk-webmenuitem
+	{
+		font-family: 'Open Sans', sans-serif;
+		color: white;
+		padding: 0 0.5em 0 0.5em;
+	}
+	*.wmk-webmenuitem:hover
+	{
+		background-color: #0000FF;
+		cursor: pointer;
+	}
 `;
     class WebMenu extends WebMolKit.Widget {
         constructor(barItems) {
@@ -24324,6 +24649,25 @@ var WebMolKit;
         }
         static toString(doc) {
             return new XMLSerializer().serializeToString(doc);
+        }
+        static toPrettyString(doc) {
+            let xslt = [
+                '<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform">',
+                '  <xsl:strip-space elements="*"/>',
+                '  <xsl:template match="para[content-style][not(text())]">',
+                '    <xsl:value-of select="normalize-space(.)"/>',
+                '  </xsl:template>',
+                '  <xsl:template match="node()|@*">',
+                '    <xsl:copy><xsl:apply-templates select="node()|@*"/></xsl:copy>',
+                '  </xsl:template>',
+                '  <xsl:output indent="yes"/>',
+                '</xsl:stylesheet>',
+            ].join('\n');
+            let xsltDoc = new DOMParser().parseFromString(xslt, 'application/xml');
+            let xsltProc = new XSLTProcessor();
+            xsltProc.importStylesheet(xsltDoc);
+            let resultDoc = xsltProc.transformToDocument(doc);
+            return new XMLSerializer().serializeToString(resultDoc);
         }
         static nodeText(el) {
             let text = '';
@@ -24573,7 +24917,6 @@ var WebMolKit;
             };
             $.get(this.urlBase + files[0], fetchResult);
         }
-        ;
         parseSketchEl() {
             this.assert(!!this.strSketchEl, 'molecule not loaded');
             let mol = WebMolKit.MoleculeStream.readNative(this.strSketchEl);
@@ -24747,7 +25090,7 @@ var WebMolKit;
             const self = this;
             let FILES = ['experiment.ds'];
             let files = FILES;
-            let fetchResult = function (data) {
+            let fetchResult = (data) => {
                 let fn = files.shift();
                 if (fn == 'experiment.ds')
                     self.strExperiment = data;

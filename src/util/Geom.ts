@@ -273,11 +273,12 @@ export class GeomUtil
 		return Math.sqrt(dsq);
 	}
 
-	// for a set of points that are presumed to be normalised about the origin, comes up with an ellipse [w,h] that is optimised to be as large as possible without expanding beyond any of
-	// the closing points; note that the solution is an approximation, but it is at least one that can be carried out in a small number of iterations
-	// NOTE: the min/max X/Y parameters are treated as blockers for the axes; this is because the algorithm uses intersection of ellipse-with-points to determine boundaries, which
-	// unfortunately means that sometimes the ellipse can do on a runaway distortion by going *through* one of the axes; these parameters will prevent this, but they must be precalculated;
-	// ideally the algorithm would calculate an "internal convex hull" to derive these points automatically
+	// for a set of points that are presumed to be normalised about the origin, comes up with an ellipse [w,h] that is optimised to be as large as possible 
+	// without expanding beyond any of the closing points; note that the solution is an approximation, but it is at least one that can be carried out in a 
+	// small number of iterations
+	// NOTE: the min/max X/Y parameters are treated as blockers for the axes; this is because the algorithm uses intersection of ellipse-with-points to determine 
+	// boundaries, which unfortunately means that sometimes the ellipse can do on a runaway distortion by going *through* one of the axes; these parameters will 
+	// prevent this, but they must be precalculated; ideally the algorithm would calculate an "internal convex hull" to derive these points automatically
 	public static fitEllipse(px:number[], py:number[], minX:number, minY:number, maxX:number, maxY:number):number[]
 	{
 		// start with a circle-of-fit, which is the worst case scenario
@@ -320,10 +321,17 @@ export class GeomUtil
 		}
 	
 		return [bestW, bestH];
-	}		
+	}
+
+	// takes a set of points and calculates the convex hull, in the form of an enclosing polygon
+	public static convexHull(x:number[], y:number[], flatness:number):[number[], number[]]
+	{
+		let algo = new QuickHull(x, y, sqr(flatness * 0.1));
+		return [algo.hullX, algo.hullY];
+	}
 }
 
-// implementation of the "Quick Hull" algorithm
+// implementation of the "Quick Hull" algorithm which calculates the convex hull that surrounds a cluster of points
 export class QuickHull
 {
 	private hsz = 0;

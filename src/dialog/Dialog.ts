@@ -73,17 +73,16 @@ export class Dialog
 		
 		let bg = $('<div></div>').appendTo(body);
 		bg.css('width', '100%');
-		bg.css('height', document.documentElement.clientHeight + 'px');
+		bg.css('height', Math.max(document.body.clientHeight, document.body.scrollHeight) + 'px');
 		bg.css('background-color', 'black');
 		bg.css('opacity', 0.8);
 		bg.css('position', 'absolute');
-		bg.css('left', 0);
-		bg.css('top', 0);
+		bg.css('left', '0');
+		bg.css('top', '0');
 		bg.css('z-index', 9999);
 		this.obscureBackground = bg;
 		
 		let pb = $('<div class="wmk-dialog"></div>').appendTo(body);
-
 		pb.css('min-width', this.minPortionWidth + '%');
 		if (this.maximumWidth > 0) pb.css('max-width', this.maximumWidth + 'px');
 		else if (this.maxPortionWidth != null) pb.css('max-width', this.maxPortionWidth + '%');
@@ -94,7 +93,7 @@ export class Dialog
 		pb.css('border', '1px solid black');
 		pb.css('position', 'absolute');
 		pb.css('left', (50 - 0.5 * this.minPortionWidth) + '%');
-		pb.css('top', (document.body.scrollTop + 50) + 'px');
+		pb.css('top', (window.scrollY + 50) + 'px');
 		pb.css('min-height', '20%');   
 		pb.css('z-index', 10000);     
 		this.panelBoundary = pb;

@@ -313,10 +313,10 @@ export class Molecule
 	}
 
 	// uses either explicit or computed number to determine how many hydrogens the atom has; the field for explicit hydrogens takes
-	// absolute preference, if it has its default value of 'unknown', the number is computed by looking up the hydrogen capacity for
+	// absolute preference; if it has its default value of 'unknown', the number is computed by looking up the hydrogen capacity for
 	// the element (most of which are zero), subtracting the total of bond orders, then returning the difference, or zero; the calculation
 	// tends to err on the side of too few, since the concept is just an aid to drawing organic structures, not a cheminformatic attempt
-	// to compensate for 2 1/2 decades of bad file formats
+	// to compensate for 4 decades of bad file formats
 	// (note: returns "implicit"+"explicit", but does NOT count "actual" hydrogens, i.e. those which have their own atom nodes)
 	public atomHydrogens(idx:number):number
 	{
@@ -542,6 +542,13 @@ export class Molecule
 	{
 		this.graph = null;
 		this.graphBond = null;
+		this.ringID = null;
+		this.compID = null;
+		this.ring3 = null;
+		this.ring4 = null;
+		this.ring5 = null;
+		this.ring6 = null;
+		this.ring7 = null;
 	}
 
 	// must be called when _any_ change to the molecule is affected; the transient extension fields are cleared out

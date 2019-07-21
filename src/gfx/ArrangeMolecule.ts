@@ -367,9 +367,9 @@ export class ArrangeMolecule
 		}
 
 		// process double bonds in rings
-		let rings = this.orderedRingList();
+		let rings = this.orderedRingList();		
 		for (let i = 0; i < rings.length; i++)
-		{
+		{			
 			for (let j = 0; j < rings[i].length; j++)
 			{
 				let k = mol.findBond(rings[i][j], rings[i][j < rings[i].length - 1 ? j + 1 : 0]);

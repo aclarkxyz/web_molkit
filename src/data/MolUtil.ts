@@ -784,28 +784,29 @@ export class MolUtil
 	// the adjacent heavy atom has its explicit hydrogen count incremented, unless it is set to auto _and_ after removing
 	// the hydrogen atom, the calculated value is 1
 	// note: the 'force' parameter can be used to make it just chop everything
-	public static stripHydrogens(mol:Molecule, force:boolean = false)
+	public static stripHydrogens(mol:Molecule, force:boolean = false):void
 	{
 		for (let n = mol.numAtoms; n >= 1; n--)
-		{
-			if (mol.atomElement(n) != 'H') continue;
-			if (!force)
-			{
-				if (mol.atomCharge(n) != 0 || mol.atomUnpaired(n) != 0) continue;
-				if (mol.atomIsotope(n) != Molecule.ISOTOPE_NATURAL) continue;
-				if (Vec.notBlank(mol.atomExtra(n)) || Vec.notBlank(mol.atomTransient(n))) continue;
-				if (mol.atomAdjCount(n) != 1) continue;
-				let other = mol.atomAdjList(n)[0];
-				if (mol.atomElement(other) == 'H') continue;
-				let bond = mol.atomAdjBonds(n)[0];
-				if (mol.bondOrder(bond) != 1 || mol.bondType(bond) != Molecule.BONDTYPE_NORMAL) continue;
-				if (mol.atomHExplicit(other) != Molecule.HEXPLICIT_UNKNOWN) continue;
-				if (Molecule.HYVALENCE_EL.indexOf(mol.atomElement(other)) < 0) continue;
-			}
-			
-			mol.deleteAtomAndBonds(n);
-		}
+			if ((force && mol.atomElement(n) == 'H') || this.boringHydrogen(mol, n)) mol.deleteAtomAndBonds(n);
 	}
+	
+	// returns true if a given atom is a hydrogen atom with nothing unusual going on, i.e. fair game for deletion
+	public static boringHydrogen(mol:Molecule, atom:number):boolean
+	{
+		if (mol.atomElement(atom) != 'H') return false;
+		if (mol.atomCharge(atom) != 0 || mol.atomUnpaired(atom) != 0) return false;
+		if (mol.atomIsotope(atom) != Molecule.ISOTOPE_NATURAL) return false;
+		if (mol.atomExtra(atom) != null || mol.atomTransient(atom) != null) return false;
+		if (mol.atomAdjCount(atom) != 1) return false;
+		let other = mol.atomAdjList(atom)[0];
+		if (mol.atomElement(other) == 'H') return false;
+		let bond = mol.atomAdjBonds(atom)[0];
+		if (mol.bondOrder(bond) != 1 || mol.bondType(bond) != Molecule.BONDTYPE_NORMAL) return false;
+		if (mol.atomHExplicit(other) != Molecule.HEXPLICIT_UNKNOWN) return false;
+		if (Molecule.HYVALENCE_EL.indexOf(mol.atomElement(other)) < 0) return false;
+
+		return true;
+	}	
 	
 	// looks through each atom's hydrogen count, and converts the number into actual hydrogen atoms, which are added
 	// to the end of the atom list in the order encountered; returns the number of new atoms appended
