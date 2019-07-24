@@ -1,11 +1,11 @@
 /*
-    WebMolKit
+	WebMolKit
 
-    (c) 2010-2019 Molecular Materials Informatics, Inc.
+	(c) 2010-2019 Molecular Materials Informatics, Inc.
 
-    All rights reserved
+	All rights reserved
 
-    http://molmatinf.com
+	http://molmatinf.com
 
 	[PKG=webmolkit]
 */
@@ -64,7 +64,7 @@ export class DotPath
 	public maskBlock:boolean[]; // atoms that are considered blocking; generally not important for interpretation
 	public paths:DotPathBlock[] = []; // the blocks of dots: note that only bonds that have a different bond order under the dot-scheme are listed
 
-    // ------------------ public methods --------------------
+	// ------------------ public methods --------------------
 
 	// instantiates the DotPath content right away, unless the molecule argument is null
 	constructor(public mol:Molecule)
@@ -75,7 +75,7 @@ export class DotPath
 	// shallow clone
 	public clone():DotPath
 	{
-		var dup = new DotPath(null);
+		let dup = new DotPath(null);
 		dup.mol = this.mol;
 		dup.maskBlock = this.maskBlock;
 		dup.paths = this.paths.slice(0);
@@ -148,10 +148,10 @@ export class DotPath
 			chg /= path.atoms.length;
 			let ccls = fltEqual(chg, 0) ? DotPathCharge.Z0 :
 					   fltEqual(chg, -1) ? DotPathCharge.N1 :
-				       fltEqual(chg, 1) ? DotPathCharge.P1 :
-				       chg > -1 && chg < 0 ? DotPathCharge.N01 :
-				       chg > 0 && chg < 1 ? DotPathCharge.P01 :
-				       chg < -1 ? DotPathCharge.N1X : DotPathCharge.P1X;
+					   fltEqual(chg, 1) ? DotPathCharge.P1 :
+					   chg > -1 && chg < 0 ? DotPathCharge.N01 :
+					   chg > 0 && chg < 1 ? DotPathCharge.P01 :
+					   chg < -1 ? DotPathCharge.N1X : DotPathCharge.P1X;
 			for (let a of path.atoms) classes[a - 1] = ccls;
 		}
 		return classes;
@@ -173,14 +173,14 @@ export class DotPath
 	}
 
 	// for debugging purposes
-	public toString():String
+	public toString():string
 	{
 		let str = 'blocking=' + JSON.stringify(this.maskBlock) + '; paths=' + this.paths.length;
 		for (let p of this.paths) str += ' [' + p.numer + '/' + p.denom + ';a=' + JSON.stringify(p.atoms) + ';b=' + JSON.stringify(p.bonds) + ']';
 		return str;
 	}
 
-    // ------------------ private methods --------------------
+	// ------------------ private methods --------------------
 
 	private calculate():void
 	{
