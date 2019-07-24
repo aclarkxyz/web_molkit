@@ -214,6 +214,7 @@ export class DotPath
 		// main groups which could potentially be blocking if they are neutral and have just sigma bonds that add up to the regular octet valence
 		let COULD_BLOCK =
 		[
+			Chemistry.ELEMENT_H,
 			Chemistry.ELEMENT_B,  Chemistry.ELEMENT_C,  Chemistry.ELEMENT_N,  Chemistry.ELEMENT_O,  Chemistry.ELEMENT_F,
 			Chemistry.ELEMENT_Al, Chemistry.ELEMENT_Si, Chemistry.ELEMENT_P,  Chemistry.ELEMENT_S,  Chemistry.ELEMENT_Cl,
 			Chemistry.ELEMENT_Ga, Chemistry.ELEMENT_Ge, Chemistry.ELEMENT_As, Chemistry.ELEMENT_Se, Chemistry.ELEMENT_Br,
@@ -238,8 +239,9 @@ export class DotPath
 			if (COULD_BLOCK.indexOf(atno) < 0) continue;
 			if (bondsum[n] != Chemistry.ELEMENT_BONDING[atno]) continue;
 
-			// if carbon, it's sp3 and definitely blocking (unless it has two pi-neighbours); other atoms only maybe
 			maskMaybe[n] = true;
+
+			// if carbon, it's sp3 and definitely blocking (unless it has two pi-neighbours); other atoms only maybe
 			if (atno == Chemistry.ELEMENT_C)
 			{
 				let adjpi = 0;
@@ -250,6 +252,11 @@ export class DotPath
 					if (COULD_BLOCK.indexOf(mol.atomicNumber(adj)) < 0) hasMetal = true;
 				}
 				if (adjpi < 2 && !hasMetal) this.maskBlock[n] = true;
+			}
+			// ... or if hydrogen, have already established that there's no interesting valence, so it's blocking
+			else if (atno == Chemistry.ELEMENT_H)
+			{
+				this.maskBlock[n] = true;
 			}
 		}
 
