@@ -207,12 +207,22 @@ export class DotPath
 			bondsum[bto - 1] += bo;
 		}
 
+		// "implied pi" atoms are those which are wedged between two or more pi atoms; this is extended out just one iteration
+		let impliedPi = Vec.booleanArray(false, na);
+		for (let n = 1; n <= na; n++) if (!pibonded[n - 1])
+		{
+			let adjpi = 0;
+			for (let adj of mol.atomAdjList(n)) if (pibonded[adj - 1]) adjpi++;
+			if (adjpi >= 2) impliedPi[n - 1] = true;
+		}
+		for (let n = 0; n < na; n++) if (impliedPi[n]) pibonded[n] = true;
+
 		// first pass: find things that are definitely blocking, or maybe blocking
 		this.maskBlock = Vec.booleanArray(false, na);
 		let maskMaybe = Vec.booleanArray(false, na); // might be blocking, as long as neighbours also maybe
 
 		// main groups which could potentially be blocking if they are neutral and have just sigma bonds that add up to the regular octet valence
-		let COULD_BLOCK =
+		const COULD_BLOCK =
 		[
 			Chemistry.ELEMENT_H,
 			Chemistry.ELEMENT_B,  Chemistry.ELEMENT_C,  Chemistry.ELEMENT_N,  Chemistry.ELEMENT_O,  Chemistry.ELEMENT_F,
@@ -222,7 +232,25 @@ export class DotPath
 			Chemistry.ELEMENT_Tl, Chemistry.ELEMENT_Pb, Chemistry.ELEMENT_Bi, Chemistry.ELEMENT_Po, Chemistry.ELEMENT_At,
 		];
 
-		for (let n = 0; n < na; n++)
+		// acids/bases: whenever one is paired with the other, it's not a blocking possibility
+		const ACIDS =
+		[
+			Chemistry.ELEMENT_B,  
+			Chemistry.ELEMENT_Al, Chemistry.ELEMENT_Si, 
+			Chemistry.ELEMENT_Ga, Chemistry.ELEMENT_Ge, 
+			Chemistry.ELEMENT_In, Chemistry.ELEMENT_Sn, 
+			Chemistry.ELEMENT_Tl, Chemistry.ELEMENT_Pb,
+		];
+		const BASES =
+		[
+			Chemistry.ELEMENT_N,  Chemistry.ELEMENT_O,  Chemistry.ELEMENT_F, 
+			Chemistry.ELEMENT_P,  Chemistry.ELEMENT_S,  Chemistry.ELEMENT_Cl,
+			Chemistry.ELEMENT_As, Chemistry.ELEMENT_Se, Chemistry.ELEMENT_Br,
+			Chemistry.ELEMENT_Sb, Chemistry.ELEMENT_Te, Chemistry.ELEMENT_I, 
+			Chemistry.ELEMENT_Bi, Chemistry.ELEMENT_Po, Chemistry.ELEMENT_At,
+		];
+
+		skip: for (let n = 0; n < na; n++)
 		{
 			const a = n + 1;
 
@@ -239,19 +267,23 @@ export class DotPath
 			if (COULD_BLOCK.indexOf(atno) < 0) continue;
 			if (bondsum[n] != Chemistry.ELEMENT_BONDING[atno]) continue;
 
+			if (ACIDS.indexOf(atno) >= 0)
+			{
+				for (let adj of mol.atomAdjList(a)) if (BASES.indexOf(mol.atomicNumber(adj)) >= 0) continue skip;
+			}
+			if (BASES.indexOf(atno) >= 0)
+			{
+				for (let adj of mol.atomAdjList(a)) if (ACIDS.indexOf(mol.atomicNumber(adj)) >= 0) continue skip;
+			}
+
 			maskMaybe[n] = true;
 
 			// if carbon, it's sp3 and definitely blocking (unless it has two pi-neighbours); other atoms only maybe
 			if (atno == Chemistry.ELEMENT_C)
 			{
-				let adjpi = 0;
 				let hasMetal = false;
-				for (let adj of mol.atomAdjList(a))
-				{
-					if (pibonded[adj - 1]) adjpi++;
-					if (COULD_BLOCK.indexOf(mol.atomicNumber(adj)) < 0) hasMetal = true;
-				}
-				if (adjpi < 2 && !hasMetal) this.maskBlock[n] = true;
+				for (let adj of mol.atomAdjList(a)) if (COULD_BLOCK.indexOf(mol.atomicNumber(adj)) < 0) hasMetal = true;
+				if (!hasMetal) this.maskBlock[n] = true;
 			}
 			// ... or if hydrogen, have already established that there's no interesting valence, so it's blocking
 			else if (atno == Chemistry.ELEMENT_H)
