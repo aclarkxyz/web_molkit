@@ -12,6 +12,7 @@
 
 ///<reference path='Molecule.ts'/>
 ///<reference path='MolUtil.ts'/>
+///<reference path='ForeignMolecule.ts'/>
 ///<reference path='Graph.ts'/>
 ///<reference path='Chemistry.ts'/>
 ///<reference path='../util/util.ts'/>
@@ -205,6 +206,13 @@ export class DotPath
 			}
 			bondsum[bfr - 1] += bo;
 			bondsum[bto - 1] += bo;
+
+			// respect externally indicated aromaticity
+			if (mol.bondTransient(n).indexOf(ForeignMoleculeExtra.BOND_AROMATIC) >= 0)
+			{
+				pibonded[bfr - 1] = true;
+				pibonded[bto - 1] = true;
+			}
 		}
 
 		// "implied pi" atoms are those which are wedged between two or more pi atoms; this is extended out just one iteration
@@ -256,7 +264,7 @@ export class DotPath
 
 			// must be all single bonds, uncharged, non-radical, in the list of potentially block elements, and have a bonding sum equal
 			// to the valence
-			if (nonsingle[n]) continue;
+			if (nonsingle[n] || pibonded[n]) continue;
 			if (mol.atomCharge(a) != 0 || mol.atomUnpaired(a) != 0) continue;
 			const atno = mol.atomicNumber(a);
 			if (atno == 0)
@@ -291,6 +299,50 @@ export class DotPath
 				this.maskBlock[n] = true;
 			}
 		}
+/*
+		skip: for (int n = 0; n < na; n++)
+		{
+			final int a = n + 1;
+			
+			// must be all single bonds, uncharged, non-radical, in the list of potentially block elements, and have a bonding sum equal 
+			// to the valence
+			if (nonsingle[n] || pibonded[n]) continue;
+			if (mol.atomCharge(a) != 0 || mol.atomUnpaired(a) != 0) continue;
+			final int atno = mol.atomicNumber(a);
+			if (atno == 0)
+			{
+				maskBlock[n] = true;
+				continue;
+			}
+			if (Vec.indexOf(atno, COULD_BLOCK) < 0) continue;
+			if (bondsum[n] != Chemistry.ELEMENT_BONDING[atno]) continue;
+			
+			if (Vec.indexOf(atno, ACIDS) >= 0)
+			{
+				for (int adj : mol.atomAdjList(a)) if (Vec.indexOf(mol.atomicNumber(adj), BASES) >= 0) continue skip;
+			}
+			if (Vec.indexOf(atno, BASES) >= 0)
+			{
+				for (int adj : mol.atomAdjList(a)) if (Vec.indexOf(mol.atomicNumber(adj), ACIDS) >= 0) continue skip;
+			}
+			
+			maskMaybe[n] = true;
+
+			// if carbon, it's sp3 and definitely blocking (unless it has two pi-neighbours); other atoms only maybe
+			if (atno == Chemistry.ELEMENT_C)
+			{
+				boolean hasMetal = false;
+				for (int adj : mol.atomAdjList(a)) if (Vec.indexOf(mol.atomicNumber(adj), COULD_BLOCK) < 0) hasMetal = true;
+				if (!hasMetal) maskBlock[n] = true;
+			}
+			// ... or if hydrogen, have already established that there's no interesting valence, so it's blocking
+			else if (atno == Chemistry.ELEMENT_H)
+			{
+				maskBlock[n] = true;
+			}
+		}
+*/
+
 
 		// any "maybe" atom that is surrounded by other maybe atoms gets approved as a blocking atom
 		// note: this is non-chaining; might need to reconsider this, i.e. make maybe-to-not propagate

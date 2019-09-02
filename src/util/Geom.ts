@@ -329,6 +329,13 @@ export class GeomUtil
 		let algo = new QuickHull(x, y, sqr(flatness * 0.1));
 		return [algo.hullX, algo.hullY];
 	}
+
+	// takes a set of points and calculates the outline, in the form of an enclosing polygon, using the "rolling ball" algorithm
+	public static outlinePolygon(x:number[], y:number[], diameter:number):[number[], number[]]
+	{
+		let algo = new RollingBall(x, y, diameter);
+		return algo.sequenceXY();
+	}
 }
 
 // implementation of the "Quick Hull" algorithm which calculates the convex hull that surrounds a cluster of points
@@ -440,6 +447,73 @@ export class QuickHull
 			}
 		}
 		return maxPos;
+	}
+}
+
+// implementation of the "Rolling Ball" algorithm which traces the outline of a group of points using a granularity threshold (the "ball diameter"); note that the points must
+// be dense enough so that the "ball" can be rolled around the outside without "falling in", in which case the result will be null
+export class RollingBall
+{
+	public sequence:number[] = []; // the indices tracing the outline; set to null if it failed
+
+	constructor(public x:number[], public y:number[], diameter:number)
+	{
+		const sz = x.length;
+		const threshSq = diameter * diameter;
+
+		let first = Vec.idxMax(x), latest = first;
+		let direction = 0.0; // radians (pointing to the right)
+		let visited = Vec.booleanArray(false, sz);
+		this.sequence.push(first);
+
+		let roll = ():number =>
+		{
+			let bestIdx = -1;
+			let bestDelta = 0, bestTheta = 0;
+			for (let n = 0; n < sz; n++) if (n != latest && !visited[n])
+			{
+				let dx = x[n] - x[latest], dy = y[n] - y[latest];
+				let dsq = norm2_xy(dx, dy);
+				if (dsq == 0 || dsq > threshSq) continue;
+				let theta = Math.atan2(dy, dx), delta = angleDiffPos(theta, direction);
+				if (bestIdx < 0 || delta < bestDelta)
+				{
+					bestIdx = n;
+					bestDelta = delta;
+					bestTheta = theta;
+				}
+			}
+			if (bestIdx < 0) return -1;
+			
+			direction = angleNorm(bestTheta - 0.5 * Math.PI);
+			visited[bestIdx] = true;
+			return bestIdx;
+		};
+
+		while (true)
+		{
+			let next = roll();
+			if (next < 0) {this.sequence = null; return;} // failure
+			if (next == first) break;
+			this.sequence.push(next);
+			latest = next;
+		}
+	}
+
+	// formulate the results in terms of coordinates, as an alternative to just looking at the sequence indices
+	public sequencePos():Pos[]
+	{
+		if (!this.sequence) return null;
+		let posList:Pos[] = [];
+		for (let n of this.sequence) posList.push(new Pos(this.x[n], this.y[n]));
+		return posList;
+	}
+	public sequenceXY():[number[], number[]]
+	{
+		if (!this.sequence) return [null, null];
+		let px:number[] = [], py:number[] = [];
+		for (let n of this.sequence) {px.push(this.x[n]); py.push(this.y[n]);}
+		return [px, py];
 	}
 }
 
