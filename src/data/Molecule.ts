@@ -219,7 +219,7 @@ export class Molecule
 	}
 
 	public swapAtoms(a1:number, a2:number):void
-	{
+	{		
 		let a = this.atoms[a1 - 1];
 		this.atoms[a1 - 1] = this.atoms[a2 - 1];
 		this.atoms[a2 - 1] = a;
@@ -232,7 +232,6 @@ export class Molecule
 		}
 
 		this.trashGraph();
-		this.trashTransient();
 	}
 
 	public addBond(from:number, to:number, order:number, type:number = Molecule.BONDTYPE_NORMAL):number

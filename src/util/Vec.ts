@@ -112,25 +112,25 @@ export class Vec
 	public static booleanArray(val:boolean, sz:number):boolean[]
 	{
 		let arr:boolean[] = new Array(sz);
-		for (let n = sz - 1; n >= 0; n--) arr[n] = val;
+		arr.fill(val);
 		return arr;
 	}
 	public static numberArray(val:number, sz:number):number[]
 	{
 		let arr:number[] = new Array(sz);
-		for (let n = sz - 1; n >= 0; n--) arr[n] = val;
+		arr.fill(val);
 		return arr;
 	}
 	public static stringArray(val:string, sz:number):string[]
 	{
 		let arr:string[] = new Array(sz);
-		for (let n = sz - 1; n >= 0; n--) arr[n] = val;
+		arr.fill(val);
 		return arr;
 	}
 	public static anyArray(val:any, sz:number):any[]
 	{
 		let arr:any[] = new Array(sz);
-		for (let n = sz - 1; n >= 0; n--) arr[n] = val;
+		arr.fill(val);
 		return arr;
 	}
 

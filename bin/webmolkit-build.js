@@ -93,26 +93,22 @@ var WebMolKit;
         }
         static booleanArray(val, sz) {
             let arr = new Array(sz);
-            for (let n = sz - 1; n >= 0; n--)
-                arr[n] = val;
+            arr.fill(val);
             return arr;
         }
         static numberArray(val, sz) {
             let arr = new Array(sz);
-            for (let n = sz - 1; n >= 0; n--)
-                arr[n] = val;
+            arr.fill(val);
             return arr;
         }
         static stringArray(val, sz) {
             let arr = new Array(sz);
-            for (let n = sz - 1; n >= 0; n--)
-                arr[n] = val;
+            arr.fill(val);
             return arr;
         }
         static anyArray(val, sz) {
             let arr = new Array(sz);
-            for (let n = sz - 1; n >= 0; n--)
-                arr[n] = val;
+            arr.fill(val);
             return arr;
         }
         static min(arr) {
@@ -1333,6 +1329,463 @@ var WebMolKit;
 })(WebMolKit || (WebMolKit = {}));
 var WebMolKit;
 (function (WebMolKit) {
+    const EPSILON = Math.pow(2, -52);
+    class Triangulation2D {
+        constructor(px, py) {
+            this.px = px;
+            this.py = py;
+            this.numTriangles = 0;
+            this.edgeStack = WebMolKit.Vec.numberArray(0, 512);
+            this.hull = null;
+            this.px = px;
+            this.py = py;
+            this.sz = px.length;
+            let maxTriangles = Math.max(2 * this.sz - 5, 0);
+            this.triangles = new Array(maxTriangles * 3);
+            this.halfedges = new Array(maxTriangles * 3);
+            this.hashSize = Math.ceil(Math.sqrt(this.sz));
+            this.hullPrev = new Array(this.sz);
+            this.hullNext = new Array(this.sz);
+            this.hullTri = new Array(this.sz);
+            this.hullHash = WebMolKit.Vec.numberArray(-1, this.hashSize);
+            this.ids = new Array(this.sz);
+            this.dists = new Array(this.sz);
+            this.update();
+        }
+        trimConcave(threshold) {
+            const threshSq = WebMolKit.sqr(threshold);
+            const { sz, px, py } = this;
+            let tri = this.triangles.slice(0);
+            let edgeCount = new Map();
+            while (true) {
+                const ntri = tri.length / 3;
+                edgeCount.clear();
+                for (let n = 0, i = 0; n < ntri; n++, i += 3) {
+                    const e1 = sz * Math.min(tri[i + 0], tri[i + 1]) + Math.max(tri[i + 0], tri[i + 1]);
+                    const e2 = sz * Math.min(tri[i + 0], tri[i + 2]) + Math.max(tri[i + 0], tri[i + 2]);
+                    const e3 = sz * Math.min(tri[i + 1], tri[i + 2]) + Math.max(tri[i + 1], tri[i + 2]);
+                    edgeCount.set(e1, (edgeCount.get(e1) || 0) + 1);
+                    edgeCount.set(e2, (edgeCount.get(e2) || 0) + 1);
+                    edgeCount.set(e3, (edgeCount.get(e3) || 0) + 1);
+                }
+                let mask = WebMolKit.Vec.booleanArray(true, ntri);
+                for (let n = 0, i = 0; n < ntri; n++, i += 3) {
+                    const i1 = tri[i], i2 = tri[i + 1], i3 = tri[i + 2];
+                    const e1 = sz * Math.min(i1, i2) + Math.max(i1, i2);
+                    const e2 = sz * Math.min(i1, i3) + Math.max(i1, i3);
+                    const e3 = sz * Math.min(i2, i3) + Math.max(i2, i3);
+                    const c1 = edgeCount.get(e1), c2 = edgeCount.get(e2), c3 = edgeCount.get(e3);
+                    if (c1 == 1 && c2 != 1 && c3 != 1)
+                        mask[n] = WebMolKit.norm2_xy(px[i1] - px[i2], py[i1] - py[i2]) < threshSq;
+                    else if (c1 != 1 && c2 == 1 && c3 != 1)
+                        mask[n] = WebMolKit.norm2_xy(px[i1] - px[i3], py[i1] - py[i3]) < threshSq;
+                    else if (c1 != 1 && c2 != 1 && c3 == 1)
+                        mask[n] = WebMolKit.norm2_xy(px[i2] - px[i3], py[i2] - py[i3]) < threshSq;
+                }
+                if (WebMolKit.Vec.allTrue(mask))
+                    break;
+                let rep = new Array(WebMolKit.Vec.maskCount(mask) * 3);
+                for (let n = 0, i = 0, j = 0; n < ntri; n++, i += 3)
+                    if (mask[n]) {
+                        rep[j++] = tri[i];
+                        rep[j++] = tri[i + 1];
+                        rep[j++] = tri[i + 2];
+                    }
+                tri = rep;
+            }
+            return tri;
+        }
+        traceOutline(tri) {
+            const ntri = tri.length / 3;
+            const { sz, px, py } = this;
+            let edgeCount = new Map();
+            for (let n = 0, i = 0; n < ntri; n++, i += 3) {
+                const e1 = sz * Math.min(tri[i + 0], tri[i + 1]) + Math.max(tri[i + 0], tri[i + 1]);
+                const e2 = sz * Math.min(tri[i + 0], tri[i + 2]) + Math.max(tri[i + 0], tri[i + 2]);
+                const e3 = sz * Math.min(tri[i + 1], tri[i + 2]) + Math.max(tri[i + 1], tri[i + 2]);
+                edgeCount.set(e1, (edgeCount.get(e1) || 0) + 1);
+                edgeCount.set(e2, (edgeCount.get(e2) || 0) + 1);
+                edgeCount.set(e3, (edgeCount.get(e3) || 0) + 1);
+            }
+            var edges = [];
+            ;
+            for (let entry of edgeCount.entries())
+                if (entry[1] == 1) {
+                    const e = entry[0];
+                    const i1 = e / sz, i2 = e % sz;
+                    edges.push(i1);
+                    edges.push(i2);
+                }
+            const idx = WebMolKit.Vec.uniqueUnstable(edges);
+            const isz = idx.length;
+            const idxMap = new Map();
+            for (let n = 0; n < isz; n++)
+                idxMap.set(idx[n], n);
+            let g1 = WebMolKit.Vec.numberArray(-1, isz), g2 = WebMolKit.Vec.numberArray(-1, isz);
+            for (let n = 0; n < edges.length; n += 2) {
+                const i1 = idxMap.get(edges[n]), i2 = idxMap.get(edges[n + 1]);
+                if (g1[i1] < 0)
+                    g1[i1] = i2;
+                else
+                    g2[i1] = i2;
+                if (g1[i2] < 0)
+                    g1[i2] = i1;
+                else
+                    g2[i2] = i1;
+            }
+            let mask = WebMolKit.Vec.booleanArray(false, isz);
+            let sequence = new Array(isz);
+            sequence[0] = 0;
+            mask[0] = true;
+            for (let n = 1; n < isz; n++) {
+                const i = sequence[n - 1];
+                if (!mask[g1[i]])
+                    sequence[n] = g1[i];
+                else
+                    sequence[n] = g2[i];
+                mask[sequence[n]] = true;
+            }
+            return WebMolKit.Vec.idxGet(idx, sequence);
+        }
+        update() {
+            const sz = this.sz;
+            let { px, py, ids, dists, triangles, halfedges } = this;
+            const minX = WebMolKit.Vec.min(px), minY = WebMolKit.Vec.min(py);
+            const maxX = WebMolKit.Vec.max(px), maxY = WebMolKit.Vec.max(py);
+            for (let n = 0; n < sz; n++)
+                ids[n] = n;
+            this.centreX = 0.5 * (minX + maxX);
+            this.centreY = 0.5 * (minY + maxY);
+            let i0 = 0, i1 = 0, i2 = 0;
+            let minDist = Number.POSITIVE_INFINITY;
+            for (let n = 0; n < sz; n++) {
+                const d = WebMolKit.norm_xy(this.centreX - px[n], this.centreY - py[n]);
+                if (d < minDist) {
+                    i0 = n;
+                    minDist = d;
+                }
+            }
+            const i0x = px[i0], i0y = py[i0];
+            minDist = Number.POSITIVE_INFINITY;
+            for (let n = 0; n < sz; n++) {
+                if (n == i0)
+                    continue;
+                const d = WebMolKit.norm_xy(i0x - px[n], i0y - py[n]);
+                if (d < minDist && d > 0) {
+                    i1 = n;
+                    minDist = d;
+                }
+            }
+            let i1x = px[i1], i1y = py[i1];
+            let minRadius = Number.POSITIVE_INFINITY;
+            for (let n = 0; n < sz; n++) {
+                if (n == i0 || n == i1)
+                    continue;
+                let r = this.circumRadius(i0x, i0y, i1x, i1y, px[n], py[n]);
+                if (r < minRadius) {
+                    i2 = n;
+                    minRadius = r;
+                }
+            }
+            let i2x = px[i2], i2y = py[i2];
+            if (!Number.isFinite(minRadius)) {
+                for (let n = 0; n < sz; n++) {
+                    dists[n] = px[n] - px[0];
+                    if (dists[n] == 0)
+                        dists[n] = py[n] - py[0];
+                }
+                this.quicksort(0, sz - 1);
+                let hull = new Array(sz);
+                let j = 0;
+                let d0 = Number.NEGATIVE_INFINITY;
+                for (let n = 0; n < sz; n++) {
+                    let id = ids[n];
+                    if (dists[id] > d0) {
+                        hull[j++] = id;
+                        d0 = dists[id];
+                    }
+                }
+                this.hull = hull.slice(0, j);
+                triangles = [];
+                halfedges = [];
+                return;
+            }
+            if (this.orient(i0x, i0y, i1x, i1y, i2x, i2y)) {
+                let i = i1;
+                let x = i1x, y = i1y;
+                i1 = i2;
+                i1x = i2x;
+                i1y = i2y;
+                i2 = i;
+                i2x = x;
+                i2y = y;
+            }
+            this.pickCircumCentre(i0x, i0y, i1x, i1y, i2x, i2y);
+            for (let n = 0; n < sz; n++)
+                dists[n] = WebMolKit.norm_xy(px[n] - this.centreX, py[n] - this.centreY);
+            this.quicksort(0, sz - 1);
+            this.hullStart = i0;
+            let hullSize = 3;
+            const { hullNext, hullPrev, hullTri, hullHash, hashKey, hashSize } = this;
+            hullNext[i0] = hullPrev[i2] = i1;
+            hullNext[i1] = hullPrev[i0] = i2;
+            hullNext[i2] = hullPrev[i1] = i0;
+            hullTri[i0] = 0;
+            hullTri[i1] = 1;
+            hullTri[i2] = 2;
+            hullHash.fill(-1);
+            hullHash[hashKey(i0x, i0y)] = i0;
+            hullHash[hashKey(i1x, i1y)] = i1;
+            hullHash[hashKey(i2x, i2y)] = i2;
+            this.numTriangles = 0;
+            this.addTriangle(i0, i1, i2, -1, -1, -1);
+            let xp = 0, yp = 0;
+            for (let k = 0; k < ids.length; k++) {
+                let i = ids[k];
+                let x = px[i], y = py[i];
+                if (k > 0 && Math.abs(x - xp) <= EPSILON && Math.abs(y - yp) <= EPSILON)
+                    continue;
+                xp = x;
+                yp = y;
+                if (i == i0 || i == i1 || i == i2)
+                    continue;
+                let start = 0;
+                for (let j = 0, key = hashKey(x, y); j < hashSize; j++) {
+                    start = hullHash[(key + j) % hashSize];
+                    if (start >= 0 && start != hullNext[start])
+                        break;
+                }
+                start = hullPrev[start];
+                let e = start, q = hullNext[e];
+                while (!this.orient(x, y, px[e], py[e], px[q], py[q])) {
+                    e = q;
+                    if (e == start) {
+                        e = -1;
+                        break;
+                    }
+                    q = hullNext[e];
+                }
+                if (e < 0)
+                    continue;
+                let t = this.addTriangle(e, i, hullNext[e], -1, -1, hullTri[e]);
+                hullTri[i] = this.legalise(t + 2);
+                hullTri[e] = t;
+                hullSize++;
+                let n = hullNext[e];
+                q = hullNext[n];
+                while (this.orient(x, y, px[n], py[n], px[q], py[q])) {
+                    t = this.addTriangle(n, i, q, hullTri[i], -1, hullTri[n]);
+                    hullTri[i] = this.legalise(t + 2);
+                    hullNext[n] = n;
+                    hullSize--;
+                    n = q;
+                    q = hullNext[n];
+                }
+                if (e == start) {
+                    q = hullPrev[e];
+                    while (this.orient(x, y, px[q], py[q], px[e], py[e])) {
+                        t = this.addTriangle(q, i, e, -1, hullTri[e], hullTri[q]);
+                        this.legalise(t + 2);
+                        hullTri[q] = t;
+                        hullNext[e] = e;
+                        hullSize--;
+                        e = q;
+                        q = hullPrev[e];
+                    }
+                }
+                this.hullStart = hullPrev[i] = e;
+                hullNext[e] = hullPrev[n] = i;
+                hullNext[i] = n;
+                hullHash[hashKey(x, y)] = i;
+                hullHash[hashKey(px[e], py[e])] = e;
+            }
+            this.hull = new Array(hullSize);
+            for (let n = 0, e = this.hullStart; n < hullSize; n++) {
+                this.hull[n] = e;
+                e = hullNext[e];
+            }
+            this.triangles = triangles.slice(0, this.numTriangles);
+            this.halfedges = halfedges.slice(0, this.numTriangles);
+        }
+        hashKey(x, y) {
+            return Math.floor(this.pseudoAngle(x - this.centreX, y - this.centreY) * this.hashSize) % this.hashSize;
+        }
+        legalise(a) {
+            let i = 0;
+            let ar = 0;
+            while (true) {
+                let b = this.halfedges[a];
+                let a0 = a - a % 3;
+                ar = a0 + (a + 2) % 3;
+                if (b < 0) {
+                    if (i == 0)
+                        break;
+                    a = this.edgeStack[--i];
+                    continue;
+                }
+                const b0 = b - b % 3;
+                const al = a0 + (a + 1) % 3;
+                const bl = b0 + (b + 2) % 3;
+                const { px, py, triangles, halfedges } = this;
+                const p0 = triangles[ar];
+                const pr = triangles[a];
+                const pl = triangles[al];
+                const p1 = triangles[bl];
+                let illegal = this.inCircle(px[p0], py[p0], px[pr], py[pr], px[pl], py[pl], px[p1], py[p1]);
+                if (illegal) {
+                    this.triangles[a] = p1;
+                    this.triangles[b] = p0;
+                    const hbl = halfedges[bl];
+                    if (hbl < 0) {
+                        let e = this.hullStart;
+                        do {
+                            if (this.hullTri[e] == bl) {
+                                this.hullTri[e] = a;
+                                break;
+                            }
+                            e = this.hullPrev[e];
+                        } while (e != this.hullStart);
+                    }
+                    this.link(a, hbl);
+                    this.link(b, halfedges[ar]);
+                    this.link(ar, bl);
+                    const br = b0 + (b + 1) % 3;
+                    if (i < this.edgeStack.length)
+                        this.edgeStack[i++] = br;
+                }
+                else {
+                    if (i == 0)
+                        break;
+                    a = this.edgeStack[--i];
+                }
+            }
+            return ar;
+        }
+        link(a, b) {
+            this.halfedges[a] = b;
+            if (b >= 0)
+                this.halfedges[b] = a;
+        }
+        addTriangle(i0, i1, i2, a, b, c) {
+            const t = this.numTriangles;
+            this.triangles[t] = i0;
+            this.triangles[t + 1] = i1;
+            this.triangles[t + 2] = i2;
+            this.link(t, a);
+            this.link(t + 1, b);
+            this.link(t + 2, c);
+            this.numTriangles += 3;
+            return t;
+        }
+        pseudoAngle(dx, dy) {
+            const p = dx / (Math.abs(dx) + Math.abs(dy));
+            return (dy > 0 ? 3 - p : 1 + p) / 4;
+        }
+        orientIfSure(px, py, rx, ry, qx, qy) {
+            const l = (ry - py) * (qx - px);
+            const r = (rx - px) * (qy - py);
+            return Math.abs(l - r) >= 3.3306690738754716e-16 * Math.abs(l + r) ? l - r : 0;
+        }
+        orient(rx, ry, qx, qy, px, py) {
+            let o = this.orientIfSure(px, py, rx, ry, qx, qy);
+            if (o != 0)
+                return o < 0;
+            o = this.orientIfSure(rx, ry, qx, qy, px, py);
+            if (o != 0)
+                return o < 0;
+            o = this.orientIfSure(qx, qy, px, py, rx, ry);
+            return o < 0;
+        }
+        inCircle(ax, ay, bx, by, cx, cy, px, py) {
+            const dx = ax - px;
+            const dy = ay - py;
+            const ex = bx - px;
+            const ey = by - py;
+            const fx = cx - px;
+            const fy = cy - py;
+            const ap = dx * dx + dy * dy;
+            const bp = ex * ex + ey * ey;
+            const cp = fx * fx + fy * fy;
+            return dx * (ey * cp - bp * fy) -
+                dy * (ex * cp - bp * fx) +
+                ap * (ex * fy - ey * fx) < 0;
+        }
+        circumRadius(ax, ay, bx, by, cx, cy) {
+            const dx = bx - ax;
+            const dy = by - ay;
+            const ex = cx - ax;
+            const ey = cy - ay;
+            const bl = dx * dx + dy * dy;
+            const cl = ex * ex + ey * ey;
+            const d = 0.5 / (dx * ey - dy * ex);
+            const x = (ey * bl - dy * cl) * d;
+            const y = (dx * cl - ex * bl) * d;
+            return x * x + y * y;
+        }
+        pickCircumCentre(ax, ay, bx, by, cx, cy) {
+            const dx = bx - ax;
+            const dy = by - ay;
+            const ex = cx - ax;
+            const ey = cy - ay;
+            const bl = dx * dx + dy * dy;
+            const cl = ex * ex + ey * ey;
+            const d = 0.5 / (dx * ey - dy * ex);
+            this.centreX = ax + (ey * bl - dy * cl) * d;
+            this.centreY = ay + (dx * cl - ex * bl) * d;
+        }
+        quicksort(left, right) {
+            const { ids, dists } = this;
+            if (right - left <= 20) {
+                for (let i = left + 1; i <= right; i++) {
+                    const temp = ids[i];
+                    const tempDist = dists[temp];
+                    let j = i - 1;
+                    while (j >= left && dists[ids[j]] > tempDist)
+                        ids[j + 1] = ids[j--];
+                    ids[j + 1] = temp;
+                }
+            }
+            else {
+                let median = (left + right) >> 1;
+                let i = left + 1;
+                let j = right;
+                WebMolKit.Vec.swap(ids, median, i);
+                if (dists[ids[left]] > dists[ids[right]])
+                    WebMolKit.Vec.swap(ids, left, right);
+                if (dists[ids[i]] > dists[ids[right]])
+                    WebMolKit.Vec.swap(ids, i, right);
+                if (dists[ids[left]] > dists[ids[i]])
+                    WebMolKit.Vec.swap(ids, left, i);
+                let temp = ids[i];
+                const tempDist = dists[temp];
+                while (true) {
+                    do
+                        i++;
+                    while (dists[ids[i]] < tempDist);
+                    do
+                        j--;
+                    while (dists[ids[j]] > tempDist);
+                    if (j < i)
+                        break;
+                    WebMolKit.Vec.swap(ids, i, j);
+                }
+                ids[left + 1] = ids[j];
+                ids[j] = temp;
+                if (right - i + 1 >= j - left) {
+                    this.quicksort(i, right);
+                    this.quicksort(left, j - 1);
+                }
+                else {
+                    this.quicksort(left, j - 1);
+                    this.quicksort(i, right);
+                }
+            }
+        }
+    }
+    WebMolKit.Triangulation2D = Triangulation2D;
+})(WebMolKit || (WebMolKit = {}));
+var WebMolKit;
+(function (WebMolKit) {
     class GeomUtil {
         static pointInPolygon(x, y, px, py) {
             if (x < WebMolKit.minArray(px) || x > WebMolKit.maxArray(px) || y < WebMolKit.minArray(py) || y > WebMolKit.maxArray(py))
@@ -1578,6 +2031,12 @@ var WebMolKit;
             let algo = new QuickHull(x, y, WebMolKit.sqr(flatness * 0.1));
             return [algo.hullX, algo.hullY];
         }
+        static outlinePolygon(x, y, diameter) {
+            let del = new WebMolKit.Triangulation2D(x, y);
+            let concave = del.trimConcave(diameter);
+            let idx = del.traceOutline(concave);
+            return [WebMolKit.Vec.idxGet(x, idx), WebMolKit.Vec.idxGet(y, idx)];
+        }
     }
     WebMolKit.GeomUtil = GeomUtil;
     class QuickHull {
@@ -1667,6 +2126,71 @@ var WebMolKit;
         }
     }
     WebMolKit.QuickHull = QuickHull;
+    class RollingBall {
+        constructor(x, y, diameter) {
+            this.x = x;
+            this.y = y;
+            this.sequence = [];
+            const sz = x.length;
+            const threshSq = diameter * diameter;
+            let first = WebMolKit.Vec.idxMax(x), latest = first;
+            let direction = 0.0;
+            let visited = WebMolKit.Vec.booleanArray(false, sz);
+            this.sequence.push(first);
+            let roll = () => {
+                let bestIdx = -1;
+                let bestDelta = 0, bestTheta = 0;
+                for (let n = 0; n < sz; n++)
+                    if (n != latest && !visited[n]) {
+                        let dx = x[n] - x[latest], dy = y[n] - y[latest];
+                        let dsq = WebMolKit.norm2_xy(dx, dy);
+                        if (dsq == 0 || dsq > threshSq)
+                            continue;
+                        let theta = Math.atan2(dy, dx), delta = WebMolKit.angleDiffPos(theta, direction);
+                        if (bestIdx < 0 || delta < bestDelta) {
+                            bestIdx = n;
+                            bestDelta = delta;
+                            bestTheta = theta;
+                        }
+                    }
+                if (bestIdx < 0)
+                    return -1;
+                direction = WebMolKit.angleNorm(bestTheta - 0.5 * Math.PI);
+                visited[bestIdx] = true;
+                return bestIdx;
+            };
+            while (true) {
+                let next = roll();
+                if (next < 0) {
+                    this.sequence = null;
+                    return;
+                }
+                if (next == first)
+                    break;
+                this.sequence.push(next);
+                latest = next;
+            }
+        }
+        sequencePos() {
+            if (!this.sequence)
+                return null;
+            let posList = [];
+            for (let n of this.sequence)
+                posList.push(new Pos(this.x[n], this.y[n]));
+            return posList;
+        }
+        sequenceXY() {
+            if (!this.sequence)
+                return [null, null];
+            let px = [], py = [];
+            for (let n of this.sequence) {
+                px.push(this.x[n]);
+                py.push(this.y[n]);
+            }
+            return [px, py];
+        }
+    }
+    WebMolKit.RollingBall = RollingBall;
     class Pos {
         constructor(x, y) {
             this.x = x == null ? 0 : x;
@@ -3781,7 +4305,6 @@ var WebMolKit;
                     b.to = a2;
             }
             this.trashGraph();
-            this.trashTransient();
         }
         addBond(from, to, order, type = Molecule.BONDTYPE_NORMAL) {
             let b = new Bond();
@@ -4101,6 +4624,13 @@ var WebMolKit;
         trashGraph() {
             this.graph = null;
             this.graphBond = null;
+            this.ringID = null;
+            this.compID = null;
+            this.ring3 = null;
+            this.ring4 = null;
+            this.ring5 = null;
+            this.ring6 = null;
+            this.ring7 = null;
         }
         trashTransient() {
             if (this.keepTransient || !this.hasTransient)
@@ -5684,31 +6214,32 @@ var WebMolKit;
             return hc;
         }
         static stripHydrogens(mol, force = false) {
-            for (let n = mol.numAtoms; n >= 1; n--) {
-                if (mol.atomElement(n) != 'H')
-                    continue;
-                if (!force) {
-                    if (mol.atomCharge(n) != 0 || mol.atomUnpaired(n) != 0)
-                        continue;
-                    if (mol.atomIsotope(n) != WebMolKit.Molecule.ISOTOPE_NATURAL)
-                        continue;
-                    if (WebMolKit.Vec.notBlank(mol.atomExtra(n)) || WebMolKit.Vec.notBlank(mol.atomTransient(n)))
-                        continue;
-                    if (mol.atomAdjCount(n) != 1)
-                        continue;
-                    let other = mol.atomAdjList(n)[0];
-                    if (mol.atomElement(other) == 'H')
-                        continue;
-                    let bond = mol.atomAdjBonds(n)[0];
-                    if (mol.bondOrder(bond) != 1 || mol.bondType(bond) != WebMolKit.Molecule.BONDTYPE_NORMAL)
-                        continue;
-                    if (mol.atomHExplicit(other) != WebMolKit.Molecule.HEXPLICIT_UNKNOWN)
-                        continue;
-                    if (WebMolKit.Molecule.HYVALENCE_EL.indexOf(mol.atomElement(other)) < 0)
-                        continue;
-                }
-                mol.deleteAtomAndBonds(n);
-            }
+            for (let n = mol.numAtoms; n >= 1; n--)
+                if ((force && mol.atomElement(n) == 'H') || this.boringHydrogen(mol, n))
+                    mol.deleteAtomAndBonds(n);
+        }
+        static boringHydrogen(mol, atom) {
+            if (mol.atomElement(atom) != 'H')
+                return false;
+            if (mol.atomCharge(atom) != 0 || mol.atomUnpaired(atom) != 0)
+                return false;
+            if (mol.atomIsotope(atom) != WebMolKit.Molecule.ISOTOPE_NATURAL)
+                return false;
+            if (mol.atomExtra(atom) != null || mol.atomTransient(atom) != null)
+                return false;
+            if (mol.atomAdjCount(atom) != 1)
+                return false;
+            let other = mol.atomAdjList(atom)[0];
+            if (mol.atomElement(other) == 'H')
+                return false;
+            let bond = mol.atomAdjBonds(atom)[0];
+            if (mol.bondOrder(bond) != 1 || mol.bondType(bond) != WebMolKit.Molecule.BONDTYPE_NORMAL)
+                return false;
+            if (mol.atomHExplicit(other) != WebMolKit.Molecule.HEXPLICIT_UNKNOWN)
+                return false;
+            if (WebMolKit.Molecule.HYVALENCE_EL.indexOf(mol.atomElement(other)) < 0)
+                return false;
+            return true;
         }
         static createHydrogens(mol, position) {
             if (position == null)
@@ -14265,6 +14796,34 @@ var WebMolKit;
 })(WebMolKit || (WebMolKit = {}));
 var WebMolKit;
 (function (WebMolKit) {
+    let ForeignMoleculeExtra;
+    (function (ForeignMoleculeExtra) {
+        ForeignMoleculeExtra["ATOM_AROMATIC"] = "yAROMATIC";
+        ForeignMoleculeExtra["BOND_AROMATIC"] = "yAROMATIC";
+        ForeignMoleculeExtra["ATOM_CHIRAL_MDL_ODD"] = "yCHIRAL_MDL_ODD";
+        ForeignMoleculeExtra["ATOM_CHIRAL_MDL_EVEN"] = "yCHIRAL_MDL_EVEN";
+        ForeignMoleculeExtra["ATOM_CHIRAL_MDL_RACEMIC"] = "yCHIRAL_MDL_RACEMIC";
+    })(ForeignMoleculeExtra = WebMolKit.ForeignMoleculeExtra || (WebMolKit.ForeignMoleculeExtra = {}));
+    class ForeignMolecule {
+        static noteAromaticAtoms(mol) {
+            const sz = mol.numAtoms;
+            let mask = WebMolKit.Vec.booleanArray(false, sz);
+            for (let n = 1; n <= sz; n++)
+                mask[n - 1] = mol.atomTransient(n).indexOf(ForeignMoleculeExtra.ATOM_AROMATIC) >= 0;
+            return mask;
+        }
+        static noteAromaticBonds(mol) {
+            const sz = mol.numBonds;
+            let mask = WebMolKit.Vec.booleanArray(false, sz);
+            for (let n = 1; n <= sz; n++)
+                mask[n - 1] = mol.bondTransient(n).indexOf(ForeignMoleculeExtra.BOND_AROMATIC) >= 0;
+            return mask;
+        }
+    }
+    WebMolKit.ForeignMolecule = ForeignMolecule;
+})(WebMolKit || (WebMolKit = {}));
+var WebMolKit;
+(function (WebMolKit) {
     let DotPathBond;
     (function (DotPathBond) {
         DotPathBond[DotPathBond["O0"] = 0] = "O0";
@@ -14294,7 +14853,7 @@ var WebMolKit;
                 this.calculate();
         }
         clone() {
-            var dup = new DotPath(null);
+            let dup = new DotPath(null);
             dup.mol = this.mol;
             dup.maskBlock = this.maskBlock;
             dup.paths = this.paths.slice(0);
@@ -14403,19 +14962,51 @@ var WebMolKit;
                 }
                 bondsum[bfr - 1] += bo;
                 bondsum[bto - 1] += bo;
+                if (mol.bondTransient(n).indexOf(WebMolKit.ForeignMoleculeExtra.BOND_AROMATIC) >= 0) {
+                    pibonded[bfr - 1] = true;
+                    pibonded[bto - 1] = true;
+                }
             }
+            let impliedPi = WebMolKit.Vec.booleanArray(false, na);
+            for (let n = 1; n <= na; n++)
+                if (!pibonded[n - 1]) {
+                    let adjpi = 0;
+                    for (let adj of mol.atomAdjList(n))
+                        if (pibonded[adj - 1])
+                            adjpi++;
+                    if (adjpi >= 2)
+                        impliedPi[n - 1] = true;
+                }
+            for (let n = 0; n < na; n++)
+                if (impliedPi[n])
+                    pibonded[n] = true;
             this.maskBlock = WebMolKit.Vec.booleanArray(false, na);
             let maskMaybe = WebMolKit.Vec.booleanArray(false, na);
-            let COULD_BLOCK = [
+            const COULD_BLOCK = [
+                WebMolKit.Chemistry.ELEMENT_H,
                 WebMolKit.Chemistry.ELEMENT_B, WebMolKit.Chemistry.ELEMENT_C, WebMolKit.Chemistry.ELEMENT_N, WebMolKit.Chemistry.ELEMENT_O, WebMolKit.Chemistry.ELEMENT_F,
                 WebMolKit.Chemistry.ELEMENT_Al, WebMolKit.Chemistry.ELEMENT_Si, WebMolKit.Chemistry.ELEMENT_P, WebMolKit.Chemistry.ELEMENT_S, WebMolKit.Chemistry.ELEMENT_Cl,
                 WebMolKit.Chemistry.ELEMENT_Ga, WebMolKit.Chemistry.ELEMENT_Ge, WebMolKit.Chemistry.ELEMENT_As, WebMolKit.Chemistry.ELEMENT_Se, WebMolKit.Chemistry.ELEMENT_Br,
                 WebMolKit.Chemistry.ELEMENT_In, WebMolKit.Chemistry.ELEMENT_Sn, WebMolKit.Chemistry.ELEMENT_Sb, WebMolKit.Chemistry.ELEMENT_Te, WebMolKit.Chemistry.ELEMENT_I,
                 WebMolKit.Chemistry.ELEMENT_Tl, WebMolKit.Chemistry.ELEMENT_Pb, WebMolKit.Chemistry.ELEMENT_Bi, WebMolKit.Chemistry.ELEMENT_Po, WebMolKit.Chemistry.ELEMENT_At,
             ];
-            for (let n = 0; n < na; n++) {
+            const ACIDS = [
+                WebMolKit.Chemistry.ELEMENT_B,
+                WebMolKit.Chemistry.ELEMENT_Al, WebMolKit.Chemistry.ELEMENT_Si,
+                WebMolKit.Chemistry.ELEMENT_Ga, WebMolKit.Chemistry.ELEMENT_Ge,
+                WebMolKit.Chemistry.ELEMENT_In, WebMolKit.Chemistry.ELEMENT_Sn,
+                WebMolKit.Chemistry.ELEMENT_Tl, WebMolKit.Chemistry.ELEMENT_Pb,
+            ];
+            const BASES = [
+                WebMolKit.Chemistry.ELEMENT_N, WebMolKit.Chemistry.ELEMENT_O, WebMolKit.Chemistry.ELEMENT_F,
+                WebMolKit.Chemistry.ELEMENT_P, WebMolKit.Chemistry.ELEMENT_S, WebMolKit.Chemistry.ELEMENT_Cl,
+                WebMolKit.Chemistry.ELEMENT_As, WebMolKit.Chemistry.ELEMENT_Se, WebMolKit.Chemistry.ELEMENT_Br,
+                WebMolKit.Chemistry.ELEMENT_Sb, WebMolKit.Chemistry.ELEMENT_Te, WebMolKit.Chemistry.ELEMENT_I,
+                WebMolKit.Chemistry.ELEMENT_Bi, WebMolKit.Chemistry.ELEMENT_Po, WebMolKit.Chemistry.ELEMENT_At,
+            ];
+            skip: for (let n = 0; n < na; n++) {
                 const a = n + 1;
-                if (nonsingle[n])
+                if (nonsingle[n] || pibonded[n])
                     continue;
                 if (mol.atomCharge(a) != 0 || mol.atomUnpaired(a) != 0)
                     continue;
@@ -14428,18 +15019,27 @@ var WebMolKit;
                     continue;
                 if (bondsum[n] != WebMolKit.Chemistry.ELEMENT_BONDING[atno])
                     continue;
+                if (ACIDS.indexOf(atno) >= 0) {
+                    for (let adj of mol.atomAdjList(a))
+                        if (BASES.indexOf(mol.atomicNumber(adj)) >= 0)
+                            continue skip;
+                }
+                if (BASES.indexOf(atno) >= 0) {
+                    for (let adj of mol.atomAdjList(a))
+                        if (ACIDS.indexOf(mol.atomicNumber(adj)) >= 0)
+                            continue skip;
+                }
                 maskMaybe[n] = true;
                 if (atno == WebMolKit.Chemistry.ELEMENT_C) {
-                    let adjpi = 0;
                     let hasMetal = false;
-                    for (let adj of mol.atomAdjList(a)) {
-                        if (pibonded[adj - 1])
-                            adjpi++;
+                    for (let adj of mol.atomAdjList(a))
                         if (COULD_BLOCK.indexOf(mol.atomicNumber(adj)) < 0)
                             hasMetal = true;
-                    }
-                    if (adjpi < 2 && !hasMetal)
+                    if (!hasMetal)
                         this.maskBlock[n] = true;
+                }
+                else if (atno == WebMolKit.Chemistry.ELEMENT_H) {
+                    this.maskBlock[n] = true;
                 }
             }
             skip: for (let n = 0; n < na; n++)
@@ -14927,12 +15527,12 @@ var WebMolKit;
             let body = $(document.documentElement);
             let bg = $('<div></div>').appendTo(body);
             bg.css('width', '100%');
-            bg.css('height', document.documentElement.clientHeight + 'px');
+            bg.css('height', Math.max(document.body.clientHeight, document.body.scrollHeight) + 'px');
             bg.css('background-color', 'black');
             bg.css('opacity', 0.8);
             bg.css('position', 'absolute');
-            bg.css('left', 0);
-            bg.css('top', 0);
+            bg.css('left', '0');
+            bg.css('top', '0');
             bg.css('z-index', 9999);
             this.obscureBackground = bg;
             let pb = $('<div class="wmk-dialog"></div>').appendTo(body);
@@ -14948,7 +15548,7 @@ var WebMolKit;
             pb.css('border', '1px solid black');
             pb.css('position', 'absolute');
             pb.css('left', (50 - 0.5 * this.minPortionWidth) + '%');
-            pb.css('top', (document.body.scrollTop + 50) + 'px');
+            pb.css('top', (window.scrollY + 50) + 'px');
             pb.css('min-height', '20%');
             pb.css('z-index', 10000);
             this.panelBoundary = pb;

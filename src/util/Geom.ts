@@ -10,8 +10,9 @@
 	[PKG=webmolkit]
 */
 
-///<reference path='../util/util.ts'/>
-///<reference path='../util/Vec.ts'/>
+///<reference path='util.ts'/>
+///<reference path='Vec.ts'/>
+///<reference path='Triangulation2D.ts'/>
 
 namespace WebMolKit /* BOF */ {
 
@@ -333,8 +334,13 @@ export class GeomUtil
 	// takes a set of points and calculates the outline, in the form of an enclosing polygon, using the "rolling ball" algorithm
 	public static outlinePolygon(x:number[], y:number[], diameter:number):[number[], number[]]
 	{
+		/* ... rolling ball algorithm isn't that great; the Delaunay-based method is much better
 		let algo = new RollingBall(x, y, diameter);
-		return algo.sequenceXY();
+		return algo.sequenceXY();*/
+		let del = new Triangulation2D(x, y);
+		let concave = del.trimConcave(diameter);
+		let idx = del.traceOutline(concave);
+		return [Vec.idxGet(x, idx), Vec.idxGet(y, idx)];
 	}
 }
 
