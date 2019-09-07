@@ -23,13 +23,17 @@ namespace WebMolKit /* BOF */ {
 
 export class ClipboardProxy
 {
+	private stashEvents:any[][] = [];
+
+	// ------------ public methods ------------
+
 	// an external menu operation has requested a copy-to-clipboard action; the owner of this object is expected
 	// to furnish a string to be transferred onto the clipboard, or null if there isn't anything
 	public copyEvent:() => string = null;
 
 	// an external menu operation has activated a paste operation; for the duration of this callback, it is for sure
 	// valid to fetch the clipboard content (using getString)
-	public pasteEvent:(proxy:ClipboardProxyWeb) => boolean = null;
+	public pasteEvent:(proxy:ClipboardProxy) => boolean = null;
 
 	// attach the clipboard proxy to a container, and make sure events are trapped; the uninstall should be gracefully
 	// automatic, but calling it explicitly on cleanup is ideal
@@ -52,6 +56,19 @@ export class ClipboardProxy
 
 	// instantiate the downloading of a string, with a given default filename
 	public downloadString(str:string, fn:string):void {}
+
+	// push/pop events: use this when doing things like popping up temporary dialogs which need to bogart the clipboard event capture,
+	// but then stop doing that after they're taken down
+	public pushEvents():void
+	{
+		this.stashEvents.push([this.copyEvent, this.pasteEvent]);
+	}
+	public popEvents():void
+	{
+		let events = this.stashEvents.shift();
+		this.copyEvent = events[0];
+		this.pasteEvent = events[1];
+	}
 }
 
 /*

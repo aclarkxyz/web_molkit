@@ -27,6 +27,8 @@ export class EditCompound extends Dialog
 	private btnCopy:JQuery;
 	private btnSave:JQuery;
 	private sketcher = new Sketcher();
+
+	private proxyClip:ClipboardProxy = null;
 	
 	private callbackSave:(source?:EditCompound) => void = null;
 
@@ -50,8 +52,18 @@ export class EditCompound extends Dialog
 
 	public defineClipboard(proxy:ClipboardProxy):void
 	{
+		this.proxyClip = proxy;
+		proxy.pushEvents();
+
 		this.sketcher.defineClipboard(proxy);
-	}	
+	}
+
+	public close():void
+	{
+		if (this.proxyClip) this.proxyClip.popEvents();
+
+		super.close();
+	}
 
 	// builds the dialog content
 	protected populate():void
