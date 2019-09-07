@@ -1,11 +1,11 @@
 /*
-    WebMolKit
+	WebMolKit
 
-    (c) 2010-2018 Molecular Materials Informatics, Inc.
+	(c) 2010-2018 Molecular Materials Informatics, Inc.
 
-    All rights reserved
-    
-    http://molmatinf.com
+	All rights reserved
+
+	http://molmatinf.com
 
 	[PKG=webmolkit]
 */
@@ -40,14 +40,14 @@ export class EditAtom extends Dialog
 	private inputIsotope:JQuery;
 	private inputMapping:JQuery;
 	private inputIndex:JQuery;
-		
+
 	constructor(mol:Molecule, public atom:number, private callbackApply:(source?:EditAtom) => void)
 	{
 		super();
 
 		this.initMol = mol;
 		this.mol = mol.clone();
-		
+
 		this.title = 'Edit Atom';
 		this.minPortionWidth = 20;
 		this.maxPortionWidth = 95;
@@ -55,21 +55,17 @@ export class EditAtom extends Dialog
 
 	// builds the dialog content
 	protected populate():void
-	{		
+	{
 		let buttons = this.buttons(), body = this.body();
 
 		buttons.append(this.btnClose); // easy way to reorder
 		buttons.append(' ');
-		this.btnApply = $('<button class="wmk-button wmk-button-primary">Save</button>').appendTo(buttons);
-		this.btnApply.click(() => 
-		{
-			this.updateMolecule();
-			if (this.callbackApply) this.callbackApply(this);
-		});
+		this.btnApply = $('<button class="wmk-button wmk-button-primary">Apply</button>').appendTo(buttons);
+		this.btnApply.click(() => this.applyChanges());
 
 		this.tabs = new TabBar(['Atom', 'Abbreviation', 'Geometry', 'Query', 'Extra']);
 		this.tabs.render(body);
-		
+
 		this.populateAtom(this.tabs.getPanel('Atom'));
 		this.populateAbbreviation(this.tabs.getPanel('Abbreviation'));
 		this.populateGeometry(this.tabs.getPanel('Geometry'));
@@ -80,6 +76,13 @@ export class EditAtom extends Dialog
 	}
 
 	// ------------ private methods ------------
+
+	// trigger the apply/save sequence
+	private applyChanges():void
+	{
+		this.updateMolecule();
+		if (this.callbackApply) this.callbackApply(this);
+	}
 
 	private populateAtom(panel:JQuery):void
 	{
@@ -140,6 +143,15 @@ export class EditAtom extends Dialog
 		}
 
 		this.inputSymbol.focus();
+
+		for (let input of [this.inputSymbol, this.inputCharge, this.inputUnpaired, this.inputHydrogen, this.inputIsotope, this.inputMapping, this.inputIndex])
+		{
+			input.keydown((event:KeyboardEvent) =>
+			{
+				let keyCode = event.keyCode || event.which;
+				if (keyCode == 13) this.applyChanges();
+			});
+		}
 	}
 
 	private populateAbbreviation(panel:JQuery):void
