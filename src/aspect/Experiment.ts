@@ -4,7 +4,7 @@
     (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
-    
+
     http://molmatinf.com
 
 	[PKG=webmolkit]
@@ -68,18 +68,18 @@ export class ExperimentComponent
 		dup.equiv = this.equiv;
 		return dup;
 	}
-	
+
 	public equals(other:ExperimentComponent):boolean
 	{
 		if (this.name != other.name) return false;
-		if (this.stoich != other.stoich || this.mass != other.mass || this.volume != other.volume || this.moles != other.moles || 
-			this.density != other.density || this.conc != other.conc || this.yield != other.yield || this.primary != other.primary || 
+		if (this.stoich != other.stoich || this.mass != other.mass || this.volume != other.volume || this.moles != other.moles ||
+			this.density != other.density || this.conc != other.conc || this.yield != other.yield || this.primary != other.primary ||
 			this.waste != other.waste || this.equiv != other.equiv) return false;
 		if (this.mol === other.mol) return true; // if literally the same
 		if (this.mol == null || other.mol == null) return false;
 		return this.mol.compareTo(other.mol) == 0;
 	}
-	
+
 	public isBlank():boolean
 	{
 		return MolUtil.isBlank(this.mol) && !this.name;
@@ -91,9 +91,9 @@ export class ExperimentStep
 	public reactants:ExperimentComponent[] = []; // non-blank only for the first step
 	public reagents:ExperimentComponent[] = [];
 	public products:ExperimentComponent[] = [];
-	
+
 	constructor() {}
-	
+
 	// makes a deep copy (assuming that molecules are treated as immutable)
 	public clone():ExperimentStep
 	{
@@ -103,7 +103,7 @@ export class ExperimentStep
 		for (let c of this.products) dup.products.push(c.clone());
 		return dup;
 	}
-	
+
 	public equals(other:ExperimentStep):boolean
 	{
 		if (this.reactants.length != other.reactants.length) return false;
@@ -122,11 +122,11 @@ export class ExperimentEntry
 	public createDate:Date = null;
 	public modifyDate:Date = null;
 	public doi = '';
-	
+
 	public steps:ExperimentStep[] = [];
-	
+
 	constructor() {}
-	
+
 	// makes a deep copy (assuming that molecules are treated as immutable)
 	public clone():ExperimentEntry
 	{
@@ -138,7 +138,7 @@ export class ExperimentEntry
 		for (let s of this.steps) dup.steps.push(s.clone());
 		return dup;
 	}
-	
+
 	// as above, but clones all the molecules too so they can be modified safely
 	public deepClone():ExperimentEntry
 	{
@@ -151,7 +151,7 @@ export class ExperimentEntry
 		}
 		return dup;
 	}
-	
+
 	public equals(other:ExperimentEntry):boolean
 	{
 		if (this.title != other.title) return false;
@@ -164,7 +164,7 @@ export class ExperimentEntry
 		for (let n = 0; n < this.steps.length; n++) if (!this.steps[n].equals(other.steps[n])) return false;
 		return true;
 	}
-	
+
 	// convenience: saves a switch
 	public getComponent(step:number, type:ExperimentComponentType, idx:number):ExperimentComponent
 	{
@@ -188,7 +188,7 @@ export class Experiment extends Aspect
 	public static COLNAME_EXPERIMENT_CREATEDATE = 'ExperimentCreateDate';
 	public static COLNAME_EXPERIMENT_MODIFYDATE = 'ExperimentModifyDate';
 	public static COLNAME_EXPERIMENT_DOI = 'ExperimentDOI';
-	
+
 	// prefixes for Reactants
 	public static COLNAME_REACTANT_MOL = 'ReactantMol';
 	public static COLNAME_REACTANT_NAME = 'ReactantName';
@@ -271,7 +271,7 @@ export class Experiment extends Aspect
 			v[Experiment.COLNAME_PRODUCT_DENSITY] = 'Density of reactant (g/mL)';
 			v[Experiment.COLNAME_PRODUCT_CONC] = 'Concentration of reactant (mol/L)';
 			v[Experiment.COLNAME_PRODUCT_YIELD] = 'Yield of product (%)';
-			v[Experiment.COLNAME_PRODUCT_WASTE] = 'Whether the product is an unwanted byproduct';			
+			v[Experiment.COLNAME_PRODUCT_WASTE] = 'Whether the product is an unwanted byproduct';
 		}
 
 		this.setup();
@@ -316,11 +316,11 @@ export class Experiment extends Aspect
 		if (doi) entry.doi = doi;
 
 		let [nreactants, nproducts, nreagents] = this.countComponents();
-		
+
 		for (let pos = row; pos < this.ds.numRows; pos++)
 		{
 			if (pos > row && this.isFirstStep(pos)) break;
-			
+
 			let step = new ExperimentStep();
 			if (pos == row) for (let n = 1; n <= nreactants; n++)
 			{
@@ -337,7 +337,7 @@ export class Experiment extends Aspect
 				let comp = this.fetchReagent(pos, n);
 				if (comp != null) step.reagents.push(comp); else break;
 			}
-			
+
 			entry.steps.push(step);
 		}
 
@@ -363,8 +363,8 @@ export class Experiment extends Aspect
 
 	// ----------------- private methods -----------------
 
-	// workhorse for the constructor 
-	private setup():void  
+	// workhorse for the constructor
+	private setup():void
 	{
 		this.parseAndCorrect();
 	}
@@ -381,78 +381,78 @@ export class Experiment extends Aspect
 			else if (ds.getExtType(n) == Experiment.CODE_YLD) {idxYld = n; extYld = ds.getExtData(n);}
 			else if (ds.getExtType(n) == Experiment.CODE) {idxExp = n; extExp = ds.getExtData(n);}
 		}
-		
+
 		// note: the implied Reaction aspect is the only metadata field that actually holds content
 		let [nreactants, nproducts, nreagents] = this.parseReactionMetaData(extRxn);
 		let meta = `nreactants=${nreactants}\nnproducts=${nproducts}\nnreagents=${nreagents}\n`;
-		if (idxRxn >= 0) ds.setExtData(idxRxn, meta); else ds.appendExtension(Experiment.NAME_RXN, Experiment.CODE_RXN, meta); 
+		if (idxRxn >= 0) ds.setExtData(idxRxn, meta); else ds.appendExtension(Experiment.NAME_RXN, Experiment.CODE_RXN, meta);
 		if (idxYld >= 0) ds.setExtData(idxYld, ''); else ds.appendExtension(Experiment.NAME_YLD, Experiment.CODE_YLD, '');
 		if (idxExp >= 0) ds.setExtData(idxExp, ''); else ds.appendExtension(Experiment.NAME, Experiment.CODE, '');
 
-		this.forceColumn(Experiment.COLNAME_EXPERIMENT_TITLE, DataSheet.COLTYPE_STRING);  
-		this.forceColumn(Experiment.COLNAME_EXPERIMENT_CREATEDATE, DataSheet.COLTYPE_REAL);  
-		this.forceColumn(Experiment.COLNAME_EXPERIMENT_MODIFYDATE, DataSheet.COLTYPE_REAL);  
-		this.forceColumn(Experiment.COLNAME_EXPERIMENT_DOI, DataSheet.COLTYPE_STRING);  
-		
+		this.forceColumn(Experiment.COLNAME_EXPERIMENT_TITLE, DataSheetColumn.String);
+		this.forceColumn(Experiment.COLNAME_EXPERIMENT_CREATEDATE, DataSheetColumn.Real);
+		this.forceColumn(Experiment.COLNAME_EXPERIMENT_MODIFYDATE, DataSheetColumn.Real);
+		this.forceColumn(Experiment.COLNAME_EXPERIMENT_DOI, DataSheetColumn.String);
+
 		for (let n = 1; n <= nreactants; n++) this.forceReactantColumns(n);
 		for (let n = 1; n <= nreagents; n++) this.forceReagentColumns(n);
 		for (let n = 1; n <= nproducts; n++) this.forceProductColumns(n);
 	}
 
 	// force-adds respective groups of columns as necessary
-	private forceColumn(colName:string, type:string, suffix?:number):void
+	private forceColumn(colName:string, type:DataSheetColumn, suffix?:number):void
 	{
 		let useName = colName + (suffix == null ? '' : suffix);
 		this.ds.ensureColumn(useName, type, Experiment.COLUMN_DESCRIPTIONS[colName]);
-	}  
+	}
 	private forceReactantColumns(suffix:number):void
 	{
-		this.forceColumn(Experiment.COLNAME_REACTANT_MOL, DataSheet.COLTYPE_MOLECULE, suffix);
-		this.forceColumn(Experiment.COLNAME_REACTANT_NAME, DataSheet.COLTYPE_STRING, suffix);
-		this.forceColumn(Experiment.COLNAME_REACTANT_STOICH, DataSheet.COLTYPE_STRING, suffix);
-		this.forceColumn(Experiment.COLNAME_REACTANT_MASS, DataSheet.COLTYPE_REAL, suffix);
-		this.forceColumn(Experiment.COLNAME_REACTANT_VOLUME, DataSheet.COLTYPE_REAL, suffix);
-		this.forceColumn(Experiment.COLNAME_REACTANT_MOLES, DataSheet.COLTYPE_REAL, suffix);
-		this.forceColumn(Experiment.COLNAME_REACTANT_DENSITY, DataSheet.COLTYPE_REAL, suffix);
-		this.forceColumn(Experiment.COLNAME_REACTANT_CONC, DataSheet.COLTYPE_REAL, suffix);
-		this.forceColumn(Experiment.COLNAME_REACTANT_PRIMARY, DataSheet.COLTYPE_BOOLEAN, suffix);
+		this.forceColumn(Experiment.COLNAME_REACTANT_MOL, DataSheetColumn.Molecule, suffix);
+		this.forceColumn(Experiment.COLNAME_REACTANT_NAME, DataSheetColumn.String, suffix);
+		this.forceColumn(Experiment.COLNAME_REACTANT_STOICH, DataSheetColumn.String, suffix);
+		this.forceColumn(Experiment.COLNAME_REACTANT_MASS, DataSheetColumn.Real, suffix);
+		this.forceColumn(Experiment.COLNAME_REACTANT_VOLUME, DataSheetColumn.Real, suffix);
+		this.forceColumn(Experiment.COLNAME_REACTANT_MOLES, DataSheetColumn.Real, suffix);
+		this.forceColumn(Experiment.COLNAME_REACTANT_DENSITY, DataSheetColumn.Real, suffix);
+		this.forceColumn(Experiment.COLNAME_REACTANT_CONC, DataSheetColumn.Real, suffix);
+		this.forceColumn(Experiment.COLNAME_REACTANT_PRIMARY, DataSheetColumn.Boolean, suffix);
 	}
 	private forceReagentColumns(suffix:number):void
 	{
-		this.forceColumn(Experiment.COLNAME_REAGENT_MOL, DataSheet.COLTYPE_MOLECULE, suffix);
-		this.forceColumn(Experiment.COLNAME_REAGENT_NAME, DataSheet.COLTYPE_STRING, suffix);
-		this.forceColumn(Experiment.COLNAME_REAGENT_EQUIV, DataSheet.COLTYPE_REAL, suffix);
-		this.forceColumn(Experiment.COLNAME_REAGENT_MASS, DataSheet.COLTYPE_REAL, suffix);
-		this.forceColumn(Experiment.COLNAME_REAGENT_VOLUME, DataSheet.COLTYPE_REAL, suffix);
-		this.forceColumn(Experiment.COLNAME_REAGENT_MOLES, DataSheet.COLTYPE_REAL, suffix);
-		this.forceColumn(Experiment.COLNAME_REAGENT_DENSITY, DataSheet.COLTYPE_REAL, suffix);
-		this.forceColumn(Experiment.COLNAME_REAGENT_CONC, DataSheet.COLTYPE_REAL, suffix);
+		this.forceColumn(Experiment.COLNAME_REAGENT_MOL, DataSheetColumn.Molecule, suffix);
+		this.forceColumn(Experiment.COLNAME_REAGENT_NAME, DataSheetColumn.String, suffix);
+		this.forceColumn(Experiment.COLNAME_REAGENT_EQUIV, DataSheetColumn.Real, suffix);
+		this.forceColumn(Experiment.COLNAME_REAGENT_MASS, DataSheetColumn.Real, suffix);
+		this.forceColumn(Experiment.COLNAME_REAGENT_VOLUME, DataSheetColumn.Real, suffix);
+		this.forceColumn(Experiment.COLNAME_REAGENT_MOLES, DataSheetColumn.Real, suffix);
+		this.forceColumn(Experiment.COLNAME_REAGENT_DENSITY, DataSheetColumn.Real, suffix);
+		this.forceColumn(Experiment.COLNAME_REAGENT_CONC, DataSheetColumn.Real, suffix);
 	}
 	private forceProductColumns(suffix:number):void
 	{
-		this.forceColumn(Experiment.COLNAME_PRODUCT_MOL, DataSheet.COLTYPE_MOLECULE, suffix);
-		this.forceColumn(Experiment.COLNAME_PRODUCT_NAME, DataSheet.COLTYPE_STRING, suffix);
-		this.forceColumn(Experiment.COLNAME_PRODUCT_STOICH, DataSheet.COLTYPE_STRING, suffix);
-		this.forceColumn(Experiment.COLNAME_PRODUCT_MASS, DataSheet.COLTYPE_REAL, suffix);
-		this.forceColumn(Experiment.COLNAME_PRODUCT_VOLUME, DataSheet.COLTYPE_REAL, suffix);
-		this.forceColumn(Experiment.COLNAME_PRODUCT_MOLES, DataSheet.COLTYPE_REAL, suffix);
-		this.forceColumn(Experiment.COLNAME_PRODUCT_DENSITY, DataSheet.COLTYPE_REAL, suffix);
-		this.forceColumn(Experiment.COLNAME_PRODUCT_CONC, DataSheet.COLTYPE_REAL, suffix);
-		this.forceColumn(Experiment.COLNAME_PRODUCT_YIELD, DataSheet.COLTYPE_REAL, suffix);
-		this.forceColumn(Experiment.COLNAME_PRODUCT_WASTE, DataSheet.COLTYPE_BOOLEAN, suffix);
+		this.forceColumn(Experiment.COLNAME_PRODUCT_MOL, DataSheetColumn.Molecule, suffix);
+		this.forceColumn(Experiment.COLNAME_PRODUCT_NAME, DataSheetColumn.String, suffix);
+		this.forceColumn(Experiment.COLNAME_PRODUCT_STOICH, DataSheetColumn.String, suffix);
+		this.forceColumn(Experiment.COLNAME_PRODUCT_MASS, DataSheetColumn.Real, suffix);
+		this.forceColumn(Experiment.COLNAME_PRODUCT_VOLUME, DataSheetColumn.Real, suffix);
+		this.forceColumn(Experiment.COLNAME_PRODUCT_MOLES, DataSheetColumn.Real, suffix);
+		this.forceColumn(Experiment.COLNAME_PRODUCT_DENSITY, DataSheetColumn.Real, suffix);
+		this.forceColumn(Experiment.COLNAME_PRODUCT_CONC, DataSheetColumn.Real, suffix);
+		this.forceColumn(Experiment.COLNAME_PRODUCT_YIELD, DataSheetColumn.Real, suffix);
+		this.forceColumn(Experiment.COLNAME_PRODUCT_WASTE, DataSheetColumn.Boolean, suffix);
 	}
 
 	private parseReactionMetaData(content:string):[number, number, number]
 	{
 		let nreactants = 1, nproducts = 1, nreagents = 0;
-		
+
 		for (let line of content.split(/\r?\n/))
 		{
 			if (line.startsWith('nreactants=')) nreactants = Math.max(nreactants, Math.min(100, parseInt(line.substring(11))));
 			else if (line.startsWith('nproducts=')) nproducts = Math.max(nproducts, Math.min(100, parseInt(line.substring(10))));
 			else if (line.startsWith('nreagents=')) nreagents = Math.max(nreagents, Math.min(100, parseInt(line.substring(10))));
 		}
-		
+
 		return [nreactants, nproducts, nreagents];
 	}
 
@@ -520,7 +520,7 @@ export class Experiment extends Aspect
 		comp.equiv = this.ds.getReal(row, `${Experiment.COLNAME_REAGENT_EQUIV}${idx}`);
 		return comp;
 	}
-	
+
 	// returns the list of operations needed to "set" an entry: this may involve adjusting columns, modifying extensions,
 	// and deleting/inserting rows... as well as replacing cell content
 	private putEntry(row:number, entry:ExperimentEntry, replace:boolean):void
@@ -551,7 +551,7 @@ export class Experiment extends Aspect
 		for (let n = 1; n <= nreactants; n++) this.forceReactantColumns(n);
 		for (let n = 1; n <= nreagents; n++) this.forceReagentColumns(n);
 		for (let n = 1; n <= nproducts; n++) this.forceProductColumns(n);
-		
+
 		// sync up the number of steps, if necessary
 		let oldSteps = replace ? this.numberOfSteps(row) : 0, newSteps = entry.steps.length;
 		if (oldSteps > newSteps)
@@ -562,7 +562,7 @@ export class Experiment extends Aspect
 		{
 			for (let n = oldSteps; n < newSteps; n++) this.ds.insertRow(row + oldSteps);
 		}
-		
+
 		// emit the header
 		this.ds.setString(row, Experiment.COLNAME_EXPERIMENT_TITLE, entry.title);
 		this.ds.setReal(row, Experiment.COLNAME_EXPERIMENT_CREATEDATE, entry.createDate == null ? null : entry.createDate.getTime() * 1E-3);
@@ -612,7 +612,7 @@ export class Experiment extends Aspect
 				this.ds.setBoolean(r, `${Experiment.COLNAME_PRODUCT_WASTE}${i}`, comp.waste);
 			}
 		}
-		
+
 		// trash anything beyond the incoming limits
 		for (let s = 0; s < entry.steps.length; s++)
 		{
@@ -662,15 +662,15 @@ export class Experiment extends Aspect
 	// ------------------ aspect implementation --------------------
 
 	public plainHeading():string {return Experiment.NAME;}
-	
+
 	public rowFirstBlock(row:number):boolean {return this.isFirstStep(row);}
 	public rowBlockCount(row:number):number {return this.numberOfSteps(row);}
 
-	public isColumnReserved(colName:string):boolean 
+	public isColumnReserved(colName:string):boolean
 	{
 		return this.areColumnsReserved([colName])[0];
 	}
-	
+
 	public areColumnsReserved(colNames:string[]):boolean[]
 	{
 		let LITERALS =
@@ -710,7 +710,7 @@ export class Experiment extends Aspect
 			Experiment.COLNAME_PRODUCT_YIELD,
 			Experiment.COLNAME_PRODUCT_WASTE
 		];
-	
+
 		let resv = Vec.booleanArray(false, colNames.length);
 		for (let n = 0; n < colNames.length; n++)
 		{
@@ -726,10 +726,10 @@ export class Experiment extends Aspect
 				break;
 			}
 		}
-		
-		return resv;		
+
+		return resv;
 	}
-	
+
 	// render the experiment in scheme form
 	// TODO: other forms can be rendered (summary, metrics, quantity)
 	public numGraphicRenderings(row:number):number {return 1;}
@@ -750,7 +750,7 @@ export class Experiment extends Aspect
 
 		return {'name': 'Scheme', 'metavec': metavec};
 	}
-	
+
 /*	open override func numTextRenderings(row:Int) -> Int {return 1}
 	open override func produceTextRendering(row:Int, idx:Int) -> (name:String, descr:String, text:String)
 	{
@@ -764,18 +764,18 @@ export class Experiment extends Aspect
 
 		let entry = getEntry(row, ds:ds)
 		var lines:[String] = []
-		
+
 		if !entry.title.isEmpty {lines.append("Title: \(entry.title)")}
-		
+
 		let datefmt = DateFormatter()
 		datefmt.dateStyle = .medium
 		datefmt.timeStyle = .medium
-		
+
 		if let createDate = entry.createDate {lines.append("Created: \(datefmt.string(from:createDate))")}
 		if let modifyDate = entry.modifyDate {lines.append("Modified: \(datefmt.string(from:modifyDate))")}
-		
+
 		if !entry.doi.isEmpty {lines.append("DOI: \(entry.doi)")}
-		
+
 		let txt = lines.joined(separator:"\n")
 
 		return (name:"Header", descr:"Experiment description and metadata", text:txt)
@@ -798,11 +798,11 @@ export class Experiment extends Aspect
 			layout.limitTotalW = 50 * policy.pointScale
 			layout.limitTotalH = 50 * policy.pointScale
 			layout.arrange()
-			
+
 			//vg.drawLine(x1:0, y1:0, x2:layout.width, y2:layout.height, colour:0xFF0000, thickness:1)
 			let vgexp = DrawExperiment(layout:layout, vg:vg)
 			vgexp.draw()
-			
+
 			return (name:"Scheme", vg:vg)
 		}
 		else if idx == Render.Quantity
@@ -822,7 +822,7 @@ export class Experiment extends Aspect
 			layout.render(vg)
 		}
 		return (name:"", vg:vg)
-	}*/	
+	}*/
 }
 
 /* EOF */ }

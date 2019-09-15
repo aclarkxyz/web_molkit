@@ -117,18 +117,18 @@ export class SARTable extends Aspect
 	{
 		let fields = this.getFields();
 		
-		let colConstruct = this.ds.findColByName(fields.construct, DataSheet.COLTYPE_MOLECULE);
+		let colConstruct = this.ds.findColByName(fields.construct, DataSheetColumn.Molecule);
 		if (colConstruct >= 0) this.ds.setMolecule(row, colConstruct, entry.construct); 
 
-		let colLocked = this.ds.findColByName(fields.locked, DataSheet.COLTYPE_BOOLEAN);
+		let colLocked = this.ds.findColByName(fields.locked, DataSheetColumn.Boolean);
 		if (colLocked >= 0) this.ds.setBoolean(row, colLocked, entry.locked);
 
-		let colScaffold = this.ds.findColByName(fields.scaffold, DataSheet.COLTYPE_MOLECULE);
+		let colScaffold = this.ds.findColByName(fields.scaffold, DataSheetColumn.Molecule);
 		if (colScaffold >= 0) this.ds.setMolecule(row, colScaffold, entry.scaffold); 
 		 
 		for (let n = 0; n < fields.substituents.length; n++)
 		{
-			let colSubst = this.ds.findColByName(fields.substituents[n], DataSheet.COLTYPE_MOLECULE);
+			let colSubst = this.ds.findColByName(fields.substituents[n], DataSheetColumn.Molecule);
 			if (colSubst >= 0) this.ds.setMolecule(row, colSubst, entry.substituents[n]);
 		}
 	}
@@ -144,7 +144,7 @@ export class SARTable extends Aspect
 		for (let name of tobeAdded) if (fields.substituents.indexOf(name) < 0)
 		{
 			fields.substituents.push(name);
-			this.ds.ensureColumn(name, DataSheet.COLTYPE_MOLECULE, SARTable.DESCR_SUBSTITUENT);
+			this.ds.ensureColumn(name, DataSheetColumn.Molecule, SARTable.DESCR_SUBSTITUENT);
 			modified = true;
 		}
 		if (modified) this.setFields(fields);
@@ -184,10 +184,10 @@ export class SARTable extends Aspect
 			break;
 		}
 
-		this.ds.ensureColumn(fields.construct, DataSheet.COLTYPE_MOLECULE, SARTable.DESCR_CONSTRUCT);
-		this.ds.ensureColumn(fields.locked, DataSheet.COLTYPE_BOOLEAN, SARTable.DESCR_LOCKED);
-		this.ds.ensureColumn(fields.scaffold, DataSheet.COLTYPE_MOLECULE, SARTable.DESCR_SCAFFOLD);
-		for (let subst of fields.substituents) this.ds.ensureColumn(subst, DataSheet.COLTYPE_MOLECULE, SARTable.DESCR_SUBSTITUENT);
+		this.ds.ensureColumn(fields.construct, DataSheetColumn.Molecule, SARTable.DESCR_CONSTRUCT);
+		this.ds.ensureColumn(fields.locked, DataSheetColumn.Boolean, SARTable.DESCR_LOCKED);
+		this.ds.ensureColumn(fields.scaffold, DataSheetColumn.Molecule, SARTable.DESCR_SCAFFOLD);
+		for (let subst of fields.substituents) this.ds.ensureColumn(subst, DataSheetColumn.Molecule, SARTable.DESCR_SUBSTITUENT);
 
 		if (!got)
 		{

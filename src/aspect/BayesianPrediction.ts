@@ -154,19 +154,19 @@ export class BayesianPrediction extends Aspect
 	}
 	public setOutcome(row:number, model:BayesianPredictionModel, outcome:BayesianPredictionOutcome):void
 	{
-		let col = this.ds.findColByName(model.colRaw, DataSheet.COLTYPE_REAL);
+		let col = this.ds.findColByName(model.colRaw, DataSheetColumn.Real);
 		if (col >= 0) this.ds.setReal(row, col, outcome.raw);
 
-		col = this.ds.findColByName(model.colScaled, DataSheet.COLTYPE_REAL);
+		col = this.ds.findColByName(model.colScaled, DataSheetColumn.Real);
 		if (col >= 0) this.ds.setReal(row, col, outcome.scaled);
 
-		col = this.ds.findColByName(model.colArcTan, DataSheet.COLTYPE_REAL);
+		col = this.ds.findColByName(model.colArcTan, DataSheetColumn.Real);
 		if (col >= 0) this.ds.setReal(row, col, outcome.arctan);
 
-		col = this.ds.findColByName(model.colDomain, DataSheet.COLTYPE_REAL);
+		col = this.ds.findColByName(model.colDomain, DataSheetColumn.Real);
 		if (col >= 0) this.ds.setReal(row, col, outcome.domain);
 
-		col = this.ds.findColByName(model.colAtoms, DataSheet.COLTYPE_STRING);
+		col = this.ds.findColByName(model.colAtoms, DataSheetColumn.String);
 		if (col >= 0) this.ds.setString(row, col, outcome.atoms ? outcome.atoms.toString() : null);
 	}	
 

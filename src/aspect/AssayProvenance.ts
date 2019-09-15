@@ -207,13 +207,13 @@ export class AssayProvenance extends Aspect
 			break;
 		}
 
-		this.ds.ensureColumn(AssayProvenance.COLNAME_MOLECULE, DataSheet.COLTYPE_MOLECULE, 'Molecular structure of compound being measured');
-		this.ds.ensureColumn(AssayProvenance.COLNAME_NAME, DataSheet.COLTYPE_STRING, 'Name of compound');
-		this.ds.ensureColumn(AssayProvenance.COLNAME_VALUE, DataSheet.COLTYPE_REAL, 'Measured value');
-		this.ds.ensureColumn(AssayProvenance.COLNAME_ERROR, DataSheet.COLTYPE_REAL, 'Experimental error of measurement');
-		this.ds.ensureColumn(AssayProvenance.COLNAME_UNITS, DataSheet.COLTYPE_STRING, 'Units of measurement');
-		this.ds.ensureColumn(AssayProvenance.COLNAME_RELATION, DataSheet.COLTYPE_STRING, 'Relation: exact, greater or less');
-		this.ds.ensureColumn(AssayProvenance.COLNAME_SOURCEURI, DataSheet.COLTYPE_STRING, 'Source identifier for activity measurement');
+		this.ds.ensureColumn(AssayProvenance.COLNAME_MOLECULE, DataSheetColumn.Molecule, 'Molecular structure of compound being measured');
+		this.ds.ensureColumn(AssayProvenance.COLNAME_NAME, DataSheetColumn.String, 'Name of compound');
+		this.ds.ensureColumn(AssayProvenance.COLNAME_VALUE, DataSheetColumn.Real, 'Measured value');
+		this.ds.ensureColumn(AssayProvenance.COLNAME_ERROR, DataSheetColumn.Real, 'Experimental error of measurement');
+		this.ds.ensureColumn(AssayProvenance.COLNAME_UNITS, DataSheetColumn.String, 'Units of measurement');
+		this.ds.ensureColumn(AssayProvenance.COLNAME_RELATION, DataSheetColumn.String, 'Relation: exact, greater or less');
+		this.ds.ensureColumn(AssayProvenance.COLNAME_SOURCEURI, DataSheetColumn.String, 'Source identifier for activity measurement');
 
 		if (!got)
 		{

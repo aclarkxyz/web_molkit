@@ -29,6 +29,23 @@ namespace WebMolKit /* BOF */ {
 	- molecules are represented as strings, in SketchEl format, not objects
 */
 
+export const enum DataSheetColumn
+{
+	Molecule = 'molecule',
+	String = 'string',
+	Real = 'real',
+	Integer = 'integer',
+	Boolean = 'boolean',
+	Extend = 'extend',
+}
+
+interface DataSheetContentColumn
+{
+	name:string;
+	type:DataSheetColumn;
+	descr:string;
+}
+
 interface DataSheetContent
 {
 	title?:string;
@@ -36,7 +53,7 @@ interface DataSheetContent
 	numCols?:number;
 	numRows?:number;
 	numExtens?:number;
-	colData?:any[];
+	colData?:DataSheetContentColumn[];
 	rowData?:any[][];
 	extData?:any[];
 }
@@ -78,14 +95,6 @@ export class DataSheet
 		return dup;
 	}
 
-	// constants
-	public static COLTYPE_MOLECULE = 'molecule';
-	public static COLTYPE_STRING = 'string';
-	public static COLTYPE_REAL = 'real';
-	public static COLTYPE_INTEGER = 'integer';
-	public static COLTYPE_BOOLEAN = 'boolean';
-	public static COLTYPE_EXTEND = 'extend';
-
 	// returns the data upon which is class is based; this is in the correct format for sending to the server as a 
 	// "JSON-formatted datasheet", and is also suitable 
 	public getData():any
@@ -101,22 +110,10 @@ export class DataSheet
 	{
 		return this.data.numRows;
 	}
-	public getTitle():string
-	{
-		return this.data.title;
-	}
-	public getDescription():string
-	{
-		return this.data.description;
-	}
-	public setTitle(val:string)
-	{
-		this.data.title = val;
-	}
-	public setDescription(val:string)
-	{
-		this.data.description = val;
-	}
+	public get title():string {return this.data.title;}
+	public set title(title:string) {this.data.title = title;}
+	public get description():string {return this.data.description;}
+	public set description(description:string) {this.data.description = description;}
 	public get numExtensions():number
 	{
 		return this.data.numExtens;
@@ -148,8 +145,13 @@ export class DataSheet
 	public appendExtension(name:string, type:string, data:string):number
 	{
 		this.data.numExtens++;
-		this.data.extData.push({'name': name, 'type': type, 'data':data});
+		this.data.extData.push({'name': name, 'type': type, 'data': data});
 		return this.data.numExtens - 1;
+	}
+	public insertExtension(idx:number, name:string, type:string, data:string):void
+	{
+		this.data.numExtens++;
+		this.data.extData.splice(idx, 0, {'name': name, 'type': type, 'data': data});
 	}
 	public deleteExtension(idx:number):void
 	{
@@ -159,7 +161,7 @@ export class DataSheet
 	{
 		return this.data.colData[col].name;
 	}
-	public colType(col:number):string
+	public colType(col:number):DataSheetColumn
 	{
 		return this.data.colData[col].type;
 	}
@@ -179,6 +181,7 @@ export class DataSheet
 		if (typeof col === 'string') col = this.findColByName(col);
 		return this.data.rowData[row][col];
 	}
+	// NOTE: the molecule object is a direct pointer, so be careful to clone before modifying frivolously
 	public getMolecule(row:number, col:number | string):Molecule
 	{
 		if (typeof col === 'string') col = this.findColByName(col);
@@ -306,12 +309,18 @@ export class DataSheet
 		if (val == null) return true;
 		return this.getBoolean(row, col) == val;
 	}
-	public appendColumn(name:string, type:string, descr:string):number
+	public appendColumn(name:string, type:DataSheetColumn, descr:string):number
 	{
 		this.data.numCols++;
 		this.data.colData.push({'name': name, 'type': type, 'descr': descr});
 		for (let n = 0; n < this.data.numRows; n++) this.data.rowData[n].push(null);
 		return this.data.numCols - 1;
+	}
+	public insertColumn(col:number, name:string, type:DataSheetColumn, descr:string):void
+	{
+		this.data.numCols++;
+		this.data.colData.splice(col, 0, {'name': name, 'type': type, 'descr': descr});
+		for (let n = 0; n < this.data.numRows; n++) this.data.rowData[n].splice(col, 0, null); 
 	}
 	public deleteColumn(col:number):void
 	{
@@ -321,16 +330,16 @@ export class DataSheet
 	}
 	public changeColumnName(col:number, name:string, descr:string):void
 	{
-		this.data.colData[col].name = col;
+		this.data.colData[col].name = name;
 		this.data.colData[col].descr = descr;
 	}
-	public changeColumnType(col:number, newType:string):void
+	public changeColumnType(col:number, newType:DataSheetColumn):void
 	{
 		let oldType = this.colType(col);
 		if (oldType == newType) return;
 
-		let incompatible = oldType == DataSheet.COLTYPE_MOLECULE || newType == DataSheet.COLTYPE_MOLECULE ||
-						   oldType == DataSheet.COLTYPE_EXTEND || newType == DataSheet.COLTYPE_EXTEND;
+		let incompatible = oldType == DataSheetColumn.Molecule || newType == DataSheetColumn.Molecule ||
+						   oldType == DataSheetColumn.Extend || newType == DataSheetColumn.Extend;
 		
 		for (let n = this.data.rowData.length - 1; n >= 0; n--)
 		{
@@ -339,22 +348,22 @@ export class DataSheet
 			if (incompatible) {row[col] = null; continue;}
 
 			let val = '';
-			if (oldType == DataSheet.COLTYPE_STRING) val = row[col] as string;
-			else if (oldType == DataSheet.COLTYPE_INTEGER) val = (row[col] as number).toString();
-			else if (oldType == DataSheet.COLTYPE_REAL) val = (row[col] as number).toString();
-			else if (oldType == DataSheet.COLTYPE_BOOLEAN) val = row[col] as boolean ? 'true' : 'false';
+			if (oldType == DataSheetColumn.String) val = row[col] as string;
+			else if (oldType == DataSheetColumn.Integer) val = (row[col] as number).toString();
+			else if (oldType == DataSheetColumn.Real) val = (row[col] as number).toString();
+			else if (oldType == DataSheetColumn.Boolean) val = row[col] as boolean ? 'true' : 'false';
 
 			row[col] = null;
 
-			if (newType == DataSheet.COLTYPE_STRING) row[col] = val;
-			else if (newType == DataSheet.COLTYPE_INTEGER) {let num = parseInt(val); row[col] = isFinite(num) ? num : null;} 
-			else if (newType == DataSheet.COLTYPE_REAL) {let num = parseFloat(val); row[col] = isFinite(num) ? num : null;}
-			else if (newType == DataSheet.COLTYPE_BOOLEAN) row[col] = val.toLowerCase() == 'true' ? true : false;
+			if (newType == DataSheetColumn.String) row[col] = val;
+			else if (newType == DataSheetColumn.Integer) {let num = parseInt(val); row[col] = isFinite(num) ? num : null;} 
+			else if (newType == DataSheetColumn.Real) {let num = parseFloat(val); row[col] = isFinite(num) ? num : null;}
+			else if (newType == DataSheetColumn.Boolean) row[col] = val.toLowerCase() == 'true' ? true : false;
 		}
 
 		this.data.colData[col].type = newType;
 	}
-	public ensureColumn(name:string, type:string, descr:string):number
+	public ensureColumn(name:string, type:DataSheetColumn, descr:string):number
 	{
 		for (let n = 0; n < this.data.numCols; n++) if (this.data.colData[n].name == name)
 		{
@@ -364,9 +373,15 @@ export class DataSheet
 		}
 		return this.appendColumn(name, type, descr);
 	}
-	/* !! TBD
-	public abstract void reorderColumns(int[] order);
-	*/
+	public reorderColumns(order:number[]):void
+	{
+		let identity = true;
+		for (let n = 0; n < order.length - 1; n++) if (order[n] != order[n + 1] - 1) {identity = false; break;}
+		if (identity) return; // nothing to do
+
+		this.data.colData = Vec.idxGet(this.data.colData, order);
+		for (let n = 0; n < this.data.numRows; n++) this.data.rowData = Vec.idxGet(this.data.rowData, order);
+	}
 	public appendRow():number
 	{
 		this.data.numRows++;
@@ -409,6 +424,10 @@ export class DataSheet
 		let data = this.data.rowData[row];
 		this.data.rowData[row] = this.data.rowData[row + 1];
 		this.data.rowData[row + 1] = data;
+	}
+	public swapRows(row1:number, row2:number):void
+	{
+		Vec.swap(this.data.rowData, row1, row2);
 	}
 	public exciseSingleRow(row:number):DataSheet
 	{

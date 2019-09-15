@@ -233,9 +233,9 @@ export class TemplateBank extends ButtonBank
 
 		for (let ds of TemplateBank.RESOURCE_DATA)
 		{
-			this.subgroups.titles.push(ds.getTitle());
+			this.subgroups.titles.push(ds.title);
 
-			let colMol = ds.firstColOfType(DataSheet.COLTYPE_MOLECULE);
+			let colMol = ds.firstColOfType(DataSheetColumn.Molecule);
 			let metavec = new MetaVector();
 			
 			for (let n = 0, idx = 0; idx < 4 && n < ds.numRows; n++)

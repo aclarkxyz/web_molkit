@@ -134,6 +134,9 @@ export class Vec
 		return arr;
 	}
 
+	public static first<T>(arr:T[]) {return arr == null || arr.length == 0 ? null : arr[0];}
+	public static last<T>(arr:T[]) {return arr == null || arr.length == 0 ? null : arr[arr.length - 1];}
+
 	public static min(arr:number[]):number
 	{
 		if (arr == null || arr.length == 0) return Number.MAX_VALUE;

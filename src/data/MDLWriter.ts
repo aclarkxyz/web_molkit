@@ -280,7 +280,7 @@ export class MDLSDFWriter
 	public write():string
 	{
 		let ds = this.ds, lines = this.lines;
-		let colMol = this.ds.firstColOfType(DataSheet.COLTYPE_MOLECULE);
+		let colMol = this.ds.firstColOfType(DataSheetColumn.Molecule);
 
 		for (let i = 0; i < ds.numRows; i++)
 		{
@@ -295,10 +295,10 @@ export class MDLSDFWriter
 			{
 				let ct = ds.colType(j);
 				let val = '';
-				if (ct == DataSheet.COLTYPE_STRING) val = ds.getString(i, j);
-				else if (ct == DataSheet.COLTYPE_INTEGER) val = ds.getInteger(i, j).toString();
-				else if (ct == DataSheet.COLTYPE_REAL) val = ds.getReal(i, j).toString();
-				else if (ct == DataSheet.COLTYPE_BOOLEAN) val = ds.getBoolean(i, j) ? 'true' : 'false';
+				if (ct == DataSheetColumn.String) val = ds.getString(i, j);
+				else if (ct == DataSheetColumn.Integer) val = ds.getInteger(i, j).toString();
+				else if (ct == DataSheetColumn.Real) val = ds.getReal(i, j).toString();
+				else if (ct == DataSheetColumn.Boolean) val = ds.getBoolean(i, j) ? 'true' : 'false';
 				
 				if (val != '')
 				{

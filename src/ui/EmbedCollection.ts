@@ -184,7 +184,7 @@ export class EmbedCollection extends EmbedChemistry
 					if (spec.aspect == null)
 					{
 						if (ds.isNull(row, spec.idx)) td.text(' ');
-						else if (ds.colType(spec.idx) == DataSheet.COLTYPE_MOLECULE) this.renderMolecule(td, row, spec.idx);
+						else if (ds.colType(spec.idx) == DataSheetColumn.Molecule) this.renderMolecule(td, row, spec.idx);
 						else this.renderPrimitive(td, row, spec.idx);
 					}
 					else if (spec.type == 'text') this.renderTextAspect(td, row, spec.aspect, spec.idx);
@@ -236,7 +236,7 @@ export class EmbedCollection extends EmbedChemistry
 			for (let n = 0; n < names.length; n++) reserved[n] = reserved[n] || claimed[n];
 		}
 
-		for (let n = 0; n < ds.numCols; n++) if (!reserved[n] && ds.colType(n) != DataSheet.COLTYPE_EXTEND)
+		for (let n = 0; n < ds.numCols; n++) if (!reserved[n] && ds.colType(n) != DataSheetColumn.Extend)
 		{
 			columns.push({'name': ds.colName(n), 'aspect': null, 'type': null, 'idx': n});
 		}
@@ -251,10 +251,10 @@ export class EmbedCollection extends EmbedChemistry
 	private renderPrimitive(td:JQuery, row:number, col:number):void
 	{
 		let txt = '', ct = this.ds.colType(col), align = 'center';
-		if (ct == DataSheet.COLTYPE_STRING) {txt = this.ds.getString(row, col); align = 'left';}
-		else if (ct == DataSheet.COLTYPE_INTEGER) txt = this.ds.getInteger(row, col).toString(); 
-		else if (ct == DataSheet.COLTYPE_REAL) txt = this.ds.getReal(row, col).toString(); 
-		else if (ct == DataSheet.COLTYPE_BOOLEAN) txt = this.ds.getBoolean(row, col) ? 'true' : 'false';
+		if (ct == DataSheetColumn.String) {txt = this.ds.getString(row, col); align = 'left';}
+		else if (ct == DataSheetColumn.Integer) txt = this.ds.getInteger(row, col).toString(); 
+		else if (ct == DataSheetColumn.Real) txt = this.ds.getReal(row, col).toString(); 
+		else if (ct == DataSheetColumn.Boolean) txt = this.ds.getBoolean(row, col) ? 'true' : 'false';
 		td.text(txt);
 		td.css('text-align', align);
 	}

@@ -96,7 +96,7 @@ export class ValidationHeadlessMolecule extends Validation
 		let ds = DataSheetStream.readXML(this.strDataXML);
 		this.assert(ds != null, 'parsing failed');
 		this.assert(ds.numRows == 2 && ds.numCols == 5, 'wrong row/column count');
-		let colTypes = [DataSheet.COLTYPE_MOLECULE, DataSheet.COLTYPE_STRING, DataSheet.COLTYPE_INTEGER, DataSheet.COLTYPE_REAL, DataSheet.COLTYPE_BOOLEAN];
+		let colTypes = [DataSheetColumn.Molecule, DataSheetColumn.String, DataSheetColumn.Integer, DataSheetColumn.Real, DataSheetColumn.Boolean];
 		for (let n = 0; n < colTypes.length; n++) this.assert(ds.colType(n) == colTypes[n], 'column#' + (n + 1) + ' wrong type');
 		
 		this.assert(ds.getMolecule(0, 0).numAtoms == 1, 'row 1: invalid molecule');
@@ -117,7 +117,7 @@ export class ValidationHeadlessMolecule extends Validation
 		let ds = rdr.ds;
 		this.assert(ds != null, 'parsing failed');
 		this.assert(ds.numRows == 2 && ds.numCols == 5, 'wrong row/column count');
-		let colTypes = [DataSheet.COLTYPE_MOLECULE, DataSheet.COLTYPE_STRING, DataSheet.COLTYPE_INTEGER, DataSheet.COLTYPE_REAL, DataSheet.COLTYPE_BOOLEAN];
+		let colTypes = [DataSheetColumn.Molecule, DataSheetColumn.String, DataSheetColumn.Integer, DataSheetColumn.Real, DataSheetColumn.Boolean];
 
 		for (let n = 0; n < colTypes.length; n++) this.assert(ds.colType(n) == colTypes[n], 'column#' + (n + 1) + ' wrong type');
 		

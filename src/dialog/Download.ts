@@ -128,7 +128,7 @@ export class Download extends Dialog
 			}
 			if (this.ds.numRows == 1 || isExperiment)
 			{
-				if (!isReaction && this.ds.firstColOfType(DataSheet.COLTYPE_MOLECULE) >= 0)
+				if (!isReaction && this.ds.firstColOfType(DataSheetColumn.Molecule) >= 0)
 				{
 					this.formatKey.push(FormatList.FMT_NATIVE); this.formatGfx.push(false);
 					this.formatKey.push(FormatList.FMT_MDLMOL); this.formatGfx.push(false);

@@ -26,6 +26,7 @@ namespace WebMolKit /* BOF */ {
 		[PRIM_OVAL,typeidx,x,y,w,h]
 		[PRIM_PATH,typeidx,numPoints,xpoints[],ypoints[],ctrlFlags[],isClosed]
 		[PRIM_TEXT,typeidx,x,y,txt]
+		[PRIM_TEXTNATIVE,typeidx,x,y,txt]
 
 	Each type is an array; first entry is type-of-type, the rest varies:
 
@@ -34,6 +35,7 @@ namespace WebMolKit /* BOF */ {
 		[PRIM_OVAL,edgeCol,fillCol,thickness]
 		[PRIM_PATH,edgeCol,fillCol,thickness,hardEdge]
 		[PRIM_TEXT,size,colour]
+		[PRIM_TEXTNATIVE,fontFamily,fontSize,colour]
 */
 
 export enum TextAlign
@@ -54,6 +56,7 @@ export class MetaVector
 	private PRIM_OVAL = 3;
 	private PRIM_PATH = 4;
 	private PRIM_TEXT = 5;
+	private PRIM_TEXTNATIVE = 6;
 
 	private ONE_THIRD = 1.0 / 3;
 	
@@ -217,6 +220,38 @@ export class MetaVector
 		this.prims.push([this.PRIM_TEXT, typeidx, x + bx, y + by, txt]);
 	}
 
+	// render *native* text, which is defined by an HTML/CSS font specifier; this is different from the built-in text in that it presumes that the device
+	// can locate the font at render-time, and that whatever methods were used to measure the font at draw-time are synced; this is a fair assumption when
+	// creating graphics for immediate output to a canvas or inline-rendered SVG object, but anything else has to be taken on a case by case basis
+	public drawTextNative(x:number, y:number, txt:string, fontFamily:string, fontSize:number, colour:number, align?:number)
+	{
+		if (align == null) align = TextAlign.Left | TextAlign.Baseline;
+		const font = FontData.main;
+		for (let n = 0; n < txt.length; n++)
+		{
+			let i = font.getIndex(txt.charAt(n));
+			if (i >= 0) this.charMask[i] = true; else this.charMissing = true;
+		}
+
+		let metrics = font.measureTextNative(txt, fontFamily, fontSize);
+		let bx = 0, by = 0;
+
+		if ((align & TextAlign.Left) != 0) {}
+		else if ((align & TextAlign.Right) != 0) bx = -metrics[0];
+		else /* centre */ bx = -0.5 * metrics[0];
+
+		if ((align & TextAlign.Middle) != 0) by += 0.5 * metrics[1];
+		else if ((align & TextAlign.Top) != 0) by += metrics[1];
+		else if ((align & TextAlign.Bottom) != 0) by -= metrics[2];
+		// else: baseline
+
+		this.updateBounds(x, y - metrics[1]);
+		this.updateBounds(x + metrics[0], y + metrics[2]);
+
+		let typeidx = this.findOrCreateType([this.PRIM_TEXTNATIVE, fontFamily, fontSize, colour]);
+		this.prims.push([this.PRIM_TEXTNATIVE, typeidx, x + bx, y + by, txt]);
+	}
+
 	// query the boundaries of the drawing, post factum
 	public boundLowX():number {return this.lowX;}
 	public boundLowY():number {return this.lowY;}
@@ -308,7 +343,7 @@ export class MetaVector
 					py[n] = oy + ((py[n] - this.lowY) * sh + this.lowY);
 				}
 			}
-			else if (type == this.PRIM_TEXT)
+			else if (type == this.PRIM_TEXT || type == this.PRIM_TEXTNATIVE)
 			{
 				a[2] = ox + ((a[2] - this.lowX) * sw + this.lowX);
 				a[3] = oy + ((a[3] - this.lowY) * sh + this.lowY);
@@ -323,6 +358,7 @@ export class MetaVector
 			else if (type == this.PRIM_OVAL) t[3] *= swsh;
 			else if (type == this.PRIM_PATH) t[3] *= swsh;
 			else if (type == this.PRIM_TEXT) t[1] *= swsh;
+			else if (type == this.PRIM_TEXTNATIVE) t[1] *= swsh;
 		}
 
 		this.highX = ox + this.lowX + (this.highX - this.lowX) * sw;
@@ -373,6 +409,7 @@ export class MetaVector
 			else if (t[0] == this.PRIM_OVAL) this.typeObj[n] = this.setupTypeOval(t);
 			else if (t[0] == this.PRIM_PATH) this.typeObj[n] = this.setupTypePath(t);
 			else if (t[0] == this.PRIM_TEXT) this.typeObj[n] = this.setupTypeText(t);
+			else if (t[0] == this.PRIM_TEXTNATIVE) this.typeObj[n] = this.setupTypeTextNative(t);
 		}
 		for (let n = 0; n < this.prims.length; n++)
 		{
@@ -382,6 +419,7 @@ export class MetaVector
 			else if (p[0] == this.PRIM_OVAL) this.renderOval(ctx, p);
 			else if (p[0] == this.PRIM_PATH) this.renderPath(ctx, p);
 			else if (p[0] == this.PRIM_TEXT) this.renderText(ctx, p);
+			else if (p[0] == this.PRIM_TEXTNATIVE) this.renderTextNative(ctx, p);
 		}
 		
 		ctx.restore();
@@ -438,11 +476,12 @@ export class MetaVector
 			else if (t[0] == this.PRIM_OVAL) this.typeObj[n] = this.setupTypeOval(t);
 			else if (t[0] == this.PRIM_PATH) this.typeObj[n] = this.setupTypePath(t);
 			else if (t[0] == this.PRIM_TEXT) this.typeObj[n] = this.setupTypeText(t);
+			else if (t[0] == this.PRIM_TEXTNATIVE) this.typeObj[n] = this.setupTypeTextNative(t);
 		}
 		for (let n = 0; n < this.prims.length;)
 		{
 			let p = this.prims[n], num = 1;
-			if (p[0] != this.PRIM_PATH && p[0] != this.PRIM_TEXT)
+			if (p[0] != this.PRIM_PATH && p[0] != this.PRIM_TEXT && p[0] != this.PRIM_TEXTNATIVE)
 			{
 				for (; n + num < this.prims.length; num++) if (this.prims[n + num][0] != p[0] || this.prims[n + num][1] != p[1]) break;
 			}
@@ -460,6 +499,7 @@ export class MetaVector
 			}
 			else if (p[0] == this.PRIM_PATH) this.svgPath(svg, p);
 			else if (p[0] == this.PRIM_TEXT) this.svgText(svg, p);
+			else if (p[0] == this.PRIM_TEXTNATIVE) this.svgTextNative(svg, p);
 
 			n += num;
 		}
@@ -502,9 +542,16 @@ export class MetaVector
 		let colour = t[2];
 		return {'colour': colour, 'size': sz};
 	}
+	public setupTypeTextNative(t:any[]):any
+	{
+		let family = t[1];
+		let sz = t[2] * this.scale;
+		let colour = t[3];
+		return {'colour': colour, 'fontFamily': family, 'fontSize': sz};
+	}
 
 	// perform actual rendering for the primitives
-	public renderLine(ctx:CanvasRenderingContext2D, p:any)
+	public renderLine(ctx:CanvasRenderingContext2D, p:any):void
 	{
 		let type = this.typeObj[p[1]];
 		let x1 = p[2], y1 = p[3];
@@ -526,7 +573,7 @@ export class MetaVector
 			ctx.stroke();
 		}
 	}
-	public renderRect(ctx:CanvasRenderingContext2D, p:any)
+	public renderRect(ctx:CanvasRenderingContext2D, p:any):void
 	{
 		let type = this.typeObj[p[1]];
 		let x = p[2], y = p[3];
@@ -551,7 +598,7 @@ export class MetaVector
 			ctx.strokeRect(x, y, w, h);
 		}
 	}
-	public renderOval(ctx:CanvasRenderingContext2D, p:any)
+	public renderOval(ctx:CanvasRenderingContext2D, p:any):void
 	{
 		let type = this.typeObj[p[1]];
 		let cx = p[2], cy = p[3];
@@ -579,7 +626,7 @@ export class MetaVector
 			ctx.stroke();
 		}
 	}
-	public renderPath(ctx:CanvasRenderingContext2D, p:any)
+	public renderPath(ctx:CanvasRenderingContext2D, p:any):void
 	{
 		let type = this.typeObj[p[1]];
 		let npts = p[2];
@@ -636,7 +683,7 @@ export class MetaVector
 			}
 		}
 	}
-	private renderText(ctx:CanvasRenderingContext2D, p:any)
+	private renderText(ctx:CanvasRenderingContext2D, p:any):void
 	{
 		let type = this.typeObj[p[1]];
 		let x = p[2], y = p[3];
@@ -678,10 +725,28 @@ export class MetaVector
 			if (n < txt.length - 1) font.getKerning(ch, txt.charAt(n + 1));
 		}
 	}
+	private renderTextNative(ctx:CanvasRenderingContext2D, p:any):void
+	{
+		let type = this.typeObj[p[1]];
+		let x = p[2], y = p[3];
+		let txt = p[4];
+		
+		let family:string = type.fontFamily, sz:number = type.fontSize;
+		let fill = colourCanvas(type.colour);
+
+		x = this.offsetX + this.scale * x;
+		y = this.offsetY + this.scale * y;
+
+		ctx.save();
+		ctx.font = sz + 'px ' + family;
+		ctx.fillStyle = fill;
+		ctx.fillText(txt, x, y);
+		ctx.restore();
+	}
 
 	// create SVG object for each primitive
 	// perform actual rendering for the primitives
-	public svgLine1(svg:JQuery, p:any)
+	public svgLine1(svg:JQuery, p:any):void
 	{
 		let type = this.typeObj[p[1]];
 		let x1 = p[2], y1 = p[3];
@@ -704,7 +769,7 @@ export class MetaVector
 			line.attr('stroke-linecap', 'round');
 		}
 	}
-	public svgLineN(svg:JQuery, p:any, pos:number, sz:number)
+	public svgLineN(svg:JQuery, p:any, pos:number, sz:number):void
 	{
 		let type = this.typeObj[p[1]];
 		if (type.colour == MetaVector.NOCOLOUR) return;
@@ -732,7 +797,7 @@ export class MetaVector
 			line.attr('y2', y2);
 		}
 	}
-	public svgRect1(svg:JQuery, p:any)
+	public svgRect1(svg:JQuery, p:any):void
 	{
 		let type = this.typeObj[p[1]];
 		let x = p[2], y = p[3];
@@ -757,7 +822,7 @@ export class MetaVector
 		}
 		this.defineSVGFill(rect, type.fillCol);
 	}
-	public svgRectN(svg:JQuery, p:any, pos:number, sz:number)
+	public svgRectN(svg:JQuery, p:any, pos:number, sz:number):void
 	{
 		let type = this.typeObj[p[1]];
 
@@ -789,7 +854,7 @@ export class MetaVector
 			rect.attr('height', h);
 		}
 	}
-	public svgOval1(svg:JQuery, p:any)
+	public svgOval1(svg:JQuery, p:any):void
 	{
 		let type = this.typeObj[p[1]];
 		let cx = p[2], cy = p[3];
@@ -813,7 +878,7 @@ export class MetaVector
 		}
 		this.defineSVGFill(oval, type.fillCol);
 	}
-	public svgOvalN(svg:JQuery, p:any, pos:number, sz:number)
+	public svgOvalN(svg:JQuery, p:any, pos:number, sz:number):void
 	{
 		let type = this.typeObj[p[1]];
 		let x = p[2], y = p[3];
@@ -846,7 +911,7 @@ export class MetaVector
 			oval.attr('ry', rh);
 		}
 	}
-	public svgPath(svg:JQuery, p:any)
+	public svgPath(svg:JQuery, p:any):void
 	{
 		let type = this.typeObj[p[1]];
 		let npts = p[2];
@@ -896,7 +961,7 @@ export class MetaVector
 		}
 		this.defineSVGFill(path, type.fillCol);
 	}
-	private svgText(svg:JQuery, p:any)
+	private svgText(svg:JQuery, p:any):void
 	{
 		let type = this.typeObj[p[1]];
 		let x = p[2], y = p[3];
@@ -935,7 +1000,25 @@ export class MetaVector
 			}
 			else dx += font.MISSING_HORZ;
 		}
-	}	
+	}
+	private svgTextNative(svg:JQuery, p:any):void
+	{
+		let type = this.typeObj[p[1]];
+		let x = p[2], y = p[3];
+		let txt = p[4];
+		
+		let family = type.fontFamily, sz = type.fontSize;
+
+		x = this.offsetX + this.scale * x;
+		y = this.offsetY + this.scale * y;
+
+		let colour = colourCanvas(type.colour);
+		let style = `fill: ${colour}; font-family: ${family}; font-size: ${sz};`;
+
+		let node = $('<text></text>').appendTo(svg);
+		node.attr({'x': x, 'y': y, 'style': style});	
+		node.text(txt);
+	}
 
 	// utility for SVG
 	private defineSVGStroke(obj:JQuery, col:number):void

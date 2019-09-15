@@ -546,7 +546,7 @@ export class MDLSDFReader
 	private parseStream():void
 	{
 		let ds = this.ds;
-		ds.appendColumn('Molecule', DataSheet.COLTYPE_MOLECULE, 'Molecular structure');
+		ds.appendColumn('Molecule', DataSheetColumn.Molecule, 'Molecular structure');
 		let colName = -1;
 		let entry:string[] = [];
 
@@ -590,7 +590,7 @@ export class MDLSDFReader
 			if (mol != null) ds.setMolecule(rn, 0, mol);
 			if (name)
 			{
-				if (colName < 0) colName = ds.appendColumn('Name', DataSheet.COLTYPE_STRING, 'Molecule name');
+				if (colName < 0) colName = ds.appendColumn('Name', DataSheetColumn.String, 'Molecule name');
 				ds.setString(rn, colName, name);
 			}
 			
@@ -603,7 +603,7 @@ export class MDLSDFReader
 				}
 				if (str3.length >= 8 && str3.startsWith('$title='))
 				{
-					ds.setTitle(str3.substring(7));
+					ds.title = str3.substring(7);
 				}
 			}
 			
@@ -626,7 +626,7 @@ export class MDLSDFReader
 				}
 				
 				let cn = ds.findColByName(key);
-				if (cn < 0) cn = ds.appendColumn(key, DataSheet.COLTYPE_STRING, '');
+				if (cn < 0) cn = ds.appendColumn(key, DataSheetColumn.String, '');
 				
 				if (val.length == 0) ds.setToNull(rn, cn);
 				else ds.setString(rn, cn, val);
@@ -641,7 +641,7 @@ export class MDLSDFReader
 	private upcastStringColumns():void
 	{
 		let ds = this.ds;
-		for (let i = 0; i < ds.numCols; i++) if (ds.colType(i) == DataSheet.COLTYPE_STRING)
+		for (let i = 0; i < ds.numCols; i++) if (ds.colType(i) == DataSheetColumn.String)
 		{
 			let allnull = true, allreal = true, allint = true, allbool = true;
 			for (let j = 0; j < ds.numRows; j++)
@@ -669,9 +669,9 @@ export class MDLSDFReader
 			}
 
 			if (allnull) {} // do nothing
-			else if (allint) ds.changeColumnType(i, DataSheet.COLTYPE_INTEGER);
-			else if (allreal) ds.changeColumnType(i, DataSheet.COLTYPE_REAL);
-			else if (allbool) ds.changeColumnType(i, DataSheet.COLTYPE_BOOLEAN);
+			else if (allint) ds.changeColumnType(i, DataSheetColumn.Integer);
+			else if (allreal) ds.changeColumnType(i, DataSheetColumn.Real);
+			else if (allbool) ds.changeColumnType(i, DataSheetColumn.Boolean);
 		}
 	}	
 }

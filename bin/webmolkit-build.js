@@ -910,6 +910,15 @@ var WebMolKit;
 })(WebMolKit || (WebMolKit = {}));
 var WebMolKit;
 (function (WebMolKit) {
+    let DataSheetColumn;
+    (function (DataSheetColumn) {
+        DataSheetColumn["Molecule"] = "molecule";
+        DataSheetColumn["String"] = "string";
+        DataSheetColumn["Real"] = "real";
+        DataSheetColumn["Integer"] = "integer";
+        DataSheetColumn["Boolean"] = "boolean";
+        DataSheetColumn["Extend"] = "extend";
+    })(DataSheetColumn = WebMolKit.DataSheetColumn || (WebMolKit.DataSheetColumn = {}));
     class DataSheet {
         constructor(data) {
             if (!data)
@@ -1184,8 +1193,8 @@ var WebMolKit;
             let oldType = this.colType(col);
             if (oldType == newType)
                 return;
-            let incompatible = oldType == DataSheet.COLTYPE_MOLECULE || newType == DataSheet.COLTYPE_MOLECULE ||
-                oldType == DataSheet.COLTYPE_EXTEND || newType == DataSheet.COLTYPE_EXTEND;
+            let incompatible = oldType == "molecule" || newType == "molecule" ||
+                oldType == "extend" || newType == "extend";
             for (let n = this.data.rowData.length - 1; n >= 0; n--) {
                 let row = this.data.rowData[n];
                 if (row[col] == null)
@@ -1195,26 +1204,26 @@ var WebMolKit;
                     continue;
                 }
                 let val = '';
-                if (oldType == DataSheet.COLTYPE_STRING)
+                if (oldType == "string")
                     val = row[col];
-                else if (oldType == DataSheet.COLTYPE_INTEGER)
+                else if (oldType == "integer")
                     val = row[col].toString();
-                else if (oldType == DataSheet.COLTYPE_REAL)
+                else if (oldType == "real")
                     val = row[col].toString();
-                else if (oldType == DataSheet.COLTYPE_BOOLEAN)
+                else if (oldType == "boolean")
                     val = row[col] ? 'true' : 'false';
                 row[col] = null;
-                if (newType == DataSheet.COLTYPE_STRING)
+                if (newType == "string")
                     row[col] = val;
-                else if (newType == DataSheet.COLTYPE_INTEGER) {
+                else if (newType == "integer") {
                     let num = parseInt(val);
                     row[col] = isFinite(num) ? num : null;
                 }
-                else if (newType == DataSheet.COLTYPE_REAL) {
+                else if (newType == "real") {
                     let num = parseFloat(val);
                     row[col] = isFinite(num) ? num : null;
                 }
-                else if (newType == DataSheet.COLTYPE_BOOLEAN)
+                else if (newType == "boolean")
                     row[col] = val.toLowerCase() == 'true' ? true : false;
             }
             this.data.colData[col].type = newType;
@@ -1319,12 +1328,6 @@ var WebMolKit;
             return obj == null ? null : parseFloat(obj);
         }
     }
-    DataSheet.COLTYPE_MOLECULE = 'molecule';
-    DataSheet.COLTYPE_STRING = 'string';
-    DataSheet.COLTYPE_REAL = 'real';
-    DataSheet.COLTYPE_INTEGER = 'integer';
-    DataSheet.COLTYPE_BOOLEAN = 'boolean';
-    DataSheet.COLTYPE_EXTEND = 'extend';
     WebMolKit.DataSheet = DataSheet;
 })(WebMolKit || (WebMolKit = {}));
 var WebMolKit;
@@ -1407,12 +1410,11 @@ var WebMolKit;
                 edgeCount.set(e2, (edgeCount.get(e2) || 0) + 1);
                 edgeCount.set(e3, (edgeCount.get(e3) || 0) + 1);
             }
-            var edges = [];
-            ;
+            let edges = [];
             for (let entry of edgeCount.entries())
                 if (entry[1] == 1) {
                     const e = entry[0];
-                    const i1 = e / sz, i2 = e % sz;
+                    const i1 = Math.floor(e / sz), i2 = e % sz;
                     edges.push(i1);
                     edges.push(i2);
                 }
@@ -1526,7 +1528,7 @@ var WebMolKit;
             this.quicksort(0, sz - 1);
             this.hullStart = i0;
             let hullSize = 3;
-            const { hullNext, hullPrev, hullTri, hullHash, hashKey, hashSize } = this;
+            const { hullNext, hullPrev, hullTri, hullHash, hashSize } = this;
             hullNext[i0] = hullPrev[i2] = i1;
             hullNext[i1] = hullPrev[i0] = i2;
             hullNext[i2] = hullPrev[i1] = i0;
@@ -1534,9 +1536,9 @@ var WebMolKit;
             hullTri[i1] = 1;
             hullTri[i2] = 2;
             hullHash.fill(-1);
-            hullHash[hashKey(i0x, i0y)] = i0;
-            hullHash[hashKey(i1x, i1y)] = i1;
-            hullHash[hashKey(i2x, i2y)] = i2;
+            hullHash[this.hashKey(i0x, i0y)] = i0;
+            hullHash[this.hashKey(i1x, i1y)] = i1;
+            hullHash[this.hashKey(i2x, i2y)] = i2;
             this.numTriangles = 0;
             this.addTriangle(i0, i1, i2, -1, -1, -1);
             let xp = 0, yp = 0;
@@ -1550,7 +1552,7 @@ var WebMolKit;
                 if (i == i0 || i == i1 || i == i2)
                     continue;
                 let start = 0;
-                for (let j = 0, key = hashKey(x, y); j < hashSize; j++) {
+                for (let j = 0, key = this.hashKey(x, y); j < hashSize; j++) {
                     start = hullHash[(key + j) % hashSize];
                     if (start >= 0 && start != hullNext[start])
                         break;
@@ -1596,8 +1598,8 @@ var WebMolKit;
                 this.hullStart = hullPrev[i] = e;
                 hullNext[e] = hullPrev[n] = i;
                 hullNext[i] = n;
-                hullHash[hashKey(x, y)] = i;
-                hullHash[hashKey(px[e], py[e])] = e;
+                hullHash[this.hashKey(x, y)] = i;
+                hullHash[this.hashKey(px[e], py[e])] = e;
             }
             this.hull = new Array(hullSize);
             for (let n = 0, e = this.hullStart; n < hullSize; n++) {
@@ -7317,7 +7319,7 @@ var WebMolKit;
         }
         parseStream() {
             let ds = this.ds;
-            ds.appendColumn('Molecule', WebMolKit.DataSheet.COLTYPE_MOLECULE, 'Molecular structure');
+            ds.appendColumn('Molecule', "molecule", 'Molecular structure');
             let colName = -1;
             let entry = [];
             while (this.pos < this.lines.length) {
@@ -7353,7 +7355,7 @@ var WebMolKit;
                     ds.setMolecule(rn, 0, mol);
                 if (name) {
                     if (colName < 0)
-                        colName = ds.appendColumn('Name', WebMolKit.DataSheet.COLTYPE_STRING, 'Molecule name');
+                        colName = ds.appendColumn('Name', "string", 'Molecule name');
                     ds.setString(rn, colName, name);
                 }
                 if (rn == 0 && mol != null) {
@@ -7385,7 +7387,7 @@ var WebMolKit;
                     }
                     let cn = ds.findColByName(key);
                     if (cn < 0)
-                        cn = ds.appendColumn(key, WebMolKit.DataSheet.COLTYPE_STRING, '');
+                        cn = ds.appendColumn(key, "string", '');
                     if (val.length == 0)
                         ds.setToNull(rn, cn);
                     else
@@ -7399,7 +7401,7 @@ var WebMolKit;
         upcastStringColumns() {
             let ds = this.ds;
             for (let i = 0; i < ds.numCols; i++)
-                if (ds.colType(i) == WebMolKit.DataSheet.COLTYPE_STRING) {
+                if (ds.colType(i) == "string") {
                     let allnull = true, allreal = true, allint = true, allbool = true;
                     for (let j = 0; j < ds.numRows; j++) {
                         if (!allreal && !allint && !allbool)
@@ -7425,11 +7427,11 @@ var WebMolKit;
                     }
                     if (allnull) { }
                     else if (allint)
-                        ds.changeColumnType(i, WebMolKit.DataSheet.COLTYPE_INTEGER);
+                        ds.changeColumnType(i, "integer");
                     else if (allreal)
-                        ds.changeColumnType(i, WebMolKit.DataSheet.COLTYPE_REAL);
+                        ds.changeColumnType(i, "real");
                     else if (allbool)
-                        ds.changeColumnType(i, WebMolKit.DataSheet.COLTYPE_BOOLEAN);
+                        ds.changeColumnType(i, "boolean");
                 }
         }
     }
@@ -7968,7 +7970,7 @@ var WebMolKit;
         }
         write() {
             let ds = this.ds, lines = this.lines;
-            let colMol = this.ds.firstColOfType(WebMolKit.DataSheet.COLTYPE_MOLECULE);
+            let colMol = this.ds.firstColOfType("molecule");
             for (let i = 0; i < ds.numRows; i++) {
                 let mol = colMol < 0 ? null : ds.getMolecule(i, colMol);
                 if (mol != null) {
@@ -7979,13 +7981,13 @@ var WebMolKit;
                     if (j != colMol && ds.notNull(i, j)) {
                         let ct = ds.colType(j);
                         let val = '';
-                        if (ct == WebMolKit.DataSheet.COLTYPE_STRING)
+                        if (ct == "string")
                             val = ds.getString(i, j);
-                        else if (ct == WebMolKit.DataSheet.COLTYPE_INTEGER)
+                        else if (ct == "integer")
                             val = ds.getInteger(i, j).toString();
-                        else if (ct == WebMolKit.DataSheet.COLTYPE_REAL)
+                        else if (ct == "real")
                             val = ds.getReal(i, j).toString();
-                        else if (ct == WebMolKit.DataSheet.COLTYPE_BOOLEAN)
+                        else if (ct == "boolean")
                             val = ds.getBoolean(i, j) ? 'true' : 'false';
                         if (val != '') {
                             lines.push('> <' + ds.colName(j) + '>');
@@ -8195,17 +8197,17 @@ var WebMolKit;
         }
         setEntry(row, entry) {
             let fields = this.getFields();
-            let colConstruct = this.ds.findColByName(fields.construct, WebMolKit.DataSheet.COLTYPE_MOLECULE);
+            let colConstruct = this.ds.findColByName(fields.construct, "molecule");
             if (colConstruct >= 0)
                 this.ds.setMolecule(row, colConstruct, entry.construct);
-            let colLocked = this.ds.findColByName(fields.locked, WebMolKit.DataSheet.COLTYPE_BOOLEAN);
+            let colLocked = this.ds.findColByName(fields.locked, "boolean");
             if (colLocked >= 0)
                 this.ds.setBoolean(row, colLocked, entry.locked);
-            let colScaffold = this.ds.findColByName(fields.scaffold, WebMolKit.DataSheet.COLTYPE_MOLECULE);
+            let colScaffold = this.ds.findColByName(fields.scaffold, "molecule");
             if (colScaffold >= 0)
                 this.ds.setMolecule(row, colScaffold, entry.scaffold);
             for (let n = 0; n < fields.substituents.length; n++) {
-                let colSubst = this.ds.findColByName(fields.substituents[n], WebMolKit.DataSheet.COLTYPE_MOLECULE);
+                let colSubst = this.ds.findColByName(fields.substituents[n], "molecule");
                 if (colSubst >= 0)
                     this.ds.setMolecule(row, colSubst, entry.substituents[n]);
             }
@@ -8218,7 +8220,7 @@ var WebMolKit;
             for (let name of tobeAdded)
                 if (fields.substituents.indexOf(name) < 0) {
                     fields.substituents.push(name);
-                    this.ds.ensureColumn(name, WebMolKit.DataSheet.COLTYPE_MOLECULE, SARTable.DESCR_SUBSTITUENT);
+                    this.ds.ensureColumn(name, "molecule", SARTable.DESCR_SUBSTITUENT);
                     modified = true;
                 }
             if (modified)
@@ -8245,11 +8247,11 @@ var WebMolKit;
                     got = true;
                     break;
                 }
-            this.ds.ensureColumn(fields.construct, WebMolKit.DataSheet.COLTYPE_MOLECULE, SARTable.DESCR_CONSTRUCT);
-            this.ds.ensureColumn(fields.locked, WebMolKit.DataSheet.COLTYPE_BOOLEAN, SARTable.DESCR_LOCKED);
-            this.ds.ensureColumn(fields.scaffold, WebMolKit.DataSheet.COLTYPE_MOLECULE, SARTable.DESCR_SCAFFOLD);
+            this.ds.ensureColumn(fields.construct, "molecule", SARTable.DESCR_CONSTRUCT);
+            this.ds.ensureColumn(fields.locked, "boolean", SARTable.DESCR_LOCKED);
+            this.ds.ensureColumn(fields.scaffold, "molecule", SARTable.DESCR_SCAFFOLD);
             for (let subst of fields.substituents)
-                this.ds.ensureColumn(subst, WebMolKit.DataSheet.COLTYPE_MOLECULE, SARTable.DESCR_SUBSTITUENT);
+                this.ds.ensureColumn(subst, "molecule", SARTable.DESCR_SUBSTITUENT);
             if (!got) {
                 let content = this.formatMetaData(fields);
                 this.ds.appendExtension(SARTable.NAME, SARTable.CODE, content);
@@ -11866,10 +11868,10 @@ var WebMolKit;
                 ds.setExtData(idxExp, '');
             else
                 ds.appendExtension(Experiment.NAME, Experiment.CODE, '');
-            this.forceColumn(Experiment.COLNAME_EXPERIMENT_TITLE, WebMolKit.DataSheet.COLTYPE_STRING);
-            this.forceColumn(Experiment.COLNAME_EXPERIMENT_CREATEDATE, WebMolKit.DataSheet.COLTYPE_REAL);
-            this.forceColumn(Experiment.COLNAME_EXPERIMENT_MODIFYDATE, WebMolKit.DataSheet.COLTYPE_REAL);
-            this.forceColumn(Experiment.COLNAME_EXPERIMENT_DOI, WebMolKit.DataSheet.COLTYPE_STRING);
+            this.forceColumn(Experiment.COLNAME_EXPERIMENT_TITLE, "string");
+            this.forceColumn(Experiment.COLNAME_EXPERIMENT_CREATEDATE, "real");
+            this.forceColumn(Experiment.COLNAME_EXPERIMENT_MODIFYDATE, "real");
+            this.forceColumn(Experiment.COLNAME_EXPERIMENT_DOI, "string");
             for (let n = 1; n <= nreactants; n++)
                 this.forceReactantColumns(n);
             for (let n = 1; n <= nreagents; n++)
@@ -11882,37 +11884,37 @@ var WebMolKit;
             this.ds.ensureColumn(useName, type, Experiment.COLUMN_DESCRIPTIONS[colName]);
         }
         forceReactantColumns(suffix) {
-            this.forceColumn(Experiment.COLNAME_REACTANT_MOL, WebMolKit.DataSheet.COLTYPE_MOLECULE, suffix);
-            this.forceColumn(Experiment.COLNAME_REACTANT_NAME, WebMolKit.DataSheet.COLTYPE_STRING, suffix);
-            this.forceColumn(Experiment.COLNAME_REACTANT_STOICH, WebMolKit.DataSheet.COLTYPE_STRING, suffix);
-            this.forceColumn(Experiment.COLNAME_REACTANT_MASS, WebMolKit.DataSheet.COLTYPE_REAL, suffix);
-            this.forceColumn(Experiment.COLNAME_REACTANT_VOLUME, WebMolKit.DataSheet.COLTYPE_REAL, suffix);
-            this.forceColumn(Experiment.COLNAME_REACTANT_MOLES, WebMolKit.DataSheet.COLTYPE_REAL, suffix);
-            this.forceColumn(Experiment.COLNAME_REACTANT_DENSITY, WebMolKit.DataSheet.COLTYPE_REAL, suffix);
-            this.forceColumn(Experiment.COLNAME_REACTANT_CONC, WebMolKit.DataSheet.COLTYPE_REAL, suffix);
-            this.forceColumn(Experiment.COLNAME_REACTANT_PRIMARY, WebMolKit.DataSheet.COLTYPE_BOOLEAN, suffix);
+            this.forceColumn(Experiment.COLNAME_REACTANT_MOL, "molecule", suffix);
+            this.forceColumn(Experiment.COLNAME_REACTANT_NAME, "string", suffix);
+            this.forceColumn(Experiment.COLNAME_REACTANT_STOICH, "string", suffix);
+            this.forceColumn(Experiment.COLNAME_REACTANT_MASS, "real", suffix);
+            this.forceColumn(Experiment.COLNAME_REACTANT_VOLUME, "real", suffix);
+            this.forceColumn(Experiment.COLNAME_REACTANT_MOLES, "real", suffix);
+            this.forceColumn(Experiment.COLNAME_REACTANT_DENSITY, "real", suffix);
+            this.forceColumn(Experiment.COLNAME_REACTANT_CONC, "real", suffix);
+            this.forceColumn(Experiment.COLNAME_REACTANT_PRIMARY, "boolean", suffix);
         }
         forceReagentColumns(suffix) {
-            this.forceColumn(Experiment.COLNAME_REAGENT_MOL, WebMolKit.DataSheet.COLTYPE_MOLECULE, suffix);
-            this.forceColumn(Experiment.COLNAME_REAGENT_NAME, WebMolKit.DataSheet.COLTYPE_STRING, suffix);
-            this.forceColumn(Experiment.COLNAME_REAGENT_EQUIV, WebMolKit.DataSheet.COLTYPE_REAL, suffix);
-            this.forceColumn(Experiment.COLNAME_REAGENT_MASS, WebMolKit.DataSheet.COLTYPE_REAL, suffix);
-            this.forceColumn(Experiment.COLNAME_REAGENT_VOLUME, WebMolKit.DataSheet.COLTYPE_REAL, suffix);
-            this.forceColumn(Experiment.COLNAME_REAGENT_MOLES, WebMolKit.DataSheet.COLTYPE_REAL, suffix);
-            this.forceColumn(Experiment.COLNAME_REAGENT_DENSITY, WebMolKit.DataSheet.COLTYPE_REAL, suffix);
-            this.forceColumn(Experiment.COLNAME_REAGENT_CONC, WebMolKit.DataSheet.COLTYPE_REAL, suffix);
+            this.forceColumn(Experiment.COLNAME_REAGENT_MOL, "molecule", suffix);
+            this.forceColumn(Experiment.COLNAME_REAGENT_NAME, "string", suffix);
+            this.forceColumn(Experiment.COLNAME_REAGENT_EQUIV, "real", suffix);
+            this.forceColumn(Experiment.COLNAME_REAGENT_MASS, "real", suffix);
+            this.forceColumn(Experiment.COLNAME_REAGENT_VOLUME, "real", suffix);
+            this.forceColumn(Experiment.COLNAME_REAGENT_MOLES, "real", suffix);
+            this.forceColumn(Experiment.COLNAME_REAGENT_DENSITY, "real", suffix);
+            this.forceColumn(Experiment.COLNAME_REAGENT_CONC, "real", suffix);
         }
         forceProductColumns(suffix) {
-            this.forceColumn(Experiment.COLNAME_PRODUCT_MOL, WebMolKit.DataSheet.COLTYPE_MOLECULE, suffix);
-            this.forceColumn(Experiment.COLNAME_PRODUCT_NAME, WebMolKit.DataSheet.COLTYPE_STRING, suffix);
-            this.forceColumn(Experiment.COLNAME_PRODUCT_STOICH, WebMolKit.DataSheet.COLTYPE_STRING, suffix);
-            this.forceColumn(Experiment.COLNAME_PRODUCT_MASS, WebMolKit.DataSheet.COLTYPE_REAL, suffix);
-            this.forceColumn(Experiment.COLNAME_PRODUCT_VOLUME, WebMolKit.DataSheet.COLTYPE_REAL, suffix);
-            this.forceColumn(Experiment.COLNAME_PRODUCT_MOLES, WebMolKit.DataSheet.COLTYPE_REAL, suffix);
-            this.forceColumn(Experiment.COLNAME_PRODUCT_DENSITY, WebMolKit.DataSheet.COLTYPE_REAL, suffix);
-            this.forceColumn(Experiment.COLNAME_PRODUCT_CONC, WebMolKit.DataSheet.COLTYPE_REAL, suffix);
-            this.forceColumn(Experiment.COLNAME_PRODUCT_YIELD, WebMolKit.DataSheet.COLTYPE_REAL, suffix);
-            this.forceColumn(Experiment.COLNAME_PRODUCT_WASTE, WebMolKit.DataSheet.COLTYPE_BOOLEAN, suffix);
+            this.forceColumn(Experiment.COLNAME_PRODUCT_MOL, "molecule", suffix);
+            this.forceColumn(Experiment.COLNAME_PRODUCT_NAME, "string", suffix);
+            this.forceColumn(Experiment.COLNAME_PRODUCT_STOICH, "string", suffix);
+            this.forceColumn(Experiment.COLNAME_PRODUCT_MASS, "real", suffix);
+            this.forceColumn(Experiment.COLNAME_PRODUCT_VOLUME, "real", suffix);
+            this.forceColumn(Experiment.COLNAME_PRODUCT_MOLES, "real", suffix);
+            this.forceColumn(Experiment.COLNAME_PRODUCT_DENSITY, "real", suffix);
+            this.forceColumn(Experiment.COLNAME_PRODUCT_CONC, "real", suffix);
+            this.forceColumn(Experiment.COLNAME_PRODUCT_YIELD, "real", suffix);
+            this.forceColumn(Experiment.COLNAME_PRODUCT_WASTE, "boolean", suffix);
         }
         parseReactionMetaData(content) {
             let nreactants = 1, nproducts = 1, nreagents = 0;
@@ -12353,13 +12355,13 @@ var WebMolKit;
                     got = true;
                     break;
                 }
-            this.ds.ensureColumn(AssayProvenance.COLNAME_MOLECULE, WebMolKit.DataSheet.COLTYPE_MOLECULE, 'Molecular structure of compound being measured');
-            this.ds.ensureColumn(AssayProvenance.COLNAME_NAME, WebMolKit.DataSheet.COLTYPE_STRING, 'Name of compound');
-            this.ds.ensureColumn(AssayProvenance.COLNAME_VALUE, WebMolKit.DataSheet.COLTYPE_REAL, 'Measured value');
-            this.ds.ensureColumn(AssayProvenance.COLNAME_ERROR, WebMolKit.DataSheet.COLTYPE_REAL, 'Experimental error of measurement');
-            this.ds.ensureColumn(AssayProvenance.COLNAME_UNITS, WebMolKit.DataSheet.COLTYPE_STRING, 'Units of measurement');
-            this.ds.ensureColumn(AssayProvenance.COLNAME_RELATION, WebMolKit.DataSheet.COLTYPE_STRING, 'Relation: exact, greater or less');
-            this.ds.ensureColumn(AssayProvenance.COLNAME_SOURCEURI, WebMolKit.DataSheet.COLTYPE_STRING, 'Source identifier for activity measurement');
+            this.ds.ensureColumn(AssayProvenance.COLNAME_MOLECULE, "molecule", 'Molecular structure of compound being measured');
+            this.ds.ensureColumn(AssayProvenance.COLNAME_NAME, "string", 'Name of compound');
+            this.ds.ensureColumn(AssayProvenance.COLNAME_VALUE, "real", 'Measured value');
+            this.ds.ensureColumn(AssayProvenance.COLNAME_ERROR, "real", 'Experimental error of measurement');
+            this.ds.ensureColumn(AssayProvenance.COLNAME_UNITS, "string", 'Units of measurement');
+            this.ds.ensureColumn(AssayProvenance.COLNAME_RELATION, "string", 'Relation: exact, greater or less');
+            this.ds.ensureColumn(AssayProvenance.COLNAME_SOURCEURI, "string", 'Source identifier for activity measurement');
             if (!got) {
                 let content = this.formatMetaData(header);
                 this.ds.appendExtension(AssayProvenance.NAME, AssayProvenance.CODE, content);
@@ -12723,19 +12725,19 @@ var WebMolKit;
             return outcome;
         }
         setOutcome(row, model, outcome) {
-            let col = this.ds.findColByName(model.colRaw, WebMolKit.DataSheet.COLTYPE_REAL);
+            let col = this.ds.findColByName(model.colRaw, "real");
             if (col >= 0)
                 this.ds.setReal(row, col, outcome.raw);
-            col = this.ds.findColByName(model.colScaled, WebMolKit.DataSheet.COLTYPE_REAL);
+            col = this.ds.findColByName(model.colScaled, "real");
             if (col >= 0)
                 this.ds.setReal(row, col, outcome.scaled);
-            col = this.ds.findColByName(model.colArcTan, WebMolKit.DataSheet.COLTYPE_REAL);
+            col = this.ds.findColByName(model.colArcTan, "real");
             if (col >= 0)
                 this.ds.setReal(row, col, outcome.arctan);
-            col = this.ds.findColByName(model.colDomain, WebMolKit.DataSheet.COLTYPE_REAL);
+            col = this.ds.findColByName(model.colDomain, "real");
             if (col >= 0)
                 this.ds.setReal(row, col, outcome.domain);
-            col = this.ds.findColByName(model.colAtoms, WebMolKit.DataSheet.COLTYPE_STRING);
+            col = this.ds.findColByName(model.colAtoms, "string");
             if (col >= 0)
                 this.ds.setString(row, col, outcome.atoms ? outcome.atoms.toString() : null);
         }
@@ -14706,17 +14708,17 @@ var WebMolKit;
                     let colidx = parseInt(col.getAttribute('id')) - 1;
                     let ct = ds.colType(colidx), val = WebMolKit.nodeText(col);
                     if (val == '') { }
-                    else if (ct == WebMolKit.DataSheet.COLTYPE_MOLECULE)
+                    else if (ct == "molecule")
                         ds.setObject(rowidx, colidx, val);
-                    else if (ct == WebMolKit.DataSheet.COLTYPE_STRING)
+                    else if (ct == "string")
                         ds.setString(rowidx, colidx, val);
-                    else if (ct == WebMolKit.DataSheet.COLTYPE_REAL)
+                    else if (ct == "real")
                         ds.setReal(rowidx, colidx, parseFloat(val));
-                    else if (ct == WebMolKit.DataSheet.COLTYPE_INTEGER)
+                    else if (ct == "integer")
                         ds.setInteger(rowidx, colidx, parseInt(val));
-                    else if (ct == WebMolKit.DataSheet.COLTYPE_BOOLEAN)
+                    else if (ct == "boolean")
                         ds.setBoolean(rowidx, colidx, val == 'true' ? true : val == 'false' ? false : null);
-                    else if (ct == WebMolKit.DataSheet.COLTYPE_EXTEND)
+                    else if (ct == "extend")
                         ds.setExtend(rowidx, colidx, val);
                     col = col.nextElementSibling;
                     colidx++;
@@ -14769,21 +14771,21 @@ var WebMolKit;
                     let ct = ds.colType(c);
                     let txtNode = null;
                     if (ds.isNull(r, c)) { }
-                    else if (ct == WebMolKit.DataSheet.COLTYPE_MOLECULE) {
+                    else if (ct == "molecule") {
                         let obj = ds.getObject(r, c);
                         if (obj instanceof WebMolKit.Molecule)
                             obj = WebMolKit.MoleculeStream.writeNative(obj);
                         txtNode = xml.createCDATASection(obj);
                     }
-                    else if (ct == WebMolKit.DataSheet.COLTYPE_STRING)
+                    else if (ct == "string")
                         txtNode = xml.createCDATASection(ds.getString(r, c));
-                    else if (ct == WebMolKit.DataSheet.COLTYPE_REAL)
+                    else if (ct == "real")
                         txtNode = xml.createTextNode(ds.getReal(r, c).toString());
-                    else if (ct == WebMolKit.DataSheet.COLTYPE_INTEGER)
+                    else if (ct == "integer")
                         txtNode = xml.createTextNode(ds.getInteger(r, c).toString());
-                    else if (ct == WebMolKit.DataSheet.COLTYPE_BOOLEAN)
+                    else if (ct == "boolean")
                         txtNode = xml.createTextNode(ds.getBoolean(r, c).toString());
-                    else if (ct == WebMolKit.DataSheet.COLTYPE_EXTEND)
+                    else if (ct == "extend")
                         txtNode = xml.createCDATASection(ds.getExtend(r, c));
                     if (txtNode != null)
                         cell.appendChild(txtNode);
@@ -16011,7 +16013,7 @@ var WebMolKit;
                     }
                 }
                 if (this.ds.numRows == 1 || isExperiment) {
-                    if (!isReaction && this.ds.firstColOfType(WebMolKit.DataSheet.COLTYPE_MOLECULE) >= 0) {
+                    if (!isReaction && this.ds.firstColOfType("molecule") >= 0) {
                         this.formatKey.push(WebMolKit.FormatList.FMT_NATIVE);
                         this.formatGfx.push(false);
                         this.formatKey.push(WebMolKit.FormatList.FMT_MDLMOL);
@@ -17752,6 +17754,7 @@ var WebMolKit;
 (function (WebMolKit) {
     class ClipboardProxy {
         constructor() {
+            this.stashEvents = [];
             this.copyEvent = null;
             this.pasteEvent = null;
         }
@@ -17763,6 +17766,14 @@ var WebMolKit;
         setHTML(html) { }
         canAlwaysGet() { return false; }
         downloadString(str, fn) { }
+        pushEvents() {
+            this.stashEvents.push([this.copyEvent, this.pasteEvent]);
+        }
+        popEvents() {
+            let events = this.stashEvents.shift();
+            this.copyEvent = events[0];
+            this.pasteEvent = events[1];
+        }
     }
     WebMolKit.ClipboardProxy = ClipboardProxy;
     class ClipboardProxyWeb extends ClipboardProxy {
@@ -20576,7 +20587,7 @@ var WebMolKit;
             let measure = new WebMolKit.OutlineMeasurement(0, 0, policy.data.pointScale);
             for (let ds of TemplateBank.RESOURCE_DATA) {
                 this.subgroups.titles.push(ds.getTitle());
-                let colMol = ds.firstColOfType(WebMolKit.DataSheet.COLTYPE_MOLECULE);
+                let colMol = ds.firstColOfType("molecule");
                 let metavec = new WebMolKit.MetaVector();
                 for (let n = 0, idx = 0; idx < 4 && n < ds.numRows; n++) {
                     let mol = ds.getMolecule(n, colMol);
@@ -20898,12 +20909,8 @@ var WebMolKit;
             let buttons = this.buttons(), body = this.body();
             buttons.append(this.btnClose);
             buttons.append(' ');
-            this.btnApply = $('<button class="wmk-button wmk-button-primary">Save</button>').appendTo(buttons);
-            this.btnApply.click(() => {
-                this.updateMolecule();
-                if (this.callbackApply)
-                    this.callbackApply(this);
-            });
+            this.btnApply = $('<button class="wmk-button wmk-button-primary">Apply</button>').appendTo(buttons);
+            this.btnApply.click(() => this.applyChanges());
             this.tabs = new WebMolKit.TabBar(['Atom', 'Abbreviation', 'Geometry', 'Query', 'Extra']);
             this.tabs.render(body);
             this.populateAtom(this.tabs.getPanel('Atom'));
@@ -20912,6 +20919,11 @@ var WebMolKit;
             this.populateQuery(this.tabs.getPanel('Query'));
             this.populateExtra(this.tabs.getPanel('Extra'));
             setTimeout(() => this.inputSymbol.focus(), 1);
+        }
+        applyChanges() {
+            this.updateMolecule();
+            if (this.callbackApply)
+                this.callbackApply(this);
         }
         populateAtom(panel) {
             let grid = $('<div></div>').appendTo(panel);
@@ -20962,6 +20974,13 @@ var WebMolKit;
                 this.inputIndex.val(atom.toString());
             }
             this.inputSymbol.focus();
+            for (let input of [this.inputSymbol, this.inputCharge, this.inputUnpaired, this.inputHydrogen, this.inputIsotope, this.inputMapping, this.inputIndex]) {
+                input.keydown((event) => {
+                    let keyCode = event.keyCode || event.which;
+                    if (keyCode == 13)
+                        this.applyChanges();
+                });
+            }
         }
         populateAbbreviation(panel) {
             panel.append('Abbreviations: TODO');
@@ -22613,6 +22632,7 @@ var WebMolKit;
             super();
             this.mol = mol;
             this.sketcher = new WebMolKit.Sketcher();
+            this.proxyClip = null;
             this.callbackSave = null;
             this.title = 'Edit Compound';
             this.minPortionWidth = 20;
@@ -22623,7 +22643,14 @@ var WebMolKit;
         }
         getMolecule() { return this.sketcher.getMolecule(); }
         defineClipboard(proxy) {
+            this.proxyClip = proxy;
+            proxy.pushEvents();
             this.sketcher.defineClipboard(proxy);
+        }
+        close() {
+            if (this.proxyClip)
+                this.proxyClip.popEvents();
+            super.close();
         }
         populate() {
             let buttons = this.buttons(), body = this.body();
@@ -23456,7 +23483,7 @@ var WebMolKit;
                         if (spec.aspect == null) {
                             if (ds.isNull(row, spec.idx))
                                 td.text(' ');
-                            else if (ds.colType(spec.idx) == WebMolKit.DataSheet.COLTYPE_MOLECULE)
+                            else if (ds.colType(spec.idx) == "molecule")
                                 this.renderMolecule(td, row, spec.idx);
                             else
                                 this.renderPrimitive(td, row, spec.idx);
@@ -23501,22 +23528,22 @@ var WebMolKit;
                     reserved[n] = reserved[n] || claimed[n];
             }
             for (let n = 0; n < ds.numCols; n++)
-                if (!reserved[n] && ds.colType(n) != WebMolKit.DataSheet.COLTYPE_EXTEND) {
+                if (!reserved[n] && ds.colType(n) != "extend") {
                     columns.push({ 'name': ds.colName(n), 'aspect': null, 'type': null, 'idx': n });
                 }
             return columns;
         }
         renderPrimitive(td, row, col) {
             let txt = '', ct = this.ds.colType(col), align = 'center';
-            if (ct == WebMolKit.DataSheet.COLTYPE_STRING) {
+            if (ct == "string") {
                 txt = this.ds.getString(row, col);
                 align = 'left';
             }
-            else if (ct == WebMolKit.DataSheet.COLTYPE_INTEGER)
+            else if (ct == "integer")
                 txt = this.ds.getInteger(row, col).toString();
-            else if (ct == WebMolKit.DataSheet.COLTYPE_REAL)
+            else if (ct == "real")
                 txt = this.ds.getReal(row, col).toString();
-            else if (ct == WebMolKit.DataSheet.COLTYPE_BOOLEAN)
+            else if (ct == "boolean")
                 txt = this.ds.getBoolean(row, col) ? 'true' : 'false';
             td.text(txt);
             td.css('text-align', align);
@@ -25534,7 +25561,7 @@ var WebMolKit;
             let ds = WebMolKit.DataSheetStream.readXML(this.strDataXML);
             this.assert(ds != null, 'parsing failed');
             this.assert(ds.numRows == 2 && ds.numCols == 5, 'wrong row/column count');
-            let colTypes = [WebMolKit.DataSheet.COLTYPE_MOLECULE, WebMolKit.DataSheet.COLTYPE_STRING, WebMolKit.DataSheet.COLTYPE_INTEGER, WebMolKit.DataSheet.COLTYPE_REAL, WebMolKit.DataSheet.COLTYPE_BOOLEAN];
+            let colTypes = ["molecule", "string", "integer", "real", "boolean"];
             for (let n = 0; n < colTypes.length; n++)
                 this.assert(ds.colType(n) == colTypes[n], 'column#' + (n + 1) + ' wrong type');
             this.assert(ds.getMolecule(0, 0).numAtoms == 1, 'row 1: invalid molecule');
@@ -25553,7 +25580,7 @@ var WebMolKit;
             let ds = rdr.ds;
             this.assert(ds != null, 'parsing failed');
             this.assert(ds.numRows == 2 && ds.numCols == 5, 'wrong row/column count');
-            let colTypes = [WebMolKit.DataSheet.COLTYPE_MOLECULE, WebMolKit.DataSheet.COLTYPE_STRING, WebMolKit.DataSheet.COLTYPE_INTEGER, WebMolKit.DataSheet.COLTYPE_REAL, WebMolKit.DataSheet.COLTYPE_BOOLEAN];
+            let colTypes = ["molecule", "string", "integer", "real", "boolean"];
             for (let n = 0; n < colTypes.length; n++)
                 this.assert(ds.colType(n) == colTypes[n], 'column#' + (n + 1) + ' wrong type');
             this.assert(ds.getMolecule(0, 0).numAtoms == 1, 'row 1: invalid molecule');

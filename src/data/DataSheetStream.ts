@@ -40,8 +40,8 @@ export class DataSheetStream
 		// overview
 		let summary = findNode(root, 'Summary');
 		if (summary == null) return null;
-		ds.setTitle(nodeText(findNode(summary, 'Title')));
-		ds.setDescription(nodeText(findNode(summary, 'Description')));
+		ds.title = nodeText(findNode(summary, 'Title'));
+		ds.description = nodeText(findNode(summary, 'Description'));
 		
 		// extensions
 		let extRoot = findNode(root, 'Extension');
@@ -67,7 +67,7 @@ export class DataSheetStream
 			let col = colList[n];
 			let id = parseInt(col.getAttribute('id'));
 			if (id != n + 1) return null;
-			ds.appendColumn(col.getAttribute('name'), col.getAttribute('type'), nodeText(col));
+			ds.appendColumn(col.getAttribute('name'), col.getAttribute('type') as DataSheetColumn, nodeText(col));
 		}
 		
 		// rows
@@ -87,12 +87,12 @@ export class DataSheetStream
 				let ct = ds.colType(colidx), val = nodeText(col);
 
 				if (val == '') {}
-				else if (ct == DataSheet.COLTYPE_MOLECULE) ds.setObject(rowidx, colidx, val);
-				else if (ct == DataSheet.COLTYPE_STRING) ds.setString(rowidx, colidx, val);
-				else if (ct == DataSheet.COLTYPE_REAL) ds.setReal(rowidx, colidx, parseFloat(val));
-				else if (ct == DataSheet.COLTYPE_INTEGER) ds.setInteger(rowidx, colidx, parseInt(val));
-				else if (ct == DataSheet.COLTYPE_BOOLEAN) ds.setBoolean(rowidx, colidx, val == 'true' ? true : val == 'false' ? false : null);
-				else if (ct == DataSheet.COLTYPE_EXTEND) ds.setExtend(rowidx, colidx, val);
+				else if (ct == DataSheetColumn.Molecule) ds.setObject(rowidx, colidx, val);
+				else if (ct == DataSheetColumn.String) ds.setString(rowidx, colidx, val);
+				else if (ct == DataSheetColumn.Real) ds.setReal(rowidx, colidx, parseFloat(val));
+				else if (ct == DataSheetColumn.Integer) ds.setInteger(rowidx, colidx, parseInt(val));
+				else if (ct == DataSheetColumn.Boolean) ds.setBoolean(rowidx, colidx, val == 'true' ? true : val == 'false' ? false : null);
+				else if (ct == DataSheetColumn.Extend) ds.setExtend(rowidx, colidx, val);
 			
 				col = col.nextElementSibling;
 				colidx++;
@@ -114,8 +114,8 @@ export class DataSheetStream
 		let summary = xml.createElement('Summary');
 		xml.documentElement.appendChild(summary);
 		let title = xml.createElement('Title'), descr = xml.createElement('Description');
-		summary.appendChild(title); title.appendChild(xml.createTextNode(ds.getTitle()));
-		summary.appendChild(descr); descr.appendChild(xml.createCDATASection(ds.getDescription()));
+		summary.appendChild(title); title.appendChild(xml.createTextNode(ds.title));
+		summary.appendChild(descr); descr.appendChild(xml.createCDATASection(ds.description));
 		
 		// extras
 		let extension = xml.createElement('Extension');
@@ -162,17 +162,17 @@ export class DataSheetStream
 				
 				let txtNode:Node = null;
 				if (ds.isNull(r, c)) {}
-				else if (ct == DataSheet.COLTYPE_MOLECULE) 
+				else if (ct == DataSheetColumn.Molecule) 
 				{
 					let obj = ds.getObject(r, c);
 					if (obj instanceof Molecule) obj = MoleculeStream.writeNative(obj);
 					txtNode = xml.createCDATASection(obj as string);
 				}
-				else if (ct == DataSheet.COLTYPE_STRING) txtNode = xml.createCDATASection(ds.getString(r, c));
-				else if (ct == DataSheet.COLTYPE_REAL) txtNode = xml.createTextNode(ds.getReal(r, c).toString());
-				else if (ct == DataSheet.COLTYPE_INTEGER) txtNode = xml.createTextNode(ds.getInteger(r, c).toString());
-				else if (ct == DataSheet.COLTYPE_BOOLEAN) txtNode = xml.createTextNode(ds.getBoolean(r, c).toString());
-				else if (ct == DataSheet.COLTYPE_EXTEND) txtNode = xml.createCDATASection(ds.getExtend(r, c));
+				else if (ct == DataSheetColumn.String) txtNode = xml.createCDATASection(ds.getString(r, c));
+				else if (ct == DataSheetColumn.Real) txtNode = xml.createTextNode(ds.getReal(r, c).toString());
+				else if (ct == DataSheetColumn.Integer) txtNode = xml.createTextNode(ds.getInteger(r, c).toString());
+				else if (ct == DataSheetColumn.Boolean) txtNode = xml.createTextNode(ds.getBoolean(r, c).toString());
+				else if (ct == DataSheetColumn.Extend) txtNode = xml.createCDATASection(ds.getExtend(r, c));
 							
 				if (txtNode != null) cell.appendChild(txtNode);
 			}
