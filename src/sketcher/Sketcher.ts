@@ -2013,7 +2013,7 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 		//console.log('DOWN: key='+key);
 
 		// special deal for the escape key: if any bank needs to be popped, consume it 
-		if (key == 27)
+		if (key == KeyCode.Escape)
 		{
 			for (let view of [this.templateView, this.commandView, this.toolView]) if (view != null && view.stackSize > 1)
 			{
@@ -2024,12 +2024,12 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 		}
 
 		// non-modifier keys that don't generate a 'pressed' event		
-		if (key == 13) {} // enter
-		else if (key == 37) {} // left
-		else if (key == 39) {} // right
-		else if (key == 38) {} // up
-		else if (key == 40) {} // down
-		else if ([27, 8, 46].indexOf(key) >= 0)
+		if (key == KeyCode.Enter) {}
+		else if (key == KeyCode.Left) {}
+		else if (key == KeyCode.Right) {}
+		else if (key == KeyCode.Up) {}
+		else if (key == KeyCode.Down) {}
+		else if ([KeyCode.Escape, KeyCode.Backspace, KeyCode.Delete].indexOf(key) >= 0)
 		{
 			if (this.toolView != null && this.toolView.topBank.claimKey(event)) {event.preventDefault(); return;}
 			if (this.commandView != null && this.commandView.topBank.claimKey(event)) {event.preventDefault(); return;}

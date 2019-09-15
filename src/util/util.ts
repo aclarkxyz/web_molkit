@@ -542,4 +542,22 @@ export function inputChanged(domInput:JQuery, callback:() => void):void
 	domInput.change(callback);
 }
 
+export const enum KeyCode
+{
+	Backspace = 8, 
+	Tab = 9,
+	Enter = 13,
+	Escape = 27,
+	Space = 32,
+	PageUp = 33,
+	PageDown = 34,
+	End = 35,
+	Home = 36,
+	Left = 37,
+	Up = 38,
+	Right = 39,
+	Down = 40,
+	Delete = 46,
+}
+
 /* EOF */ }
