@@ -4,7 +4,7 @@
     (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
-    
+
     http://molmatinf.com
 
 	[PKG=webmolkit]
@@ -124,7 +124,7 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 	private templatePerms:TemplatePermutation[] = null; // if fusing templates, these are the options in play
 	private currentPerm = 0; // currently viewed permutation (if applicable)
 	private fusionBank:FusionBank = null;
-	
+
 	private proxyClip:ClipboardProxy = null;
 	private static UNDO_SIZE = 20;
 
@@ -155,19 +155,19 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 
 		// note: inefficient; make it compute on demand
 		this.guidelines = [];
-		for (let n = 1; n <= this.mol.numAtoms; n++) 
+		for (let n = 1; n <= this.mol.numAtoms; n++)
 		{
 			for (let sprout of SketchUtil.guidelineSprouts(this.mol, n)) this.guidelines.push(sprout);
 		}
 
 		if (!this.beenSetup) return;
-		
+
 		this.layout = null;
 		this.metavec = null;
 		this.hoverAtom = 0;
 		this.hoverBond = 0;
 
-		if (!withAutoScale) 
+		if (!withAutoScale)
 		{
 			let effects = this.sketchEffects();
 			this.layout = new ArrangeMolecule(this.mol, this, this.policy, effects);
@@ -183,7 +183,7 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 	public defineClipboard(proxy:ClipboardProxy):void
 	{
 		this.proxyClip = proxy;
-		proxy.copyEvent = ():string => 
+		proxy.copyEvent = ():string =>
 		{
 			return this.getMolecule.toString();
 		};
@@ -215,24 +215,24 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 		if (borderRad != null) this.borderRadius = borderRad;
 		if (bgCol != null) this.background = bgCol;
 	}
-	
+
 	// zappy zap
 	public clearMolecule():void {this.defineMolecule(new Molecule(), true, true);}
 
 	// retrieves a copy of the molecule
 	public getMolecule():Molecule {return this.mol.clone();}
-	
+
 	// instantiates the widget: any of the immutable setup properties are now cast in stone
 	public setup(callback:() => void):void
 	{
 		this.beenSetup = true;
 		if (this.mol == null) this.mol = new Molecule();
-		if (this.policy == null) 
+		if (this.policy == null)
 		{
 			this.policy = RenderPolicy.defaultColourOnWhite();
 			this.pointScale = this.policy.data.pointScale;
 		}
-	
+
 		let effects = this.sketchEffects();
 		this.layout = new ArrangeMolecule(this.mol, this, this.policy, effects);
 		this.layout.arrange();
@@ -256,7 +256,7 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 		//let style = 'position: relative; width: ' + this.width + 'px; height: ' + this.height + 'px;';
 		//this.container = newElement(this.getContentElement(), 'div', {'style': style});
 		this.container = $('<div></div>').appendTo(this.content);
-		this.container.css({'position': 'relative', 'width': this.width + 'px', 'height': this.height + 'px'}); 
+		this.container.css({'position': 'relative', 'width': this.width + 'px', 'height': this.height + 'px'});
 		this.container.css('background-color', colourCanvas(this.background));
 		if (this.border != MetaVector.NOCOLOUR)
 		{
@@ -264,9 +264,9 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 			this.container.css('border-radius', this.borderRadius + 'px');
 		}
 		this.container.css('outline', 'none');
-		
+
 		this.container.attr('tabindex', '0');
-		
+
 		let canvasStyle = 'position: absolute; left: 0; top: 0;';
 		canvasStyle += ' pointer-events: none;';
 
@@ -274,7 +274,7 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 		this.canvasUnder = newElement(this.container, 'canvas', {'width': this.width, 'height': this.height, 'style': canvasStyle}) as HTMLCanvasElement;
 		this.canvasMolecule = newElement(this.container, 'canvas', {'width': this.width, 'height': this.height, 'style': canvasStyle}) as HTMLCanvasElement;
 		this.canvasOver = newElement(this.container, 'canvas', {'width': this.width, 'height': this.height, 'style': canvasStyle}) as HTMLCanvasElement;
-		
+
 		this.divMessage = $('<div></div>').appendTo(this.container);
 		this.divMessage.attr('style', canvasStyle);
 		this.divMessage.css({'width': this.width + 'px', 'height': this.height + 'px'});
@@ -282,7 +282,7 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 
 		this.centreAndShrink();
 		this.redraw();
-		
+
 		// create the buttonviews
 		let reserveHeight = 0;
 		if (this.useCommandBank)
@@ -343,7 +343,7 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 			event.preventDefault();
 			this.dropInto(event.dataTransfer);
 		});
-		
+
 		/* ... deprecated
 		// pasting: captures the menu/hotkey form
 		let pasteFunc = (e:any) =>
@@ -357,7 +357,7 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 
 			let wnd = <any>window;
 			if (wnd.clipboardData && wnd.clipboardData.getData) this.pasteText(wnd.clipboardData.getData('Text'));
-			else if (e.clipboardData && e.clipboardData.getData) this.pasteText(e.clipboardData.getData('text/plain')); 
+			else if (e.clipboardData && e.clipboardData.getData) this.pasteText(e.clipboardData.getData('text/plain'));
 			e.preventDefault();
 			return false;
 		};
@@ -424,13 +424,13 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 		this.divMessage.css('left', szLeft + 'px');
 		this.divMessage.css('width', (this.width - szLeft - szRight) + 'px');
 		this.divMessage.css('height', (this.height - szBottom) + 'px');
-		
+
 		window.setTimeout(() =>
 		{
-			if (watermark == this.fadeWatermark) this.divMessage.text(''); 
+			if (watermark == this.fadeWatermark) this.divMessage.text('');
 		}, 5000);
 	}
-	
+
 	// boots the message immediately
 	public clearMessage()
 	{
@@ -478,7 +478,7 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 	// changes selection state for atom
 	public setSelected(atom:number, sel:boolean):void
 	{
-		if (this.selectedMask == null) 
+		if (this.selectedMask == null)
 		{
 			this.selectedMask = new Array(this.mol.numAtoms);
 			for (let n = this.selectedMask.length - 1; n >= 0; n--) this.selectedMask[n] = false;
@@ -529,7 +529,7 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 		if (state.currentAtom >= 0) this.currentAtom = state.currentAtom;
 		if (state.currentBond >= 0) this.currentBond = state.currentBond;
 		if (state.selectedMask != null) this.selectedMask = state.selectedMask == null ? null : state.selectedMask.slice(0);
-		
+
 		this.delayedRedraw();
 	}
 
@@ -545,7 +545,7 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 		}
 		this.redoStack = [];
 	}
-	
+
 	// a bunch of template fusion permutations has arrived: display the first one, and allow them to be traversed
 	public setPermutations(perms:TemplatePermutation[]):void
 	{
@@ -555,7 +555,7 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 		this.templateView.pushBank(this.fusionBank);
 
 		if (this.mol.numAtoms == 0) this.centreAndShrink();
-	}	
+	}
 
 	// stop fusing templates, and clear out the fusion bank as well
 	public stopTemplateFusion():void
@@ -571,7 +571,7 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 		this.delayedRedraw();
 		this.fusionBank = null;
 	}
-	
+
 	// accept the current template permutation: make it the new molecule
 	public templateAccept():void
 	{
@@ -579,7 +579,7 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 		this.templateView.popBank();
 		this.defineMolecule(mol, false, true);
 	}
-	
+
 	// rotate the template display up or down
 	public templateRotate(dir:number)
 	{
@@ -587,7 +587,7 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 		if (idx < 0) idx += this.templatePerms.length;
 		this.pickTemplatePermutation(idx);
 	}
-	
+
 	// reports on the state of the undo/redo buffers
 	public canUndo():boolean {return this.undoStack.length > 0;}
 	public canRedo():boolean {return this.redoStack.length > 0;}
@@ -607,7 +607,7 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 		this.undoStack.push(state);
 		this.setState(this.redoStack.pop(), false);
 	}
-	
+
 	// copying to clipboard: sticks the content in several different places, for subsequent recall
 	public performCopy(mol?:Molecule):void
 	{
@@ -654,7 +654,7 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 		dlg.open();
 	}
 
-	// zooms in or out, depending on the magnifier; if 
+	// zooms in or out, depending on the magnifier; if
 	public zoom(mag:number)
 	{
 		let cx = 0.5 * this.width, cy = 0.5 * this.height;
@@ -664,14 +664,14 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 		this.offsetX = cx - (newScale / this.pointScale) * (cx - this.offsetX);
 		this.offsetY = cy - (newScale / this.pointScale) * (cy - this.offsetY);
 		this.pointScale = newScale;
-				
+
 		// --- begin inefficient: rewrite this to just transform the constituents...
 		let effects = this.sketchEffects();
 		this.layout = new ArrangeMolecule(this.mol, this, this.policy, effects);
 		this.layout.arrange();
 		this.metavec = new MetaVector();
 		new DrawMolecule(this.layout, this.metavec).draw();
-		this.layoutTemplatePerm();		
+		this.layoutTemplatePerm();
 		// --- end inefficient
 
 		this.delayedRedraw();
@@ -691,11 +691,11 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 			this.defineMolecule(mol, true, true);
 			return;
 		}
-		
+
 		let param = {'fragNative': mol.toString()};
 		new MoleculeActivity(this, ActivityType.TemplateFusion, param).execute();
 	}
-	
+
 	// changes the template permutation: if necessary requests the layout, and redraws the screen
 	public pickTemplatePermutation(idx:number)
 	{
@@ -708,22 +708,22 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 
 // functions for converting between coordinates within the widget (pixels) & molecular position (Angstroms)
 	public scale() {return this.pointScale;}
-	public angToX(ax:number):number 
+	public angToX(ax:number):number
 	{
 		//if (this.layout == null || this.layout.numPoints() == 0) return 0.5 * this.width + ax * this.pointScale;
 		return ax * this.pointScale + this.offsetX;
 	}
-	public angToY(ay:number):number 
+	public angToY(ay:number):number
 	{
 		//if (this.layout == null || this.layout.numPoints() == 0) return 0.5 * this.height - ay * this.pointScale;
 		return ay * -this.pointScale + this.offsetY;
 	}
-	public xToAng(px:number):number 
+	public xToAng(px:number):number
 	{
 		//if (this.layout == null || this.layout.numPoints() == 0) return (px - 0.5 * this.width) / this.pointScale;
 		return (px - this.offsetX) / this.pointScale;
 	}
-	public yToAng(py:number):number 
+	public yToAng(py:number):number
 	{
 		//if (this.layout == null || this.layout.numPoints() == 0) return (0.5 * this.height - py) / this.pointScale;
 		return (py - this.offsetY) / -this.pointScale;
@@ -740,15 +740,15 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 	{
 		let wnd = <any>window;
 		if (wnd.clipboardData && wnd.clipboardData.getData) this.pasteText(wnd.clipboardData.getData('Text'));
-		else if (e.clipboardData && e.clipboardData.getData) this.pasteText(e.clipboardData.getData('text/plain')); 
+		else if (e.clipboardData && e.clipboardData.getData) this.pasteText(e.clipboardData.getData('text/plain'));
 		e.preventDefault();
 		return false;
 	}*/
 
-	// redetermines the offset and scale so that the molecular structure fits cleanly 
+	// redetermines the offset and scale so that the molecular structure fits cleanly
 	private centreAndShrink():void
 	{
-		if (this.mol.numAtoms == 0 || this.layout == null) 
+		if (this.mol.numAtoms == 0 || this.layout == null)
 		{
 			this.offsetX = 0.5 * this.width;
 			this.offsetY = 0.5 * this.height;
@@ -796,7 +796,7 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 	{
 		if (this.currentPerm < 0 || this.templatePerms == null) return;
 		let perm = this.templatePerms[this.currentPerm];
-		
+
 		let tpolicy = new RenderPolicy(this.policy.data);
 		tpolicy.data.foreground = 0x808080;
 		tpolicy.data.atomCols = tpolicy.data.atomCols.slice(0);
@@ -880,7 +880,7 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 			let bfr = this.mol.bondFrom(this.currentBond), bto = this.mol.bondTo(this.currentBond);
 			this.drawBondShade(ctx, this.currentBond, CURRENT_COL, CURRENT_BORD, 0);
 		}
-		
+
 		// if moving or dragging a new atom/bond, draw the guides
 		if (this.dragType == DraggingTool.Move || (this.dragType == DraggingTool.Atom && this.opAtom > 0) || this.dragType == DraggingTool.Bond)
 		{
@@ -899,7 +899,7 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 				}
 			}
 		}
-		
+
 		// if creating a new ring, draw it
 		if (this.dragType == DraggingTool.Ring)
 		{
@@ -917,9 +917,9 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 					let nn = n < rsz - 1 ? n + 1 : 0;
 					let x1 = this.angToX(ringX[n]), y1 = this.angToY(ringY[n]);
 					let x2 = this.angToX(ringX[nn]), y2 = this.angToY(ringY[nn]);
-					drawLine(ctx, x1, y1, x2, y2);					
+					drawLine(ctx, x1, y1, x2, y2);
 				}
-				
+
 				if (this.toolRingArom)
 				{
 					let cx = 0, cy = 0;
@@ -934,7 +934,7 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 				}
 			}
 		}
-		
+
 		ctx.restore();
 	}
 	private redrawMolecule():void
@@ -944,12 +944,12 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 		this.canvasMolecule.height = this.height * density;
 		this.canvasMolecule.style.width = this.width + 'px';
 		this.canvasMolecule.style.height = this.height + 'px';
-		
+
 		let ctx = this.canvasMolecule.getContext('2d');
 		ctx.save();
 		ctx.scale(density, density);
 		ctx.clearRect(0, 0, this.width, this.height);
-		
+
 		if (this.metavec != null) this.metavec.renderContext(ctx);
 
 		// debugging only
@@ -964,13 +964,13 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 			ctx.lineTo(x2, y2);
 			ctx.stroke();
 		}*/
-		
+
 		if (this.templatePerms != null)
 		{
 			let perm = this.templatePerms[this.currentPerm];
 			if (perm.metavec != null) perm.metavec.renderContext(ctx);
-		}		
-		
+		}
+
 		ctx.restore();
 	}
 	private redrawOver():void
@@ -980,30 +980,30 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 		this.canvasOver.height = this.height * density;
 		this.canvasOver.style.width = this.width + 'px';
 		this.canvasOver.style.height = this.height + 'px';
-		
+
 		let ctx = this.canvasOver.getContext('2d');
 		ctx.save();
 		ctx.scale(density, density);
 		ctx.clearRect(0, 0, this.width, this.height);
-		
+
 		// draw the lasso
 		if ((this.dragType == DraggingTool.Lasso || this.dragType == DraggingTool.Erasor) && this.lassoX.length > 1)
 		{
 			let erasing = this.dragType == DraggingTool.Erasor;
-			
+
 			let path = new Path2D();
 			path.moveTo(this.lassoX[0], this.lassoY[0]);
 			for (let n = 1; n < this.lassoX.length; n++) path.lineTo(this.lassoX[n], this.lassoY[n]);
 			path.closePath();
-			
+
 			ctx.fillStyle = colourCanvas(erasing ? 0xD0FF0000 : 0xF0000000);
 			ctx.fill(path);
-			
+
 			ctx.strokeStyle = erasing ? '#804040' : '#808080';
 			ctx.lineWidth = 0.5;
 			ctx.stroke(path);
 		}
-				
+
 		// draw the rotation theta
 		if (this.dragType == DraggingTool.Rotate)
 		{
@@ -1021,13 +1021,13 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 			ctx.fillStyle = '#808080';
 			ctx.fill();
 			// !! draw 0 degrees and a nice arc...
-			
+
 			for (let atom of this.subjectAtoms(true, false))
 			{
 				let ax = this.angToX(this.mol.atomX(atom)), ay = this.angToY(this.mol.atomY(atom));
 				//let ax = this.arrmol.points[atom - 1].cx, ay = this.arrmol.points[atom - 1].cy;
 				let ang = Math.atan2(ay - y0, ax - x0), dist = norm_xy(ax - x0, ay - y0);
-				let nx = x0 + dist * Math.cos(ang + theta), ny = y0 + dist * Math.sin(ang + theta); 
+				let nx = x0 + dist * Math.cos(ang + theta), ny = y0 + dist * Math.sin(ang + theta);
 				ctx.beginPath();
 				ctx.ellipse(nx, ny, 2 * lw, 2 * lw, 0, 0, TWOPI, false);
 				ctx.strokeStyle = 'black';
@@ -1052,7 +1052,7 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 				ctx.stroke();
 			}
 		}
-		
+
 		// draw the dragging of a bond-and-atom to a new position
 		if ((this.dragType == DraggingTool.Atom && this.opAtom > 0) || this.dragType == DraggingTool.Bond)
 		{
@@ -1061,7 +1061,7 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 			let type = this.dragType == DraggingTool.Bond ? this.toolBondType : Molecule.BONDTYPE_NORMAL;
 			this.drawOriginatingBond(ctx, element, order, type);
 		}
-					
+
 		ctx.restore();
 	}
 
@@ -1079,26 +1079,26 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 	private pickObject(x:number, y:number):number
 	{
 		if (this.layout == null) return 0;
-		
+
 		// if the position is over a buttonview, return zero (yes, this does happen)
-		if (this.toolView != null) 
+		if (this.toolView != null)
 		{
 			let pos1 = this.container.position(), pos2 = this.toolView.content.position();
 			if (this.toolView.withinOutline(x + pos1.left - pos2.left, y + pos1.top - pos2.top)) return 0;
 		}
-		if (this.commandView != null) 
+		if (this.commandView != null)
 		{
 			let pos1 = this.container.position(), pos2 = this.commandView.content.position();
 			if (this.toolView.withinOutline(x + pos1.left - pos2.left, y + pos1.top - pos2.top)) return 0;
 		}
-		if (this.templateView != null) 
+		if (this.templateView != null)
 		{
 			let pos1 = this.container.position(), pos2 = this.templateView.content.position();
 			if (this.toolView.withinOutline(x + pos1.left - pos2.left, y + pos1.top - pos2.top)) return 0;
 		}
-		
+
 		// proceed with atoms & bonds
-		
+
 		let limitDSQ = sqr(0.5 * this.pointScale);
 		let bestItem = 0, bestDSQ:number;
 
@@ -1107,7 +1107,7 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 		{
 			let p = this.layout.getPoint(n);
 			if (p.anum == 0) continue;
-			
+
 			let dx = Math.abs(x - p.oval.cx), dy = Math.abs(y - p.oval.cy);
 			let dsq = norm2_xy(dx, dy);
 			if (dsq > limitDSQ) continue;
@@ -1118,22 +1118,22 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 			}
 		}
 		//if (bestItem!=0) return bestItem; // give priority to atoms (!! but not for touch-style...)
-		
+
 		// look for close bonds
 		for (let n = 0; n < this.layout.numLines(); n++)
 		{
 			let l = this.layout.getLine(n);
 			if (l.bnum == 0) continue;
-			
+
 			let x1 = l.line.x1, y1 = l.line.y1;
 			let x2 = l.line.x2, y2 = l.line.y2;
 			let bondDSQ = norm2_xy(x2 - x1, y2 - y1) * 0.25;
 			let dsq = norm2_xy(x - 0.5 * (x1 + x2), y - 0.5 * (y1 + y2));
-			
+
 			if (dsq > bondDSQ) continue;
 			if (bestItem == 0 || dsq < bestDSQ) {bestItem = -l.bnum; bestDSQ = dsq;}
 		}
-		
+
 		return bestItem;
 	}
 
@@ -1151,7 +1151,7 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 	private drawAtomShade(ctx:CanvasRenderingContext2D, atom:number, fillCol:number, borderCol:number, anghalo:number):void
 	{
 		if (this.layout == null) return;
-		
+
 		let p:APoint = null;
 		for (let n = 0; n < this.layout.numPoints(); n++) if (this.layout.getPoint(n).anum == atom)
 		{
@@ -1172,7 +1172,7 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 			ctx.fill();
 		}
 		if (borderCol != -1)
-		{ 
+		{
 			ctx.beginPath();
 			ctx.ellipse(cx, cy, rad, rad, 0, 0, TWOPI, true);
 			ctx.strokeStyle = colourCanvas(borderCol);
@@ -1185,7 +1185,7 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 		if (this.layout == null) return;
 
 		let x1 = 0, y1 = 0, x2 = 0, y2 = 0, nb = 0, sz = 0;
-		for (let n = 0; n < this.layout.numLines(); n++) 
+		for (let n = 0; n < this.layout.numLines(); n++)
 		{
 			let l = this.layout.getLine(n);
 			if (l.bnum != bond) continue;
@@ -1194,7 +1194,7 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 			sz += l.size + (0.2 + anghalo) * this.pointScale;
 		}
 		if (nb == 0) return;
-		
+
 		let invNB = 1 / nb;
 		sz *= invNB;
 		x1 *= invNB;
@@ -1203,32 +1203,32 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 		y2 *= invNB;
 
 		let dx = x2 - x1, dy = y2 - y1, invDist = 1 / norm_xy(dx, dy);
-		dx *= invDist; 
+		dx *= invDist;
 		dy *= invDist;
 		let ox = dy, oy = -dx;
-		
+
 		let path = new Path2D(), mx:number, my:number, CIRC = 0.8;
 		path.moveTo(x1 + ox * sz, y1 + oy * sz);
-		
+
 		mx = x1 + (ox * sz - dx * sz) * CIRC;
 		my = y1 + (oy * sz - dy * sz) * CIRC;
 		path.quadraticCurveTo(mx, my, x1 - dx * sz, y1 - dy * sz);
-		
+
 		mx = x1 + (-ox * sz - dx * sz) * CIRC;
 		my = y1 + (-oy * sz - dy * sz) * CIRC;
 		path.quadraticCurveTo(mx, my, x1 - ox * sz, y1 - oy * sz);
 		path.lineTo(x2 - ox * sz, y2 - oy * sz);
-		
+
 		mx = x2 + (-ox * sz + dx * sz) * CIRC;
 		my = y2 + (-oy * sz + dy * sz) * CIRC;
 		path.quadraticCurveTo(mx, my, x2 + dx * sz, y2 + dy * sz);
-		
+
 		mx = x2 + (ox * sz + dx * sz) * CIRC;
 		my = y2 + (oy * sz + dy * sz) * CIRC;
 		path.quadraticCurveTo(mx, my, x2 + ox * sz, y2 + oy * sz);
-		
+
 		path.closePath();
-		
+
 		if (fillCol != -1)
 		{
 			ctx.beginPath();
@@ -1254,18 +1254,18 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 			y1 = this.angToY(this.mol.atomY(this.opAtom));
 		}
 		let x2 = this.mouseX, y2 = this.mouseY;
-		
+
 		let snapTo = this.snapToGuide(x2, y2);
 		if (snapTo != null) {x2 = snapTo[0]; y2 = snapTo[1];}
-		
+
 		let scale = this.pointScale;
-		
+
 		ctx.strokeStyle = '#808080';
 		ctx.lineWidth = this.policy.data.lineSize * scale;
 		drawLine(ctx, x1, y1, x2, y2);
-		
+
 		// !! TODO: draw multiple bonds
-		
+
 		if (element != 'C')
 		{
 			let fh = this.policy.data.fontSize * scale;
@@ -1338,7 +1338,7 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 		}
 	}
 
-	// looks through the current list of available guidelines, and picks out the sprouting(s) that relate to the clicked atom, if any 
+	// looks through the current list of available guidelines, and picks out the sprouting(s) that relate to the clicked atom, if any
 	private determineDragGuide(order:number):GuidelineSprout[]
 	{
 		// special deal: if no atom clicked, create a fake one with 30 degree angles from the click position
@@ -1355,25 +1355,25 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 				'destX': [],
 				'destY': []
 			};
-			
+
 			let mx = this.xToAng(this.clickX), my = this.yToAng(this.clickY);
 			for (let n = 0; n < 12; n++)
 			{
 				let theta = TWOPI * n / 12;
-				let dx = Molecule.IDEALBOND * Math.cos(theta), dy = Molecule.IDEALBOND * Math.sin(theta); 
+				let dx = Molecule.IDEALBOND * Math.cos(theta), dy = Molecule.IDEALBOND * Math.sin(theta);
 				g.x.push(mx + dx);
 				g.y.push(my + dy);
 				g.destX.push(this.clickX + dx * this.pointScale);
 				g.destY.push(this.clickY - dy * this.pointScale);
 			}
-			
+
 			return [g];
 		}
-		
+
 		if (this.guidelines == null) return null;
 
 		let best:GuidelineSprout = null, single:GuidelineSprout = null;
-		for (let n = 0; n < this.guidelines.length; n++) 
+		for (let n = 0; n < this.guidelines.length; n++)
 		{
 			let g = this.guidelines[n];
 			if (g.atom != this.opAtom) continue;
@@ -1382,7 +1382,7 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 		}
 		if (best == null) best = single;
 		if (best == null) return;
-		
+
 		let g = clone(best) as GuidelineSprout;
 		g.sourceX = this.angToX(this.mol.atomX(g.atom));
 		g.sourceY = this.angToY(this.mol.atomY(g.atom));
@@ -1395,15 +1395,15 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 		}
 		return [g];
 	}
-	
+
 	// activates drag guidelines for moving atoms - this is anything besides the atoms that are being moved
 	private determineMoveGuide():GuidelineSprout[]
 	{
 		let subj = this.subjectAtoms(false, true);
 		if (subj.length == 0 || subj.length == this.mol.numAtoms) return null;
-		
+
 		let guides:GuidelineSprout[] = [];
-		for (let n = 0; n < this.guidelines.length; n++) 
+		for (let n = 0; n < this.guidelines.length; n++)
 		{
 			let g = this.guidelines[n];
 			if (g.orders.indexOf(1) < 0 || subj.indexOf(g.atom) >= 0) continue;
@@ -1461,7 +1461,7 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 		else if (bond > 0) return SketchUtil.proposeBondRing(mol, rsz, bond, dx, dy);
 		else if (atom > 0 && mol.atomAdjCount(atom) > 0 && !this.toolRingFreeform) return SketchUtil.proposeAtomRing(mol, rsz, atom, dx, dy);
 		else return SketchUtil.proposeNewRing(mol, rsz, x1, y1, dx, dy, !this.toolRingFreeform);
-		
+
 		return [null, null];
 	}
 
@@ -1469,7 +1469,7 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 	private snapToGuide(x:number, y:number):number[]
 	{
 		//if (this.dragGuides == null) return null;
-		
+
 		let bestDSQ = Number.POSITIVE_INFINITY, bestX = 0, bestY = 0;
 		const APPROACH = sqr(0.5 * this.pointScale);
 		if (this.dragGuides != null) for (let i = 0; i < this.dragGuides.length; i++) for (let j = 0; j < this.dragGuides[i].x.length; j++)
@@ -1485,7 +1485,7 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 			if (dsq < APPROACH && dsq < bestDSQ) {bestDSQ = dsq; bestX = px; bestY = py;}
 		}
 		if (isFinite(bestDSQ)) return [bestX, bestY];
-		
+
 		return null;
 	}
 
@@ -1517,11 +1517,12 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 	// --------------------------------------- toolkit events ---------------------------------------
 
 	// event responses
-	private mouseClick(event:JQueryEventObject):void
+	private mouseClick(event:JQueryEventObject):boolean
 	{
 		this.container.focus(); // just in case it wasn't already
+		return false;
 	}
-	private mouseDoubleClick(event:JQueryEventObject):void
+	private mouseDoubleClick(event:JQueryEventObject):boolean
 	{
 		event.preventDefault();
 
@@ -1542,8 +1543,9 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 			let bond = -clickObj;
 			// TODO: edit bond...
 		}
+		return false;
 	}
-	private mouseDown(event:JQueryEventObject):void
+	private mouseDown(event:JQueryEventObject):boolean
 	{
 		event.preventDefault();
 
@@ -1552,13 +1554,13 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 		this.dragType = DraggingTool.Press;
 		this.opBudged = false;
 		this.dragGuides = null;
-		
+
 		let xy = eventCoords(event, this.container);
 		this.mouseX = xy[0];
 		this.mouseY = xy[1];
 		this.clickX = xy[0];
 		this.clickY = xy[1];
-		
+
 		let clickObj = this.pickObject(xy[0], xy[1]);
 		this.opAtom = clickObj > 0 ? clickObj : 0;
 		this.opBond = clickObj < 0 ? -clickObj : 0;
@@ -1568,7 +1570,7 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 
 		let tool = 'finger';
 		if (this.toolView != null) tool = this.toolView.selectedButton;
-		
+
 		if (tool == 'arrow')
 		{
 			// special key modifiers for the arrow tool:
@@ -1642,14 +1644,14 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 			this.dragType = DraggingTool.Bond;
 			this.toolBondOrder = 1;
 			this.toolBondType = Molecule.BONDTYPE_NORMAL;
-			
+
 			if (tool == 'bondOrder0') this.toolBondOrder = 0;
 			else if (tool == 'bondOrder2') this.toolBondOrder = 2;
 			else if (tool == 'bondOrder3') this.toolBondOrder = 3;
 			else if (tool == 'bondUnknown') this.toolBondType = Molecule.BONDTYPE_UNKNOWN;
 			else if (tool == 'bondInclined') this.toolBondType = Molecule.BONDTYPE_INCLINED;
 			else if (tool == 'bondDeclined') this.toolBondType = Molecule.BONDTYPE_DECLINED;
-			
+
 			this.dragGuides = this.determineDragGuide(this.toolBondOrder);
 		}
 		else if (tool.startsWith('element'))
@@ -1658,8 +1660,9 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 			this.toolAtomSymbol = tool.substring(7);
 			this.dragGuides = this.determineDragGuide(1);
 		}
+		return false;
 	}
-	private mouseUp(event:JQueryEventObject):void
+	private mouseUp(event:JQueryEventObject):boolean
 	{
 		// if the mouse hasn't moved, it's a click operation
 		if (!this.opBudged)
@@ -1679,7 +1682,7 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 				//		SHIFT: toggle selection of object
 				//		ALT: enter pan-mode [see mouseDown]
 				//		ALT+CTRL: enter zoom mode [see mouseDown]
-			
+
 				if (!this.opShift && !this.opCtrl && !this.opAlt)
 				{
 					if (clickAtom == 0 && clickBond == 0)
@@ -1786,7 +1789,7 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 					'selectedMask': null as boolean[]
 				};
 				let molact:MoleculeActivity;
-				if (this.toolBondType == Molecule.BONDTYPE_NORMAL) 
+				if (this.toolBondType == Molecule.BONDTYPE_NORMAL)
 					molact = new MoleculeActivity(this, ActivityType.BondOrder, {'order': this.toolBondOrder}, override);
 				else
 					molact = new MoleculeActivity(this, ActivityType.BondType, {'type': this.toolBondType}, override);
@@ -1802,7 +1805,7 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 					this.calculateLassoMask();
 					for (let n = 1; n <= this.mol.numAtoms; n++) if (this.getLassoed(n) && !this.getSelected(n)) this.setSelected(n, true);
 				}
-				
+
 				this.lassoX = null;
 				this.lassoY = null;
 				this.lassoMask = null;
@@ -1860,7 +1863,7 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 				let x2 = this.mouseX, y2 = this.mouseY;
 				let snapTo = this.snapToGuide(x2, y2);
 				if (snapTo != null) {x2 = snapTo[0]; y2 = snapTo[1];}
-				
+
 				let param:any =
 				{
 					'order': 1,
@@ -1871,7 +1874,7 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 					'x2': this.xToAng(x2),
 					'y2': this.yToAng(y2)
 				};
-				
+
 				if (this.toolAtomSymbol == 'A') param.element = window.prompt('Enter element symbol:', '');
 				if (param.element != '')
 				{
@@ -1899,37 +1902,40 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 				molact.execute();
 			}
 		}
-		
+
 		this.dragType = DraggingTool.None;
 		this.lassoX = null;
 		this.lassoY = null;
 		this.lassoMask = null;
 		this.dragGuides = null;
 		this.delayedRedraw();
+		return false;
 	}
-	private mouseOver(event:JQueryEventObject):void
+	private mouseOver(event:JQueryEventObject):boolean
 	{
 		this.updateHoverCursor(event);
 		this.updateLasso(event);
+		return false;
 	}
-	private mouseOut(event:JQueryEventObject):void
+	private mouseOut(event:JQueryEventObject):boolean
 	{
 		this.updateHoverCursor(event);
 		this.updateLasso(event);
+		return false;
 	}
-	private mouseMove(event:JQueryEventObject):void
+	private mouseMove(event:JQueryEventObject):boolean
 	{
 		this.updateHoverCursor(event);
-		
+
 		if (this.dragType == DraggingTool.None) return; // mouse button isn't pressed
 
 		let xy = eventCoords(event, this.container);
-		
+
 		// once the mouse has moved more than a few pixels, it fips into "drag mode" rather than "click mode"
 		if (!this.opBudged)
 		{
 			let dx = xy[0] - this.clickX, dy = xy[1] - this.clickY;
-			if (dx * dx + dy * dy > 2 * 2) this.opBudged = true; 
+			if (dx * dx + dy * dy > 2 * 2) this.opBudged = true;
 		}
 
 		// switch lasso mode on if it becomes an open drag
@@ -1941,7 +1947,7 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 			this.lassoMask = [];
 		}
 
-		// update the various dragging-already tools		
+		// update the various dragging-already tools
 		if (this.dragType == DraggingTool.Lasso || this.dragType == DraggingTool.Erasor)
 		{
 			this.updateLasso(event);
@@ -1950,7 +1956,7 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 		{
 			let xy = eventCoords(event, this.container);
 			let dx = xy[0] - this.mouseX, dy = xy[1] - this.mouseY;
-			
+
 			if (dx != 0 || dy != 0)
 			{
 				this.offsetX += dx;
@@ -1975,7 +1981,7 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 		{
 			let xy = eventCoords(event, this.container);
 			let dy = xy[1] - this.mouseY;
-			
+
 			if (dy != 0)
 			{
 				dy = Math.min(50, Math.max(-50, dy));
@@ -1983,14 +1989,14 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 				newScale = Math.min(10, Math.max(0.1, newScale));
 				let newOX = this.clickX - (newScale / this.pointScale) * (this.clickX - this.offsetX);
 				let newOY = this.clickY - (newScale / this.pointScale) * (this.clickY - this.offsetY);
-				
+
 				this.pointScale = newScale;
 				this.offsetX = newOX;
 				this.offsetY = newOY;
-				
+
 				this.delayedRedraw();
 			}
-			
+
 			this.mouseX = xy[0];
 			this.mouseY = xy[1];
 		}
@@ -2003,13 +2009,15 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 			this.mouseX = xy[0];
 			this.mouseY = xy[1];
 			this.delayedRedraw();
-		}		
+		}
+
+		return false;
 	}
 	private keyPressed(event:JQueryEventObject):void
 	{
 		//let ch = String.fromCharCode(event.keyCode || event.charCode);
 		//console.log('PRESSED['+ch+'] key='+event.keyCode+' chcode='+event.charCode);
-		
+
 		// !! TODO: special cases, like arrow keys/escape...
 
 		if (this.toolView != null && this.toolView.topBank.claimKey(event)) {event.preventDefault(); return;}
@@ -2020,18 +2028,18 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 	{
 		let key = event.keyCode;
 		//console.log('DOWN: key='+key);
-		// special deal for the escape key: if any bank needs to be popped, consume it 
+		// special deal for the escape key: if any bank needs to be popped, consume it
 		if (key == KeyCode.Escape)
 		{
 			for (let view of [this.templateView, this.commandView, this.toolView]) if (view != null && view.stackSize > 1)
 			{
-				view.popBank(); 
-				event.preventDefault(); 
+				view.popBank();
+				event.preventDefault();
 				return false;
 			}
 		}
 
-		// non-modifier keys that don't generate a 'pressed' event		
+		// non-modifier keys that don't generate a 'pressed' event
 		if (key == KeyCode.Enter) {}
 		else if (key == KeyCode.Left) {}
 		else if (key == KeyCode.Right) {}
@@ -2042,7 +2050,7 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 			if (this.toolView != null && this.toolView.topBank.claimKey(event)) {event.preventDefault(); return false;}
 			if (this.commandView != null && this.commandView.topBank.claimKey(event)) {event.preventDefault(); return false;}
 			if (this.templateView != null && this.templateView.topBank.claimKey(event)) {event.preventDefault(); return false;}
-		} 
+		}
 		else return true; // allow the key to percolate upward
 
 		event.preventDefault();
@@ -2066,11 +2074,11 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 		this.offsetY = newOY;
 
 		this.delayedRedraw();
-		
+
 		event.stopPropagation = true;
 		*/
 	}
-	
+
 	// something was dragged into the sketcher area
 	private dropInto(transfer:DataTransfer):void
 	{
@@ -2088,11 +2096,11 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 				items[n].getAsString((str:string) =>
 				{
 					let mol = Molecule.fromString(str);
-					if (mol != null) 
+					if (mol != null)
 					{
 						// (maybe do an intelligent append/paste, using the coordinates, rather than blowing it away?)
 						this.defineMolecule(mol, true, true);
-					}	
+					}
 					else console.log('Dragged data is not a SketchEl molecule: ' + str);
 				});
 				return;
@@ -2109,16 +2117,16 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 				{
 					let str = reader.result;
 					let mol = MoleculeStream.readUnknown(str.toString());
-					if (mol != null) 
+					if (mol != null)
 					{
 						// (maybe do an intelligent append/paste, using the coordinates, rather than blowing it away?)
 						this.defineMolecule(mol, true, true);
-					}	
+					}
 					else console.log('Dragged file is not a recognised molecule: ' + str);
 				};
 				reader.readAsText(files[n]);
 				return;
-			} 
+			}
 
 			//console.log('DRAGFILE['+n+']: ' + files[n].name+',sz='+files[n].size+',type='+files[n].type);
 		}
@@ -2128,7 +2136,7 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 	private sketchEffects():RenderEffects
 	{
 		let effects = new RenderEffects();
-		for (let n = 1; n <= this.mol.numAtoms; n++) if (MolUtil.hasAbbrev(this.mol, n)) effects.dottedRectOutline[n] = 0x808080; 
+		for (let n = 1; n <= this.mol.numAtoms; n++) if (MolUtil.hasAbbrev(this.mol, n)) effects.dottedRectOutline[n] = 0x808080;
 		return effects;
 	}
 }

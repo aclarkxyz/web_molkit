@@ -86,13 +86,31 @@ export class DataSheet
 	// make a deep clone of the datasheet that can be safely modified without consequences
 	public clone(withRows = true):DataSheet
 	{
-		let dup = new DataSheet(deepClone(this.data));
-		if (!withRows) 
+		let {numCols, numRows, colData, rowData} = this.data;
+		let data:DataSheetContent =
 		{
-			dup.data.numRows = 0;
-			dup.data.rowData = [];
+			'title': this.data.title,
+			'description': this.data.description,
+			'numCols': numCols,
+			'numRows': numRows,
+			'numExtens': this.data.numExtens,
+			'colData': deepClone(colData),
+			'rowData': new Array(numRows),
+			'extData': deepClone(this.data.extData),
+		};
+		for (let r = 0; r < numRows; r++)
+		{
+			let inRow = this.data.rowData[r], outRow:any[] = new Array(numCols);
+			for (let c = 0; c < numCols; c++)
+			{
+				if (inRow[c] != null && colData[c].type == DataSheetColumn.Molecule && inRow[c] instanceof Molecule)
+					outRow[c] = (inRow[c] as Molecule).clone();
+				else
+					outRow[c] = inRow[c];
+			}
+			data.rowData[r] = outRow;
 		}
-		return dup;
+		return new DataSheet(data);
 	}
 
 	// returns the data upon which is class is based; this is in the correct format for sending to the server as a 
@@ -175,7 +193,25 @@ export class DataSheet
 		if (col < 0) return null;
 		return this.data.rowData[row][col] == null;
 	}
-	public notNull(row:number, col:number | string):boolean {return !this.isNull(row, col);}
+	public notNull(row:number, col:number | string):boolean 
+	{
+		return !this.isNull(row, col);
+	}
+	public isBlank(row:number, col:number | string):boolean
+	{
+		if (typeof col === 'string') col = this.findColByName(col);		
+		if (this.isNull(row, col)) return true;
+		let ct = this.colType(col);
+		if (ct == DataSheetColumn.Molecule) return this.getMolecule(row, col).numAtoms == 0;
+		if (ct == DataSheetColumn.String) return this.getString(row, col).length == 0;
+		if (ct == DataSheetColumn.Extend) return this.getExtend(row, col).length == 0;
+		return false;
+	}
+	public notBlank(row:number, col:number | string):boolean
+	{
+		return !this.isBlank(row, col);
+	}
+
 	public getObject(row:number, col:number | string):any
 	{
 		if (typeof col === 'string') col = this.findColByName(col);
