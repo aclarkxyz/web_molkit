@@ -71,6 +71,7 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 	private width = 0;
 	private height = 0;
 	private border = 0x808080;
+	private borderRadius = 4;
 	private background = 0xF8F8F8;
 
 	private beenSetup = false;
@@ -206,6 +207,14 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 		this.policy = policy;
 		this.pointScale = policy.data.pointScale;
 	}
+
+	// defines the colours used for border & background; note that a border of MetaVector.NOCOLOUR is an instruction to not have one
+	public defineBackground(borderCol?:number, borderRad?:number, bgCol?:number):void
+	{
+		if (borderCol != null) this.border = borderCol;
+		if (borderRad != null) this.borderRadius = borderRad;
+		if (bgCol != null) this.background = bgCol;
+	}
 	
 	// zappy zap
 	public clearMolecule():void {this.defineMolecule(new Molecule(), true, true);}
@@ -247,14 +256,16 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 		//let style = 'position: relative; width: ' + this.width + 'px; height: ' + this.height + 'px;';
 		//this.container = newElement(this.getContentElement(), 'div', {'style': style});
 		this.container = $('<div></div>').appendTo(this.content);
-		this.container.attr('style', 'position: relative; width: ' + this.width + 'px; height: ' + this.height + 'px;'); 
+		this.container.css({'position': 'relative', 'width': this.width + 'px', 'height': this.height + 'px'}); 
 		this.container.css('background-color', colourCanvas(this.background));
-		this.container.css('border', '1px solid ' + colourCanvas(this.border));
-		this.container.css('border-radius', '4px');
+		if (this.border != MetaVector.NOCOLOUR)
+		{
+			this.container.css('border', '1px solid ' + colourCanvas(this.border));
+			this.container.css('border-radius', this.borderRadius + 'px');
+		}
 		this.container.css('outline', 'none');
 		
 		this.container.attr('tabindex', '0');
-		this.container.focus();
 		
 		let canvasStyle = 'position: absolute; left: 0; top: 0;';
 		canvasStyle += ' pointer-events: none;';
@@ -266,13 +277,9 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 		
 		this.divMessage = $('<div></div>').appendTo(this.container);
 		this.divMessage.attr('style', canvasStyle);
-		this.divMessage.css('width', this.width + 'px');
-		this.divMessage.css('height', this.height + 'px');
-		this.divMessage.css('text-align', 'center');
-		this.divMessage.css('vertical-align', 'middle');
-		this.divMessage.css('font-weight', 'bold');
-		this.divMessage.css('font-size', '120%');
-		
+		this.divMessage.css({'width': this.width + 'px', 'height': this.height + 'px'});
+		this.divMessage.css({'text-align': 'center', 'vertical-align': 'middle', 'font-weight': 'bold', 'font-size': '120%'});
+
 		this.centreAndShrink();
 		this.redraw();
 		
@@ -378,6 +385,8 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 		document.addEventListener('copy', copyFunc);*/
 
 		if (this.proxyClip) this.proxyClip.install(this.container);
+
+		this.container.focus();
 	}
 
 	// change the size of the sketcher after instantiation
@@ -2007,11 +2016,10 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 		if (this.commandView != null && this.commandView.topBank.claimKey(event)) {event.preventDefault(); return;}
 		if (this.templateView != null && this.templateView.topBank.claimKey(event)) {event.preventDefault(); return;}
 	}
-	private keyDown(event:JQueryEventObject):void
+	private keyDown(event:JQueryEventObject):boolean
 	{
 		let key = event.keyCode;
 		//console.log('DOWN: key='+key);
-
 		// special deal for the escape key: if any bank needs to be popped, consume it 
 		if (key == KeyCode.Escape)
 		{
@@ -2019,7 +2027,7 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 			{
 				view.popBank(); 
 				event.preventDefault(); 
-				return;
+				return false;
 			}
 		}
 
@@ -2031,12 +2039,14 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 		else if (key == KeyCode.Down) {}
 		else if ([KeyCode.Escape, KeyCode.Backspace, KeyCode.Delete].indexOf(key) >= 0)
 		{
-			if (this.toolView != null && this.toolView.topBank.claimKey(event)) {event.preventDefault(); return;}
-			if (this.commandView != null && this.commandView.topBank.claimKey(event)) {event.preventDefault(); return;}
-			if (this.templateView != null && this.templateView.topBank.claimKey(event)) {event.preventDefault(); return;}
+			if (this.toolView != null && this.toolView.topBank.claimKey(event)) {event.preventDefault(); return false;}
+			if (this.commandView != null && this.commandView.topBank.claimKey(event)) {event.preventDefault(); return false;}
+			if (this.templateView != null && this.templateView.topBank.claimKey(event)) {event.preventDefault(); return false;}
 		} 
-		
-		// !! do something interesting when modifier keys are held down?
+		else return true; // allow the key to percolate upward
+
+		event.preventDefault();
+		return false;
 	}
 	private keyUp(event:JQueryEventObject):void
 	{
