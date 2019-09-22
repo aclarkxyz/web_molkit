@@ -4,7 +4,7 @@
     (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
-    
+
     http://molmatinf.com
 
 	[PKG=webmolkit]
@@ -109,7 +109,7 @@ function composeMainCSS():string
 		.wmk-button.active:focus,
 		.wmk-button.focus,
 		.wmk-button:active.focus,
-		.wmk-button.active.focus 
+		.wmk-button.active.focus
 		{
 			outline: thin dotted;
 			outline: 5px auto -webkit-focus-ring-color;
@@ -117,13 +117,13 @@ function composeMainCSS():string
 		}
 		.wmk-button:hover,
 		.wmk-button:focus,
-		.wmk-button.focus 
+		.wmk-button.focus
 		{
 			color: #333;
 			text-decoration: none;
 		}
 		.wmk-button:active,
-		.wmk-button.active 
+		.wmk-button.active
 		{
 			background-image: none;
 			outline: 0;
@@ -132,7 +132,7 @@ function composeMainCSS():string
 		}
 		.wmk-button.disabled,
 		.wmk-button[disabled],
-		fieldset[disabled] .wmk-button 
+		fieldset[disabled] .wmk-button
 		{
 			cursor: not-allowed;
 			filter: alpha(opacity=65);
@@ -141,7 +141,7 @@ function composeMainCSS():string
 			opacity: .65;
 		}
 		a.wmk-button.disabled,
-		fieldset[disabled] a.wmk-button 
+		fieldset[disabled] a.wmk-button
 		{
 			pointer-events: none;
 		}
@@ -157,7 +157,7 @@ function composeMainCSS():string
 
 		/* default button */
 
-		.wmk-button-default 
+		.wmk-button-default
 		{
 			color: #333;
 			background-color: #fff;
@@ -165,13 +165,13 @@ function composeMainCSS():string
 			border-color: #ccc;
 		}
 		.wmk-button-default:focus,
-		.wmk-button-default.focus 
+		.wmk-button-default.focus
 		{
 			color: #333;
 			background-color: #e6e6e6;
 			border-color: #8c8c8c;
 		}
-		.wmk-button-default:hover 
+		.wmk-button-default:hover
 		{
 			color: #333;
 			background-color: #e6e6e6;
@@ -179,7 +179,7 @@ function composeMainCSS():string
 		}
 		.wmk-button-default:active,
 		.wmk-button-default.active,
-		.open > .dropdown-toggle.wmk-button-default 
+		.open > .dropdown-toggle.wmk-button-default
 		{
 			color: #333;
 			background-color: #e6e6e6;
@@ -193,7 +193,7 @@ function composeMainCSS():string
 		.open > .dropdown-toggle.wmk-button-default:focus,
 		.wmk-button-default:active.focus,
 		.wmk-button-default.active.focus,
-		.open > .dropdown-toggle.wmk-button-default.focus 
+		.open > .dropdown-toggle.wmk-button-default.focus
 		{
 			color: #333;
 			background-color: #d4d4d4;
@@ -201,7 +201,7 @@ function composeMainCSS():string
 		}
 		.wmk-button-default:active,
 		.wmk-button-default.active,
-		.open > .dropdown-toggle.wmk-button-default 
+		.open > .dropdown-toggle.wmk-button-default
 		{
 			background-image: none;
 		}
@@ -213,12 +213,12 @@ function composeMainCSS():string
 		fieldset[disabled] .wmk-button-default:focus,
 		.wmk-button-default.disabled.focus,
 		.wmk-button-default[disabled].focus,
-		fieldset[disabled] .wmk-button-default.focus 
+		fieldset[disabled] .wmk-button-default.focus
 		{
 			background-color: #fff;
 			border-color: #ccc;
 		}
-		.wmk-button-default .badge 
+		.wmk-button-default .badge
 		{
 			color: #fff;
 			background-color: #333;
@@ -226,7 +226,7 @@ function composeMainCSS():string
 
 		/* primary button */
 
-		.wmk-button-primary 
+		.wmk-button-primary
 		{
 			color: #fff;
 			background-color: #008FD2;
@@ -234,13 +234,13 @@ function composeMainCSS():string
 			border-color: #00C0C0;
 		}
 		.wmk-button-primary:focus,
-		.wmk-button-primary.focus 
+		.wmk-button-primary.focus
 		{
 			color: #fff;
 			background-color: ${lowlight};
 			border-color: #122b40;
 		}
-		.wmk-button-primary:hover 
+		.wmk-button-primary:hover
 		{
 			color: #fff;
 			background-color: #286090;
@@ -248,7 +248,7 @@ function composeMainCSS():string
 		}
 		.wmk-button-primary:active,
 		.wmk-button-primary.active,
-		.open > .dropdown-toggle.wmk-button-primary 
+		.open > .dropdown-toggle.wmk-button-primary
 		{
 			color: #fff;
 			background-color: #286090;
@@ -262,7 +262,7 @@ function composeMainCSS():string
 		.open > .dropdown-toggle.wmk-button-primary:focus,
 		.wmk-button-primary:active.focus,
 		.wmk-button-primary.active.focus,
-		.open > .dropdown-toggle.wmk-button-primary.focus 
+		.open > .dropdown-toggle.wmk-button-primary.focus
 		{
 			color: #fff;
 			background-color: ${highlight};
@@ -271,7 +271,7 @@ function composeMainCSS():string
 		}
 		.wmk-button-primary:active,
 		.wmk-button-primary.active,
-		.open > .dropdown-toggle.wmk-button-primary 
+		.open > .dropdown-toggle.wmk-button-primary
 		{
 			background-image: none;
 		}
@@ -283,12 +283,12 @@ function composeMainCSS():string
 		fieldset[disabled] .wmk-button-primary:focus,
 		.wmk-button-primary.disabled.focus,
 		.wmk-button-primary[disabled].focus,
-		fieldset[disabled] .wmk-button-primary.focus 
+		fieldset[disabled] .wmk-button-primary.focus
 		{
 			background-color: #337ab7;
 			border-color: #2ea46d;
 		}
-		.wmk-button-primary .badge 
+		.wmk-button-primary .badge
 		{
 			color: #337ab7;
 			background-color: #fff;

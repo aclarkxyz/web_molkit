@@ -4,7 +4,7 @@
     (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
-    
+
     http://molmatinf.com
 
 	[PKG=webmolkit]
@@ -20,7 +20,7 @@ namespace WebMolKit /* BOF */ {
 
 /*
 	SearchPanel: a concise button-height search preparation area that can be used for molecules & reactions.
-	
+
 	For molecule searches, only mol1 is defined; for reactions, mol1 & mol2 & arrow are all in play.
 */
 
@@ -44,12 +44,12 @@ export class SearchPanel extends Widget
 	private hoverArrow:HTMLCanvasElement;
 	private pressedArrow:HTMLCanvasElement;
 	private drawnArrow:HTMLCanvasElement;
-	private normalMol2:HTMLCanvasElement;	
+	private normalMol2:HTMLCanvasElement;
 	private pressedMol2:HTMLCanvasElement;
 	private drawnMol2:HTMLCanvasElement;
 	private thinMol2:HTMLCanvasElement;
 	private thickMol2:HTMLCanvasElement;
-	
+
 	private isSketching = false;
 	private height = 50;
 	private molWidth = 80;
@@ -81,7 +81,7 @@ export class SearchPanel extends Widget
 	public defineClipboard(proxy:ClipboardProxy):void
 	{
 		this.proxyClip = proxy;
-	}	
+	}
 
 	// get/set molecule, with appropriate rendering updates
 	public getMolecule1():Molecule {return this.mol1;}
@@ -102,24 +102,24 @@ export class SearchPanel extends Widget
 	public render(parent:any)
 	{
 		super.render(parent);
-		
+
 		this.content.addClass('no_selection');
-		
+
 		const height = this.height, molw = this.molWidth, arrow = this.arrowWidth;
 		const density = pixelDensity();
 		const hpad = this.HPADDING, vpad = this.VPADDING;
-		
+
 		let isRxn = this.type == SearchPanel.TYPE_REACTION, isMol = !isRxn;
-		
+
 		let div = this.content;
-		
+
 		if (isMol)
 			div.css('width', (molw + 2 * hpad) + 'px');
 		else
 			div.css('width', (2 * molw + arrow + 4 * hpad) + 'px');
 		div.css('height', (height + 2 * vpad) + 'px');
 		div.css('position', 'relative');
-		
+
 		let renderSolid = (col1:string, col2:string, style:string):HTMLCanvasElement =>
 		{
 			let node = newElement(div, 'canvas', {'width': molw * density, 'height': height * density, 'style': style}) as HTMLCanvasElement;
@@ -127,13 +127,13 @@ export class SearchPanel extends Widget
 			node.style.height = height + 'px';
 			let ctx = node.getContext('2d');
 			ctx.scale(density, density);
-			
+
 			let grad = ctx.createLinearGradient(0, 0, molw, height);
 			grad.addColorStop(0, col1);
 			grad.addColorStop(1, col2);
 			ctx.fillStyle = grad;
 			ctx.fillRect(0, 0, molw, height);
-			
+
 			return node;
 		};
 		let renderBorder = (lw:number, style:string):HTMLCanvasElement =>
@@ -143,11 +143,11 @@ export class SearchPanel extends Widget
 			node.style.height = height + 'px';
 			let ctx = node.getContext('2d');
 			ctx.scale(density, density);
-			
+
 			ctx.strokeStyle = 'black';
 			ctx.lineWidth = lw;
 			ctx.strokeRect(0.5 * lw, 0.5 * lw, molw - lw, height - lw);
-			
+
 			return node;
 		};
 		let renderArrow = (style:string):HTMLCanvasElement =>
@@ -157,7 +157,7 @@ export class SearchPanel extends Widget
 			node.style.height = height + 'px';
 			let ctx = node.getContext('2d');
 			ctx.scale(density, density);
-			
+
 			let midY = Math.round(0.5 * height);
 			ctx.beginPath();
 			ctx.moveTo(0, midY);
@@ -165,14 +165,14 @@ export class SearchPanel extends Widget
 			ctx.strokeStyle = 'black';
 			ctx.lineWidth = 2;
 			ctx.stroke();
-			
+
 			ctx.beginPath();
 			ctx.moveTo(arrow, midY);
 			ctx.lineTo(arrow - 8, midY - 5);
 			ctx.lineTo(arrow - 8, midY + 5);
 			ctx.fillStyle = 'black';
 			ctx.fill();
-			
+
 			return node;
 		};
 		let renderOutlineArrow = (style:string, col:string):HTMLCanvasElement =>
@@ -182,19 +182,19 @@ export class SearchPanel extends Widget
 			node.style.height = height + 'px';
 			let ctx = node.getContext('2d');
 			ctx.scale(density, density);
-			
+
 			let midY = Math.round(0.5 * height);
 			let path = pathRoundedRect(0, midY - 8, arrow, midY + 8, 4);
 			ctx.fillStyle = col;
-			ctx.fill(path); 
-			
+			ctx.fill(path);
+
 			return node;
 		};
-		
+
 		// first molecule: always present
 		let styleMol1Pos = 'position: absolute; left: ' + hpad + 'px; top: ' + vpad + 'px;';
 		let styleMol1 = styleMol1Pos + 'pointer-events: none;';
-		
+
 		this.normalMol1 = renderSolid('#FFFFFF', '#D0D0D0', styleMol1);
 		this.pressedMol1 = renderSolid('#00CA59', '#008650', styleMol1);
 		this.drawnMol1 = newElement(div, 'canvas', {'width': molw * density, 'height': height * density, 'style': styleMol1Pos}) as HTMLCanvasElement;
@@ -202,19 +202,19 @@ export class SearchPanel extends Widget
 		this.renderMolecule(1);
 		this.thinMol1 = renderBorder(1, styleMol1);
 		this.thickMol1 = renderBorder(2, styleMol1);
-		
+
 		if (isRxn)
 		{
 			let styleArrowPos = 'position: absolute; left: ' + (2 * hpad + molw) + 'px; top: ' + vpad + 'px;';
 			let styleArrow = styleArrowPos + 'pointer-events: none;';
-			
+
 			this.hoverArrow = renderOutlineArrow(styleArrow, '#C0C0C0');
 			this.pressedArrow = renderOutlineArrow(styleArrow, '#00CA59');
 			this.drawnArrow = renderArrow(styleArrowPos);
 
 			let styleMol2Pos = 'position: absolute; left: ' + (3 * hpad + molw + arrow) + 'px; top: ' + vpad + 'px;';
 			let styleMol2 = styleMol2Pos + 'pointer-events: none;';
-			
+
 			this.normalMol2 = renderSolid('#FFFFFF', '#D0D0D0', styleMol2);
 			this.pressedMol2 = renderSolid('#00CA59', '#008650', styleMol2);
 			this.drawnMol2 = newElement(div, 'canvas', {'width': molw * density, 'height': height * density, 'style': styleMol2Pos}) as HTMLCanvasElement;
@@ -225,14 +225,14 @@ export class SearchPanel extends Widget
 		}
 
 		this.updateLayers();
-		
+
 		$(this.drawnMol1).mouseenter(() => this.mouseEnter(1));
 		$(this.drawnMol1).mouseleave(() => this.mouseLeave(1));
 		$(this.drawnMol1).mousedown(() => this.mouseDown(1));
 		$(this.drawnMol1).mouseup(() => this.mouseUp(1));
 		$(this.drawnMol1).attr('ondragstart', () => false);
 		$(this.drawnMol1).click(() => this.editMolecule(1));
-		
+
 		if (isRxn)
 		{
 			$(this.drawnArrow).mouseenter(() => this.mouseEnter(3));
@@ -249,7 +249,7 @@ export class SearchPanel extends Widget
 			$(this.drawnMol2).attr('ondragstart', () => false);
 			$(this.drawnMol2).click(() => this.editMolecule(2));
 		}
-		
+
 		if (!isRxn)
 		{
 			addTooltip(this.drawnMol1, 'Edit the molecular structure.');
@@ -268,7 +268,7 @@ export class SearchPanel extends Widget
 
 			let wnd = window as any, txt = '';
 			if (wnd.clipboardData && wnd.clipboardData.getData) txt = wnd.clipboardData.getData('Text');
-			else if (e.clipboardData && e.clipboardData.getData) txt = e.clipboardData.getData('text/plain'); 
+			else if (e.clipboardData && e.clipboardData.getData) txt = e.clipboardData.getData('text/plain');
 
 			if (!txt) return true;
 			let mol = MoleculeStream.readUnknown(txt);
@@ -281,8 +281,8 @@ export class SearchPanel extends Widget
 			if (this.onChange) this.onChange(this);
 
 			return false;
-		});		
-		
+		});
+
 		// setup the drop targets
 		this.drawnMol1.addEventListener('dragover', (event) =>
 		{
@@ -296,7 +296,7 @@ export class SearchPanel extends Widget
 			event.preventDefault();
 			this.dropInto(1, event.dataTransfer);
 		});
-		
+
 		if (isRxn)
 		{
 			this.drawnMol2.addEventListener('dragover', (event) =>
@@ -321,10 +321,10 @@ export class SearchPanel extends Widget
 		setVisible(this.pressedMol1, this.pressed == 1);
 		setVisible(this.thinMol1, this.highlight != 1);
 		setVisible(this.thickMol1, this.highlight == 1);
-		
+
 		setVisible(this.hoverArrow, this.highlight == 3);
 		setVisible(this.pressedArrow, this.pressed == 3);
-		
+
 		setVisible(this.normalMol2, this.pressed != 2);
 		setVisible(this.pressedMol2, this.pressed == 2);
 		setVisible(this.thinMol2, this.highlight != 2);
@@ -340,10 +340,10 @@ export class SearchPanel extends Widget
 			canvas.width = canvas.width; // this is rubric for 'clear'
 			return;
 		}*/
-		
+
 		let withMapping = false;
-		if (this.type == SearchPanel.TYPE_REACTION) for (let n = 1; n <= mol.numAtoms; n++) if (mol.atomMapNum(n) > 0) {withMapping = true; break;} 
-		
+		if (this.type == SearchPanel.TYPE_REACTION) for (let n = 1; n <= mol.numAtoms; n++) if (mol.atomMapNum(n) > 0) {withMapping = true; break;}
+
 		let width = this.molWidth, height = this.height;
 		let density = pixelDensity();
 		let ctx = canvas.getContext('2d');
@@ -437,13 +437,13 @@ export class SearchPanel extends Widget
 		dlg.callbackSave = (source?:MapReaction) => this.saveMapping(source);
 		dlg.open();
 	}
-	
+
 	private saveMolecule1(dlg:EditCompound):void
 	{
 		this.mol1 = dlg.getMolecule();
 		dlg.close();
 		this.renderMolecule(1);
-		
+
 		let cookies = new Cookies();
 		if (cookies.numMolecules() > 0) cookies.stashMolecule(this.mol1);
 
@@ -468,9 +468,9 @@ export class SearchPanel extends Widget
 		this.renderMolecule(1);
 		this.renderMolecule(2);
 
-		if (this.onChange) this.onChange(this);		
+		if (this.onChange) this.onChange(this);
 	}
-	
+
 	private dropInto(which:number, transfer:DataTransfer):void
 	{
 		let items = transfer.items, files = transfer.files;
@@ -487,7 +487,7 @@ export class SearchPanel extends Widget
 				items[n].getAsString((str:string) =>
 				{
 					let mol = Molecule.fromString(str);
-					if (mol != null) 
+					if (mol != null)
 					{
 						if (which == 1) this.setMolecule1(mol); else this.setMolecule2(mol);
 						if (this.onChange) this.onChange(this);
@@ -508,16 +508,16 @@ export class SearchPanel extends Widget
 				{
 					let str = reader.result;
 					let mol = MoleculeStream.readUnknown(str.toString());
-					if (mol != null) 
+					if (mol != null)
 					{
 						if (which == 1) this.setMolecule1(mol); else this.setMolecule2(mol);
 						if (this.onChange) this.onChange(this);
-					}	
+					}
 					else console.log('Dragged file is not a recognised molecule: ' + str);
 				};
 				reader.readAsText(files[n]);
 				return;
-			} 
+			}
 
 			//console.log('DRAGFILE['+n+']: ' + files[n].name+',sz='+files[n].size+',type='+files[n].type);
 		}

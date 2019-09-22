@@ -4,7 +4,7 @@
     (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
-    
+
     http://molmatinf.com
 
     [PKG=webmolkit]
@@ -103,7 +103,7 @@ export class AssayProvenance extends Aspect
 	public setHeader(header:AssayProvenanceHeader):void
 	{
 		let content = this.formatMetaData(header);
-		for (let n = 0; n < this.ds.numExtensions; n++) if (this.ds.getExtType(n) == AssayProvenance.CODE) 
+		for (let n = 0; n < this.ds.numExtensions; n++) if (this.ds.getExtType(n) == AssayProvenance.CODE)
 		{
 			this.ds.setExtData(n, content);
 			return;
@@ -188,8 +188,8 @@ export class AssayProvenance extends Aspect
 
 	// ----------------- private methods -----------------
 
-	// workhorse for the constructor 
-	private setup():void  
+	// workhorse for the constructor
+	private setup():void
 	{
 		this.parseAndCorrect();
 	}
@@ -197,7 +197,7 @@ export class AssayProvenance extends Aspect
 	// assuming that the underlying datasheet definitely is a datasheet, makes any necessary corrections to force it into compliance
 	private parseAndCorrect():void
 	{
-		let header = new AssayProvenanceHeader(); 
+		let header = new AssayProvenanceHeader();
 
 		let got = false;
 		for (let n = 0; n < this.ds.numExtensions; n++) if (this.ds.getExtType(n) == AssayProvenance.CODE)
@@ -221,7 +221,7 @@ export class AssayProvenance extends Aspect
 			this.ds.appendExtension(AssayProvenance.NAME, AssayProvenance.CODE, content);
 		}
 	}
-	
+
 	// interprets the string metadata from the extensions
 	private parseMetaData(content:string):AssayProvenanceHeader
 	{
@@ -256,7 +256,7 @@ export class AssayProvenance extends Aspect
 				header.unitURIs.push(MoleculeStream.sk_unescape(line.substring(eq + 1)));
 			}
 		}
-		
+
 		return header;
 	}
 
@@ -264,7 +264,7 @@ export class AssayProvenance extends Aspect
 	private formatMetaData(header:AssayProvenanceHeader):string
 	{
 		let content = '';
-		
+
 		for (let pfx in header.prefixes) content += 'pfx:' + MoleculeStream.sk_escape(pfx) + '=' + MoleculeStream.sk_escape(header.prefixes[pfx]) + '\n';
 		content += 'targetName=' + MoleculeStream.sk_escape(header.targetName) + '\n';
 		content += 'targetURI=' + MoleculeStream.sk_escape(header.targetURI) + '\n';
@@ -294,10 +294,10 @@ export class AssayProvenance extends Aspect
 
 	public plainHeading():string {return AssayProvenance.NAME;}
 
-	public isColumnReserved(colName:string):boolean 
+	public isColumnReserved(colName:string):boolean
 	{
-		return colName == AssayProvenance.COLNAME_VALUE || colName == AssayProvenance.COLNAME_ERROR || 
-				colName == AssayProvenance.COLNAME_UNITS || colName == AssayProvenance.COLNAME_RELATION || 
+		return colName == AssayProvenance.COLNAME_VALUE || colName == AssayProvenance.COLNAME_ERROR ||
+				colName == AssayProvenance.COLNAME_UNITS || colName == AssayProvenance.COLNAME_RELATION ||
 				colName == AssayProvenance.COLNAME_SOURCEURI;
 	}
 
@@ -305,7 +305,7 @@ export class AssayProvenance extends Aspect
 	public produceTextRendering(row:number, idx:number):AspectTextRendering
 	{
 		let header = this.getHeader();
-		
+
 		if (idx == 0)
 		{
 			let tr:AspectTextRendering =
@@ -318,7 +318,7 @@ export class AssayProvenance extends Aspect
 
 			let val = this.getValue(row), error = this.getError(row);
 			let units = this.getUnits(row), rel = this.getRelation(row);
-			
+
 			tr.text = '';
 			if (!Number.isNaN(val))
 			{
@@ -336,7 +336,7 @@ export class AssayProvenance extends Aspect
 				'name': 'Source',
 				'descr': 'Origin of the structure and activity measurement',
 				'text': '',
-				'type': Aspect.TEXT_LINK 
+				'type': Aspect.TEXT_LINK
 			};
 
 			let url = this.getSourceURI(row);
@@ -348,9 +348,9 @@ export class AssayProvenance extends Aspect
 			tr.text = url;
 			return tr;
 		}
-		
-		return null;		
-	}	
+
+		return null;
+	}
 }
 
 /* EOF */ }

@@ -4,7 +4,7 @@
     (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
-    
+
     http://molmatinf.com
 
 	[PKG=webmolkit]
@@ -56,7 +56,7 @@ export class Stereochemistry
 
 	public static RUBRIC_EQUIV_SQUARE =
 	[
-		[0, 1, 2, 3], [0, 3, 2, 1], [1, 2, 3, 0], [1, 0, 3, 2], 
+		[0, 1, 2, 3], [0, 3, 2, 1], [1, 2, 3, 0], [1, 0, 3, 2],
 		[2, 1, 0, 3], [2, 3, 0, 1], [3, 2, 1, 0], [3, 0, 1, 2]
 	];
 
@@ -121,9 +121,9 @@ export class Stereochemistry
 	}
 
 	/*
-		The Rubric Methods: each of these examines an atom/bond and ascertains whether it has sufficient substituents, and 
-		layout information (coordinates and/or wedges) for it to fit into a certain type of geometry-locked template, which 
-		can infer chirality or restricted bond stereochemistry; the return value is an array with the adjacent indices fitted 
+		The Rubric Methods: each of these examines an atom/bond and ascertains whether it has sufficient substituents, and
+		layout information (coordinates and/or wedges) for it to fit into a certain type of geometry-locked template, which
+		can infer chirality or restricted bond stereochemistry; the return value is an array with the adjacent indices fitted
 		into the mould, sometimes with 0 as a placeholder for implicit hydrogens or missing substituents; or null if there are
 		insufficient neighbours or geometry clues.
 
@@ -343,7 +343,7 @@ export class Stereochemistry
 			let mag = GeomUtil.magnitude(v[n]);
 			if (mag < THRESH) return null;
 			Vec.mulBy(v[n], 1 / mag);
-			
+
 			let bt = mol.bondType(bonds[n]);
 			if (bt == Molecule.BONDTYPE_INCLINED)
 			{
@@ -354,7 +354,7 @@ export class Stereochemistry
 				if (mol.bondFrom(bonds[n]) == atom) v[n][2] -= 1; else v[n][2] += 1;
 			}
 		}
-		
+
 		// if there's a missing spot, compose it from the opposite of the sum of all the other directions
 		if (nadj == 5)
 		{
@@ -364,11 +364,11 @@ export class Stereochemistry
 			if (mag < THRESH) return null; // (is this being unfair at all?)
 			Vec.mulBy(v[5], 1 / mag);
 		}
-		
+
 		// first reference: locate ligands that are as far away as possible from each other (i.e. 180 degrees), and stick these in the axial positions
 		let slots = [-1, -1, -1, -1, 0, 1];
 		let bestOpposite = GeomUtil.acuteAngle(v[0], v[1]);
-		for (let i = 0; i < 5; i++) for (let j = (i == 0 ? 2 : i + 1); j < 6; j++) 
+		for (let i = 0; i < 5; i++) for (let j = (i == 0 ? 2 : i + 1); j < 6; j++)
 		{
 			let theta = GeomUtil.acuteAngle(v[i], v[j]);
 			if (theta > bestOpposite)
@@ -379,7 +379,7 @@ export class Stereochemistry
 			}
 		}
 		let axial = Vec.sub(v[slots[5]], v[slots[4]]);
-		
+
 		// second reference: locate the ligand that is as close as possible to orthogonal to the axial vector, and stick this in the first equatorial position
 		let bestOrthogonal = Number.POSITIVE_INFINITY;
 		for (let n = 0; n < 6; n++) if (n != slots[4] && n != slots[5])
@@ -387,17 +387,17 @@ export class Stereochemistry
 			let delta = Math.abs((90 * DEGRAD) - GeomUtil.acuteAngle(v[n], axial));
 			if (delta < bestOrthogonal)
 			{
-				slots[0] = n; 
+				slots[0] = n;
 				bestOrthogonal = delta;
 			}
 		}
-		
+
 		// third reference: use the cross product between axial & current equatorial to grab the next two in sequence
 		for (let s = 1; s <= 2; s++)
 		{
 			let cross = GeomUtil.crossProduct(axial, v[slots[s - 1]]);
 			let bestOrient = Number.POSITIVE_INFINITY;
-			
+
 			for (let n = 0; n < 6; n++)
 			{
 				if (n == slots[4] || n == slots[5] || n == slots[0] || n == slots[1]) continue;
@@ -409,17 +409,17 @@ export class Stereochemistry
 				}
 			}
 		}
-		
+
 		// the last one is implied by process of elimination
 		for (let n = 0; n < 6; n++) if (slots.indexOf(n) < 0)
 		{
 			slots[3] = n;
 			break;
 		}
-		
+
 		/*Util.writeln("NOW slots = "+Util.arrayStr(slots));
 		for (int n = 0; n < 6; n++) Util.writeln(" position "+(n+1)+" -> atom "+mol.atomElement(adj[slots[n]]));*/
-		
+
 		// convert to atom indices
 		let rubric = [0, 0, 0, 0, 0, 0];
 		for (let n = 0; n < 6; n++) rubric[n] = slots[n] < 0 ? 0 : adj[slots[n]];
@@ -533,7 +533,7 @@ export class Stereochemistry
 		let haswedge = Vec.booleanArray(false, na);
 		for (let n = 1; n <= nb; n++)
 		{
-			if (mol.bondType(n) == Molecule.BONDTYPE_INCLINED || mol.bondType(n) == Molecule.BONDTYPE_DECLINED) 
+			if (mol.bondType(n) == Molecule.BONDTYPE_INCLINED || mol.bondType(n) == Molecule.BONDTYPE_DECLINED)
 				haswedge[mol.bondFrom(n) - 1] = true;
 		}
 
@@ -562,9 +562,9 @@ export class Stereochemistry
 
 			let pri =
 			[
-				rubric[0] == 0 ? 0 : this.priority[rubric[0] - 1], 
+				rubric[0] == 0 ? 0 : this.priority[rubric[0] - 1],
 				rubric[1] == 0 ? 0 : this.priority[rubric[1] - 1],
-				rubric[2] == 0 ? 0 : this.priority[rubric[2] - 1], 
+				rubric[2] == 0 ? 0 : this.priority[rubric[2] - 1],
 				rubric[3] == 0 ? 0 : this.priority[rubric[3] - 1]
 			];
 			pri = Vec.idxSort(pri);
@@ -598,7 +598,7 @@ export class Stereochemistry
 		{
 			this.cistransBond[n - 1] = Stereochemistry.STEREO_NONE;
 			if (mol.bondOrder(n) != 2 || this.meta.isBondAromatic(n) || ringMask[n - 1]) continue;
-			
+
 			let bfr = mol.bondFrom(n), bto = mol.bondTo(n);
 			let adj1 = mol.atomAdjList(bfr), adj2 = mol.atomAdjList(bto);
 			if (adj1.length <= 1 || adj2.length <= 1 || adj1.length > 3 || adj2.length > 3) continue;
@@ -613,7 +613,7 @@ export class Stereochemistry
 				if (adj2[i] != bto) for (let j = i + 1; j < adj2.length; j++)
 					if (adj2[j] != bto) if (this.priority[adj2[i] - 1] == this.priority[adj2[j] - 1]) continue skip_bond;
 
-			// if it's a squiggly bond, that means unknown		
+			// if it's a squiggly bond, that means unknown
 			if (mol.bondType(n) == Molecule.BONDTYPE_UNKNOWN)
 			{
 				this.cistransBond[n - 1] = Stereochemistry.STEREO_UNKNOWN;
@@ -642,9 +642,9 @@ export class Stereochemistry
 			this.cistransPlanar[n - 1] = Stereochemistry.STEREO_NONE;
 			if (mol.atomAdjCount(n) != 4) continue; // NOTE: entertain the notion of making it work with virtual hydrogens
 			if (Chemistry.ELEMENT_BLOCKS[mol.atomicNumber(n)] < 3) continue; // only d- or f-blocks need apply
-			
+
 			let adj = mol.atomAdjList(n);
-			
+
 			// if 3 or more substituents are the same, nothing to see here
 			for (let i = 0; i < adj.length; i++)
 			{
@@ -655,15 +655,15 @@ export class Stereochemistry
 				}
 				if (count >= 3) continue skip_atom;
 			}
-			
+
 			let rubric = Stereochemistry.rubricSquarePlanar(mol, n);
 			if (rubric == null) continue;
 
 			let pri =
 			[
-				rubric[0] == 0 ? 0 : this.priority[rubric[0] - 1], 
+				rubric[0] == 0 ? 0 : this.priority[rubric[0] - 1],
 				rubric[1] == 0 ? 0 : this.priority[rubric[1] - 1],
-				rubric[2] == 0 ? 0 : this.priority[rubric[2] - 1], 
+				rubric[2] == 0 ? 0 : this.priority[rubric[2] - 1],
 				rubric[3] == 0 ? 0 : this.priority[rubric[3] - 1]
 			];
 
@@ -671,7 +671,7 @@ export class Stereochemistry
 			this.cistransPlanar[n - 1] = (parity & 1) == 0 ? Stereochemistry.STEREO_POS : Stereochemistry.STEREO_NEG;
 		}
 	}
-	
+
 	// compute the R/S chirality for octahedral centres
 	private buildOctaChirality():void
 	{

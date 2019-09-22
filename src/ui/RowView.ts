@@ -4,7 +4,7 @@
     (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
-    
+
     http://molmatinf.com
 
 	[PKG=webmolkit]
@@ -27,7 +27,7 @@ interface RowViewEntry
 	datasheetID:number;
 	row:number;
 	len:number;
-	
+
 	tr?:JQuery;
 	tdStyle?:string;
 	watermark?:number;
@@ -37,7 +37,7 @@ export class RowView extends Widget
 {
 	private entries:RowViewEntry[] = null;
 	private watermark = 0;
-	
+
 	constructor(private tokenID:string)
 	{
 		super();
@@ -54,24 +54,24 @@ export class RowView extends Widget
 	public render(parent:any):void
 	{
 		super.render(parent);
-		
+
 		//if (!this.metavec) throw 'molsync.ui.RowView.render must be preceded by a call to setup';
 		if (this.entries == null) throw 'molsync.ui.RowView: entries must be defined before rendering';
 
 		//let div = $('<div></div>').appendTo($(parent));
-		
+
 		let tableStyle = 'border-collapse: collapse;';
 		let table = $('<table></table>').appendTo(this.content);
 		table.attr('style', tableStyle);
-		
+
 		let roster:any[] = [];
 		this.watermark++;
-		
+
 		for (let n = 0; n < this.entries.length; n++)
 		{
 			let entry = this.entries[n];
 			entry.tr = $('<tr></tr>').appendTo(table);
-			
+
 			// make a copy for pushing onto the roster
 			entry = clone(entry) as RowViewEntry;
 			entry.tdStyle = '';
@@ -80,33 +80,33 @@ export class RowView extends Widget
 			entry.watermark = this.watermark;
 			roster.push(entry);
 		}
-		
+
 		// process each roster line in turn to build the table; will be stopped if the watermark changes in another thread
 		let fcnComposure = (result:any, error:ErrorRPC):void =>
 		{
 			let entry = roster.shift();
 			if (entry.watermark != this.watermark) return;
 			if (error != null) throw 'molsync.ui.RowView: failed to obtain document composition: ' + error.message;
-			
+
 			let nodes:any[] = [];
-			for (let n = 0; n < result.doc.nodes.length; n++) 
+			for (let n = 0; n < result.doc.nodes.length; n++)
 			{
 				let node = result.doc.nodes[n];
 
 				// for experiments, only want to show the basic content in a row view
 				let src = node.src;
 				if (src.startsWith('experiment:') && src != 'experiment:header' && src != 'experiment:scheme') continue;
-				
+
 				nodes.push(node);
 			}
-			
-			for (let n = 0; n < nodes.length; n++) 
+
+			for (let n = 0; n < nodes.length; n++)
 			{
 				let tdStyle = entry.tdStyle + 'vertical-align: top;';
 				if (n > 0) tdStyle += 'border-left: 1px solid #80C080;';
 				if (n < nodes.length - 1) tdStyle += 'border-right: 1px solid #80C080;';
 				if (nodes[n].type != 'graphics') tdStyle += 'padding: 0.5em;';
-				
+
 				let td = $('<td></td>').appendTo(entry.tr);
 				td.attr('style', tdStyle);
 				this.renderNode(td, nodes[n]);
@@ -116,7 +116,7 @@ export class RowView extends Widget
 		};
 		if (roster.length > 0) Func.composeDocument({'tokenID': this.tokenID, 'dataXML': roster[0].dataXML, 'subsumeTitle': true}, fcnComposure);
 	}
-		
+
 	// instantiate a composed node, within the HTML hierarchy
 	private renderNode(parent:JQuery, node:any):void
 	{
@@ -131,13 +131,13 @@ export class RowView extends Widget
 	private renderLine(parent:JQuery, node:any, inPara:boolean):void
 	{
 		if (inPara) parent = $(newElement(parent, 'p'));
-		
+
 		if (node.title)
 		{
 			addText(newElement(parent,'b'), node.title);
 			addText(parent[0], ': ');
 		}
-		
+
 		if (node.bold) parent = $(newElement(parent, 'b'));
 		if (node.italic) parent = $(newElement(parent, 'i'));
 		if (node.underline) parent = $(newElement(parent, 'u'));

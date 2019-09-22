@@ -4,7 +4,7 @@
 	(c) 2010-2018 Molecular Materials Informatics, Inc.
 
 	All rights reserved
-	
+
 	http://molmatinf.com
 
 	[PKG=webmolkit]
@@ -63,9 +63,9 @@ export class MDLMOLWriter
 	{
 		return this.lines.join('\n');
 	}
-	
+
 	// ----------------- private methods -----------------
-	
+
 	// writes the main block
    	private writeCTAB():void
    	{
@@ -77,9 +77,9 @@ export class MDLMOLWriter
 			MolUtil.expandAbbrevs(mol, true);
 			break;
 		}
-   	
+
 		this.lines.push(this.intrpad(mol.numAtoms, 3) + this.intrpad(mol.numBonds, 3) + '  0  0  0  0  0  0  0  0999 V2000');
-		
+
 		// data to record in the following M-block
 		let chgidx:number[] = [], chgval:number[] = [];
 		let radidx:number[] = [], radval:number[] = [];
@@ -155,10 +155,10 @@ export class MDLMOLWriter
 			else if (stereo == Molecule.BONDTYPE_UNKNOWN) {stereo = 4; type = 1;}
 			else stereo = 0;
 
-			let line = this.intrpad(mol.bondFrom(n), 3) + this.intrpad(mol.bondTo(n), 3) + 
+			let line = this.intrpad(mol.bondFrom(n), 3) + this.intrpad(mol.bondTo(n), 3) +
 					   this.intrpad(type, 3) + this.intrpad(stereo, 3) + '  0  0  0';
 			this.lines.push(line);
-			
+
 			if (this.enhancedFields)
 			{
 				if (order < 1 || order > 3) {zboidx.push(n); zboval.push(order);}
@@ -241,7 +241,7 @@ export class MDLMOLWriter
 	{
 		let hyd = mol.atomHydrogens(atom), el = mol.atomElement(atom);
 		let options = MDLMOL_VALENCE[el];
-		
+
 		// if no implicit valence, and no hydrogens: no need
 		if (options == null && hyd == 0) return 0;
 
@@ -290,7 +290,7 @@ export class MDLSDFWriter
 				let molstr = new MDLMOLWriter(mol).write();
 				lines.push(molstr);
 			}
-			
+
 			for (let j = 0; j < ds.numCols; j++) if (j != colMol && ds.notNull(i, j))
 			{
 				let ct = ds.colType(j);
@@ -299,7 +299,7 @@ export class MDLSDFWriter
 				else if (ct == DataSheetColumn.Integer) val = ds.getInteger(i, j).toString();
 				else if (ct == DataSheetColumn.Real) val = ds.getReal(i, j).toString();
 				else if (ct == DataSheetColumn.Boolean) val = ds.getBoolean(i, j) ? 'true' : 'false';
-				
+
 				if (val != '')
 				{
 					lines.push('> <' + ds.colName(j) + '>');
@@ -319,7 +319,7 @@ export class MDLSDFWriter
 	{
 		return this.lines.join('\n');
 	}
-	
+
 	// ----------------- private methods -----------------
 }
 

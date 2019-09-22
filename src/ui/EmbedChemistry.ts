@@ -4,7 +4,7 @@
     (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
-    
+
     http://molmatinf.com
 
 	[PKG=webmolkit]
@@ -30,7 +30,7 @@ export class EmbedChemistry extends Widget
 	public backgroundCol1 = 0xFFFFFF;
 	public backgroundCol2 = 0xF0F0F0;
 	public policy:RenderPolicy = RenderPolicy.defaultColourOnWhite();
-	
+
 	// ------------ public methods ------------
 
 	constructor()
@@ -40,7 +40,7 @@ export class EmbedChemistry extends Widget
 
 	// convenience for setting up backdrop
 	public clearBackground() {this.backgroundCol1 = null; this.backgroundCol2 = null;}
-	public setBackground(bg:number) {this.backgroundCol1 = bg; this.backgroundCol2 = null;} 
+	public setBackground(bg:number) {this.backgroundCol1 = bg; this.backgroundCol2 = null;}
 	public setBackgroundGradient(bg1:number, bg2:number) {this.backgroundCol1 = bg1; this.backgroundCol2 = bg2;}
 
 	// create the objects necessary to render the widget; this function should be called after basic pre-initialisation settings, e.g.
@@ -48,15 +48,15 @@ export class EmbedChemistry extends Widget
 	public render(parent:any):void
 	{
 		super.render(parent);
-		
+
 		if (this.borderCol != null) this.content.css('border', '1px solid ' + colourCanvas(this.borderCol));
 		if (this.borderRadius > 0) this.content.css('border-radius', this.borderRadius + 'px');
 
 		let bg1 = this.backgroundCol1, bg2 = this.backgroundCol2;
 		if (bg1 != null && bg2 != null)
-		{ 
+		{
 			let cols = colourCanvas(bg1) + ',' + colourCanvas(bg2);
-			this.content.css('background-image', 'linear-gradient(to bottom right, ' + cols + ')'); 
+			this.content.css('background-image', 'linear-gradient(to bottom right, ' + cols + ')');
 		}
 		else if (bg1 != null)
 		{

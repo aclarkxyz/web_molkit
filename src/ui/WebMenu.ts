@@ -4,7 +4,7 @@
     (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
-    
+
     http://molmatinf.com
 
 	[PKG=webmolkit]
@@ -93,7 +93,7 @@ export class WebMenu extends Widget
 			item.click();
 			return;
 		}
-		if (Vec.arrayLength(item.submenu) == 0) 
+		if (Vec.arrayLength(item.submenu) == 0)
 		{
 			// neither action nor submenu: technically a bug, but silently ignore
 			return;
@@ -130,7 +130,7 @@ export class WebMenu extends Widget
 		container.css('position', 'absolute');
 		container.css('left', `${menuX}px`);
 		container.css('top', `${menuY}px`);
-		
+
 		for (let subitem of item.submenu)
 		{
 			let dom = $('<div></div>').appendTo(container);

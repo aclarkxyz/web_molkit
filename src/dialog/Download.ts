@@ -4,7 +4,7 @@
     (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
-    
+
     http://molmatinf.com
 
 	[PKG=webmolkit]
@@ -46,7 +46,7 @@ export class Download extends Dialog
 	private lineBoxHeight:JQuery;
 	private lineBoxMaxScale:JQuery;
 	private selectRender:JQuery;
-	
+
 	private mol:Molecule = null;
 	private ds:DataSheet = null;
 	private policy = RenderPolicy.defaultColourOnWhite();
@@ -83,9 +83,9 @@ export class Download extends Dialog
 
 	// builds the dialog content
 	protected populate():void
-	{		
+	{
 		let body = this.body();
-		
+
 		this.mainArea = $('<p>Setting up...</p>').appendTo(body);
 
 		// add buttons
@@ -108,7 +108,7 @@ export class Download extends Dialog
 		else if (this.ds != null)
 		{
 			let isReaction = false, isExperiment = false;
-			for (let n = 0; n < this.ds.numExtensions; n++) 
+			for (let n = 0; n < this.ds.numExtensions; n++)
 			{
 				if (this.ds.getExtType(n) == 'org.mmi.aspect.Reaction') isReaction = true;
 				if (this.ds.getExtType(n) == 'org.mmi.aspect.Experiment') isExperiment = true;
@@ -149,7 +149,7 @@ export class Download extends Dialog
 
 		// an area under the buttons, for the download link
 		//this.downloadArea = $('<p></p>').appendTo(body);
-		
+
 		this.fillContent();
 	}
 
@@ -209,7 +209,7 @@ export class Download extends Dialog
 			alert('Request failed: ' + error.message);
 			return;
 		}
-		
+
 		let metavec = result.metavec;
 
 		if (this.pictureArea == null) this.buildDisplay();
@@ -219,7 +219,7 @@ export class Download extends Dialog
 		if (w > 700) {let mod = 700 / w; scale *= mod; w *= mod; h *= mod;}
 		if (h > 500) {let mod = 500 / h; scale *= mod; w *= mod; h *= mod;}
 		let cw = Math.ceil(w) + 2 * padding, ch = Math.ceil(h) + 2 * padding;
-		
+
 		// background widget
 		let canvas = newElement(this.pictureArea, 'canvas', {'width': cw, 'height': ch}) as HTMLCanvasElement;
 
@@ -228,7 +228,7 @@ export class Download extends Dialog
 		canvas.height = ch * density;
 		canvas.style.width = cw + 'px';
 		canvas.style.height = ch + 'px';
-		
+
 		let ctx = canvas.getContext('2d');
 		ctx.save();
 		ctx.scale(density, density);
@@ -249,7 +249,7 @@ export class Download extends Dialog
 		ctx.strokeStyle = 'black';
 		ctx.lineWidth = 1;
 		ctx.strokeRect(0.5, 0.5, cw - 1, ch - 1);
-		
+
 		// draw in the structure
 		let draw = new MetaVector(metavec);
 		draw.offsetX = padding;
@@ -258,7 +258,7 @@ export class Download extends Dialog
 		draw.renderContext(ctx);
 
 		let isExperiment = false;
-		if (this.ds != null) 
+		if (this.ds != null)
 		{
 			for (let n = 0; n < this.ds.numExtensions; n++)
 				if (this.ds.getExtType(n) == 'org.mmi.aspect.Experiment') isExperiment = true;
@@ -269,7 +269,7 @@ export class Download extends Dialog
 			let dstxt = '... and ' + (this.ds.numRows - 1) + ' more row' + (this.ds.numRows == 2 ? '' : 's') + '.';
 			addText(newElement(this.pictureArea, 'p'), dstxt);
 		}
-		
+
 		ctx.restore();
 	}
 
@@ -281,16 +281,16 @@ export class Download extends Dialog
 
 		//let blankURL = RPC.BASE_URL + '/img/blank.gif';
 		//newElement(this.mainArea, 'img', {'src': blankURL, 'width': '550', 'height': '1'}); // (... probably a nicer way to do this these days...)
-		
+
 		this.pictureArea = $('<p align="center"></p>').appendTo(this.mainArea);
 		this.formatArea = $('<div style="text-align: left;"></div>').appendTo(this.mainArea);
 		this.graphicArea = $('<div style="text-align: left;"></div>').appendTo(this.mainArea);
-		
+
 		// add in the formats
 		this.formatArea.append($('<h2 class="tight">Choose Format</h2>'));
 		this.formatArea.append($('<hr class="thin"></hr>'));
 
-		let optList:string[] = []; 
+		let optList:string[] = [];
 		for (let n = 0; n < this.formatKey.length; n++) optList.push('');
 		let optFormatList = new OptionList(optList, true);
 		optFormatList.render(this.formatArea);
@@ -300,7 +300,7 @@ export class Download extends Dialog
 			$(optFormatList.getAuxiliaryCell(n)).append('\u00A0' + FormatList.FORMAT_DESCR[k]);
 		}
 		optFormatList.callbackSelect = (idx:number, source?:OptionList) => this.changeFormat(idx);
-		
+
 		// add in the graphics format options
 		this.graphicArea.append($('<h2 class="tight">Graphic Options</h2>'));
 		this.graphicArea.append($('<hr class="thin"></hr>'));
@@ -316,7 +316,7 @@ export class Download extends Dialog
 		optSizeType.setSelectedIndex(0);
 		optSizeType.render($('<td style="vertical-align: middle;"></td>').appendTo(trSize));
 		optSizeType.callbackSelect = (idx:number, source?:OptionList) => this.changeSizeType(idx);
-		
+
 		// size details (one for each type)
 		let divSizeScale = $('<div></div>').appendTo(paraSizeSpec);
 		divSizeScale.append('<b>Angstroms-to-Points: </b>');
@@ -333,7 +333,7 @@ export class Download extends Dialog
 		divSizeBox.append(' <b>Max Scale: </b>');
 		let lineBoxMaxScale = $('<input type="text" size="6"></input>"').appendTo(divSizeBox);
 		lineBoxMaxScale.val('30');
-		
+
 		// rendering policy
 		paraRender.append('<b>Rendering: </b>');
 		let selectRender = $('<select></select>').appendTo(paraRender);
@@ -361,7 +361,7 @@ export class Download extends Dialog
 	private changeFormat(idx:number):void
 	{
 		let ftype = this.formatKey[idx];
-		
+
 		// the document-style formats use a smaller default point size
 		let psz = 30;
 		if (ftype == FormatList.GFX_OOXML_DOCX || ftype == FormatList.GFX_OOXML_XLSX) psz = 10;
@@ -387,7 +387,7 @@ export class Download extends Dialog
 	private changeRender():void
 	{
 		let t = this.selectRender.prop('selectedIndex');
-		
+
 		if (t == 0) this.policy = RenderPolicy.defaultBlackOnWhite();
 		else if (t == 1) this.policy = RenderPolicy.defaultColourOnWhite();
 		else if (t == 2) this.policy = RenderPolicy.defaultWhiteOnBlack();
@@ -418,7 +418,7 @@ export class Download extends Dialog
 			alert('Request failed: ' + error.message);
 			return;
 		}
-		
+
 		let format = this.formatKey[this.optFormatList.getSelectedIndex()];
 		let id = result.transientID;
 		let fn = 'download' + FormatList.FORMAT_EXTN[format];

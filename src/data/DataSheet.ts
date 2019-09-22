@@ -4,7 +4,7 @@
     (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
-    
+
     http://molmatinf.com
 
 	[PKG=webmolkit]
@@ -61,7 +61,7 @@ interface DataSheetContent
 export class DataSheet
 {
 	private data:DataSheetContent;
-	
+
 	// instantiates the data using a JSON-encoded datasheet; it may be null or empty
 	// note: this class reserves the right to modify the data parameter; it is the caller's responsibility to ensure that there are no
 	// troublesome references elsewhere
@@ -113,8 +113,8 @@ export class DataSheet
 		return new DataSheet(data);
 	}
 
-	// returns the data upon which is class is based; this is in the correct format for sending to the server as a 
-	// "JSON-formatted datasheet", and is also suitable 
+	// returns the data upon which is class is based; this is in the correct format for sending to the server as a
+	// "JSON-formatted datasheet", and is also suitable
 	public getData():any
 	{
 		return this.data;
@@ -193,13 +193,13 @@ export class DataSheet
 		if (col < 0) return null;
 		return this.data.rowData[row][col] == null;
 	}
-	public notNull(row:number, col:number | string):boolean 
+	public notNull(row:number, col:number | string):boolean
 	{
 		return !this.isNull(row, col);
 	}
 	public isBlank(row:number, col:number | string):boolean
 	{
-		if (typeof col === 'string') col = this.findColByName(col);		
+		if (typeof col === 'string') col = this.findColByName(col);
 		if (this.isNull(row, col)) return true;
 		let ct = this.colType(col);
 		if (ct == DataSheetColumn.Molecule) return this.getMolecule(row, col).numAtoms == 0;
@@ -228,7 +228,7 @@ export class DataSheet
 		{
 			datum = Molecule.fromString(datum);
 			this.data.rowData[row][col] = datum;
-		} 
+		}
 		return datum;
 	}
 	public getString(row:number, col:number | string):string
@@ -356,13 +356,13 @@ export class DataSheet
 	{
 		this.data.numCols++;
 		this.data.colData.splice(col, 0, {'name': name, 'type': type, 'descr': descr});
-		for (let n = 0; n < this.data.numRows; n++) this.data.rowData[n].splice(col, 0, null); 
+		for (let n = 0; n < this.data.numRows; n++) this.data.rowData[n].splice(col, 0, null);
 	}
 	public deleteColumn(col:number):void
 	{
 		this.data.numCols--;
 		this.data.colData.splice(col, 1);
-		for (let n = 0; n < this.data.numRows; n++) this.data.rowData[n].splice(col, 1); 
+		for (let n = 0; n < this.data.numRows; n++) this.data.rowData[n].splice(col, 1);
 	}
 	public changeColumnName(col:number, name:string, descr:string):void
 	{
@@ -376,7 +376,7 @@ export class DataSheet
 
 		let incompatible = oldType == DataSheetColumn.Molecule || newType == DataSheetColumn.Molecule ||
 						   oldType == DataSheetColumn.Extend || newType == DataSheetColumn.Extend;
-		
+
 		for (let n = this.data.rowData.length - 1; n >= 0; n--)
 		{
 			let row = this.data.rowData[n];
@@ -392,7 +392,7 @@ export class DataSheet
 			row[col] = null;
 
 			if (newType == DataSheetColumn.String) row[col] = val;
-			else if (newType == DataSheetColumn.Integer) {let num = parseInt(val); row[col] = isFinite(num) ? num : null;} 
+			else if (newType == DataSheetColumn.Integer) {let num = parseInt(val); row[col] = isFinite(num) ? num : null;}
 			else if (newType == DataSheetColumn.Real) {let num = parseFloat(val); row[col] = isFinite(num) ? num : null;}
 			else if (newType == DataSheetColumn.Boolean) row[col] = val.toLowerCase() == 'true' ? true : false;
 		}
@@ -507,7 +507,7 @@ export class DataSheet
 		let obj = this.data.rowData[row][col];
 		return obj == null ? null : obj.toString();
 	}
-	
+
 	// converts a cell to a number; returns null or NaN as appropriate
 	public toInt(row:number, col:number):number
 	{

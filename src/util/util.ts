@@ -4,7 +4,7 @@
     (c) 2010-2017 Molecular Materials Informatics, Inc.
 
     All rights reserved
-    
+
     http://molmatinf.com
 
 	[PKG=webmolkit]
@@ -47,7 +47,7 @@ export function newElement(parent:any, tag:string, attr?:any):Element
 export function addText(parent:any, text:string)
 {
 	let el:Element = parent instanceof jQuery ? (parent as JQuery)[0] : parent as Element;
-	el.appendChild(document.createTextNode(text)); 
+	el.appendChild(document.createTextNode(text));
 }
 
 // convenience wrapper
@@ -100,7 +100,7 @@ export function colourCanvas(col:number):string
 	if (col == 0x000000) return 'black';
 	if (col == -1) return null; //return 'rgba(0,0,0,0)';
 	if (col >= 0 && col <= 0xFFFFFF) return colourCode(col);
-	
+
 	// if there's transparency, use the long-winded syntax
 	const t = ((col >> 24) & 0xFF) * ONE_OVER_255;
 	const r = ((col >> 16) & 0xFF);// * ONE_OVER_255;
@@ -128,7 +128,7 @@ export function blendRGB(fract:number, rgb1:number, rgb2:number, rgb3?:number):n
 	else
 	{
 		let r3 = ((rgb3 >> 16) & 0xFF) * ONE_OVER_255, g3 = ((rgb3 >> 8) & 0xFF) * ONE_OVER_255, b3 = (rgb3 & 0xFF) * ONE_OVER_255;
-		
+
 		if (fract < 0.5)
 		{
 			let f2 = fract * 2, f1 = 1 - f2;
@@ -142,7 +142,7 @@ export function blendRGB(fract:number, rgb1:number, rgb2:number, rgb3?:number):n
 			R = Math.round(0xFF * (f1 * r2 + f2 * r3));
 			G = Math.round(0xFF * (f1 * g2 + f2 * g3));
 			B = Math.round(0xFF * (f1 * b2 + f2 * b3));
-		}	
+		}
 	}
 
 	return (R << 16) | (G << 8) | B;
@@ -198,10 +198,10 @@ export function notDef(v:any)
 // node container, which must be a parent
 export function eventCoords(event:JQueryEventObject, container:any):number[]
 {
-	let parentOffset = $(container).offset(); 
+	let parentOffset = $(container).offset();
 	let relX = event.pageX - parentOffset.left;
 	let relY = event.pageY - parentOffset.top;
-	return [relX, relY];	
+	return [relX, relY];
 }
 
 // sets an object's position by pixel: convenience function otherwise rather ugly code; assumes that the positioning style already configured as needed
@@ -268,7 +268,7 @@ export function angleDiff(th1:number, th2:number):number
 	return theta - (theta > Math.PI ? TWOPI : 0) + (theta <= -Math.PI ? TWOPI : 0);
 }
 
-// angular difference, which is normalised from 0 <= th < 2 * PI 
+// angular difference, which is normalised from 0 <= th < 2 * PI
 export function angleDiffPos(th1:number, th2:number):number
 {
 	let theta = angleNorm(th1) - angleNorm(th2);
@@ -293,16 +293,16 @@ export function sortAngles(theta:number[]):number[]
 	return theta;
 }
 
-// calculates a list of unique angles (based on the threshold parameter, in radians), and returns it; the returned list of 
-// angles will be sorted in order, as described by sortAngles(..); note that there is no fancy clustering, so a sequence of 
-// angles which are a bit below the threshold is not guaranteed to be stable; there is also a boundary case which bumps the 
+// calculates a list of unique angles (based on the threshold parameter, in radians), and returns it; the returned list of
+// angles will be sorted in order, as described by sortAngles(..); note that there is no fancy clustering, so a sequence of
+// angles which are a bit below the threshold is not guaranteed to be stable; there is also a boundary case which bumps the
 // sort rotation status slightly out of whack
 export function uniqueAngles(theta:number[], threshold:number):number[]
 {
 	theta = sortAngles(theta);
 	for (let n = 1; n < theta.length; n++)
 	{
-		if (Math.abs(angleDiff(theta[n], theta[n - 1])) <= threshold) {theta.splice(n, 1); n--;} 
+		if (Math.abs(angleDiff(theta[n], theta[n - 1])) <= threshold) {theta.splice(n, 1); n--;}
 	}
 	return theta;
 }
@@ -443,12 +443,12 @@ export function toUTF8(str:string):string
 	{
 		let charcode = str.charCodeAt(n);
 		if (charcode < 0x80) stripe += str.charAt(n);
-		else if (charcode < 0x800) 
+		else if (charcode < 0x800)
 		{
 			stripe += String.fromCharCode(0xc0 | (charcode >> 6));
 			stripe += String.fromCharCode(0x80 | (charcode & 0x3F));
 		}
-		else if (charcode < 0xd800 || charcode >= 0xe000) 
+		else if (charcode < 0xd800 || charcode >= 0xe000)
 		{
 			stripe += String.fromCharCode(0xe0 | (charcode >> 12));
 			stripe += String.fromCharCode(0x80 | ((charcode >> 6) & 0x3F));
@@ -482,20 +482,20 @@ export function fromUTF8(str:string):string
 	{
 		let value = str.charCodeAt(n);
 		if (value < 0x80) stripe += str.charAt(n);
-		else if (value > 0xBF && value < 0xE0) 
+		else if (value > 0xBF && value < 0xE0)
 		{
 			stripe += String.fromCharCode((value & 0x1F) << 6 | str.charCodeAt(n + 1) & 0x3F);
 			n++;
-		} 
-		else if (value > 0xDF && value < 0xF0) 
+		}
+		else if (value > 0xDF && value < 0xF0)
 		{
 			str += String.fromCharCode((value & 0x0F) << 12 | (str.charCodeAt(n + 1) & 0x3F) << 6 | str.charCodeAt(n + 2) & 0x3F);
 			n += 2;
-		} 
-		else // surrogate pair 
+		}
+		else // surrogate pair
 		{
 			let charCode = ((value & 0x07) << 18 | (str.charCodeAt(n + 1) & 0x3F) << 12 | (str.charCodeAt(n + 2) & 0x3F) << 6 | str.charCodeAt(n + 3) & 0x3F) - 0x010000;
-			stripe += String.fromCharCode(charCode >> 10 | 0xD800, charCode & 0x03FF | 0xDC00); 
+			stripe += String.fromCharCode(charCode >> 10 | 0xD800, charCode & 0x03FF | 0xDC00);
 			n += 3;
 		}
 		if (stripe.length > 100)
@@ -544,7 +544,7 @@ export function inputChanged(domInput:JQuery, callback:() => void):void
 
 export const enum KeyCode
 {
-	Backspace = 8, 
+	Backspace = 8,
 	Tab = 9,
 	Enter = 13,
 	Escape = 27,

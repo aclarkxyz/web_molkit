@@ -4,7 +4,7 @@
     (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
-    
+
     http://molmatinf.com
 
 	[PKG=webmolkit]
@@ -31,7 +31,7 @@ export class BayesianPredictionModel
 	public colDomain:string;
 	public colAtoms:string;
 	public name:string;
-	public description:string; 
+	public description:string;
 	public targetName:string;
 	public isOffTarget:boolean;
 }
@@ -77,7 +77,7 @@ export class BayesianPrediction extends Aspect
 
 		let models:BayesianPredictionModel[] = [];
 		let m:BayesianPredictionModel = null;
-		
+
 		for (let line of content.split('\n'))
 		{
 			if (line == 'model:')
@@ -86,11 +86,11 @@ export class BayesianPrediction extends Aspect
 				m = {} as BayesianPredictionModel;
 				continue;
 			}
-			
+
 			if (m == null) continue;
 			let eq = line.indexOf('=');
 			if (eq < 0) continue;
-			
+
 			if (line.startsWith('colMolecule=')) m.colMolecule = MoleculeStream.sk_unescape(line.substring(eq + 1));
 			else if (line.startsWith('colRaw=')) m.colRaw = MoleculeStream.sk_unescape(line.substring(eq + 1));
 			else if (line.startsWith('colScaled=')) m.colScaled = MoleculeStream.sk_unescape(line.substring(eq + 1));
@@ -102,16 +102,16 @@ export class BayesianPrediction extends Aspect
 			else if (line.startsWith('targetName=')) m.targetName = MoleculeStream.sk_unescape(line.substring(eq + 1));
 			else if (line.startsWith('isOffTarget=')) m.isOffTarget = line.substring(eq + 1) == 'true';
 		}
-		
+
 		if (m != null) models.push(m);
 		return models;
 	}
 	public setModels(models:BayesianPredictionModel[]):void
 	{
 		let lines:string[] = [];
-		
+
 		for (let m of models)
-		{		
+		{
 			lines.push('model:');
 			lines.push('colMolecule=' + MoleculeStream.sk_escape(m.colMolecule));
 			lines.push('colRaw=' + MoleculeStream.sk_escape(m.colRaw));
@@ -124,14 +124,14 @@ export class BayesianPrediction extends Aspect
 			lines.push('targetName=' + MoleculeStream.sk_escape(m.targetName));
 			lines.push('isOffTarget=' + m.isOffTarget);
 		}
-		
+
 		let content = lines.join('\n');
 		for (let n = 0; n < this.ds.numExtensions; n++) if (this.ds.getExtType(n) == BayesianSource.CODE)
 		{
 			this.ds.setExtData(n, content.toString());
 			return;
 		}
-		this.ds.appendExtension('BayesianPrediction', BayesianPrediction.CODE, content.toString());		
+		this.ds.appendExtension('BayesianPrediction', BayesianPrediction.CODE, content.toString());
 	}
 
 	// rowdata access
@@ -142,14 +142,14 @@ export class BayesianPrediction extends Aspect
 		outcome.scaled = this.ds.getReal(row, model.colScaled);
 		outcome.arctan = this.ds.getReal(row, model.colArcTan);
 		outcome.domain = this.ds.getReal(row, model.colDomain);
-		
+
 		let strAtoms = this.ds.getString(row, model.colAtoms);
 		if (strAtoms)
 		{
 			outcome.atoms = [];
 			for (let b of strAtoms.split(','))  outcome.atoms.push(parseFloat(b));
 		}
-		
+
 		return outcome;
 	}
 	public setOutcome(row:number, model:BayesianPredictionModel, outcome:BayesianPredictionOutcome):void
@@ -168,14 +168,14 @@ export class BayesianPrediction extends Aspect
 
 		col = this.ds.findColByName(model.colAtoms, DataSheetColumn.String);
 		if (col >= 0) this.ds.setString(row, col, outcome.atoms ? outcome.atoms.toString() : null);
-	}	
+	}
 
 	// ----------------- private methods -----------------
 
-	// workhorse for the constructor 
-	private setup():void  
+	// workhorse for the constructor
+	private setup():void
 	{
-		if (this.allowModify) 
+		if (this.allowModify)
 		{
 			let models = this.getModels();
 			this.setModels(models);

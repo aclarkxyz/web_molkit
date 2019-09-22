@@ -4,7 +4,7 @@
     (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
-    
+
     http://molmatinf.com
 
 	[PKG=webmolkit]
@@ -55,7 +55,7 @@ export class QuantityCalcComp
 	public statConc = QuantityCalcStat.Unknown;
 	public valueYield = QuantityCalc.UNSPECIFIED;
 	public statYield = QuantityCalcStat.Unknown;
-	
+
 	constructor(public comp:ExperimentComponent, public step:number, public type:ExperimentComponentType, public idx:number)
 	{
 	}
@@ -78,19 +78,19 @@ export class GreenMetrics
 export class QuantityCalc
 {
 	public static UNSPECIFIED = -1;
-		
+
 	public quantities:QuantityCalcComp[] = [];
 
 	private idxPrimary:number[] = [];
 	private idxYield:number[] = [];
 	private allMassReact:number[] = [];
 	private allMassProd:number[] = [];
-	private allMassWaste:number[] = [];	
+	private allMassWaste:number[] = [];
 
 	public greenMetrics:GreenMetrics[] = [];
 
 	// ---------------- static methods -----------------
-	
+
 	// returns true if the stoichiometry string is equivalent to zero, i.e. non-stoichiometric
 	public static isStoichZero(stoich:string):boolean
 	{
@@ -112,7 +112,7 @@ export class QuantityCalc
 		if (!stoich) return [1, 1];
 
 		let numer = 1, denom = 1;
-		
+
 		let i = stoich.indexOf('/');
 		if (i < 0)
 		{
@@ -134,7 +134,7 @@ export class QuantityCalc
 		let [numer, denom] = this.extractStoichFraction(stoich);
 		return denom <= 1 ? numer : numer / denom;
 	}
-	
+
 	// attempts to express the stoichiometry as a ratio; ideally this involves pulling out the numbers, but when they are provided
 	// as a floating point number, has to have a go at finding the closest fraction; it will lock onto the closest match with a small-ish
 	// denominator, so for obscure ratios, it may be an approximation
@@ -149,17 +149,17 @@ export class QuantityCalc
 	public static stoichFractAsRatio(fract:number):[number, number]
 	{
 		if (fract == Math.floor(fract)) return [fract, 1];
-		
+
 		const MAX_DENOM = QuantityCalc.MAX_DENOM;
 		if (QuantityCalc.RATIO_FRACT == null)
 		{
 			QuantityCalc.RATIO_FRACT = [];
 			for (let p = 0, j = 2; j <= MAX_DENOM; j++) for (let i = 1; i < j && i < MAX_DENOM - 1; i++) QuantityCalc.RATIO_FRACT.push(i * 1.0 / j);
 		}
-		
+
 		let whole = Math.floor(fract);
 		let resid = fract - whole;
-		
+
 		let bestDiff = Number.MAX_VALUE;
 		let bestOver = 1, bestUnder = 1;
 		for (let p = 0, j = 2; j <= MAX_DENOM; j++) for (let i = 1; i < j && i < MAX_DENOM - 1; i++)
@@ -167,20 +167,20 @@ export class QuantityCalc
 			let diff = Math.abs(QuantityCalc.RATIO_FRACT[p++] - resid);
 			if (diff < bestDiff) {bestDiff = diff; bestOver = i; bestUnder = j;}
 		}
-		
+
 		return [bestOver + (whole * bestUnder), bestUnder];
 	}
-	
+
 	// if the given reagent has a molecule with mapping numbers, checks to see if they line up with product(s), and derives stoichiometry from
 	// there; a value of 0 means that nothing could be determined
 	public static impliedReagentStoich(reagent:ExperimentComponent, products:ExperimentComponent[]):number
 	{
 		if (MolUtil.isBlank(reagent.mol) || products.length == 0) return 0;
-		
+
 		let pstoich = Vec.numberArray(-1, products.length);
 		let rmol = reagent.mol;
 		let highest = 0;
-		
+
 		for (let n = 1; n <= rmol.numAtoms; n++)
 		{
 			let m = rmol.atomMapNum(n);
@@ -190,7 +190,7 @@ export class QuantityCalc
 			{
 				let pmol = products[i].mol;
 				if (MolUtil.isBlank(pmol)) continue;
-				
+
 				let pcount = 0;
 				for (let j = 1; j <= pmol.numAtoms; j++) if (pmol.atomMapNum(j) == m) pcount++;
 				if (pcount > 0)
@@ -205,7 +205,7 @@ export class QuantityCalc
 		}
 		return highest;
 	}
-	
+
 	/*
 	// for a given step in a reaction, adds up all the structures on both the left and right hand sides; the structures on each side are combined
 	// into a single molecule instance, and are expanded out based on the relative ratio of stoichiometry; zero stoichiometry is treated as 1
@@ -213,7 +213,7 @@ export class QuantityCalc
 	{
 		List<Molecule> left = new ArrayList<>(), right = new ArrayList<>();
 		IntVector numer = new IntVector(), denom = new IntVector();
-		
+
 		Component[] reactants = step == 0 ? entry.steps[0].reactants : entry.steps[step - 1].products;
 		for (Component comp : reactants) if (MolUtil.notBlank(comp.mol))
 		{
@@ -238,7 +238,7 @@ export class QuantityCalc
 			numer.add(ratio.val1 == 0 ? 1 : ratio.val1);
 			denom.add(ratio.val2);
 		}
-		
+
 		int bigDenom = 1;
 		for (int n = 0; n < numer.size(); n++)
 		{
@@ -247,7 +247,7 @@ export class QuantityCalc
 			if (bigDenom % d != 0) bigDenom *= d;
 		}
 		// (any way to bring it back down?)
-		
+
 		Molecule mol1 = new Molecule(), mol2 = new Molecule();
 		for (int n = 0; n < left.size(); n++)
 		{
@@ -259,10 +259,10 @@ export class QuantityCalc
 			int nn = left.size() + n, num = numer.get(nn) * bigDenom / denom.get(nn);
 			for (int i = 0; i < num; i++) MolUtil.append(mol2, right.get(n));
 		}
-		
+
 		return new Molecule[]{mol1, mol2};
 	}*/
-	
+
 	// for a given step, works out the integral stoichiometry of {reactants, reagents, components}
 	public static componentRatio(entry:ExperimentEntry, step:number):[number[], number[], number[]]
 	{
@@ -288,7 +288,7 @@ export class QuantityCalc
 			numer.push(num == 0 ? 1 : num);
 			denom.push(den);
 		}
-		
+
 		let bigDenom = 1;
 		for (let n = 0; n < numer.length; n++) if (denom[n] > 1 && bigDenom % denom[n] != 0) bigDenom *= denom[n];
 
@@ -297,7 +297,7 @@ export class QuantityCalc
 		for (let n = 0; n < reactants.length; n++, p++) ratioReactants.push(numer[p] * bigDenom / denom[p]);
 		for (let n = 0; n < entry.steps[step].reagents.length; n++, p++) ratioReagents.push(numer[p] * bigDenom / denom[p]);
 		for (let n = 0; n < entry.steps[step].products.length; n++, p++) ratioProducts.push(numer[p] * bigDenom / denom[p]);
-	
+
 		return [ratioReactants, ratioReagents, ratioProducts];
 	}
 
@@ -313,7 +313,7 @@ export class QuantityCalc
 		// the basic quantities: iteratively ifer everything possible
 		this.classifyTypes();
 		while (this.calculateSomething()) {}
-		
+
 		// work out green metrics, where applicable
 		this.allMassReact = [];
 		this.allMassProd = [];
@@ -351,7 +351,7 @@ export class QuantityCalc
 	public getAllMassReact():number[] {return this.allMassReact.slice(0);}
 	public getAllMassProd():number[] {return this.allMassProd.slice(0);}
 	public getAllMassWaste():number[] {return this.allMassWaste.slice(0);}
-	
+
 	// convenience: locate a component somewhere within the entry
 	public findComponent(step:number, type:number, idx:number):QuantityCalcComp
 	{
@@ -439,9 +439,9 @@ export class QuantityCalc
 			{
 				qc.valueEquiv = QuantityCalc.extractStoichValue(qc.comp.stoich);
 			}
-			
+
 			if (qc.comp.mol != null) qc.molw = MolUtil.molecularWeight(qc.comp.mol);
-			
+
 			qc.role = QuantityCalcRole.Independent;
 			if (qc.step == 0 && qc.type == ExperimentComponentType.Reactant)
 			{
@@ -465,7 +465,7 @@ export class QuantityCalc
 			{
 				qc.role = QuantityCalcRole.Secondary;
 			}
-			
+
 			// fill in any user-specified values
 			if (qc.comp.mass != null) qc.valueMass = qc.comp.mass;
 			if (qc.comp.volume != null) qc.valueVolume = qc.comp.volume;
@@ -473,7 +473,7 @@ export class QuantityCalc
 			if (qc.comp.density != null) qc.valueDensity = qc.comp.density;
 			if (qc.comp.conc != null) qc.valueConc = qc.comp.conc;
 			if (qc.comp.yield != null) qc.valueYield = qc.comp.yield;
-			
+
 			qc.statEquiv = qc.valueEquiv == QuantityCalc.UNSPECIFIED ? QuantityCalcStat.Unknown : QuantityCalcStat.Actual;
 			qc.statMass = qc.valueMass == QuantityCalc.UNSPECIFIED ? QuantityCalcStat.Unknown : QuantityCalcStat.Actual;
 			qc.statVolume = qc.valueVolume == QuantityCalc.UNSPECIFIED ? QuantityCalcStat.Unknown : QuantityCalcStat.Actual;
@@ -497,7 +497,7 @@ export class QuantityCalc
 			}
 		}
 	}
-	
+
 	// attempt to replace at least one unknown value with an inferred value; returns true if anything happened, which
 	// signals that another round should be repeated, in case more possibilities come online
 	private calculateSomething():boolean
@@ -530,7 +530,7 @@ export class QuantityCalc
 					qc.statMoles = QuantityCalcStat.Conflict;
 				}
 			}
-			
+
 			let isSoln = qc.statConc == QuantityCalcStat.Actual ||
 				(qc.statVolume == QuantityCalcStat.Actual && (qc.statMass == QuantityCalcStat.Actual || qc.statMoles == QuantityCalcStat.Actual));
 
@@ -549,7 +549,7 @@ export class QuantityCalc
 					qc.statVolume = QuantityCalcStat.Virtual;
 					anything = true;
 				}
-				if (qc.valueDensity == QuantityCalc.UNSPECIFIED && qc.valueMass != QuantityCalc.UNSPECIFIED && 
+				if (qc.valueDensity == QuantityCalc.UNSPECIFIED && qc.valueMass != QuantityCalc.UNSPECIFIED &&
 					qc.valueVolume != QuantityCalc.UNSPECIFIED && qc.valueConc == QuantityCalc.UNSPECIFIED)
 				{
 					if (qc.statMass == QuantityCalcStat.Actual || qc.statMoles == QuantityCalcStat.Actual) // don't guess density from stoichoimetry
@@ -560,7 +560,7 @@ export class QuantityCalc
 					}
 				}
 			}
-			
+
 			// solutions, moles/conc/volume
 			if (isSoln)
 			{
@@ -594,7 +594,7 @@ export class QuantityCalc
 					}
 				}
 			}
-			
+
 			// calculating mass from virtual molar mass
 			if (qc.molw > 0 && qc.valueMass == QuantityCalc.UNSPECIFIED && qc.valueMoles != QuantityCalc.UNSPECIFIED)
 			{
@@ -602,7 +602,7 @@ export class QuantityCalc
 				qc.statMass = QuantityCalcStat.Virtual;
 				anything = true;
 			}
-			
+
 			// providing a concentration and density is disallowed
 			if (qc.statDensity == QuantityCalcStat.Actual && qc.statConc == QuantityCalcStat.Actual)
 			{
@@ -610,17 +610,17 @@ export class QuantityCalc
 				qc.statConc = QuantityCalcStat.Conflict;
 			}
 		}
-	
+
 		if (anything) return true; // want to make it cycle over all the reactants before moving on
-		
+
 		// ---- part 2: determine the molar quantity baseline, for each step, where applicable
-		
+
 		let hasRef = false;
 		let numSteps = this.entry.steps.length;
 		let primaryCounts = Vec.numberArray(0, numSteps);
 		let primaryEquivs = Vec.numberArray(0, numSteps);
 		let primaryMoles = Vec.numberArray(0, numSteps);
-		
+
 		// go over components: first step uses reactants; next steps use products from previous
 		for (let qc of this.quantities)
 		{
@@ -629,7 +629,7 @@ export class QuantityCalc
 			else if (qc.step < numSteps - 1 && qc.type == ExperimentComponentType.Product && !qc.comp.waste) ref = qc.step + 1;
 			else continue;
 			if (primaryEquivs[ref] < 0) continue;
-			
+
 			if (qc.statMoles == QuantityCalcStat.Actual)
 			{
 				primaryEquivs[ref] = -1;
@@ -640,7 +640,7 @@ export class QuantityCalc
 			primaryEquivs[ref] += qc.valueEquiv;
 			primaryMoles[ref] += qc.valueMoles;
 		}
-		
+
 		// special deal: if no primary reactants, use all of the primaries
 		if (primaryEquivs[0] <= 0)
 		{
@@ -689,15 +689,15 @@ export class QuantityCalc
 				}
 			}
 		}
-		
+
 		if (!hasRef) return false; // can't do anything else
-		
+
 		// ---- part 3: look for ways to apply the yield
-		
+
 		for (let qc of this.quantities)
 		{
 			if (qc.type != ExperimentComponentType.Product) continue;
-			
+
 			if (refMoles[qc.step] == 0) continue;
 
 			if (qc.valueYield == QuantityCalc.UNSPECIFIED && qc.valueMoles != QuantityCalc.UNSPECIFIED)
@@ -723,9 +723,9 @@ export class QuantityCalc
 				}
 			}
 		}
-	
+
 		if (anything) return true;
-		
+
 		// ---- part 4: look for stoichiometric components where molarity can be filled in
 
 		for (let qc of this.quantities)
@@ -758,17 +758,17 @@ export class QuantityCalc
 		gm.step = qc.step;
 		gm.idx = idx;
 		gm.isBlank = true;
-	
+
 		for (let n = 0; n < this.quantities.length; n++)
 		{
 			let sub = this.quantities[n];
 			if (sub.step > gm.step) continue;
-			
+
 			let eq = sub.valueEquiv;
 			if (eq == 0 && sub.type == ExperimentComponentType.Reagent) continue;
 
 			if (sub.valueMass != QuantityCalc.UNSPECIFIED) gm.isBlank = false;
-			
+
 			if (sub.type == ExperimentComponentType.Reactant || sub.type == ExperimentComponentType.Reagent)
 			{
 				gm.massReact.push(sub.valueMass);
@@ -792,7 +792,7 @@ export class QuantityCalc
 				if (sub.step == gm.step) gm.massProdWaste.push(sub.valueMass);
 			}
 		}
-		
+
 		gm.impliedWaste = Vec.sum(gm.massReact) - Vec.sum(gm.massProdWaste);
 		if (Math.abs(gm.impliedWaste) > 1E-3) gm.impliedWaste = 0;
 

@@ -4,7 +4,7 @@
     (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
-    
+
     http://molmatinf.com
 
 	[PKG=webmolkit]
@@ -18,7 +18,7 @@ namespace WebMolKit /* BOF */ {
 
 /*
 	CircleButton: a circular button with a vector icon.
-	
+
 	Content:
 		.icon: an SVG file from ~/img/icons, e.g. "dice.svg"
 		.state: one of .STATE_*
@@ -41,7 +41,7 @@ export class CircleButton extends Widget
 	private state = this.STATE_NORMAL;
 	private isHighlight = false;
 	private isPressed = false;
-	
+
 	private normalBackgr:HTMLCanvasElement;
 	private selectedBackgr:HTMLCanvasElement;
 	private pressedBackgr:HTMLCanvasElement;
@@ -50,33 +50,33 @@ export class CircleButton extends Widget
 	private thinBorder:HTMLCanvasElement;
 	private thickBorder:HTMLCanvasElement;
 	private svg:Element;
-	
+
 	private progressFraction:number = null;
-	
+
 	public callbackAction:(source?:CircleButton) => void = null;
-	
+
 	constructor(private icon:string)
 	{
 		super();
 	}
-	
+
 	// create the underlying structure; the parent parameter must be jQuery-compatible
 	public render(parent:any)
 	{
 		super.render(parent);
 
 		this.content.addClass('no_selection');
-		
+
 		const diameter = this.BUTTON_DIAMETER;
 		const width = diameter, height = diameter;
-		
+
 		let div = this.content;
 		let density = pixelDensity();
-		
+
 		div.css('width', width + 2 * this.BUTTON_HPADDING);
 		div.css('height', height + 2 * this.BUTTON_VPADDING);
 		div.css('position', 'relative');
-		
+
 		let canvasStyle = 'position: absolute; left: ' + this.BUTTON_HPADDING + 'px; top: ' + this.BUTTON_VPADDING + 'px;';
 		canvasStyle += 'pointer-events: none;';
 
@@ -126,16 +126,16 @@ export class CircleButton extends Widget
 		this.ringProgress.style.height = height + 'px';
 		this.ringProgress.getContext('2d').scale(density, density);
 		this.ringProgress.hidden = true;
-		
+
 		this.thinBorder = renderBorder(1);
 		this.thickBorder = renderBorder(2);
-		
+
 		let svgurl = RPC.BASE_URL + '/img/icons/' + this.icon;
-			
+
 		this.svg = newElement(div, 'object', {'width': width, 'height': height, 'style': canvasStyle, 'data': svgurl, 'type': 'image/svg+xml'});
 
 		this.updateLayers();
-		
+
 		div.mouseenter(() => this.mouseEnter());
 		div.mouseleave(() => this.mouseLeave());
 		div.mousedown(() => this.mouseDown());
@@ -154,7 +154,7 @@ export class CircleButton extends Widget
 		let diameter = this.BUTTON_DIAMETER, mid = 0.5 * diameter, outer = mid - 1, inner = 0.8 * mid;
 		let ctx = this.ringProgress.getContext('2d');
 		ctx.clearRect(0, 0, diameter, diameter);
-				
+
 		ctx.strokeStyle = 'rgba(80,80,80,0.5)';
 		ctx.lineWidth = 1;
 		ctx.beginPath();
@@ -168,10 +168,10 @@ export class CircleButton extends Widget
 			drawLine(ctx, mid, mid - inner, mid, mid - outer);
 			return;
 		}
-		
+
 		let delta = TWOPI * fraction;
 		let theta1 = -0.5 * Math.PI, theta2 = theta1 + delta;
-		
+
 		ctx.save();
 		ctx.beginPath();
 		ctx.moveTo(mid, mid - outer);
@@ -183,10 +183,10 @@ export class CircleButton extends Widget
 		grad.addColorStop(0, '#47D5D2');
 		grad.addColorStop(1, '#008FD2');
 		ctx.fillStyle = grad;
-		ctx.fill(); 
+		ctx.fill();
 		ctx.restore();
 	}
-	
+
 	// returns the widget to its normal state of not having a progress indicator
 	public clearProgress()
 	{
@@ -209,7 +209,7 @@ export class CircleButton extends Widget
 			this.content.css('cursor', 'no-drop');
 		}
 		else this.content.css('cursor', 'pointer');
-		
+
 		setVisible(this.thinBorder, !highlight);
 		setVisible(this.thickBorder, highlight);
 	}

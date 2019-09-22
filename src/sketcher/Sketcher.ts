@@ -1,7 +1,7 @@
 /*
     WebMolKit
 
-    (c) 2010-2018 Molecular Materials Informatics, Inc.
+    (c) 2010-2019 Molecular Materials Informatics, Inc.
 
     All rights reserved
 
@@ -18,7 +18,6 @@
 ///<reference path='../data/Molecule.ts'/>
 ///<reference path='../data/MolUtil.ts'/>
 ///<reference path='../data/SketchUtil.ts'/>
-///<reference path='../rpc/Func.ts'/>
 ///<reference path='../gfx/Rendering.ts'/>
 ///<reference path='../gfx/MetaVector.ts'/>
 ///<reference path='../gfx/ArrangeMolecule.ts'/>
@@ -343,46 +342,6 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 			event.preventDefault();
 			this.dropInto(event.dataTransfer);
 		});
-
-		/* ... deprecated
-		// pasting: captures the menu/hotkey form
-		let pasteFunc = (e:any) =>
-		{
-			// if widget no longer visible, detach the paste handler
-			if (!$.contains(document.documentElement, this.container[0]))
-			{
-				document.removeEventListener('paste', pasteFunc);
-				return false;
-			}
-
-			let wnd = <any>window;
-			if (wnd.clipboardData && wnd.clipboardData.getData) this.pasteText(wnd.clipboardData.getData('Text'));
-			else if (e.clipboardData && e.clipboardData.getData) this.pasteText(e.clipboardData.getData('text/plain'));
-			e.preventDefault();
-			return false;
-		};
-		document.addEventListener('paste', pasteFunc);
-
-		// copying: captures the menu/hotkey form
-		let copyFunc = (e:any) =>
-		{
-			if (this.copyBusy) return;
-
-			// if widget no longer visible, detach the copy handler
-			if (!$.contains(document.documentElement, this.container[0]))
-			{
-				document.removeEventListener('copy', copyFunc);
-				return false;
-			}
-
-			document.removeEventListener('copy', copyFunc);
-			this.performCopy();
-			document.addEventListener('copy', copyFunc);
-
-			e.preventDefault();
-			return false;
-		};
-		document.addEventListener('copy', copyFunc);*/
 
 		if (this.proxyClip) this.proxyClip.install(this.container);
 

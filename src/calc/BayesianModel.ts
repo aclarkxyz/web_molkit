@@ -4,7 +4,7 @@
     (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
-    
+
     http://molmatinf.com
 
 	[PKG=webmolkit]
@@ -21,29 +21,29 @@ namespace WebMolKit /* BOF */ {
 	A specialisation of the BayesianModel class, which operates exclusively on Circular (ECFP/FCFP) fingerprints.
 	Provides convenience methods for feeding in raw molecules to create a model, and also serialisation/deserialisation
 	features allowing models to be stored and recreated with known properties.
-	
+
 	The class is designed to operate with fairly large input sizes, but it does need to hold onto all of the calculated
 	fingerprint lists so that the final build operation can calculate calibration metrics.
-	
+
 	It can operate with any degree of fingerprint folding, including none at all (but this means that there is a diabolical
 	case that could get very memory intensive).
-	
+
 	Folding is optional: 0 means that all hash codes are retained (worst case scenario: 4 billion). If folding,
 	must be an exponent of two (e.g. 1024, 2048, 4096, etc.) In practice, ROC curves for recalling single properties
 	tend to hit diminishing returns above folding sizes of about 1024.
 
 	Serialisation format is:
-	
+
 		Bayesian!({fptype},{folding},{low},{high})
 		{hashidx1}={contribution1}
 		{hashidx2}={contribution2}
 		...
 		!End
-		
+
 	Recommended file extension is ".bayesian", MIME type is "chemistry/x-bayesian"
-		
-	Where {fptype} is ECFP0/2/4/6 or FCFP0/2/4/6. 
-	
+
+	Where {fptype} is ECFP0/2/4/6 or FCFP0/2/4/6.
+
 	{low} and {high} are the boundaries of the response value for the training set.
 */
 
@@ -160,7 +160,7 @@ export class BayesianModel
 		this.invRange = this.range > 0 ? 1 / this.range : 0;
 	}
 
-	// calculates fingerprints for a molecule, and returns the predictor value	
+	// calculates fingerprints for a molecule, and returns the predictor value
 	public predictMolecule(mol:Molecule):number
 	{
 		if (MolUtil.isBlank(mol)) throw 'Molecule cannot be blank or null.';
@@ -194,9 +194,9 @@ export class BayesianModel
 		return (pred - this.lowThresh) * this.invRange;
 	}
 
-	// while the scaled predictor (above) is generally between 0..1 ("probability-like"), results can go out of bounds; using the arctan 
-	// function scales it so that the centroid is the same (0.5), but lower/higher values approach 0 or 1 as asymptotes; this is a useful 
-	// way of keeping it within the range without resorting to capping, and has another handy effect of allowing known results to be stored 
+	// while the scaled predictor (above) is generally between 0..1 ("probability-like"), results can go out of bounds; using the arctan
+	// function scales it so that the centroid is the same (0.5), but lower/higher values approach 0 or 1 as asymptotes; this is a useful
+	// way of keeping it within the range without resorting to capping, and has another handy effect of allowing known results to be stored
 	// in the same field (i.e. 0=known inactive, 1=known active, because these values cannot otherwise be reached)
 	public scaleArcTan(scaled:number):number
 	{
@@ -245,7 +245,7 @@ export class BayesianModel
 		}
 
 		// double duty: use the same source material to add up the numeric predictor as well (note that the "coverage" hashes are not necessarily
-		// the same as the approved list)		
+		// the same as the approved list)
 		let pred = 0;
 		for (let h of predHashes)
 		{
@@ -307,7 +307,7 @@ export class BayesianModel
 	{
 		let lines:string[] = [];
 
-		let fpname = this.classType == CircularFingerprints.CLASS_ECFP0 ? 'ECFP0' : this.classType == CircularFingerprints.CLASS_ECFP2 ? 'ECFP2' 
+		let fpname = this.classType == CircularFingerprints.CLASS_ECFP0 ? 'ECFP0' : this.classType == CircularFingerprints.CLASS_ECFP2 ? 'ECFP2'
 				   : this.classType == CircularFingerprints.CLASS_ECFP4 ? 'ECFP4' : this.classType == CircularFingerprints.CLASS_ECFP6 ? 'ECFP6'
 				   : '?';
 
@@ -364,7 +364,7 @@ export class BayesianModel
 
 		return lines.join('\n');
 	}
-	
+
 	// transforms string back into model, if possible
 	public static deserialise(str:string):BayesianModel
 	{
@@ -440,7 +440,7 @@ export class BayesianModel
 			else if (line.startsWith('note:title=')) model.noteTitle = line.substring(11);
 			else if (line.startsWith('note:origin=')) model.noteOrigin = line.substring(12);
 			else if (line.startsWith('note:field=')) model.noteField = line.substring(11);
-			else if (line.startsWith('note:comment=')) 
+			else if (line.startsWith('note:comment='))
 			{
 				if (model.noteComments == null) model.noteComments = [];
 				model.noteComments.push(line.substring(13));
@@ -556,7 +556,7 @@ export class BayesianModel
 	// assumes estimates already calculated, fills in the ROC data
 	private calculateROC():void
 	{
-		// sort the available estimates, and take midpoints 
+		// sort the available estimates, and take midpoints
 		const sz = this.training.length;
 		let idx = Vec.idxSort(this.estimates);
 		let thresholds:number[] = [];
@@ -663,7 +663,7 @@ export class BayesianModel
 		this.statMCC = mccOver / Math.sqrt(mccUnder);
 	}
 
-	// rederives the low/high thresholds, using ROC curve data: once the analysis is complete, the midpoint will be the optimum balance 
+	// rederives the low/high thresholds, using ROC curve data: once the analysis is complete, the midpoint will be the optimum balance
 	private calibrateThresholds(x:number[], y:number[], t:number[]):void
 	{
 		const sz = t.length;
@@ -710,7 +710,7 @@ export class BayesianModel
 		circ.hookConsiderNewFP = collectFP;
 		circ.calculate();
 
-		// collect the "approved" hashes, i.e. the normal operation of the fingerprinter		
+		// collect the "approved" hashes, i.e. the normal operation of the fingerprinter
 		if (approvedHashes != null)
 		{
 			let hashes = this.folding == 0 ? circ.getUniqueHashes() : circ.getFoldedHashes(this.folding);

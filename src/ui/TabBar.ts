@@ -4,7 +4,7 @@
     (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
-    
+
     http://molmatinf.com
 
 	[PKG=webmolkit]
@@ -24,9 +24,9 @@ export class TabBar extends Widget
 	private buttonDiv:JQuery[] = [];
 	private panelDiv:JQuery[] = [];
 	private padding = 6; // pixels
-	
+
 	public callbackSelect:(idx:number, source?:TabBar) => void = null;
-	
+
 	// ------------ public methods ------------
 
 	constructor(public options:string[])
@@ -35,7 +35,7 @@ export class TabBar extends Widget
 
 		if (!hasInlineCSS('tabbar')) installInlineCSS('tabbar', this.composeCSS());
 	}
-	
+
 	// control over selected index
 	public getSelectedIndex():number
 	{
@@ -74,7 +74,7 @@ export class TabBar extends Widget
 		underline.css('grid-row', '1');
 		underline.css('border-bottom', '1px solid #C0C0C0');
 		underline.css('height', '100%');
-		
+
 		for (let n = 0; n < this.options.length; n++)
 		{
 			let outline = $('<div class="wmk-tabbar-cell"></div>').appendTo(grid);
@@ -99,12 +99,12 @@ export class TabBar extends Widget
 	public clickButton(idx:number):void
 	{
 		if (idx == this.selidx) return; // (shouldn't happen)
-		
+
 		this.setSelectedIndex(idx);
 
 		if (this.callbackSelect) this.callbackSelect(idx, this);
 	}
-		
+
 	// change selected index, update widgets
 	public setSelectedIndex(idx:number):void
 	{
@@ -130,7 +130,7 @@ export class TabBar extends Widget
 			let txt = this.options[n];
 			if (txt.length == 0 && n == this.selidx) div.text('\u00A0\u2716\u00A0');
 			else if (txt.length == 0) div.text('\u00A0\u00A0\u00A0');
-			else div.text(txt); 
+			else div.text(txt);
 
 			div.off('mouseover');
 			div.off('mouseout');

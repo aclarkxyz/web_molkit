@@ -4,7 +4,7 @@
     (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
-    
+
     http://molmatinf.com
 
 	[PKG=webmolkit]
@@ -46,7 +46,7 @@ export class ViewStructure extends Widget
 	private datastr:string = null;
 	private datarow = 0;
 	private policy:RenderPolicy = null;
-	
+
 	// ------------ public methods ------------
 
 	// setup: note that tokenID is optional
@@ -106,17 +106,17 @@ export class ViewStructure extends Widget
 		super.render(parent);
 
 		let canvas = newElement(this.content /*parent*/, 'canvas', {'width': this.width, 'height': this.height}) as HTMLCanvasElement;
-		
+
 		let density = pixelDensity();
 		canvas.width = this.width * density;
 		canvas.height = this.height * density;
 		canvas.style.width = this.width + 'px';
 		canvas.style.height = this.height + 'px';
-		
+
 		let ctx = canvas.getContext('2d');
 		ctx.save();
 		ctx.scale(density, density);
-		
+
 		// predraw the surrounding border
 		let path:Path2D;
 		if (this.borderRadius == 0)
@@ -125,8 +125,8 @@ export class ViewStructure extends Widget
 			path.rect(1.5, 1.5, this.width - 3, this.height - 3);
 		}
 		else path = pathRoundedRect(1.5, 1.5, this.width - 1.5, this.height - 1.5, this.borderRadius);
-		 
-		if (this.backgroundCol1 != null) 
+
+		if (this.backgroundCol1 != null)
 		{
 			if (this.backgroundCol2 == null)
 			{
@@ -138,7 +138,7 @@ export class ViewStructure extends Widget
 				grad.addColorStop(0, colourCanvas(this.backgroundCol1));
 				grad.addColorStop(1, colourCanvas(this.backgroundCol2));
 				ctx.fillStyle = grad;
-			}			
+			}
 			ctx.fill(path);
 		}
 		if (this.borderCol != -1)
@@ -147,7 +147,7 @@ export class ViewStructure extends Widget
 			ctx.lineWidth = 1;
 			ctx.stroke(path);
 		}
-		
+
 		// determine a transform and render the molecule
 		let limW = this.width - 2 * this.padding, limH = this.height - 2 * this.padding;
 		let natW = this.naturalWidth, natH = this.naturalHeight;
@@ -171,7 +171,7 @@ export class ViewStructure extends Widget
 		this.metavec.offsetY = 0.5 * (this.height - natH);
 		this.metavec.scale = scale;
 		this.metavec.renderContext(ctx);
-		
+
 		ctx.restore();
 	}
 
@@ -207,10 +207,10 @@ export class ViewStructure extends Widget
 		input.policy = this.policy.data;
 		input.dataXML = this.datastr;
 		input.dataRow = this.datarow;
-		
+
 		Func.renderStructure(input, (result:any, error:ErrorRPC) =>
 		{
-			if (!result) 
+			if (!result)
 			{
 				alert('Setup of ViewStructure failed: ' + error.message);
 				return;
@@ -218,14 +218,14 @@ export class ViewStructure extends Widget
 			this.metavec = new MetaVector(result.metavec);
 			this.naturalWidth = this.metavec.width;
 			this.naturalHeight = this.metavec.width;
-			
+
 			// fill in default dimensions
 			if (this.width == 0) this.width = this.naturalWidth + 2 * this.padding;
 			if (this.height == 0) this.height = this.naturalHeight + 2 * this.padding;
 
 			if (callback) callback();
 		});
-	}	
+	}
 }
 
 /* EOF */ }

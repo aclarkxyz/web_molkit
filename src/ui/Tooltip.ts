@@ -4,7 +4,7 @@
     (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
-    
+
     http://molmatinf.com
 
 	[PKG=webmolkit]
@@ -28,7 +28,7 @@ export function addTooltip(parent:any, bodyHTML:string, titleHTML?:string, delay
 	Tooltip.ensureGlobal();
 
 	let widget = $(parent);
-		
+
 	const tooltip = new Tooltip(widget, bodyHTML, titleHTML, delay == null ? 1000 : delay);
 
 	widget.mouseenter(() => tooltip.start());
@@ -54,7 +54,7 @@ export function clearTooltip():void
 export class Tooltip
 {
 	private watermark:number;
-	
+
 	public static ensureGlobal()
 	{
 		if (globalPopover == null)
@@ -75,28 +75,28 @@ export class Tooltip
 	constructor(private widget:JQuery, private bodyHTML:string, private titleHTML:string, private delay:number)
 	{
 	}
-	
+
 	// raise the tooltip after a delay, assuming someone else hasn't bogarted it in the meanwhile
 	public start()
 	{
 		globalPopover.hide();
 		this.watermark = ++globalPopWatermark;
 		//console.log('START:[' + this.bodyHTML + '] watermark=' + this.watermark);
-		
+
 		window.setTimeout(() =>
 		{
-			if (this.watermark == globalPopWatermark) this.raise(); 
+			if (this.watermark == globalPopWatermark) this.raise();
 		}, this.delay);
 	}
-	
+
 	// lower the tooltip, if it is still owned by this widget
 	public stop()
 	{
-		//console.log('STOP:[' + this.bodyHTML + '] watermark=' + this.watermark + '/' + globalPopWatermark);        
+		//console.log('STOP:[' + this.bodyHTML + '] watermark=' + this.watermark + '/' + globalPopWatermark);
 		if (this.watermark == globalPopWatermark) this.lower();
 		globalPopWatermark++;
 	}
-	
+
 	public raise(avoid?:Box)
 	{
 		//let pageWidth = $(document).width(), pageHeight = $(document).height();
@@ -109,22 +109,22 @@ export class Tooltip
 		div.css('padding', '0.3em');
 
 		let hasTitle = this.titleHTML != null && this.titleHTML.length > 0, hasBody = this.bodyHTML != null && this.bodyHTML.length > 0;
-		
+
 		if (hasTitle) ($('<div></div>').appendTo(div)).html('<b>' + this.titleHTML + '</b>');
 		if (hasTitle && hasBody) div.append('<hr>');
 		if (hasBody) ($('<div></div>').appendTo(div)).html(this.bodyHTML);
-		
+
 		// to-do: title, if any
-		
+
 		let winW = $(window).width(), winH = $(window).height();
 		const GAP = 2;
 		let wx1 = this.widget.offset().left, wy1 = this.widget.offset().top;
 		let wx2 = wx1 + this.widget.width(), wy2 = wy1 + this.widget.height();
-		
+
 		// if more specific positioning is requested within the widget, adjust accordingly
 		if (avoid)
 		{
-			wx1 += avoid.x; 
+			wx1 += avoid.x;
 			wy1 += avoid.y;
 			wx2 = wx1 + avoid.w;
 			wy2 = wy1 + avoid.h;
@@ -139,7 +139,7 @@ export class Tooltip
 			if (wy2 + GAP + popH < winH) posY = wy2 + GAP;
 			else if (wy1 - GAP - popH > 0) posY = wy1 - GAP - popH;
 			else posY = wy2 + GAP;
-			
+
 			pop.css('left', `${posX}px`);
 			pop.css('top', `${posY}px`);
 		};
@@ -148,7 +148,7 @@ export class Tooltip
 		pop.show();
 		window.setTimeout(() => setPosition(), 1);
 	}
-	
+
 	public lower()
 	{
 		let pop = globalPopover;

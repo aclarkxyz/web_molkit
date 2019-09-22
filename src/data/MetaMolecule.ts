@@ -4,7 +4,7 @@
     (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
-    
+
     http://molmatinf.com
 
 	[PKG=webmolkit]
@@ -24,9 +24,9 @@ namespace WebMolKit /* BOF */ {
 
 	Each of the fields contained within may or may not be defined, and should be calculated as necessary, which means that
 	this class basically operates as a cache.
-	
+
 	Typical use case:
-	
+
 		MetaMolecule meta=new MetaMolecule(mol);
 		calculateStrictAromaticity();
 		calculateStereoRubric();
@@ -57,7 +57,7 @@ export class MetaMolecule
 	}
 
 	// strict aromaticity: considers only rings with pure alternating single/double bonds, i.e. benzene-style; fused ring
-	// systems like naphthalene are handled iteratively; many types of aromaticity are excluded, e.g. thiophene (lone pair), 
+	// systems like naphthalene are handled iteratively; many types of aromaticity are excluded, e.g. thiophene (lone pair),
 	// imidazolium (ions) and larger rings (e.g. porphyrins); this calculation is reasonably fast
 	public calculateStrictAromaticity():void
 	{
@@ -139,7 +139,7 @@ export class MetaMolecule
 		let mol = this.mol;
 		this.atomArom = Vec.booleanArray(false, mol.numAtoms);
 		this.bondArom = Vec.booleanArray(false, mol.numBonds);
-		
+
 		this.ensurePiAtoms();
 		const na = mol.numAtoms, nb = mol.numBonds;
 		let electrons = Vec.numberArray(0, na); // # lone pair electrons available for donating into the ring; >=2 qualifies
@@ -252,7 +252,7 @@ export class MetaMolecule
 	}
 
 	/*
-	// extended Hueckel aromaticity: any ring pathway which meets the 4n+2 PI electron rule, counting double bonds and 
+	// extended Hueckel aromaticity: any ring pathway which meets the 4n+2 PI electron rule, counting double bonds and
 	// lone pairs, is classified as aromatic
 	public void calculateExtendedAromaticity() throws MoleculeCalcException
 	{
@@ -324,7 +324,7 @@ export class MetaMolecule
 
 	// define the "heavy hash": like for skeleton, but with explicit hydrogens removed
 	public void calculateHeavyHash()
-	{	
+	{
 		boolean anyH = false;
 		for (int n = 1; n <= mol.numAtoms(); n++) if (mol.atomElement(n).equals("H")) {anyH = true; break;}
 		if (!anyH)
@@ -332,12 +332,12 @@ export class MetaMolecule
 			heavyHash = getSkeletonHash();
 			return;
 		}
-		
+
 		Molecule hvy = mol.clone();
 		for (int n = hvy.numAtoms(); n >= 1; n--) if (hvy.atomElement(n).equals("H")) hvy.deleteAtomAndBonds(n);
 		heavyHash = new SkeletonHash(hvy).generate();
 	}*/
-	
+
 	// access to aromaticity: either by 1-based single index, or grabbing the whole array
 	public isAtomAromatic(atom:number):boolean
 	{
@@ -347,7 +347,7 @@ export class MetaMolecule
 	{
 		return this.bondArom == null ? false : this.bondArom[bond - 1];
 	}
-	
+
 	// modified version of bond order: returns -1 to encode for aromaticity; if not aromatic, or aromaticity wasn't calculated,
 	// this is the same as the regular bond order
 	public bondOrderArom(bond:number):number

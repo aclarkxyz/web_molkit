@@ -4,7 +4,7 @@
 	(c) 2010-2018 Molecular Materials Informatics, Inc.
 
 	All rights reserved
-	
+
 	http://molmatinf.com
 
 	[PKG=webmolkit]
@@ -59,7 +59,7 @@ export class MetaVector
 	private PRIM_TEXTNATIVE = 6;
 
 	private ONE_THIRD = 1.0 / 3;
-	
+
 	public static NOCOLOUR = -1;
 
 	private types:any[] = [];
@@ -71,7 +71,7 @@ export class MetaVector
 	public offsetY = 0;
 	public scale = 1;
 	public density = 1;
-	
+
 	private charMask:boolean[];
 	private charMissing = false;
 	private lowX:number = null;
@@ -89,9 +89,9 @@ export class MetaVector
 
 		if (vec != null)
 		{
-			if (vec.size != null) 
+			if (vec.size != null)
 			{
-				this.width = vec.size[0]; 
+				this.width = vec.size[0];
 				this.height = vec.size[1];
 			}
 			if (vec.types != null) this.types = vec.types;
@@ -105,7 +105,7 @@ export class MetaVector
 				{
 					let i = font.getIndex(txt.charAt(n));
 					if (i >= 0) this.charMask[i] = true; else this.charMissing = true;
-				} 
+				}
 			}
 		}
 	}
@@ -153,14 +153,14 @@ export class MetaVector
 		if (edgeCol == null) edgeCol = MetaVector.NOCOLOUR;
 		if (fillCol == null) fillCol = MetaVector.NOCOLOUR;
 		if (thickness == null) thickness = 1;
-		if (hardEdge == null) hardEdge = false;		
+		if (hardEdge == null) hardEdge = false;
 
 		const bump = 0.5 * thickness;
 		for (let n = 0; n < xpoints.length; n++)
 		{
 			// NOTE: treats control points as literals; this could cause glitches, but hasn't yet
 			this.updateBounds(xpoints[n] - bump, ypoints[n] - bump);
-			if (bump != 0) this.updateBounds(xpoints[n] + bump, ypoints[n] + bump); 
+			if (bump != 0) this.updateBounds(xpoints[n] + bump, ypoints[n] + bump);
 		}
 
 		let typeidx = this.findOrCreateType([this.PRIM_PATH, edgeCol, fillCol, thickness, hardEdge]);
@@ -264,7 +264,7 @@ export class MetaVector
 	{
 		this.width = Math.ceil(this.highX - this.lowX);
 		this.height = Math.ceil(this.highY - this.lowY);
-	} 
+	}
 
 	// for a metavector that has been drawn programmatically, makes sure that origin is (0,0) and that the size is set
 	public normalise():void
@@ -277,7 +277,7 @@ export class MetaVector
 	// convenience
 	public setSize(width:number, height:number) {this.width = width; this.height = height;}
 
-	// makes sure everything fits into the indicated box, scaling down if necessary (but not up)	
+	// makes sure everything fits into the indicated box, scaling down if necessary (but not up)
 	public transformIntoBox(box:Box):void
 	{
 		this.transformPrimitives(-this.lowX, -this.lowY, 1, 1);
@@ -300,7 +300,7 @@ export class MetaVector
 		let ox = 0.5 * (box.w - nw), oy = 0.5 * (box.h - nh);
 		this.transformPrimitives(box.x + ox, box.y + oy, scale, scale);
 	}
-	
+
 	// transforms the sizes and positions of the primitives; note that this should only be called within the building stage,
 	// just before everything is emitted to the output device
 	// scaling properties:
@@ -380,12 +380,12 @@ export class MetaVector
 	{
 		let ctx = canvas.getContext('2d');
 		if (clearFirst) ctx.clearRect(0, 0, canvas.width, canvas.height);
-		
+
 		let w = canvas.style.width ? parseInt(canvas.style.width) : canvas.width / this.density;
 		let h = canvas.style.height ? parseInt(canvas.style.height) : canvas.height / this.density;
-		
+
 		this.density = pixelDensity();
-		
+
 		canvas.style.width = w + 'px';
 		canvas.style.height = h + 'px';
 		canvas.width = w * this.density;
@@ -399,7 +399,7 @@ export class MetaVector
 	{
 		ctx.save();
 		ctx.scale(this.density, this.density);
-		
+
 		this.typeObj = [];
 		for (let n = 0; n < this.types.length; n++)
 		{
@@ -421,7 +421,7 @@ export class MetaVector
 			else if (p[0] == this.PRIM_TEXT) this.renderText(ctx, p);
 			else if (p[0] == this.PRIM_TEXTNATIVE) this.renderTextNative(ctx, p);
 		}
-		
+
 		ctx.restore();
 	}
 
@@ -429,7 +429,7 @@ export class MetaVector
 	public createSVG():string
 	{
 		let svg = $('<svg></svg>');
-		svg.attr('xmlns', 'http://www.w3.org/2000/svg'); 
+		svg.attr('xmlns', 'http://www.w3.org/2000/svg');
 		svg.attr('xmlns:xlink', 'http://www.w3.org/1999/xlink');
 		svg.attr('width', this.width);
 		svg.attr('height', this.height);
@@ -485,15 +485,15 @@ export class MetaVector
 			{
 				for (; n + num < this.prims.length; num++) if (this.prims[n + num][0] != p[0] || this.prims[n + num][1] != p[1]) break;
 			}
-			if (p[0] == this.PRIM_LINE) 
+			if (p[0] == this.PRIM_LINE)
 			{
 				if (num == 1) this.svgLine1(svg, p); else this.svgLineN(svg, p, n, num);
 			}
-			else if (p[0] == this.PRIM_RECT) 
+			else if (p[0] == this.PRIM_RECT)
 			{
 				if (num == 1) this.svgRect1(svg, p); else this.svgRectN(svg, p, n, num);
 			}
-			else if (p[0] == this.PRIM_OVAL) 
+			else if (p[0] == this.PRIM_OVAL)
 			{
 				if (num == 1) this.svgOval1(svg, p); else this.svgOvalN(svg, p, n, num);
 			}
@@ -557,7 +557,7 @@ export class MetaVector
 		let x1 = p[2], y1 = p[3];
 		let x2 = p[4], y2 = p[5];
 		let colour:number = type.colour;
-		
+
 		x1 = this.offsetX + this.scale * x1;
 		y1 = this.offsetY + this.scale * y1;
 		x2 = this.offsetX + this.scale * x2;
@@ -609,7 +609,7 @@ export class MetaVector
 		cy = this.offsetY + this.scale * cy;
 		rw *= this.scale;
 		rh *= this.scale;
-		
+
 		if (fillCol != MetaVector.NOCOLOUR)
 		{
 			ctx.fillStyle = colourCanvas(fillCol);
@@ -635,7 +635,7 @@ export class MetaVector
 		let ctrl = p[5];
 		let isClosed = p[6];
 		let edgeCol:number = type.edgeCol, fillCol:number = type.fillCol;
-		
+
 		for (let n = 0; n < npts; n++)
 		{
 			x[n] = this.offsetX + this.scale * x[n];
@@ -646,7 +646,7 @@ export class MetaVector
 		{
 			if (layer == 1 && fillCol == MetaVector.NOCOLOUR) continue;
 			if (layer == 2 && edgeCol == MetaVector.NOCOLOUR) continue;
-				
+
 			ctx.beginPath();
 			ctx.moveTo(x[0], y[0]);
 			for (let i = 1; i < npts; i++)
@@ -667,7 +667,7 @@ export class MetaVector
 				}
 			}
 			if (isClosed) ctx.closePath();
-		
+
 			if (layer == 1)
 			{
 				ctx.fillStyle = colourCanvas(type.fillCol);
@@ -688,7 +688,7 @@ export class MetaVector
 		let type = this.typeObj[p[1]];
 		let x = p[2], y = p[3];
 		let txt = p[4];
-		
+
 		let sz = type.size;
 		let fill = colourCanvas(type.colour);
 
@@ -696,7 +696,7 @@ export class MetaVector
 		y = this.offsetY + this.scale * y;
 
 		let font = FontData.main;
-		
+
 		let scale = sz / font.UNITS_PER_EM;
 		let dx = 0;
 		for (let n = 0; n < txt.length; n++)
@@ -720,7 +720,7 @@ export class MetaVector
 				ctx.fill(path);
 				ctx.restore();
 			}
-			
+
 			dx += font.HORIZ_ADV_X[i];
 			if (n < txt.length - 1) font.getKerning(ch, txt.charAt(n + 1));
 		}
@@ -730,7 +730,7 @@ export class MetaVector
 		let type = this.typeObj[p[1]];
 		let x = p[2], y = p[3];
 		let txt = p[4];
-		
+
 		let family:string = type.fontFamily, sz:number = type.fontSize;
 		let fill = colourCanvas(type.colour);
 
@@ -751,12 +751,12 @@ export class MetaVector
 		let type = this.typeObj[p[1]];
 		let x1 = p[2], y1 = p[3];
 		let x2 = p[4], y2 = p[5];
-		
+
 		x1 = this.offsetX + this.scale * x1;
 		y1 = this.offsetY + this.scale * y1;
 		x2 = this.offsetX + this.scale * x2;
 		y2 = this.offsetY + this.scale * y2;
-		
+
 		if (type.colour != MetaVector.NOCOLOUR)
 		{
 			let line = $('<line></line>').appendTo(svg);
@@ -784,12 +784,12 @@ export class MetaVector
 			let p = this.prims[pos + n];
 			let x1 = p[2], y1 = p[3];
 			let x2 = p[4], y2 = p[5];
-			
+
 			x1 = this.offsetX + this.scale * x1;
 			y1 = this.offsetY + this.scale * y1;
 			x2 = this.offsetX + this.scale * x2;
 			y2 = this.offsetY + this.scale * y2;
-		
+
 			let line = $('<line></line>').appendTo(g);
 			line.attr('x1', x1);
 			line.attr('y1', y1);
@@ -827,7 +827,7 @@ export class MetaVector
 		let type = this.typeObj[p[1]];
 
 		let g = $('<g></g>').appendTo(svg);
-		
+
 		this.defineSVGStroke(g, type.edgeCol);
 		if (type.edgeCol != MetaVector.NOCOLOUR)
 		{
@@ -846,7 +846,7 @@ export class MetaVector
 			y = this.offsetY + this.scale * y;
 			w *= this.scale;
 			h *= this.scale;
-			
+
 			let rect = $('<rect></rect>').appendTo(g);
 			rect.attr('x', x);
 			rect.attr('y', y);
@@ -864,7 +864,7 @@ export class MetaVector
 		cy = this.offsetY + this.scale * cy;
 		rw *= this.scale;
 		rh *= this.scale;
-		
+
 		let oval = $('<ellipse></ellipse>').appendTo(svg);
 		oval.attr('cx', cx);
 		oval.attr('cy', cy);
@@ -885,7 +885,7 @@ export class MetaVector
 		let w = p[4], h = p[5];
 
 		let g = $('<g></g>').appendTo(svg);
-		
+
 		this.defineSVGStroke(g, type.edgeCol);
 		if (type.edgeCol != MetaVector.NOCOLOUR)
 		{
@@ -919,7 +919,7 @@ export class MetaVector
 		let x = p[3].slice(0), y = p[4].slice(0);
 		let ctrl = p[5];
 		let isClosed = p[6];
-		
+
 		for (let n = 0; n < npts; n++)
 		{
 			x[n] = this.offsetX + this.scale * x[n];
@@ -947,7 +947,7 @@ export class MetaVector
 			}
 			else n++; // (dunno, so skip)
 		}
-		if (isClosed) shape += ' Z';		
+		if (isClosed) shape += ' Z';
 
 		let path = $('<path></path>').appendTo(svg);
 		path.attr('d', shape);
@@ -966,28 +966,28 @@ export class MetaVector
 		let type = this.typeObj[p[1]];
 		let x = p[2], y = p[3];
 		let txt = p[4];
-		
+
 		let sz = type.size;
 
 		x = this.offsetX + this.scale * x;
 		y = this.offsetY + this.scale * y;
 
 		let font = FontData.main;
-		
+
 		let scale = sz / font.UNITS_PER_EM;
-		
+
 		let gdelta = $('<g></g>').appendTo(svg);
 		gdelta.attr('transform', 'translate(' + x + ',' + y + ')');
 		this.defineSVGFill(gdelta, type.colour);
 		let gscale = $('<g></g>').appendTo(gdelta);
 		gscale.attr('transform', 'scale(' + scale + ',' + (-scale) + ')');
-		
+
 		let dx = 0;
 		for (let n = 0; n < txt.length; n++)
 		{
 			let ch = txt.charAt(n);
 			let i = font.getIndex(ch);
-						
+
 			let use = $('<use></use>').appendTo(gscale);
 			let ref = i < 0 ? '#missing' : '#char' + i;
 			use.attr('xlink:href', ref);
@@ -1006,7 +1006,7 @@ export class MetaVector
 		let type = this.typeObj[p[1]];
 		let x = p[2], y = p[3];
 		let txt = p[4];
-		
+
 		let family = type.fontFamily, sz = type.fontSize;
 
 		x = this.offsetX + this.scale * x;
@@ -1016,7 +1016,7 @@ export class MetaVector
 		let style = `fill: ${colour}; font-family: ${family}; font-size: ${sz};`;
 
 		let node = $('<text></text>').appendTo(svg);
-		node.attr({'x': x, 'y': y, 'style': style});	
+		node.attr({'x': x, 'y': y, 'style': style});
 		node.text(txt);
 	}
 
@@ -1049,7 +1049,7 @@ export class MetaVector
 	private findOrCreateType(typeDef:any)
 	{
 		for (let i = 0; i < this.types.length; i++)
-		{	
+		{
 			if (this.types[i].length != typeDef.length) continue;
 			let match = true;
 			for (let j = 0; j < typeDef.length; j++) if (typeDef[j] != this.types[i][j])

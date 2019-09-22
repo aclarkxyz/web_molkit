@@ -4,7 +4,7 @@
     (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
-    
+
     http://molmatinf.com
 
 	[PKG=webmolkit]
@@ -24,12 +24,12 @@ namespace WebMolKit /* BOF */ {
 
 /*
 	Embedded collection: obtains a datasheet representation and displays it as a group of molecules, primitive datatypes, and/or higher
-	order datastructures controlled by aspects.  
-	
+	order datastructures controlled by aspects.
+
 	The rendering parameters are quite raw, and presumed to be passed from an un-typed source, directly from the user:
 
         format: MIME, or shortcuts for "datasheet" or "sdfile"
-		encoding: raw by default, but can be set to "base64" 
+		encoding: raw by default, but can be set to "base64"
         scheme: molecule colouring schema (wob/cob/bow/cow)
         scale: points per angstrom
         padding: number of pixels to space around the content
@@ -49,7 +49,7 @@ interface EmbedCollectionColumn
 	name:string;
 	aspect:Aspect; // null for primitive
 	type:string; // if aspect, either 'text' or 'graphic'
-	idx:number; // primitive: column#; aspect: text/graphic rendering # 
+	idx:number; // primitive: column#; aspect: text/graphic rendering #
 }
 
 export class EmbedCollection extends EmbedChemistry
@@ -69,37 +69,37 @@ export class EmbedCollection extends EmbedChemistry
 		if (options.encoding == 'base64') datastr = fromUTF8(atob(datastr.trim()));
 
 		let ds:DataSheet = null, name:string = options.name;
-		if (options.format == 'datasheet' || options.format == 'chemical/x-datasheet') 
+		if (options.format == 'datasheet' || options.format == 'chemical/x-datasheet')
 		{
 			ds = DataSheetStream.readXML(datastr);
 		}
 		else if (options.format == 'sdfile' || options.format == 'chemical/x-mdl-sdfile')
 		{
-			try 
+			try
 			{
 				let mdl = new MDLSDFReader(datastr);
 				ds = mdl.parse();
 			}
-			catch (ex) {this.failmsg = ex;} 
+			catch (ex) {this.failmsg = ex;}
 		}
 		else // free for all
 		{
 			try {ds = DataSheetStream.readXML(datastr);} catch (ex) {}
 			if (ds == null)
 			{
-				try 
+				try
 				{
 					let mdl = new MDLSDFReader(datastr);
 					ds = mdl.parse();
 				}
-				catch (ex) {} // (silent when not forcing a type) 
+				catch (ex) {} // (silent when not forcing a type)
 			}
 		}
 
 		if (ds == null) return;
 
 		if (options.padding) this.padding = options.padding;
-		
+
 		if (options.background == 'transparent') this.clearBackground();
 		else if (options.background)
 		{
@@ -110,7 +110,7 @@ export class EmbedCollection extends EmbedChemistry
 				this.setBackgroundGradient(htmlToRGB(bg.substring(0, comma)), htmlToRGB(bg.substring(comma + 1)));
 		}
 
-		if (options.border == 'transparent') this.borderCol = MetaVector.NOCOLOUR; 
+		if (options.border == 'transparent') this.borderCol = MetaVector.NOCOLOUR;
 		else if (options.border) this.borderCol = htmlToRGB(options.border);
 
 		if (options.radius != null) this.borderRadius = parseInt(options.radius);
@@ -133,12 +133,12 @@ export class EmbedCollection extends EmbedChemistry
 	{
 		this.tagType = 'span';
 		super.render(parent);
-		
+
 		let span = this.content, ds = this.ds, policy = this.policy;
 
 		span.css('display', 'inline-block');
 		span.css('line-height', '0');
-		if (!this.tight) span.css('margin-bottom', '1.5em'); 
+		if (!this.tight) span.css('margin-bottom', '1.5em');
 
 		if (ds != null)
 		{
@@ -252,8 +252,8 @@ export class EmbedCollection extends EmbedChemistry
 	{
 		let txt = '', ct = this.ds.colType(col), align = 'center';
 		if (ct == DataSheetColumn.String) {txt = this.ds.getString(row, col); align = 'left';}
-		else if (ct == DataSheetColumn.Integer) txt = this.ds.getInteger(row, col).toString(); 
-		else if (ct == DataSheetColumn.Real) txt = this.ds.getReal(row, col).toString(); 
+		else if (ct == DataSheetColumn.Integer) txt = this.ds.getInteger(row, col).toString();
+		else if (ct == DataSheetColumn.Real) txt = this.ds.getReal(row, col).toString();
 		else if (ct == DataSheetColumn.Boolean) txt = this.ds.getBoolean(row, col) ? 'true' : 'false';
 		td.text(txt);
 		td.css('text-align', align);
@@ -292,7 +292,7 @@ export class EmbedCollection extends EmbedChemistry
 
 		td.css('text-align', 'center');
 		metavec.normalise();
-		$(metavec.createSVG()).appendTo(td);		
+		$(metavec.createSVG()).appendTo(td);
 	}
 }
 

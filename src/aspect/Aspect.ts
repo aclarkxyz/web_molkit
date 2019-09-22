@@ -4,7 +4,7 @@
     (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
-    
+
     http://molmatinf.com
 
 	[PKG=webmolkit]
@@ -42,7 +42,7 @@ export interface AspectTextRendering
 	name:string;
 	descr:string;
 	text:string;
-	type:number; // one of Aspect.TEXT_* 
+	type:number; // one of Aspect.TEXT_*
 }
 export interface AspectGraphicRendering
 {
@@ -66,7 +66,7 @@ export abstract class Aspect
 
 	// must return a simple, short string describing the aspect
 	public abstract plainHeading():string;
-	
+
 	// if the aspect wants to "claim" any column names (whether they exist or not) for its own purposes - nominally both
 	// rendering and editing - it should override this method and return true; various implementations may or may not choose
 	// to honour this
@@ -78,19 +78,19 @@ export abstract class Aspect
 		let resMask = Vec.booleanArray(false, colNames.length);
 		for (let n = 0; n < colNames.length; n++) resMask[n] = this.isColumnReserved(colNames[n]);
 		return resMask;
-	}	
-	
+	}
+
 	// some aspects reserve multiple rows as a "block" (e.g. multistep reaction experiments); the following two methods must
 	// be overidden to achieve this: a row must be able to indicate whether it is the beginning of a block; and the block size
 	// must be countable; the default implementation implies each row is a singleton; note that both of these methods are
 	// required, because the implied results may be inconsistent with inconsistent datasheets (e.g. streams)
 	public rowFirstBlock(row:number):boolean {return true;}
 	public rowBlockCount(row:number):number {return 1;}
-	
+
 	// given another aspect (presumed to be the same type), make sure the parameters of the current aspect are such that it can
 	// accommodate data from the new one; various header settings and columns must be modified as necessary
 	public aspectUnion(other:Aspect):void {}
-	
+
 	// rendering:
 	//		an aspect may optionally volunteer to provide some static visualisation data to describe itself; this balances
 	//		out against the aspect's ability to reserve columns, which typically means that they will not be displayed; the
@@ -104,14 +104,14 @@ export abstract class Aspect
 
 	public numTextRenderings(row:number):number {return 0;}
 	public produceTextRendering(row:number, idx:number):AspectTextRendering {return null;}
-	
-	// graphical rendering: the caller must provide a vector graphics context, into which will be drawn a visual representation 
+
+	// graphical rendering: the caller must provide a vector graphics context, into which will be drawn a visual representation
 	// of the rendering; a render policy is provided, and the implementation is expected make use of it (e.g. scale, foreground
 	// colour); the returned object provides additional metadata: the vector graphics builder object is typically the
 	// same object as provided as the parameter
 	public numGraphicRenderings(row:number):number {return 0;}
 	public produceGraphicRendering(row:number, idx:number, policy:RenderPolicy):AspectGraphicRendering {return null;}
-	
+
 	// header rendering: some number of text items that describe the datasheet overall; these are typically {name:value} pairs, which
 	// are shown at the beginning of the datasheet, and supplement the universal title & description fields
 	public numHeaderRenderings():number {return 0;}

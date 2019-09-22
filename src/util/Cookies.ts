@@ -4,7 +4,7 @@
     (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
-    
+
     http://molmatinf.com
 
 	[PKG=webmolkit]
@@ -19,8 +19,8 @@ namespace WebMolKit /* BOF */ {
 export class Cookies
 {
 	private molecules:Molecule[] = [];
-	
-	private ASPIRIN = 
+
+	private ASPIRIN =
 		'SketchEl!(13,13)\n' +
 		'C=-1.6010,4.3000;0,0,i0\n' +
 		'C=-2.9000,3.5500;0,0,i1\n' +
@@ -50,7 +50,7 @@ export class Cookies
 		'11-13=2,0\n' +
 		'!End';
 
-	private CAFFEINE = 
+	private CAFFEINE =
 		'SketchEl!(14,15)\n' +
 		'N=-0.2062,0.7255;0,0,i0\n' +
 		'C=1.0929,1.4755;0,0,i0\n' +
@@ -83,11 +83,11 @@ export class Cookies
 		'1-14=1,0\n' +
 		'!End';
 
-	private MAX_MOL_STASH = 20; // when more than this many molecules is accumulate, drop things off the edge  
-	
+	private MAX_MOL_STASH = 20; // when more than this many molecules is accumulate, drop things off the edge
+
 	// --------------------------------------- public methods ---------------------------------------
 
-	constructor() 
+	constructor()
 	{
 		for (let idx = 0; ; idx++)
 		{
@@ -103,25 +103,25 @@ export class Cookies
 	{
 		return this.molecules.length;
 	}
-	
+
 	public getMolecule(idx:number):Molecule
 	{
 		return this.molecules[idx];
 	}
-	
+
 	public deleteMolecule(idx:number):void
 	{
 		this.molecules.splice(idx, 1);
 		this.setMolecules();
 	}
-	
+
 	// called when a new molecule is defined by the user
 	public stashMolecule(mol:Molecule):void
 	{
 		if (MolUtil.isBlank(mol)) return;
-		
+
 		// TODO: upgrade this to SketchUtil.sketchEquivalent (whenever it gets implemented)
-		for (let n = 0; n < this.molecules.length; n++) if (mol.compareTo(this.molecules[n]) == 0) 
+		for (let n = 0; n < this.molecules.length; n++) if (mol.compareTo(this.molecules[n]) == 0)
 		{
 			if (n > 0)
 			{
@@ -135,7 +135,7 @@ export class Cookies
 		while (this.molecules.length > this.MAX_MOL_STASH) this.molecules.pop();
 		this.setMolecules();
 	}
-	
+
 	// move the selected index to the top (position 0)
 	public promoteToTop(idx:number):void
 	{
@@ -144,7 +144,7 @@ export class Cookies
 		this.molecules.splice(0, 0, mol);
 		this.setMolecules();
 	}
-	
+
 	// typically called right after granting permission: sets up the cache with example molecules
 	public seedMolecules():void
 	{
@@ -169,12 +169,12 @@ export class Cookies
 		if (parts.length == 2) return decodeURIComponent(parts.pop().split(';').shift());
 		return null;
 	}
-	
+
 	private set(key:string, val:string):void
 	{
 		document.cookie = key + '=' + encodeURIComponent(val);
 	}
-	
+
 	private remove(key:string):void
 	{
 		document.cookie = key + '=; expires=Thu, 01 Jan 1970 00:00:00 GMT';

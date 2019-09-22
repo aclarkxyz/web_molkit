@@ -4,7 +4,7 @@
     (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
-    
+
     http://molmatinf.com
 
 	[PKG=webmolkit]
@@ -24,9 +24,9 @@ export class Widget
 {
 	protected tagType = 'div';
 	public content:JQuery = null;
-	
+
 	constructor() {}
-	
+
 	// create the underlying structure; the parent parameter must be jQuery-compatible
 	public render(parent:any):void
 	{
@@ -41,7 +41,7 @@ export class Widget
 		this.content = null;
 	}
 
-	// convenience function: attaches a tooltip to the main content element, after rendering	
+	// convenience function: attaches a tooltip to the main content element, after rendering
 	public addTooltip(bodyHTML:string, titleHTML?:string):void
 	{
 		addTooltip(this.content, bodyHTML, titleHTML);

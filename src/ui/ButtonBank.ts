@@ -4,7 +4,7 @@
     (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
-    
+
     http://molmatinf.com
 
 	[PKG=webmolkit]
@@ -16,7 +16,7 @@ namespace WebMolKit /* BOF */ {
 	ButtonBank: abstract base class for providing a "bank of buttons". The instance is expected to server up a list
 	of renderable buttons, and to respond when buttons are pressed. A ButtonBank is always owned by a ButtonView instance,
 	which calls the shots.
-	
+
 	Content:
 		.buttons: an array of buttons, each of them an object with the following properties:
 			.id: identification code supplied when a button is activated
@@ -44,7 +44,7 @@ export abstract class ButtonBank
 	public buttonView:any; // the widget parent
 	public isSubLevel = false; // true if it's not the first-on-stack
 	public buttons:ButtonBankItem[] = [];
-	
+
 	constructor() {}
 
 	// called when the bank is added to a view; the .ownerView property will be set at this point
@@ -59,7 +59,7 @@ export abstract class ButtonBank
 
 	// a key has been pressed: the button bank may choose to react to it
 	public claimKey(event:JQueryEventObject):boolean {return false;}
-	
+
 	// override to capture the closing of the bank (a cleanup opportunity)
 	public bankClosed() {}
 
@@ -91,12 +91,12 @@ export abstract class ButtonBank
 
 		if (event.keyCode == 27) ch = 'escape';
 		else if (event.keyCode == 8) ch = 'backspace';
-		else if (event.keyCode == 46) ch = 'delete'; 
+		else if (event.keyCode == 46) ch = 'delete';
 
 		if (mshift)
 		{
 			// special deal: some shifted characters look better if they're displayed unshifted; have to do a switcheroo
-			const SHIFT_SUBST:{[id:string] : string} = 
+			const SHIFT_SUBST:{[id:string] : string} =
 				{'1': '!', '2': '@', '3': '#', '4': '$', '5': '%', '6': '^', '7': '&', '8': '*', '9': '(', '0': ')', '-': '_', '=': '+'};
 			let subst = SHIFT_SUBST[mkey];
 			if (subst) mkey = subst;

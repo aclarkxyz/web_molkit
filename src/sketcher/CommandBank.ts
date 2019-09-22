@@ -4,7 +4,7 @@
     (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
-    
+
     http://molmatinf.com
 
 	[PKG=webmolkit]
@@ -33,26 +33,26 @@ const ELEMENTS_S_BLOCK:string[] =
 	'Li', 'Na', 'K',  'Rb', 'Cs', 'Fr', 'Sc',
 	'Be', 'Mg', 'Ca', 'Sr', 'Ba', 'Ra', 'Y'
 ];
-	
+
 const ELEMENTS_P_BLOCK:string[] =
 [
 	'B',  'Al', 'Si', 'Ga', 'Ge', 'As', 'Se',
 	'In', 'Sn', 'Sb', 'Te', 'Tl', 'Pb', 'Bi', 'Po', 'At'
 ];
-	
+
 const ELEMENTS_D_BLOCK:string[] =
 [
 	'Ti', 'V' , 'Cr', 'Mn', 'Fe', 'Co', 'Ni', 'Cu', 'Zn',
 	'Zr', 'Nb', 'Mo', 'Tc', 'Ru', 'Rh', 'Pd', 'Ag', 'Cd',
 	'Hf', 'Ta', 'W',  'Re', 'Os', 'Ir', 'Pt', 'Au', 'Hg'
 ];
-	
+
 const ELEMENTS_F_BLOCK:string[] =
 [
 	'La', 'Ce', 'Pr', 'Nd', 'Sm', 'Eu', 'Gd', 'Tb', 'Dy',
 	'Ho', 'Er', 'Tm', 'Yb', 'Lu', 'Ac', 'Th', 'Pa', 'U'
 ];
-	
+
 const ELEMENTS_ABBREV:string[] =
 [
 	'X',  'Y',  'Z',  'Q',  'M',  'L',  'E',  'A',  'R',
@@ -329,7 +329,7 @@ export class CommandBank extends ButtonBank
 		else if (id == 'fblock') this.buttonView.pushBank(new CommandBank(this.owner, CommandType.FBlock));
 		else if (id == 'noble') this.buttonView.pushBank(new CommandBank(this.owner, CommandType.Noble));
 		else alert('Unhandled command: "' + id + '"');
-		
+
 		if (actv > 0)
 		{
 			new MoleculeActivity(this.owner, actv, param).execute();
@@ -340,7 +340,7 @@ export class CommandBank extends ButtonBank
 	{
 		//let ch = String.fromCharCode(event.keyCode || event.charCode);
 		//console.log('Claim/Command['+ch+'] key='+event.keyCode+' chcode='+event.charCode);
-		
+
 		for (let listItems of [COMMANDS_MAIN, COMMANDS_ATOM, COMMANDS_BOND, COMMANDS_SELECT, COMMANDS_MOVE]) for (let item of listItems)
 		{
 			if (ButtonBank.matchKey(event, item.mnemonic))

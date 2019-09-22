@@ -4,7 +4,7 @@
 	(c) 2010-2018 Molecular Materials Informatics, Inc.
 
 	All rights reserved
-	
+
 	http://molmatinf.com
 
 	[PKG=webmolkit]
@@ -20,12 +20,12 @@ namespace WebMolKit /* BOF */ {
 /*
 	Bond artifacts: looks for metadata instructions that indicate that certain core bond types should be drawn in some way other than
 	the minimalistic bond primitives that are available in the core datastructure.
-	
+
 	Types:
 		ResPath: a linear resonance pathway, where the bond order and total charge are depicted as a continuous average
 		ResRing: a ring pathway, where the bond order and total charge are circularly delocalised
 		Arene: an atom having a bond that protrudes into the centre of a group of resonance-delocalised atoms (usually a ring)
-		
+
 	The atom orderings are guaranteed to be in a sensible order, i.e. path/ring traversal.
 */
 
@@ -54,7 +54,7 @@ export class BondArtifact
 	private arenes = new Map<number, BondArtifactArene>();
 
 	// ------------ public methods ------------
-	
+
 	constructor(public mol:Molecule)
 	{
 		// pull out the raw content from the molecule's extra fields
@@ -67,7 +67,7 @@ export class BondArtifact
 				else if (str.startsWith(BONDARTIFACT_EXTRA_ARENE)) this.appendArene(n, str.substring(BONDARTIFACT_EXTRA_ARENE.length).split(':'));
 			}
 		}
-		
+
 		// clean each one up, or remove if invalid
 		for (let [blk, res] of this.resPaths.entries())
 		{
@@ -87,7 +87,7 @@ export class BondArtifact
 		}
 	}
 
-	// access to resulting content	
+	// access to resulting content
 	public getPathBlocks():number[] {return Array.from(this.resPaths.keys());}
 	public getRingBlocks():number[] {return Array.from(this.resRings.keys());}
 	public getAreneBlocks():number[] {return Array.from(this.arenes.keys());}
@@ -114,7 +114,7 @@ export class BondArtifact
 			}
 			if (modified) mol.setAtomExtra(n, extra);
 		}
-		
+
 		// write back our datastructures
 		for (let [blk, path] of this.resPaths.entries())
 		{
@@ -145,7 +145,7 @@ export class BondArtifact
 			}
 		}
 	}
-	
+
 	// given the numbering system used by artifacts in another object, make sure that the current ones are renumbered so that they don't clash
 	public harmoniseNumbering(other:BondArtifact):void
 	{
@@ -158,7 +158,7 @@ export class BondArtifact
 			this.resPaths.set(blk, path);
 			blocks.push(blk);
 		}
-		
+
 		blocks = other.getRingBlocks();
 		let stashRings = this.getResRings();
 		this.resRings.clear();
@@ -179,13 +179,13 @@ export class BondArtifact
 			blocks.push(blk);
 		}
 	}
-	
+
 	// creates a new path using the given atoms, or returns false if invalid
 	public createPath(atoms:number[]):boolean
 	{
 		if (this.alreadyExists(atoms)) return false;
 		let path = this.atomsAsPath(atoms);
-		if (path) 
+		if (path)
 		{
 			let id = this.nextIdentifier(Array.from(this.resPaths.keys()));
 			this.resPaths.set(id, path);
@@ -199,7 +199,7 @@ export class BondArtifact
 	{
 		if (this.alreadyExists(atoms)) return false;
 		let ring = this.atomsAsRing(atoms);
-		if (ring) 
+		if (ring)
 		{
 			let id = this.nextIdentifier(Array.from(this.resRings.keys()));
 			this.resRings.set(id, ring);
@@ -207,13 +207,13 @@ export class BondArtifact
 		}
 		return false;
 	}
-	
+
 	// creates a new arene using the given atoms, or returns false if invalid
 	public createArene(atoms:number[]):boolean
 	{
 		if (this.alreadyExists(atoms)) return false;
 		let arene = this.atomsAsArene(atoms);
-		if (arene) 
+		if (arene)
 		{
 			let id = this.nextIdentifier(Array.from(this.arenes.keys()));
 			this.arenes.set(id, arene);
@@ -253,7 +253,7 @@ export class BondArtifact
 	}
 
 	// ------------ private methods ------------
-	
+
 	// handle a single atom being concatenated onto a putative instance
 	private appendResPath(atom:number, bits:string[]):void
 	{
@@ -291,7 +291,7 @@ export class BondArtifact
 		if (res.atoms.indexOf(atom) >= 0) return;
 		if (idx >= 1 && idx <= this.mol.numAtoms) res.atoms[idx - 1] = atom; else res.atoms.push(atom);
 	}
-	
+
 	// condense an array by removing zero's
 	private pack(arr:number[]):number[]
 	{
@@ -299,7 +299,7 @@ export class BondArtifact
 		for (let v of arr) if (v != 0) ret.push(v);
 		return ret;
 	}
-	
+
 	// takes an array of atom indices and makes sure it's a path of some sort; this may involve reordering the atoms; it must be possible to start at
 	// some atom and walk along the path; the first atom has the lowest adjacency; the given order of the atoms will inform tiebreakers; if the method
 	// returns true, then the atoms may be have been reordered
@@ -307,13 +307,13 @@ export class BondArtifact
 	{
 		let sz = atoms.length;
 		if (sz < 2) return false;
-		
+
 		let g = Graph.fromMolecule(this.mol);
 		for (let n = 0; n < this.mol.numAtoms; n++) g.setIndex(n, n + 1);
 		g = g.subgraphIndex(Vec.add(atoms, -1));
 		let pos = 0;
 		for (let n = 1; n < sz; n++) if (g.numEdges(n) < g.numEdges(pos)) pos = n;
-		
+
 		Vec.setTo(atoms, -1); // filling this with subgraph indices
 		for (let n = 0; n < sz; n++)
 		{
@@ -330,7 +330,7 @@ export class BondArtifact
 				pos = next;
 			}
 		}
-		
+
 		for (let n = 0; n < sz; n++) atoms[n] = g.getIndex(atoms[n]);
 		return true;
 	}
@@ -354,7 +354,7 @@ export class BondArtifact
 		}
 		return false;
 	}
-	
+
 	// make a list of atoms (arbitrary order) into an artifact of the given type
 	private atomsAsPath(atoms:number[]):BondArtifactResPath
 	{
@@ -393,7 +393,7 @@ export class BondArtifact
 			// the "centre" (aka metal) is the one with the highest adjacency within the subgraph
 			for (let n = 1; n < sz; n++) if (g.numEdges(n) > g.numEdges(best)) best = n;
 		}
-	
+
 		let arene:BondArtifactArene = {'centre': atoms[best], 'atoms': Vec.remove(atoms, best)};
 		if (!this.pathify(arene.atoms, false)) return null;
 		return arene;
@@ -406,7 +406,7 @@ export class BondArtifact
 		let keys = Vec.sorted(inkeys);
 		for (let n = 0; n < keys.length - 1; n++) if (keys[n + 1] != keys[n] + 1) return keys[n] + 1;
 		return keys[keys.length - 1] + 1;
-	}	
+	}
 }
 
 /* EOF */ }

@@ -4,7 +4,7 @@
 	(c) 2010-2018 Molecular Materials Informatics, Inc.
 
 	All rights reserved
-	
+
 	http://molmatinf.com
 
 	[PKG=webmolkit]
@@ -15,14 +15,14 @@
 
 namespace WebMolKit /* BOF */ {
 
-/* 
+/*
 	Representation of a unidirectional graph which has simple node labels, and no edge labels. Connections are stored in neighbour
 	list form. Construction of the graph is faster if the number of nodes are known ahead of time. Cloning a graph instance, or
 	building it from some other graph datastructure, has minimal overhead.
-	
+
 	Note that all indices are 0-based.
-	
-	Practical note: the Molecule class has much analogous functionality. The Graph class is intended to be a cleaner and more 
+
+	Practical note: the Molecule class has much analogous functionality. The Graph class is intended to be a cleaner and more
 	lightweight implementation of algorithms which are not necessarily related to a molecular datastructure.
 	The Molecule class has a lot of features such as caching calculated values, which is very useful for general purpose work;
 	the algorithms in the Graph class have more intuitive and predictable performance characteristics, and do not have shortcuts
@@ -50,7 +50,7 @@ export class Graph
 			}
 		}
 	}
-	
+
 	public clone():Graph
 	{
 		let g = new Graph();
@@ -65,7 +65,7 @@ export class Graph
 	{
 		let g = new Graph();
 		g.indices = [];
-		for (let n = 0; n < mol.numAtoms; n++) 
+		for (let n = 0; n < mol.numAtoms; n++)
 		{
 			g.nbrs.push([]);
 			g.indices.push(n + 1);
@@ -78,7 +78,7 @@ export class Graph
 		}
 		return g;
 	}
-	
+
 	public toString():string
 	{
 		let buff = '#nodes=' + this.nbrs.length;
@@ -102,14 +102,14 @@ export class Graph
 		if (this.indices == null) this.indices = Vec.numberArray(0, this.nbrs.length);
 		this.indices[node] = idx;
 	}
-	
+
 	public getLabel(node:number):string {return this.labels == null ? null : this.labels[node];}
 	public setLabel(node:number, lbl:string):void
 	{
 		if (this.labels == null) this.labels = Vec.stringArray('', this.nbrs.length);
 		this.labels[node] = lbl;
 	}
-	
+
 	public getProperty(node:number):any {return this.props == null ? null : this.props[node];}
 	public setProperty(node:number, prp:any):void
 	{
@@ -125,7 +125,7 @@ export class Graph
 		if (this.props != null) this.props.push(null);
 		return this.nbrs.length - 1;
 	}
-	
+
 	public hasEdge(node1:number, node2:number):boolean
 	{
 		if (this.nbrs[node1].length <= this.nbrs[node2].length)
@@ -133,7 +133,7 @@ export class Graph
 		else
 			return this.nbrs[node2].indexOf(node1) >= 0;
 	}
-	
+
 	public addEdge(node1:number, node2:number):void
 	{
 		this.nbrs[node1].push(node2);
@@ -146,7 +146,7 @@ export class Graph
 		if (i1 >= 0) this.nbrs[node1].splice(i1, 1);
 		if (i2 >= 0) this.nbrs[node2].splice(i2, 1);
 	}
-	
+
 	public isolateNode(node:number):void
 	{
 		for (let o of this.nbrs[node])
@@ -162,12 +162,12 @@ export class Graph
 	{
 		const oldsz = this.nbrs.length, newsz = Vec.maskCount(mask);
 		if (newsz == oldsz) return;
-		if (newsz == 0) 
+		if (newsz == 0)
 		{
-			this.nbrs = []; 
-			this.indices = null; 
-			this.labels = null; 
-			this.props = null; 
+			this.nbrs = [];
+			this.indices = null;
+			this.labels = null;
+			this.props = null;
 			return;
 		}
 
@@ -180,7 +180,7 @@ export class Graph
 			pos++;
 		}
 		this.nbrs = newnbrs;
-		
+
 		if (this.indices != null) this.indices = Vec.maskGet(this.indices, mask);
 		if (this.labels != null) this.labels = Vec.maskGet(this.labels, mask);
 		if (this.props != null) this.props = Vec.maskGet(this.props, mask);
@@ -188,7 +188,7 @@ export class Graph
 	public keepNodesIndex(idx:number[]) {this.keepNodesMask(Vec.idxMask(idx, this.numNodes));}
 	public removeNodesMask(mask:boolean[]) {this.keepNodesMask(Vec.notMask(mask));}
 	public removeNodesIndex(idx:number[]) {this.removeNodesMask(Vec.idxMask(idx, this.numNodes));}
-	
+
 	// subgraph: creates a new graph, typically smaller; note that the index version honours the new atom order
 	public subgraphIndex(idx:number[]):Graph
 	{
@@ -216,7 +216,7 @@ export class Graph
 		g.keepNodesMask(mask);
 		return g;
 	}
-	
+
 	// returns a list of connected component indices, one per node; the numbering system is based on node ordering
 	public calculateComponents():number[]
 	{
@@ -248,7 +248,7 @@ export class Graph
 
 		return cc;
 	}
-	
+
 	// returns an array of one group for each connected component
 	public calculateComponentGroups():number[][]
 	{
@@ -261,7 +261,7 @@ export class Graph
 		for (let n = 0; n < cc.length; n++) grp[cc[n] - 1].push(n);
 		return grp;
 	}
-	
+
 /*
 	public int calculateRingBlocks(int[] rblk)
 	{
@@ -272,11 +272,11 @@ export class Graph
 		Vec.setTo(rblk, 0);
 		int[] path = new int[sz + 1];
 		int plen = 0, numVisited = 0;
-		
+
 		while (true)
 		{
 			int last, current;
-	
+
 			if (plen == 0)
 			{
 				last = -1;
@@ -321,7 +321,7 @@ export class Graph
 			{
 				plen--;
 			}
-			
+
 			if (numVisited == sz) break;
 		}
 
@@ -334,17 +334,17 @@ export class Graph
 				if (rblk[j] == rblk[i]) rblk[j] = nextID;
 		}
 		for (int i = 0; i < sz; i++) rblk[i] = -rblk[i];
-		
+
 		return -nextID;
 	}
-	
+
 	public int[] calculateRingBlocks()
 	{
 		int[] rblk = new int[numNodes()];
 		calculateRingBlocks(rblk);
 		return rblk;
 	}
-	
+
 	public int[][] calculateRingBlockGroups()
 	{
 		int[] rblk = new int[numNodes()];
@@ -368,13 +368,13 @@ export class Graph
 		}
 		return grp;
 	}
-	
+
 	public int[][] findRingsOfSize(int size)
 	{
 		int[] rblk = new int[numNodes()];
 		int num = calculateRingBlocks(rblk);
 		if (num == 0) return new int[0][];
-		
+
 		List<int[]> rings = new ArrayList<>();
 		boolean[] mask = new boolean[numNodes()];
 
@@ -387,7 +387,7 @@ export class Graph
 		return rings.toArray(new int[rings.size()][]);
 	}
 
-	public int[][] findRingsOfSize(int size, boolean[] mask) 
+	public int[][] findRingsOfSize(int size, boolean[] mask)
 	{
 		List<int[]> rings = new ArrayList<>();
 		for (int n = 0; n < numNodes(); n++) if (mask[n])
@@ -399,7 +399,7 @@ export class Graph
 
 		return rings.toArray(new int[rings.size()][]);
 	}*/
-	
+
 	// returns breadth-first-search order
 	public calculateBFS(idx:number):number[]
 	{
@@ -432,7 +432,7 @@ export class Graph
 		}
 		return ret;
 	}
-	
+
 	/*public int[] calculateGravity()
 	{
 		final int sz = numNodes();
@@ -475,7 +475,7 @@ export class Graph
 			}
 			return;
 		}
-	
+
 		// path is full, so make sure it eats its tail
 		int last = path[psize - 1];
 		boolean fnd = false;
@@ -490,7 +490,7 @@ export class Graph
 			for (int i = 0; i < nbrs[p].length; i++) if (Vec.indexOf(nbrs[p][i], path) >= 0) count++;
 			if (count != 2) return; // invalid
 		}
-	
+
 		// reorder the array then look for duplicates
 		int first = 0;
 		for (int n = 1; n < psize; n++) if (path[n] < path[first]) first = n;
@@ -502,7 +502,7 @@ export class Graph
 			for (int n = 0; n < psize; n++) newPath[n] = path[(first + (flip ? psize - n : n)) % psize];
 			path = newPath;
 		}
-		
+
 		for (int n = 0; n < rings.size(); n++)
 		{
 			int[] look = (int[]) rings.get(n);
@@ -514,7 +514,7 @@ export class Graph
 			}
 			if (same) return;
 		}
-		
+
 		rings.add(path);
 	}
 	*/

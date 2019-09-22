@@ -4,7 +4,7 @@
     (c) 2010-2019 Molecular Materials Informatics, Inc.
 
     All rights reserved
-    
+
     http://molmatinf.com
 
 	[PKG=webmolkit]
@@ -36,7 +36,7 @@ export enum ForeignMoleculeExtra
 	// and a number of other formats which use this concept
 	ATOM_AROMATIC = 'yAROMATIC',
 	BOND_AROMATIC = 'yAROMATIC',
-	
+
 	// the atom-centred chirality settings, used explicitly by MDL Molfiles to denote chirality, or mixtures
 	ATOM_CHIRAL_MDL_ODD = 'yCHIRAL_MDL_ODD',
 	ATOM_CHIRAL_MDL_EVEN = 'yCHIRAL_MDL_EVEN',
@@ -44,7 +44,7 @@ export enum ForeignMoleculeExtra
 }
 
 export class ForeignMolecule
-{	
+{
 	// ----------------- public methods -----------------
 
 	// returns a mask for any atoms that have been explicitly marked as aromatic; note that this does not look at the

@@ -4,7 +4,7 @@
     (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
-    
+
     http://molmatinf.com
 
 	[PKG=webmolkit]
@@ -69,7 +69,7 @@ export class BayesianSource extends Aspect
 
 		let models:BayesianSourceModel[] = [];
 		let m:BayesianSourceModel = null;
-		
+
 		for (let line of content.split('\n'))
 		{
 			if (line == 'model:')
@@ -78,11 +78,11 @@ export class BayesianSource extends Aspect
 				m = {} as BayesianSourceModel;
 				continue;
 			}
-			
+
 			if (m == null) continue;
 			let eq = line.indexOf('=');
 			if (eq < 0) continue;
-			
+
 			if (line.startsWith('colNameMolecule=')) m.colNameMolecule = MoleculeStream.sk_unescape(line.substring(eq + 1));
 			else if (line.startsWith('colNameValue=')) m.colNameValue = MoleculeStream.sk_unescape(line.substring(eq + 1));
 			else if (line.startsWith('thresholdValue=')) m.thresholdValue = parseFloat(line.substring(eq + 1));
@@ -93,14 +93,14 @@ export class BayesianSource extends Aspect
 			else if (line.startsWith('noteOrigin=')) m.noteOrigin = MoleculeStream.sk_unescape(line.substring(eq + 1));
 			else if (line.startsWith('noteComment=')) m.noteComment = MoleculeStream.sk_unescape(line.substring(eq + 1));
 		}
-		
+
 		if (m != null) models.push(m);
 		return models;
 	}
 	public setModels(models:BayesianSourceModel[]):void
 	{
 		let lines:string[] = [];
-		
+
 		for (let m of models)
 		{
 			lines.push('model:');
@@ -114,22 +114,22 @@ export class BayesianSource extends Aspect
 			lines.push('noteOrigin=' + MoleculeStream.sk_escape(m.noteOrigin));
 			lines.push('noteComment=' + MoleculeStream.sk_escape(m.noteComment));
 		}
-		
+
 		let content = lines.join('\n');
 		for (let n = 0; n < this.ds.numExtensions; n++) if (this.ds.getExtType(n) == BayesianSource.CODE)
 		{
 			this.ds.setExtData(n, content.toString());
 			return;
 		}
-		this.ds.appendExtension('BayesianSource', BayesianSource.CODE, content.toString());		
+		this.ds.appendExtension('BayesianSource', BayesianSource.CODE, content.toString());
 	}
 
 	// ----------------- private methods -----------------
 
-	// workhorse for the constructor 
-	private setup():void  
+	// workhorse for the constructor
+	private setup():void
 	{
-		if (this.allowModify) 
+		if (this.allowModify)
 		{
 			let models = this.getModels();
 			this.setModels(models);

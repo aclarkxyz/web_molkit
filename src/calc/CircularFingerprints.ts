@@ -4,7 +4,7 @@
     (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
-    
+
     http://molmatinf.com
 
 	[PKG=webmolkit]
@@ -20,7 +20,7 @@ namespace WebMolKit /* BOF */ {
     	Original proprietary version:
     		J. Chem. Inf. Model., 50, 742–754 (2010)
     		http://pubs.acs.org/doi/abs/10.1021/ci100050t
-    		
+
     	Open source version (implemented in this module):
     		J. Cheminf., 6:38 (2014)
     		http://www.jcheminf.com/content/6/1/38
@@ -68,7 +68,7 @@ export class CircularFingerprints
 
 	// plugins: interception of fingerprint addition
 	public hookApplyNewFP:(newFP:CircularFP) => void = null;
-	public hookConsiderNewFP:(newFP:CircularFP) => void = null;	
+	public hookConsiderNewFP:(newFP:CircularFP) => void = null;
 
 	private identity:number[] = [];
 	private resolvedChiral:boolean[] = [];
@@ -92,10 +92,10 @@ export class CircularFingerprints
 		this.identity = Vec.numberArray(0, na);
 		this.resolvedChiral = Vec.booleanArray(false, na);
 		for (let n = 0; n < na; n++) this.atomGroup.push([]);
-		
+
 		// setup the potential correction between explicit vs. implicit hydrogens, and the stashed adjacency list
 		this.amask = Vec.booleanArray(false, na);
-		for (let n = 0; n < na; n++) 
+		for (let n = 0; n < na; n++)
 		{
 			this.amask[n] = mol.atomicNumber(n + 1) >= 2 && !MolUtil.hasAbbrev(mol, n + 1);
 			this.atomAdj.push([]);
@@ -112,7 +112,7 @@ export class CircularFingerprints
 				this.bondAdj[n].splice(i, 1);
 			}
 		}
-		
+
 		// seed the initial atom identities, at iteration zero
 		for (let n = 0; n < na; n++) if (this.amask[n])
 		{
@@ -145,13 +145,13 @@ export class CircularFingerprints
 		circ.calculate();
 		return circ;
 	}
-	
+
 	// access to the results/input content
 	public getMolecule():Molecule {return this.meta.mol;}
 	public get numFP():number {return this.fplist.length;}
 	public getFP(idx:number):CircularFP {return this.fplist[idx];}
 	public getFingerprints():CircularFP[] {return this.fplist.slice(0);}
-	
+
 	// pulls out just the unique instances of each hash code, and returns the sorted list
 	public getUniqueHashes():number[]
 	{
@@ -159,7 +159,7 @@ export class CircularFingerprints
 		for (let fp of this.fplist) hashes.add(fp.hashCode);
 		return Vec.sorted(Array.from(hashes));
 	}
-	
+
 	// as above, except cuts off the bits to a certain folding; note that the folding size must be an exponent of 2
 	public getFoldedHashes(maxBits:number):number[]
 	{
@@ -168,7 +168,7 @@ export class CircularFingerprints
 		for (let fp of this.fplist) hashes.add(fp.hashCode & andBits);
 		return Vec.sorted(Array.from(hashes));
 	}
-	
+
 	// calculates the Tanimoto coefficient for two lists of hash codes: these are assumed to be sorted and unique, which
 	// allows the calculation to be done in O(N) time
 	public static tanimoto(hash1:number[], hash2:number[]):number
@@ -190,13 +190,13 @@ export class CircularFingerprints
 	}
 
 	// ----------------- private methods -----------------
-	
+
 	// calculates an integer number that stores the bit-packed identity of the given atom
 	private initialIdentityECFP(atom:number):number
 	{
 		const mol = this.meta.mol;
 		let adj = mol.atomAdjList(atom); // (note: want them all)
-	
+
 		/*
 			Atom properties from the source reference:
 				(1) number of heavy atom neighbours
@@ -214,7 +214,7 @@ export class CircularFingerprints
 		let degree = Math.max(0, Chemistry.ELEMENT_BONDING[atno] - nhydr);
 		let chg = mol.atomCharge(atom);
 		let inring = mol.atomRingBlock(atom) > 0 ? 1 : 0;
-		
+
 		let crc = start_crc();
 		crc = feed_crc(crc, (nheavy << 4) | degree);
 		crc = feed_crc(crc, atno);
@@ -227,7 +227,7 @@ export class CircularFingerprints
 	private circularIterate(iter:number, atom:number):number
 	{
 		let adj = this.atomAdj[atom - 1], adjb = this.bondAdj[atom - 1];
-		
+
 		// build out a sequence, formulated as
 		//     {iteration,original#, adj0-bondorder,adj0-identity, ..., [chiral?]}
 		let seq = Vec.numberArray(0, 2 + 2 * adj.length);
@@ -238,7 +238,7 @@ export class CircularFingerprints
 			seq[2 * n + 2] = this.meta.isBondAromatic(adjb[n]) ? 0xF : this.meta.mol.bondOrder(adjb[n]);
 			seq[2 * n + 3] = this.identity[adj[n] - 1];
 		}
-		
+
 		// now sort the adjacencies by bond order first, then identity second
 		let p = 0;
 		while (p < adj.length - 1)
@@ -286,7 +286,7 @@ export class CircularFingerprints
 
 		return end_crc(crc);
 	}
-	
+
 	// takes a set of atom indices and adds all atoms that are adjacent to at least one of them; the resulting list of
 	// atom indices is sorted
 	private growAtoms(atoms:number[]):number[]
@@ -306,7 +306,7 @@ export class CircularFingerprints
 		if (this.hookApplyNewFP) this.hookApplyNewFP(newFP);
 		this.fplist.push(newFP);
 	}
-	
+
 	// consider adding a new fingerprint: if it's a duplicate with regard to the atom list, either replace the match or
 	// discard it
 	private considerNewFP(newFP:CircularFP):void
@@ -325,7 +325,7 @@ export class CircularFingerprints
 			this.fplist.push(newFP);
 			return;
 		}
-		
+
 		// if the preexisting fingerprint is from an earlier iteration, or has a lower hashcode, discard
 		if (fp.iteration < newFP.iteration || fp.hashCode < newFP.hashCode) return;
 		this.fplist[hit] = newFP;

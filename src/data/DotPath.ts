@@ -243,18 +243,18 @@ export class DotPath
 		// acids/bases: whenever one is paired with the other, it's not a blocking possibility
 		const ACIDS =
 		[
-			Chemistry.ELEMENT_B,  
-			Chemistry.ELEMENT_Al, Chemistry.ELEMENT_Si, 
-			Chemistry.ELEMENT_Ga, Chemistry.ELEMENT_Ge, 
-			Chemistry.ELEMENT_In, Chemistry.ELEMENT_Sn, 
+			Chemistry.ELEMENT_B,
+			Chemistry.ELEMENT_Al, Chemistry.ELEMENT_Si,
+			Chemistry.ELEMENT_Ga, Chemistry.ELEMENT_Ge,
+			Chemistry.ELEMENT_In, Chemistry.ELEMENT_Sn,
 			Chemistry.ELEMENT_Tl, Chemistry.ELEMENT_Pb,
 		];
 		const BASES =
 		[
-			Chemistry.ELEMENT_N,  Chemistry.ELEMENT_O,  Chemistry.ELEMENT_F, 
+			Chemistry.ELEMENT_N,  Chemistry.ELEMENT_O,  Chemistry.ELEMENT_F,
 			Chemistry.ELEMENT_P,  Chemistry.ELEMENT_S,  Chemistry.ELEMENT_Cl,
 			Chemistry.ELEMENT_As, Chemistry.ELEMENT_Se, Chemistry.ELEMENT_Br,
-			Chemistry.ELEMENT_Sb, Chemistry.ELEMENT_Te, Chemistry.ELEMENT_I, 
+			Chemistry.ELEMENT_Sb, Chemistry.ELEMENT_Te, Chemistry.ELEMENT_I,
 			Chemistry.ELEMENT_Bi, Chemistry.ELEMENT_Po, Chemistry.ELEMENT_At,
 		];
 

@@ -4,7 +4,7 @@
     (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
-    
+
     http://molmatinf.com
 
 	[PKG=webmolkit]
@@ -26,11 +26,11 @@ namespace WebMolKit /* BOF */ {
 /*
 	Embedded reaction: renders a single reaction Experiment entry (can be multistep). Various formats are acceptable, but only one
 	reaction is applicable; a datasheet with many reactions will only show the first one.
-	
+
 	The rendering parameters are quite raw, and presumed to be passed from an un-typed source, directly from the user:
 
 		format: MIME, or shortcuts for "datasheet" (... and others?)
-		encoding: raw by default, but can be set to "base64" 
+		encoding: raw by default, but can be set to "base64"
 		facet: one of 'header', 'scheme', 'quantity' or 'metrics' (default is 'scheme')
         scheme: molecule colouring schema (wob/cob/bow/cow)
         scale: points per angstrom
@@ -80,7 +80,7 @@ export class EmbedReaction extends EmbedChemistry
 		if (options.encoding == 'base64') datastr = fromUTF8(atob(datastr.trim()));
 
 		let xs:Experiment = null;
-		if (options.format == 'datasheet' || options.format == 'chemical/x-datasheet') 
+		if (options.format == 'datasheet' || options.format == 'chemical/x-datasheet')
 		{
 			let ds = DataSheetStream.readXML(datastr);
 			if (ds == null) {this.failmsg = 'Unable to parse raw XML datasheet.'; return;}
@@ -105,7 +105,7 @@ export class EmbedReaction extends EmbedChemistry
 		if (options.facet) this.facet = options.facet;
 
 		if (options.padding) this.padding = options.padding;
-		
+
 		if (options.background == 'transparent') this.clearBackground();
 		else if (options.background)
 		{
@@ -116,7 +116,7 @@ export class EmbedReaction extends EmbedChemistry
 				this.setBackgroundGradient(htmlToRGB(bg.substring(0, comma)), htmlToRGB(bg.substring(comma + 1)));
 		}
 
-		if (options.border == 'transparent') this.borderCol = MetaVector.NOCOLOUR; 
+		if (options.border == 'transparent') this.borderCol = MetaVector.NOCOLOUR;
 		else if (options.border) this.borderCol = htmlToRGB(options.border);
 
 		if (options.radius != null) this.borderRadius = parseInt(options.radius);
@@ -140,19 +140,19 @@ export class EmbedReaction extends EmbedChemistry
 	{
 		this.tagType = 'span';
 		super.render(parent);
-		
+
 		let span = this.content;
 
 		span.css('display', 'inline-block');
 		span.css('line-height', '0');
-		if (!this.tight) span.css('margin-bottom', '1.5em'); 
+		if (!this.tight) span.css('margin-bottom', '1.5em');
 
 		if (this.entry != null)
 		{
 			if (this.facet == EmbedReactionFacet.HEADER) this.renderHeader(span);
-			else if (this.facet == EmbedReactionFacet.SCHEME) this.renderScheme(span); 
-			else if (this.facet == EmbedReactionFacet.QUANTITY) this.renderQuantity(span); 
-			else if (this.facet == EmbedReactionFacet.METRICS) this.renderMetrics(span); 
+			else if (this.facet == EmbedReactionFacet.SCHEME) this.renderScheme(span);
+			else if (this.facet == EmbedReactionFacet.QUANTITY) this.renderQuantity(span);
+			else if (this.facet == EmbedReactionFacet.METRICS) this.renderMetrics(span);
 		}
 		else
 		{
@@ -199,7 +199,7 @@ export class EmbedReaction extends EmbedChemistry
 			td.css('border', '1px solid #D0D0D0');
 			td.css('padding', '0.2em');
 			td.css('vertical-align', 'middle');
-			
+
 			if (n == 0)
 			{
 				if (!this.entry.title) td.css('font-style', 'italic');
@@ -248,7 +248,7 @@ export class EmbedReaction extends EmbedChemistry
 	{
 		let quant = new QuantityCalc(this.entry);
 		quant.calculate();
-		
+
 		let table = $('<table></table>').appendTo(span);
 		table.css('font-family', '"HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif');
 		table.css('border-collapse', 'collapse');
@@ -269,7 +269,7 @@ export class EmbedReaction extends EmbedChemistry
 			let td = $('<td></td>').appendTo(tr);
 			td.css('border', '1px solid #D0D0D0');
 			td.css('padding', '0.2em');
-			td.css('text-align', 'center');		
+			td.css('text-align', 'center');
 			td.css('vertical-align', 'middle');
 			if (MolUtil.notBlank(qc.comp.mol))
 			{
@@ -285,7 +285,7 @@ export class EmbedReaction extends EmbedChemistry
 			td = $('<td></td>').appendTo(tr);
 			td.css('border', '1px solid #D0D0D0');
 			td.css('padding', '0.2em');
-			td.css('text-align', 'left');		
+			td.css('text-align', 'left');
 			td.css('vertical-align', 'top');
 
 			this.renderComponentText(td, qc);
@@ -384,7 +384,7 @@ export class EmbedReaction extends EmbedChemistry
 	{
 		let quant = new QuantityCalc(this.entry);
 		quant.calculate();
-		
+
 		let table = $('<table></table>').appendTo(span);
 		table.css('font-family', '"HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif');
 		table.css('border-collapse', 'collapse');
@@ -404,7 +404,7 @@ export class EmbedReaction extends EmbedChemistry
 			let th = $('<th></th>').appendTo(tr);
 			th.css('border', '1px solid #D0D0D0');
 			th.css('padding', '0.5em');
-			th.css('text-align', 'right');		
+			th.css('text-align', 'right');
 			th.css('vertical-align', 'middle');
 			th.css('white-space', 'nowrap');
 			th.css('font-weight', 'bold');
@@ -413,7 +413,7 @@ export class EmbedReaction extends EmbedChemistry
 			let td = $('<td></td>').appendTo(tr);
 			td.css('border', '1px solid #D0D0D0');
 			td.css('padding', '0.5em');
-			td.css('text-align', 'left');		
+			td.css('text-align', 'left');
 			td.css('vertical-align', 'middle');
 			td.css('white-space', 'nowrap');
 			if (n == 0)
@@ -451,7 +451,7 @@ export class EmbedReaction extends EmbedChemistry
 			let td = $('<td></td>').appendTo(tr);
 			td.css('border', '1px solid #D0D0D0');
 			td.css('padding', '0.2em');
-			td.css('text-align', 'center');		
+			td.css('text-align', 'center');
 			td.css('vertical-align', 'middle');
 			if (MolUtil.notBlank(qc.comp.mol))
 			{
@@ -467,7 +467,7 @@ export class EmbedReaction extends EmbedChemistry
 			td = $('<td></td>').appendTo(tr);
 			td.css('border', '1px solid #D0D0D0');
 			td.css('padding', '0.5em');
-			td.css('text-align', 'left');		
+			td.css('text-align', 'left');
 			td.css('vertical-align', 'top');
 
 			let pmi1 = this.combineQuant(gm.massReact, 'g'), pmi2 = this.combineQuant(gm.massProd, 'g');
@@ -514,7 +514,7 @@ export class EmbedReaction extends EmbedChemistry
 		}
 		return str;
 	}
-	
+
 	// sums a bunch of values, with optional units
 	private sumQuant(values:number[], units:string, requireSomething:boolean):string
 	{
@@ -547,7 +547,7 @@ export class EmbedReaction extends EmbedChemistry
 		if (sum2 <= 0) return '?';
 		let val = mul * sum1 / sum2;
 		if (!Number.isNaN(max)) val = Math.min(val, max);
-		
+
 		let ret = formatDouble(val, 4);
 		if (units) ret += ' ' + units;
 		return ret;
@@ -593,18 +593,18 @@ export class EmbedReaction extends EmbedChemistry
 	private doiToLink(doi:string):string
 	{
 		if (doi.startsWith('http://') || doi.startsWith('https://')) return doi;
-	
+
 		let m = EmbedReaction.PTN_DOI1.exec(doi);
 		if (m) return 'http://dx.doi.org/' + m[1];
 		m = EmbedReaction.PTN_DOI2.exec(doi);
 		if (m) return 'http://dx.doi.org/' + m[1];
-		
+
 		// note: there doesn't seem to be a way to turn an ISBN into a URL, which is rather unfortunate
 		m = EmbedReaction.PTN_ISBN.exec(doi);
 		if (m) return 'ISBN: ' + m[1];
-	
+
 		return null; // fail
-	}	
+	}
 }
 
 /* EOF */ }

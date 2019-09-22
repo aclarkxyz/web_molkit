@@ -4,7 +4,7 @@
     (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
-    
+
     http://molmatinf.com
 
 	[PKG=webmolkit]
@@ -88,7 +88,7 @@ export interface SketchState
 	currentAtom:number;
 	currentBond:number;
 	selectedMask:boolean[];
-	
+
 	// only used in specific circumstances
 	permutations?:FusionPermutation[];
 }
@@ -109,11 +109,11 @@ export class MoleculeActivity
 	private subjectMask:boolean[];
 	private subjectIndex:number[];
 	private subjectLength:number;
-	private hasSelected:boolean; 
+	private hasSelected:boolean;
 
 	private output:SketchState;
 	private errmsg:string;
-	
+
 	constructor(private owner:any, private activity:ActivityType, private param:any /*{[id:string]: any}*/, override?:{[id:string]: any})
 	{
 		this.input = owner.getState();
@@ -162,7 +162,7 @@ export class MoleculeActivity
 
 		/*console.log('INPUT:' + JSON.stringify(this.input));
 		console.log('subject:' + this.subjectIndex);
-		console.log('mask: ' + this.subjectMask);*/	
+		console.log('mask: ' + this.subjectMask);*/
 	}
 
 	// --------------------------------------- public methods ---------------------------------------
@@ -179,7 +179,7 @@ export class MoleculeActivity
 	public execute():void
 	{
 		let param = this.param;
-		
+
 		if (this.activity == ActivityType.Delete)
 		{
 			this.execDelete();
@@ -439,13 +439,13 @@ export class MoleculeActivity
 			if (result.currentBond >= 0) this.output.currentBond = result.currentBond;
 			if (result.selectedMask != null) this.output.selectedMask = result.selectedMask;
 			this.errmsg = result.errmsg;
-			
+
 			if (this.activity == ActivityType.TemplateFusion && result.permutations != null)
 			{
 				this.owner.setPermutations(result.permutations);
 			}
 			else this.finish();
-			
+
 			if ((this.activity == ActivityType.Copy || this.activity == ActivityType.Cut) && result.clipNative != null)
 			{
 				this.owner.performCopy(Molecule.fromString(result.clipNative));
@@ -496,7 +496,7 @@ export class MoleculeActivity
 				if (this.output.currentAtom > this.input.currentAtom) this.output.currentAtom--;
 			}
 		}
-		
+
 		// do the deletion
 		for (let n = this.subjectLength - 1; n >= 0; n--) this.output.mol.deleteAtomAndBonds(this.subjectIndex[n]);
 	}
@@ -513,7 +513,7 @@ export class MoleculeActivity
 			this.output.mol = MolUtil.subgraphMask(this.input.mol, Vec.notMask(this.subjectMask));
 		}
 	}
-	
+
 	public execClear():void
 	{
 		this.output.mol = new Molecule();
@@ -708,7 +708,7 @@ export class MoleculeActivity
 		if (!this.requireCurrent()) return;
 
 		this.output.selectedMask = this.input.selectedMask.slice(0);
-		
+
 		if (this.input.currentAtom > 0)
 		{
 			this.output.selectedMask[this.input.currentAtom - 1] = !this.output.selectedMask[this.input.currentAtom - 1];
@@ -755,7 +755,7 @@ export class MoleculeActivity
 				return;
 			}
 		}
-		
+
 		this.output.mol = this.input.mol.clone();
 
 		// when there's no subject, this is an add-atom operation
@@ -772,7 +772,7 @@ export class MoleculeActivity
 			{
 				if (keepAbbrev)
 					this.output.mol.setAtomElement(this.subjectIndex[n], element);
-				else 
+				else
 					MolUtil.setAtomElement(this.output.mol, this.subjectIndex[n], element);
 			}
 		}
@@ -839,14 +839,14 @@ export class MoleculeActivity
 	public execBond(order:number, type:number):void
 	{
 		if (!this.requireSubject()) return;
-		
+
 		// one atom subject: this is a request for a new bond
 		if (this.subjectLength == 1)
 		{
 			this.performBondNew(this.subjectIndex[0], order, type);
 			return;
 		}
-		
+
 		// see whether the selected atoms are from 2 disconnected groups, which determines whether it's a change-order operation
 		// or a connect operation
 		let ccmol = MolUtil.subgraphMask(this.input.mol, this.subjectMask);
@@ -878,9 +878,9 @@ export class MoleculeActivity
 		let mol = this.input.mol;
 		let a1 = CoordUtil.atomAtPoint(mol, x1, y1, 0.01), a2 = CoordUtil.atomAtPoint(mol, x2, y2, 0.01);
 		if (a1 > 0 && a2 > 0 && mol.findBond(a1, a2) > 0) return;
-	
+
 		this.output.mol = mol.clone();
-		
+
 		if (a1 == 0) a1 = this.output.mol.addAtom('C', x1, y1);
 		if (a2 == 0) a2 = this.output.mol.addAtom(element, x2, y2);
 		this.output.mol.addBond(a1, a2, order, type);
@@ -889,7 +889,7 @@ export class MoleculeActivity
 	public execBondSwitch():void
 	{
 		if (!this.requireSubject()) return;
-		
+
 		let mol = this.input.mol;
 
 		// decide which bonds are applicable
@@ -914,7 +914,7 @@ export class MoleculeActivity
 				dst.push(this.subjectIndex[0]);
 			}
 		}
-		
+
 		if (src == 0 || dst.length == 0)
 		{
 			this.errmsg = 'Subject must include a terminal bond.';
@@ -948,7 +948,7 @@ export class MoleculeActivity
 			this.errmsg = 'Subject atom must already have at least 2 bonds.';
 			return;
 		}
-		
+
 		let ang = SketchUtil.calculateNewBondAngles(this.input.mol, atom, 1);
 		if (ang.length == 0) ang = SketchUtil.exitVectors(this.input.mol, atom);
 		if (ang.length == 0)
@@ -970,9 +970,9 @@ export class MoleculeActivity
 				if (n == 0 || score < best) {best = score; baseAng = ang[n];}
 			}
 		}
-		
+
 		let ang1 = baseAng - 30.0 * DEGRAD, ang2 = baseAng + 30.0 * DEGRAD;
-		
+
 		// NOTE: maybe try out variations? ... may be better to just leave it as the entirely predictable 60 degrees...
 
 		let mol = this.input.mol.clone();
@@ -986,7 +986,7 @@ export class MoleculeActivity
 	public execJoin():void
 	{
 		if (!this.requireSubject()) return;
-		
+
 		this.output.mol = SketchUtil.joinOverlappingAtoms(this.input.mol, this.subjectMask);
 
 		if (this.output.mol == null)
@@ -1032,7 +1032,7 @@ export class MoleculeActivity
 			this.execNudge(dir, 1); // convert it to a nudge-lots operation
 		}
 	}
-	
+
 	public execFlip(axis:string):void
 	{
 		if (this.input.mol.numAtoms < 2)
@@ -1091,13 +1091,13 @@ export class MoleculeActivity
 		this.output.mol = mol.clone();
 		for (let n = 1; n <= mol.numAtoms; n++) if (mask[n - 1])
 		{
-			if (!isVertical) 
+			if (!isVertical)
 				this.output.mol.setAtomX(n, 2 * cx - this.output.mol.atomX(n));
 			else
 				this.output.mol.setAtomY(n, 2 * cy - this.output.mol.atomY(n));
 		}
 	}
-	
+
 	public execScale(mag:number):void
 	{
 		if (this.input.mol.numAtoms < 2)
@@ -1136,10 +1136,10 @@ export class MoleculeActivity
 				let a = idx2[n];
 				this.output.mol.setAtomPos(a, this.output.mol.atomX(a) + dx, this.output.mol.atomY(a) + dy);
 			}
-			
+
 			return;
 		}
-	
+
 		// scale about centre of gravity
 		let cx = 0, cy = 0;
 		if (this.input.currentAtom > 0)
@@ -1177,7 +1177,7 @@ export class MoleculeActivity
 	public execRotate(theta:number, centreX:number, centreY:number):void
 	{
 		theta *= DEGRAD; // (parameter is in degrees)
-		
+
 		let mol = this.input.mol;
 
 		// if a centre position is indicated, use that
@@ -1249,7 +1249,7 @@ export class MoleculeActivity
 	{
 		let subj = this.subjectIndex;
 		if (Vec.arrayLength(subj) == 0) subj = [refAtom];
-		
+
 		this.output.mol = this.input.mol.clone();
 		for (let a of subj) this.output.mol.setAtomPos(a, this.output.mol.atomX(a) + deltaX, this.output.mol.atomY(a) + deltaY);
 	}
@@ -1271,7 +1271,7 @@ export class MoleculeActivity
 			bonds[n] = outmol.findBond(atoms[n], atoms[nn]);
 			if (bonds[n] == 0) bonds[n] = outmol.addBond(atoms[n], atoms[nn], 1);
 		}
-		
+
 		// if aromaticity is desired, do an extremely crude Kekulisation
 		if (aromatic)
 		{
@@ -1292,7 +1292,7 @@ export class MoleculeActivity
 			{
 				let nn = n < rsz - 1 ? n + 1 : 0;
 				if (pi[n] || pi[nn]) continue;
-				
+
 				if (valence[n] > 0 && valence[nn] > 0)
 				{
 					outmol.setBondOrder(bonds[n], 2);
@@ -1313,10 +1313,10 @@ export class MoleculeActivity
 		let fusion = new TemplateFusion(mol, frag, '');
 		if (this.subjectLength == 0) fusion.permuteNone();
 		else if (this.subjectLength == 1) fusion.permuteAtom(this.subjectIndex[0]);
-		else if (this.subjectLength == 2 && mol.findBond(this.subjectIndex[0], this.subjectIndex[1]) > 0) 
+		else if (this.subjectLength == 2 && mol.findBond(this.subjectIndex[0], this.subjectIndex[1]) > 0)
 			fusion.permuteBond(this.subjectIndex[0], this.subjectIndex[1]);
 		else fusion.permuteMulti(this.subjectIndex);
-		
+
 		// package up the results
 		let permutations:any[] = [];
 		for (let perm of fusion.perms)
@@ -1339,7 +1339,7 @@ export class MoleculeActivity
 		let perm = fusion.getPerm(0)
 		let fused = perm.mol
 		var srcidx = perm.srcidx
-		
+
 		// consider the possibility that we might be wanting to convert a terminal atom directly into an abbreviation
 		let midx = perm.midx
 		let markback = (!perm.bridged && !perm.guided && midx.count == 1 && instate.mol.atomAdjCount(midx[0]) == 1)
@@ -1405,7 +1405,7 @@ export class MoleculeActivity
 			this.errmsg = 'Inline abbreviations must be terminal with exactly one attachment point.';
 			return;
 		}
-		
+
 		this.output.mol = mol;
 		this.zapSubject();
 		this.output.currentAtom = mol.numAtoms;
@@ -1424,7 +1424,7 @@ export class MoleculeActivity
 
 		let mol = this.input.mol.clone();
 		for (let n of idx) MolUtil.clearAbbrev(mol, n);
-		this.output.mol = mol; 
+		this.output.mol = mol;
 	}
 
 	public execAbbrevExpand():void
@@ -1440,17 +1440,17 @@ export class MoleculeActivity
 
 		let mol = this.input.mol.clone();
 		for (let n of idx) MolUtil.expandOneAbbrev(mol, n, true);
-		this.output.mol = mol; 
+		this.output.mol = mol;
 	}
 
 	public execBondArtifact(activity:ActivityType):void
 	{
 		if (!this.requireAtoms() || !this.requireSubject()) return;
-		
+
 		let artif = new BondArtifact(this.input.mol.clone());
 		let subject = this.subjectIndex.slice(0), curAtom = this.input.currentAtom;
 		if (curAtom > 0 && subject.indexOf(curAtom) < 0) subject.push(curAtom);
-		
+
 		if (activity == ActivityType.BondArtifactPath)
 		{
 			if (!artif.createPath(subject)) {this.errmsg = 'Path artifact not suitable.'; return;}
@@ -1467,7 +1467,7 @@ export class MoleculeActivity
 		{
 			if (!artif.removeArtifact(subject)) {this.errmsg = 'No artifact removed.'; return;}
 		}
-		
+
 		artif.rewriteMolecule();
 		this.output.mol = artif.mol;
 	}
@@ -1478,7 +1478,7 @@ export class MoleculeActivity
 	public void execBondInsert() throws Exception
 	{
 		if (!requireSubject()) return;
-		
+
 		if (currentBond == 0)
 		{
 			errmsg = 'There must be a current bond.';
@@ -1489,7 +1489,7 @@ export class MoleculeActivity
 			errmsg = 'Cannot insert into a ring-bond.';
 			return;
 		}
-		
+
 		int[][] sides = MolUtil.getBondSides(mol, currentBond);
 		int[] side1 = sides[0], side2 = sides[1];
 		int[] atoms = null;
@@ -1499,7 +1499,7 @@ export class MoleculeActivity
 		else if (!sel1 && sel2) atoms = side2;
 		else if (side1.length < side2.length) atoms = side1;
 		else atoms = side2;
-		
+
 		int alink = Vec.indexOf(a1, atoms) >= 0 ? a1 : a2;
 		outmol = mol.clone();
 		outmol.setBondOrder(currentBond, 1);
@@ -1513,7 +1513,7 @@ export class MoleculeActivity
 			outmol.deleteAtomAndBonds(n);
 			if (n < alink) alink--;
 		}
-		
+
 		mol.setAtomElement(alink, "C");
 		mol.setAtomCharge(alink, 0);
 		mol.setAtomUnpaired(alink, 0);
@@ -1532,28 +1532,28 @@ export class MoleculeActivity
 			errmsg = 'Unable to insert an atom.';
 			return;
 		}
-		
+
 		outmol = fusion.getPerm(0).mol;
 		zapSubject();
 		outCurrentAtom = alink;
 	}
-	
+
 	// input: (standard)
-	// output: 
+	// output:
 	//		.clipNative: the extracted subset
 	public void execCopy(boolean andCut)
 	{
 		if (!requireAtoms()) return;
-		
+
 		boolean[] mask = subjectLength == 0 ? Vec.booleanArray(true, mol.numAtoms) : subjectMask;
 		Molecule clipmol = MolUtil.subgraphWithAttachments(mol, mask);
 		output.put("clipNative", clipmol.toString());
-		
+
 		if (andCut) outmol = MolUtil.subgraph(mol, Vec.not(mask));
 	}*/
-	
+
 	// ----------------- private methods -----------------
-	
+
 	// if there is no subject, sets the error message and returns false
 	private requireSubject():boolean
 	{
@@ -1578,7 +1578,7 @@ export class MoleculeActivity
 		}
 		return true;
 	}
-	
+
 	// complains if there are no selected atoms
 	private requireSelected():boolean
 	{
@@ -1586,7 +1586,7 @@ export class MoleculeActivity
 		return this.hasSelected;
 	}
 
-	// for a set of groups of atoms, select one that is represented by the current subject; optionally advanced 
+	// for a set of groups of atoms, select one that is represented by the current subject; optionally advanced
 	// to the next group
 	private pickSelectedGroup(groups:number[][], dir:number):number
 	{
@@ -1615,11 +1615,11 @@ export class MoleculeActivity
 			let g = groups[i];
 			for (let j = 0; j < g.length; j++) if (this.subjectMask[g[j] - 1]) return i;
 		}
-		
+
 		return 0;
 	}
 
-	// makes sure output has no subject of any kind	
+	// makes sure output has no subject of any kind
 	private zapSubject():void
 	{
 		this.output.currentAtom = 0;
@@ -1681,7 +1681,7 @@ export class MoleculeActivity
 			this.errmsg = 'No bond changes made.';
 			return;
 		}
-		
+
 		this.output.mol = mol.clone();
 
 		for (let n = 0; n < bonds.length; n++)
@@ -1732,7 +1732,7 @@ export class MoleculeActivity
 			if (this.output.mol == null) this.errmsg = 'Could not re-fit the atom geometry.';
 			return;
 		}
-		
+
 		// decide whether to refit, or add a new bond onto a vacant slot
 		let ang = CoordUtil.atomBondAngles(mol, atom);
 		let newang = SketchUtil.mapAngleSubstituent(geom, ang);
@@ -1770,7 +1770,7 @@ export class MoleculeActivity
 			this.errmsg = 'One end of the bond must be terminal.';
 			return;
 		}
-		
+
 		// consider possible angles that the bond can be migrated to
 		let adj = mol.atomAdjList(bfr);
 		let x1 = mol.atomX(bfr), y1 = mol.atomY(bfr);
@@ -1786,7 +1786,7 @@ export class MoleculeActivity
 			this.errmsg = 'No alternative geometries identified.';
 			return;
 		}
-		
+
 		// pick the one that has the lowest angular increment from the current angle, i.e. around the clock
 		let bestAng = TWOPI + 1, bestX = 0, bestY = 0;
 		let curth = Math.atan2(y2 - y1, x2 - x1), r = norm_xy(x2 - x1, y2 - y1);
@@ -1835,7 +1835,7 @@ export class MoleculeActivity
 
 			if (subjmask[b1 - 1] && !subjmask[b2 - 1]) atom = b1;
 			else if (subjmask[b2 - 1] && !subjmask[b1 - 1]) atom = b2;
-			
+
 			if (atom == 0 || atom == junction) {}
 			else if (junction == 0) junction = atom;
 			else

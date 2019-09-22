@@ -4,7 +4,7 @@
     (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
-    
+
     http://molmatinf.com
 
 	[PKG=webmolkit]
@@ -18,7 +18,7 @@ namespace WebMolKit /* BOF */ {
 	Determines a series of numeric labels to describe an axis, and makes sure all these labels fit within the given width.
 	The min & max is described in the units of spacing along the axis, i.e. if this is a log scale, the numbers should be
 	post-log. The caller provides a function to transform the axis units back to the original units (e.g. log to pre-log).
-	The caller also provides a width measurement for the text. The full capabilities are appropriate for labelling an X-axis; 
+	The caller also provides a width measurement for the text. The full capabilities are appropriate for labelling an X-axis;
 	for a Y-axis, typically set the textWidth function to the height of the standard font.
 */
 
@@ -54,13 +54,13 @@ export class AxisLabeller
 
 		const width = this.width, minVal = this.minVal, maxVal = this.maxVal;
 		const range = maxVal - minVal, invRange = 1.0 / range;
-		
+
 		let position = (val:number):number => width * (val - minVal) * invRange;
 
 		// find boundaries by rounding the minimum & maximum values, such that they can be squeezed into the edge zones of the axis
 		let loT:number = null, hiT:number = null;
 		const bumpLess = 1 - 1E-5, bumpMore = 1 + 1E-5;
-//console.log('TVALUES:'+minT+','+maxT+', DIR='+dir);		
+//console.log('TVALUES:'+minT+','+maxT+', DIR='+dir);
 		got: for (let outer = 1E-10; outer <= 1E11; outer *= 10) for (let inner of [0.2, 0.5, 1])
 		{
 			let mag = outer * inner, inv = 1.0 / mag;
@@ -76,7 +76,7 @@ export class AxisLabeller
 			else if ((fltEqual(p2, 0) || p2 >= 0) && p2 <= 0.1 * width) loT = t2;
 			else if ((fltEqual(p3, 0) || p3 >= 0) && p3 <= 0.1 * width) loT = t3;
 			else continue;
-			
+
 			if (p6 >= 0.9 * width && (fltEqual(p6, width) || p6 <= width)) hiT = t6;
 			else if (p5 >= 0.9 * width && (fltEqual(p5, width) || p5 <= width)) hiT = t5;
 			else if (p4 >= 0.9 * width && (fltEqual(p4, width) || p4 <= width)) hiT = t4;

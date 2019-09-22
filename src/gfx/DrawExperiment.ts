@@ -4,7 +4,7 @@
     (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
-    
+
     http://molmatinf.com
 
 	[PKG=webmolkit]
@@ -26,7 +26,7 @@ namespace WebMolKit /* BOF */ {
 /*
 	Controlling class for drawing a molecule in a vector graphics format: this turns an "arranged molecule" instance into the series of primitives that
 	can be mapped directly to a rendering engine or output format, as encapsulated by the VectorGfxBuilder subclasses.
-	
+
 	Note that in this implementation of rendering, only the molecule is drawn, without interactive effects. The constructor/draw/build sequence should be
 	called only once during the lifetime of this object.
 */
@@ -34,13 +34,13 @@ namespace WebMolKit /* BOF */ {
 export class DrawExperiment
 {
 	private entry:ExperimentEntry;
-	private measure:ArrangeMeasurement; 
+	private measure:ArrangeMeasurement;
 	private policy:RenderPolicy;
 	private effects:RenderEffects;
 
 	private scale:number;
 	private invScale:number;
-	
+
 	// optional hooks to intercept rendering
 	public preDrawMolecule:(vg:MetaVector, idx:number, xc:ArrangeComponent, arrmol:ArrangeMolecule) => void = null;
 	public postDrawMolecule:(vg:MetaVector, idx:number, xc:ArrangeComponent, arrmol:ArrangeMolecule) => void = null;
@@ -48,7 +48,7 @@ export class DrawExperiment
 	public molDrawn:ArrangeMolecule[] = []; // useful to obtain later, sometimes
 
 	// --------------------- public methods ---------------------
-	
+
 	constructor(private layout:ArrangeExperiment, private vg:MetaVector)
 	{
 		this.entry = layout.entry;
@@ -62,7 +62,7 @@ export class DrawExperiment
 	public draw():void
 	{
 		// debug: draw outlines of components
-		//for (let xc of this.layout.components) this.vg.drawRect(xc.box.x, xc.box.y, xc.box.w, xc.box.h, MetaVector.NOCOLOUR, 0, 0xF0000000); 
+		//for (let xc of this.layout.components) this.vg.drawRect(xc.box.x, xc.box.y, xc.box.w, xc.box.h, MetaVector.NOCOLOUR, 0, 0xF0000000);
 
 		this.molDrawn = Vec.anyArray(null, this.layout.components.length);
 
@@ -76,7 +76,7 @@ export class DrawExperiment
 	}
 
 	// --------------------- private methods ---------------------
-	
+
 	private drawComponent(idx:number, xc:ArrangeComponent):void
 	{
 		let vg = this.vg, policy = this.policy;
@@ -153,11 +153,11 @@ export class DrawExperiment
 		let bx = xc.box.x + xc.padding, by = xc.box.y + xc.padding;
 		let bw = xc.box.w - 2 * xc.padding, bh = xc.box.h - 2 * xc.padding;
 
-		if (bw > bh) 
+		if (bw > bh)
 			this.drawArrow(bx, by + 0.5 * bh, bx + bw, by + 0.5 * bh, bh, this.policy.data.foreground, this.scale * 0.05);
 		else
 			this.drawArrow(bx + 0.5 * bw, by, bx + 0.5 * bw, by + bh, bw, this.policy.data.foreground, this.scale * 0.05);
-	}	
+	}
 	private drawSymbolPlus(xc:ArrangeComponent):void
 	{
 		let vg = this.vg, policy = this.policy;
@@ -175,9 +175,9 @@ export class DrawExperiment
 		let sz = bw, x2 = bx + bw, y2 = by + bh, x1 = x2 - sz, y1 = by;
 		if (annot == ArrangeComponentAnnot.Primary) y2 = y1 + sz;
 		else if (annot == ArrangeComponentAnnot.Waste) y1 = y2 - sz;
-		
+
 		//vg.drawRect(x1,y1,x2-x1,y2-y1,0x000000,1,NOCOLOUR);
-		
+
 		if (annot == ArrangeComponentAnnot.Primary)
 		{
 			let cx = 0.5 * (x1 + x2), cy = 0.5 * (y1 + y2), ext = 0.25 * sz;
@@ -212,7 +212,7 @@ export class DrawExperiment
 			let cx = x2 - 0.5 * tw, cy = y1 + 0.5 * th;
 			let ty = y1 + 0.25 * th, dsz = sz * 0.1, hsz = 0.5 * dsz;
 			let lw = 0.05 * this.scale, fg = policy.data.foreground;
-			
+
 			vg.drawLine(cx, y1, cx, y1 + th, fg, lw);
 			vg.drawLine(x2 - tw, ty, x2, ty, fg, lw);
 			vg.drawLine(x2 - tw, cy, x2, cy, fg, lw);
@@ -228,7 +228,7 @@ export class DrawExperiment
 		dy *= invD;
 		let ox = dy, oy = -dx;
 		let hx = x2 - dx * headsz, hy = y2 - dy * headsz;
-		let px = 
+		let px =
 		[
 			x1 + ox * 0.5 * linesz,
 			hx + ox * 0.5 * linesz,
@@ -238,7 +238,7 @@ export class DrawExperiment
 			hx - ox * 0.5 * linesz,
 			x1 - ox * 0.5 * linesz
 		];
-		let py = 
+		let py =
 		[
 			y1 + oy * 0.5 * linesz,
 			hy + oy * 0.5 * linesz,

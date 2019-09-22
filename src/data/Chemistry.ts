@@ -4,7 +4,7 @@
     (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
-    
+
     http://molmatinf.com
 
 	[PKG=webmolkit]
@@ -136,7 +136,7 @@ export class Chemistry
 			18,18,18,18,18,18,18,18,18,18
 	];
 
-	public static NATURAL_ATOMIC_WEIGHTS = 
+	public static NATURAL_ATOMIC_WEIGHTS =
 	[
 		0,1.00794,4.002602,6.941,9.012182,10.811,12.0107,14.0067,15.9994,18.9984032,20.1797,
 		22.989770,24.3050,26.981538,28.0855,30.973761,32.065,35.453,39.948,39.0983,40.078,
@@ -149,7 +149,7 @@ export class Chemistry
 		209,210,222,223,226,227,230.0331266,231.03588,233.039628,237,244,243,247,247,251,252,257,
 		258,259,262,261,262,266,264,277,268,271,272,285
 	];
-	
+
 	// readable constants for elements
 	public static ELEMENT_H = 1;
 	public static ELEMENT_He = 2;

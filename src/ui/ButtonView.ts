@@ -4,7 +4,7 @@
     (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
-    
+
     http://molmatinf.com
 
 	[PKG=webmolkit]
@@ -63,7 +63,7 @@ export class ButtonView extends Widget
 
 	// static cache: needs to be filled out just once; will contain the {icon:svg} pairs that can be used in the buttons
 	private static ACTION_ICONS:{[id:string] : string} = {};
-		
+
 	constructor(private position:string, private parentX:number, private parentY:number, private parentWidth:number, private parentHeight:number)
 	{
 		super();
@@ -74,14 +74,14 @@ export class ButtonView extends Widget
 	public static prepare(callback:() => void)
 	{
 		// if we have no RPC server, but we do have a resource URL, they're going to be loaded on demand, one file at a time
-		if (RPC.BASE_URL == null && RPC.RESOURCE_URL != null) ButtonView.ACTION_ICONS = {}; 
+		if (RPC.BASE_URL == null && RPC.RESOURCE_URL != null) ButtonView.ACTION_ICONS = {};
 
 		if (ButtonView.ACTION_ICONS != null)
 		{
 			callback();
 			return;
 		}
-		
+
 		let fcn = (result:any, error:ErrorRPC) =>
 		{
 			if (!result.actions)
@@ -90,7 +90,7 @@ export class ButtonView extends Widget
 				return;
 			}
 			ButtonView.ACTION_ICONS = result.actions;
-			
+
 			callback();
 		};
 		Func.getActionIcons({}, fcn);
@@ -118,20 +118,20 @@ export class ButtonView extends Widget
 	public render(parent:any):void
 	{
 		super.render(parent);
-		
+
 		this.content.css('position', 'absolute');
 		this.content.css('width', `${this.width}px`);
 		this.content.css('height', `${this.height}px`);
 		this.content.addClass('no_selection');
-		
+
 		this.layoutButtons();
-		
+
 		let canvasStyle = 'position: absolute; left: 0; top: 0;';
 		canvasStyle += 'pointer-events: none;';
 		this.canvas = newElement(this.content, 'canvas', {'width': this.width, 'height': this.height, 'style': canvasStyle}) as HTMLCanvasElement;
 		this.canvas.style.width = this.width + 'px';
 		this.canvas.style.height = this.height + 'px';
-		
+
 		this.applyOffset();
 		this.redraw();
 
@@ -151,7 +151,7 @@ export class ButtonView extends Widget
 		bank.isSubLevel = this.stack.length > 0;
 		bank.init();
 		this.stack.push(bank);
-		
+
 		if (this.canvas != null)
 		{
 			this.layoutButtons();
@@ -167,7 +167,7 @@ export class ButtonView extends Widget
 		if (this.stack.length == 0) return;
 		this.stack[this.stack.length - 1].bankClosed();
 		this.stack.length--;
-		
+
 		if (this.canvas != null)
 		{
 			this.layoutButtons();
@@ -241,14 +241,14 @@ export class ButtonView extends Widget
 		this.prefabImgSize = flag ? 44 : 36;
 		this.idealSize = flag ? 50 : 40;
 	}
-	
+
 	// returns true if the coordinate is (more or less) within the button outline, which is necessary for propagating mouse events;
 	// it's also sometimes handy for exterior code to check if the position is covered
 	public withinOutline(x:number, y:number)
 	{
 		let w = this.width, h = this.height;
 		if (x < 0 || x > w || y < 0 || y > h) return false;
-		
+
 		if (this.position == 'centre' || this.stack.length == 0) return true;
 		if (this.position == 'left')
 		{
@@ -287,7 +287,7 @@ export class ButtonView extends Widget
 		if (this.content == null) return; // too soon
 
 		let outPadding = this.outPadding, inPadding = this.inPadding;
-		
+
 		// clean up previous buttons
 		this.removeDisplayButtons();
 
@@ -300,7 +300,7 @@ export class ButtonView extends Widget
 			else if (this.position == 'top' || this.position == 'bottom') this.width = this.parentWidth;
 			return;
 		}
-		
+
 		// it not raised, it shall be small, and have only a grip
 		if (!this.isRaised)
 		{
@@ -317,11 +317,11 @@ export class ButtonView extends Widget
 			this.addGripButton();
 			return;
 		}
-			
+
 		let bank = this.stack[this.stack.length - 1];
 		bank.buttons = [];
 		bank.update();
-		
+
 		// decide how much room the 'pop button' takes up
 		let popWidth = 0, popHeight = 0;
 		if (this.stack.length == 1) {}
@@ -454,13 +454,13 @@ export class ButtonView extends Widget
 	private replaceCanvas():void
 	{
 		this.content.empty();
-		
-		for (let n = 0; n < this.display.length; n++) 
+
+		for (let n = 0; n < this.display.length; n++)
 		{
 			this.display[n].svgDOM = null;
 			this.display[n].helpSpan = null;
 		}
-				
+
 		let canvasStyle = 'position: absolute; left: 0; top: 0;';
 		canvasStyle += 'pointer-events: none;';
 		this.canvas = newElement(this.content, 'canvas', {'width': this.width, 'height': this.height, 'style': canvasStyle}) as HTMLCanvasElement;
@@ -517,9 +517,9 @@ export class ButtonView extends Widget
 	private redraw():void
 	{
 		if (!this.content || !this.canvas) return;
-		
+
 		// background
-		
+
 		let density = pixelDensity();
 		this.canvas.width = this.width * density;
 		this.canvas.height = this.height * density;
@@ -530,7 +530,7 @@ export class ButtonView extends Widget
 		ctx.save();
 		ctx.scale(density, density);
 		ctx.clearRect(0, 0, this.width, this.height);
-		
+
 		let path = this.traceOutline();
 		ctx.fillStyle = colourCanvas(this.background);
 		ctx.fill(path);
@@ -547,7 +547,7 @@ export class ButtonView extends Widget
 		for (let n = 0; n < this.display.length; n++)
 		{
 			const d = this.display[n], b = this.buttonFromID(d.id);
-			
+
 			let col1:number, col2:number;
 			if (this.highlightButton != null && d.id == this.highlightButton)
 			{
@@ -564,7 +564,7 @@ export class ButtonView extends Widget
 				col1 = this.buttonColNorm1;
 				col2 = this.buttonColNorm2;
 			}
-			
+
 			ctx.save();
 			path = pathRoundedRect(d.x + 0.5, d.y + 0.5, d.x + d.width - 1, d.y + d.height - 1, 5);
 			if (col2 != null)
@@ -580,20 +580,20 @@ export class ButtonView extends Widget
 			ctx.lineWidth = 0.5;
 			ctx.stroke(path);
 			ctx.restore();
-			
-			if (d.svgDOM != null) 
+
+			if (d.svgDOM != null)
 			{
 				$(d.svgDOM).remove();
 				d.svgDOM = null;
 			}
-			
+
 			if (b != null)
 			{
-				if (d.helpSpan == null) 
+				if (d.helpSpan == null)
 				{
 					d.helpSpan = $('<span style="position: absolute;"></span>').appendTo(this.content);
 					let txt = b.helpText;
-					if (b.mnemonic) 
+					if (b.mnemonic)
 					{
 						while (txt.endsWith('.')) txt = txt.substring(0, txt.length - 1);
 						txt += ' [' + b.mnemonic + ']';
@@ -605,7 +605,7 @@ export class ButtonView extends Widget
 				d.helpSpan.css('width', d.width + 'px');
 				d.helpSpan.css('height', d.height + 'px');
 			}
-			
+
 			if (b == null) {}
 			else if (b.imageFN != null && d.svgDOM == null)
 			{
@@ -615,7 +615,7 @@ export class ButtonView extends Widget
 
 				let putSVG = (svg:string):void =>
 				{
-					let extra = 'style="position: absolute; left: ' + bx + 'px; top: ' + by + 'px;' + 
+					let extra = 'style="position: absolute; left: ' + bx + 'px; top: ' + by + 'px;' +
 								' width: ' + sz + 'px; height: ' + sz + 'px; pointer-events: none;"';
 					svg = svg.substring(0, 4) + ' ' + extra + svg.substring(4);
 					d.svgDOM = $(svg)[0];
@@ -631,14 +631,14 @@ export class ButtonView extends Widget
 					let url = RPC.RESOURCE_URL + '/img/actions/' + b.imageFN + '.svg';
 					$.ajax(
 					{
-						'url': url, 
+						'url': url,
 						'type': 'GET',
 						'dataType': 'text',
 						'success': (svg:string) =>
 						{
 							svg = this.fixSVGFile(svg);
 							ButtonView.ACTION_ICONS[b.imageFN] = svg;
-							putSVG(svg); 
+							putSVG(svg);
 						}
 					});
   				}
@@ -678,7 +678,7 @@ export class ButtonView extends Widget
 				draw.offsetY = d.y + Math.floor(0.5 * (d.height - draw.height));
 				draw.renderContext(ctx);
 			}
-			
+
 			// optionally draw the submenus indicator
 			if (b != null && b.isSubMenu)
 			{
@@ -693,12 +693,12 @@ export class ButtonView extends Widget
 				ctx.fill();
 				ctx.restore();
 			}
-			
+
 			// if it's the grip-button, draw the caret
 			if (d.id == '*')
 			{
 				ctx.save();
-				
+
 				path = new Path2D();
 				let px:number[], py:number[], flip = this.isRaised;
 				if (this.position == 'left' || this.position == 'right')
@@ -721,15 +721,15 @@ export class ButtonView extends Widget
 				ctx.lineWidth = 0;
 				ctx.fill(path);
 				ctx.stroke(path);
-				
+
 				ctx.restore();
 			}
 			else if (d.id == '!')
 			{
 				ctx.save();
-				
+
 				let path1 = new Path2D(), path2 = new Path2D();
-				
+
 				let inset = 5;
 				let w = d.width - inset * 2, h = d.height - inset * 2;
 
@@ -753,7 +753,7 @@ export class ButtonView extends Widget
 					path2.moveTo(d.x + inset + x1 + 1, d.y + inset + y1);
 					path2.lineTo(d.x + inset + x2 + 1, d.y + inset + y2);
 				}
-				
+
 				ctx.lineWidth = 1;
 				ctx.strokeStyle = '#404040';
 				ctx.stroke(path1);
@@ -763,7 +763,7 @@ export class ButtonView extends Widget
 				ctx.restore();
 			}
 		}
-		
+
 		ctx.restore();
 	}
 	private delayedRedraw():void
@@ -791,7 +791,7 @@ export class ButtonView extends Widget
 		if (this.position == 'centre' || this.stack.length == 0) return pathRoundedRect(0.5, 0.5, w - 0.5, h - 0.5, r);
 
 		let path = new Path2D();
-		
+
 		if (this.position == 'left')
 		{
 			let my = 0.5 * h - 1, gw = this.gripHeight, hg = 0.5 * this.gripWidth;
@@ -967,11 +967,11 @@ export class ButtonView extends Widget
 	{
 		/*let xy = eventCoords(event, this.content);
 		if (!this.withinOutline(xy[0], xy[1])) return; // propagate
-		
+
 		let shift = event.shiftKey, ctrl = event.ctrlKey, alt = event.altKey, meta = event.metaKey, plat = event.platformModifierKey;
 		let id = this.pickButtonID(xy[0], xy[1]);
 		this.triggerButton(id);
-		
+
 		event.stopPropagation();*/
 	}
 	private mouseDoubleClick(event:MouseEvent):void
@@ -983,7 +983,7 @@ export class ButtonView extends Widget
 	{
 		let xy = eventCoords(event, this.content);
 		if (!this.withinOutline(xy[0], xy[1])) return; // propagate
-		
+
 		// !! ?? let shift = event.shiftKey, ctrl = event.ctrlKey, alt = event.altKey, meta = event.metaKey, plat = event.platformModifierKey;
 		let id = this.pickButtonID(xy[0], xy[1]);
 
@@ -992,17 +992,17 @@ export class ButtonView extends Widget
 			this.highlightButton = id;
 			this.redraw();
 		}
-		
+
 		event.stopPropagation();
 	}
 	private mouseUp(event:JQueryEventObject):void
 	{
 		let xy = eventCoords(event, this.content);
 		if (!this.withinOutline(xy[0], xy[1])) return; // propagate
-		
+
 		// !! ?? let shift = event.shiftKey, ctrl = event.ctrlKey, alt = event.altKey, meta = event.metaKey, plat = event.platformModifierKey;
 		let id = this.pickButtonID(xy[0], xy[1]);
-		
+
 		if (id != null && this.highlightButton == id)
 		{
 			this.highlightButton = undefined;
@@ -1029,9 +1029,9 @@ export class ButtonView extends Widget
 	private mouseOut(event:JQueryEventObject):void
 	{
 		let xy = eventCoords(event, this.content);
-		if (!this.withinOutline(xy[0], xy[1])) 
+		if (!this.withinOutline(xy[0], xy[1]))
 		{
-			if (this.highlightButton != null) 
+			if (this.highlightButton != null)
 			{
 				this.highlightButton = null;
 				this.delayedRedraw();
@@ -1073,8 +1073,8 @@ export class ButtonView extends Widget
 		let w = parseInt(svg.substring(iw + 7, svg.indexOf('"', iw + 7)));
 		let h = parseInt(svg.substring(ih + 8, svg.indexOf('"', ih + 8)));
 		svg = '<svg viewBox="0 0 ' + w + ' ' + h + '"' + svg.substring(svg.indexOf('>'));
-		return svg;	
-	}	
+		return svg;
+	}
 }
 
 /* EOF */ }

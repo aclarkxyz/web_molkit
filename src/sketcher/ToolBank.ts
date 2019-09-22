@@ -4,7 +4,7 @@
     (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
-    
+
     http://molmatinf.com
 
 	[PKG=webmolkit]
@@ -61,8 +61,8 @@ export class ToolBank extends ButtonBank
 	// populate the buttons
 	public update():void
 	{
-		for (let btn of TOOLS_MAIN) this.buttons.push(btn);		
-		
+		for (let btn of TOOLS_MAIN) this.buttons.push(btn);
+
 		this.buttonView.setSelectedButton('arrow');
 	}
 
@@ -76,7 +76,7 @@ export class ToolBank extends ButtonBank
 	{
 		//let ch = String.fromCharCode(event.keyCode || event.charCode);
 		//console.log('Claim/Command['+ch+'] key='+event.keyCode+' chcode='+event.charCode);
-		
+
 		for (let item of TOOLS_MAIN)
 		{
 			if (ButtonBank.matchKey(event, item.mnemonic))

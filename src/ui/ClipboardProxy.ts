@@ -4,7 +4,7 @@
     (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
-    
+
     http://molmatinf.com
 
 	[PKG=webmolkit]
@@ -114,7 +114,7 @@ export class ClipboardProxyWeb extends ClipboardProxy
 			e.preventDefault();
 			return false;
 		};
-		document.addEventListener('copy', this.copyFunc);		 
+		document.addEventListener('copy', this.copyFunc);
 
 		// pasting: captures the menu/hotkey form
 		this.pasteFunc = (e:any) =>
@@ -129,14 +129,14 @@ export class ClipboardProxyWeb extends ClipboardProxy
 			let wnd = window as any;
 			this.lastContent = null;
 			if (wnd.clipboardData && wnd.clipboardData.getData) this.lastContent = wnd.clipboardData.getData('Text');
-			else if (e.clipboardData && e.clipboardData.getData) this.lastContent = e.clipboardData.getData('text/plain'); 
+			else if (e.clipboardData && e.clipboardData.getData) this.lastContent = e.clipboardData.getData('text/plain');
 			this.pasteEvent(this);
 			this.lastContent = null;
 
 			e.preventDefault();
 			return false;
 		};
-		document.addEventListener('paste', this.pasteFunc);		  
+		document.addEventListener('paste', this.pasteFunc);
 	}
 
 	public uninstall():void

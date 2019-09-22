@@ -4,7 +4,7 @@
     (c) 2010-2017 Molecular Materials Informatics, Inc.
 
     All rights reserved
-    
+
     http://molmatinf.com
 
 	[PKG=webmolkit]
@@ -43,7 +43,7 @@ export class XML
 			'</xsl:stylesheet>',
 		].join('\n');
 		let xsltDoc = new DOMParser().parseFromString(xslt, 'application/xml');
-		let xsltProc = new XSLTProcessor();    
+		let xsltProc = new XSLTProcessor();
 		xsltProc.importStylesheet(xsltDoc);
 		let resultDoc = xsltProc.transformToDocument(doc);
 		return new XMLSerializer().serializeToString(resultDoc);
@@ -69,7 +69,7 @@ export class XML
 		if (el == null) return null;
 		return nodeText(el);
 	}
-	
+
 	// creates and appends an element
 	public static appendElement(parent:Node, name:string):Element
 	{
@@ -77,13 +77,13 @@ export class XML
 		parent.appendChild(el);
 		return el;
 	}
-	
+
 	// creates and appends an element and makes sure that it occurs immediately after the 'presib' node
 	public static appendElementAfter(presib:Node, name:string):Element
 	{
 		let el = presib.ownerDocument.createElement(name);
 		let postsib = presib.nextSibling;
-		if (postsib == null) 
+		if (postsib == null)
 			presib.parentNode.appendChild(el);
 		else
 			presib.parentNode.insertBefore(el, postsib);
@@ -108,7 +108,7 @@ export class XML
 		if (entity.endsWith(';')) entity = entity.substring(0, entity.length - 1);
 		parent.appendChild(parent.ownerDocument.createEntityReference(entity));
 	}*/
-	
+
 	// creates an element child with a particular name and populates it with text
 	public static createTextChild(parent:Node, name:string, text:string, isCDATA:boolean = false):void
 	{
@@ -116,14 +116,14 @@ export class XML
 		parent.appendChild(el);
 		if (!isCDATA) el.textContent = text; else el.appendChild(parent.ownerDocument.createCDATASection(text));
 	}
-	
+
 	// defines the current notes contents as being only the provided text
 	public static setText(parent:Node, text:string, isCDATA:boolean = false):void
 	{
 		while (parent.firstChild != null) parent.removeChild(parent.firstChild);
 		this.appendText(parent, text, isCDATA);
 	}
-	
+
 	// returns the first element with the given tag name, or null if none
 	public static findElement(parent:Element, tagName:string):Element
 	{

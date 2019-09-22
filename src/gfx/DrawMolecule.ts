@@ -4,7 +4,7 @@
     (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
-    
+
     http://molmatinf.com
 
     [PKG=webmolkit]
@@ -24,7 +24,7 @@ namespace WebMolKit /* BOF */ {
 /*
     Controlling class for drawing a molecule in a vector graphics format: this turns an "arranged molecule" instance into the series of primitives that
     can be mapped directly to a rendering engine or output format, as encapsulated by the VectorGfxBuilder subclasses.
-    
+
     Note that in this implementation of rendering, only the molecule is drawn, without interactive effects. The constructor/draw/build sequence should be
     called only once during the lifetime of this object.
 */
@@ -37,7 +37,7 @@ export class DrawMolecule
 
 	private scale:number;
 	private invScale:number;
-	
+
 	constructor(private layout:ArrangeMolecule, private vg:MetaVector)
 	{
 		this.mol = layout.getMolecule();
@@ -46,20 +46,20 @@ export class DrawMolecule
 		this.scale = layout.getScale();
 		this.invScale = 1.0 / this.scale;
 	}
-	
+
 	// access to content
 	public getMolecule():Molecule {return this.mol;}
 	public getMetaVector():MetaVector {return this.vg;}
 	public getLayout():ArrangeMolecule {return this.layout;}
 	public getPolicy():RenderPolicy {return this.policy;}
 	public getEffects():RenderEffects {return this.effects;}
-	
+
 	// renders the molecular structure
 	public draw():void
 	{
 		// debugging: draw the "space filling" areas-to-avoid
 		let DRAW_SPACE = false;
-		if (DRAW_SPACE) 
+		if (DRAW_SPACE)
 		{
 			let bounds = this.layout.determineBoundary();
 			this.vg.drawRect(bounds[0], bounds[1], bounds[2] - bounds[0], bounds[3] - bounds[1], 0xFF0000, 1, MetaVector.NOCOLOUR);
@@ -74,7 +74,7 @@ export class DrawMolecule
 		this.drawUnderEffects();
 
 		// emit the drawing elements as vector primitives
-		
+
 		let layout = this.layout, effects = this.effects, policy = this.policy, vg = this.vg;
 
 		for (let n = 0; n < layout.numLines(); n++)
@@ -92,7 +92,7 @@ export class DrawMolecule
 			else if (b.type == BLineType.Dotted || b.type == BLineType.DotDir) this.drawBondDotted(b);
 			else if (b.type == BLineType.IncDouble || b.type == BLineType.IncTriple || b.type == BLineType.IncQuadruple) this.drawBondIncMulti(b);
 		}
-		
+
 		let fg = policy.data.foreground;
 		for (let r of layout.getRings()) vg.drawOval(r.cx, r.cy, r.rw, r.rh, fg, r.size, MetaVector.NOCOLOUR);
 		for (let p of layout.getPaths()) vg.drawPath(p.px, p.py, p.ctrl, false, fg, p.size, MetaVector.NOCOLOUR, false);
@@ -145,7 +145,7 @@ export class DrawMolecule
 			}
 		}
 
-		this.drawOverEffects();	
+		this.drawOverEffects();
 	}
 
 	// ------------ private methods ------------
@@ -160,12 +160,12 @@ export class DrawMolecule
 
 			let dw = effects.atomFrameDotSz[n] * scale, col = effects.atomFrameCol[n];
 			let a = layout.getPoint(n);
-			
+
 			let rw = a.oval.rw + 0.1 * scale, rh = a.oval.rh + 0.1 * scale;
 			let wdots = Math.ceil(2 * rw / (3 * dw));
 			let hdots = Math.ceil(2 * rh / (3 * dw));
 			let wspc = 2 * rw / wdots, hspc = 2 * rh / hdots;
-			
+
 			for (let i = 0; i <= wdots; i++)
 			{
 				let x = a.oval.cx - rw + i * wspc;
@@ -202,7 +202,7 @@ export class DrawMolecule
 				vg.drawOval(a.oval.cx + rw, y, sz, sz, MetaVector.NOCOLOUR, 0, col);
 			}
 		}
-		
+
 		for (let key in effects.dottedBondCross)
 		{
 			let bond = parseInt(key), col = effects.dottedBondCross[key];
@@ -217,12 +217,12 @@ export class DrawMolecule
 					bcount += 1;
 				}
 			}
-			if (bcount > 1) 
+			if (bcount > 1)
 			{
-				let inv = 1 / bcount; 
+				let inv = 1 / bcount;
 				[x1, y1, x2, y2] = [x1 * inv, y1 * inv, x2 * inv, y2 * inv];
 			}
-			
+
 			let dx = x2 - x1, dy = y2 - y1;
 			let inv = 0.2 * scale * invZ(norm_xy(dx, dy)), ox = dy * inv, oy = -dx * inv;
 			let cx = 0.5 * (x1 + x2), cy = 0.5 * (y1 + y2), sz = 0.05 * scale;
@@ -233,7 +233,7 @@ export class DrawMolecule
 			}
 		}
 	}
-	
+
 	private drawOverEffects():void
 	{
 		let mol = this.mol, policy = this.policy, effects = this.effects, layout = this.layout, scale = this.scale, vg = this.vg;
@@ -245,7 +245,7 @@ export class DrawMolecule
 			vg.drawLine(p.oval.cx - rad, p.oval.cy - rad, p.oval.cx + rad, p.oval.cy + rad, 0xFF0000, 1);
 			vg.drawLine(p.oval.cx + rad, p.oval.cy - rad, p.oval.cx - rad, p.oval.cy + rad, 0xFF0000, 1);
 		}
-	
+
 		for (let n = 0, num = Math.min(effects.atomCircleSz.length, mol.numAtoms); n < num; n++) if (effects.atomCircleSz[n] > 0)
 		{
 			let dw = effects.atomCircleSz[n] * scale, col = effects.atomCircleCol[n];
@@ -253,7 +253,7 @@ export class DrawMolecule
 			vg.drawOval(p.oval.cx, p.oval.cy, dw, dw, MetaVector.NOCOLOUR, 0, col);
 		}
 	}
-	
+
 	private drawBondInclined(b:BLine):void
 	{
 		let x1 = b.line.x1, y1 = b.line.y1, x2 = b.line.x2, y2 = b.line.y2;
@@ -332,7 +332,7 @@ export class DrawMolecule
 				let dth1 = angleDiff(th1, th2), diff1 = Math.abs(dth1);
 				let dth2 = angleDiff(th1, th3), diff2 = Math.abs(dth2);
 				let diff3 = Math.abs(angleDiff(th2, th3));
-				if (diff1 > 105 * DEGRAD && diff1 < 135 * DEGRAD || 
+				if (diff1 > 105 * DEGRAD && diff1 < 135 * DEGRAD ||
 					diff2 > 105 * DEGRAD && diff2 < 135 * DEGRAD ||
 					diff3 > 105 * DEGRAD && diff3 < 135 * DEGRAD)
 				{
@@ -344,7 +344,7 @@ export class DrawMolecule
 				}
 			}
 		}
-		
+
 		this.vg.drawPoly(px, py, MetaVector.NOCOLOUR, 0, col, true);
 	}
 	private drawBondDeclined(b:BLine):void
@@ -418,7 +418,7 @@ export class DrawMolecule
 		y2 -= nudge * dy;
 		dx = x2 - x1;
 		dy = y2 - y1;
-		
+
 		let nsteps = Math.ceil(0.2 * dist / radius);
 		let invSteps = 1.0 / (nsteps + 1);
 		for (let i = 0; i <= nsteps + 1; i++)
@@ -439,7 +439,7 @@ export class DrawMolecule
 		let norm = head / Math.sqrt(dx * dx + dy * dy);
 		let ox = norm * dy, oy = -norm * dx;
 		this.vg.drawPoly([x1, x2 - ox, x2 + ox], [y1, y2 - oy, y2 + oy], col, this.scale * 0.05, MetaVector.NOCOLOUR, true);
-		
+
 		if (b.type == BLineType.IncDouble)
 		{
 			this.vg.drawLine(x1, y1, x2, y2, col, this.scale * 0.03);

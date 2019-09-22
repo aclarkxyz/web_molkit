@@ -4,7 +4,7 @@
     (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
-    
+
     http://molmatinf.com
 
 	[PKG=webmolkit]
@@ -18,9 +18,9 @@ namespace WebMolKit /* BOF */ {
 	OptionList: a replacement for the ghetto native HTML radio buttons. Can be used in either horizontal or vertical mode. Rendering
 	style looks like several custom buttons that are joined together, and the current one is highlighted and unclickable. For
 	vertical mode, slots are reserved so that text can be added to the right each option.
-	
-	Note that there is always one index selected. It is 
-	
+
+	Note that there is always one index selected. It is
+
 	Content:
 		.options: array of strings for use as labels
 		.isVertical: boolean (default: false)
@@ -35,9 +35,9 @@ export class OptionList extends Widget
 	private buttonDiv:any[] = [];
 	private auxCell:any[] = [];
 	public padding = 6; // pixels
-	
+
 	public callbackSelect:(idx:number, source?:OptionList) => void = null;
-	
+
 	constructor(public options:string[], private isVertical:boolean = false)
 	{
 		super();
@@ -45,7 +45,7 @@ export class OptionList extends Widget
 
 		if (!hasInlineCSS('option')) installInlineCSS('option', this.composeCSS());
 	}
-	
+
 	// control over selected index
 	public getSelectedIndex():number
 	{
@@ -77,19 +77,19 @@ export class OptionList extends Widget
 
 		this.buttonDiv = [];
 		this.auxCell = [];
-		
+
 		let table = $('<table class="wmk-option-table"></table>').appendTo(this.content /*span*/);
 		let tr = this.isVertical ? null : $('<tr></tr>').appendTo(table);
-		
+
 		for (let n = 0; n < this.options.length; n++)
 		{
 			if (this.isVertical) tr = $('<tr></tr>').appendTo(table);
-			let td = $('<td class="wmk-option-cell"></td>').appendTo(tr); 
+			let td = $('<td class="wmk-option-cell"></td>').appendTo(tr);
 			let div = $('<div class="wmk-option"></div>').appendTo(td);
 			div.css('padding', this.padding + 'px');
-			
+
 			this.buttonDiv.push(div);
-			
+
 			if (this.isVertical)
 			{
 				td = $('<td style="vertical-align: middle;"></td>').appendTo(tr);
@@ -104,12 +104,12 @@ export class OptionList extends Widget
 	public clickButton(idx:number):void
 	{
 		if (idx == this.selidx) return; // (shouldn't happen)
-		
+
 		this.setSelectedIndex(idx);
 
 		if (this.callbackSelect) this.callbackSelect(idx, this);
 	}
-		
+
 	// change selected index, update widgets
 	public setSelectedIndex(idx:number):void
 	{
@@ -135,7 +135,7 @@ export class OptionList extends Widget
 			let txt = this.options[n];
 			if (txt.length == 0 && n == this.selidx) div.text('\u00A0\u2716\u00A0');
 			else if (txt.length == 0) div.text('\u00A0\u00A0\u00A0');
-			else div.text(txt); 
+			else div.text(txt);
 
 			div.off('mouseover');
 			div.off('mouseout');
@@ -146,7 +146,7 @@ export class OptionList extends Widget
 			div.off('click');
 			div.removeClass('wmk-option-hover wmk-option-active wmk-option-unselected wmk-option-selected');
 
-			if (n != this.selidx) 
+			if (n != this.selidx)
 			{
 				div.addClass('wmk-option-unselected');
 				div.mouseover(() => div.addClass('wmk-option-hover'));

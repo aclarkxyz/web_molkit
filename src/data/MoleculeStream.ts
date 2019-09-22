@@ -4,7 +4,7 @@
     (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
-    
+
     http://molmatinf.com
 
 	[PKG=webmolkit]
@@ -41,10 +41,10 @@ export class MoleculeStream
 	{
 		let mol = new Molecule();
 		mol.keepTransient = true;
-		
+
 		let lines = strData.split(/\r?\n/);
 		if (lines.length < 2) return null; // cannot be valid
-		
+
 		// special deal: a clipboard hack that glues together MDL+SketchEl can be easily handled
 		if (!lines[0].startsWith('SketchEl!') && lines.length >= 4 && lines[3].indexOf('V2000') >= 0)
 		{
@@ -59,7 +59,7 @@ export class MoleculeStream
 		let numAtoms = parseInt(bits[1]), numBonds = parseInt(bits[2]);
 		if (lines.length < 2 + numAtoms + numBonds) return null;
 		if (!lines[1 + numAtoms + numBonds].match(/^!End/)) return null;
-		
+
 		for (let n = 0; n < numAtoms; n++)
 		{
 			bits = lines[1 + n].split(/[=,;]/);
@@ -90,7 +90,7 @@ export class MoleculeStream
 				let ch = bits[i].charAt(0);
 				if (bits[i].charAt(0) == 'x') extra.push(MoleculeStream.sk_unescape(bits[i]));
 				else if (bits[i].charAt(0) == 'y') trans.push(MoleculeStream.sk_unescape(bits[i]));
-				else extra.push(MoleculeStream.sk_unescape(bits[i])); // preserve unrecognised		
+				else extra.push(MoleculeStream.sk_unescape(bits[i])); // preserve unrecognised
 			}
 			mol.setBondExtra(num, extra);
 			mol.setBondTransient(num, trans);
@@ -99,7 +99,7 @@ export class MoleculeStream
 		mol.keepTransient = false;
 		return mol;
 	}
-	
+
 	// static method: converts a molecule into a string which represents it using the SketchEl format
 	public static writeNative(mol:Molecule):string
 	{
@@ -129,9 +129,9 @@ export class MoleculeStream
 		return ret;
 	}
 
-	// parses a string that is expected to be using MDL Molfile format, and turns it into a molecule; or null if 
+	// parses a string that is expected to be using MDL Molfile format, and turns it into a molecule; or null if
 	public static readMDLMOL(strData:string):Molecule
-	{		
+	{
 		let src = new MDLMOLReader(strData);
 		src.parseHeader = true;
 		src.parse();

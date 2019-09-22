@@ -19,9 +19,9 @@ namespace WebMolKit /* BOF */ {
 
 /*
 	SAR Table: provides scaffold/substituent/molecule equivalence based on fragment placeholders (R-groups).
-	
-	Note that the aspect also includes the concept of "fields", with predefined units and ranges and rendering information. This 
-	was put to good effect in the eponymous mobile app, but is now deprecated: these information are stored as a pass-through for 
+
+	Note that the aspect also includes the concept of "fields", with predefined units and ranges and rendering information. This
+	was put to good effect in the eponymous mobile app, but is now deprecated: these information are stored as a pass-through for
 	compatibility purposes.
 */
 
@@ -33,7 +33,7 @@ interface SARTableFields
 	locked:string; // boolean
 	scaffold:string; // molecule
 	substituents:string[]; // molecule
-	
+
 	// additional configuration lines from the header, implemented as a passthrough: stored for compatibility, but not used anymore
 	metadata:string[];
 }
@@ -88,7 +88,7 @@ export class SARTable extends Aspect
 	public setFields(fields:SARTableFields):void
 	{
 		let content = this.formatMetaData(fields);
-		for (let n = 0; n < this.ds.numExtensions; n++) if (this.ds.getExtType(n) == SARTable.CODE) 
+		for (let n = 0; n < this.ds.numExtensions; n++) if (this.ds.getExtType(n) == SARTable.CODE)
 		{
 			this.ds.setExtData(n, content);
 			return;
@@ -98,12 +98,12 @@ export class SARTable extends Aspect
 	public getEntry(row:number):SARTableEntry
 	{
 		let fields = this.getFields();
-		let entry:SARTableEntry = 
+		let entry:SARTableEntry =
 		{
-			'construct': this.ds.getMolecule(row, fields.construct), 
+			'construct': this.ds.getMolecule(row, fields.construct),
 			'locked': !!this.ds.getBoolean(row, fields.locked),
-			'scaffold': this.ds.getMolecule(row, fields.scaffold), 
-			'substNames': [], 
+			'scaffold': this.ds.getMolecule(row, fields.scaffold),
+			'substNames': [],
 			'substituents': []
 		};
 		for (let subst of fields.substituents)
@@ -116,16 +116,16 @@ export class SARTable extends Aspect
 	public setEntry(row:number, entry:SARTableEntry):void
 	{
 		let fields = this.getFields();
-		
+
 		let colConstruct = this.ds.findColByName(fields.construct, DataSheetColumn.Molecule);
-		if (colConstruct >= 0) this.ds.setMolecule(row, colConstruct, entry.construct); 
+		if (colConstruct >= 0) this.ds.setMolecule(row, colConstruct, entry.construct);
 
 		let colLocked = this.ds.findColByName(fields.locked, DataSheetColumn.Boolean);
 		if (colLocked >= 0) this.ds.setBoolean(row, colLocked, entry.locked);
 
 		let colScaffold = this.ds.findColByName(fields.scaffold, DataSheetColumn.Molecule);
-		if (colScaffold >= 0) this.ds.setMolecule(row, colScaffold, entry.scaffold); 
-		 
+		if (colScaffold >= 0) this.ds.setMolecule(row, colScaffold, entry.scaffold);
+
 		for (let n = 0; n < fields.substituents.length; n++)
 		{
 			let colSubst = this.ds.findColByName(fields.substituents[n], DataSheetColumn.Molecule);
@@ -133,12 +133,12 @@ export class SARTable extends Aspect
 		}
 	}
 
-	// goes through the list of substituent names, and makes sure that each of them is referred to in the extensions, and also that the 
+	// goes through the list of substituent names, and makes sure that each of them is referred to in the extensions, and also that the
 	// underlying column exists
 	public createSubstituents(tobeAdded:string[]):void
 	{
 		if (tobeAdded.length == 0) return;
-		
+
 		let fields = this.getFields();
 		let modified = false;
 		for (let name of tobeAdded) if (fields.substituents.indexOf(name) < 0)
@@ -158,8 +158,8 @@ export class SARTable extends Aspect
 
 	// ----------------- private methods -----------------
 
-	// workhorse for the constructor 
-	private setup():void  
+	// workhorse for the constructor
+	private setup():void
 	{
 		this.parseAndCorrect();
 	}
@@ -224,7 +224,7 @@ export class SARTable extends Aspect
 			}
 			fields.metadata.push(line);
 		}
-		
+
 		return fields;
 	}
 
@@ -242,12 +242,12 @@ export class SARTable extends Aspect
 	// ------------------ aspect implementation --------------------
 
 	public plainHeading():string {return SARTable.NAME;}
-	
-	public isColumnReserved(colName:string):boolean 
+
+	public isColumnReserved(colName:string):boolean
 	{
 		return this.areColumnsReserved([colName])[0];
 	}
-	
+
 	public areColumnsReserved(colNames:string[]):boolean[]
 	{
 		let fields = this.getFields();
@@ -261,8 +261,8 @@ export class SARTable extends Aspect
 		for (let n = 0; n < colNames.length; n++) reserved[n] = used.has(colNames[n]);
 		return reserved;
 	}
-	
-	public numGraphicRenderings(row:number):number 
+
+	public numGraphicRenderings(row:number):number
 	{
 		let fields = this.getFields();
 		return 2 + fields.substituents.length;
@@ -304,7 +304,7 @@ export class SARTable extends Aspect
 		{
 			let mol = ds.getMolecule(row, fields.scaffold);
 			let metavec = new MetaVector();
-			
+
 			if (MolUtil.notBlank(mol))
 			{
 				let effects = new RenderEffects();
@@ -317,7 +317,7 @@ export class SARTable extends Aspect
 					outer: for (let colName of fields.substituents)
 					{
 						let subst = ds.getMolecule(row, colName);
-						if (subst != null) for (let i = 1; i <= subst.numAtoms; i++) 
+						if (subst != null) for (let i = 1; i <= subst.numAtoms; i++)
 							if (subst.atomElement(i) == el || (subst.atomElement(i) == 'R' && el == colName))
 						{
 							isDefined = true;
@@ -344,7 +344,7 @@ export class SARTable extends Aspect
 			let sidx = idx - SARTable.RENDER_SUBSTITUENT, sname = fields.substituents[sidx];
 			let mol = ds.getMolecule(row, sname);
 			let metavec = new MetaVector();
-			
+
 			if (MolUtil.notBlank(mol))
 			{
 				let effects = new RenderEffects();
@@ -355,7 +355,7 @@ export class SARTable extends Aspect
 					effects.colAtom[n] = 0x096E6F;
 					effects.dottedRectOutline[n] = 0x808080;
 					// (different colours if the attachments don't line up? or just leave it?)
-				}		
+				}
 
 				let measure = new OutlineMeasurement(0, 0, policy.data.pointScale);
 				let layout = new ArrangeMolecule(mol, measure, policy, effects);

@@ -4,7 +4,7 @@
     (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
-    
+
     http://molmatinf.com
 
 	[PKG=webmolkit]
@@ -30,7 +30,7 @@ namespace WebMolKit /* BOF */ {
 		.code: a numerical code for well defined errors, some of which may have a recovery pathway, e.g. token timeout
 		.type: the fully specified Java class of the thrown error
 		.detail: a long error message explaining exactly what went wrong and where
-		
+
 	Static properties:
 		.ERRCODE_*: error codes that correspond to serverside failure situations (>=0) or client side (<0)
 		.errorTypeHandlers: global handlers for certain types of errors; to add one, push an object with:
@@ -52,7 +52,7 @@ export interface ErrorRPC
 	message:string;
 	code:number;
 	type:number;
-	detail:string;	
+	detail:string;
 }
 
 export class RPC
@@ -63,7 +63,7 @@ export class RPC
 
 	// base for static resources that can be fetched without going through the RPC mechanism
 	public static RESOURCE_URL:string = null;
-	
+
 	// commonly structured error codes; see com.mmi.server.wsvc.SyncException;
 	public static ERRCODE_CLIENT_ABORTED = -3;
 	public static ERRCODE_CLIENT_TIMEOUT = -1;
@@ -81,7 +81,7 @@ export class RPC
 	//molsync.RPC.errorTypeHandlers = [];
 
 	constructor(private request:string, private parameter:any, private callback:(result:any, error:ErrorRPC) => void) {}
-	
+
 	// send the request, associated with the given callback
 	public invoke():void
 	{
@@ -89,7 +89,7 @@ export class RPC
 		if (data == null) data = {};
 
 		let url = RPC.BASE_URL + '/REST/' + this.request;
-		
+
 		$.ajax(
 		{
 			'url': url,
@@ -101,7 +101,7 @@ export class RPC
 			'success': (data:any, textStatus:string, jqXHR:JQueryXHR) =>
 			{
 				let result:any = null, error:ErrorRPC = null;
-				
+
 				if (!data)
 				{
 					error =
@@ -110,7 +110,7 @@ export class RPC
 						'code': RPC.ERRCODE_NONSPECIFIC,
 						'type': 0,
 						'detail': 'unknown failure'
-					}; 
+					};
 				}
 				else
 				{
@@ -127,12 +127,12 @@ export class RPC
 					}
 					else result = data.result;
 				}
-				
+
 				this.callback(result, error);
 			},
 			'error': (jqXHR:JQueryXHR, textStatus:string, errorThrow:string) =>
 			{
-				let error:ErrorRPC = 
+				let error:ErrorRPC =
 				{
 					'message': 'connection failure',
 					'code': RPC.ERRCODE_NONSPECIFIC,
@@ -142,7 +142,7 @@ export class RPC
 
 				this.callback({}, error);
 			}
-		});		
+		});
 	}
 }
 

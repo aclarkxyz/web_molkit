@@ -4,7 +4,7 @@
     (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
-    
+
     http://molmatinf.com
 
 	[PKG=webmolkit]
@@ -42,7 +42,7 @@ export class DataSheetStream
 		if (summary == null) return null;
 		ds.title = nodeText(findNode(summary, 'Title'));
 		ds.description = nodeText(findNode(summary, 'Description'));
-		
+
 		// extensions
 		let extRoot = findNode(root, 'Extension');
 		if (extRoot != null)
@@ -69,17 +69,17 @@ export class DataSheetStream
 			if (id != n + 1) return null;
 			ds.appendColumn(col.getAttribute('name'), col.getAttribute('type') as DataSheetColumn, nodeText(col));
 		}
-		
+
 		// rows
-		let row = findNode(root, 'Content').firstElementChild; 
+		let row = findNode(root, 'Content').firstElementChild;
 		let rowidx = 0;
 		while (row)
 		{
 			//if (parseInt(row.attributes.id.value)!=rowidx+1) return null;
 			if (parseInt(row.getAttribute('id')) != rowidx + 1) return null;
-			
+
 			ds.appendRow();
-			
+
 			let col = row.firstElementChild;
 			while (col)
 			{
@@ -93,11 +93,11 @@ export class DataSheetStream
 				else if (ct == DataSheetColumn.Integer) ds.setInteger(rowidx, colidx, parseInt(val));
 				else if (ct == DataSheetColumn.Boolean) ds.setBoolean(rowidx, colidx, val == 'true' ? true : val == 'false' ? false : null);
 				else if (ct == DataSheetColumn.Extend) ds.setExtend(rowidx, colidx, val);
-			
+
 				col = col.nextElementSibling;
 				colidx++;
 			}
-			
+
 			row = row.nextElementSibling;
 			rowidx++;
 		}
@@ -109,14 +109,14 @@ export class DataSheetStream
 	public static writeXML(ds:DataSheet):string
 	{
 		let xml = new DOMParser().parseFromString('<DataSheet/>', 'text/xml');
-		
+
 		// summary area
 		let summary = xml.createElement('Summary');
 		xml.documentElement.appendChild(summary);
 		let title = xml.createElement('Title'), descr = xml.createElement('Description');
 		summary.appendChild(title); title.appendChild(xml.createTextNode(ds.title));
 		summary.appendChild(descr); descr.appendChild(xml.createCDATASection(ds.description));
-		
+
 		// extras
 		let extension = xml.createElement('Extension');
 		xml.documentElement.appendChild(extension);
@@ -128,7 +128,7 @@ export class DataSheetStream
 			ext.setAttribute('type', ds.getExtType(n));
 			ext.appendChild(xml.createCDATASection(ds.getExtData(n)));
 		}
-		
+
 		// columns
 		let header = xml.createElement('Header');
 		xml.documentElement.appendChild(header);
@@ -143,7 +143,7 @@ export class DataSheetStream
 			column.setAttribute('type', ds.colType(n));
 			column.appendChild(xml.createTextNode(ds.colDescr(n)));
 		}
-		
+
 		// rows
 		let content = xml.createElement('Content');
 		xml.documentElement.appendChild(content);
@@ -159,10 +159,10 @@ export class DataSheetStream
 				cell.setAttribute('id', (c + 1).toString());
 				row.appendChild(cell);
 				let ct = ds.colType(c);
-				
+
 				let txtNode:Node = null;
 				if (ds.isNull(r, c)) {}
-				else if (ct == DataSheetColumn.Molecule) 
+				else if (ct == DataSheetColumn.Molecule)
 				{
 					let obj = ds.getObject(r, c);
 					if (obj instanceof Molecule) obj = MoleculeStream.writeNative(obj);
@@ -173,12 +173,12 @@ export class DataSheetStream
 				else if (ct == DataSheetColumn.Integer) txtNode = xml.createTextNode(ds.getInteger(r, c).toString());
 				else if (ct == DataSheetColumn.Boolean) txtNode = xml.createTextNode(ds.getBoolean(r, c).toString());
 				else if (ct == DataSheetColumn.Extend) txtNode = xml.createCDATASection(ds.getExtend(r, c));
-							
+
 				if (txtNode != null) cell.appendChild(txtNode);
 			}
 		}
-		
-		return new XMLSerializer().serializeToString(xml.documentElement);		
+
+		return new XMLSerializer().serializeToString(xml.documentElement);
 	}
 }
 

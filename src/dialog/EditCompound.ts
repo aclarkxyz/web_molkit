@@ -4,7 +4,7 @@
     (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
-    
+
     http://molmatinf.com
 
 	[PKG=webmolkit]
@@ -29,7 +29,7 @@ export class EditCompound extends Dialog
 	private sketcher = new Sketcher();
 
 	private proxyClip:ClipboardProxy = null;
-	
+
 	private callbackSave:(source?:EditCompound) => void = null;
 
 	// ------------ public methods ------------
@@ -37,7 +37,7 @@ export class EditCompound extends Dialog
 	constructor(private mol:Molecule)
 	{
 		super();
-		
+
 		this.title = 'Edit Compound';
 		this.minPortionWidth = 20;
 		this.maxPortionWidth = 95;
@@ -67,9 +67,9 @@ export class EditCompound extends Dialog
 
 	// builds the dialog content
 	protected populate():void
-	{		
+	{
 		let buttons = this.buttons(), body = this.body();
-		
+
 		this.btnClear = $('<button class="wmk-button wmk-button-default">Clear</button>').appendTo(buttons);
 		this.btnClear.click(() => this.sketcher.clearMolecule());
 
@@ -79,16 +79,16 @@ export class EditCompound extends Dialog
 
 		buttons.append(' ');
 		buttons.append(this.btnClose); // easy way to reorder
-		
+
 		buttons.append(' ');
 		this.btnSave = $('<button class="wmk-button wmk-button-primary">Save</button>').appendTo(buttons);
 		this.btnSave.click(() => {if (this.callbackSave) this.callbackSave(this);});
-		
+
 		let skw = 800, skh = 650;
 		let skdiv = $('<div></div>').appendTo(this.body());
 		skdiv.css('width', skw + 'px');
 		skdiv.css('height', skh + 'px');
-		
+
 		this.sketcher.setSize(skw, skh);
 		this.sketcher.defineMolecule(this.mol);
 		this.sketcher.setup(() => this.sketcher.render(skdiv));
@@ -106,7 +106,7 @@ export class EditCompound extends Dialog
 	{
 		this.sketcher.performPaste();
 	}
-	public actionUndo():void 
+	public actionUndo():void
 	{
 		this.sketcher.performUndo();
 	}
@@ -116,7 +116,7 @@ export class EditCompound extends Dialog
 	}
 
 	// ------------ private methods ------------
-		
+
 }
 
 /* EOF */ }

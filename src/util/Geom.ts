@@ -4,7 +4,7 @@
     (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
-    
+
     http://molmatinf.com
 
 	[PKG=webmolkit]
@@ -28,9 +28,9 @@ export class GeomUtil
 		if (x < minArray(px) || x > maxArray(px) || y < minArray(py) || y > maxArray(py)) return false;
 		let sz = px.length;
 		for (let n = 0; n < sz; n++) if (px[n] == x && py[n] == y) return true; // point is on a vertex
-		
+
 		let phase = false;
-		
+
 		for (let n = 0; n < sz; n++)
 		{
 			let x1 = px[n], y1 = py[n], x2 = px[n + 1 < sz ? n + 1 : 0], y2 = py[n + 1 < sz ? n + 1 : 0];
@@ -40,7 +40,7 @@ export class GeomUtil
 				if (x1 == x2 || x <= intr) phase = !phase;
 			}
 		}
-		
+
 		return phase;
 	}
 
@@ -52,7 +52,7 @@ export class GeomUtil
 		return (realEqual(dxa, dxb) && realEqual(dya, dyb)) || (realEqual(dxa, -dxb) && realEqual(dya, -dyb));
 	}
 
-	// for the lines L1-->L2 and L3-->L4, calculate and return the intersection; note that this for lines, not line segments; 
+	// for the lines L1-->L2 and L3-->L4, calculate and return the intersection; note that this for lines, not line segments;
 	// the return value is an array of {x,y}; note that the answer will be garbage if the lines are parallel
 	public static lineIntersect(x1:number, y1:number, x2:number, y2:number, x3:number, y3:number, x4:number, y4:number):number[]
 	{
@@ -124,9 +124,9 @@ export class GeomUtil
 		return theta;
 	}
 
-	// calculates a list of unique angles (based on the threshold parameter, in radians), and returns it; the returned list of 
-	// angles will be sorted in order, as described by sortAngles(..); note that there is no fancy clustering, so a sequence of 
-	// angles which are a bit below the threshold is not guaranteed to be stable; there is also a boundary case which bumps the 
+	// calculates a list of unique angles (based on the threshold parameter, in radians), and returns it; the returned list of
+	// angles will be sorted in order, as described by sortAngles(..); note that there is no fancy clustering, so a sequence of
+	// angles which are a bit below the threshold is not guaranteed to be stable; there is also a boundary case which bumps the
 	// sort rotation status slightly out of whack
 	public static uniqueAngles(theta:number[], threshold:number):number[]
 	{
@@ -147,7 +147,7 @@ export class GeomUtil
 		while (dth > Math.PI) dth -= 2 * Math.PI;
 		return dth > 0 ? th1 - 0.5 * (2 * Math.PI - dth) : th1 + 0.5 * (2 * Math.PI + dth);
 	}
-	
+
 	// for a group of angles, returns a single dominant angle that represents the "average" of all of them; this takes into account boundary
 	// issues for multiple cases, e.g. +/- 180; note that the array may be modified
 	public static emergentAngle(theta:number[]):number
@@ -262,7 +262,7 @@ export class GeomUtil
 		let c = dx * dx + dy * dy - rad * rad;
 		let D = b * b - a * c;
 		let k = (Math.sqrt(D) - b) / a;
-		
+
 		return [x1 + k * t1x, y1 + k * t1y, x2 + k * t2x, y2 + k * t2y];
 	}
 
@@ -274,11 +274,11 @@ export class GeomUtil
 		return Math.sqrt(dsq);
 	}
 
-	// for a set of points that are presumed to be normalised about the origin, comes up with an ellipse [w,h] that is optimised to be as large as possible 
-	// without expanding beyond any of the closing points; note that the solution is an approximation, but it is at least one that can be carried out in a 
+	// for a set of points that are presumed to be normalised about the origin, comes up with an ellipse [w,h] that is optimised to be as large as possible
+	// without expanding beyond any of the closing points; note that the solution is an approximation, but it is at least one that can be carried out in a
 	// small number of iterations
-	// NOTE: the min/max X/Y parameters are treated as blockers for the axes; this is because the algorithm uses intersection of ellipse-with-points to determine 
-	// boundaries, which unfortunately means that sometimes the ellipse can do on a runaway distortion by going *through* one of the axes; these parameters will 
+	// NOTE: the min/max X/Y parameters are treated as blockers for the axes; this is because the algorithm uses intersection of ellipse-with-points to determine
+	// boundaries, which unfortunately means that sometimes the ellipse can do on a runaway distortion by going *through* one of the axes; these parameters will
 	// prevent this, but they must be precalculated; ideally the algorithm would calculate an "internal convex hull" to derive these points automatically
 	public static fitEllipse(px:number[], py:number[], minX:number, minY:number, maxX:number, maxY:number):number[]
 	{
@@ -288,7 +288,7 @@ export class GeomUtil
 		let x = Vec.concat(px, [minX, maxX, 0, 0]);
 		let y = Vec.concat(py, [0, 0, minY, maxY]);
 		const sz = x.length;
-		
+
 		let shrinkToFit = (whs:number[]):void =>
 		{
 			let dmin = Number.POSITIVE_INFINITY;
@@ -301,7 +301,7 @@ export class GeomUtil
 			}
 			whs[2] = whs[0] * whs[1];
 		};
-	
+
 		// keep trying to expand on one axis/shrink on both, until subsequent efforts are futile
 		let mul = 1;
 		let whsX = [0, 0, 0], whsY = [0, 0, 0];
@@ -310,17 +310,17 @@ export class GeomUtil
 			whsX[0] = bestW * (1 + mul);
 			whsX[1] = bestH;
 			shrinkToFit(whsX);
-			
+
 			whsY[0] = bestW;
 			whsY[1] = bestH * (1 + mul);
 			shrinkToFit(whsY);
-			
+
 			let anything = false;
 			if (whsX[2] > bestScore) {bestW = whsX[0]; bestH = whsX[1]; bestScore = whsX[2]; anything = true;}
 			if (whsY[2] > bestScore) {bestW = whsY[0]; bestH = whsY[1]; bestScore = whsY[2]; anything = true;}
 			if (!anything) mul *= 0.6;
 		}
-	
+
 		return [bestW, bestH];
 	}
 
@@ -490,7 +490,7 @@ export class RollingBall
 				}
 			}
 			if (bestIdx < 0) return -1;
-			
+
 			direction = angleNorm(bestTheta - 0.5 * Math.PI);
 			visited[bestIdx] = true;
 			return bestIdx;
@@ -538,7 +538,7 @@ export class Pos
 	{
 		this.x = x == null ? 0 : x;
 		this.y = y == null ? 0 : y;
-	} 
+	}
 
 	public clone():Pos {return new Pos(this.x, this.y);}
 
@@ -585,7 +585,7 @@ export class Size
 		if (this.h > maxH) scale = Math.min(scale, maxH / this.h);
 		if (scale < 1) this.scaleBy(scale);
 	}
-	
+
 	public toString():string {return '[' + this.w + ',' + this.h + ']';}
 }
 
@@ -620,7 +620,7 @@ export class Box
 		this.w = sz.w;
 		this.h = sz.h;
 	}
-	
+
 	public minX():number {return this.x;}
 	public minY():number {return this.y;}
 	public midX():number {return this.x + 0.5 * this.w;}
@@ -660,8 +660,8 @@ export class Box
 
 	public isEmpty():boolean {return this.w == 0 && this.h == 0;}
 	public notEmpty():boolean {return this.w > 0 || this.h > 0;}
-	
-	public toString():string {return '[' + this.x + ',' + this.y + ';' + this.w + ',' + this.h + ']';}	
+
+	public toString():string {return '[' + this.x + ',' + this.y + ';' + this.w + ',' + this.h + ']';}
 }
 
 export class Oval
@@ -694,7 +694,7 @@ export class Oval
 		this.rw = sz.w;
 		this.rh = sz.h;
 	}
-	
+
 	public minX():number {return this.cx - this.rw;}
 	public minY():number {return this.cy - this.rh;}
 	public maxX():number {return this.cx + this.rw;}
@@ -713,8 +713,8 @@ export class Oval
 		this.cx += dx;
 		this.cy += dy;
 	}
-	
-	public toString():string {return '[' + this.cx + ',' + this.cy + ';' + this.rw + ',' + this.rh + ']';}	
+
+	public toString():string {return '[' + this.cx + ',' + this.cy + ';' + this.rw + ',' + this.rh + ']';}
 }
 
 export class Line
@@ -745,7 +745,7 @@ export class Line
 		this.x2 = pos.x;
 		this.y2 = pos.y;
 	}
-	
+
 	public minX():number {return Math.min(this.x1, this.x2);}
 	public minY():number {return Math.min(this.y1, this.y2);}
 	public maxX():number {return Math.max(this.x1, this.x2);}
@@ -766,8 +766,8 @@ export class Line
 		this.x2 += dx;
 		this.y2 += dy;
 	}
-	
-	public toString():string {return '[' + this.x1 + ',' + this.y1 + ';' + this.x2 + ',' + this.y2 + ']';}	
+
+	public toString():string {return '[' + this.x1 + ',' + this.y1 + ';' + this.x2 + ',' + this.y2 + ']';}
 }
 
 /* EOF */ }

@@ -4,7 +4,7 @@
     (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
-    
+
     http://molmatinf.com
 
 	[PKG=webmolkit]
@@ -24,7 +24,7 @@ namespace WebMolKit /* BOF */ {
 /*
 	Performs the layout of an experiment, which is a reaction that may be multistep, and contains a variety of
 	optional annotations. The flow may be arranged from left-to-right or some combination of horizontal and vertical.
-	
+
 	There are various tweaks for things that can be included or left out. The default settings reflect the default chemistry
 	rendering style, i.e. annotations and editing artifacts are not included.
 
@@ -59,13 +59,13 @@ export class ArrangeComponent
 	public mol:Molecule; // molecule content, if applicable
 	public text:string; // text content, if applicable
 	public leftNumer:string; // // to the left of the structure: may be {n}/{d} form
-	public leftDenom:string; 
+	public leftDenom:string;
 	public fszText:number; // text font sizes, if applicable
 	public fszLeft:number;
 	public annot = ArrangeComponentAnnot.None; // annotation glyph on the right
 	public box = new Box(); // bounding box
 	public padding:number; // how much padding around the outer boundary
-	
+
 	public clone():ArrangeComponent
 	{
 		let dup = new ArrangeComponent();
@@ -131,7 +131,7 @@ export class ArrangeExperiment
 	public arrange():void
 	{
 		this.createComponents();
-		
+
 		let fszText = this.scale * this.policy.data.fontSize, fszLeft = this.scale * this.policy.data.fontSize * 1.5;
 
 		// do an initial sizing of most of the components
@@ -174,12 +174,12 @@ export class ArrangeExperiment
 				}
 				xc.box = new Box(0, 0, w, h);
 			}
-	
+
 			// give it breathing room
 			xc.padding = this.padding;
 			xc.box = new Box(0, 0, xc.box.w + 2 * this.padding, xc.box.h + 2 * this.padding);
 		}
-	
+
 		// build several permutations; take the best one
 		// note: bend=1 for completely vertical, bend=2 for switch after first step, bend=#steps+1 for linear
 		let best:ArrangeComponent[] = null;
@@ -197,9 +197,9 @@ export class ArrangeExperiment
 				bestScore = score;
 			}
 		}
-	
+
 		this.components = best;
-			
+
 		// ascertain the limits
 		this.width = this.height = 0;
 		for (let xc of this.components)
@@ -230,13 +230,13 @@ export class ArrangeExperiment
 			xc.padding *= modScale;
 		}
 	}
-	
+
 	// for debugging purposes
 	/*public String dumpArrangement()
 	{
 		StringBuffer dump = new StringBuffer();
 		dump.append("Components:" + components.size() + " size=" + width + "," + height);
-		
+
 		for (Component xc : components)
 		{
 			dump.append(xc.type == ArrangeExperiment.COMP_ARROW ? "arrow" : xc.type == ArrangeExperiment.COMP_PLUS ? "plus" :
@@ -246,10 +246,10 @@ export class ArrangeExperiment
 			// ...
 			dump.append("\n");
 		}
-		
+
 		return dump.toString();
 	}*/
-		
+
 	// --------------------- private methods ---------------------
 
 	// instantiate each component in the diagram (which includes pluses and arrows)
@@ -262,7 +262,7 @@ export class ArrangeExperiment
 			this.createReactant(n, 0);
 		}
 		if (this.components.length == 0 && this.includeBlank) this.createBlank(ArrangeComponentType.Reactant, 0);
-		
+
 		// reagents & products for each step
 		for (let s = 0; s < this.entry.steps.length; s++)
 		{
@@ -277,7 +277,7 @@ export class ArrangeExperiment
 				}
 				if (!any && this.includeBlank) this.createBlank(ArrangeComponentType.Reagent, s);
 			}
-			
+
 			let any = false;
 			for (let n = 0; n < this.entry.steps[s].products.length; n++)
 			{
@@ -353,7 +353,7 @@ export class ArrangeExperiment
 		if (MolUtil.notBlank(comp.mol)) xc.mol = comp.mol;
 		if (name && (this.includeNames || MolUtil.isBlank(comp.mol))) xc.text = comp.name;
 		//if (MolUtil.isBlank(xc.mol) && !xc.text) xc.text = '?';
-		
+
 		if (this.includeStoich && !QuantityCalc.isStoichZero(comp.stoich) && !QuantityCalc.isStoichUnity(comp.stoich))
 		{
 			let slash = comp.stoich.indexOf('/');
@@ -384,18 +384,18 @@ export class ArrangeExperiment
 		xc.srcIdx = -1;
 		this.components.push(xc);
 	}
-	
+
 	private arrangeComponents(comps:ArrangeComponent[], bendStep:number, vertComp:boolean):void
 	{
 		let blkMain:ArrangeComponent[][] = [];
 		let blkArrow:ArrangeComponent[][] = [];
 		let szMain:Size[] = [], szArrow:Size[] = [];
 		let midMain:Pos[] = [], midArrow:Pos[] = [];
-		
+
 		blkMain.push(this.gatherBlock(comps, 0, -1));
 		szMain.push(this.arrangeMainBlock(blkMain[0], vertComp));
 		midMain.push(this.findMidBlock(blkMain[0], szMain[0]));
-		
+
 		for (let n = 0; n < this.entry.steps.length; n++)
 		{
 			let bent = n + 1 >= bendStep;
@@ -403,17 +403,17 @@ export class ArrangeExperiment
 			blkMain.push(this.gatherBlock(comps, n, 1));
 			szMain.push(this.arrangeMainBlock(blkMain[n + 1], vertComp && !bent));
 			midMain.push(this.findMidBlock(blkMain[n + 1], szMain[n + 1]));
-			
+
 			blkArrow.push(this.gatherBlock(comps, n, 0));
-			if (!bent) 
+			if (!bent)
 				szArrow.push(this.arrangeHorizontalArrowBlock(blkArrow[n]));
-			else 
+			else
 				szArrow.push(this.arrangeVerticalArrowBlock(blkArrow[n]));
 			midArrow.push(this.findMidBlock(blkArrow[n], szArrow[n]));
 		}
-		
+
 		// part 1: arrange the first step(s) left-to-right
-		
+
 		let midH = 0;
 		for (let n = 0; n < bendStep; n++)
 		{
@@ -431,7 +431,7 @@ export class ArrangeExperiment
 				sz.h = Math.max(sz.h, midH + (szArrow[n - 1].h - midArrow[n - 1].y));
 			}
 		}
-		
+
 		let x = 0, arrowX = 0;
 		for (let n = 0; n < bendStep; n++)
 		{
@@ -445,9 +445,9 @@ export class ArrangeExperiment
 			arrowX = x + midMain[n].x;
 			x += szMain[n].w;
 		}
-	
+
 		// part 2: arrange the remaining steps top-down
-		
+
 		let y = sz.h, lowX = 0;
 		for (let n = bendStep; n <= this.entry.steps.length; n++)
 		{
@@ -470,7 +470,7 @@ export class ArrangeExperiment
 			for (let xc of comps) xc.box.x -= lowX;
 		}
 	}
-	
+
 	// enumerate blocks of specific type
 	private gatherBlock(comps:ArrangeComponent[], step:number, side:number):ArrangeComponent[]
 	{
@@ -478,7 +478,7 @@ export class ArrangeExperiment
 		for (let xc of comps) if (xc.side == side && xc.step == step) block.push(xc);
 		return block;
 	}
-	
+
 	// fit out all individual components, horizontally or vertically
 	private arrangeMainBlock(block:ArrangeComponent[], vertComp:boolean):Size
 	{
@@ -499,7 +499,7 @@ export class ArrangeExperiment
 				sz.h += xc.box.h;
 			}
 		}
-		
+
 		sz.w = Math.max(sz.w, this.scale * 2.0);
 		sz.h = Math.max(sz.h, this.scale * 2.0);
 
@@ -526,7 +526,7 @@ export class ArrangeExperiment
 
 		return sz;
 	}
-	
+
 	// arrange an arrow, and the associated reagents
 	private arrangeHorizontalArrowBlock(block:ArrangeComponent[]):Size
 	{
@@ -570,7 +570,7 @@ export class ArrangeExperiment
 		}
 		sz.w = arrow.box.w;
 		sz.h = y;
-		
+
 		return sz;
 	}
 
@@ -602,10 +602,10 @@ export class ArrangeExperiment
 			}
 			n++;
 		}
-	
+
 		let sz = new Size(sz1.w + sz2.w + arrow.box.w, Math.max(arrow.box.h, Math.max(sz1.h, sz2.h)));
 		arrow.box = new Box(sz1.w, 0, arrow.box.w, sz.h);
-		
+
 		let y1 = 0.5 * (sz.h - sz1.h), y2 = 0.5 * (sz.h - sz2.h);
 		n = 0;
 		for (let xc of block) if (xc.type != ArrangeComponentType.Arrow)
@@ -624,10 +624,10 @@ export class ArrangeExperiment
 			}
 			n++;
 		}
-		
+
 		return sz;
 	}
-	
+
 	// find the "reference middle" of a block, which is based on pluses and arrows
 	private findMidBlock(block:ArrangeComponent[], sz:Size):Pos
 	{
@@ -652,20 +652,20 @@ export class ArrangeExperiment
 		}
 		return mid;
 	}
-	
+
 	// determine how good a particular arrangement is
 	private scoreArrangement(comps:ArrangeComponent[]):number
 	{
 		let w = 0;
 		for (let xc of comps) w = Math.max(w, xc.box.maxX());
-		
+
 		let score = 0;
 
 		// want the width to be as close as possible to the limiting width
 		score -= Math.abs(w - this.limitTotalW);
 
 		// (anything else that matters?)
-	
+
 		return score;
 	}
 

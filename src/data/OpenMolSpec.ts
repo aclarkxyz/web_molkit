@@ -4,7 +4,7 @@
     (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
-    
+
     http://molmatinf.com
 
 	[PKG=webmolkit]
@@ -98,13 +98,13 @@ export class OpenMolSpec
 	public addNote(note:OpenMolNote):void
 	{
 		this.notes.push(note);
-		
+
 		note.level = 1.0;
 		if (OPENMOL_LEVEL_1_1.indexOf(note.type) >= 0) note.level = 1.1;
 		else if (OPENMOL_LEVEL_1_2.indexOf(note.type) >= 0) note.level = 1.2;
 		else if (OPENMOL_LEVEL_1_3.indexOf(note.type) >= 0) note.level = 1.3;
 		this.level = Math.max(this.level, note.level);
-		
+
 		this.invalid = this.invalid || OPENMOL_INVALID.indexOf(note.type) >= 0;
 	}
 

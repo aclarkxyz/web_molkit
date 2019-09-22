@@ -4,7 +4,7 @@
     (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
-    
+
     http://molmatinf.com
 
 	[PKG=webmolkit]
@@ -57,7 +57,7 @@ export class Molecule
 
 	public keepTransient = false;
 	private hasTransient = false;
-	
+
 	private graph:number[][] = null;
 	private graphBond:number[][] = null;
 	private ringID:number[] = null;
@@ -84,11 +84,11 @@ export class Molecule
 	constructor()
 	{
 	}
-	
+
 	public clone():Molecule {return Molecule.fromString(this.toString());}
 	public static fromString(strData:string):Molecule {return MoleculeStream.readNative(strData);}
 	public toString():string {return MoleculeStream.writeNative(this);}
-	
+
 	// takes the indicated molecular fragment and appends it to the end of the current molecule, with order preserved
 	public append(frag:Molecule):void
 	{
@@ -110,12 +110,12 @@ export class Molecule
 	}
 
 	public get numAtoms():number {return this.atoms.length;}
-	public getAtom(idx:number):Atom 
+	public getAtom(idx:number):Atom
 	{
 		if (idx < 1 || idx > this.atoms.length) throw `Molecule.getAtom: index ${idx} out of range (#atoms=${this.atoms.length})`;
 		return this.atoms[idx - 1];
 	}
-	
+
 	public atomElement(idx:number):string {return this.getAtom(idx).element;}
 	public atomX(idx:number):number {return this.getAtom(idx).x;}
 	public atomY(idx:number):number {return this.getAtom(idx).y;}
@@ -126,14 +126,14 @@ export class Molecule
 	public atomMapNum(idx:number):number {return this.getAtom(idx).mapNum;}
 	public atomExtra(idx:number):string[] {return this.getAtom(idx).extra.slice(0);}
 	public atomTransient(idx:number):string[] {return this.getAtom(idx).transient.slice(0);}
-		
+
 	public get numBonds():number {return this.bonds.length;}
-	public getBond(idx:number):Bond 
+	public getBond(idx:number):Bond
 	{
 		if (idx < 1 || idx > this.bonds.length) throw `Molecule.getBond: index ${idx} out of range (#bonds=${this.bonds.length})`;
 		return this.bonds[idx - 1];
 	}
-	
+
 	public bondFrom(idx:number):number {return this.getBond(idx).from;}
 	public bondTo(idx:number):number {return this.getBond(idx).to;}
 	public bondOrder(idx:number):number {return this.getBond(idx).order;}
@@ -219,7 +219,7 @@ export class Molecule
 	}
 
 	public swapAtoms(a1:number, a2:number):void
-	{		
+	{
 		let a = this.atoms[a1 - 1];
 		this.atoms[a1 - 1] = this.atoms[a2 - 1];
 		this.atoms[a2 - 1] = a;
@@ -348,7 +348,7 @@ export class Molecule
 		return 0;
 	}
 
-	// for a bond, returns the end which is not==Ref; return value will be From,To or 0    
+	// for a bond, returns the end which is not==Ref; return value will be From,To or 0
 	public bondOther(idx:number, ref:number):number
 	{
 		let b1 = this.bondFrom(idx), b2 = this.bondTo(idx);
@@ -367,7 +367,7 @@ export class Molecule
 		return false;
 	}
 
-	// returns the numerical ID of the ring block in which the atom resides, or 0 if it is not in a ring   
+	// returns the numerical ID of the ring block in which the atom resides, or 0 if it is not in a ring
 	public atomRingBlock(idx:number):number
 	{
 		if (this.graph == null) this.buildGraph();
@@ -414,7 +414,7 @@ export class Molecule
 		return this.graphBond[idx - 1].slice(0);
 	}
 
-	// returns _all_ rings of indicated size; each item in the array list is an array of int[Size], a consecutively ordered array of atom 
+	// returns _all_ rings of indicated size; each item in the array list is an array of int[Size], a consecutively ordered array of atom
 	// numbers; uses a recursive depth first search, which must be bounded above by Size being small in order to avoid exponential blowup
 	public findRingsOfSize(size:number):number[][]
 	{
@@ -494,7 +494,7 @@ export class Molecule
 		if (this.numAtoms > other.numAtoms) return 1;
 		if (this.numBonds < other.numBonds) return -1;
 		if (this.numBonds > other.numBonds) return 1;
-		
+
 		for (let n = 1;n <= this.numAtoms; n++)
 		{
 			if (this.atomElement(n) < other.atomElement(n)) return -1;
@@ -506,11 +506,11 @@ export class Molecule
 			if (this.atomHExplicit(n) < other.atomHExplicit(n)) return -1; if (this.atomHExplicit(n) > other.atomHExplicit(n)) return 1;
 			if (this.atomIsotope(n) < other.atomIsotope(n)) return -1; if (this.atomIsotope(n) > other.atomIsotope(n)) return 1;
 			if (this.atomMapNum(n) < other.atomMapNum(n)) return -1; if (this.atomMapNum(n) > other.atomMapNum(n)) return 1;
-			
+
 			let tx1 = this.atomExtra(n), tx2 = other.atomExtra(n);
 			if (tx1.length < tx2.length) return -1; if (tx1.length > tx2.length) return 1;
 			for (let i = 0; i < tx1.length; i++) if (tx1[i] < tx2[i]) return -1; else if (tx1[i] > tx2[i]) return 1;
-		
+
 			tx1 = this.atomTransient(n); tx2 = other.atomTransient(n);
 			if (tx1.length < tx2.length) return -1; if (tx1.length > tx2.length) return 1;
 			for (let i = 0; i < tx1.length; i++) if (tx1[i] < tx2[i]) return -1; else if (tx1[i] > tx2[i]) return 1;
@@ -521,21 +521,21 @@ export class Molecule
 			if (this.bondTo(n) < other.bondTo(n)) return -1; if (this.bondTo(n) > other.bondTo(n)) return 1;
 			if (this.bondOrder(n) < other.bondOrder(n)) return -1; if (this.bondOrder(n) > other.bondOrder(n)) return 1;
 			if (this.bondType(n) < other.bondType(n)) return -1; if (this.bondType(n) > other.bondType(n)) return 1;
-		
+
 			let tx1 = this.bondExtra(n), tx2 = other.bondExtra(n);
 			if (tx1.length < tx2.length) return -1; if (tx1.length > tx2.length) return 1;
 			for (let i = 0; i < tx1.length; i++) if (tx1[i] < tx2[i]) return -1; else if (tx1[i] > tx2[i]) return 1;
-			
+
 			tx1 = this.bondTransient(n); tx2 = other.bondTransient(n);
 			if (tx1.length < tx2.length) return -1; if (tx1.length > tx2.length) return 1;
 			for (let i = 0; i < tx1.length; i++) if (tx1[i] < tx2[i]) return -1; else if (tx1[i] > tx2[i]) return 1;
 		}
-		
+
 		return 0;
 	}
 
 	// ------------ private methods ------------
-	
+
 	// must be called when the molecule's graph changes; do not call for changing labels or coordinates
 	private trashGraph():void
 	{
@@ -558,12 +558,12 @@ export class Molecule
 		for (let b of this.bonds) b.transient = [];
 		this.hasTransient = false;
 	}
-	
+
 	// if the computed graph is not defined, rebuild it
 	private buildGraph():void
 	{
 		if (this.graph != null && this.graphBond != null) return;
-		
+
 		let graph:number[][] = [], graphBond:number[][] = [];
 		let na = this.numAtoms, nb = this.numBonds;
 
@@ -580,7 +580,7 @@ export class Molecule
 			graphBond[b.from - 1].push(n);
 			graphBond[b.to - 1].push(n);
 		}
-		
+
 		this.graph = graph;
 		this.graphBond = graphBond;
 	}
@@ -796,7 +796,7 @@ export class Molecule
 		}
 
 		rings.push(path);
-	}	
+	}
 }
 
 /* EOF */ }

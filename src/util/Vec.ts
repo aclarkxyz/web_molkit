@@ -4,7 +4,7 @@
     (c) 2010-2017 Molecular Materials Informatics, Inc.
 
     All rights reserved
-    
+
     http://molmatinf.com
 
 	[PKG=webmolkit]
@@ -170,7 +170,7 @@ export class Vec
 	{
 		if (arr == null || arr.length == 0) return 0;
 		let lo = arr[0], hi = arr[0];
-		for (let n = 1; n < arr.length; n++) 
+		for (let n = 1; n < arr.length; n++)
 		{
 			if (arr[n] < lo) lo = arr[n];
 			if (arr[n] > hi) hi = arr[n];
@@ -191,7 +191,7 @@ export class Vec
 		for (let n = 0; n < sz; n++) ret[n] = n;
 		return ret;
 	}
-	
+
 	public static identity1(sz:number):number[]
 	{
 		let ret:number[] = new Array(sz);
@@ -213,7 +213,7 @@ export class Vec
 		return ret;
 	}
 
-	public static maskCount(mask:boolean[]):number 
+	public static maskCount(mask:boolean[]):number
 	{
 		let c = 0;
 		for (let n = mask.length - 1; n >= 0; n--) if (mask[n]) c++;
@@ -221,13 +221,13 @@ export class Vec
 	}
 
 		// converts the mask into indices (0-based)
-	public static maskIdx(mask:boolean[]):number[] 
+	public static maskIdx(mask:boolean[]):number[]
 	{
 		let idx:number[] = [];
 		for (let n = 0; n < mask.length; n++) if (mask[n]) idx.push(n);
 		return idx;
 	}
-	
+
 	// converts the index into a mask (0-based index)
 	public static idxMask(idx:number[], sz:number):boolean[]
 	{
@@ -235,7 +235,7 @@ export class Vec
 		for (let n of idx) mask[n] = true;
 		return mask;
 	}
-	
+
 	// converts a mask into an index map: if mask[n] is true, then idx[n] is a 0-based index into an equivalent array composed only
 	// of entries for which mask is true; for the rest, the value is -1
 	public static maskMap(mask:boolean[]):number[]
@@ -244,7 +244,7 @@ export class Vec
 		for (let n = 0, pos = 0; n < mask.length; n++) ret.push(mask[n] ? pos++ : -1);
 		return ret;
 	}
-	
+
 	// returns members of an array for which the value of mask is true
 	public static maskGet(arr:any[], mask:boolean[]):any[]
 	{
@@ -252,7 +252,7 @@ export class Vec
 		for (let n = 0, p = 0; n < arr.length; n++) if (mask[n]) ret.push(arr[n]);
 		return ret;
 	}
-	
+
 	// return a mask of elements which are equal on both sides (with unit extension on the right)
 	public static maskEqual(arr1:any[], val:any):boolean[]
 	{
@@ -479,29 +479,29 @@ export class Permutation
 		else if (sz == 4) return this.PERM4;
 		else return null;
 	}
-	
+
 	// cache: intermediate permutation sizes are cached; note that anything significantly big really should not be used
 	private static MAX_CACHE = 8;
 	private static PERM_CACHE:number[][][] = [];
-	
+
 	// returns all of the permutations up to a certain size; note that this is slow and scales exponentially: use sparingly
 	public static allPermutations(sz:number):number[][]
 	{
 		if (sz <= this.SMALL_PERMS) return this.smallPermutation(sz);
 		while (this.PERM_CACHE.length < this.MAX_CACHE - this.SMALL_PERMS) this.PERM_CACHE.push(null);
 		if (sz < this.MAX_CACHE && this.PERM_CACHE[sz - this.SMALL_PERMS] != null) return this.PERM_CACHE[sz - this.SMALL_PERMS];
-		
+
 		let nperms = 1;
 		for (let n = 2; n <= sz; n++) nperms *= n;
 		let perms:number[][] = [];
-	
+
 		// NOTE: for sure not the fastest way to do it, but it gets the job done; the total number of iterations is actually
 		// exponential, rather than factorial
-		
+
 		let idx = Vec.identity0(sz);
 		perms.push(idx.slice(0));
 		let mask = Vec.booleanArray(false, sz);
-		
+
 		for (let n = 1; n < nperms; n++)
 		{
 			nonunique: while (idx[0] < sz)
@@ -514,7 +514,7 @@ export class Permutation
 					idx[i] = 0;
 					idx[i - 1]++;
 				}
-				
+
 				// skip the loop if digits have any degeneracy
 				Vec.setTo(mask, false);
 				for (let i of idx)
@@ -522,13 +522,13 @@ export class Permutation
 					if (mask[i]) continue nonunique;
 					mask[i] = true;
 				}
-				
+
 				// this is a new unique combo, so poke it in
 				perms[n] = idx.slice(0);
 				break;
 			}
 		}
-		
+
 		if (sz < this.MAX_CACHE) this.PERM_CACHE[sz - this.SMALL_PERMS] = perms;
 		return perms;
 	}

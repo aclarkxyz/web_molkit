@@ -4,7 +4,7 @@
     (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
-    
+
     http://molmatinf.com
 
 	[PKG=webmolkit]
@@ -59,7 +59,7 @@ export class TemplateBank extends ButtonBank
 	{
 		super();
 	}
-	
+
 	public init()
 	{
 		// immediately issue a webservice request to fetch the button list
@@ -69,7 +69,7 @@ export class TemplateBank extends ButtonBank
 		policy.data.bondSep *= 1.5;
 
 		let sz = this.buttonView.idealSize;
-		
+
 		if (this.group == null)
 		{
 			if (RPC.BASE_URL != null)
@@ -77,7 +77,7 @@ export class TemplateBank extends ButtonBank
 				let input = {'tokenID': this.owner.tokenID, 'policy': policy.data, 'size': [sz - 4, sz - 4]};
 				let fcn = (result:any, error:ErrorRPC) =>
 				{
-					if (!result) 
+					if (!result)
 					{
 						alert('Setup of TemplateBank failed: ' + error.message);
 						return;
@@ -102,7 +102,7 @@ export class TemplateBank extends ButtonBank
 				let input:any = {'tokenID': this.owner.tokenID, 'policy': policy.data, 'size': [sz - 4, sz - 4], 'group': this.group};
 				let fcn = (result:any, error:ErrorRPC) =>
 				{
-					if (!result) 
+					if (!result)
 					{
 						alert('Setup of TemplateBank failed: ' + error.message);
 						return;
@@ -128,14 +128,14 @@ export class TemplateBank extends ButtonBank
 		if (this.subgroups == null && this.templates == null) return;
 
 		this.buttons = [];
-		
+
 		if (this.group == null)
 			this.populateGroups();
 		else
-			this.populateTemplates();	
+			this.populateTemplates();
 	}
 
-	// build a list of template groups, based on the webservice results 
+	// build a list of template groups, based on the webservice results
 	private populateGroups():void
 	{
 		let groups = this.subgroups.groups, titles = this.subgroups.titles, preview = this.subgroups.preview;
@@ -146,11 +146,11 @@ export class TemplateBank extends ButtonBank
 		}
 	}
 
-	// build a list of template structures, based on the webservice results 
+	// build a list of template structures, based on the webservice results
 	private populateTemplates():void
 	{
 		let names = this.templates.names, abbrev = this.templates.abbrev, mnemonic = this.templates.mnemonic, preview = this.templates.preview;
-		
+
 		for (let n = 0 ; n < names.length; n++)
 		{
 			this.buttons.push({'id': n.toString(), 'metavec': preview[n], 'helpText': names[n]});
@@ -207,7 +207,7 @@ export class TemplateBank extends ButtonBank
 			let url = RPC.RESOURCE_URL + '/data/templates/' + roster.shift() + '.ds';
 			$.ajax(
 			{
-				'url': url, 
+				'url': url,
 				'type': 'GET',
 				'dataType': 'text',
 				'success': (dsstr:string) =>
@@ -217,7 +217,7 @@ export class TemplateBank extends ButtonBank
 				}
 			});
 		};
-		grabNext();	
+		grabNext();
 	}
 
 	// use the resource data to prepare button icons for the template groups
@@ -237,7 +237,7 @@ export class TemplateBank extends ButtonBank
 
 			let colMol = ds.firstColOfType(DataSheetColumn.Molecule);
 			let metavec = new MetaVector();
-			
+
 			for (let n = 0, idx = 0; idx < 4 && n < ds.numRows; n++)
 			{
 				let mol = ds.getMolecule(n, colMol);
@@ -247,7 +247,7 @@ export class TemplateBank extends ButtonBank
 				layout.arrange();
 				let col = (idx % 2), row = Math.floor(idx / 2);
 				layout.squeezeInto(1 + col * msz, 1 + row * msz, msz, msz, 1);
-				new DrawMolecule(layout, metavec).draw(); 
+				new DrawMolecule(layout, metavec).draw();
 
 				idx++;
 			}
@@ -263,7 +263,7 @@ export class TemplateBank extends ButtonBank
 	private prepareTemplates():void
 	{
 		let idx = TemplateBank.RESOURCE_LIST.indexOf(this.group);
-		let ds = TemplateBank.RESOURCE_DATA[idx]; 	
+		let ds = TemplateBank.RESOURCE_DATA[idx];
 
 		this.templates = {'molecules': [], 'names': [], 'abbrev': [], 'mnemonic': [], 'preview': []};
 
@@ -291,7 +291,7 @@ export class TemplateBank extends ButtonBank
 			layout.arrange();
 			layout.squeezeInto(0, 0, sz, sz, 2);
 			let metavec = new MetaVector();
-			new DrawMolecule(layout, metavec).draw(); 
+			new DrawMolecule(layout, metavec).draw();
 			metavec.width = sz;
 			metavec.height = sz;
 			this.templates.preview.push(metavec);
@@ -325,7 +325,7 @@ export class FusionBank extends ButtonBank
 		else if (id == 'prev') this.owner.templateRotate(-1);
 		else if (id == 'next') this.owner.templateRotate(1);
 	}
-	
+
 	public bankClosed()
 	{
 		this.owner.clearPermutations();

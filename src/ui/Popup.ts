@@ -4,7 +4,7 @@
     (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
-    
+
     http://molmatinf.com
 
 	[PKG=webmolkit]
@@ -34,7 +34,7 @@ export class Popup
 	protected obscureBackground:JQuery; // grey covering banner
 	protected panelBoundary:JQuery; // the dialog outline itself
 	protected bodyDiv:JQuery; // the main area, for content
-	
+
 	public callbackClose:(source?:Popup) => void = null;
 	public callbackPopulate:(source?:Popup) => void = null;
 
@@ -42,7 +42,7 @@ export class Popup
 	{
 		installInlineCSS('popup', CSS_POPUP);
 	}
-	
+
 	public onClose(callback:(source?:Popup) => void)
 	{
 		this.callbackClose = callback;
@@ -54,7 +54,7 @@ export class Popup
 		let body = $(document.documentElement);
 		/*let bodyW = body.outerWidth(true), margW = 0.5 * (bodyW - body.outerWidth());
 		let bodyH = body.outerHeight(true), margH = 0.5 * (bodyH - body.outerHeight());*/
-		
+
 		let bg = this.obscureBackground = $('<div></div>').appendTo(body);
 		bg.css('width', '100%');
 		bg.css('height', document.documentElement.clientHeight + 'px');
@@ -66,7 +66,7 @@ export class Popup
 		bg.css('z-index', 9999);
 		bg.click(() => this.close());
 		this.obscureBackground = bg;
-		
+
 		let pb = this.panelBoundary = $('<div class="wmk-popup"></div>').appendTo(body);
 		pb.click((event:JQueryEventObject) => event.stopPropagation()); // don't let the click percolate upward to the close event
 		pb.css('background-color', 'white');
@@ -82,7 +82,7 @@ export class Popup
 		this.populate();
 		this.positionAndShow();
 	}
-	
+
 	// closes and hides the dialog
 	public close():void
 	{
@@ -91,25 +91,25 @@ export class Popup
 
 		if (this.callbackClose) this.callbackClose(this);
 	}
-	
+
 	// sizes may have changed, so adjust if necessary
 	public bump():void
 	{
 		this.positionAndShow();
 	}
-	
-	// use this to obtain the parts of the dialog box intended for modification 
+
+	// use this to obtain the parts of the dialog box intended for modification
 	public body():JQuery {return this.bodyDiv;}
-		
+
 	// either subclass and override this, or provide the callback
 	protected populate():void
 	{
-		if (this.callbackPopulate) 
+		if (this.callbackPopulate)
 			this.callbackPopulate(this);
 		else
 			this.body().text('Empty popup.');
 	}
-	
+
 	// have this called when the size may have changed, and need to update position
 	private positionAndShow():void
 	{
@@ -117,7 +117,7 @@ export class Popup
 		const GAP = 2;
 		let wx1 = this.parent.offset().left, wy1 = this.parent.offset().top;
 		let wx2 = wx1 + this.parent.width(), wy2 = wy1 + this.parent.height();
-		
+
 		let pb = this.panelBoundary;
 
 		let maxW = Math.max(wx1, winW - wx2) - 4;
@@ -132,7 +132,7 @@ export class Popup
 			if (wy2 + GAP + popH < winH) posY = wy2 + GAP;
 			else if (wy1 - GAP - popH > 0) posY = wy1 - GAP - popH;
 			else posY = wy2 + GAP;
-			
+
 			pb.css('left', `${posX}px`);
 			pb.css('top', `${posY}px`);
 		};

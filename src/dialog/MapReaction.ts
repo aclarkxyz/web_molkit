@@ -4,7 +4,7 @@
     (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
-    
+
     http://molmatinf.com
 
 	[PKG=webmolkit]
@@ -21,7 +21,7 @@
 namespace WebMolKit /* BOF */ {
 
 /*
-	Given two sketched out molecules, allows the user to map individual atoms interactively. 
+	Given two sketched out molecules, allows the user to map individual atoms interactively.
 */
 
 export class MapReaction extends Dialog
@@ -35,7 +35,7 @@ export class MapReaction extends Dialog
 	private mol2:Molecule;
 
 	private policy:RenderPolicy;
-		
+
 	// layout information about both molecules, and how to position them
 	private layout1:ArrangeMolecule;
 	private layout2:ArrangeMolecule;
@@ -56,12 +56,12 @@ export class MapReaction extends Dialog
 	private canvasH:number;
 	private canvas:HTMLCanvasElement;
 	private drawnMols:HTMLCanvasElement;
-	
+
 	private highlighted = [0, 0];
 	private pressed = [0, 0];
 	private dragToX:number;
 	private dragToY:number;
-	
+
 	// --------------------------------------- public methods ---------------------------------------
 
 	constructor(mol1:Molecule, mol2:Molecule)
@@ -73,7 +73,7 @@ export class MapReaction extends Dialog
 
 		this.policy = RenderPolicy.defaultBlackOnWhite();
 		this.policy.data.pointScale = 40;
-		
+
 		this.title = 'Map Reaction Atoms';
 		this.minPortionWidth = 20;
 		this.maxPortionWidth = 95;
@@ -85,19 +85,19 @@ export class MapReaction extends Dialog
 
 	// builds the dialog content
 	protected populate():void
-	{		
+	{
 		let buttons = this.buttons(), body = this.body();
-		
+
 		this.btnClear = $('<button class="button button-default">Clear</button>').appendTo(buttons);
 		this.btnClear.click(() => this.clearAllMappings());
 
 		buttons.append(' ');
 		buttons.append(this.btnClose); // easy way to reorder
-		
+
 		buttons.append(' ');
 		this.btnSave = $('<button class="button button-primary">Save</button>').appendTo(buttons);
 		this.btnSave.click(() => {if (this.callbackSave) this.callbackSave(this);});
-		
+
 		let measure = new OutlineMeasurement(0, 0, this.policy.data.pointScale);
 		let effects = new RenderEffects();
 		this.layout1 = new ArrangeMolecule(this.mol1, measure, this.policy, effects);
@@ -107,7 +107,7 @@ export class MapReaction extends Dialog
 
 		this.setupPanel();
 	}
-	
+
 	// --------------------------------------- private methods ---------------------------------------
 
 	// given that both molecules have been arranged, positions and draws everything
@@ -116,7 +116,7 @@ export class MapReaction extends Dialog
 		let bounds1 = this.layout1.determineBoundary(), w1 = bounds1[2] - bounds1[0], h1 = bounds1[3] - bounds1[1];
 		let bounds2 = this.layout2.determineBoundary(), w2 = bounds2[2] - bounds2[0], h2 = bounds2[3] - bounds2[1];
 
-		let maxWidth = 0.9 * $(window).width(), maxHeight = 0.8 * $(window).height();	
+		let maxWidth = 0.9 * $(window).width(), maxHeight = 0.8 * $(window).height();
 		this.padding = 1 * this.policy.data.pointScale;
 
 		let scale1 = (maxWidth - this.ARROWWIDTH) / (w1 + w2 + 4 * this.padding);
@@ -131,7 +131,7 @@ export class MapReaction extends Dialog
 		this.box2 = new Box(this.boxArrow.maxX(), 0, w2 + 2 * this.padding, this.canvasH);
 		this.layout1.squeezeInto(this.box1.x, this.box1.y, this.box1.w, this.box1.h);
 		this.layout2.squeezeInto(this.box2.x, this.box2.y, this.box2.w, this.box2.h);
-		
+
 		/*this.offsetX1 = this.padding * this.scale;
 		this.offsetY1 = 0.5 * (this.canvasH - h1 * this.scale);
 		this.offsetX2 = (w1 + 3 * this.padding) * this.scale + this.ARROWWIDTH;
@@ -141,18 +141,18 @@ export class MapReaction extends Dialog
 		div.css('position', 'relative');
 		div.css('width', this.canvasW + 'px');
 		div.css('height', this.canvasH + 'px');
-		
+
 		let density = pixelDensity();
-		
+
 		let styleCanvas = 'position: absolute; left: 0; top: 0; width: ' + this.canvasW + 'px; height: ' + this.canvasH + 'px;';
 		let styleOverlay = styleCanvas + 'pointer-events: none;';
-		
+
 		// setup the canvas, for redrawing the interactive elements
 		this.canvas = newElement(div, 'canvas', {'width': this.canvasW * density, 'height': this.canvasH * density, 'style': styleCanvas}) as HTMLCanvasElement;
 		let ctx = this.canvas.getContext('2d');
 		ctx.scale(density, density);
 		this.redrawCanvas();
-		
+
 		$(this.canvas).mousedown((event:JQueryEventObject) => {event.preventDefault(); this.mouseDown(event);});
 		$(this.canvas).mouseup((event:JQueryEventObject) => this.mouseUp(event));
 		$(this.canvas).mouseenter((event:JQueryEventObject) => this.mouseEnter(event));
@@ -180,7 +180,7 @@ export class MapReaction extends Dialog
 		draw.offsetY = this.offsetY2;
 		draw.scale = this.scale;
 		draw.renderContext(ctx);*/
-		
+
 		this.bump();
 	}
 
@@ -189,7 +189,7 @@ export class MapReaction extends Dialog
 		let ctx = this.canvas.getContext('2d');
 		let w = this.canvasW, h = this.canvasH;
 		ctx.clearRect(0, 0, w, h);
-		
+
 		let arrowX1 = this.boxArrow.minX(), arrowX2 = this.boxArrow.maxX(), arrowY = this.boxArrow.midY();
 
 		ctx.beginPath();
@@ -198,17 +198,17 @@ export class MapReaction extends Dialog
 		ctx.strokeStyle = 'black';
 		ctx.lineWidth = 2;
 		ctx.stroke();
-		
+
 		ctx.beginPath();
 		ctx.moveTo(arrowX2, arrowY);
 		ctx.lineTo(arrowX2 - 8, arrowY - 5);
 		ctx.lineTo(arrowX2 - 8, arrowY + 5);
 		ctx.fillStyle = 'black';
 		ctx.fill();
-		
+
 		this.drawHighlights(ctx, 1, this.highlighted[0] == 1 ? this.highlighted[1] : 0);
 		this.drawHighlights(ctx, 2, this.highlighted[0] == 2 ? this.highlighted[1] : 0);
-		
+
 		if (this.pressed[0] > 0)
 		{
 			// outline everything that's compatible
@@ -234,15 +234,15 @@ export class MapReaction extends Dialog
 					ctx.ellipse(cx, cy, rw, rh, 0, 0, TWOPI, false);
 					ctx.stroke();
 				}
-			} 
-			
+			}
+
 			// draw the highlighted
 			let [cx1, cy1, rw1, rh1] = this.getAtomPos(this.pressed[0], this.pressed[1]);
 			ctx.beginPath();
-			ctx.ellipse(cx1, cy1, rw1, rh1, 0, 0, TWOPI, false);  
+			ctx.ellipse(cx1, cy1, rw1, rh1, 0, 0, TWOPI, false);
 			ctx.fillStyle = '#808080';
 			ctx.fill();
-			
+
 			let dx = this.dragToX, dy = this.dragToY;
 			let dest = this.pickAtom(dx, dy, this.pressed[0] == 2 ? compatMask : null, this.pressed[0] == 1 ? compatMask : null);
 
@@ -250,13 +250,13 @@ export class MapReaction extends Dialog
 			{
 				let [cx2, cy2, rw2, rh2] = this.getAtomPos(dest[0], dest[1]);
 				ctx.beginPath();
-				ctx.ellipse(cx2, cy2, rw2, rh2, 0, 0, TWOPI, false);  
+				ctx.ellipse(cx2, cy2, rw2, rh2, 0, 0, TWOPI, false);
 				ctx.fillStyle = '#808080';
 				ctx.fill();
 				dx = cx2;
 				dy = cy2;
 			}
-			
+
 			ctx.beginPath();
 			ctx.moveTo(cx1, cy1);
 			ctx.lineTo(dx, dy);
@@ -265,7 +265,7 @@ export class MapReaction extends Dialog
 			ctx.stroke();
 		}
 	}
-	
+
 	// mapped atoms get a background circle
 	private drawHighlights(ctx:CanvasRenderingContext2D, side:number, highlight:number):void
 	{
@@ -274,7 +274,7 @@ export class MapReaction extends Dialog
 		const offsetX = side == 1 ? this.offsetX1 : this.offsetX2;
 		const offsetY = side == 1 ? this.offsetY1 : this.offsetY2;
 		const scale = this.scale;
-		
+
 		for (let n = 1; n <= mol.numAtoms; n++)
 		{
 			let mapnum = mol.atomMapNum(n);
@@ -284,7 +284,7 @@ export class MapReaction extends Dialog
 			{
 				let col = this.COLCYCLE[(mapnum - 1) % this.COLCYCLE.length];
 				ctx.beginPath();
-				ctx.ellipse(cx, cy, rw, rh, 0, 0, TWOPI, false);  
+				ctx.ellipse(cx, cy, rw, rh, 0, 0, TWOPI, false);
 				ctx.fillStyle = col;
 				ctx.fill();
 
@@ -301,26 +301,26 @@ export class MapReaction extends Dialog
 						ctx.lineWidth = 1;
 						ctx.stroke();
 					}
-				}				
+				}
 			}
 			if (n == highlight)
 			{
 				ctx.beginPath();
-				ctx.ellipse(cx, cy, rw, rh, 0, 0, TWOPI, false);  
+				ctx.ellipse(cx, cy, rw, rh, 0, 0, TWOPI, false);
 				ctx.strokeStyle = '#404040';
 				ctx.lineWidth = 1;
 				ctx.stroke();
 			}
 		}
 	}
-	
+
 	// for a screen position, returns {side,atom#} that corresponds to it, where side is 0=nothing, 1 or 2=something
 	private pickAtom(x:number, y:number, mask1?:boolean[], mask2?:boolean[]):number[]
 	{
 		let ret = [0, 0];
-		
+
 		let bestDist = Number.POSITIVE_INFINITY;
-		
+
 		let threshsq = sqr(this.layout1.getScale() * 1.0 * this.policy.data.pointScale);
 		for (let n = 0; n < this.mol1.numAtoms; n++)
 		{
@@ -338,20 +338,20 @@ export class MapReaction extends Dialog
 			let dsq = norm2_xy(x - pt.oval.cx, y - pt.oval.cy);
 			if (dsq < threshsq && dsq < bestDist) {ret = [2, n + 1]; bestDist = dsq;}
 		}
-		
+
 		return ret;
 	}
-	
+
 	// digs around in the given atom container for the screen position and recommended bounding size
 	private getAtomPos(side:number, atom:number):[number, number, number, number]
 	{
 		let layout = side == 1 ? this.layout1 : this.layout2;
-		let ox = side == 1 ? this.offsetX1 : this.offsetX2, oy = side == 1 ? this.offsetY1 : this.offsetY2; 
+		let ox = side == 1 ? this.offsetX1 : this.offsetX2, oy = side == 1 ? this.offsetY1 : this.offsetY2;
 		let pt = layout.getPoint(atom - 1);
 		let rw = Math.max(0.5 * this.policy.data.pointScale, pt.oval.rw) * this.scale, rh = Math.max(0.5 * this.policy.data.pointScale, pt.oval.rh) * this.scale;
 		return [pt.oval.cx, pt.oval.cy, rw, rh];
 	}
-	
+
 	// returns a mask for whether or not atoms on the other side are compatible with each other
 	private compatibilityMask(side:number, atom:number):boolean[]
 	{
@@ -368,7 +368,7 @@ export class MapReaction extends Dialog
 
 		return mask;
 	}
-	
+
 	// assign the same mapping number to the two atoms; the side parameter refers to the first molecule - this
 	// second one is presumed to be the opposite
 	private connectAtoms(side:number, atom1:number, atom2:number)
@@ -376,7 +376,7 @@ export class MapReaction extends Dialog
 		let mol1 = side == 1 ? this.mol1 : this.mol2, mol2 = side == 1 ? this.mol2 : this.mol1;
 		let map = mol1.atomMapNum(atom1);
 		if (map == 0) map = mol2.atomMapNum(atom2);
-		
+
 		// find an unused mapping number, if necessary
 		if (map == 0)
 		{
@@ -387,33 +387,33 @@ export class MapReaction extends Dialog
 		}
 		mol1.setAtomMapNum(atom1, map);
 		mol2.setAtomMapNum(atom2, map);
-	}	
+	}
 
-	// tries to match up more atoms algorithmically 
+	// tries to match up more atoms algorithmically
 	private autoConnect():void
 	{
 		// note: if the user does something while the webservice is operating, that's OK: it will only apply mappings that are in addition to
 		// the current state of the molecules
-		
+
 		Func.atomMapping({'leftNative':this.mol1.toString(), 'rightNative':this.mol2.toString()}, (result:any, error:ErrorRPC) =>
 		{
 			if (!result) return; // (silent failure)
-			
+
 			let map1:number[] = result.map1, map2:number[] = result.map2;
 			if (map1 == null || map2 == null) return;
-			
+
 			let modified = false;
 			for (let n = 1; n <= this.mol1.numAtoms && n <= map1.length; n++) if (map1[n - 1] > 0 && this.mol1.atomMapNum(n) == 0)
 			{
 				this.mol1.setAtomMapNum(n, map1[n - 1]);
 				modified = true;
-			} 
+			}
 			for (let n = 1; n <= this.mol2.numAtoms && n <= map2.length; n++) if (map2[n - 1] > 0 && this.mol2.atomMapNum(n) == 0)
 			{
 				this.mol2.setAtomMapNum(n, map2[n - 1]);
 				modified = true;
 			}
-			
+
 			if (modified) this.redrawCanvas();
 		});
 	}
@@ -462,7 +462,7 @@ export class MapReaction extends Dialog
 				// investigate drag operation
 				let compatMask = this.compatibilityMask(this.pressed[0], this.pressed[1]);
 				dest = this.pickAtom(xy[0], xy[1], this.pressed[0] == 2 ? compatMask : null, this.pressed[0] == 1 ? compatMask : null);
-				if (dest[0] == 3 - this.pressed[0]) 
+				if (dest[0] == 3 - this.pressed[0])
 				{
 					this.connectAtoms(this.pressed[0], this.pressed[1], dest[1]);
 					this.autoConnect();

@@ -4,7 +4,7 @@
     (c) 2010-2018 Molecular Materials Informatics, Inc.
 
     All rights reserved
-    
+
     http://molmatinf.com
 
 	[PKG=webmolkit]
@@ -22,8 +22,8 @@ namespace WebMolKit /* BOF */ {
 
 /*
 	Embedded molecule: displays a single molecular structure, with a variety of available rendering options. The structure display is static
-	and read-only, but it can be extracted in data format. It is rendered as SVG, so that it looks good when rendered for print quality. 
-	
+	and read-only, but it can be extracted in data format. It is rendered as SVG, so that it looks good when rendered for print quality.
+
 	The rendering parameters are quite raw, and presumed to be passed from an un-typed source, directly from the user:
 
         format: MIME, or shortcuts for "molfile" or "sketchel"
@@ -55,7 +55,7 @@ export class EmbedMolecule extends EmbedChemistry
 	private maxHeight = 0;
 	private boxSize:Size = null;
 	private tight = false;
-	
+
 	// ------------ public methods ------------
 
 	constructor(private molstr:string, options?:any)
@@ -65,32 +65,32 @@ export class EmbedMolecule extends EmbedChemistry
 		if (!options) options = {};
 
 		let mol:Molecule = null, name:string = options.name;
-		if (options.format == 'sketchel' || options.format == 'chemical/x-sketchel') 
+		if (options.format == 'sketchel' || options.format == 'chemical/x-sketchel')
 		{
 			mol = Molecule.fromString(molstr);
 		}
 		else if (options.format == 'molfile' || options.format == 'chemical/x-mdl-molfile')
 		{
-			try 
+			try
 			{
-				let mdl = new MDLMOLReader(molstr); 
+				let mdl = new MDLMOLReader(molstr);
 				mol = mdl.parse();
 				if (mol != null && name == null) name = mdl.molName;
 			}
-			catch (ex) {this.failmsg = ex;} 
+			catch (ex) {this.failmsg = ex;}
 		}
 		else // free for all
 		{
 			mol = Molecule.fromString(molstr);
 			if (mol == null)
 			{
-				try 
+				try
 				{
-					let mdl = new MDLMOLReader(molstr); 
+					let mdl = new MDLMOLReader(molstr);
 					mol = mdl.parse();
 					if (mol != null && name == null) name = mdl.molName;
 				}
-				catch (ex) {} // (silent when not forcing a type) 
+				catch (ex) {} // (silent when not forcing a type)
 			}
 		}
 
@@ -99,7 +99,7 @@ export class EmbedMolecule extends EmbedChemistry
 		if (options.invert) mol = CoordUtil.mirrorImage(mol);
 		if (options.rotate) CoordUtil.rotateMolecule(mol, options.rotate * DEGRAD);
 		if (options.padding) this.padding = options.padding;
-		
+
 		if (options.background == 'transparent') this.clearBackground();
 		else if (options.background)
 		{
@@ -110,7 +110,7 @@ export class EmbedMolecule extends EmbedChemistry
 				this.setBackgroundGradient(htmlToRGB(bg.substring(0, comma)), htmlToRGB(bg.substring(comma + 1)));
 		}
 
-		if (options.border == 'transparent') this.borderCol = MetaVector.NOCOLOUR; 
+		if (options.border == 'transparent') this.borderCol = MetaVector.NOCOLOUR;
 		else if (options.border) this.borderCol = htmlToRGB(options.border);
 
 		if (options.radius != null) this.borderRadius = parseInt(options.radius);
@@ -142,12 +142,12 @@ export class EmbedMolecule extends EmbedChemistry
 	{
 		this.tagType = 'span';
 		super.render(parent);
-		
+
 		let span = this.content, mol = this.mol, policy = this.policy;
 
 		span.css('display', 'inline-block');
 		span.css('line-height', '0');
-		if (!this.tight) span.css('margin-bottom', '1.5em'); 
+		if (!this.tight) span.css('margin-bottom', '1.5em');
 
 		if (mol != null && mol.numAtoms > 0)
 		{
@@ -165,7 +165,7 @@ export class EmbedMolecule extends EmbedChemistry
 				let w = bounds[2] - bounds[0], h = bounds[3] - bounds[1];
 				let limW = this.maxWidth == 0 ? w : Math.min(w, this.maxWidth);
 				let limH = this.maxHeight == 0 ? h : Math.min(h, this.maxHeight);
-				if (limW != w || limH != h) layout.squeezeInto(0, 0, limW, limH); 
+				if (limW != w || limH != h) layout.squeezeInto(0, 0, limW, limH);
 			}
 
 			let metavec = new MetaVector();
