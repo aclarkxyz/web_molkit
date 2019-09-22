@@ -395,6 +395,8 @@ export class MapReaction extends Dialog
 		// note: if the user does something while the webservice is operating, that's OK: it will only apply mappings that are in addition to
 		// the current state of the molecules
 
+		// TODO: code it locally...
+		/*
 		Func.atomMapping({'leftNative':this.mol1.toString(), 'rightNative':this.mol2.toString()}, (result:any, error:ErrorRPC) =>
 		{
 			if (!result) return; // (silent failure)
@@ -415,7 +417,7 @@ export class MapReaction extends Dialog
 			}
 
 			if (modified) this.redrawCanvas();
-		});
+		});*/
 	}
 
 	// resets atom mapping numbers

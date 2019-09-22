@@ -14,8 +14,6 @@
 ///<reference path='../util/util.ts'/>
 ///<reference path='../ui/OptionList.ts'/>
 ///<reference path='../data/FormatList.ts'/>
-///<reference path='../rpc/RPC.ts'/>
-///<reference path='../rpc/Func.ts'/>
 ///<reference path='../data/DataSheetStream.ts'/>
 ///<reference path='../decl/jquery.d.ts'/>
 ///<reference path='../data/Molecule.ts'/>
@@ -156,6 +154,7 @@ export class Download extends Dialog
 	// grab the content
 	private clickPrepare():void
 	{
+		/* !! RECODE
 		let input:any = {'tokenID': this.tokenID};
 		input.format = this.formatKey[this.optFormatList.getSelectedIndex()];
 		input.policy = clone(this.policy.data);
@@ -181,7 +180,7 @@ export class Download extends Dialog
 		{
 			input.dataXML = DataSheetStream.writeXML(this.ds);
 		}
-		Func.prepareDownloadable(input, (result:any, error:ErrorRPC) => this.downloadContent(result, error));
+		Func.prepareDownloadable(input, (result:any, error:ErrorRPC) => this.downloadContent(result, error));*/
 	}
 
 	// submits the current content to get it viewed

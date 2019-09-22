@@ -62,7 +62,7 @@ export class PickRecent extends Dialog
 			vs.backgroundCol1 = 0xF8F8F8;
 			vs.backgroundCol2 = 0xE0E0E0;
 			vs.padding = 4;
-			vs.setup(() => {vs.render(tdMol); this.bump();});
+			vs.render(tdMol);
 
 			let tdPick = $(tdHTML).appendTo(tr);
 			if (this.sides == 1)

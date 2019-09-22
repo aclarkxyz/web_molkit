@@ -16,7 +16,6 @@
 ///<reference path='../gfx/ArrangeMolecule.ts'/>
 ///<reference path='../gfx/DrawMolecule.ts'/>
 ///<reference path='../data/Molecule.ts'/>
-///<reference path='../rpc/Func.ts'/>
 
 namespace WebMolKit /* BOF */ {
 
@@ -82,30 +81,15 @@ export class ViewStructure extends Widget
 		this.policy = policy;
 	}
 
-	// instantiates the widget: the molecule and its rendering properties must have been specified; the graphical content for the
-	// molecule will be obtained, and information such as natural width & height filled in; note that this function executes an
-	// RPC call, so it will return before the necessary information has been provided... the caller may provide its own callback for
-	// when the details become available (optional)
-	public setup(callback:() => void):void
-	{
-		if (this.molstr == null && this.datastr == null) throw 'molsync.ui.ViewStructure.setup called without specifying a molecule or datasheet';
-		if (this.policy == null) this.policy = RenderPolicy.defaultColourOnWhite();
-
-		if (this.molstr != null)
-			this.setupMolecule(callback);
-		else
-			this.setupData(callback);
-	}
-
 	// create the objects necessary to render the widget; this function should be called after basic pre-initialisation settings, e.g.
 	// specifying the starting molecule, initial size, etc.
 	public render(parent:any):void
 	{
-		if (!this.metavec) throw 'molsync.ui.ViewStructure.render must be preceded by a call to setup';
-
 		super.render(parent);
 
-		let canvas = newElement(this.content /*parent*/, 'canvas', {'width': this.width, 'height': this.height}) as HTMLCanvasElement;
+
+/* !! RECODE this...
+		let canvas = newElement(this.content, 'canvas', {'width': this.width, 'height': this.height}) as HTMLCanvasElement;
 
 		let density = pixelDensity();
 		canvas.width = this.width * density;
@@ -172,60 +156,10 @@ export class ViewStructure extends Widget
 		this.metavec.scale = scale;
 		this.metavec.renderContext(ctx);
 
-		ctx.restore();
+		ctx.restore();*/
 	}
 
 	// ------------ private methods ------------
-
-	// rendering an individual molecule is done locally
-	private setupMolecule(callback:() => void):void
-	{
-		let mol = Molecule.fromString(this.molstr); // note: not very efficient if mol was passed in...
-		let effects = new RenderEffects();
-		let measure = new OutlineMeasurement(0, 0, this.policy.data.pointScale);
-		let layout = new ArrangeMolecule(mol, measure, this.policy, effects);
-		layout.arrange();
-
-		this.metavec = new MetaVector();
-		new DrawMolecule(layout, this.metavec).draw();
-		this.metavec.normalise();
-
-		this.naturalWidth = this.metavec.width;
-		this.naturalHeight = this.metavec.height;
-
-		// fill in default dimensions
-		if (this.width == 0) this.width = this.naturalWidth + 2 * this.padding;
-		if (this.height == 0) this.height = this.naturalHeight + 2 * this.padding;
-
-		if (callback) callback();
-	}
-
-	// when a datasheet snippet is provided, have to pass this off the RPC code
-	private setupData(callback:() => void):void
-	{
-		let input:any = {'tokenID':this.tokenID};
-		input.policy = this.policy.data;
-		input.dataXML = this.datastr;
-		input.dataRow = this.datarow;
-
-		Func.renderStructure(input, (result:any, error:ErrorRPC) =>
-		{
-			if (!result)
-			{
-				alert('Setup of ViewStructure failed: ' + error.message);
-				return;
-			}
-			this.metavec = new MetaVector(result.metavec);
-			this.naturalWidth = this.metavec.width;
-			this.naturalHeight = this.metavec.width;
-
-			// fill in default dimensions
-			if (this.width == 0) this.width = this.naturalWidth + 2 * this.padding;
-			if (this.height == 0) this.height = this.naturalHeight + 2 * this.padding;
-
-			if (callback) callback();
-		});
-	}
 }
 
 /* EOF */ }

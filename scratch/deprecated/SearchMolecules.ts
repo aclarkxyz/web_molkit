@@ -10,7 +10,6 @@
 	[PKG=webmolkit]
 */
 
-///<reference path='../rpc/Search.ts'/>
 ///<reference path='Widget.ts'/>
 ///<reference path='ViewStructure.ts'/>
 ///<reference path='Tooltip.ts'/>

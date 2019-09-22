@@ -11,7 +11,6 @@
 */
 
 ///<reference path='../decl/jquery.d.ts'/>
-///<reference path='../rpc/RPC.ts'/>
 ///<reference path='util.ts'/>
 
 namespace WebMolKit /* BOF */ {
@@ -21,6 +20,12 @@ namespace WebMolKit /* BOF */ {
 // with interesting content marked in the "lowlight" colour (turquoise), and active content in "highlight" (green)
 export class Theme
 {
+	// e.g. 'http://servername/MolSync'; the REST services hang off of this url: ${BASE_URL}/REST/...
+	public static BASE_URL:string = null;
+
+	// base for static resources that can be fetched without going through the RPC mechanism
+	public static RESOURCE_URL:string = null;
+
 	// these are open to modification
 	public static foreground = 0x000000;
 	public static background = 0xFFFFFF;
@@ -51,7 +56,7 @@ export class Theme
 // to be called as soon as possible from within any environment that uses WebMolKit functionality
 export function initWebMolKit(resourcePath:string):void
 {
-	RPC.RESOURCE_URL = resourcePath;
+	Theme.RESOURCE_URL = resourcePath;
 
 	installInlineCSS('main', composeMainCSS());
 }

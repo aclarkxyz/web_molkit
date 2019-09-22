@@ -10,7 +10,6 @@
 	[PKG=webmolkit]
 */
 
-///<reference path='../rpc/RPC.ts'/>
 ///<reference path='../decl/corrections.d.ts'/>
 ///<reference path='Widget.ts'/>
 
@@ -130,7 +129,7 @@ export class CircleButton extends Widget
 		this.thinBorder = renderBorder(1);
 		this.thickBorder = renderBorder(2);
 
-		let svgurl = RPC.BASE_URL + '/img/icons/' + this.icon;
+		let svgurl = Theme.BASE_URL + '/img/icons/' + this.icon;
 
 		this.svg = newElement(div, 'object', {'width': width, 'height': height, 'style': canvasStyle, 'data': svgurl, 'type': 'image/svg+xml'});
 

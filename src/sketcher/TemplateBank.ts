@@ -17,8 +17,6 @@
 ///<reference path='../data/Molecule.ts'/>
 ///<reference path='../data/MolUtil.ts'/>
 ///<reference path='../data/DataSheetStream.ts'/>
-///<reference path='../rpc/RPC.ts'/>
-///<reference path='../rpc/Func.ts'/>
 ///<reference path='../sketcher/MoleculeActivity.ts'/>
 
 namespace WebMolKit /* BOF */ {
@@ -72,53 +70,17 @@ export class TemplateBank extends ButtonBank
 
 		if (this.group == null)
 		{
-			if (RPC.BASE_URL != null)
-			{
-				let input = {'tokenID': this.owner.tokenID, 'policy': policy.data, 'size': [sz - 4, sz - 4]};
-				let fcn = (result:any, error:ErrorRPC) =>
-				{
-					if (!result)
-					{
-						alert('Setup of TemplateBank failed: ' + error.message);
-						return;
-					}
-					this.subgroups = result;
-					this.buttonView.refreshBank();
-				};
-				Func.getDefaultTemplateGroups(input, fcn);
-			}
-			else if (RPC.RESOURCE_URL != null)
-			{
-				if (TemplateBank.RESOURCE_DATA == null)
-					this.loadResourceData(() => this.prepareSubGroups());
-				else
-					this.prepareSubGroups();
-			}
+			if (TemplateBank.RESOURCE_DATA == null)
+				this.loadResourceData(() => this.prepareSubGroups());
+			else
+				this.prepareSubGroups();
 		}
 		else
 		{
-			if (RPC.BASE_URL != null)
-			{
-				let input:any = {'tokenID': this.owner.tokenID, 'policy': policy.data, 'size': [sz - 4, sz - 4], 'group': this.group};
-				let fcn = (result:any, error:ErrorRPC) =>
-				{
-					if (!result)
-					{
-						alert('Setup of TemplateBank failed: ' + error.message);
-						return;
-					}
-					this.templates = result;
-					this.buttonView.refreshBank();
-				};
-				Func.getDefaultTemplateStructs(input, fcn);
-			}
-			else if (RPC.RESOURCE_URL != null)
-			{
-				if (TemplateBank.RESOURCE_DATA == null)
-					this.loadResourceData(() => this.prepareTemplates());
-				else
-					this.prepareTemplates();
-			}
+			if (TemplateBank.RESOURCE_DATA == null)
+				this.loadResourceData(() => this.prepareTemplates());
+			else
+				this.prepareTemplates();
 		}
 	}
 
@@ -204,7 +166,7 @@ export class TemplateBank extends ButtonBank
 				onComplete();
 				return;
 			}
-			let url = RPC.RESOURCE_URL + '/data/templates/' + roster.shift() + '.ds';
+			let url = Theme.RESOURCE_URL + '/data/templates/' + roster.shift() + '.ds';
 			$.ajax(
 			{
 				'url': url,

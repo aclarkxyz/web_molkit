@@ -626,9 +626,9 @@ export class ButtonView extends Widget
 				// the first time, and after that, they're cached
 				let svg = ButtonView.ACTION_ICONS[b.imageFN];
 				if (svg) putSVG(svg);
-				else if (RPC.RESOURCE_URL != null)
+				else if (Theme.RESOURCE_URL != null)
 				{
-					let url = RPC.RESOURCE_URL + '/img/actions/' + b.imageFN + '.svg';
+					let url = Theme.RESOURCE_URL + '/img/actions/' + b.imageFN + '.svg';
 					$.ajax(
 					{
 						'url': url,
