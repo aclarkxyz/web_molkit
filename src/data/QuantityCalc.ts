@@ -363,15 +363,15 @@ export class QuantityCalc
 	public static formatMolWeight(value:number):string
 	{
 		if (value == QuantityCalc.UNSPECIFIED) return '';
-		return formatDouble(value,6) + ' g/mol';
+		return formatDouble(value, 6) + ' g/mol';
 	}
 	public static formatMass(value:number):string
 	{
 		if (value == QuantityCalc.UNSPECIFIED) return '';
-		if (value <= 1E-6) return formatDouble(value * 1E6,6) + ' \u03BCg';
-		if (value <= 1E-3) return formatDouble(value * 1E3,6) + ' mg';
-		if (value >= 1E3) return formatDouble(value * 1E-3,6) + ' kg';
-		return formatDouble(value,6) + ' g';
+		if (value <= 1E-6) return formatDouble(value * 1E6, 6) + ' \u03BCg';
+		if (value <= 1E-3) return formatDouble(value * 1E3, 6) + ' mg';
+		if (value >= 1E3) return formatDouble(value * 1E-3, 6) + ' kg';
+		return formatDouble(value, 6) + ' g';
 	}
 	public static formatVolume(value:number):string
 	{

@@ -162,7 +162,7 @@ export class ArrangeMolecule
 
 	// access to setup info
 	public getMolecule():Molecule {return this.mol;}
-	public getMeasure():ArrangeMeasurement  {return this.measure;}
+	public getMeasure():ArrangeMeasurement {return this.measure;}
 	public getPolicy():RenderPolicy {return this.policy;}
 	public getEffects():RenderEffects {return this.effects;}
 	public getScale():number {return this.scale;} // may be different from measure.scale() if modified after layout
@@ -464,7 +464,7 @@ export class ArrangeMolecule
 
 	// access to extra ring/resonance information
 	public numRings():number {return this.rings.length;}
-	public getRing(idx:number):XRing  {return this.rings[idx];}
+	public getRing(idx:number):XRing {return this.rings[idx];}
 	public getRings():XRing[] {return this.rings;}
 	public numPaths():number {return this.paths.length;}
 	public getPath(idx:number):XPath {return this.paths[idx];}
@@ -764,7 +764,7 @@ export class ArrangeMolecule
 		let adj = this.mol.atomAdjList(anum);
 		for (let n = 0; n < adj.length; n++)
 		{
-			let theta = Math.atan2(this.mol.atomY(adj[n]) - ay,this. mol.atomX(adj[n]) - ax) * RADDEG;
+			let theta = Math.atan2(this.mol.atomY(adj[n]) - ay, this.mol.atomX(adj[n]) - ax) * RADDEG;
 			if (theta >= -15 && theta <= 15) right += 3;
 			else if (theta >= -85 && theta <= 85) right++;
 			else if (theta > 85 && theta < 95) {} // orthogonal
@@ -1553,8 +1553,8 @@ export class ArrangeMolecule
 		{
 			// create a wedge of fat-body outline
 			const dx = b.line.x2 - b.line.x1, dy = b.line.y2 - b.line.y1;
-			const  norm = b.head / Math.sqrt(dx * dx + dy * dy);
-			const  ox = norm * dy, oy = -norm * dx;
+			const norm = b.head / Math.sqrt(dx * dx + dy * dy);
+			const ox = norm * dy, oy = -norm * dx;
 
 			if (b.type == BLineType.Unknown)
 			{

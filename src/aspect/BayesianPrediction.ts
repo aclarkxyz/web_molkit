@@ -147,7 +147,7 @@ export class BayesianPrediction extends Aspect
 		if (strAtoms)
 		{
 			outcome.atoms = [];
-			for (let b of strAtoms.split(','))  outcome.atoms.push(parseFloat(b));
+			for (let b of strAtoms.split(',')) outcome.atoms.push(parseFloat(b));
 		}
 
 		return outcome;

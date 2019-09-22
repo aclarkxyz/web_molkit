@@ -30,7 +30,7 @@ module.exports =
 		'@typescript-eslint/explicit-function-return-type': 0,
 
 		'@typescript-eslint/array-type': ['error', 'array'],
-		'@typescript-eslint/camelcase': ['error', {'properties': 'always'}],
+		//'@typescript-eslint/camelcase': ['error', {'properties': 'always'}],
 		'@typescript-eslint/class-name-casing': ['error'],
 
 		// this seems to be broken with regard to constructors

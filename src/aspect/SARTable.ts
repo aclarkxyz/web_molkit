@@ -199,7 +199,7 @@ export class SARTable extends Aspect
 	// interprets the string metadata from the extensions
 	private parseMetaData(content:string):SARTableFields
 	{
-		let fields:SARTableFields = {'construct': null, 'locked': null, 'scaffold': null, 'substituents':[], 'metadata': []};
+		let fields:SARTableFields = {'construct': null, 'locked': null, 'scaffold': null, 'substituents': [], 'metadata': []};
 
 		for (let line of content.split(/\r?\n/))
 		{
