@@ -348,11 +348,11 @@ export class Vec
 	}
 
 	// for some reason the default sorter has a dubious habit of doing a string comparison; this function is numeric
-	public static sort(arr:number[])
+	public static sort(arr:number[]):void
 	{
 		arr.sort((v1:number, v2:number):number => v1 - v2);
 	}
-	public static sorted(arr:number[])
+	public static sorted(arr:number[]):number[]
 	{
 		arr = arr.slice(0);
 		this.sort(arr);
