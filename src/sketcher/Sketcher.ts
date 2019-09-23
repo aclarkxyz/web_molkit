@@ -14,7 +14,6 @@
 ///<reference path='../util/util.ts'/>
 ///<reference path='../util/Cookies.ts'/>
 ///<reference path='../util/Geom.ts'/>
-///<reference path='../dialog/PickRecent.ts'/>
 ///<reference path='../data/Molecule.ts'/>
 ///<reference path='../data/MolUtil.ts'/>
 ///<reference path='../data/SketchUtil.ts'/>
@@ -601,7 +600,7 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 		}
 
 		// otherwise raid the cookie jar
-		let cookies = new Cookies();
+		/*let cookies = new Cookies();
 		if (cookies.numMolecules() == 0)
 		{
 			if (MolUtil.notBlank(globalMoleculeClipboard)) this.pasteMolecule(globalMoleculeClipboard);
@@ -610,7 +609,7 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 		}
 		let dlg = new PickRecent(cookies, 1);
 		dlg.callbackPick1 = (mol:Molecule) => this.pasteMolecule(mol);
-		dlg.open();
+		dlg.open();*/
 	}
 
 	// zooms in or out, depending on the magnifier; if

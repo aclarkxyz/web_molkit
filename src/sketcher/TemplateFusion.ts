@@ -27,11 +27,11 @@ namespace WebMolKit /* BOF */ {
 
 export class FusionPermutation
 {
-	public mol:Molecule;  // contains the fused result
+	public mol:Molecule; // contains the fused result
 	public display:Molecule; // the appended fragment, modified for display
 	public molidx:number[]; // atom correspondence between starting molecule (parent.mol) and template (display)
 	public temidx:number[];
-	public srcidx:number[];  // for each atom in mol, >0=present in original molecule, 0=not so
+	public srcidx:number[]; // for each atom in mol, >0=present in original molecule, 0=not so
 
 	public attdist = 0;
 	public guided = false;

@@ -264,12 +264,12 @@ export class CommandBank extends ButtonBank
 		else if (id == 'declined') {actv = ActivityType.BondType; param = {'type': Molecule.BONDTYPE_DECLINED};}
 		else if (id == 'squig') {actv = ActivityType.BondType; param = {'type': Molecule.BONDTYPE_UNKNOWN};}
 		else if (id == 'linear') {actv = ActivityType.BondGeom; param = {'geom': Geometry.Linear};}
-		else if (id == 'trigonal') {actv = ActivityType.BondGeom;  param = {'geom': Geometry.Trigonal};}
-		else if (id == 'tetra1') {actv = ActivityType.BondGeom;  param = {'geom': Geometry.Tetra1};}
-		else if (id == 'tetra2') {actv = ActivityType.BondGeom;  param = {'geom': Geometry.Tetra2};}
-		else if (id == 'sqplan') {actv = ActivityType.BondGeom;  param = {'geom': Geometry.SqPlan};}
-		else if (id == 'octa1') {actv = ActivityType.BondGeom;  param = {'geom': Geometry.Octa1};}
-		else if (id == 'octa2') {actv = ActivityType.BondGeom;  param = {'geom': Geometry.Octa2};}
+		else if (id == 'trigonal') {actv = ActivityType.BondGeom; param = {'geom': Geometry.Trigonal};}
+		else if (id == 'tetra1') {actv = ActivityType.BondGeom; param = {'geom': Geometry.Tetra1};}
+		else if (id == 'tetra2') {actv = ActivityType.BondGeom; param = {'geom': Geometry.Tetra2};}
+		else if (id == 'sqplan') {actv = ActivityType.BondGeom; param = {'geom': Geometry.SqPlan};}
+		else if (id == 'octa1') {actv = ActivityType.BondGeom; param = {'geom': Geometry.Octa1};}
+		else if (id == 'octa2') {actv = ActivityType.BondGeom; param = {'geom': Geometry.Octa2};}
 		else if (id == 'switch') actv = ActivityType.BondSwitch;
 		else if (id == 'connect') actv = ActivityType.Connect;
 		else if (id == 'disconnect') actv = ActivityType.Disconnect;

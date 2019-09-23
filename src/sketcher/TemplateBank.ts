@@ -104,7 +104,7 @@ export class TemplateBank extends ButtonBank
 
 		for (let n = 0; n < groups.length; n++)
 		{
-			this.buttons.push({'id': groups[n], 'metavec': preview[n], 'helpText':titles[n]});
+			this.buttons.push({'id': groups[n], 'metavec': preview[n], 'helpText': titles[n]});
 		}
 	}
 

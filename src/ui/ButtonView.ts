@@ -654,7 +654,7 @@ export class ButtonView extends Widget
 			else if (b.text != null)
 			{
 				let sz = this.idealSize;
-				let draw = new MetaVector({'size': [sz,sz]});
+				let draw = new MetaVector({'size': [sz, sz]});
 				let fsz = sz * 0.6;
 				let wad = FontData.main.measureText(b.text, fsz);
 
