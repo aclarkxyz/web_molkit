@@ -181,16 +181,6 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 	public defineClipboard(proxy:ClipboardProxy):void
 	{
 		this.proxyClip = proxy;
-		proxy.copyEvent = ():string =>
-		{
-			return this.getMolecule.toString();
-		};
-		proxy.pasteEvent = (proxy:ClipboardProxy):boolean =>
-		{
-			this.pasteText(proxy.getString());
-			return true;
-		};
-		if (this.container) proxy.install(this.container);
 	}
 
 	// define the molecule as a SketchEl-formatted string
@@ -341,8 +331,6 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 			event.preventDefault();
 			this.dropInto(event.dataTransfer);
 		});
-
-		if (this.proxyClip) this.proxyClip.install(this.container);
 
 		this.container.focus();
 	}

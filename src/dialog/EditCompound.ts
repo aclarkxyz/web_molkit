@@ -53,14 +53,25 @@ export class EditCompound extends Dialog
 	public defineClipboard(proxy:ClipboardProxy):void
 	{
 		this.proxyClip = proxy;
-		proxy.pushEvents();
 
+		let handler = new ClipboardProxyHandler();
+		handler.copyEvent = (andCut:boolean, proxy:ClipboardProxy):boolean =>
+		{
+			this.sketcher.performCopySelection(andCut);
+			return true;
+		};
+		handler.pasteEvent = (proxy:ClipboardProxy):boolean =>
+		{
+			this.sketcher.pasteText(proxy.getString());
+			return true;
+		};
+		proxy.pushHandler(handler);
 		this.sketcher.defineClipboard(proxy);
 	}
 
 	public close():void
 	{
-		if (this.proxyClip) this.proxyClip.popEvents();
+		if (this.proxyClip) this.proxyClip.popHandler();
 
 		super.close();
 	}

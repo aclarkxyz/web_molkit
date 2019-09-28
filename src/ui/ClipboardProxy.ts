@@ -21,24 +21,47 @@ namespace WebMolKit /* BOF */ {
 
 */
 
+// default clipboard behaviour: override these methods to intercept incoming copy/cut/paste requests; this default implementation
+// hands over the reins to the system, which is normal behaviour
+export class ClipboardProxyHandler
+{
+	// note: return values = true if the event got consumed by privately implemented functionality; false = fall back to the default
+	public copyEvent(andCut:boolean, proxy:ClipboardProxy):boolean {return false;}
+	public pasteEvent(proxy:ClipboardProxy):boolean {return false;}
+}
+
 export class ClipboardProxy
 {
-	private stashEvents:any[][] = [];
+	protected handlers = [new ClipboardProxyHandler()]; // baseline fallback is the default pass-through implementation
 
 	// ------------ public methods ------------
 
-	// an external menu operation has requested a copy-to-clipboard action; the owner of this object is expected
-	// to furnish a string to be transferred onto the clipboard, or null if there isn't anything
-	public copyEvent:() => string = null;
+	// use these two functions whenever a new focus-stealing object pops up on top of everything else, e.g. dialogs or dialog-like specialised
+	// editing tools with complex clipboard behaviour
+	public pushHandler(handler:ClipboardProxyHandler) 
+	{
+		this.handlers.push(handler);
+	}
+	public popHandler()
+	{
+		this.handlers.pop();
+	}
+	public currentHandler():ClipboardProxyHandler
+	{
+		return this.handlers[this.handlers.length - 1];
+	}
 
-	// an external menu operation has activated a paste operation; for the duration of this callback, it is for sure
-	// valid to fetch the clipboard content (using getString)
-	public pasteEvent:(proxy:ClipboardProxy) => boolean = null;
-
-	// attach the clipboard proxy to a container, and make sure events are trapped; the uninstall should be gracefully
-	// automatic, but calling it explicitly on cleanup is ideal
-	public install(container:JQuery):void {}
-	public uninstall():void {}
+	// call these methods when an external event (e.g. menu/button) triggers a cut/copy/paste event
+	public triggerCopy(andCut:boolean):void
+	{
+		if (this.currentHandler().copyEvent(andCut, this)) return;
+		document.execCommand(andCut ? 'cut' : 'copy');
+	}
+	public triggerPaste():void
+	{
+		if (this.currentHandler().pasteEvent(this)) return;
+		document.execCommand('paste');
+	}
 
 	// fetches the content currently on the clipboard; note that for the web implementation, this is disallowed for
 	// security reasons, but in desktop mode it is allowed (see canAlwaysGet below)
@@ -56,101 +79,64 @@ export class ClipboardProxy
 
 	// instantiate the downloading of a string, with a given default filename
 	public downloadString(str:string, fn:string):void {}
-
-	// push/pop events: use this when doing things like popping up temporary dialogs which need to bogart the clipboard event capture,
-	// but then stop doing that after they're taken down
-	public pushEvents():void
-	{
-		this.stashEvents.push([this.copyEvent, this.pasteEvent]);
-	}
-	public popEvents():void
-	{
-		let events = this.stashEvents.shift();
-		this.copyEvent = events[0];
-		this.pasteEvent = events[1];
-	}
 }
 
 /*
-	Pure-web implementation. This has a defined lifespan, because it has to insert itself into a global handler
-	and grab the incoming contents before anyone else can claim it.
+	Clipboard handler that should be used when the browser is the runtime target, which presents a much more restricted clipboard
+	use pattern (for security reasons). The action-trapping actions are installed once for the whole documented, and from that point
+	they can either be trapped or allowed to fall back to the default action.
 */
 
 export class ClipboardProxyWeb extends ClipboardProxy
 {
 	private lastContent:string = null;
-	private busy = false;
-	private copyFunc:any = null;
-	private pasteFunc:any = null;
 	private fakeTextArea:HTMLTextAreaElement = null; // for temporarily bogarting the clipboard
+	private busy = false; // need to block trapping during the copy workaround
 
 	// ------------ public methods ------------
 
-	// installs the event intercepts needed to deal with copy/paste; the container is taken as a parameter so that it
-	// can be automatically uninstalled once the container is no longer present, though it is preferable for the caller
-	// to install/uninstall
-	public install(container:JQuery):void
+	constructor()
 	{
-		if (!container) throw 'ClipboardProxy: need a container to install to';
+		super();
 
-		this.copyFunc = (e:any) =>
+		document.addEventListener('copy', (event:ClipboardEvent) =>
 		{
 			if (this.busy) return;
-
-			let content = this.copyEvent();
-			if (content == null) return;
-
-			// if widget no longer visible, detach the copy handler
-			if (!$.contains(document.documentElement, container[0]))
+			if (this.currentHandler().copyEvent(false, this)) 
 			{
-				this.uninstall();
+				event.preventDefault();
 				return false;
 			}
-
-			document.removeEventListener('copy', this.copyFunc);
-			this.performCopy(content);
-			document.addEventListener('copy', this.copyFunc);
-
-			e.preventDefault();
-			return false;
-		};
-		document.addEventListener('copy', this.copyFunc);
-
-		// pasting: captures the menu/hotkey form
-		this.pasteFunc = (e:any) =>
+		});
+		document.addEventListener('cut', (event:ClipboardEvent) =>
 		{
-			// if widget no longer visible, detach the paste handler
-			if (!$.contains(document.documentElement, container[0]))
+			if (this.busy) return;
+			if (this.currentHandler().copyEvent(true, this)) 
 			{
-				this.uninstall();
+				event.preventDefault();
 				return false;
 			}
-
+		});
+		document.addEventListener('paste', (event:ClipboardEvent) =>
+		{
+			// this is the only time when the clipboard is allowed to be interrogated, so stash the content so the handler can access it
 			let wnd = window as any;
 			this.lastContent = null;
 			if (wnd.clipboardData && wnd.clipboardData.getData) this.lastContent = wnd.clipboardData.getData('Text');
-			else if (e.clipboardData && e.clipboardData.getData) this.lastContent = e.clipboardData.getData('text/plain');
-			this.pasteEvent(this);
+			else if (event.clipboardData && event.clipboardData.getData) this.lastContent = event.clipboardData.getData('text/plain');
+
+			let consumed = this.currentHandler().pasteEvent(this);
+
 			this.lastContent = null;
 
-			e.preventDefault();
-			return false;
-		};
-		document.addEventListener('paste', this.pasteFunc);
-	}
+			if (consumed)
+			{
+				event.preventDefault();
+				return false;
+			}
 
-	public uninstall():void
-	{
-		if (this.copyFunc)
-		{
-			document.removeEventListener('copy', this.copyFunc);
-			this.copyFunc = null;
-		}
-		if (this.pasteFunc)
-		{
-			document.removeEventListener('paste', this.pasteFunc);
-			this.pasteFunc = null;
-		}
+			return true;
+		});
 	}
 
 	public getString():string
@@ -183,6 +169,7 @@ export class ClipboardProxyWeb extends ClipboardProxy
 		this.fakeTextArea.value = content;
 		this.fakeTextArea.select();
 
+		// disable event trapping, then issue the standard copy
 		this.busy = true;
 		document.execCommand('copy');
 		this.busy = false;
