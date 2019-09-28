@@ -542,22 +542,25 @@ export function inputChanged(domInput:JQuery, callback:() => void):void
 	domInput.change(callback);
 }
 
+// special keycodes, which correspond to KeyboardEvent.key: for the most part anything that is written on the keyboard as a single character can
+// be used literally (e.g. things like 1 , < [ {); these named constants are not all self-explanatory
 export const enum KeyCode
 {
-	Backspace = 8,
-	Tab = 9,
-	Enter = 13,
-	Escape = 27,
-	Space = 32,
-	PageUp = 33,
-	PageDown = 34,
-	End = 35,
-	Home = 36,
-	Left = 37,
-	Up = 38,
-	Right = 39,
-	Down = 40,
-	Delete = 46,
+	Backspace = 'Backspace',
+	Tab = 'Tab',
+	Enter = 'Enter',
+	Escape = 'Escape',
+	Space = ' ',
+	PageUp = 'PageUp',
+	PageDown = 'PageDown',
+	End = 'End',
+	Home = 'Home',
+	Left = 'ArrowLeft',
+	Right = 'ArrowRight',
+	Up = 'ArrowUp',
+	Down = 'ArrowDown',
+	Delete = 'Delete',
+	Insert = 'Insert',
 }
 
 /* EOF */ }

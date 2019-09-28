@@ -35,7 +35,8 @@ export interface ButtonBankItem
 	metavec?:any; // either an instance of MetaVector or a dictionary that can be used to make one (server-generated: semi-deprecated)
 	helpText:string;
 	isSubMenu?:boolean;
-	mnemonic?:string;
+	mnemonic?:string; // key combination for display with modifiers, e.g. Shift+X, which gets interpreted for action purposes
+	key?:string; // from KeyCode; overrides the key part of the mnemonic
 	text?:string;
 }
 
@@ -70,24 +71,28 @@ export abstract class ButtonBank
 	//
 	// where the modifiers consist of Shift-, Ctrl-, Alt-; and the keychar is usually a plain keyboard character which is case insensitive - with
 	// special word codes for unprintables
-	public static matchKey(event:JQueryEventObject, mnemonic:string):boolean
+	public static matchKey(event:JQueryEventObject, mnemonic:string, key:string):boolean
 	{
-		if (mnemonic == null || mnemonic == '') return;
+		if (mnemonic == null || mnemonic == '') return false;
 
 		let mshift = false, mctrl = false, malt = false, mkey = mnemonic;
 		while (true)
 		{
-			if (mkey.startsWith('Shift-')) {mshift = true; mkey = mkey.substring(6);}
-			else if (mkey.startsWith('Ctrl-')) {mctrl = true; mkey = mkey.substring(5);}
-			else if (mkey.startsWith('Alt-')) {malt = true; mkey = mkey.substring(4);}
+			if (mkey.startsWith('Shift+')) {mshift = true; mkey = mkey.substring(6);}
+			else if (mkey.startsWith('Ctrl+')) {mctrl = true; mkey = mkey.substring(5);}
+			else if (mkey.startsWith('Alt+')) {malt = true; mkey = mkey.substring(4);}
 			else break;
 		}
 
-		if (mshift && !event.shiftKey) return false;
-		if (mctrl && !event.ctrlKey) return false;
-		if (malt && !event.altKey) return false;
+		if (mshift != event.shiftKey) return false;
+		if (mctrl != event.ctrlKey) return false;
+		if (malt != event.altKey) return false;
 
-		let ch = String.fromCharCode(event.keyCode || event.charCode);
+		if (key) mkey = key; // override
+
+		return mkey.toLowerCase() == event.key.toLowerCase();
+
+		/*let ch = String.fromCharCode(event.keyCode || event.charCode);
 
 		if (event.keyCode == 27) ch = 'escape';
 		else if (event.keyCode == 8) ch = 'backspace';
@@ -101,7 +106,7 @@ export abstract class ButtonBank
 			let subst = SHIFT_SUBST[mkey];
 			if (subst) mkey = subst;
 		}
-		return ch.toLowerCase() == mkey.toLowerCase();
+		return ch.toLowerCase() == mkey.toLowerCase();*/
 	}
 }
 

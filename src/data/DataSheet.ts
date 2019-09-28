@@ -100,7 +100,7 @@ export class DataSheet
 		};
 		for (let r = 0; r < numRows; r++)
 		{
-			let inRow = this.data.rowData[r], outRow:any[] = new Array(numCols);
+			let inRow = rowData[r], outRow:any[] = new Array(numCols);
 			for (let c = 0; c < numCols; c++)
 			{
 				if (inRow[c] != null && colData[c].type == DataSheetColumn.Molecule && inRow[c] instanceof Molecule)
@@ -112,6 +112,39 @@ export class DataSheet
 		}
 		return new DataSheet(data);
 	}
+
+	// clone with more detailed control about what to include; note that null rowMask is a shortcut for empty
+	public cloneMask(colMask:boolean[], rowMask:boolean[] = null, inclExtn:boolean = true):DataSheet
+	{
+		let {numCols, numRows, colData, rowData} = this.data;
+		let data:DataSheetContent =
+		{
+			'title': this.data.title,
+			'description': this.data.description,
+			'numCols': Vec.maskCount(colMask),
+			'numRows': rowMask ? Vec.maskCount(rowMask) : 0,
+			'numExtens': inclExtn ? this.data.numExtens : 0,
+			'colData': deepClone(Vec.maskGet(colData, colMask)),
+			'rowData': [],
+			'extData': inclExtn ? deepClone(this.data.extData) : [],
+		};
+
+		if (rowMask) for (let r = 0; r < numRows; r++) if (rowMask[r])
+		{
+			let inRow = rowData[r], outRow:any[] = Vec.maskGet(inRow, colMask);
+			data.rowData.push(outRow);
+		}
+
+		// molecule instances need to be cloned explicitly
+		const {colData:outCols, rowData:outRows} = data;
+		for (let c = outCols.length - 1; c >= 0; c--) if (outCols[c].type == DataSheetColumn.Molecule)
+		{
+			for (let r = outRows.length - 1; r >= 0; r--) if (outRows[r][c] != null && outRows[r][c] instanceof Molecule) 
+				outRows[r][c] = (outRows[r][c] as Molecule).clone();
+		}
+
+		return new DataSheet(data);
+	}	
 
 	// returns the data upon which is class is based; this is in the correct format for sending to the server as a
 	// "JSON-formatted datasheet", and is also suitable
@@ -498,6 +531,50 @@ export class DataSheet
 	{
 		for (let n = 0; n < this.data.numCols; n++) if (this.data.colData[n].type == type) return n;
 		return -1;
+	}
+
+	// bring in a cell from the contents of another datasheet's cell, making an honest attempt to convert the data
+	// if the type is different; completely incompatible data equates to null
+	public copyCell(toRow:number, toCol:number, fromDS:DataSheet, fromRow:number, fromCol:number):void
+	{
+		this.setToNull(toRow, toCol);
+		if (fromDS.isNull(fromRow, fromCol)) return;
+		let obj = fromDS.getObject(fromRow, fromCol);
+		this.setObject(toRow, toCol, DataSheet.convertType(obj, fromDS.colType(fromCol), this.colType(toCol)));
+	}
+
+	// when possibly converting between two column types, make sure that the object is compatible
+	public static convertType(obj:any, fromType:DataSheetColumn, toType:DataSheetColumn):any
+	{
+		const ft = fromType, tt= toType;
+		if (obj == null || ft == tt || (typeof obj == 'string' && obj == '')) return obj;
+
+		if (tt == DataSheetColumn.String)
+		{
+			if (ft == DataSheetColumn.Integer) return obj.toSring();
+			else if (ft == DataSheetColumn.Real) return obj.toString();
+			else if (ft == DataSheetColumn.Boolean) return obj ? 'true' : 'false';
+		}
+		else if (tt == DataSheetColumn.Real)
+		{
+			if (ft == DataSheetColumn.String) return safeFloat(obj, null);
+			else if (ft == DataSheetColumn.Integer) return obj;
+			else if (ft == DataSheetColumn.Boolean) return obj ? 1 : 0;
+		}
+		else if (tt == DataSheetColumn.Integer)
+		{
+			if (ft == DataSheetColumn.String) return safeInt(obj, null);
+			else if (ft == DataSheetColumn.Real) return Math.round(obj);
+			else if (ft == DataSheetColumn.Boolean) return obj ? 1 : 0;
+		}
+		else if (tt == DataSheetColumn.Boolean)
+		{
+			if (ft == DataSheetColumn.String) return (obj as string).toLowerCase() == 'true';
+			else if (ft == DataSheetColumn.Integer) return obj > 0;
+			else if (ft == DataSheetColumn.Real) obj >= 0.5;
+		}
+
+		return null;
 	}
 
 	// converts a cell to a string by whatever means necessary (or returns null)

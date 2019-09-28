@@ -23,11 +23,6 @@ export class Vec
 	public static safeArray<T>(arr:T[]):T[] {return arr == null ? [] : arr;}
 	public static arrayLength(arr:any[]):number {return arr == null ? 0 : arr.length;}
 
-	/*public static arrayNumber(arr:number[]):number[] {return arr == null ? [] : arr;}
-	public static arrayString(arr:string[]):string[] {return arr == null ? [] : arr;}
-	public static arrayBoolean(arr:boolean[]):boolean[] {return arr == null ? [] : arr;}
-	public static arrayAny(arr:any[]):any[] {return arr == null ? [] : arr;}*/
-
 	public static anyTrue(arr:boolean[]):boolean
 	{
 		if (arr == null) return false;
@@ -54,7 +49,7 @@ export class Vec
 		return true;
 	}
 
-	public static swap(arr:any[], idx1:number, idx2:number)
+	public static swap(arr:any[], idx1:number, idx2:number):void
 	{
 		let v = arr[idx1];
 		arr[idx1] = arr[idx2];
@@ -178,9 +173,9 @@ export class Vec
 		return hi - lo;
 	}
 
-	public static reverse(arr:number[]):any[]
+	public static reverse<T>(arr:T[]):T[]
 	{
-		let ret:any[] = [];
+		let ret:T[] = [];
 		for (let n = arr.length - 1; n >= 0; n--) ret.push(arr[n]);
 		return ret;
 	}
@@ -206,9 +201,9 @@ export class Vec
 		return ret;
 	}
 
-	public static idxGet(arr:any[], idx:number[]):any[]
+	public static idxGet<T>(arr:any[], idx:number[]):T[]
 	{
-		let ret:any[] = [];
+		let ret:T[] = [];
 		for (let n = 0; n < idx.length; n++) ret.push(arr[idx[n]]);
 		return ret;
 	}
@@ -220,7 +215,7 @@ export class Vec
 		return c;
 	}
 
-		// converts the mask into indices (0-based)
+	// converts the mask into indices (0-based)
 	public static maskIdx(mask:boolean[]):number[]
 	{
 		let idx:number[] = [];
@@ -246,9 +241,9 @@ export class Vec
 	}
 
 	// returns members of an array for which the value of mask is true
-	public static maskGet(arr:any[], mask:boolean[]):any[]
+	public static maskGet<T>(arr:T[], mask:boolean[]):T[]
 	{
-		let ret:number[] = [];
+		let ret:T[] = [];
 		for (let n = 0, p = 0; n < arr.length; n++) if (mask[n]) ret.push(arr[n]);
 		return ret;
 	}
@@ -277,7 +272,7 @@ export class Vec
 		return t;
 	}
 
-	public static add(arr1:any[], val:any):any[]
+	public static add(arr1:number[], val:number|number[]):number[]
 	{
 		let ret:any[] = [];
 		if (val.constructor === Array)
@@ -287,12 +282,12 @@ export class Vec
 		}
 		else
 		{
-			for (let n = 0; n < arr1.length; n++) ret.push(arr1[n] + val);
+			for (let n = 0; n < arr1.length; n++) ret.push(arr1[n] + (val as number));
 		}
 		return ret;
 	}
 
-	public static sub(arr1:any[], val:any):any[]
+	public static sub(arr1:number[], val:number|number[]):number[]
 	{
 		let ret:any[] = [];
 		if (val.constructor === Array)
@@ -302,12 +297,12 @@ export class Vec
 		}
 		else
 		{
-			for (let n = 0; n < arr1.length; n++) ret.push(arr1[n] - val);
+			for (let n = 0; n < arr1.length; n++) ret.push(arr1[n] - (val as number));
 		}
 		return ret;
 	}
 
-	public static mul(arr1:any[], val:any):any[]
+	public static mul(arr1:number[], val:number|number[]):number[]
 	{
 		let ret:any[] = [];
 		if (val.constructor === Array)
@@ -317,12 +312,12 @@ export class Vec
 		}
 		else
 		{
-			for (let n = 0; n < arr1.length; n++) ret.push(arr1[n] * val);
+			for (let n = 0; n < arr1.length; n++) ret.push(arr1[n] * (val as number));
 		}
 		return ret;
 	}
 
-	public static neg(arr:number[])
+	public static neg(arr:number[]):number[]
 	{
 		let ret = arr.slice(0);
 		for (let n = ret.length - 1; n >= 0; n--) ret[n] *= -1;
@@ -330,14 +325,14 @@ export class Vec
 	}
 
 	// bulk direct operations
-	public static setTo(arr:any[], val:any) {for (let n = arr == null ? -1 : arr.length - 1; n >= 0; n--) arr[n] = val;}
-	public static addTo(arr:number[], val:number) {for (let n = arr == null ? -1 : arr.length - 1; n >= 0; n--) arr[n] += val;}
-	public static mulBy(arr:number[], val:number) {for (let n = arr == null ? -1 : arr.length - 1; n >= 0; n--) arr[n] *= val;}
+	public static setTo(arr:any[], val:any):void {for (let n = arr == null ? -1 : arr.length - 1; n >= 0; n--) arr[n] = val;}
+	public static addTo(arr:number[], val:number):void {for (let n = arr == null ? -1 : arr.length - 1; n >= 0; n--) arr[n] += val;}
+	public static mulBy(arr:number[], val:number):void {for (let n = arr == null ? -1 : arr.length - 1; n >= 0; n--) arr[n] *= val;}
 
-	public static addToArray(arr:number[], val:number[]) {for (let n = arr == null ? -1 : arr.length - 1; n >= 0; n--) arr[n] += val[n];}
-	public static subFromArray(arr:number[], val:number[]) {for (let n = arr == null ? -1 : arr.length - 1; n >= 0; n--) arr[n] -= val[n];}
-	public static mulByArray(arr:number[], val:number[]) {for (let n = arr == null ? -1 : arr.length - 1; n >= 0; n--) arr[n] *= val[n];}
-	public static divByArray(arr:number[], val:number[]) {for (let n = arr == null ? -1 : arr.length - 1; n >= 0; n--) arr[n] /= val[n];}
+	public static addToArray(arr:number[], val:number[]):void {for (let n = arr == null ? -1 : arr.length - 1; n >= 0; n--) arr[n] += val[n];}
+	public static subFromArray(arr:number[], val:number[]):void {for (let n = arr == null ? -1 : arr.length - 1; n >= 0; n--) arr[n] -= val[n];}
+	public static mulByArray(arr:number[], val:number[]):void {for (let n = arr == null ? -1 : arr.length - 1; n >= 0; n--) arr[n] *= val[n];}
+	public static divByArray(arr:number[], val:number[]):void {for (let n = arr == null ? -1 : arr.length - 1; n >= 0; n--) arr[n] /= val[n];}
 
 	public static idxSort(arr:any[]):number[]
 	{
@@ -359,14 +354,23 @@ export class Vec
 		return arr;
 	}
 
+	// returns only the unique entries, sorted
+	public static sortedUnique<T>(arr:T[]):T[]
+	{
+		if (arr == null || arr.length == 0) return [];
+		let unique = Vec.uniqueUnstable(arr);
+		if (typeof arr[0] == 'number') this.sort((unique as any) as number[]); else unique.sort();
+		return unique;
+	}
+
 	// uniqueness, in its various permutations
-	public static uniqueUnstable(arr:any[]):any[]
+	public static uniqueUnstable<T>(arr:T[]):T[]
 	{
 		return Array.from(new Set(arr)); // order is basically random
 	}
-	public static uniqueStable(arr:any[]):any[]
+	public static uniqueStable<T>(arr:T[]):T[]
 	{
-		let set = new Set<any>(arr), ret:any[] = [];
+		let set = new Set<T>(arr), ret:T[] = [];
 		for (let v of arr) if (set.has(v)) {ret.push(v); set.delete(v);}
 		return ret; // original order is preserved, with non-first entries removed*/
 	}

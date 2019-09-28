@@ -1478,10 +1478,10 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 		{
 			let atom = clickObj;
 			let dlg = new EditAtom(this.mol, this.opAtom, () =>
-				{
-					if (this.mol.compareTo(dlg.mol) != 0) this.defineMolecule(dlg.mol);
-					dlg.close();
-				});
+			{
+				if (this.mol.compareTo(dlg.mol) != 0) this.defineMolecule(dlg.mol);
+				dlg.close();
+			});
 			dlg.open();
 		}
 		else
@@ -1966,14 +1966,15 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 
 		// !! TODO: special cases, like arrow keys/escape...
 
-		if (this.toolView != null && this.toolView.topBank.claimKey(event)) {event.preventDefault(); return;}
+		/*if (this.toolView != null && this.toolView.topBank.claimKey(event)) {event.preventDefault(); return;}
 		if (this.commandView != null && this.commandView.topBank.claimKey(event)) {event.preventDefault(); return;}
-		if (this.templateView != null && this.templateView.topBank.claimKey(event)) {event.preventDefault(); return;}
+		if (this.templateView != null && this.templateView.topBank.claimKey(event)) {event.preventDefault(); return;}*/
 	}
 	private keyDown(event:JQueryEventObject):boolean
 	{
-		let key = event.keyCode;
+		let key = event.key;
 		//console.log('DOWN: key='+key);
+
 		// special deal for the escape key: if any bank needs to be popped, consume it
 		if (key == KeyCode.Escape)
 		{
@@ -1991,12 +1992,9 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 		else if (key == KeyCode.Right) {}
 		else if (key == KeyCode.Up) {}
 		else if (key == KeyCode.Down) {}
-		else if ([KeyCode.Escape, KeyCode.Backspace, KeyCode.Delete].indexOf(key) >= 0)
-		{
-			if (this.toolView != null && this.toolView.topBank.claimKey(event)) {event.preventDefault(); return false;}
-			if (this.commandView != null && this.commandView.topBank.claimKey(event)) {event.preventDefault(); return false;}
-			if (this.templateView != null && this.templateView.topBank.claimKey(event)) {event.preventDefault(); return false;}
-		}
+		else if (this.toolView != null && this.toolView.topBank.claimKey(event)) {}
+		else if (this.commandView != null && this.commandView.topBank.claimKey(event)) {}
+		else if (this.templateView != null && this.templateView.topBank.claimKey(event)) {}
 		else return true; // allow the key to percolate upward
 
 		event.preventDefault();

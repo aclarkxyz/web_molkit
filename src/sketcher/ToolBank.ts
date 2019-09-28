@@ -24,19 +24,19 @@ namespace WebMolKit /* BOF */ {
 const TOOLS_MAIN:ButtonBankItem[] =
 [
 	{'id': 'arrow', 'imageFN': 'ToolSelect', 'helpText': 'Selection tool.', 'mnemonic': 'Escape'},
-	{'id': 'rotate', 'imageFN': 'ToolRotate', 'helpText': 'Rotate subject atoms.', 'mnemonic': 'R'},
-	{'id': 'pan', 'imageFN': 'ToolPan', 'helpText': 'Pan the viewport around the screen.', 'mnemonic': 'V'},
-	{'id': 'drag', 'imageFN': 'ToolDrag', 'helpText': 'Drag selected atoms to new positions.', 'mnemonic': 'G'},
+	{'id': 'rotate', 'imageFN': 'ToolRotate', 'helpText': 'Rotate subject atoms.', 'mnemonic': ''},
+	{'id': 'pan', 'imageFN': 'ToolPan', 'helpText': 'Pan the viewport around the screen.', 'mnemonic': ''},
+	{'id': 'drag', 'imageFN': 'ToolDrag', 'helpText': 'Drag selected atoms to new positions.', 'mnemonic': ''},
 	{'id': 'erasor', 'imageFN': 'ToolErasor', 'helpText': 'Delete atoms or bonds by selecting.', 'mnemonic': 'Delete'},
 	{'id': 'bondOrder0', 'imageFN': 'BondZero', 'helpText': 'Create or change a bond to zero order.', 'mnemonic': ''},
-	{'id': 'bondOrder1', 'imageFN': 'BondOne', 'helpText': 'Create or change a bond to single.', 'mnemonic': 'Shift-1'},
-	{'id': 'bondOrder2', 'imageFN': 'BondTwo', 'helpText': 'Create or change a bond to double.', 'mnemonic': 'Shift-2'},
-	{'id': 'bondOrder3', 'imageFN': 'BondThree', 'helpText': 'Create or change a bond to triple.', 'mnemonic': 'Shift-3'},
-	{'id': 'bondUnknown', 'imageFN': 'BondSquig', 'helpText': 'Create or change a bond to unknown stereochemistry.', 'mnemonic': 'Shift-4'},
-	{'id': 'bondInclined', 'imageFN': 'BondUp', 'helpText': 'Create or change a bond to up-wedge.', 'mnemonic': 'Shift-5'},
-	{'id': 'bondDeclined', 'imageFN': 'BondDown', 'helpText': 'Create or change a bond to down-wedge.', 'mnemonic': 'Shift-6'},
-	{'id': 'ringAliph', 'imageFN': 'ToolRing', 'helpText': 'Create plain ring.', 'mnemonic': 'Shift-7'},
-	{'id': 'ringArom', 'imageFN': 'ToolArom', 'helpText': 'Create aromatic ring.', 'mnemonic': 'Shift-8'},
+	{'id': 'bondOrder1', 'imageFN': 'BondOne', 'helpText': 'Create or change a bond to single.', 'mnemonic': ''},
+	{'id': 'bondOrder2', 'imageFN': 'BondTwo', 'helpText': 'Create or change a bond to double.', 'mnemonic': ''},
+	{'id': 'bondOrder3', 'imageFN': 'BondThree', 'helpText': 'Create or change a bond to triple.', 'mnemonic': ''},
+	{'id': 'bondUnknown', 'imageFN': 'BondSquig', 'helpText': 'Create or change a bond to unknown stereochemistry.', 'mnemonic': ''},
+	{'id': 'bondInclined', 'imageFN': 'BondUp', 'helpText': 'Create or change a bond to up-wedge.', 'mnemonic': ''},
+	{'id': 'bondDeclined', 'imageFN': 'BondDown', 'helpText': 'Create or change a bond to down-wedge.', 'mnemonic': ''},
+	{'id': 'ringAliph', 'imageFN': 'ToolRing', 'helpText': 'Create plain ring.', 'mnemonic': ''},
+	{'id': 'ringArom', 'imageFN': 'ToolArom', 'helpText': 'Create aromatic ring.', 'mnemonic': ''},
 	{'id': 'atomPlus', 'imageFN': 'AtomPlus', 'helpText': 'Increase charge on atom.', 'mnemonic': ''},
 	{'id': 'atomMinus', 'imageFN': 'AtomMinus', 'helpText': 'Decrease charge on atom.', 'mnemonic': ''},
 	{'id': 'elementC', 'text': 'C', 'helpText': 'Change elements to Carbon.', 'mnemonic': ''},
@@ -48,7 +48,7 @@ const TOOLS_MAIN:ButtonBankItem[] =
 	{'id': 'elementF', 'text': 'F', 'helpText': 'Change elements to Fluorine.', 'mnemonic': ''},
 	{'id': 'elementCl', 'text': 'Cl', 'helpText': 'Change elements to Chlorine.', 'mnemonic': ''},
 	{'id': 'elementBr', 'text': 'Br', 'helpText': 'Change elements to Bromine.', 'mnemonic': ''},
-	{'id': 'elementA', 'text': 'A', 'helpText': 'Pick other element.', 'mnemonic': 'O'}
+	{'id': 'elementA', 'text': 'A', 'helpText': 'Pick other element.', 'mnemonic': ''}
 ];
 
 export class ToolBank extends ButtonBank
@@ -79,7 +79,7 @@ export class ToolBank extends ButtonBank
 
 		for (let item of TOOLS_MAIN)
 		{
-			if (ButtonBank.matchKey(event, item.mnemonic))
+			if (ButtonBank.matchKey(event, item.mnemonic, item.key))
 			{
 				this.hitButton(item.id);
 				return true;
