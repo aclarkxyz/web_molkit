@@ -122,6 +122,9 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 	private templatePerms:TemplatePermutation[] = null; // if fusing templates, these are the options in play
 	private currentPerm = 0; // currently viewed permutation (if applicable)
 	private fusionBank:FusionBank = null;
+	private cursorWatermark = 0;
+	private cursorDX = 0;
+	private cursorDY = 0;
 
 	private proxyClip:ClipboardProxy = null;
 	private static UNDO_SIZE = 20;
@@ -431,6 +434,22 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 		}
 		while (this.selectedMask.length < this.mol.numAtoms) {this.selectedMask.push(false);}
 		this.selectedMask[atom - 1] = sel;
+		this.delayedRedraw();
+	}
+
+	// convenience: sets current and redraws
+	private changeCurrentAtom(atom:number):void
+	{
+		if (this.currentAtom == atom) return;
+		this.currentAtom = atom;
+		this.currentBond = 0;
+		this.delayedRedraw();
+	}
+	private changeCurrentBond(bond:number):void
+	{
+		if (this.currentBond == bond) return;
+		this.currentBond = bond;
+		this.currentAtom = 0;
 		this.delayedRedraw();
 	}
 
@@ -1460,6 +1479,102 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 		return atoms;
 	}
 
+	// interactively edit the given atom
+	private editAtom(atom:number):void
+	{
+		if (atom == 0) return;
+
+		let dlg = new EditAtom(this.mol, atom, () =>
+		{
+			if (this.mol.compareTo(dlg.mol) != 0) this.defineMolecule(dlg.mol);
+			dlg.close();
+		});
+		dlg.open();
+	}
+
+	// move the current selection in one of the cardinal directions
+	private hitArrowKey(dx:number, dy:number):void
+	{
+		let watermark = ++this.cursorWatermark;
+		this.cursorDX += dx;
+		this.cursorDY += dy;
+		setTimeout(() =>
+		{
+			if (watermark == this.cursorWatermark) this.cursorJumpDirection();
+		}, 100);
+	}
+
+	// given the direction of the cursor offset, try to move the current position in that direction
+	private cursorJumpDirection():void
+	{
+		let theta = Math.atan2(this.cursorDY, this.cursorDX);
+		if (this.currentAtom > 0) this.jumpFromCurrentAtom(theta);
+		else if (this.currentBond > 0) this.jumpFromCurrentBond(theta);
+		else this.jumpFromNowhere(theta);
+
+		this.cursorDX = 0;
+		this.cursorDY = 0;
+		this.cursorWatermark = 0;
+	}
+	private jumpFromCurrentAtom(theta:number):void
+	{
+		// see if we can follow a bond
+		let adj = this.mol.atomAdjList(this.currentAtom);
+		let closest = 0, closestDelta = Number.MAX_VALUE;
+		for (let a of adj)
+		{
+			let dx = this.mol.atomX(a) - this.mol.atomX(this.currentAtom), dy = this.mol.atomY(a) - this.mol.atomY(this.currentAtom);
+			let adjTheta = Math.atan2(dy, dx), delta = Math.abs(angleDiff(adjTheta, theta));
+			if (delta < 35.0 * DEGRAD && delta < closestDelta) [closest, closestDelta] = [a, delta];
+		}
+		if (closest > 0)
+		{
+			this.changeCurrentBond(this.mol.findBond(this.currentAtom, closest));
+			return;
+		}
+		
+		// no bond to hop onto, so try jumping across a chasm
+		let best = 0, bestScore = Number.MIN_VALUE;
+		for (let n = 1; n <= this.mol.numAtoms; n++) if (n != this.currentAtom && adj.indexOf(n) < 0)
+		{
+			let dx = this.mol.atomX(n) - this.mol.atomX(this.currentAtom), dy = this.mol.atomY(n) - this.mol.atomY(this.currentAtom);
+			let adjTheta = Math.atan2(dy, dx), delta = Math.abs(angleDiff(adjTheta, theta))
+			if (delta > 45.0 * DEGRAD) continue; // must be in the cone
+			let cosdelta = Math.cos(delta)
+			let score = Math.pow(cosdelta, 2) / (norm2_xy(dx, dy) + 0.001)
+			if (score > bestScore) [best, bestScore] = [n, score];
+		}
+		if (best > 0) this.changeCurrentAtom(best);
+	}
+	private jumpFromCurrentBond(theta:number):void
+	{
+		let [bfr, bto] = this.mol.bondFromTo(this.currentBond)
+		let bondTheta = Math.atan2(this.mol.atomY(bto) - this.mol.atomY(bfr), this.mol.atomX(bto) - this.mol.atomX(bfr))
+		if (Math.abs(angleDiff(theta, bondTheta)) < 50.0 * DEGRAD) this.changeCurrentAtom(bto);
+		if (Math.abs(angleDiff(theta, bondTheta + Math.PI)) < 50.0 * DEGRAD) this.changeCurrentAtom(bfr);
+		//  (otherwise do nothing)
+	}
+	private jumpFromNowhere(theta:number):void
+	{
+		if (this.mol.numAtoms == 0) return;
+		if (this.mol.numAtoms == 1) {this.changeCurrentAtom(1); return;}
+		
+		let cx = 0, cy = 0;
+		for (let n = 1; n <= this.mol.numAtoms; n++) {cx += this.mol.atomX(n); cy += this.mol.atomY(n);}
+		let inv = 1.0 / this.mol.numAtoms;
+		cx *= inv; cy *= inv
+		
+		let best = 0, bestScore = Number.MIN_VALUE;
+		for (let n = 1; n <= this.mol.numAtoms; n++)
+		{
+			let dx = this.mol.atomX(n) - cx, dy =this. mol.atomY(n) - cy, atheta = Math.atan2(dy, dx)
+			let cosdelta = Math.cos(Math.abs(angleDiff(theta + Math.PI, atheta)))
+			let score = cosdelta * norm_xy(dx, dy)
+			if (score > bestScore) [best, bestScore] = [n, score];
+		}
+		if (best > 0) this.changeCurrentAtom(best);
+	}
+
 	// --------------------------------------- toolkit events ---------------------------------------
 
 	// event responses
@@ -1477,12 +1592,7 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 		if (clickObj > 0)
 		{
 			let atom = clickObj;
-			let dlg = new EditAtom(this.mol, this.opAtom, () =>
-			{
-				if (this.mol.compareTo(dlg.mol) != 0) this.defineMolecule(dlg.mol);
-				dlg.close();
-			});
-			dlg.open();
+			this.editAtom(atom);
 		}
 		else
 		{
@@ -1986,12 +2096,12 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 			}
 		}
 
-		// non-modifier keys that don't generate a 'pressed' event
-		if (key == KeyCode.Enter) {}
-		else if (key == KeyCode.Left) {}
-		else if (key == KeyCode.Right) {}
-		else if (key == KeyCode.Up) {}
-		else if (key == KeyCode.Down) {}
+		// non-modifier keys that don't generate a 'pressed' event		
+		if (key == KeyCode.Enter) this.editAtom(this.currentAtom);
+		else if (key == KeyCode.Left) this.hitArrowKey(-1, 0);
+		else if (key == KeyCode.Right) this.hitArrowKey(1, 0);
+		else if (key == KeyCode.Up) this.hitArrowKey(0, 1);
+		else if (key == KeyCode.Down) this.hitArrowKey(0, -1);
 		else if (this.toolView != null && this.toolView.topBank.claimKey(event)) {}
 		else if (this.commandView != null && this.commandView.topBank.claimKey(event)) {}
 		else if (this.templateView != null && this.templateView.topBank.claimKey(event)) {}

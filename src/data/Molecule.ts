@@ -140,6 +140,7 @@ export class Molecule
 	public bondType(idx:number):number {return this.getBond(idx).type;}
 	public bondExtra(idx:number):string[] {return this.getBond(idx).extra.slice(0);}
 	public bondTransient(idx:number):string[] {return this.getBond(idx).transient.slice(0);}
+	public bondFromTo(idx:number):number[] {let b = this.getBond(idx); return [b.from, b.to];}
 
 	public addAtom(element:string, x:number, y:number, charge:number = 0, unpaired:number = 0):number
 	{
