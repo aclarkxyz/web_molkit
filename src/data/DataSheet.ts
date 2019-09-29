@@ -264,6 +264,11 @@ export class DataSheet
 		}
 		return datum;
 	}
+	public getMoleculeBlank(row:number, col:number | string):Molecule
+	{
+		let mol = this.getMolecule(row, col);
+		return mol ? mol : new Molecule();
+	}
 	public getString(row:number, col:number | string):string
 	{
 		if (typeof col === 'string') col = this.findColByName(col);

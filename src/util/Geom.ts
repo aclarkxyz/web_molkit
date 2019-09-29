@@ -572,6 +572,8 @@ export class Size
 
 	public clone():Size {return new Size(this.w, this.h);}
 
+	public isZero():boolean {return this.w == 0 && this.h == 0;}
+	
 	public scaleBy(mag:number):void
 	{
 		if (mag == 1) return;
@@ -620,6 +622,8 @@ export class Box
 		this.w = sz.w;
 		this.h = sz.h;
 	}
+
+	public isZero():boolean {return this.w == 0 && this.h == 0;}
 
 	public minX():number {return this.x;}
 	public minY():number {return this.y;}

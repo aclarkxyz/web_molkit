@@ -76,7 +76,6 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 	private container:JQuery;
 	private undoStack:SketchState[] = [];
 	private redoStack:SketchState[] = [];
-	private spanBackground:JQuery = null;
 	private canvasUnder:HTMLCanvasElement = null;
 	private canvasMolecule:HTMLCanvasElement = null;
 	private canvasOver:HTMLCanvasElement = null;
