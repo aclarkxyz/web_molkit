@@ -1537,18 +1537,18 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 		for (let n = 1; n <= this.mol.numAtoms; n++) if (n != this.currentAtom && adj.indexOf(n) < 0)
 		{
 			let dx = this.mol.atomX(n) - this.mol.atomX(this.currentAtom), dy = this.mol.atomY(n) - this.mol.atomY(this.currentAtom);
-			let adjTheta = Math.atan2(dy, dx), delta = Math.abs(angleDiff(adjTheta, theta))
+			let adjTheta = Math.atan2(dy, dx), delta = Math.abs(angleDiff(adjTheta, theta));
 			if (delta > 45.0 * DEGRAD) continue; // must be in the cone
-			let cosdelta = Math.cos(delta)
-			let score = Math.pow(cosdelta, 2) / (norm2_xy(dx, dy) + 0.001)
+			let cosdelta = Math.cos(delta);
+			let score = Math.pow(cosdelta, 2) / (norm2_xy(dx, dy) + 0.001);
 			if (score > bestScore) [best, bestScore] = [n, score];
 		}
 		if (best > 0) this.changeCurrentAtom(best);
 	}
 	private jumpFromCurrentBond(theta:number):void
 	{
-		let [bfr, bto] = this.mol.bondFromTo(this.currentBond)
-		let bondTheta = Math.atan2(this.mol.atomY(bto) - this.mol.atomY(bfr), this.mol.atomX(bto) - this.mol.atomX(bfr))
+		let [bfr, bto] = this.mol.bondFromTo(this.currentBond);
+		let bondTheta = Math.atan2(this.mol.atomY(bto) - this.mol.atomY(bfr), this.mol.atomX(bto) - this.mol.atomX(bfr));
 		if (Math.abs(angleDiff(theta, bondTheta)) < 50.0 * DEGRAD) this.changeCurrentAtom(bto);
 		if (Math.abs(angleDiff(theta, bondTheta + Math.PI)) < 50.0 * DEGRAD) this.changeCurrentAtom(bfr);
 		//  (otherwise do nothing)
@@ -1561,14 +1561,14 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 		let cx = 0, cy = 0;
 		for (let n = 1; n <= this.mol.numAtoms; n++) {cx += this.mol.atomX(n); cy += this.mol.atomY(n);}
 		let inv = 1.0 / this.mol.numAtoms;
-		cx *= inv; cy *= inv
+		cx *= inv; cy *= inv;
 		
 		let best = 0, bestScore = Number.MIN_VALUE;
 		for (let n = 1; n <= this.mol.numAtoms; n++)
 		{
-			let dx = this.mol.atomX(n) - cx, dy =this. mol.atomY(n) - cy, atheta = Math.atan2(dy, dx)
-			let cosdelta = Math.cos(Math.abs(angleDiff(theta + Math.PI, atheta)))
-			let score = cosdelta * norm_xy(dx, dy)
+			let dx = this.mol.atomX(n) - cx, dy = this.mol.atomY(n) - cy, atheta = Math.atan2(dy, dx);
+			let cosdelta = Math.cos(Math.abs(angleDiff(theta + Math.PI, atheta)));
+			let score = cosdelta * norm_xy(dx, dy);
 			if (score > bestScore) [best, bestScore] = [n, score];
 		}
 		if (best > 0) this.changeCurrentAtom(best);

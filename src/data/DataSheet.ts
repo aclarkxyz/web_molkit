@@ -551,7 +551,7 @@ export class DataSheet
 	// when possibly converting between two column types, make sure that the object is compatible
 	public static convertType(obj:any, fromType:DataSheetColumn, toType:DataSheetColumn):any
 	{
-		const ft = fromType, tt= toType;
+		const ft = fromType, tt = toType;
 		if (obj == null || ft == tt || (typeof obj == 'string' && obj == '')) return obj;
 
 		if (tt == DataSheetColumn.String)
@@ -576,7 +576,7 @@ export class DataSheet
 		{
 			if (ft == DataSheetColumn.String) return (obj as string).toLowerCase() == 'true';
 			else if (ft == DataSheetColumn.Integer) return obj > 0;
-			else if (ft == DataSheetColumn.Real) obj >= 0.5;
+			else if (ft == DataSheetColumn.Real) return obj >= 0.5;
 		}
 
 		return null;

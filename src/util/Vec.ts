@@ -272,7 +272,7 @@ export class Vec
 		return t;
 	}
 
-	public static add(arr1:number[], val:number|number[]):number[]
+	public static add(arr1:number[], val:number | number[]):number[]
 	{
 		let ret:any[] = [];
 		if (val.constructor === Array)
@@ -287,7 +287,7 @@ export class Vec
 		return ret;
 	}
 
-	public static sub(arr1:number[], val:number|number[]):number[]
+	public static sub(arr1:number[], val:number | number[]):number[]
 	{
 		let ret:any[] = [];
 		if (val.constructor === Array)
@@ -302,7 +302,7 @@ export class Vec
 		return ret;
 	}
 
-	public static mul(arr1:number[], val:number|number[]):number[]
+	public static mul(arr1:number[], val:number | number[]):number[]
 	{
 		let ret:any[] = [];
 		if (val.constructor === Array)
