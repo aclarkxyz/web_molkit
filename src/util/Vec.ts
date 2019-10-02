@@ -201,7 +201,7 @@ export class Vec
 		return ret;
 	}
 
-	public static idxGet<T>(arr:any[], idx:number[]):T[]
+	public static idxGet<T>(arr:T[], idx:number[]):T[]
 	{
 		let ret:T[] = [];
 		for (let n = 0; n < idx.length; n++) ret.push(arr[idx[n]]);
