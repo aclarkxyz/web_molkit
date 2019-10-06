@@ -42,6 +42,7 @@ export class DrawExperiment
 	private invScale:number;
 
 	// optional hooks to intercept rendering
+	public preDrawComponent:(vg:MetaVector, idx:number, xc:ArrangeComponent) => void = null;
 	public preDrawMolecule:(vg:MetaVector, idx:number, xc:ArrangeComponent, arrmol:ArrangeMolecule) => void = null;
 	public postDrawMolecule:(vg:MetaVector, idx:number, xc:ArrangeComponent, arrmol:ArrangeMolecule) => void = null;
 
@@ -82,6 +83,8 @@ export class DrawExperiment
 		let vg = this.vg, policy = this.policy;
 		let bx = xc.box.x + xc.padding, by = xc.box.y + xc.padding;
 		let bw = xc.box.w - 2 * xc.padding, bh = xc.box.h - 2 * xc.padding;
+
+		if (this.preDrawComponent) this.preDrawComponent(vg, idx, xc);
 
 		if (xc.srcIdx < 0 || (MolUtil.isBlank(xc.mol) && !xc.text))
 		{

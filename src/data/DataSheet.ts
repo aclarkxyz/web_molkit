@@ -92,13 +92,13 @@ export class DataSheet
 			'title': this.data.title,
 			'description': this.data.description,
 			'numCols': numCols,
-			'numRows': numRows,
+			'numRows': withRows ? numRows : 0,
 			'numExtens': this.data.numExtens,
 			'colData': deepClone(colData),
-			'rowData': new Array(numRows),
+			'rowData': withRows ? new Array(numRows) : [],
 			'extData': deepClone(this.data.extData),
 		};
-		for (let r = 0; r < numRows; r++)
+		if (withRows) for (let r = 0; r < numRows; r++)
 		{
 			let inRow = rowData[r], outRow:any[] = new Array(numCols);
 			for (let c = 0; c < numCols; c++)
