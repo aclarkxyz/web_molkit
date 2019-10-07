@@ -122,6 +122,7 @@ export class ExperimentEntry
 	public createDate:Date = null;
 	public modifyDate:Date = null;
 	public doi = '';
+	public meta = '';
 
 	public steps:ExperimentStep[] = [];
 
@@ -135,6 +136,7 @@ export class ExperimentEntry
 		dup.createDate = this.createDate;
 		dup.modifyDate = this.modifyDate;
 		dup.doi = this.doi;
+		dup.meta = this.meta;
 		for (let s of this.steps) dup.steps.push(s.clone());
 		return dup;
 	}
@@ -159,7 +161,7 @@ export class ExperimentEntry
 		if (d1 != d2) return false;
 		let d3 = this.modifyDate == null ? 0 : this.modifyDate.getTime(), d4 = other.modifyDate == null ? 0 : other.modifyDate.getTime();
 		if (d3 != d4) return false;
-		if (this.doi != other.doi) return false;
+		if (this.doi != other.doi || this.meta != other.meta) return false;
 		if (this.steps.length != other.steps.length) return false;
 		for (let n = 0; n < this.steps.length; n++) if (!this.steps[n].equals(other.steps[n])) return false;
 		return true;
@@ -188,6 +190,7 @@ export class Experiment extends Aspect
 	public static COLNAME_EXPERIMENT_CREATEDATE = 'ExperimentCreateDate';
 	public static COLNAME_EXPERIMENT_MODIFYDATE = 'ExperimentModifyDate';
 	public static COLNAME_EXPERIMENT_DOI = 'ExperimentDOI';
+	public static COLNAME_EXPERIMENT_META = 'ExperimentMeta';
 
 	// prefixes for Reactants
 	public static COLNAME_REACTANT_MOL = 'ReactantMol';
@@ -245,6 +248,7 @@ export class Experiment extends Aspect
 			v[Experiment.COLNAME_EXPERIMENT_CREATEDATE] = 'Date the experiment was created (seconds since 1970)';
 			v[Experiment.COLNAME_EXPERIMENT_MODIFYDATE] = 'Date the experiment was last modified (seconds since 1970)';
 			v[Experiment.COLNAME_EXPERIMENT_DOI] = 'Digital object identifiers (DOI) for the experiment (whitespace separated)';
+			v[Experiment.COLNAME_EXPERIMENT_META] = 'Additional experiment metadata';
 			v[Experiment.COLNAME_REACTANT_MOL] = 'Molecular structure of reactant';
 			v[Experiment.COLNAME_REACTANT_NAME] = 'Name of reactant';
 			v[Experiment.COLNAME_REACTANT_STOICH] = 'Stoichiometry of reactant';
@@ -314,6 +318,8 @@ export class Experiment extends Aspect
 		if (modifyDate) entry.modifyDate = new Date(modifyDate * 1000);
 		let doi = this.ds.getString(row, Experiment.COLNAME_EXPERIMENT_DOI);
 		if (doi) entry.doi = doi;
+		let meta = this.ds.getString(row, Experiment.COLNAME_EXPERIMENT_META);
+		if (meta) entry.meta = meta;
 
 		let [nreactants, nproducts, nreagents] = this.countComponents();
 
@@ -393,6 +399,7 @@ export class Experiment extends Aspect
 		this.forceColumn(Experiment.COLNAME_EXPERIMENT_CREATEDATE, DataSheetColumn.Real);
 		this.forceColumn(Experiment.COLNAME_EXPERIMENT_MODIFYDATE, DataSheetColumn.Real);
 		this.forceColumn(Experiment.COLNAME_EXPERIMENT_DOI, DataSheetColumn.String);
+		this.forceColumn(Experiment.COLNAME_EXPERIMENT_META, DataSheetColumn.String);
 
 		for (let n = 1; n <= nreactants; n++) this.forceReactantColumns(n);
 		for (let n = 1; n <= nreagents; n++) this.forceReagentColumns(n);
@@ -568,6 +575,7 @@ export class Experiment extends Aspect
 		this.ds.setReal(row, Experiment.COLNAME_EXPERIMENT_CREATEDATE, entry.createDate == null ? null : entry.createDate.getTime() * 1E-3);
 		this.ds.setReal(row, Experiment.COLNAME_EXPERIMENT_MODIFYDATE, entry.modifyDate == null ? null : entry.modifyDate.getTime() * 1E-3);
 		this.ds.setString(row, Experiment.COLNAME_EXPERIMENT_DOI, entry.doi);
+		this.ds.setString(row, Experiment.COLNAME_EXPERIMENT_META, entry.meta);
 
 		// emit the steps and components
 		for (let s = 0; s < entry.steps.length; s++)
@@ -678,7 +686,8 @@ export class Experiment extends Aspect
 			Experiment.COLNAME_EXPERIMENT_TITLE,
 			Experiment.COLNAME_EXPERIMENT_CREATEDATE,
 			Experiment.COLNAME_EXPERIMENT_MODIFYDATE,
-			Experiment.COLNAME_EXPERIMENT_DOI
+			Experiment.COLNAME_EXPERIMENT_DOI,
+			Experiment.COLNAME_EXPERIMENT_META
 		];
 		let PREFIXES =
 		[
