@@ -612,11 +612,13 @@ export class Box
 
 	public clone():Box {return new Box(this.x, this.y, this.w, this.h);}
 
+	public getPos():Pos {return new Pos(this.x, this.y);}
 	public setPos(pos:Pos):void
 	{
 		this.x = pos.x;
 		this.y = pos.y;
 	}
+	public getSize():Size {return new Size(this.w, this.h);}
 	public setSize(sz:Size):void
 	{
 		this.w = sz.w;

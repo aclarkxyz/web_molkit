@@ -566,6 +566,11 @@ export class ArrangeMolecule
 
 		return bounds;
 	}
+	public determineBoundaryBox():Box
+	{
+		let [x1, y1, x2, y2] = this.determineBoundary();
+		return new Box(x1, y1, x2 - x1, y2 - y1);
+	}
 
 	// convenience method: determines the boundaries of the arrangement, and makes sure that it all fits into the given
 	// box; will be scaled down if necessary, but not scaled up
