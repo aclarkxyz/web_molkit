@@ -58,7 +58,7 @@ export class MetaVector
 	private PRIM_TEXT = 5;
 	private PRIM_TEXTNATIVE = 6;
 
-	private ONE_THIRD = 1.0 / 3;
+	//private ONE_THIRD = 1.0 / 3;
 
 	public static NOCOLOUR = -1;
 
@@ -301,6 +301,9 @@ export class MetaVector
 		this.transformPrimitives(box.x + ox, box.y + oy, scale, scale);
 	}
 
+	/* NOTE: this is the older implementation - it recalibrates to the "lowest" position, which is more of an unwanted
+			artifact than a feature... I think...
+
 	// transforms the sizes and positions of the primitives; note that this should only be called within the building stage,
 	// just before everything is emitted to the output device
 	// scaling properties:
@@ -365,7 +368,70 @@ export class MetaVector
 		this.highY = oy + this.lowY + (this.highY - this.lowY) * sh;
 		this.lowX += ox;
 		this.lowY += oy;
-	}
+	}*/
+
+	// transforms the sizes and positions of the primitives; a transform of [0,0,1,1] is the identity; the position of each coordinate
+	// is rescaled based on: p' = p*scale + offset
+	public transformPrimitives(ox:number, oy:number, sw:number, sh:number):void
+	{
+		if (ox == 0 && oy == 0 && sw == 1 && sh == 1) return;
+
+		for (let a of this.prims)
+		{
+			const type = a[0];
+			if (type == this.PRIM_LINE)
+			{
+				a[2] = ox + a[2] * sw;
+				a[3] = oy + a[3] * sh;
+				a[4] = ox + a[4] * sw;
+				a[5] = oy + a[5] * sh;
+			}
+			else if (type == this.PRIM_RECT)
+			{
+				a[2] = ox + a[2] * sw;
+				a[3] = oy + a[3] * sh;
+				a[4] = a[4] * sw;
+				a[5] = a[5] * sh;
+			}
+			else if (type == this.PRIM_OVAL)
+			{
+				a[2] = ox + a[2] * sw;
+				a[3] = oy + a[3] * sh;
+				a[4] *= sw;
+				a[5] *= sh;
+			}
+			else if (type == this.PRIM_PATH)
+			{
+				let sz = a[2], px = a[3], py = a[4];
+				for (let n = 0; n < sz; n++)
+				{
+					px[n] = ox + px[n] * sw;
+					py[n] = oy + py[n] * sh;
+				}
+			}
+			else if (type == this.PRIM_TEXT || type == this.PRIM_TEXTNATIVE)
+			{
+				a[2] = ox + a[2] * sw;
+				a[3] = oy + a[3] * sh;
+			}
+		}
+		let swsh = 0.5 * (sw + sh);
+		if (swsh != 1) for (let t of this.types)
+		{
+			const type = t[0];
+			if (type == this.PRIM_LINE) t[1] *= swsh;
+			else if (type == this.PRIM_RECT) t[3] *= swsh;
+			else if (type == this.PRIM_OVAL) t[3] *= swsh;
+			else if (type == this.PRIM_PATH) t[3] *= swsh;
+			else if (type == this.PRIM_TEXT) t[1] *= swsh;
+			else if (type == this.PRIM_TEXTNATIVE) t[1] *= swsh;
+		}
+
+		this.lowX = ox + this.lowX * sw;
+		this.lowY = oy + this.lowY * sh;
+		this.highX = ox + this.highX * sw;
+		this.highY = oy + this.highY * sh;
+	}	
 
 	// renders the meta vector by creating a new canvas
 	public renderInto(parent:any)
@@ -504,6 +570,51 @@ export class MetaVector
 			n += num;
 		}
 	}
+
+	// for duplication purposes: emits all the primitives into another builder instance
+	public spool(into:MetaVector):void
+	{
+		for (let p of this.prims)
+		{
+			if (p[0] == this.PRIM_LINE)
+			{
+				let [_, typeidx, x1, y1, x2, y2] = p;
+				let [, thickness, colour] = this.types[typeidx];
+				into.drawLine(x1, y1, x2,  y2, colour, thickness);
+			}
+			else if (p[0] == this.PRIM_RECT)
+			{
+				let [_, typeidx, x, y, w, h] = p;
+				let [, edgeCol, fillCol, thickness] = this.types[typeidx];
+				into.drawRect(x, y, w, h, edgeCol, thickness, fillCol);
+			}
+			else if (p[0] == this.PRIM_OVAL)
+			{
+				let [_, typeidx, x, y, w, h] = p;
+				let [, edgeCol, fillCol, thickness] = this.types[typeidx];
+				into.drawOval(x, y, w, h, edgeCol, thickness, fillCol);
+			}
+			else if (p[0] == this.PRIM_PATH)
+			{
+				let [_, typeidx, numPoints, xpoints, ypoints, ctrlFlags, isClosed] = p;
+				let [, edgeCol, fillCol, thickness, hardEdge] = this.types[typeidx];
+				into.drawPath(xpoints, ypoints, ctrlFlags, isClosed, edgeCol, thickness, fillCol, hardEdge);
+			}
+			else if (p[0] == this.PRIM_TEXT)
+			{
+				let [_, typeidx, x, y, txt] = p;
+				let [, size, colour] = this.types[typeidx];
+				into.drawText(x, y, txt, size, colour);
+			}
+			else if (p[0] == this.PRIM_TEXTNATIVE)
+			{
+				let [_, typeidx, x, y, txt] = p;
+				let [, fontFamily, fontSize, colour] = this.types[typeidx];
+				into.drawTextNative(x, y, txt, fontFamily, fontSize, colour);
+			}
+		}
+	}
+	
 
 	// ------------ private methods ------------
 
