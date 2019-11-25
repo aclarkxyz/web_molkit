@@ -615,7 +615,6 @@ export class MetaVector
 		}
 	}
 	
-
 	// ------------ private methods ------------
 
 	// transform stored types into renderables
