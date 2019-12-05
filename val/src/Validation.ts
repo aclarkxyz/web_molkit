@@ -48,11 +48,12 @@ export class Validation
 	{
 	}
 
-	// override this to perform initialisation tasks; these can include asynchronous calls, such as loading files; be sure to call
-	// the completion function once it's ready
-	public init(donefunc:() => void):void
+	// override these to perform initialisation/de-initialisation tasks; these can include asynchronous calls, such as loading files
+	public async init():Promise<void>
 	{
-		donefunc.call(this);
+	}
+	public async deinit():Promise<void>
+	{
 	}
 
 	// adds a test to the list; note that when it gets called, 'this' will be set to the object instance
@@ -81,11 +82,12 @@ export class Validation
 			this.recentSuccess = false;
 			if (this.recentError == null)
 			{
-				let error = e as Error;
-				this.recentError = 'Exception: ' + e.message;
+				this.recentError = 'Exception: ' + (e.message || e);
 				if (e.fileName) this.recentError += ', file: ' + e.fileName;
 				if (e.lineNumber) this.recentError += ', line: ' + e.lineNumber;
-				console.log('Unhandled exception in validation:\n' + e.stack);
+				//console.log('Unhandled exception in validation:\n' + (e.stack || e));
+				console.log('Unhandled exception in validation:');
+				console.log(e);
 			}
 		}
 

@@ -48,9 +48,9 @@ export class ValidationHeadlessMolecule extends Validation
 		this.add('Molfile Round-trip', this.molfileRoundTrip);
 	}
 
-	public init(donefunc:() => void):void
+	public async init():Promise<void>
 	{
-		let FILES = ['molecule.el', 'molecule.mol', 'datasheet.ds', 'datasheet.sdf', 'stereo.el', 'circular.ds', 'roundtrip.ds'];
+		/*let FILES = ['molecule.el', 'molecule.mol', 'datasheet.ds', 'datasheet.sdf', 'stereo.el', 'circular.ds', 'roundtrip.ds'];
 		let files = FILES;
 
 		let fetchResult = (data:string):void =>
@@ -69,7 +69,15 @@ export class ValidationHeadlessMolecule extends Validation
 			else
 				donefunc.call(this);
 		};
-		$.get(this.urlBase + files[0], fetchResult);
+		$.get(this.urlBase + files[0], fetchResult);*/
+
+		this.strSketchEl = await $.get(this.urlBase + 'molecule.el');
+		this.strMolfile = await $.get(this.urlBase + 'molecule.mol');
+		this.strDataXML = await $.get(this.urlBase + 'datasheet.ds');
+		this.strSDfile = await $.get(this.urlBase + 'datasheet.sdf');
+		this.molStereo = Molecule.fromString(await $.get(this.urlBase + 'stereo.el'));
+		this.dsCircular = DataSheetStream.readXML(await $.get(this.urlBase + 'circular.ds'));
+		this.dsRoundtrip = DataSheetStream.readXML(await $.get(this.urlBase + 'roundtrip.ds'));
 	}
 
 	public parseSketchEl():void

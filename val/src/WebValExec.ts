@@ -32,21 +32,20 @@ export class WebValExec
 
 		if (this.validation.setupError)
 		{
-			let div = $('<div></div>').appendTo(domParent);
-			div.css('color', 'red');
+			let div = $('<div/>').appendTo(domParent).css({'color': 'red'});
 			div.text('Setup failed: ' + this.validation.setupError);
 			return;
 		}
 
-		let table = $('<table></table>').appendTo(domParent);
+		let table = $('<table/>').appendTo(domParent);
 
 		let tdStatus:JQuery[] = [], tdInfo:JQuery[] = [];
 
 		for (let n = 0; n < this.validation.count; n++)
 		{
-			let tr = $('<tr></tr>').appendTo(table);
+			let tr = $('<tr/>').appendTo(table);
 
-			let td = $('<td valign="top"></td>').appendTo(tr);
+			let td = $('<td valign="top"/>').appendTo(tr);
 			tdStatus.push(td);
 
 			td = $('<td valign="top"></td>').appendTo(tr);
@@ -64,14 +63,14 @@ export class WebValExec
 				tdStatus[n].html('&#9745;');
 				if (time >= 0.001)
 				{
-					let span = $('<span style="color: #909090;"></span>').appendTo(tdInfo[n]);
+					let span = $('<span style="color: #909090;"/>').appendTo(tdInfo[n]);
 					span.text(' (' + time.toFixed(3) + ' sec)');
 				}
 			}
 			else
 			{
 				tdStatus[n].html('<span style="color: red;">&#9746;</span>');
-				let para = $('<p style="color: purple; margin-top: 0;"></p>').appendTo(tdInfo[n]);
+				let para = $('<p style="color: purple; margin-top: 0;"/>').appendTo(tdInfo[n]);
 				para.text(message ? message : 'failed');
 				tdStatus[n].css('background-color', '#FFF0F0');
 				tdInfo[n].css('background-color', '#FFF0F0');

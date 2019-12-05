@@ -56,6 +56,12 @@ export class Vec
 		arr[idx2] = v;
 	}
 
+	// make a shallow copy of the array, or turn it into a blank array if null
+	public static duplicate<T>(arr:T[]):T[]
+	{
+		return arr == null ? [] : arr.slice(0);
+	}
+
 	// null-tolerant array concatenation; always returns an array, always at least a shallow copy
 	public static append<T>(arr:T[], item:T):T[]
 	{
@@ -385,6 +391,24 @@ export class Vec
 		let set = new Set<any>(arr), ret:number[] = [];
 		for (let n = 0; n < arr.length; n++) if (set.has(arr[n])) {ret.push(n); set.delete(arr[n]);}
 		return ret; // index of first occurence in original array
+	}
+
+	// for a given array, ensures that certain value are not present, and will eliminate them when discovered; original order preserved; 
+	// null-tolerant, and may return the original array if unchanged
+	// note: O(N^2); may improve this at a later date
+	public static exclude<T>(arr:T[], excl:T[]):T[]
+	{
+		const sz = Vec.arrayLength(arr);
+		if (sz == 0) return [];
+		let mask:boolean[] = new Array(sz);
+		let count = 0;
+		for (let n = 0; n < arr.length; n++) 
+		{
+			mask[n] = excl.indexOf(arr[n]) < 0;
+			if (mask[n]) count++;
+		}
+		if (count == sz) return arr;
+		return Vec.maskGet(arr, mask);
 	}
 }
 

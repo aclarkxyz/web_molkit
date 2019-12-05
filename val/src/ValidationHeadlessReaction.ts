@@ -34,9 +34,9 @@ export class ValidationHeadlessReaction extends Validation
 		this.add('Experiment aspect', this.confirmAspect);
 	}
 
-	public init(donefunc:() => void):void
+	public async init():Promise<void>
 	{
-		const self = this;
+		/*const self = this;
 
 		let FILES = ['experiment.ds'];
 		let files = FILES;
@@ -51,7 +51,9 @@ export class ValidationHeadlessReaction extends Validation
 			else
 				donefunc.call(self);
 		};
-		$.get(self.urlBase + files[0], fetchResult);
+		$.get(self.urlBase + files[0], fetchResult);*/
+
+		this.strExperiment = await $.get(this.urlBase + 'experiment.ds');
 	}
 
 	public confirmAspect()

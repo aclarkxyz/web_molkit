@@ -82,10 +82,14 @@ export class MoleculeStream
 		}
 		for (let n = 0; n < numBonds; n++)
 		{
-			bits = lines[1 + numAtoms + n].split(/[-=,]/);
-			let num = mol.addBond(parseInt(bits[0]), parseInt(bits[1]), parseInt(bits[2]), parseInt(bits[3]));
+			bits = lines[1 + numAtoms + n].split(/[=,]/);
+			let frto = bits[0].split('-');
+			let bfr = parseInt(frto[0].trim()), bto = parseInt(frto[1].trim());
+			if (bfr == bto) continue; // silent trimming
+
+			let num = mol.addBond(bfr, bto, parseInt(bits[1]), parseInt(bits[2]));
 			let extra = new Array(), trans = new Array();
-			for (let i = 4; i < bits.length; i++)
+			for (let i = 3; i < bits.length; i++)
 			{
 				let ch = bits[i].charAt(0);
 				if (bits[i].charAt(0) == 'x') extra.push(MoleculeStream.sk_unescape(bits[i]));

@@ -23,34 +23,16 @@
 
 <script>
 	let wmk = WebMolKit;
-	runBasic();
-
-	function runBasic()
+	
+	async function runModule(module, dom)
 	{
-		new wmk.ValidationHeadlessBasic().init(function()
-		{
-			new wmk.WebValExec(this).runTests($('#basic'));
-			runMolecule();
-		});
+		await module.init();
+		new wmk.WebValExec(module).runTests(dom);
 	}
 
-	function runMolecule()
-	{
-		new wmk.ValidationHeadlessMolecule('../data/').init(function()
-		{
-			new wmk.WebValExec(this).runTests($('#molecule'));
-			runReaction();
-		});
-	}
-
-	function runReaction()
-	{
-		new wmk.ValidationHeadlessReaction('../data/').init(function()
-		{
-			new wmk.WebValExec(this).runTests($('#reaction'));
-			//run...();
-		});
-	}
+	(async() => await runModule(new wmk.ValidationHeadlessBasic(), $('#basic')))();
+	(async() => await runModule(new wmk.ValidationHeadlessMolecule('../data/'), $('#molecule')))();
+	(async() => await runModule(new wmk.ValidationHeadlessReaction('../data/'), $('#reaction')))();
 
 	$('#final').html('<p><b>Finished.</b></p>');
 </script>

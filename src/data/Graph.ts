@@ -262,20 +262,22 @@ export class Graph
 		return grp;
 	}
 
-/*
-	public int calculateRingBlocks(int[] rblk)
+	// determine an array which has ring block IDs (0=no ring, >0=block index); also returns the count, i.e. number of ring blocks
+	public calculateRingBlocks():[number[], number] // (rblk[], count)
 	{
-		final int sz = numNodes();
-		if (sz == 0) return 0;
+		let sz = this.numNodes, nbrs = this.nbrs;
+		if (sz == 0) return [[], 0];
 
-		boolean[] visited = Vec.booleanArray(false, sz);
+		let rblk:number[] = new Array(this.numNodes);
+
+		let visited = Vec.booleanArray(false, sz);
 		Vec.setTo(rblk, 0);
-		int[] path = new int[sz + 1];
-		int plen = 0, numVisited = 0;
+		let path:number[] = new Array(sz + 1);
+		let plen = 0, numVisited = 0;
 
 		while (true)
 		{
-			int last, current;
+			let last:number, current:number;
 
 			if (plen == 0)
 			{
@@ -286,26 +288,25 @@ export class Graph
 			{
 				last = path[plen - 1];
 				current = -1;
-				for (int n = 0; n < nbrs[last].length; n++) if (!visited[nbrs[last][n]]) {current = nbrs[last][n]; break;}
+				for (let n = 0; n < nbrs[last].length; n++) if (!visited[nbrs[last][n]]) {current = nbrs[last][n]; break;}
 			}
 
 			if (current >= 0 && plen >= 2) // path is at least 2 items long, so look for any not-previous visited neighbours
 			{
-				int back = path[plen - 1];
-				for (int n = 0; n < nbrs[current].length; n++)
+				let back = path[plen - 1];
+				for (let n = 0; n < nbrs[current].length; n++)
 				{
-					int join = nbrs[current][n];
+					let join = nbrs[current][n];
 					if (join != back && visited[join])
 					{
 						path[plen] = current;
-						for (int i = plen; i == plen || path[i + 1] != join; i--)
+						for (let i = plen; i == plen || path[i + 1] != join; i--)
 						{
-							int id = rblk[path[i]];
+							let id = rblk[path[i]];
 							if (id == 0) rblk[path[i]] = last;
 							else if (id != last)
 							{
-								for (int j = 0; j < sz; j++)
-									if (rblk[j] == id) rblk[j] = last;
+								for (let j = 0; j < sz; j++) if (rblk[j] == id) rblk[j] = last;
 							}
 						}
 					}
@@ -326,79 +327,73 @@ export class Graph
 		}
 
 		// the ring ID's are not necessarily consecutive, so reassign them to 0=none, 1..NBlocks
-		int nextID = 0;
-		for (int i = 0; i < sz; i++) if (rblk[i] > 0)
+		let nextID = 0;
+		for (let i = 0; i < sz; i++) if (rblk[i] > 0)
 		{
 			nextID--;
-			for (int j = sz - 1; j >= i; j--)
-				if (rblk[j] == rblk[i]) rblk[j] = nextID;
+			for (let j = sz - 1; j >= i; j--) if (rblk[j] == rblk[i]) rblk[j] = nextID;
 		}
-		for (int i = 0; i < sz; i++) rblk[i] = -rblk[i];
+		for (let i = 0; i < sz; i++) rblk[i] = -rblk[i];
 
-		return -nextID;
+		return [rblk, -nextID];
 	}
 
-	public int[] calculateRingBlocks()
+	// calculate ring blocks and return an array of indices, one for each
+	public calculateRingBlockGroups():number[][]
 	{
-		int[] rblk = new int[numNodes()];
-		calculateRingBlocks(rblk);
-		return rblk;
-	}
+		let [rblk, sz] = this.calculateRingBlocks();
+		if (sz == 0) return [];
 
-	public int[][] calculateRingBlockGroups()
-	{
-		int[] rblk = new int[numNodes()];
-		int sz = calculateRingBlocks(rblk);
-		if (sz == 0) return new int[0][];
+		let cap = Vec.numberArray(0, sz);
+		for (let n = 0; n < rblk.length; n++) if (rblk[n] > 0) cap[rblk[n] - 1]++;
 
-		int[] cap = Vec.intArray(0, sz);
-		for (int n = 0; n < rblk.length; n++) if (rblk[n] > 0) cap[rblk[n] - 1]++;
-
-		int[][] grp = new int[sz][];
-		for (int n = 0; n < sz; n++)
+		let grp:number[][] = new Array(sz);
+		for (let n = 0; n < sz; n++)
 		{
-			grp[n] = new int[cap[n]];
+			grp[n] = new Array(cap[n]);
 			cap[n] = 0;
 		}
-		for (int n = 0; n < rblk.length; n++)
+		for (let n = 0; n < rblk.length; n++)
 		{
-			final int i = rblk[n] - 1;
+			let i = rblk[n] - 1;
 			if (i < 0) continue;
 			grp[i][cap[i]++] = n;
 		}
 		return grp;
 	}
 
-	public int[][] findRingsOfSize(int size)
+	// returns a list of rings with just the given size; the enumeration is exhaustive, so this is only appropriate for small rings; any ring that can be composed from
+	// smaller rings is excluded from the list
+	public findRingsOfSize(size:number):number[][]
 	{
-		int[] rblk = new int[numNodes()];
-		int num = calculateRingBlocks(rblk);
-		if (num == 0) return new int[0][];
+		let [rblk, num] = this.calculateRingBlocks();
+		if (num == 0) return [];
 
-		List<int[]> rings = new ArrayList<>();
-		boolean[] mask = new boolean[numNodes()];
+		let rings:number[][] = [];
+		let mask:boolean[] = new Array(this.numNodes);
 
-		for (int r = 1; r <= num; r++)
+		for (let r = 1; r <= num; r++)
 		{
-			for (int n = 0; n < numNodes(); n++) mask[n] = rblk[n] == r;
-			int[][] newRings = findRingsOfSize(size, mask);
-			for (int n = 0; n < newRings.length; n++) rings.add(newRings[n]);
+			for (let n = 0; n < this.numNodes; n++) mask[n] = rblk[n] == r;
+			let newRings = this.findRingsOfSizeMask(size, mask);
+			for (let n = 0; n < newRings.length; n++) rings.push(newRings[n]);
 		}
-		return rings.toArray(new int[rings.size()][]);
+		return rings;
 	}
 
-	public int[][] findRingsOfSize(int size, boolean[] mask)
+	public findRingsOfSizeMask(size:number, mask:boolean[]):number[][]
 	{
-		List<int[]> rings = new ArrayList<>();
-		for (int n = 0; n < numNodes(); n++) if (mask[n])
+		let rings:number[][] = [];
+
+		for (let n = 0; n < this.numNodes; n++) if (mask[n])
 		{
-			int path[] = new int[size];
+			let path:number[] = new Array(size);
 			path[0] = n;
-			recursiveRingFind(path, 1, size, mask, rings);
+			this.recursiveRingFind(path, 1, size, mask, rings);
 		}
 
-		return rings.toArray(new int[rings.size()][]);
-	}*/
+		return rings;
+	}
 
 	// returns breadth-first-search order
 	public calculateBFS(idx:number):number[]
@@ -448,66 +443,65 @@ export class Graph
 
 	// ----------------- private methods -----------------
 
-/*
 	// ring hunter: recursive step; finds, compares and collects
-	private void recursiveRingFind(int[] path, int psize, int capacity, boolean[] mask, List<int[]> rings)
+	private recursiveRingFind(path:number[], psize:number, capacity:number, mask:boolean[], rings:number[][]):void
 	{
 		// not enough atoms yet, so look for new possibilities
 		if (psize < capacity)
 		{
-			int last = path[psize - 1];
-			for (int n = 0; n < nbrs[last].length; n++)
+			let last = path[psize - 1];
+			for (let n = 0; n < this.nbrs[last].length; n++)
 			{
-				int adj = nbrs[last][n];
+				let adj = this.nbrs[last][n];
 				if (!mask[adj]) continue;
-				boolean fnd = false;
-				for (int i = 0; i < psize; i++) if (path[i] == adj)
+				let fnd = false;
+				for (let i = 0; i < psize; i++) if (path[i] == adj)
 				{
 					fnd = true;
 					break;
 				}
 				if (!fnd)
 				{
-					int newPath[] = Vec.duplicate(path);
+					let newPath = Vec.duplicate(path);
 					newPath[psize] = adj;
-					recursiveRingFind(newPath, psize + 1, capacity, mask, rings);
+					this.recursiveRingFind(newPath, psize + 1, capacity, mask, rings);
 				}
 			}
 			return;
 		}
 
 		// path is full, so make sure it eats its tail
-		int last = path[psize - 1];
-		boolean fnd = false;
-		for (int n = 0; n < nbrs[last].length; n++) if (nbrs[last][n] == path[0]) {fnd = true; break;}
+		let last = path[psize - 1];
+		let fnd = false;
+		for (let n = 0; n < this.nbrs[last].length; n++) if (this.nbrs[last][n] == path[0]) {fnd = true; break;}
 		if (!fnd) return;
 
 		// make sure every element in the path has exactly 2 neighbours within the path; otherwise it is spanning a bridge, which
 		// is an undesirable ring definition
-		for (int n = 0; n < path.length; n++)
+		for (let n = 0; n < path.length; n++)
 		{
-			int count = 0, p = path[n];
-			for (int i = 0; i < nbrs[p].length; i++) if (Vec.indexOf(nbrs[p][i], path) >= 0) count++;
+			let count = 0, p = path[n];
+			for (let i = 0; i < this.nbrs[p].length; i++) if (path.indexOf(this.nbrs[p][i]) >= 0) count++;
 			if (count != 2) return; // invalid
 		}
 
 		// reorder the array then look for duplicates
-		int first = 0;
-		for (int n = 1; n < psize; n++) if (path[n] < path[first]) first = n;
-		int fm = (first - 1 + psize) % psize, fp = (first + 1) % psize;
-		boolean flip = path[fm] < path[fp];
+		let first = 0;
+		for (let n = 1; n < psize; n++) if (path[n] < path[first]) first = n;
+		let fm = (first - 1 + psize) % psize, fp = (first + 1) % psize;
+		let flip = path[fm] < path[fp];
 		if (first != 0 || flip)
 		{
-			int newPath[] = new int[psize];
-			for (int n = 0; n < psize; n++) newPath[n] = path[(first + (flip ? psize - n : n)) % psize];
+			let newPath:number[] = new Array(psize);
+			for (let n = 0; n < psize; n++) newPath[n] = path[(first + (flip ? psize - n : n)) % psize];
 			path = newPath;
 		}
 
-		for (int n = 0; n < rings.size(); n++)
+		for (let n = 0; n < rings.length; n++)
 		{
-			int[] look = (int[]) rings.get(n);
-			boolean same = true;
-			for (int i = 0; i < psize; i++) if (look[i] != path[i])
+			let look = rings[n];
+			let same = true;
+			for (let i = 0; i < psize; i++) if (look[i] != path[i])
 			{
 				same = false;
 				break;
@@ -515,9 +509,8 @@ export class Graph
 			if (same) return;
 		}
 
-		rings.add(path);
+		rings.push(path);
 	}
-	*/
 }
 
 /* EOF */ }
