@@ -67,14 +67,14 @@ export class Validation
 	public getTitle(idx:number):string {return this.tests[idx].title;}
 
 	// executes a test: the return value indicates whether it succeeded, the error message (if any), and the time taken to execute
-	public runTest(idx:number):[boolean, string, number]
+	public async runTest(idx:number):Promise<[boolean, string, number]>
 	{
 		this.recentSuccess = true;
 		this.recentError = null;
 		
 		let timeStarted = new Date().getTime();
 
-		try {this.tests[idx].func.call(this);}
+		try {await this.tests[idx].func.call(this);}
 		catch (e)
 		{
 			// two scenarios: rogue exceptions that happened during the validation are caught and converted into error messages with debug
@@ -95,7 +95,15 @@ export class Validation
 
 		this.recentTimeTaken = (timeFinished - timeStarted) / 1000;
 
+		await this.gasp();
+
 		return [this.recentSuccess, this.recentError, this.recentTimeTaken];
+	}
+
+	// call this to give the DOM a chance to update itself
+	public async gasp()
+	{
+		await (() => new Promise((resolve) => setTimeout(() => resolve(), 0)))();
 	}
 
 	// fail conditions: these methods should be called to make sure some condition is met

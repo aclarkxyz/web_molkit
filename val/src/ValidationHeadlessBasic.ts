@@ -31,14 +31,14 @@ export class ValidationHeadlessBasic extends Validation
 		//this.add('fubar', this.fubar);
 	}
 
-	public vectorIndexSort()
+	public async vectorIndexSort():Promise<void>
 	{
 		let array = ['b', 'c', 'a'];
 		let idx = Vec.idxSort(array);
 		this.assert(Vec.equals(idx, [2, 0, 1]));
 	}
 
-	public axisLabeller()
+	public async axisLabeller():Promise<void>
 	{
 		let textWidth = (str:string):number => str.length * 4; // placeholder for text measurement: good enough to test the algorithm
 		let tfUnity = (val:number):number => val, tfNegLog = (val:number):number => -Math.log10(val), tfBackLog = (val:number):number => Math.pow(10, -val);

@@ -26,7 +26,7 @@ export class WebValExec
 	{
 	}
 
-	public runTests(domParent:JQuery)
+	public async runTests(domParent:JQuery)
 	{
 		domParent.empty();
 
@@ -57,7 +57,7 @@ export class WebValExec
 		{
 			tdStatus[n].html('&#9744;');
 
-			let [success, message, time] = this.validation.runTest(n);
+			let [success, message, time] = await this.validation.runTest(n);
 			if (success)
 			{
 				tdStatus[n].html('&#9745;');

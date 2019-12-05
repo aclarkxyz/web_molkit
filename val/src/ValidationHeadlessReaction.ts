@@ -56,7 +56,7 @@ export class ValidationHeadlessReaction extends Validation
 		this.strExperiment = await $.get(this.urlBase + 'experiment.ds');
 	}
 
-	public confirmAspect()
+	public async confirmAspect():Promise<void>
 	{
 		this.assert(!!this.strExperiment, 'datasheet not loaded');
 		let ds = DataSheetStream.readXML(this.strExperiment);

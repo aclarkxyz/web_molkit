@@ -80,7 +80,7 @@ export class ValidationHeadlessMolecule extends Validation
 		this.dsRoundtrip = DataSheetStream.readXML(await $.get(this.urlBase + 'roundtrip.ds'));
 	}
 
-	public parseSketchEl():void
+	public async parseSketchEl():Promise<void>
 	{
 		this.assert(!!this.strSketchEl, 'molecule not loaded');
 		let mol = MoleculeStream.readNative(this.strSketchEl);
@@ -89,7 +89,7 @@ export class ValidationHeadlessMolecule extends Validation
 		//console.log(this.strSketchEl);
 	}
 
-	public parseMolfile():void
+	public async parseMolfile():Promise<void>
 	{
 		this.assert(!!this.strMolfile, 'molecule not loaded');
 		let mol = MoleculeStream.readMDLMOL(this.strMolfile);
@@ -98,7 +98,7 @@ export class ValidationHeadlessMolecule extends Validation
 		//console.log(this.strMolfile);
 	}
 
-	public parseDataXML():void
+	public async parseDataXML():Promise<void>
 	{
 		this.assert(!!this.strDataXML, 'datasheet not loaded');
 		let ds = DataSheetStream.readXML(this.strDataXML);
@@ -117,7 +117,7 @@ export class ValidationHeadlessMolecule extends Validation
 		for (let n = 1; n < ds.numCols; n++) this.assert(ds.isNull(1, n), 'row 2, column#' + (n + 1) + ' supposed to be null');		
 	}
 
-	public parseSDfile():void
+	public async parseSDfile():Promise<void>
 	{
 		this.assert(!!this.strSDfile, 'datasheet not loaded');
 		let rdr = new MDLSDFReader(this.strSDfile);
@@ -139,7 +139,7 @@ export class ValidationHeadlessMolecule extends Validation
 		for (let n = 1; n < ds.numCols; n++) this.assert(ds.isNull(1, n), 'row 2, column#' + (n + 1) + ' supposed to be null');		
 	}
 
-	public calcStrictArom():void
+	public async calcStrictArom():Promise<void>
 	{
 		this.assert(this.molStereo != null, 'molecule not loaded');
 		let meta = MetaMolecule.createStrict(this.molStereo);
@@ -148,7 +148,7 @@ export class ValidationHeadlessMolecule extends Validation
 		for (let n = 1; n <= 10; n++) this.assert(meta.isBondAromatic(n), 'bond #' + n + ' supposed to be aromatic');
 	}
 
-	public calcStereoChem():void
+	public async calcStereoChem():Promise<void>
 	{
 		this.assert(this.molStereo != null, 'molecule not loaded');
 		let meta = MetaMolecule.createStrictRubric(this.molStereo);
@@ -166,7 +166,7 @@ export class ValidationHeadlessMolecule extends Validation
 		this.assert(side26 == Stereochemistry.STEREO_NEG, 'bond 26: incorrect stereochemistry, got ' + side26);
 	}
 
-	public calcFingerprints():void
+	public async calcFingerprints():Promise<void>
 	{
 		this.assert(this.dsCircular != null, 'datasheet not loaded');
 		
@@ -196,7 +196,7 @@ export class ValidationHeadlessMolecule extends Validation
 		}
 	}
 
-	public molfileRoundTrip():void
+	public async molfileRoundTrip():Promise<void>
 	{
 		const ds = this.dsRoundtrip;
 		for (let n = 0; n < ds.numRows; n++)
