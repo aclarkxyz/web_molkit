@@ -55,6 +55,9 @@ let globalMoleculeClipboard:Molecule = null;
 
 export class Sketcher extends Widget implements ArrangeMeasurement
 {
+	// callbacks
+	public onChangeMolecule:(mol:Molecule) => void;
+
 	// tweakable properties
 	public useToolBank = true;
 	public lowerToolBank = false;
@@ -152,6 +155,7 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 		this.stopTemplateFusion();
 
 		this.mol = mol.clone();
+		if (this.onChangeMolecule) this.onChangeMolecule(this.mol);
 
 		// note: inefficient; make it compute on demand
 		this.guidelines = [];
@@ -670,7 +674,7 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 		this.delayedRedraw();
 	}
 
-// functions for converting between coordinates within the widget (pixels) & molecular position (Angstroms)
+	// functions for converting between coordinates within the widget (pixels) & molecular position (Angstroms)
 	public scale() {return this.pointScale;}
 	public angToX(ax:number):number
 	{

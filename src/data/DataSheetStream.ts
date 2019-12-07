@@ -71,17 +71,14 @@ export class DataSheetStream
 		}
 
 		// rows
-		let row = findNode(root, 'Content').firstElementChild;
 		let rowidx = 0;
-		while (row)
+		for (let row of findNodes(findNode(root, 'Content'), 'Row'))
 		{
-			//if (parseInt(row.attributes.id.value)!=rowidx+1) return null;
 			if (parseInt(row.getAttribute('id')) != rowidx + 1) return null;
 
 			ds.appendRow();
 
-			let col = row.firstElementChild;
-			while (col)
+			for (let col of findNodes(row, 'Cell'))
 			{
 				let colidx = parseInt(col.getAttribute('id')) - 1;
 				let ct = ds.colType(colidx), val = nodeText(col);

@@ -58,7 +58,10 @@ export function initWebMolKit(resourcePath:string):void
 {
 	Theme.RESOURCE_URL = resourcePath;
 
-	installInlineCSS('main', composeMainCSS());
+	// code below here assumes that DOM is defined (which isn't the case for web workers)
+	try {document;} catch (e) {return;}
+
+	if (document) installInlineCSS('main', composeMainCSS());
 }
 
 /*

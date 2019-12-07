@@ -330,7 +330,7 @@ export function findNode(parent:Node, name:string):Element
 	let node = parent.firstChild;
 	while (node)
 	{
-		if (node.nodeType == Node.ELEMENT_NODE && node.nodeName == name) return node as Element;
+		if (/*node.nodeType == Node.ELEMENT_NODE &&*/ node.nodeName == name) return node as Element;
 		node = node.nextSibling as any;
 	}
 	return null;
@@ -344,7 +344,7 @@ export function findNodes(parent:Node, name:string):Element[]
 	let list:Element[] = [];
 	while (node)
 	{
-		if (node.nodeType == Node.ELEMENT_NODE && node.nodeName == name) list.push(node as Element);
+		if (/*node.nodeType == Node.ELEMENT_NODE &&*/ node.nodeName == name) list.push(node as Element);
 		node = node.nextSibling as any;
 	}
 	return list;
@@ -561,6 +561,20 @@ export const enum KeyCode
 	Down = 'ArrowDown',
 	Delete = 'Delete',
 	Insert = 'Insert',
+}
+
+// fetches the contents of a file, referenced via URL, and presumed to be text formatted; conveniently wrapped in an async promise
+export async function readTextURL(url:string | URL):Promise<string>
+{
+	return new Promise((resolve, reject) => 
+	{
+		let request = new XMLHttpRequest();
+		request.open('GET', url.toString(), true);
+		request.responseType = 'text';
+		request.onload = () => resolve(request.response.toString());
+		request.onerror = () => reject('Failed to request URL: ' + url);
+		request.send();
+	});
 }
 
 /* EOF */ }
