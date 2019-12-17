@@ -75,18 +75,20 @@ export abstract class ButtonBank
 	{
 		if (mnemonic == null || mnemonic == '') return false;
 
-		let mshift = false, mctrl = false, malt = false, mkey = mnemonic;
+		let mshift = false, mctrl = false, malt = false, mmeta = false, mkey = mnemonic;
 		while (true)
 		{
 			if (mkey.startsWith('Shift+')) {mshift = true; mkey = mkey.substring(6);}
 			else if (mkey.startsWith('Ctrl+')) {mctrl = true; mkey = mkey.substring(5);}
 			else if (mkey.startsWith('Alt+')) {malt = true; mkey = mkey.substring(4);}
+			else if (mkey.startsWith('Cmd+')) {mmeta = true; mkey = mkey.substring(4);}
 			else break;
 		}
 
 		if (mshift != event.shiftKey) return false;
 		if (mctrl != event.ctrlKey) return false;
 		if (malt != event.altKey) return false;
+		if (mmeta != event.metaKey) return false;
 
 		if (key) mkey = key; // override
 
