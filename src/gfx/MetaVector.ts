@@ -25,7 +25,7 @@ namespace WebMolKit /* BOF */ {
 		[PRIM_RECT,typeidx,x,y,w,h]
 		[PRIM_OVAL,typeidx,x,y,w,h]
 		[PRIM_PATH,typeidx,numPoints,xpoints[],ypoints[],ctrlFlags[],isClosed]
-		[PRIM_TEXT,typeidx,x,y,txt]
+		[PRIM_TEXT,typeidx,x,y,txt,direction] (note: direction is degrees, clock/anti-clock depending on current coordinate system)
 		[PRIM_TEXTNATIVE,typeidx,x,y,txt]
 
 	Each type is an array; first entry is type-of-type, the rest varies:
@@ -111,7 +111,7 @@ export class MetaVector
 	}
 
 	// methods for adding a primitive (and possibly a type to go with it)
-	public drawLine(x1:number, y1:number, x2:number, y2:number, colour:number, thickness:number)
+	public drawLine(x1:number, y1:number, x2:number, y2:number, colour:number, thickness:number):void
 	{
 		if (thickness == null) thickness = 1;
 		let typeidx = this.findOrCreateType([this.PRIM_LINE, thickness, colour]);
@@ -122,7 +122,7 @@ export class MetaVector
 
 		this.prims.push([this.PRIM_LINE, typeidx, x1, y1, x2, y2]);
 	}
-	public drawRect(x:number, y:number, w:number, h:number, edgeCol:number, thickness:number, fillCol:number)
+	public drawRect(x:number, y:number, w:number, h:number, edgeCol:number, thickness:number, fillCol:number):void
 	{
 		if (edgeCol == null) edgeCol = MetaVector.NOCOLOUR;
 		if (fillCol == null) fillCol = MetaVector.NOCOLOUR;
@@ -135,7 +135,7 @@ export class MetaVector
 
 		this.prims.push([this.PRIM_RECT, typeidx, x, y, w, h]);
 	}
-	public drawOval(cx:number, cy:number, rw:number, rh:number, edgeCol:number, thickness:number, fillCol:number)
+	public drawOval(cx:number, cy:number, rw:number, rh:number, edgeCol:number, thickness:number, fillCol:number):void
 	{
 		if (edgeCol == null) edgeCol = MetaVector.NOCOLOUR;
 		if (fillCol == null) fillCol = MetaVector.NOCOLOUR;
@@ -148,7 +148,8 @@ export class MetaVector
 		let typeidx = this.findOrCreateType([this.PRIM_OVAL, edgeCol, fillCol, thickness]);
 		this.prims.push([this.PRIM_OVAL, typeidx, cx, cy, rw, rh]);
 	}
-	public drawPath(xpoints:number[], ypoints:number[], ctrlFlags:boolean[], isClosed:boolean, edgeCol:number, thickness:number, fillCol:number, hardEdge:boolean)
+	public drawPath(xpoints:number[], ypoints:number[], ctrlFlags:boolean[], isClosed:boolean,
+					edgeCol:number, thickness:number, fillCol:number, hardEdge:boolean):void
 	{
 		if (edgeCol == null) edgeCol = MetaVector.NOCOLOUR;
 		if (fillCol == null) fillCol = MetaVector.NOCOLOUR;
@@ -166,13 +167,18 @@ export class MetaVector
 		let typeidx = this.findOrCreateType([this.PRIM_PATH, edgeCol, fillCol, thickness, hardEdge]);
 		this.prims.push([this.PRIM_PATH, typeidx, xpoints.length, clone(xpoints), clone(ypoints), clone(ctrlFlags), isClosed]);
 	}
-	public drawPoly(xpoints:number[], ypoints:number[], edgeCol:number, thickness:number, fillCol:number, hardEdge:boolean)
+	public drawPoly(xpoints:number[], ypoints:number[], edgeCol:number, thickness:number, fillCol:number, hardEdge:boolean):void
 	{
 		this.drawPath(xpoints, ypoints, null, true, edgeCol, thickness, fillCol, hardEdge);
 	}
-	public drawText(x:number, y:number, txt:string, size:number, colour:number, align?:number)
+	public drawText(x:number, y:number, txt:string, size:number, colour:number, align?:number, direction?:number):void
 	{
 		if (align == null) align = TextAlign.Left | TextAlign.Baseline;
+		if (direction == null) direction = 0;
+
+		let cosTheta = 1, sinTheta = 0;
+		if (direction != 0) [cosTheta, sinTheta] = [Math.cos(direction * DEGRAD), Math.sin(direction * DEGRAD)];
+
 		const font = FontData.main;
 		for (let n = 0; n < txt.length; n++)
 		{
@@ -183,18 +189,30 @@ export class MetaVector
 		let metrics = font.measureText(txt, size);
 		let bx = 0, by = 0;
 
+		let dx = 0;
 		if ((align & TextAlign.Left) != 0) {}
-		else if ((align & TextAlign.Right) != 0) bx = -metrics[0];
-		else /* centre */ bx = -0.5 * metrics[0];
+		else if ((align & TextAlign.Right) != 0) dx = -metrics[0];
+		else /* centre */ dx = -0.5 * metrics[0];
+		if (dx != 0)
+		{
+			bx += dx * cosTheta;
+			by += dx * sinTheta;
+		}
 
-		if ((align & TextAlign.Middle) != 0) by += 0.5 * metrics[1];
-		else if ((align & TextAlign.Top) != 0) by += metrics[1];
-		else if ((align & TextAlign.Bottom) != 0) by -= metrics[2];
+		let dy = 0;
+		if ((align & TextAlign.Middle) != 0) dy = 0.5 * metrics[1];
+		else if ((align & TextAlign.Top) != 0) dy = metrics[1];
+		else if ((align & TextAlign.Bottom) != 0) dy = metrics[2];
 		// else: baseline
+		if (dy != 0)
+		{
+			bx -= dy * sinTheta;
+			by += dy * cosTheta;
+		}
 
 		// mainstaking measurement of the boundaries (looks like overkill, but it really isn't)
 		let x1 = 0, y1 = 0, x2 = 0, y2 = 0;
-		let dx = 0;
+		let tx = 0;
 		for (let n = 0; n < txt.length; n++)
 		{
 			let ch = txt.charAt(n);
@@ -202,28 +220,42 @@ export class MetaVector
 			if (i >= 0)
 			{
 				let outlineX = font.getOutlineX(i), outlineY = font.getOutlineY(i);
-				x1 = Math.min(x1, dx + Vec.min(outlineX));
-				x2 = Math.max(x2, dx + Vec.max(outlineX));
+				x1 = Math.min(x1, tx + Vec.min(outlineX));
+				x2 = Math.max(x2, tx + Vec.max(outlineX));
 				y1 = Math.min(y1, -Vec.max(outlineY));
 				y2 = Math.max(y2, -Vec.min(outlineY));
 
-				dx += font.HORIZ_ADV_X[i];
-				if (n < txt.length - 1) dx += font.getKerning(ch, txt.charAt(n + 1));
+				tx += font.HORIZ_ADV_X[i];
+				if (n < txt.length - 1) tx += font.getKerning(ch, txt.charAt(n + 1));
+
+				// !! TODO: compensate for direction if !0 and !baseline/left
 			}
-			else dx += font.MISSING_HORZ;
+			else tx += font.MISSING_HORZ;
 		}
 		const mscale = size * font.INV_UNITS_PER_EM;
-		this.updateBounds(x + bx + x1 * mscale, y + by + y1 * mscale);
-		this.updateBounds(x + bx + x2 * mscale, y + by + y2 * mscale);
+		if (direction == 0)
+		{
+			this.updateBounds(x + bx + x1 * mscale, y + by + y1 * mscale);
+			this.updateBounds(x + bx + x2 * mscale, y + by + y2 * mscale);
+		}
+		else
+		{
+			let rx1 = x1 * mscale, ry1 = y1 * mscale;
+			let rx2 = x2 * mscale, ry2 = y2 * mscale;
+			this.updateBounds(x + bx + rx1 * cosTheta - ry1 * sinTheta, y + by + rx1 * sinTheta + ry1 * cosTheta);
+			this.updateBounds(x + bx + rx2 * cosTheta - ry1 * sinTheta, y + by + rx2 * sinTheta + ry1 * cosTheta);
+			this.updateBounds(x + bx + rx2 * cosTheta - ry2 * sinTheta, y + by + rx2 * sinTheta + ry2 * cosTheta);
+			this.updateBounds(x + bx + rx1 * cosTheta - ry2 * sinTheta, y + by + rx1 * sinTheta + ry2 * cosTheta);
+		}
 
 		let typeidx = this.findOrCreateType([this.PRIM_TEXT, size, colour]);
-		this.prims.push([this.PRIM_TEXT, typeidx, x + bx, y + by, txt]);
+		this.prims.push([this.PRIM_TEXT, typeidx, x + bx, y + by, txt, direction]);
 	}
 
 	// render *native* text, which is defined by an HTML/CSS font specifier; this is different from the built-in text in that it presumes that the device
 	// can locate the font at render-time, and that whatever methods were used to measure the font at draw-time are synced; this is a fair assumption when
 	// creating graphics for immediate output to a canvas or inline-rendered SVG object, but anything else has to be taken on a case by case basis
-	public drawTextNative(x:number, y:number, txt:string, fontFamily:string, fontSize:number, colour:number, align?:number)
+	public drawTextNative(x:number, y:number, txt:string, fontFamily:string, fontSize:number, colour:number, align?:number):void
 	{
 		if (align == null) align = TextAlign.Left | TextAlign.Baseline;
 		const font = FontData.main;
@@ -431,7 +463,7 @@ export class MetaVector
 		this.lowY = oy + this.lowY * sh;
 		this.highX = ox + this.highX * sw;
 		this.highY = oy + this.highY * sh;
-	}	
+	}
 
 	// renders the meta vector by creating a new canvas
 	public renderInto(parent:any)
@@ -494,7 +526,7 @@ export class MetaVector
 	// builds a new DOM containing an <svg> element, and everything underneath it is a representation of the graphic
 	public createSVG():string
 	{
-		let svg = $('<svg></svg>');
+		let svg = $('<svg/>');
 		svg.attr('xmlns', 'http://www.w3.org/2000/svg');
 		svg.attr('xmlns:xlink', 'http://www.w3.org/1999/xlink');
 		svg.attr('width', this.width);
@@ -504,7 +536,7 @@ export class MetaVector
 		this.renderSVG(svg);
 
 		// ugly but it works
-		let tmp = $('<tmp></tmp>');
+		let tmp = $('<tmp/>');
 		tmp.append(svg);
 		return tmp.html();
 	}
@@ -518,17 +550,17 @@ export class MetaVector
 		// !! todo: alternate destination for embeddables, and check if they already exist?
 
 		const font = FontData.main;
-		let defs = $('<defs></defs>').appendTo(svg);
+		let defs = $('<defs/>').appendTo(svg);
 		if (this.charMissing)
 		{
-			let path = $('<path></path>').appendTo(defs);
+			let path = $('<path/>').appendTo(defs);
 			path.attr('id', 'missing');
 			path.attr('d', font.MISSING_DATA);
 			path.attr('edge', 'none');
 		}
 		for (let n = 0; n < font.UNICODE.length; n++) if (this.charMask[n])
 		{
-			let path = $('<path></path>').appendTo(defs);
+			let path = $('<path/>').appendTo(defs);
 			path.attr('id', 'char' + n);
 			path.attr('d', font.GLYPH_DATA[n]);
 			path.attr('edge', 'none');
@@ -602,9 +634,9 @@ export class MetaVector
 			}
 			else if (p[0] == this.PRIM_TEXT)
 			{
-				let [_, typeidx, x, y, txt] = p;
+				let [_, typeidx, x, y, txt, direction] = p;
 				let [, size, colour] = this.types[typeidx];
-				into.drawText(x, y, txt, size, colour);
+				into.drawText(x, y, txt, size, colour, null, direction);
 			}
 			else if (p[0] == this.PRIM_TEXTNATIVE)
 			{
@@ -614,7 +646,7 @@ export class MetaVector
 			}
 		}
 	}
-	
+
 	// ------------ private methods ------------
 
 	// transform stored types into renderables
@@ -664,8 +696,8 @@ export class MetaVector
 	public renderLine(ctx:CanvasRenderingContext2D, p:any):void
 	{
 		let type = this.typeObj[p[1]];
-		let x1 = p[2], y1 = p[3];
-		let x2 = p[4], y2 = p[5];
+		let x1:number = p[2], y1:number = p[3];
+		let x2:number = p[4], y2:number = p[5];
 		let colour:number = type.colour;
 
 		x1 = this.offsetX + this.scale * x1;
@@ -686,8 +718,8 @@ export class MetaVector
 	public renderRect(ctx:CanvasRenderingContext2D, p:any):void
 	{
 		let type = this.typeObj[p[1]];
-		let x = p[2], y = p[3];
-		let w = p[4], h = p[5];
+		let x:number = p[2], y:number = p[3];
+		let w:number = p[4], h:number = p[5];
 		let edgeCol:number = type.edgeCol, fillCol:number = type.fillCol;
 
 		x = this.offsetX + this.scale * x;
@@ -711,8 +743,8 @@ export class MetaVector
 	public renderOval(ctx:CanvasRenderingContext2D, p:any):void
 	{
 		let type = this.typeObj[p[1]];
-		let cx = p[2], cy = p[3];
-		let rw = p[4], rh = p[5];
+		let cx:number = p[2], cy:number = p[3];
+		let rw:number = p[4], rh:number = p[5];
 		let edgeCol:number = type.edgeCol, fillCol:number = type.fillCol;
 
 		cx = this.offsetX + this.scale * cx;
@@ -739,11 +771,11 @@ export class MetaVector
 	public renderPath(ctx:CanvasRenderingContext2D, p:any):void
 	{
 		let type = this.typeObj[p[1]];
-		let npts = p[2];
+		let npts:number = p[2];
 		if (npts == 0) return;
-		let x = p[3], y = p[4];
-		let ctrl = p[5];
-		let isClosed = p[6];
+		let x:number[] = p[3], y:number[] = p[4];
+		let ctrl:boolean[] = p[5];
+		let isClosed:boolean = p[6];
 		let edgeCol:number = type.edgeCol, fillCol:number = type.fillCol;
 
 		for (let n = 0; n < npts; n++)
@@ -796,8 +828,8 @@ export class MetaVector
 	private renderText(ctx:CanvasRenderingContext2D, p:any):void
 	{
 		let type = this.typeObj[p[1]];
-		let x = p[2], y = p[3];
-		let txt = p[4];
+		let x:number = p[2], y:number = p[3];
+		let txt:string = p[4];
 
 		let sz = type.size;
 		let fill = colourCanvas(type.colour);
@@ -832,14 +864,14 @@ export class MetaVector
 			}
 
 			dx += font.HORIZ_ADV_X[i];
-			if (n < txt.length - 1) font.getKerning(ch, txt.charAt(n + 1));
+			if (n < txt.length - 1) dx += font.getKerning(ch, txt.charAt(n + 1));
 		}
 	}
 	private renderTextNative(ctx:CanvasRenderingContext2D, p:any):void
 	{
 		let type = this.typeObj[p[1]];
-		let x = p[2], y = p[3];
-		let txt = p[4];
+		let x:number = p[2], y:number = p[3];
+		let txt:string = p[4];
 
 		let family:string = type.fontFamily, sz:number = type.fontSize;
 		let fill = colourCanvas(type.colour);
@@ -859,8 +891,8 @@ export class MetaVector
 	public svgLine1(svg:JQuery, p:any):void
 	{
 		let type = this.typeObj[p[1]];
-		let x1 = p[2], y1 = p[3];
-		let x2 = p[4], y2 = p[5];
+		let x1:number = p[2], y1:number = p[3];
+		let x2:number = p[4], y2:number = p[5];
 
 		x1 = this.offsetX + this.scale * x1;
 		y1 = this.offsetY + this.scale * y1;
@@ -869,7 +901,7 @@ export class MetaVector
 
 		if (type.colour != MetaVector.NOCOLOUR)
 		{
-			let line = $('<line></line>').appendTo(svg);
+			let line = $('<line/>').appendTo(svg);
 			line.attr('x1', x1);
 			line.attr('y1', y1);
 			line.attr('x2', x2);
@@ -884,7 +916,7 @@ export class MetaVector
 		let type = this.typeObj[p[1]];
 		if (type.colour == MetaVector.NOCOLOUR) return;
 
-		let g = $('<g></g>').appendTo(svg);
+		let g = $('<g/>').appendTo(svg);
 		this.defineSVGStroke(g, type.colour);
 		g.attr('stroke-width', type.thickness);
 		g.attr('stroke-linecap', 'round');
@@ -892,15 +924,15 @@ export class MetaVector
 		for (let n = 0; n < sz; n++)
 		{
 			let p = this.prims[pos + n];
-			let x1 = p[2], y1 = p[3];
-			let x2 = p[4], y2 = p[5];
+			let x1:number = p[2], y1:number = p[3];
+			let x2:number = p[4], y2:number = p[5];
 
 			x1 = this.offsetX + this.scale * x1;
 			y1 = this.offsetY + this.scale * y1;
 			x2 = this.offsetX + this.scale * x2;
 			y2 = this.offsetY + this.scale * y2;
 
-			let line = $('<line></line>').appendTo(g);
+			let line = $('<line/>').appendTo(g);
 			line.attr('x1', x1);
 			line.attr('y1', y1);
 			line.attr('x2', x2);
@@ -910,15 +942,15 @@ export class MetaVector
 	public svgRect1(svg:JQuery, p:any):void
 	{
 		let type = this.typeObj[p[1]];
-		let x = p[2], y = p[3];
-		let w = p[4], h = p[5];
+		let x:number = p[2], y:number = p[3];
+		let w:number = p[4], h:number = p[5];
 
 		x = this.offsetX + this.scale * x;
 		y = this.offsetY + this.scale * y;
 		w *= this.scale;
 		h *= this.scale;
 
-		let rect = $('<rect></rect>').appendTo(svg);
+		let rect = $('<rect/>').appendTo(svg);
 		rect.attr('x', x);
 		rect.attr('y', y);
 		rect.attr('width', w);
@@ -936,7 +968,7 @@ export class MetaVector
 	{
 		let type = this.typeObj[p[1]];
 
-		let g = $('<g></g>').appendTo(svg);
+		let g = $('<g/>').appendTo(svg);
 
 		this.defineSVGStroke(g, type.edgeCol);
 		if (type.edgeCol != MetaVector.NOCOLOUR)
@@ -949,15 +981,15 @@ export class MetaVector
 		for (let n = 0; n < sz; n++)
 		{
 			let p = this.prims[pos + n];
-			let x = p[2], y = p[3];
-			let w = p[4], h = p[5];
+			let x:number = p[2], y:number = p[3];
+			let w:number = p[4], h:number = p[5];
 
 			x = this.offsetX + this.scale * x;
 			y = this.offsetY + this.scale * y;
 			w *= this.scale;
 			h *= this.scale;
 
-			let rect = $('<rect></rect>').appendTo(g);
+			let rect = $('<rect/>').appendTo(g);
 			rect.attr('x', x);
 			rect.attr('y', y);
 			rect.attr('width', w);
@@ -967,15 +999,15 @@ export class MetaVector
 	public svgOval1(svg:JQuery, p:any):void
 	{
 		let type = this.typeObj[p[1]];
-		let cx = p[2], cy = p[3];
-		let rw = p[4], rh = p[5];
+		let cx:number = p[2], cy:number = p[3];
+		let rw:number = p[4], rh:number = p[5];
 
 		cx = this.offsetX + this.scale * cx;
 		cy = this.offsetY + this.scale * cy;
 		rw *= this.scale;
 		rh *= this.scale;
 
-		let oval = $('<ellipse></ellipse>').appendTo(svg);
+		let oval = $('<ellipse/>').appendTo(svg);
 		oval.attr('cx', cx);
 		oval.attr('cy', cy);
 		oval.attr('rx', rw);
@@ -991,10 +1023,7 @@ export class MetaVector
 	public svgOvalN(svg:JQuery, p:any, pos:number, sz:number):void
 	{
 		let type = this.typeObj[p[1]];
-		let x = p[2], y = p[3];
-		let w = p[4], h = p[5];
-
-		let g = $('<g></g>').appendTo(svg);
+		let g = $('<g/>').appendTo(svg);
 
 		this.defineSVGStroke(g, type.edgeCol);
 		if (type.edgeCol != MetaVector.NOCOLOUR)
@@ -1006,15 +1035,15 @@ export class MetaVector
 		for (let n = 0; n < sz; n++)
 		{
 			let p = this.prims[pos + n];
-			let cx = p[2], cy = p[3];
-			let rw = p[4], rh = p[5];
+			let cx:number = p[2], cy:number = p[3];
+			let rw:number = p[4], rh:number = p[5];
 
 			cx = this.offsetX + this.scale * cx;
 			cy = this.offsetY + this.scale * cy;
 			rw *= this.scale;
 			rh *= this.scale;
 
-			let oval = $('<ellipse></ellipse>').appendTo(g);
+			let oval = $('<ellipse/>').appendTo(g);
 			oval.attr('cx', cx);
 			oval.attr('cy', cy);
 			oval.attr('rx', rw);
@@ -1026,9 +1055,9 @@ export class MetaVector
 		let type = this.typeObj[p[1]];
 		let npts = p[2];
 		if (npts == 0) return;
-		let x = p[3].slice(0), y = p[4].slice(0);
-		let ctrl = p[5];
-		let isClosed = p[6];
+		let x:number[] = p[3].slice(0), y:number[] = p[4].slice(0);
+		let ctrl:boolean[] = p[5];
+		let isClosed:boolean = p[6];
 
 		for (let n = 0; n < npts; n++)
 		{
@@ -1059,7 +1088,7 @@ export class MetaVector
 		}
 		if (isClosed) shape += ' Z';
 
-		let path = $('<path></path>').appendTo(svg);
+		let path = $('<path/>').appendTo(svg);
 		path.attr('d', shape);
 
 		this.defineSVGStroke(path, type.edgeCol);
@@ -1074,8 +1103,9 @@ export class MetaVector
 	private svgText(svg:JQuery, p:any):void
 	{
 		let type = this.typeObj[p[1]];
-		let x = p[2], y = p[3];
-		let txt = p[4];
+		let x:number = p[2], y:number = p[3];
+		let txt:string = p[4];
+		let direction:number = p[5];
 
 		let sz = type.size;
 
@@ -1086,10 +1116,17 @@ export class MetaVector
 
 		let scale = sz / font.UNITS_PER_EM;
 
-		let gdelta = $('<g></g>').appendTo(svg);
+		let parent = svg;
+		if (direction != 0)
+		{
+			parent = $('<g/>').appendTo(parent);
+			parent.attr('transform', `rotate(${direction},${x},${y})`);
+		}
+
+		let gdelta = $('<g/>').appendTo(parent);
 		gdelta.attr('transform', 'translate(' + x + ',' + y + ')');
 		this.defineSVGFill(gdelta, type.colour);
-		let gscale = $('<g></g>').appendTo(gdelta);
+		let gscale = $('<g/>').appendTo(gdelta);
 		gscale.attr('transform', 'scale(' + scale + ',' + (-scale) + ')');
 
 		let dx = 0;
@@ -1098,7 +1135,7 @@ export class MetaVector
 			let ch = txt.charAt(n);
 			let i = font.getIndex(ch);
 
-			let use = $('<use></use>').appendTo(gscale);
+			let use = $('<use/>').appendTo(gscale);
 			let ref = i < 0 ? '#missing' : '#char' + i;
 			use.attr('xlink:href', ref);
 			use.attr('x', dx);
@@ -1125,7 +1162,7 @@ export class MetaVector
 		let colour = colourCanvas(type.colour);
 		let style = `fill: ${colour}; font-family: ${family}; font-size: ${sz};`;
 
-		let node = $('<text></text>').appendTo(svg);
+		let node = $('<text/>').appendTo(svg);
 		node.attr({'x': x, 'y': y, 'style': style});
 		node.text(txt);
 	}

@@ -609,7 +609,7 @@ export class FontData
 	public getKerning(ch1:string, ch2:string):number
 	{
 		const sz = this.KERN_K.length;
-		for (let n = 0; n < sz; n++) if (this.KERN_C1[n] == ch1 && this.KERN_C2[n] == ch2) return this.KERN_K[n];
+		for (let n = 0; n < sz; n++) if (this.KERN_C1[n] == ch1 && this.KERN_C2[n] == ch2) return -this.KERN_K[n];
 		return 0;
 	}
 
