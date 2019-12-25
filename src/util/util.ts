@@ -572,7 +572,7 @@ export async function readTextURL(url:string | URL):Promise<string>
 		request.open('GET', url.toString(), true);
 		request.responseType = 'text';
 		request.onload = () => resolve(request.response.toString());
-		request.onerror = () => reject('Failed to request URL: ' + url);
+		request.onerror = () => /*reject('Failed to request URL: ' + url)*/ resolve(null);
 		request.send();
 	});
 }

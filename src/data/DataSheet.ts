@@ -46,6 +46,13 @@ interface DataSheetContentColumn
 	descr:string;
 }
 
+interface DataSheetContentExt
+{
+	name:string;
+	type:string;
+	data:string;
+}
+
 interface DataSheetContent
 {
 	title?:string;
@@ -55,7 +62,7 @@ interface DataSheetContent
 	numExtens?:number;
 	colData?:DataSheetContentColumn[];
 	rowData?:any[][];
-	extData?:any[];
+	extData?:DataSheetContentExt[];
 }
 
 export class DataSheet
@@ -72,9 +79,9 @@ export class DataSheet
 		if (!data.title) data.title = '';
 		if (!data.description) data.description = '';
 
-		if (data.numCols == null) data.numCols = 0;
-		if (data.numRows == null) data.numRows = 0;
-		if (data.numExtens == null) data.numExtens = 0;
+		if (data.numCols == null) data.numCols = Vec.arrayLength(data.colData);
+		if (data.numRows == null) data.numRows = Vec.arrayLength(data.rowData);
+		if (data.numExtens == null) data.numExtens = Vec.arrayLength(data.extData);
 
 		if (data.colData == null) data.colData = [];
 		if (data.rowData == null) data.rowData = [];

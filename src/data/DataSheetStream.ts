@@ -102,6 +102,13 @@ export class DataSheetStream
 		return ds;
 	}
 
+	// instantiate with a JSON object, which is basically the title, description, columns, rows & extensions
+	public static readJSON(json:any):DataSheet
+	{
+		if (!json.colData || !json.rowData) throw 'Not a JSON-formatted datasheet.';
+		return new DataSheet(deepClone(json));
+	}
+
 	// static method: converts a datasheet into an XML-formatted string
 	public static writeXML(ds:DataSheet):string
 	{
@@ -177,6 +184,37 @@ export class DataSheetStream
 
 		return new XMLSerializer().serializeToString(xml.documentElement);
 	}
+
+	// make a serialisation-ready JSON object with the datasheet content of interest
+	public static writeJSON(ds:DataSheet):any
+	{
+		let data = (ds as any).data; // bogarting private member
+
+		let nrow = ds.numRows, ncol = ds.numCols;
+		let rowData:any[][] = new Array(nrow);
+		for (let n = 0; n < nrow; n++) rowData[n] = new Array(ncol);
+		for (let c = 0; c < ncol; c++)
+		{
+			let doConvert = ds.colType(c) == DataSheetColumn.Molecule;
+			for (let r = 0; r < nrow; r++)
+			{
+				let val = data.rowData[r][c];
+				if (val != null && doConvert) val = val.toString(); // turns {mol-or-string} into {string}
+				rowData[r][c] = val;
+			}
+		}
+
+		let json =
+		{
+			'title': data.title,
+			'description': data.description,
+			'colData': deepClone(data.colData),
+			'rowData': rowData,
+			'extData': deepClone(data.extData),
+		};
+		return json;
+	}
+
 }
 
 /* EOF */ }
