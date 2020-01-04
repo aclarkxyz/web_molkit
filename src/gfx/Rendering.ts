@@ -62,22 +62,24 @@ export class RenderPolicy
 	}
 
 	// static methods for creating new default schemes
-	public static defaultBlackOnWhite():RenderPolicy
+	public static defaultBlackOnWhite(pixPerAng?:number):RenderPolicy
 	{
 		let policy = new RenderPolicy();
+		if (pixPerAng) policy.data.pointScale = pixPerAng;
 		return policy;
 	}
-	public static defaultWhiteOnBlack():RenderPolicy
+	public static defaultWhiteOnBlack(pixPerAng?:number):RenderPolicy
 	{
 		let policy = new RenderPolicy();
+		if (pixPerAng) policy.data.pointScale = pixPerAng;
 		policy.data.foreground = 0xFFFFFF;
 		policy.data.background = 0x000000;
 		for (let n = 0; n <= 111; n++) policy.data.atomCols[n] = 0xFFFFFF;
 		return policy;
 	}
-	public static defaultColourOnWhite():RenderPolicy
+	public static defaultColourOnWhite(pixPerAng?:number):RenderPolicy
 	{
-		let policy = RenderPolicy.defaultBlackOnWhite();
+		let policy = RenderPolicy.defaultBlackOnWhite(pixPerAng);
 		policy.data.atomCols[0] = 0x404040;
 		policy.data.atomCols[1] = 0x808080;
 		policy.data.atomCols[6] = 0x000000;
@@ -90,9 +92,9 @@ export class RenderPolicy
 		policy.data.atomCols[35] = 0xC04000;
 		return policy;
 	}
-	public static defaultColourOnBlack():RenderPolicy
+	public static defaultColourOnBlack(pixPerAng?:number):RenderPolicy
 	{
-		let policy = RenderPolicy.defaultWhiteOnBlack();
+		let policy = RenderPolicy.defaultWhiteOnBlack(pixPerAng);
 		policy.data.atomCols[0] = 0xA0A0A0;
 		policy.data.atomCols[1] = 0x808080;
 		policy.data.atomCols[6] = 0xFFFFFF;
@@ -107,8 +109,7 @@ export class RenderPolicy
 	}
 	public static defaultPrintedPublication():RenderPolicy
 	{
-		let policy = RenderPolicy.defaultBlackOnWhite();
-		policy.data.pointScale = 9.6;
+		let policy = RenderPolicy.defaultBlackOnWhite(9.6);
 		policy.data.resolutionDPI = 600;
 		policy.data.fontSize = 0.80;
 		policy.data.bondSep = 0.27;
