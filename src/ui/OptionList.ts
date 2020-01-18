@@ -78,21 +78,21 @@ export class OptionList extends Widget
 		this.buttonDiv = [];
 		this.auxCell = [];
 
-		let table = $('<table class="wmk-option-table"></table>').appendTo(this.content /*span*/);
-		let tr = this.isVertical ? null : $('<tr></tr>').appendTo(table);
+		let table = $('<table class="wmk-option-table"/>').appendTo(this.content /*span*/);
+		let tr = this.isVertical ? null : $('<tr/>').appendTo(table);
 
 		for (let n = 0; n < this.options.length; n++)
 		{
-			if (this.isVertical) tr = $('<tr></tr>').appendTo(table);
-			let td = $('<td class="wmk-option-cell"></td>').appendTo(tr);
-			let div = $('<div class="wmk-option"></div>').appendTo(td);
+			if (this.isVertical) tr = $('<tr/>').appendTo(table);
+			let td = $('<td class="wmk-option-cell"/>').appendTo(tr);
+			let div = $('<div class="wmk-option"/>').appendTo(td);
 			div.css('padding', this.padding + 'px');
 
 			this.buttonDiv.push(div);
 
 			if (this.isVertical)
 			{
-				td = $('<td style="vertical-align: middle;"></td>').appendTo(tr);
+				td = $('<td style="vertical-align: middle;"/>').appendTo(tr);
 				this.auxCell.push(td);
 			}
 		}
@@ -176,7 +176,7 @@ export class OptionList extends Widget
 				font-weight: normal;
 				text-align: center;
 				white-space: nowrap;
-				vertical-align: middle;
+				/*vertical-align: middle;*/
 				line-height: 1.2em;
 				-ms-touch-action: manipulation; touch-action: manipulation;
 				cursor: pointer;
