@@ -59,7 +59,7 @@ export class TabBar extends Widget
 	{
 		super.render(parent);
 
-		let grid = $('<div></div>').appendTo(this.content);
+		let grid = $('<div/>').appendTo(this.content);
 		grid.css('display', 'grid');
 		grid.css('align-items', 'center');
 		grid.css('justify-content', 'start');
@@ -69,7 +69,7 @@ export class TabBar extends Widget
 		columns += '[btnX] 1fr [end]';
 		grid.css('grid-template-columns', columns);
 
-		let underline = $('<div></div>').appendTo(grid);
+		let underline = $('<div/>').appendTo(grid);
 		underline.css('grid-column', 'start / end');
 		underline.css('grid-row', '1');
 		underline.css('border-bottom', '1px solid #C0C0C0');
@@ -77,18 +77,19 @@ export class TabBar extends Widget
 
 		for (let n = 0; n < this.options.length; n++)
 		{
-			let outline = $('<div class="wmk-tabbar-cell"></div>').appendTo(grid);
+			let outline = $('<div class="wmk-tabbar-cell"/>').appendTo(grid);
 			outline.css('grid-column', 'btn' + n);
 			outline.css('grid-row', '1');
-			let btn = $('<div class="wmk-tabbar"></div>').appendTo(outline);
+			let btn = $('<div class="wmk-tabbar"/>').appendTo(outline);
 			btn.css('padding', this.padding + 'px');
 			this.buttonDiv.push(btn);
 
-			let panel = $('<div></div>').appendTo(grid);
+			let panel = $('<div/>').appendTo(grid);
 			panel.css('grid-column', 'start / end');
 			panel.css('grid-row', '2');
 			panel.css('align-self', 'start');
 			panel.css('justify-self', 'center');
+			panel.css({'width': '100%'});
 			this.panelDiv.push(panel);
 		}
 

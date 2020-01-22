@@ -17,6 +17,7 @@
 ///<reference path='../data/Molecule.ts'/>
 ///<reference path='../data/MolUtil.ts'/>
 ///<reference path='../data/DataSheetStream.ts'/>
+///<reference path='../data/AbbrevContainer.ts'/>
 ///<reference path='../sketcher/MoleculeActivity.ts'/>
 
 namespace WebMolKit /* BOF */ {
@@ -138,24 +139,7 @@ export class TemplateBank extends ButtonBank
 	// loads up the resource datasheets one at a time, and stashes them in the static container
 	private loadResourceData(onComplete:() => void):void
 	{
-		let roster =
-		[
-			'rings',
-			'termgrp',
-			'funcgrp',
-			'protgrp',
-			'nonplrings',
-			'largerings',
-			'crownethers',
-			'ligmonodent',
-			'ligbident',
-			'ligtrident',
-			'ligmultident',
-			'cagecmplx',
-			'aminoacids',
-			'biomolecules',
-			'saccharides'
-		];
+		let roster = TEMPLATE_FILES.slice(0);
 		TemplateBank.RESOURCE_LIST = roster.slice(0);
 		TemplateBank.RESOURCE_DATA = [];
 

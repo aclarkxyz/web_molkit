@@ -271,6 +271,11 @@ export class DataSheet
 		}
 		return datum;
 	}
+	public getMoleculeClone(row:number, col:number | string):Molecule
+	{
+		let mol = this.getMolecule(row, col);
+		return mol == null ? null : mol.clone();
+	}
 	public getMoleculeBlank(row:number, col:number | string):Molecule
 	{
 		let mol = this.getMolecule(row, col);

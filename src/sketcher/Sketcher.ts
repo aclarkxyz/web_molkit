@@ -249,7 +249,7 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 
 		//let style = 'position: relative; width: ' + this.width + 'px; height: ' + this.height + 'px;';
 		//this.container = newElement(this.getContentElement(), 'div', {'style': style});
-		this.container = $('<div></div>').appendTo(this.content);
+		this.container = $('<div/>').appendTo(this.content);
 		this.container.css({'position': 'relative', 'width': this.width + 'px', 'height': this.height + 'px'});
 		this.container.css('background-color', colourCanvas(this.background));
 		if (this.border != MetaVector.NOCOLOUR)
@@ -269,7 +269,7 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 		this.canvasMolecule = newElement(this.container, 'canvas', {'width': this.width, 'height': this.height, 'style': canvasStyle}) as HTMLCanvasElement;
 		this.canvasOver = newElement(this.container, 'canvas', {'width': this.width, 'height': this.height, 'style': canvasStyle}) as HTMLCanvasElement;
 
-		this.divMessage = $('<div></div>').appendTo(this.container);
+		this.divMessage = $('<div/>').appendTo(this.container);
 		this.divMessage.attr('style', canvasStyle);
 		this.divMessage.css({'width': this.width + 'px', 'height': this.height + 'px'});
 		this.divMessage.css({'text-align': 'center', 'vertical-align': 'middle', 'font-weight': 'bold', 'font-size': '120%'});

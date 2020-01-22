@@ -126,7 +126,6 @@ export class CoordUtil
 	// each other
 	// NOTE: the overlay method is trivial; if the coordinates are collectively different enough to blow the tolerance unless
 	// the overlay is jiggled around a bit, this method can return a false negative
-
 	public static sketchMappable(mol1:Molecule, mol2:Molecule, tolerance?:number):boolean
 	{
 		if (tolerance == null) tolerance = CoordUtil.DEFAULT_EQUIV_TOLERANCE;
