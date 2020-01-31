@@ -225,7 +225,7 @@ export class Experiment extends Aspect
 	public static COLNAME_PRODUCT_YIELD = 'ProductYield';
 	public static COLNAME_PRODUCT_WASTE = 'ProductWaste';
 
-	public static COLUMN_DESCRIPTIONS:{[id:string] : string} = {};
+	public static COLUMN_DESCRIPTIONS:Record<string, string> = {};
 
 	// ----------------- public methods -----------------
 

@@ -113,7 +113,7 @@ export class MoleculeActivity
 	private output:SketchState;
 	private errmsg:string;
 
-	constructor(private owner:any, private activity:ActivityType, private param:any /*{[id:string]: any}*/, override?:{[id:string]: any})
+	constructor(private owner:any, private activity:ActivityType, private param:any, override?:Record<string, any>)
 	{
 		this.input = owner.getState();
 		this.output =
@@ -124,7 +124,7 @@ export class MoleculeActivity
 			'selectedMask': null
 		};
 
-		let altInput = this.input as {[id:string] : any};
+		let altInput = this.input as Record<string, any>;
 		for (let k in override) altInput[k] = override[k];
 
 		let na = this.input.mol.numAtoms;
@@ -1320,7 +1320,7 @@ export class MoleculeActivity
 		let permutations:any[] = [];
 		for (let perm of fusion.perms)
 		{
-			let obj:{[id:string] : any} = {};
+			let obj:Record<string, any> = {};
 			obj['mol'] = perm.mol.toString();
 			obj['display'] = perm.display.toString();
 			obj['molidx'] = perm.molidx;

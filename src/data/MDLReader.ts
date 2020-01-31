@@ -28,7 +28,7 @@ namespace WebMolKit /* BOF */ {
 */
 
 // valence options used by MDL/CTAB, which is much more promiscuous than the internal format
-export const MDLMOL_VALENCE:{[id:string] : number[]} =
+export const MDLMOL_VALENCE:Record<string, number[]> =
 {
 	'H':  [1],
 	'B':  [3],

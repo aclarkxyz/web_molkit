@@ -419,7 +419,7 @@ export function deepClone<T>(data:T):T
 export function escapeHTML(text:string):string
 {
 	if (!text) return '';
-	const map:{[id:string] : string} = {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'};
+	const map:Record<string, string> = {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'};
 	return text.replace(/[&<>"']/g, (m) => map[m]);
 }
 

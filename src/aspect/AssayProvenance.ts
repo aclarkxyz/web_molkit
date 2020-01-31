@@ -26,7 +26,7 @@ namespace WebMolKit /* BOF */ {
 
 export class AssayProvenanceHeader
 {
-	public prefixes:{[id:string] : string} = {};
+	public prefixes:Record<string, string> = {};
 	public targetName = '';
 	public targetURI = '';
 	public organismName = '';

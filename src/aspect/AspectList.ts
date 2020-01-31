@@ -26,7 +26,7 @@ namespace WebMolKit /* BOF */ {
 	explicitly here, if it is going to get automatically considered during routine operations (e.g. rendering arbitrary datasheets).
 */
 
-let SUPPORTED_ASPECTS:{[id:string] : string} = {};
+let SUPPORTED_ASPECTS:Record<string, string> = {};
 
 export class AspectList
 {

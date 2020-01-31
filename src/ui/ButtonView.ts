@@ -62,7 +62,7 @@ export class ButtonView extends Widget
 	private y = 0;
 
 	// static cache: needs to be filled out just once; will contain the {icon:svg} pairs that can be used in the buttons
-	private static ACTION_ICONS:{[id:string] : string} = {};
+	private static ACTION_ICONS:Record<string, string> = {};
 
 	constructor(private position:string, private parentX:number, private parentY:number, private parentWidth:number, private parentHeight:number)
 	{

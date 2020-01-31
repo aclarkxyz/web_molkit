@@ -202,7 +202,7 @@ export class MetaVector
 		let dy = 0;
 		if ((align & TextAlign.Middle) != 0) dy = 0.5 * metrics[1];
 		else if ((align & TextAlign.Top) != 0) dy = metrics[1];
-		else if ((align & TextAlign.Bottom) != 0) dy = metrics[2];
+		else if ((align & TextAlign.Bottom) != 0) dy = -metrics[2];
 		// else: baseline
 		if (dy != 0)
 		{

@@ -41,7 +41,7 @@ export class FormatList
 	public static GFX_OOXML_DOCX = 'docx'; // Microsoft Word XML
 	public static GFX_OOXML_XLSX = 'xlsx'; // Microsoft Excel XML
 
-	public static FORMAT_DESCR:{[id:string] : string} =
+	public static FORMAT_DESCR:Record<string, string> =
 	{
 		'native':	'SketchEl Molecule',
 		'xmlds':	'DataSheet XML',
@@ -64,7 +64,7 @@ export class FormatList
 		'docx':		'Microsoft Word',
 		'xlsx':		'Microsoft Excel'
 	};
-	public static FORMAT_EXTN:{[id:string] : string} =
+	public static FORMAT_EXTN:Record<string, string> =
 	{
 		'native':	'.el',
 		'xmlds':	'.ds',
@@ -86,7 +86,7 @@ export class FormatList
 		'docx':		'.docx',
 		'xlsx':		'.xlsx'
 	};
-	public static FORMAT_MIMETYPE:{[id:string] : string} =
+	public static FORMAT_MIMETYPE:Record<string, string> =
 	{
 		'native':	'chemical/x-sketchel',
 		'xmlds':	'chemical/x-datasheet',
