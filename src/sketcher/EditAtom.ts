@@ -195,7 +195,7 @@ export class EditAtom extends Dialog
 
 		let divButtons = $('<div/>').appendTo(spanSearch).css({'margin-top': '0.5em'});
 		let btnClear = $('<button class="wmk-button wmk-button-default">Clear</button>').appendTo(divButtons);
-		btnClear.click(() => 
+		btnClear.click(() =>
 		{
 			this.selectAbbreviation(-1);
 			if (this.atom > 0 && MolUtil.hasAbbrev(this.mol, this.atom)) this.applyChanges();
@@ -285,7 +285,7 @@ export class EditAtom extends Dialog
 
 		AbbrevContainer.main.submitMolecule(this.mol, true);
 		this.abbrevList = AbbrevContainer.main.getAbbrevs();
-		if (!this.svgAbbrev) 
+		if (!this.svgAbbrev)
 		{
 			this.svgAbbrev = [];
 			let policy = RenderPolicy.defaultColourOnWhite(10);
@@ -334,7 +334,7 @@ for n in stride(from:1, through:mol.numAtoms, by:1) where mol.atomElement(n) == 
 		this.abbrevEntries = [];
 		let search = this.inputAbbrevSearch.val().toLowerCase();
 
-		for (let n = 0; n < this.abbrevList.length; n++) 
+		for (let n = 0; n < this.abbrevList.length; n++)
 		{
 			if (this.currentAbbrev != n && !this.abbrevList[n].nameSearch.includes(search)) continue;
 
@@ -349,7 +349,7 @@ for n in stride(from:1, through:mol.numAtoms, by:1) where mol.atomElement(n) == 
 			tdLabel.html(this.abbrevList[n].nameHTML);
 
 			let svg = $(this.svgAbbrev[n]).appendTo(tdStruct);
-			svg.css({'pointer-events': 'none'})
+			svg.css({'pointer-events': 'none'});
 
 			entry.tr.css({'cursor': 'pointer'});
 			entry.tr.click(() => this.selectAbbreviation(n));

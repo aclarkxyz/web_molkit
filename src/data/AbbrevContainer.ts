@@ -50,7 +50,7 @@ export interface AbbrevContainerFrag
 export class AbbrevContainer
 {
 	public static main:AbbrevContainer = null;
-	
+
 	private abbrevs:AbbrevContainerFrag[] = [];
 
 	// ----------------- static methods -----------------
@@ -105,7 +105,7 @@ export class AbbrevContainer
 		let frag = infrag.clone();
 		this.submitFragment(name, frag, promote);
 	}
-	
+
 	// pulls apart the contents of a molecule, looking for abbreviations; anything that is new gets added to the background; this function returns control immediately
 	public submitMolecule(inmol:Molecule, promote:boolean = false):void
 	{
@@ -117,7 +117,7 @@ export class AbbrevContainer
 			this.submitFragment(mol.atomElement(n), frag, promote);
 		}
 	}
-	
+
 	// given that an atom has been turned into an abbreviation, searches through the list to see if the fragment structure matches anything; if so, borrows the name
 	// and modifies the molecule accordingly
 	public substituteAbbrevName(mol:Molecule, atom:number):boolean
@@ -125,7 +125,7 @@ export class AbbrevContainer
 		let frag = MolUtil.getAbbrev(mol, atom);
 		if (!frag) return false;
 		//let meta = MetaMolecule.createStrictRubric(frag);
-		
+
 		for (let abbrev of this.abbrevs) if (abbrev.frag.numAtoms == frag.numAtoms)
 		{
 			//let ameta = MetaMolecule.createStrictRubric(abbrev.frag);
@@ -136,7 +136,7 @@ export class AbbrevContainer
 				return true;
 			}
 		}
-	
+
 		return false;
 	}
 
@@ -147,7 +147,7 @@ export class AbbrevContainer
 	private submitFragment(name:string, frag:Molecule, promote:boolean):void
 	{
 		if (name == '?') return; // no thanks!
-	
+
 		// rotate the fragment so that the attachment (atom 1) is oriented "west"
 		let vx = 0, vy = 0;
 		let adj = frag.atomAdjList(1);
@@ -159,10 +159,10 @@ export class AbbrevContainer
 		if (adj.length > 1) {let inv = 1.0 / adj.length; vx *= inv; vy *= inv;}
 		if (norm_xy(vx, vy) > 0.1 * 0.1)
 		{
-			let theta = Math.atan2(vy, vx)
+			let theta = Math.atan2(vy, vx);
 			if (Math.abs(theta) > 2 * DEGRAD) CoordUtil.rotateMolecule(frag, -theta);
 		}
-	
+
 		let hit = -1;
 		for (let n = 0; n < this.abbrevs.length; n++)
 		{

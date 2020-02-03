@@ -17,6 +17,8 @@
 ///<reference path='Chemistry.ts'/>
 ///<reference path='../util/util.ts'/>
 
+/* eslint-disable no-multi-spaces */
+
 namespace WebMolKit /* BOF */ {
 
 /*

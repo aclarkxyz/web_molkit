@@ -10,6 +10,8 @@
 	[PKG=webmolkit]
 */
 
+/* eslint-disable comma-spacing */
+
 namespace WebMolKit /* BOF */ {
 
 /*
@@ -393,7 +395,7 @@ export class Vec
 		return ret; // index of first occurence in original array
 	}
 
-	// for a given array, ensures that certain value are not present, and will eliminate them when discovered; original order preserved; 
+	// for a given array, ensures that certain value are not present, and will eliminate them when discovered; original order preserved;
 	// null-tolerant, and may return the original array if unchanged
 	// note: O(N^2); may improve this at a later date
 	public static exclude<T>(arr:T[], excl:T[]):T[]
@@ -402,7 +404,7 @@ export class Vec
 		if (sz == 0) return [];
 		let mask:boolean[] = new Array(sz);
 		let count = 0;
-		for (let n = 0; n < arr.length; n++) 
+		for (let n = 0; n < arr.length; n++)
 		{
 			mask[n] = excl.indexOf(arr[n]) < 0;
 			if (mask[n]) count++;

@@ -1284,7 +1284,12 @@ export class MoleculeActivity
 				if (outmol.bondOrder(bonds[n]) >= 2)
 				{
 					pi[n] = true;
-					if (n < rsz - 1) {pi[n] = true; n++;} else pi[0] = true;
+					if (n < rsz - 1)
+					{
+						pi[n] = true;
+						n++;
+					}
+					else pi[0] = true;
 				}
 			}
 			for (let n = 0; n < rsz; n++)

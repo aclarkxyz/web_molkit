@@ -76,8 +76,8 @@ export class Molecule
 	public static BONDTYPE_DECLINED = 2;
 	public static BONDTYPE_UNKNOWN = 3;
 
-	public static HYVALENCE_EL =  ['C','N','O','S','P'];
-	public static HYVALENCE_VAL = [ 4,  3,  2,  2,  3 ];
+	public static HYVALENCE_EL = ['C', 'N', 'O', 'S', 'P'];
+	public static HYVALENCE_VAL = [4, 3, 2, 2, 3];
 
 	// ------------ public methods ------------
 

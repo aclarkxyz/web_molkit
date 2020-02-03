@@ -15,6 +15,8 @@
 ///<reference path='../data/CoordUtil.ts'/>
 ///<reference path='OpenMolSpec.ts'/>
 
+/* eslint-disable key-spacing */
+
 namespace WebMolKit /* BOF */ {
 
 /*
@@ -140,7 +142,7 @@ export class MDLMOLReader
 			let stereo = line.length < 42 ? 0 : parseInt(line.substring(39, 42).trim());
 			let hyd = line.length < 45 ? 0 : parseInt(line.substring(42, 45).trim());
 			let val = line.length < 51 ? 0 : parseInt(line.substring(48, 51).trim());
-			let mapnum = line.length < 63 ? 0 : parseInt(line.substring(60,63).trim());
+			let mapnum = line.length < 63 ? 0 : parseInt(line.substring(60, 63).trim());
 
 			if (chg >= 1 && chg <= 3) chg = 4 - chg;
 			else if (chg == 4) {chg = 0; rad = 2;}

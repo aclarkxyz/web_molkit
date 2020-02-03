@@ -10,6 +10,8 @@
 	[PKG=webmolkit]
 */
 
+/* eslint-disable comma-spacing, no-multi-spaces */
+
 namespace WebMolKit /* BOF */ {
 
 export class Chemistry

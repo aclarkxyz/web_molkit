@@ -10,6 +10,8 @@
 	[PKG=webmolkit]
 */
 
+/* eslint-disable key-spacing */
+
 namespace WebMolKit /* BOF */ {
 
 /*

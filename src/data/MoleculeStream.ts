@@ -30,7 +30,8 @@ export class MoleculeStream
 	{
 		let mol = MoleculeStream.readNative(strData);
 		if (mol) return mol;
-		try {mol = MoleculeStream.readMDLMOL(strData);} catch (e) {}
+		try {mol = MoleculeStream.readMDLMOL(strData);}
+		catch (e) {}
 		// (... add others as available ...)
 		return mol;
 	}

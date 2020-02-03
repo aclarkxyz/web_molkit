@@ -612,7 +612,7 @@ export class MetaVector
 			{
 				let [_, typeidx, x1, y1, x2, y2] = p;
 				let [, thickness, colour] = this.types[typeidx];
-				into.drawLine(x1, y1, x2,  y2, colour, thickness);
+				into.drawLine(x1, y1, x2, y2, colour, thickness);
 			}
 			else if (p[0] == this.PRIM_RECT)
 			{

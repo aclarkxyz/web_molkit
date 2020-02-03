@@ -12,6 +12,8 @@
 
 ///<reference path='../util/Geom.ts'/>
 
+/* eslint-disable comma-spacing */
+
 namespace WebMolKit /* BOF */ {
 
 /*

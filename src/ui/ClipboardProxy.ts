@@ -38,7 +38,7 @@ export class ClipboardProxy
 
 	// use these two functions whenever a new focus-stealing object pops up on top of everything else, e.g. dialogs or dialog-like specialised
 	// editing tools with complex clipboard behaviour
-	public pushHandler(handler:ClipboardProxyHandler) 
+	public pushHandler(handler:ClipboardProxyHandler)
 	{
 		this.handlers.push(handler);
 	}
@@ -102,7 +102,7 @@ export class ClipboardProxyWeb extends ClipboardProxy
 		document.addEventListener('copy', (event:ClipboardEvent) =>
 		{
 			if (this.busy) return;
-			if (this.currentHandler().copyEvent(false, this)) 
+			if (this.currentHandler().copyEvent(false, this))
 			{
 				event.preventDefault();
 				return false;
@@ -111,7 +111,7 @@ export class ClipboardProxyWeb extends ClipboardProxy
 		document.addEventListener('cut', (event:ClipboardEvent) =>
 		{
 			if (this.busy) return;
-			if (this.currentHandler().copyEvent(true, this)) 
+			if (this.currentHandler().copyEvent(true, this))
 			{
 				event.preventDefault();
 				return false;

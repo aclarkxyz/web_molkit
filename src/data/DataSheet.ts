@@ -143,15 +143,15 @@ export class DataSheet
 		}
 
 		// molecule instances need to be cloned explicitly
-		const {colData:outCols, rowData:outRows} = data;
+		const {'colData': outCols, 'rowData': outRows} = data;
 		for (let c = outCols.length - 1; c >= 0; c--) if (outCols[c].type == DataSheetColumn.Molecule)
 		{
-			for (let r = outRows.length - 1; r >= 0; r--) if (outRows[r][c] != null && outRows[r][c] instanceof Molecule) 
+			for (let r = outRows.length - 1; r >= 0; r--) if (outRows[r][c] != null && outRows[r][c] instanceof Molecule)
 				outRows[r][c] = (outRows[r][c] as Molecule).clone();
 		}
 
 		return new DataSheet(data);
-	}	
+	}
 
 	// returns the data upon which is class is based; this is in the correct format for sending to the server as a
 	// "JSON-formatted datasheet", and is also suitable
@@ -159,7 +159,7 @@ export class DataSheet
 	{
 		return this.data;
 	}
-
+	
 	public get numCols():number
 	{
 		return this.data.numCols;

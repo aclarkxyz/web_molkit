@@ -16,6 +16,8 @@
 ///<reference path='../data/SketchUtil.ts'/>
 ///<reference path='MoleculeActivity.ts'/>
 
+/* eslint-disable no-multi-spaces, comma-spacing */
+
 namespace WebMolKit /* BOF */ {
 
 /*
@@ -199,7 +201,7 @@ export class CommandBank extends ButtonBank
 	public update():void
 	{
 		if (this.cmdType == CommandType.Main) for (let btn of COMMANDS_MAIN) this.buttons.push(btn);
-		else if (this.cmdType == CommandType.Atom)for (let btn of COMMANDS_ATOM) this.buttons.push(btn);
+		else if (this.cmdType == CommandType.Atom) for (let btn of COMMANDS_ATOM) this.buttons.push(btn);
 		else if (this.cmdType == CommandType.Bond) for (let btn of COMMANDS_BOND) this.buttons.push(btn);
 		else if (this.cmdType == CommandType.Select) for (let btn of COMMANDS_SELECT) this.buttons.push(btn);
 		else if (this.cmdType == CommandType.Move) for (let btn of COMMANDS_MOVE) this.buttons.push(btn);
