@@ -31,10 +31,11 @@ const CSS_POPUP = `
 export class Popup
 {
 	// content information that can be accessed after opening
-	protected obscureBackground:JQuery; // grey covering banner
+	protected obscureBackground:JQuery; // grey covering banner	
 	protected panelBoundary:JQuery; // the dialog outline itself
 	protected bodyDiv:JQuery; // the main area, for content
 
+	public popupBackground = 'white';
 	public callbackClose:(source?:Popup) => void = null;
 	public callbackPopulate:(source?:Popup) => void = null;
 
@@ -55,27 +56,19 @@ export class Popup
 		/*let bodyW = body.outerWidth(true), margW = 0.5 * (bodyW - body.outerWidth());
 		let bodyH = body.outerHeight(true), margH = 0.5 * (bodyH - body.outerHeight());*/
 
-		let bg = this.obscureBackground = $('<div></div>').appendTo(body);
-		bg.css('width', '100%');
-		bg.css('height', document.documentElement.clientHeight + 'px');
-		bg.css('background-color', 'black');
-		bg.css('opacity', 0.2);
-		bg.css('position', 'absolute');
-		bg.css('left', 0);
-		bg.css('top', 0);
-		bg.css('z-index', 9999);
+		let bg = this.obscureBackground = $('<div/>').appendTo(body);
+		bg.css({'width': '100%', 'height': document.documentElement.clientHeight + 'px'});
+		bg.css({'background-color': 'black', 'opacity': 0.2});
+		bg.css({'position': 'absolute', 'left': 0, 'top': 0, 'z-index': 19999});
 		bg.click(() => this.close());
 		this.obscureBackground = bg;
 
-		let pb = this.panelBoundary = $('<div class="wmk-popup"></div>').appendTo(body);
+		let pb = this.panelBoundary = $('<div class="wmk-popup"/>').appendTo(body);
 		pb.click((event:JQueryEventObject) => event.stopPropagation()); // don't let the click percolate upward to the close event
-		pb.css('background-color', 'white');
-		pb.css('border', '1px solid black');
-		pb.css('position', 'absolute');
-		pb.css('z-index', 10000);
+		pb.css({'background-color': this.popupBackground, 'border': '1px solid black'});
+		pb.css({'position': 'absolute', 'z-index': 20000});
 
-		let bd = this.bodyDiv = $('<div></div>').appendTo(pb);
-		bd.css('padding', '0.5em');
+		this.bodyDiv = $('<div/>').appendTo(pb).css('padding', '0.5em');
 
 		bg.show();
 
