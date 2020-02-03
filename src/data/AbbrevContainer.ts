@@ -35,33 +35,6 @@ export const TEMPLATE_FILES =
 	'saccharides'
 ];
 
-/*		];
-		TemplateBank.RESOURCE_LIST = roster.slice(0);
-		TemplateBank.RESOURCE_DATA = [];
-
-		let grabNext = ():void =>
-		{
-			if (roster.length == 0)
-			{
-				onComplete();
-				return;
-			}
-			let url = Theme.RESOURCE_URL + '/data/templates/' + roster.shift() + '.ds';
-			$.ajax(
-			{
-				'url': url,
-				'type': 'GET',
-				'dataType': 'text',
-				'success': (dsstr:string) =>
-				{
-					TemplateBank.RESOURCE_DATA.push(DataSheetStream.readXML(dsstr));
-					grabNext();
-				}
-			});
-		};
-		grabNext();
-*/
-
 /*
 	Abbreviation container: a singleton list of inline abbreviations which are initially bootstrapped from the available templates.
 */
@@ -70,6 +43,8 @@ export interface AbbrevContainerFrag
 {
 	name:string;
 	frag:Molecule;
+	nameHTML:string; // label in HTML format, with sub & superscripts
+	nameSearch:string; // label in lower case with formatting characters stripped
 }
 
 export class AbbrevContainer
@@ -199,7 +174,8 @@ export class AbbrevContainer
 			break;
 		}
 
-		let abv:AbbrevContainerFrag = {'name': name, 'frag': frag};
+		let [html, search] = this.formatAbbrevLabel(name);
+		let abv:AbbrevContainerFrag = {'name': name, 'frag': frag, 'nameHTML': html, 'nameSearch': search};
 		if (hit < 0)
 		{
 			if (promote) this.abbrevs.unshift(abv); else this.abbrevs.push(abv);
@@ -213,6 +189,36 @@ export class AbbrevContainer
 			}
 			else this.abbrevs[hit] = abv;
 		}
+	}
+
+	// prepare the HTML & searchable forms of an abbreviation label
+	private formatAbbrevLabel(name:string):[string, string]
+	{
+		let html = '', search = '';
+
+		let append = (bit:string, tag:string):void =>
+		{
+			if (tag) html += '<' + tag + '>';
+			html += escapeHTML(bit);
+			search += bit;
+			if (tag) html += '</' + tag + '>';
+		};
+
+		for (let bit of name.split('|'))
+		{
+			while (true)
+			{
+				let match = bit.match(/^(.*?)\{(.*?)\}(.*)$/);
+				if (!match) break;
+				let pre = match[1], mid = match[2], post = match[3];
+				append(pre, null);
+				if (mid.startsWith('^')) append(mid.substring(1), 'sup'); else append(mid, 'sub');
+				bit = post;
+			}
+			append(bit, null);
+		}
+
+		return [html, search.toLowerCase()];
 	}
 }
 

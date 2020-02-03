@@ -336,7 +336,7 @@ for n in stride(from:1, through:mol.numAtoms, by:1) where mol.atomElement(n) == 
 
 		for (let n = 0; n < this.abbrevList.length; n++) 
 		{
-			if (this.currentAbbrev != n && !this.abbrevList[n].name.toLowerCase().includes(search)) continue;
+			if (this.currentAbbrev != n && !this.abbrevList[n].nameSearch.includes(search)) continue;
 
 			let entry:EditAtomAbbrev =
 			{
@@ -346,7 +346,7 @@ for n in stride(from:1, through:mol.numAtoms, by:1) where mol.atomElement(n) == 
 			};
 			entry.tr.css('background-color', this.currentAbbrev == entry.idx ? colourCode(Theme.lowlight) : entry.bgcol);
 			let tdLabel = $('<td/>').appendTo(entry.tr), tdStruct = $('<td/>').appendTo(entry.tr);
-			tdLabel.html(this.abbrevList[n].name); // !! FORMAT the special blocks as HTML (add a utility)
+			tdLabel.html(this.abbrevList[n].nameHTML);
 
 			let svg = $(this.svgAbbrev[n]).appendTo(tdStruct);
 			svg.css({'pointer-events': 'none'})

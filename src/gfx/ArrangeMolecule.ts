@@ -817,12 +817,8 @@ export class ArrangeMolecule
 			let bpri:boolean[] = [];
 
 			let blocks:string[] = label.split('|');
-			if (side < 0)
-			{
-				let oldblk = blocks;
-				blocks = [];
-				for (let i = oldblk.length - 1; i >= 0; i--) blocks.push(oldblk[i]);
-			}
+			if (side < 0) blocks = Vec.reverse(blocks);
+
 			let buff = '';
 			for (let i = 0; i < blocks.length; i++)
 			{
@@ -879,16 +875,8 @@ export class ArrangeMolecule
 		}
 
 		let x = this.measure.angToX(ax), y = this.measure.angToY(ay);
-		if (side == 0) x -= 0.5 * chunkw[0]; //x+=0.5*(chunkw[0]-tw);
-		else if (side < 0)
-		{
-			for (let n = 0; n < refchunk; n++) x -= chunkw[n];
-			x -= 0.5 * chunkw[refchunk];
-		}
-		else //if (side>0)
-		{
-			x -= 0.5 * chunkw[0];
-		}
+		for (let n = 0; n < refchunk; n++) x -= chunkw[n];
+		x -= 0.5 * chunkw[refchunk];
 
 		for (let n = 0; n < chunks.length; n++)
 		{
