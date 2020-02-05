@@ -107,11 +107,8 @@ export class EditAtom extends Dialog
 	private populateAtom(panel:JQuery):void
 	{
 		let grid = $('<div/>').appendTo(panel);
-		grid.css('display', 'grid');
-		grid.css('align-items', 'center');
-		grid.css('justify-content', 'start');
-		grid.css('grid-row-gap', '0.5em');
-		grid.css('grid-column-gap', '0.5em');
+		grid.css({'display': 'grid', 'align-items': 'center', 'justify-content': 'start'});
+		grid.css({'grid-row-gap': '0.5em', 'grid-column-gap': '0.5em'});
 		grid.css('grid-template-columns', '[start col0] auto [col1] auto [col2] auto [col3] auto [col4 end]');
 
 		grid.append('<div style="grid-area: 1 / col0;">Symbol</div>');
@@ -162,16 +159,16 @@ export class EditAtom extends Dialog
 			this.inputIndex.val(atom.toString());
 		}
 
-		this.inputSymbol.focus();
-
-		for (let input of [this.inputSymbol, this.inputCharge, this.inputUnpaired, this.inputHydrogen, this.inputIsotope, this.inputMapping, this.inputIndex])
+		grid.children('input').each((idx, dom) => 
 		{
-			input.keydown((event:KeyboardEvent) =>
+			if (idx == 0) $(dom).focus();
+			$(dom).keydown((event:KeyboardEvent) =>
 			{
 				let keyCode = event.keyCode || event.which;
 				if (keyCode == 13) this.applyChanges();
+				if (keyCode == 27) this.close();
 			});
-		}
+		});
 	}
 
 	private populateAbbreviation(panel:JQuery):void
@@ -294,16 +291,16 @@ export class EditAtom extends Dialog
 			for (let abbrev of this.abbrevList)
 			{
 				let effects = new RenderEffects();
-/* fnord
-effects.atomCircleSz = floatArray(mol.numAtoms, value:0)
-effects.atomCircleCol = [UInt32](repeating:0, count:mol.numAtoms)
-for n in stride(from:1, through:mol.numAtoms, by:1) where mol.atomElement(n) == MolUtil.SpecialName.AbbrevAttachment
-{
-	mol.setAtom(n, element:"C")
-	effects.atomCircleSz[n - 1] = 0.2
-	effects.atomCircleCol[n - 1] = 0x00C000
-}*/
-				let layout = new ArrangeMolecule(abbrev.frag, measure, policy, effects);
+				let mol = abbrev.frag.clone();
+				effects.atomCircleSz = Vec.numberArray(0, mol.numAtoms);
+				effects.atomCircleCol = Vec.numberArray(0, mol.numAtoms);
+				for (let n = 1; n <= mol.numAtoms; n++) if (mol.atomElement(n) == MolUtil.ABBREV_ATTACHMENT)
+				{
+					mol.setAtomElement(n, 'C');
+					effects.atomCircleSz[n - 1] = 0.2;
+					effects.atomCircleCol[n - 1] = 0x00C000;
+				}
+				let layout = new ArrangeMolecule(mol, measure, policy, effects);
 				layout.arrange();
 				// !! max size
 				let gfx = new MetaVector();

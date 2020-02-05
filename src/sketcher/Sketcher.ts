@@ -27,6 +27,7 @@
 ///<reference path='TemplateBank.ts'/>
 ///<reference path='ToolBank.ts'/>
 ///<reference path='EditAtom.ts'/>
+///<reference path='EditBond.ts'/>
 
 namespace WebMolKit /* BOF */ {
 
@@ -1482,7 +1483,7 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 		return atoms;
 	}
 
-	// interactively edit the given atom
+	// interactively edit the given atom/bond
 	private editAtom(atom:number):void
 	{
 		if (atom == 0) return;
@@ -1492,6 +1493,19 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 			if (this.mol.compareTo(dlg.mol) != 0) this.defineMolecule(dlg.mol);
 			dlg.close();
 		});
+		dlg.callbackClose = () => this.container.focus();
+		dlg.open();
+	}
+	private editBond(bond:number):void
+	{
+		if (bond == 0) return;
+
+		let dlg = new EditBond(this.mol, bond, () =>
+		{
+			if (this.mol.compareTo(dlg.mol) != 0) this.defineMolecule(dlg.mol);
+			dlg.close();
+		});
+		dlg.callbackClose = () => this.container.focus();
 		dlg.open();
 	}
 
@@ -1600,7 +1614,7 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 		else
 		{
 			let bond = -clickObj;
-			// TODO: edit bond...
+			this.editBond(bond);
 		}
 		return false;
 	}
@@ -2100,7 +2114,11 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 		}
 
 		// non-modifier keys that don't generate a 'pressed' event		
-		if (key == KeyCode.Enter) this.editAtom(this.currentAtom);
+		if (key == KeyCode.Enter) 
+		{
+			if (this.currentAtom > 0) this.editAtom(this.currentAtom);
+			else if (this.currentBond > 0) this.editBond(this.currentBond);
+		}
 		else if (key == KeyCode.Left) this.hitArrowKey(-1, 0);
 		else if (key == KeyCode.Right) this.hitArrowKey(1, 0);
 		else if (key == KeyCode.Up) this.hitArrowKey(0, 1);

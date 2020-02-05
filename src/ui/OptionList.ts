@@ -31,10 +31,12 @@ namespace WebMolKit /* BOF */ {
 
 export class OptionList extends Widget
 {
+	public padding = 6; // pixels
+	public htmlLabels = false; // switch this on if the labels are HTML rather than text
+
 	private selidx = 0;
 	private buttonDiv:any[] = [];
 	private auxCell:any[] = [];
-	public padding = 6; // pixels
 
 	public callbackSelect:(idx:number, source?:OptionList) => void = null;
 
@@ -135,6 +137,7 @@ export class OptionList extends Widget
 			let txt = this.options[n];
 			if (txt.length == 0 && n == this.selidx) div.text('\u00A0\u2716\u00A0');
 			else if (txt.length == 0) div.text('\u00A0\u00A0\u00A0');
+			else if (this.htmlLabels) div.html(txt);
 			else div.text(txt);
 
 			div.off('mouseover');
