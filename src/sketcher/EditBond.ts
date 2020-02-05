@@ -65,8 +65,6 @@ export class EditBond extends Dialog
 		this.populateGeometry(this.tabs.getPanel('Geometry'));
 		this.populateQuery(this.tabs.getPanel('Query'));
 		this.populateExtra(this.tabs.getPanel('Extra'));
-
-		// !! setTimeout(() => this.inputSymbol.focus(), 1);
 	}
 
 	// ------------ private methods ------------
@@ -142,33 +140,8 @@ export class EditBond extends Dialog
 	{
 		let {mol, bond} = this;
 
-		/*if (atom == 0) atom = this.atom = mol.addAtom('C', this.newX, this.newY);
-
-		let sym = this.inputSymbol.val();
-		if (sym != '') mol.setAtomElement(atom, sym);
-
-		let chg = parseInt(this.inputCharge.val());
-		if (chg > -20 && chg < 20) mol.setAtomCharge(atom, chg);
-
-		let unp = parseInt(this.inputUnpaired.val());
-		if (unp >= 0 && unp < 20) mol.setAtomUnpaired(atom, unp);
-
-		if (this.optionHydrogen.getSelectedIndex() == 1)
-		{
-			let hyd = parseInt(this.inputHydrogen.val());
-			if (hyd >= 0 && hyd < 20) mol.setAtomHExplicit(atom, hyd);
-		}
-		else mol.setAtomHExplicit(atom, Molecule.HEXPLICIT_UNKNOWN);
-
-		if (this.optionIsotope.getSelectedIndex() == 1)
-		{
-			let iso = parseInt(this.inputIsotope.val());
-			if (iso >= 0 && iso < 300) mol.setAtomIsotope(atom, iso);
-		}
-		else mol.setAtomIsotope(atom, Molecule.ISOTOPE_NATURAL);
-
-		let map = parseInt(this.inputMapping.val());
-		if (!isNaN(map)) mol.setAtomMapNum(atom, map);*/
+		mol.setBondOrder(bond, this.optionOrder.getSelectedIndex());
+		mol.setBondType(bond, this.optionStereo.getSelectedIndex());
 	}
 }
 
