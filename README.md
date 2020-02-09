@@ -22,18 +22,68 @@ All rights reserved
 
 ## Codebase
 
-Written in _TypeScript_. Requires the TypeScript compiler (`tsc`) to cross-compile into JavaScript. Developed using _Visual Studio Code_.
+The framework is written in _TypeScript_. It requires the [TypeScript](https://www.typescriptlang.org/) compiler (`tsc`) to cross-compile into JavaScript. All development has been done using _Visual Studio Code_.
 
-## Status
+Prior to doing anything with the codebase, it needs to be compiled into _JavaScript_:
 
-As of November 2016, the toolkit is openly available on [GitHub](https://github.com/aclarkxyz/web_molkit). Check the `VERSION` file: until such time as the number reaches 1.0.0, you must consider this project to be a work in progress, i.e. if you wish to use it, you need to keep the source files uptodate in order to collect features are they are completed and bugfixes as they are rolled out, but you also need to watch for API changes that can happen suddenly and without warning.
+```
+$ tsc
+$ ls bin
+	jquery.js
+	webmolkit-build.js
+	webmolkit-build.js.map
+```
 
-For documentation purposes, the best place to look is in the `val/html` folder. The `val/html/sketcher.html` file is as good a place as any to start: it imports the cross-compiled JavaScript, defines the ancilliary resource location, unpacks a _Molecule_ object, and then plops it into an interactive sketcher widget.
+The compilation creates the file `bin/webmolkit-build.js`. Once this is generated, the file can be used in a runtime context.
 
-Note that trying out the page by opening the file with a browser probably won't work because of security issues accessing a file from a parallel directory hierarchy, so you will need to fire up a trivial HTTP server (see the `run_server` file) to test it. If you cut & paste the necessary files into a current web server, and make sure the references are pointing to the correct URLs, then it should work.
+## Uses
 
-The source files are moderately well commented, but proper documentation is a to-do item that will happen when it happens.
+The framework is designed for use on a standard HTML page _and_ under the NodeJS/Electron framework.
 
-A note when perusing the source code: this project actually goes back to ca. 2010, and was originally constructed using _Google Closure_, which is a JavaScript wrapper that was designed to workaround the fact that the so-called standard web runtime was a complete and utter trainwreck until quite recently. Google's solution was unwieldy and ugly as hell, but that is what had to be done to make it work. The toolkit was originally designed to delegate anything complicated to a server (Java EE) via remote procedure calls, which worked well enough. Fast forward to 2016, the lowest common denominator of modern browsers is finally adequate for high quality applications; the _jQuery_ library has become virtually universal; _TypeScript_ has matured into a very practical solution to the many design flaws of _JavaScript_; and _Visual Studio Code_ is a remarkably pleasant way to work (and despite the fact that it comes from Microsoft, I only use it on Mac & Linux). For these reasons, the original Closure/Java split has been morphed into what you see now: a self-contained library that runs entirely on the browser. Be warned, though, that the transformation is not entirely complete, and so you will see some evidence of its earlier form (e.g. the `src/rpc` source files, which you can safely ignore).
+For anyone writing code in _TypeScript_, the method of choice is to include the `src/**.ts` files within the main project, and access the classes and functions within the `WebMolKit` namespace. For using with raw _JavaScript_, or other derivatives, the cross-compiled output file `bin/webmolkit-build.js` contains all of the functionality. The class and function names are all the same as for integrating with _TypeScript_, but the without helpful typing information.
+
+Adding the sketcher to a web page is demonstrated in the example file `val/html/sketcher.html`.
+
+Importing the necessary content into a web page can be most easily done by inserting lines into the header section of the HTML page, e.g.
+
+```
+<head>
+	<script src="../../bin/jquery.js" type="text/javascript"></script>
+	<script src="../../bin/webmolkit-build.js" type="text/javascript"></script>
+	...
+</head>
+```
+
+Note that it is necessary to make sure the [JQuery](https://jquery.com/) library is also included.
+
+Embedding a blank sketcher instance on the page can be done as:
+
+```
+<script>
+	var url = window.location.href.substring(0, window.location.href.lastIndexOf('/'));
+	WebMolKit.initWebMolKit(url + '../../../res');
+
+	var mol = WebMolKit.Molecule.fromString($('#moldata').text());
+
+	var sketcher = new WebMolKit.Sketcher();
+	sketcher.setSize(800, 700);
+	sketcher.defineMolecule(mol);
+	let proxy = new WebMolKit.ClipboardProxyWeb();
+	sketcher.defineClipboard(proxy);
+	sketcher.setup(() => sketcher.render($('#sketcher')));
+</script>
+```
+
+There are several things going on here. The first step is to make sure the framework knows where to find its own resources, by calling `WebMolKit.initWebMolKit`. The example above constructs a URL relative to the current location. The content that it needs to find is located in the `res` subdirectory of the repository, and contains information such as icons and structure templates.
+
+Starting with a current molecule is optional: the default is blank. To prepopulate, a `Molecule` object must first be created. The example above creates an instance by unpacking a string that conforms to the _SketchEl_ format, which is the native default. Calling the `defineMolecule` method for the sketcher class makes that the current molecule.
+
+A sketcher instance requires several other pieces of information, such as predefined size. It also wants something called a "clipboard proxy", which is a way of intermediating between the two very different styles of clipboard access for web vs. desktop targets, and also to provide a way to capture/release clipboard access under scenarios like dialog box creation. For a simple web page, though, the boilerplate code shown above will suffice.
+
+The final rendering and activation of the sketcher is done by chaining the `setup` and `render` methods. There is some resource loading that gets done in between the setup and rendering steps, hence the callback.
+
+That is all it takes to embed a sketcher. Interacting with the widget is fairly straightforward, and is done by calling public functions, e.g. `getMolecule`, `defineMolecule`, `performCopy`, etc.
+
+# Feedback
 
 If you have any questions, comments or inquiries, feel free to write to [aclark@molmatinf.com](mailto:aclark@molmatinf.com). Serious people welcome; trolls, spammers and haters not so much.
