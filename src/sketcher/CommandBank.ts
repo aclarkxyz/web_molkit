@@ -334,7 +334,7 @@ export class CommandBank extends ButtonBank
 
 		if (actv > 0)
 		{
-			new MoleculeActivity(this.owner, actv, param).execute();
+			new MoleculeActivity(this.owner.getState(), actv, param, {}, this.owner).execute();
 		}
 	}
 

@@ -18,6 +18,7 @@
 ///<reference path='../gfx/DrawMolecule.ts'/>
 ///<reference path='../ui/TabBar.ts'/>
 ///<reference path='../ui/OptionList.ts'/>
+///<reference path='GeomWidget.ts'/>
 
 namespace WebMolKit /* BOF */ {
 
@@ -59,6 +60,12 @@ export class EditAtom extends Dialog
 	private abbrevEntries:EditAtomAbbrev[];
 	private currentAbbrev = -1;
 
+	private inputGeom1:JQuery;
+	private inputGeom2:JQuery;
+	private geomWidget:GeomWidget;
+	private refGeom1:string;
+	private refGeom2:string;
+
 	constructor(mol:Molecule, public atom:number, private callbackApply:(source?:EditAtom) => void)
 	{
 		super();
@@ -83,6 +90,12 @@ export class EditAtom extends Dialog
 
 		this.tabs = new TabBar(['Atom', 'Abbreviation', 'Geometry', 'Query', 'Extra']);
 		this.tabs.render(body);
+		this.tabs.callbackSelect = (idx) =>
+		{
+			if (idx == 0) this.inputSymbol.focus();
+			else if (idx == 1) this.inputAbbrevSearch.focus();
+			else if (idx == 2) this.inputGeom1.focus();
+		};
 
 		this.populateAtom(this.tabs.getPanel('Atom'));
 		this.populateAbbreviation(this.tabs.getPanel('Abbreviation'));
@@ -90,7 +103,19 @@ export class EditAtom extends Dialog
 		this.populateQuery(this.tabs.getPanel('Query'));
 		this.populateExtra(this.tabs.getPanel('Extra'));
 
-		setTimeout(() => this.inputSymbol.focus(), 1);
+		body.find('input').each((idx, child) =>
+		{
+			let dom = $(child).css({'font': 'inherit'});
+			if (idx == 0) dom.focus();
+			dom.keydown((event:KeyboardEvent) =>
+			{
+				let keyCode = event.keyCode || event.which;
+				if (keyCode == 13) this.applyChanges();
+				if (keyCode == 27) this.close();
+			});
+		});
+
+//		setTimeout(() => this.inputSymbol.focus(), 1);
 	}
 
 	// ------------ private methods ------------
@@ -100,6 +125,7 @@ export class EditAtom extends Dialog
 	{
 		this.updateMolecule();
 		if (this.tabs.getSelectedValue() == 'Abbreviation') this.updateAbbrev();
+		if (this.tabs.getSelectedValue() == 'Geometry') this.updateGeometry();
 
 		if (this.callbackApply) this.callbackApply(this);
 	}
@@ -143,8 +169,6 @@ export class EditAtom extends Dialog
 		this.inputIndex = $('<input type="number" size="6" readonly="readonly"/>').appendTo(grid);
 		this.inputIndex.css('grid-area', '5 / col3');
 
-		grid.find('input').css('font', 'inherit');
-
 		const mol = this.mol, atom = this.atom;
 		if (atom > 0)
 		{
@@ -158,17 +182,6 @@ export class EditAtom extends Dialog
 			this.inputMapping.val(mol.atomMapNum(atom).toString());
 			this.inputIndex.val(atom.toString());
 		}
-
-		grid.children('input').each((idx, dom) => 
-		{
-			if (idx == 0) $(dom).focus();
-			$(dom).keydown((event:KeyboardEvent) =>
-			{
-				let keyCode = event.keyCode || event.which;
-				if (keyCode == 13) this.applyChanges();
-				if (keyCode == 27) this.close();
-			});
-		});
 	}
 
 	private populateAbbreviation(panel:JQuery):void
@@ -198,13 +211,61 @@ export class EditAtom extends Dialog
 			if (this.atom > 0 && MolUtil.hasAbbrev(this.mol, this.atom)) this.applyChanges();
 		});
 
-		this.tableAbbrev = $('<table/>').appendTo(spanList).css({'border-collapse': 'collapse'});
+		this.tableAbbrev = $('<table/>').appendTo(spanList).css({'border-collapse': 'collapse', 'width': '100%'});
 		this.fillAbbreviations();
 	}
 
 	private populateGeometry(panel:JQuery):void
 	{
-		panel.append('Geometry: TODO');
+		const {mol, atom} = this;
+
+		let divContainer1 = $('<div/>').appendTo(panel).css({'text-align': 'center'});
+		let divContainer2 = $('<div/>').appendTo(divContainer1).css({'display': 'inline-block'});
+		let grid = $('<div/>').appendTo(divContainer2);
+		grid.css({'display': 'grid', 'align-items': 'center', 'justify-content': 'start'});
+		grid.css({'grid-row-gap': '0.5em', 'grid-column-gap': '0.5em'});
+		grid.css('grid-template-columns', '[start col0] auto [col1] auto [col2] auto [col3] auto [col4 end]');
+
+		this.geomWidget = new GeomWidget(GeomWidgetType.Atom, mol, atom);
+		this.geomWidget.render($('<div/>').appendTo(grid).css({'grid-area': '1 / col0 / auto / col4', 'text-align': 'center'}));
+
+		let label1 = $('<div/>').appendTo(grid).css({'grid-area': '2 / col0'});
+		this.inputGeom1 = $('<input type="number" size="8"/>').appendTo(grid).css({'grid-area': '2 / col1'});
+		let label2 = $('<div/>').appendTo(grid).css({'grid-area': '2 / col2'});
+		this.inputGeom2 = $('<input type="number" size="8"/>').appendTo(grid).css({'grid-area': '2 / col3'});
+
+		this.geomWidget.callbackSelect = (sel:GeomWidgetSelection) =>
+		{
+			let atoms = this.geomWidget.selectionAtoms(sel);
+			if (sel.type == GeomWidgetSelType.Position)
+			{
+				label1.text('Position X');
+				label2.text('Y');
+				this.inputGeom1.val(this.refGeom1 = mol.atomX(atoms[0]).toFixed(3));
+				this.inputGeom2.val(this.refGeom2 = mol.atomY(atoms[0]).toFixed(3));
+			}
+			else if (sel.type == GeomWidgetSelType.Link)
+			{
+				let dx = mol.atomX(atoms[1]) - mol.atomX(atoms[0]), dy = mol.atomY(atoms[1]) - mol.atomY(atoms[0]);
+				label1.text('Distance');
+				label2.text('Angle');
+				this.inputGeom1.val(this.refGeom1 = norm_xy(dx, dy).toFixed(3));
+				this.inputGeom2.val(this.refGeom2 = (Math.atan2(dy, dx) * RADDEG).toFixed(1));
+			}
+			else if (sel.type == GeomWidgetSelType.Torsion)
+			{
+				let cx = mol.atomX(atoms[0]), cy = mol.atomY(atoms[0]);
+				let th2 = Math.atan2(mol.atomY(atoms[1]) - cy, mol.atomX(atoms[1]) - cx);
+				let th1 = Math.atan2(mol.atomY(atoms[2]) - cy, mol.atomX(atoms[2]) - cx);
+				label1.text('Angle');
+				label2.text('');
+				this.inputGeom1.val(this.refGeom1 = (angleDiffPos(th2, th1) * RADDEG).toFixed(1));
+				this.inputGeom2.val(this.refGeom2 = '');
+			}
+			label2.css('display', sel.type == GeomWidgetSelType.Torsion ? 'none' : 'block');
+			this.inputGeom2.css('display', sel.type == GeomWidgetSelType.Torsion ? 'none' : 'block');
+		};
+		this.geomWidget.callbackSelect(this.geomWidget.selected); // trigger initial definition
 	}
 
 	private populateQuery(panel:JQuery):void
@@ -266,6 +327,61 @@ export class EditAtom extends Dialog
 			let abbrev = this.abbrevList[this.currentAbbrev];
 			mol.setAtomElement(atom, abbrev.name);
 			MolUtil.setAbbrev(mol, atom, abbrev.frag);
+		}
+	}
+
+	private updateGeometry():void
+	{
+		let strval1 = this.inputGeom1.val(), strval2 = this.inputGeom2.val();
+		if (this.refGeom1 == strval1 && this.refGeom2 == strval2) return;
+
+		const {mol} = this;
+		let sel = this.geomWidget.selected, atoms = this.geomWidget.selectionAtoms(sel);
+
+		if (sel.type == GeomWidgetSelType.Position)
+		{
+			let x = parseFloat(strval1), y = parseFloat(strval2);
+			if (isNaN(x) || isNaN(y) || Math.abs(x) > 1E6 || Math.abs(y) > 1E6) return; // non-sane
+			mol.setAtomPos(atoms[0], x, y);
+		}
+		else if (sel.type == GeomWidgetSelType.Link)
+		{
+			if (this.refGeom1 != strval1)
+			{
+				let dist = parseFloat(strval1);
+				if (isNaN(dist) || Math.abs(dist) > 100) return; // non-sane
+				let mask = Vec.booleanArray(false, mol.numAtoms);
+				mask[atoms[1] - 1] = true;
+				let instate:SketchState = {'mol': mol, 'currentAtom': 0, 'currentBond': mol.findBond(atoms[0], atoms[1]), 'selectedMask': mask};
+				let molact = new MoleculeActivity(instate, ActivityType.BondDist, {'dist': dist});
+				molact.execute();
+				this.mol = molact.output.mol;
+				return;
+			}
+			else if (this.refGeom2 != strval2)
+			{
+				let angle = parseFloat(strval2);
+				if (isNaN(angle)) return; // non-sane		
+				let mask = Vec.booleanArray(false, mol.numAtoms);
+				mask[atoms[1] - 1] = true;
+				let instate:SketchState = {'mol': mol, 'currentAtom': 0, 'currentBond': mol.findBond(atoms[0], atoms[1]), 'selectedMask': mask};
+				let molact = new MoleculeActivity(instate, ActivityType.AlignAngle, {'angle': angle * DEGRAD});
+				molact.execute();
+				this.mol = molact.output.mol;
+				return;
+			}
+		}
+		else if (sel.type == GeomWidgetSelType.Torsion)
+		{
+			let angle = parseFloat(strval1);
+			if (isNaN(angle)) return; // non-sane		
+			let mask = Vec.booleanArray(false, mol.numAtoms);
+			for (let a of atoms) mask[a - 1] = true;
+			let instate:SketchState = {'mol': mol, 'currentAtom': atoms[2], 'currentBond': 0, 'selectedMask': mask};
+			let molact = new MoleculeActivity(instate, ActivityType.AdjustTorsion, {'angle': angle * DEGRAD});
+			molact.execute();
+			this.mol = molact.output.mol;
+			return;
 		}
 	}
 

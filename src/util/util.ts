@@ -261,7 +261,7 @@ export function angleNorm(th:number):number
 	return th;
 }
 
-// angular difference, guaranteed to be normalised
+// angular difference, guaranteed to be normalised (-PI <= th < PI); think of it as {th1 - th2}
 export function angleDiff(th1:number, th2:number):number
 {
 	let theta = angleNorm(th1) - angleNorm(th2);

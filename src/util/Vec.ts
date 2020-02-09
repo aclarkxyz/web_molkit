@@ -218,6 +218,7 @@ export class Vec
 
 	public static maskCount(mask:boolean[]):number
 	{
+		if (!mask) return 0;
 		let c = 0;
 		for (let n = mask.length - 1; n >= 0; n--) if (mask[n]) c++;
 		return c;

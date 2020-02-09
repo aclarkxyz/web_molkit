@@ -65,6 +65,9 @@ export enum ActivityType
 	Flip,
 	Scale,
 	Rotate,
+	BondDist,
+	AlignAngle,
+	AdjustTorsion,
 	Move,
 	Ring,
 	/*BondDist,
@@ -104,16 +107,68 @@ export interface TemplatePermutation
 
 export class MoleculeActivity
 {
-	public input:SketchState;
 	private subjectMask:boolean[];
 	private subjectIndex:number[];
 	private subjectLength:number;
 	private hasSelected:boolean;
 
-	private output:SketchState;
-	private errmsg:string;
+	public output:SketchState;
+	public errmsg:string;
 
-	constructor(private owner:any, private activity:ActivityType, private param:any, override?:Record<string, any>)
+	constructor(public input:SketchState, public activity:ActivityType, private param:Record<string, any>, override?:Record<string, any>, private owner?:any)
+	{
+		this.output =
+		{
+			'mol': null,
+			'currentAtom': -1,
+			'currentBond': -1,
+			'selectedMask': null
+		};
+
+		let altInput = this.input as Record<string, any>;
+		for (let k in override) altInput[k] = override[k];
+
+		let na = this.input.mol.numAtoms;
+		if (this.input.selectedMask == null) this.input.selectedMask = Vec.booleanArray(false, na);
+		while (this.input.selectedMask.length < na) this.input.selectedMask.push(false);
+		this.subjectMask = this.input.selectedMask.slice(0);
+		this.subjectLength = Vec.maskCount(this.subjectMask);
+		this.subjectIndex = [];
+		this.hasSelected = this.subjectLength > 0;
+
+		if (this.subjectLength == 0)
+		{
+			if (this.input.currentAtom > 0)
+			{
+				this.subjectLength = 1;
+				this.subjectMask[this.input.currentAtom - 1] = true;
+				this.subjectIndex = [this.input.currentAtom];
+			}
+			else if (this.input.currentBond > 0)
+			{
+				let bfr = this.input.mol.bondFrom(this.input.currentBond), bto = this.input.mol.bondTo(this.input.currentBond);
+				let b1 = Math.min(bfr, bto), b2 = Math.max(bfr, bto);
+				this.subjectLength = 2;
+				this.subjectMask[b1 - 1] = true;
+				this.subjectMask[b2 - 1] = true;
+				this.subjectIndex = [b1, b2];
+			}
+		}
+		else
+		{
+			this.subjectIndex = Vec.maskIdx(this.subjectMask);
+			Vec.addTo(this.subjectIndex, 1);
+		}	
+	}
+
+	// provide the optional owner parameter: if defined, then it will be called after the operation is complete
+	// (note: this is anachronistic, and should be refactored out)
+	public setOwner(owner:any):void
+	{
+		this.owner = owner;
+	}
+
+	/*constructor(private owner:any, private activity:ActivityType, private param:any, override?:Record<string, any>)
 	{
 		this.input = owner.getState();
 		this.output =
@@ -158,11 +213,7 @@ export class MoleculeActivity
 			this.subjectIndex = Vec.maskIdx(this.subjectMask);
 			Vec.addTo(this.subjectIndex, 1);
 		}
-
-		/*console.log('INPUT:' + JSON.stringify(this.input));
-		console.log('subject:' + this.subjectIndex);
-		console.log('mask: ' + this.subjectMask);*/
-	}
+	}*/
 
 	// --------------------------------------- public methods ---------------------------------------
 
@@ -179,190 +230,49 @@ export class MoleculeActivity
 	{
 		let param = this.param;
 
-		if (this.activity == ActivityType.Delete)
-		{
-			this.execDelete();
-			this.finish();
-		}
-		else if (this.activity == ActivityType.Clear)
-		{
-			this.execClear();
-			this.finish();
-		}
-		else if (this.activity == ActivityType.Copy)
-		{
-			this.execCopy(false);
-			this.finish();
-		}
-		else if (this.activity == ActivityType.Cut)
-		{
-			this.execCopy(true);
-			this.finish();
-		}
-		else if (this.activity == ActivityType.SelectAll)
-		{
-			this.execSelectAll(true);
-			this.finish();
-		}
-		else if (this.activity == ActivityType.SelectNone)
-		{
-			this.execSelectAll(false);
-			this.finish();
-		}
-		else if (this.activity == ActivityType.SelectPrevComp)
-		{
-			this.execSelectComp(-1);
-			this.finish();
-		}
-		else if (this.activity == ActivityType.SelectNextComp)
-		{
-			this.execSelectComp(1);
-			this.finish();
-		}
-		else if (this.activity == ActivityType.SelectSide)
-		{
-			this.execSelectSide();
-			this.finish();
-		}
-		else if (this.activity == ActivityType.SelectGrow)
-		{
-			this.execSelectGrow();
-			this.finish();
-		}
-		else if (this.activity == ActivityType.SelectShrink)
-		{
-			this.execSelectShrink();
-			this.finish();
-		}
-		else if (this.activity == ActivityType.SelectChain)
-		{
-			this.execSelectChain();
-			this.finish();
-		}
-		else if (this.activity == ActivityType.SelectSmRing)
-		{
-			this.execSelectSmRing();
-			this.finish();
-		}
-		else if (this.activity == ActivityType.SelectRingBlk)
-		{
-			this.execSelectRingBlk();
-			this.finish();
-		}
-		else if (this.activity == ActivityType.SelectCurElement)
-		{
-			this.execSelectCurElement();
-			this.finish();
-		}
-		else if (this.activity == ActivityType.SelectToggle)
-		{
-			this.execSelectToggle();
-			this.finish();
-		}
-		else if (this.activity == ActivityType.SelectUnCurrent)
-		{
-			this.execSelectUnCurrent();
-			this.finish();
-		}
-		else if (this.activity == ActivityType.Element)
-		{
-			this.execElement(param.element, param.positionX, param.positionY, param.keepAbbrev);
-			this.finish();
-		}
-		else if (this.activity == ActivityType.Charge)
-		{
-			this.execCharge(param.delta);
-			this.finish();
-		}
-		else if (this.activity == ActivityType.Connect)
-		{
-			this.execConnect(1, Molecule.BONDTYPE_NORMAL);
-			this.finish();
-		}
-		else if (this.activity == ActivityType.Disconnect)
-		{
-			this.execDisconnect();
-			this.finish();
-		}
-		else if (this.activity == ActivityType.BondOrder)
-		{
-			this.execBond(param.order, Molecule.BONDTYPE_NORMAL);
-			this.finish();
-		}
-		else if (this.activity == ActivityType.BondType)
-		{
-			this.execBond(1, param.type);
-			this.finish();
-		}
-		else if (this.activity == ActivityType.BondGeom)
-		{
-			this.execBondGeom(param.geom);
-			this.finish();
-		}
-		else if (this.activity == ActivityType.BondAtom)
-		{
-			this.execBondAtom(param.order, param.type, param.element, param.x1, param.y1, param.x2, param.y2);
-			this.finish();
-		}
-		else if (this.activity == ActivityType.BondSwitch)
-		{
-			this.execBondSwitch();
-			this.finish();
-		}
-		else if (this.activity == ActivityType.BondAddTwo)
-		{
-			this.execBondAddTwo();
-			this.finish();
-		}
+		if (this.activity == ActivityType.Delete) this.execDelete();
+		else if (this.activity == ActivityType.Clear) this.execClear();
+		else if (this.activity == ActivityType.Copy) this.execCopy(false);
+		else if (this.activity == ActivityType.Cut) this.execCopy(true);
+		else if (this.activity == ActivityType.SelectAll) this.execSelectAll(true);
+		else if (this.activity == ActivityType.SelectNone) this.execSelectAll(false);
+		else if (this.activity == ActivityType.SelectPrevComp) this.execSelectComp(-1);
+		else if (this.activity == ActivityType.SelectNextComp) this.execSelectComp(1);
+		else if (this.activity == ActivityType.SelectSide) this.execSelectSide();
+		else if (this.activity == ActivityType.SelectGrow) this.execSelectGrow();
+		else if (this.activity == ActivityType.SelectShrink) this.execSelectShrink();
+		else if (this.activity == ActivityType.SelectChain) this.execSelectChain();
+		else if (this.activity == ActivityType.SelectSmRing) this.execSelectSmRing();
+		else if (this.activity == ActivityType.SelectRingBlk) this.execSelectRingBlk();
+		else if (this.activity == ActivityType.SelectCurElement) this.execSelectCurElement();
+		else if (this.activity == ActivityType.SelectToggle) this.execSelectToggle();
+		else if (this.activity == ActivityType.SelectUnCurrent) this.execSelectUnCurrent();
+		else if (this.activity == ActivityType.Element) this.execElement(param.element, param.positionX, param.positionY, param.keepAbbrev);
+		else if (this.activity == ActivityType.Charge) this.execCharge(param.delta);
+		else if (this.activity == ActivityType.Connect) this.execConnect(1, Molecule.BONDTYPE_NORMAL);
+		else if (this.activity == ActivityType.Disconnect) this.execDisconnect();
+		else if (this.activity == ActivityType.BondOrder) this.execBond(param.order, Molecule.BONDTYPE_NORMAL);
+		else if (this.activity == ActivityType.BondType) this.execBond(1, param.type);
+		else if (this.activity == ActivityType.BondGeom) this.execBondGeom(param.geom);
+		else if (this.activity == ActivityType.BondAtom) this.execBondAtom(param.order, param.type, param.element, param.x1, param.y1, param.x2, param.y2);
+		else if (this.activity == ActivityType.BondSwitch) this.execBondSwitch();
+		else if (this.activity == ActivityType.BondAddTwo) this.execBondAddTwo();
 		else if (this.activity == ActivityType.BondInsert)
 		{
 			// !! TODO (use TemplateFusion)
 		}
-		else if (this.activity == ActivityType.Join)
-		{
-			this.execJoin();
-			this.finish();
-		}
-		else if (this.activity == ActivityType.Nudge)
-		{
-			this.execNudge(param.dir, 0.1);
-			this.finish();
-		}
-		else if (this.activity == ActivityType.NudgeLots)
-		{
-			this.execNudge(param.dir, 1);
-			this.finish();
-		}
-		else if (this.activity == ActivityType.NudgeFar)
-		{
-			this.execNudgeFar(param.dir);
-			this.finish();
-		}
-		else if (this.activity == ActivityType.Flip)
-		{
-			this.execFlip(param.axis);
-			this.finish();
-		}
-		else if (this.activity == ActivityType.Scale)
-		{
-			this.execScale(param.mag);
-			this.finish();
-		}
-		else if (this.activity == ActivityType.Rotate)
-		{
-			this.execRotate(param.theta, param.centreX, param.centreY);
-			this.finish();
-		}
-		else if (this.activity == ActivityType.Move)
-		{
-			this.execMove(param.refAtom, param.deltaX, param.deltaY);
-			this.finish();
-		}
-		else if (this.activity == ActivityType.Ring)
-		{
-			this.execRing(param.ringX, param.ringY, param.aromatic);
-			this.finish();
-		}
+		else if (this.activity == ActivityType.Join) this.execJoin();
+		else if (this.activity == ActivityType.Nudge) this.execNudge(param.dir, 0.1);
+		else if (this.activity == ActivityType.NudgeLots) this.execNudge(param.dir, 1);
+		else if (this.activity == ActivityType.NudgeFar) this.execNudgeFar(param.dir);
+		else if (this.activity == ActivityType.Flip) this.execFlip(param.axis);
+		else if (this.activity == ActivityType.Scale) this.execScale(param.mag);
+		else if (this.activity == ActivityType.Rotate) this.execRotate(param.theta, param.centreX, param.centreY);
+		else if (this.activity == ActivityType.BondDist) this.execBondDist(param.dist);
+		else if (this.activity == ActivityType.AlignAngle) this.execAlignAngle(param.angle);
+		else if (this.activity == ActivityType.AdjustTorsion) this.execAdjustTorsion(param.angle);
+		else if (this.activity == ActivityType.Move) this.execMove(param.refAtom, param.deltaX, param.deltaY);
+		else if (this.activity == ActivityType.Ring) this.execRing(param.ringX, param.ringY, param.aromatic);
 		/*else if (this.activity == ActivityType.BondDist)
 		{
 			// !!
@@ -374,88 +284,27 @@ export class MoleculeActivity
 		else if (this.activity == ActivityType.TemplateFusion)
 		{
 			this.execTemplateFusion(Molecule.fromString(param.fragNative));
-			this.owner.setPermutations(this.output.permutations);
+			if (this.owner) this.owner.setPermutations(this.output.permutations);
+			return;
 		}
-		else if (this.activity == ActivityType.AbbrevTempl)
-		{
-			this.execAbbrevTempl();
-			this.finish();
-		}
-		else if (this.activity == ActivityType.AbbrevGroup)
-		{
-			this.execAbbrevGroup();
-			this.finish();
-		}
-		else if (this.activity == ActivityType.AbbrevFormula)
-		{
-			this.execAbbrevFormula();
-			this.finish();
-		}
-		else if (this.activity == ActivityType.AbbrevClear)
-		{
-			this.execAbbrevClear();
-			this.finish();
-		}
-		else if (this.activity == ActivityType.AbbrevExpand)
-		{
-			this.execAbbrevExpand();
-			this.finish();
-		}
+		else if (this.activity == ActivityType.AbbrevTempl) this.execAbbrevTempl();
+		else if (this.activity == ActivityType.AbbrevGroup) this.execAbbrevGroup();
+		else if (this.activity == ActivityType.AbbrevFormula) this.execAbbrevFormula();
+		else if (this.activity == ActivityType.AbbrevClear) this.execAbbrevClear();
+		else if (this.activity == ActivityType.AbbrevExpand) this.execAbbrevExpand();
 		else if (this.activity == ActivityType.BondArtifactPath || this.activity == ActivityType.BondArtifactRing ||
-				this.activity == ActivityType.BondArtifactArene || this.activity == ActivityType.BondArtifactClear)
-		{
-			this.execBondArtifact(this.activity);
-			this.finish();
-		}
+				this.activity == ActivityType.BondArtifactArene || this.activity == ActivityType.BondArtifactClear) this.execBondArtifact(this.activity);
+
+		this.finish();
 	}
 
 	// --------------------------------------- private methods ---------------------------------------
 
-	// packages up an RPC request to get the job done
-	/* deprecated: the sketcher originally did its work through this RPC fall, but now everything has been rewired
-	private executeRPC(optype:string, xparam:any = {}):void
-	{
-		let param:any =
-		{
-			'tokenID': this.owner.tokenID
-		};
-		param.molNative = this.input.mol.toString();
-		param.currentAtom = this.input.currentAtom;
-		param.currentBond = this.input.currentBond;
-		param.selectedMask = this.input.selectedMask;
-
-		for (let xp in xparam) param[xp] = xparam[xp];
-
-		let fcn = function(result:any, error:ErrorRPC)
-		{
-			if (!result)
-			{
-				alert('Sketching operation failed: ' + error.message);
-				return;
-			}
-			if (result.molNative != null) this.output.mol = Molecule.fromString(result.molNative);
-			if (result.currentAtom >= 0) this.output.currentAtom = result.currentAtom;
-			if (result.currentBond >= 0) this.output.currentBond = result.currentBond;
-			if (result.selectedMask != null) this.output.selectedMask = result.selectedMask;
-			this.errmsg = result.errmsg;
-
-			if (this.activity == ActivityType.TemplateFusion && result.permutations != null)
-			{
-				this.owner.setPermutations(result.permutations);
-			}
-			else this.finish();
-
-			if ((this.activity == ActivityType.Copy || this.activity == ActivityType.Cut) && result.clipNative != null)
-			{
-				this.owner.performCopy(Molecule.fromString(result.clipNative));
-			}
-		};
-		new RPC('sketch.' + optype, param, fcn, this).invoke();
-	}*/
-
 	// call this when execution has finished
 	private finish():void
 	{
+		if (!this.owner) return;
+
 		if (this.output.mol != null || this.output.currentAtom >= 0 || this.output.currentBond >= 0 || this.output.selectedMask != null)
 		{
 			this.owner.setState(this.output, true);
@@ -1244,6 +1093,134 @@ export class MoleculeActivity
 		CoordUtil.rotateAtoms(this.output.mol, mask, cx, cy, theta);
 	}
 
+	public execBondDist(dist:number):void
+	{
+		let bond = this.input.currentBond;
+		if (bond == 0)
+		{
+			this.errmsg = 'There must be a current bond.';
+			return;
+		}
+
+		let mol = this.input.mol.clone();
+
+		if (mol.bondInRing(bond))
+		{
+			let atom1 = mol.bondFrom(bond), atom2 = mol.bondTo(bond);
+			let dx = mol.atomX(atom2) - mol.atomX(atom1), dy = mol.atomY(atom2) - mol.atomY(atom1), curDist = norm_xy(dx, dy), inv = 1.0 / curDist;
+			let sel1 = this.isSelected(atom1), sel2 = this.isSelected(atom2);
+			let ox = dx * (dist - curDist) * inv, oy = dy * (dist - curDist) * inv;
+			if (sel1 && !sel2)
+			{
+				mol.setAtomPos(atom1, mol.atomX(atom1) - ox, mol.atomY(atom1) - oy);
+			}
+			else if (sel2 && !sel1)
+			{
+				mol.setAtomPos(atom2, mol.atomX(atom2) + ox, mol.atomY(atom2) + oy);
+			}
+			else
+			{
+				mol.setAtomPos(atom1, mol.atomX(atom1) - 0.5 * ox, mol.atomY(atom1) - 0.5 * oy);
+				mol.setAtomPos(atom2, mol.atomX(atom2) + 0.5 * ox, mol.atomY(atom2) + 0.5 * oy);
+			}
+		}
+		else
+		{
+			let [atom1, atom2, side] = this.heavySide(bond);
+			let dx = mol.atomX(atom2) - mol.atomX(atom1), dy = mol.atomY(atom2) - mol.atomY(atom1);
+			let curDist = norm_xy(dx, dy), inv = 1.0 / curDist;
+			let ox = dx * (dist - curDist) * inv, oy = dy * (dist - curDist) * inv;
+			for (let a of side) mol.setAtomPos(a, mol.atomX(a) - ox, mol.atomY(a) - oy);
+		}
+
+		this.output.mol = mol;
+	}
+
+	public execAlignAngle(angle:number):void
+	{
+		let bond = this.input.currentBond;
+		if (bond == 0)
+		{
+			this.errmsg = 'There must be a current bond.';
+			return;
+		}
+
+		let mol = this.input.mol.clone();
+
+		if (mol.bondInRing(bond))
+		{
+			this.errmsg = 'Cannot align a ring-bond.';
+			return;
+		}
+
+		let [atom1, atom2, side] = this.heavySide(bond);
+		let cx = mol.atomX(atom2), cy = mol.atomY(atom2);
+		let delta = angle - Math.atan2(mol.atomY(atom1) - cy, mol.atomX(atom1) - cx);
+		let cosTheta = Math.cos(delta), sinTheta = Math.sin(delta);
+		
+		for (let a of side)
+		{
+			let x = mol.atomX(a) - cx, y = mol.atomY(a) - cy;
+			mol.setAtomPos(a, cx + x * cosTheta - y * sinTheta, cy + x * sinTheta + y * cosTheta);
+		}
+
+		this.output.mol = mol;
+	}
+
+	public execAdjustTorsion(angle:number):void
+	{
+		// NOTE: input definition is a awkward; selected = 3 atoms that make up the torsion (A1-A2-A3); current be set to A1, and defines
+		// (A1,A2) such that the angle is A3-A1; these is necessary because the user could be referring to either the acute or obtuse angle;
+		// note that the special case where the 3 atoms are all in the same ring uses the order of selected atoms as a hint, which breaks the
+		// input convention
+		
+		if (this.input.currentAtom == 0 || Vec.maskCount(this.input.selectedMask) != 3)
+		{
+			this.errmsg = 'Must be 3 selected atoms and a current atom.';
+			return;
+		}
+		
+		let mol = this.input.mol.clone();
+
+		let a1 = this.input.currentAtom;
+		let atoms:number[] = [];
+		for (let n = 1; n <= mol.numAtoms; n++) if (n != a1 && this.input.selectedMask[n - 1]) atoms.push(n);
+		let a2 = mol.findBond(a1, atoms[0]) > 0 ? atoms.shift() :
+				 mol.findBond(a1, atoms[1]) > 0 ? atoms.pop() : 0;
+		if (a2 == 0 || mol.findBond(a2, atoms[0]) == 0)
+		{
+			this.errmsg = 'Selected atoms must be consecutive.';
+			return;
+		}
+		let a3 = atoms[0];
+		
+		let cx = mol.atomX(a2), cy = mol.atomY(a2);
+		let theta1 = Math.atan2(mol.atomY(a1) - cy, mol.atomX(a1) - cx);
+		let theta3 = Math.atan2(mol.atomY(a3) - cy, mol.atomX(a3) - cx);
+		let delta = angle - angleDiff(theta3, theta1);
+		
+		var group1:number[] = [], group3:number[] = [];
+		if (mol.atomRingBlock(a1) == 0 || mol.atomRingBlock(a1) != mol.atomRingBlock(a3))
+		{
+			let g = Graph.fromMolecule(mol);
+			g.removeEdge(a2 - 1, a1 - 1);
+			g.removeEdge(a2 - 1, a3 - 1);
+			let cc = g.calculateComponents();
+			for (let n = 0; n < g.numNodes; n++)
+			{
+				if (cc[n] == cc[a1 - 1]) group1.push(n + 1);
+				else if (cc[n] == cc[a3 - 1]) group3.push(n + 1);
+			}
+		}
+		if (mol.atomRingBlock(a1) > 0 && mol.atomRingBlock(a1) == mol.atomRingBlock(a2)) group1 = [a1];
+		if (mol.atomRingBlock(a3) > 0 && mol.atomRingBlock(a3) == mol.atomRingBlock(a2)) group3 = [a3];
+		
+		CoordUtil.rotateAtoms(mol, Vec.idxMask(Vec.add(group1, -1), mol.numAtoms), cx, cy, -0.5 * delta);
+		CoordUtil.rotateAtoms(mol, Vec.idxMask(Vec.add(group3, -1), mol.numAtoms), cx, cy, 0.5 * delta);
+
+		this.output.mol = mol;
+	}
+
 	public execMove(refAtom:number, deltaX:number, deltaY:number):void
 	{
 		let subj = this.subjectIndex;
@@ -1850,6 +1827,35 @@ export class MoleculeActivity
 		}
 
 		return true;
+	}
+
+	// assuming the bond is not in a ring, returns the "heavier" side and its atom group
+	private heavySide(bond:number):[number, number, number[]]
+	{
+		let {mol} = this.input;
+		let atom1 = mol.bondFrom(bond), atom2 = mol.bondTo(bond);
+		
+		let g = Graph.fromMolecule(mol);
+		g.removeEdge(atom1 - 1, atom2 - 1);
+		let side1:number[] = [], side2:number[] = [];
+		for (let grp of g.calculateComponentGroups())
+		{
+			if (grp.includes(atom1 - 1)) side1 = Vec.add(grp, 1);
+			if (grp.includes(atom2 - 1)) side2 = Vec.add(grp, 1);
+		}
+		let weight1 = side1.length * (mol.atomRingBlock(atom1) > 0 ? 2 : 1);
+		let weight2 = side2.length * (mol.atomRingBlock(atom2) > 0 ? 2 : 1);
+		let sel1 = this.isSelected(atom1), sel2 = this.isSelected(atom2);
+		if (sel1 && !sel2) {}
+		else if (sel2 && !sel1 || weight2 < weight1) return [atom2, atom1, side2];
+		return [atom1, atom2, side1];
+	}
+
+	// returns true if the atom is indicated in the selection mask of the input, if there is one
+	private isSelected(atom:number):boolean
+	{
+		let mask = this.input.selectedMask;
+		return mask ? mask[atom - 1] : false;
 	}
 }
 

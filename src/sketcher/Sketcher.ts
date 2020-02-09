@@ -592,7 +592,7 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 	// perform a more surgical copy/cut operation
 	public performCopySelection(andCut:boolean):void
 	{
-		new MoleculeActivity(this, andCut ? ActivityType.Cut : ActivityType.Copy, {}).execute();
+		new MoleculeActivity(this.getState(), andCut ? ActivityType.Cut : ActivityType.Copy, {}, {}, this).execute();
 	}
 
 	// pasting from clipboard, initiated by the user via non-system commands: this can't necessarily grab the system
@@ -662,7 +662,7 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 		}
 
 		let param = {'fragNative': mol.toString()};
-		new MoleculeActivity(this, ActivityType.TemplateFusion, param).execute();
+		new MoleculeActivity(this.getState(), ActivityType.TemplateFusion, param, {}, this).execute();
 	}
 
 	// changes the template permutation: if necessary requests the layout, and redraws the screen
@@ -1490,7 +1490,7 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 
 		let dlg = new EditAtom(this.mol, atom, () =>
 		{
-			if (this.mol.compareTo(dlg.mol) != 0) this.defineMolecule(dlg.mol);
+			if (this.mol.compareTo(dlg.mol) != 0) this.defineMolecule(dlg.mol, false, true);
 			dlg.close();
 		});
 		dlg.callbackClose = () => this.container.focus();
@@ -1502,7 +1502,7 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 
 		let dlg = new EditBond(this.mol, bond, () =>
 		{
-			if (this.mol.compareTo(dlg.mol) != 0) this.defineMolecule(dlg.mol);
+			if (this.mol.compareTo(dlg.mol) != 0) this.defineMolecule(dlg.mol, false, true);
 			dlg.close();
 		});
 		dlg.callbackClose = () => this.container.focus();
@@ -1791,7 +1791,7 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 						'currentBond': this.opBond,
 						'selectedMask': [] as boolean[]
 					};
-					let molact:MoleculeActivity = new MoleculeActivity(this, ActivityType.Delete, {}, override);
+					let molact = new MoleculeActivity(this.getState(), ActivityType.Delete, {}, override, this);
 					molact.execute();
 				}
 			}
@@ -1835,7 +1835,7 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 						'currentBond': 0,
 						'selectedMask': null as boolean[]
 					};
-					let molact:MoleculeActivity = new MoleculeActivity(this, ActivityType.Element, param, override);
+					let molact = new MoleculeActivity(this.getState(), ActivityType.Element, param, override, this);
 					molact.execute();
 				}
 			}
@@ -1849,7 +1849,7 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 						'currentBond': this.opBond,
 						'selectedMask': null as boolean[]
 					};
-					let molact:MoleculeActivity = new MoleculeActivity(this, ActivityType.Charge, {'delta': this.toolChargeDelta}, override);
+					let molact = new MoleculeActivity(this.getState(), ActivityType.Charge, {'delta': this.toolChargeDelta}, override, this);
 					molact.execute();
 				}
 			}
@@ -1863,9 +1863,9 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 				};
 				let molact:MoleculeActivity;
 				if (this.toolBondType == Molecule.BONDTYPE_NORMAL)
-					molact = new MoleculeActivity(this, ActivityType.BondOrder, {'order': this.toolBondOrder}, override);
+					molact = new MoleculeActivity(this.getState(), ActivityType.BondOrder, {'order': this.toolBondOrder}, override, this);
 				else
-					molact = new MoleculeActivity(this, ActivityType.BondType, {'type': this.toolBondType}, override);
+					molact = new MoleculeActivity(this.getState(), ActivityType.BondType, {'type': this.toolBondType}, override, this);
 				molact.execute();
 			}
 		}
@@ -1896,7 +1896,7 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 						'currentBond': 0,
 						'selectedMask': this.lassoMask
 					};
-					let molact:MoleculeActivity = new MoleculeActivity(this, ActivityType.Delete, {}, override);
+					let molact = new MoleculeActivity(this.getState(), ActivityType.Delete, {}, override, this);
 					molact.execute();
 				}
 			}
@@ -1905,7 +1905,7 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 				let [x0, y0, theta, magnitude] = this.determineDragTheta();
 				let degrees = -theta * DEGRAD;
 				let mx = this.xToAng(x0), my = this.yToAng(y0);
-				let molact:MoleculeActivity = new MoleculeActivity(this, ActivityType.Rotate, {'theta': degrees, 'centreX': mx, 'centreY': my});
+				let molact = new MoleculeActivity(this.getState(), ActivityType.Rotate, {'theta': degrees, 'centreX': mx, 'centreY': my}, {}, this);
 				molact.execute();
 			}
 			else if (this.dragType == DraggingTool.Move)
@@ -1913,7 +1913,7 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 				let [dx, dy] = this.determineMoveDelta();
 				let scale = this.pointScale;
 				// note: in a future iteration, make the 'Move' action do rotate-snap-rebond, and call it during the mousemove, to give dynamic feedback
-				let molact:MoleculeActivity = new MoleculeActivity(this, ActivityType.Move, {'refAtom': this.opAtom, 'deltaX': dx / scale, 'deltaY': -dy / scale});
+				let molact = new MoleculeActivity(this.getState(), ActivityType.Move, {'refAtom': this.opAtom, 'deltaX': dx / scale, 'deltaY': -dy / scale}, {}, this);
 				molact.execute();
 			}
 			else if (this.dragType == DraggingTool.Ring)
@@ -1927,7 +1927,7 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 						'ringY': ringY,
 						'aromatic': this.toolRingArom
 					};
-					let molact:MoleculeActivity = new MoleculeActivity(this, ActivityType.Ring, param);
+					let molact = new MoleculeActivity(this.getState(), ActivityType.Ring, param, {}, this);
 					molact.execute();
 				}
 			}
@@ -1951,7 +1951,7 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 				if (this.toolAtomSymbol == 'A') param.element = window.prompt('Enter element symbol:', '');
 				if (param.element != '')
 				{
-					let molact:MoleculeActivity = new MoleculeActivity(this, ActivityType.BondAtom, param);
+					let molact = new MoleculeActivity(this.getState(), ActivityType.BondAtom, param, {}, this);
 					molact.execute();
 				}
 			}
@@ -1971,7 +1971,7 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 					'x2': this.xToAng(x2),
 					'y2': this.yToAng(y2)
 				};
-				let molact:MoleculeActivity = new MoleculeActivity(this, ActivityType.BondAtom, param);
+				let molact = new MoleculeActivity(this.getState(), ActivityType.BondAtom, param, {}, this);
 				molact.execute();
 			}
 		}

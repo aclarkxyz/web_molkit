@@ -132,7 +132,7 @@ export class TemplateBank extends ButtonBank
 		{
 			let idx = parseInt(id);
 			let param = {'fragNative': this.templates.molecules[idx]};
-			new MoleculeActivity(this.owner, ActivityType.TemplateFusion, param).execute();
+			new MoleculeActivity(this.owner.getState(), ActivityType.TemplateFusion, param, {}, this.owner).execute();
 		}
 	}
 
