@@ -1,7 +1,7 @@
 /*
 	WebMolKit
 
-	(c) 2010-2018 Molecular Materials Informatics, Inc.
+	(c) 2010-2020 Molecular Materials Informatics, Inc.
 
 	All rights reserved
 
@@ -19,6 +19,7 @@
 ///<reference path='../ui/TabBar.ts'/>
 ///<reference path='../ui/OptionList.ts'/>
 ///<reference path='GeomWidget.ts'/>
+///<reference path='ExtraFieldsWidget.ts'/>
 
 namespace WebMolKit /* BOF */ {
 
@@ -65,6 +66,10 @@ export class EditAtom extends Dialog
 	private geomWidget:GeomWidget;
 	private refGeom1:string;
 	private refGeom2:string;
+
+	// (...querystuff)
+
+	private fieldsWidget:ExtraFieldsWidget;
 
 	constructor(mol:Molecule, public atom:number, private callbackApply:(source?:EditAtom) => void)
 	{
@@ -123,9 +128,15 @@ export class EditAtom extends Dialog
 	// trigger the apply/save sequence
 	private applyChanges():void
 	{
+		this.mol.keepTransient = true;
+		
 		this.updateMolecule();
 		if (this.tabs.getSelectedValue() == 'Abbreviation') this.updateAbbrev();
 		if (this.tabs.getSelectedValue() == 'Geometry') this.updateGeometry();
+		// ... query...
+		if (this.tabs.getSelectedValue() == 'Extra') this.updateExtra();
+
+		this.mol.keepTransient = false;
 
 		if (this.callbackApply) this.callbackApply(this);
 	}
@@ -275,7 +286,9 @@ export class EditAtom extends Dialog
 
 	private populateExtra(panel:JQuery):void
 	{
-		panel.append('Extra: TODO');
+		let fields = [...this.mol.atomExtra(this.atom), ...this.mol.atomTransient(this.atom)];
+		this.fieldsWidget = new ExtraFieldsWidget(fields);
+		this.fieldsWidget.render(panel);
 	}
 
 	// read everything back in from the dialog objects
@@ -383,6 +396,12 @@ export class EditAtom extends Dialog
 			this.mol = molact.output.mol;
 			return;
 		}
+	}
+
+	private updateExtra():void
+	{
+		this.mol.setAtomExtra(this.atom, this.fieldsWidget.getExtraFields());
+		this.mol.setAtomTransient(this.atom, this.fieldsWidget.getTransientFields());
 	}
 
 	// enumerate all abbreviations compatible with the search; it will go into self-callback mode if the abbreviations need to be loaded

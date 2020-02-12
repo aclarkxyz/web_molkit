@@ -79,6 +79,10 @@ export class Molecule
 	public static HYVALENCE_EL = ['C', 'N', 'O', 'S', 'P'];
 	public static HYVALENCE_VAL = [4, 3, 2, 2, 3];
 
+	// recommended prefix for extra/transient
+	public static PREFIX_EXTRA = 'x';
+	public static PREFIX_TRANSIENT = 'y';
+
 	// ------------ public methods ------------
 
 	constructor()

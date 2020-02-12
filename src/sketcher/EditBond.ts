@@ -1,7 +1,7 @@
 /*
 	WebMolKit
 
-	(c) 2010-2018 Molecular Materials Informatics, Inc.
+	(c) 2010-2020 Molecular Materials Informatics, Inc.
 
 	All rights reserved
 
@@ -18,7 +18,8 @@
 ///<reference path='../gfx/DrawMolecule.ts'/>
 ///<reference path='../ui/TabBar.ts'/>
 ///<reference path='../ui/OptionList.ts'/>
-///<reference path='./GeomWidget.ts'/>
+///<reference path='GeomWidget.ts'/>
+///<reference path='ExtraFieldsWidget.ts'/>
 
 namespace WebMolKit /* BOF */ {
 
@@ -43,6 +44,8 @@ export class EditBond extends Dialog
 	private inputGeom1:JQuery;
 	private geomWidget:GeomWidget;
 	private refGeom1:string;
+
+	private fieldsWidget:ExtraFieldsWidget;
 
 	constructor(mol:Molecule, public bond:number, private callbackApply:(source?:EditBond) => void)
 	{
@@ -97,8 +100,14 @@ export class EditBond extends Dialog
 	// trigger the apply/save sequence
 	private applyChanges():void
 	{
+		this.mol.keepTransient = true;
+
 		this.updateMolecule();
 		if (this.tabs.getSelectedValue() == 'Geometry') this.updateGeometry();
+		// ... query ...
+		if (this.tabs.getSelectedValue() == 'Extra') this.updateExtra();
+
+		this.mol.keepTransient = false;
 
 		if (this.callbackApply) this.callbackApply(this);
 	}
@@ -119,7 +128,7 @@ export class EditBond extends Dialog
 		this.optionOrder.htmlLabels = true;
 		this.optionOrder.setSelectedIndex(mol.bondOrder(bond));
 		this.optionOrder.render($('<div/>').appendTo(grid).css({'grid-column': 'col1 / col4', 'grid-row': '1'}));
-		
+
 		$('<div/>').appendTo(grid).css({'grid-area': '2 / col0'}).text('Stereo');
 		this.optionStereo = new OptionList(['None', 'Up', 'Down', 'Unknown']);
 		this.optionStereo.setSelectedIndex(mol.bondType(bond));
@@ -175,7 +184,9 @@ export class EditBond extends Dialog
 
 	private populateExtra(panel:JQuery):void
 	{
-		panel.append('Extra: TODO');
+		let fields = [...this.mol.bondExtra(this.bond), ...this.mol.bondTransient(this.bond)];
+		this.fieldsWidget = new ExtraFieldsWidget(fields);
+		this.fieldsWidget.render(panel);
 	}
 
 	// read everything back in from the dialog objects
@@ -208,7 +219,13 @@ export class EditBond extends Dialog
 				return;
 			}
 		}
-	}	
+	}
+
+	private updateExtra():void
+	{
+		this.mol.setBondExtra(this.bond, this.fieldsWidget.getExtraFields());
+		this.mol.setBondTransient(this.bond, this.fieldsWidget.getTransientFields());
+	}
 }
 
 /* EOF */ }
