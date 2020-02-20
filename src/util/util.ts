@@ -577,4 +577,12 @@ export async function readTextURL(url:string | URL):Promise<string>
 	});
 }
 
+// convenience function that yields the execution state, providing the DOM with a chance to update the screen; this is
+// not necessarily sufficient to provide a responsive UI for grinding calculation, but it can at least be useful to
+// refresh status
+export async function yieldDOM():Promise<void>
+{
+	return new Promise<void>((resolve) => setTimeout(() => resolve()));
+}
+
 /* EOF */ }
