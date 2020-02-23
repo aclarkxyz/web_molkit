@@ -158,7 +158,7 @@ export class MoleculeActivity
 		{
 			this.subjectIndex = Vec.maskIdx(this.subjectMask);
 			Vec.addTo(this.subjectIndex, 1);
-		}	
+		}
 	}
 
 	// provide the optional owner parameter: if defined, then it will be called after the operation is complete
@@ -1157,7 +1157,7 @@ export class MoleculeActivity
 		let cx = mol.atomX(atom2), cy = mol.atomY(atom2);
 		let delta = angle - Math.atan2(mol.atomY(atom1) - cy, mol.atomX(atom1) - cx);
 		let cosTheta = Math.cos(delta), sinTheta = Math.sin(delta);
-		
+
 		for (let a of side)
 		{
 			let x = mol.atomX(a) - cx, y = mol.atomY(a) - cy;
@@ -1173,13 +1173,13 @@ export class MoleculeActivity
 		// (A1,A2) such that the angle is A3-A1; these is necessary because the user could be referring to either the acute or obtuse angle;
 		// note that the special case where the 3 atoms are all in the same ring uses the order of selected atoms as a hint, which breaks the
 		// input convention
-		
+
 		if (this.input.currentAtom == 0 || Vec.maskCount(this.input.selectedMask) != 3)
 		{
 			this.errmsg = 'Must be 3 selected atoms and a current atom.';
 			return;
 		}
-		
+
 		let mol = this.input.mol.clone();
 
 		let a1 = this.input.currentAtom;
@@ -1193,13 +1193,13 @@ export class MoleculeActivity
 			return;
 		}
 		let a3 = atoms[0];
-		
+
 		let cx = mol.atomX(a2), cy = mol.atomY(a2);
 		let theta1 = Math.atan2(mol.atomY(a1) - cy, mol.atomX(a1) - cx);
 		let theta3 = Math.atan2(mol.atomY(a3) - cy, mol.atomX(a3) - cx);
 		let delta = angle - angleDiff(theta3, theta1);
-		
-		var group1:number[] = [], group3:number[] = [];
+
+		let group1:number[] = [], group3:number[] = [];
 		if (mol.atomRingBlock(a1) == 0 || mol.atomRingBlock(a1) != mol.atomRingBlock(a3))
 		{
 			let g = Graph.fromMolecule(mol);
@@ -1214,7 +1214,7 @@ export class MoleculeActivity
 		}
 		if (mol.atomRingBlock(a1) > 0 && mol.atomRingBlock(a1) == mol.atomRingBlock(a2)) group1 = [a1];
 		if (mol.atomRingBlock(a3) > 0 && mol.atomRingBlock(a3) == mol.atomRingBlock(a2)) group3 = [a3];
-		
+
 		CoordUtil.rotateAtoms(mol, Vec.idxMask(Vec.add(group1, -1), mol.numAtoms), cx, cy, -0.5 * delta);
 		CoordUtil.rotateAtoms(mol, Vec.idxMask(Vec.add(group3, -1), mol.numAtoms), cx, cy, 0.5 * delta);
 
@@ -1834,7 +1834,7 @@ export class MoleculeActivity
 	{
 		let {mol} = this.input;
 		let atom1 = mol.bondFrom(bond), atom2 = mol.bondTo(bond);
-		
+
 		let g = Graph.fromMolecule(mol);
 		g.removeEdge(atom1 - 1, atom2 - 1);
 		let side1:number[] = [], side2:number[] = [];

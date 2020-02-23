@@ -1549,7 +1549,7 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 			this.changeCurrentBond(this.mol.findBond(this.currentAtom, closest));
 			return;
 		}
-		
+
 		// no bond to hop onto, so try jumping across a chasm
 		let best = 0, bestScore = Number.MIN_VALUE;
 		for (let n = 1; n <= this.mol.numAtoms; n++) if (n != this.currentAtom && adj.indexOf(n) < 0)
@@ -1575,12 +1575,12 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 	{
 		if (this.mol.numAtoms == 0) return;
 		if (this.mol.numAtoms == 1) {this.changeCurrentAtom(1); return;}
-		
+
 		let cx = 0, cy = 0;
 		for (let n = 1; n <= this.mol.numAtoms; n++) {cx += this.mol.atomX(n); cy += this.mol.atomY(n);}
 		let inv = 1.0 / this.mol.numAtoms;
 		cx *= inv; cy *= inv;
-		
+
 		let best = 0, bestScore = Number.MIN_VALUE;
 		for (let n = 1; n <= this.mol.numAtoms; n++)
 		{
@@ -2113,8 +2113,8 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 			}
 		}
 
-		// non-modifier keys that don't generate a 'pressed' event		
-		if (key == KeyCode.Enter) 
+		// non-modifier keys that don't generate a 'pressed' event
+		if (key == KeyCode.Enter)
 		{
 			if (this.currentAtom > 0) this.editAtom(this.currentAtom);
 			else if (this.currentBond > 0) this.editBond(this.currentBond);

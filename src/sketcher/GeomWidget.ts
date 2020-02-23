@@ -142,8 +142,8 @@ export class GeomWidget extends Widget
 		let dx = 0.5 * (w - (hiX - loX) * this.scale), dy = 0.5 * (h - (hiY - loY) * this.scale);
 		for (let n = 0; n < this.atomSubset.length; n++)
 		{
-			this.posX[n] = dx + (this.posX[n] - loX) * this.scale
-			this.posY[n] = h - (dy + (this.posY[n] - loY) * this.scale)
+			this.posX[n] = dx + (this.posX[n] - loX) * this.scale;
+			this.posY[n] = h - (dy + (this.posY[n] - loY) * this.scale);
 		}
 		this.posRad = ANG_RAD * this.scale;
 
@@ -238,7 +238,7 @@ export class GeomWidget extends Widget
 	{
 		event.stopPropagation();
 		if (this.type == GeomWidgetType.Bond) return; // no selection for bonds (for now)
-		
+
 		let which = this.whichSelection(xy[0], xy[1]);
 		if (!which) return; // don't want clearing of selection (for now)
 		if (!this.sameSelection(this.selected, which))
@@ -261,7 +261,7 @@ export class GeomWidget extends Widget
 			this.redraw();
 		}
 	}
-	
+
 	private whichSelection(x:number, y:number):GeomWidgetSelection
 	{
 		let cx = this.posX[0], cy = this.posY[0];
@@ -272,11 +272,11 @@ export class GeomWidget extends Widget
 
 		let theta = Math.atan2(y - cy, x - cx);
 		let closeSel:GeomWidgetSelection = null, closeDelta = Number.POSITIVE_INFINITY;
-		
+
 		for (let n = 0; n < this.linkB.length; n++)
 		{
 			let delta = Math.abs(angleDiff(Math.atan2(this.posY[this.linkB[n]] - cy, this.posX[this.linkB[n]] - cx), theta));
-			if (delta < 10 * DEGRAD && delta < closeDelta) 
+			if (delta < 10 * DEGRAD && delta < closeDelta)
 			{
 				closeSel = {'type': GeomWidgetSelType.Link, 'idx': n};
 				closeDelta = delta;
@@ -285,11 +285,11 @@ export class GeomWidget extends Widget
 
 		for (let n = 0; n < this.torsA.length; n++)
 		{
-			let theta1 = Math.atan2(this.posY[this.torsA[n]] - cy, this.posX[this.torsA[n]] - cx)
-			let theta2 = Math.atan2(this.posY[this.torsB[n]] - cy, this.posX[this.torsB[n]] - cx)
-			let midtheta = theta1 + 0.5 * (angleDiff(theta2, theta1))
-			let delta = Math.abs(angleDiff(midtheta, theta))
-			if (delta < closeDelta) 
+			let theta1 = Math.atan2(this.posY[this.torsA[n]] - cy, this.posX[this.torsA[n]] - cx);
+			let theta2 = Math.atan2(this.posY[this.torsB[n]] - cy, this.posX[this.torsB[n]] - cx);
+			let midtheta = theta1 + 0.5 * (angleDiff(theta2, theta1));
+			let delta = Math.abs(angleDiff(midtheta, theta));
+			if (delta < closeDelta)
 			{
 				closeSel = {'type': GeomWidgetSelType.Torsion, 'idx': n};
 				closeDelta = delta;

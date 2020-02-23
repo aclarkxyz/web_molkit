@@ -69,6 +69,7 @@ export class ClipboardProxy
 
 	// places the clipboard content with the indicated string; this is allowed at any time
 	public setString(str:string):void {}
+	public setImage(blob:Blob):void {}
 
 	// places HTML content onto the clipboard, if available
 	public canSetHTML():boolean {return false;}
@@ -145,13 +146,6 @@ export class ClipboardProxyWeb extends ClipboardProxy
 	}
 	public setString(str:string):void
 	{
-		this.performCopy(str);
-	}
-
-	// ------------ private methods ------------
-
-	private performCopy(content:string):void
-	{
 		// now place it on the actual system clipboard
 		if (this.fakeTextArea == null)
 		{
@@ -166,7 +160,7 @@ export class ClipboardProxyWeb extends ClipboardProxy
 			this.fakeTextArea.setAttribute('readonly', '');
 			document.body.appendChild(this.fakeTextArea);
 		}
-		this.fakeTextArea.value = content;
+		this.fakeTextArea.value = str;
 		this.fakeTextArea.select();
 
 		// disable event trapping, then issue the standard copy
@@ -174,6 +168,35 @@ export class ClipboardProxyWeb extends ClipboardProxy
 		document.execCommand('copy');
 		this.busy = false;
 	}
+	public setImage(blob:Blob):void
+	{
+		this.busy = true;
+		let rdr = new FileReader();
+		rdr.onload = (event) =>
+		{
+			let dataURL = event.target.result.toString();
+			if (!dataURL) return;
+
+			let img = $('<img/>').attr('src', dataURL);
+			img.on('load', () =>
+			{
+				let r = document.createRange();
+				r.setStartBefore(img[0]);
+				r.setEndAfter(img[0]);
+				r.selectNode(img[0]);
+				let sel = window.getSelection();
+				sel.addRange(r);
+				document.execCommand('copy');
+				img.remove();
+				this.busy = false;
+			});
+			img.appendTo(document.body);
+		};
+		rdr.readAsDataURL(blob);
+	}
+
+	// ------------ private methods ------------
+
 }
 
 /* EOF */ }
