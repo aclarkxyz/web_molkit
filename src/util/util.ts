@@ -515,7 +515,7 @@ export function jsonPrettyPrint(json:any):string
 	for (let n = 0; n < lines.length; n++)
 	{
 		lines[n] = lines[n].trim();
-		if (lines[n].length > 1 && lines[n].endsWith('{') || lines[n].endsWith('['))
+		if (lines[n].length > 1 && (lines[n].endsWith('{') || lines[n].endsWith('[')))
 		{
 			let ch = lines[n].charAt(lines[n].length - 1);
 			lines[n] = lines[n].substring(0, lines[n].length - 1);
