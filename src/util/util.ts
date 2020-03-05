@@ -527,7 +527,7 @@ export function jsonPrettyPrint(json:any):string
 	for (let n = 0; n < lines.length; n++)
 	{
 		let orig = lines[n];
-		if (orig == ']' || orig == '}') indent--;
+		if (orig == ']' || orig == '}' || orig == '],' || orig == '},') indent--;
 		lines[n] = '\t'.repeat(indent) + orig;
 		if (orig == '[' || orig == '{') indent++;
 	}
