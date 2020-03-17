@@ -136,6 +136,12 @@ export class Vec
 		arr.fill(val);
 		return arr;
 	}
+	public static genericArray<T>(val:T, sz:number):T[]
+	{
+		let arr:T[] = new Array(sz);
+		arr.fill(val);
+		return arr;
+	}
 
 	public static first<T>(arr:T[]) {return arr == null || arr.length == 0 ? null : arr[0];}
 	public static last<T>(arr:T[]) {return arr == null || arr.length == 0 ? null : arr[arr.length - 1];}
