@@ -239,6 +239,10 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 
 		if (callback) callback();
 	}
+	public async setupAsync():Promise<void>
+	{
+		return new Promise(resolve => this.setup(() => resolve()));
+	}
 
 	// create the objects necessary to render the widget; this function should be called after basic pre-initialisation settings, e.g.
 	// specifying the starting molecule, initial size, etc.
@@ -673,6 +677,12 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 
 		this.layoutTemplatePerm();
 		this.delayedRedraw();
+	}
+
+	// returns true if the sketcher is focused; the display of focus is not visible, but it is still recorded
+	public hasFocus():boolean
+	{
+		return this.container.is(':focus');
 	}
 
 	// functions for converting between coordinates within the widget (pixels) & molecular position (Angstroms)

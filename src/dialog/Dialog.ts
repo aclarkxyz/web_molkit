@@ -34,6 +34,7 @@ export class Dialog
 	public maxPortionWidth = 80; //  ...
 	public maximumWidth = 0; // optional pixel-specific maximum
 	public maximumHeight = 0;
+	public topMargin = 50; // pixels to reserve along the top
 	public title = 'Dialog';
 
 	// content information that can be accessed after opening
@@ -68,21 +69,15 @@ export class Dialog
 	public open():void
 	{
 		let body = $(document.documentElement);
-		/*let bodyW = body.outerWidth(true), margW = 0.5 * (bodyW - body.outerWidth());
-		let bodyH = body.outerHeight(true), margH = 0.5 * (bodyH - body.outerHeight());*/
+		
+		let bg = this.obscureBackground = $('<div/>').appendTo(body);
+		bg.css({'width': '100%', 'height': /*document.documentElement.clientHeight + 'px'*/ '100vh'});
+		bg.css({'background-color': 'black', 'opacity': 0.8});
+		bg.css({'position': 'absolute', 'left': 0, 'top': 0, 'z-index': 9999});
+		bg.click(() => this.close());
+		this.obscureBackground = bg;		
 
-		let bg = $('<div></div>').appendTo(body);
-		bg.css('width', '100%');
-		bg.css('height', Math.max(document.body.clientHeight, document.body.scrollHeight) + 'px');
-		bg.css('background-color', 'black');
-		bg.css('opacity', 0.8);
-		bg.css('position', 'absolute');
-		bg.css('left', '0');
-		bg.css('top', '0');
-		bg.css('z-index', 9999);
-		this.obscureBackground = bg;
-
-		let pb = $('<div class="wmk-dialog"></div>').appendTo(body);
+		let pb = $('<div class="wmk-dialog"/>').appendTo(body);
 		pb.css('min-width', this.minPortionWidth + '%');
 		if (this.maximumWidth > 0) pb.css('max-width', this.maximumWidth + 'px');
 		else if (this.maxPortionWidth != null) pb.css('max-width', this.maxPortionWidth + '%');
@@ -93,12 +88,12 @@ export class Dialog
 		pb.css('border', '1px solid black');
 		pb.css('position', 'absolute');
 		pb.css('left', (50 - 0.5 * this.minPortionWidth) + '%');
-		pb.css('top', (window.scrollY + 50) + 'px');
+		pb.css('top', (window.scrollY + this.topMargin) + 'px');
 		pb.css('min-height', '20%');
 		pb.css('z-index', 10000);
 		this.panelBoundary = pb;
 
-		let tdiv = $('<div></div>').appendTo(pb);
+		let tdiv = $('<div/>').appendTo(pb);
 		tdiv.css('width', '100%');
 		tdiv.css('background-color', '#F0F0F0');
 		tdiv.css('background-image', 'linear-gradient(to right bottom, #FFFFFF, #E0E0E0)');
@@ -108,22 +103,20 @@ export class Dialog
 		tdiv.css('padding', 0);
 		this.titleDiv = tdiv;
 
-		let bdiv = $('<div></div>').appendTo(pb);
+		let bdiv = $('<div/>').appendTo(pb);
 		bdiv.css('width', '100%');
 
-		this.bodyDiv = $('<div style="padding: 0.5em;"></div>').appendTo(bdiv); // (has to be nested, otherwise runs over)
+		this.bodyDiv = $('<div style="padding: 0.5em;"/>').appendTo(bdiv); // (has to be nested, otherwise runs over)
 
-		let ttlTable = $('<table></table>').appendTo(tdiv), tr = $('<tr></tr>').appendTo(ttlTable);
+		let ttlTable = $('<table/>').appendTo(tdiv), tr = $('<tr/>').appendTo(ttlTable);
 		ttlTable.attr('width', '100%');
 
-		let tdTitle = $('<td valign="center"></td>').appendTo(tr);
+		let tdTitle = $('<td valign="center"/>').appendTo(tr);
 		tdTitle.css('padding', '0.5em');
-		let ttl = $('<font></font>').appendTo(tdTitle);
-		ttl.css('font-size', '1.5em');
-		ttl.css('font-weight', '600');
+		let ttl = $('<font/>').appendTo(tdTitle).css({'font-size': '1.5em', 'font-weight': '600'});
 		ttl.text(this.title);
 
-		let tdButtons = $('<td align="right" valign="center"></td>').appendTo(tr);
+		let tdButtons = $('<td align="right" valign="center"/>').appendTo(tr);
 		tdButtons.css('padding', '0.5em');
 		this.btnClose = $('<button class="wmk-button wmk-button-default">Close</button>').appendTo(tdButtons);
 		this.btnClose.click(() => this.close());
