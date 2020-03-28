@@ -1294,7 +1294,7 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 			this.delayedRedraw();
 		}
 
-		let len = this.lassoX.length;
+		let len = Vec.arrayLength(this.lassoX);
 		if (len > 0 && this.lassoX[len - 1] == xy[0] && this.lassoY[len - 1] == xy[1]) return; // identical
 
 		this.lassoX.push(xy[0]);

@@ -71,7 +71,7 @@ export class Dialog
 		let body = $(document.documentElement);
 		
 		let bg = this.obscureBackground = $('<div/>').appendTo(body);
-		bg.css({'width': '100%', 'height': /*document.documentElement.clientHeight + 'px'*/ '100vh'});
+		bg.css({'width': '100%', 'height': `max(${document.documentElement.clientHeight}px, 100vh)`});
 		bg.css({'background-color': 'black', 'opacity': 0.8});
 		bg.css({'position': 'absolute', 'left': 0, 'top': 0, 'z-index': 9999});
 		bg.click(() => this.close());
