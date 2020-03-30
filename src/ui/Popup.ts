@@ -57,7 +57,7 @@ export class Popup
 		let bodyH = body.outerHeight(true), margH = 0.5 * (bodyH - body.outerHeight());*/
 
 		let bg = this.obscureBackground = $('<div/>').appendTo(body);
-		bg.css({'width': '100%', 'height': /*document.documentElement.clientHeight + 'px'*/'100vh'});
+		bg.css({'width': '100%', 'height': `max(${document.documentElement.clientHeight}px, 100vh)`});
 		bg.css({'background-color': 'black', 'opacity': 0.2});
 		bg.css({'position': 'absolute', 'left': 0, 'top': 0, 'z-index': 19999});
 		bg.click(() => this.close());

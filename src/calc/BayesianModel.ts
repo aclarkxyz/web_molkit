@@ -70,6 +70,8 @@ export class BayesianModel
 	public rocAUC = Number.NaN;
 	public trainingSize = 0; // these are serialised, while the actual training set is not
 	public trainingActives = 0;
+	public atomicSlopeA = Number.NaN; // calibration for atomic predictors (to get into [-1,1])
+	public atomicInterceptB = Number.NaN; 
 
 	// truth-table and derived metrics
 	public truthTP = 0;
@@ -244,6 +246,13 @@ export class BayesianModel
 			for (let n = 0; n < na; n++) if (mask[n]) atomic[n] += c * invSz;
 		}
 
+		// special deal: if there is a calibration for atomic values, apply that and be done with it
+		if (!isNaN(this.atomicSlopeA))
+		{
+			for (let n = 0; n < na; n++) atomic[n] = (this.atomicSlopeA * atomic[n]) + this.atomicInterceptB;
+			return atomic;
+		}
+
 		// double duty: use the same source material to add up the numeric predictor as well (note that the "coverage" hashes are not necessarily
 		// the same as the approved list)
 		let pred = 0;
@@ -354,6 +363,12 @@ export class BayesianModel
 			lines.push('truth:MCC=' + this.statMCC);
 		}
 
+		if (!isNaN(this.atomicSlopeA) && !isNaN(this.atomicInterceptB))
+		{
+			lines.push('atomic:slope=' + this.atomicSlopeA);
+			lines.push('atomic:intercept=' + this.atomicInterceptB);
+		}
+
 		// notes: freeform user text
 		if (this.noteTitle) lines.push('note:title=' + this.noteTitle);
 		if (this.noteOrigin) lines.push('note:origin=' + this.noteOrigin);
@@ -437,6 +452,8 @@ export class BayesianModel
 			else if (line.startsWith('truth:F1=')) model.statF1 = parseFloat(line.substring(9));
 			else if (line.startsWith('truth:kappa=')) model.statKappa = parseFloat(line.substring(12));
 			else if (line.startsWith('truth:MCC=')) model.statMCC = parseFloat(line.substring(10));
+			else if (line.startsWith("atomic:slope=")) model.atomicSlopeA = parseFloat(line.substring(13));
+			else if (line.startsWith("atomic:intercept=")) model.atomicInterceptB = parseFloat(line.substring(17));
 			else if (line.startsWith('note:title=')) model.noteTitle = line.substring(11);
 			else if (line.startsWith('note:origin=')) model.noteOrigin = line.substring(12);
 			else if (line.startsWith('note:field=')) model.noteField = line.substring(11);
