@@ -452,8 +452,8 @@ export class BayesianModel
 			else if (line.startsWith('truth:F1=')) model.statF1 = parseFloat(line.substring(9));
 			else if (line.startsWith('truth:kappa=')) model.statKappa = parseFloat(line.substring(12));
 			else if (line.startsWith('truth:MCC=')) model.statMCC = parseFloat(line.substring(10));
-			else if (line.startsWith("atomic:slope=")) model.atomicSlopeA = parseFloat(line.substring(13));
-			else if (line.startsWith("atomic:intercept=")) model.atomicInterceptB = parseFloat(line.substring(17));
+			else if (line.startsWith('atomic:slope=;)) model.atomicSlopeA = parseFloat(line.substring(13));
+			else if (line.startsWith('atomic:intercept=')) model.atomicInterceptB = parseFloat(line.substring(17));
 			else if (line.startsWith('note:title=')) model.noteTitle = line.substring(11);
 			else if (line.startsWith('note:origin=')) model.noteOrigin = line.substring(12);
 			else if (line.startsWith('note:field=')) model.noteField = line.substring(11);

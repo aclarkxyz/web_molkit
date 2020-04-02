@@ -241,7 +241,7 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 	}
 	public async setupAsync():Promise<void>
 	{
-		return new Promise(resolve => this.setup(() => resolve()));
+		return new Promise((resolve) => this.setup(() => resolve()));
 	}
 
 	// create the objects necessary to render the widget; this function should be called after basic pre-initialisation settings, e.g.
