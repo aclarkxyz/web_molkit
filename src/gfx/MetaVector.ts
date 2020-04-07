@@ -333,6 +333,16 @@ export class MetaVector
 		this.transformPrimitives(box.x + ox, box.y + oy, scale, scale);
 	}
 
+	// if the width/height of the content exceeds either of the indicated maximum dimensions, it is scaled down accordingly;
+	// does not correct for the origin
+	public scaleExtent(maxWidth:number, maxHeight:number):void
+	{
+		let w = this.highX - this.lowX, h = this.highY - this.lowY;
+		if (w <= maxWidth && h <= maxHeight) return; // already in bounds
+		let scale = Math.min(maxWidth / w, maxHeight / h);
+		this.transformPrimitives(0, 0, scale, scale);
+	}
+
 	/* NOTE: this is the older implementation - it recalibrates to the "lowest" position, which is more of an unwanted
 			artifact than a feature... I think...
 
