@@ -796,7 +796,7 @@ export class MolUtil
 		if (mol.atomElement(atom) != 'H') return false;
 		if (mol.atomCharge(atom) != 0 || mol.atomUnpaired(atom) != 0) return false;
 		if (mol.atomIsotope(atom) != Molecule.ISOTOPE_NATURAL) return false;
-		if (mol.atomExtra(atom) != null || mol.atomTransient(atom) != null) return false;
+		if (Vec.notBlank(mol.atomExtra(atom)) || Vec.notBlank(mol.atomTransient(atom))) return false;
 		if (mol.atomAdjCount(atom) != 1) return false;
 		let other = mol.atomAdjList(atom)[0];
 		if (mol.atomElement(other) == 'H') return false;
