@@ -647,6 +647,13 @@ export class Box
 		this.x += dx;
 		this.y += dy;
 	}
+	public grow(bx:number, by:number):void
+	{
+		this.x -= bx;
+		this.y -= by;
+		this.w += 2 * bx;
+		this.h += 2 * by;
+	}
 
 	public intersects(other:Box):boolean
 	{

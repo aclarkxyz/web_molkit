@@ -17,6 +17,8 @@
 ///<reference path='AssayProvenance.ts'/>
 ///<reference path='BayesianSource.ts'/>
 ///<reference path='BayesianPrediction.ts'/>
+///<reference path='MeasurementData.ts'/>
+///<reference path='BinaryData.ts'/>
 
 namespace WebMolKit /* BOF */ {
 
@@ -39,6 +41,8 @@ export class AspectList
 			SUPPORTED_ASPECTS[AssayProvenance.CODE] = AssayProvenance.NAME;
 			SUPPORTED_ASPECTS[BayesianSource.CODE] = BayesianSource.NAME;
 			SUPPORTED_ASPECTS[BayesianPrediction.CODE] = BayesianPrediction.NAME;
+			SUPPORTED_ASPECTS[MeasurementData.CODE] = MeasurementData.NAME;
+			SUPPORTED_ASPECTS[BinaryData.CODE] = BinaryData.NAME;
 		}
 	}
 
@@ -66,6 +70,9 @@ export class AspectList
 		if (code == Experiment.CODE) return new Experiment(this.ds);
 		if (code == AssayProvenance.CODE) return new AssayProvenance(this.ds);
 		if (code == BayesianSource.CODE) return new BayesianSource(this.ds);
+		if (code == BayesianPrediction.CODE) return new BayesianPrediction(this.ds);
+		if (code == MeasurementData.CODE) return new MeasurementData(this.ds);
+		if (code == BinaryData.CODE) return new BinaryData(this.ds);
 		return null;
 	}
 

@@ -208,6 +208,13 @@ export class Vec
 		return ret;
 	}
 
+	public static identityN(start:number, sz:number):number[]
+	{
+		let ret:number[] = new Array(sz);
+		for (let n = 0; n < sz; n++) ret[n] = n + start;
+		return ret;
+	}
+
 	public static notMask(mask:boolean[]):boolean[]
 	{
 		let ret:boolean[] = new Array(mask.length);

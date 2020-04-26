@@ -188,15 +188,15 @@ export class DataSheet
 	{
 		return this.data.extData[idx].data;
 	}
-	public setExtName(idx:number, val:string)
+	public setExtName(idx:number, val:string):void
 	{
 		this.data.extData[idx].name = val;
 	}
-	public setExtType(idx:number, val:string)
+	public setExtType(idx:number, val:string):void
 	{
 		this.data.extData[idx].type = val;
 	}
-	public setExtData(idx:number, val:string)
+	public setExtData(idx:number, val:string):void
 	{
 		this.data.extData[idx].data = val;
 	}

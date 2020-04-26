@@ -21,7 +21,8 @@ namespace WebMolKit /* BOF */ {
 export interface MenuProxyContext
 {
 	label:string;
-	click:() => void;
+	click?:() => void;
+	subMenu?:MenuProxyContext[];
 }
 
 export class MenuProxy
