@@ -297,7 +297,7 @@ export class MDLMOLReader
 			else if (line.startsWith('M  SAL'))
 			{
 				let idx = parseInt(line.substring(6, 10).trim());
-				var sup = superatoms.get(idx);
+				let sup = superatoms.get(idx);
 				if (sup != null)
 				{
 					let len = parseInt(line.substring(10, 13).trim());
@@ -305,7 +305,7 @@ export class MDLMOLReader
 					for (let n = 0; n < len; n++) atoms[n] = parseInt(line.substring(13 + 4 * n, 17 + 4 * n).trim());
 					sup.atoms = Vec.concat(sup.atoms, atoms);
 				}
-				var mix = mixtures.get(idx);
+				let mix = mixtures.get(idx);
 				if (mix != null)
 				{
 					let len = parseInt(line.substring(10, 13).trim());
@@ -317,7 +317,7 @@ export class MDLMOLReader
 			else if (line.startsWith('M  SMT'))
 			{
 				let idx = parseInt(line.substring(6, 10).trim());
-				var sup = superatoms.get(idx);
+				let sup = superatoms.get(idx);
 				if (sup != null) sup.name = line.substring(11).trim();
 			}
 			else if (line.startsWith('M  LIN'))
@@ -325,7 +325,7 @@ export class MDLMOLReader
 				let len = parseInt(line.substring(6, 9).trim());
 				for (let n = 0; n < len; n++)
 				{
-					var node:MDLReaderLinkNode =
+					let node:MDLReaderLinkNode =
 					{
 						'atom': parseInt(line.substring(9 + 8 * n, 13 + 8 * n).trim()),
 						'nbrs': [],
@@ -499,7 +499,7 @@ export class MDLMOLReader
 				{
 					let bits = this.splitWithQuotes(line.substring(9));
 
-					var node:MDLReaderLinkNode =
+					let node:MDLReaderLinkNode =
 					{
 						'atom': 0,
 						'nbrs': [],
@@ -708,7 +708,7 @@ export class MDLMOLReader
 				}
 				superatoms.set(idx, sup);
 			}
-			else if (bits.length > 3 && idx > 0 && (bits[1] == 'MIX' || bits[1]== 'FOR') && parseInt(bits[2]) == idx)
+			else if (bits.length > 3 && idx > 0 && (bits[1] == 'MIX' || bits[1] == 'FOR') && parseInt(bits[2]) == idx)
 			{
 				let mix:MDLReaderGroupMixture = {'atoms': null, 'type': bits[1]};
 				for (let i = 3; i < bits.length; i++)
@@ -742,7 +742,7 @@ export class MDLMOLReader
 		while ((i = name.indexOf('\\s')) >= 0) name = name.substring(0, i) + '{' + name.substring(i + 2);
 		while ((i = name.indexOf('\\n')) >= 0) name = name.substring(0, i) + '}' + name.substring(i + 2);
 
-		var [mod, abvAtom] = MolUtil.convertToAbbrevIndex(this.mol, mask, name);
+		let [mod, abvAtom] = MolUtil.convertToAbbrevIndex(this.mol, mask, name);
 		if (mod == null) return;
 		this.mol = mod;
 
@@ -777,7 +777,7 @@ export class MDLMOLReader
 	{
 		let segments:string[] = [];
 
-		var seg = '';
+		let seg = '';
 		let depth = 0, quote = false;
 		for (let n = 0; n < line.length; n++)
 		{

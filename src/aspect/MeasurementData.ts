@@ -105,7 +105,7 @@ export class MeasurementData extends Aspect
 		}
 	}
 
-    // return the list of columns that's reserved for just the indicated field
+	// return the list of columns that's reserved for just the indicated field
 	public reservedColumns(field:number):string[]
 	{
 		let fieldName = this.header.fields[field].name;
@@ -166,7 +166,7 @@ export class MeasurementData extends Aspect
 	public getDescr(row:number, fldidx:number):string
 	{
 		let col = this.ds.findColByName(this.header.fields[fldidx].name);
-		return col < 0 ? "" : this.ds.colDescr(col);
+		return col < 0 ? '' : this.ds.colDescr(col);
 	}
 	public setDescr(row:number, fldidx:number, descr:string):void
 	{
