@@ -88,7 +88,7 @@ export class BinaryData extends Aspect
 		else if (ct == DataSheetColumn.Integer) value = this.ds.getInteger(row, col);
 		else if (ct == DataSheetColumn.Real) value = this.ds.getReal(row, col);
 		else return null;
-		
+
 		if (field.thresholdRelation == '>') return value > field.thresholdValue;
 		if (field.thresholdRelation == '<') return value < field.thresholdValue;
 		if (field.thresholdRelation == '>=') return value >= field.thresholdValue;
@@ -98,7 +98,7 @@ export class BinaryData extends Aspect
 	public getDestValue(row:number, field:BinaryDataField):boolean
 	{
 		return this.ds.getBoolean(row, field.colNameDest);
-	}	
+	}
 
 	// ----------------- private methods -----------------
 
@@ -137,20 +137,20 @@ export class BinaryData extends Aspect
 			if (line == 'field:')
 			{
 				if (f != null) fields.push(f as BinaryDataField);
-				f = {'colNameSource' : '', 'colNameDest': '', 'thresholdValue': 0.5, 'thresholdRelation': '>='};
+				f = {'colNameSource': '', 'colNameDest': '', 'thresholdValue': 0.5, 'thresholdRelation': '>='};
 				continue;
 			}
-			
+
 			if (f == null) continue;
 			let eq = line.indexOf('=');
 			if (eq < 0) continue;
-			
+
 			if (line.startsWith("colNameSource=")) f.colNameSource = MoleculeStream.sk_unescape(line.substring(eq + 1));
 			else if (line.startsWith("colNameDest=")) f.colNameDest = MoleculeStream.sk_unescape(line.substring(eq + 1));
 			else if (line.startsWith("thresholdValue=")) f.thresholdValue = parseFloat(line.substring(eq + 1));
 			else if (line.startsWith("thresholdRelation=")) f.thresholdRelation = MoleculeStream.sk_unescape(line.substring(eq + 1));
 		}
-		
+
 		if (f != null) fields.push(f);
 
 		return fields;
@@ -160,7 +160,7 @@ export class BinaryData extends Aspect
 	private formatMetaData(fields:BinaryDataField[]):string
 	{
 		let lines:string[] = [];
-		
+
 		for (let f of fields)
 		{
 			lines.push('field:');
@@ -169,7 +169,7 @@ export class BinaryData extends Aspect
 			lines.push('thresholdValue=' + f.thresholdValue);
 			lines.push('thresholdRelation=' + MoleculeStream.sk_escape(f.thresholdRelation));
 		}
-		
+
 		return lines.join('\n');
 	}
 

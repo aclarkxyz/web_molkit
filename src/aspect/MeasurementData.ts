@@ -94,17 +94,17 @@ export class MeasurementData extends Aspect
 	{
 		let oldName = this.header.fields[field].name;
 		if (oldName == newName) return;
-		
+
 		this.header.fields[field].name = newName;
 		this.setHeader(this.header);
-		
+
 		for (let sfx of ['', '_error', '_units', '_mod'])
 		{
 			let col = this.ds.findColByName(oldName + sfx);
 			if (col >= 0) this.ds.changeColumnName(col, newName + sfx, this.ds.colDescr(col));
 		}
 	}
-	
+
     // return the list of columns that's reserved for just the indicated field
 	public reservedColumns(field:number):string[]
 	{
@@ -119,18 +119,18 @@ export class MeasurementData extends Aspect
 	}
 	public getValueField(row:number, field:MeasurementDataField):MeasurementDataValue
 	{
-		let value:MeasurementDataValue = {'value': Number.NaN, 'error': Number.NaN, 'units': '', 'mod': ''}
-		
+		let value:MeasurementDataValue = {'value': Number.NaN, 'error': Number.NaN, 'units': '', 'mod': ''};
+
 		let colValue = this.ds.findColByName(field.name, DataSheetColumn.Real);
 		let colError = this.ds.findColByName(field.name + '_error', DataSheetColumn.Real);
 		let colUnits = this.ds.findColByName(field.name + '_units', DataSheetColumn.String);
 		let colMod = this.ds.findColByName(field.name + '_mod', DataSheetColumn.String);
-	
+
 		if (colValue >= 0 && this.ds.notNull(row, colValue)) value.value = this.ds.getReal(row, colValue);
 		if (colError >= 0 && this.ds.notNull(row, colError)) value.error = this.ds.getReal(row, colError);
 		if (colUnits >= 0) value.units = this.ds.getString(row, colUnits);
 		if (colMod >= 0) value.mod = this.ds.getString(row, colMod);
-		
+
 		return value;
 	}
 
@@ -141,13 +141,13 @@ export class MeasurementData extends Aspect
 		let colError = this.ds.findColByName(fieldName + '_error', DataSheetColumn.Real);
 		let colUnits = this.ds.findColByName(fieldName + '_units', DataSheetColumn.String);
 		let colMod = this.ds.findColByName(fieldName + '_mod', DataSheetColumn.String);
-		
-		if (colValue >= 0) if (isNaN(value.value)) this.ds.setToNull(row, colValue); else this.ds.setReal(row, colValue, value.value);	
-		if (colError >= 0) if (isNaN(value.error)) this.ds.setToNull(row, colError); else this.ds.setReal(row, colError, value.error);	
+
+		if (colValue >= 0) if (isNaN(value.value)) this.ds.setToNull(row, colValue); else this.ds.setReal(row, colValue, value.value);
+		if (colError >= 0) if (isNaN(value.error)) this.ds.setToNull(row, colError); else this.ds.setReal(row, colError, value.error);
 		if (colUnits >= 0) this.ds.setString(row, colUnits, value.units);
 		if (colMod >= 0) this.ds.setString(row, colMod, value.mod);
 	}
-	
+
 	public clearValue(row:number, fldidx:number):void
 	{
 		let fieldName = this.header.fields[fldidx].name;
@@ -155,7 +155,7 @@ export class MeasurementData extends Aspect
 		let colError = this.ds.findColByName(fieldName + '_error', DataSheetColumn.Real);
 		let colUnits = this.ds.findColByName(fieldName + '_units', DataSheetColumn.String);
 		let colMod = this.ds.findColByName(fieldName + '_mod', DataSheetColumn.String);
-		
+
 		if (colValue >= 0) this.ds.setToNull(row, colValue);
 		if (colError >= 0) this.ds.setToNull(row, colError);
 		if (colUnits >= 0) this.ds.setToNull(row, colUnits);
@@ -200,7 +200,7 @@ export class MeasurementData extends Aspect
 			let descr = 'Measurement';
 			let colidx = this.ds.findColByName(f.name);
 			if (colidx >= 0) descr = this.ds.colDescr(colidx);
-			
+
 			if (this.allowModify)
 			{
 				this.ds.ensureColumn(f.name, DataSheetColumn.Real, descr);
@@ -249,7 +249,7 @@ export class MeasurementData extends Aspect
 	private formatMetaData(header:MeasurementDataHeader):string
 	{
 		let lines:string[] = [];
-		
+
 		for (let u of header.units)
 		{
 			lines.push('unit=' + MoleculeStream.sk_escape(u.name) + ',' + MoleculeStream.sk_escape(u.uri) + '\n');
@@ -260,7 +260,7 @@ export class MeasurementData extends Aspect
 			for (let u of f.units) line += ',' + MoleculeStream.sk_escape(u);
 			lines.push(line);
 		}
-		
+
 		return lines.join('\n');
 	}
 
@@ -268,7 +268,7 @@ export class MeasurementData extends Aspect
 
 	public plainHeading():string {return MeasurementData.NAME;}
 
-	public isColumnReserved(colName:string):boolean	
+	public isColumnReserved(colName:string):boolean
 	{
 		return this.areColumnsReserved([colName])[0];
 	}

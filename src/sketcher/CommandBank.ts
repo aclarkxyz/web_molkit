@@ -89,7 +89,7 @@ const COMMANDS_MAIN:ButtonBankItem[] =
 	{'id': 'delete', 'imageFN': 'MainDelete', 'helpText': 'Delete selected atoms and bonds.', 'mnemonic': 'D'},
 	{'id': 'cut', 'imageFN': 'MainCut', 'helpText': 'Copy selection to clipboard, and remove.', 'mnemonic': 'Ctrl+X'},
 	{'id': 'copy', 'imageFN': 'MainCopy', 'helpText': 'Copy selection to clipboard.', 'mnemonic': 'Ctrl+C'},
-	{'id': 'paste', 'imageFN': 'MainPaste', 'helpText': 'Paste clipboard contents.' /*, 'mnemonic': 'Ctrl+V'*/}, // TODO: web-specific behaviour
+	{'id': 'paste', 'imageFN': 'MainPaste', 'helpText': 'Paste clipboard contents.'/*, 'mnemonic': 'Ctrl+V'*/}, // TODO: web-specific behaviour
 	{'id': 'atom', 'imageFN': 'MainAtom', 'helpText': 'Open the Atom submenu.', 'isSubMenu': true, 'mnemonic': 'A'},
 	{'id': 'bond', 'imageFN': 'MainBond', 'helpText': 'Open the Bond submenu.', 'isSubMenu': true, 'mnemonic': 'B'},
 	{'id': 'select', 'imageFN': 'MainSelect', 'helpText': 'Open the Selection submenu.', 'isSubMenu': true, 'mnemonic': 'S'},

@@ -1,7 +1,7 @@
 /*
 	WebMolKit
 
-	(c) 2010-2018 Molecular Materials Informatics, Inc.
+	(c) 2010-2020 Molecular Materials Informatics, Inc.
 
 	All rights reserved
 
@@ -50,6 +50,26 @@ export const MDLMOL_VALENCE:Record<string, number[]> =
 	'At': [1, 3, 5, 7],
 };
 
+export interface MDLReaderLinkNode
+{
+	atom:number;
+	nbrs:number[];
+	minRep:number;
+	maxRep:number;
+}
+
+export interface MDLReaderGroupMixture
+{
+	type:string;
+	atoms:number[];
+}
+
+export interface MDLReaderSuperAtom
+{
+	atoms:number[];
+	name:string;
+}
+
 export class MDLMOLReader
 {
 	// options
@@ -69,6 +89,16 @@ export class MDLMOLReader
 	// hydrogen count & resonance bonds supposed to be query-only, but some software abuses them to get around the structural limitations
 	public atomHyd:number[] = null;
 	public resBonds:boolean[] = null;
+
+	// "modern" features of CTAB which are not part of the lowest common denominator
+	public explicitValence:number[] = []; // -1=zero valence, 0=no opinion, >0=specific
+	public groupAttachAny = new Map<number, number[]>(); // bond -> list of atom indices
+	public groupAttachAll = new Map<number, number[]>(); // ditto
+	private groupStereoAbsolute:number[] = []; // atom centres that have absolute stereochemistry
+	private groupStereoRacemic:number[][] = []; // blocks of atoms which are racemic
+	private groupStereoRelative:number[][] = []; // blocks of atoms which exist in their drawn configuration OR the opposite
+	private groupLinkNodes:MDLReaderLinkNode[] = []; // so-called link nodes, aka repeating atom
+	private groupMixtures:MDLReaderGroupMixture[] = []; // mixture collections, which may overlap
 
 	private pos = 0;
 	private lines:string[];
@@ -126,7 +156,6 @@ export class MDLMOLReader
 		}
 		let numAtoms = parseInt(line.substring(0, 3).trim());
 		let numBonds = parseInt(line.substring(3, 6).trim());
-		let explicitValence:number[] = [];
 
 		// read out each atom
 		for (let n = 0; n < numAtoms; n++)
@@ -182,7 +211,7 @@ export class MDLMOLReader
 				*/
 			}
 
-			explicitValence.push(val);
+			this.explicitValence.push(val);
 		}
 
 		// read out each bond
@@ -200,7 +229,7 @@ export class MDLMOLReader
 			let style = Molecule.BONDTYPE_NORMAL;
 			if (stereo == 1) style = Molecule.BONDTYPE_INCLINED;
 			else if (stereo == 6) style = Molecule.BONDTYPE_DECLINED;
-			else if (stereo == 4) style = Molecule.BONDTYPE_UNKNOWN;
+			else if (stereo == 3 || stereo == 4) style = Molecule.BONDTYPE_UNKNOWN;
 
 			let b = this.mol.addBond(bfr, bto, order, style);
 
@@ -222,8 +251,11 @@ export class MDLMOLReader
 		}
 
 		// examine anything in the M-block
-		const MBLK_CHG = 1, MBLK_RAD = 2, MBLK_ISO = 3, MBLK_RGP = 4, MBLK_HYD = 5, MBLK_ZCH = 6, MBLK_ZBO = 7, MBLK_ZPA = 8, MBLK_ZRI = 9, MBLK_ZAR = 10;
+		const MBLK_CHG = 1, MBLK_RAD = 2, MBLK_ISO = 3, MBLK_RGP = 4, MBLK_HYD = 5, MBLK_ZCH = 6, MBLK_ZBO = 7,
+			  MBLK_ZPA = 8, MBLK_ZRI = 9, MBLK_ZAR = 10;
 		let resPaths = new Map<number, number[]>(), resRings = new Map<number, number[]>(), arenes = new Map<number, number[]>();
+		let superatoms = new Map<number, MDLReaderSuperAtom>(), mixtures = new Map<number, MDLReaderGroupMixture>();
+
 		while (true)
 		{
 			line = this.nextLine();
@@ -249,6 +281,64 @@ export class MDLMOLReader
 					if (line == null) break;
 					this.mol.setAtomElement(anum, line);
 					continue;
+				}
+			}
+			else if (line.startsWith('M  STY'))
+			{
+				let len = parseInt(line.substring(6, 9).trim());
+				for (let n = 0; n < len; n++)
+				{
+					let idx = parseInt(line.substring(9 + 8 * n, 13 + 8 * n).trim());
+					let stype = line.substring(14 + 8 * n, 17 + 8 * n);
+					if (stype == 'SUP') superatoms.set(idx, {'atoms': [], 'name': null});
+					else if (stype == 'MIX' || stype == 'FOR') mixtures.set(idx, {'atoms': [], 'type': stype});
+				}
+			}
+			else if (line.startsWith('M  SAL'))
+			{
+				let idx = parseInt(line.substring(6, 10).trim());
+				var sup = superatoms.get(idx);
+				if (sup != null)
+				{
+					let len = parseInt(line.substring(10, 13).trim());
+					let atoms = Vec.numberArray(0, len);
+					for (let n = 0; n < len; n++) atoms[n] = parseInt(line.substring(13 + 4 * n, 17 + 4 * n).trim());
+					sup.atoms = Vec.concat(sup.atoms, atoms);
+				}
+				var mix = mixtures.get(idx);
+				if (mix != null)
+				{
+					let len = parseInt(line.substring(10, 13).trim());
+					let atoms = Vec.numberArray(0, len);
+					for (let n = 0; n < len; n++) atoms[n] = parseInt(line.substring(13 + 4 * n, 17 + 4 * n).trim());
+					mix.atoms = Vec.concat(mix.atoms, atoms);
+				}
+			}
+			else if (line.startsWith('M  SMT'))
+			{
+				let idx = parseInt(line.substring(6, 10).trim());
+				var sup = superatoms.get(idx);
+				if (sup != null) sup.name = line.substring(11).trim();
+			}
+			else if (line.startsWith('M  LIN'))
+			{
+				let len = parseInt(line.substring(6, 9).trim());
+				for (let n = 0; n < len; n++)
+				{
+					var node:MDLReaderLinkNode =
+					{
+						'atom': parseInt(line.substring(9 + 8 * n, 13 + 8 * n).trim()),
+						'nbrs': [],
+						'minRep': 1,
+						'maxRep': parseInt(line.substring(13 + 8 * n, 17 + 8 * n).trim()),
+					};
+
+					let nbr1 = parseInt(line.substring(17 + 8 * n, 21 + 8 * n).trim());
+					let nbr2 = parseInt(line.substring(21 + 8 * n, 25 + 8 * n).trim());
+					if (nbr1 > 0) node.nbrs.push(nbr1);
+					if (nbr2 > 0) node.nbrs.push(nbr2);
+
+					this.groupLinkNodes.push(node);
 				}
 			}
 
@@ -295,7 +385,7 @@ export class MDLMOLReader
 			}
 		}
 
-		this.postFix(explicitValence);
+		this.postFix();
 
 		if (this.parseExtended)
 		{
@@ -306,11 +396,21 @@ export class MDLMOLReader
 			artifacts.rewriteMolecule();
 		}
 
+		// process superatoms: order is important
+		for (let key of Vec.sorted(Array.from(superatoms.keys())))
+		{
+			let value = superatoms.get(key);
+			superatoms.delete(key);
+			this.applySuperAtom(value, Array.from(superatoms.values()));
+		}
+
+		for (let key of Vec.sorted(Array.from(mixtures.keys()))) this.groupMixtures.push(mixtures.get(key));
+
 		this.openmol.derive(this.mol);
 	}
 
 	// performs some intrinsic post-parse fixing
-	private postFix(explicitValence:number[]):void
+	private postFix():void
 	{
 		const mol = this.mol;
 
@@ -324,7 +424,7 @@ export class MDLMOLReader
 			else if (el == 'T') {mol.setAtomElement(n, 'H'); mol.setAtomIsotope(n, 3);}
 
 			// valence, two correction scenarios: (1) if set to explicit, make the hydrogens
-			let valence = explicitValence[n - 1], options = MDLMOL_VALENCE[el];
+			let valence = this.explicitValence[n - 1], options = MDLMOL_VALENCE[el];
 			if (valence != 0)
 			{
 				let hcount = valence < 0 || valence > 14 ? 0 : valence;
@@ -366,9 +466,10 @@ export class MDLMOLReader
 	{
 		// NOTE: this is currently very minimal
 
-		let inCTAB = false, inAtom = false, inBond = false;
+		enum Section {ATOM, BOND, COLL, SGROUP}
+		let inCTAB = false, section:Section = null;
 		let lineCounts:string = null;
-		let lineAtoms:string[] = [], lineBonds:string[] = [];
+		let lineAtom:string[] = [], lineBond:string[] = [], lineColl:string[] = [], lineSgroup:string[] = [];
 
 		const ERRPFX = 'Invalid MDL MOL V3000: ';
 
@@ -382,32 +483,65 @@ export class MDLMOLReader
 
 			if (line.startsWith('COUNTS ')) lineCounts = line.substring(7);
 			else if (line.startsWith('BEGIN CTAB')) inCTAB = true;
-			else if (line.startsWith('END CTAB')) inCTAB = false;
-			else if (line.startsWith('BEGIN ATOM')) inAtom = true;
-			else if (line.startsWith('END ATOM')) inAtom = false;
-			else if (line.startsWith('BEGIN BOND')) inBond = true;
-			else if (line.startsWith('END BOND')) inBond = false;
+			else if (line.startsWith('BEGIN ATOM')) section = Section.ATOM;
+			else if (line.startsWith('BEGIN BOND')) section = Section.BOND;
+			else if (line.startsWith('BEGIN COLLECTION')) section = Section.COLL;
+			else if (line.startsWith('BEGIN SGROUP')) section = Section.SGROUP;
+			else if (line.startsWith('END ')) section = null;
 			// TO DO: make sure these are nested properly, bug out if not
-			else if (inCTAB && inAtom && !inBond) lineAtoms.push(line);
-			else if (inCTAB && inBond && !inAtom) lineBonds.push(line);
+			else if (inCTAB && section == Section.ATOM) lineAtom.push(line);
+			else if (inCTAB && section == Section.BOND) lineBond.push(line);
+			else if (inCTAB && section == Section.COLL) lineColl.push(line);
+			else if (inCTAB && section == Section.SGROUP) lineSgroup.push(line);
+			else if (inCTAB && section == null)
+			{
+				if (line.startsWith('LINKNODE '))
+				{
+					let bits = this.splitWithQuotes(line.substring(9));
+
+					var node:MDLReaderLinkNode =
+					{
+						'atom': 0,
+						'nbrs': [],
+						'minRep': parseInt(bits[0]),
+						'maxRep': parseInt(bits[1])
+					};
+
+					// convert the list of bond {a1,a2} into central atom / neighbours
+					let nb = parseInt(bits[2]);
+					let atoms:number[] = [];
+					for (let n = 0; n < nb * 2; n++) atoms.push(parseInt(bits[3 + n]));
+					Vec.sort(atoms);
+					for (let n = 0; n < atoms.length; n++)
+					{
+						if (n < atoms.length - 1 && atoms[n] == atoms[n + 1])
+							node.atom = atoms[n++];
+						else
+							node.nbrs.push(atoms[n]);
+					}
+
+					this.groupLinkNodes.push(node);
+				}
+			}
 			// (silently ignore other stuff; don't care)
 		}
 
-		let counts = lineCounts.split('\\s+');
+		let counts = lineCounts.split(/\s+/);
 		if (counts.length < 2) throw ERRPFX + 'counts line malformatted';
 		let numAtoms = parseInt(counts[0]), numBonds = parseInt(counts[1]);
-		if (numAtoms < 0 || numAtoms > lineAtoms.length) throw ERRPFX + 'unreasonable atom count: ' + numAtoms;
-		if (numBonds < 0 || numBonds > lineBonds.length) throw ERRPFX + 'unreasonable bond count: ' + numBonds;
+		if (numAtoms < 0 || numAtoms > lineAtom.length) throw ERRPFX + 'unreasonable atom count: ' + numAtoms;
+		if (numBonds < 0 || numBonds > lineBond.length) throw ERRPFX + 'unreasonable bond count: ' + numBonds;
 
 		let atomBits:string[][] = [], bondBits:string[][] = [];
 
-		for (let n = 0; n < lineAtoms.length; n++)
+		// extract atom & bond content
+		for (let n = 0; n < lineAtom.length; n++)
 		{
-			let line = lineAtoms[n];
-			while (n < lineAtoms.length - 1 && line.endsWith('-'))
+			let line = lineAtom[n];
+			while (n < lineAtom.length - 1 && line.endsWith('-'))
 			{
 				n++;
-				line = line.substring(0, line.length - 1) + lineAtoms[n];
+				line = line.substring(0, line.length - 1) + lineAtom[n];
 			}
 			let bits = this.splitWithQuotes(line);
 			if (bits.length < 6) throw ERRPFX + 'atom line has too few components: ' + line;
@@ -416,14 +550,13 @@ export class MDLMOLReader
 			if (atomBits[idx - 1] != null) throw ERRPFX + 'duplicate atom index: ' + idx;
 			atomBits[idx - 1] = bits;
 		}
-
-		for (let n = 0; n < lineBonds.length; n++)
+		for (let n = 0; n < lineBond.length; n++)
 		{
-			let line = lineBonds[n];
-			while (n < lineBonds.length - 1 && line.endsWith('-'))
+			let line = lineBond[n];
+			while (n < lineBond.length - 1 && line.endsWith('-'))
 			{
 				n++;
-				line = line.substring(0, line.length - 1) + lineBonds[n];
+				line = line.substring(0, line.length - 1) + lineBond[n];
 			}
 			let bits = this.splitWithQuotes(line);
 			if (bits.length < 4) throw ERRPFX + 'bond line has too few components: ' + line;
@@ -433,12 +566,13 @@ export class MDLMOLReader
 			bondBits[idx - 1] = bits;
 		}
 
-		let explicitValence = Vec.numberArray(0, numAtoms);
+		this.explicitValence = Vec.numberArray(0, numAtoms);
 
-		for (let n = 1; n <= numAtoms; n++)
+		// process each atom
+		for (let a = 1; a <= numAtoms; a++)
 		{
-			let bits = atomBits[n - 1];
-			if (bits == null) throw ERRPFX + 'atom definition missing for #' + n;
+			let bits = atomBits[a - 1];
+			if (bits == null) throw ERRPFX + 'atom definition missing for #' + a;
 
 			let type = bits[1];
 			let x = parseFloat(bits[2]), y = parseFloat(bits[3]), z = parseFloat(bits[4]);
@@ -446,16 +580,16 @@ export class MDLMOLReader
 			this.mol.addAtom(type, x, y);
 			/* todo: handle Z in molecule
 			if (z != 0) {mol.setAtomZ(n, z); mol.setIs3D(true);}*/
-			this.mol.setAtomMapNum(n, map);
+			this.mol.setAtomMapNum(a, map);
 
 			for (let i = 6; i < bits.length; i++)
 			{
 				let eq = bits[i].indexOf('=');
 				if (eq < 0) continue;
 				let key = bits[i].substring(0, eq), val = bits[i].substring(eq + 1);
-				if (key == 'CHG') this.mol.setAtomCharge(n, parseInt(val));
-				else if (key == 'RAD') this.mol.setAtomUnpaired(n, parseInt(val));
-				else if (key == 'MASS') this.mol.setAtomIsotope(n, parseInt(val));
+				if (key == 'CHG') this.mol.setAtomCharge(a, parseInt(val));
+				else if (key == 'RAD') this.mol.setAtomUnpaired(a, parseInt(val));
+				else if (key == 'MASS') this.mol.setAtomIsotope(a, parseInt(val));
 				else if (key == 'CFG')
 				{
 					let stereo = parseInt(val);
@@ -468,17 +602,18 @@ export class MDLMOLReader
 						else if (stereo == 3) mol.setAtomTransient(n, Vec.append(trans, ForeignMolecule.ATOM_CHIRAL_MDL_RACEMIC));*/
 					}
 				}
-				else if (key == 'VAL') explicitValence[n - 1] = parseInt(val);
+				else if (key == 'VAL') this.explicitValence[a - 1] = parseInt(val);
 			}
 		}
 
-		for (let n = 1; n <= numBonds; n++)
+		// process each bond
+		for (let b = 1; b <= numBonds; b++)
 		{
-			let bits = bondBits[n - 1];
-			if (bits == null) throw ERRPFX + 'bond definition missing for #' + n;
+			let bits = bondBits[b - 1];
+			if (bits == null) throw ERRPFX + 'bond definition missing for #' + b;
 
 			let type = parseInt(bits[1]), bfr = parseInt(bits[2]), bto = parseInt(bits[3]);
-			let order = type >= 1 && type <= 3 ? type : 1;
+			let order = type >= 1 && type <= 3 ? type : type == 9 || type == 10 ? 0 : 1;
 			this.mol.addBond(bfr, bto, order);
 
 			// type "4" is special: it is defined to be a special query type to match aromatic bonds, but it is sometimes used
@@ -494,6 +629,9 @@ export class MDLMOLReader
 				}*/
 			}
 
+			let endpts:number[] = null;
+			let attach:string = null;
+
 			for (let i = 4; i < bits.length; i++)
 			{
 				let eq = bits[i].indexOf('=');
@@ -502,21 +640,176 @@ export class MDLMOLReader
 				if (key == 'CFG')
 				{
 					let dir = parseInt(val);
-					this.mol.setBondType(n, dir == 1 ? Molecule.BONDTYPE_INCLINED :
+					this.mol.setBondType(b, dir == 1 ? Molecule.BONDTYPE_INCLINED :
 											dir == 2 ? Molecule.BONDTYPE_UNKNOWN :
 											dir == 3 ? Molecule.BONDTYPE_DECLINED : Molecule.BONDTYPE_NORMAL);
 				}
+				else if (key == 'DISP')
+				{
+					if (val == 'COORD') this.mol.setBondOrder(b, 0);
+				}
+				else if (key == 'ENDPTS') endpts = this.unpackList(val);
+				else if (key == 'ATTACH') attach = val;
+			}
+
+			if (attach != null && endpts != null)
+			{
+				if (attach == 'ALL') this.groupAttachAll.set(b, endpts);
+				else if (attach == 'ANY') this.groupAttachAny.set(b, endpts);
 			}
 		}
 
-		this.postFix(explicitValence);
+		this.postFix();
+
+		// extract collection info
+		for (let n = 0; n < lineColl.length; n++)
+		{
+			let line = lineColl[n];
+			while (n < lineColl.length - 1 && line.endsWith('-'))
+			{
+				n++;
+				line = line.substring(0, line.length - 1) + lineColl[n];
+			}
+			let bits = this.splitWithQuotes(line);
+			if (bits[0].startsWith('MDLV30/STEABS'))
+			{
+				if (bits[1].startsWith('ATOMS=')) this.groupStereoAbsolute = this.unpackList(bits[1].substring(5));
+			}
+			else if (bits[0].startsWith('MDLV30/STERAC'))
+			{
+				if (bits[1].startsWith('ATOMS=')) this.groupStereoRacemic.push(this.unpackList(bits[1].substring(6)));
+			}
+			else if (bits[0].startsWith('MDLV30/STEREL'))
+			{
+				if (bits[1].startsWith('ATOMS=')) this.groupStereoRelative.push(this.unpackList(bits[1].substring(6)));
+			}
+		}
+
+		// extract S-groups
+		let superatoms = new Map<number, MDLReaderSuperAtom>();
+		for (let n = 0; n < lineSgroup.length; n++)
+		{
+			let line = lineSgroup[n];
+			while (n < lineSgroup.length - 1 && line.endsWith('-'))
+			{
+				n++;
+				line = line.substring(0, line.length - 1) + lineSgroup[n];
+			}
+			let bits = this.splitWithQuotes(line);
+
+			let idx = parseInt(bits[0]);
+			if (bits.length > 3 && idx > 0 && bits[1] == 'SUP' && parseInt(bits[2]) == idx)
+			{
+				let sup:MDLReaderSuperAtom = {'atoms': [], 'name': null};
+				for (let i = 3; i < bits.length; i++)
+				{
+					if (bits[i].startsWith('ATOMS=')) sup.atoms = this.unpackList(bits[i].substring(6));
+					else if (bits[i].startsWith('LABEL=')) sup.name = this.withoutQuotes(bits[i].substring(6));
+				}
+				superatoms.set(idx, sup);
+			}
+			else if (bits.length > 3 && idx > 0 && (bits[1] == 'MIX' || bits[1]== 'FOR') && parseInt(bits[2]) == idx)
+			{
+				let mix:MDLReaderGroupMixture = {'atoms': null, 'type': bits[1]};
+				for (let i = 3; i < bits.length; i++)
+				{
+					if (bits[i].startsWith('ATOMS=')) mix.atoms = this.unpackList(bits[i].substring(6));
+				}
+				this.groupMixtures.push(mix);
+			}
+		}
+
+		// process superatoms: order is important
+		for (let key of Vec.sorted(Array.from(superatoms.keys())))
+		{
+			let value = superatoms.get(key);
+			superatoms.delete(key);
+			this.applySuperAtom(value, Array.from(superatoms.values()));
+		}
+	}
+
+	// applies a superatom block: turns the definition itself into an abbreviation if possible; also modifies any remaining superatoms so that their indexes
+	// are still current
+	private applySuperAtom(sup:MDLReaderSuperAtom, residual:MDLReaderSuperAtom[]):void
+	{
+		if (sup.name == null || Vec.isBlank(sup.atoms)) return;
+		let mask = Vec.booleanArray(true, this.mol.numAtoms);
+		for (let a of sup.atoms) mask[a - 1] = false;
+
+		let name = sup.name;
+		let i:number;
+		while ((i = name.indexOf('\\S')) >= 0) name = name.substring(0, i) + '{^' + name.substring(i + 2);
+		while ((i = name.indexOf('\\s')) >= 0) name = name.substring(0, i) + '{' + name.substring(i + 2);
+		while ((i = name.indexOf('\\n')) >= 0) name = name.substring(0, i) + '}' + name.substring(i + 2);
+
+		var [mod, abvAtom] = MolUtil.convertToAbbrevIndex(this.mol, mask, name);
+		if (mod == null) return;
+		this.mol = mod;
+
+		// correct atom indices for ensuing superatom blocks
+		let map = Vec.maskMap(mask);
+		for (let res of residual)
+		{
+			let subsumed = false;
+			for (let n = res.atoms.length - 1; n >= 0; n--)
+			{
+				let atom = map[res.atoms[n] - 1] + 1;
+				if (atom == 0)
+				{
+					res.atoms = Vec.remove(res.atoms, n);
+					subsumed = true;
+				}
+				else res.atoms[n] = atom;
+			}
+			if (subsumed) res.atoms = Vec.sorted(Vec.append(res.atoms, abvAtom));
+		}
+	}
+
+	// removes surrounding quotes, if any
+	private withoutQuotes(str:string):string
+	{
+		if (str.length >= 2 && str.startsWith('"') && str.endsWith('"')) return str.substring(1, str.length - 1);
+		return str;
 	}
 
 	// takes a line of whitespace-separated stuff and breaks it into pieces
 	private splitWithQuotes(line:string):string[]
 	{
-		// !! do it properly; and remember that "" -> quote literal
-		return line.split('\\s+');
+		let segments:string[] = [];
+
+		var seg = '';
+		let depth = 0, quote = false;
+		for (let n = 0; n < line.length; n++)
+		{
+			let ch = line.charAt(n);
+			if (ch == ' ' && depth == 0 && !quote)
+			{
+				if (seg.length > 0) segments.push(seg);
+				seg = '';
+			}
+			else
+			{
+				seg += ch;
+				if (ch == '"') quote = !quote;
+				else if (ch == '(' || ch == '[') depth++;
+				else if (ch == ')' || ch == ']') depth--;
+			}
+		}
+		if (seg.length > 0) segments.push(seg);
+
+		return segments;
+	}
+
+	// converts a string of the form "(sz v1 v2 ...)" into an array of just the values
+	private unpackList(str:string):number[]
+	{
+		if (!str.startsWith('(') || !str.endsWith(')')) return null;
+
+		str = str.substring(1, str.length - 1);
+		let values:number[] = [];
+		for (let bit of str.split(' ')) values.push(parseInt(bit));
+		if (values[0] != values.length - 1) return null;
+		return Vec.remove(values, 0);
 	}
 }
 
