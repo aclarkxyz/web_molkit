@@ -94,11 +94,11 @@ export class MDLMOLReader
 	public explicitValence:number[] = []; // -1=zero valence, 0=no opinion, >0=specific
 	public groupAttachAny = new Map<number, number[]>(); // bond -> list of atom indices
 	public groupAttachAll = new Map<number, number[]>(); // ditto
-	private groupStereoAbsolute:number[] = []; // atom centres that have absolute stereochemistry
-	private groupStereoRacemic:number[][] = []; // blocks of atoms which are racemic
-	private groupStereoRelative:number[][] = []; // blocks of atoms which exist in their drawn configuration OR the opposite
-	private groupLinkNodes:MDLReaderLinkNode[] = []; // so-called link nodes, aka repeating atom
-	private groupMixtures:MDLReaderGroupMixture[] = []; // mixture collections, which may overlap
+	public groupStereoAbsolute:number[] = []; // atom centres that have absolute stereochemistry
+	public groupStereoRacemic:number[][] = []; // blocks of atoms which are racemic
+	public groupStereoRelative:number[][] = []; // blocks of atoms which exist in their drawn configuration OR the opposite
+	public groupLinkNodes:MDLReaderLinkNode[] = []; // so-called link nodes, aka repeating atom
+	public groupMixtures:MDLReaderGroupMixture[] = []; // mixture collections, which may overlap
 
 	private pos = 0;
 	private lines:string[];
