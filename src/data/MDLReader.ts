@@ -60,6 +60,8 @@ export interface MDLReaderLinkNode
 
 export interface MDLReaderGroupMixture
 {
+	index:number;
+	parent:number;
 	type:string;
 	atoms:number[];
 }
@@ -291,7 +293,18 @@ export class MDLMOLReader
 					let idx = parseInt(line.substring(9 + 8 * n, 13 + 8 * n).trim());
 					let stype = line.substring(14 + 8 * n, 17 + 8 * n);
 					if (stype == 'SUP') superatoms.set(idx, {'atoms': [], 'name': null});
-					else if (stype == 'MIX' || stype == 'FOR') mixtures.set(idx, {'atoms': [], 'type': stype});
+					else if (stype == 'MIX' || stype == 'FOR') mixtures.set(idx, {'index': idx, 'parent': 0, 'atoms': [], 'type': stype});
+				}
+			}
+			else if (line.startsWith('M  SPL'))
+			{
+				let len = parseInt(line.substring(6, 9).trim());
+				for (let n = 0; n < len; n++)
+				{
+					let child = parseInt(line.substring(9 + 8 * n, 13 + 8 * n).trim());
+					let parent = parseInt(line.substring(13 + 8 * n, 17 + 8 * n).trim());
+					let mix = mixtures.get(child);
+					if (mix != null) mix.parent = parent;
 				}
 			}
 			else if (line.startsWith('M  SAL'))
@@ -710,10 +723,11 @@ export class MDLMOLReader
 			}
 			else if (bits.length > 3 && idx > 0 && (bits[1] == 'MIX' || bits[1] == 'FOR') && parseInt(bits[2]) == idx)
 			{
-				let mix:MDLReaderGroupMixture = {'atoms': null, 'type': bits[1]};
+				let mix:MDLReaderGroupMixture = {'index': idx, 'parent': 0, 'atoms': null, 'type': bits[1]};
 				for (let i = 3; i < bits.length; i++)
 				{
 					if (bits[i].startsWith('ATOMS=')) mix.atoms = this.unpackList(bits[i].substring(6));
+					else if (bits[i].startsWith('PARENT=')) mix.parent = parseInt(bits[i].substring(7));
 				}
 				this.groupMixtures.push(mix);
 			}
