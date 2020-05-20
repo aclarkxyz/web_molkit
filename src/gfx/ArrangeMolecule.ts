@@ -322,7 +322,7 @@ export class ArrangeMolecule
 			}
 
 			// for dotted/declined, swap the sides
-			if (bo != 1 && bt == Molecule.BONDTYPE_DECLINED) {let tmp = xy1; xy1 = xy2; xy2 = tmp;}
+			if (bo != 1 && bt == Molecule.BONDTYPE_DECLINED) [xy1, xy2] = [xy2, xy1];
 
 			// for flat multi-order bonds, add multiple lines
 			if (bo > 1 && (bt == Molecule.BONDTYPE_NORMAL || bt == Molecule.BONDTYPE_UNKNOWN))
@@ -340,7 +340,7 @@ export class ArrangeMolecule
 						'type': ltype,
 						'line': new Line(lx1, ly1, lx2, ly2),
 						'size': sz,
-						'head': 0,
+						'head': head,
 						'col': col
 					};
 					this.lines.push(b);
@@ -1195,6 +1195,7 @@ export class ArrangeMolecule
 		}
 
 		let lt = this.mol.bondType(idx) == Molecule.BONDTYPE_UNKNOWN ? BLineType.Unknown : BLineType.Normal;
+		let head = lt == BLineType.Unknown ? 0.1 * this.scale : 0;
 		let col = this.effects.colBond[idx];
 		if (!col) col = this.policy.data.foreground;
 		//(do mapped colour?)
@@ -1208,7 +1209,7 @@ export class ArrangeMolecule
 			'type': lt,
 			'line': new Line(ax1, ay1, ax2, ay2),
 			'size': sz,
-			'head': 0,
+			'head': head,
 			'col': col
 		};
 		let b2:BLine =
@@ -1219,7 +1220,7 @@ export class ArrangeMolecule
 			'type': lt,
 			'line': new Line(bx1, by1, bx2, by2),
 			'size': sz,
-			'head': 0,
+			'head': head,
 			'col': col
 		};
 

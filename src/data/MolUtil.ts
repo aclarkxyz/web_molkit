@@ -124,6 +124,10 @@ export class MolUtil
 	// NOTE: returns null if the template creation is invalid
 	public static convertToAbbrev(mol:Molecule, srcmask:boolean[], abbrevName:string):Molecule
 	{
+		return this.convertToAbbrevIndex(mol, srcmask, abbrevName)[0];
+	}
+	public static convertToAbbrevIndex(mol:Molecule, srcmask:boolean[], abbrevName:string):[Molecule, number]
+	{
 		let junction = 0;
 		for (let n = 1; n <= mol.numBonds; n++)
 		{
@@ -176,7 +180,7 @@ export class MolUtil
 		newmol.addBond(molidx, newatom, bondOrder);
 		MolUtil.setAbbrev(newmol, newatom, frag);
 
-		return newmol;
+		return [newmol, newatom];
 	}
 
 	// hunts through any abbreviations, and expands them out to form actual atoms; the resulting representation is fair game for things

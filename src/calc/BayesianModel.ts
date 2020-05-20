@@ -71,7 +71,7 @@ export class BayesianModel
 	public trainingSize = 0; // these are serialised, while the actual training set is not
 	public trainingActives = 0;
 	public atomicSlopeA = Number.NaN; // calibration for atomic predictors (to get into [-1,1])
-	public atomicInterceptB = Number.NaN; 
+	public atomicInterceptB = Number.NaN;
 
 	// truth-table and derived metrics
 	public truthTP = 0;
