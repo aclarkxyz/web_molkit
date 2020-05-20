@@ -323,13 +323,13 @@ export class MDLMOLReader
 			if (el == 'D') {mol.setAtomElement(n, 'H'); mol.setAtomIsotope(n, 2);}
 			else if (el == 'T') {mol.setAtomElement(n, 'H'); mol.setAtomIsotope(n, 3);}
 
-			// valence, two correction scenarios: (1) if set to explicit, make the hydrogens
+			// valence, two correction scenarios
 			let valence = explicitValence[n - 1], options = MDLMOL_VALENCE[el];
 			if (valence != 0)
 			{
 				let hcount = valence < 0 || valence > 14 ? 0 : valence;
 				for (let b of mol.atomAdjBonds(n)) hcount -= mol.bondOrder(b);
-				if (hcount != mol.atomHydrogens(n)) mol.setAtomHExplicit(n, hcount);
+				if (hcount != mol.atomHydrogens(n)) mol.setAtomHExplicit(n, Math.max(0, hcount));
 			}
 			else if (options)
 			{
@@ -340,7 +340,7 @@ export class MDLMOLReader
 				for (let v of options) if (usedValence <= v)
 				{
 					let hcount = v - usedValence;
-					if (hcount != mol.atomHydrogens(n)) mol.setAtomHExplicit(n, hcount);
+					if (hcount != mol.atomHydrogens(n)) mol.setAtomHExplicit(n, Math.max(0, hcount));
 					break;
 				}
 			}
