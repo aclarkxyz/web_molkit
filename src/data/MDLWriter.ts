@@ -152,7 +152,10 @@ export class MDLMOLWriter
 			if (stereo == Molecule.BONDTYPE_NORMAL) {}
 			else if (stereo == Molecule.BONDTYPE_INCLINED) {stereo = 1; type = 1;}
 			else if (stereo == Molecule.BONDTYPE_DECLINED) {stereo = 6; type = 1;}
-			else if (stereo == Molecule.BONDTYPE_UNKNOWN) {stereo = 4; type = 1;}
+			else if (stereo == Molecule.BONDTYPE_UNKNOWN) 
+			{
+				if (type == 1) stereo = 4; else stereo = 3;
+			}
 			else stereo = 0;
 
 			let line = this.intrpad(mol.bondFrom(n), 3) + this.intrpad(mol.bondTo(n), 3) +
