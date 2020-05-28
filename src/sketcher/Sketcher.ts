@@ -241,7 +241,7 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 	}
 	public async setupAsync():Promise<void>
 	{
-		return new Promise((resolve) => this.setup(() => resolve()));
+		return new Promise<void>((resolve) => this.setup(() => resolve()));
 	}
 
 	// create the objects necessary to render the widget; this function should be called after basic pre-initialisation settings, e.g.
@@ -1335,15 +1335,16 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 				'destY': []
 			};
 
-			let mx = this.xToAng(this.clickX), my = this.yToAng(this.clickY);
+			let mx = this.opAtom == 0 ? this.xToAng(this.clickX) : this.mol.atomX(this.opAtom);
+			let my = this.opAtom == 0 ? this.yToAng(this.clickY) : this.mol.atomY(this.opAtom);
 			for (let n = 0; n < 12; n++)
 			{
 				let theta = TWOPI * n / 12;
 				let dx = Molecule.IDEALBOND * Math.cos(theta), dy = Molecule.IDEALBOND * Math.sin(theta);
 				g.x.push(mx + dx);
 				g.y.push(my + dy);
-				g.destX.push(this.clickX + dx * this.pointScale);
-				g.destY.push(this.clickY - dy * this.pointScale);
+				g.destX.push(g.sourceX + dx * this.pointScale);
+				g.destY.push(g.sourceY - dy * this.pointScale);
 			}
 
 			return [g];

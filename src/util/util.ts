@@ -566,7 +566,7 @@ export const enum KeyCode
 // fetches the contents of a file, referenced via URL, and presumed to be text formatted; conveniently wrapped in an async promise
 export async function readTextURL(url:string | URL):Promise<string>
 {
-	return new Promise((resolve, reject) =>
+	return new Promise<string>((resolve, reject) =>
 	{
 		let request = new XMLHttpRequest();
 		request.open('GET', url.toString(), true);
