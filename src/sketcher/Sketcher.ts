@@ -1789,7 +1789,7 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 				}
 				else if (this.opShift && !this.opCtrl && !this.opAlt)
 				{
-					// !! toggle selected state of clickobj...
+					if (clickAtom > 0) this.setSelected(clickAtom, !this.getSelected(clickAtom));
 				}
 			}
 			else if (this.dragType == DraggingTool.Erasor)
