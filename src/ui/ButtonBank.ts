@@ -42,7 +42,7 @@ export interface ButtonBankItem
 
 export abstract class ButtonBank
 {
-	public buttonView:any; // the widget parent
+	public buttonView:ButtonView; // the widget parent
 	public isSubLevel = false; // true if it's not the first-on-stack
 	public buttons:ButtonBankItem[] = [];
 
@@ -93,22 +93,6 @@ export abstract class ButtonBank
 		if (key) mkey = key; // override
 
 		return mkey.toLowerCase() == event.key.toLowerCase();
-
-		/*let ch = String.fromCharCode(event.keyCode || event.charCode);
-
-		if (event.keyCode == 27) ch = 'escape';
-		else if (event.keyCode == 8) ch = 'backspace';
-		else if (event.keyCode == 46) ch = 'delete';
-
-		if (mshift)
-		{
-			// special deal: some shifted characters look better if they're displayed unshifted; have to do a switcheroo
-			const SHIFT_SUBST:{[id:string] : string} =
-				{'1': '!', '2': '@', '3': '#', '4': '$', '5': '%', '6': '^', '7': '&', '8': '*', '9': '(', '0': ')', '-': '_', '=': '+'};
-			let subst = SHIFT_SUBST[mkey];
-			if (subst) mkey = subst;
-		}
-		return ch.toLowerCase() == mkey.toLowerCase();*/
 	}
 }
 

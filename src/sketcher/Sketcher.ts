@@ -2124,16 +2124,21 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 			}
 		}
 
+		//console.log('Keycode:[' + event.keyCode + '] Key:[' + event.key + ']');
+		
 		// non-modifier keys that don't generate a 'pressed' event
+		let nomod = !event.shiftKey && !event.ctrlKey && !event.altKey;
 		if (key == KeyCode.Enter)
 		{
 			if (this.currentAtom > 0) this.editAtom(this.currentAtom);
 			else if (this.currentBond > 0) this.editBond(this.currentBond);
 		}
-		else if (key == KeyCode.Left) this.hitArrowKey(-1, 0);
-		else if (key == KeyCode.Right) this.hitArrowKey(1, 0);
-		else if (key == KeyCode.Up) this.hitArrowKey(0, 1);
-		else if (key == KeyCode.Down) this.hitArrowKey(0, -1);
+		else if (key == KeyCode.Left && nomod) this.hitArrowKey(-1, 0);
+		else if (key == KeyCode.Right && nomod) this.hitArrowKey(1, 0);
+		else if (key == KeyCode.Up && nomod) this.hitArrowKey(0, 1);
+		else if (key == KeyCode.Down && nomod) this.hitArrowKey(0, -1);
+		else if (key == 'z' && nomod) this.toolView.cycleSelected(-1);
+		else if (key == 'x' && nomod) this.toolView.cycleSelected(1);
 		else if (this.toolView != null && this.toolView.topBank.claimKey(event)) {}
 		else if (this.commandView != null && this.commandView.topBank.claimKey(event)) {}
 		else if (this.templateView != null && this.templateView.topBank.claimKey(event)) {}

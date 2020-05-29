@@ -203,6 +203,18 @@ export class ButtonView extends Widget
 		}
 	}
 
+	// pick next/previous button
+	public cycleSelected(dir:number):void
+	{
+		let sorted = this.display.filter((s) => s.id != '*');
+		sorted.sort((d1, d2) => (d1.y * 10000 + d1.x) - (d2.y * 10000 + d2.x));
+
+		let idx = 0, sz = sorted.length;
+		for (let n = 0; n < sz; n++) if (sorted[n].id == this.selectedButton) {idx = n; break;}
+		this.selectedButton = sorted[(idx + dir + sz) % sz].id;
+		this.redraw();
+	}
+
 	// raises or lowers the buttonbank
 	public raiseBank():void
 	{
