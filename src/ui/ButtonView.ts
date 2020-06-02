@@ -137,13 +137,13 @@ export class ButtonView extends Widget
 		this.applyOffset();
 		this.redraw();
 
-		this.content.click((event:MouseEvent) => this.mouseClick(event));
-		this.content.dblclick((event:MouseEvent) => this.mouseDoubleClick(event));
-		this.content.mousedown((event:JQueryEventObject) => {event.preventDefault(); this.mouseDown(event);});
-		this.content.mouseup((event:JQueryEventObject) => this.mouseUp(event));
-		this.content.mouseover((event:JQueryEventObject) => this.mouseOver(event));
-		this.content.mouseout((event:JQueryEventObject) => this.mouseOut(event));
-		this.content.mousemove((event:JQueryEventObject) => this.mouseMove(event));
+		this.content.click((event:JQueryMouseEventObject) => this.mouseClick(event));
+		this.content.dblclick((event:JQueryMouseEventObject) => this.mouseDoubleClick(event));
+		this.content.mousedown((event:JQueryMouseEventObject) => {event.preventDefault(); this.mouseDown(event);});
+		this.content.mouseup((event:JQueryMouseEventObject) => this.mouseUp(event));
+		this.content.mouseover((event:JQueryMouseEventObject) => this.mouseOver(event));
+		this.content.mouseout((event:JQueryMouseEventObject) => this.mouseOut(event));
+		this.content.mousemove((event:JQueryMouseEventObject) => this.mouseMove(event));
 	}
 
 	// adds a new molsync.ui.ButtonBank instance to the stack, making it the current one
@@ -986,7 +986,7 @@ export class ButtonView extends Widget
 	// --------------------------------------- toolkit events ---------------------------------------
 
 	// event responses
-	private mouseClick(event:MouseEvent):void
+	private mouseClick(event:JQueryMouseEventObject):void
 	{
 		/*let xy = eventCoords(event, this.content);
 		if (!this.withinOutline(xy[0], xy[1])) return; // propagate
@@ -997,12 +997,12 @@ export class ButtonView extends Widget
 
 		event.stopPropagation();*/
 	}
-	private mouseDoubleClick(event:MouseEvent):void
+	private mouseDoubleClick(event:JQueryMouseEventObject):void
 	{
 		// (do something?)
 		event.stopImmediatePropagation();
 	}
-	private mouseDown(event:JQueryEventObject):void
+	private mouseDown(event:JQueryMouseEventObject):void
 	{
 		let xy = eventCoords(event, this.content);
 		if (!this.withinOutline(xy[0], xy[1])) return; // propagate
@@ -1018,7 +1018,7 @@ export class ButtonView extends Widget
 
 		event.stopPropagation();
 	}
-	private mouseUp(event:JQueryEventObject):void
+	private mouseUp(event:JQueryMouseEventObject):void
 	{
 		let xy = eventCoords(event, this.content);
 		if (!this.withinOutline(xy[0], xy[1])) return; // propagate
@@ -1040,7 +1040,7 @@ export class ButtonView extends Widget
 
 		event.stopPropagation();
 	}
-	private mouseOver(event:JQueryEventObject):void
+	private mouseOver(event:JQueryMouseEventObject):void
 	{
 		let xy = eventCoords(event, this.content);
 		if (!this.withinOutline(xy[0], xy[1])) return; // propagate
@@ -1049,7 +1049,7 @@ export class ButtonView extends Widget
 
 		event.stopPropagation();
 	}
-	private mouseOut(event:JQueryEventObject):void
+	private mouseOut(event:JQueryMouseEventObject):void
 	{
 		let xy = eventCoords(event, this.content);
 		if (!this.withinOutline(xy[0], xy[1]))
@@ -1075,7 +1075,7 @@ export class ButtonView extends Widget
 
 		event.stopPropagation();
 	}
-	private mouseMove(event:JQueryEventObject):void
+	private mouseMove(event:JQueryMouseEventObject):void
 	{
 		let xy = eventCoords(event, this.content);
 		if (!this.withinOutline(xy[0], xy[1])) return; // propagate

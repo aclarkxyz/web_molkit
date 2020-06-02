@@ -11,7 +11,7 @@
 */
 
 ///<reference path='Vec.ts'/>
-///<reference path='../decl/jquery.d.ts'/>
+///<reference path='../decl/jquery/index.d.ts'/>
 
 namespace WebMolKit /* BOF */ {
 

@@ -1,6 +1,6 @@
 // fixes that are broken with regard to TypeScript importing
 
-///<reference path='../decl/jquery.d.ts'/>
+///<reference path='../decl/jquery/index.d.ts'/>
 
 interface Path2D 
 {

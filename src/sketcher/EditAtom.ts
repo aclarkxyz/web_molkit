@@ -112,7 +112,7 @@ export class EditAtom extends Dialog
 		{
 			let dom = $(child).css({'font': 'inherit'});
 			if (idx == 0) dom.focus();
-			dom.keydown((event:KeyboardEvent) =>
+			dom.keydown((event:JQueryKeyEventObject) =>
 			{
 				let keyCode = event.keyCode || event.which;
 				if (keyCode == 13) this.applyChanges();
@@ -208,7 +208,7 @@ export class EditAtom extends Dialog
 		let lastSearch = '';
 		this.inputAbbrevSearch.on('input', () =>
 		{
-			let search = this.inputAbbrevSearch.val();
+			let search = this.inputAbbrevSearch.val().toString();
 			if (search == lastSearch) return;
 			lastSearch = search;
 			this.fillAbbreviations();
@@ -298,30 +298,30 @@ export class EditAtom extends Dialog
 
 		if (atom == 0) atom = this.atom = mol.addAtom('C', this.newX, this.newY);
 
-		let sym = this.inputSymbol.val();
+		let sym = this.inputSymbol.val().toString();
 		if (sym != '') mol.setAtomElement(atom, sym);
 
-		let chg = parseInt(this.inputCharge.val());
+		let chg = parseInt(this.inputCharge.val().toString());
 		if (chg > -20 && chg < 20) mol.setAtomCharge(atom, chg);
 
-		let unp = parseInt(this.inputUnpaired.val());
+		let unp = parseInt(this.inputUnpaired.val().toString());
 		if (unp >= 0 && unp < 20) mol.setAtomUnpaired(atom, unp);
 
 		if (this.optionHydrogen.getSelectedIndex() == 1)
 		{
-			let hyd = parseInt(this.inputHydrogen.val());
+			let hyd = parseInt(this.inputHydrogen.val().toString());
 			if (hyd >= 0 && hyd < 20) mol.setAtomHExplicit(atom, hyd);
 		}
 		else mol.setAtomHExplicit(atom, Molecule.HEXPLICIT_UNKNOWN);
 
 		if (this.optionIsotope.getSelectedIndex() == 1)
 		{
-			let iso = parseInt(this.inputIsotope.val());
+			let iso = parseInt(this.inputIsotope.val().toString());
 			if (iso >= 0 && iso < 300) mol.setAtomIsotope(atom, iso);
 		}
 		else mol.setAtomIsotope(atom, Molecule.ISOTOPE_NATURAL);
 
-		let map = parseInt(this.inputMapping.val());
+		let map = parseInt(this.inputMapping.val().toString());
 		if (!isNaN(map)) mol.setAtomMapNum(atom, map);
 	}
 
@@ -345,7 +345,7 @@ export class EditAtom extends Dialog
 
 	private updateGeometry():void
 	{
-		let strval1 = this.inputGeom1.val(), strval2 = this.inputGeom2.val();
+		let strval1 = this.inputGeom1.val().toString(), strval2 = this.inputGeom2.val().toString();
 		if (this.refGeom1 == strval1 && this.refGeom2 == strval2) return;
 
 		const {mol} = this;
@@ -464,7 +464,7 @@ export class EditAtom extends Dialog
 		tr.append('<td><u>Structure</u></td>');
 
 		this.abbrevEntries = [];
-		let search = this.inputAbbrevSearch.val().toLowerCase();
+		let search = this.inputAbbrevSearch.val().toString().toLowerCase();
 
 		for (let n = 0; n < this.abbrevList.length; n++)
 		{

@@ -10,7 +10,7 @@
 	[PKG=webmolkit]
 */
 
-///<reference path='../decl/jquery.d.ts'/>
+///<reference path='../decl/jquery/index.d.ts'/>
 ///<reference path='util.ts'/>
 
 namespace WebMolKit /* BOF */ {
