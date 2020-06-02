@@ -6599,7 +6599,7 @@ $( "#checkMetaKey" ).click(function( event ) {
 }
 
 declare const jQuery: JQueryStatic;
-declare const $: JQueryStatic;
+declare var $: JQueryStatic;
 
 type _Event = Event;
 type _UIEvent = UIEvent;

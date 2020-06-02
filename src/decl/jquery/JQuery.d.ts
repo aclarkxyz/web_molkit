@@ -1554,6 +1554,7 @@ $( "p" ).blur();
      */
     change<TData>(eventData: TData,
                   handler: JQuery.TypeEventHandler<TElement, TData, TElement, TElement, 'change'>): this;
+	change(handler?:(event:JQueryEventObject) => void):this;
     /**
      * Bind an event handler to the "change" JavaScript event, or trigger that event on an element.
      * @param handler A function to execute each time the event is triggered.
@@ -2108,6 +2109,7 @@ $( "#frameDemo" ).contents().find( "a" ).css( "background-color", "#BADA55" );
      */
     contextmenu<TData>(eventData: TData,
                        handler: JQuery.TypeEventHandler<TElement, TData, TElement, TElement, 'contextmenu'>): this;
+	contextmenu(handler?:(event:JQueryMouseEventObject) => void):this;
     /**
      * Bind an event handler to the "contextmenu" JavaScript event, or trigger that event on an element.
      * @param handler A function to execute each time the event is triggered.
