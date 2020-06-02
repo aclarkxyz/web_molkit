@@ -38,6 +38,8 @@ export class ButtonView extends Widget
 	public height = 0;
 	public selectedButton:string = null;
 	public highlightButton:string = null;
+	public maxButtonColumns = 0; // optional
+	public maxButtonRows = 0; // optional
 
 	private border = 0x808080;
 	private background = 0xFFFFFF;
@@ -289,6 +291,12 @@ export class ButtonView extends Widget
 	public gripSize():number
 	{
 		return this.gripHeight;
+	}
+
+	// returns the minimum size (either width or height) given a particular number of buttons, not including grip widgets
+	public sizeForButtons(nbtn:number):number
+	{
+		return this.idealSize * nbtn + this.inPadding * (nbtn - 1) + 2 * this.outPadding;
 	}
 
 	// --------------------------------------- private methods ---------------------------------------
@@ -928,10 +936,13 @@ export class ButtonView extends Widget
 	private scoreLayout(slots:string[][])
 	{
 		let score = 0;
-		for (let y = 0; y < slots.length; y++) for (let x = 0; x < slots[y].length; x++)
+		let nrows = slots.length, ncols = slots[0].length;
+		for (let y = 0; y < nrows; y++) for (let x = 0; x < ncols; x++)
 		{
 			if (slots[y][x] == null) score++;
 		}
+		if (this.maxButtonRows > 0 && nrows > this.maxButtonRows) score += (nrows - this.maxButtonRows) * 100;
+		if (this.maxButtonColumns > 0 && ncols > this.maxButtonColumns) score += (ncols - this.maxButtonColumns) * 100;
 		return score;
 	}
 
