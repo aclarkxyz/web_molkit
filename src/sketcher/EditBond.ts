@@ -86,7 +86,7 @@ export class EditBond extends Dialog
 		{
 			let dom = $(child).css({'font': 'inherit'});
 			if (idx == 0) dom.focus();
-			dom.keydown((event:KeyboardEvent) =>
+			dom.keydown((event:JQueryKeyEventObject) =>
 			{
 				let keyCode = event.keyCode || event.which;
 				if (keyCode == 13) this.applyChanges();
@@ -135,15 +135,15 @@ export class EditBond extends Dialog
 		this.optionStereo.render($('<div/>').appendTo(grid).css({'grid-column': 'col1 / col4', 'grid-row': '2'}));
 
 		$('<div/>').appendTo(grid).css({'grid-area': '3 / col0'}).text('From');
-		this.inputFrom = $('<input size="6"/>').appendTo(grid).css({'grid-area': '3 / col1', 'font': 'inherit'}).attr('readonly', true);
+		this.inputFrom = $('<input size="6"/>').appendTo(grid).css({'grid-area': '3 / col1', 'font': 'inherit'}).attr('readonly', 'true');
 		this.inputFrom.val(mol.bondFrom(bond).toString());
 
 		$('<div/>').appendTo(grid).css({'grid-area': '3 / col2'}).text('To');
-		this.inputTo = $('<input size="6"/>').appendTo(grid).css({'grid-area': '3 / col3', 'font': 'inherit'}).attr('readonly', true);
+		this.inputTo = $('<input size="6"/>').appendTo(grid).css({'grid-area': '3 / col3', 'font': 'inherit'}).attr('readonly', 'true');
 		this.inputTo.val(mol.bondTo(bond).toString());
 
 		$('<div/>').appendTo(grid).css({'grid-area': '4 / col2'}).text('Index');
-		this.inputIndex = $('<input size="6"/>').appendTo(grid).css({'grid-area': '4 / col3', 'font': 'inherit'}).attr('readonly', true);
+		this.inputIndex = $('<input size="6"/>').appendTo(grid).css({'grid-area': '4 / col3', 'font': 'inherit'}).attr('readonly', 'true');
 		this.inputIndex.val(bond.toString());
 	}
 
@@ -200,7 +200,7 @@ export class EditBond extends Dialog
 
 	private updateGeometry():void
 	{
-		let strval1 = this.inputGeom1.val();
+		let strval1 = this.inputGeom1.val().toString();
 		if (this.refGeom1 == strval1) return;
 
 		const {mol} = this;

@@ -153,11 +153,11 @@ export class MapReaction extends Dialog
 		ctx.scale(density, density);
 		this.redrawCanvas();
 
-		$(this.canvas).mousedown((event:JQueryEventObject) => {event.preventDefault(); this.mouseDown(event);});
-		$(this.canvas).mouseup((event:JQueryEventObject) => this.mouseUp(event));
-		$(this.canvas).mouseenter((event:JQueryEventObject) => this.mouseEnter(event));
-		$(this.canvas).mouseleave((event:JQueryEventObject) => this.mouseLeave(event));
-		$(this.canvas).mousemove((event:JQueryEventObject) => this.mouseMove(event));
+		$(this.canvas).mousedown((event:JQueryMouseEventObject) => {event.preventDefault(); this.mouseDown(event);});
+		$(this.canvas).mouseup((event:JQueryMouseEventObject) => this.mouseUp(event));
+		$(this.canvas).mouseenter((event:JQueryMouseEventObject) => this.mouseEnter(event));
+		$(this.canvas).mouseleave((event:JQueryMouseEventObject) => this.mouseLeave(event));
+		$(this.canvas).mousemove((event:JQueryMouseEventObject) => this.mouseMove(event));
 
 		// draw the molecules, which don't change
 		this.drawnMols = newElement(div, 'canvas', {'width': this.canvasW * density, 'height': this.canvasH * density, 'style': styleOverlay}) as HTMLCanvasElement;
@@ -440,7 +440,7 @@ export class MapReaction extends Dialog
 
 	// --------------------------------------- toolkit events ---------------------------------------
 
-	private mouseDown(event:JQueryEventObject):void
+	private mouseDown(event:JQueryMouseEventObject):void
 	{
 		let xy = eventCoords(event, this.canvas);
 		this.pressed = this.pickAtom(xy[0], xy[1]);
@@ -448,7 +448,7 @@ export class MapReaction extends Dialog
 		this.dragToY = xy[1];
 		this.redrawCanvas();
 	}
-	private mouseUp(event:JQueryEventObject):void
+	private mouseUp(event:JQueryMouseEventObject):void
 	{
 		let xy = eventCoords(event, this.canvas);
 		if (this.pressed[0] > 0)
@@ -475,10 +475,10 @@ export class MapReaction extends Dialog
 		this.highlighted = this.pickAtom(xy[0], xy[1]);
 		this.redrawCanvas();
 	}
-	private mouseEnter(event:JQueryEventObject):void
+	private mouseEnter(event:JQueryMouseEventObject):void
 	{
 	}
-	private mouseLeave(event:JQueryEventObject):void
+	private mouseLeave(event:JQueryMouseEventObject):void
 	{
 		if (this.highlighted[0] > 0 || this.pressed[0] > 0)
 		{
@@ -487,7 +487,7 @@ export class MapReaction extends Dialog
 			this.redrawCanvas();
 		}
 	}
-	private mouseMove(event:JQueryEventObject):void
+	private mouseMove(event:JQueryMouseEventObject):void
 	{
 		let xy = eventCoords(event, this.canvas);
 		if (this.pressed[0] > 0)

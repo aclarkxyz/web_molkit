@@ -1,7 +1,7 @@
 /*
     WebMolKit
 
-    (c) 2010-2017 Molecular Materials Informatics, Inc.
+    (c) 2010-2020 Molecular Materials Informatics, Inc.
 
     All rights reserved
 
@@ -11,12 +11,15 @@
 */
 
 ///<reference path='Vec.ts'/>
+///<reference path='../decl/jquery/index.d.ts'/>
 
 namespace WebMolKit /* BOF */ {
 
 /*
 	General purpose functions. Note that these are not in the WebMolKit namespace.
 */
+
+//export declare var $:JQueryStatic;
 
 // string-to-number: control the behaviour when invalid
 export function safeInt(str:string, def:number = 0):number
@@ -46,7 +49,7 @@ export function newElement(parent:any, tag:string, attr?:any):Element
 // appends child text to the node
 export function addText(parent:any, text:string)
 {
-	let el:Element = parent instanceof jQuery ? (parent as JQuery)[0] : parent as Element;
+	let el = $(parent)[0];
 	el.appendChild(document.createTextNode(text));
 }
 
@@ -196,7 +199,7 @@ export function notDef(v:any)
 
 // given a particular event, picks out the (x,y) coordinates, and offsets them until they are in the space of the given
 // node container, which must be a parent
-export function eventCoords(event:BaseJQueryEventObject, container:any):number[]
+export function eventCoords(event:JQueryMouseEventObject, container:any):number[]
 {
 	let parentOffset = $(container).offset();
 	let relX = event.pageX - parentOffset.left;

@@ -10,6 +10,7 @@
 	[PKG=webmolkit]
 */
 
+///<reference path='../util/util.ts'/>
 ///<reference path='../util/Geom.ts'/>
 
 /* eslint-disable comma-spacing */
