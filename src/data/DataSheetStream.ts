@@ -25,12 +25,19 @@ namespace WebMolKit /* BOF */ {
 
 export class DataSheetStream
 {
+	public static customParser:any = null; // replaces standard parser, which is necessary for certain use cases like
+										   // raw NodeJS or worker tasks
+
 	// static method: reads in a string that is presumed to XML, and converts it to a datasheet, which is returned; returns null if
 	// something went wrong
 	public static readXML(strXML:string):DataSheet
 	{
 		//let xmlDoc = jQuery.parseXML(strXML);
-		let xmlDoc = new DOMParser().parseFromString(strXML, 'application/xml');
+		let xmlDoc:Document;
+		if (this.customParser)
+			xmlDoc = new this.customParser().parseFromString(strXML, 'application/xml');
+		else
+			xmlDoc = new DOMParser().parseFromString(strXML, 'application/xml');
 		if (xmlDoc == null) return null;
 		let root = xmlDoc.documentElement;
 		if (root == null) return null;
