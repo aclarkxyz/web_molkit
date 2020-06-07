@@ -22,11 +22,11 @@ namespace WebMolKit /* BOF */ {
 
 export class EditCompound extends Dialog
 {
-	private btnClear:JQuery;
+	protected btnClear:JQuery;
 	//private btnPaste:JQuery; // (restore this when proxy allows paste on request?)
-	private btnCopy:JQuery;
-	private btnSave:JQuery;
-	private sketcher = new Sketcher();
+	protected btnCopy:JQuery;
+	protected btnSave:JQuery;
+	protected sketcher = new Sketcher();
 
 	private proxyClip:ClipboardProxy = null;
 
@@ -81,18 +81,16 @@ export class EditCompound extends Dialog
 	{
 		let buttons = this.buttons(), body = this.body();
 
-		this.btnClear = $('<button class="wmk-button wmk-button-default">Clear</button>').appendTo(buttons);
+		this.btnClear = $('<button class="wmk-button wmk-button-default">Clear</button>').appendTo(buttons).css({'margin-left': '0.5em'});
 		this.btnClear.click(() => this.sketcher.clearMolecule());
 
-		buttons.append(' ');
-		this.btnCopy = $('<button class="wmk-button wmk-button-default">Copy</button>').appendTo(buttons);
+		this.btnCopy = $('<button class="wmk-button wmk-button-default">Copy</button>').appendTo(buttons).css({'margin-left': '0.5em'});
 		this.btnCopy.click(() => this.actionCopy());
 
-		buttons.append(' ');
 		buttons.append(this.btnClose); // easy way to reorder
+		this.btnClose.css({'margin-left': '0.5em'})
 
-		buttons.append(' ');
-		this.btnSave = $('<button class="wmk-button wmk-button-primary">Save</button>').appendTo(buttons);
+		this.btnSave = $('<button class="wmk-button wmk-button-primary">Save</button>').appendTo(buttons).css({'margin-left': '0.5em'});
 		this.btnSave.click(() => {if (this.callbackSave) this.callbackSave(this);});
 
 		let skw = 800, skh = 650;
