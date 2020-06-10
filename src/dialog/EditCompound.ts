@@ -88,7 +88,7 @@ export class EditCompound extends Dialog
 		this.btnCopy.click(() => this.actionCopy());
 
 		buttons.append(this.btnClose); // easy way to reorder
-		this.btnClose.css({'margin-left': '0.5em'})
+		this.btnClose.css({'margin-left': '0.5em'});
 
 		this.btnSave = $('<button class="wmk-button wmk-button-primary">Save</button>').appendTo(buttons).css({'margin-left': '0.5em'});
 		this.btnSave.click(() => {if (this.callbackSave) this.callbackSave(this);});
