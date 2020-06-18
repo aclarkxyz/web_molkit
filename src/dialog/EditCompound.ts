@@ -34,9 +34,9 @@ export class EditCompound extends Dialog
 
 	// ------------ public methods ------------
 
-	constructor(private mol:Molecule)
+	constructor(private mol:Molecule, parent:JQuery = null)
 	{
-		super();
+		super(parent);
 
 		this.title = 'Edit Compound';
 		this.minPortionWidth = 20;
