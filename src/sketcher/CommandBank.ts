@@ -186,8 +186,8 @@ const COMMANDS_MOVE:ButtonBankItem[] =
 	{'id': 'rotm30', 'imageFN': 'MoveRotM30', 'helpText': 'Rotate 30\u00B0 clockwise.', 'mnemonic': 'Shift+]', 'key': '}'},
 	{'id': 'hflip', 'imageFN': 'MoveHFlip', 'helpText': 'Flip subject atoms horizontally.', 'mnemonic': 'Shift+,', 'key': ','},
 	{'id': 'vflip', 'imageFN': 'MoveVFlip', 'helpText': 'Flip subject atoms vertically.', 'mnemonic': 'Shift+.', 'key': '.'},
-	{'id': 'shrink', 'imageFN': 'MoveShrink', 'helpText': 'Decrease subject bond distances.', 'mnemonic': 'Shift+X'},
-	{'id': 'grow', 'imageFN': 'MoveGrow', 'helpText': 'Increase subject bond distances.', 'mnemonic': 'Shift+Z'},
+	{'id': 'shrink', 'imageFN': 'MoveShrink', 'helpText': 'Decrease subject bond distances.', 'mnemonic': 'Shift+Z'},
+	{'id': 'grow', 'imageFN': 'MoveGrow', 'helpText': 'Increase subject bond distances.', 'mnemonic': 'Shift+X'},
 ];
 
 export class CommandBank extends ButtonBank

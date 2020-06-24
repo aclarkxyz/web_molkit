@@ -108,8 +108,8 @@ export class Dialog
 		pb.css('top', (/*window.scrollY +*/ this.topMargin) + 'px');
 		pb.css('min-height', '20%');
 		//pb.css('z-index', 10000);
-		pb.click((event:JQueryMouseEventObject) => event.preventDefault());
-		pb.mousedown((event:JQueryMouseEventObject) => event.preventDefault());
+		//pb.click((event:JQueryMouseEventObject) => event.preventDefault());
+		//pb.mousedown((event:JQueryMouseEventObject) => event.preventDefault());
 
 		let tdiv = $('<div/>').appendTo(pb);
 		tdiv.css('width', '100%');
