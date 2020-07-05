@@ -31,7 +31,7 @@ export class Widget
 	public render(parent:any):void
 	{
 		let tag = this.tagType;
-		this.content = $(`<${tag}></${tag}>`).appendTo($(parent));
+		this.content = $(`<${tag}/>`).appendTo($(parent));
 	}
 
 	// deconstructs the widget; this is not a hook, rather it is for the benefit of calling code that wants the widget gone

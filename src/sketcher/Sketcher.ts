@@ -2127,7 +2127,7 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 		//console.log('Keycode:[' + event.keyCode + '] Key:[' + event.key + ']');
 		
 		// non-modifier keys that don't generate a 'pressed' event
-		let nomod = !event.shiftKey && !event.ctrlKey && !event.altKey;
+		let nomod = !event.shiftKey && !event.ctrlKey && !event.altKey && !event.metaKey;
 		if (key == KeyCode.Enter)
 		{
 			if (this.currentAtom > 0) this.editAtom(this.currentAtom);

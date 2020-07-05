@@ -70,11 +70,11 @@ export class Popup
 		bg.css({'position': 'fixed', 'z-index': zindex});
 		bg.css({'left': '0', 'right': '0', 'top': '0', 'bottom': '0'});
 		bg.css({'background-color': 'black', 'opacity': 0.2});
-		bg.click(() => this.close());
 
 		let fg = this.obscureForeground = $('<div/>').appendTo(body);
 		fg.css({'position': 'fixed', 'z-index': zindex + 1});
 		fg.css({'left': '0', 'right': '0', 'top': '0', 'bottom': '0'});
+		fg.click(() => this.close());
 
 		//let pb = this.panelBoundary = $('<div class="wmk-popup"/>').appendTo(body);
 		let pb = this.panelBoundary = $('<div class="wmk-popup"/>').appendTo(fg);
