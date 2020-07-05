@@ -787,7 +787,7 @@ export class MetaVector
 		let type = this.typeObj[p[1]];
 		let npts:number = p[2];
 		if (npts == 0) return;
-		let x:number[] = p[3], y:number[] = p[4];
+		let x = Vec.duplicate(p[3] as number[]), y = Vec.duplicate(p[4] as number[]);
 		let ctrl:boolean[] = p[5];
 		let isClosed:boolean = p[6];
 		let edgeCol:number = type.edgeCol, fillCol:number = type.fillCol;

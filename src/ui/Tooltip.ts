@@ -65,7 +65,7 @@ export class Tooltip
 			globalPopover.css('background-image', 'linear-gradient(to right bottom, #FFFFFF, #D0D0FF)');
 			globalPopover.css('color', 'black');
 			globalPopover.css('border', '1px solid black');
-			globalPopover.css('z-index', 12000);
+			globalPopover.css('z-index', 22000);
 			globalPopover.css('border-radius', '4px');
 			globalPopover.hide();
 			globalPopover.appendTo(document.body);

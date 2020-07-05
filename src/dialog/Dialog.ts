@@ -24,6 +24,8 @@ const CSS_DIALOG = `
     *.wmk-dialog
     {
         font-family: 'Open Sans', sans-serif;
+		font-size: 16px;
+		color: black;
     }
 `;
 
@@ -39,6 +41,7 @@ export class Dialog
 
 	// content information that can be accessed after opening
 	protected obscureBackground:JQuery; // grey covering banner
+	protected obscureForeground:JQuery; // transparent second cover
 	protected panelBoundary:JQuery; // the dialog outline itself
 	protected titleDiv:JQuery; // section that contains the title and mini-buttons
 	protected titleButtons:JQuery; // table cell where the top-right buttons go
@@ -50,7 +53,7 @@ export class Dialog
 
 	// ------------ public methods ------------
 
-	constructor()
+	constructor(private parent:JQuery = null)
 	{
 		installInlineCSS('dialog', CSS_DIALOG);
 	}
@@ -68,16 +71,30 @@ export class Dialog
 	// creates all the DOM objects and shows the dialog; details such as title should be setup before calling this
 	public open():void
 	{
-		let body = $(document.documentElement);
+		//let body = $(document.documentElement);
+		let body = this.parent || $(document.body);
 
+/* ...
 		let bg = this.obscureBackground = $('<div/>').appendTo(body);
 		bg.css({'width': '100%', 'height': `max(${document.documentElement.clientHeight}px, 100vh)`});
 		bg.css({'background-color': 'black', 'opacity': 0.8});
 		bg.css({'position': 'absolute', 'left': 0, 'top': 0, 'z-index': 9999});
 		bg.click(() => this.close());
-		this.obscureBackground = bg;
+*/
 
-		let pb = $('<div class="wmk-dialog"/>').appendTo(body);
+		let zindex = 20000;
+
+		let bg = this.obscureBackground = $('<div/>').appendTo(body);
+		bg.css({'position': 'fixed', 'z-index': zindex});
+		bg.css({'left': '0', 'right': '0', 'top': '0', 'bottom': '0'});
+		bg.css({'background-color': 'black', 'opacity': 0.8});
+		bg.click(() => this.close());
+
+		let fg = this.obscureForeground = $('<div/>').appendTo(body);
+		fg.css({'position': 'fixed', 'z-index': zindex + 1});
+		fg.css({'left': '0', 'right': '0', 'top': '0', 'bottom': '0'});
+
+		let pb = this.panelBoundary = $('<div class="wmk-dialog"/>').appendTo(fg);
 		pb.css('min-width', this.minPortionWidth + '%');
 		if (this.maximumWidth > 0) pb.css('max-width', this.maximumWidth + 'px');
 		else if (this.maxPortionWidth != null) pb.css('max-width', this.maxPortionWidth + '%');
@@ -88,10 +105,11 @@ export class Dialog
 		pb.css('border', '1px solid black');
 		pb.css('position', 'absolute');
 		pb.css('left', (50 - 0.5 * this.minPortionWidth) + '%');
-		pb.css('top', (window.scrollY + this.topMargin) + 'px');
+		pb.css('top', (/*window.scrollY +*/ this.topMargin) + 'px');
 		pb.css('min-height', '20%');
-		pb.css('z-index', 10000);
-		this.panelBoundary = pb;
+		//pb.css('z-index', 10000);
+		//pb.click((event:JQueryMouseEventObject) => event.preventDefault());
+		//pb.mousedown((event:JQueryMouseEventObject) => event.preventDefault());
 
 		let tdiv = $('<div/>').appendTo(pb);
 		tdiv.css('width', '100%');
@@ -135,8 +153,8 @@ export class Dialog
 	// closes and hides the dialog
 	public close():void
 	{
-		this.panelBoundary.remove();
 		this.obscureBackground.remove();
+		this.obscureForeground.remove();
 
 		if (this.callbackClose) this.callbackClose(this);
 	}

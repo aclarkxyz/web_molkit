@@ -1,7 +1,7 @@
 /*
     WebMolKit
 
-    (c) 2010-2018 Molecular Materials Informatics, Inc.
+    (c) 2010-2020 Molecular Materials Informatics, Inc.
 
     All rights reserved
 
@@ -867,7 +867,7 @@ export class TemplateFusion
 			{
 				let ai = adj1[i], aj = adj2[j];
 				let bo1 = mol.bondOrder(mol.findBond(perm.molidx[n], ai));
-				let bo2 = mol.bondOrder(mol.findBond(perm.temidx[n], aj));
+				let bo2 = tmol.bondOrder(tmol.findBond(perm.temidx[n], aj));
 
 				let wantTheta = 0;
 				if ((bo1 == 1 && bo2 == 1) || (bo1 == 1 && bo2 == 2) || (bo1 == 2 && bo2 == 1)) wantTheta = 120;

@@ -44,7 +44,7 @@ interface TemplateStructs
 	names:string[];
 	abbrev:string[];
 	mnemonic:string[];
-	preview:any[];
+	preview:MetaVector[];
 }
 
 export class TemplateBank extends ButtonBank
@@ -66,8 +66,6 @@ export class TemplateBank extends ButtonBank
 		policy.data.pointScale = 10;
 		policy.data.lineSize *= 1.5;
 		policy.data.bondSep *= 1.5;
-
-		let sz = this.buttonView.idealSize;
 
 		if (this.group == null)
 		{

@@ -28,6 +28,18 @@ export class MoleculeStream
 	// tries to read a format-unknown molecule, with whatever tools are currently available
 	public static readUnknown(strData:string):Molecule
 	{
+		// see if it's a JSON-encoded SketchEl string
+		if (strData.startsWith('"'))
+		{
+			try
+			{
+				let jsonStr = JSON.parse(strData);
+				let mol = MoleculeStream.readNative(jsonStr);
+				if (mol) return mol;
+			}
+			catch (ex) {}
+		}
+
 		let mol = MoleculeStream.readNative(strData);
 		if (mol) return mol;
 		try {mol = MoleculeStream.readMDLMOL(strData);}

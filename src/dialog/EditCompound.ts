@@ -34,9 +34,9 @@ export class EditCompound extends Dialog
 
 	// ------------ public methods ------------
 
-	constructor(private mol:Molecule)
+	constructor(private mol:Molecule, parent:JQuery = null)
 	{
-		super();
+		super(parent);
 
 		this.title = 'Edit Compound';
 		this.minPortionWidth = 20;
@@ -88,7 +88,7 @@ export class EditCompound extends Dialog
 		this.btnCopy.click(() => this.actionCopy());
 
 		buttons.append(this.btnClose); // easy way to reorder
-		this.btnClose.css({'margin-left': '0.5em'})
+		this.btnClose.css({'margin-left': '0.5em'});
 
 		this.btnSave = $('<button class="wmk-button wmk-button-primary">Save</button>').appendTo(buttons).css({'margin-left': '0.5em'});
 		this.btnSave.click(() => {if (this.callbackSave) this.callbackSave(this);});
