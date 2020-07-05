@@ -42,6 +42,7 @@ export class MetaMolecule
 	public bondArom:boolean[] = null;
 	public rubricTetra:number[][] = null;
 	public rubricSquare:number[][] = null;
+	public rubricBipy:number[][] = null;
 	public rubricOcta:number[][] = null;
 	public rubricSides:number[][] = null;
 	public hash:string = null;
@@ -268,6 +269,7 @@ export class MetaMolecule
 		const mol = this.mol, na = mol.numAtoms, nb = mol.numBonds;
 		this.rubricTetra = new Array(na);
 		this.rubricSquare = new Array(na);
+		this.rubricBipy = new Array(na);
 		this.rubricOcta = new Array(na);
 		this.rubricSides = new Array(nb);
 
@@ -286,6 +288,12 @@ export class MetaMolecule
 			if (blk >= 3 && adjc == 4 && hc == 0)
 			{
 				this.rubricSquare[n - 1] = Stereochemistry.rubricSquarePlanar(mol, n);
+			}
+
+			// d- and f-block atoms with 4 or 5 neighbours can have trigonal bipyramidal constraints
+			if (blk >= 3 && (adjc == 4 || adjc == 5) && hc == 0)
+			{
+				this.rubricBipy[n - 1] = Stereochemistry.rubricBipyrimidal(mol, n);
 			}
 
 			// d- & f-block atoms with 5 or 6 neighbours can have octahedral constraints

@@ -436,7 +436,7 @@ export class Permutation
 {
 	// for a set of indices that are assumed to be unique and in the range {0 .. N-1}, returns their parity, i.e.
 	// the number of swaps used to permute it from the identity; if the list is sorted, the result is 0
-	// NOTE: parityPerms(..) returns the total number of swaps, whereas parity(..) returns either 0 or 1
+	// NOTE: parityPerms(..) returns the total number of swaps, whereas parityIdentity(..) returns either 0 or 1
 	public static parityPerms(idx:number[]):number
 	{
 		let v = Vec.booleanArray(false, idx.length);
@@ -457,7 +457,6 @@ export class Permutation
 		}
 		return p;
 	}
-
 	public static parityIdentity(idx:number[]):number
 	{
 		return this.parityPerms(idx) & 1;

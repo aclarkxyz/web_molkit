@@ -30,8 +30,8 @@ export class Stereochemistry
 	private priority:number[]; // CIP (per atom)
 	private chiralTetra:number[]; // (per atom)
 	private cistransBond:number[]; // (per bond)
-	private cistransPlanar:number[]; // (per atom)
-	private chiralOcta:number[]; // (per atom)
+	private squarePlanar:number[]; // (per atom)
+	//private chiralOcta:number[]; // (per atom)
 	private isH:boolean[]; // per atom
 
 	// ------------------ constants --------------------
@@ -60,6 +60,12 @@ export class Stereochemistry
 		[2, 1, 0, 3], [2, 3, 0, 1], [3, 2, 1, 0], [3, 0, 1, 2]
 	];
 
+	public static RUBRIC_EQUIV_BIPY =
+	[
+		[0, 1, 2, 3, 4], [0, 1, 3, 4, 2], [0, 1, 4, 2, 3],
+		[1, 0, 2, 4, 3], [1, 0, 4, 3, 2], [1, 0, 3, 2, 4],
+	];
+
 	public static RUBRIC_EQUIV_OCTA =
 	[
 		[0, 1, 2, 3, 4, 5], [0, 3, 2, 1, 5, 4], [0, 4, 2, 5, 3, 1], [0, 5, 2, 4, 1, 3],
@@ -81,8 +87,8 @@ export class Stereochemistry
 		this.priority = Vec.numberArray(0, this.mol.numAtoms);
 		this.chiralTetra = Vec.numberArray(Stereochemistry.STEREO_NONE, this.mol.numAtoms);
 		this.cistransBond = Vec.numberArray(Stereochemistry.STEREO_NONE, this.mol.numBonds);
-		this.cistransPlanar = Vec.numberArray(Stereochemistry.STEREO_NONE, this.mol.numAtoms);
-		this.chiralOcta = Vec.numberArray(Stereochemistry.STEREO_NONE, this.mol.numAtoms);
+		this.squarePlanar = Vec.numberArray(Stereochemistry.STEREO_NONE, this.mol.numAtoms);
+		//this.chiralOcta = Vec.numberArray(Stereochemistry.STEREO_NONE, this.mol.numAtoms);
 	}
 
 	// performs the calculation by filling in the arrays
@@ -102,8 +108,8 @@ export class Stereochemistry
 	public atomPriority(atom:number):number {return this.priority[atom - 1];}
 	public atomTetraChirality(atom:number):number {return this.chiralTetra[atom - 1];}
 	public bondSideStereo(bond:number):number {return this.cistransBond[bond - 1];}
-	public atomPlanarStereo(atom:number):number {return this.cistransPlanar[atom - 1];}
-	public atomOctaChirality(atom:number):number {return this.chiralOcta[atom - 1];}
+	public atomPlanarStereo(atom:number):number {return this.squarePlanar[atom - 1];}
+	//public atomOctaChirality(atom:number):number {return this.chiralOcta[atom - 1];}
 
 	// for bulk access, sometimes more convenient
 	public getPriorities():number[] {return this.priority.slice(0);}
@@ -252,58 +258,167 @@ export class Stereochemistry
 		return adj;
 	}
 
-	//
-	//                        2
-	// assignment style:      |			note: the Z-axis direction is arbitrary; 1234 is equivalent to 1432
-	//                     3--A--1
-	//						  |
-	//                        4
+ 	//                      1   2
+	// assignment style:     # #	note: the Z-axis direction is arbitrary; 1234 is equivalent to 1432
+	//                        A
+	//						// \\
+	//                      3   4
 	public static rubricSquarePlanar(mol:Molecule, atom:number):number[]
 	{
 		if (mol.atomAdjCount(atom) != 4) return null;
+		
+		// drawing style must be one of 3 options: 2 up + 2 down, or 2 flat + (2 up/2 down)
+		if (!mol.is3D())
+		{
+			let ninc = 0, ndec = 0;
+			for (let b of mol.atomAdjBonds(atom))
+			{
+				let bt = mol.bondType(b);
+				if (bt == Molecule.BONDTYPE_INCLINED) ninc++;
+				else if (bt == Molecule.BONDTYPE_DECLINED) ndec++;
+			}
+			if (ninc == 2 && ndec == 2) {}
+			else if (ninc == 2 && ndec == 0) {}
+			else if (ninc == 0 && ndec == 2) {}
+			else return null;
+		}
+		
+		// determine all the vector outgoings; ensure that position 3 is opposite position 1; other than that, the order is arbitrary
 		let adj = mol.atomAdjList(atom);
-
-		// determine all the vector outgoings; ensure that position 3 is opposite position 1; other than that, the order is
-		// arbitrary
 		let v0 = MolUtil.atomVec3(mol, atom);
-		let v1 = MolUtil.atomVec3(mol, adj[0]);
-		Vec.subFromArray(v1, v0);
-		let v2 = MolUtil.atomVec3(mol, adj[1]);
-		Vec.subFromArray(v2, v0);
-		let v3 = MolUtil.atomVec3(mol, adj[2]);
-		Vec.subFromArray(v3, v0);
-		let v4 = MolUtil.atomVec3(mol, adj[3]);
-		Vec.subFromArray(v4, v0);
+		let v1 = Vec.sub(MolUtil.atomVec3(mol, adj[0]), v0);
+		let v2 = Vec.sub(MolUtil.atomVec3(mol, adj[1]), v0);
+		let v3 = Vec.sub(MolUtil.atomVec3(mol, adj[2]), v0);
+		let v4 = Vec.sub(MolUtil.atomVec3(mol, adj[3]), v0);
 
 		let d2 = GeomUtil.dist2(v1, v2), d3 = GeomUtil.dist2(v1, v3), d4 = GeomUtil.dist2(v1, v4);
 		if (d2 > d3 && d2 >= d4)
 		{
 			Vec.swap(adj, 1, 2);
-			let tmp = v2;
-			v2 = v3;
-			v3 = tmp;
+			[v2, v3] = [v3, v2];
 		}
 		else if (d4 > d3)
 		{
 			Vec.swap(adj, 3, 2);
-			let tmp = v4;
-			v4 = v3;
-			v3 = tmp;
+			[v3, v4] = [v4, v3];
 		}
 
 		// circle around and make sure the acute angles are with reasonable bounds; 90 degrees is ideal, +/- 45 is OK
-		// NOTE: this should be retooled to work for 3D as well...
-		const MIN_ANGLE = 45 * DEGRAD, MAX_ANGLE = 135 * DEGRAD;
-		let th12 = GeomUtil.acuteAngle(v1, v2);
+		// for 3D cases we don't have the wedge filter, so make the constraint tighter
+		const MIN_ANGLE = (mol.is3D() ? 80 : 45) * DEGRAD;
+		const MAX_ANGLE = (mol.is3D() ? 100 : 135) * DEGRAD;
+		const th12 = GeomUtil.acuteAngle(v1, v2);
 		if (th12 < MIN_ANGLE || th12 > MAX_ANGLE) return null;
-		let th23 = GeomUtil.acuteAngle(v2, v3);
+		const th23 = GeomUtil.acuteAngle(v2, v3);
 		if (th23 < MIN_ANGLE || th23 > MAX_ANGLE) return null;
-		let th34 = GeomUtil.acuteAngle(v3, v4);
+		const th34 = GeomUtil.acuteAngle(v3, v4);
 		if (th34 < MIN_ANGLE || th34 > MAX_ANGLE) return null;
-		let th41 = GeomUtil.acuteAngle(v4, v1);
+		const th41 = GeomUtil.acuteAngle(v4, v1);
 		if (th41 < MIN_ANGLE || th41 > MAX_ANGLE) return null;
 
 		return adj;
+	}
+
+	//                        2  5
+	// assignment style:      | #    (1->2 is the "axial up" and [3,4,5] follow the right hand vector rule)
+	//                     3--A      (only position 3 is allowed to be vacant, and only 1 & 2 can be opposite)
+	//                        |\\
+	//                        1  4
+	public static rubricBipyrimidal(mol:Molecule, atom:number):number[]
+	{
+		const nadj = mol.atomAdjCount(atom);
+		if (nadj != 4 && nadj != 5) return null;
+		
+		// if sketch, must have exactly 1 up & 1 down
+		let atom4 = 0, atom5 = 0;
+		let adj = mol.atomAdjList(atom), bonds = mol.atomAdjBonds(atom);
+		if (!mol.is3D())
+		{
+			for (let n = 0; n < adj.length; n++)
+			{
+				if (mol.bondType(bonds[n]) == Molecule.BONDTYPE_INCLINED) 
+				{
+					if (atom4 > 0) return null;
+					atom4 = adj[n];
+				}
+				else if (mol.bondType(bonds[n]) == Molecule.BONDTYPE_DECLINED)
+				{
+					if (atom5 > 0) return null;
+					atom5 = adj[n];
+				}
+			}
+			if (atom4 == 0 || atom5 == 0) return null;
+		}
+		
+		// get all the relative emergent vectors
+		let v0 = MolUtil.atomVec3(mol, atom);
+		let v:number[][] = [[], [], [], [], []];
+		const THRESH = 0.1; // bond lengths in general must be this long, otherwise the structure is unworthy
+		for (let n = 0; n < nadj; n++)
+		{
+			v[n] = Vec.sub(MolUtil.atomVec3(mol, adj[n]), v0);
+			const mag = GeomUtil.magnitude(v[n]);
+			if (mag < THRESH) return null;
+			Vec.mulBy(v[n], 1.0 / mag);
+			
+			// if it's 2D, atom4 & 5 are defined: do faux embedding
+			if (adj[n] == atom4) v[n][2] += 1; // up
+			else if (adj[n] == atom5) v[n][2] -= 1; // down
+		}
+		
+		// figure out atoms 1 & 2; for 2D can rule out two candidates already
+		let atom1 = 0, atom2 = 0;
+		const ANGLE_OPPOSITE = 175 * DEGRAD;
+		for (let i = 0; i < nadj - 1; i++) if (adj[i] != atom4 && adj[i] != atom5)
+		{
+			for (let j = i + 1; j < nadj; j++) if (adj[j] != atom4 && adj[j] != atom5)
+			{
+				let theta = GeomUtil.acuteAngle(v[i], v[j]);
+				if (theta > ANGLE_OPPOSITE)
+				{
+					if (atom1 != 0) return null; // can't have two angles close to 180 degrees
+					atom1 = adj[i];
+					atom2 = adj[j];
+				}
+			}
+		}
+		if (!atom1 || !atom2) return null;
+		
+		let v1 = v[adj.indexOf(atom1)];
+		let v2 = v[adj.indexOf(atom2)];
+		let v3 = null;
+		let v4 = v[adj.indexOf(atom4)];
+		let v5 = v[adj.indexOf(atom5)];
+		
+		// the atom3 position is either real or virtual
+		let atom3 = 0;
+		if (nadj == 5)
+		{
+			for (let n = 0; n < nadj; n++) if (adj[n] != atom1 && adj[n] != atom2 && adj[n] != atom4 && adj[n] != atom5)
+			{
+				atom3 = adj[n];
+				v3 = v[n];
+				break;
+			}
+		}
+		else // create a virtual atom
+		{
+			v3 = [0, 0, 0];
+			v3 = Vec.sub(v3, v4);
+			v3 = Vec.sub(v3, v5);
+			const mag = GeomUtil.magnitude(v3);
+			if (mag < THRESH) return null; // (is this being unfair at all?)
+			Vec.mulBy(v3, 1.0 / mag);
+		}
+		
+		// if the cross product of 1->2 x 0->3 is closer to 4, parity is even
+		let v12 = Vec.sub(v2, v1);
+		let cross = GeomUtil.crossProduct(v12, v3);
+		let dsq4 = GeomUtil.dist2(cross, v4), dsq5 = GeomUtil.dist2(cross, v5);
+		if (dsq4 < dsq5)
+			return [atom1, atom2, atom3, atom4, atom5];
+		else
+			return [atom1, atom2, atom3, atom5, atom4];
 	}
 
 	//                        6 2
@@ -331,7 +446,7 @@ export class Stereochemistry
 			if ((nadj == 5 && numWedges < 1) || (nadj == 6 && numWedges < 2)) return null;
 		}
 
-		const THRESH = 0.1, THRESHSQ = THRESH * THRESH; // bond lengths in general must be this long, otherwise the structure is unworthy
+		const THRESH = 0.1; // bond lengths in general must be this long, otherwise the structure is unworthy
 
 		// get all the relative emergent vectors; generate faux embedding for wedges
 		let v0 = MolUtil.atomVec3(mol, atom);
@@ -639,7 +754,7 @@ export class Stereochemistry
 
 		skip_atom: for (let n = 1; n <= na; n++)
 		{
-			this.cistransPlanar[n - 1] = Stereochemistry.STEREO_NONE;
+			this.squarePlanar[n - 1] = Stereochemistry.STEREO_NONE;
 			if (mol.atomAdjCount(n) != 4) continue; // NOTE: entertain the notion of making it work with virtual hydrogens
 			if (Chemistry.ELEMENT_BLOCKS[mol.atomicNumber(n)] < 3) continue; // only d- or f-blocks need apply
 
@@ -668,7 +783,7 @@ export class Stereochemistry
 			];
 
 			let parity = Permutation.parityOrder(pri);
-			this.cistransPlanar[n - 1] = (parity & 1) == 0 ? Stereochemistry.STEREO_POS : Stereochemistry.STEREO_NEG;
+			this.squarePlanar[n - 1] = (parity & 1) == 0 ? Stereochemistry.STEREO_POS : Stereochemistry.STEREO_NEG;
 		}
 	}
 
