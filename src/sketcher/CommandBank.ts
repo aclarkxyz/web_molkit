@@ -80,8 +80,8 @@ const COMMANDS_MAIN:ButtonBankItem[] =
 [
 	{'id': 'undo', 'imageFN': 'MainUndo', 'helpText': 'Undo last change.', 'mnemonic': 'Ctrl+Z'},
 	{'id': 'redo', 'imageFN': 'MainRedo', 'helpText': 'Cancel last undo.', 'mnemonic': 'Ctrl+Shift+Z'},
-	{'id': 'zoomin', 'imageFN': 'MainZoomIn', 'helpText': 'Zoom in.', 'mnemonic': 'Shift+=', 'key': '+'},
-	{'id': 'zoomout', 'imageFN': 'MainZoomOut', 'helpText': 'Zoom out.', 'mnemonic': 'Shift+-', 'key': '_'},
+	{'id': 'zoomin', 'imageFN': 'MainZoomIn', 'helpText': 'Zoom in.', 'mnemonic': '='},
+	{'id': 'zoomout', 'imageFN': 'MainZoomOut', 'helpText': 'Zoom out.', 'mnemonic': '-'},
 	{'id': 'zoomfit', 'imageFN': 'MainZoomFit', 'helpText': 'Show whole diagram onscreen.', 'mnemonic': 'Shift+0', 'key': ')'},
 	{'id': 'selside', 'imageFN': 'MainSelSide', 'helpText': 'Select alternate side of current atom or bond.', 'mnemonic': 'E'},
 	{'id': 'selall', 'imageFN': 'MainSelAll', 'helpText': 'Select all atoms.', 'mnemonic': 'Shift+A'},
@@ -107,8 +107,8 @@ const COMMANDS_ATOM:ButtonBankItem[] =
 	{'id': 'element:Cl', 'text': 'Cl', 'helpText': 'Change elements to Chlorine.', 'mnemonic': 'Shift+L'},
 	{'id': 'element:Br', 'text': 'Br', 'helpText': 'Change elements to Bromine.', 'mnemonic': 'Shift+B'},
 	{'id': 'element:I', 'text': 'I', 'helpText': 'Change elements to Iodine.', 'mnemonic': 'Shift+I'},
-	{'id': 'plus', 'imageFN': 'AtomPlus', 'helpText': 'Increase the atom charge.', 'mnemonic': '='},
-	{'id': 'minus', 'imageFN': 'AtomMinus', 'helpText': 'Decrease the atom charge.', 'mnemonic': '-'},
+	{'id': 'plus', 'imageFN': 'AtomPlus', 'helpText': 'Increase the atom charge.', 'mnemonic': 'Shift+-', 'key': '_'},
+	{'id': 'minus', 'imageFN': 'AtomMinus', 'helpText': 'Decrease the atom charge.', 'mnemonic': 'Shift+=', 'key': '+'},
 	{'id': 'abbrev', 'imageFN': 'AtomAbbrev', 'helpText': 'Open list of common labels.', 'isSubMenu': true, 'mnemonic': ''},
 	{'id': 'sblock', 'imageFN': 'AtomSBlock', 'helpText': 'Open list of s-block elements.', 'isSubMenu': true, 'mnemonic': ''},
 	{'id': 'pblock', 'imageFN': 'AtomPBlock', 'helpText': 'Open list of p-block elements.', 'isSubMenu': true, 'mnemonic': ''},
@@ -137,7 +137,8 @@ const COMMANDS_BOND:ButtonBankItem[] =
 	{'id': 'octa1', 'imageFN': 'BondOcta1', 'helpText': 'Apply octahedral geometry #1.', 'mnemonic': 'Shift+Y'},
 	{'id': 'octa2', 'imageFN': 'BondOcta2', 'helpText': 'Apply octahedral geometry #2.', 'mnemonic': 'Shift+U'},
 	{'id': 'connect', 'imageFN': 'BondConnect', 'helpText': 'Connect selected atoms, by proximity.', 'mnemonic': ''},
-	{'id': 'disconnect', 'imageFN': 'BondDisconnect', 'helpText': 'Disconnect selected atoms.', 'mnemonic': ''},
+	//{'id': 'disconnect', 'imageFN': 'BondDisconnect', 'helpText': 'Disconnect selected atoms.', 'mnemonic': ''},
+	{'id': 'metalligate', 'imageFN': 'BondMetalLigate', 'helpText': 'Arrange ligands around metal centre.', 'mnemonic': ''},
 	{'id': 'artifactpath', 'imageFN': 'BondArtifactPath', 'helpText': 'Add a path bond artifact.', 'mnemonic': ''},
 	{'id': 'artifactring', 'imageFN': 'BondArtifactRing', 'helpText': 'Add a ring bond artifact.', 'mnemonic': ''},
 	{'id': 'artifactarene', 'imageFN': 'BondArtifactArene', 'helpText': 'Add an arene bond artifact.', 'mnemonic': ''},
@@ -275,6 +276,7 @@ export class CommandBank extends ButtonBank
 		else if (id == 'switch') actv = ActivityType.BondSwitch;
 		else if (id == 'connect') actv = ActivityType.Connect;
 		else if (id == 'disconnect') actv = ActivityType.Disconnect;
+		else if (id == 'metalligate') actv = ActivityType.MetalLigate;
 		else if (id == 'artifactpath') actv = ActivityType.BondArtifactPath;
 		else if (id == 'artifactring') actv = ActivityType.BondArtifactRing;
 		else if (id == 'artifactarene') actv = ActivityType.BondArtifactArene;

@@ -112,8 +112,14 @@ export class GeomUtil
 		if (theta == null || theta.length < 2) return theta;
 		theta = theta.slice(0);
 		for (let n = 0; n < theta.length; n++) theta[n] = angleNorm(theta[n]);
+
+		if (theta.length == 2) 
+		{
+			if (angleDiffPos(theta[1], theta[0]) > Math.PI) return [theta[1], theta[0]];
+			return theta;
+		}
+
 		Vec.sort(theta);
-		if (theta.length == 2) return theta;
 		while (true)
 		{
 			let a = theta[theta.length - 1], b = theta[0], c = theta[1];
@@ -122,6 +128,31 @@ export class GeomUtil
 			theta[0] = a;
 		}
 		return theta;
+	}
+
+	// sorts angles as above, except returns indices rather than values
+	public static idxSortAngles(theta:number[]):number[]
+	{
+		const sz = Vec.arrayLength(theta);
+		if (theta == null || sz < 2) return Vec.identity0(sz);
+		
+		if (sz == 2)
+		{
+			if (angleDiffPos(theta[1], theta[0]) > Math.PI) return [1, 0]; else return [0, 1];
+		}
+		
+		theta = Vec.duplicate(theta);
+		for (let n = 0; n < sz; n++) theta[n] = angleNorm(theta[n]);
+		let idx = Vec.idxSort(theta);
+		
+		while (true)
+		{
+			let a = theta[idx[sz - 1]], b = theta[idx[0]], c = theta[idx[1]];
+			if (angleDiff(b, a) <= angleDiff(c, b)) break;
+			let last = idx.pop();
+			idx.unshift(last);
+		}
+		return idx;		
 	}
 
 	// calculates a list of unique angles (based on the threshold parameter, in radians), and returns it; the returned list of
@@ -194,6 +225,59 @@ export class GeomUtil
 		const y = v1[2] * v2[0] - v1[0] * v2[2];
 		const z = v1[0] * v2[1] - v1[1] * v2[0];
 		return [x, y, z];
+	}
+
+	// generate 2D affine transforms
+	public static affineTranslate(dx:number, dy:number):number[][]
+	{
+		return [[1, 0, dx], [0, 1, dy], [0, 0, 1]];
+	}
+	public static affineMirror(xaxis:boolean, yaxis:boolean):number[][]
+	{
+		return [[xaxis ? -1 : 1, 0, 0], [0, yaxis ? -1 : 1, 0], [0, 0, 1]];
+	}
+	public static affineScale(sx:number, sy:number):number[][]
+	{
+		return [[sx, 0, 0], [0, sy, 0], [0, 0, 1]];
+	}
+	public static affineRotate(theta:number):number[][]
+	{
+		let cos = Math.cos(theta), sin = Math.sin(theta);
+		return [[cos, -sin, 0], [sin, cos, 0], [0, 0, 1]];
+	}
+	
+	// compose two affine transforms and returns a new one that is equivalent to doing both of them in order (A then B)
+	public static affineCompose(A:number[][], B:number[][]):number[][]
+	{
+		let tfm = [[0, 0, 0], [0, 0, 0], [0, 0, 0]];
+		var Acol = [0, 0, 0];
+		for (let j = 0; j < 3; j++)
+		{
+			for (let k = 0; k < 3; k++) Acol[k] = A[k][j];
+			for (let i = 0; i < 3; i++)
+			{
+				var Brow = B[i];
+				let s = 0;
+				for (let k = 0; k < 3; k++) s += Acol[k] * Brow[k];
+				tfm[i][j] = s;
+			}
+		}
+		return tfm;
+	}
+	
+	// applies a 3x3 affine transform to two coordinates; returns [x,y] position
+	public static applyAffine(x:number, y:number, tfm:number[][]):[number, number]
+	{
+		return [x * tfm[0][0] + y * tfm[0][1] + tfm[0][2], x * tfm[1][0] + y * tfm[1][1] + tfm[1][2]];
+	}
+	
+	// returns true if the 2D affine transform contains a mirror reflection
+	public static isAffineMirror(tfm:number[][]):boolean
+	{
+		let a = tfm[0][0], b = tfm[0][1], c = tfm[0][2];
+		let d = tfm[1][0], e = tfm[1][1], f = tfm[1][2];
+		let g = tfm[2][0], h = tfm[2][1], i = tfm[2][2];
+		return a * e * i + b * f * g + c * d * h - c * e * g - b * d * i - a * f * h < 0;
 	}
 
 	public static magnitude2(v:number[]):number
@@ -322,6 +406,72 @@ export class GeomUtil
 		}
 
 		return [bestW, bestH];
+	}
+
+	// given two collections of 2D points (A and B), returns the rotate+transform matrix that best maps A onto B
+	public static superimpose(ax:number[], ay:number[], bx:number[], by:number[]):number[][]
+	{
+		// special deal for size 1: just a translation; the caller must find some other way to discover the preferred rotation
+		let sz = ax.length;
+		if (sz == 1)
+		{
+			let dx = bx[0] - ax[0], dy = by[0] - ay[0];
+			return [[1, 0, dx], [0, 1, dy], [0, 0, 1]];
+		}
+
+		// special deal for size 2: rotation matrix can be derived from a single angle, rather than doing an optimisation
+		if (sz == 2)
+		{
+			let thetaA = Math.atan2(ay[1] - ay[0], ax[1] - ax[0]), thetaB = Math.atan2(by[1] - by[0], bx[1] - bx[0]);
+			let delta = angleDiff(thetaB, thetaA), cos = Math.cos(delta), sin = Math.sin(delta);
+			let rot00 = cos, rot01 = -sin;
+			let rot10 = sin, rot11 = cos;
+
+			let acx = 0.5 * (ax[0] + ax[1]), acy = 0.5 * (ay[0] + ay[1]);			
+			let bcx = 0.5 * (bx[0] + bx[1]), bcy = 0.5 * (by[0] + by[1]);			
+			let rax = rot00 * acx + rot01 * acy;
+			let ray = rot10 * acx + rot11 * acy;
+	
+			return [[rot00, rot01, bcx - rax], [rot10, rot11, bcy - ray], [0, 0, 1]];
+		}
+
+		// proceed with a relatively heavy-handed eigenvalue optimisation
+		// adapted from: https://github.com/oleg-alexandrov/projects/blob/master/eigen/Kabsch.cpp
+
+		let invsz = 1.0 / sz;
+		let acx = Vec.sum(ax) * invsz, acy = Vec.sum(ay) * invsz;
+		let bcx = Vec.sum(bx) * invsz, bcy = Vec.sum(by) * invsz;
+		
+		let mtxA = new Matrix(3, sz), mtxB = new Matrix(3, sz);
+		for (let n = 0; n < sz; n++)
+		{
+			mtxA.set(0, n, ax[n] - acx);
+			mtxA.set(1, n, ay[n] - acy);
+			mtxA.set(2, n, 0);
+			mtxB.set(0, n, bx[n] - bcx);
+			mtxB.set(1, n, by[n] - bcy);
+			mtxB.set(2, n, 0);
+		}
+		
+		var cov = mtxA.times(mtxB.transpose());
+		var svd = new SingularValueDecomposition(cov);
+
+		/* ... this doesn't seem to be necessary for 2D
+		double d = svd.getV().times(svd.getU().transpose()).det();
+		if (d > 0) d = 1; else d = -1;
+		var ident = Matrix.identity(3, 3);
+		ident.set(2, 2, d); // NOTE: not sure if this is necessary for 2D
+		var rotate = (svd.getV().times(ident)).times(svd.getU().transpose());*/
+
+		var rotate = svd.getV().times(svd.getU().transpose());
+		
+		let rot00 = rotate.get(0, 0), rot01 = rotate.get(0, 1);
+		let rot10 = rotate.get(1, 0), rot11 = rotate.get(1, 1);
+		let rax = rot00 * acx + rot01 * acy;
+		let ray = rot10 * acx + rot11 * acy;
+
+		// return the subset of the matrix that performs the 2D rotation & translation
+		return [[rot00, rot01, bcx - rax], [rot10, rot11, bcy - ray], [0, 0, 1]];
 	}
 
 	// takes a set of points and calculates the convex hull, in the form of an enclosing polygon

@@ -231,6 +231,12 @@ export function norm2_xyz(dx:number, dy:number, dz:number):number
 	return dx * dx + dy * dy + dz * dz;
 }
 
+// converts a floating point number fo -1,0,1 depending on sign or lack thereof
+export function signum(v:number):number
+{
+	return v < 0 ? -1 : v > 0 ? 1 : 0;
+}
+
 // miscellaneous math
 export function sqr(v:number):number
 {

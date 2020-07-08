@@ -1,7 +1,7 @@
 /*
     WebMolKit
 
-    (c) 2010-2018 Molecular Materials Informatics, Inc.
+    (c) 2010-2020 Molecular Materials Informatics, Inc.
 
     All rights reserved
 
@@ -14,6 +14,7 @@
 ///<reference path='../data/CoordUtil.ts'/>
 ///<reference path='../data/SketchUtil.ts'/>
 ///<reference path='TemplateFusion.ts'/>
+///<reference path='MetalLigate.ts'/>
 
 namespace WebMolKit /* BOF */ {
 
@@ -51,6 +52,7 @@ export enum ActivityType
 	Charge,
 	Connect,
 	Disconnect,
+	MetalLigate,
 	BondOrder,
 	BondType,
 	BondGeom,
@@ -251,6 +253,7 @@ export class MoleculeActivity
 		else if (this.activity == ActivityType.Charge) this.execCharge(param.delta);
 		else if (this.activity == ActivityType.Connect) this.execConnect(1, Molecule.BONDTYPE_NORMAL);
 		else if (this.activity == ActivityType.Disconnect) this.execDisconnect();
+		else if (this.activity == ActivityType.MetalLigate) this.execMetalLigate();
 		else if (this.activity == ActivityType.BondOrder) this.execBond(param.order, Molecule.BONDTYPE_NORMAL);
 		else if (this.activity == ActivityType.BondType) this.execBond(1, param.type);
 		else if (this.activity == ActivityType.BondGeom) this.execBondGeom(param.geom);
@@ -682,6 +685,58 @@ export class MoleculeActivity
 
 		this.output.mol = this.input.mol.clone();
 		for (let n = mol.numBonds; n >= 1; n--) if (killmask[n - 1]) this.output.mol.deleteBond(n);
+	}
+
+	public execMetalLigate():void
+	{
+		if (!this.requireSubject()) return;
+
+		let mol = this.input.mol;
+
+		let ligAtoms = this.subjectIndex.slice(0);
+
+		// ideally the user specified the metal by way of the current atom, but otherwise make a guess
+		let metalAtom = this.input.currentAtom;
+		if (metalAtom == 0)
+		{
+			for (let n = 1; n <= mol.numAtoms; n++)
+			{
+				let atno = mol.atomicNumber(n);
+				if (Chemistry.ELEMENT_BLOCKS[atno] >= 3) {metalAtom = n; break;}
+			}
+		}
+		if (metalAtom == 0)
+		{
+			for (let n = 1; n <= mol.numAtoms; n++)
+			{
+				let atno = mol.atomicNumber(n);
+				if (Chemistry.ELEMENT_ROWS[atno] >= 3) {metalAtom = n; break;}
+			}
+		}
+
+		if (metalAtom == 0)
+		{
+			this.errmsg = 'Unsure which is the metal atom: try indicating as current.';
+			return;
+		}
+
+		let i = ligAtoms.indexOf(metalAtom);
+		if (i >= 0) ligAtoms.splice(i, 1);
+
+		if (ligAtoms.length == 0) ligAtoms = mol.atomAdjList(metalAtom);
+		if (ligAtoms.length == 0)
+		{
+			this.errmsg = 'Metal centre has no attachments: try selecting atom join-points.';
+			return;
+		}
+
+		mol = new MetalLigate(mol, metalAtom, ligAtoms).generate();
+
+		this.output.mol = mol;
+		this.output.currentAtom = metalAtom;
+		this.output.currentBond = -1;
+		this.output.selectedMask = Vec.booleanArray(false, mol.numAtoms);
+		for (let a of ligAtoms) this.output.selectedMask[a - 1] = true;
 	}
 
 	public execBond(order:number, type:number):void
