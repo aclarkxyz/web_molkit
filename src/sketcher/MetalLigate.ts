@@ -206,6 +206,13 @@ export class MetalLigate
 
 		// step 2: rotate in increments to get approximately the best orientation, in order to find the preferred ordering
 		let cx = Vec.sum(lx) / lsz, cy = Vec.sum(ly) / lsz;
+		let weight:number[] = [];
+		for (let n = 0; n < lsz; n++)
+		{
+			let closest = Number.POSITIVE_INFINITY;
+			for (let idx of idxAttach) closest = Math.min(closest, norm2_xy(lx[n] - lx[idx], ly[n] - ly[idx]));
+			weight.push(1.0 / (1 + Math.sqrt(closest)));
+		}
 		let bestScore = Number.POSITIVE_INFINITY;
 		let bestLX:number[] = null, bestLY:number[] = null;
 		for (let theta = 0; theta < 360; theta += 15)
@@ -219,7 +226,7 @@ export class MetalLigate
 				rx[n] = cx + x * cosTheta - y * sinTheta;
 				ry[n] = cy + x * sinTheta + y * cosTheta;
 				let dist = norm_xy(rx[n] - mx, ry[n] - my);
-				if (lig.attach.indexOf(lig.atoms[n]) >= 0) score += dist; else score -= dist;
+				if (lig.attach.indexOf(lig.atoms[n]) >= 0) score += dist; else score -= dist * weight[n];
 			}
 			if (score < bestScore)
 			{
