@@ -28,7 +28,7 @@ const TOOLS_MAIN:ButtonBankItem[] =
 	{'id': 'pan', 'imageFN': 'ToolPan', 'helpText': 'Pan the viewport around the screen.', 'mnemonic': ''},
 	{'id': 'drag', 'imageFN': 'ToolDrag', 'helpText': 'Drag selected atoms to new positions.', 'mnemonic': ''},
 	{'id': 'erasor', 'imageFN': 'ToolErasor', 'helpText': 'Delete atoms or bonds by selecting.', 'mnemonic': 'Delete'},
-	{'id': 'bondOrder0', 'imageFN': 'BondZero', 'helpText': 'Create or change a bond to zero order.', 'mnemonic': ''},
+	{'id': 'bondOrder0', 'imageFN': 'BondZero', 'helpText': 'Create or change a bond to zero order.', 'mnemonic': 'Shift+0', 'key': ')'},
 	{'id': 'bondOrder1', 'imageFN': 'BondOne', 'helpText': 'Create or change a bond to single.', 'mnemonic': 'Shift+1', 'key': '!'},
 	{'id': 'bondOrder2', 'imageFN': 'BondTwo', 'helpText': 'Create or change a bond to double.', 'mnemonic': 'Shift+2', 'key': '@'},
 	{'id': 'bondOrder3', 'imageFN': 'BondThree', 'helpText': 'Create or change a bond to triple.', 'mnemonic': 'Shift+3', 'key': '#'},
