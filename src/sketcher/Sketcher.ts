@@ -28,6 +28,7 @@
 ///<reference path='ToolBank.ts'/>
 ///<reference path='EditAtom.ts'/>
 ///<reference path='EditBond.ts'/>
+///<reference path='ContextSketch.ts'/>
 
 namespace WebMolKit /* BOF */ {
 
@@ -67,6 +68,7 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 	public useTemplateBank = true;
 	public lowerTemplateBank = false;
 	public debugOutput:any = undefined;
+	public showOxState = true;
 
 	private mol:Molecule = null;
 	private policy:RenderPolicy = null;
@@ -130,6 +132,7 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 	private cursorDY = 0;
 
 	private proxyClip:ClipboardProxy = null;
+	private proxyMenu:MenuProxy = null;
 	private static UNDO_SIZE = 20;
 
 	constructor()
@@ -188,6 +191,10 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 	public defineClipboard(proxy:ClipboardProxy):void
 	{
 		this.proxyClip = proxy;
+	}
+	public defineContext(proxy:MenuProxy):void
+	{
+		this.proxyMenu = proxy;
 	}
 
 	// define the molecule as a SketchEl-formatted string
@@ -322,6 +329,7 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 		this.container.keypress((event:JQueryEventObject) => this.keyPressed(event));
 		this.container.keydown((event:JQueryEventObject) => this.keyDown(event));
 		this.container.keyup((event:JQueryEventObject) => this.keyUp(event));
+		this.content.contextmenu((event:JQueryEventObject) => this.contextMenu(event));
 
 		// setup the wheel handler
 		/* ...
@@ -627,7 +635,7 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 		dlg.open();*/
 	}
 
-	// zooms in or out, depending on the magnifier; if
+	// zooms in or out, depending on the magnifier
 	public zoom(mag:number)
 	{
 		let cx = 0.5 * this.width, cy = 0.5 * this.height;
@@ -648,6 +656,13 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 		// --- end inefficient
 
 		this.delayedRedraw();
+	}
+
+	// bring up the interactive editing mode for current object, if any
+	public editCurrent():void
+	{
+		if (this.currentAtom > 0) this.editAtom(this.currentAtom);
+		else if (this.currentBond > 0) this.editBond(this.currentBond);
 	}
 
 	// pasted text from clipboard (can be activated from outside the widget, so is public)
@@ -1635,6 +1650,12 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 
 		this.clearMessage();
 
+		if (event.ctrlKey && !event.shiftKey && !event.altKey)
+		{
+			this.contextMenu(event);
+			return;
+		}
+
 		this.dragType = DraggingTool.Press;
 		this.opBudged = false;
 		this.dragGuides = null;
@@ -1666,10 +1687,7 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 			{
 				this.dragType = DraggingTool.Press;
 			}
-			else if (!this.opShift && this.opCtrl && !this.opAlt)
-			{
-				// !! open context...
-			}
+			//else if (!this.opShift && this.opCtrl && !this.opAlt) (done already)
 			else if (!this.opShift && !this.opCtrl && this.opAlt)
 			{
 				this.dragType = DraggingTool.Pan;
@@ -1914,7 +1932,7 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 			else if (this.dragType == DraggingTool.Rotate)
 			{
 				let [x0, y0, theta, magnitude] = this.determineDragTheta();
-				let degrees = -theta * DEGRAD;
+				let degrees = -theta * RADDEG;
 				let mx = this.xToAng(x0), my = this.yToAng(y0);
 				let molact = new MoleculeActivity(this.getState(), ActivityType.Rotate, {'theta': degrees, 'centreX': mx, 'centreY': my}, {}, this);
 				molact.execute();
@@ -2128,11 +2146,7 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 		
 		// non-modifier keys that don't generate a 'pressed' event
 		let nomod = !event.shiftKey && !event.ctrlKey && !event.altKey && !event.metaKey;
-		if (key == KeyCode.Enter)
-		{
-			if (this.currentAtom > 0) this.editAtom(this.currentAtom);
-			else if (this.currentBond > 0) this.editBond(this.currentBond);
-		}
+		if (key == KeyCode.Enter) this.editCurrent();
 		else if (key == KeyCode.Left && nomod) this.hitArrowKey(-1, 0);
 		else if (key == KeyCode.Right && nomod) this.hitArrowKey(1, 0);
 		else if (key == KeyCode.Up && nomod) this.hitArrowKey(0, 1);
@@ -2168,6 +2182,23 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 
 		event.stopPropagation = true;
 		*/
+	}
+	private contextMenu(event:JQueryEventObject):void
+	{
+		event.preventDefault();
+		this.dragType = DraggingTool.None;
+
+		if (!this.proxyMenu) return;
+
+		let [x, y] = eventCoords(event, this.container);
+		let clickObj = this.pickObject(x, y);
+		if (clickObj > 0) this.changeCurrentAtom(clickObj);
+		else if (clickObj < 0) this.changeCurrentBond(-clickObj);
+		let state = this.getState();
+
+		let ctx = new ContextSketch(state, this, this.proxyClip);
+		let menu = ctx.populate();
+		this.proxyMenu.openContextMenu(menu, event);
 	}
 
 	// something was dragged into the sketcher area
@@ -2226,8 +2257,34 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 	// puts together an effects parameter for the main sketch
 	private sketchEffects():RenderEffects
 	{
+		const {mol} = this;
+
 		let effects = new RenderEffects();
-		for (let n = 1; n <= this.mol.numAtoms; n++) if (MolUtil.hasAbbrev(this.mol, n)) effects.dottedRectOutline[n] = 0x808080;
+		
+		for (let n = 1; n <= mol.numAtoms; n++) if (MolUtil.hasAbbrev(mol, n)) effects.dottedRectOutline[n] = 0x808080;
+		
+		effects.overlapAtoms = CoordUtil.overlappingAtomList(mol, 0.2);
+		
+		effects.atomDecoText = Vec.stringArray('', mol.numAtoms);
+		effects.atomDecoCol = Vec.numberArray(Theme.foreground, mol.numAtoms);
+		effects.atomDecoSize = Vec.numberArray(0.3, mol.numAtoms);
+		effects.bondDecoText = Vec.stringArray('', mol.numBonds);
+		effects.bondDecoCol = Vec.numberArray(Theme.foreground, mol.numBonds);
+		effects.bondDecoSize = Vec.numberArray(0.3, mol.numBonds);
+
+		if (this.showOxState)
+		{
+			for (let n = 1; n <= mol.numAtoms; n++)
+			{
+				let ox = MolUtil.atomOxidationState(mol, n);
+				if (ox != null)
+				{
+					effects.atomDecoText[n - 1] = MolUtil.oxidationStateText(ox);
+					effects.atomDecoCol[n - 1] = 0xFF8080;
+				}
+			}
+		}
+
 		return effects;
 	}
 }

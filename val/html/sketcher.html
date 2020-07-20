@@ -68,6 +68,7 @@ Bu=4.0195,3.8581;0,0,i0,aSketchEl!(5\002C4)\000A*\003D2.7204\002C4.6081\003B0\00
 	};
 	proxy.pushHandler(handler);
 	sketcher.defineClipboard(proxy);
+	sketcher.defineContext(new wmk.MenuProxyWeb());
 
 	sketcher.setup(() => sketcher.render($('#sketcher')));
 

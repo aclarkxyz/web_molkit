@@ -124,7 +124,8 @@ export class MolUtil
 	// NOTE: returns null if the template creation is invalid
 	public static convertToAbbrev(mol:Molecule, srcmask:boolean[], abbrevName:string):Molecule
 	{
-		return this.convertToAbbrevIndex(mol, srcmask, abbrevName)[0];
+		let molidx = this.convertToAbbrevIndex(mol, srcmask, abbrevName);
+		return molidx ? molidx[0] : null;
 	}
 	public static convertToAbbrevIndex(mol:Molecule, srcmask:boolean[], abbrevName:string):[Molecule, number]
 	{
@@ -848,6 +849,56 @@ export class MolUtil
 			return [mol.atomX(atom), mol.atomY(atom), mol.atomZ(atom)];
 		else
 			return [mol.atomX(atom), mol.atomY(atom), 0];
+	}
+
+	// works out the oxidation state of a given atom; if it's a common main group with an ordinary valence, returns null to denote
+	// that it's not worth mentioning
+	public static atomOxidationState(mol:Molecule, atom:number):number
+	{
+		if (mol.atomAdjCount(atom) == 0) return null; // just not interesting if it's isolated
+		if (this.hasAbbrev(mol, atom)) return null;
+
+		let atno = mol.atomicNumber(atom);
+		if (atno == 0) return null;
+		let nonMetal = atno == Chemistry.ELEMENT_H || Chemistry.ELEMENT_BLOCKS[atno] == 2;
+		let oxstate = mol.atomHydrogens(atom) + (nonMetal ? -mol.atomCharge(atom) : mol.atomCharge(atom));
+		for (let b of mol.atomAdjBonds(atom))
+		{
+			let bo = mol.bondOrder(b);
+			if (nonMetal) oxstate += bo; else oxstate += bo % 2;
+		}
+		
+		if (atno == Chemistry.ELEMENT_H && oxstate == 1) return null;
+		if (atno == Chemistry.ELEMENT_B && oxstate == 3) return null;
+		if (atno == Chemistry.ELEMENT_C && oxstate == 4) return null;
+		if (atno == Chemistry.ELEMENT_N && oxstate == 3) return null;
+		if (atno == Chemistry.ELEMENT_O && oxstate == 2) return null;
+		if (atno == Chemistry.ELEMENT_S && (oxstate == 2 || oxstate == 4 || oxstate == 6)) return null;
+		if (atno == Chemistry.ELEMENT_P && (oxstate == 3 || oxstate == 5)) return null;
+		if ((atno == Chemistry.ELEMENT_F || atno == Chemistry.ELEMENT_Cl || 
+			atno == Chemistry.ELEMENT_Br || atno == Chemistry.ELEMENT_I) && oxstate == 1) return null;
+
+		return oxstate;
+	}
+	public static oxidationStateText(oxstate:number):string
+	{
+		if (oxstate == 0) return '0';
+		let str = oxstate < 0 ? '-' : '';
+		let absox = Math.abs(oxstate);
+		if (absox == 1) str += 'I';
+		else if (absox == 2) str += 'II';
+		else if (absox == 3) str += 'III';
+		else if (absox == 4) str += 'IV';
+		else if (absox == 5) str += 'V';
+		else if (absox == 6) str += 'VI';
+		else if (absox == 7) str += 'VII';
+		else if (absox == 8) str += 'VIII';
+		else if (absox == 9) str += 'IX';
+		else if (absox == 10) str += 'X';
+		else if (absox == 11) str += 'XI';
+		else if (absox == 12) str += 'XII';
+		else str = (oxstate > 0 ? '+' : '') + oxstate;
+		return str;
 	}
 }
 

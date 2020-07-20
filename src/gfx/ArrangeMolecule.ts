@@ -175,13 +175,13 @@ export class ArrangeMolecule
 	// the action method: call this before accessing any of the resultant data
 	public arrange():void
 	{
-		const mol = this.mol;
+		const {mol, measure, policy, effects} = this;
 
-		this.scale = this.measure.scale();
-		this.bondSepPix = this.policy.data.bondSep * this.measure.scale();
-		this.lineSizePix = this.policy.data.lineSize * this.measure.scale();
-		this.fontSizePix = this.policy.data.fontSize * this.measure.scale() * ArrangeMolecule.FONT_CORRECT;
-		this.ymul = this.measure.yIsUp() ? -1 : 1;
+		this.scale = measure.scale();
+		this.bondSepPix = policy.data.bondSep * measure.scale();
+		this.lineSizePix = policy.data.lineSize * measure.scale();
+		this.fontSizePix = policy.data.fontSize * measure.scale() * ArrangeMolecule.FONT_CORRECT;
+		this.ymul = measure.yIsUp() ? -1 : 1;
 
 		let artmask:boolean[] = null;
 		if (this.wantArtifacts && this.artifacts == null)
@@ -273,7 +273,7 @@ export class ArrangeMolecule
 			// for non-double bonds, can add the constituents right away
 			if (bdbl[n - 1]) continue;
 
-			let minDist = (bo == 1 && bt == Molecule.BONDTYPE_NORMAL ? this.MINBOND_LINE : this.MINBOND_EXOTIC) * this.measure.scale();
+			let minDist = (bo == 1 && bt == Molecule.BONDTYPE_NORMAL ? this.MINBOND_LINE : this.MINBOND_EXOTIC) * measure.scale();
 			let xy1 = this.backOffAtom(bfr, x1, y1, x2, y2, minDist);
 			let xy2 = this.backOffAtom(bto, x2, y2, x1, y1, minDist);
 			this.ensureMinimumBondLength(xy1, xy2, x1, y1, x2, y2, minDist);
@@ -288,17 +288,17 @@ export class ArrangeMolecule
 			if (bo == 1 && bt == Molecule.BONDTYPE_INCLINED)
 			{
 				ltype = BLineType.Inclined;
-				head = 0.15 * this.measure.scale();
+				head = 0.15 * measure.scale();
 			}
 			else if (bo == 1 && bt == Molecule.BONDTYPE_DECLINED)
 			{
 				ltype = BLineType.Declined;
-				head = 0.15 * this.measure.scale();
+				head = 0.15 * measure.scale();
 			}
 			else if (bt == Molecule.BONDTYPE_UNKNOWN)
 			{
 				ltype = BLineType.Unknown;
-				head = 0.2 * this.measure.scale();
+				head = 0.2 * measure.scale();
 			}
 			else if (bo == 0)
 			{
@@ -308,7 +308,7 @@ export class ArrangeMolecule
 			else if ((bo == 2 || bo == 3 || bo == 4) && (bt == Molecule.BONDTYPE_INCLINED || bt == Molecule.BONDTYPE_DECLINED))
 			{
 				ltype = bo == 2 ? BLineType.IncDouble : bo == 3 ? BLineType.IncTriple : BLineType.IncQuadruple;
-				head = (bo == 2 ? 0.20 : 0.25) * this.measure.scale();
+				head = (bo == 2 ? 0.20 : 0.25) * measure.scale();
 			}
 
 			// for dotted lines, back off intersections if non-terminal
@@ -394,7 +394,7 @@ export class ArrangeMolecule
 		for (let n = 1; n <= mol.numAtoms; n++) if (mol.atomIsotope(n) != Molecule.ISOTOPE_NATURAL)
 		{
 			let isostr = mol.atomIsotope(n).toString();
-			let col = this.policy.data.atomCols[mol.atomicNumber(n)];
+			let col = policy.data.atomCols[mol.atomicNumber(n)];
 			this.placeAdjunct(n, isostr, this.fontSizePix * 0.6, col, 150 * DEGRAD);
 		}
 
@@ -409,8 +409,39 @@ export class ArrangeMolecule
 			else if (chg > 1) str = chg + '+';
 			for (let i = this.atomUnpaired[n - 1]; i > 0; i--) str += '.';
 			if (str.length == 0) continue;
-			let col = this.policy.data.atomCols[mol.atomicNumber(n)];
+			let col = policy.data.atomCols[mol.atomicNumber(n)];
 			this.placeAdjunct(n, str, str.length == 1 ? 0.8 * this.fontSizePix : 0.6 * this.fontSizePix, col, 30 * DEGRAD);
+		}
+
+		// add in any explicitly user-requested decorations
+		for (let n = 0; n < effects.atomDecoText.length; n++)
+		{
+			let txt = effects.atomDecoText[n];
+			if (!txt) continue;
+			this.annotateAtom(n + 1, txt, effects.atomDecoCol[n], effects.atomDecoSize[n] * this.scale * ArrangeMolecule.FONT_CORRECT)
+		}
+		for (let n = 0; n < effects.bondDecoText.length; n++)
+		{
+			let txt = effects.bondDecoText[n];
+			if (!txt) continue;
+			this.annotateBond(n + 1, txt, effects.bondDecoCol[n], effects.bondDecoSize[n] * this.scale * ArrangeMolecule.FONT_CORRECT)
+		}
+
+		// atom circles need space reserved for them
+		for (let n = 0; n < Math.min(effects.atomCircleSz.length, mol.numAtoms); n++) if (effects.atomCircleSz[n] > 0)
+		{
+			let dw = effects.atomCircleSz[n] * this.scale;
+			let a = this.points[n];
+			let box = new Box(a.oval.cx - dw, a.oval.cy - dw, 2 * dw, 2 * dw);
+			let spc:SpaceFiller =
+			{
+				'anum': 0,
+				'bnum': 0,
+				'box': box,
+				'px': [box.minX(), box.maxX(), box.maxX(), box.minX()],
+				'py': [box.minY(), box.minY(), box.maxY(), box.maxY()]
+			};
+			this.space.push(spc);
 		}
 
 		if (this.artifacts != null)
@@ -717,7 +748,7 @@ export class ArrangeMolecule
 				px[1] = x2; py[1] = y1;
 				px[2] = x2; py[2] = y2;
 				px[3] = x1; py[3] = y2;
-				let viol = this.countPolyViolations(px, py, false);
+				let viol = this.countPolyViolations(px, py, null, false);
 				let score = 10 * viol + Math.abs(dang) + 10 * ext;
 
 				let shortCircuit = viol == 0 && Math.abs(dang) < (angThresh + 1) * DEGRAD;
@@ -1334,7 +1365,7 @@ export class ArrangeMolecule
 				// if it can be placed without overlap, we'll take it
 				Vec.addTo(outlineX, tx);
 				Vec.addTo(outlineY, ty);
-				let viol = this.countPolyViolations(outlineX, outlineY, true);
+				let viol = this.countPolyViolations(outlineX, outlineY, null, true);
 				Vec.addTo(outlineX, -tx);
 				Vec.addTo(outlineY, -ty);
 
@@ -1372,7 +1403,7 @@ export class ArrangeMolecule
 					let tx = ext * Math.cos(ang), ty = ext * Math.sin(ang);
 					Vec.addTo(magPX, tx);
 					Vec.addTo(magPY, ty);
-					let viol = this.countPolyViolations(magPX, magPY, false);
+					let viol = this.countPolyViolations(magPX, magPY, null, false);
 					Vec.addTo(magPX, -tx);
 					Vec.addTo(magPY, -ty);
 					if (viol == 0) anyNoClash = true;
@@ -1587,12 +1618,22 @@ export class ArrangeMolecule
 		}
 	}
 
+	// returns a subset of the space-filling outlines: only those whose bounding boxes match the supplied rectangle
+	private spaceSubset(x:number, y:number, w:number, h:number):SpaceFiller[]
+	{
+		let subset:SpaceFiller[] = [];
+		for (let s of this.space) if (GeomUtil.rectsIntersect(x, y, w, h, s.box.x, s.box.y, s.box.w, s.box.h)) subset.push(s);
+		return subset;
+	}
+
 	// for a provided polygon, counts the number of times each of its lines intersects with the lines of one of the space-filling
 	// polygons already placed; if the shortCircuit parameter is true, will return as soon as one is found
-	private countPolyViolations(px:number[], py:number[], shortCircuit:boolean):number
+	private countPolyViolations(px:number[], py:number[], space:SpaceFiller[], shortCircuit:boolean):number
 	{
+		if (space == null) space = this.space;
+
 		let hits = 0;
-		const psz = px.length, nspc = this.space.length;
+		const psz = px.length, nspc = space.length;
 
 		// check for line-crossings first: this is the usual way that collisions happen
 		let pr = new Box(), sr = new Box();
@@ -1606,7 +1647,7 @@ export class ArrangeMolecule
 
 			for (let j = 0; j < nspc; j++)
 			{
-				let spc = this.space[j];
+				let spc = space[j];
 				if (spc.px == null) continue;
 				sr.x = spc.box.x - 1;
 				sr.y = spc.box.y - 1;
@@ -1644,7 +1685,7 @@ export class ArrangeMolecule
 
 		for (let n = nspc - 1; n >= 0; n--)
 		{
-			let spc = this.space[n];
+			let spc = space[n];
 			sr.x = spc.box.x;
 			sr.y = spc.box.y;
 			sr.w = spc.box.w;
@@ -1783,6 +1824,163 @@ export class ArrangeMolecule
 			congest += 1 / (dx * dx + dy * dy + thresh);
 		}
 		return congest;
+	}
+
+	// adding additional non-core annotations, later on in the process; it is assumed that there is no directional preference
+	private annotateAtom(atom:number, text:string, col:number, fsz:number):void
+	{
+		let [tw, ta] = this.measure.measureText(text, fsz);
+		let a = this.points[atom - 1];
+		let cx = a.oval.cx, cy = a.oval.cy, rw = 0.6 * tw, rh = 0.6 * ta;
+	
+		let otherTheta:number[] = [];
+		for (let a of this.mol.atomAdjList(atom))
+		{
+			let dx = this.points[a - 1].oval.cx - cx, dy = this.points[a - 1].oval.cy - cy;
+			otherTheta.push(Math.atan2(dy, dx));
+		}
+
+		let minExt = 0.5 * (a.oval.rw + a.oval.rh), stepsz = 0.1 * this.scale, nsteps = 8;
+		let angsteps = 36, angsz = TWOPI / angsteps;
+		
+		// begin the circular sweep
+		let bestScore = Number.POSITIVE_INFINITY, bestDX = 0, bestDY = 0;
+		let px = [0, 0, 0, 0], py = [0, 0, 0, 0];
+
+		let limX = rw + minExt + nsteps * stepsz, limY = rh + minExt + nsteps * stepsz;
+		let subSpace = this.spaceSubset(cx - limX, cy - limY, 2 * limX, 2 * limY);
+
+		for (let step = 0; step < nsteps; step++)
+		{
+			let ext = minExt + step * stepsz;
+			for (let ang = 0; ang < angsteps; ang++)
+			{
+				let th = angsz * ang;
+				let dx = ext * Math.cos(th), dy = ext * Math.sin(th);
+				let x1 = cx + dx - rw, x2 = cx + dx + rw, y1 = cy + dy - rh, y2 = cy + dy + rh;
+				px[0] = x1; py[0] = y1;
+				px[1] = x2; py[1] = y1;
+				px[2] = x2; py[2] = y2;
+				px[3] = x1; py[3] = y2;
+				let viol = this.countPolyViolations(px, py, subSpace, false);
+				let score = viol * 1000;
+				for (let oth of otherTheta) score -= Math.abs(angleDiff(th, oth));
+				
+				if (score < bestScore)
+				{
+					bestScore = score;
+					bestDX = dx;
+					bestDY = dy;
+				}
+			}
+			if (bestScore < 500) break;
+		}
+
+		let x = cx + bestDX, y = cy + bestDY
+
+		// create a point for it
+    	let an:APoint = 
+		{
+			'anum': 0,
+			'text': text,
+			'fsz': fsz,
+			'bold': false,
+			'col': col,
+			'oval': new Oval(x, y, rw, rh),
+		};
+		this.points.push(an);
+
+		// create a square spacefiller
+		let spc:SpaceFiller =
+		{
+			'anum': 0,
+			'bnum': 0,
+			'box': new Box(x - rw, y - rh, 2 * rw, 2 * rh),
+			'px': [x - rw, x + rw, x + rw, x - rw],
+			'py': [y - rh, y - rh, y + rh, y + rh],
+		}
+    	this.space.push(spc);
+	}
+	private annotateBond(bond:number, text:string, col:number, fsz:number):void
+	{
+		let [tw, ta] = this.measure.measureText(text, fsz);
+		let bfr = this.mol.bondFrom(bond), bto = this.mol.bondTo(bond);
+		let a1 = this.points[bfr - 1], a2 = this.points[bto - 1];
+		let cx = 0.5 * (a1.oval.cx + a2.oval.cx), cy = 0.5 * (a1.oval.cy + a2.oval.cy), rw = 0.6 * tw, rh = 0.6 * ta;
+	
+		let bth = Math.atan2(a2.oval.cy - a1.oval.cy, a2.oval.cx - a1.oval.cx);
+		let otherTheta:number[] = [bth, bth + Math.PI];
+		for (let a of this.mol.atomAdjList(bfr)) if (a != bto)
+		{
+			let dx = this.points[a - 1].oval.cx - this.points[bfr - 1].oval.cx, dy = this.points[a - 1].oval.cy - this.points[bfr - 1].oval.cy;
+			otherTheta.push(Math.atan2(dy, dx));
+		}
+		for (let a of this.mol.atomAdjList(bto)) if (a != bfr)
+		{
+			let dx = this.points[a - 1].oval.cx - this.points[bto - 1].oval.cx, dy = this.points[a - 1].oval.cy - this.points[bto - 1].oval.cy;
+			otherTheta.push(Math.atan2(dy, dx));
+		}
+
+		let minExt = 0.2 * this.scale * this.bondOrder[bond - 1], stepsz = 0.1 * this.scale, nsteps = 8;
+		let angsteps = 36, angsz = TWOPI / angsteps;
+		
+		// begin the circular sweep
+		let bestScore =  Number.POSITIVE_INFINITY, bestDX = 0, bestDY = 0;
+		let px = [0, 0, 0, 0], py = [0, 0, 0, 0];
+
+		let limX = rw + minExt + nsteps * stepsz, limY = rh + minExt + nsteps * stepsz;
+		let subSpace = this.spaceSubset(cx - limX, cy - limY, 2 * limX, 2 * limY);
+
+		for (let step = 0; step < nsteps; step++)
+		{
+			let ext = minExt + step * stepsz;
+			for (let ang = 0; ang < angsteps; ang++)
+			{
+				let th = angsz * ang;
+				let dx = ext * Math.cos(th), dy = ext * Math.sin(th);
+				let x1 = cx + dx - rw, x2 = cx + dx + rw, y1 = cy + dy - rh, y2 = cy + dy + rh;
+				px[0] = x1; py[0] = y1;
+				px[1] = x2; py[1] = y1;
+				px[2] = x2; py[2] = y2;
+				px[3] = x1; py[3] = y2;
+				let viol = this.countPolyViolations(px, py, subSpace, false);
+				let score = viol * 1000;
+				for (let oth of otherTheta) score -= Math.abs(angleDiff(th, oth));
+				
+				if (score < bestScore)
+				{
+					bestScore = score;
+					bestDX = dx;
+					bestDY = dy;
+				}
+			}
+			if (bestScore < 500) break;
+		}
+
+		let x = cx + bestDX, y = cy + bestDY;
+
+		// create a point for it
+    	let an:APoint = 
+		{
+			'anum': 0,
+			'text': text,
+			'fsz': fsz,
+			'bold': false,
+			'col': col,
+			'oval': new Oval(x, y, rw, rh),
+		};
+		this.points.push(an);
+
+		// create a square spacefiller
+		let spc:SpaceFiller =
+		{
+			'anum': 0,
+			'bnum': 0,
+			'box': new Box(x - rw, y - rh, 2 * rw, 2 * rh),
+			'px': [x - rw, x + rw, x + rw, x - rw],
+			'py': [y - rh, y - rh, y + rh, y + rh],
+		}
+    	this.space.push(spc);
 	}
 
 	// returns true if the indicated box intersects with any of the currently defined atom centres or bond lines; can optionally

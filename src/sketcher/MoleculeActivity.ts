@@ -333,7 +333,7 @@ export class MoleculeActivity
 		if (this.input.currentBond > 0 && !this.hasSelected)
 		{
 			this.output.mol.deleteBond(this.input.currentBond);
-			this.input.currentBond = 0;
+			this.output.currentBond = 0;
 			return;
 		}
 
@@ -356,7 +356,7 @@ export class MoleculeActivity
 	{
 		let mol = this.input.mol;
 		if (this.subjectLength > 0) mol = MolUtil.subgraphWithAttachments(mol, this.subjectMask);
-		this.owner.performCopy(mol);
+		if (this.owner) this.owner.performCopy(mol);
 
 		if (withCut)
 		{
