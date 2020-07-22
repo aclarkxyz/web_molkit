@@ -1093,8 +1093,8 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 
 		// proceed with atoms & bonds
 
-		let limitDSQ = sqr(0.5 * this.pointScale);
-		let bestItem = 0, bestDSQ:number;
+		let limitDist = 0.5 * this.pointScale;
+		let bestItem = 0, bestScore = Number.POSITIVE_INFINITY;
 
 		// look for close atoms
 		for (let n = 0; n < this.layout.numPoints(); n++)
@@ -1104,14 +1104,15 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 
 			let dx = Math.abs(x - p.oval.cx), dy = Math.abs(y - p.oval.cy);
 			let dsq = norm2_xy(dx, dy);
+			let limitDSQ = sqr(Math.max(limitDist, Math.max(p.oval.rw, p.oval.rh)));
 			if (dsq > limitDSQ) continue;
-			if (bestItem == 0 || dsq < bestDSQ)
+			if (dsq < bestScore)
 			{
 				bestItem = p.anum;
-				bestDSQ = dsq;
+				bestScore = dsq;
 			}
 		}
-		//if (bestItem!=0) return bestItem; // give priority to atoms (!! but not for touch-style...)
+		if (bestItem != 0) return bestItem;
 
 		// look for close bonds
 		for (let n = 0; n < this.layout.numLines(); n++)
@@ -1121,11 +1122,17 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 
 			let x1 = l.line.x1, y1 = l.line.y1;
 			let x2 = l.line.x2, y2 = l.line.y2;
-			let bondDSQ = norm2_xy(x2 - x1, y2 - y1) * 0.25;
-			let dsq = norm2_xy(x - 0.5 * (x1 + x2), y - 0.5 * (y1 + y2));
 
-			if (dsq > bondDSQ) continue;
-			if (bestItem == 0 || dsq < bestDSQ) {bestItem = -l.bnum; bestDSQ = dsq;}
+			if (x < Math.min(x1, x2) - limitDist || y < Math.min(y1, y2) - limitDist ||
+				x > Math.max(x1, x2) + limitDist || y > Math.max(y1, y2) + limitDist) continue;
+
+			let dist = GeomUtil.pointLineSegDistance(x, y, x1,  y1, x2, y2);
+			if (dist > limitDist) continue;
+			if (dist < bestScore)
+			{
+				bestItem = -l.bnum;
+				bestScore = dist;
+			}
 		}
 
 		return bestItem;
@@ -1768,7 +1775,7 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 	{
 		// if the mouse hasn't moved, it's a click operation
 		if (!this.opBudged)
-		{
+		{		
 			let xy = eventCoords(event, this.container);
 
 			let clickObj = this.pickObject(xy[0], xy[1]);
@@ -1797,17 +1804,24 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 					{
 						this.currentAtom = clickAtom;
 						this.currentBond = clickBond;
-						this.delayedRedraw();
 					}
 					else if (clickAtom == 0 && clickBond == 0 && this.anySelected())
 					{
 						this.selectedMask = null;
-						this.delayedRedraw();
 					}
 				}
 				else if (this.opShift && !this.opCtrl && !this.opAlt)
 				{
 					if (clickAtom > 0) this.setSelected(clickAtom, !this.getSelected(clickAtom));
+				}
+			}
+			else if (this.dragType == DraggingTool.Move)
+			{
+				if (clickObj == 0)
+				{
+					if (Vec.anyTrue(this.selectedMask)) this.selectedMask = null;
+					else if (this.currentAtom > 0) this.currentAtom = 0;
+					else if (this.currentBond > 0) this.currentBond = 0;
 				}
 			}
 			else if (this.dragType == DraggingTool.Erasor)
@@ -2144,7 +2158,6 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 
 		//console.log('Keycode:[' + event.keyCode + '] Key:[' + event.key + ']');
 		
-		// non-modifier keys that don't generate a 'pressed' event
 		let nomod = !event.shiftKey && !event.ctrlKey && !event.altKey && !event.metaKey;
 		if (key == KeyCode.Enter) this.editCurrent();
 		else if (key == KeyCode.Left && nomod) this.hitArrowKey(-1, 0);

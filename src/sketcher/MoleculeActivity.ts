@@ -58,6 +58,7 @@ export enum ActivityType
 	BondGeom,
 	BondAtom,
 	BondSwitch,
+	BondRotate,
 	BondAddTwo,
 	BondInsert,
 	Join,
@@ -259,6 +260,7 @@ export class MoleculeActivity
 		else if (this.activity == ActivityType.BondGeom) this.execBondGeom(param.geom);
 		else if (this.activity == ActivityType.BondAtom) this.execBondAtom(param.order, param.type, param.element, param.x1, param.y1, param.x2, param.y2);
 		else if (this.activity == ActivityType.BondSwitch) this.execBondSwitch();
+		else if (this.activity == ActivityType.BondRotate) this.execBondRotate();
 		else if (this.activity == ActivityType.BondAddTwo) this.execBondAddTwo();
 		else if (this.activity == ActivityType.BondInsert)
 		{
@@ -836,6 +838,58 @@ export class MoleculeActivity
 		{
 			this.errmsg = 'No alternative geometries identified.';
 		}
+	}
+
+	public execBondRotate():void
+	{
+		let bond = this.input.currentBond;
+
+		if (bond == 0)
+		{
+			this.errmsg = 'There must be a current bond.';
+			return;
+		}
+
+		let mol = this.input.mol;
+		if (mol.bondInRing(bond))
+		{
+			this.errmsg = 'Cannot rotate a ring-bond.';
+			return;
+		}
+		if (mol.atomAdjCount(mol.bondFrom(bond)) == 1 || mol.atomAdjCount(mol.bondTo(bond)) == 1)
+		{
+			this.errmsg = 'Terminal bonds do not rotate.';
+			return;
+		}
+
+		mol = mol.clone();
+
+		let [atom1, atom2, side] = this.heavySide(bond);
+
+		let cx = mol.atomX(atom1), cy = mol.atomY(atom1);
+		let theta = Math.atan2(mol.atomY(atom1) - mol.atomY(atom2), mol.atomX(atom1) - mol.atomX(atom2));
+		for (let a of side) if (a != atom1)
+		{
+			let dx = mol.atomX(a) - cx, dy = mol.atomY(a) - cy, dist = norm_xy(dx, dy);
+			var dtheta = Math.atan2(dy, dx);
+			dtheta = theta - angleDiff(dtheta, theta);
+			mol.setAtomPos(a, cx + dist * Math.cos(dtheta), cy + dist * Math.sin(dtheta));
+		}
+		let mask = Vec.idxMask(Vec.add(side, -1), mol.numAtoms);
+		for (let b = 1; b <= mol.numBonds; b++) if (mask[mol.bondFrom(b) - 1] && mask[mol.bondTo(b) - 1])
+		{
+			let bt = mol.bondType(b);
+			if (bt == Molecule.BONDTYPE_INCLINED) mol.setBondType(b, Molecule.BONDTYPE_DECLINED);
+			else if (bt == Molecule.BONDTYPE_DECLINED) mol.setBondType(b, Molecule.BONDTYPE_INCLINED);
+		}
+		
+		if (CoordUtil.sketchEquivalent(this.input.mol, mol))
+		{
+			this.errmsg = 'Rotation has no effect.';
+			return;
+		}
+		
+		this.output.mol = mol;
 	}
 
 	public execBondAddTwo():void

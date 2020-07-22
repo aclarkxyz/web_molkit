@@ -129,6 +129,7 @@ const COMMANDS_BOND:ButtonBankItem[] =
 	{'id': 'addtwo', 'imageFN': 'BondAddTwo', 'helpText': 'Add two new bonds to the subject atom.', 'mnemonic': 'Shift+D'},
 	{'id': 'insert', 'imageFN': 'BondInsert', 'helpText': 'Insert a methylene into the subject bond.', 'mnemonic': ''},
 	{'id': 'switch', 'imageFN': 'BondSwitch', 'helpText': 'Cycle through likely bond geometries.', 'mnemonic': ''},
+	{'id': 'rotate', 'imageFN': 'BondRotate', 'helpText': 'Rotate bond to invert substituent orientation.', 'mnemonic': ''},
 	{'id': 'linear', 'imageFN': 'BondLinear', 'helpText': 'Apply linear geometry.', 'mnemonic': 'Shift+V'},
 	{'id': 'trigonal', 'imageFN': 'BondTrigonal', 'helpText': 'Apply trigonal geometry.', 'mnemonic': 'Shift+W'},
 	{'id': 'tetra1', 'imageFN': 'BondTetra1', 'helpText': 'Apply tetrahedral geometry #1.', 'mnemonic': 'Shift+E'},
@@ -136,7 +137,7 @@ const COMMANDS_BOND:ButtonBankItem[] =
 	{'id': 'sqplan', 'imageFN': 'BondSqPlan', 'helpText': 'Apply square planar geometry.', 'mnemonic': 'Shift+T'},
 	{'id': 'octa1', 'imageFN': 'BondOcta1', 'helpText': 'Apply octahedral geometry #1.', 'mnemonic': 'Shift+Y'},
 	{'id': 'octa2', 'imageFN': 'BondOcta2', 'helpText': 'Apply octahedral geometry #2.', 'mnemonic': 'Shift+U'},
-	{'id': 'connect', 'imageFN': 'BondConnect', 'helpText': 'Connect selected atoms, by proximity.', 'mnemonic': ''},
+	//{'id': 'connect', 'imageFN': 'BondConnect', 'helpText': 'Connect selected atoms, by proximity.', 'mnemonic': ''},
 	//{'id': 'disconnect', 'imageFN': 'BondDisconnect', 'helpText': 'Disconnect selected atoms.', 'mnemonic': ''},
 	{'id': 'metalligate', 'imageFN': 'BondMetalLigate', 'helpText': 'Arrange ligands around metal centre.', 'mnemonic': ''},
 	{'id': 'artifactpath', 'imageFN': 'BondArtifactPath', 'helpText': 'Add a path bond artifact.', 'mnemonic': ''},
@@ -274,6 +275,7 @@ export class CommandBank extends ButtonBank
 		else if (id == 'octa1') {actv = ActivityType.BondGeom; param = {'geom': Geometry.Octa1};}
 		else if (id == 'octa2') {actv = ActivityType.BondGeom; param = {'geom': Geometry.Octa2};}
 		else if (id == 'switch') actv = ActivityType.BondSwitch;
+		else if (id == 'rotate') actv = ActivityType.BondRotate;
 		else if (id == 'connect') actv = ActivityType.Connect;
 		else if (id == 'disconnect') actv = ActivityType.Disconnect;
 		else if (id == 'metalligate') actv = ActivityType.MetalLigate;
@@ -344,6 +346,13 @@ export class CommandBank extends ButtonBank
 	{
 		//let ch = String.fromCharCode(event.keyCode || event.charCode);
 		//console.log('Claim/Command['+ch+'] key='+event.keyCode+' chcode='+event.charCode);
+	
+		// special deal: in case it's a mac, convert Cmd-Z/Cmd-Shift-Z into the Winux convention of using Ctrl
+		if (event.metaKey && event.key == 'z')
+		{
+			event.metaKey = false;
+			event.ctrlKey = true;
+		}
 
 		for (let listItems of [COMMANDS_MAIN, COMMANDS_ATOM, COMMANDS_BOND, COMMANDS_SELECT, COMMANDS_MOVE]) for (let item of listItems)
 		{

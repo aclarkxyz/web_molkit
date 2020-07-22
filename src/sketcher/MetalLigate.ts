@@ -86,6 +86,7 @@ export class MetalLigate
 			{
 				let a = lig.attach[0];
 				lig.avgTheta = Math.atan2(mol.atomY(a) - my, mol.atomX(a) - mx);
+				this.orientLigand(lig);
 			}
 			else
 			{
@@ -238,41 +239,52 @@ export class MetalLigate
 		lx = bestLX;
 		ly = bestLY;
 
-		// step 3: get an ordering of the attachment angles
-		let attTheta:number[] = new Array(asz), attDist = Vec.numberArray(0, asz), attDX = Vec.numberArray(0, asz), attDY = Vec.numberArray(0, asz);
-		for (let n = 0; n < asz; n++)
+		if (asz == 1)
 		{
-			let ox = lx[idxAttach[n]] - mx, oy = ly[idxAttach[n]] - my;
-			attTheta[n] = Math.atan2(oy, ox);
-			if (asz > 2)
+			// shrink the bond length back down to normal
+			dx = Molecule.IDEALBOND * Math.cos(lig.avgTheta);
+			dy = Molecule.IDEALBOND * Math.sin(lig.avgTheta);
+			Vec.addTo(lx, mx + dx - lx[idxAttach[0]]);
+			Vec.addTo(ly, my + dy - ly[idxAttach[0]]);
+		}
+		else
+		{
+			// step 3: get an ordering of the attachment angles
+			let attTheta:number[] = new Array(asz), attDist = Vec.numberArray(0, asz), attDX = Vec.numberArray(0, asz), attDY = Vec.numberArray(0, asz);
+			for (let n = 0; n < asz; n++)
 			{
-				attDist[n] = norm_xy(ox, oy);
-				attDX[n] = ox / attDist[n];
-				attDY[n] = oy / attDist[n];
+				let ox = lx[idxAttach[n]] - mx, oy = ly[idxAttach[n]] - my;
+				attTheta[n] = Math.atan2(oy, ox);
+				if (asz > 2)
+				{
+					attDist[n] = norm_xy(ox, oy);
+					attDX[n] = ox / attDist[n];
+					attDY[n] = oy / attDist[n];
+				}
 			}
-		}
-		Vec.addTo(attDist, -Vec.min(attDist));
-		let orderAttach = GeomUtil.idxSortAngles(attTheta);
+			Vec.addTo(attDist, -Vec.min(attDist));
+			let orderAttach = GeomUtil.idxSortAngles(attTheta);
 
-		// step 4: get a mapping onto desired coords, and run with it
-		let srcX:number[] = new Array(asz), srcY:number[] = new Array(asz);
-		let dstX:number[] = new Array(asz), dstY:number[] = new Array(asz);
-		let dtheta = 45 * DEGRAD / (asz - 1), theta = lig.avgTheta - 0.5 * dtheta;
-		for (let n = 0; n < asz; n++)
-		{
-			srcX[n] = lx[idxAttach[orderAttach[n]]];
-			srcY[n] = ly[idxAttach[orderAttach[n]]];
-			dstX[n] = mx + Molecule.IDEALBOND * Math.cos(theta) + attDist[n] * attDX[n];
-			dstY[n] = my + Molecule.IDEALBOND * Math.sin(theta) + attDist[n] * attDY[n];
+			// step 4: get a mapping onto desired coords, and run with it
+			let srcX:number[] = new Array(asz), srcY:number[] = new Array(asz);
+			let dstX:number[] = new Array(asz), dstY:number[] = new Array(asz);
+			let dtheta = 45 * DEGRAD / (asz - 1), theta = lig.avgTheta - 0.5 * dtheta;
+			for (let n = 0; n < asz; n++)
+			{
+				srcX[n] = lx[idxAttach[orderAttach[n]]];
+				srcY[n] = ly[idxAttach[orderAttach[n]]];
+				dstX[n] = mx + Molecule.IDEALBOND * Math.cos(theta) + attDist[n] * attDX[n];
+				dstY[n] = my + Molecule.IDEALBOND * Math.sin(theta) + attDist[n] * attDY[n];
 
-			theta += dtheta / (asz - 1);
-		}
-		let tfm = GeomUtil.superimpose(srcX, srcY, dstX, dstY);
-		for (let n = 0; n < lsz; n++)
-		{
-			let [x, y] = GeomUtil.applyAffine(lx[n], ly[n], tfm);
-			lx[n] = x;
-			ly[n] = y;
+				theta += dtheta / (asz - 1);
+			}
+			let tfm = GeomUtil.superimpose(srcX, srcY, dstX, dstY);
+			for (let n = 0; n < lsz; n++)
+			{
+				let [x, y] = GeomUtil.applyAffine(lx[n], ly[n], tfm);
+				lx[n] = x;
+				ly[n] = y;
+			}
 		}
 
 		for (let n = 0; n < lsz; n++) mol.setAtomPos(lig.atoms[n], lx[n], ly[n]);
@@ -394,7 +406,7 @@ export class MetalLigate
 
 		const CLOSE_SQ = sqr(0.5);
 
-		for (let count = 0; count < 6; count++)
+		for (let count = 0; count < 12; count++)
 		{
 			let tainted = Vec.booleanArray(false, lsz);
 			outer: for (let i = 0; i < na - 1; i++)

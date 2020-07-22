@@ -70,6 +70,23 @@ export class GeomUtil
 		else return realEqual(px, (dx / dy) * (py - y1) + x1);
 	}
 
+	// returns the distance from the point to the closest location on the indicated line
+	public static pointLineDistance(px:number, py:number, x1:number, y1:number, x2:number, y2:number):number
+	{
+		let dx = x2 - x1, dy = y2 - y1;
+		return Math.abs(dy * px - dx * py + x2 * y1 - y2 * x1) / norm_xy(dx, dy);
+	}
+
+	// returns the shortest distance from the point to the line segment
+	public static pointLineSegDistance(px:number, py:number, x1:number, y1:number, x2:number, y2:number):number
+	{
+		let dx = x2 - x1, dy = y2 - y1;
+		let t = ((px - x1) * dx + (py - y1) * dy) / norm2_xy(dx, dy); // t=position along the line to which the point is orthogonal
+		t = Math.max(0, Math.min(1, t));
+		let tx = x1 + t * dx, ty = y1 + t * dy;
+		return norm_xy(px - tx, py - ty);
+	}
+
 	// tests the two line segments L1-->L2 and L3-->L4 for intersection, and returns true if they do
 	// !! methinks this is almost correct, but there might be a boundary flaw
 	public static doLineSegsIntersect(x1:number, y1:number, x2:number, y2:number, x3:number, y3:number, x4:number, y4:number):boolean
