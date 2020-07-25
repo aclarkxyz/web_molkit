@@ -228,7 +228,7 @@ export class Stereochemistry
 				x[3] = -(x[0] + x[1] + x[2]);
 				y[3] = -(y[0] + y[1] + y[2]);
 				z[3] = -(z[0] + z[1] + z[2]);
-				let dsq = norm_xyz(x[3], y[3], z[3]);
+				let dsq = norm2_xyz(x[3], y[3], z[3]);
 				if (dsq < 0.01 * 0.01) return null;
 				let inv = 1.0 / Math.sqrt(dsq);
 				x[3] *= inv;
@@ -266,7 +266,7 @@ export class Stereochemistry
 	public static rubricSquarePlanar(mol:Molecule, atom:number):number[]
 	{
 		if (mol.atomAdjCount(atom) != 4) return null;
-		
+
 		// drawing style must be one of 3 options: 2 up + 2 down, or 2 flat + (2 up/2 down)
 		if (!mol.is3D())
 		{
@@ -282,7 +282,7 @@ export class Stereochemistry
 			else if (ninc == 0 && ndec == 2) {}
 			else return null;
 		}
-		
+
 		// determine all the vector outgoings; ensure that position 3 is opposite position 1; other than that, the order is arbitrary
 		let adj = mol.atomAdjList(atom);
 		let v0 = MolUtil.atomVec3(mol, atom);
@@ -290,6 +290,16 @@ export class Stereochemistry
 		let v2 = Vec.sub(MolUtil.atomVec3(mol, adj[1]), v0);
 		let v3 = Vec.sub(MolUtil.atomVec3(mol, adj[2]), v0);
 		let v4 = Vec.sub(MolUtil.atomVec3(mol, adj[3]), v0);
+
+		for (let v of [v1, v2, v3, v4])
+		{
+			let dsq = norm2_xyz(v[0], v[1], v[2]);
+			if (dsq < 0.01 * 0.01) continue;
+			let inv = 1.0 / Math.sqrt(dsq);
+			v[0] *= inv;
+			v[1] *= inv;
+			v[2] *= inv;
+		}
 
 		let d2 = GeomUtil.dist2(v1, v2), d3 = GeomUtil.dist2(v1, v3), d4 = GeomUtil.dist2(v1, v4);
 		if (d2 > d3 && d2 >= d4)
@@ -328,7 +338,7 @@ export class Stereochemistry
 	{
 		const nadj = mol.atomAdjCount(atom);
 		if (nadj != 4 && nadj != 5) return null;
-		
+
 		// if sketch, must have exactly 1 up & 1 down
 		let atom4 = 0, atom5 = 0;
 		let adj = mol.atomAdjList(atom), bonds = mol.atomAdjBonds(atom);
@@ -336,7 +346,7 @@ export class Stereochemistry
 		{
 			for (let n = 0; n < adj.length; n++)
 			{
-				if (mol.bondType(bonds[n]) == Molecule.BONDTYPE_INCLINED) 
+				if (mol.bondType(bonds[n]) == Molecule.BONDTYPE_INCLINED)
 				{
 					if (atom4 > 0) return null;
 					atom4 = adj[n];
@@ -349,7 +359,7 @@ export class Stereochemistry
 			}
 			if (atom4 == 0 || atom5 == 0) return null;
 		}
-		
+
 		// get all the relative emergent vectors
 		let v0 = MolUtil.atomVec3(mol, atom);
 		let v:number[][] = [[], [], [], [], []];
@@ -360,12 +370,12 @@ export class Stereochemistry
 			const mag = GeomUtil.magnitude(v[n]);
 			if (mag < THRESH) return null;
 			Vec.mulBy(v[n], 1.0 / mag);
-			
+
 			// if it's 2D, atom4 & 5 are defined: do faux embedding
 			if (adj[n] == atom4) v[n][2] += 1; // up
 			else if (adj[n] == atom5) v[n][2] -= 1; // down
 		}
-		
+
 		// figure out atoms 1 & 2; for 2D can rule out two candidates already
 		let atom1 = 0, atom2 = 0;
 		const ANGLE_OPPOSITE = 175 * DEGRAD;
@@ -383,13 +393,13 @@ export class Stereochemistry
 			}
 		}
 		if (!atom1 || !atom2) return null;
-		
+
 		let v1 = v[adj.indexOf(atom1)];
 		let v2 = v[adj.indexOf(atom2)];
 		let v3 = null;
 		let v4 = v[adj.indexOf(atom4)];
 		let v5 = v[adj.indexOf(atom5)];
-		
+
 		// the atom3 position is either real or virtual
 		let atom3 = 0;
 		if (nadj == 5)
@@ -410,7 +420,7 @@ export class Stereochemistry
 			if (mag < THRESH) return null; // (is this being unfair at all?)
 			Vec.mulBy(v3, 1.0 / mag);
 		}
-		
+
 		// if the cross product of 1->2 x 0->3 is closer to 4, parity is even
 		let v12 = Vec.sub(v2, v1);
 		let cross = GeomUtil.crossProduct(v12, v3);

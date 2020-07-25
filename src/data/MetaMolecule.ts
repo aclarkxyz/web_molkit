@@ -277,9 +277,20 @@ export class MetaMolecule
 		{
 			let blk = Chemistry.ELEMENT_BLOCKS[mol.atomicNumber(n)];
 			let adjc = mol.atomAdjCount(n), hc = mol.atomHydrogens(n);
+			let ninc = 0, ndec = 0;
+			for (let b of mol.atomAdjBonds(n))
+			{
+				if (mol.bondType(b) == Molecule.BONDTYPE_INCLINED && mol.bondFrom(b) == n) ninc++;
+				else if (mol.bondType(b) == Molecule.BONDTYPE_DECLINED && mol.bondFrom(b) == n) ndec++;
+			}
 
 			// p-block atoms with 4 neighbours (1 of which can be implicit H) are allowed tetrahedral chirality
+			// (or more stringent requirements for d- & f-block)
 			if (blk == 2 && ((adjc == 3 && hc == 1) || (adjc == 4 && hc == 0)))
+			{
+				this.rubricTetra[n - 1] = Stereochemistry.rubricTetrahedral(mol, n);
+			}
+			else if (blk >= 3 && adjc == 4 && ninc == 1 && ndec == 1)
 			{
 				this.rubricTetra[n - 1] = Stereochemistry.rubricTetrahedral(mol, n);
 			}
@@ -297,7 +308,12 @@ export class MetaMolecule
 			}
 
 			// d- & f-block atoms with 5 or 6 neighbours can have octahedral constraints
+			// (as can p-block atoms with 6 neighbours)
 			if (blk >= 3 && (adjc == 5 || adjc == 6) && hc == 0)
+			{
+				this.rubricOcta[n - 1] = Stereochemistry.rubricOctahedral(mol, n);
+			}
+			else if (blk == 2 && adjc == 6 && hc == 0)
 			{
 				this.rubricOcta[n - 1] = Stereochemistry.rubricOctahedral(mol, n);
 			}
