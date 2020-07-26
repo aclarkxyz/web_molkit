@@ -799,10 +799,12 @@ export class MolUtil
 	public static boringHydrogen(mol:Molecule, atom:number):boolean
 	{
 		if (mol.atomElement(atom) != 'H') return false;
+
 		if (mol.atomCharge(atom) != 0 || mol.atomUnpaired(atom) != 0) return false;
 		if (mol.atomIsotope(atom) != Molecule.ISOTOPE_NATURAL) return false;
 		if (Vec.notBlank(mol.atomExtra(atom)) || Vec.notBlank(mol.atomTransient(atom))) return false;
 		if (mol.atomAdjCount(atom) != 1) return false;
+		
 		let other = mol.atomAdjList(atom)[0];
 		if (mol.atomElement(other) == 'H') return false;
 		let bond = mol.atomAdjBonds(atom)[0];
