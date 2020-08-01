@@ -62,8 +62,8 @@ export class Stereochemistry
 
 	public static RUBRIC_EQUIV_BIPY =
 	[
-		[0, 1, 2, 3, 4], [0, 1, 3, 4, 2], [0, 1, 4, 2, 3],
-		[1, 0, 2, 4, 3], [1, 0, 4, 3, 2], [1, 0, 3, 2, 4],
+		[0, 1, 2, 3, 4], [1, 2, 0, 3, 4], [2, 0, 1, 3, 4],
+		[0, 2, 1, 4, 3], [1, 0, 2, 4, 3], [2, 1, 0, 4, 3],
 	];
 
 	public static RUBRIC_EQUIV_OCTA =
@@ -329,18 +329,18 @@ export class Stereochemistry
 		return adj;
 	}
 
-	//                        2  5
-	// assignment style:      | #    (1->2 is the "axial up" and [3,4,5] follow the right hand vector rule)
-	//                     3--A      (only position 3 is allowed to be vacant, and only 1 & 2 can be opposite)
+	//                        5  3
+	// assignment style:      | #    (4->5 is the "axial up" and [1,2,3] follow the right hand vector rule)
+	//                     1--A      (only position 1 is allowed to be vacant, and only 2 & 3 can be opposite)
 	//                        |\\
-	//                        1  4
+	//                        4  2
 	public static rubricBipyrimidal(mol:Molecule, atom:number):number[]
 	{
 		const nadj = mol.atomAdjCount(atom);
 		if (nadj != 4 && nadj != 5) return null;
 
 		// if sketch, must have exactly 1 up & 1 down
-		let atom4 = 0, atom5 = 0;
+		let atom2 = 0, atom3 = 0;
 		let adj = mol.atomAdjList(atom), bonds = mol.atomAdjBonds(atom);
 		if (!mol.is3D())
 		{
@@ -348,16 +348,21 @@ export class Stereochemistry
 			{
 				if (mol.bondType(bonds[n]) == Molecule.BONDTYPE_INCLINED)
 				{
-					if (atom4 > 0) return null;
-					atom4 = adj[n];
+					if (atom2 > 0) return null;
+					atom2 = adj[n];
 				}
 				else if (mol.bondType(bonds[n]) == Molecule.BONDTYPE_DECLINED)
 				{
-					if (atom5 > 0) return null;
-					atom5 = adj[n];
+					if (atom3 > 0) return null;
+					atom3 = adj[n];
 				}
 			}
-			if (atom4 == 0 || atom5 == 0) return null;
+			if (atom2 == 0 || atom3 == 0) return null;
+
+			// the two bonds with opposite wedges cannot be close to opposite
+			let th1 = Math.atan2(mol.atomY(atom2) - mol.atomY(atom), mol.atomX(atom2) - mol.atomX(atom));
+			let th2 = Math.atan2(mol.atomY(atom3) - mol.atomY(atom), mol.atomX(atom3) - mol.atomX(atom));
+			if (Math.abs(angleDiff(th1, th2)) > 160 * DEGRAD) return null;
 		}
 
 		// get all the relative emergent vectors
@@ -371,61 +376,61 @@ export class Stereochemistry
 			if (mag < THRESH) return null;
 			Vec.mulBy(v[n], 1.0 / mag);
 
-			// if it's 2D, atom4 & 5 are defined: do faux embedding
-			if (adj[n] == atom4) v[n][2] += 1; // up
-			else if (adj[n] == atom5) v[n][2] -= 1; // down
+			// if it's 2D, atom2 & 3 are defined: do faux embedding
+			if (adj[n] == atom2) v[n][2] += 1; // up
+			else if (adj[n] == atom3) v[n][2] -= 1; // down
 		}
 
-		// figure out atoms 1 & 2; for 2D can rule out two candidates already
-		let atom1 = 0, atom2 = 0;
+		// figure out atoms 4 & 5; for 2D can rule out two candidates already
+		let atom4 = 0, atom5 = 0;
 		const ANGLE_OPPOSITE = 175 * DEGRAD;
-		for (let i = 0; i < nadj - 1; i++) if (adj[i] != atom4 && adj[i] != atom5)
+		for (let i = 0; i < nadj - 1; i++) if (adj[i] != atom2 && adj[i] != atom3)
 		{
-			for (let j = i + 1; j < nadj; j++) if (adj[j] != atom4 && adj[j] != atom5)
+			for (let j = i + 1; j < nadj; j++) if (adj[j] != atom2 && adj[j] != atom3)
 			{
 				let theta = GeomUtil.acuteAngle(v[i], v[j]);
 				if (theta > ANGLE_OPPOSITE)
 				{
-					if (atom1 != 0) return null; // can't have two angles close to 180 degrees
-					atom1 = adj[i];
-					atom2 = adj[j];
+					if (atom4 != 0) return null; // can't have two angles close to 180 degrees
+					atom4 = adj[i];
+					atom5 = adj[j];
 				}
 			}
 		}
-		if (!atom1 || !atom2) return null;
+		if (!atom4 || !atom5) return null;
 
-		let v1 = v[adj.indexOf(atom1)];
+		let v1 = null;
 		let v2 = v[adj.indexOf(atom2)];
-		let v3 = null;
+		let v3 = v[adj.indexOf(atom3)];
 		let v4 = v[adj.indexOf(atom4)];
 		let v5 = v[adj.indexOf(atom5)];
 
 		// the atom3 position is either real or virtual
-		let atom3 = 0;
+		let atom1 = 0;
 		if (nadj == 5)
 		{
-			for (let n = 0; n < nadj; n++) if (adj[n] != atom1 && adj[n] != atom2 && adj[n] != atom4 && adj[n] != atom5)
+			for (let n = 0; n < nadj; n++) if (adj[n] != atom2 && adj[n] != atom3 && adj[n] != atom4 && adj[n] != atom5)
 			{
-				atom3 = adj[n];
-				v3 = v[n];
+				atom1 = adj[n];
+				v1 = v[n];
 				break;
 			}
 		}
 		else // create a virtual atom
 		{
-			v3 = [0, 0, 0];
-			v3 = Vec.sub(v3, v4);
-			v3 = Vec.sub(v3, v5);
-			const mag = GeomUtil.magnitude(v3);
+			v1 = [0, 0, 0];
+			v1 = Vec.sub(v1, v2);
+			v1 = Vec.sub(v1, v3);
+			const mag = GeomUtil.magnitude(v1);
 			if (mag < THRESH) return null; // (is this being unfair at all?)
-			Vec.mulBy(v3, 1.0 / mag);
+			Vec.mulBy(v1, 1.0 / mag);
 		}
 
-		// if the cross product of 1->2 x 0->3 is closer to 4, parity is even
-		let v12 = Vec.sub(v2, v1);
-		let cross = GeomUtil.crossProduct(v12, v3);
-		let dsq4 = GeomUtil.dist2(cross, v4), dsq5 = GeomUtil.dist2(cross, v5);
-		if (dsq4 < dsq5)
+		// if the cross product of 4->5 x 0->1 is closer to 2, parity is even
+		let v45 = Vec.sub(v5, v4);
+		let cross = GeomUtil.crossProduct(v45, v1);
+		let dsq2 = GeomUtil.dist2(cross, v2), dsq3 = GeomUtil.dist2(cross, v3);
+		if (dsq2 < dsq3)
 			return [atom1, atom2, atom3, atom4, atom5];
 		else
 			return [atom1, atom2, atom3, atom5, atom4];

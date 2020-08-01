@@ -112,6 +112,18 @@ export class Vec
 		return true;
 	}
 
+	// comparison that can be used for sorting; -1 if arr1<arr2, +1 if arr1>arr2, 0 if equal
+	public static compareTo<T>(arr1:T[], arr2:T[]):number
+	{
+		const sz = Math.max(arr1.length, arr2.length);
+		for (let n = 0; n < sz; n++)
+		{
+			if (arr1[n] < arr2[n]) return -1;
+			if (arr1[n] > arr2[n]) return 1;
+		}
+		return 0;
+	}
+
 	public static booleanArray(val:boolean, sz:number):boolean[]
 	{
 		let arr:boolean[] = new Array(sz);
