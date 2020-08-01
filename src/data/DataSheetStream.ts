@@ -25,14 +25,13 @@ namespace WebMolKit /* BOF */ {
 
 export class DataSheetStream
 {
-	public static customParser:any = null; // replaces standard parser, which is necessary for certain use cases like
-										   // raw NodeJS or worker tasks
+	public static customParser:any = null; // replaces standard parser, which is necessary for certain use cases like...
+	public static customSerial:any = null; // ... raw NodeJS or worker tasks
 
 	// static method: reads in a string that is presumed to XML, and converts it to a datasheet, which is returned; returns null if
 	// something went wrong
 	public static readXML(strXML:string):DataSheet
 	{
-		//let xmlDoc = jQuery.parseXML(strXML);
 		let xmlDoc:Document;
 		if (this.customParser)
 			xmlDoc = new this.customParser().parseFromString(strXML, 'application/xml');
@@ -119,7 +118,12 @@ export class DataSheetStream
 	// static method: converts a datasheet into an XML-formatted string
 	public static writeXML(ds:DataSheet):string
 	{
-		let xml = new DOMParser().parseFromString('<DataSheet/>', 'text/xml');
+		//let xml = new DOMParser().parseFromString('<DataSheet/>', 'text/xml');
+		let xml:Document;
+		if (this.customParser)
+			xml = new this.customParser().parseFromString('<DataSheet/>', 'application/xml');
+		else
+			xml = new DOMParser().parseFromString('<DataSheet/>', 'application/xml');
 
 		// summary area
 		let summary = xml.createElement('Summary');
@@ -189,7 +193,10 @@ export class DataSheetStream
 			}
 		}
 
-		return new XMLSerializer().serializeToString(xml.documentElement);
+		if (this.customSerial)
+			return new this.customSerial().serializeToString(xml.documentElement);
+		else
+			return new XMLSerializer().serializeToString(xml.documentElement);
 	}
 
 	// make a serialisation-ready JSON object with the datasheet content of interest
