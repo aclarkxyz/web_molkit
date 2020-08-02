@@ -339,6 +339,42 @@ export class MetaMolecule
 		}
 	}
 
+	// removes all hydrogens from the molecule, cloning it anything changes; if this is called after the aromaticity/stereochemistry is calculated, these will be
+	// remapped as necessary
+	public removeHydrogens():void
+	{
+		let mol = this.mol, na = mol.numAtoms, nb = mol.numBonds;
+		let atomMask = Vec.booleanArray(true, na), bondMask = Vec.booleanArray(true, nb);
+		for (let n = 1; n <= na; n++) if (MolUtil.boringHydrogen(mol, n))
+		{
+			atomMask[n - 1] = false;
+			bondMask[mol.atomAdjBonds(n)[0] - 1] = false;
+		}
+		if (Vec.allTrue(atomMask)) return;
+
+		mol = MolUtil.subgraphMask(mol, atomMask);
+
+		if (this.atomArom) this.atomArom = Vec.maskGet(this.atomArom, atomMask);
+		if (this.bondArom) this.bondArom = Vec.maskGet(this.bondArom, bondMask);
+
+		if (this.rubricTetra || this.rubricSquare || this.rubricOcta || this.rubricSides)
+		{
+			if (this.rubricTetra) this.rubricTetra = Vec.maskGet(this.rubricTetra, atomMask);
+			if (this.rubricSquare) this.rubricSquare = Vec.maskGet(this.rubricSquare, atomMask);
+			if (this.rubricOcta) this.rubricOcta = Vec.maskGet(this.rubricOcta, atomMask);
+			if (this.rubricSides) this.rubricSides = Vec.maskGet(this.rubricSides, bondMask);
+
+			let atomMap = Vec.prepend(Vec.add(Vec.maskMap(atomMask), 1), 0);
+			for (let n = 0; n < Vec.arrayLength(this.rubricTetra); n++) if (this.rubricTetra[n]) this.rubricTetra[n] = Vec.idxGet(atomMap, this.rubricTetra[n]);
+			for (let n = 0; n < Vec.arrayLength(this.rubricSquare); n++) if (this.rubricSquare[n]) this.rubricSquare[n] = Vec.idxGet(atomMap, this.rubricSquare[n]);
+			for (let n = 0; n < Vec.arrayLength(this.rubricOcta); n++) if (this.rubricOcta[n]) this.rubricOcta[n] = Vec.idxGet(atomMap, this.rubricOcta[n]);
+			for (let n = 0; n < Vec.arrayLength(this.rubricSides); n++) if (this.rubricSides[n]) this.rubricSides[n] = Vec.idxGet(atomMap, this.rubricSides[n]);
+		}
+
+		// (... recreate anything else that's affected)
+	}
+
+
 /*
 	// defines the "skeleton hash" field, for prescreening
 	public void calculateSkeletonHash()

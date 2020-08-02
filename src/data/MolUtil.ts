@@ -224,6 +224,12 @@ export class MolUtil
 	public static expandOneAbbrevFrag(mol:Molecule, atom:number, frag:Molecule, alignCoords:boolean):void
 	{
 		let nbr = mol.atomAdjCount(atom) == 1 ? mol.atomAdjList(atom)[0] : 0;
+		let connBond = mol.findBond(atom, nbr), connType = Molecule.BONDTYPE_NORMAL;
+		if (connBond > 0)
+		{
+			connType = mol.bondType(connBond);
+			if (mol.bondFrom(connBond) != nbr && (connType == Molecule.BONDTYPE_INCLINED || connType == Molecule.BONDTYPE_DECLINED)) connType = Molecule.BONDTYPE_NORMAL;
+		}
 
 		if (alignCoords)
 		{
@@ -246,8 +252,16 @@ export class MolUtil
 		mol.append(frag);
 		for (let n = 1; n <= mol.numBonds; n++)
 		{
-			if (mol.bondFrom(n) == join) mol.setBondFrom(n, nbr);
-			if (mol.bondTo(n) == join) mol.setBondTo(n, nbr);
+			if (mol.bondFrom(n) == join) 
+			{
+				mol.setBondFrom(n, nbr);
+				mol.setBondType(n, connType);
+			}
+			else if (mol.bondTo(n) == join)
+			{
+				mol.setBondFromTo(n, nbr, mol.bondFrom(n));
+				mol.setBondType(n, connType);
+			}
 		}
 		mol.deleteAtomAndBonds(join);
 		mol.deleteAtomAndBonds(atom);

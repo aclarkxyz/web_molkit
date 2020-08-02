@@ -95,6 +95,14 @@ export class Vec
 		return arr;
 	}
 
+	// squishes a 2D array down to a single consecutive flattened vector
+	public static flatten<T>(mtx:T[][]):T[]
+	{
+		let ret:T[] = [];
+		for (let vec of mtx) ret.push(...vec);
+		return ret;
+	}
+
 	// null-tolerant comparison
 	public static equals(arr1:any[], arr2:any[]):boolean
 	{
