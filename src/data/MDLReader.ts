@@ -436,7 +436,7 @@ export class MDLMOLReader
 			if (el == 'D') {mol.setAtomElement(n, 'H'); mol.setAtomIsotope(n, 2);}
 			else if (el == 'T') {mol.setAtomElement(n, 'H'); mol.setAtomIsotope(n, 3);}
 
-			// valence, two correction scenarios: (1) if set to explicit, make the hydrogens
+			// valence, two correction scenarios
 			let valence = this.explicitValence[n - 1], options = MDLMOL_VALENCE[el];
 			if (valence != 0)
 			{

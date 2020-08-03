@@ -22,6 +22,7 @@
 ///<reference path='../gfx/ArrangeMolecule.ts'/>
 ///<reference path='../ui/ButtonView.ts'/>
 ///<reference path='../ui/ClipboardProxy.ts'/>
+///<reference path='../data/Stereochemistry.ts'/>
 ///<reference path='MoleculeActivity.ts'/>
 ///<reference path='CommandBank.ts'/>
 ///<reference path='TemplateBank.ts'/>
@@ -29,6 +30,7 @@
 ///<reference path='EditAtom.ts'/>
 ///<reference path='EditBond.ts'/>
 ///<reference path='ContextSketch.ts'/>
+///<reference path='DrawCanvas.ts'/>
 
 namespace WebMolKit /* BOF */ {
 
@@ -36,26 +38,11 @@ namespace WebMolKit /* BOF */ {
 	Sketcher: a very heavyweight widget that provides 2D structure editing for a molecule.
 */
 
-enum DraggingTool
-{
-	None = 0,
-	Press,
-	Lasso,
-	Pan,
-	Zoom,
-	Rotate,
-	Move,
-	Erasor,
-	Atom,
-	Bond,
-	Charge,
-	Ring
-}
 
 // used as a transient backup in case of access to the clipboard being problematic
 let globalMoleculeClipboard:Molecule = null;
 
-export class Sketcher extends Widget implements ArrangeMeasurement
+export class Sketcher extends DrawCanvas
 {
 	// callbacks
 	public onChangeMolecule:(mol:Molecule) => void;
@@ -69,6 +56,7 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 	public lowerTemplateBank = false;
 	public debugOutput:any = undefined;
 	public showOxState = true;
+	public decoration = DrawCanvasDecoration.Stereochemistry;
 
 	private mol:Molecule = null;
 	private policy:RenderPolicy = null;
@@ -89,13 +77,11 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 	private fadeWatermark = 0;
 	private layout:ArrangeMolecule = null;
 	private metavec:MetaVector = null; // instantiated version of above
+	private stereo:Stereochemistry = null;
 	private guidelines:GuidelineSprout[] = null;
 	private toolView:ButtonView = null;
 	private commandView:ButtonView = null;
 	private templateView:ButtonView = null;
-	private offsetX = 0;
-	private offsetY = 0;
-	private pointScale = 1;
 	private currentAtom = 0;
 	private currentBond = 0;
 	private hoverAtom = 0;
@@ -135,12 +121,12 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 	private proxyMenu:MenuProxy = null;
 	private static UNDO_SIZE = 20;
 
+	// ------------ public methods ------------
+
 	constructor()
 	{
 		super();
 	}
-
-	// --------------------------------------- public methods ---------------------------------------
 
 	// the sketcher needs to know what size to be, prior to rendering
 	public setSize(width:number, height:number):void
@@ -172,6 +158,7 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 
 		this.layout = null;
 		this.metavec = null;
+		this.stereo = null;
 		this.hoverAtom = 0;
 		this.hoverBond = 0;
 
@@ -700,44 +687,7 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 		return this.container.is(':focus');
 	}
 
-	// functions for converting between coordinates within the widget (pixels) & molecular position (Angstroms)
-	public scale() {return this.pointScale;}
-	public angToX(ax:number):number
-	{
-		//if (this.layout == null || this.layout.numPoints() == 0) return 0.5 * this.width + ax * this.pointScale;
-		return ax * this.pointScale + this.offsetX;
-	}
-	public angToY(ay:number):number
-	{
-		//if (this.layout == null || this.layout.numPoints() == 0) return 0.5 * this.height - ay * this.pointScale;
-		return ay * -this.pointScale + this.offsetY;
-	}
-	public xToAng(px:number):number
-	{
-		//if (this.layout == null || this.layout.numPoints() == 0) return (px - 0.5 * this.width) / this.pointScale;
-		return (px - this.offsetX) / this.pointScale;
-	}
-	public yToAng(py:number):number
-	{
-		//if (this.layout == null || this.layout.numPoints() == 0) return (0.5 * this.height - py) / this.pointScale;
-		return (py - this.offsetY) / -this.pointScale;
-	}
-	public scaleToAng(scale:number):number {return scale / this.pointScale;}
-	public angToScale(ang:number):number {return ang * this.pointScale;}
-	public yIsUp():boolean {return false;}
-	public measureText(str:string, fontSize:number):number[] {return FontData.main.measureText(str, fontSize);}
-
 	// ------------ private methods ------------
-
-	// respond to user-initiated clipboard paste event
-	/*private pasteEvent(e:any):boolean
-	{
-		let wnd = <any>window;
-		if (wnd.clipboardData && wnd.clipboardData.getData) this.pasteText(wnd.clipboardData.getData('Text'));
-		else if (e.clipboardData && e.clipboardData.getData) this.pasteText(e.clipboardData.getData('text/plain'));
-		e.preventDefault();
-		return false;
-	}*/
 
 	// redetermines the offset and scale so that the molecular structure fits cleanly
 	private centreAndShrink():void
@@ -2297,6 +2247,44 @@ export class Sketcher extends Widget implements ArrangeMeasurement
 				}
 			}
 		}
+
+		if (this.decoration == DrawCanvasDecoration.Stereochemistry)
+		{
+			if (!this.stereo) this.stereo = Stereochemistry.create(MetaMolecule.createStrict(mol));
+			for (let n = 1; n <= mol.numAtoms; n++)
+			{
+				let chi = this.stereo.atomTetraChirality(n);
+				if (chi == Stereochemistry.STEREO_NONE) continue;
+				effects.atomDecoText[n - 1] = chi == Stereochemistry.STEREO_POS ? 'R' :
+											  chi == Stereochemistry.STEREO_NEG ? 'S' :
+										      chi == Stereochemistry.STEREO_UNKNOWN ? 'R/S' : /*STEREO_BROKEN*/ '?';
+				effects.atomDecoCol[n - 1] = 0x00A000;
+			}
+			for (let n = 1; n <= mol.numBonds; n++)
+			{
+				let side = this.stereo.bondSideStereo(n);
+				if (side == Stereochemistry.STEREO_NONE) continue;
+				effects.bondDecoText[n - 1] = side == Stereochemistry.STEREO_POS ? 'Z' :
+											  side == Stereochemistry.STEREO_NEG ? 'E' :
+										      side == Stereochemistry.STEREO_UNKNOWN ? 'Z/E' : /*STEREO_BROKEN*/ '?';
+				effects.bondDecoCol[n - 1] = 0x00A000;
+			}
+		}
+		else if (this.decoration == DrawCanvasDecoration.MappingNumber)
+		{
+			effects.atomDecoText = Vec.stringArray('', mol.numAtoms);
+			effects.atomDecoCol = Vec.numberArray(0x8000FF, mol.numAtoms);			
+			effects.atomDecoSize = Vec.numberArray(0.3, mol.numAtoms);
+			for (let n = 1; n <= mol.numAtoms; n++) if (mol.atomMapNum(n) > 0) effects.atomDecoText[n - 1] = mol.atomMapNum(n).toString();
+		}
+		else if (this.decoration == DrawCanvasDecoration.AtomIndex)
+		{
+			effects.atomDecoText = Vec.stringArray('', mol.numAtoms);
+			effects.atomDecoCol = Vec.numberArray(0x8000FF, mol.numAtoms);
+			effects.atomDecoSize = Vec.numberArray(0.3, mol.numAtoms);
+			for (let n = 1; n <= mol.numAtoms; n++) effects.atomDecoText[n - 1] = n.toString();
+		}
+
 
 		return effects;
 	}
