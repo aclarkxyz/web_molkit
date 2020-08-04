@@ -51,7 +51,7 @@ export class ContextSketch
 
 		this.maybeAppend(menu, ActivityType.Cut, 'Cut');
 		this.maybeAppend(menu, ActivityType.Copy, 'Copy');
-		if (this.proxyClip.canAlwaysGet()) menu.push({'label': 'Paste', 'click': () => sketcher.performPaste()});;
+		if (this.proxyClip.canAlwaysGet()) menu.push({'label': 'Paste', 'click': () => sketcher.performPaste()});
 		//this.maybeAppend(state, ActivityType.Paste, title:"Paste");
 
 		this.maybeAppend(menu, ActivityType.Charge, 'Charge +', {'delta': 1});

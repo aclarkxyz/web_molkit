@@ -418,13 +418,13 @@ export class ArrangeMolecule
 		{
 			let txt = effects.atomDecoText[n];
 			if (!txt) continue;
-			this.annotateAtom(n + 1, txt, effects.atomDecoCol[n], effects.atomDecoSize[n] * this.scale * ArrangeMolecule.FONT_CORRECT)
+			this.annotateAtom(n + 1, txt, effects.atomDecoCol[n], effects.atomDecoSize[n] * this.scale * ArrangeMolecule.FONT_CORRECT);
 		}
 		for (let n = 0; n < effects.bondDecoText.length; n++)
 		{
 			let txt = effects.bondDecoText[n];
 			if (!txt) continue;
-			this.annotateBond(n + 1, txt, effects.bondDecoCol[n], effects.bondDecoSize[n] * this.scale * ArrangeMolecule.FONT_CORRECT)
+			this.annotateBond(n + 1, txt, effects.bondDecoCol[n], effects.bondDecoSize[n] * this.scale * ArrangeMolecule.FONT_CORRECT);
 		}
 
 		// atom circles need space reserved for them
@@ -1832,7 +1832,7 @@ export class ArrangeMolecule
 		let [tw, ta] = this.measure.measureText(text, fsz);
 		let a = this.points[atom - 1];
 		let cx = a.oval.cx, cy = a.oval.cy, rw = 0.6 * tw, rh = 0.6 * ta;
-	
+
 		let otherTheta:number[] = [];
 		for (let a of this.mol.atomAdjList(atom))
 		{
@@ -1842,7 +1842,7 @@ export class ArrangeMolecule
 
 		let minExt = 0.5 * (a.oval.rw + a.oval.rh), stepsz = 0.1 * this.scale, nsteps = 8;
 		let angsteps = 36, angsz = TWOPI / angsteps;
-		
+
 		// begin the circular sweep
 		let bestScore = Number.POSITIVE_INFINITY, bestDX = 0, bestDY = 0;
 		let px = [0, 0, 0, 0], py = [0, 0, 0, 0];
@@ -1865,7 +1865,7 @@ export class ArrangeMolecule
 				let viol = this.countPolyViolations(px, py, subSpace, false);
 				let score = viol * 1000;
 				for (let oth of otherTheta) score -= Math.abs(angleDiff(th, oth));
-				
+
 				if (score < bestScore)
 				{
 					bestScore = score;
@@ -1876,10 +1876,10 @@ export class ArrangeMolecule
 			if (bestScore < 500) break;
 		}
 
-		let x = cx + bestDX, y = cy + bestDY
+		let x = cx + bestDX, y = cy + bestDY;
 
 		// create a point for it
-    	let an:APoint = 
+		let an:APoint =
 		{
 			'anum': 0,
 			'text': text,
@@ -1898,8 +1898,8 @@ export class ArrangeMolecule
 			'box': new Box(x - rw, y - rh, 2 * rw, 2 * rh),
 			'px': [x - rw, x + rw, x + rw, x - rw],
 			'py': [y - rh, y - rh, y + rh, y + rh],
-		}
-    	this.space.push(spc);
+		};
+		this.space.push(spc);
 	}
 	private annotateBond(bond:number, text:string, col:number, fsz:number):void
 	{
@@ -1907,7 +1907,7 @@ export class ArrangeMolecule
 		let bfr = this.mol.bondFrom(bond), bto = this.mol.bondTo(bond);
 		let a1 = this.points[bfr - 1], a2 = this.points[bto - 1];
 		let cx = 0.5 * (a1.oval.cx + a2.oval.cx), cy = 0.5 * (a1.oval.cy + a2.oval.cy), rw = 0.6 * tw, rh = 0.6 * ta;
-	
+
 		let bth = Math.atan2(a2.oval.cy - a1.oval.cy, a2.oval.cx - a1.oval.cx);
 		let otherTheta:number[] = [bth, bth + Math.PI];
 		for (let a of this.mol.atomAdjList(bfr)) if (a != bto)
@@ -1923,9 +1923,9 @@ export class ArrangeMolecule
 
 		let minExt = 0.2 * this.scale * this.bondOrder[bond - 1], stepsz = 0.1 * this.scale, nsteps = 8;
 		let angsteps = 36, angsz = TWOPI / angsteps;
-		
+
 		// begin the circular sweep
-		let bestScore =  Number.POSITIVE_INFINITY, bestDX = 0, bestDY = 0;
+		let bestScore = Number.POSITIVE_INFINITY, bestDX = 0, bestDY = 0;
 		let px = [0, 0, 0, 0], py = [0, 0, 0, 0];
 
 		let limX = rw + minExt + nsteps * stepsz, limY = rh + minExt + nsteps * stepsz;
@@ -1946,7 +1946,7 @@ export class ArrangeMolecule
 				let viol = this.countPolyViolations(px, py, subSpace, false);
 				let score = viol * 1000;
 				for (let oth of otherTheta) score -= Math.abs(angleDiff(th, oth));
-				
+
 				if (score < bestScore)
 				{
 					bestScore = score;
@@ -1960,7 +1960,7 @@ export class ArrangeMolecule
 		let x = cx + bestDX, y = cy + bestDY;
 
 		// create a point for it
-    	let an:APoint = 
+		let an:APoint =
 		{
 			'anum': 0,
 			'text': text,
@@ -1979,8 +1979,8 @@ export class ArrangeMolecule
 			'box': new Box(x - rw, y - rh, 2 * rw, 2 * rh),
 			'px': [x - rw, x + rw, x + rw, x - rw],
 			'py': [y - rh, y - rh, y + rh, y + rh],
-		}
-    	this.space.push(spc);
+		};
+		this.space.push(spc);
 	}
 
 	// returns true if the indicated box intersects with any of the currently defined atom centres or bond lines; can optionally

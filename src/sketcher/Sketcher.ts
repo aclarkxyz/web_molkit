@@ -1,11 +1,11 @@
 /*
-    WebMolKit
+	WebMolKit
 
-    (c) 2010-2019 Molecular Materials Informatics, Inc.
+	(c) 2010-2019 Molecular Materials Informatics, Inc.
 
-    All rights reserved
+	All rights reserved
 
-    http://molmatinf.com
+	http://molmatinf.com
 
 	[PKG=webmolkit]
 */
@@ -37,7 +37,6 @@ namespace WebMolKit /* BOF */ {
 /*
 	Sketcher: a very heavyweight widget that provides 2D structure editing for a molecule.
 */
-
 
 // used as a transient backup in case of access to the clipboard being problematic
 let globalMoleculeClipboard:Molecule = null;
@@ -1076,7 +1075,7 @@ export class Sketcher extends DrawCanvas
 			if (x < Math.min(x1, x2) - limitDist || y < Math.min(y1, y2) - limitDist ||
 				x > Math.max(x1, x2) + limitDist || y > Math.max(y1, y2) + limitDist) continue;
 
-			let dist = GeomUtil.pointLineSegDistance(x, y, x1,  y1, x2, y2);
+			let dist = GeomUtil.pointLineSegDistance(x, y, x1, y1, x2, y2);
 			if (dist > limitDist) continue;
 			if (dist < bestScore)
 			{
@@ -1725,7 +1724,7 @@ export class Sketcher extends DrawCanvas
 	{
 		// if the mouse hasn't moved, it's a click operation
 		if (!this.opBudged)
-		{		
+		{
 			let xy = eventCoords(event, this.container);
 
 			let clickObj = this.pickObject(xy[0], xy[1]);
@@ -2107,7 +2106,7 @@ export class Sketcher extends DrawCanvas
 		}
 
 		//console.log('Keycode:[' + event.keyCode + '] Key:[' + event.key + ']');
-		
+
 		let nomod = !event.shiftKey && !event.ctrlKey && !event.altKey && !event.metaKey;
 		if (key == KeyCode.Enter) this.editCurrent();
 		else if (key == KeyCode.Left && nomod) this.hitArrowKey(-1, 0);
@@ -2223,11 +2222,11 @@ export class Sketcher extends DrawCanvas
 		const {mol} = this;
 
 		let effects = new RenderEffects();
-		
+
 		for (let n = 1; n <= mol.numAtoms; n++) if (MolUtil.hasAbbrev(mol, n)) effects.dottedRectOutline[n] = 0x808080;
-		
+
 		effects.overlapAtoms = CoordUtil.overlappingAtomList(mol, 0.2);
-		
+
 		effects.atomDecoText = Vec.stringArray('', mol.numAtoms);
 		effects.atomDecoCol = Vec.numberArray(Theme.foreground, mol.numAtoms);
 		effects.atomDecoSize = Vec.numberArray(0.3, mol.numAtoms);
@@ -2251,13 +2250,18 @@ export class Sketcher extends DrawCanvas
 		if (this.decoration == DrawCanvasDecoration.Stereochemistry)
 		{
 			if (!this.stereo) this.stereo = Stereochemistry.create(MetaMolecule.createStrict(mol));
-			for (let n = 1; n <= mol.numAtoms; n++)
+			skip: for (let n = 1; n <= mol.numAtoms; n++)
 			{
 				let chi = this.stereo.atomTetraChirality(n);
 				if (chi == Stereochemistry.STEREO_NONE) continue;
+				for (let adjb of mol.atomAdjBonds(n)) if (mol.bondOrder(adjb) != 1) continue skip;
+				if (chi == Stereochemistry.STEREO_UNKNOWN)
+				{
+					for (let adj of mol.atomAdjList(n)) if (Chemistry.ELEMENT_BLOCKS[mol.atomicNumber(adj)] >= 3) continue skip;
+				}
 				effects.atomDecoText[n - 1] = chi == Stereochemistry.STEREO_POS ? 'R' :
 											  chi == Stereochemistry.STEREO_NEG ? 'S' :
-										      chi == Stereochemistry.STEREO_UNKNOWN ? 'R/S' : /*STEREO_BROKEN*/ '?';
+											  chi == Stereochemistry.STEREO_UNKNOWN ? 'R/S' : /*STEREO_BROKEN*/ '?';
 				effects.atomDecoCol[n - 1] = 0x00A000;
 			}
 			for (let n = 1; n <= mol.numBonds; n++)
@@ -2266,14 +2270,14 @@ export class Sketcher extends DrawCanvas
 				if (side == Stereochemistry.STEREO_NONE) continue;
 				effects.bondDecoText[n - 1] = side == Stereochemistry.STEREO_POS ? 'Z' :
 											  side == Stereochemistry.STEREO_NEG ? 'E' :
-										      side == Stereochemistry.STEREO_UNKNOWN ? 'Z/E' : /*STEREO_BROKEN*/ '?';
+											  side == Stereochemistry.STEREO_UNKNOWN ? 'Z/E' : /*STEREO_BROKEN*/ '?';
 				effects.bondDecoCol[n - 1] = 0x00A000;
 			}
 		}
 		else if (this.decoration == DrawCanvasDecoration.MappingNumber)
 		{
 			effects.atomDecoText = Vec.stringArray('', mol.numAtoms);
-			effects.atomDecoCol = Vec.numberArray(0x8000FF, mol.numAtoms);			
+			effects.atomDecoCol = Vec.numberArray(0x8000FF, mol.numAtoms);
 			effects.atomDecoSize = Vec.numberArray(0.3, mol.numAtoms);
 			for (let n = 1; n <= mol.numAtoms; n++) if (mol.atomMapNum(n) > 0) effects.atomDecoText[n - 1] = mol.atomMapNum(n).toString();
 		}
@@ -2284,7 +2288,6 @@ export class Sketcher extends DrawCanvas
 			effects.atomDecoSize = Vec.numberArray(0.3, mol.numAtoms);
 			for (let n = 1; n <= mol.numAtoms; n++) effects.atomDecoText[n - 1] = n.toString();
 		}
-
 
 		return effects;
 	}

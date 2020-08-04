@@ -130,7 +130,7 @@ export class GeomUtil
 		theta = theta.slice(0);
 		for (let n = 0; n < theta.length; n++) theta[n] = angleNorm(theta[n]);
 
-		if (theta.length == 2) 
+		if (theta.length == 2)
 		{
 			if (angleDiffPos(theta[1], theta[0]) > Math.PI) return [theta[1], theta[0]];
 			return theta;
@@ -152,16 +152,16 @@ export class GeomUtil
 	{
 		const sz = Vec.arrayLength(theta);
 		if (theta == null || sz < 2) return Vec.identity0(sz);
-		
+
 		if (sz == 2)
 		{
 			if (angleDiffPos(theta[1], theta[0]) > Math.PI) return [1, 0]; else return [0, 1];
 		}
-		
+
 		theta = Vec.duplicate(theta);
 		for (let n = 0; n < sz; n++) theta[n] = angleNorm(theta[n]);
 		let idx = Vec.idxSort(theta);
-		
+
 		while (true)
 		{
 			let a = theta[idx[sz - 1]], b = theta[idx[0]], c = theta[idx[1]];
@@ -169,7 +169,7 @@ export class GeomUtil
 			let last = idx.pop();
 			idx.unshift(last);
 		}
-		return idx;		
+		return idx;
 	}
 
 	// calculates a list of unique angles (based on the threshold parameter, in radians), and returns it; the returned list of
@@ -262,18 +262,18 @@ export class GeomUtil
 		let cos = Math.cos(theta), sin = Math.sin(theta);
 		return [[cos, -sin, 0], [sin, cos, 0], [0, 0, 1]];
 	}
-	
+
 	// compose two affine transforms and returns a new one that is equivalent to doing both of them in order (A then B)
 	public static affineCompose(A:number[][], B:number[][]):number[][]
 	{
 		let tfm = [[0, 0, 0], [0, 0, 0], [0, 0, 0]];
-		var Acol = [0, 0, 0];
+		let Acol = [0, 0, 0];
 		for (let j = 0; j < 3; j++)
 		{
 			for (let k = 0; k < 3; k++) Acol[k] = A[k][j];
 			for (let i = 0; i < 3; i++)
 			{
-				var Brow = B[i];
+				let Brow = B[i];
 				let s = 0;
 				for (let k = 0; k < 3; k++) s += Acol[k] * Brow[k];
 				tfm[i][j] = s;
@@ -281,13 +281,13 @@ export class GeomUtil
 		}
 		return tfm;
 	}
-	
+
 	// applies a 3x3 affine transform to two coordinates; returns [x,y] position
 	public static applyAffine(x:number, y:number, tfm:number[][]):[number, number]
 	{
 		return [x * tfm[0][0] + y * tfm[0][1] + tfm[0][2], x * tfm[1][0] + y * tfm[1][1] + tfm[1][2]];
 	}
-	
+
 	// returns true if the 2D affine transform contains a mirror reflection
 	public static isAffineMirror(tfm:number[][]):boolean
 	{
@@ -444,11 +444,11 @@ export class GeomUtil
 			let rot00 = cos, rot01 = -sin;
 			let rot10 = sin, rot11 = cos;
 
-			let acx = 0.5 * (ax[0] + ax[1]), acy = 0.5 * (ay[0] + ay[1]);			
-			let bcx = 0.5 * (bx[0] + bx[1]), bcy = 0.5 * (by[0] + by[1]);			
+			let acx = 0.5 * (ax[0] + ax[1]), acy = 0.5 * (ay[0] + ay[1]);
+			let bcx = 0.5 * (bx[0] + bx[1]), bcy = 0.5 * (by[0] + by[1]);
 			let rax = rot00 * acx + rot01 * acy;
 			let ray = rot10 * acx + rot11 * acy;
-	
+
 			return [[rot00, rot01, bcx - rax], [rot10, rot11, bcy - ray], [0, 0, 1]];
 		}
 
@@ -458,7 +458,7 @@ export class GeomUtil
 		let invsz = 1.0 / sz;
 		let acx = Vec.sum(ax) * invsz, acy = Vec.sum(ay) * invsz;
 		let bcx = Vec.sum(bx) * invsz, bcy = Vec.sum(by) * invsz;
-		
+
 		let mtxA = new Matrix(3, sz), mtxB = new Matrix(3, sz);
 		for (let n = 0; n < sz; n++)
 		{
@@ -469,19 +469,19 @@ export class GeomUtil
 			mtxB.set(1, n, by[n] - bcy);
 			mtxB.set(2, n, 0);
 		}
-		
-		var cov = mtxA.times(mtxB.transpose());
-		var svd = new SingularValueDecomposition(cov);
+
+		let cov = mtxA.times(mtxB.transpose());
+		let svd = new SingularValueDecomposition(cov);
 
 		/* ... this doesn't seem to be necessary for 2D
 		double d = svd.getV().times(svd.getU().transpose()).det();
 		if (d > 0) d = 1; else d = -1;
-		var ident = Matrix.identity(3, 3);
+		let ident = Matrix.identity(3, 3);
 		ident.set(2, 2, d); // NOTE: not sure if this is necessary for 2D
-		var rotate = (svd.getV().times(ident)).times(svd.getU().transpose());*/
+		let rotate = (svd.getV().times(ident)).times(svd.getU().transpose());*/
 
-		var rotate = svd.getV().times(svd.getU().transpose());
-		
+		let rotate = svd.getV().times(svd.getU().transpose());
+
 		let rot00 = rotate.get(0, 0), rot01 = rotate.get(0, 1);
 		let rot10 = rotate.get(1, 0), rot11 = rotate.get(1, 1);
 		let rax = rot00 * acx + rot01 * acy;
@@ -740,7 +740,7 @@ export class Size
 	public clone():Size {return new Size(this.w, this.h);}
 
 	public isZero():boolean {return this.w == 0 && this.h == 0;}
-	
+
 	public scaleBy(mag:number):void
 	{
 		if (mag == 1) return;

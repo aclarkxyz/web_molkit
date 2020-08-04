@@ -97,9 +97,6 @@ export class DrawCanvas extends Widget implements ArrangeMeasurement
 	public measureText(str:string, fontSize:number):number[] {return FontData.main.measureText(str, fontSize);}
 
 	// ------------ private methods ------------
-
 }
-
-
 
 /* EOF */ }

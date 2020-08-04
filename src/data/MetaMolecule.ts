@@ -374,7 +374,6 @@ export class MetaMolecule
 		// (... recreate anything else that's affected)
 	}
 
-
 /*
 	// defines the "skeleton hash" field, for prescreening
 	public void calculateSkeletonHash()

@@ -116,7 +116,7 @@ export class Molecule
 	public get numAtoms():number {return this.atoms.length;}
 	public getAtom(idx:number):Atom
 	{
-		if (idx < 1 || idx > this.atoms.length) 
+		if (idx < 1 || idx > this.atoms.length)
 			throw new Error(`Molecule.getAtom: index ${idx} out of range (#atoms=${this.atoms.length})`);
 		return this.atoms[idx - 1];
 	}
@@ -135,7 +135,7 @@ export class Molecule
 	public get numBonds():number {return this.bonds.length;}
 	public getBond(idx:number):Bond
 	{
-		if (idx < 1 || idx > this.bonds.length) 
+		if (idx < 1 || idx > this.bonds.length)
 			throw new Error(`Molecule.getBond: index ${idx} out of range (#bonds=${this.bonds.length})`);
 		return this.bonds[idx - 1];
 	}

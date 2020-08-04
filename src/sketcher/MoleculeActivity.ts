@@ -701,18 +701,18 @@ export class MoleculeActivity
 		let metalAtom = this.input.currentAtom;
 		if (metalAtom == 0)
 		{
-			for (let n = 1; n <= mol.numAtoms; n++)
+			for (let a of this.subjectIndex)
 			{
-				let atno = mol.atomicNumber(n);
-				if (Chemistry.ELEMENT_BLOCKS[atno] >= 3) {metalAtom = n; break;}
+				let atno = mol.atomicNumber(a);
+				if (Chemistry.ELEMENT_BLOCKS[atno] >= 3) {metalAtom = a; break;}
 			}
 		}
 		if (metalAtom == 0)
 		{
-			for (let n = 1; n <= mol.numAtoms; n++)
+			for (let a of this.subjectIndex)
 			{
-				let atno = mol.atomicNumber(n);
-				if (Chemistry.ELEMENT_ROWS[atno] >= 3) {metalAtom = n; break;}
+				let atno = mol.atomicNumber(a);
+				if (Chemistry.ELEMENT_ROWS[atno] >= 3) {metalAtom = a; break;}
 			}
 		}
 
@@ -871,7 +871,7 @@ export class MoleculeActivity
 		for (let a of side) if (a != atom1)
 		{
 			let dx = mol.atomX(a) - cx, dy = mol.atomY(a) - cy, dist = norm_xy(dx, dy);
-			var dtheta = Math.atan2(dy, dx);
+			let dtheta = Math.atan2(dy, dx);
 			dtheta = theta - angleDiff(dtheta, theta);
 			mol.setAtomPos(a, cx + dist * Math.cos(dtheta), cy + dist * Math.sin(dtheta));
 		}
@@ -882,13 +882,13 @@ export class MoleculeActivity
 			if (bt == Molecule.BONDTYPE_INCLINED) mol.setBondType(b, Molecule.BONDTYPE_DECLINED);
 			else if (bt == Molecule.BONDTYPE_DECLINED) mol.setBondType(b, Molecule.BONDTYPE_INCLINED);
 		}
-		
+
 		if (CoordUtil.sketchEquivalent(this.input.mol, mol))
 		{
 			this.errmsg = 'Rotation has no effect.';
 			return;
 		}
-		
+
 		this.output.mol = mol;
 	}
 
@@ -1333,7 +1333,11 @@ export class MoleculeActivity
 	public execMove(refAtom:number, deltaX:number, deltaY:number):void
 	{
 		let subj = this.subjectIndex;
-		if (Vec.arrayLength(subj) == 0) subj = [refAtom];
+		if (Vec.arrayLength(subj) == 0)
+		{
+			if (refAtom == 0) return;
+			subj = [refAtom];
+		}
 
 		this.output.mol = this.input.mol.clone();
 		for (let a of subj) this.output.mol.setAtomPos(a, this.output.mol.atomX(a) + deltaX, this.output.mol.atomY(a) + deltaY);

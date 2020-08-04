@@ -238,7 +238,6 @@ export class Matrix
 		return new QRDecomposition(this);
 	}
 
-
 	public CholeskyDecomposition chol()
 	{
 		return new CholeskyDecomposition(this);
@@ -249,30 +248,25 @@ export class Matrix
 		return new SingularValueDecomposition(this);
 	}
 
-
 	public EigenvalueDecomposition eig()
 	{
 		return new EigenvalueDecomposition(this);
 	}
-
 
 	public Matrix solve(Matrix B)
 	{
 		return (m == n ? (new LUDecomposition(this)).solve(B) : (new QRDecomposition(this)).solve(B));
 	}
 
-
 	public Matrix solveTranspose(Matrix B)
 	{
 		return transpose().solve(B.transpose());
 	}
 
-
 	public Matrix inverse()
 	{
 		return solve(identity(m, m));
 	}
-
 
 	public double det()
 	{
@@ -288,7 +282,6 @@ export class Matrix
 	{
 		return new SingularValueDecomposition(this).cond();
 	}
-
 
 	public trace():number
 	{
@@ -387,7 +380,7 @@ export class SingularValueDecomposition
 				if ((k + 1 < m) && (e[k] != 0.0))
 				{
 					for (let i = k + 1; i < m; i++) work[i] = 0.0;
-					for (let j = k + 1; j < n; j++)  for (let i = k + 1; i < m; i++) work[i] += e[j] * A[i][j];
+					for (let j = k + 1; j < n; j++) for (let i = k + 1; i < m; i++) work[i] += e[j] * A[i][j];
 					for (let j = k + 1; j < n; j++)
 					{
 						let t = -e[j] / e[k + 1];
@@ -491,7 +484,7 @@ export class SingularValueDecomposition
 				}
 				if (ks == k) kase = 3;
 				else if (ks == p - 1) kase = 1;
-				else 
+				else
 				{
 					kase = 2;
 					k = ks;
@@ -659,7 +652,7 @@ export class SingularValueDecomposition
 	{
 		return Matrix.fromArray(this.V);
 	}
-	public getSingularValues():number[] 
+	public getSingularValues():number[]
 	{
 		return this.s;
 	}
@@ -673,7 +666,7 @@ export class SingularValueDecomposition
 		return X;
 	}
 
-	public norm2():number 
+	public norm2():number
 	{
 		return this.s[0];
 	}

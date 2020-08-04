@@ -80,7 +80,7 @@ export class Popup
 		let pb = this.panelBoundary = $('<div class="wmk-popup"/>').appendTo(fg);
 		pb.click((event:JQueryEventObject) => event.stopPropagation()); // don't let the click percolate upward to the close event
 		pb.css({'background-color': this.popupBackground, 'border': '1px solid black'});
-		pb.css({'position': 'absolute', /*'z-index': zindex + 1*/});
+		pb.css({'position': 'absolute'});
 
 		this.bodyDiv = $('<div/>').appendTo(pb).css('padding', '0.5em');
 

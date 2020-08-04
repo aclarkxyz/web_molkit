@@ -252,7 +252,7 @@ export class MolUtil
 		mol.append(frag);
 		for (let n = 1; n <= mol.numBonds; n++)
 		{
-			if (mol.bondFrom(n) == join) 
+			if (mol.bondFrom(n) == join)
 			{
 				mol.setBondFrom(n, nbr);
 				mol.setBondType(n, connType);
@@ -818,7 +818,7 @@ export class MolUtil
 		if (mol.atomIsotope(atom) != Molecule.ISOTOPE_NATURAL) return false;
 		if (Vec.notBlank(mol.atomExtra(atom)) || Vec.notBlank(mol.atomTransient(atom))) return false;
 		if (mol.atomAdjCount(atom) != 1) return false;
-		
+
 		let other = mol.atomAdjList(atom)[0];
 		if (mol.atomElement(other) == 'H') return false;
 		let bond = mol.atomAdjBonds(atom)[0];
@@ -883,7 +883,7 @@ export class MolUtil
 			let bo = mol.bondOrder(b);
 			if (nonMetal) oxstate += bo; else oxstate += bo % 2;
 		}
-		
+
 		if (atno == Chemistry.ELEMENT_H && oxstate == 1) return null;
 		if (atno == Chemistry.ELEMENT_B && oxstate == 3) return null;
 		if (atno == Chemistry.ELEMENT_C && oxstate == 4) return null;
@@ -891,7 +891,7 @@ export class MolUtil
 		if (atno == Chemistry.ELEMENT_O && oxstate == 2) return null;
 		if (atno == Chemistry.ELEMENT_S && (oxstate == 2 || oxstate == 4 || oxstate == 6)) return null;
 		if (atno == Chemistry.ELEMENT_P && (oxstate == 3 || oxstate == 5)) return null;
-		if ((atno == Chemistry.ELEMENT_F || atno == Chemistry.ELEMENT_Cl || 
+		if ((atno == Chemistry.ELEMENT_F || atno == Chemistry.ELEMENT_Cl ||
 			atno == Chemistry.ELEMENT_Br || atno == Chemistry.ELEMENT_I) && oxstate == 1) return null;
 
 		return oxstate;

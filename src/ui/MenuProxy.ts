@@ -62,7 +62,7 @@ export class MenuProxyWeb extends MenuProxy
 					div.text(menuItem.label);
 					div.hover(() => div.css({'background-color': '#D0D0D0'}), () => div.css({'background-color': 'transparent'}));
 					div.css({'cursor': 'pointer'});
-					div.click(() => 
+					div.click(() =>
 					{
 						popup.close();
 						menuItem.click();
@@ -70,7 +70,7 @@ export class MenuProxyWeb extends MenuProxy
 				}
 			}
 		};
-		popup.callbackClose = () => 
+		popup.callbackClose = () =>
 		{
 			divCursor.remove();
 			currentFocus.focus();
