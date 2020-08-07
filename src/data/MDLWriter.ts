@@ -164,7 +164,7 @@ export class MDLMOLWriter
 
 			if (this.enhancedFields)
 			{
-				if (order < 1 || order > 3) {zboidx.push(n); zboval.push(order);}
+				if ((order < 1 || order > 3) || type != order) {zboidx.push(n); zboval.push(order);}
 				// these are for retroactive bond separation, not implemented at the moment
 				//if (xmol.bondOrder(n) != mol.bondOrder(n)) {zboidx.push(n); zboval.push(xmol.bondOrder(n));}
 			}

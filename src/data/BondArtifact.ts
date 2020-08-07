@@ -91,9 +91,27 @@ export class BondArtifact
 	public getPathBlocks():number[] {return Array.from(this.resPaths.keys());}
 	public getRingBlocks():number[] {return Array.from(this.resRings.keys());}
 	public getAreneBlocks():number[] {return Array.from(this.arenes.keys());}
-	public getResPaths():BondArtifactResPath[] {return Array.from(this.resPaths.values());}
-	public getResRings():BondArtifactResRing[] {return Array.from(this.resRings.values());}
-	public getArenes():BondArtifactArene[] {return Array.from(this.arenes.values());}
+	public getResPaths():BondArtifactResPath[]
+	{
+		//return Array.from(this.resPaths.values());
+		let list:BondArtifactResPath[] = [];
+		for (let key of Vec.sorted(Array.from(this.resPaths.keys()))) list.push(this.resPaths.get(key));
+		return list;
+	}
+	public getResRings():BondArtifactResRing[]
+	{
+		//return Array.from(this.resRings.values());
+		let list:BondArtifactResRing[] = [];
+		for (let key of Vec.sorted(Array.from(this.resRings.keys()))) list.push(this.resRings.get(key));
+		return list;
+	}
+	public getArenes():BondArtifactArene[]
+	{
+		//return Array.from(this.arenes.values());
+		let list:BondArtifactArene[] = [];
+		for (let key of Vec.sorted(Array.from(this.arenes.keys()))) list.push(this.arenes.get(key));
+		return list;
+	}
 
 	// replaces all artifact signifiers with those from the current list of content
 	public rewriteMolecule():void
