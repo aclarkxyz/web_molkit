@@ -34,7 +34,7 @@ export class MDLMOLWriter
 	// options
 	public includeHeader = true; // if on, the 3 line header will be included
 	public enhancedFields = true; // if on, non-standard MDL fields may be added
-	public chargeSeparate = true; // if on, zero bonds will be split out
+	public chargeSeparate = false; // if on, zero bonds will be split out
 	public abbrevSgroups = true; // if on, abbreviations will be written as Sgroups when possible
 	public molName = ''; // optional name to include in the header (if any)
 
@@ -357,6 +357,9 @@ export class MDLMOLWriter
 export class MDLSDFWriter
 {
 	// options
+	public enhancedFields = true; // if on, non-standard MDL fields may be added
+	public chargeSeparate = false; // if on, zero bonds will be split out
+	public abbrevSgroups = true; // if on, abbreviations will be written as Sgroups when possible
 
 	// content in progress
 	private lines:string[] = [];
@@ -378,7 +381,11 @@ export class MDLSDFWriter
 			let mol = colMol < 0 ? null : ds.getMolecule(i, colMol);
 			if (mol != null /*MolUtil.notBlank(mol)*/)
 			{
-				let molstr = new MDLMOLWriter(mol).write();
+				let wtr = new MDLMOLWriter(mol);
+				wtr.enhancedFields = this.enhancedFields;
+				wtr.chargeSeparate = this.chargeSeparate;
+				wtr.abbrevSgroups = this.abbrevSgroups;
+				let molstr = wtr.write();
 				lines.push(molstr);
 			}
 
