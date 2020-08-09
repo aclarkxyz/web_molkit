@@ -227,7 +227,7 @@ export class MDLMOLReader
 
 			if (bfr == bto || bfr < 1 || bfr > numAtoms || bto < 1 || bto > numAtoms) throw 'Invalid MDL MOL: bond line' + (n + 1);
 
-			let order = type >= 1 && type <= 3 ? type : 1;
+			let order = type >= 1 && type <= 3 ? type : type == 8 ? 0 : 1;
 			let style = Molecule.BONDTYPE_NORMAL;
 			if (stereo == 1) style = Molecule.BONDTYPE_INCLINED;
 			else if (stereo == 6) style = Molecule.BONDTYPE_DECLINED;

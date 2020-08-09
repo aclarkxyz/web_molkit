@@ -35,7 +35,12 @@ export class MDLMOLWriter
 	public includeHeader = true; // if on, the 3 line header will be included
 	public enhancedFields = true; // if on, non-standard MDL fields may be added
 	public chargeSeparate = true; // if on, zero bonds will be split out
+	public abbrevSgroups = true; // if on, abbreviations will be written as Sgroups when possible
 	public molName = ''; // optional name to include in the header (if any)
+
+	// some number of superatom abbreviation groups, each of which is a list of atom indices
+	private sgroupNames:string[] = [];
+	private sgroupAtoms:number[][] = [];
 
 	// content in progress
 	private lines:string[] = [];
@@ -71,11 +76,22 @@ export class MDLMOLWriter
    	{
 		let mol = this.mol;
 
-		for (let n = 1; n <= mol.numAtoms; n++) if (MolUtil.hasAbbrev(mol, n))
+		/*for (let n = 1; n <= mol.numAtoms; n++) if (MolUtil.hasAbbrev(mol, n))
 		{
 			mol = mol.clone();
 			MolUtil.expandAbbrevs(mol, true);
 			break;
+		}*/
+		// if allowed to write Sgroups, some abbreviations may be retained for the subsequent steps
+		if (MolUtil.hasAnyAbbrev(mol))
+		{
+			mol = this.mol = mol.clone();
+			if (this.abbrevSgroups)
+			{
+				this.partialAbbrevExpansion();
+				this.prepareSgroups();
+			}
+			else MolUtil.expandAbbrevs(mol, true);
 		}
 
 		this.lines.push(this.intrpad(mol.numAtoms, 3) + this.intrpad(mol.numBonds, 3) + '  0  0  0  0  0  0  0  0999 V2000');
@@ -88,18 +104,6 @@ export class MDLMOLWriter
 		let hydidx:number[] = [], hydval:number[] = [];
 		let zchidx:number[] = [], zchval:number[] = [];
 		let zboidx:number[] = [], zboval:number[] = [];
-
-		// store the original molecule in 'xmol'; after this point, 'mol' will be dumbed down to fit in standard MDL fields
-		/* TODO....
-		let xmol = mol;
-		if (chargeSeparate && ChargeSeparator.anyZeroBonds(mol))
-		{
-			ChargeSeparator sep = new ChargeSeparator(mol);
-			sep.process();
-			mol = sep.getResult();
-		}
-		Molecule rmol = MolUtil.reduceBondTypes(mol);
-		if (rmol != null) mol = rmol;*/
 
 		// export atoms, and make a few notes along the way
 		for (let n = 1; n <= mol.numAtoms; n++)
@@ -135,9 +139,6 @@ export class MDLMOLWriter
 			if (this.enhancedFields)
 			{
 				if (mol.atomHExplicit(n) != Molecule.HEXPLICIT_UNKNOWN) {hydidx.push(n); hydval.push(mol.atomHExplicit(n));}
-				// these are for retroactive bond separation, not implemented at the moment
-				//if (xmol.atomCharge(n) != mol.atomCharge(n)) {zchidx.push(n); zchval.push(xmol.atomCharge(n));}
-				//if (xmol.atomHExplicit(n) != Molecule.HEXPLICIT_UNKNOWN) {hydidx.push(n); hydval.push(xmol.atomHExplicit(n));}
 		   	}
 
 			if (mol.atomUnpaired(n) != 0) {radidx.push(n); radval.push(mol.atomUnpaired(n));}
@@ -147,11 +148,22 @@ export class MDLMOLWriter
 		// export bonds
 		for (let n = 1; n <= mol.numBonds; n++)
 		{
-			let order = mol.bondOrder(n), type = Math.max(1, Math.min(3, order));
+			let order = mol.bondOrder(n), type = order;
+			if (type == 0) type = 8; // the "any" type
+			else if (type > 3) type = 3; // 4-or-higher bonds are not available
+
 			let stereo = mol.bondType(n);
 			if (stereo == Molecule.BONDTYPE_NORMAL) {}
-			else if (stereo == Molecule.BONDTYPE_INCLINED) {stereo = 1; type = 1;}
-			else if (stereo == Molecule.BONDTYPE_DECLINED) {stereo = 6; type = 1;}
+			else if (stereo == Molecule.BONDTYPE_INCLINED)
+			{
+				stereo = 1;
+				//type = 1; ... documentation says that wedges have to be single
+			}
+			else if (stereo == Molecule.BONDTYPE_DECLINED)
+			{
+				stereo = 6;
+				//type = 1; ... documentation says that wedges have to be single
+			}
 			else if (stereo == Molecule.BONDTYPE_UNKNOWN)
 			{
 				if (type == 1) stereo = 4; else stereo = 3;
@@ -187,6 +199,25 @@ export class MDLMOLWriter
 			for (let path of artifacts.getResPaths()) this.writeMBlockFlat('ZPA', ++idx, path.atoms);
 			for (let ring of artifacts.getResRings()) this.writeMBlockFlat('ZRI', ++idx, ring.atoms);
 			for (let arene of artifacts.getArenes()) this.writeMBlockFlat('ZAR', ++idx, Vec.prepend(arene.atoms, arene.centre));
+		}
+
+		// encode Sgroups
+		let inSgroup = Vec.booleanArray(false, mol.numAtoms);
+		for (let s = 0; s < this.sgroupAtoms.length; s++)
+		{
+			let sgroup = this.sgroupAtoms[s];
+			for (let n of sgroup) inSgroup[n - 1] = true;
+
+			let sidx = this.intrpad(s + 1, 4);
+			this.lines.push('M  STY  1' + sidx + ' SUP');
+			for (let n = 0; n < sgroup.length; n += 15)
+			{
+				let sz = Math.min(sgroup.length - n, 15);
+				let line = 'M  SAL' + sidx + this.intrpad(sz, 3);
+				for (let i = 0; i < sz; i++) line += this.intrpad(sgroup[n + i], 4);
+				this.lines.push(line);
+			}
+			this.lines.push('M  SMT' + sidx + ' ' + this.sgroupNames[s]);
 		}
 
 		// export long atom names
@@ -263,6 +294,63 @@ export class MDLMOLWriter
 
 		let val = nativeVal - chgmod;
 		return val <= 0 || val > 14 ? zeroVal : val;
+	}
+
+	// processes the structure so that any non-trivial abbreviations (multiple attachment points/different bond orders) are expanded, and also makes
+	// sure that any remaining abbreviations have no nesting within them
+	private partialAbbrevExpansion():void
+	{
+		const {mol} = this;
+		for (let n = 1; n <= mol.numAtoms; n++) if (MolUtil.hasAbbrev(mol, n))
+		{
+			let frag = MolUtil.getAbbrev(mol, n);
+			if (frag == null || mol.atomAdjCount(n) != 1) {MolUtil.clearAbbrev(mol, n); continue;}
+
+			if (MolUtil.hasAnyAbbrev(frag))
+			{
+				MolUtil.expandAbbrevs(frag, true);
+				MolUtil.setAbbrev(mol, n, frag);
+			}
+
+			let order = mol.bondOrder(mol.atomAdjBonds(n)[0]);
+			if (frag.atomAdjCount(1) == 1 && order == frag.bondOrder(frag.atomAdjBonds(1)[0])) continue;
+
+			MolUtil.expandOneAbbrev(mol, n, true);
+			n--;
+		}
+	}
+
+	// any remaining abbreviations within the molecule get turned into S-groups
+	private prepareSgroups():void
+	{
+		const {mol} = this;
+
+		// note: using -ve atom mapping numbers to disambiguate
+		for (let n = 1; n <= mol.numAtoms; n++) if (mol.atomMapNum(n) < 0) mol.setAtomMapNum(n, 0);
+		let next = 0;
+
+		for (let n = 1; n <= mol.numAtoms; n++) if (MolUtil.hasAbbrev(mol, n))
+		{
+			this.sgroupNames.push(mol.atomElement(n));
+			let mask = MolUtil.expandOneAbbrev(mol, n, true);
+			if (mask == null) continue;
+			next--;
+			for (let i = 0; i < mask.length; i++) if (mask[i]) mol.setAtomMapNum(i + 1, next);
+
+			n--;
+		}
+
+		// extract the layers one at a time
+		for (let idx = -1; idx >= next; idx--)
+		{
+			let atoms:number[] = [];
+			for (let n = 1; n <= mol.numAtoms; n++) if (mol.atomMapNum(n) == idx)
+			{
+				atoms.push(n);
+				mol.setAtomMapNum(n, 0);
+			}
+			this.sgroupAtoms.push(atoms);
+		}
 	}
 }
 

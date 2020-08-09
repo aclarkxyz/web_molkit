@@ -270,6 +270,24 @@ export class BondArtifact
 		return true;
 	}
 
+	// quickly strip out all bond artifacts
+	public static removeAll(mol:Molecule):void
+	{
+		for (let n = 1; n <= mol.numAtoms; n++)
+		{
+			let extra = mol.atomExtra(n);
+			let modified = false;
+			for (let i = extra.length - 1; i >= 0; i--)
+			{
+				if (!extra[i].startsWith(BONDARTIFACT_EXTRA_RESPATH) && !extra[i].startsWith(BONDARTIFACT_EXTRA_RESRING) &&
+					!extra[i].startsWith(BONDARTIFACT_EXTRA_ARENE)) continue;
+				extra = Vec.remove(extra, i);
+				modified = true;
+			}
+			if (modified) mol.setAtomExtra(n, extra);
+		}
+	}
+
 	// ------------ private methods ------------
 
 	// handle a single atom being concatenated onto a putative instance

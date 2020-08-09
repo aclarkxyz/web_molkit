@@ -153,6 +153,16 @@ export class MolUtil
 			if (maskfrag[n] && n + 1 <= junction) fragidx++;
 		}
 
+		// sometimes stereo info is preserved
+		let bondType = Molecule.BONDTYPE_NORMAL, nadj = 0;
+		for (let a of mol.atomAdjList(junction)) if (!srcmask[a - 1])
+		{
+			if (nadj != 0) {bondType = Molecule.BONDTYPE_NORMAL; break;}
+			let b = mol.findBond(junction, a);
+			if (mol.bondFrom(b) == junction) bondType = mol.bondType(b);
+			nadj++;
+		}
+
 		// create and analyse the fragment
 		let frag = MolUtil.subgraphMask(mol, maskfrag);
 		frag.setAtomElement(fragidx, MolUtil.ABBREV_ATTACHMENT);
@@ -178,7 +188,7 @@ export class MolUtil
 		// create the excised molecule, and add in the fragment
 		let newmol = MolUtil.subgraphMask(mol, maskmol);
 		let	 newatom = newmol.addAtom(abbrevName, x, y);
-		newmol.addBond(molidx, newatom, bondOrder);
+		newmol.addBond(molidx, newatom, bondOrder, bondType);
 		MolUtil.setAbbrev(newmol, newatom, frag);
 
 		return [newmol, newatom];
@@ -204,24 +214,23 @@ export class MolUtil
 
 	// expands the abbreviation for a single atom; the atom itself is deleted, and the expanded content is added to the end of the molecule; if for some
 	// reason the abbreviation is invalid, will clear the abbreviation instead
-	// return value: true if any abbreviations were successfully expanded out
-	public static expandOneAbbrev(mol:Molecule, atom:number, alignCoords:boolean):boolean
+	// return value: if something happened, mask of true = part of the expansion (including the new placeholder atom); if nothing happened, returns null
+	public static expandOneAbbrev(mol:Molecule, atom:number, alignCoords:boolean):boolean[]
 	{
 		let frag = MolUtil.getAbbrev(mol, atom);
-		if (frag == null) return false;
+		if (frag == null) return null;
 		if (mol.atomAdjCount(atom) != 1 || frag.numAtoms == 0)
 		{
 			MolUtil.clearAbbrev(mol, atom);
-			return false;
+			return null;
 		}
 
 		let m = mol.atomMapNum(atom);
 		if (m > 0) for (let n of frag.atomAdjList(1)) frag.setAtomMapNum(n, m);
 
-		MolUtil.expandOneAbbrevFrag(mol, atom, frag, alignCoords);
-		return true;
+		return MolUtil.expandOneAbbrevFrag(mol, atom, frag, alignCoords);
 	}
-	public static expandOneAbbrevFrag(mol:Molecule, atom:number, frag:Molecule, alignCoords:boolean):void
+	public static expandOneAbbrevFrag(mol:Molecule, atom:number, frag:Molecule, alignCoords:boolean):boolean[]
 	{
 		let nbr = mol.atomAdjCount(atom) == 1 ? mol.atomAdjList(atom)[0] : 0;
 		let connBond = mol.findBond(atom, nbr), connType = Molecule.BONDTYPE_NORMAL;
@@ -263,8 +272,14 @@ export class MolUtil
 				mol.setBondType(n, connType);
 			}
 		}
+
+		let mask = Vec.booleanArray(false, mol.numAtoms);
+		for (let n = mask.length - frag.numAtoms; n < mask.length; n++) mask[n] = true;
 		mol.deleteAtomAndBonds(join);
 		mol.deleteAtomAndBonds(atom);
+		mask.splice(join - 1, 1);
+		mask.splice(atom - 1, 1);
+		return mask;
 	}
 
 	// removes the abbreviation from a molecule, if there is one; also, the element symbol will be set to "C" when there is
