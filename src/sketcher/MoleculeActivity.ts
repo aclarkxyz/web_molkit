@@ -1788,8 +1788,8 @@ export class MoleculeActivity
 			}
 			else if (this.output.mol.bondOrder(b) != order || this.output.mol.bondType(b) != type)
 			{
-				if (!stereoType) this.output.mol.setBondOrder(b, order);
-				this.output.mol.setBondType(b, type);
+				if (!stereoType && order != this.output.mol.bondOrder(b)) this.output.mol.setBondOrder(b, order);
+				else this.output.mol.setBondType(b, type);
 			}
 			else if (switchType)
 			{

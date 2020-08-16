@@ -61,6 +61,7 @@ export class Graph
 		return g;
 	}
 
+	// builds a graph with the same shape as the given molecule
 	public static fromMolecule(mol:Molecule):Graph
 	{
 		let g = new Graph();
@@ -76,6 +77,15 @@ export class Graph
 			g.nbrs[bfr].push(bto);
 			g.nbrs[bto].push(bfr);
 		}
+		return g;
+	}
+
+	// when a neighbour list is already available, construction is essentially immediate; note that the neighbour list is not cloned at all,
+	// and it may be corrupted if graph modification methods are called
+	public static fromNeighbours(nbrs:number[][]):Graph
+	{
+		let g = new Graph();
+		g.nbrs = nbrs;
 		return g;
 	}
 

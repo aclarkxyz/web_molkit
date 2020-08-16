@@ -38,7 +38,7 @@ export interface DotPathBlock
 }
 
 // discrete bond type categories (these collapse the fractional bond orders)
-enum DotPathBond
+export const enum DotPathBond
 {
 	O0 = 0, // exactly zero
 	O01 = 1, // from 0..1 (exclusive)
@@ -51,7 +51,7 @@ enum DotPathBond
 }
 
 // discrete charge type categories (these collapse fractional charges)
-enum DotPathCharge
+export const enum DotPathCharge
 {
 	N1X = -3, // less than -1
 	N1 = -2, // exactly -1
