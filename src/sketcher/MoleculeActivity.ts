@@ -85,6 +85,8 @@ export enum ActivityType
 	BondArtifactRing,
 	BondArtifactArene,
 	BondArtifactClear,
+	AddHydrogens,
+	RemoveHydrogens,
 }
 
 export interface SketchState
@@ -299,6 +301,8 @@ export class MoleculeActivity
 		else if (this.activity == ActivityType.AbbrevExpand) this.execAbbrevExpand();
 		else if (this.activity == ActivityType.BondArtifactPath || this.activity == ActivityType.BondArtifactRing ||
 				this.activity == ActivityType.BondArtifactArene || this.activity == ActivityType.BondArtifactClear) this.execBondArtifact(this.activity);
+		else if (this.activity == ActivityType.AddHydrogens) this.execAddHydrogens();
+		else if (this.activity == ActivityType.RemoveHydrogens) this.execRemoveHydrogens();
 
 		this.finish();
 	}
@@ -1564,6 +1568,53 @@ export class MoleculeActivity
 
 		artif.rewriteMolecule();
 		this.output.mol = artif.mol;
+	}
+
+	public execAddHydrogens():void
+	{
+		let mol = this.input.mol.clone();
+
+		if (!this.requireAtoms()) return;
+		let atoms = this.subjectIndex;
+		if (atoms.length == 0) atoms = Vec.identity1(mol.numAtoms);
+
+		for (let a of atoms)
+		{
+			let hc = mol.atomHydrogens(a);
+			if (hc > 0) SketchUtil.placeAdditionalHydrogens(mol, a, hc);
+		}
+
+		if (mol.numAtoms == this.input.mol.numAtoms)
+		{
+			this.errmsg = 'Nothing needs to be added.';
+			return;
+		}
+
+		this.output.mol = mol;
+	}
+
+	public execRemoveHydrogens():void
+	{
+		let mol = this.input.mol;
+
+		if (!this.requireAtoms()) return;
+		let selmask = this.subjectMask;
+		if (Vec.allFalse(selmask)) selmask = Vec.booleanArray(true, mol.numAtoms);
+		let keepmask = Vec.booleanArray(true, mol.numAtoms);
+
+		for (let n = 1; n <= mol.numAtoms; n++) if (MolUtil.boringHydrogen(mol, n))
+		{
+			let nbr = mol.atomAdjList(n)[0];
+			if (selmask[n - 1] || selmask[nbr - 1]) keepmask[n - 1] = false;
+		}
+
+		if (Vec.allTrue(keepmask))
+		{
+			this.errmsg = 'Nothing to be deleted.';
+			return;
+		}
+
+		this.output.mol = MolUtil.subgraphMask(mol, keepmask);
 	}
 
 	/*

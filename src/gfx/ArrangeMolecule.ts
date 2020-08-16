@@ -227,7 +227,7 @@ export class ArrangeMolecule
 			//let explicit = mol.atomExplicit(n) /*|| this.effects.showCarbon;*/
 			//if (explicit && /*!effects.showCarbon &&*/ mol.atomElement(n) == 'C' && !this.atomIsWeirdLinear(n)) explicit = !artmask[n - 1];
 			//a.text = explicit ? mol.atomElement(n) : null;
-			if (artmask[n - 1] && mol.atomElement(n) == 'C') a.text = null;
+			if (artmask && artmask[n - 1] && mol.atomElement(n) == 'C') a.text = null;
 
 			// if it has a label, then how big
 			if (a.text != null)

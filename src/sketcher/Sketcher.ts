@@ -54,8 +54,6 @@ export class Sketcher extends DrawCanvas
 	public useTemplateBank = true;
 	public lowerTemplateBank = false;
 	public debugOutput:any = undefined;
-	public showOxState = true;
-	public decoration = DrawCanvasDecoration.Stereochemistry;
 
 	private mol:Molecule = null;
 	private policy:RenderPolicy = null;
@@ -155,22 +153,14 @@ export class Sketcher extends DrawCanvas
 
 		if (!this.beenSetup) return;
 
-		this.layout = null;
-		this.metavec = null;
 		this.stereo = null;
 		this.hoverAtom = 0;
 		this.hoverBond = 0;
 
 		if (!withAutoScale)
-		{
-			let effects = this.sketchEffects();
-			this.layout = new ArrangeMolecule(this.mol, this, this.policy, effects);
-			this.layout.arrange();
-			this.metavec = new MetaVector();
-			new DrawMolecule(this.layout, this.metavec).draw();
-			this.delayedRedraw();
-		}
-		else this.autoScale();
+			this.renderMolecule();
+		else
+			this.autoScale();	
 	}
 
 	// provides the mechanism for interacting with the clipboard (which is quite different for web vs. app mode)
@@ -229,6 +219,11 @@ export class Sketcher extends DrawCanvas
 
 		this.metavec = new MetaVector();
 		new DrawMolecule(this.layout, this.metavec).draw();
+
+		if (this.showQuery)
+		{
+			// TODO: render any query features
+		}
 
 		if (callback) callback();
 	}
@@ -339,6 +334,16 @@ export class Sketcher extends DrawCanvas
 
 		this.container.focus();
 	}
+
+	// viewing options: changing any of them triggers a redraw
+	public get decoration():DrawCanvasDecoration {return this.viewOpt.decoration;}
+	public set decoration(decoration:DrawCanvasDecoration) {if (this.viewOpt.decoration != decoration) {this.viewOpt.decoration = decoration; this.renderMolecule();}}
+	public get showOxState():boolean {return this.viewOpt.showOxState;}
+	public set showOxState(showOxState:boolean) {if (this.viewOpt.showOxState != showOxState) {this.viewOpt.showOxState = showOxState; this.renderMolecule();}}
+	public get showQuery():boolean {return this.viewOpt.showQuery;}
+	public set showQuery(showQuery:boolean) {if (this.viewOpt.showQuery != showQuery) {this.viewOpt.showQuery = showQuery; this.renderMolecule();}}
+	public get showArtifacts():boolean {return this.viewOpt.showArtifacts;}
+	public set showArtifacts(showArtifacts:boolean) {if (this.viewOpt.showArtifacts != showArtifacts) {this.viewOpt.showArtifacts = showArtifacts; this.renderMolecule();}}
 
 	// change the size of the sketcher after instantiation
 	public changeSize(width:number, height:number):void
@@ -619,6 +624,12 @@ export class Sketcher extends DrawCanvas
 		let dlg = new PickRecent(cookies, 1);
 		dlg.callbackPick1 = (mol:Molecule) => this.pasteMolecule(mol);
 		dlg.open();*/
+	}
+
+	// executes an arbitrary activity on the current molecule/selection state
+	public performActivity(activity:ActivityType, param:Record<string, any> = {}):void
+	{
+		new MoleculeActivity(this.getState(), activity, param, {}, this).execute();
 	}
 
 	// zooms in or out, depending on the magnifier
@@ -1016,6 +1027,19 @@ export class Sketcher extends DrawCanvas
 		if (this.canvasMolecule == null) return;
 		this.filthy = true;
 		window.setTimeout(() => {if (this.filthy) this.redraw();}, 10);
+	}
+
+	// re-render the molecule into its graphical state buffers, then trigger a delayed re-splat onto the canvas; this is useful when the molecule
+	// is to be displayed differently even though the molecule itself has not actually changed
+	private renderMolecule():void
+	{
+		let effects = this.sketchEffects();
+		this.layout = new ArrangeMolecule(this.mol, this, this.policy, effects);
+		this.layout.setWantArtifacts(this.showArtifacts);
+		this.layout.arrange();
+		this.metavec = new MetaVector();
+		new DrawMolecule(this.layout, this.metavec).draw();
+		this.delayedRedraw();
 	}
 
 	// locates a molecular object at the given position: returns N for atom, -N for bond, or 0 for nothing

@@ -60,11 +60,27 @@ export enum DrawCanvasDecoration
 	AtomIndex,
 }
 
+interface DrawCanvasViewOpt
+{
+	decoration:DrawCanvasDecoration;
+	showOxState:boolean;
+	showQuery:boolean;
+	showArtifacts:boolean;
+}
+
 export class DrawCanvas extends Widget implements ArrangeMeasurement
 {
 	protected offsetX = 0;
 	protected offsetY = 0;
 	protected pointScale = 1;
+
+	protected viewOpt:DrawCanvasViewOpt = 
+	{
+		'decoration': DrawCanvasDecoration.Stereochemistry,
+		'showOxState': true,
+		'showQuery': true,
+		'showArtifacts': true,
+	}
 
 	// ------------ public methods ------------
 
