@@ -161,9 +161,10 @@ export class EditAtom extends Dialog
 		this.inputUnpaired.css('grid-area', '2 / col3');
 
 		grid.append('<div style="grid-area: 3 / col0;">Hydrogens</div>');
-		this.optionHydrogen = new OptionList(['Auto', 'Explicit']);
+		this.optionHydrogen = new OptionList(['Auto', 'None', '1', '2', '3', '4', 'Other']);
 		this.optionHydrogen.render($('<div style="grid-area: 3 / col1 / auto / col3"/>').appendTo(grid));
-		this.inputHydrogen = $('<input type="number" size="6"/>').appendTo(grid);
+		this.optionHydrogen.onSelect((idx:number) => this.inputHydrogen.prop('disabled', idx != 6));
+		this.inputHydrogen = $('<input type="number" size="4"/>').appendTo(grid);
 		this.inputHydrogen.css('grid-area', '3 / col3');
 
 		grid.append('<div style="grid-area: 4 / col0;">Isotope</div>');
@@ -186,8 +187,29 @@ export class EditAtom extends Dialog
 			this.inputSymbol.val(mol.atomElement(atom));
 			this.inputCharge.val(mol.atomCharge(atom).toString());
 			this.inputUnpaired.val(mol.atomUnpaired(atom).toString());
-			this.optionHydrogen.setSelectedIndex(mol.atomHExplicit(atom) == Molecule.HEXPLICIT_UNKNOWN ? 0 : 1);
-			if (mol.atomHExplicit(atom) != Molecule.HEXPLICIT_UNKNOWN) this.inputHydrogen.val(mol.atomHExplicit(atom).toString());
+
+			let hc = mol.atomHExplicit(atom);
+			if (hc == Molecule.HEXPLICIT_UNKNOWN) 
+			{
+				this.optionHydrogen.setSelectedIndex(0);
+				this.inputHydrogen.val(mol.atomHydrogens(atom).toString());
+				this.inputHydrogen.prop('disabled', true);
+			}
+			else if (hc <= 4) 
+			{
+				this.optionHydrogen.setSelectedIndex(hc + 1);
+				this.inputHydrogen.val(hc.toString());
+				this.inputHydrogen.prop('disabled', true);
+			}
+			else
+			{
+				this.optionHydrogen.setSelectedIndex(6);
+				this.inputHydrogen.val(hc.toString());
+				this.inputHydrogen.prop('disabled', false);
+			}
+			//this.optionHydrogen.setSelectedIndex(mol.atomHExplicit(atom) == Molecule.HEXPLICIT_UNKNOWN ? 0 : 1);			
+			//if (mol.atomHExplicit(atom) != Molecule.HEXPLICIT_UNKNOWN) this.inputHydrogen.val(mol.atomHExplicit(atom).toString());
+
 			this.optionIsotope.setSelectedIndex(mol.atomIsotope(atom) == Molecule.ISOTOPE_NATURAL ? 0 : 1);
 			if (mol.atomIsotope(atom) == Molecule.ISOTOPE_NATURAL) this.inputIsotope.val(mol.atomIsotope(atom).toString());
 			this.inputMapping.val(mol.atomMapNum(atom).toString());
@@ -307,12 +329,14 @@ export class EditAtom extends Dialog
 		let unp = parseInt(this.inputUnpaired.val().toString());
 		if (unp >= 0 && unp < 20) mol.setAtomUnpaired(atom, unp);
 
-		if (this.optionHydrogen.getSelectedIndex() == 1)
+		let hcidx = this.optionHydrogen.getSelectedIndex();
+		if (hcidx == 0) mol.setAtomHExplicit(atom, Molecule.HEXPLICIT_UNKNOWN);
+		else if (hcidx <= 5) mol.setAtomHExplicit(atom, hcidx - 1);
+		else
 		{
 			let hyd = parseInt(this.inputHydrogen.val().toString());
 			if (hyd >= 0 && hyd < 20) mol.setAtomHExplicit(atom, hyd);
 		}
-		else mol.setAtomHExplicit(atom, Molecule.HEXPLICIT_UNKNOWN);
 
 		if (this.optionIsotope.getSelectedIndex() == 1)
 		{
