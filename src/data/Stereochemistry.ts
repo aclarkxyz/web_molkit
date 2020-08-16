@@ -325,7 +325,6 @@ export class Stereochemistry
 		if (th34 < MIN_ANGLE || th34 > MAX_ANGLE) return null;
 		const th41 = GeomUtil.acuteAngle(v4, v1);
 		if (th41 < MIN_ANGLE || th41 > MAX_ANGLE) return null;
-
 		return adj;
 	}
 
@@ -395,6 +394,16 @@ export class Stereochemistry
 					atom4 = adj[i];
 					atom5 = adj[j];
 				}
+			}
+		}
+
+		// if 3D, atoms 2 & 3 can be selected arbitrarily
+		if (mol.is3D())
+		{
+			for (let a of adj) if (a != atom4 && a != atom5)
+			{
+				if (atom2 == 0) atom2 = a;
+				else if (atom3 == 0) atom3 = a;
 			}
 		}
 		if (!atom4 || !atom5) return null;
