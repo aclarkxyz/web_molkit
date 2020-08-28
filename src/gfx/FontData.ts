@@ -642,6 +642,35 @@ export class FontData
 		return [dx * scale, font.ASCENT * scale * font.ASCENT_FUDGE, -font.DESCENT * scale];
 	}
 
+	// measurement of individual characters: an array of x offsets is returned (0, sz1, sz1+sz2, ...) with kernings
+	// factored in; this is particularly useful for wordwrapping, as it avoids repeated calls; the size is one greater
+	// than the string length, to capture the final position of the whole string
+	public static measureWidths(txt:string, size:number):number[] {return this.main.measureWidths(txt, size);}
+	public measureWidths(txt:string, size:number):number[]
+	{
+		let font = FontData.main;
+
+		let scale = size / font.UNITS_PER_EM;
+		let xpos = [0];
+		let dx = 0;
+		for (let n = 0; n < txt.length; n++)
+		{
+			let ch = txt.charAt(n);
+			let i = this.getIndex(ch);
+			if (i < 0)
+			{
+				dx += font.MISSING_HORZ;
+				continue;
+			}
+
+			dx += font.HORIZ_ADV_X[i];
+			if (n < txt.length - 1) dx += font.getKerning(ch, txt.charAt(n + 1));
+
+			xpos.push(dx * scale);
+		}
+		return xpos;
+	}
+
 	private pathCache:Path2D[] = [];
 	private pathMissing:Path2D = null;
 
