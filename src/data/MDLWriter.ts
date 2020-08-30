@@ -283,7 +283,7 @@ export class MDLMOLWriter
 		let chgmod = (el == 'C' || el == 'H') ? Math.abs(chg) : el == 'B' ? -Math.abs(chg) : -chg;
 		let bondSum = 0;
 		for (let b of mol.atomAdjBonds(atom)) bondSum += mol.bondOrder(b);
-		let nativeVal = chgmod + mol.atomUnpaired(atom) + hyd + bondSum;
+		let nativeVal = chgmod + /*mol.atomUnpaired(atom) +*/ hyd + bondSum;
 
 		// if there are valence options and this is the first one, it should work out
 		if (options && options[0] == nativeVal) return 0;

@@ -288,7 +288,7 @@ export class DotPath
 
 			maskMaybe[n] = true;
 
-			// if carbon, it's sp3 and definitely blocking (unless it has two pi-neighbours); other atoms only maybe
+			// if carbon and has no metal neighbours, it's sp3 and definitely blocking
 			if (atno == Chemistry.ELEMENT_C)
 			{
 				let hasMetal = false;
@@ -343,7 +343,6 @@ export class DotPath
 
 			let electrons = Math.min(totalHave, totalWant);
 
-			//if (cc.length == 2 && electrons == 2 * mol.bondOrder(p.bonds[0])) continue; // boring ... but... charge & rad...
 			p.numer = electrons;
 			p.denom = 2 * p.bonds.length;
 			this.paths.push(p);
