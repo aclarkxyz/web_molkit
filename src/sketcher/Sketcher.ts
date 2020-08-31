@@ -160,7 +160,7 @@ export class Sketcher extends DrawCanvas
 		if (!withAutoScale)
 			this.renderMolecule();
 		else
-			this.autoScale();	
+			this.autoScale();
 	}
 
 	// provides the mechanism for interacting with the clipboard (which is quite different for web vs. app mode)

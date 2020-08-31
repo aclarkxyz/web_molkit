@@ -74,13 +74,13 @@ export class DrawCanvas extends Widget implements ArrangeMeasurement
 	protected offsetY = 0;
 	protected pointScale = 1;
 
-	protected viewOpt:DrawCanvasViewOpt = 
+	protected viewOpt:DrawCanvasViewOpt =
 	{
 		'decoration': DrawCanvasDecoration.Stereochemistry,
 		'showOxState': true,
 		'showQuery': true,
 		'showArtifacts': true,
-	}
+	};
 
 	// ------------ public methods ------------
 

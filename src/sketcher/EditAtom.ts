@@ -189,13 +189,13 @@ export class EditAtom extends Dialog
 			this.inputUnpaired.val(mol.atomUnpaired(atom).toString());
 
 			let hc = mol.atomHExplicit(atom);
-			if (hc == Molecule.HEXPLICIT_UNKNOWN) 
+			if (hc == Molecule.HEXPLICIT_UNKNOWN)
 			{
 				this.optionHydrogen.setSelectedIndex(0);
 				this.inputHydrogen.val(mol.atomHydrogens(atom).toString());
 				this.inputHydrogen.prop('disabled', true);
 			}
-			else if (hc <= 4) 
+			else if (hc <= 4)
 			{
 				this.optionHydrogen.setSelectedIndex(hc + 1);
 				this.inputHydrogen.val(hc.toString());
