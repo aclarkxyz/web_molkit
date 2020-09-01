@@ -190,7 +190,7 @@ export class DotPath
 		const mol = this.mol, na = mol.numAtoms, nb = mol.numBonds;
 
 		// gather metrics
-		let nonsingle = Vec.booleanArray(false, na), pibonded = Vec.booleanArray(false, na);
+		let nonsingle = Vec.booleanArray(false, na), pibonded = Vec.booleanArray(false, na), metalbonded = Vec.booleanArray(false, na);
 		let bondsum = Vec.numberArray(0, na); // explicit bond orders + virtual hydrogens
 		for (let n = 0; n < na; n++) bondsum[n] = mol.atomHydrogens(n + 1);
 		for (let n = 1; n <= nb; n++)
@@ -205,6 +205,15 @@ export class DotPath
 			{
 				pibonded[bfr - 1] = true;
 				pibonded[bto - 1] = true;
+			}
+			else
+			{
+				let blk1 = Chemistry.ELEMENT_BLOCKS[mol.atomicNumber(bfr)], blk2 = Chemistry.ELEMENT_BLOCKS[mol.atomicNumber(bto)];
+				if (blk1 >= 3 || blk2 >= 3) 
+				{
+					metalbonded[bfr - 1] = true;
+					metalbonded[bto - 1] = true;
+				}
 			}
 			bondsum[bfr - 1] += bo;
 			bondsum[bto - 1] += bo;
@@ -222,7 +231,7 @@ export class DotPath
 		for (let n = 1; n <= na; n++) if (!pibonded[n - 1])
 		{
 			let adjpi = 0;
-			for (let adj of mol.atomAdjList(n)) if (pibonded[adj - 1]) adjpi++;
+			for (let adj of mol.atomAdjList(n)) if (pibonded[adj - 1] || metalbonded[adj - 1]) adjpi++;
 			if (adjpi >= 2) impliedPi[n - 1] = true;
 		}
 		for (let n = 0; n < na; n++) if (impliedPi[n]) pibonded[n] = true;
