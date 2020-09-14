@@ -74,7 +74,7 @@ export class BinaryData extends Aspect
 	public getValue(row:number, field:BinaryDataField):boolean
 	{
 		let value = this.getDestValue(row, field);
-		if (value != null) return;
+		if (value != null) return value;
 		return this.getSourceValue(row, field);
 	}
 	public getSourceValue(row:number, field:BinaryDataField):boolean

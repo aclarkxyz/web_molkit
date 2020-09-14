@@ -320,7 +320,7 @@ export class GeomUtil
 		return Math.sqrt(dx * dx + dy * dy + dz * dz);
 	}
 
-	public static normalise(v:number[]):number
+	public static normalise(v:number[]):void
 	{
 		const dsq = v[0] * v[0] + v[1] * v[1] + v[2] * v[2];
 		if (dsq == 0) return;

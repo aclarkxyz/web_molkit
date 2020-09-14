@@ -33,7 +33,7 @@ namespace WebMolKit /* BOF */ {
 */
 
 let crc_table:number[] = [];
-function make_crc_table():number
+function make_crc_table():void
 {
 	if (crc_table.length > 0) return;
 	for (let n = 0; n < 256; n++)

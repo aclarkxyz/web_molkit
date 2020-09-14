@@ -1356,7 +1356,7 @@ export class Sketcher extends DrawCanvas
 			if (g.orders.indexOf(1) >= 0) single = g;
 		}
 		if (best == null) best = single;
-		if (best == null) return;
+		if (best == null) return [];
 
 		let g = clone(best) as GuidelineSprout;
 		g.sourceX = this.angToX(this.mol.atomX(g.atom));
