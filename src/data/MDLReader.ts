@@ -448,7 +448,7 @@ export class MDLMOLReader
 			{
 				let chg = mol.atomCharge(n);
 				let chgmod = (el == 'C' || el == 'H') ? Math.abs(chg) : el == 'B' ? -Math.abs(chg) : -chg;
-				let usedValence = chgmod + mol.atomUnpaired(n);
+				let usedValence = chgmod /*+ mol.atomUnpaired(n)*/;
 				for (let b of mol.atomAdjBonds(n)) usedValence += mol.bondOrder(b);
 				for (let v of options) if (usedValence <= v)
 				{

@@ -174,10 +174,10 @@ export function blendRGB(fract:number, rgb1:number, rgb2:number, rgb3?:number):n
 }*/
 
 // goes through all text-node children and splices them together
-export function nodeText(node:Node)
+export function nodeText(node:Node):string
 {
 	let ret = '';
-	if (!node) return;
+	if (!node) return '';
 	node = node.firstChild;
 	while (node)
 	{
@@ -188,11 +188,11 @@ export function nodeText(node:Node)
 }
 
 // convenience functions to abstract the unreasonably longwinded closures function
-export function isDef(v:any)
+export function isDef(v:any):boolean
 {
 	return !(v === null || typeof v === 'undefined');
 }
-export function notDef(v:any)
+export function notDef(v:any):boolean
 {
 	return v === null || typeof v === 'undefined';
 }
