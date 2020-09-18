@@ -123,7 +123,8 @@ export class Popup
 	{
 		let winW = $(window).width(), winH = $(window).height();
 		const GAP = 2;
-		let wx1 = this.parent.offset().left, wy1 = this.parent.offset().top;
+		let wx1 = this.parent.offset().left - window.scrollX;
+		let wy1 = this.parent.offset().top - window.scrollY;
 		let wx2 = wx1 + this.parent.width(), wy2 = wy1 + this.parent.height();
 
 		let pb = this.panelBoundary;
