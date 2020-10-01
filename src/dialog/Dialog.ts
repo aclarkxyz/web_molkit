@@ -36,6 +36,7 @@ export class Dialog
 	public maxPortionWidth = 80; //  ...
 	public maximumWidth = 0; // optional pixel-specific maximum
 	public maximumHeight = 0;
+	public maxPortionHeight = 0; // optional % of vertical height allowed
 	public topMargin = 50; // pixels to reserve along the top
 	public title = 'Dialog';
 
@@ -99,6 +100,7 @@ export class Dialog
 		if (this.maximumWidth > 0) pb.css('max-width', this.maximumWidth + 'px');
 		else if (this.maxPortionWidth != null) pb.css('max-width', this.maxPortionWidth + '%');
 		if (this.maximumHeight > 0) pb.css('max-height', this.maximumHeight + 'px');
+		else if (this.maxPortionHeight > 0) pb.css('max-height', this.maxPortionHeight + 'vh');
 
 		pb.css('background-color', 'white');
 		pb.css('border-radius', '6px');
@@ -121,8 +123,7 @@ export class Dialog
 		tdiv.css('padding', 0);
 		this.titleDiv = tdiv;
 
-		let bdiv = $('<div/>').appendTo(pb);
-		bdiv.css('width', '100%');
+		let bdiv = $('<div/>').appendTo(pb).css({'width': '100%'});
 
 		this.bodyDiv = $('<div style="padding: 0.5em;"/>').appendTo(bdiv); // (has to be nested, otherwise runs over)
 
