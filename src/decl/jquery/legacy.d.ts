@@ -141,7 +141,7 @@ interface BaseJQueryEventObject extends Event {
     metaKey: boolean;
 }
 /**
- * @deprecated ​ Deprecated. Use \`{@link JQuery.Event }\`.
+ * {NO} deprecated ​ Deprecated. Use \`{@link JQuery.Event }\`.
  */
 interface JQueryInputEventObject extends BaseJQueryEventObject {
     altKey: boolean;
@@ -150,7 +150,7 @@ interface JQueryInputEventObject extends BaseJQueryEventObject {
     shiftKey: boolean;
 }
 /**
- * @deprecated ​ Deprecated. Use \`{@link JQuery.Event }\`.
+ * {NO} deprecated ​ Deprecated. Use \`{@link JQuery.Event }\`.
  */
 interface JQueryMouseEventObject extends JQueryInputEventObject {
     button: number;
@@ -176,7 +176,7 @@ interface JQueryKeyEventObject extends JQueryInputEventObject {
     keyCode: number;
 }
 /**
- * @deprecated ​ Deprecated. Use \`{@link JQuery.Event }\`.
+ * {NO}deprecated ​ Deprecated. Use \`{@link JQuery.Event }\`.
  */
 interface JQueryEventObject extends BaseJQueryEventObject, JQueryInputEventObject, JQueryMouseEventObject, JQueryKeyEventObject { }
 /**

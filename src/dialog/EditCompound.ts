@@ -94,7 +94,7 @@ export class EditCompound extends Dialog
 		this.btnSave.click(() => {if (this.callbackSave) this.callbackSave(this);});
 
 		let skw = 800, skh = 650;
-		let skdiv = $('<div/>').appendTo(this.body());
+		let skdiv = $('<div/>').appendTo(body);
 		skdiv.css('width', skw + 'px');
 		skdiv.css('height', skh + 'px');
 

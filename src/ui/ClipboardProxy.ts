@@ -146,27 +146,38 @@ export class ClipboardProxyWeb extends ClipboardProxy
 	}
 	public setString(str:string):void
 	{
-		// now place it on the actual system clipboard
-		if (this.fakeTextArea == null)
+		// the default method for putting text on the clipboard involves making a fake hidden control, which is real
+		// nasty: if the cleaner approach works, defer to that in preference
+		let fallbackWorkaround = () =>
 		{
-			this.fakeTextArea = document.createElement('textarea');
-			this.fakeTextArea.style.fontSize = '12pt';
-			this.fakeTextArea.style.border = '0';
-			this.fakeTextArea.style.padding = '0';
-			this.fakeTextArea.style.margin = '0';
-			this.fakeTextArea.style.position = 'fixed';
-			this.fakeTextArea.style['left'] = '-9999px';
-			this.fakeTextArea.style.top = (window.pageYOffset || document.documentElement.scrollTop) + 'px';
-			this.fakeTextArea.setAttribute('readonly', '');
-			document.body.appendChild(this.fakeTextArea);
-		}
-		this.fakeTextArea.value = str;
-		this.fakeTextArea.select();
+			if (this.fakeTextArea == null)
+			{
+				this.fakeTextArea = document.createElement('textarea');
+				this.fakeTextArea.style.fontSize = '12pt';
+				this.fakeTextArea.style.border = '0';
+				this.fakeTextArea.style.padding = '0';
+				this.fakeTextArea.style.margin = '0';
+				this.fakeTextArea.style.position = 'fixed';
+				this.fakeTextArea.style['left'] = '-9999px';
+				this.fakeTextArea.style.top = (window.pageYOffset || document.documentElement.scrollTop) + 'px';
+				this.fakeTextArea.setAttribute('readonly', '');
+				document.body.appendChild(this.fakeTextArea);
+			}
+			this.fakeTextArea.value = str;
+			this.fakeTextArea.select();
 
-		// disable event trapping, then issue the standard copy
-		this.busy = true;
-		document.execCommand('copy');
-		this.busy = false;
+			// disable event trapping, then issue the standard copy
+			this.busy = true;
+			document.execCommand('copy');
+			this.busy = false;
+		};
+
+		// favour the explicit clipboard API, if allowed
+		if (navigator.clipboard)
+		{
+			navigator.clipboard.writeText(str).then(() => {}, fallbackWorkaround);
+		}
+		else fallbackWorkaround();
 	}
 	public setImage(blob:Blob):void
 	{
