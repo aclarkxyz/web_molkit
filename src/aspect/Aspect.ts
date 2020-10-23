@@ -10,11 +10,6 @@
 	[PKG=webmolkit]
 */
 
-///<reference path='../util/util.ts'/>
-///<reference path='../data/DataSheet.ts'/>
-///<reference path='../gfx/MetaVector.ts'/>
-///<reference path='../gfx/Rendering.ts'/>
-
 namespace WebMolKit /* BOF */ {
 
 /*

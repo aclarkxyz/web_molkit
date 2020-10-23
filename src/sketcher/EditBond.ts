@@ -10,17 +10,6 @@
 	[PKG=webmolkit]
 */
 
-///<reference path='../dialog/Dialog.ts'/>
-///<reference path='../data/Molecule.ts'/>
-///<reference path='../data/AbbrevContainer.ts'/>
-///<reference path='../gfx/Rendering.ts'/>
-///<reference path='../gfx/ArrangeMolecule.ts'/>
-///<reference path='../gfx/DrawMolecule.ts'/>
-///<reference path='../ui/TabBar.ts'/>
-///<reference path='../ui/OptionList.ts'/>
-///<reference path='GeomWidget.ts'/>
-///<reference path='ExtraFieldsWidget.ts'/>
-
 namespace WebMolKit /* BOF */ {
 
 /*

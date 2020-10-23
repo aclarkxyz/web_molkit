@@ -10,9 +10,6 @@
 	[PKG=webmolkit]
 */
 
-///<reference path='Molecule.ts'/>
-///<reference path='Stereochemistry.ts'/>
-
 namespace WebMolKit /* BOF */ {
 
 /*

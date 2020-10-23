@@ -10,10 +10,6 @@
 	[PKG=webmolkit]
 */
 
-///<reference path='../decl/corrections.d.ts'/>
-///<reference path='MDLReader.ts'/>
-///<reference path='MDLWriter.ts'/>
-
 namespace WebMolKit /* BOF */ {
 
 /*

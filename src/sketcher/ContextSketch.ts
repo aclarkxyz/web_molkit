@@ -10,14 +10,6 @@
 	[PKG=webmolkit]
 */
 
-///<reference path='../gfx/MetaVector.ts'/>
-///<reference path='../data/CoordUtil.ts'/>
-///<reference path='../data/SketchUtil.ts'/>
-///<reference path='../ui/MenuProxy.ts'/>
-///<reference path='../ui/ClipboardProxy.ts'/>
-///<reference path='MoleculeActivity.ts'/>
-///<reference path='Sketcher.ts'/>
-
 namespace WebMolKit /* BOF */ {
 
 /*

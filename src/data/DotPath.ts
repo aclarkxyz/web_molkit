@@ -10,13 +10,6 @@
 	[PKG=webmolkit]
 */
 
-///<reference path='Molecule.ts'/>
-///<reference path='MolUtil.ts'/>
-///<reference path='ForeignMolecule.ts'/>
-///<reference path='Graph.ts'/>
-///<reference path='Chemistry.ts'/>
-///<reference path='../util/util.ts'/>
-
 /* eslint-disable no-multi-spaces */
 
 namespace WebMolKit /* BOF */ {

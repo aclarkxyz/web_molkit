@@ -10,12 +10,6 @@
 	[PKG=webmolkit]
 */
 
-///<reference path='../gfx/MetaVector.ts'/>
-///<reference path='../data/CoordUtil.ts'/>
-///<reference path='../data/SketchUtil.ts'/>
-///<reference path='TemplateFusion.ts'/>
-///<reference path='MetalLigate.ts'/>
-
 namespace WebMolKit /* BOF */ {
 
 /*

@@ -10,8 +10,6 @@
 	[PKG=webmolkit]
 */
 
-///<reference path='../ui/ButtonBank.ts'/>
-
 namespace WebMolKit /* BOF */ {
 
 /*

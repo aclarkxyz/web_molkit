@@ -10,16 +10,6 @@
 	[PKG=webmolkit]
 */
 
-///<reference path='../util/util.ts'/>
-///<reference path='../data/DataSheet.ts'/>
-///<reference path='SARTable.ts'/>
-///<reference path='Experiment.ts'/>
-///<reference path='AssayProvenance.ts'/>
-///<reference path='BayesianSource.ts'/>
-///<reference path='BayesianPrediction.ts'/>
-///<reference path='MeasurementData.ts'/>
-///<reference path='BinaryData.ts'/>
-
 namespace WebMolKit /* BOF */ {
 
 /*

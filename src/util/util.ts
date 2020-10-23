@@ -10,9 +10,6 @@
 	[PKG=webmolkit]
 */
 
-///<reference path='Vec.ts'/>
-///<reference path='../decl/jquery/index.d.ts'/>
-
 namespace WebMolKit /* BOF */ {
 
 /*

@@ -10,9 +10,6 @@
 	[PKG=webmolkit]
 */
 
-///<reference path='../util/util.ts'/>
-///<reference path='../util/Vec.ts'/>
-
 namespace WebMolKit /* BOF */ {
 
 /*

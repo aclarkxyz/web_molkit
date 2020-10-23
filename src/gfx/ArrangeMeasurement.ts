@@ -10,8 +10,6 @@
 	[PKG=webmolkit]
 */
 
-///<reference path='../gfx/FontData.ts'/>
-
 namespace WebMolKit /* BOF */ {
 
 /*

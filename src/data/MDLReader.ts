@@ -10,11 +10,6 @@
 	[PKG=webmolkit]
 */
 
-///<reference path='../decl/corrections.d.ts'/>
-///<reference path='../util/util.ts'/>
-///<reference path='../data/CoordUtil.ts'/>
-///<reference path='OpenMolSpec.ts'/>
-
 /* eslint-disable key-spacing */
 
 namespace WebMolKit /* BOF */ {

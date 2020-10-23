@@ -10,11 +10,6 @@
 	[PKG=webmolkit]
 */
 
-///<reference path='MoleculeStream.ts'/>
-///<reference path='Chemistry.ts'/>
-///<reference path='../util/Vec.ts'/>
-///<reference path='../util/Geom.ts'/>
-
 namespace WebMolKit /* BOF */ {
 
 /*

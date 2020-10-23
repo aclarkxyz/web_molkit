@@ -10,10 +10,6 @@
 	[PKG=webmolkit]
 */
 
-///<reference path='../util/Theme.ts'/>
-///<reference path='Molecule.ts'/>
-///<reference path='MolUtil.ts'/>
-
 namespace WebMolKit /* BOF */ {
 
 export const TEMPLATE_FILES =

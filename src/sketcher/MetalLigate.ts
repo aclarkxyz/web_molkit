@@ -10,9 +10,6 @@
 	[PKG=webmolkit]
 */
 
-///<reference path='../data/CoordUtil.ts'/>
-///<reference path='../data/SketchUtil.ts'/>
-
 namespace WebMolKit /* BOF */ {
 
 /*

@@ -10,10 +10,6 @@
 	[PKG=webmolkit]
 */
 
-///<reference path='util.ts'/>
-///<reference path='Vec.ts'/>
-///<reference path='Triangulation2D.ts'/>
-
 namespace WebMolKit /* BOF */ {
 
 /*

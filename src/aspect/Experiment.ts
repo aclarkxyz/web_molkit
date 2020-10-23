@@ -10,13 +10,6 @@
 	[PKG=webmolkit]
 */
 
-///<reference path='../util/util.ts'/>
-///<reference path='../data/DataSheet.ts'/>
-///<reference path='../data/MoleculeStream.ts'/>
-///<reference path='../gfx/ArrangeExperiment.ts'/>
-///<reference path='../gfx/DrawExperiment.ts'/>
-///<reference path='Aspect.ts'/>
-
 namespace WebMolKit /* BOF */ {
 
 /*

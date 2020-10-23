@@ -10,8 +10,6 @@
 	[PKG=webmolkit]
 */
 
-///<reference path='Widget.ts'/>
-
 namespace WebMolKit /* BOF */ {
 
 /*

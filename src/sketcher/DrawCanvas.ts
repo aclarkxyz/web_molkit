@@ -10,25 +10,7 @@
 	[PKG=webmolkit]
 */
 
-///<reference path='../decl/corrections.d.ts'/>
-///<reference path='../util/util.ts'/>
-///<reference path='../util/Cookies.ts'/>
-///<reference path='../util/Geom.ts'/>
-///<reference path='../data/Molecule.ts'/>
-///<reference path='../data/MolUtil.ts'/>
-///<reference path='../data/SketchUtil.ts'/>
-///<reference path='../gfx/Rendering.ts'/>
-///<reference path='../gfx/MetaVector.ts'/>
-///<reference path='../gfx/ArrangeMolecule.ts'/>
-///<reference path='../ui/ButtonView.ts'/>
-///<reference path='../ui/ClipboardProxy.ts'/>
-///<reference path='MoleculeActivity.ts'/>
-///<reference path='CommandBank.ts'/>
-///<reference path='TemplateBank.ts'/>
-///<reference path='ToolBank.ts'/>
-///<reference path='EditAtom.ts'/>
-///<reference path='EditBond.ts'/>
-///<reference path='ContextSketch.ts'/>
+///<reference path='../ui/Widget.ts'/>
 
 namespace WebMolKit /* BOF */ {
 

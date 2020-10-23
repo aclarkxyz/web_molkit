@@ -10,9 +10,6 @@
 	[PKG=webmolkit]
 */
 
-///<reference path='Dialog.ts'/>
-///<reference path='../sketcher/Sketcher.ts'/>
-
 namespace WebMolKit /* BOF */ {
 
 /*

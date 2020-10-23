@@ -10,10 +10,6 @@
 	[PKG=webmolkit]
 */
 
-///<reference path='FontData.ts'/>
-///<reference path='../util/util.ts'/>
-///<reference path='../decl/corrections.d.ts'/>
-
 namespace WebMolKit /* BOF */ {
 
 /*

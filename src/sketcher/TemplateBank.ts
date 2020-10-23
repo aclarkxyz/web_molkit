@@ -10,16 +10,6 @@
 	[PKG=webmolkit]
 */
 
-///<reference path='../ui/ButtonBank.ts'/>
-///<reference path='../gfx/Rendering.ts'/>
-///<reference path='../gfx/ArrangeMolecule.ts'/>
-///<reference path='../gfx/DrawMolecule.ts'/>
-///<reference path='../data/Molecule.ts'/>
-///<reference path='../data/MolUtil.ts'/>
-///<reference path='../data/DataSheetStream.ts'/>
-///<reference path='../data/AbbrevContainer.ts'/>
-///<reference path='../sketcher/MoleculeActivity.ts'/>
-
 namespace WebMolKit /* BOF */ {
 
 /*

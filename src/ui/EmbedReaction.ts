@@ -10,17 +10,6 @@
 	[PKG=webmolkit]
 */
 
-///<reference path='../util/util.ts'/>
-///<reference path='../gfx/Rendering.ts'/>
-///<reference path='../gfx/MetaVector.ts'/>
-///<reference path='../gfx/ArrangeExperiment.ts'/>
-///<reference path='../gfx/DrawExperiment.ts'/>
-///<reference path='../data/Molecule.ts'/>
-///<reference path='../data/DataSheet.ts'/>
-///<reference path='../data/DataSheetStream.ts'/>
-///<reference path='../aspect/Experiment.ts'/>
-///<reference path='EmbedChemistry.ts'/>
-
 namespace WebMolKit /* BOF */ {
 
 /*

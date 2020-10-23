@@ -10,11 +10,6 @@
 	[PKG=webmolkit]
 */
 
-///<reference path='../data/Molecule.ts'/>
-///<reference path='../data/MetaMolecule.ts'/>
-///<reference path='../data/MoleculeStream.ts'/>
-///<reference path='CircularFingerprints.ts'/>
-
 namespace WebMolKit /* BOF */ {
 
 /*

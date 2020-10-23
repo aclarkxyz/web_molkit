@@ -10,9 +10,6 @@
 	[PKG=webmolkit]
 */
 
-///<reference path='../decl/jquery/index.d.ts'/>
-///<reference path='util.ts'/>
-
 namespace WebMolKit /* BOF */ {
 
 // public theme definition: the values for these colours can be customised; they will be converted into CSS as soon as the initialisation

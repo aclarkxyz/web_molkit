@@ -10,11 +10,7 @@
 	[PKG=webmolkit]
 */
 
-///<reference path='../decl/corrections.d.ts'/>
 ///<reference path='../ui/ButtonBank.ts'/>
-///<reference path='../data/Molecule.ts'/>
-///<reference path='../data/SketchUtil.ts'/>
-///<reference path='MoleculeActivity.ts'/>
 
 /* eslint-disable no-multi-spaces, comma-spacing */
 
