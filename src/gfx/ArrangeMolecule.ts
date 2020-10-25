@@ -2402,8 +2402,8 @@ export class ArrangeMolecule
 	{
 		interface Bracket
 		{
-			a1:number
-			a2:number;
+			a1?:number
+			a2?:number;
 			x1?:number;
 			y1?:number;
 			x2?:number;
@@ -2429,7 +2429,9 @@ export class ArrangeMolecule
 		}
 
 		let tagidx = 0;
-		let minX = Vec.min(MolUtil.arrayAtomX(mol)), minY = Vec.min(MolUtil.arrayAtomY(mol));
+		let atomX = unit.atoms.map((a) => mol.atomX(a)), atomY = unit.atoms.map((a) => mol.atomY(a));
+		let minX = Vec.min(atomX), minY = Vec.min(atomY);
+		let maxX = Vec.max(atomX), maxY = Vec.max(atomY);
 		for (let n = 1; n < brackets.length; n++)
 		{
 			let b1 = brackets[tagidx], b2 = brackets[n];
@@ -2438,7 +2440,7 @@ export class ArrangeMolecule
 			if (score2 > score1) tagidx = n;
 		}
 
-		let isLinear = false;
+		let isLinear = false, isOuter = false;
 		if (brackets.length == 2)
 		{
 			let left = brackets[tagidx == 0 ? 1 : 0], right = brackets[tagidx];
@@ -2446,8 +2448,16 @@ export class ArrangeMolecule
 			let theta2 = Math.atan2(right.y2 - right.y1, right.x2 - right.x1);
 			isLinear = (theta1 > 145 * DEGRAD || theta1 < -145 * DEGRAD) && theta2 < 35 * DEGRAD && theta2 > -35 * DEGRAD;
 		}
+		else if (brackets.length == 0)
+		{
+			let ym = 0.5 * (minY + maxY);
+			brackets.push({'x1': minX, 'y1': ym, 'x2': minX - 1, 'y2': ym});
+			brackets.push({'x1': maxX, 'y1': ym, 'x2': maxX + 1, 'y2': ym});
+			tagidx = 1;
+			isOuter = true;
+		}
 
-		let bsz1 = (isLinear ? 1.0 : 0.5) * this.scale, bsz2 = 0.2 * this.scale;
+		let bsz1 = (isOuter ? 0.5 * (maxY - minY + 1) : isLinear ? 1.0 : 0.5) * this.scale, bsz2 = 0.2 * this.scale;
 
 		const BASE_LINE = {'bnum': 0, 'bfr': 0, 'bto': 0, 'type': BLineType.Normal, 'size': this.lineSizePix, 'head': 0, 'col': this.policy.data.foreground};
 		const BASE_TEXT = {'anum': 0, 'fsz': 0.7 * this.fontSizePix, 'bold': false, 'col': this.policy.data.foreground};
