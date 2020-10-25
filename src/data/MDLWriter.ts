@@ -29,6 +29,7 @@ export class MDLMOLWriter
 	public enhancedFields = true; // if on, non-standard MDL fields may be added
 	public chargeSeparate = false; // if on, zero bonds will be split out
 	public abbrevSgroups = true; // if on, abbreviations will be written as Sgroups when possible
+	public polymerBlocks = true; // write polymer blocks, if any
 	public molName = ''; // optional name to include in the header (if any)
 
 	// some number of superatom abbreviation groups, each of which is a list of atom indices
@@ -213,6 +214,8 @@ export class MDLMOLWriter
 			this.lines.push('M  SMT' + sidx + ' ' + this.sgroupNames[s]);
 		}
 
+		if (this.polymerBlocks) this.encodePolymerBlocks(this.sgroupAtoms.length);
+
 		// export long atom names
 		for (let n = 1; n <= mol.numAtoms; n++) if (mol.atomElement(n).length > 2)
 		{
@@ -244,8 +247,18 @@ export class MDLMOLWriter
 		for (let i = 0; i < sz; i += 15)
 		{
 			let count = Math.min(15, sz - i);
-			let line = 'M  ' + token + this.intrpad(count, 3);
-			line += this.intrpad(idx, 4);
+			let line = 'M  ' + token + this.intrpad(count, 3) + this.intrpad(idx, 4);
+			for (let j = 0; j < count; j++) line += this.intrpad(val[i + j], 4);
+			this.lines.push(line);
+		}
+	}
+	private writeMBlockFlatIdxFirst(token:string, idx:number, val:number[])
+	{
+		const sz = val.length;
+		for (let i = 0; i < sz; i += 15)
+		{
+			let count = Math.min(15, sz - i);
+			let line = 'M  ' + token + this.intrpad(idx, 4) + this.intrpad(count, 3);
 			for (let j = 0; j < count; j++) line += this.intrpad(val[i + j], 4);
 			this.lines.push(line);
 		}
@@ -345,6 +358,40 @@ export class MDLMOLWriter
 			this.sgroupAtoms.push(atoms);
 		}
 	}
+
+	// use a variant of Sgroups for any polymer blocks
+	private encodePolymerBlocks(idx:number):void
+	{
+		var polymers = new PolymerBlock(this.mol);
+		for (let id of polymers.getIDList())
+		{
+			let unit = polymers.getUnit(id);
+			let sidx = this.intrpad(++idx, 4);
+			this.lines.push('M  STY  1' + sidx + ' SRU');
+			
+			if (unit.connect == PolymerBlockConnectivity.HeadToTail) this.lines.push('M  SCN  1' + sidx + ' HT ');
+			else if (unit.connect == PolymerBlockConnectivity.HeadToHead) this.lines.push('M  SCN  1' + sidx + ' HH ');
+			else if (unit.connect == PolymerBlockConnectivity.Random) this.lines.push('M  SCN  1' + sidx + ' EU ');
+
+			this.writeMBlockFlatIdxFirst('SAL', idx, unit.atoms);
+			
+			let bonds:number[] = null;
+			for (let n = 1; n <= this.mol.numBonds; n++)
+			{
+				let fl1 = unit.atoms.indexOf(this.mol.bondFrom(n)) >= 0, fl2 = unit.atoms.indexOf(this.mol.bondTo(n)) >= 0;
+				if ((fl1 && !fl2) || (!fl1 && fl2)) bonds = Vec.append(bonds, n);
+			}
+			if (bonds != null) this.writeMBlockFlatIdxFirst('SBL', idx, bonds);
+			
+			if (Vec.arrayLength(unit.bondConn) == 4)
+			{
+				let bcrs = [unit.bondConn[0], unit.bondConn[2], unit.bondConn[1]];
+				this.writeMBlockFlatIdxFirst('CRS', idx, bcrs);
+			}
+			
+			this.lines.push('M  SMT' + sidx + ' n');
+		}
+	}
 }
 
 export class MDLSDFWriter
@@ -402,7 +449,6 @@ export class MDLSDFWriter
 			lines.push('$$$$');
 		}
 
-		// !!
 		return lines.join('\n');
 	}
 
@@ -412,6 +458,8 @@ export class MDLSDFWriter
 	}
 
 	// ----------------- private methods -----------------
+
+	
 }
 
 /* EOF */ }

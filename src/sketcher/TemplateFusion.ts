@@ -54,6 +54,11 @@ export class TemplateFusion
 		artif2.harmoniseNumbering(artif1);
 		artif2.rewriteMolecule();
 
+		// and polymers
+		let poly1 = new PolymerBlock(mol), poly2 = new PolymerBlock(templ);
+		poly2.harmoniseNumbering(poly1);
+		poly2.rewriteMolecule();
+
 		this.huntForGuides();
 	}
 

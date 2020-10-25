@@ -471,8 +471,11 @@ export class ArrangeMolecule
 			PseudoEmbedding.LineCrossing c = emb.getCrossing(n);
 			if (c.higher == 1) resolveLineCrossings(c.bond1, c.bond2);
 			else if (c.higher == 2) resolveLineCrossings(c.bond2, c.bond1);
-		}
-*/
+		}*/
+
+		// create polymer brackets
+		var polymers = new PolymerBlock(mol);
+		for (let id of polymers.getIDList()) this.processPolymerUnit(polymers.getUnit(id));
 	}
 
    	// access to atom information; it is valid to assume that {atomcentre}[N-1] matches {moleculeatom}[N], if N<=mol.numAtoms
@@ -2392,6 +2395,102 @@ export class ArrangeMolecule
 			'py': [a.oval.cy - rh, a.oval.cy - rh, a.oval.cy + rh, a.oval.cy + rh]
 		};
 		this.space.push(spc);
+	}
+
+	// draw the brackets that are associated with a
+	private processPolymerUnit(unit:PolymerBlockUnit):void
+	{
+		interface Bracket
+		{
+			a1:number
+			a2:number;
+			x1?:number;
+			y1?:number;
+			x2?:number;
+			y2?:number;
+		}
+		let brackets:Bracket[] = [];
+
+		const {mol, measure} = this;
+		for (let n = 1; n <= mol.numBonds; n++)
+		{
+			let a1 = mol.bondFrom(n), a2 = mol.bondTo(n);
+			let in1 = unit.atoms.indexOf(a1) >= 0, in2 = unit.atoms.indexOf(a2) >= 0;
+			let bracket:Bracket = null;
+			if (in1 && !in2) bracket = {a1, a2};
+			else if (in2 && !in1) bracket = {'a1': a2, 'a2': a1};
+			else continue;
+
+			bracket.x1 = mol.atomX(bracket.a1);
+			bracket.y1 = mol.atomY(bracket.a1);
+			bracket.x2 = mol.atomX(bracket.a2);
+			bracket.y2 = mol.atomY(bracket.a2);
+			brackets.push(bracket);
+		}
+
+		let tagidx = 0;
+		let minX = Vec.min(MolUtil.arrayAtomX(mol)), minY = Vec.min(MolUtil.arrayAtomY(mol));
+		for (let n = 1; n < brackets.length; n++)
+		{
+			let b1 = brackets[tagidx], b2 = brackets[n];
+			let score1 = b1.x2 - minX - b1.y2 + minY;
+			let score2 = b2.x2 - minX - b2.y2 + minY;
+			if (score2 > score1) tagidx = n;
+		}
+
+		let isLinear = false;
+		if (brackets.length == 2)
+		{
+			let left = brackets[tagidx == 0 ? 1 : 0], right = brackets[tagidx];
+			let theta1 = Math.atan2(left.y2 - left.y1, left.x2 - left.x1);
+			let theta2 = Math.atan2(right.y2 - right.y1, right.x2 - right.x1);
+			isLinear = (theta1 > 145 * DEGRAD || theta1 < -145 * DEGRAD) && theta2 < 35 * DEGRAD && theta2 > -35 * DEGRAD;
+		}
+
+		let bsz1 = (isLinear ? 1.0 : 0.5) * this.scale, bsz2 = 0.2 * this.scale;
+
+		const BASE_LINE = {'bnum': 0, 'bfr': 0, 'bto': 0, 'type': BLineType.Normal, 'size': this.lineSizePix, 'head': 0, 'col': this.policy.data.foreground};
+		const BASE_TEXT = {'anum': 0, 'fsz': 0.7 * this.fontSizePix, 'bold': false, 'col': this.policy.data.foreground};
+
+		for (let n = 0; n < brackets.length; n++)
+		{
+			let bracket = brackets[n];
+			let x1 = measure.angToX(bracket.x1), y1 = measure.angToY(bracket.y1);
+			let x2 = measure.angToX(bracket.x2), y2 = measure.angToY(bracket.y2);
+			let mx = 0.5 * (x1 + x2), my = 0.5 * (y1 + y2);
+			if (isLinear)
+			{
+				x1 = x2 = mx;
+				y1 = y2 = my;
+				if (n == tagidx) {x1--; x2++;} else {x1++; x2--;}
+			}
+			let invDist = invZ(norm_xy(x2 - x1, y2 - y1));
+			let dx = (x2 - x1) * invDist, dy = (y2 - y1) * invDist;
+			let ox = dy, oy = -dx;
+
+			let px2 = mx - bsz1 * ox, py2 = my - bsz1 * oy;
+			let px3 = mx + bsz1 * ox, py3 = my + bsz1 * oy;
+			let px1 = px2 - bsz2 * dx, py1 = py2 - bsz2 * dy;
+			let px4 = px3 - bsz2 * dx, py4 = py3 - bsz2 * dy;
+
+			this.lines.push({...BASE_LINE, 'line': new Line(px1, py1, px2, py2)});
+			this.lines.push({...BASE_LINE, 'line': new Line(px2, py2, px3, py3)});
+			this.lines.push({...BASE_LINE, 'line': new Line(px3, py3, px4, py4)});
+
+			if (n == tagidx)
+			{
+				this.points.push({...BASE_TEXT, 'text': 'n', 'oval': new Oval(px2 + bsz2 * 2 * dx, py2 + bsz2 * 2 * dy, 0, 0)});
+
+				if (unit.connect != null)
+				{
+					let text = '?';
+					if (unit.connect == PolymerBlockConnectivity.HeadToTail) text = 'ht';
+					else if (unit.connect == PolymerBlockConnectivity.HeadToHead) text = 'hh';
+					else if (unit.connect == PolymerBlockConnectivity.Random) text = 'eu';
+					this.points.push({...BASE_TEXT, 'text': text, 'oval': new Oval(px3 + bsz2 * 2.5 * dx, py3 + bsz2 * 2.5 * dy, 0, 0)});
+				}
+			}
+		}
 	}
 }
 

@@ -126,11 +126,21 @@ export class MolUtil
 	public static convertToAbbrevIndex(mol:Molecule, srcmask:boolean[], abbrevName:string):[Molecule, number]
 	{
 		let junction = 0;
+		let polymerExtra:string[] = null; // just in case the abbreviation has polymer information
 		for (let n = 1; n <= mol.numBonds; n++)
 		{
 			let b1 = mol.bondFrom(n), b2 = mol.bondTo(n), atom = 0;
-			if (srcmask[b1 - 1] && !srcmask[b2 - 1]) atom = b1;
-			else if (!srcmask[b1 - 1] && srcmask[b2 - 1]) atom = b2;
+			if (srcmask[b1 - 1] && !srcmask[b2 - 1]) 
+			{
+				atom = b1; 
+				polymerExtra = PolymerBlock.getPolymerExtensions(mol, b2);
+			}
+			else if (!srcmask[b1 - 1] && srcmask[b2 - 1])
+			{
+				atom = b2;
+				polymerExtra = PolymerBlock.getPolymerExtensions(mol, b1);
+			}
+
 			if (atom == 0) continue;
 
 			if (junction > 0 && atom != junction) return null;
@@ -186,6 +196,7 @@ export class MolUtil
 		let	 newatom = newmol.addAtom(abbrevName, x, y);
 		newmol.addBond(molidx, newatom, bondOrder, bondType);
 		MolUtil.setAbbrev(newmol, newatom, frag);
+		if (polymerExtra != null) newmol.setAtomExtra(newatom, Vec.concat(newmol.atomExtra(newatom), polymerExtra));
 
 		return [newmol, newatom];
 	}
@@ -228,6 +239,8 @@ export class MolUtil
 	}
 	public static expandOneAbbrevFrag(mol:Molecule, atom:number, frag:Molecule, alignCoords:boolean):boolean[]
 	{
+		let polymerExtra = PolymerBlock.getPolymerExtensions(mol, atom);	
+
 		let nbr = mol.atomAdjCount(atom) == 1 ? mol.atomAdjList(atom)[0] : 0;
 		let connBond = mol.findBond(atom, nbr), connType = Molecule.BONDTYPE_NORMAL;
 		if (connBond > 0)
@@ -251,6 +264,16 @@ export class MolUtil
 			let th1 = Math.atan2(vy1, vx1), th2 = Math.atan2(vy2, vx2);
 			CoordUtil.rotateMolecule(frag, th1 - th2);
 			CoordUtil.translateMolecule(frag, mol.atomX(nbr) - frag.atomX(1), mol.atomY(nbr) - frag.atomY(1));
+		}
+
+		if (polymerExtra != null)
+		{
+			for (let n = 1; n <= frag.numAtoms; n++)
+			{
+				let extra = frag.atomExtra(n);
+				for (let i = extra.length - 1; i >= 0; i--) if (polymerExtra.indexOf(extra[i]) >= 0) extra.splice(i, 1);
+				frag.setAtomExtra(n, Vec.concat(extra, polymerExtra));
+			}
 		}
 
 		let join = mol.numAtoms + 1;

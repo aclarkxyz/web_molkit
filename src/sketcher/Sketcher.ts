@@ -10,6 +10,8 @@
 	[PKG=webmolkit]
 */
 
+///<reference path="DrawCanvas.ts"/>
+
 namespace WebMolKit /* BOF */ {
 
 /*

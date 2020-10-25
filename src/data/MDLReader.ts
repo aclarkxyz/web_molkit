@@ -65,6 +65,12 @@ export interface MDLReaderSuperAtom
 {
 	atoms:number[];
 	name:string;
+
+	// for polymers
+	bracketType?:string;
+	connectType?:string;
+	bonds?:number[];
+	bondConn?:number[];
 }
 
 export class MDLMOLReader
@@ -289,6 +295,7 @@ export class MDLMOLReader
 					let stype = line.substring(14 + 8 * n, 17 + 8 * n);
 					if (stype == 'SUP') superatoms.set(idx, {'atoms': [], 'name': null});
 					else if (stype == 'MIX' || stype == 'FOR') mixtures.set(idx, {'index': idx, 'parent': 0, 'atoms': [], 'type': stype});
+					else if (stype == 'SRU' || stype == 'COP') superatoms.set(idx, {'atoms': [], 'name': null, 'bracketType': stype});
 				}
 			}
 			else if (line.startsWith('M  SPL'))
@@ -322,11 +329,45 @@ export class MDLMOLReader
 					mix.atoms = Vec.concat(mix.atoms, atoms);
 				}
 			}
+			else if (line.startsWith('M  SBL'))
+			{
+				let idx = parseInt(line.substring(6, 10).trim());
+				let sup = superatoms.get(idx);
+				if (sup != null)
+				{
+					let len = parseInt(line.substring(10, 13).trim());
+					let bonds = Vec.numberArray(0, len);
+					for (let n = 0; n < len; n++) bonds[n] = parseInt(line.substring(13 + 4 * n, 17 + 4 * n).trim());
+					sup.bonds = Vec.concat(sup.bonds, bonds);
+				}
+			}
 			else if (line.startsWith('M  SMT'))
 			{
 				let idx = parseInt(line.substring(6, 10).trim());
 				let sup = superatoms.get(idx);
 				if (sup != null) sup.name = line.substring(11).trim();
+			}
+			else if (line.startsWith('M  SCN'))
+			{
+				let len = parseInt(line.substring(6, 9).trim());
+				for (let n = 0; n < len; n++)
+				{
+					let idx = parseInt(line.substring(9 + 8 * n, 13 + 8 * n).trim());
+					let stype = line.substring(14 + 8 * n, 17 + 8 * n);
+					let sup = superatoms.get(idx);
+					if (sup != null) sup.connectType = stype.trim();
+				}
+			}
+			else if (line.startsWith('M  CRS'))
+			{
+				let idx = parseInt(line.substring(6, 10).trim());
+				let sup = superatoms.get(idx);
+				if (sup != null)
+				{
+					let len = parseInt(line.substring(10, 13).trim());
+					sup.bondConn = Vec.numberArray(0, len);
+					for (let n = 0; n < len; n++) sup.bondConn[n] = parseInt(line.substring(13 + 4 * n, 17 + 4 * n).trim());
+				}
 			}
 			else if (line.startsWith('M  LIN'))
 			{
@@ -404,7 +445,18 @@ export class MDLMOLReader
 			artifacts.rewriteMolecule();
 		}
 
-		// process superatoms: order is important
+		// process polymer superblocks first
+		for (let key of Vec.sorted(Array.from(superatoms.keys())))
+		{
+			let value = superatoms.get(key);
+			if (value.bracketType)
+			{
+				superatoms.delete(key);
+				this.applyPolymerBlock(value);
+			}
+		}
+		
+		// process non-polymer superblocks
 		for (let key of Vec.sorted(Array.from(superatoms.keys())))
 		{
 			let value = superatoms.get(key);
@@ -474,8 +526,6 @@ export class MDLMOLReader
 	// alternate track: only look at the specially marked V3000 tags
 	private parseV3000():void
 	{
-		// NOTE: this is currently very minimal
-
 		enum Section {ATOM, BOND, COLL, SGROUP}
 		let inCTAB = false, section:Section = null;
 		let lineCounts:string = null;
@@ -728,9 +778,33 @@ export class MDLMOLReader
 				}
 				this.groupMixtures.push(mix);
 			}
+			else if (bits.length > 3 && idx > 0 && (bits[1] == 'SRU' || bits[1] == 'COP') && parseInt(bits[2]) == idx)
+			{
+				let sup:MDLReaderSuperAtom = {'atoms': [], 'name': null, 'bracketType': bits[1]};
+				for (let i = 3; i < bits.length; i++)
+				{
+					if (bits[i].startsWith('ATOMS=')) sup.atoms = this.unpackList(bits[i].substring(6));
+					else if (bits[i].startsWith('BONDS=')) sup.bonds = this.unpackList(bits[i].substring(6));
+					else if (bits[i].startsWith('LABEL=')) sup.name = this.withoutQuotes(bits[i].substring(6));
+					else if (bits[i].startsWith('CONNECT=')) sup.connectType = bits[i].substring(8);
+					else if (bits[i].startsWith('XBCORR=')) sup.bondConn = this.unpackList(bits[i].substring(7));
+				}
+				superatoms.set(idx, sup);
+			}
 		}
 
-		// process superatoms: order is important
+		// process polymer superblocks first
+		for (let key of Vec.sorted(Array.from(superatoms.keys())))
+		{
+			let value = superatoms.get(key);
+			if (value.bracketType)
+			{
+				superatoms.delete(key);
+				this.applyPolymerBlock(value);
+			}
+		}
+
+		// process non-polymer superblocks
 		for (let key of Vec.sorted(Array.from(superatoms.keys())))
 		{
 			let value = superatoms.get(key);
@@ -774,6 +848,42 @@ export class MDLMOLReader
 			}
 			if (subsumed) res.atoms = Vec.sorted(Vec.append(res.atoms, abvAtom));
 		}
+	}
+
+	// deals with a superatom block that is marked as 
+	private applyPolymerBlock(sup:MDLReaderSuperAtom):void
+	{
+		var poly = new PolymerBlock(this.mol);
+		let connect:PolymerBlockConnectivity = null;
+		if (sup.connectType == null) {}
+		else if (sup.connectType == 'HT') connect = PolymerBlockConnectivity.HeadToTail;
+		else if (sup.connectType == 'HH') connect = PolymerBlockConnectivity.HeadToHead;
+		else if (sup.connectType == 'EU') connect = PolymerBlockConnectivity.Random;
+		else return;
+		
+		let bondConn:number[] = null;
+		if (Vec.arrayLength(sup.bondConn) == 3)
+		{
+			// the V2000 style of specifying 2x2 connectivity (by leaving one out...)
+			let b1 = sup.bondConn[0], b2 = sup.bondConn[2], b3 = sup.bondConn[1], b4 = 0;
+			for (let n = 1; n <= this.mol.numBonds; n++) if (n != b1 && n != b2 && n != b3)
+			{
+				let in1 = sup.atoms.indexOf(this.mol.bondFrom(n)) >= 0, in2 = sup.atoms.indexOf(this.mol.bondTo(n)) >= 0;
+				if ((in1 && !in2) || (!in1 && in2)) 
+				{
+					if (b4 > 0) {b4 = 0; break;}
+					b4 = n;
+				}
+			}
+			bondConn = [b1, b2, b3, b4];
+		}
+		else if (Vec.arrayLength(sup.bondConn) == 4)
+		{
+			// the V3000 style of specifying 2x2 connectivity, which is the same as what we're using
+			bondConn = sup.bondConn;
+		}
+		
+		poly.createBlock(Vec.sorted(sup.atoms), connect, bondConn);
 	}
 
 	// removes surrounding quotes, if any
