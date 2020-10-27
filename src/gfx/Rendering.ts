@@ -121,14 +121,14 @@ export class RenderPolicy
 export class RenderEffects
 {
 	// optional replacement colours, by object index: to override defaults
-	public colAtom:{[id:number] : number} = {};
-	public colBond:{[id:number] : number} = {};
+	public colAtom:Record<number, number> = {};
+	public colBond:Record<number, number> = {};
 
 	// atoms that should be surrounded by a dotted rectangular outline (atom = colour)
-	public dottedRectOutline:{[id:number] : number} = {};
+	public dottedRectOutline:Record<number, number> = {};
 
 	// bonds that should have a dotted line plotted across them (bond = colour)
-	public dottedBondCross:{[id:number] : number} = {};
+	public dottedBondCross:Record<number, number>= {};
 
 	// list of atom/bond indices to NOT draw
 	public hideAtoms = new Set<number>();

@@ -592,18 +592,6 @@ export class Sketcher extends DrawCanvas
 				if (mol) {this.pasteMolecule(mol); return;}
 			}
 		}
-
-		// otherwise raid the cookie jar
-		/*let cookies = new Cookies();
-		if (cookies.numMolecules() == 0)
-		{
-			if (MolUtil.notBlank(globalMoleculeClipboard)) this.pasteMolecule(globalMoleculeClipboard);
-			// (else complain?)
-			return;
-		}
-		let dlg = new PickRecent(cookies, 1);
-		dlg.callbackPick1 = (mol:Molecule) => this.pasteMolecule(mol);
-		dlg.open();*/
 	}
 
 	// executes an arbitrary activity on the current molecule/selection state
@@ -669,6 +657,18 @@ export class Sketcher extends DrawCanvas
 
 		this.layoutTemplatePerm();
 		this.delayedRedraw();
+	}
+
+	// bring up the dialog for converting the subject atoms into a polymer block repeating unit
+	public performPolymerBlock(atoms:number[]):void
+	{
+		let dlg = new EditPolymer(this.mol, atoms, () =>
+		{
+			if (this.mol.compareTo(dlg.mol) != 0) this.defineMolecule(dlg.mol, false, true);
+			dlg.close();
+		});
+		dlg.callbackClose = () => this.container.focus();
+		dlg.open();
 	}
 
 	// returns true if the sketcher is focused; the display of focus is not visible, but it is still recorded

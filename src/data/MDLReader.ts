@@ -883,7 +883,7 @@ export class MDLMOLReader
 			bondConn = sup.bondConn;
 		}
 		
-		poly.createBlock(Vec.sorted(sup.atoms), connect, bondConn);
+		poly.createUnit(Vec.sorted(sup.atoms), connect, bondConn);
 	}
 
 	// removes surrounding quotes, if any

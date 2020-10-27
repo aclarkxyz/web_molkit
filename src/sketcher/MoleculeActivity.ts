@@ -79,6 +79,7 @@ export enum ActivityType
 	BondArtifactRing,
 	BondArtifactArene,
 	BondArtifactClear,
+	PolymerBlock,
 	AddHydrogens,
 	RemoveHydrogens,
 }
@@ -295,6 +296,7 @@ export class MoleculeActivity
 		else if (this.activity == ActivityType.AbbrevExpand) this.execAbbrevExpand();
 		else if (this.activity == ActivityType.BondArtifactPath || this.activity == ActivityType.BondArtifactRing ||
 				this.activity == ActivityType.BondArtifactArene || this.activity == ActivityType.BondArtifactClear) this.execBondArtifact(this.activity);
+		else if (this.activity == ActivityType.PolymerBlock) this.execPolymerBlock();
 		else if (this.activity == ActivityType.AddHydrogens) this.execAddHydrogens();
 		else if (this.activity == ActivityType.RemoveHydrogens) this.execRemoveHydrogens();
 
@@ -1562,6 +1564,12 @@ export class MoleculeActivity
 
 		artif.rewriteMolecule();
 		this.output.mol = artif.mol;
+	}
+
+	public execPolymerBlock():void
+	{
+		if (!this.requireAtoms() || !this.requireSubject()) return;
+		if (this.owner) this.owner.performPolymerBlock(this.subjectIndex);
 	}
 
 	public execAddHydrogens():void

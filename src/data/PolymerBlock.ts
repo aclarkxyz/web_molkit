@@ -127,14 +127,14 @@ export class PolymerBlock
 	}
 	
 	// quickly strip out all bond artifacts
-	public removeAll(mol:Molecule):void
+	public removeAll():void
 	{
 		this.units.clear();
 		this.purgeExtraFields();
 	}
 	
 	// creates the block, writes content into the molecule, and returns the ID
-	public createBlock(atoms:number[], connect:PolymerBlockConnectivity, bondConn:number[]):number
+	public createUnit(atoms:number[], connect:PolymerBlockConnectivity, bondConn:number[]):number
 	{
 		let id = this.nextIdentifier();
 		let unit:PolymerBlockUnit = {atoms, connect, bondConn};

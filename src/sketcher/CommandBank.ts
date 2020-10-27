@@ -140,6 +140,7 @@ const COMMANDS_BOND:ButtonBankItem[] =
 	{'id': 'artifactring', 'imageFN': 'BondArtifactRing', 'helpText': 'Add a ring bond artifact.', 'mnemonic': ''},
 	{'id': 'artifactarene', 'imageFN': 'BondArtifactArene', 'helpText': 'Add an arene bond artifact.', 'mnemonic': ''},
 	{'id': 'artifactclear', 'imageFN': 'BondArtifactClear', 'helpText': 'Remove a bond artifact.', 'mnemonic': ''},
+	{'id': 'polymer', 'imageFN': 'BondPolymer', 'helpText': 'Create a polymer block.', 'mnemonic': ''},
 ];
 const COMMANDS_SELECT:ButtonBankItem[] =
 [
@@ -279,6 +280,7 @@ export class CommandBank extends ButtonBank
 		else if (id == 'artifactring') actv = ActivityType.BondArtifactRing;
 		else if (id == 'artifactarene') actv = ActivityType.BondArtifactArene;
 		else if (id == 'artifactclear') actv = ActivityType.BondArtifactClear;
+		else if (id == 'polymer') actv = ActivityType.PolymerBlock;
 		else if (id == 'addtwo') actv = ActivityType.BondAddTwo;
 		else if (id == 'insert') actv = ActivityType.BondInsert;
 		else if (id == 'curelement') actv = ActivityType.SelectCurElement;
