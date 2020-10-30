@@ -2483,13 +2483,21 @@ export class ArrangeMolecule
 			let px1 = px2 - bsz2 * dx, py1 = py2 - bsz2 * dy;
 			let px4 = px3 - bsz2 * dx, py4 = py3 - bsz2 * dy;
 
-			this.lines.push({...BASE_LINE, 'line': new Line(px1, py1, px2, py2)});
-			this.lines.push({...BASE_LINE, 'line': new Line(px2, py2, px3, py3)});
-			this.lines.push({...BASE_LINE, 'line': new Line(px3, py3, px4, py4)});
+			let line1 = {...BASE_LINE, 'line': new Line(px1, py1, px2, py2)};
+			let line2 = {...BASE_LINE, 'line': new Line(px2, py2, px3, py3)};
+			let line3 = {...BASE_LINE, 'line': new Line(px3, py3, px4, py4)}
+			this.lines.push(line1);
+			this.lines.push(line2);
+			this.lines.push(line3);
+			this.space.push(this.computeSpaceLine(line1));
+			this.space.push(this.computeSpaceLine(line2));
+			this.space.push(this.computeSpaceLine(line3));
 
 			if (n == tagidx)
 			{
-				this.points.push({...BASE_TEXT, 'text': 'n', 'oval': new Oval(px2 + bsz2 * 2 * dx, py2 + bsz2 * 2 * dy, 0, 0)});
+				let pt1 = {...BASE_TEXT, 'text': 'n', 'oval': new Oval(px2 + bsz2 * 2 * dx, py2 + bsz2 * 2 * dy, 0, 0)};
+				this.points.push(pt1);
+				this.space.push(this.computeSpacePoint(pt1));
 
 				if (unit.connect != null)
 				{
@@ -2497,7 +2505,9 @@ export class ArrangeMolecule
 					if (unit.connect == PolymerBlockConnectivity.HeadToTail) text = 'ht';
 					else if (unit.connect == PolymerBlockConnectivity.HeadToHead) text = 'hh';
 					else if (unit.connect == PolymerBlockConnectivity.Random) text = 'eu';
-					this.points.push({...BASE_TEXT, 'text': text, 'oval': new Oval(px3 + bsz2 * 2.5 * dx, py3 + bsz2 * 2.5 * dy, 0, 0)});
+					let pt2 = {...BASE_TEXT, 'text': text, 'oval': new Oval(px3 + bsz2 * 2.5 * dx, py3 + bsz2 * 2.5 * dy, 0, 0)};
+					this.points.push(pt2);
+					this.space.push(this.computeSpacePoint(pt2));
 				}
 			}
 		}
