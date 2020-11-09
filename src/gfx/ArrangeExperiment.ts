@@ -78,6 +78,14 @@ export class ArrangeComponent
 	}
 }
 
+const PADDING = 0.25;
+const PLUSSZ = 0.5;
+const ARROW_W = 2;
+const ARROW_H = 0.5;
+const REAGENT_SCALE = 0.7;
+const PLACEHOLDER_W = 2;
+const PLACEHOLDER_H = 2;
+
 export class ArrangeExperiment
 {
 	public scale:number;
@@ -98,13 +106,6 @@ export class ArrangeExperiment
 	public includeBlank = false; // any section with no components gets a blank placeholder
 	public padding = 0;
 
-	private PADDING = 0.25;
-	private PLUSSZ = 0.5;
-	private ARROW_W = 2;
-	private ARROW_H = 0.5;
-	private REAGENT_SCALE = 0.7;
-	private PLACEHOLDER_W = 2;
-	private PLACEHOLDER_H = 2;
 	public static COMP_GAP_LEFT = 0.5;
 	public static COMP_ANNOT_SIZE = 1;
 
@@ -115,7 +116,7 @@ export class ArrangeExperiment
 	{
 		this.scale = policy.data.pointScale;
 		this.limitStructW = this.limitStructH = this.scale * 10;
-		this.padding = this.PADDING * this.scale;
+		this.padding = PADDING * this.scale;
 	}
 
 	// carries out the arrangement
@@ -128,7 +129,7 @@ export class ArrangeExperiment
 		// do an initial sizing of most of the components
 		for (let xc of this.components)
 		{
-			if (xc.type == ArrangeComponentType.Plus) xc.box = new Box(0, 0, this.scale * this.PLUSSZ, this.scale * this.PLUSSZ);
+			if (xc.type == ArrangeComponentType.Plus) xc.box = new Box(0, 0, this.scale * PLUSSZ, this.scale * PLUSSZ);
 			else if (xc.type == ArrangeComponentType.Arrow) {} // directional
 			else
 			{
@@ -136,7 +137,7 @@ export class ArrangeExperiment
 				if (MolUtil.notBlank(xc.mol))
 				{
 					let sz = Size.fromArray(ArrangeMolecule.guestimateSize(xc.mol, this.policy));
-					if (xc.type == ArrangeComponentType.Reagent) sz.scaleBy(this.REAGENT_SCALE);
+					if (xc.type == ArrangeComponentType.Reagent) sz.scaleBy(REAGENT_SCALE);
 					if (xc.leftNumer)
 					{
 						xc.fszLeft = fszLeft;
@@ -160,8 +161,8 @@ export class ArrangeExperiment
 				if (xc.annot != 0) w += ArrangeExperiment.COMP_ANNOT_SIZE * this.scale;
 				if (this.includeBlank || w == 0 || h == 0)
 				{
-					w = Math.max(w, this.PLACEHOLDER_W * this.scale);
-					h = Math.max(h, this.PLACEHOLDER_H * this.scale);
+					w = Math.max(w, PLACEHOLDER_W * this.scale);
+					h = Math.max(h, PLACEHOLDER_H * this.scale);
 				}
 				xc.box = new Box(0, 0, w, h);
 			}
@@ -525,8 +526,8 @@ export class ArrangeExperiment
 		for (let xc of block) if (xc.type == ArrangeComponentType.Arrow)
 		{
 			arrow = xc;
-			xc.box.w = this.ARROW_W * this.scale + 2 * xc.padding;
-			xc.box.h = this.ARROW_H * this.scale + 2 * xc.padding;
+			xc.box.w = ARROW_W * this.scale + 2 * xc.padding;
+			xc.box.h = ARROW_H * this.scale + 2 * xc.padding;
 		}
 
 		let mid = block.length >> 1; // (could vote by height?)
@@ -571,8 +572,8 @@ export class ArrangeExperiment
 		for (let xc of block) if (xc.type == ArrangeComponentType.Arrow)
 		{
 			arrow = xc;
-			xc.box.w = this.ARROW_H * this.scale + 2 * xc.padding;
-			xc.box.h = this.ARROW_W * this.scale + 2 * xc.padding;
+			xc.box.w = ARROW_H * this.scale + 2 * xc.padding;
+			xc.box.h = ARROW_W * this.scale + 2 * xc.padding;
 		}
 
 		let mid = block.length >> 1; // (could vote by height?)

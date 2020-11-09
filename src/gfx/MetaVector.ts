@@ -45,15 +45,15 @@ export enum TextAlign
 	Bottom = 16
 }
 
+const PRIM_LINE = 1;
+const PRIM_RECT = 2;
+const PRIM_OVAL = 3;
+const PRIM_PATH = 4;
+const PRIM_TEXT = 5;
+const PRIM_TEXTNATIVE = 6;
+
 export class MetaVector
 {
-	private PRIM_LINE = 1;
-	private PRIM_RECT = 2;
-	private PRIM_OVAL = 3;
-	private PRIM_PATH = 4;
-	private PRIM_TEXT = 5;
-	private PRIM_TEXTNATIVE = 6;
-
 	//private ONE_THIRD = 1.0 / 3;
 
 	public static NOCOLOUR = -1;
@@ -94,7 +94,7 @@ export class MetaVector
 			if (vec.prims != null) this.prims = vec.prims;
 
 			// extract char-mask
-			for (let p of this.prims) if (p[0] == this.PRIM_TEXT)
+			for (let p of this.prims) if (p[0] == PRIM_TEXT)
 			{
 				let txt = p[4];
 				for (let n = 0; n < txt.length; n++)
@@ -110,26 +110,26 @@ export class MetaVector
 	public drawLine(x1:number, y1:number, x2:number, y2:number, colour:number, thickness:number):void
 	{
 		if (thickness == null) thickness = 1;
-		let typeidx = this.findOrCreateType([this.PRIM_LINE, thickness, colour]);
+		let typeidx = this.findOrCreateType([PRIM_LINE, thickness, colour]);
 
 		const bump = 0.5 * thickness;
 		this.updateBounds(Math.min(x1, x2) - bump, Math.min(y1, y2) - bump);
 		this.updateBounds(Math.max(x1, x2) + bump, Math.max(y1, y2) + bump);
 
-		this.prims.push([this.PRIM_LINE, typeidx, x1, y1, x2, y2]);
+		this.prims.push([PRIM_LINE, typeidx, x1, y1, x2, y2]);
 	}
 	public drawRect(x:number, y:number, w:number, h:number, edgeCol:number, thickness:number, fillCol:number):void
 	{
 		if (edgeCol == null) edgeCol = MetaVector.NOCOLOUR;
 		if (fillCol == null) fillCol = MetaVector.NOCOLOUR;
 		if (thickness == null) thickness = 1;
-		let typeidx = this.findOrCreateType([this.PRIM_RECT, edgeCol, fillCol, thickness]);
+		let typeidx = this.findOrCreateType([PRIM_RECT, edgeCol, fillCol, thickness]);
 
 		const bump = 0.5 * thickness;
 		this.updateBounds(x - bump, y - bump);
 		this.updateBounds(x + w + bump, y + h + bump);
 
-		this.prims.push([this.PRIM_RECT, typeidx, x, y, w, h]);
+		this.prims.push([PRIM_RECT, typeidx, x, y, w, h]);
 	}
 	public drawOval(cx:number, cy:number, rw:number, rh:number, edgeCol:number, thickness:number, fillCol:number):void
 	{
@@ -141,8 +141,8 @@ export class MetaVector
 		this.updateBounds(cx - rw - bump, cy - rh - bump);
 		this.updateBounds(cx + rw + bump, cy + rh + bump);
 
-		let typeidx = this.findOrCreateType([this.PRIM_OVAL, edgeCol, fillCol, thickness]);
-		this.prims.push([this.PRIM_OVAL, typeidx, cx, cy, rw, rh]);
+		let typeidx = this.findOrCreateType([PRIM_OVAL, edgeCol, fillCol, thickness]);
+		this.prims.push([PRIM_OVAL, typeidx, cx, cy, rw, rh]);
 	}
 	public drawPath(xpoints:number[], ypoints:number[], ctrlFlags:boolean[], isClosed:boolean,
 					edgeCol:number, thickness:number, fillCol:number, hardEdge:boolean):void
@@ -160,8 +160,8 @@ export class MetaVector
 			if (bump != 0) this.updateBounds(xpoints[n] + bump, ypoints[n] + bump);
 		}
 
-		let typeidx = this.findOrCreateType([this.PRIM_PATH, edgeCol, fillCol, thickness, hardEdge]);
-		this.prims.push([this.PRIM_PATH, typeidx, xpoints.length, clone(xpoints), clone(ypoints), clone(ctrlFlags), isClosed]);
+		let typeidx = this.findOrCreateType([PRIM_PATH, edgeCol, fillCol, thickness, hardEdge]);
+		this.prims.push([PRIM_PATH, typeidx, xpoints.length, clone(xpoints), clone(ypoints), clone(ctrlFlags), isClosed]);
 	}
 	public drawPoly(xpoints:number[], ypoints:number[], edgeCol:number, thickness:number, fillCol:number, hardEdge:boolean):void
 	{
@@ -244,8 +244,8 @@ export class MetaVector
 			this.updateBounds(x + bx + rx1 * cosTheta - ry2 * sinTheta, y + by + rx1 * sinTheta + ry2 * cosTheta);
 		}
 
-		let typeidx = this.findOrCreateType([this.PRIM_TEXT, size, colour]);
-		this.prims.push([this.PRIM_TEXT, typeidx, x + bx, y + by, txt, direction]);
+		let typeidx = this.findOrCreateType([PRIM_TEXT, size, colour]);
+		this.prims.push([PRIM_TEXT, typeidx, x + bx, y + by, txt, direction]);
 	}
 
 	// render *native* text, which is defined by an HTML/CSS font specifier; this is different from the built-in text in that it presumes that the device
@@ -276,8 +276,8 @@ export class MetaVector
 		this.updateBounds(x, y - metrics[1]);
 		this.updateBounds(x + metrics[0], y + metrics[2]);
 
-		let typeidx = this.findOrCreateType([this.PRIM_TEXTNATIVE, fontFamily, fontSize, colour]);
-		this.prims.push([this.PRIM_TEXTNATIVE, typeidx, x + bx, y + by, txt]);
+		let typeidx = this.findOrCreateType([PRIM_TEXTNATIVE, fontFamily, fontSize, colour]);
+		this.prims.push([PRIM_TEXTNATIVE, typeidx, x + bx, y + by, txt]);
 	}
 
 	// query the boundaries of the drawing, post factum
@@ -354,28 +354,28 @@ export class MetaVector
 		for (let a of this.prims)
 		{
 			const type = a[0];
-			if (type == this.PRIM_LINE)
+			if (type == PRIM_LINE)
 			{
 				a[2] = ox + ((a[2] - this.lowX) * sw + this.lowX);
 				a[3] = oy + ((a[3] - this.lowY) * sh + this.lowY);
 				a[4] = ox + ((a[4] - this.lowX) * sw + this.lowX);
 				a[5] = oy + ((a[5] - this.lowY) * sh + this.lowY);
 			}
-			else if (type == this.PRIM_RECT)
+			else if (type == PRIM_RECT)
 			{
 				a[2] = ox + ((a[2] - this.lowX) * sw + this.lowX);
 				a[3] = oy + ((a[3] - this.lowY) * sh + this.lowY);
 				a[4] = a[4] * sw;
 				a[5] = a[5] * sh;
 			}
-			else if (type == this.PRIM_OVAL)
+			else if (type == PRIM_OVAL)
 			{
 				a[2] = ox + ((a[2] - this.lowX) * sw + this.lowX);
 				a[3] = oy + ((a[3] - this.lowY) * sh + this.lowY);
 				a[4] *= sw;
 				a[5] *= sh;
 			}
-			else if (type == this.PRIM_PATH)
+			else if (type == PRIM_PATH)
 			{
 				let sz = a[2], px = a[3], py = a[4];
 				for (let n = 0; n < sz; n++)
@@ -384,7 +384,7 @@ export class MetaVector
 					py[n] = oy + ((py[n] - this.lowY) * sh + this.lowY);
 				}
 			}
-			else if (type == this.PRIM_TEXT || type == this.PRIM_TEXTNATIVE)
+			else if (type == PRIM_TEXT || type == PRIM_TEXTNATIVE)
 			{
 				a[2] = ox + ((a[2] - this.lowX) * sw + this.lowX);
 				a[3] = oy + ((a[3] - this.lowY) * sh + this.lowY);
@@ -394,12 +394,12 @@ export class MetaVector
 		if (swsh != 1) for (let t of this.types)
 		{
 			const type = t[0];
-			if (type == this.PRIM_LINE) t[1] *= swsh;
-			else if (type == this.PRIM_RECT) t[3] *= swsh;
-			else if (type == this.PRIM_OVAL) t[3] *= swsh;
-			else if (type == this.PRIM_PATH) t[3] *= swsh;
-			else if (type == this.PRIM_TEXT) t[1] *= swsh;
-			else if (type == this.PRIM_TEXTNATIVE) t[1] *= swsh;
+			if (type == PRIM_LINE) t[1] *= swsh;
+			else if (type == PRIM_RECT) t[3] *= swsh;
+			else if (type == PRIM_OVAL) t[3] *= swsh;
+			else if (type == PRIM_PATH) t[3] *= swsh;
+			else if (type == PRIM_TEXT) t[1] *= swsh;
+			else if (type == PRIM_TEXTNATIVE) t[1] *= swsh;
 		}
 
 		this.highX = ox + this.lowX + (this.highX - this.lowX) * sw;
@@ -417,28 +417,28 @@ export class MetaVector
 		for (let a of this.prims)
 		{
 			const type = a[0];
-			if (type == this.PRIM_LINE)
+			if (type == PRIM_LINE)
 			{
 				a[2] = ox + a[2] * sw;
 				a[3] = oy + a[3] * sh;
 				a[4] = ox + a[4] * sw;
 				a[5] = oy + a[5] * sh;
 			}
-			else if (type == this.PRIM_RECT)
+			else if (type == PRIM_RECT)
 			{
 				a[2] = ox + a[2] * sw;
 				a[3] = oy + a[3] * sh;
 				a[4] = a[4] * sw;
 				a[5] = a[5] * sh;
 			}
-			else if (type == this.PRIM_OVAL)
+			else if (type == PRIM_OVAL)
 			{
 				a[2] = ox + a[2] * sw;
 				a[3] = oy + a[3] * sh;
 				a[4] *= sw;
 				a[5] *= sh;
 			}
-			else if (type == this.PRIM_PATH)
+			else if (type == PRIM_PATH)
 			{
 				let sz = a[2], px = a[3], py = a[4];
 				for (let n = 0; n < sz; n++)
@@ -447,7 +447,7 @@ export class MetaVector
 					py[n] = oy + py[n] * sh;
 				}
 			}
-			else if (type == this.PRIM_TEXT || type == this.PRIM_TEXTNATIVE)
+			else if (type == PRIM_TEXT || type == PRIM_TEXTNATIVE)
 			{
 				a[2] = ox + a[2] * sw;
 				a[3] = oy + a[3] * sh;
@@ -457,12 +457,12 @@ export class MetaVector
 		if (swsh != 1) for (let t of this.types)
 		{
 			const type = t[0];
-			if (type == this.PRIM_LINE) t[1] *= swsh;
-			else if (type == this.PRIM_RECT) t[3] *= swsh;
-			else if (type == this.PRIM_OVAL) t[3] *= swsh;
-			else if (type == this.PRIM_PATH) t[3] *= swsh;
-			else if (type == this.PRIM_TEXT) t[1] *= swsh;
-			else if (type == this.PRIM_TEXTNATIVE) t[1] *= swsh;
+			if (type == PRIM_LINE) t[1] *= swsh;
+			else if (type == PRIM_RECT) t[3] *= swsh;
+			else if (type == PRIM_OVAL) t[3] *= swsh;
+			else if (type == PRIM_PATH) t[3] *= swsh;
+			else if (type == PRIM_TEXT) t[1] *= swsh;
+			else if (type == PRIM_TEXTNATIVE) t[1] *= swsh;
 		}
 
 		this.lowX = ox + this.lowX * sw;
@@ -508,22 +508,22 @@ export class MetaVector
 		for (let n = 0; n < this.types.length; n++)
 		{
 			let t = this.types[n];
-			if (t[0] == this.PRIM_LINE) this.typeObj[n] = this.setupTypeLine(t);
-			else if (t[0] == this.PRIM_RECT) this.typeObj[n] = this.setupTypeRect(t);
-			else if (t[0] == this.PRIM_OVAL) this.typeObj[n] = this.setupTypeOval(t);
-			else if (t[0] == this.PRIM_PATH) this.typeObj[n] = this.setupTypePath(t);
-			else if (t[0] == this.PRIM_TEXT) this.typeObj[n] = this.setupTypeText(t);
-			else if (t[0] == this.PRIM_TEXTNATIVE) this.typeObj[n] = this.setupTypeTextNative(t);
+			if (t[0] == PRIM_LINE) this.typeObj[n] = this.setupTypeLine(t);
+			else if (t[0] == PRIM_RECT) this.typeObj[n] = this.setupTypeRect(t);
+			else if (t[0] == PRIM_OVAL) this.typeObj[n] = this.setupTypeOval(t);
+			else if (t[0] == PRIM_PATH) this.typeObj[n] = this.setupTypePath(t);
+			else if (t[0] == PRIM_TEXT) this.typeObj[n] = this.setupTypeText(t);
+			else if (t[0] == PRIM_TEXTNATIVE) this.typeObj[n] = this.setupTypeTextNative(t);
 		}
 		for (let n = 0; n < this.prims.length; n++)
 		{
 			let p = this.prims[n];
-			if (p[0] == this.PRIM_LINE) this.renderLine(ctx, p);
-			else if (p[0] == this.PRIM_RECT) this.renderRect(ctx, p);
-			else if (p[0] == this.PRIM_OVAL) this.renderOval(ctx, p);
-			else if (p[0] == this.PRIM_PATH) this.renderPath(ctx, p);
-			else if (p[0] == this.PRIM_TEXT) this.renderText(ctx, p);
-			else if (p[0] == this.PRIM_TEXTNATIVE) this.renderTextNative(ctx, p);
+			if (p[0] == PRIM_LINE) this.renderLine(ctx, p);
+			else if (p[0] == PRIM_RECT) this.renderRect(ctx, p);
+			else if (p[0] == PRIM_OVAL) this.renderOval(ctx, p);
+			else if (p[0] == PRIM_PATH) this.renderPath(ctx, p);
+			else if (p[0] == PRIM_TEXT) this.renderText(ctx, p);
+			else if (p[0] == PRIM_TEXTNATIVE) this.renderTextNative(ctx, p);
 		}
 
 		ctx.restore();
@@ -579,35 +579,35 @@ export class MetaVector
 		for (let n = 0; n < this.types.length; n++)
 		{
 			let t = this.types[n];
-			if (t[0] == this.PRIM_LINE) this.typeObj[n] = this.setupTypeLine(t);
-			else if (t[0] == this.PRIM_RECT) this.typeObj[n] = this.setupTypeRect(t);
-			else if (t[0] == this.PRIM_OVAL) this.typeObj[n] = this.setupTypeOval(t);
-			else if (t[0] == this.PRIM_PATH) this.typeObj[n] = this.setupTypePath(t);
-			else if (t[0] == this.PRIM_TEXT) this.typeObj[n] = this.setupTypeText(t);
-			else if (t[0] == this.PRIM_TEXTNATIVE) this.typeObj[n] = this.setupTypeTextNative(t);
+			if (t[0] == PRIM_LINE) this.typeObj[n] = this.setupTypeLine(t);
+			else if (t[0] == PRIM_RECT) this.typeObj[n] = this.setupTypeRect(t);
+			else if (t[0] == PRIM_OVAL) this.typeObj[n] = this.setupTypeOval(t);
+			else if (t[0] == PRIM_PATH) this.typeObj[n] = this.setupTypePath(t);
+			else if (t[0] == PRIM_TEXT) this.typeObj[n] = this.setupTypeText(t);
+			else if (t[0] == PRIM_TEXTNATIVE) this.typeObj[n] = this.setupTypeTextNative(t);
 		}
 		for (let n = 0; n < this.prims.length;)
 		{
 			let p = this.prims[n], num = 1;
-			if (p[0] != this.PRIM_PATH && p[0] != this.PRIM_TEXT && p[0] != this.PRIM_TEXTNATIVE)
+			if (p[0] != PRIM_PATH && p[0] != PRIM_TEXT && p[0] != PRIM_TEXTNATIVE)
 			{
 				for (; n + num < this.prims.length; num++) if (this.prims[n + num][0] != p[0] || this.prims[n + num][1] != p[1]) break;
 			}
-			if (p[0] == this.PRIM_LINE)
+			if (p[0] == PRIM_LINE)
 			{
 				if (num == 1) this.svgLine1(svg, p); else this.svgLineN(svg, p, n, num);
 			}
-			else if (p[0] == this.PRIM_RECT)
+			else if (p[0] == PRIM_RECT)
 			{
 				if (num == 1) this.svgRect1(svg, p); else this.svgRectN(svg, p, n, num);
 			}
-			else if (p[0] == this.PRIM_OVAL)
+			else if (p[0] == PRIM_OVAL)
 			{
 				if (num == 1) this.svgOval1(svg, p); else this.svgOvalN(svg, p, n, num);
 			}
-			else if (p[0] == this.PRIM_PATH) this.svgPath(svg, p);
-			else if (p[0] == this.PRIM_TEXT) this.svgText(svg, p);
-			else if (p[0] == this.PRIM_TEXTNATIVE) this.svgTextNative(svg, p);
+			else if (p[0] == PRIM_PATH) this.svgPath(svg, p);
+			else if (p[0] == PRIM_TEXT) this.svgText(svg, p);
+			else if (p[0] == PRIM_TEXTNATIVE) this.svgTextNative(svg, p);
 
 			n += num;
 		}
@@ -618,37 +618,37 @@ export class MetaVector
 	{
 		for (let p of this.prims)
 		{
-			if (p[0] == this.PRIM_LINE)
+			if (p[0] == PRIM_LINE)
 			{
 				let [_, typeidx, x1, y1, x2, y2] = p;
 				let [, thickness, colour] = this.types[typeidx];
 				into.drawLine(x1, y1, x2, y2, colour, thickness);
 			}
-			else if (p[0] == this.PRIM_RECT)
+			else if (p[0] == PRIM_RECT)
 			{
 				let [_, typeidx, x, y, w, h] = p;
 				let [, edgeCol, fillCol, thickness] = this.types[typeidx];
 				into.drawRect(x, y, w, h, edgeCol, thickness, fillCol);
 			}
-			else if (p[0] == this.PRIM_OVAL)
+			else if (p[0] == PRIM_OVAL)
 			{
 				let [_, typeidx, x, y, w, h] = p;
 				let [, edgeCol, fillCol, thickness] = this.types[typeidx];
 				into.drawOval(x, y, w, h, edgeCol, thickness, fillCol);
 			}
-			else if (p[0] == this.PRIM_PATH)
+			else if (p[0] == PRIM_PATH)
 			{
 				let [_, typeidx, numPoints, xpoints, ypoints, ctrlFlags, isClosed] = p;
 				let [, edgeCol, fillCol, thickness, hardEdge] = this.types[typeidx];
 				into.drawPath(xpoints, ypoints, ctrlFlags, isClosed, edgeCol, thickness, fillCol, hardEdge);
 			}
-			else if (p[0] == this.PRIM_TEXT)
+			else if (p[0] == PRIM_TEXT)
 			{
 				let [_, typeidx, x, y, txt, direction] = p;
 				let [, size, colour] = this.types[typeidx];
 				into.drawText(x, y, txt, size, colour, null, direction);
 			}
-			else if (p[0] == this.PRIM_TEXTNATIVE)
+			else if (p[0] == PRIM_TEXTNATIVE)
 			{
 				let [_, typeidx, x, y, txt] = p;
 				let [, fontFamily, fontSize, colour] = this.types[typeidx];

@@ -206,7 +206,7 @@ export class SARTable extends Aspect
 				let bits = val.split(',');
 				if (bits.length >= 3)
 				{
-					let type = bits[0], name = MoleculeStream.sk_unescape(bits[1]);
+					let type = bits[0], name = MoleculeStream.skUnescape(bits[1]);
 					if (type == 'construct')
 					{
 						fields.construct = name;
@@ -227,9 +227,9 @@ export class SARTable extends Aspect
 	private formatMetaData(fields:SARTableFields):string
 	{
 		let content = '';
-		content += 'field=construct,' + MoleculeStream.sk_escape(fields.construct) + ',\n';
-		content += 'field=scaffold,' + MoleculeStream.sk_escape(fields.scaffold) + ',\n';
-		for (let subst of fields.substituents) content += 'field=substituent,' + MoleculeStream.sk_escape(subst) + ',\n';
+		content += 'field=construct,' + MoleculeStream.skEscape(fields.construct) + ',\n';
+		content += 'field=scaffold,' + MoleculeStream.skEscape(fields.scaffold) + ',\n';
+		for (let subst of fields.substituents) content += 'field=substituent,' + MoleculeStream.skEscape(subst) + ',\n';
 		for (let meta of fields.metadata) content += meta + '\n';
 		return content;
 	}

@@ -1,4 +1,5 @@
 #!/bin/tcsh
 tslint -c tslint.json -p tsconfig.json
-cd src
-eslint aspect/**.ts calc/**.ts data/**.ts dialog/**.ts gfx/**.ts sketcher/**.ts ui/**.ts util/**.ts
+#cd src
+#eslint aspect/**.ts calc/**.ts data/**.ts dialog/**.ts gfx/**.ts sketcher/**.ts ui/**.ts util/**.ts
+npm run eslint

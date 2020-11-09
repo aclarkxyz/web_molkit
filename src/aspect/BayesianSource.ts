@@ -78,15 +78,15 @@ export class BayesianSource extends Aspect
 			let eq = line.indexOf('=');
 			if (eq < 0) continue;
 
-			if (line.startsWith('colNameMolecule=')) m.colNameMolecule = MoleculeStream.sk_unescape(line.substring(eq + 1));
-			else if (line.startsWith('colNameValue=')) m.colNameValue = MoleculeStream.sk_unescape(line.substring(eq + 1));
+			if (line.startsWith('colNameMolecule=')) m.colNameMolecule = MoleculeStream.skUnescape(line.substring(eq + 1));
+			else if (line.startsWith('colNameValue=')) m.colNameValue = MoleculeStream.skUnescape(line.substring(eq + 1));
 			else if (line.startsWith('thresholdValue=')) m.thresholdValue = parseFloat(line.substring(eq + 1));
-			else if (line.startsWith('thresholdRelation=')) m.thresholdRelation = MoleculeStream.sk_unescape(line.substring(eq + 1));
+			else if (line.startsWith('thresholdRelation=')) m.thresholdRelation = MoleculeStream.skUnescape(line.substring(eq + 1));
 			else if (line.startsWith('folding=')) m.folding = parseInt(line.substring(eq + 1));
-			else if (line.startsWith('noteField=')) m.noteField = MoleculeStream.sk_unescape(line.substring(eq + 1));
-			else if (line.startsWith('noteTitle=')) m.noteTitle = MoleculeStream.sk_unescape(line.substring(eq + 1));
-			else if (line.startsWith('noteOrigin=')) m.noteOrigin = MoleculeStream.sk_unescape(line.substring(eq + 1));
-			else if (line.startsWith('noteComment=')) m.noteComment = MoleculeStream.sk_unescape(line.substring(eq + 1));
+			else if (line.startsWith('noteField=')) m.noteField = MoleculeStream.skUnescape(line.substring(eq + 1));
+			else if (line.startsWith('noteTitle=')) m.noteTitle = MoleculeStream.skUnescape(line.substring(eq + 1));
+			else if (line.startsWith('noteOrigin=')) m.noteOrigin = MoleculeStream.skUnescape(line.substring(eq + 1));
+			else if (line.startsWith('noteComment=')) m.noteComment = MoleculeStream.skUnescape(line.substring(eq + 1));
 		}
 
 		if (m != null) models.push(m);
@@ -99,15 +99,15 @@ export class BayesianSource extends Aspect
 		for (let m of models)
 		{
 			lines.push('model:');
-			lines.push('colNameMolecule=' + MoleculeStream.sk_escape(m.colNameMolecule));
-			lines.push('colNameValue=' + MoleculeStream.sk_escape(m.colNameValue));
+			lines.push('colNameMolecule=' + MoleculeStream.skEscape(m.colNameMolecule));
+			lines.push('colNameValue=' + MoleculeStream.skEscape(m.colNameValue));
 			lines.push('thresholdValue=' + m.thresholdValue);
-			lines.push('thresholdRelation=' + MoleculeStream.sk_escape(m.thresholdRelation));
+			lines.push('thresholdRelation=' + MoleculeStream.skEscape(m.thresholdRelation));
 			lines.push('folding=%d' + m.folding);
-			lines.push('noteField=' + MoleculeStream.sk_escape(m.noteField));
-			lines.push('noteTitle=' + MoleculeStream.sk_escape(m.noteTitle));
-			lines.push('noteOrigin=' + MoleculeStream.sk_escape(m.noteOrigin));
-			lines.push('noteComment=' + MoleculeStream.sk_escape(m.noteComment));
+			lines.push('noteField=' + MoleculeStream.skEscape(m.noteField));
+			lines.push('noteTitle=' + MoleculeStream.skEscape(m.noteTitle));
+			lines.push('noteOrigin=' + MoleculeStream.skEscape(m.noteOrigin));
+			lines.push('noteComment=' + MoleculeStream.skEscape(m.noteComment));
 		}
 
 		let content = lines.join('\n');

@@ -11,6 +11,7 @@
 */
 
 /* eslint-disable comma-spacing, no-multi-spaces */
+/* eslint-disable @typescript-eslint/naming-convention */
 
 namespace WebMolKit /* BOF */ {
 

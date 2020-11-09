@@ -202,7 +202,7 @@ export class DotPath
 			else
 			{
 				let blk1 = Chemistry.ELEMENT_BLOCKS[mol.atomicNumber(bfr)], blk2 = Chemistry.ELEMENT_BLOCKS[mol.atomicNumber(bto)];
-				if (blk1 >= 3 || blk2 >= 3) 
+				if (blk1 >= 3 || blk2 >= 3)
 				{
 					metalbonded[bfr - 1] = true;
 					metalbonded[bto - 1] = true;
@@ -212,7 +212,7 @@ export class DotPath
 			bondsum[bto - 1] += bo;
 
 			// respect externally indicated aromaticity
-			if (mol.bondTransient(n).indexOf(ForeignMoleculeExtra.BOND_AROMATIC) >= 0)
+			if (mol.bondTransient(n).indexOf(ForeignMoleculeExtra.BondAromatic) >= 0)
 			{
 				pibonded[bfr - 1] = true;
 				pibonded[bto - 1] = true;

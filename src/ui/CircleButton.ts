@@ -25,16 +25,16 @@ namespace WebMolKit /* BOF */ {
 		.svg: the instantiated icon object
 */
 
+const BUTTON_DIAMETER = 50;
+const BUTTON_HPADDING = 4;
+const BUTTON_VPADDING = 2;
+const STATE_NORMAL = 'normal';
+const STATE_SELECTED = 'selected';
+const STATE_DISABLED = 'disabled';
+
 export class CircleButton extends Widget
 {
-	private BUTTON_DIAMETER = 50;
-	private BUTTON_HPADDING = 4;
-	private BUTTON_VPADDING = 2;
-	private STATE_NORMAL = 'normal';
-	private STATE_SELECTED = 'selected';
-	private STATE_DISABLED = 'disabled';
-
-	private state = this.STATE_NORMAL;
+	private state = STATE_NORMAL;
 	private isHighlight = false;
 	private isPressed = false;
 
@@ -63,17 +63,17 @@ export class CircleButton extends Widget
 
 		this.content.addClass('no_selection');
 
-		const diameter = this.BUTTON_DIAMETER;
+		const diameter = BUTTON_DIAMETER;
 		const width = diameter, height = diameter;
 
 		let div = this.content;
 		let density = pixelDensity();
 
-		div.css('width', width + 2 * this.BUTTON_HPADDING);
-		div.css('height', height + 2 * this.BUTTON_VPADDING);
+		div.css('width', width + 2 * BUTTON_HPADDING);
+		div.css('height', height + 2 * BUTTON_VPADDING);
 		div.css('position', 'relative');
 
-		let canvasStyle = 'position: absolute; left: ' + this.BUTTON_HPADDING + 'px; top: ' + this.BUTTON_VPADDING + 'px;';
+		let canvasStyle = 'position: absolute; left: ' + BUTTON_HPADDING + 'px; top: ' + BUTTON_VPADDING + 'px;';
 		canvasStyle += 'pointer-events: none;';
 
 		function renderSolid(col1:any, col2:any):HTMLCanvasElement
@@ -147,7 +147,7 @@ export class CircleButton extends Widget
 
 		this.ringProgress.hidden = false;
 
-		let diameter = this.BUTTON_DIAMETER, mid = 0.5 * diameter, outer = mid - 1, inner = 0.8 * mid;
+		let diameter = BUTTON_DIAMETER, mid = 0.5 * diameter, outer = mid - 1, inner = 0.8 * mid;
 		let ctx = this.ringProgress.getContext('2d');
 		ctx.clearRect(0, 0, diameter, diameter);
 
@@ -194,12 +194,12 @@ export class CircleButton extends Widget
 	private updateLayers()
 	{
 		setVisible(this.pressedBackgr, this.isPressed);
-		setVisible(this.normalBackgr, !this.isPressed && this.state == this.STATE_NORMAL);
-		setVisible(this.selectedBackgr, !this.isPressed && this.state == this.STATE_SELECTED);
-		setVisible(this.disabledBackgr, !this.isPressed && this.state == this.STATE_DISABLED);
+		setVisible(this.normalBackgr, !this.isPressed && this.state == STATE_NORMAL);
+		setVisible(this.selectedBackgr, !this.isPressed && this.state == STATE_SELECTED);
+		setVisible(this.disabledBackgr, !this.isPressed && this.state == STATE_DISABLED);
 
 		let highlight = this.isHighlight;
-		if (this.state == this.STATE_DISABLED)
+		if (this.state == STATE_DISABLED)
 		{
 			highlight = false;
 			this.content.css('cursor', 'no-drop');
@@ -224,7 +224,7 @@ export class CircleButton extends Widget
 	}
 	private mouseDown()
 	{
-		this.isPressed = this.state != this.STATE_DISABLED;
+		this.isPressed = this.state != STATE_DISABLED;
 		this.updateLayers();
 	}
 	private mouseUp()

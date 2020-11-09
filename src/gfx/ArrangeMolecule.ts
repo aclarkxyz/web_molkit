@@ -81,6 +81,10 @@ export interface SpaceFiller
 	py:number[];
 }
 
+// try to avoid compressing bonds too much; simple-line bonds are more resilient than things like dotted lines
+const MINBOND_LINE = 0.25;
+const MINBOND_EXOTIC = 0.5;
+
 export class ArrangeMolecule
 {
 	private scale:number; // extracted from the measurement instance: useful to note when it changes
@@ -90,10 +94,6 @@ export class ArrangeMolecule
 	private lineSizePix:number;
 	private fontSizePix:number;
 	private ymul:number; // -1 if Y is up, +1 if it is down
-
-	// try to avoid compressing bonds too much; simple-line bonds are more resilient than things like dotted lines
-	private MINBOND_LINE = 0.25;
-	private MINBOND_EXOTIC = 0.5;
 
 	// the angstrom-to-ascent height is corrected by this factor
 	private static FONT_CORRECT = 1.5;
@@ -265,7 +265,7 @@ export class ArrangeMolecule
 			// for non-double bonds, can add the constituents right away
 			if (bdbl[n - 1]) continue;
 
-			let minDist = (bo == 1 && bt == Molecule.BONDTYPE_NORMAL ? this.MINBOND_LINE : this.MINBOND_EXOTIC) * measure.scale();
+			let minDist = (bo == 1 && bt == Molecule.BONDTYPE_NORMAL ? MINBOND_LINE : MINBOND_EXOTIC) * measure.scale();
 			let xy1 = this.backOffAtom(bfr, x1, y1, x2, y2, minDist);
 			let xy2 = this.backOffAtom(bto, x2, y2, x1, y1, minDist);
 			this.ensureMinimumBondLength(xy1, xy2, x1, y1, x2, y2, minDist);
@@ -474,7 +474,7 @@ export class ArrangeMolecule
 		}*/
 
 		// create polymer brackets
-		var polymers = new PolymerBlock(mol);
+		let polymers = new PolymerBlock(mol);
 		for (let id of polymers.getIDList()) this.processPolymerUnit(polymers.getUnit(id));
 	}
 
@@ -1089,7 +1089,7 @@ export class ArrangeMolecule
 		let a1 = this.points[bfr - 1], a2 = this.points[bto - 1];
 		let x1 = a1.oval.cx, y1 = a1.oval.cy, x2 = a2.oval.cx, y2 = a2.oval.cy;
 
-		const minDist = this.MINBOND_EXOTIC * this.measure.scale();
+		const minDist = MINBOND_EXOTIC * this.measure.scale();
 		let xy1 = this.backOffAtom(bfr, x1, y1, x2, y2, minDist);
 		let xy2 = this.backOffAtom(bto, x2, y2, x1, y1, minDist);
 		this.ensureMinimumBondLength(xy1, xy2, x1, y1, x2, y2, minDist);
@@ -2290,7 +2290,7 @@ export class ArrangeMolecule
 			y2 -= 0.1 * (y2 - y1);
 		}
 
-		const minDist = this.MINBOND_LINE * this.measure.scale();
+		const minDist = MINBOND_LINE * this.measure.scale();
 		let xy1 = this.backOffAtom(from, x1, y1, x2, y2, minDist);
 		this.ensureMinimumBondLength(xy1, [x2, y2], x1, y1, x2, y2, minDist);
 
@@ -2402,7 +2402,7 @@ export class ArrangeMolecule
 	{
 		interface Bracket
 		{
-			a1?:number
+			a1?:number;
 			a2?:number;
 			x1?:number;
 			y1?:number;
@@ -2472,7 +2472,10 @@ export class ArrangeMolecule
 			{
 				x1 = x2 = mx;
 				y1 = y2 = my;
-				if (n == tagidx) {x1--; x2++;} else {x1++; x2--;}
+				if (n == tagidx)
+					{x1--; x2++;}
+				else
+					{x1++; x2--;}
 			}
 			let invDist = invZ(norm_xy(x2 - x1, y2 - y1));
 			let dx = (x2 - x1) * invDist, dy = (y2 - y1) * invDist;
@@ -2485,7 +2488,7 @@ export class ArrangeMolecule
 
 			let line1 = {...BASE_LINE, 'line': new Line(px1, py1, px2, py2)};
 			let line2 = {...BASE_LINE, 'line': new Line(px2, py2, px3, py3)};
-			let line3 = {...BASE_LINE, 'line': new Line(px3, py3, px4, py4)}
+			let line3 = {...BASE_LINE, 'line': new Line(px3, py3, px4, py4)};
 			this.lines.push(line1);
 			this.lines.push(line2);
 			this.lines.push(line3);

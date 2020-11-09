@@ -140,10 +140,10 @@ export class BinaryData extends Aspect
 			let eq = line.indexOf('=');
 			if (eq < 0) continue;
 
-			if (line.startsWith('colNameSource=')) f.colNameSource = MoleculeStream.sk_unescape(line.substring(eq + 1));
-			else if (line.startsWith('colNameDest=')) f.colNameDest = MoleculeStream.sk_unescape(line.substring(eq + 1));
+			if (line.startsWith('colNameSource=')) f.colNameSource = MoleculeStream.skUnescape(line.substring(eq + 1));
+			else if (line.startsWith('colNameDest=')) f.colNameDest = MoleculeStream.skUnescape(line.substring(eq + 1));
 			else if (line.startsWith('thresholdValue=')) f.thresholdValue = parseFloat(line.substring(eq + 1));
-			else if (line.startsWith('thresholdRelation=')) f.thresholdRelation = MoleculeStream.sk_unescape(line.substring(eq + 1));
+			else if (line.startsWith('thresholdRelation=')) f.thresholdRelation = MoleculeStream.skUnescape(line.substring(eq + 1));
 		}
 
 		if (f != null) fields.push(f);
@@ -159,10 +159,10 @@ export class BinaryData extends Aspect
 		for (let f of fields)
 		{
 			lines.push('field:');
-			lines.push('colNameSource=' + MoleculeStream.sk_escape(f.colNameSource));
-			lines.push('colNameDest=' + MoleculeStream.sk_escape(f.colNameDest));
+			lines.push('colNameSource=' + MoleculeStream.skEscape(f.colNameSource));
+			lines.push('colNameDest=' + MoleculeStream.skEscape(f.colNameDest));
 			lines.push('thresholdValue=' + f.thresholdValue);
-			lines.push('thresholdRelation=' + MoleculeStream.sk_escape(f.thresholdRelation));
+			lines.push('thresholdRelation=' + MoleculeStream.skEscape(f.thresholdRelation));
 		}
 
 		return lines.join('\n');

@@ -16,6 +16,9 @@ namespace WebMolKit /* BOF */ {
 	Given two sketched out molecules, allows the user to map individual atoms interactively.
 */
 
+const ARROWWIDTH = 30;
+const COLCYCLE = ['#89A54E', '#71588F', '#4198AF', '#DB843D', '#93A9CF', '#D19392', '#4572A7', '#AA4643'];
+
 export class MapReaction extends Dialog
 {
 	private btnClear:JQuery;
@@ -40,9 +43,6 @@ export class MapReaction extends Dialog
 	private offsetY1:number;
 	private offsetX2:number;
 	private offsetY2:number;
-
-	private ARROWWIDTH = 30;
-	private COLCYCLE = ['#89A54E', '#71588F', '#4198AF', '#DB843D', '#93A9CF', '#D19392', '#4572A7', '#AA4643'];
 
 	private canvasW:number;
 	private canvasH:number;
@@ -111,15 +111,15 @@ export class MapReaction extends Dialog
 		let maxWidth = 0.9 * $(window).width(), maxHeight = 0.8 * $(window).height();
 		this.padding = 1 * this.policy.data.pointScale;
 
-		let scale1 = (maxWidth - this.ARROWWIDTH) / (w1 + w2 + 4 * this.padding);
+		let scale1 = (maxWidth - ARROWWIDTH) / (w1 + w2 + 4 * this.padding);
 		let scale2 = maxHeight / (h1 + 2 * this.padding);
 		let scale3 = maxHeight / (bounds2[3] - bounds2[1] + 2 * this.padding);
 		this.scale = Math.min(1, Math.min(scale1, Math.min(scale2, scale3)));
 
-		this.canvasW = Math.ceil((w1 + w2 + 4 * this.padding) * this.scale + this.ARROWWIDTH);
+		this.canvasW = Math.ceil((w1 + w2 + 4 * this.padding) * this.scale + ARROWWIDTH);
 		this.canvasH = Math.ceil((Math.max(h1, h2) + 2 * this.padding) * this.scale);
 		this.box1 = new Box(0, 0, w1 + 2 * this.padding, this.canvasH);
-		this.boxArrow = new Box(this.box1.maxX(), 0, this.ARROWWIDTH, this.canvasH);
+		this.boxArrow = new Box(this.box1.maxX(), 0, ARROWWIDTH, this.canvasH);
 		this.box2 = new Box(this.boxArrow.maxX(), 0, w2 + 2 * this.padding, this.canvasH);
 		this.layout1.squeezeInto(this.box1.x, this.box1.y, this.box1.w, this.box1.h);
 		this.layout2.squeezeInto(this.box2.x, this.box2.y, this.box2.w, this.box2.h);
@@ -274,7 +274,7 @@ export class MapReaction extends Dialog
 			let [cx, cy, rw, rh] = this.getAtomPos(side, n);
 			if (mapnum > 0)
 			{
-				let col = this.COLCYCLE[(mapnum - 1) % this.COLCYCLE.length];
+				let col = COLCYCLE[(mapnum - 1) % COLCYCLE.length];
 				ctx.beginPath();
 				ctx.ellipse(cx, cy, rw, rh, 0, 0, TWOPI, false);
 				ctx.fillStyle = col;

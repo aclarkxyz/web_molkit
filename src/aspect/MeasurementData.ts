@@ -224,15 +224,15 @@ export class MeasurementData extends Aspect
 			if (line.startsWith('unit='))
 			{
 				let bits = line.substring(eq + 1).split(',');
-				if (bits.length >= 2) header.units.push({'name': MoleculeStream.sk_unescape(bits[0]), 'uri': MoleculeStream.sk_unescape(bits[1])});
+				if (bits.length >= 2) header.units.push({'name': MoleculeStream.skUnescape(bits[0]), 'uri': MoleculeStream.skUnescape(bits[1])});
 			}
 			else if (line.startsWith('field='))
 			{
 				let bits = line.substring(eq + 1).split(',');
 				if (bits.length >= 2)
 				{
-					let f:MeasurementDataField = {'name': MoleculeStream.sk_unescape(bits[0]), 'units': []};
-					for (let n = 1; n < bits.length; n++) f.units.push(MoleculeStream.sk_unescape(bits[n]));
+					let f:MeasurementDataField = {'name': MoleculeStream.skUnescape(bits[0]), 'units': []};
+					for (let n = 1; n < bits.length; n++) f.units.push(MoleculeStream.skUnescape(bits[n]));
 				}
 			}
 		}
@@ -247,12 +247,12 @@ export class MeasurementData extends Aspect
 
 		for (let u of header.units)
 		{
-			lines.push('unit=' + MoleculeStream.sk_escape(u.name) + ',' + MoleculeStream.sk_escape(u.uri) + '\n');
+			lines.push('unit=' + MoleculeStream.skEscape(u.name) + ',' + MoleculeStream.skEscape(u.uri) + '\n');
 		}
 		for (let f of header.fields)
 		{
-			let line = 'field=' + MoleculeStream.sk_escape(f.name);
-			for (let u of f.units) line += ',' + MoleculeStream.sk_escape(u);
+			let line = 'field=' + MoleculeStream.skEscape(f.name);
+			for (let u of f.units) line += ',' + MoleculeStream.skEscape(u);
 			lines.push(line);
 		}
 

@@ -128,7 +128,7 @@ export class RenderEffects
 	public dottedRectOutline:Record<number, number> = {};
 
 	// bonds that should have a dotted line plotted across them (bond = colour)
-	public dottedBondCross:Record<number, number>= {};
+	public dottedBondCross:Record<number, number> = {};
 
 	// list of atom/bond indices to NOT draw
 	public hideAtoms = new Set<number>();

@@ -15,18 +15,18 @@ namespace WebMolKit /* BOF */ {
 /*
 	Polymer blocks: handles metadata instructions that mark up sections of the molecule as being blocks that are assembled in a
 	repeating pattern to build macromolecules.
-	
+
 	The information contained in is relatively simplistic and abstract: properties such as complex repeating sequences, splicing of
 	cross linkers, molecular weight distribution etc. need to be encoded external to the molecule, but they can reference the encoded
 	blocks.
-	
+
 	Each block consists of 1-or-more atoms. The information is repeated identically for each atom, which makes the encoding largely
 	invariant to atom deletion by code that does not respect the extensions. Some initial post-correction may also be able to fix
 	modifications such as atom insertion, or to delete invalid block IDs.
-	
+
 	Block IDs are stable, i.e. deleting block N does not cause block N+1 to be renumbered. New blocks pick the next available ID, or
 	an available empty slot.
-	
+
 	Properties:
 		id (starts at 1)
 		#connecting bonds (mainly used as a checksum)
@@ -67,15 +67,15 @@ export class PolymerBlock
 			{
 				let bits = str.substring(POLYMERBLOCK_EXTRA_POLYMER.length).split(':');
 				let id = parseInt(bits[0]);
-				if (id > 0) 
+				if (id > 0)
 				{
 					let atoms = blockAtoms.get(id);
-					if (atoms) atoms.push(n); else atoms = [n];					
+					if (atoms) atoms.push(n); else atoms = [n];
 					blockAtoms.set(id, atoms);
 				}
 			}
 		}
-		
+
 		for (let key of Vec.sorted(Array.from(blockAtoms.keys()))) this.appendBlock(key, blockAtoms.get(key));
 	}
 
@@ -87,7 +87,7 @@ export class PolymerBlock
 	public rewriteMolecule():void
 	{
 		this.purgeExtraFields();
-		for (let key of Vec.sorted(Array.from(this.units.keys()))) this.writeUnit(key, this.units.get(key));		
+		for (let key of Vec.sorted(Array.from(this.units.keys()))) this.writeUnit(key, this.units.get(key));
 	}
 
 	// given the numbering system used by artifacts in another object, make sure that the current ones are renumbered so that they don't clash
@@ -125,14 +125,14 @@ export class PolymerBlock
 			this.mol.setBondExtra(b, extra);
 		}
 	}
-	
+
 	// quickly strip out all bond artifacts
 	public removeAll():void
 	{
 		this.units.clear();
 		this.purgeExtraFields();
 	}
-	
+
 	// creates the block, writes content into the molecule, and returns the ID
 	public createUnit(atoms:number[], connect:PolymerBlockConnectivity, bondConn:number[]):number
 	{
@@ -142,7 +142,7 @@ export class PolymerBlock
 		this.writeUnit(id, unit);
 		return id;
 	}
-	
+
 	public static hasPolymerExtensions(mol:Molecule):boolean
 	{
 		for (let n = 1; n <= mol.numAtoms; n++)
@@ -152,7 +152,7 @@ export class PolymerBlock
 		}
 		return false;
 	}
-	
+
 	// for a given atom, return all of the polymer designations, or null if none
 	public static getPolymerExtensions(mol:Molecule, atom:number):string[]
 	{
@@ -196,8 +196,8 @@ export class PolymerBlock
 				else if (bits[n] == PolymerBlockConnectivity.HeadToHead) unit.connect = PolymerBlockConnectivity.HeadToHead;
 				else if (bits[n] == PolymerBlockConnectivity.Random) unit.connect = PolymerBlockConnectivity.Random;
 			}
-		}	
-		
+		}
+
 		// sanity check: make sure attachment count matches # bonds crossing the block
 		if (nattach < 0) return;
 		for (let n = 1; n <= this.mol.numBonds; n++)
@@ -205,8 +205,8 @@ export class PolymerBlock
 			let in1 = atoms.indexOf(this.mol.bondFrom(n)) >= 0, in2 = atoms.indexOf(this.mol.bondTo(n)) >= 0;
 			if ((in1 && !in2) || (!in1 && in2)) nattach--;
 		}
-		if (nattach != 0) return;		
-		
+		if (nattach != 0) return;
+
 		// pull out labelled bonds (if any) to derive the reconnection order
 		let bonds:number[] = null, order:number[] = null;
 		for (let n = 1; n <= this.mol.numBonds; n++)
@@ -224,7 +224,7 @@ export class PolymerBlock
 			if (bonds.length % 2 == 1) return; // has to be an even number
 			unit.bondConn = Vec.idxGet(bonds, Vec.idxSort(order));
 		}
-	
+
 		this.units.set(id, unit);
 	}
 
@@ -236,12 +236,12 @@ export class PolymerBlock
 			let in1 = unit.atoms.indexOf(this.mol.bondFrom(n)) >= 0, in2 = unit.atoms.indexOf(this.mol.bondTo(n)) >= 0;
 			if ((in1 && !in2) || (!in1 && in2)) nbonds++;
 		}
-		
+
 		let str = POLYMERBLOCK_EXTRA_POLYMER + id + ':' + nbonds;
 		if (unit.connect != null) str += ':' + unit.connect;
 		return str.toString();
 	}
-	
+
 	private formatBlockBond(id:number, unit:PolymerBlockUnit, idxConn:number):string
 	{
 		return POLYMERBLOCK_EXTRA_POLYMER + id + ':' + idxConn;
@@ -272,7 +272,7 @@ export class PolymerBlock
 			if (modified) this.mol.setBondExtra(n, extra);
 		}
 	}
-	
+
 	private writeUnit(id:number, unit:PolymerBlockUnit):void
 	{
 		let codeAtom = this.formatBlockAtom(id, unit);
@@ -283,12 +283,12 @@ export class PolymerBlock
 			let codeBond = this.formatBlockBond(id, unit, n + 1);
 			this.mol.setBondExtra(bond, Vec.append(this.mol.bondExtra(bond), codeBond));
 		}
-	}	
+	}
 
 	// using a disposable array, finds the next suitable identifier given that some number may already been taken
 	private nextIdentifier(keys?:number[]):number
 	{
-		if (!keys) keys = this.getIDList(); 
+		if (!keys) keys = this.getIDList();
 		if (keys.length == 0) return 1;
 		for (let n = 0; n < keys.length - 1; n++) if (keys[n + 1] != keys[n] + 1) return keys[n] + 1;
 		return keys[keys.length - 1] + 1;

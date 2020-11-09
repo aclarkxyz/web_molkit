@@ -10,6 +10,8 @@
     [PKG=webmolkit]
 */
 
+/* eslint-disable @typescript-eslint/naming-convention */
+
 namespace WebMolKit /* BOF */ {
 
 /*
@@ -229,29 +231,29 @@ export class AssayProvenance extends Aspect
 		{
 			let eq = line.indexOf('=');
 			if (eq < 0) continue;
-			if (line.startsWith('pfx:')) header.prefixes[MoleculeStream.sk_unescape(line.substring(4, eq))] = MoleculeStream.sk_unescape(line.substring(eq + 1));
-			else if (line.startsWith('targetName=')) header.targetName = MoleculeStream.sk_unescape(line.substring(eq + 1));
-			else if (line.startsWith('targetURI=')) header.targetURI = MoleculeStream.sk_unescape(line.substring(eq + 1));
-			else if (line.startsWith('organismName=')) header.organismName = MoleculeStream.sk_unescape(line.substring(eq + 1));
-			else if (line.startsWith('organismURI=')) header.organismURI = MoleculeStream.sk_unescape(line.substring(eq + 1));
-			else if (line.startsWith('targetTypeName=')) header.targetTypeName = MoleculeStream.sk_unescape(line.substring(eq + 1));
-			else if (line.startsWith('targetTypeURI=')) header.targetTypeURI = MoleculeStream.sk_unescape(line.substring(eq + 1));
-			else if (line.startsWith('cellName=')) header.cellName = MoleculeStream.sk_unescape(line.substring(eq + 1));
-			else if (line.startsWith('cellURI=')) header.cellURI = MoleculeStream.sk_unescape(line.substring(eq + 1));
-			else if (line.startsWith('assayTypeName=')) header.assayTypeName = MoleculeStream.sk_unescape(line.substring(eq + 1));
-			else if (line.startsWith('assayTypeURI=')) header.assayTypeURI = MoleculeStream.sk_unescape(line.substring(eq + 1));
-			else if (line.startsWith('assayDescription=')) header.assayDescription = MoleculeStream.sk_unescape(line.substring(eq + 1));
-			else if (line.startsWith('sourceName=')) header.sourceName = MoleculeStream.sk_unescape(line.substring(eq + 1));
-			else if (line.startsWith('sourceURI=')) header.sourceURI = MoleculeStream.sk_unescape(line.substring(eq + 1));
-			else if (line.startsWith('sourceVersion=')) header.sourceVersion = MoleculeStream.sk_unescape(line.substring(eq + 1));
-			else if (line.startsWith('documentName=')) header.documentName = MoleculeStream.sk_unescape(line.substring(eq + 1));
-			else if (line.startsWith('documentURI=')) header.documentURI = MoleculeStream.sk_unescape(line.substring(eq + 1));
-			else if (line.startsWith('measureTypeName=')) header.measureTypeName = MoleculeStream.sk_unescape(line.substring(eq + 1));
-			else if (line.startsWith('measureTypeURI=')) header.measureTypeURI = MoleculeStream.sk_unescape(line.substring(eq + 1));
+			if (line.startsWith('pfx:')) header.prefixes[MoleculeStream.skUnescape(line.substring(4, eq))] = MoleculeStream.skUnescape(line.substring(eq + 1));
+			else if (line.startsWith('targetName=')) header.targetName = MoleculeStream.skUnescape(line.substring(eq + 1));
+			else if (line.startsWith('targetURI=')) header.targetURI = MoleculeStream.skUnescape(line.substring(eq + 1));
+			else if (line.startsWith('organismName=')) header.organismName = MoleculeStream.skUnescape(line.substring(eq + 1));
+			else if (line.startsWith('organismURI=')) header.organismURI = MoleculeStream.skUnescape(line.substring(eq + 1));
+			else if (line.startsWith('targetTypeName=')) header.targetTypeName = MoleculeStream.skUnescape(line.substring(eq + 1));
+			else if (line.startsWith('targetTypeURI=')) header.targetTypeURI = MoleculeStream.skUnescape(line.substring(eq + 1));
+			else if (line.startsWith('cellName=')) header.cellName = MoleculeStream.skUnescape(line.substring(eq + 1));
+			else if (line.startsWith('cellURI=')) header.cellURI = MoleculeStream.skUnescape(line.substring(eq + 1));
+			else if (line.startsWith('assayTypeName=')) header.assayTypeName = MoleculeStream.skUnescape(line.substring(eq + 1));
+			else if (line.startsWith('assayTypeURI=')) header.assayTypeURI = MoleculeStream.skUnescape(line.substring(eq + 1));
+			else if (line.startsWith('assayDescription=')) header.assayDescription = MoleculeStream.skUnescape(line.substring(eq + 1));
+			else if (line.startsWith('sourceName=')) header.sourceName = MoleculeStream.skUnescape(line.substring(eq + 1));
+			else if (line.startsWith('sourceURI=')) header.sourceURI = MoleculeStream.skUnescape(line.substring(eq + 1));
+			else if (line.startsWith('sourceVersion=')) header.sourceVersion = MoleculeStream.skUnescape(line.substring(eq + 1));
+			else if (line.startsWith('documentName=')) header.documentName = MoleculeStream.skUnescape(line.substring(eq + 1));
+			else if (line.startsWith('documentURI=')) header.documentURI = MoleculeStream.skUnescape(line.substring(eq + 1));
+			else if (line.startsWith('measureTypeName=')) header.measureTypeName = MoleculeStream.skUnescape(line.substring(eq + 1));
+			else if (line.startsWith('measureTypeURI=')) header.measureTypeURI = MoleculeStream.skUnescape(line.substring(eq + 1));
 			else if (line.startsWith('unit:'))
 			{
-				header.unitNames.push(MoleculeStream.sk_unescape(line.substring(5, eq)));
-				header.unitURIs.push(MoleculeStream.sk_unescape(line.substring(eq + 1)));
+				header.unitNames.push(MoleculeStream.skUnescape(line.substring(5, eq)));
+				header.unitURIs.push(MoleculeStream.skUnescape(line.substring(eq + 1)));
 			}
 		}
 
@@ -263,27 +265,27 @@ export class AssayProvenance extends Aspect
 	{
 		let content = '';
 
-		for (let pfx in header.prefixes) content += 'pfx:' + MoleculeStream.sk_escape(pfx) + '=' + MoleculeStream.sk_escape(header.prefixes[pfx]) + '\n';
-		content += 'targetName=' + MoleculeStream.sk_escape(header.targetName) + '\n';
-		content += 'targetURI=' + MoleculeStream.sk_escape(header.targetURI) + '\n';
-		content += 'organismName=' + MoleculeStream.sk_escape(header.organismName) + '\n';
-		content += 'organismURI=' + MoleculeStream.sk_escape(header.organismURI) + '\n';
-		content += 'targetTypeName=' + MoleculeStream.sk_escape(header.targetTypeName) + '\n';
-		content += 'targetTypeURI=' + MoleculeStream.sk_escape(header.targetTypeURI) + '\n';
-		content += 'cellName=' + MoleculeStream.sk_escape(header.cellName) + '\n';
-		content += 'cellURI=' + MoleculeStream.sk_escape(header.cellURI) + '\n';
-		content += 'assayTypeName=' + MoleculeStream.sk_escape(header.assayTypeName) + '\n';
-		content += 'assayTypeURI=' + MoleculeStream.sk_escape(header.assayTypeURI) + '\n';
-		content += 'assayDescription=' + MoleculeStream.sk_escape(header.assayDescription) + '\n';
-		content += 'sourceName=' + MoleculeStream.sk_escape(header.sourceName) + '\n';
-		content += 'sourceURI=' + MoleculeStream.sk_escape(header.sourceURI) + '\n';
-		content += 'sourceVersion=' + MoleculeStream.sk_escape(header.sourceVersion) + '\n';
-		content += 'documentName=' + MoleculeStream.sk_escape(header.documentName) + '\n';
-		content += 'documentURI=' + MoleculeStream.sk_escape(header.documentURI) + '\n';
-		content += 'measureTypeName=' + MoleculeStream.sk_escape(header.measureTypeName) + '\n';
-		content += 'measureTypeURI=' + MoleculeStream.sk_escape(header.measureTypeURI) + '\n';
+		for (let pfx in header.prefixes) content += 'pfx:' + MoleculeStream.skEscape(pfx) + '=' + MoleculeStream.skEscape(header.prefixes[pfx]) + '\n';
+		content += 'targetName=' + MoleculeStream.skEscape(header.targetName) + '\n';
+		content += 'targetURI=' + MoleculeStream.skEscape(header.targetURI) + '\n';
+		content += 'organismName=' + MoleculeStream.skEscape(header.organismName) + '\n';
+		content += 'organismURI=' + MoleculeStream.skEscape(header.organismURI) + '\n';
+		content += 'targetTypeName=' + MoleculeStream.skEscape(header.targetTypeName) + '\n';
+		content += 'targetTypeURI=' + MoleculeStream.skEscape(header.targetTypeURI) + '\n';
+		content += 'cellName=' + MoleculeStream.skEscape(header.cellName) + '\n';
+		content += 'cellURI=' + MoleculeStream.skEscape(header.cellURI) + '\n';
+		content += 'assayTypeName=' + MoleculeStream.skEscape(header.assayTypeName) + '\n';
+		content += 'assayTypeURI=' + MoleculeStream.skEscape(header.assayTypeURI) + '\n';
+		content += 'assayDescription=' + MoleculeStream.skEscape(header.assayDescription) + '\n';
+		content += 'sourceName=' + MoleculeStream.skEscape(header.sourceName) + '\n';
+		content += 'sourceURI=' + MoleculeStream.skEscape(header.sourceURI) + '\n';
+		content += 'sourceVersion=' + MoleculeStream.skEscape(header.sourceVersion) + '\n';
+		content += 'documentName=' + MoleculeStream.skEscape(header.documentName) + '\n';
+		content += 'documentURI=' + MoleculeStream.skEscape(header.documentURI) + '\n';
+		content += 'measureTypeName=' + MoleculeStream.skEscape(header.measureTypeName) + '\n';
+		content += 'measureTypeURI=' + MoleculeStream.skEscape(header.measureTypeURI) + '\n';
 		for (let n = 0, num = Math.min(header.unitNames.length, header.unitURIs.length); n < num; n++)
-			content += 'unit:' + MoleculeStream.sk_escape(header.unitNames[n]) + '=' + MoleculeStream.sk_escape(header.unitURIs[n]) + '\n';
+			content += 'unit:' + MoleculeStream.skEscape(header.unitNames[n]) + '=' + MoleculeStream.skEscape(header.unitURIs[n]) + '\n';
 
 		return content;
 	}

@@ -455,7 +455,7 @@ export class MDLMOLReader
 				this.applyPolymerBlock(value);
 			}
 		}
-		
+
 		// process non-polymer superblocks
 		for (let key of Vec.sorted(Array.from(superatoms.keys())))
 		{
@@ -850,17 +850,17 @@ export class MDLMOLReader
 		}
 	}
 
-	// deals with a superatom block that is marked as 
+	// deals with a superatom block that is marked as
 	private applyPolymerBlock(sup:MDLReaderSuperAtom):void
 	{
-		var poly = new PolymerBlock(this.mol);
+		let poly = new PolymerBlock(this.mol);
 		let connect:PolymerBlockConnectivity = null;
 		if (sup.connectType == null) {}
 		else if (sup.connectType == 'HT') connect = PolymerBlockConnectivity.HeadToTail;
 		else if (sup.connectType == 'HH') connect = PolymerBlockConnectivity.HeadToHead;
 		else if (sup.connectType == 'EU') connect = PolymerBlockConnectivity.Random;
 		else return;
-		
+
 		let bondConn:number[] = null;
 		if (Vec.arrayLength(sup.bondConn) == 3)
 		{
@@ -869,7 +869,7 @@ export class MDLMOLReader
 			for (let n = 1; n <= this.mol.numBonds; n++) if (n != b1 && n != b2 && n != b3)
 			{
 				let in1 = sup.atoms.indexOf(this.mol.bondFrom(n)) >= 0, in2 = sup.atoms.indexOf(this.mol.bondTo(n)) >= 0;
-				if ((in1 && !in2) || (!in1 && in2)) 
+				if ((in1 && !in2) || (!in1 && in2))
 				{
 					if (b4 > 0) {b4 = 0; break;}
 					b4 = n;
@@ -882,7 +882,7 @@ export class MDLMOLReader
 			// the V3000 style of specifying 2x2 connectivity, which is the same as what we're using
 			bondConn = sup.bondConn;
 		}
-		
+
 		poly.createUnit(Vec.sorted(sup.atoms), connect, bondConn);
 	}
 

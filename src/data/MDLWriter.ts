@@ -362,7 +362,7 @@ export class MDLMOLWriter
 	// use a variant of Sgroups for any polymer blocks
 	private encodePolymerBlocks(idx:number):void
 	{
-		var polymers = new PolymerBlock(this.mol);
+		let polymers = new PolymerBlock(this.mol);
 		for (let id of polymers.getIDList())
 		{
 			let unit = polymers.getUnit(id);
@@ -458,7 +458,6 @@ export class MDLSDFWriter
 	}
 
 	// ----------------- private methods -----------------
-
 	
 }
 

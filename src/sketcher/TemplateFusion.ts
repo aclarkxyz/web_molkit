@@ -42,7 +42,7 @@ export class TemplateFusion
 	private guideidx:number[] = [];
 	private guideadj:number[] = [];
 
-	public TIME_LIMIT = 5.0; // number of seconds after which template fusion should quit with what it has
+	public timeLimit = 5.0; // number of seconds after which template fusion should quit with what it has
 	public static RESERVED_GUIDESYMBOL = 'XXX';
 
 	// ------------------ public methods --------------------
@@ -120,7 +120,7 @@ export class TemplateFusion
 
 			for (let n = 0; n < this.guideidx.length; n++)
 			{
-				if (new Date().getTime() - timeStart > this.TIME_LIMIT * 1000) break;
+				if (new Date().getTime() - timeStart > this.timeLimit * 1000) break;
 
 				this.composeGuidedOne(newperms, oldmol, this.guidetempl, atom, this.guideidx[n]);
 				this.composeGuidedOne(newperms, oldmol, fliptempl, atom, this.guideidx[n]);
@@ -134,7 +134,7 @@ export class TemplateFusion
 
 			for (let n = 1; n <= newmol.numAtoms; n++)
 			{
-				if (new Date().getTime() - timeStart > this.TIME_LIMIT * 1000) break;
+				if (new Date().getTime() - timeStart > this.timeLimit * 1000) break;
 
 				this.composeDirectOne(newperms, oldmol, newmol, atom, n);
 				this.composeDirectOne(newperms, oldmol, flipmol, atom, n);
@@ -162,7 +162,7 @@ export class TemplateFusion
 			CoordUtil.mirrorImage(fliptempl);
 			for (let i = 0; i < this.guideidx.length; i++)
 			{
-				if (new Date().getTime() - timeStart > this.TIME_LIMIT * 1000) break;
+				if (new Date().getTime() - timeStart > this.timeLimit * 1000) break;
 
 				let g1 = this.guideidx[i];
 				let adj = this.guidetempl.atomAdjList(g1);
@@ -190,7 +190,7 @@ export class TemplateFusion
 
 			for (let n = 1; n <= newmol.numBonds; n++)
 			{
-				if (new Date().getTime() - timeStart > this.TIME_LIMIT * 1000) break;
+				if (new Date().getTime() - timeStart > this.timeLimit * 1000) break;
 
 				let nfr = newmol.bondFrom(n), nto = newmol.bondTo(n);
 				this.composeDirectTwo(newperms, oldmol, newmol, a1, a2, nfr, nto);
@@ -236,7 +236,7 @@ export class TemplateFusion
 
 			for (let n = 1; n <= newmol.numAtoms; n++)
 			{
-				if (new Date().getTime() - timeStart > this.TIME_LIMIT * 1000) break;
+				if (new Date().getTime() - timeStart > this.timeLimit * 1000) break;
 
 				this.composeDirectMulti(newperms, oldmol, newmol, atoms, n);
 				this.composeDirectMulti(newperms, oldmol, flipmol, atoms, n);

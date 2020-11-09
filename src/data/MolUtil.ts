@@ -130,9 +130,9 @@ export class MolUtil
 		for (let n = 1; n <= mol.numBonds; n++)
 		{
 			let b1 = mol.bondFrom(n), b2 = mol.bondTo(n), atom = 0;
-			if (srcmask[b1 - 1] && !srcmask[b2 - 1]) 
+			if (srcmask[b1 - 1] && !srcmask[b2 - 1])
 			{
-				atom = b1; 
+				atom = b1;
 				polymerExtra = PolymerBlock.getPolymerExtensions(mol, b2);
 			}
 			else if (!srcmask[b1 - 1] && srcmask[b2 - 1])
@@ -239,7 +239,7 @@ export class MolUtil
 	}
 	public static expandOneAbbrevFrag(mol:Molecule, atom:number, frag:Molecule, alignCoords:boolean):boolean[]
 	{
-		let polymerExtra = PolymerBlock.getPolymerExtensions(mol, atom);	
+		let polymerExtra = PolymerBlock.getPolymerExtensions(mol, atom);
 
 		let nbr = mol.atomAdjCount(atom) == 1 ? mol.atomAdjList(atom)[0] : 0;
 		let connBond = mol.findBond(atom, nbr), connType = Molecule.BONDTYPE_NORMAL;

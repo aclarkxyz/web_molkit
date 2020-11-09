@@ -30,13 +30,13 @@ export enum ForeignMoleculeExtra
 {
 	// generic flags for remarking that an atom/bond is aromatic; commonly used by SMILES, for MDL Molfile queries (and illegal structures)
 	// and a number of other formats which use this concept
-	ATOM_AROMATIC = 'yAROMATIC',
-	BOND_AROMATIC = 'yAROMATIC',
+	AtomAromatic = 'yAROMATIC',
+	BondAromatic = 'yAROMATIC',
 
 	// the atom-centred chirality settings, used explicitly by MDL Molfiles to denote chirality, or mixtures
-	ATOM_CHIRAL_MDL_ODD = 'yCHIRAL_MDL_ODD',
-	ATOM_CHIRAL_MDL_EVEN = 'yCHIRAL_MDL_EVEN',
-	ATOM_CHIRAL_MDL_RACEMIC = 'yCHIRAL_MDL_RACEMIC',
+	AtomChiralMDLOdd = 'yCHIRAL_MDL_ODD',
+	AtomChiralMDLEven= 'yCHIRAL_MDL_EVEN',
+	AtomChiralMDLRacemic = 'yCHIRAL_MDL_RACEMIC',
 }
 
 export class ForeignMolecule
@@ -49,7 +49,7 @@ export class ForeignMolecule
 	{
 		const sz = mol.numAtoms;
 		let mask = Vec.booleanArray(false, sz);
-		for (let n = 1; n <= sz; n++) mask[n - 1] = mol.atomTransient(n).indexOf(ForeignMoleculeExtra.ATOM_AROMATIC) >= 0;
+		for (let n = 1; n <= sz; n++) mask[n - 1] = mol.atomTransient(n).indexOf(ForeignMoleculeExtra.AtomAromatic) >= 0;
 		return mask;
 	}
 
@@ -58,7 +58,7 @@ export class ForeignMolecule
 	{
 		const sz = mol.numBonds;
 		let mask = Vec.booleanArray(false, sz);
-		for (let n = 1; n <= sz; n++) mask[n - 1] = mol.bondTransient(n).indexOf(ForeignMoleculeExtra.BOND_AROMATIC) >= 0;
+		for (let n = 1; n <= sz; n++) mask[n - 1] = mol.bondTransient(n).indexOf(ForeignMoleculeExtra.BondAromatic) >= 0;
 		return mask;
 	}
 

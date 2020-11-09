@@ -16,7 +16,7 @@
 //
 // to run: $BAE/ts> eslint **/*.ts
 
-module.exports = 
+module.exports =
 {
 	'parser': '@typescript-eslint/parser',
 	'plugins': ['@typescript-eslint'],
@@ -29,9 +29,24 @@ module.exports =
 		// all functions must return a value; this also includes inline functions, which are not currently enforced
 		'@typescript-eslint/explicit-function-return-type': 0,
 
-		'@typescript-eslint/array-type': ['error', 'array'],
+		'@typescript-eslint/array-type': ['error', {'default': 'array'}],
 		//'@typescript-eslint/camelcase': ['error', {'properties': 'always'}],
-		'@typescript-eslint/class-name-casing': ['error'],
+		//'@typescript-eslint/class-name-casing': ['error'],
+		'@typescript-eslint/naming-convention':
+		[
+			'error',
+			{'selector': 'default', 'format': ['camelCase']},
+			{'selector': 'variable', 'leadingUnderscore': 'allow', 'format': ['camelCase', 'PascalCase', 'UPPER_CASE', 'snake_case']},
+			{'selector': 'enumMember', 'format': ['PascalCase']},
+			{'selector': 'typeLike', 'format': ['PascalCase']},
+			{'selector': 'function', 'format': ['camelCase', 'snake_case']},
+			/*{'selector': 'property', 'modifiers': ['static'], 'format': ['camelCase', 'UPPER_CASE']},
+			{'selector': 'property', 'modifiers': ['public'], 'format': ['camelCase', 'PascalCase']},
+			{'selector': 'property', 'modifiers': ['private'], 'format': ['camelCase', 'PascalCase']},
+			{'selector': 'property', 'modifiers': ['protected'], 'format': ['camelCase', 'PascalCase']},*/
+			{'selector': 'property', 'format': ['camelCase', 'PascalCase', 'UPPER_CASE']},
+			{'selector': 'parameter', 'format': ['camelCase', 'PascalCase']}
+		],
 
 		// this seems to be broken with regard to constructors
 		'@typescript-eslint/explicit-member-accessibility': 0,
@@ -44,7 +59,8 @@ module.exports =
 		//spaced-comment : ditto
 
 		'new-parens': ['error'],
-		'@typescript-eslint/no-angle-bracket-type-assertion': ['error'],
+		//'@typescript-eslint/no-angle-bracket-type-assertion': ['error'],
+
 		'no-multiple-empty-lines': ['error', {'max': 1, "maxEOF": 10}],
 		'no-irregular-whitespace': ['error', {'skipStrings': true}],
 		'no-trailing-spaces': ['error', {'skipBlankLines': true, 'ignoreComments': true}],
@@ -54,9 +70,9 @@ module.exports =
 		'semi': ['error', 'always'],
 		'space-before-function-paren': ['error', 'never'],
 		'space-in-parens': ['error', 'never'],
-		'@typescript-eslint/member-delimiter-style': 
+		'@typescript-eslint/member-delimiter-style':
 		[
-			'error', 
+			'error',
 			{'multiline': {'delimiter': 'semi', 'requireLast': true}, 'singleline': {'delimiter': 'semi', 'requireLast': false}},
 		],
 		'no-extra-semi': ['error'],

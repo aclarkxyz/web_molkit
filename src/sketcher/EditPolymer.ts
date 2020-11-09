@@ -124,7 +124,7 @@ export class EditPolymer extends Dialog
 				else if (Vec.equals(bpri, [0, 3, 2, 1])) this.optionBondConn.setSelectedIndex(4);
 			}
 		}*/
-		
+
 		row++;
 		this.divPreview = $('<div/>').appendTo(grid).css({'grid-area': `${row} / col0 / auto / col4`, 'text-align': 'center'});
 		this.renderUnit();
@@ -141,7 +141,7 @@ export class EditPolymer extends Dialog
 			});
 		});
 
-		setTimeout(() => inputNAtoms.focus(), 1);		
+		setTimeout(() => inputNAtoms.focus(), 1);
 	}
 
 	// ------------ private methods ------------
@@ -157,7 +157,7 @@ export class EditPolymer extends Dialog
 			else if (sel == 2) this.unit.connect = PolymerBlockConnectivity.HeadToHead;
 			else if (sel == 3) this.unit.connect = PolymerBlockConnectivity.Random;
 		}
-		
+
 		if (this.currentID) this.polymer.removeUnit(this.currentID);
 		this.currentID = this.polymer.createUnit(this.atoms, this.unit.connect, this.unit.bondConn);
 
@@ -184,12 +184,12 @@ export class EditPolymer extends Dialog
 			let bfr = this.mol.bondFrom(n), bto = this.mol.bondTo(n);
 			let in1 = this.atoms.includes(bfr), in2 = this.atoms.includes(bto);
 			if (in1 || in2) {mask[bfr - 1] = true; mask[bto - 1] = true;}
-			if (in1 && !in2) 
+			if (in1 && !in2)
 			{
 				umol.setAtomElement(bto, (this.bonds.indexOf(n) + 1).toString());
 				umol.setAtomExtra(bto, Vec.append(umol.atomExtra(bto), EXTRA_TAG));
 			}
-			if (in2 && !in1) 
+			if (in2 && !in1)
 			{
 				umol.setAtomElement(bfr, (this.bonds.indexOf(n) + 1).toString());
 				umol.setAtomExtra(bfr, Vec.append(umol.atomExtra(bfr), EXTRA_TAG));

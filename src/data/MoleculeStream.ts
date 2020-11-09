@@ -81,10 +81,10 @@ export class MoleculeStream
 				else if (bits[i].charAt(0) == 'e') mol.setAtomHExplicit(num, parseInt(bits[i].substring(1)));
 				else if (bits[i].charAt(0) == 'm') mol.setAtomIsotope(num, parseInt(bits[i].substring(1)));
 				else if (bits[i].charAt(0) == 'n') mol.setAtomMapNum(num, parseInt(bits[i].substring(1)));
-				else if (bits[i].charAt(0) == 'x') extra.push(MoleculeStream.sk_unescape(bits[i]));
-				else if (bits[i].charAt(0) == 'y') trans.push(MoleculeStream.sk_unescape(bits[i]));
+				else if (bits[i].charAt(0) == 'x') extra.push(MoleculeStream.skUnescape(bits[i]));
+				else if (bits[i].charAt(0) == 'y') trans.push(MoleculeStream.skUnescape(bits[i]));
 				else if (bits[i].charAt(0) == 'z') {mol.setAtomZ(num, parseFloat(bits[i].substring(1))); mol.setIs3D(true);}
-				else extra.push(MoleculeStream.sk_unescape(bits[i])); // preserve unrecognised
+				else extra.push(MoleculeStream.skUnescape(bits[i])); // preserve unrecognised
 			}
 			mol.setAtomExtra(num, extra);
 			mol.setAtomTransient(num, trans);
@@ -101,9 +101,9 @@ export class MoleculeStream
 			for (let i = 3; i < bits.length; i++)
 			{
 				let ch = bits[i].charAt(0);
-				if (bits[i].charAt(0) == 'x') extra.push(MoleculeStream.sk_unescape(bits[i]));
-				else if (bits[i].charAt(0) == 'y') trans.push(MoleculeStream.sk_unescape(bits[i]));
-				else extra.push(MoleculeStream.sk_unescape(bits[i])); // preserve unrecognised
+				if (bits[i].charAt(0) == 'x') extra.push(MoleculeStream.skUnescape(bits[i]));
+				else if (bits[i].charAt(0) == 'y') trans.push(MoleculeStream.skUnescape(bits[i]));
+				else extra.push(MoleculeStream.skUnescape(bits[i])); // preserve unrecognised
 			}
 			mol.setBondExtra(num, extra);
 			mol.setBondTransient(num, trans);
@@ -121,20 +121,20 @@ export class MoleculeStream
 		{
 			let el = mol.atomElement(n), x = mol.atomX(n), y = mol.atomY(n), charge = mol.atomCharge(n), unpaired = mol.atomUnpaired(n);
 			let hy = mol.atomHExplicit(n) != Molecule.HEXPLICIT_UNKNOWN ? ('e' + mol.atomHExplicit(n)) : ('i' + mol.atomHydrogens(n));
-			ret += MoleculeStream.sk_escape(el) + '=' + x.toFixed(4) + ',' + y.toFixed(4) + ';' + charge + ',' + unpaired + ',' + hy;
+			ret += MoleculeStream.skEscape(el) + '=' + x.toFixed(4) + ',' + y.toFixed(4) + ';' + charge + ',' + unpaired + ',' + hy;
 			if (mol.is3D()) ret += ',z' + mol.atomZ(n);
 			if (mol.atomIsotope(n) != Molecule.ISOTOPE_NATURAL) ret += ',m' + mol.atomIsotope(n);
 			if (mol.atomMapNum(n) > 0) ret += ',n' + mol.atomMapNum(n);
-			ret += MoleculeStream.sk_encodeExtra(mol.atomExtra(n));
-			ret += MoleculeStream.sk_encodeExtra(mol.atomTransient(n));
+			ret += MoleculeStream.skEncodeExtra(mol.atomExtra(n));
+			ret += MoleculeStream.skEncodeExtra(mol.atomTransient(n));
 			ret += '\n';
 		}
 
 		for (let n = 1; n <= mol.numBonds; n++)
 		{
 			ret += mol.bondFrom(n) + '-' + mol.bondTo(n) + '=' + mol.bondOrder(n) + ',' + mol.bondType(n);
-			ret += MoleculeStream.sk_encodeExtra(mol.bondExtra(n));
-			ret += MoleculeStream.sk_encodeExtra(mol.bondTransient(n));
+			ret += MoleculeStream.skEncodeExtra(mol.bondExtra(n));
+			ret += MoleculeStream.skEncodeExtra(mol.bondTransient(n));
 			ret += '\n';
 		}
 
@@ -158,7 +158,7 @@ export class MoleculeStream
 	}
 
 	// static method: decodes a string from a sketchel field
-	public static sk_unescape(str:string):string
+	public static skUnescape(str:string):string
 	{
 		let ret = '', match:RegExpMatchArray;
 		while (match = str.match(/^(.*?)\\([0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f])(.*)/))
@@ -170,7 +170,7 @@ export class MoleculeStream
 	}
 
 	// static method: makes a string safe for inclusion as a SketchEl field
-	public static sk_escape(str:string):string
+	public static skEscape(str:string):string
 	{
 		let ret = '';
 		for (let n = 0; n < str.length; n++)
@@ -189,10 +189,10 @@ export class MoleculeStream
 	}
 
 	// internal utility for writing SketchEl extra/transient content
-	public static sk_encodeExtra(extra:string[]):string
+	public static skEncodeExtra(extra:string[]):string
 	{
 		let ret = '';
-		for (let n = 0; n < extra.length; n++) ret += ',' + MoleculeStream.sk_escape(extra[n]);
+		for (let n = 0; n < extra.length; n++) ret += ',' + MoleculeStream.skEscape(extra[n]);
 		return ret;
 	}
 }

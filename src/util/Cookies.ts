@@ -16,74 +16,74 @@ namespace WebMolKit /* BOF */ {
 	Cookies: handles the caching of recently used molecules, by stashing them in the cookie jar.
 */
 
+const ASPIRIN =
+	'SketchEl!(13,13)\n' +
+	'C=-1.6010,4.3000;0,0,i0\n' +
+	'C=-2.9000,3.5500;0,0,i1\n' +
+	'C=-0.3019,3.5500;0,0,i0\n' +
+	'C=-2.9000,2.0500;0,0,i1\n' +
+	'C=-1.6010,1.3000;0,0,i1\n' +
+	'C=-0.3019,2.0500;0,0,i1\n' +
+	'C=-1.6010,5.8000;0,0,i0\n' +
+	'O=-0.3019,6.5500;0,0,i1\n' +
+	'O=-2.9000,6.5500;0,0,i0\n' +
+	'O=0.9971,4.3000;0,0,i0\n' +
+	'C=2.2962,3.5500;0,0,i0\n' +
+	'C=3.5952,4.3000;0,0,i3\n' +
+	'O=2.2962,2.0500;0,0,i0\n' +
+	'1-2=1,0\n' +
+	'1-3=2,0\n' +
+	'2-4=2,0\n' +
+	'4-5=1,0\n' +
+	'5-6=2,0\n' +
+	'6-3=1,0\n' +
+	'1-7=1,0\n' +
+	'7-8=1,0\n' +
+	'7-9=2,0\n' +
+	'3-10=1,0\n' +
+	'10-11=1,0\n' +
+	'11-12=1,0\n' +
+	'11-13=2,0\n' +
+	'!End';
+
+const CAFFEINE =
+	'SketchEl!(14,15)\n' +
+	'N=-0.2062,0.7255;0,0,i0\n' +
+	'C=1.0929,1.4755;0,0,i0\n' +
+	'C=-1.5052,1.4755;0,0,i0\n' +
+	'C=1.0929,2.9755;0,0,i0\n' +
+	'C=-0.2062,3.7255;0,0,i0\n' +
+	'N=-1.5052,2.9755;0,0,i0\n' +
+	'N=2.5142,1.0083;0,0,i0\n' +
+	'C=3.3966,2.2166;0,0,i1\n' +
+	'N=2.5208,3.4370;0,0,i0\n' +
+	'O=-2.8042,0.7255;0,0,i0\n' +
+	'O=-0.2062,5.2255;0,0,i0\n' +
+	'C=2.9896,4.8619;0,0,i3\n' +
+	'C=-2.8042,3.7255;0,0,i3\n' +
+	'C=-0.2062,-0.7745;0,0,i3\n' +
+	'1-2=1,0\n' +
+	'1-3=1,0\n' +
+	'2-4=2,0\n' +
+	'4-5=1,0\n' +
+	'5-6=1,0\n' +
+	'6-3=1,0\n' +
+	'9-8=1,0\n' +
+	'8-7=2,0\n' +
+	'7-2=1,0\n' +
+	'4-9=1,0\n' +
+	'3-10=2,0\n' +
+	'5-11=2,0\n' +
+	'9-12=1,0\n' +
+	'6-13=1,0\n' +
+	'1-14=1,0\n' +
+	'!End';
+
 export class Cookies
 {
 	private molecules:Molecule[] = [];
 
-	private ASPIRIN =
-		'SketchEl!(13,13)\n' +
-		'C=-1.6010,4.3000;0,0,i0\n' +
-		'C=-2.9000,3.5500;0,0,i1\n' +
-		'C=-0.3019,3.5500;0,0,i0\n' +
-		'C=-2.9000,2.0500;0,0,i1\n' +
-		'C=-1.6010,1.3000;0,0,i1\n' +
-		'C=-0.3019,2.0500;0,0,i1\n' +
-		'C=-1.6010,5.8000;0,0,i0\n' +
-		'O=-0.3019,6.5500;0,0,i1\n' +
-		'O=-2.9000,6.5500;0,0,i0\n' +
-		'O=0.9971,4.3000;0,0,i0\n' +
-		'C=2.2962,3.5500;0,0,i0\n' +
-		'C=3.5952,4.3000;0,0,i3\n' +
-		'O=2.2962,2.0500;0,0,i0\n' +
-		'1-2=1,0\n' +
-		'1-3=2,0\n' +
-		'2-4=2,0\n' +
-		'4-5=1,0\n' +
-		'5-6=2,0\n' +
-		'6-3=1,0\n' +
-		'1-7=1,0\n' +
-		'7-8=1,0\n' +
-		'7-9=2,0\n' +
-		'3-10=1,0\n' +
-		'10-11=1,0\n' +
-		'11-12=1,0\n' +
-		'11-13=2,0\n' +
-		'!End';
-
-	private CAFFEINE =
-		'SketchEl!(14,15)\n' +
-		'N=-0.2062,0.7255;0,0,i0\n' +
-		'C=1.0929,1.4755;0,0,i0\n' +
-		'C=-1.5052,1.4755;0,0,i0\n' +
-		'C=1.0929,2.9755;0,0,i0\n' +
-		'C=-0.2062,3.7255;0,0,i0\n' +
-		'N=-1.5052,2.9755;0,0,i0\n' +
-		'N=2.5142,1.0083;0,0,i0\n' +
-		'C=3.3966,2.2166;0,0,i1\n' +
-		'N=2.5208,3.4370;0,0,i0\n' +
-		'O=-2.8042,0.7255;0,0,i0\n' +
-		'O=-0.2062,5.2255;0,0,i0\n' +
-		'C=2.9896,4.8619;0,0,i3\n' +
-		'C=-2.8042,3.7255;0,0,i3\n' +
-		'C=-0.2062,-0.7745;0,0,i3\n' +
-		'1-2=1,0\n' +
-		'1-3=1,0\n' +
-		'2-4=2,0\n' +
-		'4-5=1,0\n' +
-		'5-6=1,0\n' +
-		'6-3=1,0\n' +
-		'9-8=1,0\n' +
-		'8-7=2,0\n' +
-		'7-2=1,0\n' +
-		'4-9=1,0\n' +
-		'3-10=2,0\n' +
-		'5-11=2,0\n' +
-		'9-12=1,0\n' +
-		'6-13=1,0\n' +
-		'1-14=1,0\n' +
-		'!End';
-
-	private MAX_MOL_STASH = 20; // when more than this many molecules is accumulate, drop things off the edge
+	private static MAX_MOL_STASH = 20; // when more than this many molecules is accumulate, drop things off the edge
 
 	// --------------------------------------- public methods ---------------------------------------
 
@@ -132,7 +132,7 @@ export class Cookies
 			return;
 		}
 		this.molecules.splice(0, 0, mol);
-		while (this.molecules.length > this.MAX_MOL_STASH) this.molecules.pop();
+		while (this.molecules.length > Cookies.MAX_MOL_STASH) this.molecules.pop();
 		this.setMolecules();
 	}
 
@@ -149,8 +149,8 @@ export class Cookies
 	public seedMolecules():void
 	{
 		this.molecules = [];
-		this.molecules.push(Molecule.fromString(this.CAFFEINE));
-		this.molecules.push(Molecule.fromString(this.ASPIRIN));
+		this.molecules.push(Molecule.fromString(CAFFEINE));
+		this.molecules.push(Molecule.fromString(ASPIRIN));
 		this.setMolecules();
 	}
 
