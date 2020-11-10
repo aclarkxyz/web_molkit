@@ -68,7 +68,7 @@ module.exports =
 		'no-undef-init': ['error'],
 		'quote-props': ['error', 'always'],
 		'semi': ['error', 'always'],
-		'space-before-function-paren': ['error', 'never'],
+		'space-before-function-paren': ['error', {'anonymous': 'never', 'named': 'never', 'asyncArrow': 'always'}],
 		'space-in-parens': ['error', 'never'],
 		'@typescript-eslint/member-delimiter-style':
 		[

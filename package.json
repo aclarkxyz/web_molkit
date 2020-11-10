@@ -1,11 +1,11 @@
 {
-    "name": "placeholder",
-    "version": "0.0.0",
-    "devDependencies": 
-    {
-        "typescript": "^4.0"
-    },
-    "scripts": 
+	"name": "placeholder",
+	"version": "0.0.0",
+	"devDependencies": 
+	{
+		"typescript": "^4.0"
+	},
+	"scripts": 
 	{
 		"eslint": "eslint src/**/*.ts"
 	}
