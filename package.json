@@ -1,12 +1,15 @@
 {
 	"name": "placeholder",
 	"version": "0.0.0",
-	"devDependencies": 
-	{
-		"typescript": "^4.0"
+	"devDependencies": {
+		"electron": "^9.0",
+		"electron-packager": "^8.1.0",
+		"typescript": "^4.0",
+		"eslint": "^7.0",
+		"@typescript-eslint/parser": "^4.7",
+		"@typescript-eslint/eslint-plugin": "^4.7"
 	},
-	"scripts": 
-	{
+	"scripts": {
 		"eslint": "eslint src/**/*.ts"
 	}
 }
