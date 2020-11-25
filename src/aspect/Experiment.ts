@@ -10,6 +10,8 @@
 	[PKG=webmolkit]
 */
 
+///<reference path='Aspect.ts'/>
+
 namespace WebMolKit /* BOF */ {
 
 /*

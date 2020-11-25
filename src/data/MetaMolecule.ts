@@ -319,7 +319,7 @@ export class MetaMolecule
 		// certain double bonds are considered to have restricted rotation constraints
 		for (let n = 1; n <= mol.numBonds; n++)
 		{
-			if (mol.bondOrder(n) != 2 || this.isBondAromatic(n)) continue;
+			if (mol.bondOrder(n) != 2 || mol.bondType(n) == Molecule.BONDTYPE_UNKNOWN || this.isBondAromatic(n)) continue;
 
 			let bfr = mol.bondFrom(n), bto = mol.bondTo(n);
 			let blk1 = Chemistry.ELEMENT_BLOCKS[mol.atomicNumber(bfr)];

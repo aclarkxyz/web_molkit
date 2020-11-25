@@ -135,7 +135,8 @@ export class MDLMOLWriter
 				if (mol.atomHExplicit(n) != Molecule.HEXPLICIT_UNKNOWN) {hydidx.push(n); hydval.push(mol.atomHExplicit(n));}
 		   	}
 
-			if (mol.atomUnpaired(n) != 0) {radidx.push(n); radval.push(mol.atomUnpaired(n));}
+			if (rad == 1) {radidx.push(n); radval.push(2);}
+			if (rad == 2) {radidx.push(n); radval.push(1);}
 			if (mol.atomIsotope(n) != Molecule.ISOTOPE_NATURAL) {isoidx.push(n); isoval.push(mol.atomIsotope(n));}
 		}
 
