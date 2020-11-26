@@ -2152,6 +2152,8 @@ export class Sketcher extends DrawCanvas
 	private contextMenu(event:JQueryEventObject):void
 	{
 		event.preventDefault();
+		event.stopPropagation();
+
 		this.dragType = DraggingTool.None;
 
 		if (!this.proxyMenu) return;

@@ -26,6 +26,7 @@ export class EditCompound extends Dialog
 	protected sketcher = new Sketcher();
 
 	private proxyClip:ClipboardProxy = null;
+	private proxyMenu:MenuProxy = null;
 
 	private callbackSave:(source?:EditCompound) => void = null;
 
@@ -64,6 +65,12 @@ export class EditCompound extends Dialog
 		};
 		proxy.pushHandler(handler);
 		this.sketcher.defineClipboard(proxy);
+	}
+
+	public defineContext(proxy:MenuProxy):void
+	{
+		this.proxyMenu = proxy;
+		this.sketcher.defineContext(proxy);
 	}
 
 	public close():void
