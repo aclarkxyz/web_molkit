@@ -28,6 +28,7 @@ export interface MeasurementDataField
 {
 	name:string;
 	units:string[];
+	defnURI:string[];
 }
 
 export interface MeasurementDataHeader
@@ -231,8 +232,18 @@ export class MeasurementData extends Aspect
 				let bits = line.substring(eq + 1).split(',');
 				if (bits.length >= 2)
 				{
-					let f:MeasurementDataField = {'name': MoleculeStream.skUnescape(bits[0]), 'units': []};
+					let f:MeasurementDataField = {'name': MoleculeStream.skUnescape(bits[0]), 'units': [], 'defnURI': []};
 					for (let n = 1; n < bits.length; n++) f.units.push(MoleculeStream.skUnescape(bits[n]));
+				}
+			}
+			else if (line.startsWith('definition='))
+			{
+				let bits = line.substring(eq + 1).split(',');
+				if (bits.length >= 2)
+				{
+					let f = header.fields.find((f) => f.name == bits[0]);
+					if (!f) continue;
+					for (let n = 1; n < bits.length; n++) f.defnURI.push(MoleculeStream.skUnescape(bits[n]));
 				}
 			}
 		}
@@ -254,6 +265,13 @@ export class MeasurementData extends Aspect
 			let line = 'field=' + MoleculeStream.skEscape(f.name);
 			for (let u of f.units) line += ',' + MoleculeStream.skEscape(u);
 			lines.push(line);
+
+			if (Vec.notBlank(f.defnURI))
+			{
+				line = 'definition=' + MoleculeStream.skEscape(f.name);
+				for (let d of f.defnURI) line += ',' + MoleculeStream.skEscape(d);
+				lines.push(line);
+			}
 		}
 
 		return lines.join('\n');

@@ -77,6 +77,12 @@ export class AspectList
 		}
 		return aspects;
 	}
+
+	// fetches just the name of an aspect, without instantiating it
+	public aspectName(code:string):string
+	{
+		return SUPPORTED_ASPECTS[code];
+	}
 }
 
 /* EOF */ }
