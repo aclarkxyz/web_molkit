@@ -42,12 +42,13 @@ export class MenuProxyWeb extends MenuProxy
 	{
 		let [x, y] = eventCoords(event, document.body);
 		//let x = event.screenX, y = event.screenY;
-		let divCursor = $('<div/>').appendTo(document.body).css({'position': 'absolute'});
+		let divCursor = $('<div/>').appendTo(document.body).css({'position': 'absolute', 'user-select': 'none'});
 		setBoundaryPixels(divCursor, x - 5, y - 5, 10, 10);
 		let currentFocus = $(document.activeElement);
 		let popup = new Popup(divCursor);
  		popup.callbackPopulate = () =>
 		{
+			popup.body().css({'user-select': 'none'});
 			for (let menuItem of menuItems)
 			{
 				let div = $('<div/>').appendTo(popup.body());
