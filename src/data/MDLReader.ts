@@ -414,7 +414,7 @@ export class MDLMOLReader
 					if (pos < 1) throw 'Invalid MDL MOL: M-block';
 
 					if (type == MBLK_CHG) this.mol.setAtomCharge(pos, val);
-					else if (type == MBLK_RAD) 
+					else if (type == MBLK_RAD)
 					{
 						if (val == 1 || val == 3) this.mol.setAtomUnpaired(pos, 2);
 						else if (val == 2) this.mol.setAtomUnpaired(pos, 1);
@@ -652,7 +652,7 @@ export class MDLMOLReader
 				if (eq < 0) continue;
 				let key = bits[i].substring(0, eq), val = bits[i].substring(eq + 1);
 				if (key == 'CHG') this.mol.setAtomCharge(a, parseInt(val));
-				else if (key == 'RAD') 
+				else if (key == 'RAD')
 				{
 					let spin = parseInt(val);
 					if (spin == 1 || spin == 3) this.mol.setAtomUnpaired(a, 2);

@@ -210,6 +210,13 @@ export function setBoundaryPixels(dom:JQuery, x:number, y:number, w:number, h:nu
 	dom.css({'left': x + 'px', 'top': y + 'px', 'width': w + 'px', 'height': h + 'px'});
 }
 
+// return the object's screen position as [x, y, w, h]
+export function getBoundaryPixels(dom:JQuery):[number, number, number, number]
+{
+	let offset = dom.offset();
+	return [offset.left, offset.top, dom.width(), dom.height()];
+}
+
 // geometry functions
 export function norm_xy(dx:number, dy:number):number
 {
