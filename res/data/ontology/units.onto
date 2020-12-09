@@ -1,0 +1,16 @@
+http://purl.obolibrary.org/obo/UO_0000000 units
+
+- http://purl.obolibrary.org/obo/UO_0000051 concentration units
+- - http://purl.obolibrary.org/obo/UO_0000062 moles per litre (mol/L)
+- - http://purl.obolibrary.org/obo/UO_0000063 millimoles per litre (mmol/L)
+- - http://purl.obolibrary.org/obo/UO_0000064 micromoles per litre (umol/L)
+- - http://purl.obolibrary.org/obo/UO_0000065 nanomoles per litre (nmol/L)
+- - http://purl.obolibrary.org/obo/UO_0000066 picomoles per litre (pmol/L)
+- - http://www.bioassayontology.org/bao#BAO_0000101 log10 of mol/L
+- - http://www.bioassayontology.org/bao#BAO_0000102 -log10 of mol/L
+- - http://purl.obolibrary.org/obo/UO_0000175 grams per litre (g/L)
+- - http://purl.obolibrary.org/obo/UO_0000273 milligrams per litre (mg/L)
+- - http://purl.obolibrary.org/obo/UO_0000275 micrograms per litre (ug/L)
+
+- http://purl.obolibrary.org/obo/UO_0000186 dimensionless unit
+- - http://www.bioassayontology.org/bao#BAO_0080023 binary (true/false)

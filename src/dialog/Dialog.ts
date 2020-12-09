@@ -32,6 +32,7 @@ export class Dialog
 	public maxPortionWidth = 80; //  ...
 	public maximumWidth = 0; // optional pixel-specific maximum
 	public maximumHeight = 0;
+	public minPortionHeight = 20; // minimum % vertical height, if too small
 	public maxPortionHeight = 0; // optional % of vertical height allowed
 	public topMargin = 50; // pixels to reserve along the top
 	public title = 'Dialog';
@@ -104,24 +105,30 @@ export class Dialog
 		pb.css('position', 'absolute');
 		pb.css('left', (50 - 0.5 * this.minPortionWidth) + '%');
 		pb.css('top', (/*window.scrollY +*/ this.topMargin) + 'px');
-		pb.css('min-height', '20%');
+		pb.css('min-height', this.minPortionHeight + '%');
 		//pb.css('z-index', 10000);
 		//pb.click((event:JQueryMouseEventObject) => event.preventDefault());
 		//pb.mousedown((event:JQueryMouseEventObject) => event.preventDefault());
 
-		let tdiv = $('<div/>').appendTo(pb);
-		tdiv.css('width', '100%');
+		let divOuter = $('<div/>').appendTo(pb).css({'display': 'flex'});
+		divOuter.css({'flex-direction': 'column', 'align-items': 'stretch'});
+		if (this.maximumHeight > 0) divOuter.css('max-height', this.maximumHeight + 'px');
+		else if (this.maxPortionHeight > 0) divOuter.css('max-height', this.maxPortionHeight + 'vh');
+		let tdiv = $('<div/>').appendTo(divOuter);
+		//tdiv.css('width', '100%');
+		tdiv.css({'flex-shrink': '0', 'flex-grow': '0'});
+		tdiv.css({'margin': '0', 'padding': '0'});
 		tdiv.css('background-color', '#F0F0F0');
 		tdiv.css('background-image', 'linear-gradient(to right bottom, #FFFFFF, #E0E0E0)');
 		tdiv.css('border-bottom', '1px solid #C0C0C0');
 		tdiv.css('border-radius', '6px 6px 0 0');
-		tdiv.css('margin', 0);
-		tdiv.css('padding', 0);
 		this.titleDiv = tdiv;
 
-		let bdiv = $('<div/>').appendTo(pb).css({'width': '100%'});
+		let bdiv = $('<div/>').appendTo(divOuter).css({'width': '100%'});
+		bdiv.css({'flex-shrink': '1', 'flex-grow': '0'});
+		bdiv.css({'overflow-y': 'auto'});
 
-		this.bodyDiv = $('<div style="padding: 0.5em;"/>').appendTo(bdiv); // (has to be nested, otherwise runs over)
+		this.bodyDiv = $('<div/>').appendTo(bdiv).css({'padding': '0.5em'}); // (has to be nested, otherwise runs over)
 
 		let ttlTable = $('<table/>').appendTo(tdiv), tr = $('<tr/>').appendTo(ttlTable);
 		ttlTable.attr('width', '100%');

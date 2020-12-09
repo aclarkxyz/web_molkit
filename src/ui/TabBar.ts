@@ -1,7 +1,7 @@
 /*
     WebMolKit
 
-    (c) 2010-2018 Molecular Materials Informatics, Inc.
+    (c) 2010-2020 Molecular Materials Informatics, Inc.
 
     All rights reserved
 
@@ -18,6 +18,8 @@ namespace WebMolKit /* BOF */ {
 
 export class TabBar extends Widget
 {
+	private unionHeight = false; // if true, height of tab bar will be set to the maximum of all components
+
 	private selidx = 0;
 	private buttonDiv:JQuery[] = [];
 	private panelDiv:JQuery[] = [];
@@ -57,37 +59,28 @@ export class TabBar extends Widget
 	{
 		super.render(parent);
 
-		let grid = $('<div/>').appendTo(this.content);
-		grid.css('display', 'grid');
-		grid.css('align-items', 'center');
-		grid.css('justify-content', 'start');
-		grid.css('grid-row-gap', '0.5em');
+		let grid = $('<div/>').appendTo(this.content).css('display', 'grid');
+		grid.css({'align-items': 'center', 'justify-content': 'start', 'grid-row-gap': '0.5em'});
 		let columns = '[start] 1fr ';
 		for (let n = 0; n < this.options.length; n++) columns += '[btn' + n + '] auto ';
 		columns += '[btnX] 1fr [end]';
 		grid.css('grid-template-columns', columns);
 
 		let underline = $('<div/>').appendTo(grid);
-		underline.css('grid-column', 'start / end');
-		underline.css('grid-row', '1');
+		underline.css({'grid-column': 'start / end', 'grid-row': '1', 'height': '100%'});
 		underline.css('border-bottom', '1px solid #C0C0C0');
-		underline.css('height', '100%');
 
 		for (let n = 0; n < this.options.length; n++)
 		{
 			let outline = $('<div class="wmk-tabbar-cell"/>').appendTo(grid);
-			outline.css('grid-column', 'btn' + n);
-			outline.css('grid-row', '1');
+			outline.css({'grid-column': 'btn' + n, 'grid-row': '1'});
 			let btn = $('<div class="wmk-tabbar"/>').appendTo(outline);
 			btn.css('padding', this.padding + 'px');
 			this.buttonDiv.push(btn);
 
 			let panel = $('<div/>').appendTo(grid);
-			panel.css('grid-column', 'start / end');
-			panel.css('grid-row', '2');
-			panel.css('align-self', 'start');
-			panel.css('justify-self', 'center');
-			panel.css({'width': '100%'});
+			panel.css({'grid-column': 'start / end', 'grid-row': '2'});
+			panel.css({'align-self': 'start', 'justify-self': 'center', 'width': '100%'});
 			this.panelDiv.push(panel);
 		}
 
@@ -153,7 +146,10 @@ export class TabBar extends Widget
 			}
 			else div.addClass('wmk-tabbar-selected');
 
-			this.panelDiv[n].css('visibility', n == this.selidx ? 'visible' : 'hidden');
+			if (this.unionHeight)
+				this.panelDiv[n].css('visibility', n == this.selidx ? 'visible' : 'hidden');
+			else
+				this.panelDiv[n].css('display', n == this.selidx ? 'block': 'none');
 		}
 	}
 
