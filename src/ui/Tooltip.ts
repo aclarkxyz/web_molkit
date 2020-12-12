@@ -27,7 +27,7 @@ export function addTooltip(parent:any, bodyHTML:string, titleHTML?:string, delay
 
 	let widget = $(parent);
 
-	const tooltip = new Tooltip(widget, bodyHTML, titleHTML, delay == null ? 1000 : delay);
+	let tooltip = new Tooltip(widget, bodyHTML, titleHTML, delay == null ? 1000 : delay);
 
 	widget.mouseenter(() => tooltip.start());
 	widget.mouseleave(() => tooltip.stop());
@@ -97,6 +97,8 @@ export class Tooltip
 
 	public raise(avoid?:Box)
 	{
+		if (this.widget.closest(document.documentElement).length == 0) return; // 'tis gone
+
 		//let pageWidth = $(document).width(), pageHeight = $(document).height();
 		globalTooltip = this;
 

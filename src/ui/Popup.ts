@@ -96,6 +96,8 @@ export class Popup
 		this.obscureForeground.remove();
 
 		if (this.callbackClose) this.callbackClose(this);
+
+		clearTooltip();
 	}
 
 	// sizes may have changed, so adjust if necessary
@@ -119,6 +121,8 @@ export class Popup
 	// have this called when the size may have changed, and need to update position
 	private positionAndShow():void
 	{
+		clearTooltip();
+
 		let winW = $(window).width(), winH = $(window).height();
 		const GAP = 2;
 		let client = this.parent[0].getBoundingClientRect();

@@ -85,6 +85,13 @@ export class MeasurementData extends Aspect
 		this.ds.appendExtension(MeasurementData.NAME, MeasurementData.CODE, content);
 	}
 
+	// applies the header, and also updates the columns if necessary
+	public effectHeader(header:MeasurementDataHeader):void
+	{
+		this.setHeader(header);
+		this.ensureFields();
+	}
+
 	// renames a field, updating both the header and the underlying columns
 	public rename(field:number, newName:string):void
 	{
@@ -191,6 +198,18 @@ export class MeasurementData extends Aspect
 			break;
 		}
 
+		this.ensureFields();
+
+		if (!got && this.allowModify)
+		{
+			let content = this.formatMetaData(this.header);
+			this.ds.appendExtension(MeasurementData.NAME, MeasurementData.CODE, content);
+		}
+	}
+
+	// makes sure the fields mentioned in the header are available
+	private ensureFields():void
+	{
 		for (let f of this.header.fields)
 		{
 			let descr = 'Measurement';
@@ -204,12 +223,6 @@ export class MeasurementData extends Aspect
 				this.ds.ensureColumn(f.name + '_units', DataSheetColumn.String, 'Units');
 				this.ds.ensureColumn(f.name + '_mod', DataSheetColumn.String, 'Modifier');
 			}
-		}
-
-		if (!got && this.allowModify)
-		{
-			let content = this.formatMetaData(this.header);
-			this.ds.appendExtension(MeasurementData.NAME, MeasurementData.CODE, content);
 		}
 	}
 
@@ -234,6 +247,7 @@ export class MeasurementData extends Aspect
 				{
 					let f:MeasurementDataField = {'name': MoleculeStream.skUnescape(bits[0]), 'units': [], 'defnURI': []};
 					for (let n = 1; n < bits.length; n++) f.units.push(MoleculeStream.skUnescape(bits[n]));
+					header.fields.push(f);
 				}
 			}
 			else if (line.startsWith('definition='))
@@ -247,7 +261,6 @@ export class MeasurementData extends Aspect
 				}
 			}
 		}
-
 		return header;
 	}
 
@@ -258,7 +271,7 @@ export class MeasurementData extends Aspect
 
 		for (let u of header.units)
 		{
-			lines.push('unit=' + MoleculeStream.skEscape(u.name) + ',' + MoleculeStream.skEscape(u.uri) + '\n');
+			lines.push('unit=' + MoleculeStream.skEscape(u.name) + ',' + MoleculeStream.skEscape(u.uri));
 		}
 		for (let f of header.fields)
 		{
@@ -299,6 +312,31 @@ export class MeasurementData extends Aspect
 		for (let col of colNames) resv.push(names.has(col));
 		return resv;
 	}
+
+	public numTextRenderings(row:number):number {return this.header.fields.length;}
+	public produceTextRendering(row:number, idx:number):AspectTextRendering
+	{
+		let field = this.header.fields[idx];
+		let colField = this.ds.findColByName(field.name)
+
+		let tr:AspectTextRendering =
+		{
+			'name': field.name,
+			'descr': colField < 0 ? '' : this.ds.colDescr(colField),
+			'text': '',
+			'type': Aspect.TEXT_PLAIN
+		};
+
+		let datum = this.getValue(row, idx)
+		if (!Number.isNaN(datum.value))
+		{
+			if (datum.mod) tr.text += datum.mod + ' ';
+			tr.text += datum.value;
+			if (!Number.isNaN(datum.error)) tr.text += ' \u{2213} ' + datum.error;
+			if (datum.units) tr.text += ' ' + datum.units;
+		}
+		return tr;
+	}	
 }
 
 /* EOF */ }
