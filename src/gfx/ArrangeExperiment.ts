@@ -291,7 +291,7 @@ export class ArrangeExperiment
 		xc.step = step;
 		xc.side = -1;
 		if (MolUtil.notBlank(comp.mol)) xc.mol = comp.mol;
-		if (name && (this.includeNames || MolUtil.isBlank(comp.mol))) xc.text = name;
+		if (comp.name && (this.includeNames || MolUtil.isBlank(comp.mol))) xc.text = comp.name;
 		if (this.includeStoich && !QuantityCalc.isStoichZero(comp.stoich) && !QuantityCalc.isStoichUnity(comp.stoich))
 		{
 			let slash = comp.stoich.indexOf('/');
@@ -315,7 +315,7 @@ export class ArrangeExperiment
 		xc.step = step;
 		xc.side = 0;
 		if (MolUtil.notBlank(comp.mol)) xc.mol = comp.mol;
-		if (name && (this.includeNames || MolUtil.isBlank(comp.mol))) xc.text = name;
+		if (comp.name && (this.includeNames || MolUtil.isBlank(comp.mol))) xc.text = comp.name;
 		//if (MolUtil.isBlank(xc.mol) && !xc.text) xc.text = '?';
 
 		if (this.includeAnnot)
@@ -343,7 +343,7 @@ export class ArrangeExperiment
 		xc.step = step;
 		xc.side = 1;
 		if (MolUtil.notBlank(comp.mol)) xc.mol = comp.mol;
-		if (name && (this.includeNames || MolUtil.isBlank(comp.mol))) xc.text = comp.name;
+		if (comp.name && (this.includeNames || MolUtil.isBlank(comp.mol))) xc.text = comp.name;
 		//if (MolUtil.isBlank(xc.mol) && !xc.text) xc.text = '?';
 
 		if (this.includeStoich && !QuantityCalc.isStoichZero(comp.stoich) && !QuantityCalc.isStoichUnity(comp.stoich))

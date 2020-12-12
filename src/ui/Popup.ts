@@ -78,9 +78,9 @@ export class Popup
 		let pb = this.panelBoundary = $('<div class="wmk-popup"/>').appendTo(fg);
 		pb.click((event:JQueryEventObject) => event.stopPropagation()); // don't let the click percolate upward to the close event
 		pb.css({'background-color': this.popupBackground, 'border': '1px solid black'});
-		pb.css({'position': 'absolute'});
+		pb.css({'position': 'absolute', 'overflow': 'auto'});
 
-		this.bodyDiv = $('<div/>').appendTo(pb).css('padding', '0.5em');
+		this.bodyDiv = $('<div/>').appendTo(pb).css({'padding': '0.5em'});
 
 		bg.show();
 
@@ -121,9 +121,8 @@ export class Popup
 	{
 		let winW = $(window).width(), winH = $(window).height();
 		const GAP = 2;
-		let wx1 = this.parent.offset().left - window.scrollX;
-		let wy1 = this.parent.offset().top - window.scrollY;
-		let wx2 = wx1 + this.parent.width(), wy2 = wy1 + this.parent.height();
+		let client = this.parent[0].getBoundingClientRect();
+		let wx1 = client.left, wy1 = client.top, wx2 = client.right, wy2 = client.bottom;
 
 		let pb = this.panelBoundary;
 
@@ -136,12 +135,21 @@ export class Popup
 			let posX = 0, posY = 0;
 			if (wx1 + popW < winW) posX = wx1;
 			else if (popW < wx2) posX = wx2 - popW;
+
 			if (wy2 + GAP + popH < winH) posY = wy2 + GAP;
 			else if (wy1 - GAP - popH > 0) posY = wy1 - GAP - popH;
-			else posY = wy2 + GAP;
+			else if (winH - wy2 > wy1)
+			{
+				posY = wy2 + GAP;
+				popH = winH - posY - GAP;
+			}
+			else // wy1 >= winH - wy2
+			{
+				posY = GAP;
+				popH = wy1 - posY - GAP;
+			}
 
-			pb.css('left', `${posX}px`);
-			pb.css('top', `${posY}px`);
+			setBoundaryPixels(pb, posX, posY, popW, popH);
 		};
 
 		setPosition();

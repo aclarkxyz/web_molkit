@@ -60,6 +60,8 @@ export class OntologyTree
 	private roots:OntologyTreeTerm[] = [];
 	private mapTerms = new Map<string, OntologyTreeTerm[]>(); // uri-to-term(s)
 
+	private alreadyLoaded = new Set<string>(); // prevent double-loading files
+
 	// ------------------ public methods --------------------
 
 	constructor()
@@ -117,6 +119,9 @@ export class OntologyTree
 	// fetches a file and loads it up; throws an exception if it didn't work
 	public async loadFromURL(url:string):Promise<void>
 	{
+		if (this.alreadyLoaded.has(url)) return;
+		this.alreadyLoaded.add(url);
+
 		let text = await readTextURL(url);
 		if (!text) throw `Resource not found: ${url}`;
 		this.loadContent(text);
@@ -159,6 +164,7 @@ export class OntologyTree
 					{
 						term.parent = termList[n];
 						termList[n].children.push(term);
+						break;
 					}
 					if (!term.parent) throw `Line ${pos} invalid hierarchy, no parent found`;
 				}
