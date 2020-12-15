@@ -149,7 +149,7 @@ export class TabBar extends Widget
 			if (this.unionHeight)
 				this.panelDiv[n].css('visibility', n == this.selidx ? 'visible' : 'hidden');
 			else
-				this.panelDiv[n].css('display', n == this.selidx ? 'block': 'none');
+				this.panelDiv[n].css('display', n == this.selidx ? 'block' : 'none');
 		}
 	}
 

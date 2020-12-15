@@ -317,7 +317,7 @@ export class MeasurementData extends Aspect
 	public produceTextRendering(row:number, idx:number):AspectTextRendering
 	{
 		let field = this.header.fields[idx];
-		let colField = this.ds.findColByName(field.name)
+		let colField = this.ds.findColByName(field.name);
 
 		let tr:AspectTextRendering =
 		{
@@ -327,7 +327,7 @@ export class MeasurementData extends Aspect
 			'type': Aspect.TEXT_PLAIN
 		};
 
-		let datum = this.getValue(row, idx)
+		let datum = this.getValue(row, idx);
 		if (!Number.isNaN(datum.value))
 		{
 			if (datum.mod) tr.text += datum.mod + ' ';
@@ -336,7 +336,7 @@ export class MeasurementData extends Aspect
 			if (datum.units) tr.text += ' ' + datum.units;
 		}
 		return tr;
-	}	
+	}
 }
 
 /* EOF */ }
