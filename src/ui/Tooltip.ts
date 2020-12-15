@@ -57,7 +57,7 @@ export class Tooltip
 	{
 		if (globalPopover == null)
 		{
-			globalPopover = $(document.createElement('div'));
+			/*globalPopover = $(document.createElement('div'));
 			globalPopover.css('position', 'absolute');
 			globalPopover.css('background-color', '#F0F0FF');
 			globalPopover.css('background-image', 'linear-gradient(to right bottom, #FFFFFF, #D0D0FF)');
@@ -65,6 +65,10 @@ export class Tooltip
 			globalPopover.css('border', '1px solid black');
 			globalPopover.css('z-index', 22000);
 			globalPopover.css('border-radius', '4px');
+			*/
+			globalPopover = $('<div/>').css({'position': 'absolute', 'z-index': 22000});
+			globalPopover.css({'background-color': '#F0F0FF', 'background-image': 'linear-gradient(to right bottom, #FFFFFF, #D0D0FF)'});
+			globalPopover.css({'color': 'black', 'border': '1px solid black', 'border-radius': '4px'});
 			globalPopover.hide();
 			globalPopover.appendTo(document.body);
 		}
@@ -105,21 +109,21 @@ export class Tooltip
 		let pop = globalPopover;
 		pop.css('max-width', '20em');
 		pop.empty();
-		let div = $('<div></div>').appendTo(pop);
-		div.css('padding', '0.3em');
+		let div = $('<div></div>').appendTo(pop).css({'padding': '0.3em'});
 
 		let hasTitle = this.titleHTML != null && this.titleHTML.length > 0, hasBody = this.bodyHTML != null && this.bodyHTML.length > 0;
 
-		if (hasTitle) ($('<div></div>').appendTo(div)).html('<b>' + this.titleHTML + '</b>');
+		if (hasTitle) $('<div/>').appendTo(div).html('<b>' + this.titleHTML + '</b>');
 		if (hasTitle && hasBody) div.append('<hr>');
-		if (hasBody) ($('<div></div>').appendTo(div)).html(this.bodyHTML);
+		if (hasBody) $('<div/>').appendTo(div).html(this.bodyHTML);
 
 		// to-do: title, if any
 
 		let winW = $(window).width(), winH = $(window).height();
 		const GAP = 2;
-		let wx1 = this.widget.offset().left, wy1 = this.widget.offset().top;
-		let wx2 = wx1 + this.widget.width(), wy2 = wy1 + this.widget.height();
+		let boundDiv = this.widget[0].getBoundingClientRect();
+		let wx1 = boundDiv.left, wy1 = boundDiv.top;
+		let wx2 = wx1 + boundDiv.width, wy2 = wy1 + boundDiv.height;
 
 		// if more specific positioning is requested within the widget, adjust accordingly
 		if (avoid)
@@ -140,8 +144,10 @@ export class Tooltip
 			else if (wy1 - GAP - popH > 0) posY = wy1 - GAP - popH;
 			else posY = wy2 + GAP;
 
-			pop.css('left', `${posX}px`);
-			pop.css('top', `${posY}px`);
+			posX += window.pageXOffset;
+			posY += window.pageYOffset;
+
+			pop.css({'left': `${posX}px`, 'top': `${posY}px`});
 		};
 
 		setPosition();
