@@ -48,7 +48,7 @@ export class MenuProxyWeb extends MenuProxy
 		let popup = new Popup(divCursor);
  		popup.callbackPopulate = () =>
 		{
-			popup.body().css({'user-select': 'none'});
+			popup.body().css({'user-select': 'none', 'font-size': '16px'});
 			for (let menuItem of menuItems)
 			{
 				let div = $('<div/>').appendTo(popup.body());
