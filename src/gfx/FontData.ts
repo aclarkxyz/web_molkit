@@ -18,6 +18,12 @@ namespace WebMolKit /* BOF */ {
 	FontData: stores information about the general font, sufficient to recreate and layout every glyph.
 */
 
+export interface FontDataNativeOpt
+{
+	bold?:boolean;
+	italic?:boolean;
+}
+
 export class FontData
 {
 	public static main = new FontData();
@@ -716,19 +722,25 @@ export class FontData
 		if (ctx == null && this.ctxReference) return;
 		if (ctx == null)
 		{
-			let canvas = $('<canvas></canvas>').appendTo(document.body);
+			let canvas = $('<canvas/>').appendTo(document.body);
 			this.ctxReference = (canvas[0] as HTMLCanvasElement).getContext('2d');
 			canvas.remove();
 		}
 		else this.ctxReference = ctx;
 	}
 
-	public static measureTextNative(txt:string, family:string, size:number):number[] {return this.main.measureTextNative(txt, family, size);}
-	public measureTextNative(txt:string, family:string, size:number):number[]
+	public static measureTextNative(txt:string, family:string, size:number, opt:FontDataNativeOpt = {}):number[] 
+	{
+		return this.main.measureTextNative(txt, family, size, opt);
+	}
+	public measureTextNative(txt:string, family:string, size:number, opt:FontDataNativeOpt = {}):number[]
 	{
 		if (!this.ctxReference) throw 'Calling measureTextNative without having called initNativeFont first';
 		this.ctxReference.save();
-		this.ctxReference.font = size + 'px ' + family;
+		let pfx = '';
+		if (opt.bold) pfx += 'bold ';
+		if (opt.italic) pfx += 'italic ';
+		this.ctxReference.font = pfx + size + 'px ' + family;
 		let metrics = this.ctxReference.measureText(txt);
 		this.ctxReference.restore();
 		// unfortunately the font-bounding values aren't implemented yet, and will come out as null; default to the same fudge-factors as built in font

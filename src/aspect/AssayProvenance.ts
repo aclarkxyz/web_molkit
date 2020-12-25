@@ -324,7 +324,7 @@ export class AssayProvenance extends Aspect
 			{
 				if (rel) tr.text += rel + ' ';
 				tr.text += val;
-				if (!Number.isNaN(error)) tr.text += ' \u2213 ' + error;
+				if (!Number.isNaN(error)) tr.text += ' \u{00B1} ' + error;
 				if (units) tr.text += ' ' + units;
 			}
 			return tr;

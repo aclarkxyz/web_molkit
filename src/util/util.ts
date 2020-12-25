@@ -148,27 +148,13 @@ export function blendRGB(fract:number, rgb1:number, rgb2:number, rgb3?:number):n
 	return (R << 16) | (G << 8) | B;
 }
 
-// takes a GMT date formatted as yyyy-mm-dd hh:mm:ss and converts it to the local timezone, and displays it
-// nicely (not including the time)
-/*function formatGMTDateNicely(gmtDate:string)
+// formats date nicely, as dd-mon-yyyy
+export function formatDate(date:Date):string
 {
-	if (!gmtDate) return '';
-	var regex = /^(\d\d\d\d)-(\d\d)-(\d\d) (\d\d):(\d\d):(\d\d)/;
-	var bits:string[] = gmtDate.match(regex);
-	if (!bits) return '';
-	for (var n = 1; n <= 6; n++) bits[n] = parseFloat(bits[n]);
-
-	var date = new goog.date.DateTime(bits[1], bits[2] - 1, bits[3], bits[4], bits[5], bits[6]);
-	var offset = new goog.date.Interval(goog.date.Interval.MINUTES, -date.getTimezoneOffset());
-	date.add(offset);
-
-	var day = date.getDate(), mon = date.getMonth(), year = date.getYear();
-	var MONTHS =
-	[
-		'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
-	];
+	const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+	let day = date.getDate(), mon = date.getMonth(), year = date.getFullYear(); 
 	return day + '-' + MONTHS[mon] + '-' + year;
-}*/
+}
 
 // goes through all text-node children and splices them together
 export function nodeText(node:Node):string
