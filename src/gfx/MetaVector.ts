@@ -524,8 +524,6 @@ export class MetaVector
 	{
 		this.typeObj = [];
 
-		// !! todo: alternate destination for embeddables, and check if they already exist?
-
 		const font = FontData.main;
 		let defs = $('<defs/>').appendTo(svg);
 		if (this.charMissing)
@@ -1147,6 +1145,7 @@ export class MetaVector
 		if (opt.italic) style += ' font-style: italic;';
 
 		let node = $('<text/>').appendTo(svg);
+		node.attr('xml:space', 'preserve');
 		node.attr({'x': x, 'y': y, 'style': style});
 		node.text(txt);
 	}

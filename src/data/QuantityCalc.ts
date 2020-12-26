@@ -77,11 +77,11 @@ export class QuantityCalc
 
 	public quantities:QuantityCalcComp[] = [];
 
-	private idxPrimary:number[] = [];
-	private idxYield:number[] = [];
-	private allMassReact:number[] = [];
-	private allMassProd:number[] = [];
-	private allMassWaste:number[] = [];
+	public idxPrimary:number[] = [];
+	public idxYield:number[] = [];
+	public allMassReact:number[] = [];
+	public allMassProd:number[] = [];
+	public allMassWaste:number[] = [];
 
 	public greenMetrics:GreenMetrics[] = [];
 
@@ -317,6 +317,7 @@ export class QuantityCalc
 		for (let n = 0; n < this.quantities.length; n++)
 		{
 			let qc = this.quantities[n];
+			
 			if (qc.type == ExperimentComponentType.Reactant || qc.type == ExperimentComponentType.Reagent)
 			{
 				if (qc.valueEquiv == 0 && qc.type == ExperimentComponentType.Reagent) continue;
@@ -752,7 +753,7 @@ export class QuantityCalc
 		let gm = new GreenMetrics();
 
 		gm.step = qc.step;
-		gm.idx = idx;
+		gm.idx = qc.idx;
 		gm.isBlank = true;
 
 		for (let n = 0; n < this.quantities.length; n++)

@@ -152,7 +152,7 @@ export function blendRGB(fract:number, rgb1:number, rgb2:number, rgb3?:number):n
 export function formatDate(date:Date):string
 {
 	const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-	let day = date.getDate(), mon = date.getMonth(), year = date.getFullYear(); 
+	let day = date.getDate(), mon = date.getMonth(), year = date.getFullYear();
 	return day + '-' + MONTHS[mon] + '-' + year;
 }
 

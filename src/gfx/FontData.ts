@@ -743,6 +743,7 @@ export class FontData
 		this.ctxReference.font = pfx + size + 'px ' + family;
 		let metrics = this.ctxReference.measureText(txt);
 		this.ctxReference.restore();
+
 		// unfortunately the font-bounding values aren't implemented yet, and will come out as null; default to the same fudge-factors as built in font
 		//return [metrics.width, metrics.fontBoundingBoxAscent, metrics.fontBoundingBoxDescent];
 		const FUDGE = this.ASCENT_FUDGE * this.ASCENT / this.UNITS_PER_EM;
