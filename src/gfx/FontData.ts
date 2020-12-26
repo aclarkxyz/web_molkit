@@ -729,7 +729,7 @@ export class FontData
 		else this.ctxReference = ctx;
 	}
 
-	public static measureTextNative(txt:string, family:string, size:number, opt:FontDataNativeOpt = {}):number[] 
+	public static measureTextNative(txt:string, family:string, size:number, opt:FontDataNativeOpt = {}):number[]
 	{
 		return this.main.measureTextNative(txt, family, size, opt);
 	}

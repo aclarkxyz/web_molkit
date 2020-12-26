@@ -375,75 +375,6 @@ export class MetaVector
 		this.transformPrimitives(0, 0, scale, scale);
 	}
 
-	/* NOTE: this is the older implementation - it recalibrates to the "lowest" position, which is more of an unwanted
-			artifact than a feature... I think...
-
-	// transforms the sizes and positions of the primitives; note that this should only be called within the building stage,
-	// just before everything is emitted to the output device
-	// scaling properties:
-	//		position=(position-lowest)*scale + lowest + offset
-	//		i.e., if (ox,oy) are zero, then the lower point does not change at all, but the upper bound is stretched
-	public transformPrimitives(ox:number, oy:number, sw:number, sh:number):void
-	{
-		if (ox == 0 && oy == 0 && sw == 1 && sh == 1) return;
-
-		for (let a of this.prims)
-		{
-			const type = a[0];
-			if (type == PRIM_LINE)
-			{
-				a[2] = ox + ((a[2] - this.lowX) * sw + this.lowX);
-				a[3] = oy + ((a[3] - this.lowY) * sh + this.lowY);
-				a[4] = ox + ((a[4] - this.lowX) * sw + this.lowX);
-				a[5] = oy + ((a[5] - this.lowY) * sh + this.lowY);
-			}
-			else if (type == PRIM_RECT)
-			{
-				a[2] = ox + ((a[2] - this.lowX) * sw + this.lowX);
-				a[3] = oy + ((a[3] - this.lowY) * sh + this.lowY);
-				a[4] = a[4] * sw;
-				a[5] = a[5] * sh;
-			}
-			else if (type == PRIM_OVAL)
-			{
-				a[2] = ox + ((a[2] - this.lowX) * sw + this.lowX);
-				a[3] = oy + ((a[3] - this.lowY) * sh + this.lowY);
-				a[4] *= sw;
-				a[5] *= sh;
-			}
-			else if (type == PRIM_PATH)
-			{
-				let sz = a[2], px = a[3], py = a[4];
-				for (let n = 0; n < sz; n++)
-				{
-					px[n] = ox + ((px[n] - this.lowX) * sw + this.lowX);
-					py[n] = oy + ((py[n] - this.lowY) * sh + this.lowY);
-				}
-			}
-			else if (type == PRIM_TEXT || type == PRIM_TEXTNATIVE)
-			{
-				a[2] = ox + ((a[2] - this.lowX) * sw + this.lowX);
-				a[3] = oy + ((a[3] - this.lowY) * sh + this.lowY);
-			}
-		}
-		let swsh = 0.5 * (sw + sh);
-		if (swsh != 1) for (let t of this.types)
-		{
-			const type = t[0];
-			if (type == PRIM_LINE) t[1] *= swsh;
-			else if (type == PRIM_RECT) t[3] *= swsh;
-			else if (type == PRIM_OVAL) t[3] *= swsh;
-			else if (type == PRIM_PATH) t[3] *= swsh;
-			else if (type == PRIM_TEXT) t[1] *= swsh;
-			else if (type == PRIM_TEXTNATIVE) t[1] *= swsh;
-		}
-
-		this.highX = ox + this.lowX + (this.highX - this.lowX) * sw;
-		this.highY = oy + this.lowY + (this.highY - this.lowY) * sh;
-		this.lowX += ox;
-		this.lowY += oy;
-	}*/
-
 	// transforms the sizes and positions of the primitives; a transform of [0,0,1,1] is the identity; the position of each coordinate
 	// is rescaled based on: p' = p*scale + offset
 	public transformPrimitives(ox:number, oy:number, sw:number, sh:number):void
@@ -498,7 +429,7 @@ export class MetaVector
 			else if (type == PRIM_OVAL) t[3] *= swsh;
 			else if (type == PRIM_PATH) t[3] *= swsh;
 			else if (type == PRIM_TEXT) t[1] *= swsh;
-			else if (type == PRIM_TEXTNATIVE) t[1] *= swsh;
+			else if (type == PRIM_TEXTNATIVE) t[2] *= swsh;
 		}
 
 		this.lowX = ox + this.lowX * sw;
