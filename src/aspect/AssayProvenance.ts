@@ -126,7 +126,11 @@ export class AssayProvenance extends Aspect
 	public getError(row:number):number
 	{
 		let col = this.ds.findColByName(AssayProvenance.COLNAME_ERROR);
-		return col < 0 ? null : this.ds.isNull(row, col) ? Number.NaN : this.ds.getReal(row, col);
+		if (col < 0) return null;
+		if (this.ds.isNull(row, col)) return Number.NaN;
+		let err = this.ds.getReal(row, col);
+		if (err <= 0) return Number.NaN;
+		return err;
 	}
 	public getUnits(row:number):string
 	{

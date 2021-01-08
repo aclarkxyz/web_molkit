@@ -50,6 +50,11 @@ export class MeasurementData extends Aspect
 	public static CODE = 'org.mmi.aspect.MeasurementData';
 	public static NAME = 'Measurement Data';
 
+	public static SUFFIX_VALUE = '';
+	public static SUFFIX_ERROR = '_error';
+	public static SUFFIX_UNITS = '_units';
+	public static SUFFIX_MOD = '_mod';
+
 	private header:MeasurementDataHeader = {'units': [], 'fields': []};
 
 	// ----------------- public methods -----------------
@@ -101,7 +106,7 @@ export class MeasurementData extends Aspect
 		this.header.fields[field].name = newName;
 		this.setHeader(this.header);
 
-		for (let sfx of ['', '_error', '_units', '_mod'])
+		for (let sfx of [MeasurementData.SUFFIX_VALUE, MeasurementData.SUFFIX_ERROR, MeasurementData.SUFFIX_UNITS, MeasurementData.SUFFIX_MOD])
 		{
 			let col = this.ds.findColByName(oldName + sfx);
 			if (col >= 0) this.ds.changeColumnName(col, newName + sfx, this.ds.colDescr(col));
@@ -112,7 +117,8 @@ export class MeasurementData extends Aspect
 	public reservedColumns(field:number):string[]
 	{
 		let fieldName = this.header.fields[field].name;
-		return [fieldName, fieldName + '_error', fieldName + '_units', fieldName + '_mod'];
+		return [fieldName + MeasurementData.SUFFIX_VALUE, fieldName + MeasurementData.SUFFIX_ERROR, 
+				fieldName + MeasurementData.SUFFIX_UNITS, fieldName + MeasurementData.SUFFIX_MOD];
 	}
 
 	// getting and setting values
@@ -124,10 +130,10 @@ export class MeasurementData extends Aspect
 	{
 		let value:MeasurementDataValue = {'value': Number.NaN, 'error': Number.NaN, 'units': '', 'mod': ''};
 
-		let colValue = this.ds.findColByName(field.name, DataSheetColumn.Real);
-		let colError = this.ds.findColByName(field.name + '_error', DataSheetColumn.Real);
-		let colUnits = this.ds.findColByName(field.name + '_units', DataSheetColumn.String);
-		let colMod = this.ds.findColByName(field.name + '_mod', DataSheetColumn.String);
+		let colValue = this.ds.findColByName(field.name + MeasurementData.SUFFIX_VALUE, DataSheetColumn.Real);
+		let colError = this.ds.findColByName(field.name + MeasurementData.SUFFIX_ERROR, DataSheetColumn.Real);
+		let colUnits = this.ds.findColByName(field.name + MeasurementData.SUFFIX_UNITS, DataSheetColumn.String);
+		let colMod = this.ds.findColByName(field.name + MeasurementData.SUFFIX_MOD, DataSheetColumn.String);
 
 		if (colValue >= 0 && this.ds.notNull(row, colValue)) value.value = this.ds.getReal(row, colValue);
 		if (colError >= 0 && this.ds.notNull(row, colError)) value.error = this.ds.getReal(row, colError);
@@ -140,10 +146,10 @@ export class MeasurementData extends Aspect
 	public setValue(row:number, fldidx:number, value:MeasurementDataValue):void
 	{
 		let fieldName = this.header.fields[fldidx].name;
-		let colValue = this.ds.findColByName(fieldName, DataSheetColumn.Real);
-		let colError = this.ds.findColByName(fieldName + '_error', DataSheetColumn.Real);
-		let colUnits = this.ds.findColByName(fieldName + '_units', DataSheetColumn.String);
-		let colMod = this.ds.findColByName(fieldName + '_mod', DataSheetColumn.String);
+		let colValue = this.ds.findColByName(fieldName + MeasurementData.SUFFIX_VALUE, DataSheetColumn.Real);
+		let colError = this.ds.findColByName(fieldName + MeasurementData.SUFFIX_ERROR, DataSheetColumn.Real);
+		let colUnits = this.ds.findColByName(fieldName + MeasurementData.SUFFIX_UNITS, DataSheetColumn.String);
+		let colMod = this.ds.findColByName(fieldName + MeasurementData.SUFFIX_MOD, DataSheetColumn.String);
 
 		if (colValue >= 0) if (isNaN(value.value)) this.ds.setToNull(row, colValue); else this.ds.setReal(row, colValue, value.value);
 		if (colError >= 0) if (isNaN(value.error)) this.ds.setToNull(row, colError); else this.ds.setReal(row, colError, value.error);
@@ -154,10 +160,10 @@ export class MeasurementData extends Aspect
 	public clearValue(row:number, fldidx:number):void
 	{
 		let fieldName = this.header.fields[fldidx].name;
-		let colValue = this.ds.findColByName(fieldName, DataSheetColumn.Real);
-		let colError = this.ds.findColByName(fieldName + '_error', DataSheetColumn.Real);
-		let colUnits = this.ds.findColByName(fieldName + '_units', DataSheetColumn.String);
-		let colMod = this.ds.findColByName(fieldName + '_mod', DataSheetColumn.String);
+		let colValue = this.ds.findColByName(fieldName + MeasurementData.SUFFIX_VALUE, DataSheetColumn.Real);
+		let colError = this.ds.findColByName(fieldName + MeasurementData.SUFFIX_ERROR, DataSheetColumn.Real);
+		let colUnits = this.ds.findColByName(fieldName + MeasurementData.SUFFIX_UNITS, DataSheetColumn.String);
+		let colMod = this.ds.findColByName(fieldName + MeasurementData.SUFFIX_MOD, DataSheetColumn.String);
 
 		if (colValue >= 0) this.ds.setToNull(row, colValue);
 		if (colError >= 0) this.ds.setToNull(row, colError);
@@ -218,10 +224,10 @@ export class MeasurementData extends Aspect
 
 			if (this.allowModify)
 			{
-				this.ds.ensureColumn(f.name, DataSheetColumn.Real, descr);
-				this.ds.ensureColumn(f.name + '_error', DataSheetColumn.Real, 'Error');
-				this.ds.ensureColumn(f.name + '_units', DataSheetColumn.String, 'Units');
-				this.ds.ensureColumn(f.name + '_mod', DataSheetColumn.String, 'Modifier');
+				this.ds.ensureColumn(f.name + MeasurementData.SUFFIX_VALUE, DataSheetColumn.Real, descr);
+				this.ds.ensureColumn(f.name + MeasurementData.SUFFIX_ERROR, DataSheetColumn.Real, 'Error');
+				this.ds.ensureColumn(f.name + MeasurementData.SUFFIX_UNITS, DataSheetColumn.String, 'Units');
+				this.ds.ensureColumn(f.name + MeasurementData.SUFFIX_MOD, DataSheetColumn.String, 'Modifier');
 			}
 		}
 	}
@@ -303,10 +309,10 @@ export class MeasurementData extends Aspect
 		let names = new Set<string>();
 		for (let f of this.header.fields)
 		{
-			names.add(f.name);
-			names.add(f.name + '_error');
-			names.add(f.name + '_units');
-			names.add(f.name + '_mod');
+			names.add(f.name + MeasurementData.SUFFIX_VALUE);
+			names.add(f.name + MeasurementData.SUFFIX_ERROR);
+			names.add(f.name + MeasurementData.SUFFIX_UNITS);
+			names.add(f.name + MeasurementData.SUFFIX_MOD);
 		}
 		let resv:boolean[] = [];
 		for (let col of colNames) resv.push(names.has(col));
