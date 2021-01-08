@@ -584,4 +584,18 @@ export async function yieldDOM():Promise<void>
 	return new Promise<void>((resolve) => setTimeout(() => resolve()));
 }
 
+// practical workaround for figuring out how much space the scrollers will used when realised; on Mac-like or mobile platforms this will generally be zero,
+// whereas for Windows/Linux-like platforms it's usually around 20 pixels or so; it will finagle the DOM invisibly the first time it is called
+let staticScrollerSize:Size = null;
+export function empiricalScrollerSize():Size
+{
+	if (staticScrollerSize) return staticScrollerSize;
+
+	let outer = $('<div/>').css({'visibility': 'hidden', 'width': '100px', 'height': '100px', 'overflow': 'scroll'}).appendTo($(document.body));
+	let inner = $('<div/>').css({'width': '100%', 'height': '100%'}).appendTo(outer);
+	staticScrollerSize = new Size(100 - inner.outerWidth(), 100 - inner.outerHeight());
+    outer.remove();
+	return staticScrollerSize;
+};
+
 /* EOF */ }
