@@ -596,6 +596,6 @@ export function empiricalScrollerSize():Size
 	staticScrollerSize = new Size(100 - inner.outerWidth(), 100 - inner.outerHeight());
     outer.remove();
 	return staticScrollerSize;
-};
+}
 
 /* EOF */ }

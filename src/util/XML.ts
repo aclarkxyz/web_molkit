@@ -18,14 +18,31 @@ namespace WebMolKit /* BOF */ {
 
 export class XML
 {
+	// these need to be defined when running under a raw NodeJS or worker thread environment, which has the XML parsing functionality stripped out of
+	// the API; not necessary when running in regular web browser mode or Electron main task
+	public static customParser:any = null;
+	public static customSerial:any = null;
+
 	// DOM <--> String
-	public static parseXML(xml:string):Document
+	public static parseXML(strXML:string):Document
 	{
-		return $.parseXML(xml);
+		//return $.parseXML(xml);
+
+		let xmlDoc:Document;
+		if (this.customParser)
+			xmlDoc = new this.customParser().parseFromString(strXML, 'application/xml');
+		else
+			xmlDoc = new DOMParser().parseFromString(strXML, 'application/xml');
+		if (xmlDoc == null) return null;
+		return xmlDoc;
 	}
 	public static toString(doc:Document):string
 	{
-		return new XMLSerializer().serializeToString(doc);
+		//return new XMLSerializer().serializeToString(doc);
+		if (this.customSerial)
+			return new this.customSerial().serializeToString(doc.documentElement);
+		else
+			return new XMLSerializer().serializeToString(doc.documentElement);
 	}
 	public static toPrettyString(doc:Document):string
 	{
@@ -42,7 +59,8 @@ export class XML
 			'  <xsl:output indent="yes"/>',
 			'</xsl:stylesheet>',
 		].join('\n');
-		let xsltDoc = new DOMParser().parseFromString(xslt, 'application/xml');
+		//let xsltDoc = new DOMParser().parseFromString(xslt, 'application/xml');
+		let xsltDoc = this.parseXML(xslt);
 		let xsltProc = new XSLTProcessor();
 		xsltProc.importStylesheet(xsltDoc);
 		let resultDoc = xsltProc.transformToDocument(doc);

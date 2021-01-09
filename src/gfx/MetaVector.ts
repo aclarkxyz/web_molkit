@@ -501,44 +501,42 @@ export class MetaVector
 	//			domSVG.css({'display': 'block', 'pointer-events': 'none'});
 	// note that setting the display style to 'block' prevents the layout from adding descender padding for baseline alignment, which is never useful; and disabling
 	// pointer events for individual SVG elements is generally a good idea
-	public createSVG():string
+	public createSVG(prettyPrint = false):string
 	{
-		let svg = $('<svg/>');
-		svg.attr('xmlns', 'http://www.w3.org/2000/svg');
-		svg.attr('xmlns:xlink', 'http://www.w3.org/1999/xlink');
-		svg.attr('width', this.width);
-		svg.attr('height', this.height);
-		svg.attr('viewBox', '0 0 ' + this.width + ' ' + this.height);
+		let xml = XML.parseXML('<svg/>');
+		let svg = xml.documentElement;
+		svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+		svg.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
+		svg.setAttribute('width', this.width.toString());
+		svg.setAttribute('height', this.height.toString());
+		svg.setAttribute('viewBox', `0 0 ${this.width} ${this.height}`);
 
 		this.renderSVG(svg);
 
-		// ugly but it works
-		let tmp = $('<tmp/>');
-		tmp.append(svg);
-		return tmp.html();
+		return prettyPrint ? XML.toPrettyString(xml) : XML.toString(xml);
 	}
 
 	// given a DOM that represents an <svg> element, or some sub-container (such as <g>), populates it with all of the
 	// content from the graphic
-	public renderSVG(svg:JQuery):void
+	public renderSVG(svg:Element):void
 	{
 		this.typeObj = [];
 
 		const font = FontData.main;
-		let defs = $('<defs/>').appendTo(svg);
+		let defs = XML.appendElement(svg, 'defs');
 		if (this.charMissing)
 		{
-			let path = $('<path/>').appendTo(defs);
-			path.attr('id', 'missing');
-			path.attr('d', font.MISSING_DATA);
-			path.attr('edge', 'none');
+			let path = XML.appendElement(defs, 'path');
+			path.setAttribute('id', 'missing');
+			path.setAttribute('d', font.MISSING_DATA);
+			path.setAttribute('edge', 'none');
 		}
 		for (let n = 0; n < font.UNICODE.length; n++) if (this.charMask[n])
 		{
-			let path = $('<path/>').appendTo(defs);
-			path.attr('id', 'char' + n);
-			path.attr('d', font.GLYPH_DATA[n]);
-			path.attr('edge', 'none');
+			let path = XML.appendElement(defs, 'path');
+			path.setAttribute('id', 'char' + n);
+			path.setAttribute('d', font.GLYPH_DATA[n]);
+			path.setAttribute('edge', 'none');
 		}
 
 		for (let n = 0; n < this.types.length; n++)
@@ -868,7 +866,7 @@ export class MetaVector
 
 	// create SVG object for each primitive
 	// perform actual rendering for the primitives
-	public svgLine1(svg:JQuery, p:any):void
+	public svgLine1(svg:Element, p:any):void
 	{
 		let type = this.typeObj[p[1]] as TypeObjLine;
 		let x1:number = p[2], y1:number = p[3];
@@ -881,25 +879,25 @@ export class MetaVector
 
 		if (type.colour != MetaVector.NOCOLOUR)
 		{
-			let line = $('<line/>').appendTo(svg);
-			line.attr('x1', x1);
-			line.attr('y1', y1);
-			line.attr('x2', x2);
-			line.attr('y2', y2);
+			let line = XML.appendElement(svg, 'line');
+			line.setAttribute('x1', x1.toString());
+			line.setAttribute('y1', y1.toString());
+			line.setAttribute('x2', x2.toString());
+			line.setAttribute('y2', y2.toString());
 			this.defineSVGStroke(line, type.colour);
-			line.attr('stroke-width', type.thickness);
-			line.attr('stroke-linecap', 'round');
+			line.setAttribute('stroke-width', type.thickness.toString());
+			line.setAttribute('stroke-linecap', 'round');
 		}
 	}
-	public svgLineN(svg:JQuery, p:any, pos:number, sz:number):void
+	public svgLineN(svg:Element, p:any, pos:number, sz:number):void
 	{
 		let type = this.typeObj[p[1]] as TypeObjLine;
 		if (type.colour == MetaVector.NOCOLOUR) return;
 
-		let g = $('<g/>').appendTo(svg);
+		let g = XML.appendElement(svg, 'g');
 		this.defineSVGStroke(g, type.colour);
-		g.attr('stroke-width', type.thickness);
-		g.attr('stroke-linecap', 'round');
+		g.setAttribute('stroke-width', type.thickness.toString());
+		g.setAttribute('stroke-linecap', 'round');
 
 		for (let n = 0; n < sz; n++)
 		{
@@ -912,14 +910,14 @@ export class MetaVector
 			x2 = this.offsetX + this.scale * x2;
 			y2 = this.offsetY + this.scale * y2;
 
-			let line = $('<line/>').appendTo(g);
-			line.attr('x1', x1);
-			line.attr('y1', y1);
-			line.attr('x2', x2);
-			line.attr('y2', y2);
+			let line = XML.appendElement(g, 'line');
+			line.setAttribute('x1', x1.toString());
+			line.setAttribute('y1', y1.toString());
+			line.setAttribute('x2', x2.toString());
+			line.setAttribute('y2', y2.toString());
 		}
 	}
-	public svgRect1(svg:JQuery, p:any):void
+	public svgRect1(svg:Element, p:any):void
 	{
 		let type = this.typeObj[p[1]] as TypeObjRect;
 		let x:number = p[2], y:number = p[3];
@@ -930,31 +928,30 @@ export class MetaVector
 		w *= this.scale;
 		h *= this.scale;
 
-		let rect = $('<rect/>').appendTo(svg);
-		rect.attr('x', x);
-		rect.attr('y', y);
-		rect.attr('width', w);
-		rect.attr('height', h);
+		let rect = XML.appendElement(svg, 'rect');
+		rect.setAttribute('x', x.toString());
+		rect.setAttribute('y', y.toString());
+		rect.setAttribute('width', w.toString());
+		rect.setAttribute('height', h.toString());
 
 		this.defineSVGStroke(rect, type.edgeCol);
 		if (type.edgeCol != MetaVector.NOCOLOUR)
 		{
-			rect.attr('stroke-width', type.thickness);
-			rect.attr('stroke-linecap', 'square');
+			rect.setAttribute('stroke-width', type.thickness.toString());
+			rect.setAttribute('stroke-linecap', 'square');
 		}
 		this.defineSVGFill(rect, type.fillCol);
 	}
-	public svgRectN(svg:JQuery, p:any, pos:number, sz:number):void
+	public svgRectN(svg:Element, p:any, pos:number, sz:number):void
 	{
 		let type = this.typeObj[p[1]] as TypeObjRect;
 
-		let g = $('<g/>').appendTo(svg);
-
+		let g = XML.appendElement(svg, 'g');
 		this.defineSVGStroke(g, type.edgeCol);
 		if (type.edgeCol != MetaVector.NOCOLOUR)
 		{
-			g.attr('stroke-width', type.thickness);
-			g.attr('stroke-linecap', 'square');
+			g.setAttribute('stroke-width', type.thickness.toString());
+			g.setAttribute('stroke-linecap', 'square');
 		}
 		this.defineSVGFill(g, type.fillCol);
 
@@ -969,14 +966,14 @@ export class MetaVector
 			w *= this.scale;
 			h *= this.scale;
 
-			let rect = $('<rect/>').appendTo(g);
-			rect.attr('x', x);
-			rect.attr('y', y);
-			rect.attr('width', w);
-			rect.attr('height', h);
+			let rect = XML.appendElement(g, 'rect');
+			rect.setAttribute('x', x.toString());
+			rect.setAttribute('y', y.toString());
+			rect.setAttribute('width', w.toString());
+			rect.setAttribute('height', h.toString());
 		}
 	}
-	public svgOval1(svg:JQuery, p:any):void
+	public svgOval1(svg:Element, p:any):void
 	{
 		let type = this.typeObj[p[1]] as TypeObjOval;
 		let cx:number = p[2], cy:number = p[3];
@@ -987,28 +984,27 @@ export class MetaVector
 		rw *= this.scale;
 		rh *= this.scale;
 
-		let oval = $('<ellipse/>').appendTo(svg);
-		oval.attr('cx', cx);
-		oval.attr('cy', cy);
-		oval.attr('rx', rw);
-		oval.attr('ry', rh);
+		let oval = XML.appendElement(svg, 'ellipse');
+		oval.setAttribute('cx', cx.toString());
+		oval.setAttribute('cy', cy.toString());
+		oval.setAttribute('rx', rw.toString());
+		oval.setAttribute('ry', rh.toString());
 
 		this.defineSVGStroke(oval, type.edgeCol);
 		if (type.edgeCol != MetaVector.NOCOLOUR)
 		{
-			oval.attr('stroke-width', type.thickness);
+			oval.setAttribute('stroke-width', type.thickness.toString());
 		}
 		this.defineSVGFill(oval, type.fillCol);
 	}
-	public svgOvalN(svg:JQuery, p:any, pos:number, sz:number):void
+	public svgOvalN(svg:Element, p:any, pos:number, sz:number):void
 	{
 		let type = this.typeObj[p[1]] as TypeObjOval;
-		let g = $('<g/>').appendTo(svg);
-
+		let g = XML.appendElement(svg, 'g');
 		this.defineSVGStroke(g, type.edgeCol);
 		if (type.edgeCol != MetaVector.NOCOLOUR)
 		{
-			g.attr('stroke-width', type.thickness);
+			g.setAttribute('stroke-width', type.thickness.toString());
 		}
 		this.defineSVGFill(g, type.fillCol);
 
@@ -1023,14 +1019,14 @@ export class MetaVector
 			rw *= this.scale;
 			rh *= this.scale;
 
-			let oval = $('<ellipse/>').appendTo(g);
-			oval.attr('cx', cx);
-			oval.attr('cy', cy);
-			oval.attr('rx', rw);
-			oval.attr('ry', rh);
+			let oval = XML.appendElement(g, 'oval');
+			oval.setAttribute('cx', cx.toString());
+			oval.setAttribute('cy', cy.toString());
+			oval.setAttribute('rx', rw.toString());
+			oval.setAttribute('ry', rh.toString());
 		}
 	}
-	public svgPath(svg:JQuery, p:any):void
+	public svgPath(svg:Element, p:any):void
 	{
 		let type = this.typeObj[p[1]] as TypeObjPath;
 		let npts = p[2];
@@ -1068,19 +1064,19 @@ export class MetaVector
 		}
 		if (isClosed) shape += ' Z';
 
-		let path = $('<path/>').appendTo(svg);
-		path.attr('d', shape);
+		let path = XML.appendElement(svg, 'path');
+		path.setAttribute('d', shape);
 
 		this.defineSVGStroke(path, type.edgeCol);
 		if (type.edgeCol != MetaVector.NOCOLOUR)
 		{
-			path.attr('stroke-width', type.thickness);
-			path.attr('stroke-linejoin', type.hardEdge ? 'miter' : 'round');
-			path.attr('stroke-linecap', 'square');
+			path.setAttribute('stroke-width', type.thickness.toString());
+			path.setAttribute('stroke-linejoin', type.hardEdge ? 'miter' : 'round');
+			path.setAttribute('stroke-linecap', 'square');
 		}
 		this.defineSVGFill(path, type.fillCol);
 	}
-	private svgText(svg:JQuery, p:any):void
+	private svgText(svg:Element, p:any):void
 	{
 		let type = this.typeObj[p[1]] as TypeObjText;
 		let x:number = p[2], y:number = p[3];
@@ -1099,15 +1095,15 @@ export class MetaVector
 		let parent = svg;
 		if (direction != 0)
 		{
-			parent = $('<g/>').appendTo(parent);
-			parent.attr('transform', `rotate(${direction},${x},${y})`);
+			parent = XML.appendElement(parent, 'g');
+			parent.setAttribute('transform', `rotate(${direction},${x},${y})`);
 		}
 
-		let gdelta = $('<g/>').appendTo(parent);
-		gdelta.attr('transform', 'translate(' + x + ',' + y + ')');
+		let gdelta = XML.appendElement(parent, 'g');
+		gdelta.setAttribute('transform', 'translate(' + x + ',' + y + ')');
 		this.defineSVGFill(gdelta, type.colour);
-		let gscale = $('<g/>').appendTo(gdelta);
-		gscale.attr('transform', 'scale(' + scale + ',' + (-scale) + ')');
+		let gscale = XML.appendElement(gdelta, 'g');
+		gscale.setAttribute('transform', 'scale(' + scale + ',' + (-scale) + ')');
 
 		let dx = 0;
 		for (let n = 0; n < txt.length; n++)
@@ -1115,10 +1111,10 @@ export class MetaVector
 			let ch = txt.charAt(n);
 			let i = font.getIndex(ch);
 
-			let use = $('<use/>').appendTo(gscale);
+			let use = XML.appendElement(gscale, 'use');
 			let ref = i < 0 ? '#missing' : '#char' + i;
-			use.attr('xlink:href', ref);
-			use.attr('x', dx);
+			use.setAttribute('xlink:href', ref);
+			use.setAttribute('x', dx.toString());
 
 			if (i >= 0)
 			{
@@ -1128,7 +1124,7 @@ export class MetaVector
 			else dx += font.MISSING_HORZ;
 		}
 	}
-	private svgTextNative(svg:JQuery, p:any):void
+	private svgTextNative(svg:Element, p:any):void
 	{
 		let type = this.typeObj[p[1]] as TypeObjTextNative;
 		let x = p[2], y = p[3];
@@ -1144,35 +1140,37 @@ export class MetaVector
 		if (opt.bold) style += ' font-weight: bold;';
 		if (opt.italic) style += ' font-style: italic;';
 
-		let node = $('<text/>').appendTo(svg);
-		node.attr('xml:space', 'preserve');
-		node.attr({'x': x, 'y': y, 'style': style});
-		node.text(txt);
+		let node = XML.appendElement(svg, 'text');
+		node.setAttribute('xml:space', 'preserve');
+		node.setAttribute('x', x.toString()); 
+		node.setAttribute('y', y.toString());
+		node.setAttribute('style', style);
+		XML.setText(node, txt);
 	}
 
 	// utility for SVG
-	private defineSVGStroke(obj:JQuery, col:number):void
+	private defineSVGStroke(obj:Element, col:number):void
 	{
 		if (col == MetaVector.NOCOLOUR)
 		{
-			obj.attr('stroke-opacity', '0');
+			obj.setAttribute('stroke-opacity', '0');
 			return;
 		}
-		obj.attr('stroke', colourCode(col));
+		obj.setAttribute('stroke', colourCode(col));
 		let alpha = colourAlpha(col);
-		if (alpha != 1) obj.attr('stroke-opacity', alpha.toString());
+		if (alpha != 1) obj.setAttribute('stroke-opacity', alpha.toString());
 
 	}
-	private defineSVGFill(obj:JQuery, col:number):void
+	private defineSVGFill(obj:Element, col:number):void
 	{
 		if (col == MetaVector.NOCOLOUR)
 		{
-			obj.attr('fill-opacity', '0');
+			obj.setAttribute('fill-opacity', '0');
 			return;
 		}
-		obj.attr('fill', colourCode(col));
+		obj.setAttribute('fill', colourCode(col));
 		let alpha = colourAlpha(col);
-		if (alpha != 1) obj.attr('fill-opacity', alpha.toString());
+		if (alpha != 1) obj.setAttribute('fill-opacity', alpha.toString());
 	}
 
 	// for a type definition array, see if it exists in the list, and return that index - or if not, push it on
