@@ -115,8 +115,7 @@ export class TemplateFusion
 
 		if (this.guidetempl != null)
 		{
-			let fliptempl = this.guidetempl.clone();
-			CoordUtil.mirrorImage(fliptempl);
+			let fliptempl = CoordUtil.mirrorImage(this.guidetempl.clone());
 
 			for (let n = 0; n < this.guideidx.length; n++)
 			{
@@ -158,8 +157,8 @@ export class TemplateFusion
 
 		if (this.guidetempl != null)
 		{
-			let fliptempl = this.guidetempl.clone();
-			CoordUtil.mirrorImage(fliptempl);
+			let fliptempl = CoordUtil.mirrorImage(this.guidetempl.clone());
+
 			for (let i = 0; i < this.guideidx.length; i++)
 			{
 				if (new Date().getTime() - timeStart > this.timeLimit * 1000) break;
@@ -214,8 +213,7 @@ export class TemplateFusion
 
 		if (this.guidetempl != null)
 		{
-			let fliptempl = this.guidetempl.clone();
-			CoordUtil.mirrorImage(fliptempl);
+			let fliptempl = CoordUtil.mirrorImage(this.guidetempl.clone());
 
 			if (this.guideidx.length == atoms.length)
 			{
