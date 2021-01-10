@@ -43,8 +43,7 @@ export class BinaryData extends Aspect
 
 	constructor(ds?:DataSheet, allowModify?:boolean)
 	{
-		super(ds, allowModify);
-		this.id = BinaryData.CODE;
+		super(BinaryData.CODE, ds, allowModify);
 		this.setup();
 	}
 
@@ -174,5 +173,7 @@ export class BinaryData extends Aspect
 
 	public isColumnReserved(colName:string):boolean	{return false;}
 }
+
+registerAspect(BinaryData);
 
 /* EOF */ }

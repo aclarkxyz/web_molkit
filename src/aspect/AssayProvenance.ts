@@ -85,8 +85,7 @@ export class AssayProvenance extends Aspect
 
 	constructor(ds?:DataSheet, allowModify?:boolean)
 	{
-		super(ds, allowModify);
-		this.id = AssayProvenance.CODE;
+		super(AssayProvenance.CODE, ds, allowModify);
 		this.setup();
 	}
 
@@ -356,5 +355,7 @@ export class AssayProvenance extends Aspect
 		return null;
 	}
 }
+
+registerAspect(AssayProvenance);
 
 /* EOF */ }

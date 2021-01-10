@@ -233,8 +233,7 @@ export class Experiment extends Aspect
 
 	constructor(ds?:DataSheet, allowModify?:boolean)
 	{
-		super(ds, allowModify);
-		this.id = Experiment.CODE;
+		super(Experiment.CODE, ds, allowModify);
 
 		if ($.isEmptyObject(Experiment.COLUMN_DESCRIPTIONS))
 		{
@@ -828,5 +827,7 @@ export class Experiment extends Aspect
 		return (name:"", vg:vg)
 	}*/
 }
+
+registerAspect(Experiment);
 
 /* EOF */ }

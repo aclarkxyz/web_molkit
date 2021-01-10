@@ -56,8 +56,7 @@ export class BayesianPrediction extends Aspect
 
 	constructor(ds?:DataSheet, allowModify?:boolean)
 	{
-		super(ds, allowModify);
-		this.id = BayesianPrediction.CODE;
+		super(BayesianPrediction.CODE, ds, allowModify);
 		this.setup();
 	}
 
@@ -181,5 +180,7 @@ export class BayesianPrediction extends Aspect
 
 	public plainHeading():string {return BayesianSource.NAME;}
 }
+
+registerAspect(BayesianPrediction);
 
 /* EOF */ }

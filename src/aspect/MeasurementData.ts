@@ -68,8 +68,7 @@ export class MeasurementData extends Aspect
 
 	constructor(ds?:DataSheet, allowModify?:boolean)
 	{
-		super(ds, allowModify);
-		this.id = MeasurementData.CODE;
+		super(MeasurementData.CODE, ds, allowModify);
 		this.setup();
 	}
 
@@ -344,5 +343,7 @@ export class MeasurementData extends Aspect
 		return tr;
 	}
 }
+
+registerAspect(MeasurementData);
 
 /* EOF */ }

@@ -47,8 +47,7 @@ export class BayesianSource extends Aspect
 
 	constructor(ds?:DataSheet, allowModify?:boolean)
 	{
-		super(ds, allowModify);
-		this.id = BayesianSource.CODE;
+		super(BayesianSource.CODE, ds, allowModify);
 		this.setup();
 	}
 
@@ -135,5 +134,7 @@ export class BayesianSource extends Aspect
 
 	public plainHeading():string {return BayesianSource.NAME;}
 }
+
+registerAspect(BayesianSource);
 
 /* EOF */ }

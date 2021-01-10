@@ -18,22 +18,27 @@ namespace WebMolKit /* BOF */ {
 	explicitly here, if it is going to get automatically considered during routine operations (e.g. rendering arbitrary datasheets).
 */
 
-let SUPPORTED_ASPECTS:Record<string, string> = {};
+interface SupportedAspect
+{
+	code:string;
+	name:string;
+	classdef:any;
+}
+let supportedAspects:Record<string, SupportedAspect> = {}; // code-to-definition
+
+//	each aspect has to call this method globally as early as possible in order to be recognised; e.g.
+//		class CustomAspect extends Aspect {...}
+//		registerAspect(CustomAspect);
+export function registerAspect(classdef:any):void
+{
+	let code = classdef.CODE as string, name = classdef.NAME as string;
+	supportedAspects[code] = {code, name, classdef};
+}
 
 export class AspectList
 {
 	constructor(public ds:DataSheet)
 	{
-		if ($.isEmptyObject(SUPPORTED_ASPECTS))
-		{
-			SUPPORTED_ASPECTS[SARTable.CODE] = SARTable.NAME;
-			SUPPORTED_ASPECTS[Experiment.CODE] = Experiment.NAME;
-			SUPPORTED_ASPECTS[AssayProvenance.CODE] = AssayProvenance.NAME;
-			SUPPORTED_ASPECTS[BayesianSource.CODE] = BayesianSource.NAME;
-			SUPPORTED_ASPECTS[BayesianPrediction.CODE] = BayesianPrediction.NAME;
-			SUPPORTED_ASPECTS[MeasurementData.CODE] = MeasurementData.NAME;
-			SUPPORTED_ASPECTS[BinaryData.CODE] = BinaryData.NAME;
-		}
 	}
 
 	// returns two arrays: the first is a list of aspect codes that exist within the datasheet's header already; the second is a list of
@@ -46,7 +51,7 @@ export class AspectList
 		let codes = new Set<string>();
 		for (let n = 0; n < this.ds.numExtensions; n++) codes.add(this.ds.getExtType(n));
 
-		for (let code in SUPPORTED_ASPECTS) if (codes.has(code)) present.push(code); else absent.push(code);
+		for (let code in supportedAspects) if (codes.has(code)) present.push(code); else absent.push(code);
 
 		return [present, absent];
 	}
@@ -56,13 +61,8 @@ export class AspectList
 	// already exist; if it does exist, it is given the chance to make corrective changes to the content
 	public instantiate(code:string):Aspect
 	{
-		if (code == SARTable.CODE) return new SARTable(this.ds);
-		if (code == Experiment.CODE) return new Experiment(this.ds);
-		if (code == AssayProvenance.CODE) return new AssayProvenance(this.ds);
-		if (code == BayesianSource.CODE) return new BayesianSource(this.ds);
-		if (code == BayesianPrediction.CODE) return new BayesianPrediction(this.ds);
-		if (code == MeasurementData.CODE) return new MeasurementData(this.ds);
-		if (code == BinaryData.CODE) return new BinaryData(this.ds);
+		let supp = supportedAspects[code];
+		if (supp) return new supp.classdef(this.ds) as Aspect;
 		return null;
 	}
 
@@ -73,7 +73,7 @@ export class AspectList
 		for (let n = 0; n < this.ds.numExtensions; n++)
 		{
 			let code = this.ds.getExtType(n);
-			if (SUPPORTED_ASPECTS[code]) aspects.push(this.instantiate(code));
+			if (supportedAspects[code]) aspects.push(this.instantiate(code));
 		}
 		return aspects;
 	}
@@ -81,7 +81,8 @@ export class AspectList
 	// fetches just the name of an aspect, without instantiating it
 	public aspectName(code:string):string
 	{
-		return SUPPORTED_ASPECTS[code];
+		let supp = supportedAspects[code];
+		return supp ? supp.name : null;
 	}
 }
 

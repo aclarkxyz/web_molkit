@@ -47,13 +47,12 @@ export interface AspectGraphicRendering
 
 export abstract class Aspect
 {
-	public id:string = null; // identifier: full class name (Java-style reverse domain)
 	public ds:DataSheet;
 	protected allowModify = true; // if set to false, aspect is not allowed to modify any part of the header
 
 	// usually provide an existing datasheet with the aspect already installed; if not, it will be added (as long as
 	// modification is allowed); if no datasheet, creates a blank one
-	constructor(ds?:DataSheet, allowModify?:boolean)
+	constructor(public id:string, ds?:DataSheet, allowModify?:boolean)
 	{
 		this.ds = ds ? ds : new DataSheet();
 		if (allowModify != null) this.allowModify = allowModify;

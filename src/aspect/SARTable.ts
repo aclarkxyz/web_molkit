@@ -69,8 +69,7 @@ export class SARTable extends Aspect
 
 	constructor(ds?:DataSheet, allowModify?:boolean)
 	{
-		super(ds, allowModify);
-		this.id = SARTable.CODE;
+		super(SARTable.CODE, ds, allowModify);
 		this.setup();
 	}
 
@@ -386,5 +385,7 @@ export class SARTable extends Aspect
 		return null;
 	}
 }
+
+registerAspect(SARTable);
 
 /* EOF */ }
