@@ -248,12 +248,9 @@ export class MeasurementData extends Aspect
 			else if (line.startsWith('field='))
 			{
 				let bits = line.substring(eq + 1).split(',');
-				if (bits.length >= 2)
-				{
-					let f:MeasurementDataField = {'name': MoleculeStream.skUnescape(bits[0]), 'units': [], 'defnURI': []};
-					for (let n = 1; n < bits.length; n++) f.units.push(MoleculeStream.skUnescape(bits[n]));
-					header.fields.push(f);
-				}
+				let f:MeasurementDataField = {'name': MoleculeStream.skUnescape(bits[0]), 'units': [], 'defnURI': []};
+				for (let n = 1; n < bits.length; n++) f.units.push(MoleculeStream.skUnescape(bits[n]));
+				header.fields.push(f);
 			}
 			else if (line.startsWith('definition='))
 			{
