@@ -52,15 +52,6 @@ export class Popup
 	public open():void
 	{
 		let body = $(document.documentElement);
-		/*let bodyW = body.outerWidth(true), margW = 0.5 * (bodyW - body.outerWidth());
-		let bodyH = body.outerHeight(true), margH = 0.5 * (bodyH - body.outerHeight());*/
-
-		/*let bg = this.obscureBackground = $('<div/>').appendTo(body);
-		bg.css({'width': '100%', 'height': `max(${document.documentElement.clientHeight}px, 100vh)`});
-		bg.css({'background-color': 'black', 'opacity': 0.2});
-		bg.css({'position': 'absolute', 'left': 0, 'top': 0, 'z-index': 19999});
-		bg.click(() => this.close());
-		this.obscureBackground = bg;*/
 
 		let zindex = 21000;
 
@@ -80,7 +71,7 @@ export class Popup
 		pb.css({'background-color': this.popupBackground, 'border': '1px solid black'});
 		pb.css({'position': 'absolute', 'overflow': 'auto'});
 
-		this.bodyDiv = $('<div/>').appendTo(pb).css({'padding': '0.5em'});
+		this.bodyDiv = $('<div/>').appendTo(pb).css({'padding': '5px'});
 
 		bg.show();
 
@@ -133,12 +124,12 @@ export class Popup
 		let maxW = Math.max(wx1, winW - wx2) - 4;
 		pb.css('max-width', maxW + 'px');
 
+		let scrollSize = empiricalScrollerSize();
+
 		let setPosition = ():void =>
 		{
 			let popW = pb.width(), popH = pb.height();
 			let posX = 0, posY = 0;
-			if (wx1 + popW < winW) posX = wx1;
-			else if (popW < wx2) posX = wx2 - popW;
 
 			if (wy2 + GAP + popH < winH) posY = wy2 + GAP;
 			else if (wy1 - GAP - popH > 0) posY = wy1 - GAP - popH;
@@ -152,6 +143,11 @@ export class Popup
 				posY = GAP;
 				popH = wy1 - posY - GAP;
 			}
+
+			if (pb.height() > popH) popW += scrollSize.w + 10;
+
+			if (wx1 + popW < winW) posX = wx1;
+			else if (popW < wx2) posX = wx2 - popW;
 
 			setBoundaryPixels(pb, posX, posY, popW, popH);
 		};

@@ -161,6 +161,8 @@ export class EditPolymer extends Dialog
 		if (this.currentID) this.polymer.removeUnit(this.currentID);
 		this.currentID = this.polymer.createUnit(this.atoms, this.unit.connect, this.unit.bondConn);
 
+		this.polymer.rewriteMolecule(); // housekeeping
+
 		this.callbackApply(this);
 		this.close();
 	}

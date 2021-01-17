@@ -334,7 +334,7 @@ export class MeasurementData extends Aspect
 		{
 			if (datum.mod) tr.text += datum.mod + ' ';
 			tr.text += datum.value;
-			if (!Number.isNaN(datum.error)) tr.text += ' \u{2213} ' + datum.error;
+			if (!Number.isNaN(datum.error)) tr.text += ' \u{00B1} ' + datum.error;
 			if (datum.units) tr.text += ' ' + datum.units;
 		}
 		return tr;

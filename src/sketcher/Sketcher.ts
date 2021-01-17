@@ -1578,6 +1578,80 @@ export class Sketcher extends DrawCanvas
 		if (best > 0) this.changeCurrentAtom(best);
 	}
 
+	// manufactures a ring of given size based on context
+	private createRing(rsz:number, aromatic:boolean):void
+	{
+		const {mol} = this;
+		let rx:number[] = null, ry:number[] = null;
+		if (this.currentAtom > 0) 
+		{
+			let dx = 0, dy = 0, adj = mol.atomAdjList(this.currentAtom);
+			let x0 = mol.atomX(this.currentAtom), y0 = mol.atomY(this.currentAtom);
+			for (let a of adj)
+			{
+				dx -= mol.atomX(a) - x0;
+				dy -= mol.atomY(a) - y0;
+			}
+			if (Math.abs(dx) < 0.001 && Math.abs(dy) < 0.001) 
+			{
+				if (adj.length >= 2)
+				{
+					let theta = adj.map((a) => Math.atan2(mol.atomY(a) - x0, mol.atomX(a) - y0));
+					Vec.sort(theta);
+					let best = Number.POSITIVE_INFINITY;
+					for (let n = 0; n < theta.length; n++)
+					{
+						let th = angleDiff(theta[(n + 1) % theta.length], theta[n]);
+						let lx = Math.cos(th), ly = Math.sin(th), score = CoordUtil.congestionPoint(mol, x0 + lx, y0 + ly);
+						if (score < best) [best, dx, dy] = [score, lx, ly];
+					}
+				}
+				else [dx, dy] = [1, 0]; 
+			}
+			[rx, ry] = SketchUtil.proposeAtomRing(this.mol, rsz, this.currentAtom, dx, dy);
+		}
+		else if (this.currentBond > 0) 
+		{
+			let a1 = mol.bondFrom(this.currentBond), a2 = mol.bondTo(this.currentBond);
+			let x1 = mol.atomX(a1), y1 = mol.atomY(a1), x2 = mol.atomX(a2), y2 = mol.atomY(a2);
+			let cx = 0.5 * (x1 + x2), cy = 0.5 * (y1 + y2), ox = x1 - x2, oy = y2 - y1;
+			let [dx, dy] = CoordUtil.congestionPoint(mol, cx - ox, cy - oy) < CoordUtil.congestionPoint(mol, cx + ox, cy + oy) ? [-ox, -oy] : [ox, oy];
+			[rx, ry] = SketchUtil.proposeBondRing(this.mol, rsz, this.currentBond, dx, dy);
+		}
+		else
+		{
+			let x = 0, y = 0;
+			if (mol.numAtoms > 0)
+			{
+				let bound = mol.boundary();
+				[x, y] = [bound.maxX() + Molecule.IDEALBOND, bound.midY()];
+			}
+			[rx, ry] = SketchUtil.proposeNewRing(this.mol, rsz, x, y, 1, 0, false);
+		}
+		
+		if (!rx) return;
+
+		let param:any =
+		{
+			'ringX': rx,
+			'ringY': ry,
+			'aromatic': aromatic
+		};
+		let molact = new MoleculeActivity(this.getState(), ActivityType.Ring, param, {}, this);
+		molact.execute();
+
+
+		/*
+		if (rsz < 3) {}
+		else if (bond > 0) return 
+		else if (atom > 0 && mol.atomAdjCount(atom) > 0 && !this.toolRingFreeform) return 
+		else return 
+
+
+		console.log('R='+[rsz,aromatic]);//fnord
+		*/
+	}
+
 	// --------------------------------------- toolkit events ---------------------------------------
 
 	// event responses
@@ -2111,7 +2185,9 @@ export class Sketcher extends DrawCanvas
 
 		//console.log('Keycode:[' + event.keyCode + '] Key:[' + event.key + ']');
 
+		let mod = (event.shiftKey ? 'S' : '') + (event.ctrlKey || event.metaKey ? 'C' : '') + (event.altKey ? 'A' : ''); // (meta==cmd on mac; alt=opt on mac)	
 		let nomod = !event.shiftKey && !event.ctrlKey && !event.altKey && !event.metaKey;
+
 		if (key == KeyCode.Enter) this.editCurrent();
 		else if (key == KeyCode.Left && nomod) this.hitArrowKey(-1, 0);
 		else if (key == KeyCode.Right && nomod) this.hitArrowKey(1, 0);
@@ -2122,6 +2198,16 @@ export class Sketcher extends DrawCanvas
 		else if (this.toolView != null && this.toolView.topBank.claimKey(event)) {}
 		else if (this.commandView != null && this.commandView.topBank.claimKey(event)) {}
 		else if (this.templateView != null && this.templateView.topBank.claimKey(event)) {}
+		else if (key == '#' && mod == 'SC') this.createRing(3, false);
+		else if (key == '$' && mod == 'SC') this.createRing(4, false);
+		else if (key == '%' && mod == 'SC') this.createRing(5, false);
+		else if (key == '^' && mod == 'SC') this.createRing(6, false);
+		else if (key == '&' && mod == 'SC') this.createRing(7, false);
+		else if (key == '3' && mod == 'CA') this.createRing(3, true);
+		else if (key == '4' && mod == 'CA') this.createRing(4, true);
+		else if (key == '5' && mod == 'CA') this.createRing(5, true);
+		else if (key == '6' && mod == 'CA') this.createRing(6, true);
+		else if (key == '7' && mod == 'CA') this.createRing(7, true);
 		else return true; // allow the key to percolate upward
 
 		event.preventDefault();

@@ -1559,7 +1559,13 @@ export class MoleculeActivity
 		}
 		else if (activity == ActivityType.BondArtifactClear)
 		{
-			if (!artif.removeArtifact(subject)) {this.errmsg = 'No artifact removed.'; return;}
+			if (!artif.removeArtifact(subject)) 
+			{
+				if (this.removePolymerBlock(subject)) return;
+
+				this.errmsg = 'No artifact removed.'; 
+				return;
+			}
 		}
 
 		artif.rewriteMolecule();
@@ -2023,6 +2029,27 @@ export class MoleculeActivity
 		let mask = this.input.selectedMask;
 		return mask ? mask[atom - 1] : false;
 	}
+
+	// if the atoms overlap with a polymer block, zap it, apply the results, and return true
+	private removePolymerBlock(atoms:number[]):boolean
+	{
+		let polymer = new PolymerBlock(this.input.mol.clone());
+
+		for (let id of polymer.getIDList())
+		{
+			let unit = polymer.getUnit(id);
+			for (let atom of atoms) if (unit.atoms.includes(atom))
+			{
+				polymer.removeUnit(id);
+				polymer.rewriteMolecule();
+				this.output.mol = polymer.mol;
+				return true;
+			}
+		}
+
+		return false;
+	}
+
 }
 
 /* EOF */ }
