@@ -97,12 +97,12 @@ export class MeasurementData extends Aspect
 	}
 
 	// renames a field, updating both the header and the underlying columns
-	public rename(field:number, newName:string):void
+	public rename(fldidx:number, newName:string):void
 	{
-		let oldName = this.header.fields[field].name;
+		let oldName = this.header.fields[fldidx].name;
 		if (oldName == newName) return;
 
-		this.header.fields[field].name = newName;
+		this.header.fields[fldidx].name = newName;
 		this.setHeader(this.header);
 
 		for (let sfx of [MeasurementData.SUFFIX_VALUE, MeasurementData.SUFFIX_ERROR, MeasurementData.SUFFIX_UNITS, MeasurementData.SUFFIX_MOD])
@@ -113,9 +113,9 @@ export class MeasurementData extends Aspect
 	}
 
 	// return the list of columns that's reserved for just the indicated field
-	public reservedColumns(field:number):string[]
+	public reservedColumns(fldidx:number):string[]
 	{
-		let fieldName = this.header.fields[field].name;
+		let fieldName = this.header.fields[fldidx].name;
 		return [fieldName + MeasurementData.SUFFIX_VALUE, fieldName + MeasurementData.SUFFIX_ERROR, 
 				fieldName + MeasurementData.SUFFIX_UNITS, fieldName + MeasurementData.SUFFIX_MOD];
 	}
