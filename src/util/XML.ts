@@ -26,8 +26,6 @@ export class XML
 	// DOM <--> String
 	public static parseXML(strXML:string):Document
 	{
-		//return $.parseXML(xml);
-
 		let xmlDoc:Document;
 		if (this.customParser)
 			xmlDoc = new this.customParser().parseFromString(strXML, 'application/xml');
@@ -38,7 +36,6 @@ export class XML
 	}
 	public static toString(doc:Document):string
 	{
-		//return new XMLSerializer().serializeToString(doc);
 		if (this.customSerial)
 			return new this.customSerial().serializeToString(doc.documentElement);
 		else
@@ -59,7 +56,6 @@ export class XML
 			'  <xsl:output indent="yes"/>',
 			'</xsl:stylesheet>',
 		].join('\n');
-		//let xsltDoc = new DOMParser().parseFromString(xslt, 'application/xml');
 		let xsltDoc = this.parseXML(xslt);
 		let xsltProc = new XSLTProcessor();
 		xsltProc.importStylesheet(xsltDoc);

@@ -722,8 +722,11 @@ export class FontData
 		if (ctx == null && this.ctxReference) return;
 		if (ctx == null)
 		{
-			let canvas = $('<canvas/>').appendTo(document.body);
+			/*let canvas = $('<canvas/>').appendTo(document.body);
 			this.ctxReference = (canvas[0] as HTMLCanvasElement).getContext('2d');
+			canvas.remove();*/
+			let canvas = dom('<canvas/>').appendTo(document.body);
+			this.ctxReference = (canvas.el as HTMLCanvasElement).getContext('2d');
 			canvas.remove();
 		}
 		else this.ctxReference = ctx;
