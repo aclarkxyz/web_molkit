@@ -19,22 +19,31 @@ namespace WebMolKit /* BOF */ {
 export class Widget
 {
 	protected tagType = 'div';
-	public content:JQuery = null;
+
+	//public content:JQuery = null;
+
+	private domContent:DOM = null;
+	public get content():JQuery {return $(this.domContent.el as HTMLElement);}
+	public get contentDOM():DOM {return this.domContent;}
 
 	constructor() {}
 
-	// create the underlying structure; the parent parameter must be jQuery-compatible
+	// create the underlying structure; the parent parameter must be jQuery- or DOM-compatible
 	public render(parent:any):void
 	{
+		if (parent.jquery) parent = (parent as JQuery)[0];
+
 		let tag = this.tagType;
-		this.content = $(`<${tag}/>`).appendTo($(parent));
+		//this.content = $(`<${tag}/>`).appendTo($(parent));
+		this.domContent = dom(`<${tag}/>`).appendTo(parent as (DOM | Element));
 	}
 
 	// deconstructs the widget; this is not a hook, rather it is for the benefit of calling code that wants the widget gone
 	public remove():void
 	{
-		if (this.content) this.content.remove();
-		this.content = null;
+		//if (this.content) this.content.remove();
+		if (this.domContent) this.domContent.remove();
+		this.domContent = null;
 	}
 
 	// convenience function: attaches a tooltip to the main content element, after rendering

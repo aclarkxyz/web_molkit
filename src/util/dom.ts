@@ -34,7 +34,6 @@ export class DOM
 	{
 		let xml = XML.parseXML(xhtml);
 		if (xml == null) throw 'Invalid XHTML string: ' + xhtml;
-		//let html = XML.toString(xml);
 		let html = xml.documentElement.outerHTML
 
 		var template = document.createElement('template');
@@ -77,6 +76,12 @@ export class DOM
 			domList.push(new DOM(child));
 		}
 		return domList;
+	}
+
+	// returns true if this element still exists in the overall HTML DOM, i.e. hasn't been removed and left dangling
+	public exists():boolean
+	{
+		return document.body.contains(this.el);
 	}
 
 	// ------------ hierarchy ------------
@@ -126,39 +131,49 @@ export class DOM
 		this.el.innerHTML = '';
 	}
 
+	// getting & setting HTML content
 	public getHTML():string
 	{
 		return this.el.innerHTML;
 	}
-
 	public setHTML(html:string):void
 	{
 		this.el.innerHTML = html;
 	}
+	public appendHTML(xhtml:string):void
+	{
+		let xml = XML.parseXML(xhtml);
+		if (xml == null) throw 'Invalid XHTML string: ' + xhtml;
+		let html = xml.documentElement.outerHTML
+		this.el.insertAdjacentHTML('beforeend', html);
+	}
 
+	// getting & setting unmarkedup text
 	public getText():string
 	{
 		return this.el.textContent;
 	}
-
 	public setText(text:string):void
 	{
 		this.el.textContent = text;
+	}
+	public appendText(text:string):void
+	{
+		this.el.innerHTML += escapeHTML(text);
 	}
 
 	// getting & setting CSS values
 	public getCSS(key:string):string
 	{
-		// TODO
-		return null;
+		return (this.el as HTMLElement).style.getPropertyValue(key);
 	}
 	public setCSS(key:string, value:string):void
 	{
-		// TODO
+		(this.el as HTMLElement).style.setProperty(key, value);
 	}
-	public css(dict:Record<string, string>):DOM
+	public css(dict:Record<string, string | number>):DOM
 	{
-		for (let key in dict) this.setCSS(key, dict[key]);
+		for (let key in dict) this.setCSS(key, dict[key].toString());
 		return this;
 	}
 
@@ -172,10 +187,43 @@ export class DOM
 	{
 		this.el.setAttribute(key, value);
 	}
-	public attr(dict:Record<string, string>):DOM
+	public attr(dict:Record<string, string | number>):DOM
 	{
-		for (let key in dict) this.setAttr(key, dict[key]);
+		for (let key in dict) this.setAttr(key, dict[key].toString());
 		return this;
+	}
+
+	// getting & setting CSS classes
+	public addClass(clsname:string):void
+	{
+		(this.el as HTMLElement).classList.add(clsname);
+	}
+	public removeClass(clsname:string):void
+	{
+		(this.el as HTMLElement).classList.remove(clsname);
+	}
+	public hasClass(clsname:string):boolean
+	{
+		return (this.el as HTMLElement).classList.contains(clsname);
+	}
+	public setClass(clsname:string, flag:boolean):void
+	{
+		if (flag) this.addClass(clsname); else this.removeClass(clsname);
+	}
+	public class(clsname:string):DOM
+	{
+		this.addClass(clsname);
+		return this;
+	}
+
+	// position & size
+	public width():number
+	{
+		return (this.el as HTMLElement).offsetWidth;
+	}
+	public height():number
+	{
+		return (this.el as HTMLElement).offsetHeight;
 	}
 
 	// ------------ events ------------
@@ -184,59 +232,59 @@ export class DOM
 	{
 		this.el.removeEventListener(id, callback);
 	}
-	public onKeyDown(callback:(event:KeyboardEvent) => boolean):void
+	public onKeyDown(callback:(event?:KeyboardEvent) => boolean | void):void
 	{
 		this.el.addEventListener('keydown', callback);
 	}
-	public onKeyUp(callback:(event:KeyboardEvent) => boolean):void
+	public onKeyUp(callback:(event?:KeyboardEvent) => boolean | void):void
 	{
 		this.el.addEventListener('keyup', callback);
 	}
-	public onKeyPress(callback:(event:KeyboardEvent) => boolean):void
+	public onKeyPress(callback:(event?:KeyboardEvent) => boolean | void):void
 	{
 		this.el.addEventListener('keypress', callback);
 	}
-	public onScroll(callback:(event:Event) => boolean):void
+	public onScroll(callback:(event?:Event) => boolean | void):void
 	{
 		this.el.addEventListener('scroll', callback);
 	}
-	public onWheel(callback:(event:WheelEvent) => boolean):void
+	public onWheel(callback:(event?:WheelEvent) => boolean | void):void
 	{
 		this.el.addEventListener('wheel', callback);
 	}
-	public onClick(callback:(event:MouseEvent) => boolean):void
+	public onClick(callback:(event?:MouseEvent) => boolean | void):void
 	{
 		this.el.addEventListener('click', callback);
 	}
-	public onContextMenu(callback:(event:MouseEvent) => boolean):void
+	public onContextMenu(callback:(event?:MouseEvent) => boolean | void):void
 	{
 		this.el.addEventListener('contextmenu', callback);
 	}
-	public onDblClick(callback:(event:MouseEvent) => boolean):void
+	public onDblClick(callback:(event?:MouseEvent) => boolean | void):void
 	{
 		this.el.addEventListener('dblclick', callback);
 	}
-	public onMouseDown(callback:(event:MouseEvent) => boolean):void
+	public onMouseDown(callback:(event?:MouseEvent) => boolean | void):void
 	{
 		this.el.addEventListener('mousedown', callback);
 	}
-	public onMouseUp(callback:(event:MouseEvent) => boolean):void
+	public onMouseUp(callback:(event?:MouseEvent) => boolean | void):void
 	{
 		this.el.addEventListener('mouseup', callback);
 	}
-	public onMouseEnter(callback:(event:MouseEvent) => boolean):void
+	public onMouseEnter(callback:(event?:MouseEvent) => boolean | void):void
 	{
-		this.el.addEventListener('mousenter', callback);
+		this.el.addEventListener('mouseenter', callback);
 	}
-	public onMouseLeave(callback:(event:MouseEvent) => boolean):void
+	public onMouseLeave(callback:(event?:MouseEvent) => boolean | void):void
 	{
 		this.el.addEventListener('mouseleave', callback);
 	}
-	public onMouseMove(callback:(event:MouseEvent) => boolean):void
+	public onMouseMove(callback:(event?:MouseEvent) => boolean | void):void
 	{
 		this.el.addEventListener('mousemove', callback);
 	}
-	public onMouseOver(callback:(event:MouseEvent) => boolean):void
+	public onMouseOver(callback:(event?:MouseEvent) => boolean | void):void
 	{
 		this.el.addEventListener('mouseover', callback);
 	}

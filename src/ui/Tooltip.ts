@@ -16,7 +16,7 @@ namespace WebMolKit /* BOF */ {
 	Tooltips: adding popovers to widgets.
 */
 
-let globalPopover:JQuery = null;
+let globalPopover:DOM = null;
 let globalTooltip:Tooltip = null;
 let globalPopWatermark = 0;
 
@@ -25,20 +25,23 @@ export function addTooltip(parent:any, bodyHTML:string, titleHTML?:string, delay
 {
 	Tooltip.ensureGlobal();
 
-	let widget = $(parent);
+	if (parent.jquery) parent = (parent as JQuery)[0];
 
+	let widget = dom(parent);
 	let tooltip = new Tooltip(widget, bodyHTML, titleHTML, delay == null ? 1000 : delay);
 
-	widget.mouseenter(() => tooltip.start());
-	widget.mouseleave(() => tooltip.stop());
+	widget.onMouseEnter(() => tooltip.start());
+	widget.onMouseLeave(() => tooltip.stop());
 }
 
 // immediately raise a tooltip, with a position relative to a given widget
-export function raiseToolTip(widget:any, avoid:Box, bodyHTML:string, titleHTML?:string):void
+export function raiseToolTip(parent:any, avoid:Box, bodyHTML:string, titleHTML?:string):void
 {
+	if (parent.jquery) parent = (parent as JQuery)[0];
+
 	clearTooltip();
 	Tooltip.ensureGlobal();
-	new Tooltip($(widget), bodyHTML, titleHTML, 0).raise(avoid);
+	new Tooltip(dom(parent), bodyHTML, titleHTML, 0).raise(avoid);
 }
 
 // rudely shutdown the tooltip
@@ -57,33 +60,22 @@ export class Tooltip
 	{
 		if (globalPopover == null)
 		{
-			/*globalPopover = $(document.createElement('div'));
-			globalPopover.css('position', 'absolute');
-			globalPopover.css('background-color', '#F0F0FF');
-			globalPopover.css('background-image', 'linear-gradient(to right bottom, #FFFFFF, #D0D0FF)');
-			globalPopover.css('color', 'black');
-			globalPopover.css('border', '1px solid black');
-			globalPopover.css('z-index', 22000);
-			globalPopover.css('border-radius', '4px');
-			*/
-			globalPopover = $('<div/>').css({'position': 'absolute', 'z-index': 22000});
+			globalPopover = dom('<div/>').css({'position': 'absolute', 'z-index': 22000, 'display': 'none'});
 			globalPopover.css({'background-color': '#F0F0FF', 'background-image': 'linear-gradient(to right bottom, #FFFFFF, #D0D0FF)'});
 			globalPopover.css({'color': 'black', 'border': '1px solid black', 'border-radius': '4px'});
-			globalPopover.hide();
 			globalPopover.appendTo(document.body);
 		}
 	}
 
-	constructor(private widget:JQuery, private bodyHTML:string, private titleHTML:string, private delay:number)
+	constructor(private widget:DOM, private bodyHTML:string, private titleHTML:string, private delay:number)
 	{
 	}
 
 	// raise the tooltip after a delay, assuming someone else hasn't bogarted it in the meanwhile
 	public start()
 	{
-		globalPopover.hide();
+		globalPopover.setCSS('display', 'none');
 		this.watermark = ++globalPopWatermark;
-		//console.log('START:[' + this.bodyHTML + '] watermark=' + this.watermark);
 
 		window.setTimeout(() =>
 		{
@@ -101,27 +93,26 @@ export class Tooltip
 
 	public raise(avoid?:Box)
 	{
-		if (this.widget.closest(document.documentElement).length == 0) return; // 'tis gone
+		if (!this.widget.exists()) return; // 'tis gone
 
-		//let pageWidth = $(document).width(), pageHeight = $(document).height();
 		globalTooltip = this;
 
 		let pop = globalPopover;
-		pop.css('max-width', '20em');
+		pop.css({'max-width': '20em'});
 		pop.empty();
-		let div = $('<div></div>').appendTo(pop).css({'padding': '0.3em'});
+		let div = dom('<div/>').appendTo(pop).css({'padding': '0.3em'});
 
 		let hasTitle = this.titleHTML != null && this.titleHTML.length > 0, hasBody = this.bodyHTML != null && this.bodyHTML.length > 0;
 
-		if (hasTitle) $('<div/>').appendTo(div).html('<b>' + this.titleHTML + '</b>');
-		if (hasTitle && hasBody) div.append('<hr>');
-		if (hasBody) $('<div/>').appendTo(div).html(this.bodyHTML);
+		if (hasTitle) dom('<div/>').appendTo(div).setHTML('<b>' + this.titleHTML + '</b>');
+		if (hasTitle && hasBody) div.appendHTML('<hr/>');
+		if (hasBody) dom('<div/>').appendTo(div).setHTML(this.bodyHTML);
 
 		// to-do: title, if any
 
-		let winW = $(window).width(), winH = $(window).height();
+		let winW = window.innerWidth, winH = window.innerHeight;
 		const GAP = 2;
-		let boundDiv = this.widget[0].getBoundingClientRect();
+		let boundDiv = this.widget.el.getBoundingClientRect();
 		let wx1 = boundDiv.left, wy1 = boundDiv.top;
 		let wx2 = wx1 + boundDiv.width, wy2 = wy1 + boundDiv.height;
 
@@ -151,14 +142,14 @@ export class Tooltip
 		};
 
 		setPosition();
-		pop.show();
+		pop.setCSS('display', 'block');
 		window.setTimeout(() => setPosition(), 1);
 	}
 
 	public lower()
 	{
 		let pop = globalPopover;
-		pop.hide();
+		pop.setCSS('display', 'none');
 	}
 }
 
