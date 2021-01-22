@@ -53,7 +53,7 @@ module.exports =
 
 		'@typescript-eslint/func-call-spacing': ['error', 'never'],
 		'arrow-parens': ['error', 'always'],
-		'arrow-body-style': ['error', 'as-needed'],
+		'arrow-body-style': 0,
 
 		//capitalized-comments : may be possible to tweak
 		//spaced-comment : ditto

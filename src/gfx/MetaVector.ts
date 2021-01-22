@@ -1072,7 +1072,7 @@ export class MetaVector
 		{
 			path.setAttribute('stroke-width', type.thickness.toString());
 			path.setAttribute('stroke-linejoin', type.hardEdge ? 'miter' : 'round');
-			path.setAttribute('stroke-linecap', 'square');
+			path.setAttribute('stroke-linecap', type.hardEdge ? 'square' : 'round');
 		}
 		this.defineSVGFill(path, type.fillCol);
 	}
