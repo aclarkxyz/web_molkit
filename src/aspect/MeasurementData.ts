@@ -116,7 +116,7 @@ export class MeasurementData extends Aspect
 	public reservedColumns(fldidx:number):string[]
 	{
 		let fieldName = this.header.fields[fldidx].name;
-		return [fieldName + MeasurementData.SUFFIX_VALUE, fieldName + MeasurementData.SUFFIX_ERROR, 
+		return [fieldName + MeasurementData.SUFFIX_VALUE, fieldName + MeasurementData.SUFFIX_ERROR,
 				fieldName + MeasurementData.SUFFIX_UNITS, fieldName + MeasurementData.SUFFIX_MOD];
 	}
 

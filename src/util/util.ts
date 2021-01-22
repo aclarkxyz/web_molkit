@@ -594,7 +594,7 @@ export function empiricalScrollerSize():Size
 	let outer = $('<div/>').css({'visibility': 'hidden', 'width': '100px', 'height': '100px', 'overflow': 'scroll'}).appendTo($(document.body));
 	let inner = $('<div/>').css({'width': '100%', 'height': '100%'}).appendTo(outer);
 	staticScrollerSize = new Size(100 - inner.outerWidth(), 100 - inner.outerHeight());
-    outer.remove();
+	outer.remove();
 	return staticScrollerSize;
 }
 

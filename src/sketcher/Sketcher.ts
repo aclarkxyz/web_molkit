@@ -1583,7 +1583,7 @@ export class Sketcher extends DrawCanvas
 	{
 		const {mol} = this;
 		let rx:number[] = null, ry:number[] = null;
-		if (this.currentAtom > 0) 
+		if (this.currentAtom > 0)
 		{
 			let dx = 0, dy = 0, adj = mol.atomAdjList(this.currentAtom);
 			let x0 = mol.atomX(this.currentAtom), y0 = mol.atomY(this.currentAtom);
@@ -1592,7 +1592,7 @@ export class Sketcher extends DrawCanvas
 				dx -= mol.atomX(a) - x0;
 				dy -= mol.atomY(a) - y0;
 			}
-			if (Math.abs(dx) < 0.001 && Math.abs(dy) < 0.001) 
+			if (Math.abs(dx) < 0.001 && Math.abs(dy) < 0.001)
 			{
 				if (adj.length >= 2)
 				{
@@ -1606,11 +1606,11 @@ export class Sketcher extends DrawCanvas
 						if (score < best) [best, dx, dy] = [score, lx, ly];
 					}
 				}
-				else [dx, dy] = [1, 0]; 
+				else [dx, dy] = [1, 0];
 			}
 			[rx, ry] = SketchUtil.proposeAtomRing(this.mol, rsz, this.currentAtom, dx, dy);
 		}
-		else if (this.currentBond > 0) 
+		else if (this.currentBond > 0)
 		{
 			let a1 = mol.bondFrom(this.currentBond), a2 = mol.bondTo(this.currentBond);
 			let x1 = mol.atomX(a1), y1 = mol.atomY(a1), x2 = mol.atomX(a2), y2 = mol.atomY(a2);
@@ -1628,7 +1628,7 @@ export class Sketcher extends DrawCanvas
 			}
 			[rx, ry] = SketchUtil.proposeNewRing(this.mol, rsz, x, y, 1, 0, false);
 		}
-		
+
 		if (!rx) return;
 
 		let param:any =
@@ -1639,17 +1639,6 @@ export class Sketcher extends DrawCanvas
 		};
 		let molact = new MoleculeActivity(this.getState(), ActivityType.Ring, param, {}, this);
 		molact.execute();
-
-
-		/*
-		if (rsz < 3) {}
-		else if (bond > 0) return 
-		else if (atom > 0 && mol.atomAdjCount(atom) > 0 && !this.toolRingFreeform) return 
-		else return 
-
-
-		console.log('R='+[rsz,aromatic]);//fnord
-		*/
 	}
 
 	// --------------------------------------- toolkit events ---------------------------------------
@@ -2185,7 +2174,7 @@ export class Sketcher extends DrawCanvas
 
 		//console.log('Keycode:[' + event.keyCode + '] Key:[' + event.key + ']');
 
-		let mod = (event.shiftKey ? 'S' : '') + (event.ctrlKey || event.metaKey ? 'C' : '') + (event.altKey ? 'A' : ''); // (meta==cmd on mac; alt=opt on mac)	
+		let mod = (event.shiftKey ? 'S' : '') + (event.ctrlKey || event.metaKey ? 'C' : '') + (event.altKey ? 'A' : ''); // (meta==cmd on mac; alt=opt on mac)
 		let nomod = !event.shiftKey && !event.ctrlKey && !event.altKey && !event.metaKey;
 
 		if (key == KeyCode.Enter) this.editCurrent();
