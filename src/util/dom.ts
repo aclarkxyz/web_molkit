@@ -34,9 +34,9 @@ export class DOM
 	{
 		let xml = XML.parseXML(xhtml);
 		if (xml == null) throw 'Invalid XHTML string: ' + xhtml;
-		let html = xml.documentElement.outerHTML
+		let html = xml.documentElement.outerHTML;
 
-		var template = document.createElement('template');
+		let template = document.createElement('template');
 		template.innerHTML = html;
 		return new DOM(template.content.firstChild as Element);
 	}
@@ -144,7 +144,7 @@ export class DOM
 	{
 		let xml = XML.parseXML(xhtml);
 		if (xml == null) throw 'Invalid XHTML string: ' + xhtml;
-		let html = xml.documentElement.outerHTML
+		let html = xml.documentElement.outerHTML;
 		this.el.insertAdjacentHTML('beforeend', html);
 	}
 

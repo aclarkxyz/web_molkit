@@ -1559,11 +1559,11 @@ export class MoleculeActivity
 		}
 		else if (activity == ActivityType.BondArtifactClear)
 		{
-			if (!artif.removeArtifact(subject)) 
+			if (!artif.removeArtifact(subject))
 			{
 				if (this.removePolymerBlock(subject)) return;
 
-				this.errmsg = 'No artifact removed.'; 
+				this.errmsg = 'No artifact removed.';
 				return;
 			}
 		}

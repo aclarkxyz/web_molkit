@@ -26,7 +26,7 @@ namespace WebMolKit /* BOF */ {
 	Text objects are handled unusually: they correspond to internally-defined paths, so they can be measured *precisely* without knowing the rendering context
 	ahead of time. This means that the font options are limited, but for most chemistry rendering tasks, this is not a dealbreaker.
 
-	TextNative is to be used in cases where the font should match other renderings on the device, e.g. HTML text & MetaVector text should be drawn in the same 
+	TextNative is to be used in cases where the font should match other renderings on the device, e.g. HTML text & MetaVector text should be drawn in the same
 	way. The font is specified using the CSS style, which is the same for SVG & canvas. Measurement of the native text is done by making a fake invisible background
 	canvas which is specific to the current HTML environment. Rendering on another device does not guarantee the same metrics, so caution must be exercised.
 */
@@ -1142,7 +1142,7 @@ export class MetaVector
 
 		let node = XML.appendElement(svg, 'text');
 		node.setAttribute('xml:space', 'preserve');
-		node.setAttribute('x', x.toString()); 
+		node.setAttribute('x', x.toString());
 		node.setAttribute('y', y.toString());
 		node.setAttribute('style', style);
 		XML.setText(node, txt);
