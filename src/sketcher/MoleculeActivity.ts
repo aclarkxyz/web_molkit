@@ -259,10 +259,7 @@ export class MoleculeActivity
 		else if (this.activity == ActivityType.BondSwitch) this.execBondSwitch();
 		else if (this.activity == ActivityType.BondRotate) this.execBondRotate();
 		else if (this.activity == ActivityType.BondAddTwo) this.execBondAddTwo();
-		else if (this.activity == ActivityType.BondInsert)
-		{
-			// !! TODO (use TemplateFusion)
-		}
+		else if (this.activity == ActivityType.BondInsert) this.execBondInsert();
 		else if (this.activity == ActivityType.Join) this.execJoin();
 		else if (this.activity == ActivityType.Nudge) this.execNudge(param.dir, 0.1);
 		else if (this.activity == ActivityType.NudgeLots) this.execNudge(param.dir, 1);
@@ -938,6 +935,67 @@ export class MoleculeActivity
 		mol.addBond(atom, a1, 1);
 		mol.addBond(atom, a2, 1);
 		this.output.mol = mol;
+	}
+
+	public execBondInsert():void
+	{
+		let mol = this.input.mol, bond = this.input.currentBond;
+
+		if (bond == 0)
+		{
+			this.errmsg = 'There must be a current bond.';
+			return;
+		}
+		if (mol.bondInRing(bond))
+		{
+			this.errmsg = 'Cannot insert into a ring-bond.';
+			return;
+		}
+
+		let sides = MolUtil.getBondSides(mol, bond);
+		let side1 = sides[0], side2 = sides[1];
+		let atoms:number[] = [];
+		let [a1, a2] = mol.bondFromTo(bond);
+		let sel1 = this.input.selectedMask[a1 - 1], sel2 = this.input.selectedMask[a2 - 1];
+		if (sel1 && !sel2) atoms = side1;
+		else if (!sel1 && sel2) atoms = side2;
+		else if (side1.length < side2.length) atoms = side1;
+		else atoms = side2;
+
+		let alink = atoms.includes(a1) ? a1 : a2;
+		mol = mol.clone();
+		mol.setBondOrder(bond, 1);
+
+		var fragmask = Vec.booleanArray(false, mol.numAtoms);
+		for (let a of atoms) fragmask[a - 1] = true;
+		let frag = MolUtil.subgraphWithAttachments(mol, fragmask);
+
+		for (let n = mol.numAtoms; n >= 1; n--) if (fragmask[n - 1] && n != alink)
+		{
+			mol.deleteAtomAndBonds(n);
+			if (n < alink) alink -= 1;
+		}
+
+		mol.setAtomElement(alink, 'C');
+		mol.setAtomCharge(alink, 0);
+		mol.setAtomUnpaired(alink, 0);
+		mol.setAtomHExplicit(alink, Molecule.HEXPLICIT_UNKNOWN);
+		mol.setAtomIsotope(alink, Molecule.ISOTOPE_NATURAL);
+		mol.setAtomMapNum(alink, 0);
+		mol.setAtomExtra(alink, []);
+		mol.setAtomTransient(alink, []);
+
+		let fusion = new TemplateFusion(mol, frag, '');
+		fusion.withGuideOnly = true;
+		fusion.permuteAtom(alink);
+		if (fusion.perms.length == 0)
+		{
+			this.errmsg = 'Unable to insert.'; // should be rare (?)
+			return;
+		}
+		this.output.mol = fusion.perms[0].mol;
+		this.zapSubject();
+		this.output.currentAtom = alink;
 	}
 
 	public execJoin():void

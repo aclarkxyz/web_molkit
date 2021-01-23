@@ -1614,7 +1614,7 @@ export class Sketcher extends DrawCanvas
 		{
 			let a1 = mol.bondFrom(this.currentBond), a2 = mol.bondTo(this.currentBond);
 			let x1 = mol.atomX(a1), y1 = mol.atomY(a1), x2 = mol.atomX(a2), y2 = mol.atomY(a2);
-			let cx = 0.5 * (x1 + x2), cy = 0.5 * (y1 + y2), ox = x1 - x2, oy = y2 - y1;
+			let cx = 0.5 * (x1 + x2), cy = 0.5 * (y1 + y2), ox = y1 - y2, oy = x2 - x1;
 			let [dx, dy] = CoordUtil.congestionPoint(mol, cx - ox, cy - oy) < CoordUtil.congestionPoint(mol, cx + ox, cy + oy) ? [-ox, -oy] : [ox, oy];
 			[rx, ry] = SketchUtil.proposeBondRing(this.mol, rsz, this.currentBond, dx, dy);
 		}
