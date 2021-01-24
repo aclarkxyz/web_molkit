@@ -138,6 +138,7 @@ export class Tooltip
 			posX += window.pageXOffset;
 			posY += window.pageYOffset;
 
+console.log('POS:'+[posX,posY,popW,popH]);
 			pop.css({'left': `${posX}px`, 'top': `${posY}px`});
 		};
 

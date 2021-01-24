@@ -81,7 +81,7 @@ export class DOM
 	// returns true if this element still exists in the overall HTML DOM, i.e. hasn't been removed and left dangling
 	public exists():boolean
 	{
-		return document.body.contains(this.el);
+		return document.documentElement.contains(this.el);
 	}
 
 	// ------------ hierarchy ------------
