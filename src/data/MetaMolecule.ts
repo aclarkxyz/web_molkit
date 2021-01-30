@@ -35,6 +35,9 @@ namespace WebMolKit /* BOF */ {
 
 export class MetaMolecule
 {
+	public static skeletonHash:(mol:Molecule) => string = null;
+	public static isomorphMatch:(meta1:MetaMolecule, meta2:MetaMolecule, timeout:number) => boolean = null;
+
 	public atomArom:boolean[] = null;
 	public bondArom:boolean[] = null;
 	public rubricTetra:number[][] = null;
@@ -45,6 +48,7 @@ export class MetaMolecule
 	public hash:string = null;
 	public heavyHash:string = null;
 	public uniqueElements:string[] = null;
+	public dots:DotPath = null;
 
 	private piAtom:boolean[] = null; // true for all atoms that have at least one double bond attached
 
@@ -371,28 +375,28 @@ export class MetaMolecule
 		// (... recreate anything else that's affected)
 	}
 
-/*
 	// defines the "skeleton hash" field, for prescreening
-	public void calculateSkeletonHash()
+	public calculateSkeletonHash():void
 	{
-		hash = new SkeletonHash(mol).generate();
+		if (MetaMolecule.skeletonHash == null) throw 'Skeleton hash not available.';
+		this.hash = MetaMolecule.skeletonHash(this.mol);
 	}
 
 	// define the "heavy hash": like for skeleton, but with explicit hydrogens removed
-	public void calculateHeavyHash()
+	public calculateHeavyHash():void
 	{
-		boolean anyH = false;
-		for (int n = 1; n <= mol.numAtoms(); n++) if (mol.atomElement(n).equals("H")) {anyH = true; break;}
+		let anyH = false;
+		for (let n = 1; n <= this.mol.numAtoms; n++) if (this.mol.atomElement(n) == 'H') {anyH = true; break;}
 		if (!anyH)
 		{
-			heavyHash = getSkeletonHash();
+			this.heavyHash = this.getSkeletonHash();
 			return;
 		}
 
-		Molecule hvy = mol.clone();
-		for (int n = hvy.numAtoms(); n >= 1; n--) if (hvy.atomElement(n).equals("H")) hvy.deleteAtomAndBonds(n);
-		heavyHash = new SkeletonHash(hvy).generate();
-	}*/
+		let hvy = this.mol.clone();
+		for (let n = hvy.numAtoms; n >= 1; n--) if (hvy.atomElement(n) == 'H') hvy.deleteAtomAndBonds(n);
+		this.heavyHash = MetaMolecule.skeletonHash(hvy);
+	}
 
 	// access to aromaticity: either by 1-based single index, or grabbing the whole array
 	public isAtomAromatic(atom:number):boolean
@@ -420,23 +424,22 @@ export class MetaMolecule
 		return this.bondArom == null ? null : this.bondArom.slice(0);
 	}
 
-/*
 	// cached access to hash-type properties: first invocation slow, after that fast
-	public String getSkeletonHash()
+	public getSkeletonHash():string
 	{
-		if (hash == null) calculateSkeletonHash();
-		return hash;
+		if (this.hash == null) this.calculateSkeletonHash();
+		return this.hash;
 	}
-	public String getHeavyHash()
+	public getHeavyHash():string
 	{
-		if (heavyHash == null) calculateHeavyHash();
-		return heavyHash;
+		if (this.heavyHash == null) this.calculateHeavyHash();
+		return this.heavyHash;
 	}
-	public DotPath getDotPath()
+	public getDotPath():DotPath
 	{
-		if (dots == null) dots = new DotPath(mol);
-		return dots;
-	}*/
+		if (this.dots == null) this.dots = new DotPath(this.mol);
+		return this.dots;
+	}
 
 	public getUniqueElements():string[]
 	{
@@ -452,40 +455,34 @@ export class MetaMolecule
 		return this.uniqueElements;
 	}
 
-/*
 	// equivalence: assumes that both metavectors have been marked up according to the same additional into, i.e.
 	// aromaticity, stereo, etc.; it will try to resolve the equivalence and get to the answer as quickly as possible,
 	// with the isomorphism test being the final option
-	public boolean equivalentTo(MetaMolecule other)
+	public equivalentTo(other:MetaMolecule, timeout = 1000):boolean
 	{
-		return equivalentTo(other, 1000);
-	}
+		if (MetaMolecule.isomorphMatch == null) throw 'Isomorph search unavailable.';
 
-	public boolean equivalentTo(MetaMolecule other, int timeout)
-	{
 		// phase 1: different atom/bond counts, don't waste any time
-		if (mol.numAtoms() != other.mol.numAtoms() || mol.numBonds() != other.mol.numBonds()) return false;
+		if (this.mol.numAtoms != other.mol.numAtoms || this.mol.numBonds != other.mol.numBonds) return false;
 
 		// phase 2: make sure both hashes are generated, and use to screen
-		if (hash == null) calculateSkeletonHash();
+		if (this.hash == null) this.calculateSkeletonHash();
 		if (other.hash == null) other.calculateSkeletonHash();
-		if (!hash.equals(other.hash)) return false;
+		if (this.hash != other.hash) return false;
 
 		// phase 3: if molecules are literally equal, no need to get fancy
-		if (new CompareMolecules(mol,other.mol).compare() == 0) return true;
+		if (this.mol.compareTo(other.mol) == 0) return true;
 
 		// phase 4: check if any elements are unique on either side
-		String[] uniq1 = getUniqueElements(), uniq2 = other.getUniqueElements();
-		for (int n = 0; n < uniq1.length; n++)
+		let uniq1 = this.getUniqueElements(), uniq2 = other.getUniqueElements();
+		for (let n = 0; n < uniq1.length; n++)
 		{
-			if (Vec.indexOf(uniq1[n], uniq2) < 0) return false;
+			if (!uniq2.includes(uniq1[n])) return false;
 		}
-
+	
 		// phase 5: the most laborious part, finding any isomorphism
-		SubstructureSearch ss = new SubstructureSearch(this, other);
-		ss.setTimeout(timeout);
-		return ss.searchNext() == SubstructureSearch.SEARCH_FOUND;
-	}*/
+		return MetaMolecule.isomorphMatch(this, other, timeout);
+	}
 
 	// convenience constructor alternatives
 	public static createRubric(mol:Molecule):MetaMolecule

@@ -534,6 +534,8 @@ export class ArrangeMolecule
 	// goes through all of the objects and scales them by the provided factor
 	public scaleEverything(scaleBy:number):void
 	{
+		if (scaleBy == 1) return;
+		
 		this.scale *= scaleBy;
 		for (let a of this.points)
 		{
@@ -620,6 +622,18 @@ export class ArrangeMolecule
 			Vec.mulBy(bounds, downScale);
 		}
 		this.offsetEverything(x - bounds[0] + 0.5 * (w - bounds[2] + bounds[0]), y - bounds[1] + 0.5 * (h - bounds[3] + bounds[1]));
+	}
+
+	// if either boundary is greater than the given width/height, scales the objects down so that it fits; the origin is at (0,0) and the
+	// size is as big as it needs to be
+	public limitBounds(w:number, h:number):void
+	{
+		let bounds = this.determineBoundary(0);
+		if (bounds[0] == bounds[2] && bounds[1] == bounds[3]) return;
+
+		let scale = Math.min(1, Math.min(w / (bounds[2] - bounds[0]), h / (bounds[3] - bounds[1])));
+		this.offsetEverything(-bounds[0], -bounds[1]);
+		this.scaleEverything(scale);
 	}
 
 	// converts all drawing objects to a single colour

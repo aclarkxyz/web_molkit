@@ -966,7 +966,7 @@ export class MoleculeActivity
 		mol = mol.clone();
 		mol.setBondOrder(bond, 1);
 
-		var fragmask = Vec.booleanArray(false, mol.numAtoms);
+		let fragmask = Vec.booleanArray(false, mol.numAtoms);
 		for (let a of atoms) fragmask[a - 1] = true;
 		let frag = MolUtil.subgraphWithAttachments(mol, fragmask);
 
