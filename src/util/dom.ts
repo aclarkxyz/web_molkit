@@ -162,6 +162,26 @@ export class DOM
 		this.el.innerHTML += escapeHTML(text);
 	}
 
+	// getting & setting values of interactive widgets, like <input>
+	public getValue():string
+	{
+		return (this.el as HTMLInputElement).value;
+	}
+	public setValue(str:string):void
+	{
+		(this.el as HTMLInputElement).value = str;
+	}
+
+	// getting & setting disabled property, for interactive widgets like <input>
+	public getDisabled():boolean
+	{
+		return (this.el as HTMLInputElement).disabled;
+	}
+	public setDisabled(disabled:boolean):void
+	{
+		(this.el as HTMLInputElement).disabled = disabled;
+	}
+
 	// getting & setting CSS values
 	public getCSS(key:string):string
 	{
@@ -287,6 +307,14 @@ export class DOM
 	public onMouseOver(callback:(event?:MouseEvent) => boolean | void):void
 	{
 		this.el.addEventListener('mouseover', callback);
+	}
+	public onChange(callback:(event?:MouseEvent) => boolean | void):void
+	{
+		this.el.addEventListener('change', callback);
+	}
+	public onInput(callback:(event?:MouseEvent) => boolean | void):void
+	{
+		this.el.addEventListener('input', callback);
 	}
 }
 

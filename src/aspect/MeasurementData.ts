@@ -59,7 +59,7 @@ export class MeasurementData extends Aspect
 
 	// ----------------- public methods -----------------
 
-	// used to test if a datasheet has the appropriate metadata flagging it as a feedstock-containing datasheet
+	// used to test if a datasheet has the appropriate metadata
 	public static isMeasurementData(ds:DataSheet):boolean
 	{
 		for (let n = 0; n < ds.numExtensions; n++) if (ds.getExtType(n) == MeasurementData.CODE) return true;
