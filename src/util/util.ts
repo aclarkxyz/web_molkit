@@ -191,7 +191,7 @@ export function eventCoords(event:JQueryMouseEventObject, container:any):number[
 }
 
 // sets an object's position by pixel: convenience function otherwise rather ugly code; assumes that the positioning style already configured as needed
-export function setBoundaryPixels(dom:JQuery, x:number, y:number, w:number, h:number):void
+export function setBoundaryPixels(dom:JQuery | DOM, x:number, y:number, w:number, h:number):void
 {
 	dom.css({'left': x + 'px', 'top': y + 'px', 'width': w + 'px', 'height': h + 'px'});
 }

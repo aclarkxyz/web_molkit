@@ -17,11 +17,21 @@ namespace WebMolKit /* BOF */ {
 	of what it does is for convenience rather than the historical need to workaround compatibility issues.
 */
 
+// generic creator: converts a compatible object into a DOM
 export function dom(obj:Element | DOM | string):DOM
 {
 	if (typeof obj == 'string') return DOM.parse(obj);
 	if (obj instanceof DOM) return obj;
 	return new DOM(obj);
+}
+
+// a more permissive version of the above, which also looks for JQuery inputs, for compatibility purposes; type checking is
+// limited, so buyer-beware
+export function domLegacy(obj:any):DOM
+{
+	if (obj == null) return null;
+	if (obj.jquery) return dom(obj[0]);
+	return dom(obj);
 }
 
 export class DOM
@@ -75,6 +85,22 @@ export class DOM
 			if (tag && child.tagName != tag) continue;
 			domList.push(new DOM(child));
 		}
+		return domList;
+	}
+
+	// finds just one qualifying in the child herarchy based on the selector string; returns null if nothing
+	public find(selector:string):DOM
+	{
+		let el = this.el.querySelector(selector);
+		return el ? new DOM(el) : null;
+	}
+
+	// finds all instances matching the selector string in the child hierarchy, or empty array if nothing
+	public findAll(selector:string):DOM[]
+	{
+		let nodeList = this.el.querySelectorAll(selector);
+		let domList:DOM[] = [];
+		for (let n = 0; n < nodeList.length; n++) domList.push(new DOM(nodeList.item(n)));
 		return domList;
 	}
 
@@ -207,7 +233,7 @@ export class DOM
 	{
 		this.el.setAttribute(key, value);
 	}
-	public attr(dict:Record<string, string | number>):DOM
+	public attr(dict:Record<string, string | number | boolean>):DOM
 	{
 		for (let key in dict) this.setAttr(key, dict[key].toString());
 		return this;
@@ -244,6 +270,12 @@ export class DOM
 	public height():number
 	{
 		return (this.el as HTMLElement).offsetHeight;
+	}
+
+	// actions
+	public focus():void
+	{
+		(this.el as HTMLElement).focus();
 	}
 
 	// ------------ events ------------

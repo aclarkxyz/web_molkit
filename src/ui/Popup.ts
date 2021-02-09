@@ -28,18 +28,28 @@ const CSS_POPUP = `
 
 export class Popup
 {
+	private parent:DOM;
+
 	// content information that can be accessed after opening
-	protected obscureBackground:JQuery; // grey covering banner	
-	protected obscureForeground:JQuery;
-	protected panelBoundary:JQuery; // the dialog outline itself
-	protected bodyDiv:JQuery; // the main area, for content
+	protected domObscureBackground:DOM; // grey covering banner	
+	protected domObscureForeground:DOM;
+	protected domPanelBoundary:DOM; // the dialog outline itself
+	protected domBody:DOM; // the main area, for content
+
+	// legacy versions for compatibility
+	protected get obscureBackground():JQuery {return $(this.domObscureBackground.el as HTMLElement);}
+	protected get obscureForeground():JQuery {return $(this.domObscureForeground.el as HTMLElement);}
+	protected get panelBoundary():JQuery {return $(this.domPanelBoundary.el as HTMLElement);}
+	protected get bodyDiv():JQuery {return $(this.domBody.el as HTMLElement);}
 
 	public popupBackground = 'white';
 	public callbackClose:(source?:Popup) => void = null;
 	public callbackPopulate:(source?:Popup) => void = null;
 
-	constructor(private parent:JQuery)
+	constructor(parent:any)
 	{
+		this.parent = domLegacy(parent);
+
 		installInlineCSS('popup', CSS_POPUP);
 	}
 
@@ -51,29 +61,28 @@ export class Popup
 	// creates all the DOM objects and shows the dialog; details such as title should be setup before calling this
 	public open():void
 	{
-		let body = $(document.documentElement);
+		let body = dom(document.documentElement);
 
 		let zindex = 21000;
 
-		let bg = this.obscureBackground = $('<div/>').appendTo(body);
+		let bg = this.domObscureBackground = dom('<div/>').appendTo(body);
 		bg.css({'position': 'fixed', 'z-index': zindex});
 		bg.css({'left': '0', 'right': '0', 'top': '0', 'bottom': '0'});
 		bg.css({'background-color': 'black', 'opacity': 0.2});
 
-		let fg = this.obscureForeground = $('<div/>').appendTo(body);
+		let fg = this.domObscureForeground = dom('<div/>').appendTo(body);
 		fg.css({'position': 'fixed', 'z-index': zindex + 1});
 		fg.css({'left': '0', 'right': '0', 'top': '0', 'bottom': '0'});
-		fg.click(() => this.close());
+		fg.onClick(() => this.close());
 
-		//let pb = this.panelBoundary = $('<div class="wmk-popup"/>').appendTo(body);
-		let pb = this.panelBoundary = $('<div class="wmk-popup"/>').appendTo(fg);
-		pb.click((event:JQueryEventObject) => event.stopPropagation()); // don't let the click percolate upward to the close event
+		let pb = this.domPanelBoundary = dom('<div class="wmk-popup"/>').appendTo(fg);
+		pb.onClick((event:MouseEvent) => event.stopPropagation()); // don't let the click percolate upward to the close event
 		pb.css({'background-color': this.popupBackground, 'border': '1px solid black'});
 		pb.css({'position': 'absolute', 'overflow': 'auto'});
 
-		this.bodyDiv = $('<div/>').appendTo(pb).css({'padding': '5px'});
+		this.domBody = dom('<div/>').appendTo(pb).css({'padding': '5px'});
 
-		bg.show();
+		//bg.show();
 
 		this.populate();
 		this.positionAndShow();
@@ -99,6 +108,7 @@ export class Popup
 
 	// use this to obtain the parts of the dialog box intended for modification
 	public body():JQuery {return this.bodyDiv;}
+	public bodyDOM():DOM {return this.domBody;}
 
 	// either subclass and override this, or provide the callback
 	protected populate():void
@@ -114,15 +124,15 @@ export class Popup
 	{
 		clearTooltip();
 
-		let winW = $(window).width(), winH = $(window).height();
+		let winW = window.innerWidth, winH = window.innerHeight;
 		const GAP = 2;
-		let client = this.parent[0].getBoundingClientRect();
+		let client = this.parent.el.getBoundingClientRect();
 		let wx1 = client.left, wy1 = client.top, wx2 = client.right, wy2 = client.bottom;
 
-		let pb = this.panelBoundary;
+		let pb = this.domPanelBoundary;
 
 		let maxW = Math.max(wx1, winW - wx2) - 4;
-		pb.css('max-width', maxW + 'px');
+		pb.css({'max-width': maxW + 'px'});
 
 		let scrollSize = empiricalScrollerSize();
 
@@ -153,7 +163,7 @@ export class Popup
 		};
 
 		setPosition();
-		pb.show();
+		//pb.show();
 		window.setTimeout(() => setPosition());
 	}
 }
