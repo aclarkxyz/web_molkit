@@ -1019,7 +1019,7 @@ export class MetaVector
 			rw *= this.scale;
 			rh *= this.scale;
 
-			let oval = XML.appendElement(g, 'oval');
+			let oval = XML.appendElement(g, 'ellipse');
 			oval.setAttribute('cx', cx.toString());
 			oval.setAttribute('cy', cy.toString());
 			oval.setAttribute('rx', rw.toString());
