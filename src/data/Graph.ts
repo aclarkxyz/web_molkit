@@ -435,18 +435,19 @@ export class Graph
 		return ret;
 	}
 
-	/*public int[] calculateGravity()
+	public calculateGravity():number[]
 	{
-		final int sz = numNodes();
-		int[] wght = Vec.intArray(1, sz), wmod = new int[sz];
-		for (int n = 0; n < sz; n++)
+		const sz = this.numNodes;
+		const {nbrs} = this;
+		let wght = Vec.numberArray(1, sz), wmod = Vec.numberArray(0, sz);
+		for (let n = 0; n < sz; n++)
 		{
 			Vec.setTo(wmod, wght);
-			for (int i = 0; i < sz; i++) for (int j = nbrs[i].length - 1; j >= 0; j--) wmod[i] += wght[nbrs[i][j]];
+			for (let i = 0; i < sz; i++) for (let j = nbrs[i].length - 1; j >= 0; j--) wmod[i] += wght[nbrs[i][j]];
 			Vec.setTo(wght, wmod);
 		}
 		return wght;
-	}*/
+	}
 
 	// ----------------- private methods -----------------
 
