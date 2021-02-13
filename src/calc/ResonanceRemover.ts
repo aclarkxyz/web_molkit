@@ -28,7 +28,7 @@ namespace WebMolKit /* BOF */ {
 export class ResonanceRemover
 {
 	public maxIter = 1000;
-	public bondOrders:number[] = [];
+	public bondOrders:number[] = []; // this is the deliverable output
 
 	// ------------------ public methods --------------------
 
@@ -130,7 +130,7 @@ export class ResonanceRemover
 		bsz = 0;
 		for (let n = 1; n <= mol.numBonds; n++) if (resBonds[n - 1] && mask[mol.bondFrom(n) - 1] && mask[mol.bondTo(n) - 1])
 		{
-			let f = nodes.indexOf(mol.bondFrom(n)), t = nodes.indexOf(mol.bondTo(n) - 1);
+			let f = nodes.indexOf(mol.bondFrom(n) - 1), t = nodes.indexOf(mol.bondTo(n) - 1);
 			bfr[bsz] = f;
 			bto[bsz] = t;
 			bgrav[bsz] = gravity[f] + gravity[t];

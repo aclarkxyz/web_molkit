@@ -433,6 +433,12 @@ export function dictValues<T>(dict:{[id:string] : T}):T[]
 	return list;
 }
 
+// iterate over two arrays at the same time
+export function zip<U, V>(u:U[], v:V[]):[U, V][]
+{
+	return u.map((a, i) => [a, v[i]]);
+}
+
 // converts a string (which is stored by JavaScript as UCS2) to UTF8, where each character is guaranteed to be 1 byte
 export function toUTF8(str:string):string
 {
