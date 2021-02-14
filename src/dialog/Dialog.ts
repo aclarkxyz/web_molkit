@@ -38,6 +38,7 @@ export class Dialog
 	public maxPortionHeight = 0; // optional % of vertical height allowed
 	public topMargin = 50; // pixels to reserve along the top
 	public title = 'Dialog';
+	public allowScroller = true; // if true, vertical scrolling is enabled
 
 	// content information that can be accessed after opening
 	protected domObscureBackground:DOM; // grey covering banner
@@ -123,7 +124,7 @@ export class Dialog
 
 		let bdiv = dom('<div/>').appendTo(divOuter).css({'width': '100%'});
 		bdiv.css({'flex-shrink': '1', 'flex-grow': '0'});
-		bdiv.css({'overflow-y': 'auto'});
+		if (this.allowScroller) bdiv.css({'overflow-y': 'auto'});
 
 		this.domBody = dom('<div/>').appendTo(bdiv).css({'padding': '0.5em'}); // (has to be nested, otherwise runs over)
 

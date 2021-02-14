@@ -195,7 +195,7 @@ export class DOM
 	}
 	public setValue(str:string):void
 	{
-		(this.el as HTMLInputElement).value = str;
+		(this.el as HTMLInputElement).value = str || '';
 	}
 
 	// getting & setting disabled property, for interactive widgets like <input>
@@ -270,6 +270,16 @@ export class DOM
 	public height():number
 	{
 		return (this.el as HTMLElement).offsetHeight;
+	}
+	public offset():Pos
+	{
+		let rect = this.el.getBoundingClientRect();
+		let win = this.el.ownerDocument.defaultView;
+		return new Pos(rect.left + win.pageXOffset, rect.top + win.pageYOffset);
+	}
+	public size():Size
+	{
+		return new Size(this.width(), this.height());
 	}
 
 	// actions
