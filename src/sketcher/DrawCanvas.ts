@@ -110,7 +110,7 @@ export class DrawCanvas extends Widget implements ArrangeMeasurement
 		this.divMessage = dom('<div/>').appendTo(this.container).css(canvasStyle);
 		this.divMessage.css({'text-align': 'center', 'vertical-align': 'middle', 'font-weight': 'bold', 'font-size': '120%'});
 	}
-
+	
 	// functions for converting between coordinates within the widget (pixels) & molecular position (Angstroms)
 	public scale() {return this.pointScale;}
 	public angToX(ax:number):number

@@ -21,16 +21,16 @@ export class EditBond extends Dialog
 	public mol:Molecule; // copy of original: may or may not be different
 
 	private initMol:Molecule;
-	private btnApply:JQuery;
+	private btnApply:DOM;
 	private tabs:TabBar;
 
 	private optionOrder:OptionList;
 	private optionStereo:OptionList;
-	private inputFrom:JQuery;
-	private inputTo:JQuery;
-	private inputIndex:JQuery;
+	private inputFrom:DOM;
+	private inputTo:DOM;
+	private inputIndex:DOM;
 
-	private inputGeom1:JQuery;
+	private inputGeom1:DOM;
 	private geomWidget:GeomWidget;
 	private refGeom1:string;
 
@@ -51,37 +51,36 @@ export class EditBond extends Dialog
 	// builds the dialog content
 	protected populate():void
 	{
-		let buttons = this.buttons(), body = this.body();
+		let buttons = this.buttonsDOM(), body = this.bodyDOM();
 
-		buttons.append(this.btnClose); // easy way to reorder
-		buttons.append(' ');
-		this.btnApply = $('<button class="wmk-button wmk-button-primary">Apply</button>').appendTo(buttons);
-		this.btnApply.click(() => this.applyChanges());
+		this.btnApply = dom('<button class="wmk-button wmk-button-primary">Apply</button>').appendTo(buttons).css({'margin-left': '0.5em'});
+		this.btnApply.onClick(() => this.applyChanges());
 
 		this.tabs = new TabBar(['Bond', 'Geometry', 'Query', 'Extra']);
 		this.tabs.render(body);
 		this.tabs.callbackSelect = (idx) =>
 		{
-			if (idx == 0) this.inputFrom.focus();
-			else if (idx == 1) this.inputGeom1.focus();
+			if (idx == 0) this.inputFrom.grabFocus();
+			else if (idx == 1) this.inputGeom1.grabFocus();
 		};
 
-		this.populateBond(this.tabs.getPanel('Bond'));
-		this.populateGeometry(this.tabs.getPanel('Geometry'));
-		this.populateQuery(this.tabs.getPanel('Query'));
-		this.populateExtra(this.tabs.getPanel('Extra'));
+		this.populateBond(this.tabs.getPanelDOM('Bond'));
+		this.populateGeometry(this.tabs.getPanelDOM('Geometry'));
+		this.populateQuery(this.tabs.getPanelDOM('Query'));
+		this.populateExtra(this.tabs.getPanelDOM('Extra'));
 
-		body.find('input').each((idx, child) =>
+		let focusable = body.findAll('input,textarea');
+		if (focusable.length > 0) focusable[0].grabFocus(true);
+		for (let dom of focusable)
 		{
-			let dom = $(child).css({'font': 'inherit'});
-			if (idx == 0) dom.focus();
-			dom.keydown((event:JQueryKeyEventObject) =>
+			dom.css({'font': 'inherit'});
+			dom.onKeyDown((event:KeyboardEvent) =>
 			{
 				let keyCode = event.keyCode || event.which;
 				if (keyCode == 13) this.applyChanges();
 				if (keyCode == 27) this.close();
 			});
-		});
+		}
 	}
 
 	// ------------ private methods ------------
@@ -101,57 +100,60 @@ export class EditBond extends Dialog
 		if (this.callbackApply) this.callbackApply(this);
 	}
 
-	private populateBond(panel:JQuery):void
+	private populateBond(panel:DOM):void
 	{
 		const {mol, bond} = this;
 
-		let grid = $('<div/>').appendTo(panel);
+		let grid = dom('<div/>').appendTo(panel);
 		grid.css({'display': 'grid', 'align-items': 'center', 'justify-content': 'start'});
 		grid.css({'grid-row-gap': '0.5em', 'grid-column-gap': '0.5em'});
-		grid.css('grid-template-columns', '[start col0] auto [col1] auto [col2] auto [col3] auto [col4 end]');
+		grid.css({'grid-template-columns': '[start col0] auto [col1] auto [col2] auto [col3] auto [col4 end]'});
 
-		$('<div/>').appendTo(grid).css({'grid-area': '1 / col0'}).text('Order');
+		dom('<div/>').appendTo(grid).css({'grid-area': '1 / col0'}).setText('Order');
 		let ordersHTML:string[] = [];
 		for (let o = 0; o <= 4; o++) ordersHTML.push(`&nbsp;&nbsp;${o}&nbsp;&nbsp;`);
 		this.optionOrder = new OptionList(ordersHTML);
 		this.optionOrder.htmlLabels = true;
 		this.optionOrder.setSelectedIndex(mol.bondOrder(bond));
-		this.optionOrder.render($('<div/>').appendTo(grid).css({'grid-column': 'col1 / col4', 'grid-row': '1'}));
+		this.optionOrder.render(dom('<div/>').appendTo(grid).css({'grid-column': 'col1 / col4', 'grid-row': '1'}));
 
-		$('<div/>').appendTo(grid).css({'grid-area': '2 / col0'}).text('Stereo');
+		dom('<div/>').appendTo(grid).css({'grid-area': '2 / col0'}).setText('Stereo');
 		this.optionStereo = new OptionList(['None', 'Up', 'Down', 'Unknown']);
 		this.optionStereo.setSelectedIndex(mol.bondType(bond));
-		this.optionStereo.render($('<div/>').appendTo(grid).css({'grid-column': 'col1 / col4', 'grid-row': '2'}));
+		this.optionStereo.render(dom('<div/>').appendTo(grid).css({'grid-column': 'col1 / col4', 'grid-row': '2'}));
 
-		$('<div/>').appendTo(grid).css({'grid-area': '3 / col0'}).text('From');
-		this.inputFrom = $('<input size="6"/>').appendTo(grid).css({'grid-area': '3 / col1', 'font': 'inherit'}).attr('readonly', 'true');
-		this.inputFrom.val(mol.bondFrom(bond).toString());
+		dom('<div/>').appendTo(grid).css({'grid-area': '3 / col0'}).setText('From');
+		this.inputFrom = dom('<input size="6"/>').appendTo(grid).css({'grid-area': '3 / col1', 'font': 'inherit'});
+		this.inputFrom.setReadOnly(true);
+		this.inputFrom.setValue(mol.bondFrom(bond).toString());
 
-		$('<div/>').appendTo(grid).css({'grid-area': '3 / col2'}).text('To');
-		this.inputTo = $('<input size="6"/>').appendTo(grid).css({'grid-area': '3 / col3', 'font': 'inherit'}).attr('readonly', 'true');
-		this.inputTo.val(mol.bondTo(bond).toString());
+		dom('<div/>').appendTo(grid).css({'grid-area': '3 / col2'}).setText('To');
+		this.inputTo = dom('<input size="6"/>').appendTo(grid).css({'grid-area': '3 / col3', 'font': 'inherit'});
+		this.inputTo.setReadOnly(true);
+		this.inputTo.setValue(mol.bondTo(bond).toString());
 
-		$('<div/>').appendTo(grid).css({'grid-area': '4 / col2'}).text('Index');
-		this.inputIndex = $('<input size="6"/>').appendTo(grid).css({'grid-area': '4 / col3', 'font': 'inherit'}).attr('readonly', 'true');
-		this.inputIndex.val(bond.toString());
+		dom('<div/>').appendTo(grid).css({'grid-area': '4 / col2'}).setText('Index');
+		this.inputIndex = dom('<input size="6"/>').appendTo(grid).css({'grid-area': '4 / col3', 'font': 'inherit'});
+		this.inputIndex.setReadOnly(true);
+		this.inputIndex.setValue(bond.toString());
 	}
 
-	private populateGeometry(panel:JQuery):void
+	private populateGeometry(panel:DOM):void
 	{
 		const {mol, bond} = this;
 
-		let divContainer1 = $('<div/>').appendTo(panel).css({'text-align': 'center'});
-		let divContainer2 = $('<div/>').appendTo(divContainer1).css({'display': 'inline-block'});
-		let grid = $('<div/>').appendTo(divContainer2);
+		let divContainer1 = dom('<div/>').appendTo(panel).css({'text-align': 'center'});
+		let divContainer2 = dom('<div/>').appendTo(divContainer1).css({'display': 'inline-block'});
+		let grid = dom('<div/>').appendTo(divContainer2);
 		grid.css({'display': 'grid', 'align-items': 'center', 'justify-content': 'start'});
 		grid.css({'grid-row-gap': '0.5em', 'grid-column-gap': '0.5em'});
-		grid.css('grid-template-columns', '[start col0] auto [col1] auto [col2]');
+		grid.css({'grid-template-columns': '[start col0] auto [col1] auto [col2]'});
 
 		this.geomWidget = new GeomWidget(GeomWidgetType.Bond, mol, bond);
-		this.geomWidget.render($('<div/>').appendTo(grid).css({'grid-area': '1 / col0 / auto / col2', 'text-align': 'center'}));
+		this.geomWidget.render(dom('<div/>').appendTo(grid).css({'grid-area': '1 / col0 / auto / col2', 'text-align': 'center'}));
 
-		let label1 = $('<div/>').appendTo(grid).css({'grid-area': '2 / col0'});
-		this.inputGeom1 = $('<input type="number" size="8"/>').appendTo(grid).css({'grid-area': '2 / col1'});
+		let label1 = dom('<div/>').appendTo(grid).css({'grid-area': '2 / col0'});
+		this.inputGeom1 = dom('<input type="number" size="8"/>').appendTo(grid).css({'grid-area': '2 / col1'});
 
 		this.geomWidget.callbackSelect = (sel:GeomWidgetSelection) =>
 		{
@@ -159,19 +161,19 @@ export class EditBond extends Dialog
 			{
 				let a1 = mol.bondFrom(bond), a2 = mol.bondTo(bond);
 				let dx = mol.atomX(a2) - mol.atomX(a1), dy = mol.atomY(a2) - mol.atomY(a1);
-				label1.text('Distance');
-				this.inputGeom1.val(this.refGeom1 = norm_xy(dx, dy).toFixed(3));
+				label1.setText('Distance');
+				this.inputGeom1.setValue(this.refGeom1 = norm_xy(dx, dy).toFixed(3));
 			}
 		};
 		this.geomWidget.callbackSelect(this.geomWidget.selected); // trigger initial definition
 	}
 
-	private populateQuery(panel:JQuery):void
+	private populateQuery(panel:DOM):void
 	{
-		panel.append('Query: TODO');
+		panel.appendText('Query: TODO');
 	}
 
-	private populateExtra(panel:JQuery):void
+	private populateExtra(panel:DOM):void
 	{
 		let fields = [...this.mol.bondExtra(this.bond), ...this.mol.bondTransient(this.bond)];
 		this.fieldsWidget = new ExtraFieldsWidget(fields);
@@ -189,7 +191,7 @@ export class EditBond extends Dialog
 
 	private updateGeometry():void
 	{
-		let strval1 = this.inputGeom1.val().toString();
+		let strval1 = this.inputGeom1.getValue();
 		if (this.refGeom1 == strval1) return;
 
 		const {mol} = this;

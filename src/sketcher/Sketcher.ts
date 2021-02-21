@@ -18,9 +18,6 @@ namespace WebMolKit /* BOF */ {
 	Sketcher: a very heavyweight widget that provides 2D structure editing for a molecule.
 */
 
-// used as a transient backup in case of access to the clipboard being problematic
-let globalMoleculeClipboard:Molecule = null;
-
 export class Sketcher extends DrawCanvas
 {
 	// callbacks
@@ -295,8 +292,7 @@ export class Sketcher extends DrawCanvas
 
 		for (let widget of [this.container, this.canvasUnder, this.canvasMolecule, this.canvasOver])
 		{
-			$(widget).css('width', width + 'px');
-			$(widget).css('height', height + 'px');
+			widget.css({'width': `${width}px`, 'height': `${height}px`});
 		}
 
 		for (let btnv of [this.commandView, this.toolView, this.templateView]) if (btnv)
@@ -525,10 +521,6 @@ export class Sketcher extends DrawCanvas
 	public performCopy(mol?:Molecule):void
 	{
 		if (!mol) mol = this.getMolecule();
-
-		globalMoleculeClipboard = mol.clone();
-		let cookies = new Cookies();
-		if (cookies.numMolecules() > 0) cookies.stashMolecule(mol);
 
 		if (this.proxyClip) this.proxyClip.setString(mol.toString());
 	}
@@ -1610,11 +1602,13 @@ export class Sketcher extends DrawCanvas
 	// event responses
 	private mouseClick(event:MouseEvent):boolean
 	{
+		event.stopPropagation();
 		this.container.grabFocus(); // just in case it wasn't already
 		return false;
 	}
 	private mouseDoubleClick(event:MouseEvent):boolean
 	{
+		event.stopPropagation();
 		event.preventDefault();
 
 		let xy = eventCoords(event, this.container);
@@ -1633,6 +1627,7 @@ export class Sketcher extends DrawCanvas
 	}
 	private mouseDown(event:MouseEvent):boolean
 	{
+		event.stopPropagation();
 		event.preventDefault();
 
 		this.clearMessage();
@@ -1753,6 +1748,8 @@ export class Sketcher extends DrawCanvas
 	}
 	private mouseUp(event:MouseEvent):boolean
 	{
+		event.stopPropagation();
+
 		// if the mouse hasn't moved, it's a click operation
 		if (!this.opBudged)
 		{
@@ -1824,11 +1821,11 @@ export class Sketcher extends DrawCanvas
 				if (element == 'A')
 				{
 					let dlg = new EditAtom(this.mol, this.opAtom, () =>
-						{
-							let autoscale = this.mol.numAtoms == 0;
-							if (this.mol.compareTo(dlg.mol) != 0) this.defineMolecule(dlg.mol, autoscale);
-							dlg.close();
-						});
+					{
+						let autoscale = this.mol.numAtoms == 0;
+						if (this.mol.compareTo(dlg.mol) != 0) this.defineMolecule(dlg.mol, autoscale);
+						dlg.close();
+					});
 					if (this.opAtom == 0)
 					{
 						dlg.newX = this.xToAng(this.clickX);
@@ -2009,18 +2006,21 @@ export class Sketcher extends DrawCanvas
 	}
 	private mouseOver(event:MouseEvent):boolean
 	{
+		event.stopPropagation();
 		this.updateHoverCursor(event);
 		this.updateLasso(event);
 		return false;
 	}
 	private mouseOut(event:MouseEvent):boolean
 	{
+		event.stopPropagation();
 		this.updateHoverCursor(event);
 		this.updateLasso(event);
 		return false;
 	}
 	private mouseMove(event:MouseEvent):boolean
 	{
+		event.stopPropagation();
 		this.updateHoverCursor(event);
 
 		if (this.dragType == DraggingTool.None) return; // mouse button isn't pressed

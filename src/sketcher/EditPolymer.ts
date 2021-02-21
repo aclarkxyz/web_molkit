@@ -21,11 +21,11 @@ export class EditPolymer extends Dialog
 	public mol:Molecule; // copy of original: may or may not be different
 
 	private initMol:Molecule;
-	private btnApply:JQuery;
-	private btnRemove:JQuery;
+	private btnApply:DOM;
+	private btnRemove:DOM;
 	private optionConnect:OptionList = null;
 	private optionBondConn:OptionList = null;
-	private divPreview:JQuery;
+	private divPreview:DOM;
 
 	private polymer:PolymerBlock;
 	private currentID = 0;
@@ -68,42 +68,40 @@ export class EditPolymer extends Dialog
 	// builds the dialog content
 	protected populate():void
 	{
-		let buttons = this.buttons(), body = this.body();
+		let buttons = this.buttonsDOM(), body = this.bodyDOM();
 
-		buttons.append(this.btnClose); // easy way to reorder
-		buttons.append(' ');
-
-		this.btnApply = $('<button class="wmk-button wmk-button-primary">Apply</button>').appendTo(buttons);
-		if (this.currentID == 0) this.btnApply.text('Create');
-		this.btnApply.click(() => this.applyChanges());
+		this.btnApply = dom('<button class="wmk-button wmk-button-primary">Apply</button>').appendTo(buttons).css({'margin-left': '0.5em'});
+		if (this.currentID == 0) this.btnApply.setText('Create');
+		this.btnApply.onClick(() => this.applyChanges());
 
 		if (this.currentID > 0)
 		{
-			buttons.append(' ');
-			this.btnRemove = $('<button class="wmk-button wmk-button-default">Remove</button>').appendTo(buttons);
-			this.btnRemove.click(() => this.applyRemove());
+			this.btnRemove = dom('<button class="wmk-button wmk-button-default">Remove</button>').appendTo(buttons).css({'margin-left': '0.5em'});
+			this.btnRemove.onClick(() => this.applyRemove());
 		}
 
-		let grid = $('<div/>').appendTo(body);
+		let grid = dom('<div/>').appendTo(body);
 		grid.css({'display': 'grid', 'align-items': 'center', 'justify-content': 'start'});
 		grid.css({'grid-row-gap': '0.5em', 'grid-column-gap': '0.5em'});
-		grid.css('grid-template-columns', '[start col0] auto [col1] auto [col2] auto [col3] auto [col4 end]');
+		grid.css({'grid-template-columns': '[start col0] auto [col1] auto [col2] auto [col3] auto [col4 end]'});
 
-		$('<div/>').appendTo(grid).css({'grid-area': '1 / col0'}).text('# Atoms');
-		let inputNAtoms = $('<input size="5"/>').appendTo($('<div/>').appendTo(grid).css({'grid-area': '1 / col1'})).prop('readonly', true);
-		inputNAtoms.val(this.unit.atoms.length.toString());
+		dom('<div/>').appendTo(grid).css({'grid-area': '1 / col0'}).setText('# Atoms');
+		let inputNAtoms = dom('<input size="5"/>').appendTo(dom('<div/>').appendTo(grid).css({'grid-area': '1 / col1'}));
+		inputNAtoms.setReadOnly(true);
+		inputNAtoms.setValue(this.unit.atoms.length.toString());
 
-		$('<div/>').appendTo(grid).css({'grid-area': '1 / col2'}).text('Out-bonds');
-		let inputNBond = $('<input size="5"/>').appendTo($('<div/>').appendTo(grid).css({'grid-area': '1 / col3'})).prop('readonly', true);
-		inputNBond.val(this.bonds.length.toString());
+		dom('<div/>').appendTo(grid).css({'grid-area': '1 / col2'}).setText('Out-bonds');
+		let inputNBond = dom('<input size="5"/>').appendTo(dom('<div/>').appendTo(grid).css({'grid-area': '1 / col3'}));
+		inputNBond.setReadOnly(true);
+		inputNBond.setValue(this.bonds.length.toString());
 
 		let row = 1;
 		if (this.bonds.length == 2)
 		{
 			row++;
-			$('<div/>').appendTo(grid).css({'grid-area': `${row} / col0`}).text('Connectivity');
+			dom('<div/>').appendTo(grid).css({'grid-area': `${row} / col0`}).setText('Connectivity');
 			this.optionConnect = new OptionList(['Unknown', 'Head-to-Tail', 'Head-to-Head', 'Random']);
-			this.optionConnect.render($('<div/>').appendTo(grid).css({'grid-area': `${row} / col1 / auto / col4`}));
+			this.optionConnect.render(dom('<div/>').appendTo(grid).css({'grid-area': `${row} / col1 / auto / col4`}));
 			if (this.unit.connect == PolymerBlockConnectivity.HeadToTail) this.optionConnect.setSelectedIndex(1);
 			else if (this.unit.connect == PolymerBlockConnectivity.HeadToHead) this.optionConnect.setSelectedIndex(2);
 			else if (this.unit.connect == PolymerBlockConnectivity.Random) this.optionConnect.setSelectedIndex(3);
@@ -112,9 +110,9 @@ export class EditPolymer extends Dialog
 		if (this.bonds.length == 4)
 		{
 			row++;
-			$('<div/>').appendTo(grid).css({'grid-area': `${row} / col0`}).text('2x2 Connectivity');
+			dom('<div/>').appendTo(grid).css({'grid-area': `${row} / col0`}).text('2x2 Connectivity');
 			this.optionBondConn = new OptionList(['Unknown', '1-2,3-4', '1-4,2-3', '1-3,2-4', '1-4,3-2']);
-			this.optionBondConn.render($('<div/>').appendTo(grid).css({'grid-area': `${row} / col1 / auto / col4`}));
+			this.optionBondConn.render(dom('<div/>').appendTo(grid).css({'grid-area': `${row} / col1 / auto / col4`}));
 			if (Vec.arrayLength(this.unit.bondConn) == 4)
 			{
 				let bpri = Vec.idxSort(this.unit.bondConn);
@@ -126,22 +124,23 @@ export class EditPolymer extends Dialog
 		}*/
 
 		row++;
-		this.divPreview = $('<div/>').appendTo(grid).css({'grid-area': `${row} / col0 / auto / col4`, 'text-align': 'center'});
+		this.divPreview = dom('<div/>').appendTo(grid).css({'grid-area': `${row} / col0 / auto / col4`, 'text-align': 'center'});
 		this.renderUnit();
 
-		body.find('input').each((idx, child) =>
+		let focusable = body.findAll('input,textarea');
+		if (focusable.length > 0) focusable[0].grabFocus(true);
+		for (let dom of focusable)
 		{
-			let dom = $(child).css({'font': 'inherit'});
-			if (idx == 0) dom.focus();
-			dom.keydown((event:JQueryKeyEventObject) =>
+			dom.css({'font': 'inherit'});
+			dom.onKeyDown((event:KeyboardEvent) =>
 			{
 				let keyCode = event.keyCode || event.which;
 				if (keyCode == 13) this.applyChanges();
 				if (keyCode == 27) this.close();
 			});
-		});
+		}
 
-		setTimeout(() => inputNAtoms.focus(), 1);
+		//setTimeout(() => inputNAtoms.focus(), 1);
 	}
 
 	// ------------ private methods ------------
@@ -230,7 +229,7 @@ export class EditPolymer extends Dialog
 		gfx.normalise();
 
 		this.divPreview.empty();
-		$(gfx.createSVG()).appendTo(this.divPreview).css({'pointer-events': 'none'});
+		dom(gfx.createSVG()).appendTo(this.divPreview).css({'pointer-events': 'none'});
 	}
 }
 

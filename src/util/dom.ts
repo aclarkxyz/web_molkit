@@ -220,6 +220,17 @@ export class DOM
 		(this.el as HTMLInputElement).checked = checked;
 	}
 
+	// getting & setting readonly property, for interactive widgets like <input>
+	public getReadOnly():boolean
+	{
+		return (this.el as HTMLInputElement).readOnly;
+	}
+	public setReadOnly(readOnly:boolean):void
+	{
+		if (readOnly == null) return;
+		(this.el as HTMLInputElement).readOnly = readOnly;
+	}
+
 	// getting & setting CSS values
 	public getCSS(key:string):string
 	{
@@ -252,13 +263,13 @@ export class DOM
 	}
 
 	// getting & setting CSS classes
-	public addClass(clsname:string):void
+	public addClass(clsnames:string):void
 	{
-		(this.el as HTMLElement).classList.add(clsname);
+		for (let cls of clsnames.split(' ')) if (cls) (this.el as HTMLElement).classList.add(cls);
 	}
-	public removeClass(clsname:string):void
+	public removeClass(clsnames:string):void
 	{
-		(this.el as HTMLElement).classList.remove(clsname);
+		for (let cls of clsnames.split(' ')) if (cls) (this.el as HTMLElement).classList.remove(cls);
 	}
 	public hasClass(clsname:string):boolean
 	{
@@ -300,14 +311,17 @@ export class DOM
 		this.css({'left': `${x}px`, 'top': `${y}px`, 'width': `${w}px`, 'height': `${h}px`});
 	}
 
-	// focus: testing and taking
+	// focus: testing and taking focus; note that focus grabbing often works better with a short delay, hence the convenient option
 	public hasFocus():boolean
 	{
 		return this.el === document.activeElement;
 	}
-	public grabFocus():void
+	public grabFocus(delay = false):void
 	{
-		(this.el as HTMLElement).focus();
+		if (delay)
+			setTimeout(() => this.grabFocus(), 10);
+		else
+			(this.el as HTMLElement).focus();
 	}
 
 	// ------------ events ------------

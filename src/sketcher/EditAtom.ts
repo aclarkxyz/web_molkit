@@ -18,7 +18,7 @@ namespace WebMolKit /* BOF */ {
 
 interface EditAtomAbbrev
 {
-	tr:JQuery;
+	tr:DOM;
 	idx:number;
 	bgcol:string;
 }
@@ -30,28 +30,28 @@ export class EditAtom extends Dialog
 	public newY = 0;
 
 	private initMol:Molecule;
-	private btnApply:JQuery;
+	private btnApply:DOM;
 	private tabs:TabBar;
 
-	private inputSymbol:JQuery;
-	private inputCharge:JQuery;
-	private inputUnpaired:JQuery;
+	private inputSymbol:DOM;
+	private inputCharge:DOM;
+	private inputUnpaired:DOM;
 	private optionHydrogen:OptionList;
-	private inputHydrogen:JQuery;
+	private inputHydrogen:DOM;
 	private optionIsotope:OptionList;
-	private inputIsotope:JQuery;
-	private inputMapping:JQuery;
-	private inputIndex:JQuery;
+	private inputIsotope:DOM;
+	private inputMapping:DOM;
+	private inputIndex:DOM;
 
 	private abbrevList:AbbrevContainerFrag[] = null;
-	private inputAbbrevSearch:JQuery;
-	private tableAbbrev:JQuery;
+	private inputAbbrevSearch:DOM;
+	private tableAbbrev:DOM;
 	private svgAbbrev:string[] = null;
 	private abbrevEntries:EditAtomAbbrev[];
 	private currentAbbrev = -1;
 
-	private inputGeom1:JQuery;
-	private inputGeom2:JQuery;
+	private inputGeom1:DOM;
+	private inputGeom2:DOM;
 	private geomWidget:GeomWidget;
 	private refGeom1:string;
 	private refGeom2:string;
@@ -75,41 +75,38 @@ export class EditAtom extends Dialog
 	// builds the dialog content
 	protected populate():void
 	{
-		let buttons = this.buttons(), body = this.body();
+		let buttons = this.buttonsDOM(), body = this.bodyDOM();
 
-		buttons.append(this.btnClose); // easy way to reorder
-		buttons.append(' ');
-		this.btnApply = $('<button class="wmk-button wmk-button-primary">Apply</button>').appendTo(buttons);
-		this.btnApply.click(() => this.applyChanges());
+		this.btnApply = dom('<button class="wmk-button wmk-button-primary">Apply</button>').appendTo(buttons).css({'margin-left': '0.5em'});		
+		this.btnApply.onClick(() => this.applyChanges());
 
 		this.tabs = new TabBar(['Atom', 'Abbreviation', 'Geometry', 'Query', 'Extra']);
 		this.tabs.render(body);
 		this.tabs.callbackSelect = (idx) =>
 		{
-			if (idx == 0) this.inputSymbol.focus();
-			else if (idx == 1) this.inputAbbrevSearch.focus();
-			else if (idx == 2) this.inputGeom1.focus();
+			if (idx == 0) this.inputSymbol.grabFocus();
+			else if (idx == 1) this.inputAbbrevSearch.grabFocus();
+			else if (idx == 2) this.inputGeom1.grabFocus();
 		};
 
-		this.populateAtom(this.tabs.getPanel('Atom'));
-		this.populateAbbreviation(this.tabs.getPanel('Abbreviation'));
-		this.populateGeometry(this.tabs.getPanel('Geometry'));
-		this.populateQuery(this.tabs.getPanel('Query'));
-		this.populateExtra(this.tabs.getPanel('Extra'));
+		this.populateAtom(this.tabs.getPanelDOM('Atom'));
+		this.populateAbbreviation(this.tabs.getPanelDOM('Abbreviation'));
+		this.populateGeometry(this.tabs.getPanelDOM('Geometry'));
+		this.populateQuery(this.tabs.getPanelDOM('Query'));
+		this.populateExtra(this.tabs.getPanelDOM('Extra'));
 
-		body.find('input').each((idx, child) =>
+		let focusable = body.findAll('input,textarea');
+		if (focusable.length > 0) focusable[0].grabFocus(true);
+		for (let dom of focusable)
 		{
-			let dom = $(child).css({'font': 'inherit'});
-			if (idx == 0) dom.focus();
-			dom.keydown((event:JQueryKeyEventObject) =>
+			dom.css({'font': 'inherit'});
+			dom.onKeyDown((event:KeyboardEvent) =>
 			{
 				let keyCode = event.keyCode || event.which;
 				if (keyCode == 13) this.applyChanges();
 				if (keyCode == 27) this.close();
 			});
-		});
-
-//		setTimeout(() => this.inputSymbol.focus(), 1);
+		}
 	}
 
 	// ------------ private methods ------------
@@ -130,172 +127,172 @@ export class EditAtom extends Dialog
 		if (this.callbackApply) this.callbackApply(this);
 	}
 
-	private populateAtom(panel:JQuery):void
+	private populateAtom(panel:DOM):void
 	{
-		let grid = $('<div/>').appendTo(panel);
+		let grid = dom('<div/>').appendTo(panel);
 		grid.css({'display': 'grid', 'align-items': 'center', 'justify-content': 'start'});
 		grid.css({'grid-row-gap': '0.5em', 'grid-column-gap': '0.5em'});
-		grid.css('grid-template-columns', '[start col0] auto [col1] auto [col2] auto [col3] auto [col4 end]');
+		grid.css({'grid-template-columns': '[start col0] auto [col1] auto [col2] auto [col3] auto [col4 end]'});
 
-		grid.append('<div style="grid-area: 1 / col0;">Symbol</div>');
-		this.inputSymbol = $('<input size="20"/>').appendTo(grid);
-		this.inputSymbol.css('grid-area', '1 / col1 / auto / col4');
+		grid.appendHTML('<div style="grid-area: 1 / col0;">Symbol</div>');
+		this.inputSymbol = dom('<input size="20"/>').appendTo(grid);
+		this.inputSymbol.css({'grid-area': '1 / col1 / auto / col4}'});
 
-		grid.append('<div style="grid-area: 2 / col0;">Charge</div>');
-		this.inputCharge = $('<input type="number" size="6"/>').appendTo(grid);
-		this.inputCharge.css('grid-area', '2 / col1');
+		grid.appendHTML('<div style="grid-area: 2 / col0;">Charge</div>');
+		this.inputCharge = dom('<input type="number" size="6"/>').appendTo(grid);
+		this.inputCharge.css({'grid-area': '2 / col1'});
 
-		grid.append('<div style="grid-area: 2 / col2;">Unpaired</div>');
-		this.inputUnpaired = $('<input type="number" size="6"/>').appendTo(grid);
-		this.inputUnpaired.css('grid-area', '2 / col3');
+		grid.appendHTML('<div style="grid-area: 2 / col2;">Unpaired</div>');
+		this.inputUnpaired = dom('<input type="number" size="6"/>').appendTo(grid);
+		this.inputUnpaired.css({'grid-area': '2 / col3'});
 
-		grid.append('<div style="grid-area: 3 / col0;">Hydrogens</div>');
+		grid.appendHTML('<div style="grid-area: 3 / col0;">Hydrogens</div>');
 		this.optionHydrogen = new OptionList(['Auto', 'None', '1', '2', '3', '4', 'Other']);
-		this.optionHydrogen.render($('<div style="grid-area: 3 / col1 / auto / col3"/>').appendTo(grid));
-		this.optionHydrogen.onSelect((idx:number) => this.inputHydrogen.prop('disabled', idx != 6));
-		this.inputHydrogen = $('<input type="number" size="4"/>').appendTo(grid);
-		this.inputHydrogen.css('grid-area', '3 / col3');
+		this.optionHydrogen.render(dom('<div style="grid-area: 3 / col1 / auto / col3"/>').appendTo(grid));
+		this.optionHydrogen.onSelect((idx:number) => this.inputHydrogen.setDisabled(idx != 6));
+		this.inputHydrogen = dom('<input type="number" size="4"/>').appendTo(grid);
+		this.inputHydrogen.css({'grid-area': '3 / col3'});
 
-		grid.append('<div style="grid-area: 4 / col0;">Isotope</div>');
+		grid.appendHTML('<div style="grid-area: 4 / col0;">Isotope</div>');
 		this.optionIsotope = new OptionList(['Natural', 'Enriched']);
-		this.optionIsotope.render($('<div style="grid-area: 4 / col1 / auto / col3"/>').appendTo(grid));
-		this.inputIsotope = $('<input type="number" size="6"/>').appendTo(grid);
-		this.inputIsotope.css('grid-area', '4 / col3');
+		this.optionIsotope.render(dom('<div style="grid-area: 4 / col1 / auto / col3"/>').appendTo(grid));
+		this.inputIsotope = dom('<input type="number" size="6"/>').appendTo(grid);
+		this.inputIsotope.css({'grid-area': '4 / col3'});
 
-		grid.append('<div style="grid-area: 5 / col0;">Mapping</div>');
-		this.inputMapping = $('<input type="number" size="6"/>').appendTo(grid);
-		this.inputMapping.css('grid-area', '5 / col1');
+		grid.appendHTML('<div style="grid-area: 5 / col0;">Mapping</div>');
+		this.inputMapping = dom('<input type="number" size="6"/>').appendTo(grid);
+		this.inputMapping.css({'grid-area': '5 / col1'});
 
-		grid.append('<div style="grid-area: 5 / col2;">Index</div>');
-		this.inputIndex = $('<input type="number" size="6" readonly="readonly"/>').appendTo(grid);
-		this.inputIndex.css('grid-area', '5 / col3');
+		grid.appendHTML('<div style="grid-area: 5 / col2;">Index</div>');
+		this.inputIndex = dom('<input type="number" size="6" readonly="readonly"/>').appendTo(grid);
+		this.inputIndex.css({'grid-area': '5 / col3'});
 
 		const mol = this.mol, atom = this.atom;
 		if (atom > 0)
 		{
-			this.inputSymbol.val(mol.atomElement(atom));
-			this.inputCharge.val(mol.atomCharge(atom).toString());
-			this.inputUnpaired.val(mol.atomUnpaired(atom).toString());
+			this.inputSymbol.setValue(mol.atomElement(atom));
+			this.inputCharge.setValue(mol.atomCharge(atom).toString());
+			this.inputUnpaired.setValue(mol.atomUnpaired(atom).toString());
 
 			let hc = mol.atomHExplicit(atom);
 			if (hc == Molecule.HEXPLICIT_UNKNOWN)
 			{
 				this.optionHydrogen.setSelectedIndex(0);
-				this.inputHydrogen.val(mol.atomHydrogens(atom).toString());
-				this.inputHydrogen.prop('disabled', true);
+				this.inputHydrogen.setValue(mol.atomHydrogens(atom).toString());
+				this.inputHydrogen.setDisabled(true);
 			}
 			else if (hc <= 4)
 			{
 				this.optionHydrogen.setSelectedIndex(hc + 1);
-				this.inputHydrogen.val(hc.toString());
-				this.inputHydrogen.prop('disabled', true);
+				this.inputHydrogen.setValue(hc.toString());
+				this.inputHydrogen.setDisabled(true);
 			}
 			else
 			{
 				this.optionHydrogen.setSelectedIndex(6);
-				this.inputHydrogen.val(hc.toString());
-				this.inputHydrogen.prop('disabled', false);
+				this.inputHydrogen.setValue(hc.toString());
+				this.inputHydrogen.setDisabled(false);
 			}
 			//this.optionHydrogen.setSelectedIndex(mol.atomHExplicit(atom) == Molecule.HEXPLICIT_UNKNOWN ? 0 : 1);			
 			//if (mol.atomHExplicit(atom) != Molecule.HEXPLICIT_UNKNOWN) this.inputHydrogen.val(mol.atomHExplicit(atom).toString());
 
 			this.optionIsotope.setSelectedIndex(mol.atomIsotope(atom) == Molecule.ISOTOPE_NATURAL ? 0 : 1);
-			if (mol.atomIsotope(atom) == Molecule.ISOTOPE_NATURAL) this.inputIsotope.val(mol.atomIsotope(atom).toString());
-			this.inputMapping.val(mol.atomMapNum(atom).toString());
-			this.inputIndex.val(atom.toString());
+			if (mol.atomIsotope(atom) == Molecule.ISOTOPE_NATURAL) this.inputIsotope.setValue(mol.atomIsotope(atom).toString());
+			this.inputMapping.setValue(mol.atomMapNum(atom).toString());
+			this.inputIndex.setValue(atom.toString());
 		}
 	}
 
-	private populateAbbreviation(panel:JQuery):void
+	private populateAbbreviation(panel:DOM):void
 	{
-		let divFlex = $('<div/>').appendTo(panel).css({'display': 'flex', 'align-items': 'flex-start'});
+		let divFlex = dom('<div/>').appendTo(panel).css({'display': 'flex', 'align-items': 'flex-start'});
 		divFlex.css({'max-width': '60vw', 'max-height': '50vh', 'overflow-y': 'scroll'});
 
-		let spanSearch = $('<div/>').appendTo(divFlex).css({'margin-right': '0.5em', 'flex': '0 0'});
-		let spanList = $('<div/>').appendTo(divFlex).css({'flex': '1 1 100%'});
+		let spanSearch = dom('<div/>').appendTo(divFlex).css({'margin-right': '0.5em', 'flex': '0 0'});
+		let spanList = dom('<div/>').appendTo(divFlex).css({'flex': '1 1 100%'});
 
-		this.inputAbbrevSearch = $('<input size="10"/>').appendTo(spanSearch);
-		this.inputAbbrevSearch.attr('placeholder', 'Search');
+		this.inputAbbrevSearch = dom('<input size="10"/>').appendTo(spanSearch);
+		this.inputAbbrevSearch.setAttr('placeholder', 'Search');
 		let lastSearch = '';
-		this.inputAbbrevSearch.on('input', () =>
+		this.inputAbbrevSearch.onInput(() =>
 		{
-			let search = this.inputAbbrevSearch.val().toString();
+			let search = this.inputAbbrevSearch.getValue();
 			if (search == lastSearch) return;
 			lastSearch = search;
 			this.fillAbbreviations();
 		});
 
-		let divButtons = $('<div/>').appendTo(spanSearch).css({'margin-top': '0.5em'});
-		let btnClear = $('<button class="wmk-button wmk-button-default">Clear</button>').appendTo(divButtons);
-		btnClear.click(() =>
+		let divButtons = dom('<div/>').appendTo(spanSearch).css({'margin-top': '0.5em'});
+		let btnClear = dom('<button class="wmk-button wmk-button-default">Clear</button>').appendTo(divButtons);
+		btnClear.onClick(() =>
 		{
 			this.selectAbbreviation(-1);
 			if (this.atom > 0 && MolUtil.hasAbbrev(this.mol, this.atom)) this.applyChanges();
 		});
 
-		this.tableAbbrev = $('<table/>').appendTo(spanList).css({'border-collapse': 'collapse', 'width': '100%'});
+		this.tableAbbrev = dom('<table/>').appendTo(spanList).css({'border-collapse': 'collapse', 'width': '100%'});
 		this.fillAbbreviations();
 	}
 
-	private populateGeometry(panel:JQuery):void
+	private populateGeometry(panel:DOM):void
 	{
 		const {mol, atom} = this;
 
-		let divContainer1 = $('<div/>').appendTo(panel).css({'text-align': 'center'});
-		let divContainer2 = $('<div/>').appendTo(divContainer1).css({'display': 'inline-block'});
-		let grid = $('<div/>').appendTo(divContainer2);
+		let divContainer1 = dom('<div/>').appendTo(panel).css({'text-align': 'center'});
+		let divContainer2 = dom('<div/>').appendTo(divContainer1).css({'display': 'inline-block'});
+		let grid = dom('<div/>').appendTo(divContainer2);
 		grid.css({'display': 'grid', 'align-items': 'center', 'justify-content': 'start'});
 		grid.css({'grid-row-gap': '0.5em', 'grid-column-gap': '0.5em'});
-		grid.css('grid-template-columns', '[start col0] auto [col1] auto [col2] auto [col3] auto [col4 end]');
+		grid.css({'grid-template-columns': '[start col0] auto [col1] auto [col2] auto [col3] auto [col4 end]'});
 
 		this.geomWidget = new GeomWidget(GeomWidgetType.Atom, mol, atom);
-		this.geomWidget.render($('<div/>').appendTo(grid).css({'grid-area': '1 / col0 / auto / col4', 'text-align': 'center'}));
+		this.geomWidget.render(dom('<div/>').appendTo(grid).css({'grid-area': '1 / col0 / auto / col4', 'text-align': 'center'}));
 
-		let label1 = $('<div/>').appendTo(grid).css({'grid-area': '2 / col0'});
-		this.inputGeom1 = $('<input type="number" size="8"/>').appendTo(grid).css({'grid-area': '2 / col1'});
-		let label2 = $('<div/>').appendTo(grid).css({'grid-area': '2 / col2'});
-		this.inputGeom2 = $('<input type="number" size="8"/>').appendTo(grid).css({'grid-area': '2 / col3'});
+		let label1 = dom('<div/>').appendTo(grid).css({'grid-area': '2 / col0'});
+		this.inputGeom1 = dom('<input type="number" size="8"/>').appendTo(grid).css({'grid-area': '2 / col1'});
+		let label2 = dom('<div/>').appendTo(grid).css({'grid-area': '2 / col2'});
+		this.inputGeom2 = dom('<input type="number" size="8"/>').appendTo(grid).css({'grid-area': '2 / col3'});
 
 		this.geomWidget.callbackSelect = (sel:GeomWidgetSelection) =>
 		{
 			let atoms = this.geomWidget.selectionAtoms(sel);
 			if (sel.type == GeomWidgetSelType.Position)
 			{
-				label1.text('Position X');
-				label2.text('Y');
-				this.inputGeom1.val(this.refGeom1 = mol.atomX(atoms[0]).toFixed(3));
-				this.inputGeom2.val(this.refGeom2 = mol.atomY(atoms[0]).toFixed(3));
+				label1.setText('Position X');
+				label2.setText('Y');
+				this.inputGeom1.setValue(this.refGeom1 = mol.atomX(atoms[0]).toFixed(3));
+				this.inputGeom2.setValue(this.refGeom2 = mol.atomY(atoms[0]).toFixed(3));
 			}
 			else if (sel.type == GeomWidgetSelType.Link)
 			{
 				let dx = mol.atomX(atoms[1]) - mol.atomX(atoms[0]), dy = mol.atomY(atoms[1]) - mol.atomY(atoms[0]);
-				label1.text('Distance');
-				label2.text('Angle');
-				this.inputGeom1.val(this.refGeom1 = norm_xy(dx, dy).toFixed(3));
-				this.inputGeom2.val(this.refGeom2 = (Math.atan2(dy, dx) * RADDEG).toFixed(1));
+				label1.setText('Distance');
+				label2.setText('Angle');
+				this.inputGeom1.setValue(this.refGeom1 = norm_xy(dx, dy).toFixed(3));
+				this.inputGeom2.setValue(this.refGeom2 = (Math.atan2(dy, dx) * RADDEG).toFixed(1));
 			}
 			else if (sel.type == GeomWidgetSelType.Torsion)
 			{
 				let cx = mol.atomX(atoms[0]), cy = mol.atomY(atoms[0]);
 				let th2 = Math.atan2(mol.atomY(atoms[1]) - cy, mol.atomX(atoms[1]) - cx);
 				let th1 = Math.atan2(mol.atomY(atoms[2]) - cy, mol.atomX(atoms[2]) - cx);
-				label1.text('Angle');
-				label2.text('');
-				this.inputGeom1.val(this.refGeom1 = (angleDiffPos(th2, th1) * RADDEG).toFixed(1));
-				this.inputGeom2.val(this.refGeom2 = '');
+				label1.setText('Angle');
+				label2.setText('');
+				this.inputGeom1.setValue(this.refGeom1 = (angleDiffPos(th2, th1) * RADDEG).toFixed(1));
+				this.inputGeom2.setValue(this.refGeom2 = '');
 			}
-			label2.css('display', sel.type == GeomWidgetSelType.Torsion ? 'none' : 'block');
-			this.inputGeom2.css('display', sel.type == GeomWidgetSelType.Torsion ? 'none' : 'block');
+			label2.setCSS('display', sel.type == GeomWidgetSelType.Torsion ? 'none' : 'block');
+			this.inputGeom2.setCSS('display', sel.type == GeomWidgetSelType.Torsion ? 'none' : 'block');
 		};
 		this.geomWidget.callbackSelect(this.geomWidget.selected); // trigger initial definition
 	}
 
-	private populateQuery(panel:JQuery):void
+	private populateQuery(panel:DOM):void
 	{
-		panel.append('Query: TODO');
+		panel.appendText('Query: TODO');
 	}
 
-	private populateExtra(panel:JQuery):void
+	private populateExtra(panel:DOM):void
 	{
 		let fields = [...this.mol.atomExtra(this.atom), ...this.mol.atomTransient(this.atom)];
 		this.fieldsWidget = new ExtraFieldsWidget(fields);
@@ -309,13 +306,13 @@ export class EditAtom extends Dialog
 
 		if (atom == 0) atom = this.atom = mol.addAtom('C', this.newX, this.newY);
 
-		let sym = this.inputSymbol.val().toString();
+		let sym = this.inputSymbol.getValue();
 		if (sym != '') mol.setAtomElement(atom, sym);
 
-		let chg = parseInt(this.inputCharge.val().toString());
+		let chg = parseInt(this.inputCharge.getValue());
 		if (chg > -20 && chg < 20) mol.setAtomCharge(atom, chg);
 
-		let unp = parseInt(this.inputUnpaired.val().toString());
+		let unp = parseInt(this.inputUnpaired.getValue());
 		if (unp >= 0 && unp < 20) mol.setAtomUnpaired(atom, unp);
 
 		let hcidx = this.optionHydrogen.getSelectedIndex();
@@ -323,18 +320,18 @@ export class EditAtom extends Dialog
 		else if (hcidx <= 5) mol.setAtomHExplicit(atom, hcidx - 1);
 		else
 		{
-			let hyd = parseInt(this.inputHydrogen.val().toString());
+			let hyd = parseInt(this.inputHydrogen.getValue());
 			if (hyd >= 0 && hyd < 20) mol.setAtomHExplicit(atom, hyd);
 		}
 
 		if (this.optionIsotope.getSelectedIndex() == 1)
 		{
-			let iso = parseInt(this.inputIsotope.val().toString());
+			let iso = parseInt(this.inputIsotope.getValue());
 			if (iso >= 0 && iso < 300) mol.setAtomIsotope(atom, iso);
 		}
 		else mol.setAtomIsotope(atom, Molecule.ISOTOPE_NATURAL);
 
-		let map = parseInt(this.inputMapping.val().toString());
+		let map = parseInt(this.inputMapping.getValue());
 		if (!isNaN(map)) mol.setAtomMapNum(atom, map);
 	}
 
@@ -358,7 +355,7 @@ export class EditAtom extends Dialog
 
 	private updateGeometry():void
 	{
-		let strval1 = this.inputGeom1.val().toString(), strval2 = this.inputGeom2.val().toString();
+		let strval1 = this.inputGeom1.getValue(), strval2 = this.inputGeom2.getValue();
 		if (this.refGeom1 == strval1 && this.refGeom2 == strval2) return;
 
 		const {mol} = this;
@@ -472,12 +469,12 @@ export class EditAtom extends Dialog
 			}
 		}
 
-		let tr = $('<tr/>').appendTo(this.tableAbbrev);
-		tr.append('<td><u>Label</u></td>');
-		tr.append('<td><u>Structure</u></td>');
+		let tr = dom('<tr/>').appendTo(this.tableAbbrev);
+		tr.appendHTML('<td><u>Label</u></td>');
+		tr.appendHTML('<td><u>Structure</u></td>');
 
 		this.abbrevEntries = [];
-		let search = this.inputAbbrevSearch.val().toString().toLowerCase();
+		let search = this.inputAbbrevSearch.getValue().toLowerCase();
 
 		for (let n = 0; n < this.abbrevList.length; n++)
 		{
@@ -485,20 +482,20 @@ export class EditAtom extends Dialog
 
 			let entry:EditAtomAbbrev =
 			{
-				'tr': $('<tr/>').appendTo(this.tableAbbrev),
+				'tr': dom('<tr/>').appendTo(this.tableAbbrev),
 				'idx': n,
 				'bgcol': this.abbrevEntries.length % 2 == 0 ? '#FFFFFF' : '#F8F8F8'
 			};
-			entry.tr.css('background-color', this.currentAbbrev == entry.idx ? colourCode(Theme.lowlight) : entry.bgcol);
-			let tdLabel = $('<td/>').appendTo(entry.tr), tdStruct = $('<td/>').appendTo(entry.tr);
-			tdLabel.html(this.abbrevList[n].nameHTML);
+			entry.tr.setCSS('background-color', this.currentAbbrev == entry.idx ? colourCode(Theme.lowlight) : entry.bgcol);
+			let tdLabel = dom('<td/>').appendTo(entry.tr), tdStruct = dom('<td/>').appendTo(entry.tr);
+			tdLabel.setHTML(this.abbrevList[n].nameHTML);
 
-			let svg = $(this.svgAbbrev[n]).appendTo(tdStruct);
+			let svg = dom(this.svgAbbrev[n]).appendTo(tdStruct);
 			svg.css({'pointer-events': 'none'});
 
 			entry.tr.css({'cursor': 'pointer'});
-			entry.tr.click(() => this.selectAbbreviation(n));
-			entry.tr.dblclick(() => this.applyChanges());
+			entry.tr.onClick(() => this.selectAbbreviation(n));
+			entry.tr.onDblClick(() => this.applyChanges());
 
 			this.abbrevEntries.push(entry);
 		}
@@ -512,7 +509,7 @@ export class EditAtom extends Dialog
 
 		for (let entry of this.abbrevEntries)
 		{
-			entry.tr.css('background-color', this.currentAbbrev == entry.idx ? colourCode(Theme.lowlight) : entry.bgcol);
+			entry.tr.setCSS('background-color', this.currentAbbrev == entry.idx ? colourCode(Theme.lowlight) : entry.bgcol);
 		}
 	}
 }
