@@ -59,7 +59,7 @@ export abstract class ButtonBank
 	public abstract hitButton(id:string):void;
 
 	// a key has been pressed: the button bank may choose to react to it
-	public claimKey(event:JQueryEventObject):boolean {return false;}
+	public claimKey(event:KeyboardEvent):boolean {return false;}
 
 	// override to capture the closing of the bank (a cleanup opportunity)
 	public bankClosed() {}
@@ -71,7 +71,7 @@ export abstract class ButtonBank
 	//
 	// where the modifiers consist of Shift-, Ctrl-, Alt-; and the keychar is usually a plain keyboard character which is case insensitive - with
 	// special word codes for unprintables
-	public static matchKey(event:JQueryEventObject, mnemonic:string, key:string):boolean
+	public static matchKey(event:KeyboardEvent, mnemonic:string, key:string):boolean
 	{
 		if (mnemonic == null || mnemonic == '') return false;
 

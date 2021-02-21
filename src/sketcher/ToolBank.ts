@@ -70,7 +70,7 @@ export class ToolBank extends ButtonBank
 		this.buttonView.setSelectedButton(id);
 	}
 
-	public claimKey(event:JQueryEventObject):boolean
+	public claimKey(event:KeyboardEvent):boolean
 	{
 		//let ch = String.fromCharCode(event.keyCode || event.charCode);
 		//console.log('Claim/Command['+ch+'] key='+event.keyCode+' chcode='+event.charCode);

@@ -37,20 +37,10 @@ export class Sketcher extends DrawCanvas
 
 	private mol:Molecule = null;
 	private policy:RenderPolicy = null;
-	private width = 0;
-	private height = 0;
-	private border = 0x808080;
-	private borderRadius = 4;
-	private background = 0xF8F8F8;
 
 	private beenSetup = false;
-	private container:JQuery;
 	private undoStack:SketchState[] = [];
 	private redoStack:SketchState[] = [];
-	private canvasUnder:HTMLCanvasElement = null;
-	private canvasMolecule:HTMLCanvasElement = null;
-	private canvasOver:HTMLCanvasElement = null;
-	private divMessage:JQuery = null;
 	private fadeWatermark = 0;
 	private layout:ArrangeMolecule = null;
 	private metavec:MetaVector = null; // instantiated version of above
@@ -216,36 +206,7 @@ export class Sketcher extends DrawCanvas
 	// specifying the starting molecule, initial size, etc.
 	public render(parent:any):void
 	{
-		if (!this.width || !this.height) throw 'Sketcher.render called without width and height';
-
 		super.render(parent);
-
-		//let style = 'position: relative; width: ' + this.width + 'px; height: ' + this.height + 'px;';
-		//this.container = newElement(this.getContentElement(), 'div', {'style': style});
-		this.container = $('<div/>').appendTo(this.content);
-		this.container.css({'position': 'relative', 'width': this.width + 'px', 'height': this.height + 'px'});
-		this.container.css('background-color', colourCanvas(this.background));
-		if (this.border != MetaVector.NOCOLOUR)
-		{
-			this.container.css('border', '1px solid ' + colourCanvas(this.border));
-			this.container.css('border-radius', this.borderRadius + 'px');
-		}
-		this.container.css('outline', 'none');
-
-		this.container.attr('tabindex', '0');
-
-		let canvasStyle = 'position: absolute; left: 0; top: 0;';
-		canvasStyle += ' pointer-events: none;';
-
-		//this.canvasBackground = <HTMLCanvasElement>newElement(this.container, 'canvas', {'width': this.width, 'height': this.height, 'style': canvasStyle});
-		this.canvasUnder = newElement(this.container, 'canvas', {'width': this.width, 'height': this.height, 'style': canvasStyle}) as HTMLCanvasElement;
-		this.canvasMolecule = newElement(this.container, 'canvas', {'width': this.width, 'height': this.height, 'style': canvasStyle}) as HTMLCanvasElement;
-		this.canvasOver = newElement(this.container, 'canvas', {'width': this.width, 'height': this.height, 'style': canvasStyle}) as HTMLCanvasElement;
-
-		this.divMessage = $('<div/>').appendTo(this.container);
-		this.divMessage.attr('style', canvasStyle);
-		this.divMessage.css({'width': this.width + 'px', 'height': this.height + 'px'});
-		this.divMessage.css({'text-align': 'center', 'vertical-align': 'middle', 'font-weight': 'bold', 'font-size': '120%'});
 
 		this.centreAndShrink();
 		this.redraw();
@@ -280,17 +241,17 @@ export class Sketcher extends DrawCanvas
 		}
 
 		// setup all the interactive events
-		this.container.click((event:JQueryEventObject) => this.mouseClick(event));
-		this.container.dblclick((event:JQueryEventObject) => this.mouseDoubleClick(event));
-		this.container.mousedown((event:JQueryEventObject) => this.mouseDown(event));
-		this.container.mouseup((event:JQueryEventObject) => this.mouseUp(event));
-		this.container.mouseover((event:JQueryEventObject) => this.mouseOver(event));
-		this.container.mouseout((event:JQueryEventObject) => this.mouseOut(event));
-		this.container.mousemove((event:JQueryEventObject) => this.mouseMove(event));
-		this.container.keypress((event:JQueryEventObject) => this.keyPressed(event));
-		this.container.keydown((event:JQueryEventObject) => this.keyDown(event));
-		this.container.keyup((event:JQueryEventObject) => this.keyUp(event));
-		this.content.contextmenu((event:JQueryEventObject) => this.contextMenu(event));
+		this.container.onClick((event:MouseEvent) => this.mouseClick(event));
+		this.container.onDblClick((event:MouseEvent) => this.mouseDoubleClick(event));
+		this.container.onMouseDown((event:MouseEvent) => this.mouseDown(event));
+		this.container.onMouseUp((event:MouseEvent) => this.mouseUp(event));
+		this.container.onMouseOver((event:MouseEvent) => this.mouseOver(event));
+		this.container.onMouseLeave((event:MouseEvent) => this.mouseOut(event));
+		this.container.onMouseMove((event:MouseEvent) => this.mouseMove(event));
+		this.container.onKeyPress((event:KeyboardEvent) => this.keyPressed(event));
+		this.container.onKeyDown((event:KeyboardEvent) => this.keyDown(event));
+		this.container.onKeyUp((event:KeyboardEvent) => this.keyUp(event));
+		this.contentDOM.onContextMenu((event:MouseEvent) => this.contextMenu(event));
 
 		// setup the wheel handler
 		/* ...
@@ -299,20 +260,20 @@ export class Sketcher extends DrawCanvas
 		*/
 
 		// setup drop events
-		this.container[0].addEventListener('dragover', (event) =>
+		this.container.el.addEventListener('dragover', (event:DragEvent) =>
 		{
 			event.stopPropagation();
 			event.preventDefault();
 			event.dataTransfer.dropEffect = 'copy';
 		});
-		this.container[0].addEventListener('drop', (event) =>
+		this.container.el.addEventListener('drop', (event:DragEvent) =>
 		{
 			event.stopPropagation();
 			event.preventDefault();
 			this.dropInto(event.dataTransfer);
 		});
 
-		this.container.focus();
+		this.container.grabFocus();
 	}
 
 	// viewing options: changing any of them triggers a redraw
@@ -352,27 +313,27 @@ export class Sketcher extends DrawCanvas
 	{
 		let watermark = ++this.fadeWatermark;
 
-		this.divMessage.css('color', isError ? '#FF0000' : '#008000');
-		this.divMessage.text(msg);
+		this.divMessage.css({'color': isError ? '#FF0000' : '#008000'});
+		this.divMessage.setText(msg);
 		let szLeft = (this.toolView == null ? 0 : this.toolView.width) + 2;
 		let szRight = (this.templateView == null ? 0 : this.templateView.width) + 2;
 		let szBottom = (this.commandView == null ? 0 : this.commandView.height) + 2;
-		this.divMessage.css('left', szLeft + 'px');
-		this.divMessage.css('width', (this.width - szLeft - szRight) + 'px');
-		this.divMessage.css('height', (this.height - szBottom) + 'px');
+		this.divMessage.css({'left': szLeft + 'px'});
+		this.divMessage.css({'width': (this.width - szLeft - szRight) + 'px'});
+		this.divMessage.css({'height': (this.height - szBottom) + 'px'});
 
 		window.setTimeout(() =>
 		{
-			if (watermark == this.fadeWatermark) this.divMessage.text('');
+			if (watermark == this.fadeWatermark) this.divMessage.setText('');
 		}, 5000);
 	}
 
 	// boots the message immediately
 	public clearMessage()
 	{
-		if (this.divMessage.text() == '') return;
+		if (this.divMessage.getText() == '') return;
 		this.fadeWatermark++;
-		this.divMessage.text('');
+		this.divMessage.setText('');
 	}
 
 	// rescales and aligns to the middle of the screen
@@ -667,14 +628,14 @@ export class Sketcher extends DrawCanvas
 			if (this.mol.compareTo(dlg.mol) != 0) this.defineMolecule(dlg.mol, false, true);
 			dlg.close();
 		});
-		dlg.callbackClose = () => this.container.focus();
+		dlg.callbackClose = () => this.container.grabFocus();
 		dlg.open();
 	}
 
 	// returns true if the sketcher is focused; the display of focus is not visible, but it is still recorded
 	public hasFocus():boolean
 	{
-		return this.container.is(':focus');
+		return this.container.hasFocus();
 	}
 
 	// ------------ private methods ------------
@@ -761,12 +722,11 @@ export class Sketcher extends DrawCanvas
 		let LASSO_COL = 0xD0D0D0;
 
 		let density = pixelDensity();
-		this.canvasUnder.width = this.width * density;
-		this.canvasUnder.height = this.height * density;
-		this.canvasUnder.style.width = this.width + 'px';
-		this.canvasUnder.style.height = this.height + 'px';
+		(this.canvasUnder.el as HTMLCanvasElement).width = this.width * density;
+		(this.canvasUnder.el as HTMLCanvasElement).height = this.height * density;
+		this.canvasUnder.css({'width': `${this.width}px`, 'height': `${this.height}px`});
 
-		let ctx = this.canvasUnder.getContext('2d');
+		let ctx = (this.canvasUnder.el as HTMLCanvasElement).getContext('2d');
 		ctx.save();
 		ctx.scale(density, density);
 		ctx.clearRect(0, 0, this.width, this.height);
@@ -874,12 +834,11 @@ export class Sketcher extends DrawCanvas
 	private redrawMolecule():void
 	{
 		let density = pixelDensity();
-		this.canvasMolecule.width = this.width * density;
-		this.canvasMolecule.height = this.height * density;
-		this.canvasMolecule.style.width = this.width + 'px';
-		this.canvasMolecule.style.height = this.height + 'px';
+		(this.canvasMolecule.el as HTMLCanvasElement).width = this.width * density;
+		(this.canvasMolecule.el as HTMLCanvasElement).height = this.height * density;
+		this.canvasMolecule.css({'width': `${this.width}px`, 'height': `${this.height}px`});
 
-		let ctx = this.canvasMolecule.getContext('2d');
+		let ctx = (this.canvasMolecule.el as HTMLCanvasElement).getContext('2d');
 		ctx.save();
 		ctx.scale(density, density);
 		ctx.clearRect(0, 0, this.width, this.height);
@@ -910,12 +869,11 @@ export class Sketcher extends DrawCanvas
 	private redrawOver():void
 	{
 		let density = pixelDensity();
-		this.canvasOver.width = this.width * density;
-		this.canvasOver.height = this.height * density;
-		this.canvasOver.style.width = this.width + 'px';
-		this.canvasOver.style.height = this.height + 'px';
+		(this.canvasOver.el as HTMLCanvasElement).width = this.width * density;
+		(this.canvasOver.el as HTMLCanvasElement).height = this.height * density;
+		this.canvasOver.css({'width': `${this.width}px`, 'height': `${this.height}px`});
 
-		let ctx = this.canvasOver.getContext('2d');
+		let ctx = (this.canvasOver.el as HTMLCanvasElement).getContext('2d');
 		ctx.save();
 		ctx.scale(density, density);
 		ctx.clearRect(0, 0, this.width, this.height);
@@ -1030,18 +988,24 @@ export class Sketcher extends DrawCanvas
 		// if the position is over a buttonview, return zero (yes, this does happen)
 		if (this.toolView != null)
 		{
-			let pos1 = this.container.position(), pos2 = this.toolView.content.position();
-			if (this.toolView.withinOutline(x + pos1.left - pos2.left, y + pos1.top - pos2.top)) return 0;
+			//let pos1 = this.container.position(), pos2 = this.toolView.content.position();
+			//if (this.toolView.withinOutline(x + pos1.left - pos2.left, y + pos1.top - pos2.top)) return 0;
+			let pos1 = this.container.offset(), pos2 = this.toolView.contentDOM.offset();
+			if (this.toolView.withinOutline(x + pos1.x - pos2.x, y + pos1.y - pos2.y)) return 0;
 		}
 		if (this.commandView != null)
 		{
-			let pos1 = this.container.position(), pos2 = this.commandView.content.position();
-			if (this.toolView.withinOutline(x + pos1.left - pos2.left, y + pos1.top - pos2.top)) return 0;
+			//let pos1 = this.container.position(), pos2 = this.commandView.content.position();
+			//if (this.toolView.withinOutline(x + pos1.left - pos2.left, y + pos1.top - pos2.top)) return 0;
+			let pos1 = this.container.offset(), pos2 = this.commandView.contentDOM.offset();
+			if (this.toolView.withinOutline(x + pos1.x - pos2.x, y + pos1.y - pos2.y)) return 0;
 		}
 		if (this.templateView != null)
 		{
-			let pos1 = this.container.position(), pos2 = this.templateView.content.position();
-			if (this.toolView.withinOutline(x + pos1.left - pos2.left, y + pos1.top - pos2.top)) return 0;
+			//let pos1 = this.container.position(), pos2 = this.templateView.content.position();
+			//if (this.toolView.withinOutline(x + pos1.left - pos2.left, y + pos1.top - pos2.top)) return 0;
+			let pos1 = this.container.offset(), pos2 = this.templateView.contentDOM.offset();
+			if (this.toolView.withinOutline(x + pos1.x - pos2.x, y + pos1.y - pos2.y)) return 0;
 		}
 
 		// proceed with atoms & bonds
@@ -1231,7 +1195,7 @@ export class Sketcher extends DrawCanvas
 	}
 
 	// response to some mouse event: hovering cursor restated
-	private updateHoverCursor(event:JQueryEventObject):void
+	private updateHoverCursor(event:MouseEvent):void
 	{
 		let tool = 'finger';
 		if (this.toolView != null) tool = this.toolView.selectedButton;
@@ -1255,7 +1219,7 @@ export class Sketcher extends DrawCanvas
 	}
 
 	// response to some mouse event: lasso may need to be extended, or cancelled
-	private updateLasso(event:JQueryEventObject):void
+	private updateLasso(event:MouseEvent):void
 	{
 		if (this.dragType != DraggingTool.Lasso && this.dragType != DraggingTool.Erasor) return;
 
@@ -1479,7 +1443,7 @@ export class Sketcher extends DrawCanvas
 			if (this.mol.compareTo(dlg.mol) != 0) this.defineMolecule(dlg.mol, false, true);
 			dlg.close();
 		});
-		dlg.callbackClose = () => this.container.focus();
+		dlg.callbackClose = () => this.container.grabFocus();
 		dlg.open();
 	}
 	private editBond(bond:number):void
@@ -1491,7 +1455,7 @@ export class Sketcher extends DrawCanvas
 			if (this.mol.compareTo(dlg.mol) != 0) this.defineMolecule(dlg.mol, false, true);
 			dlg.close();
 		});
-		dlg.callbackClose = () => this.container.focus();
+		dlg.callbackClose = () => this.container.grabFocus();
 		dlg.open();
 	}
 
@@ -1644,12 +1608,12 @@ export class Sketcher extends DrawCanvas
 	// --------------------------------------- toolkit events ---------------------------------------
 
 	// event responses
-	private mouseClick(event:JQueryEventObject):boolean
+	private mouseClick(event:MouseEvent):boolean
 	{
-		this.container.focus(); // just in case it wasn't already
+		this.container.grabFocus(); // just in case it wasn't already
 		return false;
 	}
-	private mouseDoubleClick(event:JQueryEventObject):boolean
+	private mouseDoubleClick(event:MouseEvent):boolean
 	{
 		event.preventDefault();
 
@@ -1667,7 +1631,7 @@ export class Sketcher extends DrawCanvas
 		}
 		return false;
 	}
-	private mouseDown(event:JQueryEventObject):boolean
+	private mouseDown(event:MouseEvent):boolean
 	{
 		event.preventDefault();
 
@@ -1787,7 +1751,7 @@ export class Sketcher extends DrawCanvas
 		}
 		return false;
 	}
-	private mouseUp(event:JQueryEventObject):boolean
+	private mouseUp(event:MouseEvent):boolean
 	{
 		// if the mouse hasn't moved, it's a click operation
 		if (!this.opBudged)
@@ -2043,19 +2007,19 @@ export class Sketcher extends DrawCanvas
 		this.delayedRedraw();
 		return false;
 	}
-	private mouseOver(event:JQueryEventObject):boolean
+	private mouseOver(event:MouseEvent):boolean
 	{
 		this.updateHoverCursor(event);
 		this.updateLasso(event);
 		return false;
 	}
-	private mouseOut(event:JQueryEventObject):boolean
+	private mouseOut(event:MouseEvent):boolean
 	{
 		this.updateHoverCursor(event);
 		this.updateLasso(event);
 		return false;
 	}
-	private mouseMove(event:JQueryEventObject):boolean
+	private mouseMove(event:MouseEvent):boolean
 	{
 		this.updateHoverCursor(event);
 
@@ -2145,7 +2109,7 @@ export class Sketcher extends DrawCanvas
 
 		return false;
 	}
-	private keyPressed(event:JQueryEventObject):void
+	private keyPressed(event:KeyboardEvent):void
 	{
 		//let ch = String.fromCharCode(event.keyCode || event.charCode);
 		//console.log('PRESSED['+ch+'] key='+event.keyCode+' chcode='+event.charCode);
@@ -2156,7 +2120,7 @@ export class Sketcher extends DrawCanvas
 		if (this.commandView != null && this.commandView.topBank.claimKey(event)) {event.preventDefault(); return;}
 		if (this.templateView != null && this.templateView.topBank.claimKey(event)) {event.preventDefault(); return;}*/
 	}
-	private keyDown(event:JQueryEventObject):boolean
+	private keyDown(event:KeyboardEvent):boolean
 	{
 		let key = event.key;
 		//console.log('DOWN: key='+key);
@@ -2202,11 +2166,11 @@ export class Sketcher extends DrawCanvas
 		event.preventDefault();
 		return false;
 	}
-	private keyUp(event:JQueryEventObject):void
+	private keyUp(event:KeyboardEvent):void
 	{
-		// !!
+		// ..
 	}
-	private mouseWheel(event:JQueryEventObject):void
+	private mouseWheel(event:MouseEvent):void
 	{
 		/* !! reinstate
 		let xy = eventCoords(event, this.container);
@@ -2224,7 +2188,7 @@ export class Sketcher extends DrawCanvas
 		event.stopPropagation = true;
 		*/
 	}
-	private contextMenu(event:JQueryEventObject):void
+	private contextMenu(event:MouseEvent):void
 	{
 		event.preventDefault();
 		event.stopPropagation();

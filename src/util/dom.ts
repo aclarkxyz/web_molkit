@@ -300,8 +300,12 @@ export class DOM
 		this.css({'left': `${x}px`, 'top': `${y}px`, 'width': `${w}px`, 'height': `${h}px`});
 	}
 
-	// actions
-	public focus():void
+	// focus: testing and taking
+	public hasFocus():boolean
+	{
+		return this.el === document.activeElement;
+	}
+	public grabFocus():void
 	{
 		(this.el as HTMLElement).focus();
 	}
