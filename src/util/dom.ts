@@ -205,7 +205,19 @@ export class DOM
 	}
 	public setDisabled(disabled:boolean):void
 	{
+		if (disabled == null) return;
 		(this.el as HTMLInputElement).disabled = disabled;
+	}
+
+	// getting & setting checked property, for interactive widgets like <checkbox>
+	public getChecked():boolean
+	{
+		return (this.el as HTMLInputElement).checked;
+	}
+	public setChecked(checked:boolean):void
+	{
+		if (checked == null) return;
+		(this.el as HTMLInputElement).checked = checked;
 	}
 
 	// getting & setting CSS values
@@ -280,6 +292,12 @@ export class DOM
 	public size():Size
 	{
 		return new Size(this.width(), this.height());
+	}
+
+	// shorthand for defining the precise rectangle in pixels
+	public setBoundaryPixels(x:number, y:number, w:number, h:number):void
+	{
+		this.css({'left': `${x}px`, 'top': `${y}px`, 'width': `${w}px`, 'height': `${h}px`});
 	}
 
 	// actions
