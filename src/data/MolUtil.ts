@@ -382,6 +382,7 @@ export class MolUtil
 		for (let n = 0; n < idx.length; n++) invidx[idx[n] - 1] = n + 1;
 
 		let frag = new Molecule();
+		frag.keepTransient = mol.keepTransient;
 		for (let n = 0; n < idx.length; n++)
 		{
 			let num = frag.addAtom(mol.atomElement(idx[n]), mol.atomX(idx[n]), mol.atomY(idx[n]), mol.atomCharge(idx[n]), mol.atomUnpaired(idx[n]));
@@ -389,6 +390,7 @@ export class MolUtil
 			frag.setAtomHExplicit(num, mol.atomHExplicit(idx[n]));
 			frag.setAtomMapNum(num, mol.atomMapNum(idx[n]));
 			frag.setAtomExtra(num, mol.atomExtra(idx[n]));
+			if (mol.keepTransient) frag.setAtomTransient(num, mol.atomTransient(idx[n]));
 		}
 		for (let n = 1; n <= mol.numBonds; n++)
 		{
@@ -397,6 +399,7 @@ export class MolUtil
 			{
 				let num = frag.addBond(bfr, bto, mol.bondOrder(n), mol.bondType(n));
 				frag.setBondExtra(num, mol.bondExtra(n));
+				if (mol.keepTransient) frag.setBondTransient(num, mol.bondTransient(n));
 			}
 		}
 

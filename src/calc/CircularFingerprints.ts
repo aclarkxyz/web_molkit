@@ -55,6 +55,7 @@ export interface CircularFP
 	hashCode:number;
 	iteration:number;
 	atoms:number[];
+	centralAtom:number;
 }
 
 export class CircularFingerprints
@@ -116,7 +117,7 @@ export class CircularFingerprints
 		{
 			this.identity[n] = this.initialIdentityECFP(n + 1);
 			this.atomGroup[n] = [n + 1];
-			this.applyNewFP({'hashCode': this.identity[n], 'iteration': 0, 'atoms': this.atomGroup[n]});
+			this.applyNewFP({'hashCode': this.identity[n], 'iteration': 0, 'atoms': this.atomGroup[n], 'centralAtom': n + 1});
 		}
 		let niter = this.kind; // (corresponds: numeric value is # iterations)
 
@@ -130,7 +131,7 @@ export class CircularFingerprints
 			for (let n = 0; n < na; n++) if (this.amask[n])
 			{
 				this.atomGroup[n] = this.growAtoms(this.atomGroup[n]);
-				this.considerNewFP({'hashCode': this.identity[n], 'iteration': iter, 'atoms': this.atomGroup[n]});
+				this.considerNewFP({'hashCode': this.identity[n], 'iteration': iter, 'atoms': this.atomGroup[n], 'centralAtom': n + 1});
 			}
 		}
 	}

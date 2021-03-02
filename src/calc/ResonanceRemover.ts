@@ -29,6 +29,7 @@ export class ResonanceRemover
 {
 	public maxIter = 1000;
 	public bondOrders:number[] = []; // this is the deliverable output
+	public tolerant = false; // if set to true, will fail silently
 
 	// ------------------ public methods --------------------
 
@@ -216,11 +217,16 @@ export class ResonanceRemover
 			if (iter > this.maxIter)
 			{
 				if (result != null) break; // run with it
+				if (this.tolerant) return;
 				throw 'Resonance localisation exceeded maximum iteration count';
 			}
 		}
 
-		if (result == null) throw 'Unable to find a solution to the resonance block.';
+		if (result == null) 
+		{
+			if (this.tolerant) return;
+			throw 'Unable to find a solution to the resonance block.';
+		}
 		for (let n = 0; n < bsz; n++) bondOrders[bidx[seq[n]] - 1] = result[n] ? 2 : 1;
 	}
 
