@@ -340,17 +340,17 @@ export class CommandBank extends ButtonBank
 		}
 	}
 
-	public claimKey(event:JQueryEventObject):boolean
+	public claimKey(event:KeyboardEvent):boolean
 	{
 		//let ch = String.fromCharCode(event.keyCode || event.charCode);
 		//console.log('Claim/Command['+ch+'] key='+event.keyCode+' chcode='+event.charCode);
 	
 		// special deal: in case it's a mac, convert Cmd-Z/Cmd-Shift-Z into the Winux convention of using Ctrl
-		if (event.metaKey && event.key == 'z')
+		/*if (event.metaKey && event.key == 'z')
 		{
 			event.metaKey = false;
 			event.ctrlKey = true;
-		}
+		}*/
 
 		for (let listItems of [COMMANDS_MAIN, COMMANDS_ATOM, COMMANDS_BOND, COMMANDS_SELECT, COMMANDS_MOVE]) for (let item of listItems)
 		{

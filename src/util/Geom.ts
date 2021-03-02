@@ -704,6 +704,7 @@ export class Pos
 	}
 
 	public clone():Pos {return new Pos(this.x, this.y);}
+	public equals(other:Pos):boolean {return this.x == other.x && this.y == other.y;}
 
 	public scaleBy(mag:number):void
 	{
@@ -734,6 +735,7 @@ export class Size
 	}
 
 	public clone():Size {return new Size(this.w, this.h);}
+	public equals(other:Size):boolean {return this.w == other.w && this.h == other.h;}
 
 	public isZero():boolean {return this.w == 0 && this.h == 0;}
 
@@ -774,6 +776,7 @@ export class Box
 	}
 
 	public clone():Box {return new Box(this.x, this.y, this.w, this.h);}
+	public equals(other:Box):boolean {return this.x == other.x && this.y == other.y && this.w == other.w && this.h == other.h;}
 
 	public getPos():Pos {return new Pos(this.x, this.y);}
 	public setPos(pos:Pos):void

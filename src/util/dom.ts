@@ -195,7 +195,7 @@ export class DOM
 	}
 	public setValue(str:string):void
 	{
-		(this.el as HTMLInputElement).value = str;
+		(this.el as HTMLInputElement).value = str || '';
 	}
 
 	// getting & setting disabled property, for interactive widgets like <input>
@@ -205,7 +205,30 @@ export class DOM
 	}
 	public setDisabled(disabled:boolean):void
 	{
+		if (disabled == null) return;
 		(this.el as HTMLInputElement).disabled = disabled;
+	}
+
+	// getting & setting checked property, for interactive widgets like <checkbox>
+	public getChecked():boolean
+	{
+		return (this.el as HTMLInputElement).checked;
+	}
+	public setChecked(checked:boolean):void
+	{
+		if (checked == null) return;
+		(this.el as HTMLInputElement).checked = checked;
+	}
+
+	// getting & setting readonly property, for interactive widgets like <input>
+	public getReadOnly():boolean
+	{
+		return (this.el as HTMLInputElement).readOnly;
+	}
+	public setReadOnly(readOnly:boolean):void
+	{
+		if (readOnly == null) return;
+		(this.el as HTMLInputElement).readOnly = readOnly;
 	}
 
 	// getting & setting CSS values
@@ -240,13 +263,13 @@ export class DOM
 	}
 
 	// getting & setting CSS classes
-	public addClass(clsname:string):void
+	public addClass(clsnames:string):void
 	{
-		(this.el as HTMLElement).classList.add(clsname);
+		for (let cls of clsnames.split(' ')) if (cls) (this.el as HTMLElement).classList.add(cls);
 	}
-	public removeClass(clsname:string):void
+	public removeClass(clsnames:string):void
 	{
-		(this.el as HTMLElement).classList.remove(clsname);
+		for (let cls of clsnames.split(' ')) if (cls) (this.el as HTMLElement).classList.remove(cls);
 	}
 	public hasClass(clsname:string):boolean
 	{
@@ -271,11 +294,34 @@ export class DOM
 	{
 		return (this.el as HTMLElement).offsetHeight;
 	}
-
-	// actions
-	public focus():void
+	public offset():Pos
 	{
-		(this.el as HTMLElement).focus();
+		let rect = this.el.getBoundingClientRect();
+		let win = this.el.ownerDocument.defaultView;
+		return new Pos(rect.left + win.pageXOffset, rect.top + win.pageYOffset);
+	}
+	public size():Size
+	{
+		return new Size(this.width(), this.height());
+	}
+
+	// shorthand for defining the precise rectangle in pixels
+	public setBoundaryPixels(x:number, y:number, w:number, h:number):void
+	{
+		this.css({'left': `${x}px`, 'top': `${y}px`, 'width': `${w}px`, 'height': `${h}px`});
+	}
+
+	// focus: testing and taking focus; note that focus grabbing often works better with a short delay, hence the convenient option
+	public hasFocus():boolean
+	{
+		return this.el === document.activeElement;
+	}
+	public grabFocus(delay = false):void
+	{
+		if (delay)
+			setTimeout(() => this.grabFocus(), 10);
+		else
+			(this.el as HTMLElement).focus();
 	}
 
 	// ------------ events ------------

@@ -33,8 +33,8 @@ export class OptionList extends Widget
 	public htmlLabels = false; // switch this on if the labels are HTML rather than text
 
 	private selidx = 0;
-	private buttonDiv:any[] = [];
-	private auxCell:any[] = [];
+	private buttonDiv:DOM[] = [];
+	private auxCell:DOM[] = [];
 
 	public callbackSelect:(idx:number, source?:OptionList) => void = null;
 
@@ -59,7 +59,7 @@ export class OptionList extends Widget
 	// requests an "auxiliary cell" for a vertical control, into which additional information may be placed
 	public getAuxiliaryCell(idx:number):Element
 	{
-		return this.auxCell[idx];
+		return this.auxCell[idx].el;
 	}
 
 	// provide the change of state handler
@@ -73,26 +73,27 @@ export class OptionList extends Widget
 	{
 		super.render(parent);
 
-		this.content.css('display', 'inline-block');
+		this.contentDOM.css({'display': 'inline-block'});
 
 		this.buttonDiv = [];
 		this.auxCell = [];
 
-		let table = $('<table class="wmk-option-table"/>').appendTo(this.content /*span*/);
-		let tr = this.isVertical ? null : $('<tr/>').appendTo(table);
+		let table = dom('<table class="wmk-option-table"/>').appendTo(this.contentDOM);
+		let tr = this.isVertical ? null : dom('<tr/>').appendTo(table);
 
 		for (let n = 0; n < this.options.length; n++)
 		{
-			if (this.isVertical) tr = $('<tr/>').appendTo(table);
-			let td = $('<td class="wmk-option-cell"/>').appendTo(tr);
-			let div = $('<div class="wmk-option"/>').appendTo(td);
-			div.css('padding', this.padding + 'px');
+			if (this.isVertical) tr = dom('<tr/>').appendTo(table);
+			let td = dom('<td class="wmk-option-cell"/>').appendTo(tr);
+			let div = dom('<div class="wmk-option"/>').appendTo(td);
+			div.css({'padding': `${this.padding}px`});
+			div.onClick(() => this.clickButton(n));
 
 			this.buttonDiv.push(div);
 
 			if (this.isVertical)
 			{
-				td = $('<td style="vertical-align: middle;"/>').appendTo(tr);
+				td = dom('<td style="vertical-align: middle;"/>').appendTo(tr);
 				this.auxCell.push(td);
 			}
 		}
@@ -103,7 +104,7 @@ export class OptionList extends Widget
 	// perform some checks before rendering
 	public clickButton(idx:number):void
 	{
-		if (idx == this.selidx) return; // (shouldn't happen)
+		if (idx == this.selidx) return;
 
 		this.setSelectedIndex(idx);
 
@@ -133,32 +134,17 @@ export class OptionList extends Widget
 			let div = this.buttonDiv[n];
 
 			let txt = this.options[n];
-			if (txt.length == 0 && n == this.selidx) div.text('\u00A0\u2716\u00A0');
-			else if (txt.length == 0) div.text('\u00A0\u00A0\u00A0');
-			else if (this.htmlLabels) div.html(txt);
-			else div.text(txt);
+			if (txt.length == 0 && n == this.selidx) div.setText('\u00A0\u2716\u00A0');
+			else if (txt.length == 0) div.setText('\u00A0\u00A0\u00A0');
+			else if (this.htmlLabels) div.setHTML(txt);
+			else div.setText(txt);
 
-			div.off('mouseover');
-			div.off('mouseout');
-			div.off('mousedown');
-			div.off('mouseup');
-			div.off('mouseleave');
-			div.off('mousemove');
-			div.off('click');
-			div.removeClass('wmk-option-hover wmk-option-active wmk-option-unselected wmk-option-selected');
+			div.removeClass('wmk-option-unselected wmk-option-selected');
 
 			if (n != this.selidx)
-			{
 				div.addClass('wmk-option-unselected');
-				div.mouseover(() => div.addClass('wmk-option-hover'));
-				div.mouseout(() => div.removeClass('wmk-option-hover wmk-option-active'));
-				div.mousedown(() => div.addClass('wmk-option-active'));
-				div.mouseup(() => div.removeClass('wmk-option-active'));
-				div.mouseleave(() => div.removeClass('wmk-option-hover wmk-option-active'));
-				div.mousemove(() => false);
-				div.click(() => this.clickButton(n));
-			}
-			else div.addClass('wmk-option-selected');
+			else
+				div.addClass('wmk-option-selected');
 		}
 	}
 
@@ -177,11 +163,8 @@ export class OptionList extends Widget
 				font-weight: normal;
 				text-align: center;
 				white-space: nowrap;
-				/*vertical-align: middle;*/
 				line-height: 1.2em;
-				-ms-touch-action: manipulation; touch-action: manipulation;
 				cursor: pointer;
-				-webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none;
 			}
 			.wmk-option-selected
 			{
@@ -194,6 +177,17 @@ export class OptionList extends Widget
 				color: #333;
 				background-color: white;
 				background-image: linear-gradient(to right bottom, #FFFFFF, #E0E0E0);
+			}
+			.wmk-option-unselected:hover
+			{
+				background-color: #808080;
+				background-image: linear-gradient(to right bottom, #F0F0F0, #D0D0D0);
+			}
+			.wmk-option-unselected:active
+			{
+				color: white;
+				background-color: #00C000;
+				background-image: linear-gradient(to right bottom, ${highlightEdge1}, ${highlightEdge2});
 			}
 			.wmk-option-table
 			{
@@ -210,16 +204,6 @@ export class OptionList extends Widget
 				border-width: 1px;
 				border-style: solid;
 				border-color: #808080;
-			}
-			.wmk-option-hover
-			{
-				background-color: #808080;
-				background-image: linear-gradient(to right bottom, #F0F0F0, #D0D0D0);
-			}
-			.wmk-option-active
-			{
-				background-color: #00C000;
-				background-image: linear-gradient(to right bottom, ${highlightEdge1}, ${highlightEdge2});
 			}
 		`;
 	}

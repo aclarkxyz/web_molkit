@@ -182,11 +182,11 @@ export function notDef(v:any):boolean
 
 // given a particular event, picks out the (x,y) coordinates, and offsets them until they are in the space of the given
 // node container, which must be a parent
-export function eventCoords(event:JQueryMouseEventObject, container:any):number[]
+export function eventCoords(event:MouseEvent | JQueryMouseEventObject, container:any):number[]
 {
-	let parentOffset = $(container).offset();
-	let relX = event.pageX - parentOffset.left;
-	let relY = event.pageY - parentOffset.top;
+	let pos = domLegacy(container).offset();
+	let relX = event.pageX - pos.x;
+	let relY = event.pageY - pos.y;
 	return [relX, relY];
 }
 

@@ -497,7 +497,7 @@ export class MetaVector
 	}
 
 	// builds a new DOM containing an <svg> element, and everything underneath it is a representation of the graphic; the most common UI use case for this method is:
-	//			let domSVG = $(gfx.createSVG()).appendTo(div);
+	//			let domSVG = dom(gfx.createSVG()).appendTo(div);
 	//			domSVG.css({'display': 'block', 'pointer-events': 'none'});
 	// note that setting the display style to 'block' prevents the layout from adding descender padding for baseline alignment, which is never useful; and disabling
 	// pointer events for individual SVG elements is generally a good idea

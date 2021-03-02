@@ -27,7 +27,7 @@ export class MenuProxy
 {
 	// override this with true when the context menu is available
 	public hasContextMenu():boolean {return false;}
-	public openContextMenu(menuItems:MenuProxyContext[], event:JQueryMouseEventObject):void {}
+	public openContextMenu(menuItems:MenuProxyContext[], event:JQueryMouseEventObject | MouseEvent):void {}
 }
 
 /*

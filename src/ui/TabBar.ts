@@ -21,8 +21,8 @@ export class TabBar extends Widget
 	private unionHeight = false; // if true, height of tab bar will be set to the maximum of all components
 
 	private selidx = 0;
-	private buttonDiv:JQuery[] = [];
-	private panelDiv:JQuery[] = [];
+	private buttonDiv:DOM[] = [];
+	private panelDiv:DOM[] = [];
 	private padding = 6; // pixels
 
 	public callbackSelect:(idx:number, source?:TabBar) => void = null;
@@ -49,6 +49,11 @@ export class TabBar extends Widget
 	// return the panel: each of these needs to be individually filled
 	public getPanel(idxOrName:number | string):JQuery
 	{
+		let dom = this.getPanelDOM(idxOrName);
+		return dom ? $(dom.el as HTMLElement) : null;
+	}
+	public getPanelDOM(idxOrName:number | string):DOM
+	{
 		let idx = typeof idxOrName == 'number' ? idxOrName as number : this.options.indexOf(idxOrName);
 		if (idx < 0) return null;
 		return this.panelDiv[idx];
@@ -59,26 +64,27 @@ export class TabBar extends Widget
 	{
 		super.render(parent);
 
-		let grid = $('<div/>').appendTo(this.content).css('display', 'grid');
+		let grid = dom('<div/>').appendTo(this.contentDOM).css({'display': 'grid'});
 		grid.css({'align-items': 'center', 'justify-content': 'start', 'grid-row-gap': '0.5em'});
 		let columns = '[start] 1fr ';
 		for (let n = 0; n < this.options.length; n++) columns += '[btn' + n + '] auto ';
 		columns += '[btnX] 1fr [end]';
-		grid.css('grid-template-columns', columns);
+		grid.css({'grid-template-columns': columns});
 
-		let underline = $('<div/>').appendTo(grid);
+		let underline = dom('<div/>').appendTo(grid);
 		underline.css({'grid-column': 'start / end', 'grid-row': '1', 'height': '100%'});
-		underline.css('border-bottom', '1px solid #C0C0C0');
+		underline.css({'border-bottom': '1px solid #C0C0C0'});
 
 		for (let n = 0; n < this.options.length; n++)
 		{
-			let outline = $('<div class="wmk-tabbar-cell"/>').appendTo(grid);
+			let outline = dom('<div class="wmk-tabbar-cell"/>').appendTo(grid);
 			outline.css({'grid-column': 'btn' + n, 'grid-row': '1'});
-			let btn = $('<div class="wmk-tabbar"/>').appendTo(outline);
-			btn.css('padding', this.padding + 'px');
+			let btn = dom('<div class="wmk-tabbar"/>').appendTo(outline);
+			btn.css({'padding': `${this.padding}px`});
+			btn.onClick(() => this.clickButton(n));
 			this.buttonDiv.push(btn);
 
-			let panel = $('<div/>').appendTo(grid);
+			let panel = dom('<div/>').appendTo(grid);
 			panel.css({'grid-column': 'start / end', 'grid-row': '2'});
 			panel.css({'align-self': 'start', 'justify-self': 'center', 'width': '100%'});
 			this.panelDiv.push(panel);
@@ -90,7 +96,7 @@ export class TabBar extends Widget
 	// tab-button clicked, so change content
 	public clickButton(idx:number):void
 	{
-		if (idx == this.selidx) return; // (shouldn't happen)
+		if (idx == this.selidx) return;
 
 		this.setSelectedIndex(idx);
 
@@ -120,36 +126,21 @@ export class TabBar extends Widget
 			let div = this.buttonDiv[n];
 
 			let txt = this.options[n];
-			if (txt.length == 0 && n == this.selidx) div.text('\u00A0\u2716\u00A0');
-			else if (txt.length == 0) div.text('\u00A0\u00A0\u00A0');
-			else div.text(txt);
+			if (txt.length == 0 && n == this.selidx) div.setText('\u00A0\u2716\u00A0');
+			else if (txt.length == 0) div.setText('\u00A0\u00A0\u00A0');
+			else div.setText(txt);
 
-			div.off('mouseover');
-			div.off('mouseout');
-			div.off('mousedown');
-			div.off('mouseup');
-			div.off('mouseleave');
-			div.off('mousemove');
-			div.off('click');
-			div.removeClass('wmk-tabbar-hover wmk-tabbar-active wmk-tabbar-unselected wmk-tabbar-selected');
+			div.removeClass('wmk-tabbar-unselected wmk-tabbar-selected');
 
 			if (n != this.selidx)
-			{
 				div.addClass('wmk-tabbar-unselected');
-				div.mouseover(() => div.addClass('wmk-tabbar-hover'));
-				div.mouseout(() => div.removeClass('wmk-tabbar-hover wmk-tabbar-active'));
-				div.mousedown(() => div.addClass('wmk-tabbar-active'));
-				div.mouseup(() => div.removeClass('wmk-tabbar-active'));
-				div.mouseleave(() => div.removeClass('wmk-tabbar-hover wmk-tabbar-active'));
-				div.mousemove(() => false);
-				div.click(() => this.clickButton(n));
-			}
-			else div.addClass('wmk-tabbar-selected');
+			else 
+				div.addClass('wmk-tabbar-selected');
 
 			if (this.unionHeight)
-				this.panelDiv[n].css('visibility', n == this.selidx ? 'visible' : 'hidden');
+				this.panelDiv[n].setCSS('visibility', n == this.selidx ? 'visible' : 'hidden');
 			else
-				this.panelDiv[n].css('display', n == this.selidx ? 'block' : 'none');
+				this.panelDiv[n].setCSS('display', n == this.selidx ? 'block' : 'none');
 		}
 	}
 
@@ -169,9 +160,7 @@ export class TabBar extends Widget
 				text-align: center;
 				white-space: nowrap;
 				vertical-align: middle;
-				-ms-touch-action: manipulation; touch-action: manipulation;
 				cursor: pointer;
-				-webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none;
 			}
 			.wmk-tabbar-selected
 			{
@@ -184,6 +173,17 @@ export class TabBar extends Widget
 				color: #333;
 				background-color: white;
 				background-image: linear-gradient(to right bottom, #FFFFFF, #E0E0E0);
+			}
+			.wmk-tabbar-unselected:hover
+			{
+				background-color: #808080;
+				background-image: linear-gradient(to right bottom, #F0F0F0, #D0D0D0);
+			}
+			.wmk-tabbar-unselected:active
+			{
+				color: white;
+				background-color: #00C000;
+				background-image: linear-gradient(to right bottom, ${highlightEdge1}, ${highlightEdge2});
 			}
 			.wmk-tabbar-table
 			{
@@ -200,16 +200,6 @@ export class TabBar extends Widget
 				border-width: 1px;
 				border-style: solid;
 				border-color: #808080;
-			}
-			.wmk-tabbar-hover
-			{
-				background-color: #808080;
-				background-image: linear-gradient(to right bottom, #F0F0F0, #D0D0D0);
-			}
-			.wmk-tabbar-active
-			{
-				background-color: #00C000;
-				background-image: linear-gradient(to right bottom, ${highlightEdge1}, ${highlightEdge2});
 			}
 		`;
 	}
