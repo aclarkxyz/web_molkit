@@ -60,7 +60,7 @@ export class EditAtom extends Dialog
 
 	private fieldsWidget:ExtraFieldsWidget;
 
-	constructor(mol:Molecule, public atom:number, private callbackApply:(source?:EditAtom) => void)
+	constructor(mol:Molecule, public atom:number, private proxyClip:ClipboardProxy, private callbackApply:(source?:EditAtom) => void)
 	{
 		super();
 
@@ -75,9 +75,11 @@ export class EditAtom extends Dialog
 	// builds the dialog content
 	protected populate():void
 	{
+		this.proxyClip.pushHandler(new ClipboardProxyHandler());
+
 		let buttons = this.buttonsDOM(), body = this.bodyDOM();
 
-		this.btnApply = dom('<button class="wmk-button wmk-button-primary">Apply</button>').appendTo(buttons).css({'margin-left': '0.5em'});		
+		this.btnApply = dom('<button class="wmk-button wmk-button-primary">Apply</button>').appendTo(buttons).css({'margin-left': '0.5em'});
 		this.btnApply.onClick(() => this.applyChanges());
 
 		this.tabs = new TabBar(['Atom', 'Abbreviation', 'Geometry', 'Query', 'Extra']);
@@ -109,13 +111,19 @@ export class EditAtom extends Dialog
 		}
 	}
 
+	public close():void
+	{
+		this.proxyClip.popHandler();
+		super.close();
+	}
+
 	// ------------ private methods ------------
 
 	// trigger the apply/save sequence
 	private applyChanges():void
 	{
 		this.mol.keepTransient = true;
-		
+
 		this.updateMolecule();
 		if (this.tabs.getSelectedValue() == 'Abbreviation') this.updateAbbrev();
 		if (this.tabs.getSelectedValue() == 'Geometry') this.updateGeometry();
@@ -193,7 +201,7 @@ export class EditAtom extends Dialog
 				this.inputHydrogen.setValue(hc.toString());
 				this.inputHydrogen.setDisabled(false);
 			}
-			//this.optionHydrogen.setSelectedIndex(mol.atomHExplicit(atom) == Molecule.HEXPLICIT_UNKNOWN ? 0 : 1);			
+			//this.optionHydrogen.setSelectedIndex(mol.atomHExplicit(atom) == Molecule.HEXPLICIT_UNKNOWN ? 0 : 1);
 			//if (mol.atomHExplicit(atom) != Molecule.HEXPLICIT_UNKNOWN) this.inputHydrogen.val(mol.atomHExplicit(atom).toString());
 
 			this.optionIsotope.setSelectedIndex(mol.atomIsotope(atom) == Molecule.ISOTOPE_NATURAL ? 0 : 1);
@@ -384,7 +392,7 @@ export class EditAtom extends Dialog
 			else if (this.refGeom2 != strval2)
 			{
 				let angle = parseFloat(strval2);
-				if (isNaN(angle)) return; // non-sane		
+				if (isNaN(angle)) return; // non-sane
 				let mask = Vec.booleanArray(false, mol.numAtoms);
 				mask[atoms[1] - 1] = true;
 				let instate:SketchState = {'mol': mol, 'currentAtom': 0, 'currentBond': mol.findBond(atoms[0], atoms[1]), 'selectedMask': mask};
@@ -397,7 +405,7 @@ export class EditAtom extends Dialog
 		else if (sel.type == GeomWidgetSelType.Torsion)
 		{
 			let angle = parseFloat(strval1);
-			if (isNaN(angle)) return; // non-sane		
+			if (isNaN(angle)) return; // non-sane
 			let mask = Vec.booleanArray(false, mol.numAtoms);
 			for (let a of atoms) mask[a - 1] = true;
 			let instate:SketchState = {'mol': mol, 'currentAtom': atoms[2], 'currentBond': 0, 'selectedMask': mask};

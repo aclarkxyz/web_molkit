@@ -18,7 +18,7 @@ namespace WebMolKit /* BOF */ {
 
 export class ExtraFieldsWidget extends Widget
 {
-	private divFields:JQuery;
+	private divFields:DOM;
 
 	constructor(private fields:string[])
 	{
@@ -30,19 +30,19 @@ export class ExtraFieldsWidget extends Widget
 	{
 		super.render(parent);
 
-		this.divFields = $('<div/>').appendTo(this.content);
+		this.divFields = dom('<div/>').appendTo(this.contentDOM);
 		this.fillTable();
 
-		let divButtons = $('<div/>').appendTo(this.content).css({'text-align': 'center'});
-		let btnExtra = $('<button class="wmk-button wmk-button-default">Extra</button>').appendTo(divButtons);
-		btnExtra.click(() =>
+		let divButtons = dom('<div/>').appendTo(this.contentDOM).css({'text-align': 'center'});
+		let btnExtra = dom('<button class="wmk-button wmk-button-default">Extra</button>').appendTo(divButtons);
+		btnExtra.onClick(() =>
 		{
 			this.fields.push(Molecule.PREFIX_EXTRA);
 			this.fillTable();
 		});
-		divButtons.append(' ');
-		let btnTransient = $('<button class="wmk-button wmk-button-default">Transient</button>').appendTo(divButtons);
-		btnTransient.click(() =>
+		//divButtons.append(' ');
+		let btnTransient = dom('<button class="wmk-button wmk-button-default">Transient</button>').appendTo(divButtons).css({'margin-left': '0.5em'});
+		btnTransient.onClick(() =>
 		{
 			this.fields.push(Molecule.PREFIX_TRANSIENT);
 			this.fillTable();
@@ -70,10 +70,10 @@ export class ExtraFieldsWidget extends Widget
 		this.divFields.empty();
 		if (this.fields.length == 0) return;
 
-		let table = $('<table/>').appendTo(this.divFields).css({'width': '100%'});
-		let tr = $('<tr/>').appendTo(table);
-		$('<td/>').appendTo(tr).css({'text-align': 'right', 'font-weight': 'bold', 'text-decoration': 'underline'}).text('Type');
-		$('<td/>').appendTo(tr).css({'font-weight': 'bold', 'text-decoration': 'underline'}).text('Value');
+		let table = dom('<table/>').appendTo(this.divFields).css({'width': '100%'});
+		let tr = dom('<tr/>').appendTo(table);
+		dom('<td/>').appendTo(tr).css({'text-align': 'right', 'font-weight': 'bold', 'text-decoration': 'underline'}).setText('Type');
+		dom('<td/>').appendTo(tr).css({'font-weight': 'bold', 'text-decoration': 'underline'}).setText('Value');
 
 		for (let n = 0; n < this.fields.length; n++)
 		{
@@ -84,18 +84,17 @@ export class ExtraFieldsWidget extends Widget
 				strValue = this.fields[n].substring(1);
 			}
 
-			tr = $('<tr/>').appendTo(table);
-			let tdType = $('<td/>').appendTo(tr).css({'text-align': 'right'}), tdValue = $('<td/>').appendTo(tr), tdButton = $('<td/>').appendTo(tr);
+			tr = dom('<tr/>').appendTo(table);
+			let tdType = dom('<td/>').appendTo(tr).css({'text-align': 'right'}), tdValue = dom('<td/>').appendTo(tr), tdButton = dom('<td/>').appendTo(tr);
 
-			$('<span/>').appendTo(tdType).css({'padding': '0.2em', 'border': '1px solid black', 'background-color': '#C0C0C0'}).text(strType);
+			dom('<span/>').appendTo(tdType).css({'padding': '0.2em', 'border': '1px solid black', 'background-color': '#C0C0C0'}).setText(strType);
 
-			let input = $('<input size="20"/>').appendTo(tdValue).css({'width': '100%', 'font': 'inherit'});
-			input.val(strValue);
-			input.change(() => this.fields[n] = strType + input.val());
-			input.keyup(() => this.fields[n] = strType + input.val());
+			let input = dom('<input size="20"/>').appendTo(tdValue).css({'width': '100%', 'font': 'inherit'});
+			input.setValue(strValue);
+			input.onInput(() => {this.fields[n] = strType + input.getValue();});
 
-			let btnDelete = $('<button class="wmk-button wmk-button-small wmk-button-default">\u{2716}</button>').appendTo(tdButton);
-			btnDelete.click(() =>
+			let btnDelete = dom('<button class="wmk-button wmk-button-small wmk-button-default">\u{2716}</button>').appendTo(tdButton).css({'margin-left': '0.5em'});
+			btnDelete.onClick(() =>
 			{
 				this.fields.splice(n, 1);
 				this.fillTable();

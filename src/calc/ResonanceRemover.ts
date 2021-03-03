@@ -222,7 +222,7 @@ export class ResonanceRemover
 			}
 		}
 
-		if (result == null) 
+		if (result == null)
 		{
 			if (this.tolerant) return;
 			throw 'Unable to find a solution to the resonance block.';

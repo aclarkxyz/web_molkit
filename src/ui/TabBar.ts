@@ -134,7 +134,7 @@ export class TabBar extends Widget
 
 			if (n != this.selidx)
 				div.addClass('wmk-tabbar-unselected');
-			else 
+			else
 				div.addClass('wmk-tabbar-selected');
 
 			if (this.unionHeight)

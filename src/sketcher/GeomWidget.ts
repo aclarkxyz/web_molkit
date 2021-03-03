@@ -51,7 +51,7 @@ export class GeomWidget extends Widget
 	private torsB:number[] = [];
 	private hovered:GeomWidgetSelection = null;
 
-	private divDiagram:JQuery;
+	private divDiagram:DOM;
 
 	constructor(private type:GeomWidgetType, private mol:Molecule, private idx:number)
 	{
@@ -99,8 +99,8 @@ export class GeomWidget extends Widget
 	{
 		super.render(parent);
 
-		let divOuter = $('<div/>').appendTo(this.content).css({'text-align': 'center'});
-		this.divDiagram = $('<div/>').appendTo(divOuter).css({'display': 'inline-block'});
+		let divOuter = dom('<div/>').appendTo(this.contentDOM).css({'text-align': 'center'});
+		this.divDiagram = dom('<div/>').appendTo(divOuter).css({'display': 'inline-block'});
 		this.content.click((event:JQueryMouseEventObject) => this.mouseClick(eventCoords(event, this.divDiagram)));
 		this.content.mousemove((event:JQueryMouseEventObject) => this.mouseMove(eventCoords(event, this.divDiagram)));
 
@@ -227,7 +227,7 @@ export class GeomWidget extends Widget
 		}
 
 		this.divDiagram.empty();
-		let svg = $(gfx.createSVG()).appendTo(this.divDiagram).css({'pointer-events': 'none'});
+		let svg = dom(gfx.createSVG()).appendTo(this.divDiagram).css({'pointer-events': 'none'});
 	}
 
 	private mouseClick(xy:number[]):void

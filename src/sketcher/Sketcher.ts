@@ -615,7 +615,7 @@ export class Sketcher extends DrawCanvas
 	// bring up the dialog for converting the subject atoms into a polymer block repeating unit
 	public performPolymerBlock(atoms:number[]):void
 	{
-		let dlg = new EditPolymer(this.mol, atoms, () =>
+		let dlg = new EditPolymer(this.mol, atoms, this.proxyClip, () =>
 		{
 			if (this.mol.compareTo(dlg.mol) != 0) this.defineMolecule(dlg.mol, false, true);
 			dlg.close();
@@ -1430,7 +1430,7 @@ export class Sketcher extends DrawCanvas
 	{
 		if (atom == 0) return;
 
-		let dlg = new EditAtom(this.mol, atom, () =>
+		let dlg = new EditAtom(this.mol, atom, this.proxyClip, () =>
 		{
 			if (this.mol.compareTo(dlg.mol) != 0) this.defineMolecule(dlg.mol, false, true);
 			dlg.close();
@@ -1442,7 +1442,7 @@ export class Sketcher extends DrawCanvas
 	{
 		if (bond == 0) return;
 
-		let dlg = new EditBond(this.mol, bond, () =>
+		let dlg = new EditBond(this.mol, bond, this.proxyClip, () =>
 		{
 			if (this.mol.compareTo(dlg.mol) != 0) this.defineMolecule(dlg.mol, false, true);
 			dlg.close();
@@ -1820,7 +1820,7 @@ export class Sketcher extends DrawCanvas
 				let element = this.toolAtomSymbol;
 				if (element == 'A')
 				{
-					let dlg = new EditAtom(this.mol, this.opAtom, () =>
+					let dlg = new EditAtom(this.mol, this.opAtom, this.proxyClip, () =>
 					{
 						let autoscale = this.mol.numAtoms == 0;
 						if (this.mol.compareTo(dlg.mol) != 0) this.defineMolecule(dlg.mol, autoscale);

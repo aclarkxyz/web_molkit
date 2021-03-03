@@ -36,7 +36,7 @@ export class EditBond extends Dialog
 
 	private fieldsWidget:ExtraFieldsWidget;
 
-	constructor(mol:Molecule, public bond:number, private callbackApply:(source?:EditBond) => void)
+	constructor(mol:Molecule, public bond:number, private proxyClip:ClipboardProxy, private callbackApply:(source?:EditBond) => void)
 	{
 		super();
 
@@ -51,6 +51,8 @@ export class EditBond extends Dialog
 	// builds the dialog content
 	protected populate():void
 	{
+		this.proxyClip.pushHandler(new ClipboardProxyHandler());
+
 		let buttons = this.buttonsDOM(), body = this.bodyDOM();
 
 		this.btnApply = dom('<button class="wmk-button wmk-button-primary">Apply</button>').appendTo(buttons).css({'margin-left': '0.5em'});
@@ -81,6 +83,12 @@ export class EditBond extends Dialog
 				if (keyCode == 27) this.close();
 			});
 		}
+	}
+
+	public close():void
+	{
+		this.proxyClip.popHandler();
+		super.close();
 	}
 
 	// ------------ private methods ------------

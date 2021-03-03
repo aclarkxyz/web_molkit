@@ -25,8 +25,8 @@ export interface ButtonViewDisplay
 	y?:number;
 	width?:number;
 	height?:number;
-	helpSpan?:JQuery;
-	svgDOM?:Element;
+	helpSpan?:DOM;
+	imgDOM?:DOM;
 }
 
 export class ButtonView extends Widget
@@ -62,7 +62,7 @@ export class ButtonView extends Widget
 	private y = 0;
 
 	// static cache: needs to be filled out just once; will contain the {icon:svg} pairs that can be used in the buttons
-	private static ACTION_ICONS:Record<string, string> = {};
+	//private static ACTION_ICONS:Record<string, string> = {};
 
 	constructor(private position:string, private parentX:number, private parentY:number, private parentWidth:number, private parentHeight:number)
 	{
@@ -119,29 +119,27 @@ export class ButtonView extends Widget
 	{
 		super.render(parent);
 
-		this.content.css('position', 'absolute');
-		this.content.css('width', `${this.width}px`);
-		this.content.css('height', `${this.height}px`);
-		this.content.addClass('no_selection');
+		this.contentDOM.css({'position': 'absolute', 'width': `${this.width}px`, 'height': `${this.height}px`});
+		this.contentDOM.addClass('no_selection');
 
 		this.layoutButtons();
 
 		let canvasStyle = 'position: absolute; left: 0; top: 0;';
 		canvasStyle += 'pointer-events: none;';
-		this.canvas = newElement(this.content, 'canvas', {'width': this.width, 'height': this.height, 'style': canvasStyle}) as HTMLCanvasElement;
+		this.canvas = newElement(this.contentDOM.el, 'canvas', {'width': this.width, 'height': this.height, 'style': canvasStyle}) as HTMLCanvasElement;
 		this.canvas.style.width = this.width + 'px';
 		this.canvas.style.height = this.height + 'px';
 
 		this.applyOffset();
 		this.redraw();
 
-		this.content.click((event:JQueryMouseEventObject) => this.mouseClick(event));
-		this.content.dblclick((event:JQueryMouseEventObject) => this.mouseDoubleClick(event));
-		this.content.mousedown((event:JQueryMouseEventObject) => {event.preventDefault(); this.mouseDown(event);});
-		this.content.mouseup((event:JQueryMouseEventObject) => this.mouseUp(event));
-		this.content.mouseover((event:JQueryMouseEventObject) => this.mouseOver(event));
-		this.content.mouseout((event:JQueryMouseEventObject) => this.mouseOut(event));
-		this.content.mousemove((event:JQueryMouseEventObject) => this.mouseMove(event));
+		this.contentDOM.onClick((event) => this.mouseClick(event));
+		this.contentDOM.onDblClick((event) => this.mouseDoubleClick(event));
+		this.contentDOM.onMouseDown((event) => {event.preventDefault(); this.mouseDown(event);});
+		this.contentDOM.onMouseUp((event) => this.mouseUp(event));
+		this.contentDOM.onMouseOver((event) => this.mouseOver(event));
+		this.contentDOM.onMouseLeave((event) => this.mouseOut(event));
+		this.contentDOM.onMouseMove((event) => this.mouseMove(event));
 	}
 
 	// adds a new molsync.ui.ButtonBank instance to the stack, making it the current one
@@ -220,7 +218,7 @@ export class ButtonView extends Widget
 	{
 		if (this.isRaised) return;
 		this.isRaised = true;
-		if (this.content)
+		if (this.contentDOM)
 		{
 			this.layoutButtons();
 			this.replaceCanvas();
@@ -232,7 +230,7 @@ export class ButtonView extends Widget
 	{
 		if (!this.isRaised) return;
 		this.isRaised = false;
-		if (this.content)
+		if (this.contentDOM)
 		{
 			this.layoutButtons();
 			this.replaceCanvas();
@@ -302,7 +300,7 @@ export class ButtonView extends Widget
 	// figures out the size that this buttonview needs to be
 	private layoutButtons():void
 	{
-		if (this.content == null) return; // too soon
+		if (this.contentDOM == null) return; // too soon
 
 		let outPadding = this.outPadding, inPadding = this.inPadding;
 
@@ -471,23 +469,23 @@ export class ButtonView extends Widget
 	// library, so this may not always be necessary
 	private replaceCanvas():void
 	{
-		this.content.empty();
+		this.contentDOM.empty();
 
 		for (let n = 0; n < this.display.length; n++)
 		{
-			this.display[n].svgDOM = null;
+			this.display[n].imgDOM = null;
 			this.display[n].helpSpan = null;
 		}
 
 		let canvasStyle = 'position: absolute; left: 0; top: 0;';
 		canvasStyle += 'pointer-events: none;';
-		this.canvas = newElement(this.content, 'canvas', {'width': this.width, 'height': this.height, 'style': canvasStyle}) as HTMLCanvasElement;
+		this.canvas = newElement(this.contentDOM.el, 'canvas', {'width': this.width, 'height': this.height, 'style': canvasStyle}) as HTMLCanvasElement;
 	}
 
 	// removes all the display buttons, making sure to delete the HTML objects as necessary
 	private removeDisplayButtons():void
 	{
-		this.content.empty();
+		this.contentDOM.empty();
 		this.display = [];
 	}
 
@@ -524,17 +522,14 @@ export class ButtonView extends Widget
 		this.x = this.parentX + x;
 		this.y = this.parentY + y;
 
-		this.content.css('position', 'absolute');
-		this.content.css('width', this.width + 'px');
-		this.content.css('height', this.height + 'px');
-		this.content.css('left', this.x + 'px');
-		this.content.css('top', this.y + 'px');
+		this.contentDOM.css({'position': 'absolute'});
+		setBoundaryPixels(this.contentDOM, this.x, this.y, this.width, this.height);
 	}
 
 	// redraws the buttons, in response to some kind of state change
 	private redraw():void
 	{
-		if (!this.content || !this.canvas) return;
+		if (!this.contentDOM || !this.canvas) return;
 
 		// background
 
@@ -558,8 +553,7 @@ export class ButtonView extends Widget
 
 		let bank = this.stack.length > 0 ? this.stack[this.stack.length - 1] : null;
 
-		this.content.css('width', this.width + 'px');
-		this.content.css('height', this.height + 'px');
+		this.contentDOM.css({'width': this.width + 'px', 'height': this.height + 'px'});
 
 		// button outlines
 		for (let n = 0; n < this.display.length; n++)
@@ -599,17 +593,17 @@ export class ButtonView extends Widget
 			ctx.stroke(path);
 			ctx.restore();
 
-			if (d.svgDOM != null)
+			if (d.imgDOM != null)
 			{
-				$(d.svgDOM).remove();
-				d.svgDOM = null;
+				d.imgDOM.remove();
+				d.imgDOM = null;
 			}
 
 			if (b != null)
 			{
 				if (d.helpSpan == null)
 				{
-					d.helpSpan = $('<span style="position: absolute;"></span>').appendTo(this.content);
+					d.helpSpan = dom('<span style="position: absolute;"/>').appendTo(this.contentDOM);
 					let txt = b.helpText;
 					if (b.mnemonic)
 					{
@@ -618,49 +612,18 @@ export class ButtonView extends Widget
 					}
 					addTooltip(d.helpSpan, txt);
 				}
-				d.helpSpan.css('left', d.x + 'px');
-				d.helpSpan.css('top', d.y + 'px');
-				d.helpSpan.css('width', d.width + 'px');
-				d.helpSpan.css('height', d.height + 'px');
+				setBoundaryPixels(d.helpSpan, d.x, d.y, d.width, d.height);
 			}
 
 			if (b == null) {}
-			else if (b.imageFN != null && d.svgDOM == null)
+			else if (b.imageFN != null && d.imgDOM == null)
 			{
+				d.imgDOM = dom('<img/>').appendTo(this.contentDOM).css({'position': 'absolute'});
+				d.imgDOM.setAttr('src', Theme.RESOURCE_URL + '/img/actions/' + b.imageFN + '.svg');
 				const sz = this.prefabImgSize;
 				const bx = d.x + Math.floor(0.5 * (d.width - sz));
 				const by = d.y + Math.floor(0.5 * (d.height - sz));
-
-				let putSVG = (svg:string):void =>
-				{
-					let extra = 'style="position: absolute; left: ' + bx + 'px; top: ' + by + 'px;' +
-								' width: ' + sz + 'px; height: ' + sz + 'px; pointer-events: none;"';
-					svg = svg.substring(0, 4) + ' ' + extra + svg.substring(4);
-					d.svgDOM = $(svg)[0];
-					this.content.append(d.svgDOM);
-				};
-
-				// SVG icons: if there's an RPC server, they're already in the cache; if not, they have to be loaded individually
-				// the first time, and after that, they're cached
-				let svg = ButtonView.ACTION_ICONS[b.imageFN];
-				if (svg) putSVG(svg);
-				else if (Theme.RESOURCE_URL != null)
-				{
-					let url = Theme.RESOURCE_URL + '/img/actions/' + b.imageFN + '.svg';
-					$.ajax(
-					{
-						'url': url,
-						'type': 'GET',
-						'dataType': 'text',
-						'success': (svg:string) =>
-						{
-							svg = this.fixSVGFile(svg);
-							ButtonView.ACTION_ICONS[b.imageFN] = svg;
-							putSVG(svg);
-						}
-					});
-  				}
-				else console.log('Action button "' + b.imageFN + '" not found.');
+				setBoundaryPixels(d.imgDOM, bx, by, sz, sz);
 			}
 			else if (b.metavec != null)
 			{
@@ -984,7 +947,7 @@ export class ButtonView extends Widget
 	// --------------------------------------- toolkit events ---------------------------------------
 
 	// event responses
-	private mouseClick(event:JQueryMouseEventObject):void
+	private mouseClick(event:MouseEvent):void
 	{
 		/*let xy = eventCoords(event, this.content);
 		if (!this.withinOutline(xy[0], xy[1])) return; // propagate
@@ -995,12 +958,12 @@ export class ButtonView extends Widget
 
 		event.stopPropagation();*/
 	}
-	private mouseDoubleClick(event:JQueryMouseEventObject):void
+	private mouseDoubleClick(event:MouseEvent):void
 	{
 		// (do something?)
 		event.stopImmediatePropagation();
 	}
-	private mouseDown(event:JQueryMouseEventObject):void
+	private mouseDown(event:MouseEvent):void
 	{
 		let xy = eventCoords(event, this.content);
 		if (!this.withinOutline(xy[0], xy[1])) return; // propagate
@@ -1016,7 +979,7 @@ export class ButtonView extends Widget
 
 		event.stopPropagation();
 	}
-	private mouseUp(event:JQueryMouseEventObject):void
+	private mouseUp(event:MouseEvent):void
 	{
 		let xy = eventCoords(event, this.content);
 		if (!this.withinOutline(xy[0], xy[1])) return; // propagate
@@ -1038,7 +1001,7 @@ export class ButtonView extends Widget
 
 		event.stopPropagation();
 	}
-	private mouseOver(event:JQueryMouseEventObject):void
+	private mouseOver(event:MouseEvent):void
 	{
 		let xy = eventCoords(event, this.content);
 		if (!this.withinOutline(xy[0], xy[1])) return; // propagate
@@ -1047,7 +1010,7 @@ export class ButtonView extends Widget
 
 		event.stopPropagation();
 	}
-	private mouseOut(event:JQueryMouseEventObject):void
+	private mouseOut(event:MouseEvent):void
 	{
 		let xy = eventCoords(event, this.content);
 		if (!this.withinOutline(xy[0], xy[1]))
@@ -1073,7 +1036,7 @@ export class ButtonView extends Widget
 
 		event.stopPropagation();
 	}
-	private mouseMove(event:JQueryMouseEventObject):void
+	private mouseMove(event:MouseEvent):void
 	{
 		let xy = eventCoords(event, this.content);
 		if (!this.withinOutline(xy[0], xy[1])) return; // propagate
