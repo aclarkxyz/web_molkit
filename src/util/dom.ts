@@ -40,6 +40,9 @@ export class DOM
 	{
 	}
 
+	public get elHTML():HTMLElement {return this.el as HTMLElement;}
+	public get elInput():HTMLInputElement {return this.el as HTMLInputElement;}
+
 	public static parse(xhtml:string):DOM
 	{
 		let xml = XML.parseXML(xhtml);
@@ -185,7 +188,9 @@ export class DOM
 	}
 	public appendText(text:string):void
 	{
-		this.el.innerHTML += escapeHTML(text);
+		//this.el.innerHTML += escapeHTML(text);
+		let content = document.createTextNode(text);
+		this.el.appendChild(content);
 	}
 
 	// getting & setting values of interactive widgets, like <input>
@@ -234,11 +239,11 @@ export class DOM
 	// getting & setting CSS values
 	public getCSS(key:string):string
 	{
-		return (this.el as HTMLElement).style.getPropertyValue(key);
+		return this.elHTML.style.getPropertyValue(key);
 	}
 	public setCSS(key:string, value:string):void
 	{
-		(this.el as HTMLElement).style.setProperty(key, value);
+		this.elHTML.style.setProperty(key, value);
 	}
 	public css(dict:Record<string, string | number>):DOM
 	{
@@ -265,15 +270,15 @@ export class DOM
 	// getting & setting CSS classes
 	public addClass(clsnames:string):void
 	{
-		for (let cls of clsnames.split(' ')) if (cls) (this.el as HTMLElement).classList.add(cls);
+		for (let cls of clsnames.split(' ')) if (cls) this.elHTML.classList.add(cls);
 	}
 	public removeClass(clsnames:string):void
 	{
-		for (let cls of clsnames.split(' ')) if (cls) (this.el as HTMLElement).classList.remove(cls);
+		for (let cls of clsnames.split(' ')) if (cls) this.elHTML.classList.remove(cls);
 	}
 	public hasClass(clsname:string):boolean
 	{
-		return (this.el as HTMLElement).classList.contains(clsname);
+		return this.elHTML.classList.contains(clsname);
 	}
 	public setClass(clsname:string, flag:boolean):void
 	{
@@ -288,11 +293,11 @@ export class DOM
 	// position & size
 	public width():number
 	{
-		return (this.el as HTMLElement).offsetWidth;
+		return this.elHTML.offsetWidth;
 	}
 	public height():number
 	{
-		return (this.el as HTMLElement).offsetHeight;
+		return this.elHTML.offsetHeight;
 	}
 	public offset():Pos
 	{
@@ -321,7 +326,7 @@ export class DOM
 		if (delay)
 			setTimeout(() => this.grabFocus(), 10);
 		else
-			(this.el as HTMLElement).focus();
+			this.elHTML.focus();
 	}
 
 	// ------------ events ------------

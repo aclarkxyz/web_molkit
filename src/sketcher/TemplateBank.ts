@@ -39,8 +39,8 @@ interface TemplateStructs
 
 export class TemplateBank extends ButtonBank
 {
-	private static RESOURCE_LIST:string[] = null;
-	private static RESOURCE_DATA:DataSheet[] = null; // templates are derived from these
+	private static resourceList:string[] = [];
+	private static resourceData:DataSheet[] = []; // templates are derived from these
 	private subgroups:GroupTemplates = null;
 	private templates:TemplateStructs = null;
 
@@ -57,7 +57,7 @@ export class TemplateBank extends ButtonBank
 		policy.data.lineSize *= 1.5;
 		policy.data.bondSep *= 1.5;
 
-		if (this.group == null)
+		/*if (this.group == null)
 		{
 			if (TemplateBank.RESOURCE_DATA == null)
 				this.loadResourceData(() => this.prepareSubGroups());
@@ -70,7 +70,17 @@ export class TemplateBank extends ButtonBank
 				this.loadResourceData(() => this.prepareTemplates());
 			else
 				this.prepareTemplates();
-		}
+		}*/
+
+		(async () =>
+		{
+			if (TemplateBank.resourceData.length == 0) await this.loadResourceData();
+
+			if (this.group == null)
+				this.prepareSubGroups();
+			else
+				this.prepareTemplates();
+		})();
 	}
 
 	// populate the buttons
@@ -125,7 +135,7 @@ export class TemplateBank extends ButtonBank
 	}
 
 	// loads up the resource datasheets one at a time, and stashes them in the static container
-	private loadResourceData(onComplete:() => void):void
+	/*private loadResourceData(onComplete:() => void):void
 	{
 		let roster = TEMPLATE_FILES.slice(0);
 		TemplateBank.RESOURCE_LIST = roster.slice(0);
@@ -152,12 +162,22 @@ export class TemplateBank extends ButtonBank
 			});
 		};
 		grabNext();
+	}*/
+	private async loadResourceData():Promise<void>
+	{
+		for (let fn of TEMPLATE_FILES)
+		{
+			let url = Theme.RESOURCE_URL + '/data/templates/' + fn + '.ds';
+			let dsstr = await readTextURL(url);
+			TemplateBank.resourceList.push(fn);
+			TemplateBank.resourceData.push(DataSheetStream.readXML(dsstr));
+		}
 	}
 
 	// use the resource data to prepare button icons for the template groups
 	private prepareSubGroups():void
 	{
-		this.subgroups = {'groups': TemplateBank.RESOURCE_LIST, 'titles': [], 'preview': []};
+		this.subgroups = {'groups': TemplateBank.resourceList, 'titles': [], 'preview': []};
 		let sz = this.buttonView.idealSize, msz = 0.5 * (sz - 2);
 
 		let policy = RenderPolicy.defaultBlackOnWhite();
@@ -165,7 +185,7 @@ export class TemplateBank extends ButtonBank
 		let effects = new RenderEffects();
 		let measure = new OutlineMeasurement(0, 0, policy.data.pointScale);
 
-		for (let ds of TemplateBank.RESOURCE_DATA)
+		for (let ds of TemplateBank.resourceData)
 		{
 			this.subgroups.titles.push(ds.title);
 
@@ -196,8 +216,8 @@ export class TemplateBank extends ButtonBank
 	// use the resource data to prepare pictures for each of the templates
 	private prepareTemplates():void
 	{
-		let idx = TemplateBank.RESOURCE_LIST.indexOf(this.group);
-		let ds = TemplateBank.RESOURCE_DATA[idx];
+		let idx = TemplateBank.resourceList.indexOf(this.group);
+		let ds = TemplateBank.resourceData[idx];
 
 		this.templates = {'molecules': [], 'names': [], 'abbrev': [], 'mnemonic': [], 'preview': []};
 

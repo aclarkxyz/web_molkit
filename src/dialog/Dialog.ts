@@ -152,8 +152,8 @@ export class Dialog
 	// closes and hides the dialog
 	public close():void
 	{
-		this.obscureBackground.remove();
-		this.obscureForeground.remove();
+		this.domObscureBackground.remove();
+		this.domObscureForeground.remove();
 
 		if (this.callbackClose) this.callbackClose(this);
 	}

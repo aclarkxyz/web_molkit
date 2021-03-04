@@ -965,7 +965,7 @@ export class ButtonView extends Widget
 	}
 	private mouseDown(event:MouseEvent):void
 	{
-		let xy = eventCoords(event, this.content);
+		let xy = eventCoords(event, this.contentDOM);
 		if (!this.withinOutline(xy[0], xy[1])) return; // propagate
 
 		// !! ?? let shift = event.shiftKey, ctrl = event.ctrlKey, alt = event.altKey, meta = event.metaKey, plat = event.platformModifierKey;
@@ -981,7 +981,7 @@ export class ButtonView extends Widget
 	}
 	private mouseUp(event:MouseEvent):void
 	{
-		let xy = eventCoords(event, this.content);
+		let xy = eventCoords(event, this.contentDOM);
 		if (!this.withinOutline(xy[0], xy[1])) return; // propagate
 
 		// !! ?? let shift = event.shiftKey, ctrl = event.ctrlKey, alt = event.altKey, meta = event.metaKey, plat = event.platformModifierKey;
@@ -1003,7 +1003,7 @@ export class ButtonView extends Widget
 	}
 	private mouseOver(event:MouseEvent):void
 	{
-		let xy = eventCoords(event, this.content);
+		let xy = eventCoords(event, this.contentDOM);
 		if (!this.withinOutline(xy[0], xy[1])) return; // propagate
 
 		// (do something?)
@@ -1012,7 +1012,7 @@ export class ButtonView extends Widget
 	}
 	private mouseOut(event:MouseEvent):void
 	{
-		let xy = eventCoords(event, this.content);
+		let xy = eventCoords(event, this.contentDOM);
 		if (!this.withinOutline(xy[0], xy[1]))
 		{
 			if (this.highlightButton != null)
@@ -1025,7 +1025,7 @@ export class ButtonView extends Widget
 
 		if (this.highlightButton != null)
 		{
-			let xy = eventCoords(event, this.content);
+			let xy = eventCoords(event, this.contentDOM);
 			let id = this.pickButtonID(xy[0], xy[1]);
 			if (id != this.highlightButton)
 			{
@@ -1038,7 +1038,7 @@ export class ButtonView extends Widget
 	}
 	private mouseMove(event:MouseEvent):void
 	{
-		let xy = eventCoords(event, this.content);
+		let xy = eventCoords(event, this.contentDOM);
 		if (!this.withinOutline(xy[0], xy[1])) return; // propagate
 
 		// (do something?)
