@@ -35,12 +35,17 @@ export function safeFloat(str:string, def:number = 0):number
 
 // creates a new element, with a specific parent (raw or jQuery); returns the child node - the raw DOM element, not the
 // jQuery wrapper
-export function newElement(parent:any, tag:string, attr?:any):Element
+export function newElement(parent:any, tag:string, attr?:Record<string, any>):Element
 {
-	let el = $(`<${tag}>`);
+	/*let el = $(`<${tag}>`);
 	if (attr) el.attr(attr);
 	$(parent).append(el);
-	return el[0];
+	return el[0];*/
+
+	let domNew = dom(`<${tag}/>`);
+	if (attr) domNew.attr(attr);
+	domLegacy(parent).append(domNew);
+	return domNew.el;
 }
 
 // appends child text to the node
