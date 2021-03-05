@@ -327,7 +327,9 @@ export class CircularFingerprints
 
 		// if the preexisting fingerprint is from an earlier iteration, or has a lower hashcode, discard
 		if (fp.iteration < newFP.iteration || fp.hashCode < newFP.hashCode) return;
+
 		this.fplist[hit] = newFP;
+		if (this.hookApplyNewFP) this.hookApplyNewFP(newFP);		
 	}
 }
 

@@ -84,7 +84,12 @@ export class Molecule
 	{
 	}
 
-	public clone():Molecule {return Molecule.fromString(this.toString());}
+	public clone():Molecule 
+	{
+		let dup = Molecule.fromString(this.toString());
+		dup.keepTransient = this.keepTransient;
+		return dup;
+	}
 	public static fromString(strData:string):Molecule {return MoleculeStream.readNative(strData);}
 	public toString():string {return MoleculeStream.writeNative(this);}
 
