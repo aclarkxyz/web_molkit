@@ -132,17 +132,17 @@ export class EditBond extends Dialog
 
 		dom('<div/>').appendTo(grid).css({'grid-area': '3 / col0'}).setText('From');
 		this.inputFrom = dom('<input size="6"/>').appendTo(grid).css({'grid-area': '3 / col1', 'font': 'inherit'});
-		this.inputFrom.setReadOnly(true);
+		this.inputFrom.elInput.readOnly = true;
 		this.inputFrom.setValue(mol.bondFrom(bond).toString());
 
 		dom('<div/>').appendTo(grid).css({'grid-area': '3 / col2'}).setText('To');
 		this.inputTo = dom('<input size="6"/>').appendTo(grid).css({'grid-area': '3 / col3', 'font': 'inherit'});
-		this.inputTo.setReadOnly(true);
+		this.inputTo.elInput.readOnly = true;
 		this.inputTo.setValue(mol.bondTo(bond).toString());
 
 		dom('<div/>').appendTo(grid).css({'grid-area': '4 / col2'}).setText('Index');
 		this.inputIndex = dom('<input size="6"/>').appendTo(grid).css({'grid-area': '4 / col3', 'font': 'inherit'});
-		this.inputIndex.setReadOnly(true);
+		this.inputIndex.elInput.readOnly = true;
 		this.inputIndex.setValue(bond.toString());
 	}
 

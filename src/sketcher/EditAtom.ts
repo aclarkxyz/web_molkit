@@ -157,7 +157,7 @@ export class EditAtom extends Dialog
 		grid.appendHTML('<div style="grid-area: 3 / col0;">Hydrogens</div>');
 		this.optionHydrogen = new OptionList(['Auto', 'None', '1', '2', '3', '4', 'Other']);
 		this.optionHydrogen.render(dom('<div style="grid-area: 3 / col1 / auto / col3"/>').appendTo(grid));
-		this.optionHydrogen.onSelect((idx:number) => this.inputHydrogen.setDisabled(idx != 6));
+		this.optionHydrogen.onSelect((idx:number) => this.inputHydrogen.elInput.disabled = idx != 6);
 		this.inputHydrogen = dom('<input type="number" size="4"/>').appendTo(grid);
 		this.inputHydrogen.css({'grid-area': '3 / col3'});
 
@@ -187,19 +187,19 @@ export class EditAtom extends Dialog
 			{
 				this.optionHydrogen.setSelectedIndex(0);
 				this.inputHydrogen.setValue(mol.atomHydrogens(atom).toString());
-				this.inputHydrogen.setDisabled(true);
+				this.inputHydrogen.elInput.disabled = true;
 			}
 			else if (hc <= 4)
 			{
 				this.optionHydrogen.setSelectedIndex(hc + 1);
 				this.inputHydrogen.setValue(hc.toString());
-				this.inputHydrogen.setDisabled(true);
+				this.inputHydrogen.elInput.disabled = true;
 			}
 			else
 			{
 				this.optionHydrogen.setSelectedIndex(6);
 				this.inputHydrogen.setValue(hc.toString());
-				this.inputHydrogen.setDisabled(false);
+				this.inputHydrogen.elInput.disabled = true;
 			}
 			//this.optionHydrogen.setSelectedIndex(mol.atomHExplicit(atom) == Molecule.HEXPLICIT_UNKNOWN ? 0 : 1);
 			//if (mol.atomHExplicit(atom) != Molecule.HEXPLICIT_UNKNOWN) this.inputHydrogen.val(mol.atomHExplicit(atom).toString());

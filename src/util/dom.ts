@@ -42,6 +42,7 @@ export class DOM
 
 	public get elHTML():HTMLElement {return this.el as HTMLElement;}
 	public get elInput():HTMLInputElement {return this.el as HTMLInputElement;}
+	public get elCanvas():HTMLCanvasElement {return this.el as HTMLCanvasElement;}
 
 	public static parse(xhtml:string):DOM
 	{
@@ -203,6 +204,7 @@ export class DOM
 		(this.el as HTMLInputElement).value = str || '';
 	}
 
+	/*
 	// getting & setting disabled property, for interactive widgets like <input>
 	public getDisabled():boolean
 	{
@@ -234,7 +236,7 @@ export class DOM
 	{
 		if (readOnly == null) return;
 		(this.el as HTMLInputElement).readOnly = readOnly;
-	}
+	}*/
 
 	// getting & setting CSS values
 	public getCSS(key:string):string

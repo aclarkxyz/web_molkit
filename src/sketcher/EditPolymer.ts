@@ -89,12 +89,12 @@ export class EditPolymer extends Dialog
 
 		dom('<div/>').appendTo(grid).css({'grid-area': '1 / col0'}).setText('# Atoms');
 		let inputNAtoms = dom('<input size="5"/>').appendTo(dom('<div/>').appendTo(grid).css({'grid-area': '1 / col1'}));
-		inputNAtoms.setReadOnly(true);
+		inputNAtoms.elInput.readOnly = true;
 		inputNAtoms.setValue(this.unit.atoms.length.toString());
 
 		dom('<div/>').appendTo(grid).css({'grid-area': '1 / col2'}).setText('Out-bonds');
 		let inputNBond = dom('<input size="5"/>').appendTo(dom('<div/>').appendTo(grid).css({'grid-area': '1 / col3'}));
-		inputNBond.setReadOnly(true);
+		inputNBond.elInput.readOnly = true;
 		inputNBond.setValue(this.bonds.length.toString());
 
 		let row = 1;
