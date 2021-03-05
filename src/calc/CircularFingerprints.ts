@@ -302,6 +302,7 @@ export class CircularFingerprints
 	// add a new fingerprint, with no duplicate check (initial seed round); is only a separate function so it can be trapped
 	private applyNewFP(newFP:CircularFP):void
 	{
+		if (this.hookConsiderNewFP) this.hookConsiderNewFP(newFP);
 		if (this.hookApplyNewFP) this.hookApplyNewFP(newFP);
 		this.fplist.push(newFP);
 	}
