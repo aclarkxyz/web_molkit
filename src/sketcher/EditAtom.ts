@@ -199,7 +199,7 @@ export class EditAtom extends Dialog
 			{
 				this.optionHydrogen.setSelectedIndex(6);
 				this.inputHydrogen.setValue(hc.toString());
-				this.inputHydrogen.elInput.disabled = true;
+				this.inputHydrogen.elInput.disabled = false;
 			}
 			//this.optionHydrogen.setSelectedIndex(mol.atomHExplicit(atom) == Molecule.HEXPLICIT_UNKNOWN ? 0 : 1);
 			//if (mol.atomHExplicit(atom) != Molecule.HEXPLICIT_UNKNOWN) this.inputHydrogen.val(mol.atomHExplicit(atom).toString());

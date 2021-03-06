@@ -101,8 +101,8 @@ export class GeomWidget extends Widget
 
 		let divOuter = dom('<div/>').appendTo(this.contentDOM).css({'text-align': 'center'});
 		this.divDiagram = dom('<div/>').appendTo(divOuter).css({'display': 'inline-block'});
-		this.content.click((event:JQueryMouseEventObject) => this.mouseClick(eventCoords(event, this.divDiagram)));
-		this.content.mousemove((event:JQueryMouseEventObject) => this.mouseMove(eventCoords(event, this.divDiagram)));
+		this.contentDOM.onClick((event) => this.mouseClick(eventCoords(event, this.divDiagram)));
+		this.contentDOM.onMouseMove((event) => this.mouseMove(eventCoords(event, this.divDiagram)));
 
 		this.redraw();
 	}
