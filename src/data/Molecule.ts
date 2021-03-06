@@ -53,6 +53,7 @@ export class Molecule
 	public keepTransient = false;
 	private hasTransient = false;
 
+	// cached properties: note that these are treated as shallow copies: read-only or rebuild
 	private graph:number[][] = null;
 	private graphBond:number[][] = null;
 	private ringID:number[] = null;
@@ -86,8 +87,24 @@ export class Molecule
 
 	public clone():Molecule 
 	{
-		let dup = Molecule.fromString(this.toString());
+		/*let dup = Molecule.fromString(this.toString());
+		dup.keepTransient = this.keepTransient;*/
+
+		let dup = new Molecule();
+		dup.atoms = deepClone(this.atoms);
+		dup.bonds = deepClone(this.bonds);
+		dup.hasZCoord = this.hasZCoord;
 		dup.keepTransient = this.keepTransient;
+		dup.hasTransient = this.hasTransient;
+		dup.graph = this.graph;
+		dup.graphBond = this.graphBond;
+		dup.ringID = this.ringID;
+		dup.compID = this.compID;
+		dup.ring3 = this.ring3;
+		dup.ring4 = this.ring4;
+		dup.ring5 = this.ring5;
+		dup.ring6 = this.ring6;
+		dup.ring7 = this.ring7;
 		return dup;
 	}
 	public static fromString(strData:string):Molecule {return MoleculeStream.readNative(strData);}
@@ -726,13 +743,15 @@ export class Molecule
 	// ring hunter: recursive step; finds, compares and collects
 	private recursiveRingFind(path:number[], psize:number, capacity:number, rblk:number, rings:number[][]):void
 	{
+		const {graph} = this;
+
 		// not enough atoms yet, so look for new possibilities
 		if (psize < capacity)
 		{
 			let last = path[psize - 1];
-			for (let n = 0; n < this.graph[last - 1].length; n++)
+			for (let n = 0; n < graph[last - 1].length; n++)
 			{
-				let adj = this.graph[last - 1][n] + 1;
+				let adj = graph[last - 1][n] + 1;
 				if (this.ringID[adj - 1] != rblk) continue;
 				let fnd = false;
 				for (let i = 0; i < psize; i++)
@@ -756,9 +775,9 @@ export class Molecule
 		// path is full, so make sure it eats its tail
 		let last = path[psize - 1];
 		let fnd = false;
-		for (let n = 0; n < this.graph[last - 1].length; n++)
+		for (let n = 0; n < graph[last - 1].length; n++)
 		{
-			if (this.graph[last - 1][n] + 1 == path[0])
+			if (graph[last - 1][n] + 1 == path[0])
 			{
 				fnd = true;
 				break;
@@ -771,7 +790,7 @@ export class Molecule
 		for (let n = 0; n < path.length; n++)
 		{
 			let count = 0, p = path[n] - 1;
-			for (let i = 0; i < this.graph[p].length; i++) if (path.indexOf(this.graph[p][i] + 1) >= 0) count++;
+			for (let i = 0; i < graph[p].length; i++) if (path.indexOf(graph[p][i] + 1) >= 0) count++;
 			if (count != 2) return; // invalid
 		}
 
