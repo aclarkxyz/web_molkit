@@ -171,7 +171,7 @@ export class EditPolymer extends Dialog
 		this.polymer.rewriteMolecule(); // housekeeping
 
 		this.callbackApply(this);
-		this.close();
+		//this.close();
 	}
 
 	private applyRemove():void
@@ -179,7 +179,7 @@ export class EditPolymer extends Dialog
 		if (this.currentID) this.polymer.removeUnit(this.currentID);
 
 		this.callbackApply(this);
-		this.close();
+		//this.close();
 	}
 
 	private renderUnit():void
