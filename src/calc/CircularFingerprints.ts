@@ -330,7 +330,7 @@ export class CircularFingerprints
 		if (fp.iteration < newFP.iteration || fp.hashCode < newFP.hashCode) return;
 
 		this.fplist[hit] = newFP;
-		if (this.hookApplyNewFP) this.hookApplyNewFP(newFP);		
+		if (this.hookApplyNewFP) this.hookApplyNewFP(newFP);
 	}
 }
 

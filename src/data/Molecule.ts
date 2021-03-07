@@ -85,7 +85,7 @@ export class Molecule
 	{
 	}
 
-	public clone():Molecule 
+	public clone():Molecule
 	{
 		/*let dup = Molecule.fromString(this.toString());
 		dup.keepTransient = this.keepTransient;*/

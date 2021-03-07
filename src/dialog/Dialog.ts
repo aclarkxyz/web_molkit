@@ -22,6 +22,7 @@ const CSS_DIALOG = `
         font-family: 'Open Sans', sans-serif;
 		font-size: 16px;
 		color: black;
+		user-select: none;
     }
 `;
 

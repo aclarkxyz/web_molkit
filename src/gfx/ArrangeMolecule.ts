@@ -475,7 +475,7 @@ export class ArrangeMolecule
 
 		// create polymer brackets
 		let polymers = new PolymerBlock(mol);
-		for (let id of polymers.getIDList()) this.processPolymerUnit(polymers.getUnit(id));
+		for (let id of polymers.getIDList()) this.processPolymerUnit(polymers.getUnit(id), polymers.getUnits());
 	}
 
    	// access to atom information; it is valid to assume that {atomcentre}[N-1] matches {moleculeatom}[N], if N<=mol.numAtoms
@@ -535,7 +535,7 @@ export class ArrangeMolecule
 	public scaleEverything(scaleBy:number):void
 	{
 		if (scaleBy == 1) return;
-		
+
 		this.scale *= scaleBy;
 		for (let a of this.points)
 		{
@@ -2412,7 +2412,7 @@ export class ArrangeMolecule
 	}
 
 	// draw the brackets that are associated with a
-	private processPolymerUnit(unit:PolymerBlockUnit):void
+	private processPolymerUnit(unit:PolymerBlockUnit, allUnits:PolymerBlockUnit[]):void
 	{
 		interface Bracket
 		{
@@ -2422,6 +2422,7 @@ export class ArrangeMolecule
 			y1?:number;
 			x2?:number;
 			y2?:number;
+			shared?:boolean;
 		}
 		let brackets:Bracket[] = [];
 
@@ -2439,6 +2440,12 @@ export class ArrangeMolecule
 			bracket.y1 = mol.atomY(bracket.a1);
 			bracket.x2 = mol.atomX(bracket.a2);
 			bracket.y2 = mol.atomY(bracket.a2);
+			bracket.shared = false;
+			for (let other of allUnits) if (unit !== other && other.atoms.includes(bracket.a2))
+			{
+				bracket.shared = true;
+				break;
+			}
 			brackets.push(bracket);
 		}
 
@@ -2481,6 +2488,11 @@ export class ArrangeMolecule
 			let bracket = brackets[n];
 			let x1 = measure.angToX(bracket.x1), y1 = measure.angToY(bracket.y1);
 			let x2 = measure.angToX(bracket.x2), y2 = measure.angToY(bracket.y2);
+			if (bracket.shared)
+			{
+				x2 -= (x2 - x1) * 0.1;
+				y2 -= (y2 - y1) * 0.1;
+			}
 			let mx = 0.5 * (x1 + x2), my = 0.5 * (y1 + y2);
 			if (isLinear)
 			{
@@ -2512,7 +2524,15 @@ export class ArrangeMolecule
 
 			if (n == tagidx)
 			{
-				let pt1 = {...BASE_TEXT, 'text': 'n', 'oval': new Oval(px2 + bsz2 * 2 * dx, py2 + bsz2 * 2 * dy, 0, 0)};
+				let modShared = bracket.shared ? 0.5 * this.scale : 0;
+
+				let xx:number, yy:number;
+				if (bracket.shared)
+					[xx, yy] = [px2 - 0.5 * this.scale * ox, py2 - 0.5 * this.scale * oy];
+				else
+					[xx, yy] = [px2 + bsz2 * 2 * dx, py2 + bsz2 * 2 * dy];
+
+				let pt1 = {...BASE_TEXT, 'text': 'n', 'oval': new Oval(xx, yy, 0, 0)};
 				this.points.push(pt1);
 				this.space.push(this.computeSpacePoint(pt1));
 
@@ -2522,7 +2542,13 @@ export class ArrangeMolecule
 					if (unit.connect == PolymerBlockConnectivity.HeadToTail) text = 'ht';
 					else if (unit.connect == PolymerBlockConnectivity.HeadToHead) text = 'hh';
 					else if (unit.connect == PolymerBlockConnectivity.Random) text = 'eu';
-					let pt2 = {...BASE_TEXT, 'text': text, 'oval': new Oval(px3 + bsz2 * 2.5 * dx, py3 + bsz2 * 2.5 * dy, 0, 0)};
+
+					if (bracket.shared)
+						[xx, yy] = [px3 + 0.5 * this.scale * ox, py3 + 0.5 * this.scale * oy];
+					else
+						[xx, yy] = [px3 + bsz2 * 2.5 * dx, py3 + bsz2 * 2.5 * dy];
+
+					let pt2 = {...BASE_TEXT, 'text': text, 'oval': new Oval(xx, yy, 0, 0)};
 					this.points.push(pt2);
 					this.space.push(this.computeSpacePoint(pt2));
 				}

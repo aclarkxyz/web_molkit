@@ -503,7 +503,7 @@ export class EditAtom extends Dialog
 
 			entry.tr.css({'cursor': 'pointer'});
 			entry.tr.onClick(() => this.selectAbbreviation(n));
-			entry.tr.onDblClick(() => this.applyChanges());
+			entry.tr.onDblClick((event) => this.applyChanges());
 
 			this.abbrevEntries.push(entry);
 		}

@@ -82,6 +82,7 @@ export class PolymerBlock
 	// access to resulting content
 	public getIDList():number[] {return Vec.sorted(Array.from(this.units.keys()));}
 	public getUnit(id:number):PolymerBlockUnit {return this.units.get(id);}
+	public getUnits():PolymerBlockUnit[] {return Array.from(this.units.values());}
 
 	// replaces all artifact signifiers with those from the current list of content
 	public rewriteMolecule():void

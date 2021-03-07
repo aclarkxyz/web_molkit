@@ -159,7 +159,7 @@ export class DataSheet
 	{
 		return this.data;
 	}
-	
+
 	public get numCols():number
 	{
 		return this.data.numCols;
@@ -466,7 +466,7 @@ export class DataSheet
 		if (identity) return; // nothing to do
 
 		this.data.colData = Vec.idxGet(this.data.colData, order);
-		for (let n = 0; n < this.data.numRows; n++) this.data.rowData = Vec.idxGet(this.data.rowData, order);
+		for (let n = 0; n < this.data.numRows; n++) this.data.rowData[n] = Vec.idxGet(this.data.rowData[n], order);
 	}
 	public appendRow():number
 	{
