@@ -91,7 +91,7 @@ export class EditCompound extends Dialog
 		this.btnCopy.onClick(() => this.actionCopy());
 
 		buttons.append(this.domClose); // easy way to reorder
-		this.btnClose.css({'margin-left': '0.5em'});
+		this.domClose.css({'margin-left': '0.5em'});
 
 		this.btnSave = dom('<button class="wmk-button wmk-button-primary">Save</button>').appendTo(buttons).css({'margin-left': '0.5em'});
 		this.btnSave.onClick(() => {if (this.callbackSave) this.callbackSave(this);});

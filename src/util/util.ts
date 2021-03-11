@@ -207,6 +207,11 @@ export function getBoundaryPixels(dom:JQuery):[number, number, number, number]
 	let offset = dom.offset();
 	return [offset.left, offset.top, dom.width(), dom.height()];
 }
+export function getBoundaryPixelsDOM(dom:DOM):[number, number, number, number]
+{
+	let offset = dom.offset();
+	return [offset.x, offset.y, dom.width(), dom.height()];
+}
 
 // geometry functions
 export function norm_xy(dx:number, dy:number):number
@@ -602,9 +607,9 @@ export function empiricalScrollerSize():Size
 {
 	if (staticScrollerSize) return staticScrollerSize;
 
-	let outer = $('<div/>').css({'visibility': 'hidden', 'width': '100px', 'height': '100px', 'overflow': 'scroll'}).appendTo($(document.body));
-	let inner = $('<div/>').css({'width': '100%', 'height': '100%'}).appendTo(outer);
-	staticScrollerSize = new Size(100 - inner.outerWidth(), 100 - inner.outerHeight());
+	let outer = dom('<div/>').css({'visibility': 'hidden', 'width': '100px', 'height': '100px', 'overflow': 'scroll'}).appendTo(dom(document.body));
+	let inner = dom('<div/>').css({'width': '100%', 'height': '100%'}).appendTo(outer);
+	staticScrollerSize = new Size(100 - inner.elHTML.offsetWidth, 100 - inner.elHTML.offsetHeight);
 	outer.remove();
 	return staticScrollerSize;
 }
