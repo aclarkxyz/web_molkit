@@ -18,10 +18,8 @@ namespace WebMolKit /* BOF */ {
 
 export class ContextSketch
 {
-
 	constructor(private state:SketchState, private sketcher:Sketcher, private proxyClip:ClipboardProxy)
 	{
-
 	}
 
 	public populate():MenuProxyContext[]
@@ -71,6 +69,18 @@ export class ContextSketch
 		this.maybeAppend(menu, ActivityType.AbbrevClear, 'Clear Abbreviation');
 		this.maybeAppend(menu, ActivityType.AbbrevExpand, 'Expand Abbreviation');
 		//if state.currentAtom > 0 || state.currentBond > 0 {append(cmdID:Command.Query, title:"Query Properties")};
+
+		let poly = new PolymerBlock(state.mol);
+		for (let units of poly.getUnits())
+		{
+			let a1 = state.currentAtom, a2 = 0;
+			if (state.currentBond > 0) [a1, a2] = state.mol.bondFromTo(state.currentBond);
+			if (units.atoms.includes(a1) || units.atoms.includes(a2))
+			{
+				let label = 'Polymer Block (' + units.atoms.length + ' atom' + (units.atoms.length == 1 ? '' : 's') + ')';
+				menu.push({'label': label, 'click': () => sketcher.performPolymerBlock(units.atoms)});
+			}
+		}
 
 		if (menu.length > 0) menu.push(null);
 

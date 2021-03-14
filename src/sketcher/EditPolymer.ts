@@ -16,6 +16,8 @@ namespace WebMolKit /* BOF */ {
 	Editing a new or existing polymer block.
 */
 
+const EXTRA_TAG = 'xOUTBOND';
+
 export class EditPolymer extends Dialog
 {
 	public mol:Molecule; // copy of original: may or may not be different
@@ -31,6 +33,9 @@ export class EditPolymer extends Dialog
 	private currentID = 0;
 	private unit:PolymerBlockUnit = null;
 	private bonds:number[] = [];
+	private outAtoms:number[] = []; // sorted in same order as bonds
+
+	private umol:Molecule;
 
 	constructor(mol:Molecule, public atoms:number[], private proxyClip:ClipboardProxy, private callbackApply:(source?:EditPolymer) => void)
 	{
@@ -58,11 +63,31 @@ export class EditPolymer extends Dialog
 		}
 		if (!this.unit) this.unit = {'atoms': atoms, 'connect': null, 'bondConn': null};
 
+		let umol = this.umol = this.mol.clone();
+		let mask = Vec.booleanArray(false, this.umol.numAtoms);
 		for (let n = 1; n <= this.mol.numBonds; n++)
 		{
-			let in1 = atoms.includes(this.mol.bondFrom(n)), in2 = atoms.includes(this.mol.bondTo(n));
-			if ((in1 && !in2) || (in2 && !in1)) this.bonds.push(n);
+			let bfr = this.mol.bondFrom(n), bto = this.mol.bondTo(n);
+			let in1 = this.atoms.includes(bfr), in2 = this.atoms.includes(bto);
+			if (in1 || in2) {mask[bfr - 1] = true; mask[bto - 1] = true;}
+			if (in1 && !in2)
+			{
+				this.bonds.push(n);
+				this.outAtoms.push(bto);
+				umol.setAtomElement(bto, (this.bonds.indexOf(n) + 1).toString());
+				umol.setAtomExtra(bto, Vec.append(umol.atomExtra(bto), EXTRA_TAG));
+			}
+			if (in2 && !in1)
+			{
+				this.bonds.push(n);
+				this.outAtoms.push(bfr);
+				umol.setAtomElement(bfr, (this.bonds.indexOf(n) + 1).toString());
+				umol.setAtomExtra(bfr, Vec.append(umol.atomExtra(bfr), EXTRA_TAG));
+			}
 		}
+
+		this.umol = MolUtil.subgraphMask(this.umol, mask);
+		new PolymerBlock(this.umol).removeAll();
 	}
 
 	// builds the dialog content
@@ -108,22 +133,12 @@ export class EditPolymer extends Dialog
 			else if (this.unit.connect == PolymerBlockConnectivity.HeadToHead) this.optionConnect.setSelectedIndex(2);
 			else if (this.unit.connect == PolymerBlockConnectivity.Random) this.optionConnect.setSelectedIndex(3);
 		}
-		/* ... this isn't right; need to think it through
-		if (this.bonds.length == 4)
+		if (this.bonds.length == 4 && Vec.uniqueUnstable(this.outAtoms).length == 4)
 		{
 			row++;
-			dom('<div/>').appendTo(grid).css({'grid-area': `${row} / col0`}).text('2x2 Connectivity');
-			this.optionBondConn = new OptionList(['Unknown', '1-2,3-4', '1-4,2-3', '1-3,2-4', '1-4,3-2']);
-			this.optionBondConn.render(dom('<div/>').appendTo(grid).css({'grid-area': `${row} / col1 / auto / col4`}));
-			if (Vec.arrayLength(this.unit.bondConn) == 4)
-			{
-				let bpri = Vec.idxSort(this.unit.bondConn);
-				if (Vec.equals(bpri, [0, 1, 2, 3])) this.optionBondConn.setSelectedIndex(1);
-				else if (Vec.equals(bpri, [0, 3, 1, 2])) this.optionBondConn.setSelectedIndex(2);
-				else if (Vec.equals(bpri, [0, 2, 1, 3])) this.optionBondConn.setSelectedIndex(3);
-				else if (Vec.equals(bpri, [0, 3, 2, 1])) this.optionBondConn.setSelectedIndex(4);
-			}
-		}*/
+			dom('<div/>').appendTo(grid).css({'grid-area': `${row} / col0`}).setText('2x2 Connectivity');
+			this.populate2x2Conn(dom('<div/>').appendTo(grid).css({'grid-area': `${row} / col1 / auto / col4`}));
+		}
 
 		row++;
 		this.divPreview = dom('<div/>').appendTo(grid).css({'grid-area': `${row} / col0 / auto / col4`, 'text-align': 'center'});
@@ -153,6 +168,32 @@ export class EditPolymer extends Dialog
 
 	// ------------ private methods ------------
 
+	private populate2x2Conn(div:DOM):void
+	{
+		const perms = [[0, 1, 2, 3], [0, 1, 3, 2], [0, 2, 1, 3], [0, 2, 3, 1], [0, 3, 1, 2], [0, 3, 2, 1]];
+
+		let bondConnOptions:number[][] = [null];
+		let optionList = ['None'];
+		let selidx = 0;
+		for (let perm of perms)
+		{
+			let bonds = Vec.idxGet(this.bonds, perm);
+			if (Vec.equals(bonds, this.unit.bondConn)) selidx = optionList.length;
+			bondConnOptions.push(bonds);
+			//optionList.push(`${this.outAtoms[perm[0]]},${this.outAtoms[perm[1]]}:${this.outAtoms[perm[2]]},${this.outAtoms[perm[3]]}`);
+			optionList.push(`${perm[0] + 1},${perm[1] + 1}:${perm[2] + 1},${perm[3] + 1}`);
+		}
+
+		this.optionBondConn = new OptionList(optionList);
+		this.optionBondConn.setSelectedIndex(selidx);
+		this.optionBondConn.render(div);
+		this.optionBondConn.onSelect((idx) =>
+		{
+			this.unit.bondConn = bondConnOptions[idx];
+			this.renderUnit();
+		});
+	}
+
 	// trigger the apply/save sequence
 	private applyChanges():void
 	{
@@ -169,43 +210,18 @@ export class EditPolymer extends Dialog
 		this.currentID = this.polymer.createUnit(this.atoms, this.unit.connect, this.unit.bondConn);
 
 		this.polymer.rewriteMolecule(); // housekeeping
-
 		this.callbackApply(this);
-		//this.close();
 	}
 
 	private applyRemove():void
 	{
 		if (this.currentID) this.polymer.removeUnit(this.currentID);
-
 		this.callbackApply(this);
-		//this.close();
 	}
 
 	private renderUnit():void
 	{
-		let umol = this.mol.clone();
-		let mask = Vec.booleanArray(false, umol.numAtoms);
-		const EXTRA_TAG = 'xOUTBOND';
-
-		for (let n = 1; n <= this.mol.numBonds; n++)
-		{
-			let bfr = this.mol.bondFrom(n), bto = this.mol.bondTo(n);
-			let in1 = this.atoms.includes(bfr), in2 = this.atoms.includes(bto);
-			if (in1 || in2) {mask[bfr - 1] = true; mask[bto - 1] = true;}
-			if (in1 && !in2)
-			{
-				umol.setAtomElement(bto, (this.bonds.indexOf(n) + 1).toString());
-				umol.setAtomExtra(bto, Vec.append(umol.atomExtra(bto), EXTRA_TAG));
-			}
-			if (in2 && !in1)
-			{
-				umol.setAtomElement(bfr, (this.bonds.indexOf(n) + 1).toString());
-				umol.setAtomExtra(bfr, Vec.append(umol.atomExtra(bfr), EXTRA_TAG));
-			}
-		}
-		umol = MolUtil.subgraphMask(umol, mask);
-		new PolymerBlock(umol).removeAll();
+		let umol = this.umol.clone();
 
 		let policy = RenderPolicy.defaultColourOnWhite(15);
 		let measure = new OutlineMeasurement(0, 0, policy.data.pointScale);
@@ -233,7 +249,20 @@ export class EditPolymer extends Dialog
 		layout.arrange();
 		layout.squeezeInto(0, 0, 300, 300);
 		let gfx = new MetaVector();
+
+		if (this.unit.bondConn)
+		{
+			for (let [i1, i2, col, sz] of [[0, 1, 0xC86D08, 2], [2, 3, 0xC86D08, 2], [0, 2, 0xC0C86D08, 1], [1, 3, 0xC0C86D08, 1]])
+			{
+				let a1 = this.outAtoms[this.bonds.indexOf(this.unit.bondConn[i1])];
+				let a2 = this.outAtoms[this.bonds.indexOf(this.unit.bondConn[i2])];
+				let p1 = layout.getPoint(a1 - 1), p2 = layout.getPoint(a2 - 1);
+				gfx.drawLine(p1.oval.cx, p1.oval.cy, p2.oval.cx, p2.oval.cy, col, sz);
+			}
+		}
+
 		new DrawMolecule(layout, gfx).draw();
+
 		gfx.normalise();
 
 		this.divPreview.empty();

@@ -1,10 +1,10 @@
 # WebMolKit
 
-Cheminformatics toolkit built with _TypeScript_ & _jQuery_. Can be used to carry out some fairly sophisticated cheminformatics tasks on a contemporary web browser, such as rendering molecules for display, format conversions, calculations, interactive sketching, among other things.
+Cheminformatics toolkit built with _TypeScript_. Can be used to carry out some fairly sophisticated cheminformatics tasks on a contemporary web browser, such as rendering molecules for display, format conversions, calculations, interactive sketching, among other things.
 
 ## License
 
-Copyright &copy; 2010-2016 Molecular Materials Informatics, Inc.
+Copyright &copy; 2010-2021 Molecular Materials Informatics, Inc.
 
 [http://molmatinf.com](http://molmatinf.com)
 
@@ -29,7 +29,6 @@ Prior to doing anything with the codebase, it needs to be compiled into _JavaScr
 ```
 $ tsc
 $ ls bin
-	jquery.js
 	webmolkit-build.js
 	webmolkit-build.js.map
 ```
@@ -48,13 +47,10 @@ Importing the necessary content into a web page can be most easily done by inser
 
 ```
 <head>
-	<script src="../../bin/jquery.js" type="text/javascript"></script>
 	<script src="../../bin/webmolkit-build.js" type="text/javascript"></script>
 	...
 </head>
 ```
-
-Note that it is necessary to make sure the [JQuery](https://jquery.com/) library is also included.
 
 Embedding a blank sketcher instance on the page can be done as:
 
@@ -63,14 +59,14 @@ Embedding a blank sketcher instance on the page can be done as:
 	var url = window.location.href.substring(0, window.location.href.lastIndexOf('/'));
 	WebMolKit.initWebMolKit(url + '../../../res');
 
-	var mol = WebMolKit.Molecule.fromString($('#moldata').text());
+	var mol = WebMolKit.Molecule.fromString(WebMolKit.DOM.find('#moldata').text());
 
 	var sketcher = new WebMolKit.Sketcher();
 	sketcher.setSize(800, 700);
 	sketcher.defineMolecule(mol);
 	let proxy = new WebMolKit.ClipboardProxyWeb();
 	sketcher.defineClipboard(proxy);
-	sketcher.setup(() => sketcher.render($('#sketcher')));
+	sketcher.setup(() => sketcher.render(WebMolKit.DOM.find('#sketcher')));
 </script>
 ```
 
