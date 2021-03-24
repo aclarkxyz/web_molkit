@@ -181,7 +181,7 @@ export class ResonanceRemover
 			if (!this.validPath(p1, seq, bfr, bto, g, optionalH)) p1 = null;
 			if (!this.validPath(p2, seq, bfr, bto, g, optionalH)) p2 = null;
 
-			if (Vec.arrayLength(p1) == bsz)
+			if (Vec.len(p1) == bsz)
 			{
 				let c = Vec.maskCount(p1);
 				if (c > resultCount)
@@ -191,7 +191,7 @@ export class ResonanceRemover
 				}
 				p1 = null;
 			}
-			if (Vec.arrayLength(p2) == bsz)
+			if (Vec.len(p2) == bsz)
 			{
 				let c = Vec.maskCount(p2);
 				if (c > resultCount)

@@ -1391,7 +1391,7 @@ export class MoleculeActivity
 	public execMove(refAtom:number, deltaX:number, deltaY:number):void
 	{
 		let subj = this.subjectIndex;
-		if (Vec.arrayLength(subj) == 0)
+		if (Vec.len(subj) == 0)
 		{
 			if (refAtom == 0) return;
 			subj = [refAtom];

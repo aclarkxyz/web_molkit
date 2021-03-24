@@ -871,7 +871,7 @@ export class MDLMOLReader
 		else return;
 
 		let bondConn:number[] = null;
-		if (Vec.arrayLength(sup.bondConn) == 3)
+		if (Vec.len(sup.bondConn) == 3)
 		{
 			// the V2000 style of specifying 2x2 connectivity (by leaving one out...)
 			let b1 = sup.bondConn[0], b2 = sup.bondConn[2], b3 = sup.bondConn[1], b4 = 0;
@@ -886,7 +886,7 @@ export class MDLMOLReader
 			}
 			bondConn = [b1, b2, b3, b4];
 		}
-		else if (Vec.arrayLength(sup.bondConn) == 4)
+		else if (Vec.len(sup.bondConn) == 4)
 		{
 			// the V3000 style of specifying 2x2 connectivity, which is the same as what we're using
 			bondConn = sup.bondConn;

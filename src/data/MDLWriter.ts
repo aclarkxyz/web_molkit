@@ -384,7 +384,7 @@ export class MDLMOLWriter
 			}
 			if (bonds != null) this.writeMBlockFlatIdxFirst('SBL', idx, bonds);
 			
-			if (Vec.arrayLength(unit.bondConn) == 4)
+			if (Vec.len(unit.bondConn) == 4)
 			{
 				let bcrs = [unit.bondConn[0], unit.bondConn[2], unit.bondConn[1]];
 				this.writeMBlockFlatIdxFirst('CRS', idx, bcrs);

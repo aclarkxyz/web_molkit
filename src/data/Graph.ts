@@ -92,8 +92,8 @@ export class Graph
 		for (let n = 0; n < this.nbrs.length; n++)
 		{
 			buff += ' ' + n + ':{' + this.nbrs[n] + '}';
-			if (n < Vec.arrayLength(this.indices)) buff += '[i=' + this.indices[n] + ']';
-			if (n < Vec.arrayLength(this.labels)) buff += '[l=' + this.labels[n] + ']';
+			if (n < Vec.len(this.indices)) buff += '[i=' + this.indices[n] + ']';
+			if (n < Vec.len(this.labels)) buff += '[l=' + this.labels[n] + ']';
 		}
 		return buff;
 	}

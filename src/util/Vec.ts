@@ -23,7 +23,8 @@ export class Vec
 	public static isBlank(arr:any[]):boolean {return arr == null || arr.length == 0;}
 	public static notBlank(arr:any[]):boolean {return arr != null && arr.length > 0;}
 	public static safeArray<T>(arr:T[]):T[] {return arr == null ? [] : arr;}
-	public static arrayLength(arr:any[]):number {return arr == null ? 0 : arr.length;}
+	public static len(arr:any[]):number {return arr == null ? 0 : arr.length;} // (can't use "length" because it's reserved)
+	public static arrayLength(arr:any[]):number {return arr == null ? 0 : arr.length;} // (unwieldy)
 
 	public static anyTrue(arr:boolean[]):boolean
 	{
@@ -434,7 +435,7 @@ export class Vec
 	// note: O(N^2); may improve this at a later date
 	public static exclude<T>(arr:T[], excl:T[]):T[]
 	{
-		const sz = Vec.arrayLength(arr);
+		const sz = Vec.len(arr);
 		if (sz == 0) return [];
 		let mask:boolean[] = new Array(sz);
 		let count = 0;

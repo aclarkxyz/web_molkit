@@ -146,7 +146,7 @@ export class GeomUtil
 	// sorts angles as above, except returns indices rather than values
 	public static idxSortAngles(theta:number[]):number[]
 	{
-		const sz = Vec.arrayLength(theta);
+		const sz = Vec.len(theta);
 		if (theta == null || sz < 2) return Vec.identity0(sz);
 
 		if (sz == 2)

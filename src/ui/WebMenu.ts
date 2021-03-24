@@ -91,7 +91,7 @@ export class WebMenu extends Widget
 			item.click();
 			return;
 		}
-		if (Vec.arrayLength(item.submenu) == 0)
+		if (Vec.len(item.submenu) == 0)
 		{
 			// neither action nor submenu: technically a bug, but silently ignore
 			return;
