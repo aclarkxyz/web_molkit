@@ -366,10 +366,10 @@ export class MetaMolecule
 			if (this.rubricSides) this.rubricSides = Vec.maskGet(this.rubricSides, bondMask);
 
 			let atomMap = Vec.prepend(Vec.add(Vec.maskMap(atomMask), 1), 0);
-			for (let n = 0; n < Vec.arrayLength(this.rubricTetra); n++) if (this.rubricTetra[n]) this.rubricTetra[n] = Vec.idxGet(atomMap, this.rubricTetra[n]);
-			for (let n = 0; n < Vec.arrayLength(this.rubricSquare); n++) if (this.rubricSquare[n]) this.rubricSquare[n] = Vec.idxGet(atomMap, this.rubricSquare[n]);
-			for (let n = 0; n < Vec.arrayLength(this.rubricOcta); n++) if (this.rubricOcta[n]) this.rubricOcta[n] = Vec.idxGet(atomMap, this.rubricOcta[n]);
-			for (let n = 0; n < Vec.arrayLength(this.rubricSides); n++) if (this.rubricSides[n]) this.rubricSides[n] = Vec.idxGet(atomMap, this.rubricSides[n]);
+			for (let n = 0; n < Vec.len(this.rubricTetra); n++) if (this.rubricTetra[n]) this.rubricTetra[n] = Vec.idxGet(atomMap, this.rubricTetra[n]);
+			for (let n = 0; n < Vec.len(this.rubricSquare); n++) if (this.rubricSquare[n]) this.rubricSquare[n] = Vec.idxGet(atomMap, this.rubricSquare[n]);
+			for (let n = 0; n < Vec.len(this.rubricOcta); n++) if (this.rubricOcta[n]) this.rubricOcta[n] = Vec.idxGet(atomMap, this.rubricOcta[n]);
+			for (let n = 0; n < Vec.len(this.rubricSides); n++) if (this.rubricSides[n]) this.rubricSides[n] = Vec.idxGet(atomMap, this.rubricSides[n]);
 		}
 
 		// (... recreate anything else that's affected)

@@ -82,6 +82,11 @@ export enum ActivityType
 	PolymerBlock,
 	AddHydrogens,
 	RemoveHydrogens,
+	QueryClear,
+	QueryCopy,
+	QueryPaste,
+	QuerySetAtom,
+	QuerySetBond,
 }
 
 export interface SketchState
@@ -114,8 +119,9 @@ export class MoleculeActivity
 
 	public output:SketchState;
 	public errmsg:string;
+	public toClipboard:string = null;
 
-	constructor(public input:SketchState, public activity:ActivityType, private param:Record<string, any>, override?:Record<string, any>, private owner?:any)
+	constructor(public input:SketchState, public activity:ActivityType, private param:Record<string, any>, override?:Record<string, any>, private owner?:Sketcher)
 	{
 		this.output =
 		{
@@ -283,7 +289,7 @@ export class MoleculeActivity
 		else if (this.activity == ActivityType.TemplateFusion)
 		{
 			this.execTemplateFusion(Molecule.fromString(param.fragNative));
-			if (this.owner) this.owner.setPermutations(this.output.permutations);
+			if (this.owner) this.owner.setPermutations(this.output.permutations as any as TemplatePermutation[]);
 			return;
 		}
 		else if (this.activity == ActivityType.AbbrevTempl) this.execAbbrevTempl();
@@ -296,6 +302,11 @@ export class MoleculeActivity
 		else if (this.activity == ActivityType.PolymerBlock) this.execPolymerBlock();
 		else if (this.activity == ActivityType.AddHydrogens) this.execAddHydrogens();
 		else if (this.activity == ActivityType.RemoveHydrogens) this.execRemoveHydrogens();
+		else if (this.activity == ActivityType.QueryClear) this.execQueryClear();
+		else if (this.activity == ActivityType.QueryCopy) this.execQueryCopy();
+		else if (this.activity == ActivityType.QueryPaste) this.execQueryPaste();
+		else if (this.activity == ActivityType.QuerySetAtom) this.execQuerySetAtom();
+		else if (this.activity == ActivityType.QuerySetBond) this.execQuerySetBond();
 
 		this.finish();
 	}
@@ -355,7 +366,9 @@ export class MoleculeActivity
 	{
 		let mol = this.input.mol;
 		if (this.subjectLength > 0) mol = MolUtil.subgraphWithAttachments(mol, this.subjectMask);
+
 		if (this.owner) this.owner.performCopy(mol);
+		else this.toClipboard = mol.toString();
 
 		if (withCut)
 		{
@@ -1661,9 +1674,10 @@ export class MoleculeActivity
 
 	public execRemoveHydrogens():void
 	{
+		if (!this.requireAtoms()) return;
+
 		let mol = this.input.mol;
 
-		if (!this.requireAtoms()) return;
 		let selmask = this.subjectMask;
 		if (Vec.allFalse(selmask)) selmask = Vec.booleanArray(true, mol.numAtoms);
 		let keepmask = Vec.booleanArray(true, mol.numAtoms);
@@ -1681,6 +1695,117 @@ export class MoleculeActivity
 		}
 
 		this.output.mol = MolUtil.subgraphMask(mol, keepmask);
+	}
+
+	public execQueryClear():void
+	{
+		if (!this.requireSubject()) return;
+
+		let mol = this.input.mol.clone();
+
+		const {currentBond} = this.input;
+		if (currentBond > 0 && QueryUtil.hasAnyQueryBond(mol, currentBond))
+		{
+			QueryUtil.deleteQueryBondAll(mol, currentBond);
+			this.output.mol = mol;
+			return;
+		}
+
+		let anything = false;
+		for (let a of this.subjectIndex) if (QueryUtil.hasAnyQueryAtom(mol, a))
+		{
+			QueryUtil.deleteQueryAtomAll(mol, a);
+			anything = true;
+		}
+		for (let b = 1; b <= mol.numBonds; b++) if (this.subjectMask[mol.bondFrom(b) - 1] && this.subjectMask[mol.bondTo(b) - 1] && QueryUtil.hasAnyQueryBond(mol, b))
+		{
+			QueryUtil.deleteQueryBondAll(mol, b);
+			anything = true;
+		}
+
+		if (anything)
+			this.output.mol = mol;
+		else
+			this.errmsg = 'No query terms to clear.';
+	}
+
+	public execQueryCopy():void
+	{
+		if (!this.requireSubject()) return;
+
+		const {mol, currentBond} = this.input;
+
+		if (currentBond > 0)
+		{
+			if (!QueryUtil.hasAnyQueryBond(mol, currentBond))
+			{
+				this.errmsg = 'Bond has no query terms.';
+				return;
+			}
+			let qmol = new Molecule();
+			qmol.addAtom('*', 0, 0);
+			qmol.addAtom('*', Molecule.IDEALBOND, 0);
+			qmol.addBond(1, 2, 1);
+			qmol.setBondExtra(1, mol.bondExtra(currentBond).filter((xtra) => xtra.startsWith('q')));
+			this.toClipboard = qmol.toString();
+		}
+		else if (this.subjectLength == 1)
+		{
+			let atom = this.subjectIndex[0];
+			if (!QueryUtil.hasAnyQueryAtom(mol, atom))
+			{
+				this.errmsg = 'Atom has no query terms.';
+				return;
+			}
+			let qmol = new Molecule();
+			qmol.addAtom('*', 0, 0);
+			qmol.setAtomExtra(1, mol.atomExtra(atom).filter((xtra) => xtra.startsWith('q')));
+			this.toClipboard = qmol.toString();
+		}
+		else this.errmsg = 'Subject has to be a single atom or bond.';
+	}
+
+	public execQueryPaste():void
+	{
+		if (!this.requireSubject()) return;
+
+		let qmol:Molecule = this.param.qmol;
+		if (!qmol) {}
+		else if (qmol.numAtoms == 1 && qmol.atomElement(1) == '*' && QueryUtil.hasAnyQueryAtom(qmol, 1))
+		{
+			let mol = this.output.mol = this.input.mol.clone();
+			let qterms = qmol.atomExtra(1).filter((xtra) => xtra.startsWith('q'));
+			for (let a of this.subjectIndex)
+			{
+				let aterms = mol.atomExtra(a).filter((xtra) => xtra.startsWith('q'));
+				mol.setAtomExtra(a, [...aterms, ...qterms]);
+			}
+			return;
+		}
+		else if (qmol.numAtoms == 2 && qmol.atomElement(1) == '*' && qmol.atomElement(2) == '*' &&
+				 qmol.numBonds == 1 && QueryUtil.hasAnyQueryBond(qmol, 1))
+		{
+			let mol = this.output.mol = this.input.mol.clone();
+			let qterms = qmol.bondExtra(1).filter((xtra) => xtra.startsWith('q'));
+			for (let b = 1; b <= mol.numBonds; b++) if (this.subjectMask[mol.bondFrom(b) - 1] && this.subjectMask[mol.bondTo(b) - 1])
+			{
+				let bterms = mol.bondExtra(b).filter((xtra) => xtra.startsWith('q'));
+				mol.setBondExtra(b, [...bterms, ...qterms]);
+			}
+			return;
+		}
+
+		this.errmsg = 'Unable to paste query terms.';
+	}
+
+	public execQuerySetAtom():void
+	{
+		// TODO
+	}
+
+	public execQuerySetBond():void
+	{
+		// TODO
 	}
 
 	/*
@@ -1747,20 +1872,6 @@ export class MoleculeActivity
 		outmol = fusion.getPerm(0).mol;
 		zapSubject();
 		outCurrentAtom = alink;
-	}
-
-	// input: (standard)
-	// output:
-	//		.clipNative: the extracted subset
-	public void execCopy(boolean andCut)
-	{
-		if (!requireAtoms()) return;
-
-		boolean[] mask = subjectLength == 0 ? Vec.booleanArray(true, mol.numAtoms) : subjectMask;
-		Molecule clipmol = MolUtil.subgraphWithAttachments(mol, mask);
-		output.put("clipNative", clipmol.toString());
-
-		if (andCut) outmol = MolUtil.subgraph(mol, Vec.not(mask));
 	}*/
 
 	// ----------------- private methods -----------------

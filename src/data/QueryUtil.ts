@@ -55,13 +55,13 @@ export class QueryUtil
 	public static hasAnyQueryAtom(mol:Molecule, atom:number):boolean
 	{
 		let extra = mol.atomExtra(atom);
-		for (let n = extra.length - 1; n >= 0; n--) if (extra[n].startsWith("q")) return true;
+		for (let n = extra.length - 1; n >= 0; n--) if (extra[n].startsWith('q')) return true;
 		return false;
 	}
 	public static hasAnyQueryBond(mol:Molecule, bond:number):boolean
 	{
 		let extra = mol.bondExtra(bond);
-		for (let n = extra.length - 1; n >= 0; n--) if (extra[n].startsWith("q")) return true;
+		for (let n = extra.length - 1; n >= 0; n--) if (extra[n].startsWith('q')) return true;
 		return false;
 	}
 
@@ -102,6 +102,16 @@ export class QueryUtil
 			modified = true;
 		}
 		if (modified) mol.setBondExtra(bond, extra);
+	}
+
+	// remove all query features from atom/bond
+	public static deleteQueryAtomAll(mol:Molecule, atom:number)
+	{
+		mol.setAtomExtra(atom, mol.atomExtra(atom).filter((xtra) => !xtra.startsWith('q')));
+	}
+	public static deleteQueryBondAll(mol:Molecule, bond:number)
+	{
+		mol.setBondExtra(bond, mol.bondExtra(bond).filter((xtra) => !xtra.startsWith('q')));
 	}
 
 	// fetch the payload content for a particular type, or null if not found
@@ -229,7 +239,7 @@ export class QueryUtil
 		{return this.parseIntegers(this.queryBondString(mol, bond, QueryTypeBond.NumRings));}
 	public static queryBondOrders(mol:Molecule, bond:number):number[]
 		{return this.parseIntegers(this.queryBondString(mol, bond, QueryTypeBond.Orders));}
-	
+
 	// setting of specific query types for atoms
 	public static setQueryAtomCharges(mol:Molecule, atom:number, value:number[]):void
 		{this.setQueryAtom(mol, atom, QueryTypeAtom.Charges, this.formatIntegers(value));}
@@ -292,7 +302,7 @@ export class QueryUtil
 	}
 	private static parseBoolean(str:string):boolean
 	{
-		return str == null ? false : str == 'yes';
+		return !str ? null : str == 'yes';
 	}
 	public static parseMolecules(list:string[]):Molecule[]
 	{
@@ -305,12 +315,12 @@ export class QueryUtil
 		}
 		return mols;
 	}
-	
+
 	// conversion of appropriate datatypes into molecule-encoded strings
 	private static formatIntegers(list:number[]):string
 	{
 		if (Vec.isBlank(list)) return null;
-		let str = ''; 
+		let str = '';
 		for (let n = 0; n < list.length; n++)
 		{
 			if (n > 0) str += ',';

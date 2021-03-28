@@ -56,8 +56,7 @@ export class EditAtom extends Dialog
 	private refGeom1:string;
 	private refGeom2:string;
 
-	// (...querystuff)
-
+	private queryWidget:QueryFieldsWidget;
 	private fieldsWidget:ExtraFieldsWidget;
 
 	constructor(mol:Molecule, public atom:number, private proxyClip:ClipboardProxy, private callbackApply:(source?:EditAtom) => void)
@@ -107,6 +106,7 @@ export class EditAtom extends Dialog
 				let keyCode = event.keyCode || event.which;
 				if (keyCode == 13) this.applyChanges();
 				if (keyCode == 27) this.close();
+				event.stopPropagation();
 			});
 		}
 	}
@@ -127,7 +127,7 @@ export class EditAtom extends Dialog
 		this.updateMolecule();
 		if (this.tabs.getSelectedValue() == 'Abbreviation') this.updateAbbrev();
 		if (this.tabs.getSelectedValue() == 'Geometry') this.updateGeometry();
-		// ... query...
+		if (this.tabs.getSelectedValue() == 'Query') this.updateQuery();
 		if (this.tabs.getSelectedValue() == 'Extra') this.updateExtra();
 
 		this.mol.keepTransient = false;
@@ -297,7 +297,8 @@ export class EditAtom extends Dialog
 
 	private populateQuery(panel:DOM):void
 	{
-		panel.appendText('Query: TODO');
+		this.queryWidget = new QueryFieldsWidget(this.mol, this.atom, 0);
+		this.queryWidget.render(panel);
 	}
 
 	private populateExtra(panel:DOM):void
@@ -414,6 +415,11 @@ export class EditAtom extends Dialog
 			this.mol = molact.output.mol;
 			return;
 		}
+	}
+
+	private updateQuery():void
+	{
+		this.queryWidget.updateAtom();
 	}
 
 	private updateExtra():void

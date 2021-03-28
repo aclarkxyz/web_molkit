@@ -63,12 +63,15 @@ export class ContextSketch
 		// !! this.maybeAppend(menu, ActivityType.BondRotate, 'Rotate Substituent');
 		this.maybeAppend(menu, ActivityType.Join, 'Join Atoms');
 		// !! this.maybeAppend(menu, ActivityType.BondFix, 'Fix Geometry');
-		
+
 		this.maybeAppend(menu, ActivityType.AbbrevGroup, 'Abbreviate Group');
 		this.maybeAppend(menu, ActivityType.AbbrevFormula, 'Abbreviate Formula');
 		this.maybeAppend(menu, ActivityType.AbbrevClear, 'Clear Abbreviation');
 		this.maybeAppend(menu, ActivityType.AbbrevExpand, 'Expand Abbreviation');
 		//if state.currentAtom > 0 || state.currentBond > 0 {append(cmdID:Command.Query, title:"Query Properties")};
+
+		let querySub = this.querySubMenu();
+		if (Vec.notBlank(querySub)) menu.push({'label': 'Query', 'subMenu': querySub});
 
 		let poly = new PolymerBlock(state.mol);
 		for (let units of poly.getUnits())
@@ -91,15 +94,31 @@ export class ContextSketch
 		return menu;
 	}
 
-	// --------------------------------------- public methods ---------------------------------------
+	// ------------ private methods ------------
 
 	private maybeAppend(menu:MenuProxyContext[], activ:ActivityType, title:string, param:Record<string, any> = null):void
 	{
 		let molact = new MoleculeActivity(this.state, activ, param);
 		molact.execute();
-		if (!molact.output.mol) return;
+		if (!molact.output.mol && !molact.toClipboard) return;
 
-		menu.push({'label': title, 'click': () => this.sketcher.setState(molact.output, true)});
+		menu.push({'label': title, 'click': () =>
+		{
+			this.sketcher.setState(molact.output, true);
+			if (molact.toClipboard) this.proxyClip.setString(molact.toClipboard);
+		}});
+	}
+
+	private querySubMenu():MenuProxyContext[]
+	{
+		let menu:MenuProxyContext[] = [];
+
+		this.maybeAppend(menu, ActivityType.QueryClear, 'Clear');
+		this.maybeAppend(menu, ActivityType.QueryCopy, 'Copy');
+
+		// TODO: add common use cases; implement in MoleculeActivity
+
+		return menu;
 	}
 }
 

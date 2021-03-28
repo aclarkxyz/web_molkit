@@ -79,9 +79,9 @@ export class DataSheet
 		if (!data.title) data.title = '';
 		if (!data.description) data.description = '';
 
-		if (data.numCols == null) data.numCols = Vec.arrayLength(data.colData);
-		if (data.numRows == null) data.numRows = Vec.arrayLength(data.rowData);
-		if (data.numExtens == null) data.numExtens = Vec.arrayLength(data.extData);
+		if (data.numCols == null) data.numCols = Vec.len(data.colData);
+		if (data.numRows == null) data.numRows = Vec.len(data.rowData);
+		if (data.numExtens == null) data.numExtens = Vec.len(data.extData);
 
 		if (data.colData == null) data.colData = [];
 		if (data.rowData == null) data.rowData = [];

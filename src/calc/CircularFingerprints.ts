@@ -265,7 +265,7 @@ export class CircularFingerprints
 		}
 
 		// chirality flag: one chance to resolve it
-		if (!this.resolvedChiral[atom - 1] && Vec.arrayLength(this.meta.rubricTetra) > 0 && this.meta.rubricTetra[atom - 1] != null)
+		if (!this.resolvedChiral[atom - 1] && Vec.len(this.meta.rubricTetra) > 0 && this.meta.rubricTetra[atom - 1] != null)
 		{
 			let ru = this.meta.rubricTetra[atom - 1];
 			let par =

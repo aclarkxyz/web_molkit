@@ -34,6 +34,7 @@ export class EditBond extends Dialog
 	private geomWidget:GeomWidget;
 	private refGeom1:string;
 
+	private queryWidget:QueryFieldsWidget;
 	private fieldsWidget:ExtraFieldsWidget;
 
 	constructor(mol:Molecule, public bond:number, private proxyClip:ClipboardProxy, private callbackApply:(source?:EditBond) => void)
@@ -100,7 +101,7 @@ export class EditBond extends Dialog
 
 		this.updateMolecule();
 		if (this.tabs.getSelectedValue() == 'Geometry') this.updateGeometry();
-		// ... query ...
+		if (this.tabs.getSelectedValue() == 'Query') this.updateQuery();
 		if (this.tabs.getSelectedValue() == 'Extra') this.updateExtra();
 
 		this.mol.keepTransient = false;
@@ -178,7 +179,8 @@ export class EditBond extends Dialog
 
 	private populateQuery(panel:DOM):void
 	{
-		panel.appendText('Query: TODO');
+		this.queryWidget = new QueryFieldsWidget(this.mol, 0, this.bond);
+		this.queryWidget.render(panel);
 	}
 
 	private populateExtra(panel:DOM):void
@@ -218,6 +220,11 @@ export class EditBond extends Dialog
 				return;
 			}
 		}
+	}
+
+	private updateQuery():void
+	{
+		this.queryWidget.updateBond();
 	}
 
 	private updateExtra():void
