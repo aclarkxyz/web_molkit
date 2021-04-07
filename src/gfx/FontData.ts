@@ -663,6 +663,7 @@ export class FontData
 			if (i < 0)
 			{
 				dx += font.MISSING_HORZ;
+				xpos.push(dx * scale);
 				continue;
 			}
 
