@@ -452,8 +452,9 @@ export class MetaVector
 		let ctx = canvas.getContext('2d');
 		if (clearFirst) ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-		let w = canvas.style.width ? parseInt(canvas.style.width) : canvas.width / this.density;
-		let h = canvas.style.height ? parseInt(canvas.style.height) : canvas.height / this.density;
+		//let w = canvas.style.width ? parseInt(canvas.style.width) : canvas.width / this.density;
+		//let h = canvas.style.height ? parseInt(canvas.style.height) : canvas.height / this.density;
+		let w = this.width, h = this.height;
 
 		this.density = pixelDensity();
 

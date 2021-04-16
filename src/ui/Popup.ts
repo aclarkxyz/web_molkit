@@ -91,9 +91,9 @@ export class Popup
 	// closes and hides the dialog
 	public close():void
 	{
-		this.panelBoundary.remove();
-		this.obscureBackground.remove();
-		this.obscureForeground.remove();
+		this.domPanelBoundary.remove();
+		this.domObscureBackground.remove();
+		this.domObscureForeground.remove();
 
 		if (this.callbackClose) this.callbackClose(this);
 
@@ -116,7 +116,7 @@ export class Popup
 		if (this.callbackPopulate)
 			this.callbackPopulate(this);
 		else
-			this.body().text('Empty popup.');
+			this.bodyDOM().setText('Empty popup.');
 	}
 
 	// have this called when the size may have changed, and need to update position

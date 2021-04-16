@@ -42,26 +42,27 @@ export class MenuProxyWeb extends MenuProxy
 	{
 		let [x, y] = eventCoords(event, document.body);
 		//let x = event.screenX, y = event.screenY;
-		let divCursor = $('<div/>').appendTo(document.body).css({'position': 'absolute', 'user-select': 'none'});
+		let divCursor = dom('<div/>').appendTo(document.body).css({'position': 'absolute', 'user-select': 'none'});
 		setBoundaryPixels(divCursor, x - 5, y - 5, 10, 10);
-		let currentFocus = $(document.activeElement);
+		let currentFocus = dom(document.activeElement);
 		let popup = new Popup(divCursor);
  		popup.callbackPopulate = () =>
 		{
-			popup.body().css({'user-select': 'none', 'font-size': '16px'});
+			popup.bodyDOM().css({'user-select': 'none', 'font-size': '16px'});
 			for (let menuItem of menuItems)
 			{
-				let div = $('<div/>').appendTo(popup.body());
+				let div = dom('<div/>').appendTo(popup.bodyDOM());
 				if (menuItem == null)
 				{
-					div.append('<hr/>');
+					div.appendHTML('<hr/>');
 				}
 				else
 				{
-					div.text(menuItem.label);
-					div.hover(() => div.css({'background-color': '#D0D0D0'}), () => div.css({'background-color': 'transparent'}));
+					div.setText(menuItem.label);
+					div.onMouseEnter(() => {div.css({'background-color': '#D0D0D0'});});
+					div.onMouseLeave(() => {div.css({'background-color': 'transparent'});});
 					div.css({'cursor': 'pointer'});
-					div.click(() =>
+					div.onClick(() =>
 					{
 						popup.close();
 						menuItem.click();
@@ -72,7 +73,7 @@ export class MenuProxyWeb extends MenuProxy
 		popup.callbackClose = () =>
 		{
 			divCursor.remove();
-			currentFocus.focus();
+			currentFocus.grabFocus();
 		};
 		popup.open();
 	}
