@@ -892,7 +892,10 @@ export class MDLMOLReader
 			bondConn = sup.bondConn;
 		}
 
-		poly.createUnit(Vec.sorted(sup.atoms), connect, bondConn);
+		let unit = new PolymerBlockUnit(sup.atoms);
+		unit.connect = connect;
+		unit.bondConn = bondConn;
+		poly.createUnit(unit);
 	}
 
 	// removes surrounding quotes, if any

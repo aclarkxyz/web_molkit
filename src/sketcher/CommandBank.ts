@@ -53,7 +53,7 @@ const ELEMENTS_F_BLOCK:string[] =
 
 const ELEMENTS_ABBREV:string[] =
 [
-	'X',  'Y',  'Z',  'Q',  'M',  'L',  'E',  'A',  'R',
+	'*', 'X',  'Y',  'Z',  'Q',  'M',  'L',  'E',  'A',  'R',
 	'R0', 'R1', 'R2', 'R3', 'R4', 'R5', 'R6', 'R7', 'R8'
 ];
 

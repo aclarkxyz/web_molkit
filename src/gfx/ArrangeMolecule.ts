@@ -2414,6 +2414,12 @@ export class ArrangeMolecule
 	// draw the brackets that are associated with a
 	private processPolymerUnit(unit:PolymerBlockUnit, allUnits:PolymerBlockUnit[]):void
 	{
+		if (Vec.len(unit.bondConn) == 4)
+		{
+			this.processPolymerUnitPair(unit);
+			return;
+		}
+
 		interface Bracket
 		{
 			a1?:number;
@@ -2427,6 +2433,7 @@ export class ArrangeMolecule
 		let brackets:Bracket[] = [];
 
 		const {mol, measure} = this;
+
 		for (let n = 1; n <= mol.numBonds; n++)
 		{
 			let a1 = mol.bondFrom(n), a2 = mol.bondTo(n);
@@ -2554,6 +2561,74 @@ export class ArrangeMolecule
 				}
 			}
 		}
+	}
+
+	// special case: 2x2, double-up the brackets
+	private processPolymerUnitPair(unit:PolymerBlockUnit):void
+	{
+		const {mol, measure} = this;
+
+		let xpos:number[] = [], ypos:number[] = [];
+		for (let b of unit.bondConn)
+		{
+			let bfr = mol.bondFrom(b), bto = mol.bondTo(b);
+			xpos.push(measure.angToX(0.5 * (mol.atomX(bfr) + mol.atomX(bto))));
+			ypos.push(measure.angToY(0.5 * (mol.atomY(bfr) + mol.atomY(bto))));
+		}
+
+		let cx = Vec.sum(xpos) * 0.25, cy = Vec.sum(ypos) * 0.25;
+		let bsz = 0.5 * this.scale;
+		let rx:number[] = [], ry:number[] = [];
+
+		for (let [i1, i2] of [[0, 1], [2, 3]])
+		{
+			let dx = xpos[i2] - xpos[i1], dy = ypos[i2] - ypos[i1], inv = bsz * invZ(norm_xy(dx, dy) + 0.001);
+			[dx, dy] = [dx * inv, dy * inv];
+			xpos[i1] -= 2 * dx;
+			ypos[i1] -= 2 * dy;
+			xpos[i2] += 2 * dx;
+			ypos[i2] += 2 * dy;
+			let ox = dy, oy = -dx;
+			let dsq1 = norm2_xy(0.5 * (xpos[i1] + xpos[i2]) + ox - cx, 0.5 * (ypos[i1] + ypos[i2]) + oy - cy);
+			let dsq2 = norm2_xy(0.5 * (xpos[i1] + xpos[i2]) - ox - cx, 0.5 * (ypos[i1] + ypos[i2]) - oy - cy);
+			if (dsq2 < dsq1) [ox, oy] = [-ox, -oy];
+			rx.push(...[ox, ox]);
+			ry.push(...[oy, oy]);
+		}
+
+		const BASE_LINE = {'bnum': 0, 'bfr': 0, 'bto': 0, 'type': BLineType.Normal, 'size': this.lineSizePix, 'head': 0, 'col': this.policy.data.foreground};
+		const BASE_TEXT = {'anum': 0, 'fsz': 0.7 * this.fontSizePix, 'bold': false, 'col': this.policy.data.foreground};
+
+		let drawLine = (x1:number, y1:number, x2:number, y2:number):void =>
+		{
+			let line = {...BASE_LINE, 'line': new Line(x1, y1, x2, y2)};
+			this.lines.push(line);
+			this.space.push(this.computeSpaceLine(line));
+		};
+		let drawText = (x:number, y:number, txt:string):void =>
+		{
+			let pt = {...BASE_TEXT, 'text': txt, 'oval': new Oval(x, y, 0, 0)};
+			this.points.push(pt);
+			this.space.push(this.computeSpacePoint(pt));
+		};
+
+		drawLine(xpos[0], ypos[0], xpos[1], ypos[1]);
+		drawLine(xpos[0], ypos[0], xpos[0] + rx[0], ypos[0] + ry[0]);
+		drawLine(xpos[1], ypos[1], xpos[1] + rx[1], ypos[1] + ry[1]);
+
+		drawLine(xpos[2], ypos[2], xpos[3], ypos[3]);
+		drawLine(xpos[2], ypos[2], xpos[2] + rx[2], ypos[2] + ry[2]);
+		drawLine(xpos[3], ypos[3], xpos[3] + rx[3], ypos[3] + ry[3]);
+
+		let xmin = Vec.min(xpos), ymin = Vec.min(ypos);
+		let dist:number[] = [];
+		for (let n = 0; n < 4; n++) dist.push(xpos[n] - xmin + ypos[n] - ymin);
+		let idxN = Vec.idxMax(dist); // "bottom right" or equivalent
+		drawText(xpos[idxN] - rx[idxN], ypos[idxN] - ry[idxN], 'n');
+
+		let idxD2 = idxN + (idxN % 2 == 1 ? -1 : 1), idxD1 = (idxD2 + 2) % 4;
+		drawText(xpos[idxD1] - 0.5 * rx[idxD1], ypos[idxD1] - 0.5 * ry[idxD1], '*');
+		drawText(xpos[idxD2] - 0.5 * rx[idxD2], ypos[idxD2] - 0.5 * ry[idxD2], '*');
 	}
 }
 

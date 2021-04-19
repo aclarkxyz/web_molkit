@@ -16,8 +16,6 @@ namespace WebMolKit /* BOF */ {
 	Editing a new or existing polymer block.
 */
 
-const EXTRA_TAG = 'xOUTBOND';
-
 export class EditPolymer extends Dialog
 {
 	public mol:Molecule; // copy of original: may or may not be different
@@ -32,9 +30,12 @@ export class EditPolymer extends Dialog
 	private polymer:PolymerBlock;
 	private currentID = 0;
 	private unit:PolymerBlockUnit = null;
-	private bonds:number[] = [];
+
+	private borderAtoms:number[] = []; // subset of atoms that have a bond going to the outside
+	private outBonds:number[] = []; // list of bonds going to the outside
 	private outAtoms:number[] = []; // sorted in same order as bonds
 
+	private umap:number[];
 	private umol:Molecule;
 
 	constructor(mol:Molecule, public atoms:number[], private proxyClip:ClipboardProxy, private callbackApply:(source?:EditPolymer) => void)
@@ -61,7 +62,7 @@ export class EditPolymer extends Dialog
 				break;
 			}
 		}
-		if (!this.unit) this.unit = {'atoms': atoms, 'connect': null, 'bondConn': null};
+		if (!this.unit) this.unit = new PolymerBlockUnit(atoms);
 
 		let umol = this.umol = this.mol.clone();
 		let mask = Vec.booleanArray(false, this.umol.numAtoms);
@@ -69,23 +70,23 @@ export class EditPolymer extends Dialog
 		{
 			let bfr = this.mol.bondFrom(n), bto = this.mol.bondTo(n);
 			let in1 = this.atoms.includes(bfr), in2 = this.atoms.includes(bto);
-			if (in1 || in2) {mask[bfr - 1] = true; mask[bto - 1] = true;}
+			if (in1 || in2) mask[bfr - 1] = mask[bto - 1] = true;
 			if (in1 && !in2)
 			{
-				this.bonds.push(n);
+				this.borderAtoms.push(bfr);
+				this.outBonds.push(n);
 				this.outAtoms.push(bto);
-				umol.setAtomElement(bto, (this.bonds.indexOf(n) + 1).toString());
-				umol.setAtomExtra(bto, Vec.append(umol.atomExtra(bto), EXTRA_TAG));
 			}
 			if (in2 && !in1)
 			{
-				this.bonds.push(n);
+				this.borderAtoms.push(bto);
+				this.outBonds.push(n);
 				this.outAtoms.push(bfr);
-				umol.setAtomElement(bfr, (this.bonds.indexOf(n) + 1).toString());
-				umol.setAtomExtra(bfr, Vec.append(umol.atomExtra(bfr), EXTRA_TAG));
 			}
 		}
+		this.borderAtoms = Vec.sortedUnique(this.borderAtoms);
 
+		this.umap = Vec.maskMap(mask);
 		this.umol = MolUtil.subgraphMask(this.umol, mask);
 		new PolymerBlock(this.umol).removeAll();
 	}
@@ -110,7 +111,7 @@ export class EditPolymer extends Dialog
 		let grid = dom('<div/>').appendTo(body);
 		grid.css({'display': 'grid', 'align-items': 'center', 'justify-content': 'start'});
 		grid.css({'grid-row-gap': '0.5em', 'grid-column-gap': '0.5em'});
-		grid.css({'grid-template-columns': '[start col0] auto [col1] auto [col2] auto [col3] auto [col4 end]'});
+		grid.css({'grid-template-columns': '[start col0] auto [col1] auto [col2] auto [col3] auto [col4] auto [end]'});
 
 		dom('<div/>').appendTo(grid).css({'grid-area': '1 / col0'}).setText('# Atoms');
 		let inputNAtoms = dom('<input size="5"/>').appendTo(dom('<div/>').appendTo(grid).css({'grid-area': '1 / col1'}));
@@ -120,10 +121,10 @@ export class EditPolymer extends Dialog
 		dom('<div/>').appendTo(grid).css({'grid-area': '1 / col2'}).setText('Out-bonds');
 		let inputNBond = dom('<input size="5"/>').appendTo(dom('<div/>').appendTo(grid).css({'grid-area': '1 / col3'}));
 		inputNBond.elInput.readOnly = true;
-		inputNBond.setValue(this.bonds.length.toString());
+		inputNBond.setValue(this.outBonds.length.toString());
 
 		let row = 1;
-		if (this.bonds.length == 2)
+		if (this.outBonds.length == 2)
 		{
 			row++;
 			dom('<div/>').appendTo(grid).css({'grid-area': `${row} / col0`}).setText('Connectivity');
@@ -133,12 +134,69 @@ export class EditPolymer extends Dialog
 			else if (this.unit.connect == PolymerBlockConnectivity.HeadToHead) this.optionConnect.setSelectedIndex(2);
 			else if (this.unit.connect == PolymerBlockConnectivity.Random) this.optionConnect.setSelectedIndex(3);
 		}
-		if (this.bonds.length == 4 && Vec.uniqueUnstable(this.outAtoms).length == 4)
+		if (this.outBonds.length == 4 && Vec.uniqueUnstable(this.outAtoms).length == 4)
 		{
 			row++;
 			dom('<div/>').appendTo(grid).css({'grid-area': `${row} / col0`}).setText('2x2 Connectivity');
-			this.populate2x2Conn(dom('<div/>').appendTo(grid).css({'grid-area': `${row} / col1 / auto / col4`}));
+			this.populate2x2Conn(dom('<div/>').appendTo(grid).css({'grid-area': `${row} / col1 / auto / end`}));
 		}
+
+		let getList = (str:string):number[] =>
+		{
+			if (!str) return null;
+			let list:number[] = [];
+			for (let bit of str.split(','))
+			{
+				let v = parseInt(bit);
+				if (v > 0) list.push(v); else return undefined;
+			}
+			return list;
+		};
+
+		for (let n = 0; n < this.borderAtoms.length; n++)
+		{
+			row++;
+			let label = (n == 0 ? 'Name ' : '') + (n + 1);
+			dom('<div/>').appendTo(grid).css({'grid-area': `${row} / col0`, 'text-align': 'right', 'padding-right': '0.5em'}).setText(label);
+			let input = dom('<input size="20"/>').appendTo(dom('<div/>').appendTo(grid).css({'grid-area': `${row} / col1 / auto / end`, 'width': '100%'}));
+
+			let atom = this.borderAtoms[n];
+			let nvals = this.unit.atomName.get(atom);
+			if (nvals) input.setValue(nvals.join(','));
+			input.onChange(() =>
+			{
+				let list = getList(input.getValue());
+				if (list !== undefined) this.unit.atomName.set(atom, list);
+			});
+		}
+		for (let n = 0; n < this.outAtoms.length; n++)
+		{
+			row++;
+			let label = (n == 0 ? 'Link ' : '') + (n + 1);
+			dom('<div/>').appendTo(grid).css({'grid-area': `${row} / col0`, 'text-align': 'right', 'padding-right': '0.5em'}).setText(label);
+			dom('<div/>').appendTo(grid).css({'grid-area': `${row} / col1`}).setText('Include');
+			let inputIncl = dom('<input size="10"/>').appendTo(dom('<div/>').appendTo(grid).css({'grid-area': `${row} / col2`, 'width': '100%'}));
+			dom('<div/>').appendTo(grid).css({'grid-area': `${row} / col3`}).setText('Exclude');
+			let inputExcl = dom('<input size="10"/>').appendTo(dom('<div/>').appendTo(grid).css({'grid-area': `${row} / col4`, 'width': '100%'}));
+
+			let bond = this.outBonds[n];
+			let ivals = this.unit.bondIncl.get(bond), evals = this.unit.bondExcl.get(bond);
+			if (ivals) inputIncl.setValue(ivals.join(','));
+			if (evals) inputExcl.setValue(evals.join(','));
+			inputIncl.onChange(() =>
+			{
+				let list = getList(inputIncl.getValue());
+				if (list !== undefined) this.unit.bondIncl.set(bond, list);
+			});
+			inputExcl.onChange(() =>
+			{
+				let list = getList(inputExcl.getValue());
+				if (list !== undefined) this.unit.bondExcl.set(bond, list);
+			});
+		}
+
+		row++;
+		this.populateUncap(dom('<div/>').appendTo(grid).css({'grid-area': `${row} / col0 / auto / col4`, 'text-align': 'center'}));
 
 		row++;
 		this.divPreview = dom('<div/>').appendTo(grid).css({'grid-area': `${row} / col0 / auto / col4`, 'text-align': 'center'});
@@ -177,7 +235,7 @@ export class EditPolymer extends Dialog
 		let selidx = 0;
 		for (let perm of perms)
 		{
-			let bonds = Vec.idxGet(this.bonds, perm);
+			let bonds = Vec.idxGet(this.outBonds, perm);
 			if (Vec.equals(bonds, this.unit.bondConn)) selidx = optionList.length;
 			bondConnOptions.push(bonds);
 			//optionList.push(`${this.outAtoms[perm[0]]},${this.outAtoms[perm[1]]}:${this.outAtoms[perm[2]]},${this.outAtoms[perm[3]]}`);
@@ -194,6 +252,25 @@ export class EditPolymer extends Dialog
 		});
 	}
 
+	// list out each outgoing atom that's terminal and could be converted into '*': if any, make a button for that
+	private populateUncap(div:DOM):void
+	{
+		let uncapAtoms:number[] = [];
+		skip: for (let a of this.outAtoms) if (this.mol.atomAdjCount(a) == 1 && this.mol.atomElement(a) != '*')
+		{
+			for (let unit of this.polymer.getUnits()) if (unit.atoms.includes(a)) continue skip;
+			uncapAtoms.push(a);
+		}
+		if (uncapAtoms.length == 0) return;
+
+		let btnUncap = dom('<button class="wmk-button wmk-button-default">Uncap Exterior</button>').appendTo(div);
+		btnUncap.onClick(() =>
+		{
+			btnUncap.elInput.disabled = true;
+			for (let a of uncapAtoms) this.mol.setAtomElement(a, '*');
+		});
+	}
+
 	// trigger the apply/save sequence
 	private applyChanges():void
 	{
@@ -207,7 +284,8 @@ export class EditPolymer extends Dialog
 		}
 
 		if (this.currentID) this.polymer.removeUnit(this.currentID);
-		this.currentID = this.polymer.createUnit(this.atoms, this.unit.connect, this.unit.bondConn);
+
+		this.currentID = this.polymer.createUnit(this.unit.clone());
 
 		this.polymer.rewriteMolecule(); // housekeeping
 		this.callbackApply(this);
@@ -223,7 +301,7 @@ export class EditPolymer extends Dialog
 	{
 		let umol = this.umol.clone();
 
-		let policy = RenderPolicy.defaultColourOnWhite(15);
+		let policy = RenderPolicy.defaultColourOnWhite(20);
 		let measure = new OutlineMeasurement(0, 0, policy.data.pointScale);
 
 		let effects = new RenderEffects();
@@ -233,17 +311,30 @@ export class EditPolymer extends Dialog
 		effects.atomDecoCol = Vec.numberArray(null, umol.numAtoms);
 		effects.atomDecoSize = Vec.numberArray(null, umol.numAtoms);
 
-		for (let n = 1; n <= umol.numAtoms; n++) if (umol.atomExtra(n).includes(EXTRA_TAG))
+		let borderAtoms = this.borderAtoms.map((atom) => this.umap[atom - 1] + 1);
+		let outAtoms = this.outAtoms.map((atom) => this.umap[atom - 1] + 1);
+
+		for (let n = 1; n <= umol.numAtoms; n++)
 		{
-			umol.setAtomCharge(n, 0);
-			umol.setAtomUnpaired(n, 0);
-			umol.setAtomIsotope(n, 0);
-			effects.atomCircleSz[n - 1] = 0.1;
-			effects.atomCircleCol[n - 1] = 0xFF00FF;
-			effects.atomDecoText[n - 1] = umol.atomElement(n);
-			effects.atomDecoCol[n - 1] = 0x800080;
-			effects.atomDecoSize[n - 1] = 0.5;
-			umol.setAtomElement(n, 'C');
+			let bidx = borderAtoms.indexOf(n), oidx = outAtoms.indexOf(n);
+			if (bidx >= 0)
+			{
+				effects.atomDecoText[n - 1] = (bidx + 1).toString();
+				effects.atomDecoCol[n - 1] = 0x008000;
+				effects.atomDecoSize[n - 1] = 0.3;
+			}
+			if (oidx >= 0)
+			{
+				umol.setAtomCharge(n, 0);
+				umol.setAtomUnpaired(n, 0);
+				umol.setAtomIsotope(n, 0);
+				effects.atomCircleSz[n - 1] = 0.1;
+				effects.atomCircleCol[n - 1] = 0xFF00FF;
+				effects.atomDecoText[n - 1] = (oidx + 1).toString();
+				effects.atomDecoCol[n - 1] = 0x800080;
+				effects.atomDecoSize[n - 1] = 0.3;
+				umol.setAtomElement(n, 'C');
+			}
 		}
 		let layout = new ArrangeMolecule(umol, measure, policy, effects);
 		layout.arrange();
@@ -252,12 +343,25 @@ export class EditPolymer extends Dialog
 
 		if (this.unit.bondConn)
 		{
-			for (let [i1, i2, col, sz] of [[0, 1, 0xC86D08, 2], [2, 3, 0xC86D08, 2], [0, 2, 0xC0C86D08, 1], [1, 3, 0xC0C86D08, 1]])
+			const LINES:[number, number, number, number, boolean][] =
+			[
+				[0, 1, 0xC86D08, 2, false], [2, 3, 0xC86D08, 2, false],
+				[0, 2, 0xC0C86D08, 1, true], [1, 3, 0xC0C86D08, 1, true]
+			];
+			for (let [i1, i2, col, sz, circle] of LINES)
 			{
-				let a1 = this.outAtoms[this.bonds.indexOf(this.unit.bondConn[i1])];
-				let a2 = this.outAtoms[this.bonds.indexOf(this.unit.bondConn[i2])];
+				let a1 = this.outAtoms[this.outBonds.indexOf(this.unit.bondConn[i1])];
+				let a2 = this.outAtoms[this.outBonds.indexOf(this.unit.bondConn[i2])];
 				let p1 = layout.getPoint(a1 - 1), p2 = layout.getPoint(a2 - 1);
 				gfx.drawLine(p1.oval.cx, p1.oval.cy, p2.oval.cx, p2.oval.cy, col, sz);
+				if (circle)
+				{
+					for (let f of [0.2, 0.4, 0.6, 0.8])
+					{
+						let mx = p1.oval.cx + f * (p2.oval.cx - p1.oval.cx), my = p1.oval.cy + f * (p2.oval.cy - p1.oval.cy);
+						gfx.drawOval(mx, my, 2, 2, col, sz, null);
+					}
+				}
 			}
 		}
 

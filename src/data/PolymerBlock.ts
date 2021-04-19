@@ -43,11 +43,25 @@ export enum PolymerBlockConnectivity
 	Random = 'rnd', // explicitly random
 }
 
-export interface PolymerBlockUnit
+export class PolymerBlockUnit
 {
-	atoms:number[]; // atoms order not significant
-	connect:PolymerBlockConnectivity; // null if not applicable
-	bondConn:number[]; // interbond connection groups; pairwise ordering: [b1a, b1b, b2a, b2b, ...]
+	public connect:PolymerBlockConnectivity = null; // null if not applicable
+	public bondConn:number[] = null; // interbond connection groups; pairwise ordering: [b1a, b1b, b2a, b2b, ...]
+	public atomName = new Map<number, number[]>(); // for atoms: list of name codes that an atom belongs to, if any; applies only to atoms on the boundary
+	public bondIncl = new Map<number, number[]>(); // for bonds: list of name codes that the outgoing bond may be connected to (none = no restriction)
+	public bondExcl = new Map<number, number[]>(); // for bonds: list of name codes that the outgoing bond may not be connected to (redundant when there are include atoms)
+
+	constructor(public atoms:number[]) {}
+	public clone():PolymerBlockUnit
+	{
+		let dup = new PolymerBlockUnit(this.atoms.slice(0));
+		dup.connect = this.connect;
+		if (this.bondConn) dup.bondConn = this.bondConn.slice(0);
+		for (let [k, v] of this.atomName.entries()) dup.atomName.set(k, v.slice(0));
+		for (let [k, v] of this.bondIncl.entries()) dup.bondIncl.set(k, v.slice(0));
+		for (let [k, v] of this.bondExcl.entries()) dup.bondExcl.set(k, v.slice(0));
+		return dup;
+	}
 }
 
 export class PolymerBlock
@@ -135,11 +149,10 @@ export class PolymerBlock
 	}
 
 	// creates the block, writes content into the molecule, and returns the ID
-	public createUnit(atoms:number[], connect:PolymerBlockConnectivity, bondConn:number[]):number
+	public createUnit(unit:PolymerBlockUnit):number
 	{
 		let id = this.nextIdentifier();
-		let unit:PolymerBlockUnit = {atoms, connect, bondConn};
-		this.units.set(id, unit);
+		this.units.set(id, unit.clone());
 		this.writeUnit(id, unit);
 		return id;
 	}
@@ -182,11 +195,14 @@ export class PolymerBlock
 	// given an ID and some atoms that correspond to it, see if it checks out: and if so, add it to the processed list
 	private appendBlock(id:number, atoms:number[]):void
 	{
-		let nattach = 0;
-		let unit:PolymerBlockUnit = {atoms, 'connect': null, 'bondConn': null};
+		const {mol} = this;
 
-		// process the first atom in the list, and extract its properties (assuming degeneracy)
-		for (let extra of this.mol.atomExtra(atoms[0])) if (extra.startsWith(POLYMERBLOCK_EXTRA_POLYMER))
+		let nattach = 0;
+		let unit = new PolymerBlockUnit(atoms);
+
+		// process the first atom in the list, and extract its properties that apply to the whole block (assuming degeneracy)
+		// look for atom-encoded properties; note that tags (like connectivity) are degenerate, and are assumed to be the same for all atoms
+		for (let atom of atoms) for (let extra of mol.atomExtra(atom)) if (extra.startsWith(POLYMERBLOCK_EXTRA_POLYMER))
 		{
 			let bits = extra.substring(POLYMERBLOCK_EXTRA_POLYMER.length).split(':');
 			if (bits.length < 2 || parseInt(bits[0]) != id) continue;
@@ -196,28 +212,59 @@ export class PolymerBlock
 				if (bits[n] == PolymerBlockConnectivity.HeadToTail) unit.connect = PolymerBlockConnectivity.HeadToTail;
 				else if (bits[n] == PolymerBlockConnectivity.HeadToHead) unit.connect = PolymerBlockConnectivity.HeadToHead;
 				else if (bits[n] == PolymerBlockConnectivity.Random) unit.connect = PolymerBlockConnectivity.Random;
+				else if (bits[n].startsWith('n'))
+				{
+					let hasOuter = false;
+					for (let adj of mol.atomAdjList(atom)) if (!atoms.includes(adj)) {hasOuter = true; break;}
+
+					if (hasOuter)
+					{
+						let subBits = bits[n].substring(1).split(',');
+						unit.atomName.set(atom, subBits.map((str) => parseInt(str)));
+					}
+				}
 			}
 		}
 
 		// sanity check: make sure attachment count matches # bonds crossing the block
 		if (nattach < 0) return;
-		for (let n = 1; n <= this.mol.numBonds; n++)
+		for (let n = 1; n <= mol.numBonds; n++)
 		{
-			let in1 = atoms.indexOf(this.mol.bondFrom(n)) >= 0, in2 = atoms.indexOf(this.mol.bondTo(n)) >= 0;
+			let in1 = atoms.indexOf(mol.bondFrom(n)) >= 0, in2 = atoms.indexOf(mol.bondTo(n)) >= 0;
 			if ((in1 && !in2) || (!in1 && in2)) nattach--;
 		}
 		if (nattach != 0) return;
 
 		// pull out labelled bonds (if any) to derive the reconnection order
 		let bonds:number[] = null, order:number[] = null;
-		for (let n = 1; n <= this.mol.numBonds; n++)
+		for (let n = 1; n <= mol.numBonds; n++)
 		{
-			for (let extra of this.mol.bondExtra(n)) if (extra.startsWith(POLYMERBLOCK_EXTRA_POLYMER))
+			for (let extra of mol.bondExtra(n)) if (extra.startsWith(POLYMERBLOCK_EXTRA_POLYMER))
 			{
 				let bits = extra.substring(POLYMERBLOCK_EXTRA_POLYMER.length).split(':');
 				if (bits.length < 2 || parseInt(bits[0]) != id) continue;
-				bonds = Vec.append(bonds, n);
-				order = Vec.append(order, parseInt(bits[1]));
+				for (let i = 1; i < bits.length; i++)
+				{
+					if (bits[i].startsWith('i'))
+					{
+						let subBits = bits[i].substring(1).split(',');
+						unit.bondIncl.set(n, subBits.map((str) => parseInt(str)));
+					}
+					else if (bits[i].startsWith('e'))
+					{
+						let subBits = bits[i].substring(1).split(',');
+						unit.bondExcl.set(n, subBits.map((str) => parseInt(str)));
+					}
+					else
+					{
+						let o = parseInt(bits[i]);
+						if (o > 0)
+						{
+							bonds = Vec.append(bonds, n);
+							order = Vec.append(order, o);
+						}
+					}
+				}
 			}
 		}
 		if (bonds != null)
@@ -229,7 +276,7 @@ export class PolymerBlock
 		this.units.set(id, unit);
 	}
 
-	private formatBlockAtom(id:number, unit:PolymerBlockUnit):string
+	private formatBlockAtom(id:number, unit:PolymerBlockUnit, atom:number):string
 	{
 		let nbonds = 0;
 		for (let n = 1; n <= this.mol.numBonds; n++)
@@ -240,12 +287,28 @@ export class PolymerBlock
 
 		let str = POLYMERBLOCK_EXTRA_POLYMER + id + ':' + nbonds;
 		if (unit.connect != null) str += ':' + unit.connect;
-		return str.toString();
+
+		let names = unit.atomName.get(atom);
+		if (Vec.notBlank(names)) str += ':n' + names.join(',');
+
+		return str;
 	}
 
-	private formatBlockBond(id:number, unit:PolymerBlockUnit, idxConn:number):string
+	private formatBlockBond(id:number, unit:PolymerBlockUnit, bond:number):string
 	{
-		return POLYMERBLOCK_EXTRA_POLYMER + id + ':' + idxConn;
+		let in1 = unit.atoms.includes(this.mol.bondFrom(bond)), in2 = unit.atoms.includes(this.mol.bondTo(bond));
+		let isBoundary = (in1 && !in2) || (in2 && !in1);
+		if (!isBoundary) return null;
+
+		let idxConn = unit.bondConn ? unit.bondConn.indexOf(bond) : -1;
+		let incl = unit.bondIncl.get(bond), excl = unit.bondExcl.get(bond);
+		if (idxConn < 0 && Vec.isBlank(incl) && Vec.isBlank(excl)) return null;
+
+		let str = POLYMERBLOCK_EXTRA_POLYMER + id;
+		if (idxConn >= 0) str += ':' + (idxConn + 1);
+		if (Vec.notBlank(incl)) str += ':i' + incl.join(',');
+		if (Vec.notBlank(excl)) str += ':e' + excl.join(',');
+		return str;
 	}
 
 	private purgeExtraFields():void
@@ -276,13 +339,16 @@ export class PolymerBlock
 
 	private writeUnit(id:number, unit:PolymerBlockUnit):void
 	{
-		let codeAtom = this.formatBlockAtom(id, unit);
-		for (let a of unit.atoms) this.mol.setAtomExtra(a, Vec.append(this.mol.atomExtra(a), codeAtom));
-		if (unit.bondConn != null) for (let n = 0; n < unit.bondConn.length; n++)
+		const {mol} = this;
+		for (let a of unit.atoms)
 		{
-			let bond = unit.bondConn[n];
-			let codeBond = this.formatBlockBond(id, unit, n + 1);
-			this.mol.setBondExtra(bond, Vec.append(this.mol.bondExtra(bond), codeBond));
+			let codeAtom = this.formatBlockAtom(id, unit, a);
+			mol.setAtomExtra(a, Vec.append(mol.atomExtra(a), codeAtom));
+		}
+		for (let b = 1; b <= mol.numBonds; b++)
+		{
+			let codeBond = this.formatBlockBond(id, unit, b);
+			if (codeBond) mol.setBondExtra(b, Vec.append(mol.bondExtra(b), codeBond));
 		}
 	}
 
