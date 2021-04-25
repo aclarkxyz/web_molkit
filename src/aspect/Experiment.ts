@@ -235,7 +235,7 @@ export class Experiment extends Aspect
 	{
 		super(Experiment.CODE, ds, allowModify);
 
-		if ($.isEmptyObject(Experiment.COLUMN_DESCRIPTIONS))
+		if (Object.keys(Experiment.COLUMN_DESCRIPTIONS).length == 0)
 		{
 			let v = Experiment.COLUMN_DESCRIPTIONS;
 			v[Experiment.COLNAME_EXPERIMENT_TITLE] = 'Title description for the experiment';
