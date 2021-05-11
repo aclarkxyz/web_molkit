@@ -31,6 +31,7 @@ export class OptionList extends Widget
 {
 	public padding = 6; // pixels
 	public htmlLabels = false; // switch this on if the labels are HTML rather than text
+	public numCols = 0; // optional: if 0, everything is on one line
 
 	private selidx = 0;
 	private buttonDiv:DOM[] = [];
@@ -83,7 +84,7 @@ export class OptionList extends Widget
 
 		for (let n = 0; n < this.options.length; n++)
 		{
-			if (this.isVertical) tr = dom('<tr/>').appendTo(table);
+			if (this.isVertical || (this.numCols > 0 && n > 0 && n % this.numCols == 0)) tr = dom('<tr/>').appendTo(table);
 			let td = dom('<td class="wmk-option-cell"/>').appendTo(tr);
 			let div = dom('<div class="wmk-option"/>').appendTo(td);
 			div.css({'padding': `${this.padding}px`});
