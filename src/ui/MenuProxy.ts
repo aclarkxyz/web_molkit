@@ -21,6 +21,7 @@ export interface MenuProxyContext
 	label:string;
 	click?:() => void;
 	subMenu?:MenuProxyContext[];
+	accelerator?:string;
 }
 
 export class MenuProxy

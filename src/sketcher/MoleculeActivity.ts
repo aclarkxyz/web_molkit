@@ -1236,6 +1236,12 @@ export class MoleculeActivity
 				let cc = mol.atomConnComp(this.input.currentAtom);
 				for (let n = 1; n <= mol.numAtoms; n++) mask[n - 1] = mol.atomConnComp(n) == cc;
 			}
+
+			if (Vec.maskCount(mask) == 1 && mask[this.input.currentAtom - 1])
+			{
+				this.errmsg = 'Component is isolated.';
+				return;
+			}
 		}
 		else if (this.input.currentBond > 0)
 		{
@@ -1258,6 +1264,11 @@ export class MoleculeActivity
 		}
 		else
 		{
+			if (this.subjectLength == 1)
+			{
+				this.errmsg = 'Component is isolated.';
+				return;
+			}
 			for (let n = 0; n < this.subjectLength; n++)
 			{
 				cx += mol.atomX(this.subjectIndex[n]);
