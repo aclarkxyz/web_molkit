@@ -328,7 +328,7 @@ export class DataSheet
 	{
 		if (typeof col === 'string') col = this.findColByName(col);
 		if (col < 0) return;
-		this.data.rowData[row][col] = mol.clone();
+		this.data.rowData[row][col] = mol ? mol.clone() : null;
 	}
 	public setString(row:number, col:number | string, val:string):void
 	{
