@@ -148,6 +148,24 @@ export class DOM
 		return this;
 	}
 
+	// inserts this object right before the reference DOM, in the reference DOM's parent list
+	public insertBefore(ref:DOM):DOM
+	{
+		ref.el.parentElement.insertBefore(this.el, ref.el);
+		return this;
+	}
+
+	// inserts this object right after the reference DOM, in the reference DOM's parent list
+	public insertAfter(ref:DOM):DOM
+	{
+		let before = ref.el.nextElementSibling;
+		if (before)
+			ref.el.parentElement.insertBefore(this.el, before);
+		else
+			ref.el.parentElement.append(this.el);
+		return this;
+	}
+
 	// take this node out of the DOM
 	public remove():void
 	{

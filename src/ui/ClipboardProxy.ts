@@ -46,7 +46,7 @@ export class ClipboardProxy
 	}
 	public currentHandler():ClipboardProxyHandler
 	{
-		return this.handlers[this.handlers.length - 1];
+		return Vec.last(this.handlers);
 	}
 
 	// call these methods when an external event (e.g. menu/button) triggers a cut/copy/paste event
