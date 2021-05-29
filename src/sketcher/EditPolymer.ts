@@ -163,7 +163,7 @@ export class EditPolymer extends Dialog
 			let atom = this.borderAtoms[n];
 			let nvals = this.unit.atomName.get(atom);
 			if (nvals) input.setValue(nvals.join(','));
-			input.onChange(() =>
+			input.onInput(() =>
 			{
 				let list = getList(input.getValue());
 				if (list !== undefined) this.unit.atomName.set(atom, list);
@@ -183,12 +183,12 @@ export class EditPolymer extends Dialog
 			let ivals = this.unit.bondIncl.get(bond), evals = this.unit.bondExcl.get(bond);
 			if (ivals) inputIncl.setValue(ivals.join(','));
 			if (evals) inputExcl.setValue(evals.join(','));
-			inputIncl.onChange(() =>
+			inputIncl.onInput(() =>
 			{
 				let list = getList(inputIncl.getValue());
 				if (list !== undefined) this.unit.bondIncl.set(bond, list);
 			});
-			inputExcl.onChange(() =>
+			inputExcl.onInput(() =>
 			{
 				let list = getList(inputExcl.getValue());
 				if (list !== undefined) this.unit.bondExcl.set(bond, list);
