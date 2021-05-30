@@ -35,6 +35,7 @@ namespace WebMolKit /* BOF */ {
 */
 
 export const POLYMERBLOCK_EXTRA_POLYMER = 'xPOLYMER:';
+export const POLYMERBLOCK_SPECIAL_UNCAPPED = '*'; // atom name for "something goes here"
 
 export enum PolymerBlockConnectivity
 {

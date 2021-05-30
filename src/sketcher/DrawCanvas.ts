@@ -223,6 +223,9 @@ export class DrawCanvas extends Widget implements ArrangeMeasurement
 		// draw hover effects
 		if (this.hoverAtom > 0)
 		{
+			let units = new PolymerBlock(this.mol).getUnits();
+			for (let unit of units) if (unit.atoms.includes(this.hoverAtom)) this.drawPolymerUnit(ctx, unit, units);
+
 			let sz = 0;
 			if (this.hoverAtom == this.currentAtom) sz += 0.1;
 			if (this.getSelected(this.hoverAtom)) sz += 0.1;
@@ -231,7 +234,11 @@ export class DrawCanvas extends Widget implements ArrangeMeasurement
 		}
 		if (this.hoverBond > 0)
 		{
-			let sz = 0, bfr = this.mol.bondFrom(this.hoverBond), bto = this.mol.bondTo(this.hoverBond);
+			let bfr = this.mol.bondFrom(this.hoverBond), bto = this.mol.bondTo(this.hoverBond);
+			let units = new PolymerBlock(this.mol).getUnits();
+			for (let unit of units) if (unit.atoms.includes(bfr) && unit.atoms.includes(bto)) this.drawPolymerUnit(ctx, unit, units);
+
+			let sz = 0;
 			if (this.hoverBond == this.currentBond) sz += 0.1;
 			if (this.getSelected(bfr) && this.getSelected(bto)) sz += 0.1;
 			this.drawBondShade(ctx, this.hoverBond, HOVER_COL, -1, sz);
@@ -624,6 +631,195 @@ export class DrawCanvas extends Widget implements ArrangeMeasurement
 			ctx.fillStyle = '#FF40C0';
 			ctx.fillText(annot.txt, annot.x, annot.y);
 		}
+	}
+
+	// renders a polymer block unit by drawing the outline and some key connectivity information
+	private drawPolymerUnit(ctx:CanvasRenderingContext2D, unit:PolymerBlockUnit, allUnits:PolymerBlockUnit[]):void
+	{
+		const {mol, layout} = this;
+
+		// part 1: draw outline around the polymer segment
+
+		let x:number[] = [], y:number[] = [];
+		let scale = this.pointScale;
+
+		for (let a of unit.atoms)
+		{
+			let pt = layout.getPoint(a - 1);
+			let rad = Math.max(0.5 * scale, Math.max(pt.oval.rw, pt.oval.rh));
+			const NPT = 36, THPT = TWOPI / NPT;
+			for (let n = 0; n < NPT; n++)
+			{
+				let th = n * THPT;
+				x.push(pt.oval.cx + rad * Math.cos(th));
+				y.push(pt.oval.cy + rad * Math.sin(th));
+			}
+		}
+
+		let extBonds:number[] = [], inAtoms:number[] = [], outAtoms:number[] = [];
+		for (let n = 1; n <= mol.numBonds; n++)
+		{
+			let bfr = mol.bondFrom(n), bto = mol.bondTo(n);
+			let flag1 = unit.atoms.includes(bfr), flag2 = unit.atoms.includes(bto);
+			if (!flag1 && !flag2) continue;
+			if (!flag2)
+			{
+				extBonds.push(n);
+				inAtoms.push(bfr);
+				outAtoms.push(bto);
+			}
+			else if (!flag1)
+			{
+				extBonds.push(n);
+				inAtoms.push(bto);
+				outAtoms.push(bfr);
+			}
+
+			let pt1 = layout.getPoint(bfr - 1), pt2 = layout.getPoint(bto - 1);
+			let x1 = pt1.oval.cx, y1 = pt1.oval.cy, x2 = pt2.oval.cx, y2 = pt2.oval.cy;
+			if (!flag1) [x1, y1] = [0.5 * (x1 + x2), 0.5 * (y1 + y2)];
+			else if (!flag2) [x2, y2] = [0.5 * (x1 + x2), 0.5 * (y1 + y2)];
+			let dx = x2 - x1, dy = y2 - y1, d = norm_xy(dx, dy), invD = invZ(d);
+			let ox = dy * invD * 0.3 * scale, oy = -dx * invD * 0.3 * scale;
+			let npWidth = Math.ceil(2 * d / scale) + 1, npHeight = Math.ceil(2 * norm_xy(ox, oy) / scale) + 1;
+			for (let n = 0; n <= npWidth; n++)
+			{
+				x.push(x1 - ox + dx * n / npWidth);
+				y.push(y1 - oy + dy * n / npWidth);
+				x.push(x1 + ox + dx * n / npWidth);
+				y.push(y1 + oy + dy * n / npWidth);
+			}
+			for (let n = 1; n < npHeight; n++)
+			{
+				x.push(x1 - ox + 2 * ox * n / npHeight);
+				y.push(y1 - oy + 2 * oy * n / npHeight);
+				x.push(x2 - ox + 2 * ox * n / npHeight);
+				y.push(y2 - oy + 2 * oy * n / npHeight);
+			}
+		}
+
+		let [px, py] = GeomUtil.outlinePolygon(x, y, 0.5 * scale);
+
+		let path = new Path2D();
+		path.moveTo(px[0], py[0]);
+		for (let n = 1; n < px.length; n++) path.lineTo(px[n], py[n]);
+		path.closePath();
+
+		ctx.save();
+		ctx.fillStyle = '#F9EFFF';
+		ctx.fill(path);
+		ctx.strokeStyle = '#C0C0C0';
+		ctx.lineWidth = 1;
+		//ctx.setLineDash([1, 1]);
+		ctx.stroke(path);
+		ctx.restore();
+
+		// part 2: draw atom-to-atom connectivity options
+
+		let selfLinks:number[] = [];
+		let innerLinks:[number, number][] = [];
+		let outerLinks:[number, number][] = [];
+
+		if (Vec.len(unit.bondConn) == 4)
+		{
+			innerLinks.push([inAtoms[extBonds.indexOf(unit.bondConn[0])], inAtoms[extBonds.indexOf(unit.bondConn[2])]]);
+			innerLinks.push([inAtoms[extBonds.indexOf(unit.bondConn[1])], inAtoms[extBonds.indexOf(unit.bondConn[3])]]);
+		}
+		else if (Vec.len(extBonds) == 2 && unit.connect != null)
+		{
+			if (unit.connect == PolymerBlockConnectivity.HeadToTail || unit.connect == PolymerBlockConnectivity.Random)
+			{
+				innerLinks.push([inAtoms[0], inAtoms[1]]);
+			}
+			if (unit.connect == PolymerBlockConnectivity.HeadToHead || unit.connect == PolymerBlockConnectivity.Random)
+			{
+				selfLinks.push(inAtoms[0]);
+				selfLinks.push(inAtoms[1]);
+			}
+		}
+		else // anything goes
+		{
+			for (let b of extBonds)
+			{
+				let a1 = mol.bondFrom(b), a2 = mol.bondTo(b);
+				if (unit.atoms.includes(a2)) [a1, a2] = [a2, a1];
+				let incl = unit.bondIncl.get(b), excl = unit.bondExcl.get(b);
+
+				let isCapped = mol.atomElement(a2) != POLYMERBLOCK_SPECIAL_UNCAPPED;
+
+				for (let look of (isCapped ? [unit] : allUnits)) for (let a of look.atoms)
+				{
+					if (Vec.notBlank(incl))
+					{
+						let anames = look.atomName.get(a), any = false;
+						if (anames) for (let an of anames) any = any || incl.includes(an);
+						if (!any) continue;
+					}
+					if (Vec.notBlank(excl))
+					{
+						let anames = look.atomName.get(a), any = false;
+						if (anames) for (let an of anames) any = any || excl.includes(an);
+						if (any) continue;
+					}
+					if (a == a1) selfLinks.push(a1);
+					else if (unit === look) innerLinks.push([a1, a]);
+					else outerLinks.push([a1, a]);
+				}
+			}
+		}
+
+		selfLinks = Vec.uniqueStable(selfLinks);
+		innerLinks = Vec.maskGet(innerLinks, Vec.maskUnique(innerLinks.map((pair) => Vec.min(pair) * mol.numAtoms + Vec.max(pair))));
+		outerLinks = Vec.maskGet(outerLinks, Vec.maskUnique(outerLinks.map((pair) => Vec.min(pair) * mol.numAtoms + Vec.max(pair))));
+
+		ctx.save();
+		ctx.strokeStyle = '#6329C1';
+		ctx.lineWidth = 2;
+		ctx.setLineDash([1, 1]);
+		ctx.beginPath();
+
+		for (let a of selfLinks)
+		{
+			let p1 = layout.getPoint(a - 1), x1 = p1.oval.cx, y1 = p1.oval.cy;
+			let x2 = 0, y2 = 0, num = 0;
+			for (let n = 0; n < extBonds.length; n++) if (inAtoms[n] == a)
+			{
+				let p2 = layout.getPoint(outAtoms[n] - 1);
+				x2 += p2.oval.cx;
+				y2 += p2.oval.cy;
+				num++;
+			}
+			if (num > 1) {x2 /= num; y2 /= num;}
+			x2 = x1 + 0.5 * (x2 - x1);
+			y2 = y1 + 0.5 * (y2 - y1);
+
+			let dx = x2 - x1, dy = y2 - y1, invD = invZ(norm_xy(dx, dy)), ox = dy * invD, oy = -dx * invD;
+			let cx = 0.5 * (x1 + x2), cy = 0.5 * (y1 + y2);
+			const EXT = 2 * scale;
+			ctx.moveTo(x1, y1);
+			ctx.quadraticCurveTo(cx + ox * EXT, cy + oy * EXT, x2, y2);
+			ctx.quadraticCurveTo(cx - ox * EXT, cy - oy * EXT, x1, y1);
+		}
+		for (let [a1, a2] of innerLinks)
+		{
+			let x1 = mol.atomX(a1), y1 = mol.atomY(a1), x2 = mol.atomX(a2), y2 = mol.atomY(a2);
+			let dx = x2 - x1, dy = y2 - y1, invD = invZ(norm_xy(dx, dy)), ox = dy * invD, oy = -dx * invD;
+			let cx = 0.5 * (x1 + x2), cy = 0.5 * (y1 + y2);
+			const EXT = 5;
+			let px1 = cx + ox * EXT, py1 = cy + oy * EXT, px2 = cx - ox * EXT, py2 = cy - oy * EXT;
+			let [px, py] = CoordUtil.congestionPoint(mol, px1, py1) < CoordUtil.congestionPoint(mol, px2, py2) ? [px1, py1] : [px2, py2];
+			ctx.moveTo(this.angToX(x1), this.angToY(y1));
+			ctx.quadraticCurveTo(this.angToX(px), this.angToY(py), this.angToX(x2), this.angToY(y2));
+		}
+		for (let [a1, a2] of outerLinks)
+		{
+			let p1 = layout.getPoint(a1 - 1), p2 = layout.getPoint(a2 - 1);
+			ctx.moveTo(p1.oval.cx, p1.oval.cy);
+			ctx.lineTo(p2.oval.cx, p2.oval.cy);
+		}
+
+		ctx.stroke();
+		ctx.restore();
 	}
 
 	// based on drag state, calculates a ring that's fused & locked to the origination

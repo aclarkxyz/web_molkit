@@ -30,7 +30,7 @@ export class ContextSketch
 
 		if (sketcher.canUndo() || sketcher.canRedo())
 		{
-			if (sketcher.canUndo()) menu.push({'label': 'Undo','accelerator': 'CmdOrCtrl+Z', 'click': () => sketcher.performUndo()});
+			if (sketcher.canUndo()) menu.push({'label': 'Undo', 'accelerator': 'CmdOrCtrl+Z', 'click': () => sketcher.performUndo()});
 			if (sketcher.canRedo()) menu.push({'label': 'Redo', 'accelerator': 'CmdOrCtrl+Shift+Z', 'click': () => sketcher.performRedo()});
 			menu.push(null);
 		}
@@ -122,7 +122,7 @@ export class ContextSketch
 		this.maybeAppend(menu, '-5 \u{00B0}', null, ActivityType.Rotate, {'theta': -5});
 		this.maybeAppend(menu, '+15 \u{00B0}', null, ActivityType.Rotate, {'theta': 15});
 		this.maybeAppend(menu, '-15 \u{00B0}', null, ActivityType.Rotate, {'theta': -15});
-		this.maybeAppend(menu, '+30 \u{00B0}','Shift+[', ActivityType.Rotate, {'theta': 30});
+		this.maybeAppend(menu, '+30 \u{00B0}', 'Shift+[', ActivityType.Rotate, {'theta': 30});
 		this.maybeAppend(menu, '-30 \u{00B0}', 'Shift+]', ActivityType.Rotate, {'theta': -30});
 		this.maybeAppend(menu, 'H-Flip', 'Shift+,', ActivityType.Flip, {'axis': 'hor'});
 		this.maybeAppend(menu, 'V-Flip', 'Shift+.', ActivityType.Flip, {'axis': 'ver'});
