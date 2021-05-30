@@ -1,11 +1,11 @@
 /*
-    WebMolKit
+	WebMolKit
 
-    (c) 2010-2019 Molecular Materials Informatics, Inc.
+	(c) 2010-2019 Molecular Materials Informatics, Inc.
 
-    All rights reserved
+	All rights reserved
 
-    http://molmatinf.com
+	http://molmatinf.com
 
 	[PKG=webmolkit]
 */
@@ -54,6 +54,7 @@ export class DrawCanvas extends Widget implements ArrangeMeasurement
 {
 	protected mol:Molecule = null;
 	protected policy:RenderPolicy = null;
+	protected abbrevPolicy:RenderPolicy;
 
 	protected offsetX = 0;
 	protected offsetY = 0;
@@ -124,6 +125,10 @@ export class DrawCanvas extends Widget implements ArrangeMeasurement
 	constructor()
 	{
 		super();
+
+		this.abbrevPolicy = RenderPolicy.defaultBlackOnWhite();
+		this.abbrevPolicy.data.foreground = 0xD0D0D0;
+		this.abbrevPolicy.data.atomCols = Vec.numberArray(0xD0D0D0, this.abbrevPolicy.data.atomCols.length);
 	}
 
 	public render(parent:any):void
@@ -193,11 +198,46 @@ export class DrawCanvas extends Widget implements ArrangeMeasurement
 
 	// ------------ private methods ------------
 
+	// regenerates the layout, which is slightly performance sensitive
+	protected layoutMolecule():void
+	{
+		let mol = this.mol;
+		if (this.hoverAtom > 0 && MolUtil.hasAbbrev(this.mol, this.hoverAtom))
+		{
+			mol = mol.clone();
+			mol.setAtomElement(this.hoverAtom, '');
+			mol.setAtomCharge(this.hoverAtom, 0);
+			mol.setAtomUnpaired(this.hoverAtom, 0);
+			MolUtil.clearAbbrev(mol, this.hoverAtom);
+		}
+
+		let effects = this.sketchEffects(mol);
+		this.layout = new ArrangeMolecule(mol, this, this.policy, effects);
+		this.layout.setWantArtifacts(this.viewOpt.showArtifacts);
+		this.layout.arrange();
+	}
+
+	// rebuilds the metavector for the molecule, possibly with some retromods
+	protected redrawMetaVector():void
+	{
+		this.metavec = new MetaVector();
+		new DrawMolecule(this.layout, this.metavec).draw();
+
+		if (this.hoverAtom > 0 && MolUtil.hasAbbrev(this.mol, this.hoverAtom))
+		{
+			let abbrevMol = MolUtil.getAbbrev(this.mol, this.hoverAtom);
+			this.orientAbbreviation(this.hoverAtom, abbrevMol);
+			this.abbrevPolicy.data.pointScale = this.policy.data.pointScale;
+			let layout = new ArrangeMolecule(abbrevMol, this, this.abbrevPolicy, new RenderEffects());
+			layout.arrange();
+			new DrawMolecule(layout, this.metavec).draw();
+		}
+	}
+
 	// rebuilds the canvas content
 	protected redraw():void
 	{
 		this.filthy = false;
-		//this.redrawBackground();
 		this.redrawUnder();
 		this.redrawMolecule();
 		this.redrawOver();
@@ -211,11 +251,11 @@ export class DrawCanvas extends Widget implements ArrangeMeasurement
 		let LASSO_COL = 0xD0D0D0;
 
 		let density = pixelDensity();
-		(this.canvasUnder.el as HTMLCanvasElement).width = this.width * density;
-		(this.canvasUnder.el as HTMLCanvasElement).height = this.height * density;
+		this.canvasUnder.elCanvas.width = this.width * density;
+		this.canvasUnder.elCanvas.height = this.height * density;
 		this.canvasUnder.css({'width': `${this.width}px`, 'height': `${this.height}px`});
 
-		let ctx = (this.canvasUnder.el as HTMLCanvasElement).getContext('2d');
+		let ctx = this.canvasUnder.elCanvas.getContext('2d');
 		ctx.save();
 		ctx.scale(density, density);
 		ctx.clearRect(0, 0, this.width, this.height);
@@ -330,11 +370,11 @@ export class DrawCanvas extends Widget implements ArrangeMeasurement
 	protected redrawMolecule():void
 	{
 		let density = pixelDensity();
-		(this.canvasMolecule.el as HTMLCanvasElement).width = this.width * density;
-		(this.canvasMolecule.el as HTMLCanvasElement).height = this.height * density;
+		this.canvasMolecule.elCanvas.width = this.width * density;
+		this.canvasMolecule.elCanvas.height = this.height * density;
 		this.canvasMolecule.css({'width': `${this.width}px`, 'height': `${this.height}px`});
 
-		let ctx = (this.canvasMolecule.el as HTMLCanvasElement).getContext('2d');
+		let ctx = this.canvasMolecule.elCanvas.getContext('2d');
 		ctx.save();
 		ctx.scale(density, density);
 		ctx.clearRect(0, 0, this.width, this.height);
@@ -365,11 +405,11 @@ export class DrawCanvas extends Widget implements ArrangeMeasurement
 	protected redrawOver():void
 	{
 		let density = pixelDensity();
-		(this.canvasOver.el as HTMLCanvasElement).width = this.width * density;
-		(this.canvasOver.el as HTMLCanvasElement).height = this.height * density;
+		this.canvasOver.elCanvas.width = this.width * density;
+		this.canvasOver.elCanvas.height = this.height * density;
 		this.canvasOver.css({'width': `${this.width}px`, 'height': `${this.height}px`});
 
-		let ctx = (this.canvasOver.el as HTMLCanvasElement).getContext('2d');
+		let ctx = this.canvasOver.elCanvas.getContext('2d');
 		ctx.save();
 		ctx.scale(density, density);
 		ctx.clearRect(0, 0, this.width, this.height);
@@ -911,6 +951,117 @@ export class DrawCanvas extends Widget implements ArrangeMeasurement
 			for (let n = 1; n <= this.mol.numAtoms; n++) atoms.push(n);
 		}
 		return atoms;
+	}
+
+	// puts together an effects parameter for the main sketch
+	private sketchEffects(mol:Molecule):RenderEffects
+	{
+		let effects = new RenderEffects();
+
+		for (let n = 1; n <= mol.numAtoms; n++) if (MolUtil.hasAbbrev(mol, n) && n != this.hoverAtom) effects.dottedRectOutline[n] = 0x808080;
+
+		effects.overlapAtoms = CoordUtil.overlappingAtomList(mol, 0.2);
+
+		effects.atomDecoText = Vec.stringArray('', mol.numAtoms);
+		effects.atomDecoCol = Vec.numberArray(Theme.foreground, mol.numAtoms);
+		effects.atomDecoSize = Vec.numberArray(0.3, mol.numAtoms);
+		effects.bondDecoText = Vec.stringArray('', mol.numBonds);
+		effects.bondDecoCol = Vec.numberArray(Theme.foreground, mol.numBonds);
+		effects.bondDecoSize = Vec.numberArray(0.3, mol.numBonds);
+
+		if (this.viewOpt.showOxState)
+		{
+			for (let n = 1; n <= mol.numAtoms; n++)
+			{
+				let ox = MolUtil.atomOxidationState(mol, n);
+				if (ox != null)
+				{
+					effects.atomDecoText[n - 1] = MolUtil.oxidationStateText(ox);
+					effects.atomDecoCol[n - 1] = 0xFF8080;
+				}
+			}
+		}
+
+		if (this.viewOpt.decoration == DrawCanvasDecoration.Stereochemistry)
+		{
+			if (!this.stereo) this.stereo = Stereochemistry.create(MetaMolecule.createStrict(mol));
+			skip: for (let n = 1; n <= mol.numAtoms; n++)
+			{
+				let chi = this.stereo.atomTetraChirality(n);
+				if (chi == Stereochemistry.STEREO_NONE) continue;
+				for (let adjb of mol.atomAdjBonds(n)) if (mol.bondOrder(adjb) != 1) continue skip;
+				if (chi == Stereochemistry.STEREO_UNKNOWN)
+				{
+					for (let adj of mol.atomAdjList(n)) if (Chemistry.ELEMENT_BLOCKS[mol.atomicNumber(adj)] >= 3) continue skip;
+				}
+				effects.atomDecoText[n - 1] = chi == Stereochemistry.STEREO_POS ? 'R' :
+											  chi == Stereochemistry.STEREO_NEG ? 'S' :
+											  chi == Stereochemistry.STEREO_UNKNOWN ? 'R/S' : /*STEREO_BROKEN*/ '?';
+				effects.atomDecoCol[n - 1] = 0x00A000;
+			}
+			for (let n = 1; n <= mol.numBonds; n++)
+			{
+				let side = this.stereo.bondSideStereo(n);
+				if (side == Stereochemistry.STEREO_NONE) continue;
+				effects.bondDecoText[n - 1] = side == Stereochemistry.STEREO_POS ? 'Z' :
+											  side == Stereochemistry.STEREO_NEG ? 'E' :
+											  side == Stereochemistry.STEREO_UNKNOWN ? 'Z/E' : /*STEREO_BROKEN*/ '?';
+				effects.bondDecoCol[n - 1] = 0x00A000;
+			}
+		}
+		else if (this.viewOpt.decoration == DrawCanvasDecoration.MappingNumber)
+		{
+			effects.atomDecoText = Vec.stringArray('', mol.numAtoms);
+			effects.atomDecoCol = Vec.numberArray(0x8000FF, mol.numAtoms);
+			effects.atomDecoSize = Vec.numberArray(0.3, mol.numAtoms);
+			for (let n = 1; n <= mol.numAtoms; n++) if (mol.atomMapNum(n) > 0) effects.atomDecoText[n - 1] = mol.atomMapNum(n).toString();
+		}
+		else if (this.viewOpt.decoration == DrawCanvasDecoration.AtomIndex)
+		{
+			effects.atomDecoText = Vec.stringArray('', mol.numAtoms);
+			effects.atomDecoCol = Vec.numberArray(0x8000FF, mol.numAtoms);
+			effects.atomDecoSize = Vec.numberArray(0.3, mol.numAtoms);
+			for (let n = 1; n <= mol.numAtoms; n++) effects.atomDecoText[n - 1] = n.toString();
+		}
+
+		return effects;
+	}
+
+	// align an abbreviation for display purposes
+	private orientAbbreviation(abbrevAtom:number, abbrevMol:Molecule):void
+	{
+		const {mol} = this;
+
+		if (MolUtil.isBlank(abbrevMol)) return;
+		if (this.mol.atomAdjCount(abbrevAtom) != 1) return;
+
+		// find the vectors, so they can be lined up
+		let nbr = mol.atomAdjList(abbrevAtom)[0];
+		let vx1 = mol.atomX(abbrevAtom) - mol.atomX(nbr), vy1 = mol.atomY(abbrevAtom) - mol.atomY(nbr);
+		let adj = abbrevMol!.atomAdjList(1);
+		let vx2 = 0, vy2 = 0, inv = invZ(adj.length);
+		for (let a of adj)
+		{
+			vx2 += abbrevMol.atomX(a) - abbrevMol.atomX(1);
+			vy2 += abbrevMol.atomY(a) - abbrevMol.atomY(1);
+		}
+		vx2 *= inv;
+		vy2 *= inv;
+
+		// align the coordinates
+		let th1 = Math.atan2(vy1, vx1), th2 = Math.atan2(vy2, vx2);
+		CoordUtil.rotateMolecule(abbrevMol, th1 - th2);
+		if (adj.length == 1)
+		{
+			CoordUtil.translateMolecule(abbrevMol, mol.atomX(abbrevAtom) - abbrevMol.atomX(adj[0]), mol.atomY(abbrevAtom) - abbrevMol.atomY(adj[0]));
+			abbrevMol.setAtomPos(1, mol.atomX(nbr), mol.atomY(nbr));
+		}
+		else
+		{
+			CoordUtil.translateMolecule(abbrevMol, mol.atomX(nbr) - abbrevMol.atomX(1), mol.atomY(nbr) - abbrevMol.atomY(1));
+		}
+
+		abbrevMol.setAtomElement(1, 'C'); // mask out the "X"
 	}
 }
 

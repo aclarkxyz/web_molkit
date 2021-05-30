@@ -141,14 +141,9 @@ export class Sketcher extends DrawCanvas
 			this.pointScale = this.policy.data.pointScale;
 		}
 
-		let effects = this.sketchEffects();
-		this.layout = new ArrangeMolecule(this.mol, this, this.policy, effects);
-		this.layout.arrange();
-
+		this.layoutMolecule();
 		this.centreAndShrink();
-
-		this.metavec = new MetaVector();
-		new DrawMolecule(this.layout, this.metavec).draw();
+		this.redrawMetaVector();
 
 		if (callback) callback();
 	}
@@ -297,17 +292,10 @@ export class Sketcher extends DrawCanvas
 
 		this.pointScale = this.policy.data.pointScale;
 
-		let effects = this.sketchEffects();
-		this.layout = new ArrangeMolecule(this.mol, this, this.policy, effects);
-		this.layout.arrange();
-
+		this.layoutMolecule();
 		this.centreAndShrink();
-
-		this.metavec = new MetaVector();
-		new DrawMolecule(this.layout, this.metavec).draw();
-
+		this.redrawMetaVector();
 		this.layoutTemplatePerm();
-
 		this.delayedRedraw();
 	}
 
@@ -510,11 +498,8 @@ export class Sketcher extends DrawCanvas
 		this.pointScale = newScale;
 
 		// --- begin inefficient: rewrite this to just transform the constituents...
-		let effects = this.sketchEffects();
-		this.layout = new ArrangeMolecule(this.mol, this, this.policy, effects);
-		this.layout.arrange();
-		this.metavec = new MetaVector();
-		new DrawMolecule(this.layout, this.metavec).draw();
+		this.layoutMolecule();
+		this.redrawMetaVector();
 		this.layoutTemplatePerm();
 		// --- end inefficient
 
@@ -669,12 +654,8 @@ export class Sketcher extends DrawCanvas
 	// is to be displayed differently even though the molecule itself has not actually changed
 	private renderMolecule():void
 	{
-		let effects = this.sketchEffects();
-		this.layout = new ArrangeMolecule(this.mol, this, this.policy, effects);
-		this.layout.setWantArtifacts(this.showArtifacts);
-		this.layout.arrange();
-		this.metavec = new MetaVector();
-		new DrawMolecule(this.layout, this.metavec).draw();
+		this.layoutMolecule();
+		this.redrawMetaVector();
 		this.delayedRedraw();
 	}
 
@@ -753,16 +734,6 @@ export class Sketcher extends DrawCanvas
 		return bestItem;
 	}
 
-	// writes content to the log, if there is one
-	private log(str:number, zap:boolean):void
-	{
-		if (this.debugOutput)
-		{
-			if (zap) this.debugOutput.value = '';
-			this.debugOutput.value = this.debugOutput.value + '' + str + '\n';
-		}
-	}
-
 	// response to some mouse event: hovering cursor restated
 	private updateHoverCursor(event:MouseEvent):void
 	{
@@ -779,10 +750,18 @@ export class Sketcher extends DrawCanvas
 		}
 		let mouseAtom = mouseObj > 0 ? mouseObj : 0, mouseBond = mouseObj < 0 ? -mouseObj : 0;
 
+		let abbrevThen = this.hoverAtom > 0 && MolUtil.hasAbbrev(this.mol, this.hoverAtom) ? this.hoverAtom : 0;
+		let abbrevNow = mouseAtom > 0 && MolUtil.hasAbbrev(this.mol, mouseAtom) ? mouseAtom : 0;
+
 		if (mouseAtom != this.hoverAtom || mouseBond != this.hoverBond)
 		{
 			this.hoverAtom = mouseAtom;
 			this.hoverBond = mouseBond;
+			if (abbrevThen != abbrevNow)
+			{
+				this.layoutMolecule();
+				this.redrawMetaVector();
+			}
 			this.delayedRedraw();
 		}
 	}
@@ -1761,82 +1740,6 @@ export class Sketcher extends DrawCanvas
 
 			//console.log('DRAGFILE['+n+']: ' + files[n].name+',sz='+files[n].size+',type='+files[n].type);
 		}
-	}
-
-	// puts together an effects parameter for the main sketch
-	private sketchEffects():RenderEffects
-	{
-		const {mol} = this;
-
-		let effects = new RenderEffects();
-
-		for (let n = 1; n <= mol.numAtoms; n++) if (MolUtil.hasAbbrev(mol, n)) effects.dottedRectOutline[n] = 0x808080;
-
-		effects.overlapAtoms = CoordUtil.overlappingAtomList(mol, 0.2);
-
-		effects.atomDecoText = Vec.stringArray('', mol.numAtoms);
-		effects.atomDecoCol = Vec.numberArray(Theme.foreground, mol.numAtoms);
-		effects.atomDecoSize = Vec.numberArray(0.3, mol.numAtoms);
-		effects.bondDecoText = Vec.stringArray('', mol.numBonds);
-		effects.bondDecoCol = Vec.numberArray(Theme.foreground, mol.numBonds);
-		effects.bondDecoSize = Vec.numberArray(0.3, mol.numBonds);
-
-		if (this.showOxState)
-		{
-			for (let n = 1; n <= mol.numAtoms; n++)
-			{
-				let ox = MolUtil.atomOxidationState(mol, n);
-				if (ox != null)
-				{
-					effects.atomDecoText[n - 1] = MolUtil.oxidationStateText(ox);
-					effects.atomDecoCol[n - 1] = 0xFF8080;
-				}
-			}
-		}
-
-		if (this.decoration == DrawCanvasDecoration.Stereochemistry)
-		{
-			if (!this.stereo) this.stereo = Stereochemistry.create(MetaMolecule.createStrict(mol));
-			skip: for (let n = 1; n <= mol.numAtoms; n++)
-			{
-				let chi = this.stereo.atomTetraChirality(n);
-				if (chi == Stereochemistry.STEREO_NONE) continue;
-				for (let adjb of mol.atomAdjBonds(n)) if (mol.bondOrder(adjb) != 1) continue skip;
-				if (chi == Stereochemistry.STEREO_UNKNOWN)
-				{
-					for (let adj of mol.atomAdjList(n)) if (Chemistry.ELEMENT_BLOCKS[mol.atomicNumber(adj)] >= 3) continue skip;
-				}
-				effects.atomDecoText[n - 1] = chi == Stereochemistry.STEREO_POS ? 'R' :
-											  chi == Stereochemistry.STEREO_NEG ? 'S' :
-											  chi == Stereochemistry.STEREO_UNKNOWN ? 'R/S' : /*STEREO_BROKEN*/ '?';
-				effects.atomDecoCol[n - 1] = 0x00A000;
-			}
-			for (let n = 1; n <= mol.numBonds; n++)
-			{
-				let side = this.stereo.bondSideStereo(n);
-				if (side == Stereochemistry.STEREO_NONE) continue;
-				effects.bondDecoText[n - 1] = side == Stereochemistry.STEREO_POS ? 'Z' :
-											  side == Stereochemistry.STEREO_NEG ? 'E' :
-											  side == Stereochemistry.STEREO_UNKNOWN ? 'Z/E' : /*STEREO_BROKEN*/ '?';
-				effects.bondDecoCol[n - 1] = 0x00A000;
-			}
-		}
-		else if (this.decoration == DrawCanvasDecoration.MappingNumber)
-		{
-			effects.atomDecoText = Vec.stringArray('', mol.numAtoms);
-			effects.atomDecoCol = Vec.numberArray(0x8000FF, mol.numAtoms);
-			effects.atomDecoSize = Vec.numberArray(0.3, mol.numAtoms);
-			for (let n = 1; n <= mol.numAtoms; n++) if (mol.atomMapNum(n) > 0) effects.atomDecoText[n - 1] = mol.atomMapNum(n).toString();
-		}
-		else if (this.decoration == DrawCanvasDecoration.AtomIndex)
-		{
-			effects.atomDecoText = Vec.stringArray('', mol.numAtoms);
-			effects.atomDecoCol = Vec.numberArray(0x8000FF, mol.numAtoms);
-			effects.atomDecoSize = Vec.numberArray(0.3, mol.numAtoms);
-			for (let n = 1; n <= mol.numAtoms; n++) effects.atomDecoText[n - 1] = n.toString();
-		}
-
-		return effects;
 	}
 }
 
