@@ -224,7 +224,7 @@ export class Sketcher extends DrawCanvas
 			this.dropInto(event.dataTransfer);
 		});
 
-		if (this.initialFocus) this.container.grabFocus();
+		if (this.initialFocus) this.grabFocus();
 	}
 
 	// viewing options: changing any of them triggers a redraw
@@ -563,10 +563,16 @@ export class Sketcher extends DrawCanvas
 		dlg.callbackClose = () =>
 		{
 			this.inDialog = false;
-			this.container.grabFocus();
+			this.grabFocus();
 		};
 		this.inDialog = true;
 		dlg.open();
+	}
+
+	// ensure that focus is happening
+	public grabFocus():void
+	{
+		this.container.grabFocus();
 	}
 
 	// returns true if the sketcher is focused; the display of focus is not visible, but it is still recorded
@@ -904,7 +910,7 @@ export class Sketcher extends DrawCanvas
 		dlg.callbackClose = () =>
 		{
 			this.inDialog = false;
-			this.container.grabFocus();
+			this.grabFocus();
 		};
 		this.inDialog = true;
 		dlg.open();
@@ -921,7 +927,7 @@ export class Sketcher extends DrawCanvas
 		dlg.callbackClose = () =>
 		{
 			this.inDialog = false;
-			this.container.grabFocus();
+			this.grabFocus();
 		};
 		this.inDialog = true;
 		dlg.open();
@@ -1079,7 +1085,7 @@ export class Sketcher extends DrawCanvas
 	private mouseClick(event:MouseEvent):boolean
 	{
 		event.stopPropagation();
-		this.container.grabFocus(); // just in case it wasn't already
+		this.grabFocus(); // just in case it wasn't already
 		return false;
 	}
 	private mouseDoubleClick(event:MouseEvent):boolean
@@ -1310,7 +1316,7 @@ export class Sketcher extends DrawCanvas
 					dlg.callbackClose = () =>
 					{
 						this.inDialog = false;
-						this.container.grabFocus();
+						this.grabFocus();
 					};
 					this.inDialog = true;
 					dlg.open();
