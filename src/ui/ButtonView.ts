@@ -949,14 +949,6 @@ export class ButtonView extends Widget
 	// event responses
 	private mouseClick(event:MouseEvent):void
 	{
-		/*let xy = eventCoords(event, this.content);
-		if (!this.withinOutline(xy[0], xy[1])) return; // propagate
-
-		let shift = event.shiftKey, ctrl = event.ctrlKey, alt = event.altKey, meta = event.metaKey, plat = event.platformModifierKey;
-		let id = this.pickButtonID(xy[0], xy[1]);
-		this.triggerButton(id);
-
-		event.stopPropagation();*/
 	}
 	private mouseDoubleClick(event:MouseEvent):void
 	{
@@ -965,6 +957,8 @@ export class ButtonView extends Widget
 	}
 	private mouseDown(event:MouseEvent):void
 	{
+		this.contentDOM.parent().grabFocus();
+
 		let xy = eventCoords(event, this.contentDOM);
 		if (!this.withinOutline(xy[0], xy[1])) return; // propagate
 

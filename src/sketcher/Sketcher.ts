@@ -24,6 +24,7 @@ export class Sketcher extends DrawCanvas
 	public onChangeMolecule:(mol:Molecule) => void;
 
 	public inDialog = false; // set to true while a modal dialog is open
+	public initialFocus = true; // normally want to bogart the focus upon creation, but not always
 
 	// tweakable properties
 	public useToolBank = true;
@@ -223,7 +224,7 @@ export class Sketcher extends DrawCanvas
 			this.dropInto(event.dataTransfer);
 		});
 
-		this.container.grabFocus();
+		if (this.initialFocus) this.container.grabFocus();
 	}
 
 	// viewing options: changing any of them triggers a redraw
