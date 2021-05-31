@@ -45,22 +45,23 @@ export class EmbedChemistry extends Widget
 	{
 		super.render(parent);
 
-		if (this.borderCol != null) this.content.css('border', '1px solid ' + colourCanvas(this.borderCol));
-		if (this.borderRadius > 0) this.content.css('border-radius', this.borderRadius + 'px');
+		let content = this.contentDOM;
+
+		if (this.borderCol != null) content.setCSS('border', '1px solid ' + colourCanvas(this.borderCol));
+		if (this.borderRadius > 0) content.setCSS('border-radius', this.borderRadius + 'px');
 
 		let bg1 = this.backgroundCol1, bg2 = this.backgroundCol2;
 		if (bg1 != null && bg2 != null)
 		{
 			let cols = colourCanvas(bg1) + ',' + colourCanvas(bg2);
-			this.content.css('background-image', 'linear-gradient(to bottom right, ' + cols + ')');
+			content.setCSS('background-image', 'linear-gradient(to bottom right, ' + cols + ')');
 		}
 		else if (bg1 != null)
 		{
-			this.content.css('background-color', colourCanvas(bg1));
+			content.setCSS('background-color', colourCanvas(bg1));
 		}
 
-		this.content.css('padding', this.padding + 'px');
-		this.content.css('margin', 0);
+		content.css({'padding': this.padding + 'px', 'margin': '0'});
 	}
 
 	// ------------ private methods ------------

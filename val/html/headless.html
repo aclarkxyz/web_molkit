@@ -2,7 +2,6 @@
 <head>
 
 <title>WebMolKit - Headless Validation</title>
-<script src="../../bin/jquery.js" type="text/javascript"></script>
 <script src="../../bin/webmolkit-build.js" type="text/javascript"></script>
 <link href="thumb.png" rel="icon" type="image/png">
 
@@ -31,11 +30,11 @@
 		new wmk.WebValExec(module).runTests(dom);
 	}
 
-	(async() => await runModule(new wmk.ValidationHeadlessBasic(), $('#basic')))();
-	(async() => await runModule(new wmk.ValidationHeadlessMolecule('../data/'), $('#molecule')))();
-	(async() => await runModule(new wmk.ValidationHeadlessReaction('../data/'), $('#reaction')))();
+	(async () => await runModule(new wmk.ValidationHeadlessBasic(), document.getElementById('basic')))();
+	(async () => await runModule(new wmk.ValidationHeadlessMolecule('../data/'), document.getElementById('molecule')))();
+	(async () => await runModule(new wmk.ValidationHeadlessReaction('../data/'), document.getElementById('reaction')))();
 
-	$('#final').html('<p><b>Finished.</b></p>');
+	wmk.DOM.find('#final').setHTML('<p><b>Finished.</b></p>');
 </script>
 
 </body>

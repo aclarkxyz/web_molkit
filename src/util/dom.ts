@@ -190,9 +190,9 @@ export class DOM
 	}
 	public appendHTML(xhtml:string):void
 	{
-		let xml = XML.parseXML(xhtml);
+		let xml = XML.parseXML('<z>' + xhtml + '</z>');
 		if (xml == null) throw 'Invalid XHTML string: ' + xhtml;
-		let html = xml.documentElement.outerHTML;
+		let html = xml.documentElement.innerHTML;
 		this.el.insertAdjacentHTML('beforeend', html);
 	}
 

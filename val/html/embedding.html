@@ -2,7 +2,6 @@
 <head>
 
 <title>WebMolKit - Sketcher</title>
-<script src="../../bin/jquery.js" type="text/javascript"></script>
 <script src="../../bin/webmolkit-build.js" type="text/javascript"></script>
 <link href="thumb.png" rel="icon" type="image/png">
 
@@ -13,7 +12,7 @@
 
 <h2>Molecules</h2>
 
-<table><tr>
+<table style="display: none;"><tr>
 
 <td><molecule name="normal">SketchEl!(20,22)
 C=2.0653,1.1409;0,0,i2
@@ -626,48 +625,46 @@ C=3.2500,1.2990;0,0,i2
 	var url = window.location.href.substring(0, window.location.href.lastIndexOf('/'));
 	wmk.initWebMolKit(url + '../../../res');
 	
-	$('molecule').each(function()
+	for (let obj of wmk.DOM.findAll('molecule'))
 	{
-		let obj = $(this), div = $('<div></div>');
+		let div = wmk.dom('<div/>');
 		div.insertAfter(obj);
-		let molstr = obj.text(), params = {};
-		for (let attr of this.attributes) params[attr.name] = attr.value;
+		let molstr = obj.getText(), params = {};
+		for (let attr of obj.el.attributes) params[attr.name] = attr.value;
 		obj.remove();
 		new wmk.EmbedMolecule(molstr, params).render(div);
-	});
+	}
 
-	$('reaction').each(function()
+	for (let obj of wmk.DOM.findAll('reaction'))
 	{
-		let obj = $(this), div = $('<div></div>');
+		let div = wmk.dom('<div/>');
 		div.insertAfter(obj);
 		let params = {};
-		for (let attr of this.attributes) params[attr.name] = attr.value;
+		for (let attr of obj.el.attributes) params[attr.name] = attr.value;
 
-		if (obj.attr('source'))
+		let src = obj.getAttr('source');
+		if (src)
 		{
-			$.get(obj.attr('source'), function(data)
-			{
-				obj.remove();
-				new wmk.EmbedReaction(data, params).render(div);
-			}, 'text');
+			obj.remove();
+			wmk.readTextURL(src).then((data) => {new wmk.EmbedReaction(data, params).render(div);});
 		}
 		else
 		{
-			let xml = obj.find('script').html();
+			let xml = obj.find('script').getHTML();
 			obj.remove();
 			new wmk.EmbedReaction(xml, params).render(div);
 		}
-	});
+	}
 
-	$('collection').each(function()
+	for (let obj of wmk.DOM.findAll('collection'))
 	{
-		let obj = $(this), div = $('<div></div>');
+		let div = wmk.dom('<div/>');
 		div.insertAfter(obj);
-		let xml = obj.find('script').html(), params = {};
-		for (let attr of this.attributes) params[attr.name] = attr.value;
+		let xml = obj.find('script').getHTML(), params = {};
+		for (let attr of obj.el.attributes) params[attr.name] = attr.value;
 		obj.remove();
 		new wmk.EmbedCollection(xml, params).render(div);
-	});
+	}
 </script>
 
 </body>

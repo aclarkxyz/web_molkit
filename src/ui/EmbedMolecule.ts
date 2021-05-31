@@ -135,15 +135,14 @@ export class EmbedMolecule extends EmbedChemistry
 		this.tagType = 'span';
 		super.render(parent);
 
-		let span = this.content, mol = this.mol, policy = this.policy;
+		let span = this.contentDOM, mol = this.mol, policy = this.policy;
 
-		span.css('display', 'inline-block');
-		span.css('line-height', '0');
-		if (!this.tight) span.css('margin-bottom', '1.5em');
+		span.css({'display': 'inline-block', 'line-height': '0'});
+		if (!this.tight) span.setCSS('margin-bottom', '1.5em');
 
 		if (mol != null && mol.numAtoms > 0)
 		{
-			span.css('text-align', 'center');
+			span.setCSS('text-align', 'center');
 
 			let effects = new RenderEffects();
 			let measure = new OutlineMeasurement(0, 0, policy.data.pointScale);
@@ -167,29 +166,23 @@ export class EmbedMolecule extends EmbedChemistry
 			else
 				metavec.setSize(this.boxSize.w, this.boxSize.h);
 
-			let svg = $(metavec.createSVG()).appendTo(span);
+			let svg = dom(metavec.createSVG()).appendTo(span);
 
 			if (this.name)
 			{
-				let p = $('<p></p>').appendTo(span);
-				p.css('padding', '0');
-				p.css('padding-top', '0.2em');
-				p.css('margin', 0);
-				p.css('font-family', '"HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif');
-				p.css('line-height', '1');
-				p.css('width', '100%');
-				//p.css('text-align', 'center');
-				p.css('color', '#606060');
-				p.text(this.name);
+				let p = dom('<p/>').appendTo(span);
+				p.css({'padding': '0.2em 0 0 0', 'margin': '0', 'width': '100%', 'color': '#606060', 'line-height': '1'});
+				p.css({'font-family': '"HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif'});
+				p.setText(this.name);
 			}
 		}
 		else
 		{
-			span.css('color', 'red');
-			span.text('Unable to parse molecule: ' + this.failmsg);
-			let pre = $('<pre></pre>').appendTo(span);
-			pre.css('line-height', '1.1');
-			pre.text(this.molstr);
+			span.css({'color': 'red'});
+			span.setText('Unable to parse molecule: ' + this.failmsg);
+			let pre = dom('<pre/>').appendTo(span);
+			pre.css({'line-height': '1.1'});
+			pre.setText(this.molstr);
 			console.log('Unparseable molecule source string:\n[' + this.molstr + ']');
 		}
 	}

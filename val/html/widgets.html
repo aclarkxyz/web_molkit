@@ -2,7 +2,6 @@
 <head>
 
 <title>WebMolKit - Widgets</title>
-<script src="../../bin/jquery.js" type="text/javascript"></script>
 <script src="../../bin/webmolkit-build.js" type="text/javascript"></script>
 <link href="thumb.png" rel="icon" type="image/png">
 
@@ -26,10 +25,10 @@
 	let url = window.location.href.substring(0, window.location.href.lastIndexOf('/'));
 	wmk.initWebMolKit(url + '../../../res');
 
-	$('#sketch').click(() => new wmk.EditCompound(new wmk.Molecule()).open());
+	wmk.DOM.find('#sketch').onClick(() => new wmk.EditCompound(new wmk.Molecule()).open());
 
-	new wmk.OptionList(['First', 'Second', 'Third']).render($('#option1'));
-	new wmk.OptionList(['First', 'Second', 'Third'], true).render($('#option2'));
+	new wmk.OptionList(['First', 'Second', 'Third']).render(document.getElementById('option1'));
+	new wmk.OptionList(['First', 'Second', 'Third'], true).render(document.getElementById('option2'));
 </script>
 
 </body>

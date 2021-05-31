@@ -36,24 +36,7 @@ export class ValidationHeadlessReaction extends Validation
 
 	public async init():Promise<void>
 	{
-		/*const self = this;
-
-		let FILES = ['experiment.ds'];
-		let files = FILES;
-
-		let fetchResult = (data:string):void =>
-		{
-			let fn = files.shift();
-			if (fn == 'experiment.ds') self.strExperiment = data;
-
-			if (files.length > 0)
-				$.get(self.urlBase + files[0], fetchResult);
-			else
-				donefunc.call(self);
-		};
-		$.get(self.urlBase + files[0], fetchResult);*/
-
-		this.strExperiment = await $.get(this.urlBase + 'experiment.ds');
+		this.strExperiment = await readTextURL(this.urlBase + 'experiment.ds');
 	}
 
 	public async confirmAspect():Promise<void>

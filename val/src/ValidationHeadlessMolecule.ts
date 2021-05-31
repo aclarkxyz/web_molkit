@@ -50,34 +50,13 @@ export class ValidationHeadlessMolecule extends Validation
 
 	public async init():Promise<void>
 	{
-		/*let FILES = ['molecule.el', 'molecule.mol', 'datasheet.ds', 'datasheet.sdf', 'stereo.el', 'circular.ds', 'roundtrip.ds'];
-		let files = FILES;
-
-		let fetchResult = (data:string):void =>
-		{
-			let fn = files.shift();
-			if (fn == 'molecule.el') this.strSketchEl = data;
-			else if (fn == 'molecule.mol') this.strMolfile = data;
-			else if (fn == 'datasheet.ds') this.strDataXML = data;
-			else if (fn == 'datasheet.sdf') this.strSDfile = data;
-			else if (fn == 'stereo.el') this.molStereo = Molecule.fromString(data);
-			else if (fn == 'circular.ds') this.dsCircular = DataSheetStream.readXML(data);
-			else if (fn == 'roundtrip.ds') this.dsRoundtrip = DataSheetStream.readXML(data);
-
-			if (files.length > 0)
-				$.get(this.urlBase + files[0], fetchResult);
-			else
-				donefunc.call(this);
-		};
-		$.get(this.urlBase + files[0], fetchResult);*/
-
-		this.strSketchEl = await $.get(this.urlBase + 'molecule.el');
-		this.strMolfile = await $.get(this.urlBase + 'molecule.mol');
-		this.strDataXML = await $.get(this.urlBase + 'datasheet.ds');
-		this.strSDfile = await $.get(this.urlBase + 'datasheet.sdf');
-		this.molStereo = Molecule.fromString(await $.get(this.urlBase + 'stereo.el'));
-		this.dsCircular = DataSheetStream.readXML(await $.get(this.urlBase + 'circular.ds'));
-		this.dsRoundtrip = DataSheetStream.readXML(await $.get(this.urlBase + 'roundtrip.ds'));
+		this.strSketchEl = await readTextURL(this.urlBase + 'molecule.el');
+		this.strMolfile = await readTextURL(this.urlBase + 'molecule.mol');
+		this.strDataXML = await readTextURL(this.urlBase + 'datasheet.ds');
+		this.strSDfile = await readTextURL(this.urlBase + 'datasheet.sdf');
+		this.molStereo = Molecule.fromString(await readTextURL(this.urlBase + 'stereo.el'));
+		this.dsCircular = DataSheetStream.readXML(await readTextURL(this.urlBase + 'circular.ds'));
+		this.dsRoundtrip = DataSheetStream.readXML(await readTextURL(this.urlBase + 'roundtrip.ds'));
 	}
 
 	public async parseSketchEl():Promise<void>

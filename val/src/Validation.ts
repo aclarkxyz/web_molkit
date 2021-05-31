@@ -40,7 +40,7 @@ export class Validation
 	private recentTimeTaken:number; // in seconds
 
 	// validation tests can use this to store situational data, especially when subsequent tests re-use data from previous tests
-	public rec:{[id:string] : any} = {};
+	public rec:Record<string, any> = {};
 
 	// ------------ public methods ------------
 
@@ -103,7 +103,8 @@ export class Validation
 	// call this to give the DOM a chance to update itself
 	public async gasp()
 	{
-		await (() => new Promise((resolve) => setTimeout(() => resolve(), 0)))();
+		//await (() => new Promise((resolve) => setTimeout(() => resolve(), 0)))();
+		await yieldDOM();
 	}
 
 	// fail conditions: these methods should be called to make sure some condition is met

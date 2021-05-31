@@ -2,7 +2,6 @@
 <head>
 
 <title>WebMolKit - Clipboard</title>
-<script src="../../bin/jquery.js" type="text/javascript"></script>
 <script src="../../bin/webmolkit-build.js" type="text/javascript"></script>
 <link href="thumb.png" rel="icon" type="image/png">
 
@@ -49,29 +48,24 @@
 		let renderMolecule = (ul, mol) =>
 		{
 			ul.append('<li>molecule: atoms=' + mol.numAtoms + ', bonds=' + mol.numBonds + '</li>');
-			let para = $('<p></p>').appendTo(ul);
+			let para = wmk.dom('<p/>').appendTo(ul);
 			new wmk.EmbedMolecule(mol.toString(), {}).render(para);
 		}
 		let renderDataSheet = (ul, ds) =>
 		{
-			ul.append('<li>datasheet: cols=' + ds.numCols + ', rows=' + ds.numRows + '</li>');
+			ul.appendHTML('<li>datasheet: cols=' + ds.numCols + ', rows=' + ds.numRows + '</li>');
 		}
 		let renderText = (ul, type, str) =>
 		{
 			ul.append('<li>text:</li>');
-			let pre = $('<pre></pre>').appendTo(ul);
-			pre.css('border', '1px solid black');
-			pre.css('background-color', '#E0E0E0');
-			pre.css('white-space', 'pre-wrap');
-			pre.text(str);
+			let pre = wmk.dom('<pre/>').appendTo(ul).css({'border': '1px solid black', 'background-color': '#E0E0E0', 'white-space': 'pre-wrap'});
+			pre.setText(str);
 
 			if (type == 'text/html')
 			{
-				ul.append('<li>html:</li>');
-				let para = $('<p></p>').appendTo(ul);
-				para.css('border', '1px solid black');
-				para.css('background-color', '#E0E0E0');
-				para.html(str);
+				ul.appendHTML('<li>html:</li>');
+				let para = wmk.dom('<p/>').appendTo(ul).css({'border': '1px solid black', 'background-color': '#E0E0E0'});
+				para.setHTML(str);
 			}
 
 			let mol = wmk.MoleculeStream.readUnknown(str);
@@ -90,20 +84,20 @@
 		{
 			let item = items[n], kind = item.kind, type = item.type;
 
-			let div = $('<div></div>');
+			let div = wmk.dom('<div/>');
 			content.push(div);
 
-			div.append('<h2>Item #' + (n + 1) + '</h2>');
+			div.appendHTML('<h2>Item #' + (n + 1) + '</h2>');
 
-			let ul = $('<ul></ul>').appendTo(div);
-			ul.append('<li>kind: <b>' + kind + '</b></li>');
-			ul.append('<li>type: <b>' + type + '</b></li>');
+			let ul = wmk.dom('<ul/>').appendTo(div);
+			ul.appendHTML('<li>kind: <b>' + kind + '</b></li>');
+			ul.appendHTML('<li>type: <b>' + type + '</b></li>');
 
 			if (kind == 'string') item.getAsString((str) => renderText(ul, type, str));
 			if (kind == 'file')
 			{
 				let file = item.getAsFile();
-				ul.append('<li>file: name=[' + file.name + '] size=' + file.size + '</li>');
+				ul.appendHTML('<li>file: name=[' + file.name + '] size=' + file.size + '</li>');
 
 				let reader = new FileReader();
 				reader.onload = (event) => renderText(ul, type, reader.result);
@@ -112,37 +106,18 @@
 			}
 		}
 
-		/* this really does seem to be unnecessary
-		for (let n = 0; n < files.length; n++)
-		{
-			let file = files[n], type = file.type;
-
-			let div = $('<div></div>');
-			content.push(div);
-
-			div.append('<h2>File #' + (n + 1) + '</h2>');
-
-			let ul = $('<ul></ul>').appendTo(div);
-			ul.append('<li>kind: <b>file</b></li>');
-			ul.append('<li>type: <b>' + type + '</b></li>');
-
-			let reader = new FileReader();
-			reader.onload = (event) => renderText(ul, type, reader.result);
-			reader.readAsText(files[n]);
-		}*/
-
 		displayContent(srcType, content);
 	}
 
 	function displayContent(srcType, content)
 	{
-		let div = $('#main');
+		let div = wmk.DOM.find('#main');
 		div.empty();
-		div.append('<h1>' + srcType + '</h1>');
+		div.appendHTML('<h1>' + srcType + '</h1>');
 
 		if (content.length == 0)
 		{
-			div.append('<p>Empty.</p>');
+			div.appendHTML('<p>Empty.</p>');
 		}
 		else
 		{

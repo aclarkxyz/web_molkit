@@ -125,37 +125,27 @@ export class EmbedCollection extends EmbedChemistry
 		this.tagType = 'span';
 		super.render(parent);
 
-		let span = this.content, ds = this.ds, policy = this.policy;
-
-		span.css('display', 'inline-block');
-		span.css('line-height', '0');
-		if (!this.tight) span.css('margin-bottom', '1.5em');
+		let span = this.contentDOM, ds = this.ds, policy = this.policy;
+		
+		span.css({'display': 'inline-block', 'line-height': '0'});
+		if (!this.tight) span.setCSS('margin-bottom', '1.5em');
 
 		if (ds != null)
 		{
 			let aspects = new AspectList(ds).enumerate();
 			let columns:EmbedCollectionColumn[] = this.determineColumns(aspects);
 
-			let table = $('<table></table>').appendTo(span);
-			table.css('font-family', '"HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif');
-			table.css('border-collapse', 'collapse');
-			table.css('line-height', '1');
-			table.css('margin', '2px');
-			table.css('border', '0');
+			let table = dom('<table/>').appendTo(span);
+			table.css({'font-family': '"HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif'});
+			table.css({'border-collapse': 'collapse', 'line-height': '1', 'margin': '2px', 'border': '0'});
 
-			let tr = $('<tr></tr>').appendTo(table);
-			tr.css('line-height', '1');
+			let tr = dom('<tr/>').appendTo(table).css({'line-height': '1'});
 			for (let n = 0; n < columns.length; n++)
 			{
-				let th = $('<th></th>').appendTo(tr);
-				th.css('white-space', 'nowrap');
-				th.css('font-weight', '600');
-				th.css('color', 'black');
-				th.css('text-decoration', 'underline');
-				th.css('text-align', 'center');
-				th.css('padding', '0.2em 0.5em 0.2em 0.5em');
-				th.css('border', '0');
-				th.text(columns[n].name);
+				let th = dom('<th/>').appendTo(tr);
+				th.css({'white-space': 'nowrap', 'font-weight': '600', 'text-decoration': 'underline', 'text-align': 'center'});
+				th.css({'padding': '0.2em 0.5em 0.2em 0.5em', 'color': 'black', 'border': '0'});
+				th.setText(columns[n].name);
 			}
 
 			for (let row = 0; row < ds.numRows;)
@@ -163,18 +153,15 @@ export class EmbedCollection extends EmbedChemistry
 				let blksz = 1;
 				for (let aspect of aspects) blksz = Math.max(blksz, aspect.rowBlockCount(row));
 
-				tr = $('<tr></tr>').appendTo(table);
-				tr.css('line-height', '1');
+				tr = dom('<tr/>').appendTo(table).css({'line-height': '1'});
 				for (let col = 0; col < columns.length; col++)
 				{
-					let td = $('<td></td>').appendTo(tr);
-					td.css('border', '1px solid #D0D0D0');
-					td.css('padding', '0.2em');
-					td.css('vertical-align', 'middle');
+					let td = dom('<td/>').appendTo(tr);
+					td.css({'border': '1px solid #D0D0D0', 'padding': '0.2em', 'vertical-align': 'middle'});
 					let spec = columns[col];
 					if (spec.aspect == null)
 					{
-						if (ds.isNull(row, spec.idx)) td.text(' ');
+						if (ds.isNull(row, spec.idx)) td.setText(' ');
 						else if (ds.colType(spec.idx) == DataSheetColumn.Molecule) this.renderMolecule(td, row, spec.idx);
 						else this.renderPrimitive(td, row, spec.idx);
 					}
@@ -187,11 +174,11 @@ export class EmbedCollection extends EmbedChemistry
 		}
 		else
 		{
-			span.css('color', 'red');
-			span.text('Unable to parse datasheet: ' + this.failmsg);
-			let pre = $('<pre></pre>').appendTo(span);
-			pre.css('line-height', '1.1');
-			pre.text(this.datastr);
+			span.css({'color': 'red'});
+			span.setText('Unable to parse datasheet: ' + this.failmsg);
+			let pre = dom('<pre/>').appendTo(span);
+			pre.css({'line-height': '1.1'});
+			pre.setText(this.datastr);
 			console.log('Unparseable datasheet source string:\n[' + this.datastr + ']');
 		}
 	}
@@ -239,19 +226,19 @@ export class EmbedCollection extends EmbedChemistry
 	}
 
 	// rendering specifics for individual cells
-	private renderPrimitive(td:JQuery, row:number, col:number):void
+	private renderPrimitive(td:DOM, row:number, col:number):void
 	{
 		let txt = '', ct = this.ds.colType(col), align = 'center';
 		if (ct == DataSheetColumn.String) {txt = this.ds.getString(row, col); align = 'left';}
 		else if (ct == DataSheetColumn.Integer) txt = this.ds.getInteger(row, col).toString();
 		else if (ct == DataSheetColumn.Real) txt = this.ds.getReal(row, col).toString();
 		else if (ct == DataSheetColumn.Boolean) txt = this.ds.getBoolean(row, col) ? 'true' : 'false';
-		td.text(txt);
-		td.css('text-align', align);
+		td.setText(txt);
+		td.css({'text-align': align});
 	}
-	private renderMolecule(td:JQuery, row:number, col:number):void
+	private renderMolecule(td:DOM, row:number, col:number):void
 	{
-		td.css('text-align', 'center');
+		td.css({'text-align': 'center'});
 
 		let effects = new RenderEffects();
 		let measure = new OutlineMeasurement(0, 0, this.policy.data.pointScale);
@@ -261,29 +248,29 @@ export class EmbedCollection extends EmbedChemistry
 		let metavec = new MetaVector();
 		new DrawMolecule(layout, metavec).draw();
 		metavec.normalise();
-		let svg = $(metavec.createSVG()).appendTo(td);
+		dom(metavec.createSVG()).appendTo(td);
 	}
-	private renderTextAspect(td:JQuery, row:number, aspect:Aspect, idx:number):void
+	private renderTextAspect(td:DOM, row:number, aspect:Aspect, idx:number):void
 	{
 		let rend = aspect.produceTextRendering(row, idx);
-		if (!rend.text) td.text(' ');
-		else if (rend.type == Aspect.TEXT_PLAIN) td.text(rend.text);
+		if (!rend.text) td.setText(' ');
+		else if (rend.type == Aspect.TEXT_PLAIN) td.setText(rend.text);
 		else if (rend.type == Aspect.TEXT_LINK)
 		{
-			let ahref = $('<a target="_blank"></a>').appendTo(td);
-			ahref.attr('href', rend.text);
-			ahref.text(rend.text);
+			let ahref = dom('<a target="_blank"/>').appendTo(td);
+			ahref.setAttr('href', rend.text);
+			ahref.setText(rend.text);
 		}
-		else if (rend.type == Aspect.TEXT_HTML) td.html(rend.text);
+		else if (rend.type == Aspect.TEXT_HTML) td.setHTML(rend.text);
 	}
-	private renderGraphicAspect(td:JQuery, row:number, aspect:Aspect, idx:number):void
+	private renderGraphicAspect(td:DOM, row:number, aspect:Aspect, idx:number):void
 	{
 		let metavec = aspect.produceGraphicRendering(row, idx, this.policy).metavec;
-		if (metavec == null) {td.text(' '); return;}
+		if (metavec == null) {td.setText(' '); return;}
 
-		td.css('text-align', 'center');
+		td.css({'text-align': 'center'});
 		metavec.normalise();
-		$(metavec.createSVG()).appendTo(td);
+		dom(metavec.createSVG()).appendTo(td);
 	}
 }
 

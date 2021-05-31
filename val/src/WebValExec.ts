@@ -26,54 +26,56 @@ export class WebValExec
 	{
 	}
 
-	public async runTests(domParent:JQuery)
+	public async runTests(parent:any)
 	{
+		let domParent = dom(parent);
+
 		domParent.empty();
 
 		if (this.validation.setupError)
 		{
-			let div = $('<div/>').appendTo(domParent).css({'color': 'red'});
-			div.text('Setup failed: ' + this.validation.setupError);
+			let div = dom('<div/>').appendTo(domParent).css({'color': 'red'});
+			div.setText('Setup failed: ' + this.validation.setupError);
 			return;
 		}
 
-		let table = $('<table/>').appendTo(domParent);
+		let table = dom('<table/>').appendTo(domParent);
 
-		let tdStatus:JQuery[] = [], tdInfo:JQuery[] = [];
+		let tdStatus:DOM[] = [], tdInfo:DOM[] = [];
 
 		for (let n = 0; n < this.validation.count; n++)
 		{
-			let tr = $('<tr/>').appendTo(table);
+			let tr = dom('<tr/>').appendTo(table);
 
-			let td = $('<td valign="top"/>').appendTo(tr);
+			let td = dom('<td valign="top"/>').appendTo(tr);
 			tdStatus.push(td);
 
-			td = $('<td valign="top"></td>').appendTo(tr);
-			td.text(this.validation.getTitle(n));
+			td = dom('<td valign="top"></td>').appendTo(tr);
+			td.setText(this.validation.getTitle(n));
 			tdInfo.push(td);
 		}
 
 		for (let n = 0; n < this.validation.count; n++)
 		{
-			tdStatus[n].html('&#9744;');
+			tdStatus[n].setHTML('&#9744;');
 
 			let [success, message, time] = await this.validation.runTest(n);
 			if (success)
 			{
-				tdStatus[n].html('&#9745;');
+				tdStatus[n].setHTML('&#9745;');
 				if (time >= 0.001)
 				{
-					let span = $('<span style="color: #909090;"/>').appendTo(tdInfo[n]);
-					span.text(' (' + time.toFixed(3) + ' sec)');
+					let span = dom('<span style="color: #909090;"/>').appendTo(tdInfo[n]);
+					span.setText(' (' + time.toFixed(3) + ' sec)');
 				}
 			}
 			else
 			{
-				tdStatus[n].html('<span style="color: red;">&#9746;</span>');
-				let para = $('<p style="color: purple; margin-top: 0;"/>').appendTo(tdInfo[n]);
-				para.text(message ? message : 'failed');
-				tdStatus[n].css('background-color', '#FFF0F0');
-				tdInfo[n].css('background-color', '#FFF0F0');
+				tdStatus[n].setHTML('<span style="color: red;">&#9746;</span>');
+				let para = dom('<p style="color: purple; margin-top: 0;"/>').appendTo(tdInfo[n]);
+				para.setText(message ? message : 'failed');
+				tdStatus[n].setCSS('background-color', '#FFF0F0');
+				tdInfo[n].setCSS('background-color', '#FFF0F0');
 			} 
 		}
 	}

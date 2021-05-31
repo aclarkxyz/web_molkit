@@ -130,11 +130,9 @@ export class EmbedReaction extends EmbedChemistry
 		this.tagType = 'span';
 		super.render(parent);
 
-		let span = this.content;
-
-		span.css('display', 'inline-block');
-		span.css('line-height', '0');
-		if (!this.tight) span.css('margin-bottom', '1.5em');
+		let span = this.contentDOM;
+		span.css({'display': 'inline-block', 'line-height': '0'});
+		if (!this.tight) span.setCSS('margin-bottom', '1.5em');
 
 		if (this.entry != null)
 		{
@@ -145,11 +143,10 @@ export class EmbedReaction extends EmbedChemistry
 		}
 		else
 		{
-			span.css('color', 'red');
-			span.text('Failure to acquire data: ' + this.failmsg);
-			let pre = $('<pre></pre>').appendTo(span);
-			pre.css('line-height', '1.1');
-			pre.text(this.datastr);
+			span.css({'color': 'red'});
+			span.setText('Failure to acquire data: ' + this.failmsg);
+			let pre = dom('<pre/>').appendTo(span).css({'line-height': '1.1'});
+			pre.setText(this.datastr);
 			console.log('Unparseable datasheet source string:\n[' + this.datastr + ']');
 		}
 	}
@@ -157,48 +154,37 @@ export class EmbedReaction extends EmbedChemistry
 	// ------------ private methods ------------
 
 	// display summary information from the header
-	private renderHeader(span:JQuery):void
+	private renderHeader(span:DOM):void
 	{
-		let table = $('<table></table>').appendTo(span);
-		table.css('font-family', '"HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif');
-		table.css('border-collapse', 'collapse');
-		table.css('line-height', '1');
-		table.css('margin', '2px');
-		table.css('border', '0');
+		let table = dom('<table/>').appendTo(span);
+		table.css({'font-family': '"HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif'});
+		table.css({'border-collapse': 'collapse', 'line-height': '1', 'margin': '2px', 'border': '0'});
 
 		let titles = ['Title', 'Created', 'Modified', 'DOI'];
 		for (let n = 0; n < 4; n++)
 		{
 			if (n == 3 && !this.entry.doi) continue;
 
-			let tr = $('<tr></tr>').appendTo(table);
-			tr.css('line-height', '1');
+			let tr = dom('<tr/>').appendTo(table).css({'line-height': '1'});
 
-			let th = $('<th></th>').appendTo(tr);
-			th.css('white-space', 'nowrap');
-			th.css('font-weight', '600');
-			th.css('color', 'black');
-			th.css('text-align', 'left');
-			th.css('vertical-align', 'middle');
-			th.css('padding', '0.2em 0.5em 0.2em 0.5em');
-			th.css('border', '1px solid #D0D0D0');
-			th.text(titles[n]);
+			let th = dom('<th/>').appendTo(tr);
+			th.css({'white-space': 'nowrap', 'font-weight': '600', 'color': 'black', 'text-align': 'left', 'vertical-align': 'middle'});
+			th.css({'padding': '0.2em 0.5em 0.2em 0.5em', 'border': '1px solid #D0D0D0'});
+			th.setText(titles[n]);
 
-			let td = $('<td></td>').appendTo(tr);
-			td.css('border', '1px solid #D0D0D0');
-			td.css('padding', '0.2em');
-			td.css('vertical-align', 'middle');
+			let td = dom('<td/>').appendTo(tr);
+			td.css({'border': '1px solid #D0D0D0', 'padding': '0.2em', 'vertical-align': 'middle'});
 
 			if (n == 0)
 			{
-				if (!this.entry.title) td.css('font-style', 'italic');
-				td.text(this.entry.title ? this.entry.title : '(none)');
+				if (!this.entry.title) td.setCSS('font-style', 'italic');
+				td.setText(this.entry.title ? this.entry.title : '(none)');
 			}
 			else if (n == 1 || n == 2)
 			{
 				let date = n == 1 ? this.entry.createDate : this.entry.modifyDate;
-				if (date == null) td.css('font-style', 'italic');
-				td.text(date == null ? '(none)' : date.toLocaleString());
+				if (date == null) td.setCSS('font-style', 'italic');
+				td.setText(date == null ? '(none)' : date.toLocaleString());
 			}
 			else if (n == 3)
 			{
@@ -206,17 +192,17 @@ export class EmbedReaction extends EmbedChemistry
 
 				if (url != null && (url.startsWith('http://') || url.startsWith('https://')))
 				{
-					let ahref = $('<a target="_blank"></a>').appendTo(td);
-					ahref.attr('href', url);
-					ahref.text(this.entry.doi);
+					let ahref = dom('<a target="_blank"/>').appendTo(td);
+					ahref.setAttr('href', url);
+					ahref.setText(this.entry.doi);
 				}
-				else td.text(this.entry.doi);
+				else td.setText(this.entry.doi);
 			}
 		}
 	}
 
 	// render the schema, using preferred chemist-style diagram
-	private renderScheme(span:JQuery):void
+	private renderScheme(span:DOM):void
 	{
 		let measure = new OutlineMeasurement(0, 0, this.policy.data.pointScale);
 		let layout = new ArrangeExperiment(this.entry, measure, this.policy);
@@ -229,21 +215,18 @@ export class EmbedReaction extends EmbedChemistry
 		let metavec = new MetaVector();
 		new DrawExperiment(layout, metavec).draw();
 		metavec.normalise();
-		let svg = $(metavec.createSVG()).appendTo(span);
+		let svg = dom(metavec.createSVG()).appendTo(span);
 	}
 
 	// render all the quantities by listing out each component in a table
-	private renderQuantity(span:JQuery):void
+	private renderQuantity(span:DOM):void
 	{
 		let quant = new QuantityCalc(this.entry);
 		quant.calculate();
 
-		let table = $('<table></table>').appendTo(span);
-		table.css('font-family', '"HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif');
-		table.css('border-collapse', 'collapse');
-		table.css('line-height', '1');
-		table.css('margin', '2px');
-		table.css('border', '0');
+		let table = dom('<table/>').appendTo(span);
+		table.css({'font-family': '"HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif'});
+		table.css({'border-collapse': 'collapse', 'line-height': '1', 'margin': '2px', 'border': '0'});
 
 		let effects = new RenderEffects();
 		let measure = new OutlineMeasurement(0, 0, this.policy.data.pointScale);
@@ -252,14 +235,10 @@ export class EmbedReaction extends EmbedChemistry
 		{
 			let qc = quant.getQuantity(n);
 
-			let tr = $('<tr></tr>').appendTo(table);
-			tr.css('line-height', '1');
+			let tr = dom('<tr/>').appendTo(table).css({'line-height': '1'});
 
-			let td = $('<td></td>').appendTo(tr);
-			td.css('border', '1px solid #D0D0D0');
-			td.css('padding', '0.2em');
-			td.css('text-align', 'center');
-			td.css('vertical-align', 'middle');
+			let td = dom('<td/>').appendTo(tr);
+			td.css({'border': '1px solid #D0D0D0', 'padding': '0.2em', 'text-align': 'center', 'vertical-align': 'middle'});
 			if (MolUtil.notBlank(qc.comp.mol))
 			{
 				let layout = new ArrangeMolecule(qc.comp.mol, measure, this.policy, effects);
@@ -268,21 +247,18 @@ export class EmbedReaction extends EmbedChemistry
 				let metavec = new MetaVector();
 				new DrawMolecule(layout, metavec).draw();
 				metavec.normalise();
-				let svg = $(metavec.createSVG()).appendTo(td);
+				let svg = dom(metavec.createSVG()).appendTo(td);
 			}
 
-			td = $('<td></td>').appendTo(tr);
-			td.css('border', '1px solid #D0D0D0');
-			td.css('padding', '0.2em');
-			td.css('text-align', 'left');
-			td.css('vertical-align', 'top');
+			td = dom('<td/>').appendTo(tr);
+			td.css({'border': '1px solid #D0D0D0', 'padding': '0.2em', 'text-align': 'left', 'vertical-align': 'top'});
 
 			this.renderComponentText(td, qc);
 		}
 	}
 
 	// renders lines representing the component's text-like properties
-	private renderComponentText(parent:JQuery, qc:QuantityCalcComp)
+	private renderComponentText(parent:DOM, qc:QuantityCalcComp)
 	{
 		let title:string[] = [], content:string[] = [];
 
@@ -360,26 +336,23 @@ export class EmbedReaction extends EmbedChemistry
 
 		for (let n = 0; n < title.length; n++)
 		{
-			let p = $('<p></p>').appendTo(parent);
-			p.css('margin', '0.1em');
-			p.append($('<b>' + title[n] + '</b>'));
-			p.append(': ');
-			p.append(content[n]);
+			let p = dom('<p/>').appendTo(parent);
+			p.setCSS('margin', '0.1em');
+			p.append(dom('<b>' + title[n] + '</b>'));
+			p.appendText(': ');
+			p.appendHTML(content[n]);
 		}
 	}
 
 	// display calculated green chemistry metrics
-	private renderMetrics(span:JQuery):void
+	private renderMetrics(span:DOM):void
 	{
 		let quant = new QuantityCalc(this.entry);
 		quant.calculate();
 
-		let table = $('<table></table>').appendTo(span);
-		table.css('font-family', '"HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif');
-		table.css('border-collapse', 'collapse');
-		table.css('line-height', '1');
-		table.css('margin', '2px');
-		table.css('border', '0');
+		let table = dom('<table/>').appendTo(span);
+		table.css({'font-family': '"HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif'});
+		table.css({'border-collapse': 'collapse', 'line-height': '1', 'margin': '2px', 'border': '0'});
 
 		let effects = new RenderEffects();
 		let measure = new OutlineMeasurement(0, 0, this.policy.data.pointScale);
@@ -387,45 +360,37 @@ export class EmbedReaction extends EmbedChemistry
 		// display overall summary totals
 		if (quant.numGreenMetrics > 0) for (let n = 0; n < 3; n++)
 		{
-			let tr = $('<tr></tr>').appendTo(table);
-			tr.css('line-height', '1');
+			let tr = dom('<tr/>').appendTo(table).css({'line-height': '1'});
 
-			let th = $('<th></th>').appendTo(tr);
-			th.css('border', '1px solid #D0D0D0');
-			th.css('padding', '0.5em');
-			th.css('text-align', 'right');
-			th.css('vertical-align', 'middle');
-			th.css('white-space', 'nowrap');
-			th.css('font-weight', 'bold');
-			th.text(n == 0 ? 'All Reactants' : n == 1 ? 'All Products' : /* n == 2 */ 'All Waste');
+			let th = dom('<th/>').appendTo(tr);
+			th.css({'border': '1px solid #D0D0D0', 'padding': '0.5em', 'font-weight': 'bold'});
+			th.css({'text-align': 'right', 'vertical-align': 'middle', 'white-space': 'nowrap'});
+			th.setText(n == 0 ? 'All Reactants' : n == 1 ? 'All Products' : /* n == 2 */ 'All Waste');
 
-			let td = $('<td></td>').appendTo(tr);
-			td.css('border', '1px solid #D0D0D0');
-			td.css('padding', '0.5em');
-			td.css('text-align', 'left');
-			td.css('vertical-align', 'middle');
-			td.css('white-space', 'nowrap');
+			let td = dom('<td/>').appendTo(tr);
+			td.css({'border': '1px solid #D0D0D0', 'padding': '0.5em', 'white-space': 'nowrap'});
+			td.css({'text-align': 'left', 'vertical-align': 'middle'});
 			if (n == 0)
 			{
-				td.text(this.combineQuant(quant.getAllMassReact(), 'g') + ' = ' + this.sumQuant(quant.getAllMassReact(), 'g', true));
+				td.setText(this.combineQuant(quant.getAllMassReact(), 'g') + ' = ' + this.sumQuant(quant.getAllMassReact(), 'g', true));
 			}
 			else if (n == 1)
 			{
-				td.text(this.combineQuant(quant.getAllMassProd(), 'g') + ' = ' + this.sumQuant(quant.getAllMassProd(), 'g', true));
+				td.setText(this.combineQuant(quant.getAllMassProd(), 'g') + ' = ' + this.sumQuant(quant.getAllMassProd(), 'g', true));
 			}
 			else if (n == 2)
 			{
 				if (quant.getAllMassWaste().length > 0)
-					td.text(this.combineQuant(quant.getAllMassWaste(), 'g') + ' = ' + this.sumQuant(quant.getAllMassWaste(), 'g', false));
+					td.setText(this.combineQuant(quant.getAllMassWaste(), 'g') + ' = ' + this.sumQuant(quant.getAllMassWaste(), 'g', false));
 				else
-					td.text('none');
+					td.setText('none');
 			}
 		}
 		else
 		{
-			let tr = $('<tr></tr>').appendTo(table);
-			let td = $('<td></td>').appendTo(tr);
-			td.text('No metrics to show.');
+			let tr = dom('<tr/>').appendTo(table);
+			let td = dom('<td/>').appendTo(tr);
+			td.setText('No metrics to show.');
 		}
 
 		// show each relevant entity (i.e. products)
@@ -434,14 +399,10 @@ export class EmbedReaction extends EmbedChemistry
 			let gm = quant.getGreenMetrics(n);
 			let qc = quant.getQuantity(gm.idx);
 
-			let tr = $('<tr></tr>').appendTo(table);
-			tr.css('line-height', '1');
+			let tr = dom('<tr/>').appendTo(table).css({'line-height': '1'});
 
-			let td = $('<td></td>').appendTo(tr);
-			td.css('border', '1px solid #D0D0D0');
-			td.css('padding', '0.2em');
-			td.css('text-align', 'center');
-			td.css('vertical-align', 'middle');
+			let td = dom('<td/>').appendTo(tr);
+			td.css({'border': '1px solid #D0D0D0', 'padding': '0.2em', 'text-align': 'center', 'vertical-align': 'middle'});
 			if (MolUtil.notBlank(qc.comp.mol))
 			{
 				let layout = new ArrangeMolecule(qc.comp.mol, measure, this.policy, effects);
@@ -450,35 +411,32 @@ export class EmbedReaction extends EmbedChemistry
 				let metavec = new MetaVector();
 				new DrawMolecule(layout, metavec).draw();
 				metavec.normalise();
-				$(metavec.createSVG()).appendTo(td);
+				dom(metavec.createSVG()).appendTo(td);
 			}
 
-			td = $('<td></td>').appendTo(tr);
-			td.css('border', '1px solid #D0D0D0');
-			td.css('padding', '0.5em');
-			td.css('text-align', 'left');
-			td.css('vertical-align', 'top');
+			td = dom('<td/>').appendTo(tr);
+			td.css({'border': '1px solid #D0D0D0', 'padding': '0.5em', 'text-align': 'left', 'vertical-align': 'top'});
 
 			let pmi1 = this.combineQuant(gm.massReact, 'g'), pmi2 = this.combineQuant(gm.massProd, 'g');
 			let pmi3 = this.sumQuantExt(gm.massReact, gm.massProd, 1, Number.NaN, null);
 			let vg = this.drawTotals('PMI', pmi1, pmi2, pmi3);
 			vg.normalise();
-			let para = $('<p></p>').appendTo(td);
-			$(vg.createSVG()).appendTo(para);
+			let para = dom('<p/>').appendTo(td);
+			dom(vg.createSVG()).appendTo(para);
 
 			let ef1 = this.combineQuant(gm.massWaste, 'g'), ef2 = this.combineQuant(gm.massProd, 'g');
 			let ef3 = this.sumQuantExt(gm.massWaste, gm.massProd, 1, Number.NaN, null);
 			vg = this.drawTotals('E-factor', ef1, ef2, ef3);
 			vg.normalise();
-			para = $('<p></p>').appendTo(td);
-			$(vg.createSVG()).appendTo(para);
+			para = dom('<p/>').appendTo(td);
+			dom(vg.createSVG()).appendTo(para);
 
 			let ae1 = this.combineQuant(gm.molwProd, null), ae2 = this.combineQuant(gm.molwReact, null);
 			let ae3 = this.sumQuantExt(gm.molwProd, gm.molwReact, 100, 100, '%');
 			vg = this.drawTotals('Atom-E', ae1, ae2, ae3);
 			vg.normalise();
-			para = $('<p></p>').appendTo(td);
-			$(vg.createSVG()).appendTo(para);
+			para = dom('<p/>').appendTo(td);
+			dom(vg.createSVG()).appendTo(para);
 		}
 	}
 
