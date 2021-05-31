@@ -59,14 +59,14 @@ Embedding a blank sketcher instance on the page can be done as:
 	var url = window.location.href.substring(0, window.location.href.lastIndexOf('/'));
 	WebMolKit.initWebMolKit(url + '../../../res');
 
-	var mol = WebMolKit.Molecule.fromString(WebMolKit.DOM.find('#moldata').text());
+	var mol = WebMolKit.Molecule.fromString(document.getElementById('moldata').textContent);
 
 	var sketcher = new WebMolKit.Sketcher();
 	sketcher.setSize(800, 700);
 	sketcher.defineMolecule(mol);
 	let proxy = new WebMolKit.ClipboardProxyWeb();
 	sketcher.defineClipboard(proxy);
-	sketcher.setup(() => sketcher.render(WebMolKit.DOM.find('#sketcher')));
+	sketcher.setup(() => sketcher.render(document.getElementById('sketcher')));
 </script>
 ```
 
