@@ -14,11 +14,6 @@ namespace WebMolKit /* BOF */ {
 
 /*
 	TemplateBank: template list... either the top-level list of template groups, or a single folder full of templates.
-
-	Content:
-		.owner: the instance of molsync.ui.EditMolecule that owns this buttonbank
-		.group: not defined=list all groups; defined=this specific group of templates
-		.content: result of webservice request used to fetch buttons
 */
 
 interface GroupTemplates

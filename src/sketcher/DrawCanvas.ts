@@ -159,6 +159,19 @@ export class DrawCanvas extends Widget implements ArrangeMeasurement
 		this.divMessage.css({'text-align': 'center', 'vertical-align': 'middle', 'font-weight': 'bold', 'font-size': '120%'});
 	}
 
+	// gets the current state, as an associative array
+	public getState():SketchState
+	{
+		let state:SketchState =
+		{
+			'mol': this.mol.clone(),
+			'currentAtom': this.currentAtom,
+			'currentBond': this.currentBond,
+			'selectedMask': this.selectedMask == null ? null : this.selectedMask.slice(0)
+		};
+		return state;
+	}
+
 	// returns true if atom is selected (1-based)
 	public getSelected(atom:number):boolean
 	{
@@ -196,7 +209,17 @@ export class DrawCanvas extends Widget implements ArrangeMeasurement
 	public yIsUp():boolean {return false;}
 	public measureText(str:string, fontSize:number):number[] {return FontData.main.measureText(str, fontSize);}
 
-	// ------------ private methods ------------
+	// ------------ protected methods ------------
+
+	// redraw the structure: this will update the main canvas, using the current metavector representation of the structure;
+	// the need-to-redraw flag is set, which means that this can be called multiple times without forcing the underlying canvas
+	// to be redrawn too many times
+	protected delayedRedraw():void
+	{
+		if (this.canvasMolecule == null) return;
+		this.filthy = true;
+		window.setTimeout(() => {if (this.filthy) this.redraw();}, 10);
+	}
 
 	// regenerates the layout, which is slightly performance sensitive
 	protected layoutMolecule():void
@@ -495,6 +518,70 @@ export class DrawCanvas extends Widget implements ArrangeMeasurement
 		ctx.restore();
 	}
 
+	// returns an array of atom indices that make up the selection/current, or empty if nothing; if the "allIfNone" flag
+	// is set, all of the atoms will be returned if otherwise would have been none; if "useOpAtom" is true, an empty
+	// selection will be beefed up by the current mouseunder atom
+	protected subjectAtoms(allIfNone = false, useOpAtom = false):number[]
+	{
+		let atoms:number[] = [];
+		if (this.selectedMask != null)
+		{
+			for (let n = 0; n < this.selectedMask.length; n++) if (this.selectedMask[n]) atoms.push(n + 1);
+			if (atoms.length > 0) return atoms;
+		}
+		if (this.currentAtom > 0) atoms.push(this.currentAtom);
+		else if (this.currentBond > 0)
+		{
+			atoms.push(this.mol.bondFrom(this.currentBond));
+			atoms.push(this.mol.bondTo(this.currentBond));
+		}
+		if (useOpAtom && atoms.length == 0 && this.opAtom > 0) atoms.push(this.opAtom);
+		if (allIfNone && atoms.length == 0)
+		{
+			for (let n = 1; n <= this.mol.numAtoms; n++) atoms.push(n);
+		}
+		return atoms;
+	}
+
+	// response to some mouse event: lasso may need to be extended, or cancelled
+	protected updateLasso(x:number, y:number):void
+	{
+		if (this.dragType != DraggingTool.Lasso && this.dragType != DraggingTool.Erasor) return;
+
+		if (x < 0 || y < 0 || x > this.width || y > this.height)
+		{
+			this.dragType = DraggingTool.None;
+			this.lassoX = null;
+			this.lassoY = null;
+			this.lassoMask = null;
+			this.delayedRedraw();
+		}
+
+		let len = Vec.len(this.lassoX);
+		if (len > 0 && this.lassoX[len - 1] == x && this.lassoY[len - 1] == y) return; // identical
+
+		this.lassoX.push(x);
+		this.lassoY.push(y);
+		this.calculateLassoMask();
+		this.delayedRedraw();
+	}
+
+	// sets up the lasso mask to include any atom that is within the lasso polygon
+	protected calculateLassoMask():void
+	{
+		this.lassoMask = new Array(this.mol.numAtoms);
+		for (let n = 0; n < this.mol.numAtoms; n++) this.lassoMask[n] = false;
+
+		for (let n = 0; n < this.layout.numPoints(); n++)
+		{
+			let p = this.layout.getPoint(n);
+			if (p.anum == 0) continue;
+			this.lassoMask[p.anum - 1] = GeomUtil.pointInPolygon(p.oval.cx, p.oval.cy, this.lassoX, this.lassoY);
+		}
+	}
+
+	// ------------ private methods -----------
+
 	// draws an ellipse around an atom/bond, for highlighting purposes
 	private drawAtomShade(ctx:CanvasRenderingContext2D, atom:number, fillCol:number, borderCol:number, anghalo:number):void
 	{
@@ -593,7 +680,7 @@ export class DrawCanvas extends Widget implements ArrangeMeasurement
 	}
 
 	// draws an in-progress bond, originating either from the clicked-upon atom, or a point in space
-	protected drawOriginatingBond(ctx:CanvasRenderingContext2D, element:string, order:number, type:number)
+	private drawOriginatingBond(ctx:CanvasRenderingContext2D, element:string, order:number, type:number)
 	{
 		let x1 = this.clickX, y1 = this.clickY;
 		if (this.opAtom > 0)
@@ -789,6 +876,10 @@ export class DrawCanvas extends Widget implements ArrangeMeasurement
 
 				for (let look of (isCapped ? [unit] : allUnits)) for (let a of look.atoms)
 				{
+					let isExt = false;
+					for (let adj of mol.atomAdjList(a)) if (!look.atoms.includes(adj)) {isExt = true; break;}
+					if (!isExt) continue;
+
 					if (Vec.notBlank(incl))
 					{
 						let anames = look.atomName.get(a), any = false;
@@ -928,31 +1019,6 @@ export class DrawCanvas extends Widget implements ArrangeMeasurement
 		return null;
 	}
 
-	// returns an array of atom indices that make up the selection/current, or empty if nothing; if the "allIfNone" flag
-	// is set, all of the atoms will be returned if otherwise would have been none; if "useOpAtom" is true, an empty
-	// selection will be beefed up by the current mouseunder atom
-	protected subjectAtoms(allIfNone = false, useOpAtom = false):number[]
-	{
-		let atoms:number[] = [];
-		if (this.selectedMask != null)
-		{
-			for (let n = 0; n < this.selectedMask.length; n++) if (this.selectedMask[n]) atoms.push(n + 1);
-			if (atoms.length > 0) return atoms;
-		}
-		if (this.currentAtom > 0) atoms.push(this.currentAtom);
-		else if (this.currentBond > 0)
-		{
-			atoms.push(this.mol.bondFrom(this.currentBond));
-			atoms.push(this.mol.bondTo(this.currentBond));
-		}
-		if (useOpAtom && atoms.length == 0 && this.opAtom > 0) atoms.push(this.opAtom);
-		if (allIfNone && atoms.length == 0)
-		{
-			for (let n = 1; n <= this.mol.numAtoms; n++) atoms.push(n);
-		}
-		return atoms;
-	}
-
 	// puts together an effects parameter for the main sketch
 	private sketchEffects(mol:Molecule):RenderEffects
 	{
@@ -1061,7 +1127,8 @@ export class DrawCanvas extends Widget implements ArrangeMeasurement
 			CoordUtil.translateMolecule(abbrevMol, mol.atomX(nbr) - abbrevMol.atomX(1), mol.atomY(nbr) - abbrevMol.atomY(1));
 		}
 
-		abbrevMol.setAtomElement(1, 'C'); // mask out the "X"
+		//abbrevMol.setAtomElement(1, 'C'); // mask out the "X"
+		abbrevMol.deleteAtomAndBonds(1);
 	}
 }
 

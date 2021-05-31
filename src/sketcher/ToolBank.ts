@@ -14,9 +14,6 @@ namespace WebMolKit /* BOF */ {
 
 /*
 	ToolBank: buttons for the Sketcher main command bank.
-
-	Content:
-		.owner: the instance of molsync.ui.EditMolecule that owns this buttonbank
 */
 
 const TOOLS_MAIN:ButtonBankItem[] =

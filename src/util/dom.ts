@@ -222,40 +222,6 @@ export class DOM
 		(this.el as HTMLInputElement).value = str || '';
 	}
 
-	/*
-	// getting & setting disabled property, for interactive widgets like <input>
-	public getDisabled():boolean
-	{
-		return (this.el as HTMLInputElement).disabled;
-	}
-	public setDisabled(disabled:boolean):void
-	{
-		if (disabled == null) return;
-		(this.el as HTMLInputElement).disabled = disabled;
-	}
-
-	// getting & setting checked property, for interactive widgets like <checkbox>
-	public getChecked():boolean
-	{
-		return (this.el as HTMLInputElement).checked;
-	}
-	public setChecked(checked:boolean):void
-	{
-		if (checked == null) return;
-		(this.el as HTMLInputElement).checked = checked;
-	}
-
-	// getting & setting readonly property, for interactive widgets like <input>
-	public getReadOnly():boolean
-	{
-		return (this.el as HTMLInputElement).readOnly;
-	}
-	public setReadOnly(readOnly:boolean):void
-	{
-		if (readOnly == null) return;
-		(this.el as HTMLInputElement).readOnly = readOnly;
-	}*/
-
 	// getting & setting CSS values
 	public getCSS(key:string):string
 	{
@@ -418,6 +384,22 @@ export class DOM
 	public onInput(callback:(event?:MouseEvent) => boolean | void):void
 	{
 		this.el.addEventListener('input', callback);
+	}
+	public onTouchStart(callback:(event?:TouchEvent) => boolean | void):void
+	{
+		this.el.addEventListener('touchstart', callback);
+	}
+	public onTouchMove(callback:(event?:TouchEvent) => boolean | void):void
+	{
+		this.el.addEventListener('touchmove', callback);
+	}
+	public onTouchCancel(callback:(event?:TouchEvent) => boolean | void):void
+	{
+		this.el.addEventListener('touchcancel', callback);
+	}
+	public onTouchEnd(callback:(event?:TouchEvent) => boolean | void):void
+	{
+		this.el.addEventListener('touchend', callback);
 	}
 }
 

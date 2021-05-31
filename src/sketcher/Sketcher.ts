@@ -84,6 +84,8 @@ export class Sketcher extends DrawCanvas
 
 		if (!this.beenSetup) return;
 
+		this.currentAtom = this.currentBond = 0;
+		this.selectedMask = null;
 		this.stereo = null;
 		this.hoverAtom = 0;
 		this.hoverBond = 0;
@@ -192,16 +194,20 @@ export class Sketcher extends DrawCanvas
 		}
 
 		// setup all the interactive events
-		this.container.onClick((event:MouseEvent) => this.mouseClick(event));
-		this.container.onDblClick((event:MouseEvent) => this.mouseDoubleClick(event));
-		this.container.onMouseDown((event:MouseEvent) => this.mouseDown(event));
-		this.container.onMouseUp((event:MouseEvent) => this.mouseUp(event));
-		this.container.onMouseOver((event:MouseEvent) => this.mouseOver(event));
-		this.container.onMouseLeave((event:MouseEvent) => this.mouseOut(event));
-		this.container.onMouseMove((event:MouseEvent) => this.mouseMove(event));
-		this.container.onKeyPress((event:KeyboardEvent) => this.keyPressed(event));
-		this.container.onKeyDown((event:KeyboardEvent) => this.keyDown(event));
-		this.container.onKeyUp((event:KeyboardEvent) => this.keyUp(event));
+		this.container.onClick((event) => this.mouseClick(event));
+		this.container.onDblClick((event) => this.mouseDoubleClick(event));
+		this.container.onMouseDown((event) => this.mouseDown(event));
+		this.container.onMouseUp((event) => this.mouseUp(event));
+		this.container.onMouseOver((event) => this.mouseOver(event));
+		this.container.onMouseLeave((event) => this.mouseOut(event));
+		this.container.onMouseMove((event) => this.mouseMove(event));
+		this.container.onKeyPress((event) => this.keyPressed(event));
+		this.container.onKeyDown((event) => this.keyDown(event));
+		this.container.onKeyUp((event) => this.keyUp(event));
+		this.container.onTouchStart((event) => this.touchStart(event));
+		this.container.onTouchMove((event) => this.touchMove(event));
+		this.container.onTouchCancel((event) => this.touchCancel(event));
+		this.container.onTouchEnd((event) => this.touchEnd(event));
 		this.contentDOM.onContextMenu((event:MouseEvent) => this.contextMenu(event));
 
 		// setup the wheel handler
@@ -345,19 +351,6 @@ export class Sketcher extends DrawCanvas
 		this.currentBond = 0;
 		this.selectedMask = Vec.booleanArray(false, this.mol.numAtoms);
 		this.delayedRedraw();
-	}
-
-	// gets the current state, as an associative array
-	public getState():SketchState
-	{
-		let state:SketchState =
-		{
-			'mol': this.mol.clone(),
-			'currentAtom': this.currentAtom,
-			'currentBond': this.currentBond,
-			'selectedMask': this.selectedMask == null ? null : this.selectedMask.slice(0)
-		};
-		return state;
 	}
 
 	// sets the current state; see getState() function above for the format of the object; the 'withStashUndo' parameter is a
@@ -647,16 +640,6 @@ export class Sketcher extends DrawCanvas
 		new DrawMolecule(layout, perm.metavec).draw();
 	}
 
-	// redraw the structure: this will update the main canvas, using the current metavector representation of the structure;
-	// the need-to-redraw flag is set, which means that this can be called multiple times without forcing the underlying canvas
-	// to be redrawn too many times
-	private delayedRedraw():void
-	{
-		if (this.canvasMolecule == null) return;
-		this.filthy = true;
-		window.setTimeout(() => {if (this.filthy) this.redraw();}, 10);
-	}
-
 	// re-render the molecule into its graphical state buffers, then trigger a delayed re-splat onto the canvas; this is useful when the molecule
 	// is to be displayed differently even though the molecule itself has not actually changed
 	private renderMolecule():void
@@ -666,8 +649,8 @@ export class Sketcher extends DrawCanvas
 		this.delayedRedraw();
 	}
 
-	// locates a molecular object at the given position: returns N for atom, -N for bond, or 0 for nothing
-	private pickObject(x:number, y:number):number
+	// locates a molecular object at the given position: returns N for atom, -N for bond, 0 for nothing, or null for not-on-canvas (e.g. button banks)
+	private pickObjectCanvas(x:number, y:number):number
 	{
 		if (this.layout == null) return 0;
 
@@ -677,21 +660,21 @@ export class Sketcher extends DrawCanvas
 			//let pos1 = this.container.position(), pos2 = this.toolView.content.position();
 			//if (this.toolView.withinOutline(x + pos1.left - pos2.left, y + pos1.top - pos2.top)) return 0;
 			let pos1 = this.container.offset(), pos2 = this.toolView.contentDOM.offset();
-			if (this.toolView.withinOutline(x + pos1.x - pos2.x, y + pos1.y - pos2.y)) return 0;
+			if (this.toolView.withinOutline(x + pos1.x - pos2.x, y + pos1.y - pos2.y)) return null;
 		}
 		if (this.commandView != null)
 		{
 			//let pos1 = this.container.position(), pos2 = this.commandView.content.position();
 			//if (this.toolView.withinOutline(x + pos1.left - pos2.left, y + pos1.top - pos2.top)) return 0;
 			let pos1 = this.container.offset(), pos2 = this.commandView.contentDOM.offset();
-			if (this.toolView.withinOutline(x + pos1.x - pos2.x, y + pos1.y - pos2.y)) return 0;
+			if (this.toolView.withinOutline(x + pos1.x - pos2.x, y + pos1.y - pos2.y)) return null;
 		}
 		if (this.templateView != null)
 		{
 			//let pos1 = this.container.position(), pos2 = this.templateView.content.position();
 			//if (this.toolView.withinOutline(x + pos1.left - pos2.left, y + pos1.top - pos2.top)) return 0;
 			let pos1 = this.container.offset(), pos2 = this.templateView.contentDOM.offset();
-			if (this.toolView.withinOutline(x + pos1.x - pos2.x, y + pos1.y - pos2.y)) return 0;
+			if (this.toolView.withinOutline(x + pos1.x - pos2.x, y + pos1.y - pos2.y)) return null;
 		}
 
 		// proceed with atoms & bonds
@@ -740,9 +723,13 @@ export class Sketcher extends DrawCanvas
 
 		return bestItem;
 	}
+	private pickObject(x:number, y:number):number
+	{
+		return this.pickObjectCanvas(x, y) || 0;
+	}
 
 	// response to some mouse event: hovering cursor restated
-	private updateHoverCursor(event:MouseEvent):void
+	private updateHoverCursor(x:number, y:number):void
 	{
 		let tool = 'finger';
 		if (this.toolView != null) tool = this.toolView.selectedButton;
@@ -752,8 +739,7 @@ export class Sketcher extends DrawCanvas
 
 		if (this.dragType == DraggingTool.None && toolApplies)
 		{
-			let xy = eventCoords(event, this.container);
-			mouseObj = this.pickObject(xy[0], xy[1]);
+			mouseObj = this.pickObject(x, y);
 		}
 		let mouseAtom = mouseObj > 0 ? mouseObj : 0, mouseBond = mouseObj < 0 ? -mouseObj : 0;
 
@@ -770,44 +756,6 @@ export class Sketcher extends DrawCanvas
 				this.redrawMetaVector();
 			}
 			this.delayedRedraw();
-		}
-	}
-
-	// response to some mouse event: lasso may need to be extended, or cancelled
-	private updateLasso(event:MouseEvent):void
-	{
-		if (this.dragType != DraggingTool.Lasso && this.dragType != DraggingTool.Erasor) return;
-
-		let xy = eventCoords(event, this.container);
-		if (xy[0] < 0 || xy[1] < 0 || xy[0] > this.width || xy[1] > this.height)
-		{
-			this.dragType = DraggingTool.None;
-			this.lassoX = null;
-			this.lassoY = null;
-			this.lassoMask = null;
-			this.delayedRedraw();
-		}
-
-		let len = Vec.len(this.lassoX);
-		if (len > 0 && this.lassoX[len - 1] == xy[0] && this.lassoY[len - 1] == xy[1]) return; // identical
-
-		this.lassoX.push(xy[0]);
-		this.lassoY.push(xy[1]);
-		this.calculateLassoMask();
-		this.delayedRedraw();
-	}
-
-	// sets up the lasso mask to include any atom that is within the lasso polygon
-	private calculateLassoMask():void
-	{
-		this.lassoMask = new Array(this.mol.numAtoms);
-		for (let n = 0; n < this.mol.numAtoms; n++) this.lassoMask[n] = false;
-
-		for (let n = 0; n < this.layout.numPoints(); n++)
-		{
-			let p = this.layout.getPoint(n);
-			if (p.anum == 0) continue;
-			this.lassoMask[p.anum - 1] = GeomUtil.pointInPolygon(p.oval.cx, p.oval.cy, this.lassoX, this.lassoY);
 		}
 	}
 
@@ -1120,483 +1068,49 @@ export class Sketcher extends DrawCanvas
 			return;
 		}
 
-		this.dragType = DraggingTool.Press;
-		this.opBudged = false;
-		this.dragGuides = null;
+		let [x, y] = eventCoords(event, this.container);
+		this.interactStart(x, y, event.shiftKey, event.ctrlKey, event.altKey);
 
-		let xy = eventCoords(event, this.container);
-		this.mouseX = xy[0];
-		this.mouseY = xy[1];
-		this.clickX = xy[0];
-		this.clickY = xy[1];
-
-		let clickObj = this.pickObject(xy[0], xy[1]);
-		this.opAtom = clickObj > 0 ? clickObj : 0;
-		this.opBond = clickObj < 0 ? -clickObj : 0;
-		this.opShift = event.shiftKey;
-		this.opCtrl = event.ctrlKey;
-		this.opAlt = event.altKey;
-
-		let tool = 'finger';
-		if (this.toolView != null) tool = this.toolView.selectedButton;
-
-		if (tool == 'arrow')
-		{
-			// special key modifiers for the arrow tool:
-			//		CTRL: open context menu
-			//		SHIFT: toggle selection of object [see mouseClick]
-			//		ALT: enter pan-mode
-			//		ALT+CTRL: enter zoom mode
-			if (!this.opShift && !this.opCtrl && !this.opAlt)
-			{
-				this.dragType = DraggingTool.Press;
-			}
-			//else if (!this.opShift && this.opCtrl && !this.opAlt) (done already)
-			else if (!this.opShift && !this.opCtrl && this.opAlt)
-			{
-				this.dragType = DraggingTool.Pan;
-			}
-			else if (!this.opShift && this.opCtrl && this.opAlt)
-			{
-				this.dragType = DraggingTool.Zoom;
-			}
-		}
-		else if (tool == 'rotate')
-		{
-			this.dragType = DraggingTool.Rotate;
-			this.toolRotateIncr = this.opShift ? 0 : 15 * DEGRAD;
-		}
-		else if (tool == 'pan')
-		{
-			this.dragType = DraggingTool.Pan;
-		}
-		else if (tool == 'drag')
-		{
-			this.dragType = DraggingTool.Move;
-			if (this.opAtom > 0) this.dragGuides = this.determineMoveGuide();
-			this.delayedRedraw();
-		}
-		else if (tool == 'erasor')
-		{
-			this.dragType = DraggingTool.Erasor;
-			this.lassoX = [xy[0]];
-			this.lassoY = [xy[1]];
-			this.lassoMask = [];
-		}
-		else if (tool == 'ringAliph')
-		{
-			this.dragType = DraggingTool.Ring;
-			this.toolRingArom = false;
-			this.toolRingFreeform = this.opShift;
-		}
-		else if (tool == 'ringArom')
-		{
-			this.dragType = DraggingTool.Ring;
-			this.toolRingArom = true;
-			this.toolRingFreeform = this.opShift;
-		}
-		else if (tool == 'atomPlus')
-		{
-			this.dragType = DraggingTool.Charge;
-			this.toolChargeDelta = 1;
-		}
-		else if (tool == 'atomMinus')
-		{
-			this.dragType = DraggingTool.Charge;
-			this.toolChargeDelta = -1;
-		}
-		else if (tool.startsWith('bond'))
-		{
-			this.dragType = DraggingTool.Bond;
-			this.toolBondOrder = 1;
-			this.toolBondType = Molecule.BONDTYPE_NORMAL;
-
-			if (tool == 'bondOrder0') this.toolBondOrder = 0;
-			else if (tool == 'bondOrder2') this.toolBondOrder = 2;
-			else if (tool == 'bondOrder3') this.toolBondOrder = 3;
-			else if (tool == 'bondUnknown') this.toolBondType = Molecule.BONDTYPE_UNKNOWN;
-			else if (tool == 'bondInclined') this.toolBondType = Molecule.BONDTYPE_INCLINED;
-			else if (tool == 'bondDeclined') this.toolBondType = Molecule.BONDTYPE_DECLINED;
-
-			this.dragGuides = this.determineDragGuide(this.toolBondOrder);
-		}
-		else if (tool.startsWith('element'))
-		{
-			this.dragType = DraggingTool.Atom;
-			this.toolAtomSymbol = tool.substring(7);
-			this.dragGuides = this.determineDragGuide(1);
-		}
 		return false;
 	}
 	private mouseUp(event:MouseEvent):boolean
 	{
 		event.stopPropagation();
 
-		// if the mouse hasn't moved, it's a click operation
-		if (!this.opBudged)
-		{
-			let xy = eventCoords(event, this.container);
+		let [x, y] = eventCoords(event, this.container);
+		this.interactEnd(x, y);
 
-			let clickObj = this.pickObject(xy[0], xy[1]);
-			let clickAtom = clickObj > 0 ? clickObj : 0, clickBond = clickObj < 0 ? -clickObj : 0;
-
-			//let tool = 'finger';
-			//if (this.toolView != null && this.toolView.selectedButton) tool = this.toolView.selectedButton;
-
-			if (this.dragType == DraggingTool.Press)
-			{
-				// special key modifiers for the arrow tool:
-				//		CTRL: open context menu [see mouseDown]
-				//		SHIFT: toggle selection of object
-				//		ALT: enter pan-mode [see mouseDown]
-				//		ALT+CTRL: enter zoom mode [see mouseDown]
-
-				if (!this.opShift && !this.opCtrl && !this.opAlt)
-				{
-					if (clickAtom == 0 && clickBond == 0)
-					{
-						if (Vec.anyTrue(this.selectedMask)) this.selectedMask = null;
-						else if (this.currentAtom > 0) this.currentAtom = 0;
-						else if (this.currentBond > 0) this.currentBond = 0;
-					}
-					else if (clickAtom != this.currentAtom || clickBond != this.currentBond)
-					{
-						this.currentAtom = clickAtom;
-						this.currentBond = clickBond;
-					}
-					else if (clickAtom == 0 && clickBond == 0 && this.anySelected())
-					{
-						this.selectedMask = null;
-					}
-				}
-				else if (this.opShift && !this.opCtrl && !this.opAlt)
-				{
-					if (clickAtom > 0) this.setSelected(clickAtom, !this.getSelected(clickAtom));
-				}
-			}
-			else if (this.dragType == DraggingTool.Move)
-			{
-				if (clickObj == 0)
-				{
-					if (Vec.anyTrue(this.selectedMask)) this.selectedMask = null;
-					else if (this.currentAtom > 0) this.currentAtom = 0;
-					else if (this.currentBond > 0) this.currentBond = 0;
-				}
-			}
-			else if (this.dragType == DraggingTool.Erasor)
-			{
-				if (this.opAtom > 0 || this.opBond > 0)
-				{
-					let override =
-					{
-						'currentAtom': this.opAtom,
-						'currentBond': this.opBond,
-						'selectedMask': [] as boolean[]
-					};
-					let molact = new MoleculeActivity(this.getState(), ActivityType.Delete, {}, override, this);
-					molact.execute();
-				}
-			}
-			else if (this.dragType == DraggingTool.Atom)
-			{
-				let element = this.toolAtomSymbol;
-				if (element == 'A')
-				{
-					let dlg = new EditAtom(this.mol, this.opAtom, this.proxyClip, () =>
-					{
-						let autoscale = this.mol.numAtoms == 0;
-						if (this.mol.compareTo(dlg.mol) != 0) this.defineMolecule(dlg.mol, autoscale);
-						dlg.close();
-					});
-					if (this.opAtom == 0)
-					{
-						dlg.newX = this.xToAng(this.clickX);
-						dlg.newY = this.yToAng(this.clickY);
-					}
-					dlg.callbackClose = () =>
-					{
-						this.inDialog = false;
-						this.grabFocus();
-					};
-					this.inDialog = true;
-					dlg.open();
-				}
-				else if (element)
-				{
-					let param:any = {'element': element, 'keepAbbrev': true};
-					if (this.opAtom == 0)
-					{
-						let x = this.xToAng(this.clickX), y = this.yToAng(this.clickY);
-						if (this.mol.numAtoms == 0)
-						{
-							this.offsetX = this.clickX;
-							this.offsetY = this.clickY;
-							x = 0;
-							y = 0;
-						}
-						param.positionX = x;
-						param.positionY = y;
-					}
-					let override =
-					{
-						'currentAtom': this.opAtom,
-						'currentBond': 0,
-						'selectedMask': null as boolean[]
-					};
-					let molact = new MoleculeActivity(this.getState(), ActivityType.Element, param, override, this);
-					molact.execute();
-				}
-			}
-			else if (this.dragType == DraggingTool.Charge)
-			{
-				if (this.opAtom > 0 || this.opBond > 0)
-				{
-					let override =
-					{
-						'currentAtom': this.opAtom,
-						'currentBond': this.opBond,
-						'selectedMask': null as boolean[]
-					};
-					let molact = new MoleculeActivity(this.getState(), ActivityType.Charge, {'delta': this.toolChargeDelta}, override, this);
-					molact.execute();
-				}
-			}
-			else if (this.dragType == DraggingTool.Bond)
-			{
-				let override =
-				{
-					'currentAtom': this.opAtom,
-					'currentBond': this.opBond,
-					'selectedMask': null as boolean[]
-				};
-				let molact:MoleculeActivity;
-				if (this.toolBondType == Molecule.BONDTYPE_NORMAL)
-					molact = new MoleculeActivity(this.getState(), ActivityType.BondOrder, {'order': this.toolBondOrder}, override, this);
-				else
-					molact = new MoleculeActivity(this.getState(), ActivityType.BondType, {'type': this.toolBondType}, override, this);
-				molact.execute();
-			}
-		}
-		else // otherwise, it's the conclusion of a drag
-		{
-			if (this.dragType == DraggingTool.Lasso)
-			{
-				if (this.lassoX.length >= 2)
-				{
-					this.calculateLassoMask();
-					for (let n = 1; n <= this.mol.numAtoms; n++) if (this.getLassoed(n) && !this.getSelected(n)) this.setSelected(n, true);
-				}
-
-				this.lassoX = null;
-				this.lassoY = null;
-				this.lassoMask = null;
-				this.delayedRedraw();
-			}
-			else if (this.dragType == DraggingTool.Erasor)
-			{
-				let any = false;
-				for (let n = 0; n < this.lassoMask.length; n++) if (this.lassoMask[n]) {any = true; break;}
-				if (any)
-				{
-					let override =
-					{
-						'currentAtom': 0,
-						'currentBond': 0,
-						'selectedMask': this.lassoMask
-					};
-					let molact = new MoleculeActivity(this.getState(), ActivityType.Delete, {}, override, this);
-					molact.execute();
-				}
-			}
-			else if (this.dragType == DraggingTool.Rotate)
-			{
-				let [x0, y0, theta, magnitude] = this.determineDragTheta();
-				let degrees = -theta * RADDEG;
-				let mx = this.xToAng(x0), my = this.yToAng(y0);
-				let molact = new MoleculeActivity(this.getState(), ActivityType.Rotate, {'theta': degrees, 'centreX': mx, 'centreY': my}, {}, this);
-				molact.execute();
-			}
-			else if (this.dragType == DraggingTool.Move)
-			{
-				let [dx, dy] = this.determineMoveDelta();
-				let scale = this.pointScale;
-				// note: in a future iteration, make the 'Move' action do rotate-snap-rebond, and call it during the mousemove, to give dynamic feedback
-				let molact = new MoleculeActivity(this.getState(), ActivityType.Move, {'refAtom': this.opAtom, 'deltaX': dx / scale, 'deltaY': -dy / scale}, {}, this);
-				molact.execute();
-			}
-			else if (this.dragType == DraggingTool.Ring)
-			{
-				let [ringX, ringY] = this.determineFauxRing();
-				if (ringX != null)
-				{
-					let param:any =
-					{
-						'ringX': ringX,
-						'ringY': ringY,
-						'aromatic': this.toolRingArom
-					};
-					let molact = new MoleculeActivity(this.getState(), ActivityType.Ring, param, {}, this);
-					molact.execute();
-				}
-			}
-			else if (this.dragType == DraggingTool.Atom && this.opAtom > 0)
-			{
-				let x2 = this.mouseX, y2 = this.mouseY;
-				let snapTo = this.snapToGuide(x2, y2);
-				if (snapTo != null) {x2 = snapTo[0]; y2 = snapTo[1];}
-
-				let param:any =
-				{
-					'order': 1,
-					'type': Molecule.BONDTYPE_NORMAL,
-					'element': this.toolAtomSymbol,
-					'x1': this.mol.atomX(this.opAtom),
-					'y1': this.mol.atomY(this.opAtom),
-					'x2': this.xToAng(x2),
-					'y2': this.yToAng(y2)
-				};
-
-				if (this.toolAtomSymbol == 'A') param.element = window.prompt('Enter element symbol:', '');
-				if (param.element != '')
-				{
-					let molact = new MoleculeActivity(this.getState(), ActivityType.BondAtom, param, {}, this);
-					molact.execute();
-				}
-			}
-			else if (this.dragType == DraggingTool.Bond)
-			{
-				let x2 = this.mouseX, y2 = this.mouseY;
-				let snapTo = this.snapToGuide(x2, y2);
-				if (snapTo != null) {x2 = snapTo[0]; y2 = snapTo[1];}
-
-				let param:any =
-				{
-					'order': this.toolBondOrder,
-					'type': this.toolBondType,
-					'element': 'C',
-					'x1': this.opAtom == 0 ? this.xToAng(this.clickX) : this.mol.atomX(this.opAtom),
-					'y1': this.opAtom == 0 ? this.yToAng(this.clickY) : this.mol.atomY(this.opAtom),
-					'x2': this.xToAng(x2),
-					'y2': this.yToAng(y2)
-				};
-				let molact = new MoleculeActivity(this.getState(), ActivityType.BondAtom, param, {}, this);
-				molact.execute();
-			}
-		}
-
-		this.dragType = DraggingTool.None;
-		this.lassoX = null;
-		this.lassoY = null;
-		this.lassoMask = null;
-		this.dragGuides = null;
-		this.delayedRedraw();
 		return false;
 	}
 	private mouseOver(event:MouseEvent):boolean
 	{
 		event.stopPropagation();
-		this.updateHoverCursor(event);
-		this.updateLasso(event);
+		let [x, y] = eventCoords(event, this.container);
+		this.updateHoverCursor(x, y);
+		this.updateLasso(x, y);
 		return false;
 	}
 	private mouseOut(event:MouseEvent):boolean
 	{
 		event.stopPropagation();
-		this.updateHoverCursor(event);
-		this.updateLasso(event);
+		let [x, y] = eventCoords(event, this.container);
+		this.updateHoverCursor(x, y);
+		this.updateLasso(x, y);
 		return false;
 	}
 	private mouseMove(event:MouseEvent):boolean
 	{
 		event.stopPropagation();
-		this.updateHoverCursor(event);
+		let [x, y] = eventCoords(event, this.container);
+		this.updateHoverCursor(x, y);
 
 		if (this.dragType == DraggingTool.None) return; // mouse button isn't pressed
 
-		let xy = eventCoords(event, this.container);
-
-		// once the mouse has moved more than a few pixels, it fips into "drag mode" rather than "click mode"
-		if (!this.opBudged)
-		{
-			let dx = xy[0] - this.clickX, dy = xy[1] - this.clickY;
-			if (dx * dx + dy * dy > 2 * 2) this.opBudged = true;
-		}
-
-		// switch lasso mode on if it becomes an open drag
-		if (this.dragType == DraggingTool.Press && this.opAtom == 0 && this.opBond == 0 && this.opBudged)
-		{
-			this.dragType = DraggingTool.Lasso;
-			this.lassoX = [xy[0]];
-			this.lassoY = [xy[1]];
-			this.lassoMask = [];
-		}
-
-		// update the various dragging-already tools
-		if (this.dragType == DraggingTool.Lasso || this.dragType == DraggingTool.Erasor)
-		{
-			this.updateLasso(event);
-		}
-		else if (this.dragType == DraggingTool.Pan)
-		{
-			let xy = eventCoords(event, this.container);
-			let dx = xy[0] - this.mouseX, dy = xy[1] - this.mouseY;
-
-			if (dx != 0 || dy != 0)
-			{
-				this.offsetX += dx;
-				this.offsetY += dy;
-				this.layout.offsetEverything(dx, dy);
-				this.metavec.transformPrimitives(dx, dy, 1, 1);
-
-				if (this.currentPerm >= 0 && this.templatePerms != null)
-				{
-					let perm = this.templatePerms[this.currentPerm];
-					//perm.layout.offsetEverything(dx, dy);
-					perm.metavec.transformPrimitives(dx, dy, 1, 1);
-				}
-
-				this.delayedRedraw();
-			}
-
-			this.mouseX = xy[0];
-			this.mouseY = xy[1];
-		}
-		else if (this.dragType == DraggingTool.Zoom)
-		{
-			let xy = eventCoords(event, this.container);
-			let dy = xy[1] - this.mouseY;
-
-			if (dy != 0)
-			{
-				dy = Math.min(50, Math.max(-50, dy));
-				let newScale = this.pointScale * (1 - dy * 0.01);
-				newScale = Math.min(10, Math.max(0.1, newScale));
-				let newOX = this.clickX - (newScale / this.pointScale) * (this.clickX - this.offsetX);
-				let newOY = this.clickY - (newScale / this.pointScale) * (this.clickY - this.offsetY);
-
-				this.pointScale = newScale;
-				this.offsetX = newOX;
-				this.offsetY = newOY;
-
-				this.delayedRedraw();
-			}
-
-			this.mouseX = xy[0];
-			this.mouseY = xy[1];
-		}
-		else if (this.dragType == DraggingTool.Rotate ||
-				this.dragType == DraggingTool.Move ||
-				this.dragType == DraggingTool.Atom ||
-				this.dragType == DraggingTool.Bond ||
-				this.dragType == DraggingTool.Ring)
-		{
-			this.mouseX = xy[0];
-			this.mouseY = xy[1];
-			this.delayedRedraw();
-		}
+		this.interactDrag(x, y);
 
 		return false;
 	}
+
 	private keyPressed(event:KeyboardEvent):void
 	{
 		//let ch = String.fromCharCode(event.keyCode || event.charCode);
@@ -1658,9 +1172,40 @@ export class Sketcher extends DrawCanvas
 	{
 		// ..
 	}
+	private touchStart(event:TouchEvent):void
+	{
+		let [x, y] = eventCoords(event.touches[0], this.container);
+		if (this.pickObjectCanvas(x, y) == null) return; // defer to an overlaying widget
+
+		this.interactStart(x, y, event.shiftKey, event.ctrlKey, event.altKey);
+		event.preventDefault();
+	}
+	private touchMove(event:TouchEvent):void
+	{
+		if (this.dragType != DraggingTool.None)
+		{
+			let [x, y] = eventCoords(event.touches[0], this.container);
+			this.interactDrag(x, y);
+		}
+
+		event.preventDefault(); // prevents panning around the place
+	}
+	private touchCancel(event:TouchEvent):void
+	{
+		//event.preventDefault();
+	}
+	private touchEnd(event:TouchEvent):void
+	{
+		if (this.dragType != DraggingTool.None)
+		{
+			let [x, y] = [this.mouseX, this.mouseY]; // end events have 0 touches, so use last known
+			this.interactEnd(x, y);
+			event.preventDefault();
+		}
+	}
 	private mouseWheel(event:MouseEvent):void
 	{
-		/* !! reinstate
+		/* maybe reinstate? not sure...
 		let xy = eventCoords(event, this.container);
 		let newScale = this.scale * (1 - event.deltaY * 0.1);
 		newScale = Math.min(10, Math.max(0.1, newScale));
@@ -1694,6 +1239,459 @@ export class Sketcher extends DrawCanvas
 		let ctx = new ContextSketch(state, this, this.proxyClip);
 		let menu = ctx.populate();
 		this.proxyMenu.openContextMenu(menu, event);
+	}
+
+	// the mouse/touch sequence began
+	private interactStart(x:number, y:number, shiftKey:boolean, ctrlKey:boolean, altKey:boolean):void
+	{
+		this.dragType = DraggingTool.Press;
+		this.opBudged = false;
+		this.dragGuides = null;
+
+		this.mouseX = x;
+		this.mouseY = y;
+		this.clickX = x;
+		this.clickY = y;
+
+		let clickObj = this.pickObject(x, y);
+		this.opAtom = clickObj > 0 ? clickObj : 0;
+		this.opBond = clickObj < 0 ? -clickObj : 0;
+		this.opShift = shiftKey;
+		this.opCtrl = ctrlKey;
+		this.opAlt = altKey;
+
+		let tool = 'finger';
+		if (this.toolView != null) tool = this.toolView.selectedButton;
+
+		if (tool == 'arrow')
+		{
+			// special key modifiers for the arrow tool:
+			//		CTRL: open context menu
+			//		SHIFT: toggle selection of object [see mouseClick]
+			//		ALT: enter pan-mode
+			//		ALT+CTRL: enter zoom mode
+			if (!this.opShift && !this.opCtrl && !this.opAlt)
+			{
+				this.dragType = DraggingTool.Press;
+			}
+			//else if (!this.opShift && this.opCtrl && !this.opAlt) (done already)
+			else if (!this.opShift && !this.opCtrl && this.opAlt)
+			{
+				this.dragType = DraggingTool.Pan;
+			}
+			else if (!this.opShift && this.opCtrl && this.opAlt)
+			{
+				this.dragType = DraggingTool.Zoom;
+			}
+		}
+		else if (tool == 'rotate')
+		{
+			this.dragType = DraggingTool.Rotate;
+			this.toolRotateIncr = this.opShift ? 0 : 15 * DEGRAD;
+		}
+		else if (tool == 'pan')
+		{
+			this.dragType = DraggingTool.Pan;
+		}
+		else if (tool == 'drag')
+		{
+			this.dragType = DraggingTool.Move;
+			if (this.opAtom > 0) this.dragGuides = this.determineMoveGuide();
+			this.delayedRedraw();
+		}
+		else if (tool == 'erasor')
+		{
+			this.dragType = DraggingTool.Erasor;
+			this.lassoX = [x];
+			this.lassoY = [y];
+			this.lassoMask = [];
+		}
+		else if (tool == 'ringAliph')
+		{
+			this.dragType = DraggingTool.Ring;
+			this.toolRingArom = false;
+			this.toolRingFreeform = this.opShift;
+		}
+		else if (tool == 'ringArom')
+		{
+			this.dragType = DraggingTool.Ring;
+			this.toolRingArom = true;
+			this.toolRingFreeform = this.opShift;
+		}
+		else if (tool == 'atomPlus')
+		{
+			this.dragType = DraggingTool.Charge;
+			this.toolChargeDelta = 1;
+		}
+		else if (tool == 'atomMinus')
+		{
+			this.dragType = DraggingTool.Charge;
+			this.toolChargeDelta = -1;
+		}
+		else if (tool.startsWith('bond'))
+		{
+			this.dragType = DraggingTool.Bond;
+			this.toolBondOrder = 1;
+			this.toolBondType = Molecule.BONDTYPE_NORMAL;
+
+			if (tool == 'bondOrder0') this.toolBondOrder = 0;
+			else if (tool == 'bondOrder2') this.toolBondOrder = 2;
+			else if (tool == 'bondOrder3') this.toolBondOrder = 3;
+			else if (tool == 'bondUnknown') this.toolBondType = Molecule.BONDTYPE_UNKNOWN;
+			else if (tool == 'bondInclined') this.toolBondType = Molecule.BONDTYPE_INCLINED;
+			else if (tool == 'bondDeclined') this.toolBondType = Molecule.BONDTYPE_DECLINED;
+
+			this.dragGuides = this.determineDragGuide(this.toolBondOrder);
+		}
+		else if (tool.startsWith('element'))
+		{
+			this.dragType = DraggingTool.Atom;
+			this.toolAtomSymbol = tool.substring(7);
+			this.dragGuides = this.determineDragGuide(1);
+		}
+	}
+
+	// the mouse/touch was moved to a new position, respond accordingly
+	protected interactDrag(x:number, y:number)
+	{
+		// once the mouse has moved more than a few pixels, it fips into "drag mode" rather than "click mode"
+		if (!this.opBudged)
+		{
+			let dx = x - this.clickX, dy = y - this.clickY;
+			if (dx * dx + dy * dy > 2 * 2) this.opBudged = true;
+		}
+
+		// switch lasso mode on if it becomes an open drag
+		if (this.dragType == DraggingTool.Press && this.opAtom == 0 && this.opBond == 0 && this.opBudged)
+		{
+			this.dragType = DraggingTool.Lasso;
+			this.lassoX = [x];
+			this.lassoY = [y];
+			this.lassoMask = [];
+		}
+
+		// update the various dragging-already tools
+		if (this.dragType == DraggingTool.Lasso || this.dragType == DraggingTool.Erasor)
+		{
+			this.updateLasso(x, y);
+		}
+		else if (this.dragType == DraggingTool.Pan)
+		{
+			let dx = x - this.mouseX, dy = y - this.mouseY;
+
+			if (dx != 0 || dy != 0)
+			{
+				this.offsetX += dx;
+				this.offsetY += dy;
+				this.layout.offsetEverything(dx, dy);
+				this.metavec.transformPrimitives(dx, dy, 1, 1);
+
+				if (this.currentPerm >= 0 && this.templatePerms != null)
+				{
+					let perm = this.templatePerms[this.currentPerm];
+					//perm.layout.offsetEverything(dx, dy);
+					perm.metavec.transformPrimitives(dx, dy, 1, 1);
+				}
+
+				this.delayedRedraw();
+			}
+
+			this.mouseX = x;
+			this.mouseY = y;
+		}
+		else if (this.dragType == DraggingTool.Zoom)
+		{
+			let dy = y - this.mouseY;
+
+			if (dy != 0)
+			{
+				dy = Math.min(50, Math.max(-50, dy));
+				let newScale = this.pointScale * (1 - dy * 0.01);
+				newScale = Math.min(10, Math.max(0.1, newScale));
+				let newOX = this.clickX - (newScale / this.pointScale) * (this.clickX - this.offsetX);
+				let newOY = this.clickY - (newScale / this.pointScale) * (this.clickY - this.offsetY);
+
+				this.pointScale = newScale;
+				this.offsetX = newOX;
+				this.offsetY = newOY;
+
+				this.delayedRedraw();
+			}
+
+			this.mouseX = x;
+			this.mouseY = y;
+		}
+		else if (this.dragType == DraggingTool.Rotate ||
+				this.dragType == DraggingTool.Move ||
+				this.dragType == DraggingTool.Atom ||
+				this.dragType == DraggingTool.Bond ||
+				this.dragType == DraggingTool.Ring)
+		{
+			this.mouseX = x;
+			this.mouseY = y;
+			this.delayedRedraw();
+		}
+	}
+
+	// the mouse/touch interaction completed, respond accordingly
+	private interactEnd(x:number, y:number):void
+	{
+		if (this.opBudged)
+			this.interactEndDrag(x, y);
+		else
+			this.interactEndClick(x, y);
+
+		this.dragType = DraggingTool.None;
+		this.lassoX = null;
+		this.lassoY = null;
+		this.lassoMask = null;
+		this.dragGuides = null;
+		this.delayedRedraw();
+	}
+	private interactEndClick(x:number, y:number):void
+	{
+		let clickObj = this.pickObject(x, y);
+		let clickAtom = clickObj > 0 ? clickObj : 0, clickBond = clickObj < 0 ? -clickObj : 0;
+
+		if (this.dragType == DraggingTool.Press)
+		{
+			// special key modifiers for the arrow tool:
+			//		CTRL: open context menu [see mouseDown]
+			//		SHIFT: toggle selection of object
+			//		ALT: enter pan-mode [see mouseDown]
+			//		ALT+CTRL: enter zoom mode [see mouseDown]
+
+			if (!this.opShift && !this.opCtrl && !this.opAlt)
+			{
+				if (clickAtom == 0 && clickBond == 0)
+				{
+					if (Vec.anyTrue(this.selectedMask)) this.selectedMask = null;
+					else if (this.currentAtom > 0) this.currentAtom = 0;
+					else if (this.currentBond > 0) this.currentBond = 0;
+				}
+				else if (clickAtom != this.currentAtom || clickBond != this.currentBond)
+				{
+					this.currentAtom = clickAtom;
+					this.currentBond = clickBond;
+				}
+				else if (clickAtom == 0 && clickBond == 0 && this.anySelected())
+				{
+					this.selectedMask = null;
+				}
+			}
+			else if (this.opShift && !this.opCtrl && !this.opAlt)
+			{
+				if (clickAtom > 0) this.setSelected(clickAtom, !this.getSelected(clickAtom));
+			}
+		}
+		else if (this.dragType == DraggingTool.Move)
+		{
+			if (clickObj == 0)
+			{
+				if (Vec.anyTrue(this.selectedMask)) this.selectedMask = null;
+				else if (this.currentAtom > 0) this.currentAtom = 0;
+				else if (this.currentBond > 0) this.currentBond = 0;
+			}
+		}
+		else if (this.dragType == DraggingTool.Erasor)
+		{
+			if (this.opAtom > 0 || this.opBond > 0)
+			{
+				let override =
+				{
+					'currentAtom': this.opAtom,
+					'currentBond': this.opBond,
+					'selectedMask': [] as boolean[]
+				};
+				let molact = new MoleculeActivity(this.getState(), ActivityType.Delete, {}, override, this);
+				molact.execute();
+			}
+		}
+		else if (this.dragType == DraggingTool.Atom)
+		{
+			let element = this.toolAtomSymbol;
+			if (element == 'A')
+			{
+				let dlg = new EditAtom(this.mol, this.opAtom, this.proxyClip, () =>
+				{
+					let autoscale = this.mol.numAtoms == 0;
+					if (this.mol.compareTo(dlg.mol) != 0) this.defineMolecule(dlg.mol, autoscale);
+					dlg.close();
+				});
+				if (this.opAtom == 0)
+				{
+					dlg.newX = this.xToAng(this.clickX);
+					dlg.newY = this.yToAng(this.clickY);
+				}
+				dlg.callbackClose = () =>
+				{
+					this.inDialog = false;
+					this.grabFocus();
+				};
+				this.inDialog = true;
+				dlg.open();
+			}
+			else if (element)
+			{
+				let param:any = {'element': element, 'keepAbbrev': true};
+				if (this.opAtom == 0)
+				{
+					let x = this.xToAng(this.clickX), y = this.yToAng(this.clickY);
+					if (this.mol.numAtoms == 0)
+					{
+						this.offsetX = this.clickX;
+						this.offsetY = this.clickY;
+						x = 0;
+						y = 0;
+					}
+					param.positionX = x;
+					param.positionY = y;
+				}
+				let override =
+				{
+					'currentAtom': this.opAtom,
+					'currentBond': 0,
+					'selectedMask': null as boolean[]
+				};
+				let molact = new MoleculeActivity(this.getState(), ActivityType.Element, param, override, this);
+				molact.execute();
+			}
+		}
+		else if (this.dragType == DraggingTool.Charge)
+		{
+			if (this.opAtom > 0 || this.opBond > 0)
+			{
+				let override =
+				{
+					'currentAtom': this.opAtom,
+					'currentBond': this.opBond,
+					'selectedMask': null as boolean[]
+				};
+				let molact = new MoleculeActivity(this.getState(), ActivityType.Charge, {'delta': this.toolChargeDelta}, override, this);
+				molact.execute();
+			}
+		}
+		else if (this.dragType == DraggingTool.Bond)
+		{
+			let override =
+			{
+				'currentAtom': this.opAtom,
+				'currentBond': this.opBond,
+				'selectedMask': null as boolean[]
+			};
+			let molact:MoleculeActivity;
+			if (this.toolBondType == Molecule.BONDTYPE_NORMAL)
+				molact = new MoleculeActivity(this.getState(), ActivityType.BondOrder, {'order': this.toolBondOrder}, override, this);
+			else
+				molact = new MoleculeActivity(this.getState(), ActivityType.BondType, {'type': this.toolBondType}, override, this);
+			molact.execute();
+		}
+	}
+	private interactEndDrag(x:number, y:number):void
+	{
+		if (this.dragType == DraggingTool.Lasso)
+		{
+			if (this.lassoX.length >= 2)
+			{
+				this.calculateLassoMask();
+				for (let n = 1; n <= this.mol.numAtoms; n++) if (this.getLassoed(n) && !this.getSelected(n)) this.setSelected(n, true);
+			}
+
+			this.lassoX = null;
+			this.lassoY = null;
+			this.lassoMask = null;
+			this.delayedRedraw();
+		}
+		else if (this.dragType == DraggingTool.Erasor)
+		{
+			let any = false;
+			for (let n = 0; n < this.lassoMask.length; n++) if (this.lassoMask[n]) {any = true; break;}
+			if (any)
+			{
+				let override =
+				{
+					'currentAtom': 0,
+					'currentBond': 0,
+					'selectedMask': this.lassoMask
+				};
+				let molact = new MoleculeActivity(this.getState(), ActivityType.Delete, {}, override, this);
+				molact.execute();
+			}
+		}
+		else if (this.dragType == DraggingTool.Rotate)
+		{
+			let [x0, y0, theta, magnitude] = this.determineDragTheta();
+			let degrees = -theta * RADDEG;
+			let mx = this.xToAng(x0), my = this.yToAng(y0);
+			let molact = new MoleculeActivity(this.getState(), ActivityType.Rotate, {'theta': degrees, 'centreX': mx, 'centreY': my}, {}, this);
+			molact.execute();
+		}
+		else if (this.dragType == DraggingTool.Move)
+		{
+			let [dx, dy] = this.determineMoveDelta();
+			let scale = this.pointScale;
+			// note: in a future iteration, make the 'Move' action do rotate-snap-rebond, and call it during the mousemove, to give dynamic feedback
+			let molact = new MoleculeActivity(this.getState(), ActivityType.Move, {'refAtom': this.opAtom, 'deltaX': dx / scale, 'deltaY': -dy / scale}, {}, this);
+			molact.execute();
+		}
+		else if (this.dragType == DraggingTool.Ring)
+		{
+			let [ringX, ringY] = this.determineFauxRing();
+			if (ringX != null)
+			{
+				let param:any =
+				{
+					'ringX': ringX,
+					'ringY': ringY,
+					'aromatic': this.toolRingArom
+				};
+				let molact = new MoleculeActivity(this.getState(), ActivityType.Ring, param, {}, this);
+				molact.execute();
+			}
+		}
+		else if (this.dragType == DraggingTool.Atom && this.opAtom > 0)
+		{
+			let x2 = this.mouseX, y2 = this.mouseY;
+			let snapTo = this.snapToGuide(x2, y2);
+			if (snapTo != null) {x2 = snapTo[0]; y2 = snapTo[1];}
+
+			let param:any =
+			{
+				'order': 1,
+				'type': Molecule.BONDTYPE_NORMAL,
+				'element': this.toolAtomSymbol,
+				'x1': this.mol.atomX(this.opAtom),
+				'y1': this.mol.atomY(this.opAtom),
+				'x2': this.xToAng(x2),
+				'y2': this.yToAng(y2)
+			};
+
+			if (this.toolAtomSymbol == 'A') param.element = window.prompt('Enter element symbol:', '');
+			if (param.element != '')
+			{
+				let molact = new MoleculeActivity(this.getState(), ActivityType.BondAtom, param, {}, this);
+				molact.execute();
+			}
+		}
+		else if (this.dragType == DraggingTool.Bond)
+		{
+			let x2 = this.mouseX, y2 = this.mouseY;
+			let snapTo = this.snapToGuide(x2, y2);
+			if (snapTo != null) {x2 = snapTo[0]; y2 = snapTo[1];}
+
+			let param:any =
+			{
+				'order': this.toolBondOrder,
+				'type': this.toolBondType,
+				'element': 'C',
+				'x1': this.opAtom == 0 ? this.xToAng(this.clickX) : this.mol.atomX(this.opAtom),
+				'y1': this.opAtom == 0 ? this.yToAng(this.clickY) : this.mol.atomY(this.opAtom),
+				'x2': this.xToAng(x2),
+				'y2': this.yToAng(y2)
+			};
+			let molact = new MoleculeActivity(this.getState(), ActivityType.BondAtom, param, {}, this);
+			molact.execute();
+		}
 	}
 
 	// something was dragged into the sketcher area
