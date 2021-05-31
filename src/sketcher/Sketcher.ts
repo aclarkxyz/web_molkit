@@ -657,24 +657,18 @@ export class Sketcher extends DrawCanvas
 		// if the position is over a buttonview, return zero (yes, this does happen)
 		if (this.toolView != null)
 		{
-			//let pos1 = this.container.position(), pos2 = this.toolView.content.position();
-			//if (this.toolView.withinOutline(x + pos1.left - pos2.left, y + pos1.top - pos2.top)) return 0;
 			let pos1 = this.container.offset(), pos2 = this.toolView.contentDOM.offset();
 			if (this.toolView.withinOutline(x + pos1.x - pos2.x, y + pos1.y - pos2.y)) return null;
 		}
 		if (this.commandView != null)
 		{
-			//let pos1 = this.container.position(), pos2 = this.commandView.content.position();
-			//if (this.toolView.withinOutline(x + pos1.left - pos2.left, y + pos1.top - pos2.top)) return 0;
 			let pos1 = this.container.offset(), pos2 = this.commandView.contentDOM.offset();
-			if (this.toolView.withinOutline(x + pos1.x - pos2.x, y + pos1.y - pos2.y)) return null;
+			if (this.commandView.withinOutline(x + pos1.x - pos2.x, y + pos1.y - pos2.y)) return null;
 		}
 		if (this.templateView != null)
 		{
-			//let pos1 = this.container.position(), pos2 = this.templateView.content.position();
-			//if (this.toolView.withinOutline(x + pos1.left - pos2.left, y + pos1.top - pos2.top)) return 0;
 			let pos1 = this.container.offset(), pos2 = this.templateView.contentDOM.offset();
-			if (this.toolView.withinOutline(x + pos1.x - pos2.x, y + pos1.y - pos2.y)) return null;
+			if (this.templateView.withinOutline(x + pos1.x - pos2.x, y + pos1.y - pos2.y)) return null;
 		}
 
 		// proceed with atoms & bonds
