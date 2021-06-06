@@ -65,7 +65,7 @@ export class Sketcher extends DrawCanvas
 	// it could be modified elsewhere; note that the 'withStashUndo' parameter is a flag, which defaults to _false_, because
 	// this function is usually used for things like initial state; during-edit modifications are more typically done via
 	// the setState(..) function
-	public defineMolecule(mol:Molecule, withAutoScale:boolean = true, withStashUndo:boolean = false):void
+	public defineMolecule(mol:Molecule, withAutoScale = true, withStashUndo = false, keepSelect = false):void
 	{
 		if (mol.compareTo(this.mol) == 0) return;
 
@@ -84,8 +84,11 @@ export class Sketcher extends DrawCanvas
 
 		if (!this.beenSetup) return;
 
-		this.currentAtom = this.currentBond = 0;
-		this.selectedMask = null;
+		if (!keepSelect)
+		{
+			this.currentAtom = this.currentBond = 0;
+			this.selectedMask = null;
+		}
 		this.stereo = null;
 		this.hoverAtom = 0;
 		this.hoverBond = 0;
@@ -168,7 +171,7 @@ export class Sketcher extends DrawCanvas
 		let reserveHeight = 0;
 		if (this.useCommandBank)
 		{
-			this.commandView = new ButtonView('bottom', 0, 0, this.width, this.height);
+			this.commandView = new ButtonView(ButtonViewPosition.Bottom, 0, 0, this.width, this.height);
 			if (this.lowerCommandBank) this.commandView.lowerBank();
 			// (put this back) this.commandView.lowerBank();
 			this.commandView.setHasBigButtons(false);
@@ -178,7 +181,7 @@ export class Sketcher extends DrawCanvas
 		}
 		if (this.useToolBank)
 		{
-			this.toolView = new ButtonView('left', 0, 0, this.width, this.height - reserveHeight);
+			this.toolView = new ButtonView(ButtonViewPosition.Left, 0, 0, this.width, this.height - reserveHeight);
 			if (this.lowerToolBank) this.toolView.lowerBank();
 			this.toolView.setHasBigButtons(false);
 			this.toolView.pushBank(new ToolBank(this));
@@ -186,7 +189,7 @@ export class Sketcher extends DrawCanvas
 		}
 		if (this.useTemplateBank)
 		{
-			this.templateView = new ButtonView('right', 0, 0, this.width, this.height - reserveHeight);
+			this.templateView = new ButtonView(ButtonViewPosition.Right, 0, 0, this.width, this.height - reserveHeight);
 			if (this.lowerTemplateBank) this.templateView.lowerBank();
 			this.templateView.setHasBigButtons(true); // big buttons for templates is a good thing
 			this.templateView.pushBank(new TemplateBank(this, null));
@@ -360,7 +363,7 @@ export class Sketcher extends DrawCanvas
 		//if (withStashUndo) this.stashUndo();
 		this.stopTemplateFusion();
 
-		if (state.mol != null) this.defineMolecule(state.mol.clone(), false, withStashUndo);
+		if (state.mol != null) this.defineMolecule(state.mol.clone(), false, withStashUndo, true);
 		if (state.currentAtom >= 0) this.currentAtom = state.currentAtom;
 		if (state.currentBond >= 0) this.currentBond = state.currentBond;
 		if (state.selectedMask != null) this.selectedMask = state.selectedMask == null ? null : state.selectedMask.slice(0);
@@ -413,7 +416,7 @@ export class Sketcher extends DrawCanvas
 	{
 		let mol = Molecule.fromString(this.templatePerms[this.currentPerm].mol);
 		this.templateView.popBank();
-		this.defineMolecule(mol, false, true);
+		this.defineMolecule(mol, false, true, true);
 	}
 
 	// rotate the template display up or down
@@ -518,7 +521,7 @@ export class Sketcher extends DrawCanvas
 	{
 		if (this.mol.numAtoms == 0)
 		{
-			this.defineMolecule(mol, true, true);
+			this.defineMolecule(mol, true, true, true);
 			return;
 		}
 
@@ -527,7 +530,7 @@ export class Sketcher extends DrawCanvas
 		molact.execute();
 		if (molact.output.mol)
 		{
-			this.defineMolecule(molact.output.mol, false, true);
+			this.defineMolecule(molact.output.mol, false, true, true);
 			return;
 		}
 
@@ -550,7 +553,7 @@ export class Sketcher extends DrawCanvas
 	{
 		let dlg = new EditPolymer(this.mol, atoms, this.proxyClip, () =>
 		{
-			if (this.mol.compareTo(dlg.mol) != 0) this.defineMolecule(dlg.mol, false, true);
+			if (this.mol.compareTo(dlg.mol) != 0) this.defineMolecule(dlg.mol, false, true, true);
 			dlg.close();
 		});
 		dlg.callbackClose = () =>
@@ -846,7 +849,7 @@ export class Sketcher extends DrawCanvas
 
 		let dlg = new EditAtom(this.mol, atom, this.proxyClip, () =>
 		{
-			if (this.mol.compareTo(dlg.mol) != 0) this.defineMolecule(dlg.mol, false, true);
+			if (this.mol.compareTo(dlg.mol) != 0) this.defineMolecule(dlg.mol, false, true, true);
 			dlg.close();
 		});
 		dlg.callbackClose = () =>
@@ -863,7 +866,7 @@ export class Sketcher extends DrawCanvas
 
 		let dlg = new EditBond(this.mol, bond, this.proxyClip, () =>
 		{
-			if (this.mol.compareTo(dlg.mol) != 0) this.defineMolecule(dlg.mol, false, true);
+			if (this.mol.compareTo(dlg.mol) != 0) this.defineMolecule(dlg.mol, false, true, true);
 			dlg.close();
 		});
 		dlg.callbackClose = () =>
@@ -1509,7 +1512,7 @@ export class Sketcher extends DrawCanvas
 				let dlg = new EditAtom(this.mol, this.opAtom, this.proxyClip, () =>
 				{
 					let autoscale = this.mol.numAtoms == 0;
-					if (this.mol.compareTo(dlg.mol) != 0) this.defineMolecule(dlg.mol, autoscale);
+					if (this.mol.compareTo(dlg.mol) != 0) this.defineMolecule(dlg.mol, autoscale, true);
 					dlg.close();
 				});
 				if (this.opAtom == 0)
@@ -1708,7 +1711,7 @@ export class Sketcher extends DrawCanvas
 					if (mol != null)
 					{
 						// (maybe do an intelligent append/paste, using the coordinates, rather than blowing it away?)
-						this.defineMolecule(mol, true, true);
+						this.defineMolecule(mol, true, true, true);
 					}
 					else console.log('Dragged data is not a SketchEl molecule: ' + str);
 				});

@@ -126,9 +126,9 @@ export class DOM
 	public appendTo(parent:DOM | Element):DOM
 	{
 		if (parent instanceof DOM)
-			parent.el.append(this.el);
+			(parent as DOM).el.append(this.el);
 		else
-			parent.append(this.el);
+			(parent as Element).appendChild(this.el);
 		return this;
 	}
 
@@ -142,9 +142,9 @@ export class DOM
 	public prependTo(parent:DOM | Element):DOM
 	{
 		if (parent instanceof DOM)
-			parent.el.prepend(this.el);
+			(parent as DOM).el.prepend(this.el);
 		else
-			parent.append(this.el);
+			(parent as Element).append(this.el);
 		return this;
 	}
 

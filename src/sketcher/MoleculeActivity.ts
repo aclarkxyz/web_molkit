@@ -174,53 +174,6 @@ export class MoleculeActivity
 		this.owner = owner;
 	}
 
-	/*constructor(private owner:any, private activity:ActivityType, private param:any, override?:Record<string, any>)
-	{
-		this.input = owner.getState();
-		this.output =
-		{
-			'mol': null,
-			'currentAtom': -1,
-			'currentBond': -1,
-			'selectedMask': null
-		};
-
-		let altInput = this.input as Record<string, any>;
-		for (let k in override) altInput[k] = override[k];
-
-		let na = this.input.mol.numAtoms;
-		if (this.input.selectedMask == null) this.input.selectedMask = Vec.booleanArray(false, na);
-		while (this.input.selectedMask.length < na) this.input.selectedMask.push(false);
-		this.subjectMask = this.input.selectedMask.slice(0);
-		this.subjectLength = Vec.maskCount(this.subjectMask);
-		this.subjectIndex = [];
-		this.hasSelected = this.subjectLength > 0;
-
-		if (this.subjectLength == 0)
-		{
-			if (this.input.currentAtom > 0)
-			{
-				this.subjectLength = 1;
-				this.subjectMask[this.input.currentAtom - 1] = true;
-				this.subjectIndex = [this.input.currentAtom];
-			}
-			else if (this.input.currentBond > 0)
-			{
-				let bfr = this.input.mol.bondFrom(this.input.currentBond), bto = this.input.mol.bondTo(this.input.currentBond);
-				let b1 = Math.min(bfr, bto), b2 = Math.max(bfr, bto);
-				this.subjectLength = 2;
-				this.subjectMask[b1 - 1] = true;
-				this.subjectMask[b2 - 1] = true;
-				this.subjectIndex = [b1, b2];
-			}
-		}
-		else
-		{
-			this.subjectIndex = Vec.maskIdx(this.subjectMask);
-			Vec.addTo(this.subjectIndex, 1);
-		}
-	}*/
-
 	// --------------------------------------- public methods ---------------------------------------
 
 	// returns false if the activity cannot be executed; errs on the side of generosity, i.e. false positives are to be expected

@@ -74,8 +74,8 @@ enum CommandType
 
 const COMMANDS_MAIN:ButtonBankItem[] =
 [
-	{'id': 'undo', 'imageFN': 'MainUndo', 'helpText': 'Undo last change.', 'mnemonic': 'Ctrl+Z'},
-	{'id': 'redo', 'imageFN': 'MainRedo', 'helpText': 'Cancel last undo.', 'mnemonic': 'Ctrl+Shift+Z'},
+	{'id': 'undo', 'imageFN': 'MainUndo', 'helpText': 'Undo last change.', 'mnemonic': 'CmdOrCtrl+Z'},
+	{'id': 'redo', 'imageFN': 'MainRedo', 'helpText': 'Cancel last undo.', 'mnemonic': 'CmdOrCtrl+Shift+Z'},
 	{'id': 'zoomin', 'imageFN': 'MainZoomIn', 'helpText': 'Zoom in.', 'mnemonic': '='},
 	{'id': 'zoomout', 'imageFN': 'MainZoomOut', 'helpText': 'Zoom out.', 'mnemonic': '-'},
 	{'id': 'zoomfit', 'imageFN': 'MainZoomFit', 'helpText': 'Show whole diagram onscreen.', 'mnemonic': ''},
@@ -83,8 +83,8 @@ const COMMANDS_MAIN:ButtonBankItem[] =
 	{'id': 'selall', 'imageFN': 'MainSelAll', 'helpText': 'Select all atoms.', 'mnemonic': 'Shift+A'},
 	{'id': 'selnone', 'imageFN': 'MainSelNone', 'helpText': 'Clear selection.', 'mnemonic': 'Shift+Q'},
 	{'id': 'delete', 'imageFN': 'MainDelete', 'helpText': 'Delete selected atoms and bonds.', 'mnemonic': 'D'},
-	{'id': 'cut', 'imageFN': 'MainCut', 'helpText': 'Copy selection to clipboard, and remove.', 'mnemonic': 'Ctrl+X'},
-	{'id': 'copy', 'imageFN': 'MainCopy', 'helpText': 'Copy selection to clipboard.', 'mnemonic': 'Ctrl+C'},
+	{'id': 'cut', 'imageFN': 'MainCut', 'helpText': 'Copy selection to clipboard, and remove.', 'mnemonic': 'CmdOrCtrl+X'},
+	{'id': 'copy', 'imageFN': 'MainCopy', 'helpText': 'Copy selection to clipboard.', 'mnemonic': 'CmdOrCtrl+C'},
 	{'id': 'paste', 'imageFN': 'MainPaste', 'helpText': 'Paste clipboard contents.'/*, 'mnemonic': 'Ctrl+V'*/}, // TODO: web-specific behaviour
 	{'id': 'atom', 'imageFN': 'MainAtom', 'helpText': 'Open the Atom submenu.', 'isSubMenu': true, 'mnemonic': 'A'},
 	{'id': 'bond', 'imageFN': 'MainBond', 'helpText': 'Open the Bond submenu.', 'isSubMenu': true, 'mnemonic': 'B'},

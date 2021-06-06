@@ -18,6 +18,15 @@ namespace WebMolKit /* BOF */ {
 	object can position itself.
 */
 
+export enum ButtonViewPosition
+{
+	Left,
+	Right,
+	Top,
+	Bottom,
+	Centre,
+}
+
 export interface ButtonViewDisplay
 {
 	id:string;
@@ -64,37 +73,14 @@ export class ButtonView extends Widget
 	// static cache: needs to be filled out just once; will contain the {icon:svg} pairs that can be used in the buttons
 	//private static ACTION_ICONS:Record<string, string> = {};
 
-	constructor(private position:string, private parentX:number, private parentY:number, private parentWidth:number, private parentHeight:number)
+	private isMacLike = false;
+
+	constructor(private position:ButtonViewPosition, private parentX:number, private parentY:number, private parentWidth:number, private parentHeight:number)
 	{
 		super();
+
+		this.isMacLike = !!navigator.platform.match(/(Mac|iPhone|iPod|iPad)/i);
 	}
-
-	// static: should be called before making use of buttons; does nothing if they are already defined
-	/* no longer necessary
-	public static prepare(callback:() => void)
-	{
-		// if we have no RPC server, but we do have a resource URL, they're going to be loaded on demand, one file at a time
-		if (RPC.BASE_URL == null && RPC.RESOURCE_URL != null) ButtonView.ACTION_ICONS = {};
-
-		if (ButtonView.ACTION_ICONS != null)
-		{
-			callback();
-			return;
-		}
-
-		let fcn = (result:any, error:ErrorRPC) =>
-		{
-			if (!result.actions)
-			{
-				alert('Fetching action icons failed: ' + error.message);
-				return;
-			}
-			ButtonView.ACTION_ICONS = result.actions;
-
-			callback();
-		};
-		Func.getActionIcons({}, fcn);
-	}*/
 
 	// for future reference, parent boundary size is different
 	public setParentSize(width:number, height:number):void
@@ -163,7 +149,7 @@ export class ButtonView extends Widget
 	public popBank():void
 	{
 		if (this.stack.length == 0) return;
-		this.stack[this.stack.length - 1].bankClosed();
+		Vec.last(this.stack).bankClosed();
 		this.stack.length--;
 
 		if (this.canvas != null)
@@ -259,23 +245,23 @@ export class ButtonView extends Widget
 		let w = this.width, h = this.height;
 		if (x < 0 || x > w || y < 0 || y > h) return false;
 
-		if (this.position == 'centre' || this.stack.length == 0) return true;
-		if (this.position == 'left')
+		if (this.position == ButtonViewPosition.Centre || this.stack.length == 0) return true;
+		if (this.position == ButtonViewPosition.Left)
 		{
 			let my = 0.5 * h - 1, gw = this.gripHeight, hg = 0.5 * this.gripWidth;
 			return x < w - gw || (y > my - hg && y < my + hg);
 		}
-		else if (this.position == 'right')
+		else if (this.position == ButtonViewPosition.Right)
 		{
 			let my = 0.5 * h - 1, gw = this.gripHeight, hg = 0.5 * this.gripWidth;
 			return x > gw || (y > my - hg && y < my + hg);
 		}
-		else if (this.position == 'top')
+		else if (this.position == ButtonViewPosition.Top)
 		{
 			let mx = 0.5 * w - 1, gh = this.gripHeight, hg = 0.5 * this.gripWidth;
 			return y < h - gh || (x > mx - hg && x < mx + hg);
 		}
-		else if (this.position == 'bottom')
+		else if (this.position == ButtonViewPosition.Bottom)
 		{
 			let mx = 0.5 * w - 1, gh = this.gripHeight, hg = 0.5 * this.gripWidth;
 			return y > gh || (x > mx - hg && x < mx + hg);
@@ -312,20 +298,20 @@ export class ButtonView extends Widget
 		{
 			this.width = 10;
 			this.height = 10;
-			if (this.position == 'left' || this.position == 'right') this.height = this.parentHeight;
-			else if (this.position == 'top' || this.position == 'bottom') this.width = this.parentWidth;
+			if (this.position == ButtonViewPosition.Left || this.position == ButtonViewPosition.Right) this.height = this.parentHeight;
+			else if (this.position == ButtonViewPosition.Top || this.position == ButtonViewPosition.Bottom) this.width = this.parentWidth;
 			return;
 		}
 
 		// it not raised, it shall be small, and have only a grip
 		if (!this.isRaised)
 		{
-			if (this.position == 'left' || this.position == 'right')
+			if (this.position == ButtonViewPosition.Left || this.position == ButtonViewPosition.Right)
 			{
 				this.width = this.gripHeight;
 				this.height = this.gripWidth + 2 * outPadding;
 			}
-			else if (this.position == 'top' || this.position == 'bottom')
+			else if (this.position == ButtonViewPosition.Top || this.position == ButtonViewPosition.Bottom)
 			{
 				this.width = this.gripWidth + 2 * outPadding;
 				this.height = this.gripHeight;
@@ -341,12 +327,12 @@ export class ButtonView extends Widget
 		// decide how much room the 'pop button' takes up
 		let popWidth = 0, popHeight = 0;
 		if (this.stack.length == 1) {}
-		else if (this.position == 'left' || this.position == 'right') popHeight = this.gripHeight + inPadding;
-		else if (this.position == 'top' || this.position == 'bottom') popWidth = this.gripHeight + inPadding;
+		else if (this.position == ButtonViewPosition.Left || this.position == ButtonViewPosition.Right) popHeight = this.gripHeight + inPadding;
+		else if (this.position == ButtonViewPosition.Top || this.position == ButtonViewPosition.Bottom) popWidth = this.gripHeight + inPadding;
 
 		// burn through layout possibilities, and keep the best one
 		let bestLayout:string[][] = null, bestScore:number = null;
-		if (this.position == 'left' || this.position == 'right')
+		if (this.position == ButtonViewPosition.Left || this.position == ButtonViewPosition.Right)
 		{
 			let maxSlotHeight = Math.floor((this.parentHeight - 2 * outPadding - inPadding /*- popHeight*/) / (this.idealSize + inPadding));
 			let minSlotHeight = Math.ceil(0.5 * maxSlotHeight);
@@ -365,7 +351,7 @@ export class ButtonView extends Widget
 				}
 			}
 		}
-		else if (this.position == 'top' || this.position == 'bottom')
+		else if (this.position == ButtonViewPosition.Top || this.position == ButtonViewPosition.Bottom)
 		{
 			let maxSlotWidth = Math.floor((this.parentWidth - 2 * outPadding - inPadding - popWidth) / (this.idealSize + inPadding));
 			let minSlotWidth = Math.ceil(0.5 * maxSlotWidth);
@@ -390,13 +376,13 @@ export class ButtonView extends Widget
 		this.width = 2 * outPadding + inPadding + (this.idealSize + inPadding) * ncols + popWidth;
 		this.height = 2 * outPadding + inPadding + (this.idealSize + inPadding) * nrows + popHeight;
 
-		if (this.position == 'left' || this.position == 'right') this.width += this.gripHeight;
-		else if (this.position == 'top' || this.position == 'bottom') this.height += this.gripHeight;
+		if (this.position == ButtonViewPosition.Left || this.position == ButtonViewPosition.Right) this.width += this.gripHeight;
+		else if (this.position == ButtonViewPosition.Top || this.position == ButtonViewPosition.Bottom) this.height += this.gripHeight;
 		this.addGripButton();
 
 		if (popWidth > 0 || popHeight > 0)
 		{
-			let d =
+			let d:ButtonViewDisplay =
 			{
 				'id': '!',
 				'x': outPadding + inPadding,
@@ -404,8 +390,8 @@ export class ButtonView extends Widget
 				'width': popWidth - inPadding,
 				'height': popHeight - inPadding
 			};
-			if (this.position == 'right') d.x += this.gripHeight;
-			else if (this.position == 'bottom') d.y += this.gripHeight;
+			if (this.position == ButtonViewPosition.Right) d.x += this.gripHeight;
+			else if (this.position == ButtonViewPosition.Bottom) d.y += this.gripHeight;
 			if (popWidth == 0) d.width = ncols * this.idealSize + inPadding * (ncols - 1);
 			if (popHeight == 0) d.height = nrows * this.idealSize + inPadding * (nrows - 1);
 			this.display.push(d);
@@ -419,8 +405,8 @@ export class ButtonView extends Widget
 				let b = bank.buttons[n], d:ButtonViewDisplay = {'id': b.id};
 				d.x = outPadding + inPadding + popWidth + (this.idealSize + inPadding) * x;
 				d.y = outPadding + inPadding + popHeight + (this.idealSize + inPadding) * y;
-				if (this.position == 'right') d.x += this.gripHeight;
-				else if (this.position == 'bottom') d.y += this.gripHeight;
+				if (this.position == ButtonViewPosition.Right) d.x += this.gripHeight;
+				else if (this.position == ButtonViewPosition.Bottom) d.y += this.gripHeight;
 				d.width = this.idealSize;
 				d.height = this.idealSize;
 				this.display.push(d);
@@ -431,31 +417,31 @@ export class ButtonView extends Widget
 	// if appropriate, adds a grip button, with a suitable position
 	private addGripButton():void
 	{
-		if (this.position == 'centre') return;
+		if (this.position == ButtonViewPosition.Centre) return;
 
 		let d:ButtonViewDisplay = {'id': '*'}, spc = 3;
-		if (this.position == 'left')
+		if (this.position == ButtonViewPosition.Left)
 		{
 			d.width = this.gripHeight - spc;
 			d.height = this.gripWidth - 2 * spc;
 			d.x = this.width - d.width - spc - 1;
 			d.y = 0.5 * (this.height - d.height);
 		}
-		else if (this.position == 'right')
+		else if (this.position == ButtonViewPosition.Right)
 		{
 			d.width = this.gripHeight - spc;
 			d.height = this.gripWidth - 2 * spc;
 			d.x = spc + 1;
 			d.y = 0.5 * (this.height - d.height);
 		}
-		else if (this.position == 'top')
+		else if (this.position == ButtonViewPosition.Top)
 		{
 			d.width = this.gripWidth - 2 * spc;
 			d.height = this.gripHeight - spc;
 			d.x = 0.5 * (this.width - d.width);
 			d.y = this.height - d.height - spc - 1;
 		}
-		else if (this.position == 'bottom')
+		else if (this.position == ButtonViewPosition.Bottom)
 		{
 			d.width = this.gripWidth - 2 * spc;
 			d.height = this.gripHeight - spc;
@@ -493,22 +479,22 @@ export class ButtonView extends Widget
 	private applyOffset():void
 	{
 		let x:number, y:number;
-		if (this.position == 'left')
+		if (this.position == ButtonViewPosition.Left)
 		{
 			x = 0;
 			y = 0.5 * (this.parentHeight - this.height);
 		}
-		else if (this.position == 'right')
+		else if (this.position == ButtonViewPosition.Right)
 		{
 			x = this.parentWidth - this.width;
 			y = 0.5 * (this.parentHeight - this.height);
 		}
-		else if (this.position == 'top')
+		else if (this.position == ButtonViewPosition.Top)
 		{
 			x = 0.5 * (this.parentWidth - this.width);
 			y = 0;
 		}
-		else if (this.position == 'bottom')
+		else if (this.position == ButtonViewPosition.Bottom)
 		{
 			x = 0.5 * (this.parentWidth - this.width);
 			y = this.parentHeight - this.height;
@@ -608,7 +594,11 @@ export class ButtonView extends Widget
 					if (b.mnemonic)
 					{
 						while (txt.endsWith('.')) txt = txt.substring(0, txt.length - 1);
-						txt += ' [' + b.mnemonic + ']';
+
+						let keyText = b.mnemonic;
+						let match = keyText.match(/^(.*)CmdOrCtrl(.*)$/);
+						if (match) keyText = match[1] + (this.isMacLike ? 'Cmd' : 'Ctrl') + match[2];
+						txt += ' [' + keyText + ']';
 					}
 					addTooltip(d.helpSpan, txt);
 				}
@@ -618,7 +608,7 @@ export class ButtonView extends Widget
 			if (b == null) {}
 			else if (b.imageFN != null && d.imgDOM == null)
 			{
-				d.imgDOM = dom('<img/>').appendTo(this.contentDOM).css({'position': 'absolute'});
+				d.imgDOM = dom('<img/>').appendTo(this.contentDOM).css({'position': 'absolute', 'pointer-events': 'none'});
 				d.imgDOM.setAttr('src', Theme.RESOURCE_URL + '/img/actions/' + b.imageFN + '.svg');
 				const sz = this.prefabImgSize;
 				const bx = d.x + Math.floor(0.5 * (d.width - sz));
@@ -682,15 +672,15 @@ export class ButtonView extends Widget
 
 				path = new Path2D();
 				let px:number[], py:number[], flip = this.isRaised;
-				if (this.position == 'left' || this.position == 'right')
+				if (this.position == ButtonViewPosition.Left || this.position == ButtonViewPosition.Right)
 				{
 					px = [0.2, 0.7, 0.7]; py = [0.5, 0.3, 0.7];
-					if (this.position == 'left') flip = !flip;
+					if (this.position == ButtonViewPosition.Left) flip = !flip;
 				}
-				else if (this.position == 'top' || this.position == 'bottom')
+				else if (this.position == ButtonViewPosition.Top || this.position == ButtonViewPosition.Bottom)
 				{
 					px = [0.5, 0.3, 0.7]; py = [0.2, 0.7, 0.7];
-					if (this.position == 'top') flip = !flip;
+					if (this.position == ButtonViewPosition.Top) flip = !flip;
 				}
 				if (flip) {px = [1 - px[0], 1 - px[1], 1 - px[2]]; py = [1 - py[0], 1 - py[1], 1 - py[2]];}
 				path.moveTo(d.x + d.width * px[0], d.y + d.height * py[0]);
@@ -769,11 +759,11 @@ export class ButtonView extends Widget
 	private traceOutline():Path2D
 	{
 		let w = this.width, h = this.height, uw = w - 1, uh = h - 1, r = 8;
-		if (this.position == 'centre' || this.stack.length == 0) return pathRoundedRect(0.5, 0.5, w - 0.5, h - 0.5, r);
+		if (this.position == ButtonViewPosition.Centre || this.stack.length == 0) return pathRoundedRect(0.5, 0.5, w - 0.5, h - 0.5, r);
 
 		let path = new Path2D();
 
-		if (this.position == 'left')
+		if (this.position == ButtonViewPosition.Left)
 		{
 			let my = 0.5 * h - 1, gw = this.gripHeight, hg = 0.5 * this.gripWidth;
 			path.moveTo(0.5, 0.5);
@@ -789,7 +779,7 @@ export class ButtonView extends Widget
 			path.bezierCurveTo(0.5 + uw - gw, 0.5 + uh, 0.5 + uw - gw, 0.5 + uh, 0.5 + uw - gw - r, 0.5 + uh);
 			path.lineTo(0.5, 0.5 + uh);
 		}
-		else if (this.position == 'right')
+		else if (this.position == ButtonViewPosition.Right)
 		{
 			let my = 0.5 * h - 1, gw = this.gripHeight, hg = 0.5 * this.gripWidth;
 			path.moveTo(w - 0.5, 0.5);
@@ -805,7 +795,7 @@ export class ButtonView extends Widget
 			path.bezierCurveTo(w - (0.5 + uw - gw), 0.5 + uh, w - (0.5 + uw - gw), 0.5 + uh, w - (0.5 + uw - gw - r), 0.5 + uh);
 			path.lineTo(w - 0.5, 0.5 + uh);
 		}
-		else if (this.position == 'top')
+		else if (this.position == ButtonViewPosition.Top)
 		{
 			let mx = 0.5 * w - 1, gh = this.gripHeight, hg = 0.5 * this.gripWidth;
 			path.moveTo(0.5, h - (0.5 + uh));
@@ -821,7 +811,7 @@ export class ButtonView extends Widget
 			path.bezierCurveTo(0.5 + uw, h - (0.5 + gh), 0.5 + uw, h - (0.5 + gh), 0.5 + uw, h - (0.5 + gh + r));
 			path.lineTo(0.5 + uw, h - (0.5 + uh));
 		}
-		else if (this.position == 'bottom')
+		else if (this.position == ButtonViewPosition.Bottom)
 		{
 			let mx = 0.5 * w - 1, gh = this.gripHeight, hg = 0.5 * this.gripWidth;
 			path.moveTo(0.5, 0.5 + uh);
@@ -1038,20 +1028,6 @@ export class ButtonView extends Widget
 		// (do something?)
 
 		//event.stopPropagation();
-	}
-
-	// a rather unfortunate hack: raw files from the action button directory have to be patched up so that the viewbox
-	// defines the correct dimensions; this works for SVG files that are edited with inkscape (which these are); it would be
-	// nice to replace this with a better system at some point, but for now it works
-	private fixSVGFile(svg:string):string
-	{
-		svg = svg.substring(svg.indexOf('<svg')); // remove the header fluff
-		let iw = svg.indexOf('width="'), ih = svg.indexOf('height="');
-		if (iw < 0 || ih < 0) return svg;
-		let w = parseInt(svg.substring(iw + 7, svg.indexOf('"', iw + 7)));
-		let h = parseInt(svg.substring(ih + 8, svg.indexOf('"', ih + 8)));
-		svg = '<svg viewBox="0 0 ' + w + ' ' + h + '"' + svg.substring(svg.indexOf('>'));
-		return svg;
 	}
 }
 
