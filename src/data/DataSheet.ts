@@ -214,6 +214,7 @@ export class DataSheet
 	public deleteExtension(idx:number):void
 	{
 		this.data.extData.splice(idx, 1);
+		this.data.numExtens--;
 	}
 	public colName(col:number):string
 	{
