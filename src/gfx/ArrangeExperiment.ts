@@ -153,6 +153,7 @@ export class ArrangeExperiment
 				}
 				if (xc.text)
 				{
+					if (MolUtil.notBlank(xc.mol)) h += 0.5 * fszText;
 					xc.fszText = fszText;
 					let wad = this.measure.measureText(xc.text, fszText);
 					w = Math.max(w, wad[0]);

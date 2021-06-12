@@ -46,6 +46,7 @@ export class EditCompound extends Dialog
 	}
 
 	public getMolecule():Molecule {return this.sketcher.getMolecule();}
+	public getSketcher():Sketcher {return this.sketcher;}
 
 	public defineClipboard(proxy:ClipboardProxy):void
 	{
@@ -69,7 +70,7 @@ export class EditCompound extends Dialog
 	public defineContext(proxy:MenuProxy):void
 	{
 		this.proxyMenu = proxy;
-		this.sketcher.defineContext(proxy);
+		this.sketcher.defineContext(this.proxyMenu);
 	}
 
 	public close():void

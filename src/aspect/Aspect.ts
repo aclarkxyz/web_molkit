@@ -85,6 +85,10 @@ export abstract class Aspect
 	// accommodate data from the new one; various header settings and columns must be modified as necessary
 	public aspectUnion(other:Aspect):void {}
 
+	// provides an opportunity to carry out modifications on a newly added row, which is intended to represent a new unit entity - the aspect may need
+	// to setup some defaults
+	public initiateNewRow(row:number):void {}
+
 	// rendering:
 	//		an aspect may optionally volunteer to provide some static visualisation data to describe itself; this balances
 	//		out against the aspect's ability to reserve columns, which typically means that they will not be displayed; the

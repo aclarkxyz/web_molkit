@@ -668,6 +668,12 @@ export class Experiment extends Aspect
 	public rowFirstBlock(row:number):boolean {return this.isFirstStep(row);}
 	public rowBlockCount(row:number):number {return this.numberOfSteps(row);}
 
+	public initiateNewRow(row:number):void
+	{
+		let curTime = new Date().getTime() * 1E-3;
+		this.ds.setReal(row, Experiment.COLNAME_EXPERIMENT_CREATEDATE, curTime);
+	}
+
 	public isColumnReserved(colName:string):boolean
 	{
 		return this.areColumnsReserved([colName])[0];

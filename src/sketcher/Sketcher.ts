@@ -1119,10 +1119,9 @@ export class Sketcher extends DrawCanvas
 		if (this.commandView != null && this.commandView.topBank.claimKey(event)) {event.preventDefault(); return;}
 		if (this.templateView != null && this.templateView.topBank.claimKey(event)) {event.preventDefault(); return;}*/
 	}
-	private keyDown(event:KeyboardEvent):boolean
+	private keyDown(event:KeyboardEvent):void
 	{
 		let key = event.key;
-		//console.log('DOWN: key='+key);
 
 		// special deal for the escape key: if any bank needs to be popped, consume it
 		if (key == KeyCode.Escape)
@@ -1131,14 +1130,15 @@ export class Sketcher extends DrawCanvas
 			{
 				view.popBank();
 				event.preventDefault();
-				return false;
+				event.stopPropagation();
+				return;
 			}
 		}
 
-		//console.log('Keycode:[' + event.keyCode + '] Key:[' + event.key + ']');
-
 		let mod = (event.shiftKey ? 'S' : '') + (event.ctrlKey || event.metaKey ? 'C' : '') + (event.altKey ? 'A' : ''); // (meta==cmd on mac; alt=opt on mac)
 		let nomod = !event.shiftKey && !event.ctrlKey && !event.altKey && !event.metaKey;
+
+		//console.log(`Sketcher/Key:${key} Mod:${mod}`);
 
 		if (key == KeyCode.Enter) this.editCurrent();
 		else if (key == KeyCode.Left && nomod) this.hitArrowKey(-1, 0);
@@ -1160,10 +1160,13 @@ export class Sketcher extends DrawCanvas
 		else if (key == '5' && mod == 'CA') this.createRing(5, true);
 		else if (key == '6' && mod == 'CA') this.createRing(6, true);
 		else if (key == '7' && mod == 'CA') this.createRing(7, true);
-		else return true; // allow the key to percolate upward
+		else if (key == 'c' && mod == 'C' && this.proxyClip) this.proxyClip.triggerCopy(false);
+		else if (key == 'x' && mod == 'C' && this.proxyClip) this.proxyClip.triggerCopy(true);
+		else if (key == 'v' && mod == 'C' && this.proxyClip && this.proxyClip.canAlwaysGet()) this.proxyClip.triggerPaste();
+		else return; // allow the key to percolate upward
 
 		event.preventDefault();
-		return false;
+		event.stopPropagation();
 	}
 	private keyUp(event:KeyboardEvent):void
 	{

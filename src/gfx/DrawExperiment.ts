@@ -90,7 +90,7 @@ export class DrawExperiment
 			/* !! text has to be wrapped: need features for this, in some static module...
 			if (tsz.width>limitBounds.width) tsz=textSizeWithin(xc.text,fontText,limitBounds,NSLineBreakByCharWrapping);
 			... in DrawUtil	*/
-			vg.drawText(bx + 0.5 * bw, by + bh, xc.text, xc.fszText, policy.data.foreground, TextAlign.Bottom | TextAlign.Centre);
+			vg.drawText(bx + 0.5 * bw, by + bh, xc.text, xc.fszText, policy.data.foreground, TextAlign.Centre | TextAlign.Bottom);
 			bh -= wad[1] + wad[2];
 		}
 
