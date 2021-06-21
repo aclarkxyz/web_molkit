@@ -55,12 +55,6 @@ export function addText(parent:any, text:string)
 	el.appendChild(document.createTextNode(text));
 }
 
-// convenience wrapper
-export function setVisible(node:any, visible:boolean)
-{
-	if (visible) $(node).show(); else $(node).hide();
-}
-
 // convenience function for adding the plural modifier, i.e. "1 thing" vs "N things"
 export function plural(count:number):string
 {

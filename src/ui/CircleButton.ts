@@ -193,6 +193,8 @@ export class CircleButton extends Widget
 	// switches the layers on or off depending on the state
 	private updateLayers()
 	{
+		let setVisible = (canvas:HTMLCanvasElement, visible:boolean) => canvas.style.display = visible ? 'block' : 'none';
+
 		setVisible(this.pressedBackgr, this.isPressed);
 		setVisible(this.normalBackgr, !this.isPressed && this.state == STATE_NORMAL);
 		setVisible(this.selectedBackgr, !this.isPressed && this.state == STATE_SELECTED);

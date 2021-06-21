@@ -160,7 +160,7 @@ export class ArrangeExperiment
 					h += wad[1] + wad[2];
 				}
 				if (xc.annot != 0) w += ArrangeExperiment.COMP_ANNOT_SIZE * this.scale;
-				if (this.includeBlank || w == 0 || h == 0)
+				if ((MolUtil.isBlank(xc.mol) && !xc.text && this.includeBlank) || w == 0 || h == 0)
 				{
 					w = Math.max(w, PLACEHOLDER_W * this.scale);
 					h = Math.max(h, PLACEHOLDER_H * this.scale);

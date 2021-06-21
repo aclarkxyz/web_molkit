@@ -1145,6 +1145,8 @@ export class Sketcher extends DrawCanvas
 		else if (key == KeyCode.Right && nomod) this.hitArrowKey(1, 0);
 		else if (key == KeyCode.Up && nomod) this.hitArrowKey(0, 1);
 		else if (key == KeyCode.Down && nomod) this.hitArrowKey(0, -1);
+		else if (key == 'z' && mod == 'C') this.performUndo();
+		else if (key == 'Z' && mod == 'SC') this.performRedo();
 		else if (key == 'z' && nomod) this.toolView.cycleSelected(-1);
 		else if (key == 'x' && nomod) this.toolView.cycleSelected(1);
 		else if (this.toolView != null && this.toolView.topBank.claimKey(event)) {}

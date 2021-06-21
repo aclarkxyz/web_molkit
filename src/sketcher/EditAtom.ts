@@ -31,7 +31,7 @@ export class EditAtom extends Dialog
 
 	private initMol:Molecule;
 	private btnApply:DOM;
-	private tabs:TabBar;
+	private tabs:TabBar = null;
 
 	private inputSymbol:DOM;
 	private inputCharge:DOM;
@@ -81,20 +81,27 @@ export class EditAtom extends Dialog
 		this.btnApply = dom('<button class="wmk-button wmk-button-primary">Apply</button>').appendTo(buttons).css({'margin-left': '0.5em'});
 		this.btnApply.onClick(() => this.applyChanges());
 
-		this.tabs = new TabBar(['Atom', 'Abbreviation', 'Geometry', 'Query', 'Extra']);
-		this.tabs.render(body);
-		this.tabs.callbackSelect = (idx) =>
+		if (this.atom > 0)
 		{
-			if (idx == 0) this.inputSymbol.grabFocus();
-			else if (idx == 1) this.inputAbbrevSearch.grabFocus();
-			else if (idx == 2) this.inputGeom1.grabFocus();
-		};
+			this.tabs = new TabBar(['Atom', 'Abbreviation', 'Geometry', 'Query', 'Extra']);
+			this.tabs.render(body);
+			this.tabs.callbackSelect = (idx) =>
+			{
+				if (idx == 0) this.inputSymbol.grabFocus();
+				else if (idx == 1) this.inputAbbrevSearch.grabFocus();
+				else if (idx == 2) this.inputGeom1.grabFocus();
+			};
 
-		this.populateAtom(this.tabs.getPanelDOM('Atom'));
-		this.populateAbbreviation(this.tabs.getPanelDOM('Abbreviation'));
-		this.populateGeometry(this.tabs.getPanelDOM('Geometry'));
-		this.populateQuery(this.tabs.getPanelDOM('Query'));
-		this.populateExtra(this.tabs.getPanelDOM('Extra'));
+			this.populateAtom(this.tabs.getPanelDOM('Atom'));
+			this.populateAbbreviation(this.tabs.getPanelDOM('Abbreviation'));
+			if (this.atom > 0) this.populateGeometry(this.tabs.getPanelDOM('Geometry'));
+			this.populateQuery(this.tabs.getPanelDOM('Query'));
+			this.populateExtra(this.tabs.getPanelDOM('Extra'));
+		}
+		else
+		{
+			this.populateAtom(body);
+		}
 
 		let focusable = body.findAll('input,textarea');
 		if (focusable.length > 0) focusable[0].grabFocus(true);
@@ -125,10 +132,11 @@ export class EditAtom extends Dialog
 		this.mol.keepTransient = true;
 
 		this.updateMolecule();
-		if (this.tabs.getSelectedValue() == 'Abbreviation') this.updateAbbrev();
-		if (this.tabs.getSelectedValue() == 'Geometry') this.updateGeometry();
-		if (this.tabs.getSelectedValue() == 'Query') this.updateQuery();
-		if (this.tabs.getSelectedValue() == 'Extra') this.updateExtra();
+		let selTab = this.tabs ? this.tabs.getSelectedValue() : null;
+		if (selTab == 'Abbreviation') this.updateAbbrev();
+		if (selTab == 'Geometry') this.updateGeometry();
+		if (selTab == 'Query') this.updateQuery();
+		if (selTab == 'Extra') this.updateExtra();
 
 		this.mol.keepTransient = false;
 
@@ -470,7 +478,7 @@ export class EditAtom extends Dialog
 
 			// see if the current abbreviation matches anything
 			const {mol, atom} = this;
-			if (MolUtil.hasAbbrev(mol, atom))
+			if (atom > 0 && MolUtil.hasAbbrev(mol, atom))
 			{
 				let name = mol.atomElement(atom), mf = MolUtil.molecularFormula(MolUtil.getAbbrev(mol, atom));
 				for (let n = 0; n < this.abbrevList.length; n++) if (name == this.abbrevList[n].name)

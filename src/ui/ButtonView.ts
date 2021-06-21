@@ -275,7 +275,8 @@ export class ButtonView extends Widget
 		return this.gripHeight;
 	}
 
-	// returns the minimum size (either width or height) given a particular number of buttons, not including grip widgets
+	// returns the minimum size (either width or height depending on orientation) given a particular number of buttons in the aligning direction, not
+	// including grip widgets
 	public sizeForButtons(nbtn:number):number
 	{
 		return this.idealSize * nbtn + this.inPadding * (nbtn - 1) + 2 * this.outPadding;

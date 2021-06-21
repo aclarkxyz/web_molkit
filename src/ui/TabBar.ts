@@ -18,7 +18,7 @@ namespace WebMolKit /* BOF */ {
 
 export class TabBar extends Widget
 {
-	private unionHeight = false; // if true, height of tab bar will be set to the maximum of all components
+	public unionHeight = false; // if true, height of tab bar will be set to the maximum of all components
 
 	private selidx = 0;
 	private buttonDiv:DOM[] = [];
@@ -108,6 +108,10 @@ export class TabBar extends Widget
 	{
 		if (this.selidx == idx) return;
 		this.selidx = idx;
+
+		let dom = this.contentDOM;
+		dom.setCSS('min-width', `${dom.width()}px`);
+		
 		this.updateButtons();
 	}
 	public setSelectedValue(val:string):void
