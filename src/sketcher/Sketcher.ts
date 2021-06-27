@@ -469,11 +469,7 @@ export class Sketcher extends DrawCanvas
 		if (this.proxyClip && this.proxyClip.canAlwaysGet())
 		{
 			let txt = this.proxyClip.getString();
-			if (txt != null)
-			{
-				let mol = MoleculeStream.readUnknown(txt);
-				if (mol) this.pasteMolecule(mol);
-			}
+			this.pasteText(txt);
 		}
 	}
 
@@ -514,6 +510,19 @@ export class Sketcher extends DrawCanvas
 	public pasteText(str:string):void
 	{
 		let mol = MoleculeStream.readUnknown(str);
+		if (!mol)
+		{
+			let ds = DataSheetStream.readXML(str);
+			if (ds)
+			{
+				outer: for (let r = 0; r < ds.numRows; r++) for (let c = 0; c < ds.numCols; c++) if (ds.colType(c) == DataSheetColumn.Molecule && ds.notNull(r, c))
+				{
+					mol = ds.getMolecule(r, c);
+					break outer;
+				}
+			}
+		}
+
 		if (mol != null) this.pasteMolecule(mol);
 		else alert('Text from clipboard is not a valid molecule.');
 	}
@@ -728,9 +737,8 @@ export class Sketcher extends DrawCanvas
 	// response to some mouse event: hovering cursor restated
 	private updateHoverCursor(x:number, y:number):void
 	{
-		let tool = 'finger';
-		if (this.toolView != null) tool = this.toolView.selectedButton;
-		let toolApplies = tool != 'finger' && tool != 'pan' && tool != 'zoom' && tool != 'rotate';
+		let tool = this.toolView ? this.toolView.selectedButton : '';
+		let toolApplies = tool && tool != ToolBankItem.Pan && tool != ToolBankItem.Rotate;
 
 		let mouseObj = 0;
 
@@ -1038,6 +1046,8 @@ export class Sketcher extends DrawCanvas
 		event.stopPropagation();
 		event.preventDefault();
 
+		if (this.toolView.selectedButton != ToolBankItem.Arrow) return;
+
 		let xy = eventCoords(event, this.container);
 		let clickObj = this.pickObject(xy[0], xy[1]);
 		if (clickObj > 0)
@@ -1262,10 +1272,10 @@ export class Sketcher extends DrawCanvas
 		this.opCtrl = ctrlKey;
 		this.opAlt = altKey;
 
-		let tool = 'finger';
+		let tool = '';
 		if (this.toolView != null) tool = this.toolView.selectedButton;
 
-		if (tool == 'arrow')
+		if (tool == ToolBankItem.Arrow)
 		{
 			// special key modifiers for the arrow tool:
 			//		CTRL: open context menu
@@ -1286,69 +1296,69 @@ export class Sketcher extends DrawCanvas
 				this.dragType = DraggingTool.Zoom;
 			}
 		}
-		else if (tool == 'rotate')
+		else if (tool == ToolBankItem.Rotate)
 		{
 			this.dragType = DraggingTool.Rotate;
 			this.toolRotateIncr = this.opShift ? 0 : 15 * DEGRAD;
 		}
-		else if (tool == 'pan')
+		else if (tool == ToolBankItem.Pan)
 		{
 			this.dragType = DraggingTool.Pan;
 		}
-		else if (tool == 'drag')
+		else if (tool == ToolBankItem.Drag)
 		{
 			this.dragType = DraggingTool.Move;
 			if (this.opAtom > 0) this.dragGuides = this.determineMoveGuide();
 			this.delayedRedraw();
 		}
-		else if (tool == 'erasor')
+		else if (tool == ToolBankItem.Erasor)
 		{
 			this.dragType = DraggingTool.Erasor;
 			this.lassoX = [x];
 			this.lassoY = [y];
 			this.lassoMask = [];
 		}
-		else if (tool == 'ringAliph')
+		else if (tool == ToolBankItem.RingAliph)
 		{
 			this.dragType = DraggingTool.Ring;
 			this.toolRingArom = false;
 			this.toolRingFreeform = this.opShift;
 		}
-		else if (tool == 'ringArom')
+		else if (tool == ToolBankItem.RingArom)
 		{
 			this.dragType = DraggingTool.Ring;
 			this.toolRingArom = true;
 			this.toolRingFreeform = this.opShift;
 		}
-		else if (tool == 'atomPlus')
+		else if (tool == ToolBankItem.AtomPlus)
 		{
 			this.dragType = DraggingTool.Charge;
 			this.toolChargeDelta = 1;
 		}
-		else if (tool == 'atomMinus')
+		else if (tool == ToolBankItem.AtomMinus)
 		{
 			this.dragType = DraggingTool.Charge;
 			this.toolChargeDelta = -1;
 		}
-		else if (tool.startsWith('bond'))
+		else if (tool.startsWith(ToolBankItem.BondPfx))
 		{
 			this.dragType = DraggingTool.Bond;
 			this.toolBondOrder = 1;
 			this.toolBondType = Molecule.BONDTYPE_NORMAL;
 
-			if (tool == 'bondOrder0') this.toolBondOrder = 0;
-			else if (tool == 'bondOrder2') this.toolBondOrder = 2;
-			else if (tool == 'bondOrder3') this.toolBondOrder = 3;
-			else if (tool == 'bondUnknown') this.toolBondType = Molecule.BONDTYPE_UNKNOWN;
-			else if (tool == 'bondInclined') this.toolBondType = Molecule.BONDTYPE_INCLINED;
-			else if (tool == 'bondDeclined') this.toolBondType = Molecule.BONDTYPE_DECLINED;
+			if (tool == ToolBankItem.BondOrder0) this.toolBondOrder = 0;
+			else if (tool == ToolBankItem.BondOrder2) this.toolBondOrder = 2;
+			else if (tool == ToolBankItem.BondOrder3) this.toolBondOrder = 3;
+			else if (tool == ToolBankItem.BondUnknown) this.toolBondType = Molecule.BONDTYPE_UNKNOWN;
+			else if (tool == ToolBankItem.BondInclined) this.toolBondType = Molecule.BONDTYPE_INCLINED;
+			else if (tool == ToolBankItem.BondDeclined) this.toolBondType = Molecule.BONDTYPE_DECLINED;
 
 			this.dragGuides = this.determineDragGuide(this.toolBondOrder);
 		}
-		else if (tool.startsWith('element'))
+		else if (tool.startsWith(ToolBankItem.ElementPfx))
 		{
 			this.dragType = DraggingTool.Atom;
-			this.toolAtomSymbol = tool.substring(7);
+			this.toolAtomSymbol = tool.substring(ToolBankItem.ElementPfx.length);
 			this.dragGuides = this.determineDragGuide(1);
 		}
 	}

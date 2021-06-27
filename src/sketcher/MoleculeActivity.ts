@@ -574,9 +574,13 @@ export class MoleculeActivity
 
 		this.output.mol = this.input.mol.clone();
 
-		// when there's no subject, this is an add-atom operation
-		if (this.subjectLength == 0)
+		if (this.output.mol.numAtoms == 0)
 		{
+			this.output.mol.addAtom(element, 0, 0);
+		}
+		else if (this.subjectLength == 0)
+		{
+			// when there's no subject, this is an add-atom operation
 			if (positionX != null && positionY != null)
 				this.output.mol.addAtom(element, positionX, positionY);
 			else

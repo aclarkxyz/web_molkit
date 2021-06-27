@@ -2422,13 +2422,15 @@ export class ArrangeMolecule
 
 		interface Bracket
 		{
-			a1?:number;
-			a2?:number;
+			a1?:number; // in-block atom
+			a2?:number; // out-block atom
 			x1?:number;
 			y1?:number;
 			x2?:number;
 			y2?:number;
-			shared?:boolean;
+			shared?:boolean; // bond is shared with a block coming from the other direction
+			nestOrder?:number; // if bond is nested within more than one block, nest/count stored information
+			nestCount?:number; // ... on how to render them non-overlapping
 		}
 		let brackets:Bracket[] = [];
 
@@ -2447,12 +2449,22 @@ export class ArrangeMolecule
 			bracket.y1 = mol.atomY(bracket.a1);
 			bracket.x2 = mol.atomX(bracket.a2);
 			bracket.y2 = mol.atomY(bracket.a2);
+			
 			bracket.shared = false;
 			for (let other of allUnits) if (unit !== other && other.atoms.includes(bracket.a2))
 			{
 				bracket.shared = true;
 				break;
 			}
+
+			let nestings = allUnits.filter((look) => look === unit || (look.atoms.includes(bracket.a1) && !look.atoms.includes(bracket.a2)));
+			if (nestings.length > 1)
+			{
+				nestings.sort((u1, u2) => u1.atoms.length - u2.atoms.length);
+				for (let i = 0; i < nestings.length; i++) if (nestings[i] === unit) bracket.nestOrder = i;
+				bracket.nestCount = nestings.length;
+			}
+
 			brackets.push(bracket);
 		}
 
@@ -2500,6 +2512,12 @@ export class ArrangeMolecule
 				x2 -= (x2 - x1) * 0.1;
 				y2 -= (y2 - y1) * 0.1;
 			}
+			if (bracket.nestCount > 1)
+			{
+				let dx = x2 - x1, dy = y2 - y1, fract = (bracket.nestOrder + 1) / bracket.nestCount;
+				x2 = x1 + dx * fract;
+				y2 = y1 + dy * fract;
+			}
 			let mx = 0.5 * (x1 + x2), my = 0.5 * (y1 + y2);
 			if (isLinear)
 			{
@@ -2531,8 +2549,6 @@ export class ArrangeMolecule
 
 			if (n == tagidx)
 			{
-				let modShared = bracket.shared ? 0.5 * this.scale : 0;
-
 				let xx:number, yy:number;
 				if (bracket.shared)
 					[xx, yy] = [px2 - 0.5 * this.scale * ox, py2 - 0.5 * this.scale * oy];
