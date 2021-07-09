@@ -662,7 +662,7 @@ export class Sketcher extends DrawCanvas
 	}
 
 	// locates a molecular object at the given position: returns N for atom, -N for bond, 0 for nothing, or null for not-on-canvas (e.g. button banks)
-	private pickObjectCanvas(x:number, y:number):number
+	protected pickObjectCanvas(x:number, y:number):number
 	{
 		if (this.layout == null) return 0;
 
@@ -683,55 +683,7 @@ export class Sketcher extends DrawCanvas
 			if (this.templateView.withinOutline(x + pos1.x - pos2.x, y + pos1.y - pos2.y)) return null;
 		}
 
-		// proceed with atoms & bonds
-
-		let limitDist = 0.5 * this.pointScale;
-		let bestItem = 0, bestScore = Number.POSITIVE_INFINITY;
-
-		// look for close atoms
-		for (let n = 0; n < this.layout.numPoints(); n++)
-		{
-			let p = this.layout.getPoint(n);
-			if (p.anum == 0) continue;
-
-			let dx = Math.abs(x - p.oval.cx), dy = Math.abs(y - p.oval.cy);
-			let dsq = norm2_xy(dx, dy);
-			let limitDSQ = sqr(Math.max(limitDist, Math.max(p.oval.rw, p.oval.rh)));
-			if (dsq > limitDSQ) continue;
-			if (dsq < bestScore)
-			{
-				bestItem = p.anum;
-				bestScore = dsq;
-			}
-		}
-		if (bestItem != 0) return bestItem;
-
-		// look for close bonds
-		for (let n = 0; n < this.layout.numLines(); n++)
-		{
-			let l = this.layout.getLine(n);
-			if (l.bnum == 0) continue;
-
-			let x1 = l.line.x1, y1 = l.line.y1;
-			let x2 = l.line.x2, y2 = l.line.y2;
-
-			if (x < Math.min(x1, x2) - limitDist || y < Math.min(y1, y2) - limitDist ||
-				x > Math.max(x1, x2) + limitDist || y > Math.max(y1, y2) + limitDist) continue;
-
-			let dist = GeomUtil.pointLineSegDistance(x, y, x1, y1, x2, y2);
-			if (dist > limitDist) continue;
-			if (dist < bestScore)
-			{
-				bestItem = -l.bnum;
-				bestScore = dist;
-			}
-		}
-
-		return bestItem;
-	}
-	private pickObject(x:number, y:number):number
-	{
-		return this.pickObjectCanvas(x, y) || 0;
+		return super.pickObjectCanvas(x, y);
 	}
 
 	// response to some mouse event: hovering cursor restated
@@ -1353,7 +1305,24 @@ export class Sketcher extends DrawCanvas
 			else if (tool == ToolBankItem.BondInclined) this.toolBondType = Molecule.BONDTYPE_INCLINED;
 			else if (tool == ToolBankItem.BondDeclined) this.toolBondType = Molecule.BONDTYPE_DECLINED;
 
-			this.dragGuides = this.determineDragGuide(this.toolBondOrder);
+			// drag-from-bond is only a thing when polymers are involved
+			if (this.opBond > 0)
+			{
+				let [bfr, bto] = this.mol.bondFromTo(this.opBond), inPoly = false;
+				for (let poly of new PolymerBlock(this.mol).getUnits())
+				{
+					let in1 = poly.atoms.includes(bfr), in2 = poly.atoms.includes(bto);
+					if ((in1 && !in2) || (in2 && !in1)) {inPoly = true; break;}
+				}
+				if (inPoly)
+				{
+					this.toolBondOrder = 0;
+					this.toolBondType = Molecule.BONDTYPE_NORMAL;
+				}
+				else this.opBond = 0;
+			}
+
+			if (this.opBond == 0) this.dragGuides = this.determineDragGuide(this.toolBondOrder);
 		}
 		else if (tool.startsWith(ToolBankItem.ElementPfx))
 		{
@@ -1665,7 +1634,7 @@ export class Sketcher extends DrawCanvas
 		{
 			let x2 = this.mouseX, y2 = this.mouseY;
 			let snapTo = this.snapToGuide(x2, y2);
-			if (snapTo != null) {x2 = snapTo[0]; y2 = snapTo[1];}
+			if (snapTo != null) [x2, y2] = snapTo;
 
 			let param:any =
 			{
@@ -1689,7 +1658,19 @@ export class Sketcher extends DrawCanvas
 		{
 			let x2 = this.mouseX, y2 = this.mouseY;
 			let snapTo = this.snapToGuide(x2, y2);
-			if (snapTo != null) {x2 = snapTo[0]; y2 = snapTo[1];}
+			if (snapTo != null) 
+			{
+				[x2, y2] = snapTo;
+				if (this.opBond > 0)
+				{				
+					let toObj = this.pickObject(x2, y2, {'noAtoms': true});
+					if (toObj < 0) 
+					{
+						this.connectPolymerBlock(this.opBond, -toObj);
+						return;
+					}
+				}
+			}
 
 			let param:any =
 			{
@@ -1757,6 +1738,57 @@ export class Sketcher extends DrawCanvas
 
 			//console.log('DRAGFILE['+n+']: ' + files[n].name+',sz='+files[n].size+',type='+files[n].type);
 		}
+	}
+
+	// special case when dragging a 0-order bond between two atoms in a polymer block: add to the opt-in naming list rather than making a bond
+	private connectPolymerBlock(bond1:number, bond2:number):boolean
+	{
+		let [atomIn1, atomOut1] = this.mol.bondFromTo(bond1), [atomIn2, atomOut2] = this.mol.bondFromTo(bond2);
+	
+		let state = this.getState();
+		let polymer = new PolymerBlock(state.mol);
+
+		let poly1:PolymerBlockUnit = null, poly2:PolymerBlockUnit = null;
+		let highName = 0;
+		for (let poly of polymer.getUnits())
+		{
+			if (!poly1 || poly.atoms.length < poly1.atoms.length)
+			{
+				let ina = poly.atoms.includes(atomIn1), inb = poly.atoms.includes(atomOut1);
+				if (ina && !inb) poly1 = poly;
+				else if (inb && !ina) [poly1, atomIn1, atomOut1] = [poly, atomOut1, atomIn1];
+			}
+			if (!poly2 || poly.atoms.length < poly2.atoms.length)
+			{
+				let ina = poly.atoms.includes(atomIn2), inb = poly.atoms.includes(atomOut2);
+				if (ina && !inb) poly2 = poly;
+				else if (inb && !ina) [poly2, atomIn2, atomOut2] = [poly, atomOut2, atomIn2];
+			}
+			
+			for (let nameList of poly.atomName.values()) highName = Math.max(highName, Vec.max(nameList));
+		}
+		if (!poly1 || !poly2) return false;
+
+		//console.log('BONDS:'+[bond1,bond2]+' ATOMS:'+[atomIn1,atomOut1]+' '+[atomIn2,atomOut2]);
+
+		let name1 = Vec.first(poly1.atomName.get(atomIn1));
+		if (!name1)
+		{
+			name1 = ++highName;
+			poly1.atomName.set(atomIn1, [name1]);
+		}
+		let name2 = Vec.first(poly2.atomName.get(atomIn2));
+		if (!name2)
+		{
+			name2 = ++highName;
+			poly2.atomName.set(atomIn2, [name2]);
+		}
+
+		poly1.bondIncl.set(bond1, Vec.append(poly1.bondIncl.get(bond1), name2));
+		poly2.bondIncl.set(bond2, Vec.append(poly2.bondIncl.get(bond2), name1));
+
+		polymer.rewriteMolecule();
+		this.setState(state);
 	}
 }
 

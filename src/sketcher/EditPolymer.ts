@@ -16,6 +16,10 @@ namespace WebMolKit /* BOF */ {
 	Editing a new or existing polymer block.
 */
 
+const CHAR_a = 'a'.charCodeAt(0), CHAR_A = 'A'.charCodeAt(0);
+function indexToAtomLabel(idx:number):string {return String.fromCharCode(CHAR_A + Math.min(26, Math.max(0, idx)) - 1);}
+function indexToBondLabel(idx:number):string {return String.fromCharCode(CHAR_a + Math.min(26, Math.max(0, idx)) - 1);}
+
 export class EditPolymer extends Dialog
 {
 	public mol:Molecule; // copy of original: may or may not be different
@@ -156,8 +160,9 @@ export class EditPolymer extends Dialog
 		for (let n = 0; n < this.borderAtoms.length; n++)
 		{
 			row++;
-			let label = (n == 0 ? 'Name ' : '') + (n + 1);
-			dom('<div/>').appendTo(grid).css({'grid-area': `${row} / col0`, 'text-align': 'right', 'padding-right': '0.5em'}).setText(label);
+			let domLabel = dom('<div/>').appendTo(grid).css({'grid-area': `${row} / col0`, 'text-align': 'right', 'padding-right': '0.5em'});
+			if (n == 0) domLabel.setText('Name ');
+			dom('<span/>').appendTo(domLabel).css({'color': '#008000'}).setText(indexToAtomLabel(n + 1));
 			let input = dom('<input size="20"/>').appendTo(dom('<div/>').appendTo(grid).css({'grid-area': `${row} / col1 / auto / end`, 'width': '100%'}));
 
 			let atom = this.borderAtoms[n];
@@ -172,8 +177,9 @@ export class EditPolymer extends Dialog
 		for (let n = 0; n < this.outAtoms.length; n++)
 		{
 			row++;
-			let label = (n == 0 ? 'Link ' : '') + (n + 1);
-			dom('<div/>').appendTo(grid).css({'grid-area': `${row} / col0`, 'text-align': 'right', 'padding-right': '0.5em'}).setText(label);
+			let domLabel = dom('<div/>').appendTo(grid).css({'grid-area': `${row} / col0`, 'text-align': 'right', 'padding-right': '0.5em'});
+			if (n == 0) domLabel.setText('Link ');
+			dom('<span/>').appendTo(domLabel).css({'color': '#800080'}).setText(indexToBondLabel(n + 1));
 			dom('<div/>').appendTo(grid).css({'grid-area': `${row} / col1`}).setText('Include');
 			let inputIncl = dom('<input size="10"/>').appendTo(dom('<div/>').appendTo(grid).css({'grid-area': `${row} / col2`, 'width': '100%'}));
 			dom('<div/>').appendTo(grid).css({'grid-area': `${row} / col3`}).setText('Exclude');
@@ -319,9 +325,9 @@ export class EditPolymer extends Dialog
 			let bidx = borderAtoms.indexOf(n), oidx = outAtoms.indexOf(n);
 			if (bidx >= 0)
 			{
-				effects.atomDecoText[n - 1] = (bidx + 1).toString();
+				effects.atomDecoText[n - 1] = indexToAtomLabel(bidx + 1); //(bidx + 1).toString();
 				effects.atomDecoCol[n - 1] = 0x008000;
-				effects.atomDecoSize[n - 1] = 0.3;
+				effects.atomDecoSize[n - 1] = 0.5;
 			}
 			if (oidx >= 0)
 			{
@@ -330,9 +336,9 @@ export class EditPolymer extends Dialog
 				umol.setAtomIsotope(n, 0);
 				effects.atomCircleSz[n - 1] = 0.1;
 				effects.atomCircleCol[n - 1] = 0xFF00FF;
-				effects.atomDecoText[n - 1] = (oidx + 1).toString();
+				effects.atomDecoText[n - 1] = indexToBondLabel(oidx + 1); //(oidx + 1).toString();
 				effects.atomDecoCol[n - 1] = 0x800080;
-				effects.atomDecoSize[n - 1] = 0.3;
+				effects.atomDecoSize[n - 1] = 0.5;
 				umol.setAtomElement(n, 'C');
 			}
 		}

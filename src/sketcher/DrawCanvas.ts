@@ -688,6 +688,12 @@ export class DrawCanvas extends Widget implements ArrangeMeasurement
 			x1 = this.angToX(this.mol.atomX(this.opAtom));
 			y1 = this.angToY(this.mol.atomY(this.opAtom));
 		}
+		else if (this.opBond > 0)
+		{
+			let [bfr, bto] = this.mol.bondFromTo(this.opBond);
+			x1 = this.angToX(0.5 * (this.mol.atomX(bfr) + this.mol.atomX(bto)));
+			y1 = this.angToY(0.5 * (this.mol.atomY(bfr) + this.mol.atomY(bto)));
+		}
 		let x2 = this.mouseX, y2 = this.mouseY;
 
 		let snapTo = this.snapToGuide(x2, y2);
@@ -998,8 +1004,21 @@ export class DrawCanvas extends Widget implements ArrangeMeasurement
 	// if the mouse position is close to one of the snap-to points, or an existing atom, return that position
 	protected snapToGuide(x:number, y:number):number[]
 	{
-		//if (this.dragGuides == null) return null;
-
+		// if coming from a bond, only snap to other bonds
+		if (this.opBond > 0)
+		{
+			let obj = this.pickObject(x, y);
+			if (obj < 0)
+			{
+				let [bfr, bto] = this.mol.bondFromTo(-obj);
+				let px = this.angToX(0.5 * (this.mol.atomX(bfr) + this.mol.atomX(bto)));
+				let py = this.angToY(0.5 * (this.mol.atomY(bfr) + this.mol.atomY(bto)));
+				return [px, py];
+			}
+			return null;
+		}
+	
+		// try guides & atoms for snapping
 		let bestDSQ = Number.POSITIVE_INFINITY, bestX = 0, bestY = 0;
 		const APPROACH = sqr(0.5 * this.pointScale);
 		if (this.dragGuides != null) for (let i = 0; i < this.dragGuides.length; i++) for (let j = 0; j < this.dragGuides[i].x.length; j++)
@@ -1017,6 +1036,60 @@ export class DrawCanvas extends Widget implements ArrangeMeasurement
 		if (isFinite(bestDSQ)) return [bestX, bestY];
 
 		return null;
+	}
+
+	// locates a molecular object at the given position: returns N for atom, -N for bond, 0 for nothing, or null for not-on-canvas (e.g. button banks)
+	protected pickObjectCanvas(x:number, y:number, opt:{noAtoms?:boolean, noBonds?:boolean} = {}):number
+	{
+		// proceed with atoms & bonds
+
+		let limitDist = 0.5 * this.pointScale;
+		let bestItem = 0, bestScore = Number.POSITIVE_INFINITY;
+
+		// look for close atoms
+		if (!opt.noAtoms) for (let n = 0; n < this.layout.numPoints(); n++)
+		{
+			let p = this.layout.getPoint(n);
+			if (p.anum == 0) continue;
+
+			let dx = Math.abs(x - p.oval.cx), dy = Math.abs(y - p.oval.cy);
+			let dsq = norm2_xy(dx, dy);
+			let limitDSQ = sqr(Math.max(limitDist, Math.max(p.oval.rw, p.oval.rh)));
+			if (dsq > limitDSQ) continue;
+			if (dsq < bestScore)
+			{
+				bestItem = p.anum;
+				bestScore = dsq;
+			}
+		}
+		if (bestItem != 0) return bestItem;
+
+		// look for close bonds
+		if (!opt.noBonds) for (let n = 0; n < this.layout.numLines(); n++)
+		{
+			let l = this.layout.getLine(n);
+			if (l.bnum == 0) continue;
+
+			let x1 = l.line.x1, y1 = l.line.y1;
+			let x2 = l.line.x2, y2 = l.line.y2;
+
+			if (x < Math.min(x1, x2) - limitDist || y < Math.min(y1, y2) - limitDist ||
+				x > Math.max(x1, x2) + limitDist || y > Math.max(y1, y2) + limitDist) continue;
+
+			let dist = GeomUtil.pointLineSegDistance(x, y, x1, y1, x2, y2);
+			if (dist > limitDist) continue;
+			if (dist < bestScore)
+			{
+				bestItem = -l.bnum;
+				bestScore = dist;
+			}
+		}
+
+		return bestItem;
+	}
+	protected pickObject(x:number, y:number, opt:{noAtoms?:boolean, noBonds?:boolean} = {}):number
+	{
+		return this.pickObjectCanvas(x, y, opt) || 0;
 	}
 
 	// puts together an effects parameter for the main sketch
