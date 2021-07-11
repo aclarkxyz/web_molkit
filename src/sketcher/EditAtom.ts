@@ -512,8 +512,7 @@ export class EditAtom extends Dialog
 			let tdLabel = dom('<td/>').appendTo(entry.tr), tdStruct = dom('<td/>').appendTo(entry.tr);
 			tdLabel.setHTML(this.abbrevList[n].nameHTML);
 
-			let svg = dom(this.svgAbbrev[n]).appendTo(tdStruct);
-			svg.css({'pointer-events': 'none'});
+			dom(this.svgAbbrev[n]).appendTo(tdStruct).css({'display': 'block', 'pointer-events': 'none'});
 
 			entry.tr.css({'cursor': 'pointer'});
 			entry.tr.onClick(() => this.selectAbbreviation(n));

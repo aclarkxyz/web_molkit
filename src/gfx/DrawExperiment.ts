@@ -91,7 +91,7 @@ export class DrawExperiment
 			if (tsz.width>limitBounds.width) tsz=textSizeWithin(xc.text,fontText,limitBounds,NSLineBreakByCharWrapping);
 			... in DrawUtil	*/
 			vg.drawText(bx + 0.5 * bw, by + bh, xc.text, xc.fszText, policy.data.foreground, TextAlign.Centre | TextAlign.Bottom);
-			bh -= wad[1] + wad[2];
+			bh -= wad[1] + wad[2] + 0.5 * xc.fszText;
 		}
 
 		if (xc.leftNumer)

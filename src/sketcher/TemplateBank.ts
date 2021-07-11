@@ -130,34 +130,6 @@ export class TemplateBank extends ButtonBank
 	}
 
 	// loads up the resource datasheets one at a time, and stashes them in the static container
-	/*private loadResourceData(onComplete:() => void):void
-	{
-		let roster = TEMPLATE_FILES.slice(0);
-		TemplateBank.RESOURCE_LIST = roster.slice(0);
-		TemplateBank.RESOURCE_DATA = [];
-
-		let grabNext = ():void =>
-		{
-			if (roster.length == 0)
-			{
-				onComplete();
-				return;
-			}
-			let url = Theme.RESOURCE_URL + '/data/templates/' + roster.shift() + '.ds';
-			$.ajax(
-			{
-				'url': url,
-				'type': 'GET',
-				'dataType': 'text',
-				'success': (dsstr:string) =>
-				{
-					TemplateBank.RESOURCE_DATA.push(DataSheetStream.readXML(dsstr));
-					grabNext();
-				}
-			});
-		};
-		grabNext();
-	}*/
 	private async loadResourceData():Promise<void>
 	{
 		for (let fn of TEMPLATE_FILES)
