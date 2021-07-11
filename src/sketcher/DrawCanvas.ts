@@ -1039,7 +1039,7 @@ export class DrawCanvas extends Widget implements ArrangeMeasurement
 	}
 
 	// locates a molecular object at the given position: returns N for atom, -N for bond, 0 for nothing, or null for not-on-canvas (e.g. button banks)
-	protected pickObjectCanvas(x:number, y:number, opt:{noAtoms?:boolean, noBonds?:boolean} = {}):number
+	protected pickObjectCanvas(x:number, y:number, opt:{noAtoms?:boolean; noBonds?:boolean} = {}):number
 	{
 		// proceed with atoms & bonds
 
@@ -1087,7 +1087,7 @@ export class DrawCanvas extends Widget implements ArrangeMeasurement
 
 		return bestItem;
 	}
-	protected pickObject(x:number, y:number, opt:{noAtoms?:boolean, noBonds?:boolean} = {}):number
+	protected pickObject(x:number, y:number, opt:{noAtoms?:boolean; noBonds?:boolean} = {}):number
 	{
 		return this.pickObjectCanvas(x, y, opt) || 0;
 	}

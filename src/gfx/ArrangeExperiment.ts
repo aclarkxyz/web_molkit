@@ -243,6 +243,15 @@ export class ArrangeExperiment
 		return dump.toString();
 	}*/
 
+	// convenience: convert arrangment type to its experiment counterpart, if applicable
+	public static toExpType(compType:ArrangeComponentType):ExperimentComponentType
+	{
+		if (compType == ArrangeComponentType.Reactant) return ExperimentComponentType.Reactant;
+		if (compType == ArrangeComponentType.Reagent) return ExperimentComponentType.Reagent;
+		if (compType == ArrangeComponentType.Product) return ExperimentComponentType.Product;
+		return null;
+	}
+
 	// --------------------- private methods ---------------------
 
 	// instantiate each component in the diagram (which includes pluses and arrows)

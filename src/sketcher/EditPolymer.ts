@@ -16,9 +16,9 @@ namespace WebMolKit /* BOF */ {
 	Editing a new or existing polymer block.
 */
 
-const CHAR_a = 'a'.charCodeAt(0), CHAR_A = 'A'.charCodeAt(0);
-function indexToAtomLabel(idx:number):string {return String.fromCharCode(CHAR_A + Math.min(26, Math.max(0, idx)) - 1);}
-function indexToBondLabel(idx:number):string {return String.fromCharCode(CHAR_a + Math.min(26, Math.max(0, idx)) - 1);}
+const CHAR_LOW_A = 'a'.charCodeAt(0), CHAR_UP_A = 'A'.charCodeAt(0);
+function indexToAtomLabel(idx:number):string {return String.fromCharCode(CHAR_UP_A + Math.min(26, Math.max(0, idx)) - 1);}
+function indexToBondLabel(idx:number):string {return String.fromCharCode(CHAR_LOW_A + Math.min(26, Math.max(0, idx)) - 1);}
 
 export class EditPolymer extends Dialog
 {

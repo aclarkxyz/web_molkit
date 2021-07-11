@@ -66,7 +66,11 @@ export function formatDouble(value:number, sigfig:number):string
 {
 	if (value == null) return '';
 	let str = value.toPrecision(sigfig);
-	if (str.indexOf('.') > 0) while (str.endsWith('0') || str.endsWith('.')) str = str.substring(0, str.length - 1);
+	if (str.indexOf('.') > 0)
+	{
+		while (str.endsWith('0')) str = str.substring(0, str.length - 1);
+		if (str.endsWith('.')) str = str.substring(0, str.length - 1);
+	}
 	return str;
 }
 
@@ -205,6 +209,12 @@ export function getBoundaryPixelsDOM(dom:DOM):[number, number, number, number]
 {
 	let offset = dom.offset();
 	return [offset.x, offset.y, dom.width(), dom.height()];
+}
+
+// return the object's position and size relative to its parent
+export function getOffsetPixelsDOM(dom:DOM):[number, number, number, number]
+{
+	return [dom.elHTML.offsetLeft, dom.elHTML.offsetTop, dom.elHTML.offsetWidth, dom.elHTML.offsetHeight];
 }
 
 // geometry functions

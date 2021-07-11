@@ -404,7 +404,12 @@ export class QuantityCalc
 		if (value == QuantityCalc.UNSPECIFIED) return '';
 		return formatDouble(value, 6) + '%';
 	}
-
+	public static formatEquiv(value:number):string
+	{
+		if (value == QuantityCalc.UNSPECIFIED) return '';
+		return formatDouble(value, 4) + ' equiv';
+	}
+	
 	// ---------------- private methods -----------------
 
 	// do a first pass of pulling out the raw data

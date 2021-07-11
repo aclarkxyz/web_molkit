@@ -1658,13 +1658,13 @@ export class Sketcher extends DrawCanvas
 		{
 			let x2 = this.mouseX, y2 = this.mouseY;
 			let snapTo = this.snapToGuide(x2, y2);
-			if (snapTo != null) 
+			if (snapTo != null)
 			{
 				[x2, y2] = snapTo;
 				if (this.opBond > 0)
-				{				
+				{
 					let toObj = this.pickObject(x2, y2, {'noAtoms': true});
-					if (toObj < 0) 
+					if (toObj < 0)
 					{
 						this.connectPolymerBlock(this.opBond, -toObj);
 						return;
@@ -1744,7 +1744,7 @@ export class Sketcher extends DrawCanvas
 	private connectPolymerBlock(bond1:number, bond2:number):boolean
 	{
 		let [atomIn1, atomOut1] = this.mol.bondFromTo(bond1), [atomIn2, atomOut2] = this.mol.bondFromTo(bond2);
-	
+
 		let state = this.getState();
 		let polymer = new PolymerBlock(state.mol);
 
@@ -1764,7 +1764,7 @@ export class Sketcher extends DrawCanvas
 				if (ina && !inb) poly2 = poly;
 				else if (inb && !ina) [poly2, atomIn2, atomOut2] = [poly, atomOut2, atomIn2];
 			}
-			
+
 			for (let nameList of poly.atomName.values()) highName = Math.max(highName, Vec.max(nameList));
 		}
 		if (!poly1 || !poly2) return false;

@@ -502,6 +502,7 @@ export class Experiment extends Aspect
 		comp.moles = this.ds.getReal(row, `${Experiment.COLNAME_PRODUCT_MOLES}${idx}`);
 		comp.density = this.ds.getReal(row, `${Experiment.COLNAME_PRODUCT_DENSITY}${idx}`);
 		comp.conc = this.ds.getReal(row, `${Experiment.COLNAME_PRODUCT_CONC}${idx}`);
+		comp.yield = this.ds.getReal(row, `${Experiment.COLNAME_PRODUCT_YIELD}${idx}`);
 		let waste = this.ds.getBoolean(row, `${Experiment.COLNAME_PRODUCT_WASTE}${idx}`);
 		if (waste != null) comp.waste = waste;
 		return comp;
@@ -611,6 +612,7 @@ export class Experiment extends Aspect
 				this.ds.setReal(r, `${Experiment.COLNAME_PRODUCT_MOLES}${i}`, comp.moles);
 				this.ds.setReal(r, `${Experiment.COLNAME_PRODUCT_DENSITY}${i}`, comp.density);
 				this.ds.setReal(r, `${Experiment.COLNAME_PRODUCT_CONC}${i}`, comp.conc);
+				this.ds.setReal(r, `${Experiment.COLNAME_PRODUCT_YIELD}${i}`, comp.yield);
 				this.ds.setBoolean(r, `${Experiment.COLNAME_PRODUCT_WASTE}${i}`, comp.waste);
 			}
 		}

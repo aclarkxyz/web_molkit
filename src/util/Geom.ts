@@ -718,6 +718,15 @@ export class Pos
 		this.y += dy;
 	}
 
+	public withScaleBy(mag:number):Pos
+	{
+		return new Pos(this.x * mag, this.y * mag);
+	}
+	public withOffsetBy(dx:number, dy:number):Pos
+	{
+		return new Pos(this.x + dx, this.y + dy);
+	}
+
 	public toString():string {return '[' + this.x + ',' + this.y + ']';}
 }
 
@@ -751,6 +760,11 @@ export class Size
 		if (this.w > maxW) scale = maxW / this.w;
 		if (this.h > maxH) scale = Math.min(scale, maxH / this.h);
 		if (scale < 1) this.scaleBy(scale);
+	}
+
+	public withScaleBy(mag:number):Size
+	{
+		return new Size(this.w * mag, this.h * mag);
 	}
 
 	public toString():string {return '[' + this.w + ',' + this.h + ']';}
@@ -799,6 +813,7 @@ export class Box
 	public midY():number {return this.y + 0.5 * this.h;}
 	public maxX():number {return this.x + this.w;}
 	public maxY():number {return this.y + this.h;}
+	public area():number {return this.w * this.h;}
 
 	public scaleBy(mag:number):void
 	{
@@ -821,10 +836,33 @@ export class Box
 		this.h += 2 * by;
 	}
 
+	public withScaleBy(mag:number):Box
+	{
+		return new Box(this.x * mag, this.y * mag, this.w * mag, this.h * mag);
+	}
+	public withOffsetBy(dx:number, dy:number):Box
+	{
+		return new Box(this.x + dx, this.y + dy, this.w, this.h);
+	}
+	public withGrow(bx:number, by:number):Box
+	{
+		return new Box(this.x - bx, this.y - by, this.w + 2 * bx, this.h + 2 * by);
+	}
+
 	public intersects(other:Box):boolean
 	{
 		return GeomUtil.rectsIntersect(this.x, this.y, this.w, this.h, other.x, other.y, other.w, other.h);
 	}
+
+	// returns the actual intersection box; note that if they don't intersect at all, things get weird
+	public intersection(other:Box):Box
+	{
+		let x1 = this.x, x2 = x1 + this.w, y1 = this.y, y2 = y1 + this.h;
+		let x3 = other.x, x4 = x3 + other.w, y3 = other.y, y4 = y3 + other.h;
+		let x5 = Math.max(x1, x3), y5 = Math.max(y1, y3), x6 = Math.min(x2, x4), y6 = Math.min(y2, y4);
+		return new Box(x5, y5, x6 - x5, y6 - y5);
+	}
+
 	public contains(x:number, y:number):boolean
 	{
 		return x >= this.x && x < this.x + this.w && y >= this.y && y < this.y + this.h;
@@ -891,6 +929,15 @@ export class Oval
 	{
 		this.cx += dx;
 		this.cy += dy;
+	}
+
+	public withScaleBy(mag:number):Oval
+	{
+		return new Oval(this.cx * mag, this.cy * mag, this.rw * mag, this.rh * mag);
+	}
+	public withOffsetBy(dx:number, dy:number):Oval
+	{
+		return new Oval(this.cx + dx, this.cy + dy, this.rw, this.rh);
 	}
 
 	public toString():string {return '[' + this.cx + ',' + this.cy + ';' + this.rw + ',' + this.rh + ']';}
