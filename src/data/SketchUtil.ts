@@ -236,18 +236,15 @@ export class SketchUtil
 		let na = mol.numAtoms;
 		let mx = MolUtil.arrayAtomX(mol), my = MolUtil.arrayAtomY(mol);
 
-		for (let i = 1; i <= na; i++)
-			if (mask[i - 1]) for (let j = 1; j <= na; j++)
-				if (!mask[j - 1] && !chopmask[j - 1]) if (norm2_xy(mx[i - 1] - mx[j - 1], my[i - 1] - my[j - 1]) < CoordUtil.OVERLAP_THRESHOLD_SQ)
+		for (let i = 1; i <= na; i++) if (mask[i - 1]) for (let j = 1; j <= na; j++)
+			if (!mask[j - 1] && !chopmask[j - 1]) if (norm2_xy(mx[i - 1] - mx[j - 1], my[i - 1] - my[j - 1]) < CoordUtil.OVERLAP_THRESHOLD_SQ)
 		{
 			let oldN = j, newN = i; // remove the later one, by default
-			if (mol.atomElement(i) == 'C' && mol.atomElement(j) != 'C' && mol.atomElement(j) != 'X')
-			{
-				oldN = i;
-				newN = j;
-			} // switch
-			// (any other criteria? [if so, then sync. with above])
-
+			if (mol.atomElement(i) == 'C' && mol.atomElement(j) != 'C' && mol.atomElement(j) != 'X') [oldN, newN] = [i, j];
+			
+			mol.setAtomHExplicit(newN, mol.atomHExplicit(oldN));
+			mol.setAtomUnpaired(newN, mol.atomUnpaired(oldN));
+			mol.setAtomCharge(newN, mol.atomCharge(oldN));
 			mol.setAtomExtra(newN, Vec.concat(mol.atomExtra(oldN), mol.atomExtra(newN)));
 
 			for (let n = 1; n <= mol.numBonds; n++)

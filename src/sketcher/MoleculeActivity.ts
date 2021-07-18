@@ -121,7 +121,7 @@ export class MoleculeActivity
 	public errmsg:string;
 	public toClipboard:string = null;
 
-	constructor(public input:SketchState, public activity:ActivityType, private param:Record<string, any>, override?:Record<string, any>, private owner?:Sketcher)
+	constructor(public input:SketchState, public activity:ActivityType, private param:Record<string, any>, private owner?:Sketcher)
 	{
 		this.output =
 		{
@@ -130,9 +130,6 @@ export class MoleculeActivity
 			'currentBond': -1,
 			'selectedMask': null
 		};
-
-		let altInput = this.input as Record<string, any>;
-		for (let k in override) altInput[k] = override[k];
 
 		let na = this.input.mol.numAtoms;
 		if (this.input.selectedMask == null) this.input.selectedMask = Vec.booleanArray(false, na);

@@ -542,6 +542,7 @@ export class TemplateFusion
 			let pmol = oldmol.clone();
 			let osz = pmol.numAtoms;
 			pmol.append(frag);
+
 			let srcidx = this.sourceIndex(pmol, oldmol);
 			SketchUtil.mergeFragmentsMask(pmol, this.asMask(srcidx));
 			if (pmol.numAtoms == osz) continue;

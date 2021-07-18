@@ -143,7 +143,17 @@ export class Tooltip
 
 		setPosition();
 		pop.setCSS('display', 'block');
-		window.setTimeout(() => setPosition(), 1);
+		setTimeout(() => setPosition(), 1);
+
+		let checkParent = () =>
+		{
+			if (this.watermark != globalPopWatermark) return; // someone else owns it now
+			if (!this.widget.isVisible())
+				pop.setCSS('display', 'none');
+			else
+				setTimeout(checkParent, 100);
+		};
+		setTimeout(checkParent, 100);
 	}
 
 	public lower()

@@ -731,7 +731,8 @@ export class ArrangeMolecule
 			delocalise(arene, arene.atoms);
 		}
 	}
-		// for a given adjunct to an atom, find a suitable position for it, based on the provided direction (angdir, radians);
+
+	// for a given adjunct to an atom, find a suitable position for it, based on the provided direction (angdir, radians);
 	// the placement algorithm will try pretty hard to find a suitable position which is close to the parent atom, not
 	// overlapping anything, and projected in the requested direction
 	private placeAdjunct(atom:number, str:string, fsz:number, col:number, angdir:number):void
@@ -739,6 +740,25 @@ export class ArrangeMolecule
 		let wad = this.measure.measureText(str, fsz);
 		let a = this.points[atom - 1];
 		let cx = a.oval.cx, cy = a.oval.cy, rw = 0.55 * wad[0], rh = 0.55 * wad[1];
+
+		// special deal: carbenes with a zero bond
+		if (str == '..')
+		{
+			let zeroBonds = this.mol.atomAdjBonds(atom).filter((b) => this.mol.bondOrder(b) == 0);
+			if (zeroBonds.length == 1)
+			{
+				let zpt = this.getPoint(this.mol.bondOther(zeroBonds[0], atom) - 1);
+				let dx = zpt.oval.cx - cx, dy = zpt.oval.cy - cy, inv = 1 / norm_xy(dx, dy);
+				let r = fsz * 0.15;
+				let ox = dy * inv * 2.5 * r, oy = -dx * inv * 2.5 * r;
+				let ext = 1.2 * (rw + rh) * inv;
+				[dx, dy] = [dx * ext, dy * ext];
+				
+				this.points.push({'anum': 0, 'text': '.', 'fsz': fsz, 'bold': false, 'col': col, 'oval': new Oval(cx + dx + ox, cy + dy + oy, r, r)});
+				this.points.push({'anum': 0, 'text': '.', 'fsz': fsz, 'bold': false, 'col': col, 'oval': new Oval(cx + dx - ox, cy + dy - oy, r, r)});
+				return;
+			}
+		}
 
 		// begin the circular sweep
 		let bestScore = 0, bestDX = 0, bestDY = 0;

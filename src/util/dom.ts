@@ -114,6 +114,12 @@ export class DOM
 		return document.documentElement.contains(this.el);
 	}
 
+	// returns true if the element is currently being shown onscreen
+	public isVisible():boolean
+	{
+		return this.elHTML.offsetWidth > 0 || this.elHTML.offsetHeight > 0 || this.elHTML.getClientRects().length > 0;
+	}
+
 	// ------------ hierarchy ------------
 
 	// append the given node to this one's child list

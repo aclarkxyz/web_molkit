@@ -52,7 +52,7 @@ export abstract class Aspect
 
 	// usually provide an existing datasheet with the aspect already installed; if not, it will be added (as long as
 	// modification is allowed); if no datasheet, creates a blank one
-	constructor(public id:string, ds?:DataSheet, allowModify?:boolean)
+	constructor(public code:string, ds?:DataSheet, allowModify?:boolean)
 	{
 		this.ds = ds ? ds : new DataSheet();
 		if (allowModify != null) this.allowModify = allowModify;

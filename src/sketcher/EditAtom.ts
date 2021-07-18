@@ -395,7 +395,7 @@ export class EditAtom extends Dialog
 				let instate:SketchState = {'mol': mol, 'currentAtom': 0, 'currentBond': mol.findBond(atoms[0], atoms[1]), 'selectedMask': mask};
 				let molact = new MoleculeActivity(instate, ActivityType.BondDist, {'dist': dist});
 				molact.execute();
-				this.mol = molact.output.mol;
+				if (molact.output.mol) this.mol = molact.output.mol;
 				return;
 			}
 			else if (this.refGeom2 != strval2)
@@ -407,7 +407,7 @@ export class EditAtom extends Dialog
 				let instate:SketchState = {'mol': mol, 'currentAtom': 0, 'currentBond': mol.findBond(atoms[0], atoms[1]), 'selectedMask': mask};
 				let molact = new MoleculeActivity(instate, ActivityType.AlignAngle, {'angle': angle * DEGRAD});
 				molact.execute();
-				this.mol = molact.output.mol;
+				if (molact.output.mol) this.mol = molact.output.mol;
 				return;
 			}
 		}
@@ -420,7 +420,7 @@ export class EditAtom extends Dialog
 			let instate:SketchState = {'mol': mol, 'currentAtom': atoms[2], 'currentBond': 0, 'selectedMask': mask};
 			let molact = new MoleculeActivity(instate, ActivityType.AdjustTorsion, {'angle': angle * DEGRAD});
 			molact.execute();
-			this.mol = molact.output.mol;
+			if (molact.output.mol) this.mol = molact.output.mol;
 			return;
 		}
 	}

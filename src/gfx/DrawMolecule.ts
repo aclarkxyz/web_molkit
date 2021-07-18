@@ -107,7 +107,7 @@ export class DrawMolecule
 
 				cx -= dw;
 				rw -= dw;
-				txt = txt.substring(0, txt.length - 1);
+				txt = txt.substring(1, txt.length);
 			}
 			while (txt.startsWith('+'))
 			{

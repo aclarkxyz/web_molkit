@@ -317,7 +317,7 @@ export class QuantityCalc
 		for (let n = 0; n < this.quantities.length; n++)
 		{
 			let qc = this.quantities[n];
-			
+
 			if (qc.type == ExperimentComponentType.Reactant || qc.type == ExperimentComponentType.Reagent)
 			{
 				if (qc.valueEquiv == 0 && qc.type == ExperimentComponentType.Reagent) continue;
@@ -409,7 +409,7 @@ export class QuantityCalc
 		if (value == QuantityCalc.UNSPECIFIED) return '';
 		return formatDouble(value, 4) + ' equiv';
 	}
-	
+
 	// ---------------- private methods -----------------
 
 	// do a first pass of pulling out the raw data
@@ -637,7 +637,6 @@ export class QuantityCalc
 				primaryEquivs[ref] = -1;
 				continue;
 			}
-
 			primaryCounts[ref]++;
 			primaryEquivs[ref] += qc.valueEquiv;
 			primaryMoles[ref] += qc.valueMoles;
@@ -652,7 +651,7 @@ export class QuantityCalc
 			for (let i of this.idxPrimary)
 			{
 				let qc = this.quantities[i];
-				if (qc.statMoles == QuantityCalcStat.Actual)
+				if (qc.statMoles == QuantityCalcStat.Unknown)
 				{
 					primaryCounts[0] = 0;
 					primaryEquivs[0] = -1;
@@ -680,7 +679,8 @@ export class QuantityCalc
 				for (let qc of this.quantities)
 				{
 					if (qc.step != n || qc.role != QuantityCalcRole.Product) continue;
-					if (qc.statMoles == QuantityCalcStat.Actual || qc.valueMoles <= 0 || qc.valueEquiv <= 0) continue;
+					//if (qc.statMoles == QuantityCalcStat.Actual || qc.valueMoles <= 0 || qc.valueEquiv <= 0) continue;
+					if (qc.statMoles == QuantityCalcStat.Unknown || qc.valueMoles <= 0 || qc.valueEquiv <= 0) continue;
 					let yld = qc.valueYield > 0 ? qc.valueYield * 0.01 : 1;
 					prodMolar.push(qc.valueMoles / (qc.valueEquiv * yld));
 				}

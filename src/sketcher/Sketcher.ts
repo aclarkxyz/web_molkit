@@ -458,7 +458,7 @@ export class Sketcher extends DrawCanvas
 	// perform a more surgical copy/cut operation
 	public performCopySelection(andCut:boolean):void
 	{
-		new MoleculeActivity(this.getState(), andCut ? ActivityType.Cut : ActivityType.Copy, {}, {}, this).execute();
+		new MoleculeActivity(this.getState(), andCut ? ActivityType.Cut : ActivityType.Copy, {}, this).execute();
 	}
 
 	// pasting from clipboard, initiated by the user via non-system commands: this can't necessarily grab the system
@@ -476,7 +476,7 @@ export class Sketcher extends DrawCanvas
 	// executes an arbitrary activity on the current molecule/selection state
 	public performActivity(activity:ActivityType, param:Record<string, any> = {}):void
 	{
-		new MoleculeActivity(this.getState(), activity, param, {}, this).execute();
+		new MoleculeActivity(this.getState(), activity, param, this).execute();
 	}
 
 	// zooms in or out, depending on the magnifier
@@ -544,7 +544,7 @@ export class Sketcher extends DrawCanvas
 		}
 
 		let param = {'fragNative': mol.toString()};
-		new MoleculeActivity(this.getState(), ActivityType.TemplateFusion, param, {}, this).execute();
+		new MoleculeActivity(this.getState(), ActivityType.TemplateFusion, param, this).execute();
 	}
 
 	// changes the template permutation: if necessary requests the layout, and redraws the screen
@@ -980,7 +980,7 @@ export class Sketcher extends DrawCanvas
 			'ringY': ry,
 			'aromatic': aromatic
 		};
-		let molact = new MoleculeActivity(this.getState(), ActivityType.Ring, param, {}, this);
+		let molact = new MoleculeActivity(this.getState(), ActivityType.Ring, param, this);
 		molact.execute();
 	}
 
@@ -1319,7 +1319,6 @@ export class Sketcher extends DrawCanvas
 					this.toolBondOrder = 0;
 					this.toolBondType = Molecule.BONDTYPE_NORMAL;
 				}
-				else this.opBond = 0;
 			}
 
 			if (this.opBond == 0) this.dragGuides = this.determineDragGuide(this.toolBondOrder);
@@ -1478,13 +1477,14 @@ export class Sketcher extends DrawCanvas
 		{
 			if (this.opAtom > 0 || this.opBond > 0)
 			{
-				let override =
+				let state =
 				{
+					...this.getState(),
 					'currentAtom': this.opAtom,
 					'currentBond': this.opBond,
 					'selectedMask': [] as boolean[]
 				};
-				let molact = new MoleculeActivity(this.getState(), ActivityType.Delete, {}, override, this);
+				let molact = new MoleculeActivity(state, ActivityType.Delete, {}, this);
 				molact.execute();
 			}
 		}
@@ -1528,13 +1528,14 @@ export class Sketcher extends DrawCanvas
 					param.positionX = x;
 					param.positionY = y;
 				}
-				let override =
+				let state =
 				{
+					...this.getState(),
 					'currentAtom': this.opAtom,
 					'currentBond': 0,
 					'selectedMask': null as boolean[]
 				};
-				let molact = new MoleculeActivity(this.getState(), ActivityType.Element, param, override, this);
+				let molact = new MoleculeActivity(state, ActivityType.Element, param, this);
 				molact.execute();
 			}
 		}
@@ -1542,29 +1543,31 @@ export class Sketcher extends DrawCanvas
 		{
 			if (this.opAtom > 0 || this.opBond > 0)
 			{
-				let override =
+				let state =
 				{
+					...this.getState(),
 					'currentAtom': this.opAtom,
 					'currentBond': this.opBond,
 					'selectedMask': null as boolean[]
 				};
-				let molact = new MoleculeActivity(this.getState(), ActivityType.Charge, {'delta': this.toolChargeDelta}, override, this);
+				let molact = new MoleculeActivity(state, ActivityType.Charge, {'delta': this.toolChargeDelta}, this);
 				molact.execute();
 			}
 		}
 		else if (this.dragType == DraggingTool.Bond)
 		{
-			let override =
+			let state =
 			{
+				...this.getState(),
 				'currentAtom': this.opAtom,
 				'currentBond': this.opBond,
 				'selectedMask': null as boolean[]
 			};
 			let molact:MoleculeActivity;
 			if (this.toolBondType == Molecule.BONDTYPE_NORMAL)
-				molact = new MoleculeActivity(this.getState(), ActivityType.BondOrder, {'order': this.toolBondOrder}, override, this);
+				molact = new MoleculeActivity(state, ActivityType.BondOrder, {'order': this.toolBondOrder}, this);
 			else
-				molact = new MoleculeActivity(this.getState(), ActivityType.BondType, {'type': this.toolBondType}, override, this);
+				molact = new MoleculeActivity(state, ActivityType.BondType, {'type': this.toolBondType}, this);
 			molact.execute();
 		}
 	}
@@ -1589,13 +1592,14 @@ export class Sketcher extends DrawCanvas
 			for (let n = 0; n < this.lassoMask.length; n++) if (this.lassoMask[n]) {any = true; break;}
 			if (any)
 			{
-				let override =
+				let state =
 				{
+					...this.getState(),
 					'currentAtom': 0,
 					'currentBond': 0,
 					'selectedMask': this.lassoMask
 				};
-				let molact = new MoleculeActivity(this.getState(), ActivityType.Delete, {}, override, this);
+				let molact = new MoleculeActivity(state, ActivityType.Delete, {}, this);
 				molact.execute();
 			}
 		}
@@ -1604,7 +1608,7 @@ export class Sketcher extends DrawCanvas
 			let [x0, y0, theta, magnitude] = this.determineDragTheta();
 			let degrees = -theta * RADDEG;
 			let mx = this.xToAng(x0), my = this.yToAng(y0);
-			let molact = new MoleculeActivity(this.getState(), ActivityType.Rotate, {'theta': degrees, 'centreX': mx, 'centreY': my}, {}, this);
+			let molact = new MoleculeActivity(this.getState(), ActivityType.Rotate, {'theta': degrees, 'centreX': mx, 'centreY': my}, this);
 			molact.execute();
 		}
 		else if (this.dragType == DraggingTool.Move)
@@ -1612,7 +1616,7 @@ export class Sketcher extends DrawCanvas
 			let [dx, dy] = this.determineMoveDelta();
 			let scale = this.pointScale;
 			// note: in a future iteration, make the 'Move' action do rotate-snap-rebond, and call it during the mousemove, to give dynamic feedback
-			let molact = new MoleculeActivity(this.getState(), ActivityType.Move, {'refAtom': this.opAtom, 'deltaX': dx / scale, 'deltaY': -dy / scale}, {}, this);
+			let molact = new MoleculeActivity(this.getState(), ActivityType.Move, {'refAtom': this.opAtom, 'deltaX': dx / scale, 'deltaY': -dy / scale}, this);
 			molact.execute();
 		}
 		else if (this.dragType == DraggingTool.Ring)
@@ -1626,7 +1630,7 @@ export class Sketcher extends DrawCanvas
 					'ringY': ringY,
 					'aromatic': this.toolRingArom
 				};
-				let molact = new MoleculeActivity(this.getState(), ActivityType.Ring, param, {}, this);
+				let molact = new MoleculeActivity(this.getState(), ActivityType.Ring, param, this);
 				molact.execute();
 			}
 		}
@@ -1650,7 +1654,7 @@ export class Sketcher extends DrawCanvas
 			if (this.toolAtomSymbol == 'A') param.element = window.prompt('Enter element symbol:', '');
 			if (param.element != '')
 			{
-				let molact = new MoleculeActivity(this.getState(), ActivityType.BondAtom, param, {}, this);
+				let molact = new MoleculeActivity(this.getState(), ActivityType.BondAtom, param, this);
 				molact.execute();
 			}
 		}
@@ -1682,7 +1686,7 @@ export class Sketcher extends DrawCanvas
 				'x2': this.xToAng(x2),
 				'y2': this.yToAng(y2)
 			};
-			let molact = new MoleculeActivity(this.getState(), ActivityType.BondAtom, param, {}, this);
+			let molact = new MoleculeActivity(this.getState(), ActivityType.BondAtom, param, this);
 			molact.execute();
 		}
 	}
