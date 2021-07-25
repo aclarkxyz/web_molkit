@@ -40,6 +40,7 @@ export class ExperimentComponent
 	public primary = false; // reactants only
 	public waste = false; // products only
 	public equiv:number = null; // reagents only
+	public meta = '';
 
 	constructor(mol?:Molecule, name?:string)
 	{
@@ -61,6 +62,7 @@ export class ExperimentComponent
 		dup.primary = this.primary;
 		dup.waste = this.waste;
 		dup.equiv = this.equiv;
+		dup.meta = this.meta;
 		return dup;
 	}
 
@@ -69,7 +71,7 @@ export class ExperimentComponent
 		if (this.name != other.name) return false;
 		if (this.stoich != other.stoich || this.mass != other.mass || this.volume != other.volume || this.moles != other.moles ||
 			this.density != other.density || this.conc != other.conc || this.yield != other.yield || this.primary != other.primary ||
-			this.waste != other.waste || this.equiv != other.equiv) return false;
+			this.waste != other.waste || this.equiv != other.equiv || this.meta != other.meta) return false;
 		if (this.mol === other.mol) return true; // if literally the same
 		if (this.mol == null || other.mol == null) return false;
 		return this.mol.compareTo(other.mol) == 0;
@@ -86,6 +88,7 @@ export class ExperimentStep
 	public reactants:ExperimentComponent[] = []; // non-blank only for the first step
 	public reagents:ExperimentComponent[] = [];
 	public products:ExperimentComponent[] = [];
+	public meta = '';
 
 	constructor() {}
 
@@ -96,6 +99,7 @@ export class ExperimentStep
 		for (let c of this.reactants) dup.reactants.push(c.clone());
 		for (let c of this.reagents) dup.reagents.push(c.clone());
 		for (let c of this.products) dup.products.push(c.clone());
+		dup.meta = this.meta;
 		return dup;
 	}
 
@@ -104,6 +108,7 @@ export class ExperimentStep
 		if (this.reactants.length != other.reactants.length) return false;
 		if (this.reagents.length != other.reagents.length) return false;
 		if (this.products.length != other.products.length) return false;
+		if (this.meta != other.meta) return false;
 		for (let n = 0; n < this.reactants.length; n++) if (!this.reactants[n].equals(other.reactants[n])) return false;
 		for (let n = 0; n < this.reagents.length; n++) if (!this.reagents[n].equals(other.reagents[n])) return false;
 		for (let n = 0; n < this.products.length; n++) if (!this.products[n].equals(other.products[n])) return false;
@@ -187,6 +192,9 @@ export class Experiment extends Aspect
 	public static COLNAME_EXPERIMENT_DOI = 'ExperimentDOI';
 	public static COLNAME_EXPERIMENT_META = 'ExperimentMeta';
 
+	// prefixes for Steps
+	public static COLNAME_STEP_META = 'ExperimentStepMeta';
+
 	// prefixes for Reactants
 	public static COLNAME_REACTANT_MOL = 'ReactantMol';
 	public static COLNAME_REACTANT_NAME = 'ReactantName';
@@ -197,6 +205,7 @@ export class Experiment extends Aspect
 	public static COLNAME_REACTANT_DENSITY = 'ReactantDensity';
 	public static COLNAME_REACTANT_CONC = 'ReactantConc';
 	public static COLNAME_REACTANT_PRIMARY = 'ReactantPrimary';
+	public static COLNAME_REACTANT_META = 'ReactantMeta';
 
 	// prefixes for Reagents
 	public static COLNAME_REAGENT_MOL = 'ReagentMol';
@@ -207,6 +216,7 @@ export class Experiment extends Aspect
 	public static COLNAME_REAGENT_MOLES = 'ReagentMoles';
 	public static COLNAME_REAGENT_DENSITY = 'ReagentDensity';
 	public static COLNAME_REAGENT_CONC = 'ReagentConc';
+	public static COLNAME_REAGENT_META = 'ReagentMeta';
 
 	// prefixes for Products
 	public static COLNAME_PRODUCT_MOL = 'ProductMol';
@@ -219,6 +229,7 @@ export class Experiment extends Aspect
 	public static COLNAME_PRODUCT_CONC = 'ProductConc';
 	public static COLNAME_PRODUCT_YIELD = 'ProductYield';
 	public static COLNAME_PRODUCT_WASTE = 'ProductWaste';
+	public static COLNAME_PRODUCT_META = 'ProductMeta';
 
 	public static COLUMN_DESCRIPTIONS:Record<string, string> = {};
 
@@ -243,6 +254,7 @@ export class Experiment extends Aspect
 			v[Experiment.COLNAME_EXPERIMENT_MODIFYDATE] = 'Date the experiment was last modified (seconds since 1970)';
 			v[Experiment.COLNAME_EXPERIMENT_DOI] = 'Digital object identifiers (DOI) for the experiment (whitespace separated)';
 			v[Experiment.COLNAME_EXPERIMENT_META] = 'Additional experiment metadata';
+			v[Experiment.COLNAME_STEP_META] = 'Additional step metadata';
 			v[Experiment.COLNAME_REACTANT_MOL] = 'Molecular structure of reactant';
 			v[Experiment.COLNAME_REACTANT_NAME] = 'Name of reactant';
 			v[Experiment.COLNAME_REACTANT_STOICH] = 'Stoichiometry of reactant';
@@ -252,6 +264,7 @@ export class Experiment extends Aspect
 			v[Experiment.COLNAME_REACTANT_DENSITY] = 'Density of reactant (g/mL)';
 			v[Experiment.COLNAME_REACTANT_CONC] = 'Concentration of reactant (mol/L)';
 			v[Experiment.COLNAME_REACTANT_PRIMARY] = 'Whether the reactant is used for yield calculation';
+			v[Experiment.COLNAME_REACTANT_META] = 'Additional reactant metadata';
 			v[Experiment.COLNAME_REAGENT_MOL] = 'Molecular structure of reagent';
 			v[Experiment.COLNAME_REAGENT_NAME] = 'Name of reagent';
 			v[Experiment.COLNAME_REAGENT_EQUIV] = 'Molar equivalents of reagent';
@@ -260,6 +273,7 @@ export class Experiment extends Aspect
 			v[Experiment.COLNAME_REAGENT_MOLES] = 'Molar quantity of reagent (mol)';
 			v[Experiment.COLNAME_REAGENT_DENSITY] = 'Density of reagent (g/mL)';
 			v[Experiment.COLNAME_REAGENT_CONC] = 'Concentration of reagent (mol/L)';
+			v[Experiment.COLNAME_REAGENT_META] = 'Additional reagent metadata';
 			v[Experiment.COLNAME_PRODUCT_MOL] = 'Molecular structure of product';
 			v[Experiment.COLNAME_PRODUCT_NAME] = 'Name of product';
 			v[Experiment.COLNAME_PRODUCT_STOICH] = 'Stoichiometry of product';
@@ -270,6 +284,7 @@ export class Experiment extends Aspect
 			v[Experiment.COLNAME_PRODUCT_CONC] = 'Concentration of reactant (mol/L)';
 			v[Experiment.COLNAME_PRODUCT_YIELD] = 'Yield of product (%)';
 			v[Experiment.COLNAME_PRODUCT_WASTE] = 'Whether the product is an unwanted byproduct';
+			v[Experiment.COLNAME_PRODUCT_META] = 'Additional product metadata';
 		}
 
 		this.setup();
@@ -337,6 +352,7 @@ export class Experiment extends Aspect
 				let comp = this.fetchReagent(pos, n);
 				if (comp != null) step.reagents.push(comp); else break;
 			}
+			step.meta = this.ds.getString(pos, Experiment.COLNAME_STEP_META);
 
 			entry.steps.push(step);
 		}
@@ -395,6 +411,8 @@ export class Experiment extends Aspect
 		this.forceColumn(Experiment.COLNAME_EXPERIMENT_DOI, DataSheetColumn.String);
 		this.forceColumn(Experiment.COLNAME_EXPERIMENT_META, DataSheetColumn.String);
 
+		this.forceColumn(Experiment.COLNAME_STEP_META, DataSheetColumn.String);
+
 		for (let n = 1; n <= nreactants; n++) this.forceReactantColumns(n);
 		for (let n = 1; n <= nreagents; n++) this.forceReagentColumns(n);
 		for (let n = 1; n <= nproducts; n++) this.forceProductColumns(n);
@@ -417,6 +435,7 @@ export class Experiment extends Aspect
 		this.forceColumn(Experiment.COLNAME_REACTANT_DENSITY, DataSheetColumn.Real, suffix);
 		this.forceColumn(Experiment.COLNAME_REACTANT_CONC, DataSheetColumn.Real, suffix);
 		this.forceColumn(Experiment.COLNAME_REACTANT_PRIMARY, DataSheetColumn.Boolean, suffix);
+		this.forceColumn(Experiment.COLNAME_REACTANT_META, DataSheetColumn.String, suffix);
 	}
 	private forceReagentColumns(suffix:number):void
 	{
@@ -428,6 +447,7 @@ export class Experiment extends Aspect
 		this.forceColumn(Experiment.COLNAME_REAGENT_MOLES, DataSheetColumn.Real, suffix);
 		this.forceColumn(Experiment.COLNAME_REAGENT_DENSITY, DataSheetColumn.Real, suffix);
 		this.forceColumn(Experiment.COLNAME_REAGENT_CONC, DataSheetColumn.Real, suffix);
+		this.forceColumn(Experiment.COLNAME_REAGENT_META, DataSheetColumn.String, suffix);
 	}
 	private forceProductColumns(suffix:number):void
 	{
@@ -441,6 +461,7 @@ export class Experiment extends Aspect
 		this.forceColumn(Experiment.COLNAME_PRODUCT_CONC, DataSheetColumn.Real, suffix);
 		this.forceColumn(Experiment.COLNAME_PRODUCT_YIELD, DataSheetColumn.Real, suffix);
 		this.forceColumn(Experiment.COLNAME_PRODUCT_WASTE, DataSheetColumn.Boolean, suffix);
+		this.forceColumn(Experiment.COLNAME_PRODUCT_META, DataSheetColumn.String, suffix);
 	}
 
 	private parseReactionMetaData(content:string):[number, number, number]
@@ -486,6 +507,7 @@ export class Experiment extends Aspect
 		comp.conc = this.ds.getReal(row, `${Experiment.COLNAME_REACTANT_CONC}${idx}`);
 		let primary = this.ds.getBoolean(row, `${Experiment.COLNAME_REACTANT_PRIMARY}${idx}`);
 		if (primary != null) comp.primary = primary;
+		comp.meta = this.ds.getString(row, `${Experiment.COLNAME_REACTANT_META}${idx}`);
 		return comp;
 	}
 	private fetchProduct(row:number, idx:number):ExperimentComponent
@@ -505,6 +527,7 @@ export class Experiment extends Aspect
 		comp.yield = this.ds.getReal(row, `${Experiment.COLNAME_PRODUCT_YIELD}${idx}`);
 		let waste = this.ds.getBoolean(row, `${Experiment.COLNAME_PRODUCT_WASTE}${idx}`);
 		if (waste != null) comp.waste = waste;
+		comp.meta = this.ds.getString(row, `${Experiment.COLNAME_PRODUCT_META}${idx}`);
 		return comp;
 	}
 	private fetchReagent(row:number, idx:number):ExperimentComponent
@@ -520,6 +543,7 @@ export class Experiment extends Aspect
 		comp.density = this.ds.getReal(row, `${Experiment.COLNAME_REAGENT_DENSITY}${idx}`);
 		comp.conc = this.ds.getReal(row, `${Experiment.COLNAME_REAGENT_CONC}${idx}`);
 		comp.equiv = this.ds.getReal(row, `${Experiment.COLNAME_REAGENT_EQUIV}${idx}`);
+		comp.meta = this.ds.getString(row, `${Experiment.COLNAME_REAGENT_META}${idx}`);
 		return comp;
 	}
 
@@ -575,10 +599,10 @@ export class Experiment extends Aspect
 		// emit the steps and components
 		for (let s = 0; s < entry.steps.length; s++)
 		{
-			let r = row + s;
-			if (s == 0) for (let n = 0; n < entry.steps[s].reactants.length; n++)
+			let r = row + s, step = entry.steps[s];
+			if (s == 0) for (let n = 0; n < step.reactants.length; n++)
 			{
-				let comp = entry.steps[s].reactants[n], i = n + 1;
+				let comp = step.reactants[n], i = n + 1;
 				this.ds.setMolecule(r, `${Experiment.COLNAME_REACTANT_MOL}${i}`, comp.mol);
 				this.ds.setString(r, `${Experiment.COLNAME_REACTANT_NAME}${i}`, comp.name);
 				this.ds.setString(r, `${Experiment.COLNAME_REACTANT_STOICH}${i}`, comp.stoich);
@@ -588,10 +612,11 @@ export class Experiment extends Aspect
 				this.ds.setReal(r, `${Experiment.COLNAME_REACTANT_DENSITY}${i}`, comp.density);
 				this.ds.setReal(r, `${Experiment.COLNAME_REACTANT_CONC}${i}`, comp.conc);
 				this.ds.setBoolean(r, `${Experiment.COLNAME_REACTANT_PRIMARY}${i}`, comp.primary);
+				this.ds.setString(r, `${Experiment.COLNAME_REACTANT_META}${i}`, comp.meta);
 			}
-			for (let n = 0; n < entry.steps[s].reagents.length; n++)
+			for (let n = 0; n < step.reagents.length; n++)
 			{
-				let comp = entry.steps[s].reagents[n], i = n + 1;
+				let comp = step.reagents[n], i = n + 1;
 				this.ds.setMolecule(r, `${Experiment.COLNAME_REAGENT_MOL}${i}`, comp.mol);
 				this.ds.setString(r, `${Experiment.COLNAME_REAGENT_NAME}${i}`, comp.name);
 				this.ds.setReal(r, `${Experiment.COLNAME_REAGENT_EQUIV}${i}`, comp.equiv);
@@ -600,10 +625,11 @@ export class Experiment extends Aspect
 				this.ds.setReal(r, `${Experiment.COLNAME_REAGENT_MOLES}${i}`, comp.moles);
 				this.ds.setReal(r, `${Experiment.COLNAME_REAGENT_DENSITY}${i}`, comp.density);
 				this.ds.setReal(r, `${Experiment.COLNAME_REAGENT_CONC}${i}`, comp.conc);
+				this.ds.setString(r, `${Experiment.COLNAME_REAGENT_META}${i}`, comp.meta);
 			}
-			for (let n = 0; n < entry.steps[s].products.length; n++)
+			for (let n = 0; n < step.products.length; n++)
 			{
-				let comp = entry.steps[s].products[n], i = n + 1;
+				let comp = step.products[n], i = n + 1;
 				this.ds.setMolecule(r, `${Experiment.COLNAME_PRODUCT_MOL}${i}`, comp.mol);
 				this.ds.setString(r, `${Experiment.COLNAME_PRODUCT_NAME}${i}`, comp.name);
 				this.ds.setString(r, `${Experiment.COLNAME_PRODUCT_STOICH}${i}`, comp.stoich);
@@ -614,7 +640,9 @@ export class Experiment extends Aspect
 				this.ds.setReal(r, `${Experiment.COLNAME_PRODUCT_CONC}${i}`, comp.conc);
 				this.ds.setReal(r, `${Experiment.COLNAME_PRODUCT_YIELD}${i}`, comp.yield);
 				this.ds.setBoolean(r, `${Experiment.COLNAME_PRODUCT_WASTE}${i}`, comp.waste);
+				this.ds.setString(r, `${Experiment.COLNAME_PRODUCT_META}${i}`, comp.meta);
 			}
+			this.ds.setString(r, Experiment.COLNAME_STEP_META, step.meta);
 		}
 
 		// trash anything beyond the incoming limits
@@ -634,6 +662,7 @@ export class Experiment extends Aspect
 				this.ds.setToNull(r, `${Experiment.COLNAME_REACTANT_DENSITY}${i}`);
 				this.ds.setToNull(r, `${Experiment.COLNAME_REACTANT_CONC}${i}`);
 				this.ds.setToNull(r, `${Experiment.COLNAME_REACTANT_PRIMARY}${i}`);
+				this.ds.setToNull(r, `${Experiment.COLNAME_REACTANT_META}${i}`);
 			}
 			for (let n = entry.steps[s].reagents.length; n < nreagents; n++)
 			{
@@ -646,6 +675,7 @@ export class Experiment extends Aspect
 				this.ds.setToNull(r, `${Experiment.COLNAME_REAGENT_MOLES}${i}`);
 				this.ds.setToNull(r, `${Experiment.COLNAME_REAGENT_DENSITY}${i}`);
 				this.ds.setToNull(r, `${Experiment.COLNAME_REAGENT_CONC}${i}`);
+				this.ds.setToNull(r, `${Experiment.COLNAME_REAGENT_META}${i}`);
 			}
 			for (let n = entry.steps[s].products.length; n < nproducts; n++)
 			{
@@ -659,6 +689,7 @@ export class Experiment extends Aspect
 				this.ds.setToNull(r, `${Experiment.COLNAME_PRODUCT_DENSITY}${i}`);
 				this.ds.setToNull(r, `${Experiment.COLNAME_PRODUCT_CONC}${i}`);
 				this.ds.setToNull(r, `${Experiment.COLNAME_PRODUCT_WASTE}${i}`);
+				this.ds.setToNull(r, `${Experiment.COLNAME_PRODUCT_META}${i}`);
 			}
 		}
 	}
@@ -689,7 +720,8 @@ export class Experiment extends Aspect
 			Experiment.COLNAME_EXPERIMENT_CREATEDATE,
 			Experiment.COLNAME_EXPERIMENT_MODIFYDATE,
 			Experiment.COLNAME_EXPERIMENT_DOI,
-			Experiment.COLNAME_EXPERIMENT_META
+			Experiment.COLNAME_EXPERIMENT_META,
+			Experiment.COLNAME_STEP_META,
 		];
 		let PREFIXES =
 		[
@@ -702,6 +734,7 @@ export class Experiment extends Aspect
 			Experiment.COLNAME_REACTANT_DENSITY,
 			Experiment.COLNAME_REACTANT_CONC,
 			Experiment.COLNAME_REACTANT_PRIMARY,
+			Experiment.COLNAME_REACTANT_META,
 			Experiment.COLNAME_REAGENT_MOL,
 			Experiment.COLNAME_REAGENT_NAME,
 			Experiment.COLNAME_REAGENT_EQUIV,
@@ -710,6 +743,7 @@ export class Experiment extends Aspect
 			Experiment.COLNAME_REAGENT_MOLES,
 			Experiment.COLNAME_REAGENT_DENSITY,
 			Experiment.COLNAME_REAGENT_CONC,
+			Experiment.COLNAME_REAGENT_META,
 			Experiment.COLNAME_PRODUCT_MOL,
 			Experiment.COLNAME_PRODUCT_NAME,
 			Experiment.COLNAME_PRODUCT_STOICH,
@@ -719,7 +753,8 @@ export class Experiment extends Aspect
 			Experiment.COLNAME_PRODUCT_DENSITY,
 			Experiment.COLNAME_PRODUCT_CONC,
 			Experiment.COLNAME_PRODUCT_YIELD,
-			Experiment.COLNAME_PRODUCT_WASTE
+			Experiment.COLNAME_PRODUCT_WASTE,
+			Experiment.COLNAME_PRODUCT_META,
 		];
 
 		let resv = Vec.booleanArray(false, colNames.length);

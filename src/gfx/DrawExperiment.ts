@@ -82,17 +82,30 @@ export class DrawExperiment
 			return;
 		}
 
-		//vg.drawRect(bx,by,bw,bh,0x000000,1,NOCOLOUR);
+		//vg.drawRect(bx, by, bw, bh, 0xFF0000, 2, null);
 
-		if (xc.text)
+		if (Vec.notBlank(xc.text))
 		{
-			let wad = this.measure.measureText(xc.text, xc.fszText);
-			/* !! text has to be wrapped: need features for this, in some static module...
-			if (tsz.width>limitBounds.width) tsz=textSizeWithin(xc.text,fontText,limitBounds,NSLineBreakByCharWrapping);
-			... in DrawUtil	*/
-			vg.drawText(bx + 0.5 * bw, by + bh, xc.text, xc.fszText, policy.data.foreground, TextAlign.Centre | TextAlign.Bottom);
-			bh -= wad[1] + wad[2] + 0.5 * xc.fszText;
+			let wad = this.measure.measureText('!', xc.fszText), th = wad[1] + wad[2];
+			let totalH = th * xc.text.length;
+
+			//vg.drawRect(bx, by + bh - totalH, bw, totalH, 0x00FF00, 1, null);
+
+			let ty = by + bh - th * (xc.text.length - 1);
+			for (let line of xc.text)
+			{
+				let wad = this.measure.measureText(line, xc.fszText);
+				/* !! text has to be wrapped: need features for this, in some static module...
+				if (tsz.width>limitBounds.width) tsz=textSizeWithin(xc.text,fontText,limitBounds,NSLineBreakByCharWrapping);
+				... in DrawUtil	*/
+				vg.drawText(bx + 0.5 * bw, ty, line, xc.fszText, policy.data.foreground, TextAlign.Centre | TextAlign.Baseline);
+				ty += th;
+			}
+
+			bh -= totalH + 0.5 * xc.fszText;
 		}
+
+		//vg.drawRect(bx, by, bw, bh, 0x0000FF, 1, null);
 
 		if (xc.leftNumer)
 		{

@@ -30,6 +30,7 @@ export enum ArrangeComponentType
 	Reactant = 3, // primary reactant: molecule or name
 	Reagent = 4, // primary reagent: molecule or name
 	Product = 5, // primary product: molecule or name
+	StepNote = 6, // additional information about the step (e.g. rxn conditions)
 }
 
 export enum ArrangeComponentAnnot
@@ -48,7 +49,7 @@ export class ArrangeComponent
 	public side:number; // which side of the reaction (-1=left, 1=right, 0=middle)
 	public refIdx:number; // for non-primary components, the index of the association
 	public mol:Molecule; // molecule content, if applicable
-	public text:string; // text content, if applicable
+	public text:string[]; // text content, if applicable
 	public leftNumer:string; // // to the left of the structure: may be {n}/{d} form
 	public leftDenom:string;
 	public fszText:number; // text font sizes, if applicable
@@ -104,6 +105,7 @@ export class ArrangeExperiment
 	public includeStoich = true; // whether to include non-unity stoichiometry labels
 	public includeAnnot = false; // whether to add annotations like primary/waste
 	public includeBlank = false; // any section with no components gets a blank placeholder
+	public includeDetails = false; // include information like yield, amount, metadata in the layout
 	public padding = 0;
 
 	public static COMP_GAP_LEFT = 0.5;
@@ -151,13 +153,16 @@ export class ArrangeExperiment
 					w = sz.w;
 					h = sz.h;
 				}
-				if (xc.text)
+				if (Vec.notBlank(xc.text))
 				{
 					if (MolUtil.notBlank(xc.mol)) h += 0.5 * fszText;
-					xc.fszText = fszText;
-					let wad = this.measure.measureText(xc.text, fszText);
-					w = Math.max(w, wad[0]);
-					h += wad[1] + wad[2];
+					for (let line of xc.text)
+					{
+						xc.fszText = fszText;
+						let wad = this.measure.measureText(line, fszText);
+						w = Math.max(w, wad[0]);
+						h += wad[1] + wad[2];
+					}
 				}
 				if (xc.annot != 0) w += ArrangeExperiment.COMP_ANNOT_SIZE * this.scale;
 				if ((MolUtil.isBlank(xc.mol) && !xc.text && this.includeBlank) || w == 0 || h == 0)
@@ -224,25 +229,6 @@ export class ArrangeExperiment
 		}
 	}
 
-	// for debugging purposes
-	/*public String dumpArrangement()
-	{
-		StringBuffer dump = new StringBuffer();
-		dump.append("Components:" + components.size() + " size=" + width + "," + height);
-
-		for (Component xc : components)
-		{
-			dump.append(xc.type == ArrangeExperiment.COMP_ARROW ? "arrow" : xc.type == ArrangeExperiment.COMP_PLUS ? "plus" :
-						xc.type == ArrangeExperiment.COMP_REACTANT ? "reactant" : xc.type == ArrangeExperiment.COMP_REAGENT ? "reagent" :
-						xc.type == ArrangeExperiment.COMP_PRODUCT ? "product" : "?");
-			dump.append(": bounds={" + xc.bx + "," + xc.by + "," + xc.bw + "," + xc.bh + "}");
-			// ...
-			dump.append("\n");
-		}
-
-		return dump.toString();
-	}*/
-
 	// convenience: convert arrangment type to its experiment counterpart, if applicable
 	public static toExpType(compType:ArrangeComponentType):ExperimentComponentType
 	{
@@ -279,6 +265,7 @@ export class ArrangeExperiment
 				}
 				if (!any && this.includeBlank) this.createBlank(ArrangeComponentType.Reagent, s);
 			}
+			if (this.includeDetails) this.createStepMeta(s);
 
 			let any = false;
 			for (let n = 0; n < this.entry.steps[s].products.length; n++)
@@ -301,7 +288,9 @@ export class ArrangeExperiment
 		xc.step = step;
 		xc.side = -1;
 		if (MolUtil.notBlank(comp.mol)) xc.mol = comp.mol;
-		if (comp.name && (this.includeNames || MolUtil.isBlank(comp.mol))) xc.text = comp.name;
+		if (comp.name && (this.includeNames || MolUtil.isBlank(comp.mol))) xc.text = [comp.name];
+		if (this.includeDetails) this.supplementText(xc, comp);
+
 		if (this.includeStoich && !QuantityCalc.isStoichZero(comp.stoich) && !QuantityCalc.isStoichUnity(comp.stoich))
 		{
 			let slash = comp.stoich.indexOf('/');
@@ -325,8 +314,8 @@ export class ArrangeExperiment
 		xc.step = step;
 		xc.side = 0;
 		if (MolUtil.notBlank(comp.mol)) xc.mol = comp.mol;
-		if (comp.name && (this.includeNames || MolUtil.isBlank(comp.mol))) xc.text = comp.name;
-		//if (MolUtil.isBlank(xc.mol) && !xc.text) xc.text = '?';
+		if (comp.name && (this.includeNames || MolUtil.isBlank(comp.mol))) xc.text = [comp.name];
+		if (this.includeDetails) this.supplementText(xc, comp);
 
 		if (this.includeAnnot)
 		{
@@ -353,8 +342,8 @@ export class ArrangeExperiment
 		xc.step = step;
 		xc.side = 1;
 		if (MolUtil.notBlank(comp.mol)) xc.mol = comp.mol;
-		if (comp.name && (this.includeNames || MolUtil.isBlank(comp.mol))) xc.text = comp.name;
-		//if (MolUtil.isBlank(xc.mol) && !xc.text) xc.text = '?';
+		if (comp.name && (this.includeNames || MolUtil.isBlank(comp.mol))) xc.text = [comp.name];
+		if (this.includeDetails) this.supplementText(xc, comp);
 
 		if (this.includeStoich && !QuantityCalc.isStoichZero(comp.stoich) && !QuantityCalc.isStoichUnity(comp.stoich))
 		{
@@ -369,12 +358,30 @@ export class ArrangeExperiment
 		if (this.includeAnnot && MolUtil.notBlank(comp.mol) && comp.waste) xc.annot = ArrangeComponentAnnot.Waste;
 		this.components.push(xc);
 	}
-	private createSegregator(type:number, step:number, side:number):void
+	private createSegregator(type:ArrangeComponentType, step:number, side:number):void
 	{
 		let xc = new ArrangeComponent();
 		xc.type = type;
 		xc.step = step;
 		xc.side = side;
+		this.components.push(xc);
+	}
+	private createStepMeta(step:number):void
+	{
+		let lines:string[] = [];
+		for (let [type, value] of ExperimentMeta.unpackMeta(this.entry.steps[step].meta))
+		{
+			if (!Vec.safeArray(ExperimentMeta.APPLICABILITY[type]).includes(ExperimentMetaApplic.Step)) continue;
+			let descr = ExperimentMeta.describeMeta(type, value);
+			if (descr != null) lines.push(descr);
+		}
+		if (lines.length == 0) return;
+
+		let xc = new ArrangeComponent();
+		xc.type = ArrangeComponentType.StepNote;
+		xc.step = step;
+		xc.side = 0;
+		xc.text = lines;
 		this.components.push(xc);
 	}
 	private createBlank(type:number, step:number):void
@@ -680,6 +687,27 @@ export class ArrangeExperiment
 			xc.box.y += y;
 		}
 	}
+
+	// add in other text information about the comment, if desired
+	private supplementText(xc:ArrangeComponent, comp:ExperimentComponent):void
+	{
+		if (!xc.text) xc.text = [];
+
+		if (comp.mass > 0) xc.text.push(QuantityCalc.formatMass(comp.mass));
+		if (comp.volume > 0) xc.text.push(QuantityCalc.formatVolume(comp.volume));
+		if (comp.moles > 0) xc.text.push(QuantityCalc.formatMoles(comp.moles));
+		//if (comp.density > 0) xc.text.push(QuantityCalc.formatDensity(comp.density));
+		if (comp.conc > 0) xc.text.push(QuantityCalc.formatConc(comp.conc));
+		if (comp.yield > 0) xc.text.push(QuantityCalc.formatPercent(comp.yield));
+		if (comp.equiv > 0) xc.text.push(QuantityCalc.formatEquiv(comp.equiv));
+
+		for (let [type, value] of ExperimentMeta.unpackMeta(comp.meta))
+		{
+			let descr = ExperimentMeta.describeMeta(type, value);
+			if (descr) xc.text.push(descr);
+		}
+	}
+
 }
 
 /* EOF */ }
