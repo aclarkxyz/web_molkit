@@ -21,12 +21,15 @@ export class Random
 	private m = 0x8000000;
 	private invMN = 1.0 / (this.m - 1);
 	private a = 1103515245;
-	private c = 12345;
+	private c = 5425153011;
 	private state:number;
 
 	constructor(private seed:number = null)
 	{
-		this.state = seed != null ? seed : Math.floor(Math.random() * (this.m - 1));
+		if (seed == null)
+			this.state = Math.floor(Math.random() * (this.m - 1));
+		else
+			this.state = seed;
   	}
 
 	// returns a positive 31-bit integer

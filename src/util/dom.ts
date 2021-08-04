@@ -10,6 +10,8 @@
 	[PKG=webmolkit]
 */
 
+///<reference path='Geom.ts'/>
+
 namespace WebMolKit /* BOF */ {
 
 /*
