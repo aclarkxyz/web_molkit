@@ -75,7 +75,7 @@ export class DrawExperiment
 
 		if (this.preDrawComponent) this.preDrawComponent(vg, idx, xc);
 
-		if (xc.srcIdx < 0 || (MolUtil.isBlank(xc.mol) && !xc.text))
+		if (xc.srcIdx < 0 || (MolUtil.isBlank(xc.mol) && Vec.isBlank(xc.text)))
 		{
 			let fsz = 0.5 * bh;
 			vg.drawText(bx + 0.5 * bw, by + 0.5 * bh, '?', fsz, policy.data.foreground, TextAlign.Centre | TextAlign.Middle);

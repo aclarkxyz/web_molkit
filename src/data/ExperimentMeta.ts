@@ -18,6 +18,7 @@ namespace WebMolKit /* BOF */ {
 
 export enum ExperimentMetaType
 {
+	Pressure = 'pressure', // when a reagent is applied at a nonstandard pressure
 	TurnoverNumber = 'turnover_number', // catalyst turnovers (unitless)
 	EnantiomericExcess = 'enantiomeric_excess', // percent of desired enantiomer above undesired
 	Time = 'time', // total time for reaction step
@@ -45,6 +46,7 @@ export class ExperimentMeta
 {
 	public static APPLICABILITY =
 	{
+		[ExperimentMetaType.Pressure]: [ExperimentMetaApplic.Reactant, ExperimentMetaApplic.Reagent],
 		[ExperimentMetaType.TurnoverNumber]: [ExperimentMetaApplic.Reagent],
 		[ExperimentMetaType.EnantiomericExcess]: [ExperimentMetaApplic.Product],
 		[ExperimentMetaType.Time]: [ExperimentMetaApplic.Step],
@@ -54,6 +56,7 @@ export class ExperimentMeta
 
 	public static NAMES =
 	{
+		[ExperimentMetaType.Pressure]: 'Pressure',
 		[ExperimentMetaType.TurnoverNumber]: 'Turnover Number',
 		[ExperimentMetaType.EnantiomericExcess]: 'Enantiomeric Excess',
 		[ExperimentMetaType.Time]: 'Time',
@@ -63,6 +66,7 @@ export class ExperimentMeta
 
 	public static UNITS =
 	{
+		[ExperimentMetaType.Pressure]: 'atm',
 		[ExperimentMetaType.TurnoverNumber]: null as string,
 		[ExperimentMetaType.EnantiomericExcess]: '%',
 		[ExperimentMetaType.Time]: 'hr',
@@ -72,6 +76,7 @@ export class ExperimentMeta
 
 	public static VALUES =
 	{
+		[ExperimentMetaType.Pressure]: ExperimentMetaValue.Number,
 		[ExperimentMetaType.TurnoverNumber]: ExperimentMetaValue.Number,
 		[ExperimentMetaType.EnantiomericExcess]: ExperimentMetaValue.Number,
 		[ExperimentMetaType.Time]: ExperimentMetaValue.Number,
@@ -125,7 +130,12 @@ export class ExperimentMeta
 			return str;
 		};
 
-		if (type == ExperimentMetaType.TurnoverNumber)
+		if (type == ExperimentMetaType.Pressure)
+		{
+			if (value == null) return null;
+			return `${formatFloat(value as number, 2)} atm`;
+		}
+		else if (type == ExperimentMetaType.TurnoverNumber)
 		{
 			if (value == null) return null;
 			return `${formatFloat(value as number, 2)} turnover${value == 1 ? '' : 's'}`;

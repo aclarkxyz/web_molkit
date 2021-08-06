@@ -698,7 +698,7 @@ export class ArrangeExperiment
 		if (comp.moles > 0) xc.text.push(QuantityCalc.formatMoles(comp.moles));
 		//if (comp.density > 0) xc.text.push(QuantityCalc.formatDensity(comp.density));
 		if (comp.conc > 0) xc.text.push(QuantityCalc.formatConc(comp.conc));
-		if (comp.yield > 0) xc.text.push(QuantityCalc.formatPercent(comp.yield));
+		if (comp.yield != null && comp.yield >= 0) xc.text.push(QuantityCalc.formatPercent(comp.yield));
 		if (comp.equiv > 0) xc.text.push(QuantityCalc.formatEquiv(comp.equiv));
 
 		for (let [type, value] of ExperimentMeta.unpackMeta(comp.meta))

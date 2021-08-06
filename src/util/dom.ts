@@ -82,6 +82,13 @@ export class DOM
 		return parent ? new DOM(parent) : null;
 	}
 
+	// returns the first object in the parent's ancestry that matches the selector
+	public ancestor(selector:string):DOM
+	{
+		let el = this.el.closest(selector);
+		return el ? new DOM(el) : null;
+	}
+
 	// return all the node's element children
 	public children(tag?:string):DOM[]
 	{
