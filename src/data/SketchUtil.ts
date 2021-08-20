@@ -242,9 +242,9 @@ export class SketchUtil
 			let oldN = j, newN = i; // remove the later one, by default
 			if (mol.atomElement(i) == 'C' && mol.atomElement(j) != 'C' && mol.atomElement(j) != 'X') [oldN, newN] = [i, j];
 			
-			mol.setAtomHExplicit(newN, mol.atomHExplicit(oldN));
-			mol.setAtomUnpaired(newN, mol.atomUnpaired(oldN));
-			mol.setAtomCharge(newN, mol.atomCharge(oldN));
+			if (mol.atomHExplicit(newN) == Molecule.HEXPLICIT_UNKNOWN) mol.setAtomHExplicit(newN, mol.atomHExplicit(oldN));
+			mol.setAtomUnpaired(newN, mol.atomUnpaired(newN) + mol.atomUnpaired(oldN));
+			mol.setAtomCharge(newN, mol.atomCharge(newN) + mol.atomCharge(oldN));
 			mol.setAtomExtra(newN, Vec.concat(mol.atomExtra(oldN), mol.atomExtra(newN)));
 
 			for (let n = 1; n <= mol.numBonds; n++)

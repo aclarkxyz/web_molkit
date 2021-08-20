@@ -418,7 +418,14 @@ export class MolUtil
 			else if (mask[bto] && !mask[bfr]) xmask[bfr] = true;
 		}
 		let xmol = mol.clone();
-		for (let n = 1; n <= xmol.numAtoms; n++) if (xmask[n - 1] && !mask[n - 1]) xmol.setAtomElement(n, 'X');
+		for (let n = 1; n <= xmol.numAtoms; n++) if (xmask[n - 1] && !mask[n - 1])
+		{
+			xmol.setAtomElement(n, 'X');
+			xmol.setAtomCharge(n, 0);
+			xmol.setAtomUnpaired(n, 0);
+			xmol.setAtomHExplicit(n, Molecule.HEXPLICIT_UNKNOWN);
+			xmol.setAtomExtra(n, []);
+		}
 		return MolUtil.subgraphMask(xmol, xmask);
 	}
 
