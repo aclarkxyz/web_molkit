@@ -42,6 +42,7 @@ export class EditAtom extends Dialog
 	private inputIsotope:DOM;
 	private inputMapping:DOM;
 	private inputIndex:DOM;
+	private periodicWidget:PeriodicTableWidget;
 
 	private abbrevList:AbbrevContainerFrag[] = null;
 	private inputAbbrevSearch:DOM;
@@ -153,6 +154,7 @@ export class EditAtom extends Dialog
 		grid.appendHTML('<div style="grid-area: 1 / col0;">Symbol</div>');
 		this.inputSymbol = dom('<input size="20"/>').appendTo(grid);
 		this.inputSymbol.css({'grid-area': '1 / col1 / auto / col4}'});
+		this.inputSymbol.onInput(() => this.periodicWidget.changeElement(this.inputSymbol.getValue()));
 
 		grid.appendHTML('<div style="grid-area: 2 / col0;">Charge</div>');
 		this.inputCharge = dom('<input type="number" size="6"/>').appendTo(grid);
@@ -165,15 +167,18 @@ export class EditAtom extends Dialog
 		grid.appendHTML('<div style="grid-area: 3 / col0;">Hydrogens</div>');
 		this.optionHydrogen = new OptionList(['Auto', 'None', '1', '2', '3', '4', 'Other']);
 		this.optionHydrogen.render(dom('<div style="grid-area: 3 / col1 / auto / col3"/>').appendTo(grid));
-		this.optionHydrogen.onSelect((idx:number) => this.inputHydrogen.elInput.disabled = idx != 6);
+		this.optionHydrogen.onSelect((idx) => this.inputHydrogen.elInput.disabled = idx != 6);
 		this.inputHydrogen = dom('<input type="number" size="4"/>').appendTo(grid);
 		this.inputHydrogen.css({'grid-area': '3 / col3'});
+		this.inputHydrogen.elInput.disabled = true;
 
 		grid.appendHTML('<div style="grid-area: 4 / col0;">Isotope</div>');
 		this.optionIsotope = new OptionList(['Natural', 'Enriched']);
 		this.optionIsotope.render(dom('<div style="grid-area: 4 / col1 / auto / col3"/>').appendTo(grid));
+		this.optionIsotope.onSelect((idx) => this.inputIsotope.elInput.disabled = idx == 0);
 		this.inputIsotope = dom('<input type="number" size="6"/>').appendTo(grid);
 		this.inputIsotope.css({'grid-area': '4 / col3'});
+		this.inputIsotope.elInput.disabled = true;
 
 		grid.appendHTML('<div style="grid-area: 5 / col0;">Mapping</div>');
 		this.inputMapping = dom('<input type="number" size="6"/>').appendTo(grid);
@@ -182,6 +187,11 @@ export class EditAtom extends Dialog
 		grid.appendHTML('<div style="grid-area: 5 / col2;">Index</div>');
 		this.inputIndex = dom('<input type="number" size="6" readonly="readonly"/>').appendTo(grid);
 		this.inputIndex.css({'grid-area': '5 / col3'});
+
+		let divPeriodic = dom('<div/>').appendTo(grid).css({'grid-area': '6 / start / 6 / end'});
+		this.periodicWidget = new PeriodicTableWidget();
+		this.periodicWidget.onSelect((element) => this.inputSymbol.setValue(element));
+		this.periodicWidget.render(divPeriodic);
 
 		const mol = this.mol, atom = this.atom;
 		if (atom > 0)
@@ -213,9 +223,13 @@ export class EditAtom extends Dialog
 			//if (mol.atomHExplicit(atom) != Molecule.HEXPLICIT_UNKNOWN) this.inputHydrogen.val(mol.atomHExplicit(atom).toString());
 
 			this.optionIsotope.setSelectedIndex(mol.atomIsotope(atom) == Molecule.ISOTOPE_NATURAL ? 0 : 1);
-			if (mol.atomIsotope(atom) == Molecule.ISOTOPE_NATURAL) this.inputIsotope.setValue(mol.atomIsotope(atom).toString());
+			if (mol.atomIsotope(atom) != Molecule.ISOTOPE_NATURAL) this.inputIsotope.setValue(mol.atomIsotope(atom).toString());
+			this.inputIsotope.elInput.disabled = mol.atomIsotope(atom) == Molecule.ISOTOPE_NATURAL;
+
 			this.inputMapping.setValue(mol.atomMapNum(atom).toString());
 			this.inputIndex.setValue(atom.toString());
+
+			this.periodicWidget.changeElement(mol.atomElement(atom));
 		}
 	}
 
