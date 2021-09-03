@@ -225,7 +225,7 @@ export class DrawCanvas extends Widget implements ArrangeMeasurement
 	protected layoutMolecule():void
 	{
 		let mol = this.mol;
-		if (this.hoverAtom > 0 && MolUtil.hasAbbrev(this.mol, this.hoverAtom))
+		if (this.hoverAtom > 0 && MolUtil.hasAbbrev(mol, this.hoverAtom))
 		{
 			mol = mol.clone();
 			mol.setAtomElement(this.hoverAtom, '');
@@ -1017,7 +1017,7 @@ export class DrawCanvas extends Widget implements ArrangeMeasurement
 			}
 			return null;
 		}
-	
+
 		// try guides & atoms for snapping
 		let bestDSQ = Number.POSITIVE_INFINITY, bestX = 0, bestY = 0;
 		const APPROACH = sqr(0.5 * this.pointScale);
@@ -1200,7 +1200,12 @@ export class DrawCanvas extends Widget implements ArrangeMeasurement
 			CoordUtil.translateMolecule(abbrevMol, mol.atomX(nbr) - abbrevMol.atomX(1), mol.atomY(nbr) - abbrevMol.atomY(1));
 		}
 
-		//abbrevMol.setAtomElement(1, 'C'); // mask out the "X"
+		for (let b of abbrevMol.atomAdjBonds(1))
+		{
+			let a = abbrevMol.bondOther(b, 1);
+			if (abbrevMol.atomHExplicit(a) != Molecule.HEXPLICIT_UNKNOWN) continue;
+			abbrevMol.setAtomHExplicit(a, Math.max(0, abbrevMol.atomHydrogens(a)));
+		}
 		abbrevMol.deleteAtomAndBonds(1);
 	}
 }
