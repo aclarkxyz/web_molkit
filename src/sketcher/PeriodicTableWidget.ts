@@ -16,6 +16,7 @@ namespace WebMolKit /* BOF */ {
 	Interactive periodic table for picking elements.
 */
 
+/* eslint-disable no-multi-spaces, comma-spacing */
 const POSITION_TABLE_Y =
 [
 	1,                                1,
@@ -127,7 +128,7 @@ export class PeriodicTableWidget extends Widget
 			div.setText(el);
 			this.divList.push(div);
 
-			div.onClick(() => 
+			div.onClick(() =>
 			{
 				this.changeElement(el);
 				this.callbackSelect(el);
@@ -151,7 +152,6 @@ export class PeriodicTableWidget extends Widget
 	}
 
 	// ------------ private methods ------------
-
 
 }
 
