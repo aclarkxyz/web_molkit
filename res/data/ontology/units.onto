@@ -1,8 +1,8 @@
 http://purl.obolibrary.org/obo/UO_0000000 units
 - http://purl.obolibrary.org/obo/UO_0000051 concentration units
-- - http://www.bioassayontology.org/bao#BAO_0000102 -log10 of mol/L
+- - http://www.bioassayontology.org/bao#BAO_0000102 -log10[mol/L]
 - - http://purl.obolibrary.org/obo/UO_0000175 grams per litre (g/L)
-- - http://www.bioassayontology.org/bao#BAO_0000101 log10 of mol/L
+- - http://www.bioassayontology.org/bao#BAO_0000101 log10[mol/L]
 - - http://purl.obolibrary.org/obo/UO_0000275 micrograms per litre (ug/L)
 - - http://purl.obolibrary.org/obo/UO_0000064 micromoles per litre (umol/L)
 - - http://purl.obolibrary.org/obo/UO_0000273 milligrams per litre (mg/L)
