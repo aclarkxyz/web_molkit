@@ -58,7 +58,7 @@ export class DataSheetStream
 
 		// header: columns
 		let header = findNode(root, 'Header');
-		let numCols = parseInt(header.getAttribute('ncols')), numRows = parseInt(header.getAttribute('nrows'));
+		let numCols = parseInt(header.getAttribute('ncols'));//, numRows = parseInt(header.getAttribute('nrows'));
 		let colList = findNodes(header, 'Column');
 		if (colList.length != numCols) return null;
 		for (let n = 0; n < numCols; n++)
