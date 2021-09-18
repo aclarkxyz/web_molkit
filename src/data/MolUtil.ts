@@ -554,6 +554,12 @@ export class MolUtil
 		for (let n = y.length - 1; n >= 0; n--) y[n] = mol.atomY(n + 1);
 		return y;
 	}
+	public static arrayAtomMapNum(mol:Molecule):number[]
+	{
+		let mapnum = Vec.numberArray(0, mol.numAtoms);
+		for (let n = mapnum.length - 1; n >= 0; n--) mapnum[n] = mol.atomMapNum(n + 1);
+		return mapnum;
+	}
 
 	// calculates the molecular formula
 	public static molecularFormula(mol:Molecule, punctuation?:boolean | string[]):string
