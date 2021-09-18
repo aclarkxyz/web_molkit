@@ -39,7 +39,7 @@ export class MenuProxy
 export class MenuProxyWeb extends MenuProxy
 {
 	public hasContextMenu():boolean {return true;}
-	public openContextMenu(menuItems:MenuProxyContext[], event:JQueryMouseEventObject):void
+	public openContextMenu(menuItems:MenuProxyContext[], event:JQueryMouseEventObject | MouseEvent):void
 	{
 		let [x, y] = eventCoords(event, document.body);
 		//let x = event.screenX, y = event.screenY;
@@ -57,7 +57,20 @@ export class MenuProxyWeb extends MenuProxy
 				{
 					div.appendHTML('<hr/>');
 				}
-				else
+				else if (menuItem.subMenu)
+				{
+					div.setText(menuItem.label + ' \u{25B8}');
+					div.css({'cursor': 'pointer'});
+					let fcn = (event:MouseEvent) =>
+					{
+						event.preventDefault();
+						popup.close();
+						this.openContextMenu(menuItem.subMenu, event);
+					};
+					div.onClick(fcn);
+					div.onContextMenu(fcn);
+				}
+				else if (menuItem.click)
 				{
 					div.setText(menuItem.label);
 					div.onMouseEnter(() => {div.css({'background-color': '#D0D0D0'});});
@@ -68,6 +81,11 @@ export class MenuProxyWeb extends MenuProxy
 						popup.close();
 						menuItem.click();
 					});
+				}
+				else
+				{
+					div.css({'color': '#808080'});
+					div.setText(menuItem.label);
 				}
 			}
 		};

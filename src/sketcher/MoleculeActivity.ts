@@ -828,8 +828,7 @@ export class MoleculeActivity
 
 		mol = mol.clone();
 
-		let [atom1, atom2, side] = this.heavySide(bond);
-
+		let [atom1, atom2, side] = this.mobileSide(bond);
 		let cx = mol.atomX(atom1), cy = mol.atomY(atom1);
 		let theta = Math.atan2(mol.atomY(atom1) - mol.atomY(atom2), mol.atomX(atom1) - mol.atomX(atom2));
 		for (let a of side) if (a != atom1)
@@ -919,22 +918,13 @@ export class MoleculeActivity
 			return;
 		}
 
-		let sides = MolUtil.getBondSides(mol, bond);
-		let side1 = sides[0], side2 = sides[1];
-		let atoms:number[] = [];
-		let [a1, a2] = mol.bondFromTo(bond);
-		let sel1 = this.input.selectedMask[a1 - 1], sel2 = this.input.selectedMask[a2 - 1];
-		if (sel1 && !sel2) atoms = side1;
-		else if (!sel1 && sel2) atoms = side2;
-		else if (side1.length < side2.length) atoms = side1;
-		else atoms = side2;
+		let [alink, _, side] = this.mobileSide(bond);
 
-		let alink = atoms.includes(a1) ? a1 : a2;
 		mol = mol.clone();
 		mol.setBondOrder(bond, 1);
 
 		let fragmask = Vec.booleanArray(false, mol.numAtoms);
-		for (let a of atoms) fragmask[a - 1] = true;
+		for (let a of side) fragmask[a - 1] = true;
 		let frag = MolUtil.subgraphWithAttachments(mol, fragmask);
 
 		for (let n = mol.numAtoms; n >= 1; n--) if (fragmask[n - 1] && n != alink)
@@ -1271,7 +1261,7 @@ export class MoleculeActivity
 		}
 		else
 		{
-			let [atom1, atom2, side] = this.heavySide(bond);
+			let [atom1, atom2, side] = this.mobileSide(bond);
 			let dx = mol.atomX(atom2) - mol.atomX(atom1), dy = mol.atomY(atom2) - mol.atomY(atom1);
 			let curDist = norm_xy(dx, dy), inv = 1.0 / curDist;
 			let ox = dx * (dist - curDist) * inv, oy = dy * (dist - curDist) * inv;
@@ -1298,7 +1288,7 @@ export class MoleculeActivity
 			return;
 		}
 
-		let [atom1, atom2, side] = this.heavySide(bond);
+		let [atom1, atom2, side] = this.mobileSide(bond);
 		let cx = mol.atomX(atom2), cy = mol.atomY(atom2);
 		let delta = angle - Math.atan2(mol.atomY(atom1) - cy, mol.atomX(atom1) - cx);
 		let cosTheta = Math.cos(delta), sinTheta = Math.sin(delta);
@@ -1571,6 +1561,7 @@ export class MoleculeActivity
 		let mol = this.input.mol.clone();
 		for (let n of idx) MolUtil.expandOneAbbrev(mol, n, true);
 		this.output.mol = mol;
+		this.zapSubject();
 	}
 
 	public execBondArtifact(activity:ActivityType):void
@@ -2135,8 +2126,9 @@ export class MoleculeActivity
 		return true;
 	}
 
-	// assuming the bond is not in a ring, returns the "heavier" side and its atom group
-	private heavySide(bond:number):[number, number, number[]]
+	// assuming the bond is not in a ring, figures out which side is "lighter", and returns the opposite; note that if one of the two
+	// bond atoms is selected, then that one is picked preferentially
+	private mobileSide(bond:number):[number, number, number[]]
 	{
 		let {mol} = this.input;
 		let atom1 = mol.bondFrom(bond), atom2 = mol.bondTo(bond);
@@ -2151,9 +2143,12 @@ export class MoleculeActivity
 		}
 		let weight1 = side1.length * (mol.atomRingBlock(atom1) > 0 ? 2 : 1);
 		let weight2 = side2.length * (mol.atomRingBlock(atom2) > 0 ? 2 : 1);
-		let sel1 = this.isSelected(atom1), sel2 = this.isSelected(atom2);
+		let sel1 = false, sel2 = false;
+		for (let a of side1) if (this.isSelected(a)) {sel1 = true; break;}
+		for (let a of side2) if (this.isSelected(a)) {sel2 = true; break;}
+
 		if (sel1 && !sel2) {}
-		else if (sel2 && !sel1 || weight2 < weight1) return [atom2, atom1, side2];
+		else if ((sel2 && !sel1) || weight2 < weight1) return [atom2, atom1, side2];
 		return [atom1, atom2, side1];
 	}
 
