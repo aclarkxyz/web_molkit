@@ -290,6 +290,13 @@ export class DOM
 		this.addClass(clsname);
 		return this;
 	}
+	public toggleClass(dict:Record<string, boolean>):void
+	{
+		for (let key in dict)
+		{
+			if (dict[key]) this.elHTML.classList.add(key); else this.elHTML.classList.remove(key);
+		}
+	}
 
 	// position & size
 	public width():number
