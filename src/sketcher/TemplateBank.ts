@@ -46,26 +46,10 @@ export class TemplateBank extends ButtonBank
 
 	public init()
 	{
-		// immediately issue a webservice request to fetch the button list
 		let policy = RenderPolicy.defaultBlackOnWhite();
 		policy.data.pointScale = 10;
 		policy.data.lineSize *= 1.5;
 		policy.data.bondSep *= 1.5;
-
-		/*if (this.group == null)
-		{
-			if (TemplateBank.RESOURCE_DATA == null)
-				this.loadResourceData(() => this.prepareSubGroups());
-			else
-				this.prepareSubGroups();
-		}
-		else
-		{
-			if (TemplateBank.RESOURCE_DATA == null)
-				this.loadResourceData(() => this.prepareTemplates());
-			else
-				this.prepareTemplates();
-		}*/
 
 		(async () =>
 		{
