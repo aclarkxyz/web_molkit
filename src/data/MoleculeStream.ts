@@ -72,7 +72,7 @@ export class MoleculeStream
 		for (let n = 0; n < numAtoms; n++)
 		{
 			bits = lines[1 + n].split(/[=,;]/);
-			let num = mol.addAtom(bits[0], parseFloat(bits[1]), parseFloat(bits[2]), parseInt(bits[3]), parseInt(bits[4]));
+			let num = mol.addAtom(MoleculeStream.skUnescape(bits[0]), parseFloat(bits[1]), parseFloat(bits[2]), parseInt(bits[3]), parseInt(bits[4]));
 			let extra:string[] = [], trans:string[] = [];
 			for (let i = 5; i < bits.length; i++)
 			{
