@@ -36,6 +36,11 @@ export class TabBar extends Widget
 		if (!hasInlineCSS('tabbar')) installInlineCSS('tabbar', this.composeCSS());
 	}
 
+	public onSelect(callback:(idx:number, source?:TabBar) => void):void
+	{
+		this.callbackSelect = callback;
+	}
+
 	// control over selected index
 	public getSelectedIndex():number
 	{
