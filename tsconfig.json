@@ -8,7 +8,8 @@
         "outFile": "bin/webmolkit-build.js",
         "sourceMap": true,
         "target": "ES6",
-        "lib": ["es2017", "dom"]
+        "lib": ["es2017", "dom"],
+		"declaration": true
     },
     "include": 
     [
