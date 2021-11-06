@@ -12,3 +12,4 @@ http://purl.obolibrary.org/obo/UO_0000000 units
 - - http://purl.obolibrary.org/obo/UO_0000066 picomoles per litre (pmol/L)
 - http://purl.obolibrary.org/obo/UO_0000186 dimensionless unit
 - - http://www.bioassayontology.org/bao#BAO_0080023 binary (true/false)
+- - http://purl.obolibrary.org/obo/UO_0000187 percent

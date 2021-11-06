@@ -104,6 +104,19 @@ export class Vec
 		return ret;
 	}
 
+	// assuming the input is matrix-like, swaps the first two axes, i.e. {m,n} => {n,m}
+	public static transpose<T>(mtx:T[][]):T[][]
+	{
+		let sz1 = mtx.length, sz2 = mtx[0].length;
+		let ret:T[][] = Vec.anyArray(null, sz2);
+		for (let j = 0; j < sz2; j++)
+		{
+			ret[j] = Vec.anyArray(null, sz1);
+			for (let i = 0; i < sz1; i++) ret[j][i] = mtx[i][j];
+		}
+		return ret;
+	}
+
 	// null-tolerant comparison
 	public static equals(arr1:any[], arr2:any[]):boolean
 	{

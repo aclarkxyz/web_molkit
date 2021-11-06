@@ -416,7 +416,7 @@ export class Sketcher extends DrawCanvas
 	{
 		let mol = Molecule.fromString(this.templatePerms[this.currentPerm].mol);
 		this.templateView.popBank();
-		this.defineMolecule(mol, false, true, true);
+		this.defineMolecule(mol, false, true, false);
 	}
 
 	// rotate the template display up or down
