@@ -77,6 +77,7 @@ export class QuantityCalc
 
 	public quantities:QuantityCalcComp[] = [];
 
+	public primaryMoles:number[] = [];
 	public idxPrimary:number[] = [];
 	public idxYield:number[] = [];
 	public allMassReact:number[] = [];
@@ -621,7 +622,7 @@ export class QuantityCalc
 		let numSteps = this.entry.steps.length;
 		let primaryCounts = Vec.numberArray(0, numSteps);
 		let primaryEquivs = Vec.numberArray(0, numSteps);
-		let primaryMoles = Vec.numberArray(0, numSteps);
+		let primaryMoles = this.primaryMoles = Vec.numberArray(0, numSteps);
 
 		// go over components: first step uses reactants; next steps use products from previous
 		for (let qc of this.quantities)
