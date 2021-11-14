@@ -1,19 +1,19 @@
 {
-    "compilerOptions": 
-    {
-        "module": "system",
-        "noImplicitAny": true,
-        "removeComments": true,
-        "preserveConstEnums": true,
-        "outFile": "bin/webmolkit-build.js",
-        "sourceMap": true,
-        "target": "ES6",
-        "lib": ["es2017", "dom"],
+	"compilerOptions": 
+	{
+		"module": "system",
+		"noImplicitAny": true,
+		"removeComments": true,
+		"preserveConstEnums": true,
+		"outFile": "bin/webmolkit-build.js",
+		"sourceMap": true,
+		"target": "ES6",
+		"lib": ["es2017", "dom"],
 		"declaration": true
-    },
-    "include": 
-    [
-        "src/**/*.ts",
-        "val/**/*.ts"
-    ]
+	},
+	"include": 
+	[
+		"src/**/*.ts",
+		"val/**/*.ts"
+	]
 }

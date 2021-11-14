@@ -89,6 +89,9 @@ export abstract class Aspect
 	// to setup some defaults
 	public initiateNewRow(row:number):void {}
 
+	// companion to above: returns a list of rows that can be considered blank because they are auto-created
+	public columnEffectivelyBlank(row:number):string[] {return [];}
+
 	// rendering:
 	//		an aspect may optionally volunteer to provide some static visualisation data to describe itself; this balances
 	//		out against the aspect's ability to reserve columns, which typically means that they will not be displayed; the

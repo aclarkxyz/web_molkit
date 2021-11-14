@@ -291,7 +291,7 @@ export class ArrangeExperiment
 		if (comp.name && (this.includeNames || MolUtil.isBlank(comp.mol))) xc.text = [comp.name];
 		if (this.includeDetails) this.supplementText(xc, comp);
 
-		if (this.includeStoich && !QuantityCalc.isStoichZero(comp.stoich) && !QuantityCalc.isStoichUnity(comp.stoich))
+		if (MolUtil.notBlank(comp.mol) && this.includeStoich && !QuantityCalc.isStoichZero(comp.stoich) && !QuantityCalc.isStoichUnity(comp.stoich))
 		{
 			let slash = comp.stoich.indexOf('/');
 			if (slash >= 0)

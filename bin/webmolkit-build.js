@@ -28,6 +28,7 @@ var WebMolKit;
         rowBlockCount(row) { return 1; }
         aspectUnion(other) { }
         initiateNewRow(row) { }
+        columnEffectivelyBlank(row) { return []; }
         numTextRenderings(row) { return 0; }
         produceTextRendering(row, idx) { return null; }
         numGraphicRenderings(row) { return 0; }
@@ -1353,58 +1354,21 @@ var WebMolKit;
             let curTime = new Date().getTime() * 1E-3;
             this.ds.setReal(row, Experiment.COLNAME_EXPERIMENT_CREATEDATE, curTime);
         }
+        columnEffectivelyBlank(row) {
+            return [Experiment.COLNAME_EXPERIMENT_CREATEDATE];
+        }
         isColumnReserved(colName) {
             return this.areColumnsReserved([colName])[0];
         }
         areColumnsReserved(colNames) {
-            let LITERALS = [
-                Experiment.COLNAME_EXPERIMENT_TITLE,
-                Experiment.COLNAME_EXPERIMENT_CREATEDATE,
-                Experiment.COLNAME_EXPERIMENT_MODIFYDATE,
-                Experiment.COLNAME_EXPERIMENT_DOI,
-                Experiment.COLNAME_EXPERIMENT_META,
-                Experiment.COLNAME_STEP_META,
-            ];
-            let PREFIXES = [
-                Experiment.COLNAME_REACTANT_MOL,
-                Experiment.COLNAME_REACTANT_NAME,
-                Experiment.COLNAME_REACTANT_STOICH,
-                Experiment.COLNAME_REACTANT_MASS,
-                Experiment.COLNAME_REACTANT_VOLUME,
-                Experiment.COLNAME_REACTANT_MOLES,
-                Experiment.COLNAME_REACTANT_DENSITY,
-                Experiment.COLNAME_REACTANT_CONC,
-                Experiment.COLNAME_REACTANT_PRIMARY,
-                Experiment.COLNAME_REACTANT_META,
-                Experiment.COLNAME_REAGENT_MOL,
-                Experiment.COLNAME_REAGENT_NAME,
-                Experiment.COLNAME_REAGENT_EQUIV,
-                Experiment.COLNAME_REAGENT_MASS,
-                Experiment.COLNAME_REAGENT_VOLUME,
-                Experiment.COLNAME_REAGENT_MOLES,
-                Experiment.COLNAME_REAGENT_DENSITY,
-                Experiment.COLNAME_REAGENT_CONC,
-                Experiment.COLNAME_REAGENT_META,
-                Experiment.COLNAME_PRODUCT_MOL,
-                Experiment.COLNAME_PRODUCT_NAME,
-                Experiment.COLNAME_PRODUCT_STOICH,
-                Experiment.COLNAME_PRODUCT_MASS,
-                Experiment.COLNAME_PRODUCT_VOLUME,
-                Experiment.COLNAME_PRODUCT_MOLES,
-                Experiment.COLNAME_PRODUCT_DENSITY,
-                Experiment.COLNAME_PRODUCT_CONC,
-                Experiment.COLNAME_PRODUCT_YIELD,
-                Experiment.COLNAME_PRODUCT_WASTE,
-                Experiment.COLNAME_PRODUCT_META,
-            ];
             let resv = WebMolKit.Vec.booleanArray(false, colNames.length);
             for (let n = 0; n < colNames.length; n++) {
                 let name = colNames[n];
-                if (LITERALS.indexOf(name) >= 0) {
+                if (Experiment.ALL_COLUMN_LITERALS.indexOf(name) >= 0) {
                     resv[n] = true;
                     continue;
                 }
-                for (let pfx of PREFIXES)
+                for (let pfx of Experiment.ALL_COLUMN_PREFIXES)
                     if (name.startsWith(pfx)) {
                         resv[n] = true;
                         break;
@@ -1470,6 +1434,46 @@ var WebMolKit;
     Experiment.COLNAME_PRODUCT_WASTE = 'ProductWaste';
     Experiment.COLNAME_PRODUCT_META = 'ProductMeta';
     Experiment.COLUMN_DESCRIPTIONS = {};
+    Experiment.ALL_COLUMN_LITERALS = [
+        Experiment.COLNAME_EXPERIMENT_TITLE,
+        Experiment.COLNAME_EXPERIMENT_CREATEDATE,
+        Experiment.COLNAME_EXPERIMENT_MODIFYDATE,
+        Experiment.COLNAME_EXPERIMENT_DOI,
+        Experiment.COLNAME_EXPERIMENT_META,
+        Experiment.COLNAME_STEP_META,
+    ];
+    Experiment.ALL_COLUMN_PREFIXES = [
+        Experiment.COLNAME_REACTANT_MOL,
+        Experiment.COLNAME_REACTANT_NAME,
+        Experiment.COLNAME_REACTANT_STOICH,
+        Experiment.COLNAME_REACTANT_MASS,
+        Experiment.COLNAME_REACTANT_VOLUME,
+        Experiment.COLNAME_REACTANT_MOLES,
+        Experiment.COLNAME_REACTANT_DENSITY,
+        Experiment.COLNAME_REACTANT_CONC,
+        Experiment.COLNAME_REACTANT_PRIMARY,
+        Experiment.COLNAME_REACTANT_META,
+        Experiment.COLNAME_REAGENT_MOL,
+        Experiment.COLNAME_REAGENT_NAME,
+        Experiment.COLNAME_REAGENT_EQUIV,
+        Experiment.COLNAME_REAGENT_MASS,
+        Experiment.COLNAME_REAGENT_VOLUME,
+        Experiment.COLNAME_REAGENT_MOLES,
+        Experiment.COLNAME_REAGENT_DENSITY,
+        Experiment.COLNAME_REAGENT_CONC,
+        Experiment.COLNAME_REAGENT_META,
+        Experiment.COLNAME_PRODUCT_MOL,
+        Experiment.COLNAME_PRODUCT_NAME,
+        Experiment.COLNAME_PRODUCT_STOICH,
+        Experiment.COLNAME_PRODUCT_MASS,
+        Experiment.COLNAME_PRODUCT_VOLUME,
+        Experiment.COLNAME_PRODUCT_MOLES,
+        Experiment.COLNAME_PRODUCT_DENSITY,
+        Experiment.COLNAME_PRODUCT_CONC,
+        Experiment.COLNAME_PRODUCT_YIELD,
+        Experiment.COLNAME_PRODUCT_WASTE,
+        Experiment.COLNAME_PRODUCT_META,
+    ];
     WebMolKit.Experiment = Experiment;
     WebMolKit.registerAspect(Experiment);
 })(WebMolKit || (WebMolKit = {}));
@@ -5397,6 +5401,7 @@ var WebMolKit;
 (function (WebMolKit) {
     let ExperimentMetaType;
     (function (ExperimentMetaType) {
+        ExperimentMetaType["Role"] = "role";
         ExperimentMetaType["Pressure"] = "pressure";
         ExperimentMetaType["TurnoverNumber"] = "turnover_number";
         ExperimentMetaType["EnantiomericExcess"] = "enantiomeric_excess";
@@ -5417,9 +5422,18 @@ var WebMolKit;
         ExperimentMetaValue[ExperimentMetaValue["Boolean"] = 0] = "Boolean";
         ExperimentMetaValue[ExperimentMetaValue["Number"] = 1] = "Number";
         ExperimentMetaValue[ExperimentMetaValue["Optional"] = 2] = "Optional";
+        ExperimentMetaValue[ExperimentMetaValue["String"] = 3] = "String";
     })(ExperimentMetaValue = WebMolKit.ExperimentMetaValue || (WebMolKit.ExperimentMetaValue = {}));
+    let ExperimentMetaRoleType;
+    (function (ExperimentMetaRoleType) {
+        ExperimentMetaRoleType["Reagent"] = "reagent";
+        ExperimentMetaRoleType["Catalyst"] = "catalyst";
+        ExperimentMetaRoleType["Solvent"] = "solvent";
+    })(ExperimentMetaRoleType = WebMolKit.ExperimentMetaRoleType || (WebMolKit.ExperimentMetaRoleType = {}));
     class ExperimentMeta {
         static unpackMeta(str) {
+            if (!str)
+                return [];
             let list = [];
             for (let line of str.split('\n'))
                 if (line) {
@@ -5427,7 +5441,7 @@ var WebMolKit;
                     let type = WebMolKit.MoleculeStream.skUnescape(eq < 0 ? line : line.substring(0, eq));
                     let value = eq < 0 ? null : WebMolKit.MoleculeStream.skUnescape(line.substring(eq + 1));
                     let vtype = this.VALUES[type];
-                    if (value != null && (vtype == ExperimentMetaValue.Number || ExperimentMetaValue.Optional))
+                    if (value != null && (vtype == ExperimentMetaValue.Number || vtype == ExperimentMetaValue.Optional))
                         value = parseFloat(value);
                     list.push([type, value]);
                 }
@@ -5442,6 +5456,20 @@ var WebMolKit;
                     lines.push(WebMolKit.MoleculeStream.skEscape(type) + '=' + WebMolKit.MoleculeStream.skEscape(value.toString()));
             }
             return lines.join('\n');
+        }
+        static withMetaKey(metastr, type, value) {
+            let list = this.unpackMeta(metastr);
+            let item = list.find((look) => look[0] == type);
+            if (value != null) {
+                if (item)
+                    item[1] = value;
+                else
+                    list.push([type, value]);
+            }
+            else {
+                list = list.filter((look) => look[0] != type);
+            }
+            return this.packMeta(list);
         }
         static describeMeta(type, value) {
             let formatFloat = (val, maxSigFig) => {
@@ -5460,7 +5488,12 @@ var WebMolKit;
                     str = str.substring(0, str.length - 1);
                 return str;
             };
-            if (type == ExperimentMetaType.Pressure) {
+            if (type == ExperimentMetaType.Role) {
+                if (!value)
+                    return null;
+                return `role: ${value}`;
+            }
+            else if (type == ExperimentMetaType.Pressure) {
                 if (value == null)
                     return null;
                 return `${formatFloat(value, 2)} atm`;
@@ -5499,6 +5532,7 @@ var WebMolKit;
         }
     }
     ExperimentMeta.APPLICABILITY = {
+        [ExperimentMetaType.Role]: [ExperimentMetaApplic.Reagent],
         [ExperimentMetaType.Pressure]: [ExperimentMetaApplic.Reactant, ExperimentMetaApplic.Reagent],
         [ExperimentMetaType.TurnoverNumber]: [ExperimentMetaApplic.Reagent],
         [ExperimentMetaType.EnantiomericExcess]: [ExperimentMetaApplic.Product],
@@ -5507,6 +5541,7 @@ var WebMolKit;
         [ExperimentMetaType.Light]: [ExperimentMetaApplic.Step],
     };
     ExperimentMeta.NAMES = {
+        [ExperimentMetaType.Role]: 'Role',
         [ExperimentMetaType.Pressure]: 'Pressure',
         [ExperimentMetaType.TurnoverNumber]: 'Turnover Number',
         [ExperimentMetaType.EnantiomericExcess]: 'Enantiomeric Excess',
@@ -5523,6 +5558,7 @@ var WebMolKit;
         [ExperimentMetaType.Light]: 'nm',
     };
     ExperimentMeta.VALUES = {
+        [ExperimentMetaType.Role]: ExperimentMetaValue.String,
         [ExperimentMetaType.Pressure]: ExperimentMetaValue.Number,
         [ExperimentMetaType.TurnoverNumber]: ExperimentMetaValue.Number,
         [ExperimentMetaType.EnantiomericExcess]: ExperimentMetaValue.Number,
@@ -9211,7 +9247,7 @@ var WebMolKit;
                 return null;
             for (let n = 0; n < numAtoms; n++) {
                 bits = lines[1 + n].split(/[=,;]/);
-                let num = mol.addAtom(bits[0], parseFloat(bits[1]), parseFloat(bits[2]), parseInt(bits[3]), parseInt(bits[4]));
+                let num = mol.addAtom(MoleculeStream.skUnescape(bits[0]), parseFloat(bits[1]), parseFloat(bits[2]), parseInt(bits[3]), parseInt(bits[4]));
                 let extra = [], trans = [];
                 for (let i = 5; i < bits.length; i++) {
                     let ch = bits[i].charAt(0);
@@ -9882,6 +9918,7 @@ var WebMolKit;
         constructor(entry) {
             this.entry = entry;
             this.quantities = [];
+            this.primaryMoles = [];
             this.idxPrimary = [];
             this.idxYield = [];
             this.allMassReact = [];
@@ -10287,7 +10324,7 @@ var WebMolKit;
             let numSteps = this.entry.steps.length;
             let primaryCounts = WebMolKit.Vec.numberArray(0, numSteps);
             let primaryEquivs = WebMolKit.Vec.numberArray(0, numSteps);
-            let primaryMoles = WebMolKit.Vec.numberArray(0, numSteps);
+            let primaryMoles = this.primaryMoles = WebMolKit.Vec.numberArray(0, numSteps);
             for (let qc of this.quantities) {
                 let ref = -1;
                 if (qc.step == 0 && qc.type == WebMolKit.ExperimentComponentType.Reactant && qc.comp.primary)
@@ -13514,7 +13551,7 @@ var WebMolKit;
                 xc.text = [comp.name];
             if (this.includeDetails)
                 this.supplementText(xc, comp);
-            if (this.includeStoich && !WebMolKit.QuantityCalc.isStoichZero(comp.stoich) && !WebMolKit.QuantityCalc.isStoichUnity(comp.stoich)) {
+            if (WebMolKit.MolUtil.notBlank(comp.mol) && this.includeStoich && !WebMolKit.QuantityCalc.isStoichZero(comp.stoich) && !WebMolKit.QuantityCalc.isStoichUnity(comp.stoich)) {
                 let slash = comp.stoich.indexOf('/');
                 if (slash >= 0) {
                     xc.leftNumer = comp.stoich.substring(0, slash);
@@ -13917,8 +13954,12 @@ var WebMolKit;
             let fontSize = policy.data.fontSize * this.FONT_CORRECT;
             for (let n = 1; n <= mol.numAtoms; n++)
                 if (mol.atomExplicit(n)) {
+                    let numsym = 0;
+                    for (let ch of mol.atomElement(n))
+                        if (!'|{}^'.includes(ch))
+                            numsym++;
                     let plusH = mol.atomHydrogens(n) > 0 ? 1 : 0;
-                    const aw = 0.5 * 0.7 * fontSize * (mol.atomElement(n).length + plusH);
+                    const aw = 0.5 * 0.7 * fontSize * (numsym + plusH);
                     const ah = 0.5 * fontSize * (1 + plusH);
                     const ax = mol.atomX(n), ay = mol.atomY(n);
                     minX = Math.min(minX, ax - aw);

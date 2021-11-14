@@ -22,6 +22,7 @@ declare namespace WebMolKit {
         rowBlockCount(row: number): number;
         aspectUnion(other: Aspect): void;
         initiateNewRow(row: number): void;
+        columnEffectivelyBlank(row: number): string[];
         static TEXT_PLAIN: number;
         static TEXT_LINK: number;
         static TEXT_HTML: number;
@@ -290,6 +291,8 @@ declare namespace WebMolKit {
         static COLNAME_PRODUCT_WASTE: string;
         static COLNAME_PRODUCT_META: string;
         static COLUMN_DESCRIPTIONS: Record<string, string>;
+        static ALL_COLUMN_LITERALS: string[];
+        static ALL_COLUMN_PREFIXES: string[];
         static isExperiment(ds: DataSheet): boolean;
         constructor(ds?: DataSheet, allowModify?: boolean);
         isFirstStep(row: number): boolean;
@@ -315,6 +318,7 @@ declare namespace WebMolKit {
         rowFirstBlock(row: number): boolean;
         rowBlockCount(row: number): number;
         initiateNewRow(row: number): void;
+        columnEffectivelyBlank(row: number): string[];
         isColumnReserved(colName: string): boolean;
         areColumnsReserved(colNames: string[]): boolean[];
         numGraphicRenderings(row: number): number;
@@ -944,6 +948,7 @@ declare namespace WebMolKit {
 }
 declare namespace WebMolKit {
     enum ExperimentMetaType {
+        Role = "role",
         Pressure = "pressure",
         TurnoverNumber = "turnover_number",
         EnantiomericExcess = "enantiomeric_excess",
@@ -961,10 +966,17 @@ declare namespace WebMolKit {
     enum ExperimentMetaValue {
         Boolean = 0,
         Number = 1,
-        Optional = 2
+        Optional = 2,
+        String = 3
+    }
+    enum ExperimentMetaRoleType {
+        Reagent = "reagent",
+        Catalyst = "catalyst",
+        Solvent = "solvent"
     }
     class ExperimentMeta {
         static APPLICABILITY: {
+            role: ExperimentMetaApplic[];
             pressure: ExperimentMetaApplic[];
             turnover_number: ExperimentMetaApplic[];
             enantiomeric_excess: ExperimentMetaApplic[];
@@ -973,6 +985,7 @@ declare namespace WebMolKit {
             light: ExperimentMetaApplic[];
         };
         static NAMES: {
+            role: string;
             pressure: string;
             turnover_number: string;
             enantiomeric_excess: string;
@@ -989,6 +1002,7 @@ declare namespace WebMolKit {
             light: string;
         };
         static VALUES: {
+            role: ExperimentMetaValue;
             pressure: ExperimentMetaValue;
             turnover_number: ExperimentMetaValue;
             enantiomeric_excess: ExperimentMetaValue;
@@ -998,6 +1012,7 @@ declare namespace WebMolKit {
         };
         static unpackMeta(str: string): [ExperimentMetaType, number | string][];
         static packMeta(list: [ExperimentMetaType, number | string][]): string;
+        static withMetaKey(metastr: string, type: ExperimentMetaType, value: string): string;
         static describeMeta(type: ExperimentMetaType, value: number | string): string;
     }
 }
@@ -1562,6 +1577,7 @@ declare namespace WebMolKit {
         entry: ExperimentEntry;
         static UNSPECIFIED: number;
         quantities: QuantityCalcComp[];
+        primaryMoles: number[];
         idxPrimary: number[];
         idxYield: number[];
         allMassReact: number[];

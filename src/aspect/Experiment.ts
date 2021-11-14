@@ -233,6 +233,49 @@ export class Experiment extends Aspect
 
 	public static COLUMN_DESCRIPTIONS:Record<string, string> = {};
 
+	public static ALL_COLUMN_LITERALS =
+	[
+		Experiment.COLNAME_EXPERIMENT_TITLE,
+		Experiment.COLNAME_EXPERIMENT_CREATEDATE,
+		Experiment.COLNAME_EXPERIMENT_MODIFYDATE,
+		Experiment.COLNAME_EXPERIMENT_DOI,
+		Experiment.COLNAME_EXPERIMENT_META,
+		Experiment.COLNAME_STEP_META,
+	];
+	public static ALL_COLUMN_PREFIXES =
+	[
+		Experiment.COLNAME_REACTANT_MOL,
+		Experiment.COLNAME_REACTANT_NAME,
+		Experiment.COLNAME_REACTANT_STOICH,
+		Experiment.COLNAME_REACTANT_MASS,
+		Experiment.COLNAME_REACTANT_VOLUME,
+		Experiment.COLNAME_REACTANT_MOLES,
+		Experiment.COLNAME_REACTANT_DENSITY,
+		Experiment.COLNAME_REACTANT_CONC,
+		Experiment.COLNAME_REACTANT_PRIMARY,
+		Experiment.COLNAME_REACTANT_META,
+		Experiment.COLNAME_REAGENT_MOL,
+		Experiment.COLNAME_REAGENT_NAME,
+		Experiment.COLNAME_REAGENT_EQUIV,
+		Experiment.COLNAME_REAGENT_MASS,
+		Experiment.COLNAME_REAGENT_VOLUME,
+		Experiment.COLNAME_REAGENT_MOLES,
+		Experiment.COLNAME_REAGENT_DENSITY,
+		Experiment.COLNAME_REAGENT_CONC,
+		Experiment.COLNAME_REAGENT_META,
+		Experiment.COLNAME_PRODUCT_MOL,
+		Experiment.COLNAME_PRODUCT_NAME,
+		Experiment.COLNAME_PRODUCT_STOICH,
+		Experiment.COLNAME_PRODUCT_MASS,
+		Experiment.COLNAME_PRODUCT_VOLUME,
+		Experiment.COLNAME_PRODUCT_MOLES,
+		Experiment.COLNAME_PRODUCT_DENSITY,
+		Experiment.COLNAME_PRODUCT_CONC,
+		Experiment.COLNAME_PRODUCT_YIELD,
+		Experiment.COLNAME_PRODUCT_WASTE,
+		Experiment.COLNAME_PRODUCT_META,
+	];
+
 	// ----------------- public methods -----------------
 
 	// used to test if a datasheet has the appropriate metadata flagging it as a feedstock-containing datasheet
@@ -707,6 +750,11 @@ export class Experiment extends Aspect
 		this.ds.setReal(row, Experiment.COLNAME_EXPERIMENT_CREATEDATE, curTime);
 	}
 
+	public columnEffectivelyBlank(row:number):string[]
+	{
+		return [Experiment.COLNAME_EXPERIMENT_CREATEDATE];
+	}
+
 	public isColumnReserved(colName:string):boolean
 	{
 		return this.areColumnsReserved([colName])[0];
@@ -714,59 +762,16 @@ export class Experiment extends Aspect
 
 	public areColumnsReserved(colNames:string[]):boolean[]
 	{
-		let LITERALS =
-		[
-			Experiment.COLNAME_EXPERIMENT_TITLE,
-			Experiment.COLNAME_EXPERIMENT_CREATEDATE,
-			Experiment.COLNAME_EXPERIMENT_MODIFYDATE,
-			Experiment.COLNAME_EXPERIMENT_DOI,
-			Experiment.COLNAME_EXPERIMENT_META,
-			Experiment.COLNAME_STEP_META,
-		];
-		let PREFIXES =
-		[
-			Experiment.COLNAME_REACTANT_MOL,
-			Experiment.COLNAME_REACTANT_NAME,
-			Experiment.COLNAME_REACTANT_STOICH,
-			Experiment.COLNAME_REACTANT_MASS,
-			Experiment.COLNAME_REACTANT_VOLUME,
-			Experiment.COLNAME_REACTANT_MOLES,
-			Experiment.COLNAME_REACTANT_DENSITY,
-			Experiment.COLNAME_REACTANT_CONC,
-			Experiment.COLNAME_REACTANT_PRIMARY,
-			Experiment.COLNAME_REACTANT_META,
-			Experiment.COLNAME_REAGENT_MOL,
-			Experiment.COLNAME_REAGENT_NAME,
-			Experiment.COLNAME_REAGENT_EQUIV,
-			Experiment.COLNAME_REAGENT_MASS,
-			Experiment.COLNAME_REAGENT_VOLUME,
-			Experiment.COLNAME_REAGENT_MOLES,
-			Experiment.COLNAME_REAGENT_DENSITY,
-			Experiment.COLNAME_REAGENT_CONC,
-			Experiment.COLNAME_REAGENT_META,
-			Experiment.COLNAME_PRODUCT_MOL,
-			Experiment.COLNAME_PRODUCT_NAME,
-			Experiment.COLNAME_PRODUCT_STOICH,
-			Experiment.COLNAME_PRODUCT_MASS,
-			Experiment.COLNAME_PRODUCT_VOLUME,
-			Experiment.COLNAME_PRODUCT_MOLES,
-			Experiment.COLNAME_PRODUCT_DENSITY,
-			Experiment.COLNAME_PRODUCT_CONC,
-			Experiment.COLNAME_PRODUCT_YIELD,
-			Experiment.COLNAME_PRODUCT_WASTE,
-			Experiment.COLNAME_PRODUCT_META,
-		];
-
 		let resv = Vec.booleanArray(false, colNames.length);
 		for (let n = 0; n < colNames.length; n++)
 		{
 			let name = colNames[n];
-			if (LITERALS.indexOf(name) >= 0)
+			if (Experiment.ALL_COLUMN_LITERALS.indexOf(name) >= 0)
 			{
 				resv[n] = true;
 				continue;
 			}
-			for (let pfx of PREFIXES) if (name.startsWith(pfx))
+			for (let pfx of Experiment.ALL_COLUMN_PREFIXES) if (name.startsWith(pfx))
 			{
 				resv[n] = true;
 				break;

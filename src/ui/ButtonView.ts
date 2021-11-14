@@ -79,6 +79,7 @@ export class ButtonView extends Widget
 	{
 		super();
 
+		// NOTE: this is going to be a problem soon, but there's no replacement
 		this.isMacLike = !!navigator.platform.match(/(Mac|iPhone|iPod|iPad)/i);
 	}
 
