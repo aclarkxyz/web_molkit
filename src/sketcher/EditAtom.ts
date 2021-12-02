@@ -49,6 +49,7 @@ export class EditAtom extends Dialog
 	private tableAbbrev:DOM;
 	private svgAbbrev:string[] = null;
 	private abbrevEntries:EditAtomAbbrev[];
+	private abbrevIndices:number[] = [];
 	private currentAbbrev = -1;
 
 	private inputGeom1:DOM;
@@ -244,6 +245,11 @@ export class EditAtom extends Dialog
 		this.inputAbbrevSearch = dom('<input size="10"/>').appendTo(spanSearch);
 		this.inputAbbrevSearch.setAttr('placeholder', 'Search');
 		let lastSearch = '';
+		this.inputAbbrevSearch.onKeyDown((event) =>
+		{
+			if (event.key == KeyCode.Up) this.cycleAbbreviation(-1);
+			else if (event.key == KeyCode.Down) this.cycleAbbreviation(1);
+			});
 		this.inputAbbrevSearch.onInput(() =>
 		{
 			let search = this.inputAbbrevSearch.getValue();
@@ -510,6 +516,7 @@ export class EditAtom extends Dialog
 		tr.appendHTML('<td><u>Structure</u></td>');
 
 		this.abbrevEntries = [];
+		this.abbrevIndices = [];
 		let search = this.inputAbbrevSearch.getValue().toLowerCase();
 
 		for (let n = 0; n < this.abbrevList.length; n++)
@@ -533,6 +540,7 @@ export class EditAtom extends Dialog
 			entry.tr.onDblClick((event) => this.applyChanges());
 
 			this.abbrevEntries.push(entry);
+			this.abbrevIndices.push(n);
 		}
 	}
 
@@ -545,7 +553,24 @@ export class EditAtom extends Dialog
 		for (let entry of this.abbrevEntries)
 		{
 			entry.tr.setCSS('background-color', this.currentAbbrev == entry.idx ? colourCode(Theme.lowlight) : entry.bgcol);
+			if (this.currentAbbrev == entry.idx) entry.tr.el.scrollIntoView({'block': 'nearest'});
 		}
+	}
+
+	// move abbreviation selection up or down
+	private cycleAbbreviation(dir:number):void
+	{
+		let sz = this.abbrevIndices.length;
+		if (sz == 0) return;
+
+		let idx = this.abbrevIndices.indexOf(this.currentAbbrev);
+		if (idx < 0)
+		{
+			if (dir < 0) idx = sz - 1; else idx = 0;
+		}
+		else idx = (idx + sz + dir) % sz;
+
+		this.selectAbbreviation(this.abbrevIndices[idx]);
 	}
 }
 

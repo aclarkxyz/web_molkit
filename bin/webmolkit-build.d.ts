@@ -2735,6 +2735,7 @@ declare namespace WebMolKit {
         private tableAbbrev;
         private svgAbbrev;
         private abbrevEntries;
+        private abbrevIndices;
         private currentAbbrev;
         private inputGeom1;
         private inputGeom2;
@@ -2759,6 +2760,7 @@ declare namespace WebMolKit {
         private updateExtra;
         private fillAbbreviations;
         private selectAbbreviation;
+        private cycleAbbreviation;
     }
 }
 declare namespace WebMolKit {

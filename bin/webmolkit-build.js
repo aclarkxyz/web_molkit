@@ -20102,6 +20102,7 @@ var WebMolKit;
             this.tabs = null;
             this.abbrevList = null;
             this.svgAbbrev = null;
+            this.abbrevIndices = [];
             this.currentAbbrev = -1;
             this.initMol = mol;
             this.mol = mol.clone();
@@ -20247,6 +20248,12 @@ var WebMolKit;
             this.inputAbbrevSearch = WebMolKit.dom('<input size="10"/>').appendTo(spanSearch);
             this.inputAbbrevSearch.setAttr('placeholder', 'Search');
             let lastSearch = '';
+            this.inputAbbrevSearch.onKeyDown((event) => {
+                if (event.key == "ArrowUp")
+                    this.cycleAbbreviation(-1);
+                else if (event.key == "ArrowDown")
+                    this.cycleAbbreviation(1);
+            });
             this.inputAbbrevSearch.onInput(() => {
                 let search = this.inputAbbrevSearch.getValue();
                 if (search == lastSearch)
@@ -20470,6 +20477,7 @@ var WebMolKit;
             tr.appendHTML('<td><u>Label</u></td>');
             tr.appendHTML('<td><u>Structure</u></td>');
             this.abbrevEntries = [];
+            this.abbrevIndices = [];
             let search = this.inputAbbrevSearch.getValue().toLowerCase();
             for (let n = 0; n < this.abbrevList.length; n++) {
                 if (this.currentAbbrev != n && !this.abbrevList[n].nameSearch.includes(search))
@@ -20487,6 +20495,7 @@ var WebMolKit;
                 entry.tr.onClick(() => this.selectAbbreviation(n));
                 entry.tr.onDblClick((event) => this.applyChanges());
                 this.abbrevEntries.push(entry);
+                this.abbrevIndices.push(n);
             }
         }
         selectAbbreviation(idx) {
@@ -20495,7 +20504,24 @@ var WebMolKit;
             this.currentAbbrev = idx;
             for (let entry of this.abbrevEntries) {
                 entry.tr.setCSS('background-color', this.currentAbbrev == entry.idx ? WebMolKit.colourCode(WebMolKit.Theme.lowlight) : entry.bgcol);
+                if (this.currentAbbrev == entry.idx)
+                    entry.tr.el.scrollIntoView({ 'block': 'nearest' });
             }
+        }
+        cycleAbbreviation(dir) {
+            let sz = this.abbrevIndices.length;
+            if (sz == 0)
+                return;
+            let idx = this.abbrevIndices.indexOf(this.currentAbbrev);
+            if (idx < 0) {
+                if (dir < 0)
+                    idx = sz - 1;
+                else
+                    idx = 0;
+            }
+            else
+                idx = (idx + sz + dir) % sz;
+            this.selectAbbreviation(this.abbrevIndices[idx]);
         }
     }
     WebMolKit.EditAtom = EditAtom;
