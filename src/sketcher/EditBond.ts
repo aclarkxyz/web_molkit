@@ -61,11 +61,7 @@ export class EditBond extends Dialog
 
 		this.tabs = new TabBar(['Bond', 'Geometry', 'Query', 'Extra']);
 		this.tabs.render(body);
-		this.tabs.callbackSelect = (idx) =>
-		{
-			if (idx == 0) this.inputFrom.grabFocus();
-			else if (idx == 1) this.inputGeom1.grabFocus();
-		};
+		this.tabs.onSelect((idx) => this.selectedTab(idx));
 
 		this.populateBond(this.tabs.getPanelDOM('Bond'));
 		this.populateGeometry(this.tabs.getPanelDOM('Geometry'));
@@ -79,9 +75,21 @@ export class EditBond extends Dialog
 			dom.css({'font': 'inherit'});
 			dom.onKeyDown((event:KeyboardEvent) =>
 			{
-				let keyCode = event.keyCode || event.which;
-				if (keyCode == 13) this.applyChanges();
-				if (keyCode == 27) this.close();
+				if (event.key == KeyCode.Enter) this.applyChanges();
+				else if (event.key == KeyCode.Escape) this.close();
+				else if (event.key == KeyCode.PageUp) 
+				{
+					this.tabs.rotateSelected(-1);
+					this.selectedTab(this.tabs.getSelectedIndex());
+					event.preventDefault();
+				}
+				else if (event.key == KeyCode.PageDown) 
+				{
+					this.tabs.rotateSelected(1);
+					this.selectedTab(this.tabs.getSelectedIndex());
+					event.preventDefault();
+				}
+				event.stopPropagation();
 			});
 		}
 	}
@@ -231,6 +239,12 @@ export class EditBond extends Dialog
 	{
 		this.mol.setBondExtra(this.bond, this.fieldsWidget.getExtraFields());
 		this.mol.setBondTransient(this.bond, this.fieldsWidget.getTransientFields());
+	}
+
+	private selectedTab(idx:number):void
+	{
+		if (idx == 0) this.inputFrom.grabFocus();
+		else if (idx == 1) this.inputGeom1.grabFocus();
 	}
 }
 

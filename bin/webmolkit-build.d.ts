@@ -2763,6 +2763,7 @@ declare namespace WebMolKit {
         private fillAbbreviations;
         private selectAbbreviation;
         private cycleAbbreviation;
+        private selectedTab;
     }
 }
 declare namespace WebMolKit {
@@ -2796,6 +2797,7 @@ declare namespace WebMolKit {
         private updateGeometry;
         private updateQuery;
         private updateExtra;
+        private selectedTab;
     }
 }
 declare namespace WebMolKit {
@@ -3629,6 +3631,7 @@ declare namespace WebMolKit {
         clickButton(idx: number): void;
         setSelectedIndex(idx: number): void;
         setSelectedValue(val: string): void;
+        rotateSelected(dir: number): void;
         private updateButtons;
         private composeCSS;
     }

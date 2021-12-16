@@ -87,12 +87,7 @@ export class EditAtom extends Dialog
 		{
 			this.tabs = new TabBar(['Atom', 'Abbreviation', 'Geometry', 'Query', 'Extra']);
 			this.tabs.render(body);
-			this.tabs.callbackSelect = (idx) =>
-			{
-				if (idx == 0) this.inputSymbol.grabFocus();
-				else if (idx == 1) this.inputAbbrevSearch.grabFocus();
-				else if (idx == 2) this.inputGeom1.grabFocus();
-			};
+			this.tabs.onSelect((idx) => this.selectedTab(idx));
 
 			this.populateAtom(this.tabs.getPanelDOM('Atom'));
 			this.populateAbbreviation(this.tabs.getPanelDOM('Abbreviation'));
@@ -112,9 +107,20 @@ export class EditAtom extends Dialog
 			dom.css({'font': 'inherit'});
 			dom.onKeyDown((event:KeyboardEvent) =>
 			{
-				let keyCode = event.keyCode || event.which;
-				if (keyCode == 13) this.applyChanges();
-				if (keyCode == 27) this.close();
+				if (event.key == KeyCode.Enter) this.applyChanges();
+				else if (event.key == KeyCode.Escape) this.close();
+				else if (event.key == KeyCode.PageUp) 
+				{
+					this.tabs.rotateSelected(-1);
+					this.selectedTab(this.tabs.getSelectedIndex());
+					event.preventDefault();
+				}
+				else if (event.key == KeyCode.PageDown) 
+				{
+					this.tabs.rotateSelected(1);
+					this.selectedTab(this.tabs.getSelectedIndex());
+					event.preventDefault();
+				}
 				event.stopPropagation();
 			});
 		}
@@ -249,7 +255,7 @@ export class EditAtom extends Dialog
 		{
 			if (event.key == KeyCode.Up) this.cycleAbbreviation(-1);
 			else if (event.key == KeyCode.Down) this.cycleAbbreviation(1);
-			});
+		});
 		this.inputAbbrevSearch.onInput(() =>
 		{
 			let search = this.inputAbbrevSearch.getValue();
@@ -571,6 +577,13 @@ export class EditAtom extends Dialog
 		else idx = (idx + sz + dir) % sz;
 
 		this.selectAbbreviation(this.abbrevIndices[idx]);
+	}
+
+	private selectedTab(idx:number):void
+	{
+		if (idx == 0) this.inputSymbol.grabFocus();
+		else if (idx == 1) this.inputAbbrevSearch.grabFocus();
+		else if (idx == 2) this.inputGeom1.grabFocus();
 	}
 }
 

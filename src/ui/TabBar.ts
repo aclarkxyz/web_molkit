@@ -124,6 +124,10 @@ export class TabBar extends Widget
 		let idx = this.options.indexOf(val);
 		if (idx >= 0) this.setSelectedIndex(idx);
 	}
+	public rotateSelected(dir:number):void
+	{
+		this.setSelectedIndex((this.selidx + dir + this.options.length) % this.options.length);
+	}
 
 	// ------------ private methods ------------
 

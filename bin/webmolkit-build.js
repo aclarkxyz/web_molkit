@@ -19319,7 +19319,6 @@ var WebMolKit;
             divText.setHTML(html);
             setTimeout(() => {
                 let w = divText.width(), h = divText.height();
-                console.log('WH:' + [w, h] + ' BIG:' + [this.width, this.height] + ' HTML:' + html);
                 WebMolKit.setBoundaryPixels(this.divInfo, this.width - w - 1, 1, w, h);
                 this.divInfo.css({ 'visibility': 'visible' });
             }, 1);
@@ -20147,14 +20146,7 @@ var WebMolKit;
             if (this.atom > 0) {
                 this.tabs = new WebMolKit.TabBar(['Atom', 'Abbreviation', 'Geometry', 'Query', 'Extra']);
                 this.tabs.render(body);
-                this.tabs.callbackSelect = (idx) => {
-                    if (idx == 0)
-                        this.inputSymbol.grabFocus();
-                    else if (idx == 1)
-                        this.inputAbbrevSearch.grabFocus();
-                    else if (idx == 2)
-                        this.inputGeom1.grabFocus();
-                };
+                this.tabs.onSelect((idx) => this.selectedTab(idx));
                 this.populateAtom(this.tabs.getPanelDOM('Atom'));
                 this.populateAbbreviation(this.tabs.getPanelDOM('Abbreviation'));
                 if (this.atom > 0)
@@ -20171,11 +20163,20 @@ var WebMolKit;
             for (let dom of focusable) {
                 dom.css({ 'font': 'inherit' });
                 dom.onKeyDown((event) => {
-                    let keyCode = event.keyCode || event.which;
-                    if (keyCode == 13)
+                    if (event.key == "Enter")
                         this.applyChanges();
-                    if (keyCode == 27)
+                    else if (event.key == "Escape")
                         this.close();
+                    else if (event.key == "PageUp") {
+                        this.tabs.rotateSelected(-1);
+                        this.selectedTab(this.tabs.getSelectedIndex());
+                        event.preventDefault();
+                    }
+                    else if (event.key == "PageDown") {
+                        this.tabs.rotateSelected(1);
+                        this.selectedTab(this.tabs.getSelectedIndex());
+                        event.preventDefault();
+                    }
                     event.stopPropagation();
                 });
             }
@@ -20552,6 +20553,14 @@ var WebMolKit;
                 idx = (idx + sz + dir) % sz;
             this.selectAbbreviation(this.abbrevIndices[idx]);
         }
+        selectedTab(idx) {
+            if (idx == 0)
+                this.inputSymbol.grabFocus();
+            else if (idx == 1)
+                this.inputAbbrevSearch.grabFocus();
+            else if (idx == 2)
+                this.inputGeom1.grabFocus();
+        }
     }
     WebMolKit.EditAtom = EditAtom;
 })(WebMolKit || (WebMolKit = {}));
@@ -20576,12 +20585,7 @@ var WebMolKit;
             this.btnApply.onClick(() => this.applyChanges());
             this.tabs = new WebMolKit.TabBar(['Bond', 'Geometry', 'Query', 'Extra']);
             this.tabs.render(body);
-            this.tabs.callbackSelect = (idx) => {
-                if (idx == 0)
-                    this.inputFrom.grabFocus();
-                else if (idx == 1)
-                    this.inputGeom1.grabFocus();
-            };
+            this.tabs.onSelect((idx) => this.selectedTab(idx));
             this.populateBond(this.tabs.getPanelDOM('Bond'));
             this.populateGeometry(this.tabs.getPanelDOM('Geometry'));
             this.populateQuery(this.tabs.getPanelDOM('Query'));
@@ -20592,11 +20596,21 @@ var WebMolKit;
             for (let dom of focusable) {
                 dom.css({ 'font': 'inherit' });
                 dom.onKeyDown((event) => {
-                    let keyCode = event.keyCode || event.which;
-                    if (keyCode == 13)
+                    if (event.key == "Enter")
                         this.applyChanges();
-                    if (keyCode == 27)
+                    else if (event.key == "Escape")
                         this.close();
+                    else if (event.key == "PageUp") {
+                        this.tabs.rotateSelected(-1);
+                        this.selectedTab(this.tabs.getSelectedIndex());
+                        event.preventDefault();
+                    }
+                    else if (event.key == "PageDown") {
+                        this.tabs.rotateSelected(1);
+                        this.selectedTab(this.tabs.getSelectedIndex());
+                        event.preventDefault();
+                    }
+                    event.stopPropagation();
                 });
             }
         }
@@ -20709,6 +20723,12 @@ var WebMolKit;
         updateExtra() {
             this.mol.setBondExtra(this.bond, this.fieldsWidget.getExtraFields());
             this.mol.setBondTransient(this.bond, this.fieldsWidget.getTransientFields());
+        }
+        selectedTab(idx) {
+            if (idx == 0)
+                this.inputFrom.grabFocus();
+            else if (idx == 1)
+                this.inputGeom1.grabFocus();
         }
     }
     WebMolKit.EditBond = EditBond;
@@ -28335,6 +28355,9 @@ var WebMolKit;
             let idx = this.options.indexOf(val);
             if (idx >= 0)
                 this.setSelectedIndex(idx);
+        }
+        rotateSelected(dir) {
+            this.setSelectedIndex((this.selidx + dir + this.options.length) % this.options.length);
         }
         updateButtons() {
             for (let n = 0; n < this.options.length && n < this.buttonDiv.length; n++) {
