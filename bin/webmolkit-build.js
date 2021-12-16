@@ -19214,6 +19214,7 @@ var WebMolKit;
             this.container.css({ 'outline': 'none' });
             this.container.attr({ 'tabindex': '0' });
             let canvasStyle = { 'position': 'absolute', 'left': '0', 'top': '0', 'width': `${this.width}px`, 'height': `${this.height}`, 'pointer-events': 'none' };
+            this.divInfo = WebMolKit.dom('<div/>').appendTo(this.container).css({ 'position': 'absolute', 'left': '0', 'top': '0', 'pointer-events': 'none' });
             this.canvasUnder = WebMolKit.dom('<canvas/>').appendTo(this.container).css(canvasStyle);
             this.canvasMolecule = WebMolKit.dom('<canvas/>').appendTo(this.container).css(canvasStyle);
             this.canvasOver = WebMolKit.dom('<canvas/>').appendTo(this.container).css(canvasStyle);
@@ -19291,9 +19292,37 @@ var WebMolKit;
         }
         redraw() {
             this.filthy = false;
+            this.redrawInfo();
             this.redrawUnder();
             this.redrawMolecule();
             this.redrawOver();
+        }
+        redrawInfo() {
+            this.divInfo.empty();
+            this.divInfo.css({ 'visibility': 'hidden', 'left': '0', 'top': '0' });
+            if (this.mol.numAtoms == 0)
+                return;
+            let divText = WebMolKit.dom('<div/>').appendTo(this.divInfo).css({ 'display': 'inline-block', 'text-align': 'right', 'font-family': 'sans-serif', 'font-size': '80%', 'color': '#C0C0C0' });
+            let html = WebMolKit.MolUtil.molecularFormula(this.mol, ['<sub>', '</sub>', '<sup>', '</sup>']);
+            let chg = 0;
+            for (let n = 1; n <= this.mol.numAtoms; n++)
+                chg += this.mol.atomCharge(n);
+            if (chg == -1)
+                html += `<sup>-</sup>`;
+            else if (chg < -1)
+                html += `<sup>${chg}</sup>`;
+            else if (chg == 1)
+                html += `<sup>+</sup>`;
+            else if (chg > 1)
+                html += `<sup>+${chg}</sup>`;
+            html += '<br>' + WebMolKit.MolUtil.molecularWeight(this.mol).toFixed(2);
+            divText.setHTML(html);
+            setTimeout(() => {
+                let w = divText.width(), h = divText.height();
+                console.log('WH:' + [w, h] + ' BIG:' + [this.width, this.height] + ' HTML:' + html);
+                WebMolKit.setBoundaryPixels(this.divInfo, this.width - w - 1, 1, w, h);
+                this.divInfo.css({ 'visibility': 'visible' });
+            }, 1);
         }
         redrawUnder() {
             let HOVER_COL = 0xE0E0E0;

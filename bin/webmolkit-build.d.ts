@@ -2621,6 +2621,7 @@ declare namespace WebMolKit {
         protected borderRadius: number;
         protected background: number;
         protected container: DOM;
+        protected divInfo: DOM;
         protected canvasUnder: DOM;
         protected canvasMolecule: DOM;
         protected canvasOver: DOM;
@@ -2681,6 +2682,7 @@ declare namespace WebMolKit {
         protected layoutMolecule(): void;
         protected redrawMetaVector(): void;
         protected redraw(): void;
+        protected redrawInfo(): void;
         protected redrawUnder(): void;
         protected redrawMolecule(): void;
         protected redrawOver(): void;
