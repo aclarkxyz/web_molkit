@@ -121,6 +121,8 @@ export class DrawCanvas extends Widget implements ArrangeMeasurement
 	protected toolRingFreeform = false;
 	protected toolRotateIncr = 0;
 
+	protected redrawCacheKey = '';
+
 	// ------------ public methods ------------
 
 	constructor()
@@ -271,11 +273,16 @@ export class DrawCanvas extends Widget implements ArrangeMeasurement
 
 	protected redrawInfo():void
 	{
+		let cacheKey = JSON.stringify([this.width, this.height, this.mol.toString()]);
+		if (cacheKey == this.redrawCacheKey) return;
+		this.redrawCacheKey = cacheKey;
+
 		this.divInfo.empty();
 		this.divInfo.css({'visibility': 'hidden', 'left': '0', 'top': '0'});
 		if (this.mol.numAtoms == 0) return;
 
-		let divText = dom('<div/>').appendTo(this.divInfo).css({'display': 'inline-block', 'text-align': 'right', 'font-family': 'sans-serif', 'font-size': '80%', 'color': '#C0C0C0'});
+		let divText = dom('<div/>').appendTo(this.divInfo);
+		divText.css({'display': 'inline-block', 'text-align': 'right', 'font-family': 'sans-serif', 'font-size': '80%', 'color': '#C0C0C0'});
 		let html = MolUtil.molecularFormula(this.mol, ['<sub>', '</sub>', '<sup>', '</sup>']);
 		
 		let chg = 0;

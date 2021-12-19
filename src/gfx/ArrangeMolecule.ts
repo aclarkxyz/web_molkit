@@ -556,11 +556,13 @@ export class ArrangeMolecule
 			r.cy *= scaleBy;
 			r.rw *= scaleBy;
 			r.rh *= scaleBy;
+			r.size *= scaleBy;
 		}
 		for (let p of this.paths)
 		{
 			Vec.mulBy(p.px, scaleBy);
 			Vec.mulBy(p.py, scaleBy);
+			p.size *= scaleBy;
 		}
 		for (let spc of this.space)
 		{

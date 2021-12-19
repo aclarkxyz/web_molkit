@@ -198,6 +198,7 @@ export class EditAtom extends Dialog
 		let divPeriodic = dom('<div/>').appendTo(grid).css({'grid-area': '6 / start / 6 / end'});
 		this.periodicWidget = new PeriodicTableWidget();
 		this.periodicWidget.onSelect((element) => this.inputSymbol.setValue(element));
+		this.periodicWidget.onDoubleClick(() => this.applyChanges());
 		this.periodicWidget.render(divPeriodic);
 
 		const mol = this.mol, atom = this.atom;

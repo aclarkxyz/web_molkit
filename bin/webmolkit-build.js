@@ -14297,10 +14297,12 @@ var WebMolKit;
                 r.cy *= scaleBy;
                 r.rw *= scaleBy;
                 r.rh *= scaleBy;
+                r.size *= scaleBy;
             }
             for (let p of this.paths) {
                 WebMolKit.Vec.mulBy(p.px, scaleBy);
                 WebMolKit.Vec.mulBy(p.py, scaleBy);
+                p.size *= scaleBy;
             }
             for (let spc of this.space) {
                 spc.box.scaleBy(scaleBy);

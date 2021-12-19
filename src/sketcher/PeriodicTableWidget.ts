@@ -85,6 +85,7 @@ const CSS_PERIODICTABLE = `
 export class PeriodicTableWidget extends Widget
 {
 	private callbackSelect:(element:string) => void;
+	private callbackDoubleClick:() => void;
 
 	private divList:DOM[] = [];
 	private selectedAtno = 0;
@@ -133,12 +134,22 @@ export class PeriodicTableWidget extends Widget
 				this.changeElement(el);
 				this.callbackSelect(el);
 			});
+			div.onDblClick((event) =>
+			{
+				this.callbackDoubleClick();
+				event.preventDefault();
+				event.stopPropagation();
+			});
 		}
 	}
 
 	public onSelect(callback:(element:string) => void):void
 	{
 		this.callbackSelect = callback;
+	}
+	public onDoubleClick(callback:() => void):void
+	{
+		this.callbackDoubleClick = callback;
 	}
 
 	// set visible selection to the given element, or nothing if it's not in the list
