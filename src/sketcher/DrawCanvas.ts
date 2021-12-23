@@ -287,9 +287,9 @@ export class DrawCanvas extends Widget implements ArrangeMeasurement
 		
 		let chg = 0;
 		for (let n = 1; n <= this.mol.numAtoms; n++) chg += this.mol.atomCharge(n);
-		if (chg == -1) html += `<sup>-</sup>`;
+		if (chg == -1) html += '<sup>-</sup>';
 		else if (chg < -1) html += `<sup>${chg}</sup>`;
-		else if (chg == 1) html += `<sup>+</sup>`;
+		else if (chg == 1) html += '<sup>+</sup>';
 		else if (chg > 1) html += `<sup>+${chg}</sup>`;
 
 		html += '<br>' + MolUtil.molecularWeight(this.mol).toFixed(2);

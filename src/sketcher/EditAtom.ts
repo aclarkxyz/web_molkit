@@ -109,13 +109,13 @@ export class EditAtom extends Dialog
 			{
 				if (event.key == KeyCode.Enter) this.applyChanges();
 				else if (event.key == KeyCode.Escape) this.close();
-				else if (event.key == KeyCode.PageUp) 
+				else if (event.key == KeyCode.PageUp)
 				{
 					this.tabs.rotateSelected(-1);
 					this.selectedTab(this.tabs.getSelectedIndex());
 					event.preventDefault();
 				}
-				else if (event.key == KeyCode.PageDown) 
+				else if (event.key == KeyCode.PageDown)
 				{
 					this.tabs.rotateSelected(1);
 					this.selectedTab(this.tabs.getSelectedIndex());
