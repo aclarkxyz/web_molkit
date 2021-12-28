@@ -2664,6 +2664,7 @@ declare namespace WebMolKit {
         protected toolRingArom: boolean;
         protected toolRingFreeform: boolean;
         protected toolRotateIncr: number;
+        protected redrawCacheKey: string;
         constructor();
         render(parent: any): void;
         getState(): SketchState;
@@ -2960,7 +2961,8 @@ declare namespace WebMolKit {
         QueryCopy = 58,
         QueryPaste = 59,
         QuerySetAtom = 60,
-        QuerySetBond = 61
+        QuerySetBond = 61,
+        QueryBondAny = 62
     }
     interface SketchState {
         mol: Molecule;
@@ -3046,6 +3048,7 @@ declare namespace WebMolKit {
         execQueryPaste(): void;
         execQuerySetAtom(): void;
         execQuerySetBond(): void;
+        execQueryBondAny(): void;
         private requireSubject;
         private requireAtoms;
         private requireCurrent;
@@ -3065,11 +3068,13 @@ declare namespace WebMolKit {
 declare namespace WebMolKit {
     class PeriodicTableWidget extends Widget {
         private callbackSelect;
+        private callbackDoubleClick;
         private divList;
         private selectedAtno;
         constructor();
         render(parent: any): void;
         onSelect(callback: (element: string) => void): void;
+        onDoubleClick(callback: () => void): void;
         changeElement(element: string): void;
     }
 }

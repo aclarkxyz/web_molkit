@@ -18518,7 +18518,7 @@ var WebMolKit;
         'Ho', 'Er', 'Tm', 'Yb', 'Lu', 'Ac', 'Th', 'Pa', 'U'
     ];
     const ELEMENTS_ABBREV = [
-        '*', 'X', 'Y', 'Z', 'Q', 'M', 'L', 'E', 'A', 'R',
+        '*', 'A', 'X', 'Y', 'Z', 'Q', 'M', 'T', 'E', 'L', 'R',
         'R0', 'R1', 'R2', 'R3', 'R4', 'R5', 'R6', 'R7', 'R8'
     ];
     let CommandType;
@@ -18582,6 +18582,7 @@ var WebMolKit;
         { 'id': 'inclined', 'imageFN': 'BondUp', 'helpText': 'Create or set bonds to inclined.', 'mnemonic': '5' },
         { 'id': 'declined', 'imageFN': 'BondDown', 'helpText': 'Create or set bonds to declined.', 'mnemonic': '6' },
         { 'id': 'squig', 'imageFN': 'BondSquig', 'helpText': 'Create or set bonds to unknown stereochemistry.', 'mnemonic': '4' },
+        { 'id': 'bondQAny', 'imageFN': 'BondAny', 'helpText': 'Query bond that matches anything.' },
         { 'id': 'addtwo', 'imageFN': 'BondAddTwo', 'helpText': 'Add two new bonds to the subject atom.', 'mnemonic': 'Shift+D' },
         { 'id': 'insert', 'imageFN': 'BondInsert', 'helpText': 'Insert a methylene into the subject bond.', 'mnemonic': '' },
         { 'id': 'switch', 'imageFN': 'BondSwitch', 'helpText': 'Cycle through likely bond geometries.', 'mnemonic': '' },
@@ -18947,6 +18948,8 @@ var WebMolKit;
                 actv = WebMolKit.ActivityType.Scale;
                 param = { 'mag': 1.1 };
             }
+            else if (id == 'bondQAny')
+                actv = WebMolKit.ActivityType.QueryBondAny;
             else if (id == 'atom')
                 this.buttonView.pushBank(new CommandBank(this.owner, CommandType.Atom));
             else if (id == 'bond')
@@ -19198,6 +19201,7 @@ var WebMolKit;
             this.toolRingArom = false;
             this.toolRingFreeform = false;
             this.toolRotateIncr = 0;
+            this.redrawCacheKey = '';
             this.abbrevPolicy = WebMolKit.RenderPolicy.defaultBlackOnWhite();
             this.abbrevPolicy.data.foreground = 0xD0D0D0;
             this.abbrevPolicy.data.atomCols = WebMolKit.Vec.numberArray(0xD0D0D0, this.abbrevPolicy.data.atomCols.length);
@@ -19300,21 +19304,26 @@ var WebMolKit;
             this.redrawOver();
         }
         redrawInfo() {
+            let cacheKey = JSON.stringify([this.width, this.height, this.mol.toString()]);
+            if (cacheKey == this.redrawCacheKey)
+                return;
+            this.redrawCacheKey = cacheKey;
             this.divInfo.empty();
             this.divInfo.css({ 'visibility': 'hidden', 'left': '0', 'top': '0' });
             if (this.mol.numAtoms == 0)
                 return;
-            let divText = WebMolKit.dom('<div/>').appendTo(this.divInfo).css({ 'display': 'inline-block', 'text-align': 'right', 'font-family': 'sans-serif', 'font-size': '80%', 'color': '#C0C0C0' });
+            let divText = WebMolKit.dom('<div/>').appendTo(this.divInfo);
+            divText.css({ 'display': 'inline-block', 'text-align': 'right', 'font-family': 'sans-serif', 'font-size': '80%', 'color': '#C0C0C0' });
             let html = WebMolKit.MolUtil.molecularFormula(this.mol, ['<sub>', '</sub>', '<sup>', '</sup>']);
             let chg = 0;
             for (let n = 1; n <= this.mol.numAtoms; n++)
                 chg += this.mol.atomCharge(n);
             if (chg == -1)
-                html += `<sup>-</sup>`;
+                html += '<sup>-</sup>';
             else if (chg < -1)
                 html += `<sup>${chg}</sup>`;
             else if (chg == 1)
-                html += `<sup>+</sup>`;
+                html += '<sup>+</sup>';
             else if (chg > 1)
                 html += `<sup>+${chg}</sup>`;
             html += '<br>' + WebMolKit.MolUtil.molecularWeight(this.mol).toFixed(2);
@@ -20241,6 +20250,7 @@ var WebMolKit;
             let divPeriodic = WebMolKit.dom('<div/>').appendTo(grid).css({ 'grid-area': '6 / start / 6 / end' });
             this.periodicWidget = new WebMolKit.PeriodicTableWidget();
             this.periodicWidget.onSelect((element) => this.inputSymbol.setValue(element));
+            this.periodicWidget.onDoubleClick(() => this.applyChanges());
             this.periodicWidget.render(divPeriodic);
             const mol = this.mol, atom = this.atom;
             if (atom > 0) {
@@ -21751,6 +21761,7 @@ var WebMolKit;
         ActivityType[ActivityType["QueryPaste"] = 59] = "QueryPaste";
         ActivityType[ActivityType["QuerySetAtom"] = 60] = "QuerySetAtom";
         ActivityType[ActivityType["QuerySetBond"] = 61] = "QuerySetBond";
+        ActivityType[ActivityType["QueryBondAny"] = 62] = "QueryBondAny";
     })(ActivityType = WebMolKit.ActivityType || (WebMolKit.ActivityType = {}));
     class MoleculeActivity {
         constructor(input, activity, param, owner) {
@@ -21922,6 +21933,8 @@ var WebMolKit;
                 this.execQuerySetAtom();
             else if (this.activity == ActivityType.QuerySetBond)
                 this.execQuerySetBond();
+            else if (this.activity == ActivityType.QueryBondAny)
+                this.execQueryBondAny();
             this.finish();
         }
         finish() {
@@ -22156,7 +22169,8 @@ var WebMolKit;
             }
         }
         execElement(element, positionX, positionY, keepAbbrev) {
-            if (this.subjectLength > 0) {
+            const QUERY_ELEMENTS = ['A', 'X', 'Y', 'Z', 'Q', 'M', 'T', 'E', 'R'];
+            if (this.subjectLength > 0 && !QUERY_ELEMENTS.includes(element)) {
                 let anyChange = false;
                 for (let n = 0; n < this.subjectLength; n++)
                     if (this.input.mol.atomElement(this.subjectIndex[n]) != element) {
@@ -22168,22 +22182,79 @@ var WebMolKit;
                     return;
                 }
             }
-            this.output.mol = this.input.mol.clone();
-            if (this.output.mol.numAtoms == 0) {
-                this.output.mol.addAtom(element, 0, 0);
+            let mol = this.output.mol = this.input.mol.clone();
+            let applyQuery = (atom) => {
+                if (element == 'A') {
+                    WebMolKit.QueryUtil.setQueryAtomElementsNot(mol, atom, ['H']);
+                    WebMolKit.QueryUtil.deleteQueryAtom(mol, atom, WebMolKit.QueryTypeAtom.Elements);
+                }
+                else if (element == 'X') {
+                    WebMolKit.QueryUtil.setQueryAtomElements(mol, atom, ['F', 'Cl', 'Br', 'I']);
+                    WebMolKit.QueryUtil.deleteQueryAtom(mol, atom, WebMolKit.QueryTypeAtom.ElementsNot);
+                }
+                else if (element == 'Y') {
+                    WebMolKit.QueryUtil.setQueryAtomElements(mol, atom, ['O', 'S', 'Se', 'Te']);
+                    WebMolKit.QueryUtil.deleteQueryAtom(mol, atom, WebMolKit.QueryTypeAtom.ElementsNot);
+                }
+                else if (element == 'Z') {
+                    WebMolKit.QueryUtil.setQueryAtomElements(mol, atom, ['F', 'Cl', 'Br', 'O', 'S']);
+                    WebMolKit.QueryUtil.deleteQueryAtom(mol, atom, WebMolKit.QueryTypeAtom.ElementsNot);
+                }
+                else if (element == 'Q') {
+                    WebMolKit.QueryUtil.setQueryAtomElementsNot(mol, atom, ['H', 'C']);
+                    WebMolKit.QueryUtil.deleteQueryAtom(mol, atom, WebMolKit.QueryTypeAtom.Elements);
+                }
+                else if (element == 'M') {
+                    const NON_METALS = ['H', 'B', 'C', 'N', 'O', 'F', 'Si', 'P', 'S', 'Cl', 'As', 'Se', 'Br', 'Te', 'I'];
+                    WebMolKit.QueryUtil.setQueryAtomElementsNot(mol, atom, NON_METALS);
+                    WebMolKit.QueryUtil.deleteQueryAtom(mol, atom, WebMolKit.QueryTypeAtom.Elements);
+                }
+                else if (element == 'T') {
+                    const TRANSITION_METALS = [
+                        'Sc', 'Ti', 'V', 'Cr', 'Mn', 'Fe', 'Co', 'Ni', 'Cu', 'Zn',
+                        'Y', 'Zr', 'Nb', 'Mo', 'Tc', 'Ru', 'Rh', 'Pd', 'Ag', 'Cd',
+                        'Hf', 'Ta', 'W', 'Re', 'Os', 'Ir', 'Pt', 'Au', 'Hg',
+                        'La', 'Ce', 'Pr', 'Nd', 'Pm', 'Sm', 'Eu', 'Gd', 'Tb', 'Dy', 'Ho', 'Er', 'Tm', 'Yb', 'Lu',
+                        'Ac', 'Th', 'Pa', 'U', 'Np', 'Pu', 'Am', 'Cm', 'Bk', 'Cf', 'Es', 'Fm', 'Md', 'No', 'Lr'
+                    ];
+                    WebMolKit.QueryUtil.setQueryAtomElements(mol, atom, TRANSITION_METALS);
+                    WebMolKit.QueryUtil.deleteQueryAtom(mol, atom, WebMolKit.QueryTypeAtom.ElementsNot);
+                }
+                else if (element == 'E') {
+                    const MAIN_GROUPS = [
+                        'B', 'N', 'O', 'F',
+                        'Al', 'Si', 'P', 'S', 'Cl',
+                        'Zn', 'Ga', 'Se', 'As', 'Se', 'Br',
+                        'Cd', 'In', 'Sn', 'Sb', 'Te', 'I',
+                        'Hg', 'Tl', 'Pb', 'Bi', 'Pb', 'At'
+                    ];
+                    WebMolKit.QueryUtil.setQueryAtomElements(mol, atom, MAIN_GROUPS);
+                    WebMolKit.QueryUtil.deleteQueryAtom(mol, atom, WebMolKit.QueryTypeAtom.ElementsNot);
+                }
+                else if (element == 'R') {
+                    WebMolKit.QueryUtil.setQueryAtomElements(mol, atom, ['C', 'N', 'O', 'S', 'P', 'H']);
+                    WebMolKit.QueryUtil.deleteQueryAtom(mol, atom, WebMolKit.QueryTypeAtom.ElementsNot);
+                }
+            };
+            if (mol.numAtoms == 0) {
+                mol.addAtom(element, 0, 0);
+                applyQuery(mol.numAtoms);
             }
             else if (this.subjectLength == 0) {
                 if (positionX != null && positionY != null)
-                    this.output.mol.addAtom(element, positionX, positionY);
+                    mol.addAtom(element, positionX, positionY);
                 else
-                    WebMolKit.SketchUtil.placeNewAtom(this.output.mol, element);
+                    WebMolKit.SketchUtil.placeNewAtom(mol, element);
+                applyQuery(mol.numAtoms);
             }
             else {
                 for (let n = 0; n < this.subjectLength; n++) {
                     if (keepAbbrev)
-                        this.output.mol.setAtomElement(this.subjectIndex[n], element);
+                        mol.setAtomElement(this.subjectIndex[n], element);
                     else
-                        WebMolKit.MolUtil.setAtomElement(this.output.mol, this.subjectIndex[n], element);
+                        WebMolKit.MolUtil.setAtomElement(mol, this.subjectIndex[n], element);
+                    console.log('set:', this.subjectIndex[n], ' ', element);
+                    applyQuery(this.subjectIndex[n]);
                 }
             }
         }
@@ -23106,6 +23177,24 @@ var WebMolKit;
         }
         execQuerySetBond() {
         }
+        execQueryBondAny() {
+            if (!this.requireSubject())
+                return;
+            const { mol, currentBond } = this.input;
+            let bonds = [];
+            for (let n = 1; n <= mol.numBonds; n++)
+                if (this.subjectMask[mol.bondFrom(n) - 1] && this.subjectMask[mol.bondTo(n) - 1])
+                    bonds.push(n);
+            if (bonds.length == 0) {
+                this.errmsg = 'Must select at least one bond.';
+                return;
+            }
+            this.output.mol = this.input.mol.clone();
+            for (let b of bonds) {
+                this.output.mol.setBondOrder(b, 0);
+                WebMolKit.QueryUtil.setQueryBondOrders(this.output.mol, b, [-1, 0, 1, 2, 3, 4]);
+            }
+        }
         requireSubject() {
             if (this.subjectLength == 0)
                 this.errmsg = 'Subject required: current atom/bond or selected atoms.';
@@ -23478,10 +23567,18 @@ var WebMolKit;
                     this.changeElement(el);
                     this.callbackSelect(el);
                 });
+                div.onDblClick((event) => {
+                    this.callbackDoubleClick();
+                    event.preventDefault();
+                    event.stopPropagation();
+                });
             }
         }
         onSelect(callback) {
             this.callbackSelect = callback;
+        }
+        onDoubleClick(callback) {
+            this.callbackDoubleClick = callback;
         }
         changeElement(element) {
             let atno = WebMolKit.Chemistry.ELEMENTS.indexOf(element);

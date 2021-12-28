@@ -87,6 +87,7 @@ export enum ActivityType
 	QueryPaste,
 	QuerySetAtom,
 	QuerySetBond,
+	QueryBondAny,
 }
 
 export interface SketchState
@@ -257,6 +258,7 @@ export class MoleculeActivity
 		else if (this.activity == ActivityType.QueryPaste) this.execQueryPaste();
 		else if (this.activity == ActivityType.QuerySetAtom) this.execQuerySetAtom();
 		else if (this.activity == ActivityType.QuerySetBond) this.execQuerySetBond();
+		else if (this.activity == ActivityType.QueryBondAny) this.execQueryBondAny();
 
 		this.finish();
 	}
@@ -554,7 +556,9 @@ export class MoleculeActivity
 
 	public execElement(element:string, positionX?:number, positionY?:number, keepAbbrev?:boolean):void
 	{
-		if (this.subjectLength > 0)
+		const QUERY_ELEMENTS = ['A', 'X', 'Y', 'Z', 'Q', 'M', 'T', 'E', 'R'];
+
+		if (this.subjectLength > 0 && !QUERY_ELEMENTS.includes(element))
 		{
 			let anyChange = false;
 			for (let n = 0; n < this.subjectLength; n++) if (this.input.mol.atomElement(this.subjectIndex[n]) != element)
@@ -569,28 +573,97 @@ export class MoleculeActivity
 			}
 		}
 
-		this.output.mol = this.input.mol.clone();
+		let mol = this.output.mol = this.input.mol.clone();
 
-		if (this.output.mol.numAtoms == 0)
+		let applyQuery = (atom:number) =>
+		{			
+			if (element == 'A') 
+			{
+				QueryUtil.setQueryAtomElementsNot(mol, atom, ['H']);
+				QueryUtil.deleteQueryAtom(mol, atom, QueryTypeAtom.Elements);
+			}
+			else if (element == 'X') 
+			{
+				QueryUtil.setQueryAtomElements(mol, atom, ['F', 'Cl', 'Br', 'I']);
+				QueryUtil.deleteQueryAtom(mol, atom, QueryTypeAtom.ElementsNot);
+			}
+			else if (element == 'Y') 
+			{
+				QueryUtil.setQueryAtomElements(mol, atom, ['O', 'S', 'Se', 'Te']);
+				QueryUtil.deleteQueryAtom(mol, atom, QueryTypeAtom.ElementsNot);
+			}
+			else if (element == 'Z') 
+			{
+				QueryUtil.setQueryAtomElements(mol, atom, ['F', 'Cl', 'Br', 'O', 'S']);
+				QueryUtil.deleteQueryAtom(mol, atom, QueryTypeAtom.ElementsNot);
+			}
+			else if (element == 'Q') 
+			{
+				QueryUtil.setQueryAtomElementsNot(mol, atom, ['H', 'C']);
+				QueryUtil.deleteQueryAtom(mol, atom, QueryTypeAtom.Elements);
+			}
+			else if (element == 'M')
+			{
+				const NON_METALS = ['H', 'B', 'C', 'N', 'O', 'F', 'Si', 'P', 'S', 'Cl', 'As', 'Se', 'Br', 'Te', 'I'];
+				QueryUtil.setQueryAtomElementsNot(mol, atom, NON_METALS);
+				QueryUtil.deleteQueryAtom(mol, atom, QueryTypeAtom.Elements);
+			}
+			else if (element == 'T')
+			{
+				const TRANSITION_METALS =
+				[
+					'Sc', 'Ti', 'V', 'Cr', 'Mn', 'Fe', 'Co', 'Ni', 'Cu', 'Zn',
+					'Y', 'Zr','Nb', 'Mo', 'Tc', 'Ru', 'Rh', 'Pd', 'Ag', 'Cd',
+					'Hf', 'Ta', 'W', 'Re', 'Os', 'Ir', 'Pt', 'Au', 'Hg',
+					'La', 'Ce', 'Pr', 'Nd', 'Pm', 'Sm', 'Eu', 'Gd', 'Tb', 'Dy', 'Ho', 'Er', 'Tm', 'Yb', 'Lu',
+					'Ac', 'Th', 'Pa', 'U', 'Np', 'Pu', 'Am', 'Cm', 'Bk', 'Cf', 'Es', 'Fm', 'Md', 'No', 'Lr'
+				];
+				QueryUtil.setQueryAtomElements(mol, atom, TRANSITION_METALS);
+				QueryUtil.deleteQueryAtom(mol, atom, QueryTypeAtom.ElementsNot);
+			}
+			else if (element == 'E')
+			{
+				const MAIN_GROUPS =
+				[
+					'B', 'N', 'O', 'F',
+					'Al', 'Si', 'P', 'S', 'Cl',
+					'Zn', 'Ga', 'Se', 'As', 'Se', 'Br',
+					'Cd', 'In', 'Sn', 'Sb', 'Te', 'I',
+					'Hg', 'Tl', 'Pb', 'Bi', 'Pb', 'At'
+				];
+				QueryUtil.setQueryAtomElements(mol, atom, MAIN_GROUPS);
+				QueryUtil.deleteQueryAtom(mol, atom, QueryTypeAtom.ElementsNot);
+			}
+			else if (element == 'R') 
+			{
+				QueryUtil.setQueryAtomElements(mol, atom, ['C', 'N', 'O', 'S', 'P', 'H']);
+				QueryUtil.deleteQueryAtom(mol, atom, QueryTypeAtom.ElementsNot);
+			}
+		};
+
+		if (mol.numAtoms == 0)
 		{
-			this.output.mol.addAtom(element, 0, 0);
+			mol.addAtom(element, 0, 0);
+			applyQuery(mol.numAtoms);
 		}
 		else if (this.subjectLength == 0)
 		{
 			// when there's no subject, this is an add-atom operation
 			if (positionX != null && positionY != null)
-				this.output.mol.addAtom(element, positionX, positionY);
+				mol.addAtom(element, positionX, positionY);
 			else
-				SketchUtil.placeNewAtom(this.output.mol, element);
+				SketchUtil.placeNewAtom(mol, element);
+			applyQuery(mol.numAtoms);
 		}
 		else // there is a subject, so it's a change-atom operation
 		{
 			for (let n = 0; n < this.subjectLength; n++)
 			{
 				if (keepAbbrev)
-					this.output.mol.setAtomElement(this.subjectIndex[n], element);
+					mol.setAtomElement(this.subjectIndex[n], element);
 				else
-					MolUtil.setAtomElement(this.output.mol, this.subjectIndex[n], element);
+					MolUtil.setAtomElement(mol, this.subjectIndex[n], element);
+				applyQuery(this.subjectIndex[n]);
 			}
 		}
 	}
@@ -1762,6 +1835,28 @@ export class MoleculeActivity
 	public execQuerySetBond():void
 	{
 		// TODO
+	}
+
+	public execQueryBondAny():void
+	{
+		if (!this.requireSubject()) return;
+		
+		const {mol, currentBond} = this.input;
+		let bonds:number[] = [];
+		for (let n = 1; n <= mol.numBonds; n++) if (this.subjectMask[mol.bondFrom(n) - 1] && this.subjectMask[mol.bondTo(n) - 1]) bonds.push(n);
+		if (bonds.length == 0)
+		{
+			this.errmsg = 'Must select at least one bond.';
+			return;
+		}
+
+		this.output.mol = this.input.mol.clone();
+		
+		for (let b of bonds)
+		{
+			this.output.mol.setBondOrder(b, 0);
+			QueryUtil.setQueryBondOrders(this.output.mol, b, [-1, 0, 1, 2, 3, 4]);
+		}
 	}
 
 	/*

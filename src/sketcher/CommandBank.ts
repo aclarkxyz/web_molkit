@@ -53,7 +53,7 @@ const ELEMENTS_F_BLOCK:string[] =
 
 const ELEMENTS_ABBREV:string[] =
 [
-	'*', 'X',  'Y',  'Z',  'Q',  'M',  'L',  'E',  'A',  'R',
+	'*', 'A', 'X', 'Y', 'Z', 'Q', 'M', 'T', 'E', 'L', 'R',
 	'R0', 'R1', 'R2', 'R3', 'R4', 'R5', 'R6', 'R7', 'R8'
 ];
 
@@ -122,6 +122,7 @@ const COMMANDS_BOND:ButtonBankItem[] =
 	{'id': 'inclined', 'imageFN': 'BondUp', 'helpText': 'Create or set bonds to inclined.', 'mnemonic': '5'},
 	{'id': 'declined', 'imageFN': 'BondDown', 'helpText': 'Create or set bonds to declined.', 'mnemonic': '6'},
 	{'id': 'squig', 'imageFN': 'BondSquig', 'helpText': 'Create or set bonds to unknown stereochemistry.', 'mnemonic': '4'},
+	{'id': 'bondQAny', 'imageFN': 'BondQAny', 'helpText': 'Query bond that matches anything.'},
 	{'id': 'addtwo', 'imageFN': 'BondAddTwo', 'helpText': 'Add two new bonds to the subject atom.', 'mnemonic': 'Shift+D'},
 	{'id': 'insert', 'imageFN': 'BondInsert', 'helpText': 'Insert a methylene into the subject bond.', 'mnemonic': ''},
 	{'id': 'switch', 'imageFN': 'BondSwitch', 'helpText': 'Cycle through likely bond geometries.', 'mnemonic': ''},
@@ -322,6 +323,7 @@ export class CommandBank extends ButtonBank
 		else if (id == 'vflip') {actv = ActivityType.Flip; param = {'axis': 'ver'};}
 		else if (id == 'shrink') {actv = ActivityType.Scale; param = {'mag': 1 / 1.1};}
 		else if (id == 'grow') {actv = ActivityType.Scale; param = {'mag': 1.1};}
+		else if (id == 'bondQAny') actv = ActivityType.QueryBondAny;
 		else if (id == 'atom') this.buttonView.pushBank(new CommandBank(this.owner, CommandType.Atom));
 		else if (id == 'bond') this.buttonView.pushBank(new CommandBank(this.owner, CommandType.Bond));
 		else if (id == 'select') this.buttonView.pushBank(new CommandBank(this.owner, CommandType.Select));
