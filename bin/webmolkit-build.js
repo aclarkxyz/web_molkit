@@ -17757,7 +17757,6 @@ var WebMolKit;
             let xml = WebMolKit.XML.parseXML('<svg/>');
             let svg = xml.documentElement;
             svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
-            svg.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
             svg.setAttribute('width', this.width.toString());
             svg.setAttribute('height', this.height.toString());
             svg.setAttribute('viewBox', `0 0 ${this.width} ${this.height}`);
@@ -18259,7 +18258,7 @@ var WebMolKit;
                 let i = font.getIndex(ch);
                 let use = WebMolKit.XML.appendElement(gscale, 'use');
                 let ref = i < 0 ? '#missing' : '#char' + i;
-                use.setAttribute('xlink:href', ref);
+                use.setAttribute('href', ref);
                 use.setAttribute('x', dx.toString());
                 if (i >= 0) {
                     dx += font.HORIZ_ADV_X[i];
@@ -18582,7 +18581,7 @@ var WebMolKit;
         { 'id': 'inclined', 'imageFN': 'BondUp', 'helpText': 'Create or set bonds to inclined.', 'mnemonic': '5' },
         { 'id': 'declined', 'imageFN': 'BondDown', 'helpText': 'Create or set bonds to declined.', 'mnemonic': '6' },
         { 'id': 'squig', 'imageFN': 'BondSquig', 'helpText': 'Create or set bonds to unknown stereochemistry.', 'mnemonic': '4' },
-        { 'id': 'bondQAny', 'imageFN': 'BondAny', 'helpText': 'Query bond that matches anything.' },
+        { 'id': 'bondQAny', 'imageFN': 'BondQAny', 'helpText': 'Query bond that matches anything.' },
         { 'id': 'addtwo', 'imageFN': 'BondAddTwo', 'helpText': 'Add two new bonds to the subject atom.', 'mnemonic': 'Shift+D' },
         { 'id': 'insert', 'imageFN': 'BondInsert', 'helpText': 'Insert a methylene into the subject bond.', 'mnemonic': '' },
         { 'id': 'switch', 'imageFN': 'BondSwitch', 'helpText': 'Cycle through likely bond geometries.', 'mnemonic': '' },
@@ -22253,7 +22252,6 @@ var WebMolKit;
                         mol.setAtomElement(this.subjectIndex[n], element);
                     else
                         WebMolKit.MolUtil.setAtomElement(mol, this.subjectIndex[n], element);
-                    console.log('set:', this.subjectIndex[n], ' ', element);
                     applyQuery(this.subjectIndex[n]);
                 }
             }
