@@ -17757,7 +17757,6 @@ var WebMolKit;
             let xml = WebMolKit.XML.parseXML('<svg/>');
             let svg = xml.documentElement;
             svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
-            svg.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
             svg.setAttribute('width', this.width.toString());
             svg.setAttribute('height', this.height.toString());
             svg.setAttribute('viewBox', `0 0 ${this.width} ${this.height}`);
@@ -18259,7 +18258,7 @@ var WebMolKit;
                 let i = font.getIndex(ch);
                 let use = WebMolKit.XML.appendElement(gscale, 'use');
                 let ref = i < 0 ? '#missing' : '#char' + i;
-                use.setAttribute('xlink:href', ref);
+                use.setAttribute('href', ref);
                 use.setAttribute('x', dx.toString());
                 if (i >= 0) {
                     dx += font.HORIZ_ADV_X[i];
@@ -28162,7 +28161,7 @@ var WebMolKit;
         }
         render(parent) {
             super.render(parent);
-            this.contentDOM.css({ 'display': 'inline-block' });
+            this.contentDOM.css({ 'display': 'inline-block', 'baseline-shift': '1.5em' });
             this.buttonDiv = [];
             this.auxCell = [];
             let table = WebMolKit.dom('<table class="wmk-option-table"/>').appendTo(this.contentDOM);

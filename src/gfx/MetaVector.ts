@@ -507,7 +507,6 @@ export class MetaVector
 		let xml = XML.parseXML('<svg/>');
 		let svg = xml.documentElement;
 		svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
-		svg.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
 		svg.setAttribute('width', this.width.toString());
 		svg.setAttribute('height', this.height.toString());
 		svg.setAttribute('viewBox', `0 0 ${this.width} ${this.height}`);
@@ -1114,7 +1113,7 @@ export class MetaVector
 
 			let use = XML.appendElement(gscale, 'use');
 			let ref = i < 0 ? '#missing' : '#char' + i;
-			use.setAttribute('xlink:href', ref);
+			use.setAttribute('href', ref);
 			use.setAttribute('x', dx.toString());
 
 			if (i >= 0)

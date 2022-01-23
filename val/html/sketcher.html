@@ -42,14 +42,15 @@ Bu=4.0195,3.8581;0,0,i0,aSketchEl!(5\002C4)\000A*\003D2.7204\002C4.6081\003B0\00
 	<button onClick="demoMolecule()">Demo Molecule</button>
 	<button onClick="copySketchEl()">Copy SketchEl</button>
 	<button onClick="copyMDLMOL()">Copy MDLMOL</button>
+	<button onClick="copySVG()">Copy SVG</button>
 </p>
 
 <script>
-	var wmk = WebMolKit;
-	var url = window.location.href.substring(0, window.location.href.lastIndexOf('/'));
+	let wmk = WebMolKit;
+	let url = window.location.href.substring(0, window.location.href.lastIndexOf('/'));
 	wmk.initWebMolKit(url + '../../../res');
-	var mol = wmk.Molecule.fromString(document.getElementById('moldata').textContent);
-	var sketcher = new wmk.Sketcher();
+	let mol = wmk.Molecule.fromString(document.getElementById('moldata').textContent);
+	let sketcher = new wmk.Sketcher();
 	sketcher.setSize(800, 700);
 	sketcher.defineMolecule(mol);
 
@@ -74,6 +75,17 @@ Bu=4.0195,3.8581;0,0,i0,aSketchEl!(5\002C4)\000A*\003D2.7204\002C4.6081\003B0\00
 	function demoMolecule() {sketcher.defineMolecule(mol);}
 	function copySketchEl() {sketcher.performCopy();}
 	function copyMDLMOL() {proxy.setString(new wmk.MDLMOLWriter(sketcher.getMolecule()).write());}
+	function copySVG() 
+	{
+		let policy = wmk.RenderPolicy.defaultColourOnWhite(20);
+		let measure = new wmk.OutlineMeasurement(0, 0, policy.data.pointScale);
+		let layout = new wmk.ArrangeMolecule(sketcher.getMolecule(), measure, policy);
+		layout.arrange();
+		let gfx = new wmk.MetaVector();
+		new wmk.DrawMolecule(layout, gfx).draw();
+		gfx.normalise();
+		proxy.setString(gfx.createSVG(true));
+	}
 </script>
 
 </body>
