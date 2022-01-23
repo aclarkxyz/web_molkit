@@ -18582,7 +18582,7 @@ var WebMolKit;
         { 'id': 'inclined', 'imageFN': 'BondUp', 'helpText': 'Create or set bonds to inclined.', 'mnemonic': '5' },
         { 'id': 'declined', 'imageFN': 'BondDown', 'helpText': 'Create or set bonds to declined.', 'mnemonic': '6' },
         { 'id': 'squig', 'imageFN': 'BondSquig', 'helpText': 'Create or set bonds to unknown stereochemistry.', 'mnemonic': '4' },
-        { 'id': 'bondQAny', 'imageFN': 'BondAny', 'helpText': 'Query bond that matches anything.' },
+        { 'id': 'bondQAny', 'imageFN': 'BondQAny', 'helpText': 'Query bond that matches anything.' },
         { 'id': 'addtwo', 'imageFN': 'BondAddTwo', 'helpText': 'Add two new bonds to the subject atom.', 'mnemonic': 'Shift+D' },
         { 'id': 'insert', 'imageFN': 'BondInsert', 'helpText': 'Insert a methylene into the subject bond.', 'mnemonic': '' },
         { 'id': 'switch', 'imageFN': 'BondSwitch', 'helpText': 'Cycle through likely bond geometries.', 'mnemonic': '' },
@@ -22253,7 +22253,6 @@ var WebMolKit;
                         mol.setAtomElement(this.subjectIndex[n], element);
                     else
                         WebMolKit.MolUtil.setAtomElement(mol, this.subjectIndex[n], element);
-                    console.log('set:', this.subjectIndex[n], ' ', element);
                     applyQuery(this.subjectIndex[n]);
                 }
             }
@@ -23260,6 +23259,10 @@ var WebMolKit;
                 let x = mol.atomX(atom) + WebMolKit.Molecule.IDEALBOND * Math.cos(ang[n]);
                 let y = mol.atomY(atom) + WebMolKit.Molecule.IDEALBOND * Math.sin(ang[n]);
                 let score = WebMolKit.CoordUtil.congestionPoint(mol, x, y);
+                if (WebMolKit.Chemistry.ELEMENT_BLOCKS[mol.atomicNumber(atom)] <= 2)
+                    score += Math.abs(WebMolKit.angleNorm(ang[n])) * 1E-8;
+                else
+                    score += Math.abs(WebMolKit.angleDiff(0.5 * Math.PI, ang[n])) * 1E-8;
                 if (n == 0 || score < best) {
                     best = score;
                     bx = x;

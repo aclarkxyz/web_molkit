@@ -74,7 +74,7 @@ export class OptionList extends Widget
 	{
 		super.render(parent);
 
-		this.contentDOM.css({'display': 'inline-block'});
+		this.contentDOM.css({'display': 'inline-block', 'baseline-shift': '1.5em'});
 
 		this.buttonDiv = [];
 		this.auxCell = [];

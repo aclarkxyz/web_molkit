@@ -576,28 +576,28 @@ export class MoleculeActivity
 		let mol = this.output.mol = this.input.mol.clone();
 
 		let applyQuery = (atom:number) =>
-		{			
-			if (element == 'A') 
+		{
+			if (element == 'A')
 			{
 				QueryUtil.setQueryAtomElementsNot(mol, atom, ['H']);
 				QueryUtil.deleteQueryAtom(mol, atom, QueryTypeAtom.Elements);
 			}
-			else if (element == 'X') 
+			else if (element == 'X')
 			{
 				QueryUtil.setQueryAtomElements(mol, atom, ['F', 'Cl', 'Br', 'I']);
 				QueryUtil.deleteQueryAtom(mol, atom, QueryTypeAtom.ElementsNot);
 			}
-			else if (element == 'Y') 
+			else if (element == 'Y')
 			{
 				QueryUtil.setQueryAtomElements(mol, atom, ['O', 'S', 'Se', 'Te']);
 				QueryUtil.deleteQueryAtom(mol, atom, QueryTypeAtom.ElementsNot);
 			}
-			else if (element == 'Z') 
+			else if (element == 'Z')
 			{
 				QueryUtil.setQueryAtomElements(mol, atom, ['F', 'Cl', 'Br', 'O', 'S']);
 				QueryUtil.deleteQueryAtom(mol, atom, QueryTypeAtom.ElementsNot);
 			}
-			else if (element == 'Q') 
+			else if (element == 'Q')
 			{
 				QueryUtil.setQueryAtomElementsNot(mol, atom, ['H', 'C']);
 				QueryUtil.deleteQueryAtom(mol, atom, QueryTypeAtom.Elements);
@@ -613,7 +613,7 @@ export class MoleculeActivity
 				const TRANSITION_METALS =
 				[
 					'Sc', 'Ti', 'V', 'Cr', 'Mn', 'Fe', 'Co', 'Ni', 'Cu', 'Zn',
-					'Y', 'Zr','Nb', 'Mo', 'Tc', 'Ru', 'Rh', 'Pd', 'Ag', 'Cd',
+					'Y', 'Zr', 'Nb', 'Mo', 'Tc', 'Ru', 'Rh', 'Pd', 'Ag', 'Cd',
 					'Hf', 'Ta', 'W', 'Re', 'Os', 'Ir', 'Pt', 'Au', 'Hg',
 					'La', 'Ce', 'Pr', 'Nd', 'Pm', 'Sm', 'Eu', 'Gd', 'Tb', 'Dy', 'Ho', 'Er', 'Tm', 'Yb', 'Lu',
 					'Ac', 'Th', 'Pa', 'U', 'Np', 'Pu', 'Am', 'Cm', 'Bk', 'Cf', 'Es', 'Fm', 'Md', 'No', 'Lr'
@@ -634,7 +634,7 @@ export class MoleculeActivity
 				QueryUtil.setQueryAtomElements(mol, atom, MAIN_GROUPS);
 				QueryUtil.deleteQueryAtom(mol, atom, QueryTypeAtom.ElementsNot);
 			}
-			else if (element == 'R') 
+			else if (element == 'R')
 			{
 				QueryUtil.setQueryAtomElements(mol, atom, ['C', 'N', 'O', 'S', 'P', 'H']);
 				QueryUtil.deleteQueryAtom(mol, atom, QueryTypeAtom.ElementsNot);
@@ -1840,7 +1840,7 @@ export class MoleculeActivity
 	public execQueryBondAny():void
 	{
 		if (!this.requireSubject()) return;
-		
+
 		const {mol, currentBond} = this.input;
 		let bonds:number[] = [];
 		for (let n = 1; n <= mol.numBonds; n++) if (this.subjectMask[mol.bondFrom(n) - 1] && this.subjectMask[mol.bondTo(n) - 1]) bonds.push(n);
@@ -1851,7 +1851,7 @@ export class MoleculeActivity
 		}
 
 		this.output.mol = this.input.mol.clone();
-		
+
 		for (let b of bonds)
 		{
 			this.output.mol.setBondOrder(b, 0);
@@ -2020,6 +2020,10 @@ export class MoleculeActivity
 			let x = mol.atomX(atom) + Molecule.IDEALBOND * Math.cos(ang[n]);
 			let y = mol.atomY(atom) + Molecule.IDEALBOND * Math.sin(ang[n]);
 			let score = CoordUtil.congestionPoint(mol, x, y);
+			if (Chemistry.ELEMENT_BLOCKS[mol.atomicNumber(atom)] <= 2)
+				score += Math.abs(angleNorm(ang[n])) * 1E-8; // rounding error bias for pointing right
+			else
+				score += Math.abs(angleDiff(0.5 * Math.PI, ang[n])) * 1E-8; // bias for pointing up
 			if (n == 0 || score < best) {best = score; bx = x; by = y;}
 		}
 
