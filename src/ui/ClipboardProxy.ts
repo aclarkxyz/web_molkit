@@ -186,13 +186,13 @@ export class ClipboardProxyWeb extends ClipboardProxy
 			let dataURL = event.target.result.toString();
 			if (!dataURL) return;
 
-			let img = $('<img/>').attr('src', dataURL);
-			img.on('load', () =>
+			let img = dom('<img/>').attr({'src': dataURL});
+			img.el.addEventListener('load', () =>
 			{
 				let r = document.createRange();
-				r.setStartBefore(img[0]);
-				r.setEndAfter(img[0]);
-				r.selectNode(img[0]);
+				r.setStartBefore(img.el);
+				r.setEndAfter(img.el);
+				r.selectNode(img.el);
 				let sel = window.getSelection();
 				sel.addRange(r);
 				document.execCommand('copy');

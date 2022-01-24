@@ -106,6 +106,7 @@ export class ArrangeExperiment
 	public includeAnnot = false; // whether to add annotations like primary/waste
 	public includeBlank = false; // any section with no components gets a blank placeholder
 	public includeDetails = false; // include information like yield, amount, metadata in the layout
+	public allowVertical = true; // permit vertical or bent arrangements
 	public padding = 0;
 
 	public static COMP_GAP_LEFT = 0.5;
@@ -180,23 +181,29 @@ export class ArrangeExperiment
 
 		// build several permutations; take the best one
 		// note: bend=1 for completely vertical, bend=2 for switch after first step, bend=#steps+1 for linear
-		let best:ArrangeComponent[] = null;
-		let bestScore = 0;
-		for (let bend = this.entry.steps.length + 1; bend >= 1; bend--) for (let vert = 0; vert <= 1; vert++)
+		if (this.allowVertical)
 		{
-			let trial:ArrangeComponent[] = [];
-			for (let xc of this.components) trial.push(xc.clone());
-			this.arrangeComponents(trial, bend, vert > 0);
-
-			let score = this.scoreArrangement(trial);
-			if (best == null || score > bestScore)
+			let best:ArrangeComponent[] = null;
+			let bestScore = 0;
+			for (let bend = this.entry.steps.length + 1; bend >= 1; bend--) for (let vert = 0; vert <= 1; vert++)
 			{
-				best = trial;
-				bestScore = score;
-			}
-		}
+				let trial:ArrangeComponent[] = [];
+				for (let xc of this.components) trial.push(xc.clone());
+				this.arrangeComponents(trial, bend, vert > 0);
 
-		this.components = best;
+				let score = this.scoreArrangement(trial);
+				if (best == null || score > bestScore)
+				{
+					best = trial;
+					bestScore = score;
+				}
+			}
+			this.components = best;
+		}
+		else
+		{
+			this.arrangeComponents(this.components, this.entry.steps.length + 1, false);
+		}
 
 		// ascertain the limits
 		this.width = this.height = 0;
