@@ -52,6 +52,29 @@ export class Vec
 		return true;
 	}
 
+	// lambda versions of array scanning
+	public static iterAnyTrue<T>(arr:T[], callback:(value:T) => boolean)
+	{
+		for (let v of arr) if (callback(v)) return true;
+		return false;
+	}
+	public static iterAllTrue<T>(arr:T[], callback:(value:T) => boolean)
+	{
+		for (let v of arr) if (!callback(v)) return false;
+		return true;
+	}
+	public static iterAnyFalse<T>(arr:T[], callback:(value:T) => boolean)
+	{
+		for (let v of arr) if (!callback(v)) return true;
+		return false;
+	}
+	public static iterAllFalse<T>(arr:T[], callback:(value:T) => boolean)
+	{
+		for (let v of arr) if (callback(v)) return false;
+		return true;
+	}
+
+	// convenience index swapping
 	public static swap(arr:any[], idx1:number, idx2:number):void
 	{
 		let v = arr[idx1];

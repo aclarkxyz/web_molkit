@@ -2050,6 +2050,7 @@ declare namespace WebMolKit {
         includeAnnot: boolean;
         includeBlank: boolean;
         includeDetails: boolean;
+        allowVertical: boolean;
         padding: number;
         static COMP_GAP_LEFT: number;
         static COMP_ANNOT_SIZE: number;
@@ -3977,6 +3978,10 @@ declare namespace WebMolKit {
         static allTrue(arr: boolean[]): boolean;
         static anyFalse(arr: boolean[]): boolean;
         static allFalse(arr: boolean[]): boolean;
+        static iterAnyTrue<T>(arr: T[], callback: (value: T) => boolean): boolean;
+        static iterAllTrue<T>(arr: T[], callback: (value: T) => boolean): boolean;
+        static iterAnyFalse<T>(arr: T[], callback: (value: T) => boolean): boolean;
+        static iterAllFalse<T>(arr: T[], callback: (value: T) => boolean): boolean;
         static swap(arr: any[], idx1: number, idx2: number): void;
         static duplicate<T>(arr: T[]): T[];
         static append<T>(arr: T[], item: T): T[];

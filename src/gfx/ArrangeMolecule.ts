@@ -458,8 +458,13 @@ export class ArrangeMolecule
 					let nn = n < arene.atoms.length - 1 ? n + 1 : 0;
 					if (mol.findBond(arene.atoms[n], arene.atoms[nn]) == 0) {isRing = false; break;}
 				}
+				let alkeneLike = arene.atoms.length == 2;
+
 				this.createBondCentroid(arene.centre, arene.atoms);
-				if (isRing) this.createCircularRing(arene.atoms); else this.createCurvedPath(arene.atoms, false, arene.centre);
+				if (!alkeneLike)
+				{
+					if (isRing) this.createCircularRing(arene.atoms); else this.createCurvedPath(arene.atoms, false, arene.centre);
+				}
 				this.delocalisedAnnotation(arene.atoms, this.artifactCharge.get(arene), this.artifactUnpaired.get(arene));
 			}
 		}
@@ -679,6 +684,7 @@ export class ArrangeMolecule
 
 		let delocalise = (obj:any, atoms:number[]) =>
 		{
+			// move charge/unpaired off the atoms and into the resonance system
 			let charge = 0, unpaired = 0;
 			for (let a of atoms)
 			{
@@ -688,6 +694,13 @@ export class ArrangeMolecule
 			}
 			this.artifactCharge.set(obj, charge);
 			this.artifactUnpaired.set(obj, unpaired);
+
+			// any bonds sticking out of the resonance system are depicted as single lines
+			for (let a1 of atoms) for (let a2 of mol.atomAdjList(a1)) if (!atoms.includes(a2))
+			{
+				let b = mol.findBond(a1, a2);
+				if (this.bondOrder[b - 1] >= 0) this.bondOrder[b - 1] = 1;
+			}
 		};
 
 		// any bond that's affected by an artifact gets set to single-order for rendering purposes
@@ -725,11 +738,16 @@ export class ArrangeMolecule
 		}
 		for (let arene of this.artifacts.getArenes())
 		{
+			let alkeneLike = arene.atoms.length == 2;
+
 			for (let n = 0; n < arene.atoms.length; n++)
 			{
-				let b = mol.findBond(arene.atoms[n], arene.atoms[n < arene.atoms.length - 1 ? n + 1 : 0]);
-				if (b > 0) this.bondOrder[b - 1] = 1;
-				b = mol.findBond(arene.centre, arene.atoms[n]);
+				if (!alkeneLike)
+				{
+					let b = mol.findBond(arene.atoms[n], arene.atoms[n < arene.atoms.length - 1 ? n + 1 : 0]);
+					if (b > 0) this.bondOrder[b - 1] = 1;
+				}
+				let b = mol.findBond(arene.centre, arene.atoms[n]);
 				if (b > 0) this.bondOrder[b - 1] = -1;
 			}
 			delocalise(arene, arene.atoms);

@@ -13408,6 +13408,7 @@ var WebMolKit;
             this.includeAnnot = false;
             this.includeBlank = false;
             this.includeDetails = false;
+            this.allowVertical = true;
             this.padding = 0;
             this.scale = policy.data.pointScale;
             this.limitStructW = this.limitStructH = this.scale * 10;
@@ -13460,21 +13461,26 @@ var WebMolKit;
                 xc.padding = this.padding;
                 xc.box = new WebMolKit.Box(0, 0, xc.box.w + 2 * this.padding, xc.box.h + 2 * this.padding);
             }
-            let best = null;
-            let bestScore = 0;
-            for (let bend = this.entry.steps.length + 1; bend >= 1; bend--)
-                for (let vert = 0; vert <= 1; vert++) {
-                    let trial = [];
-                    for (let xc of this.components)
-                        trial.push(xc.clone());
-                    this.arrangeComponents(trial, bend, vert > 0);
-                    let score = this.scoreArrangement(trial);
-                    if (best == null || score > bestScore) {
-                        best = trial;
-                        bestScore = score;
+            if (this.allowVertical) {
+                let best = null;
+                let bestScore = 0;
+                for (let bend = this.entry.steps.length + 1; bend >= 1; bend--)
+                    for (let vert = 0; vert <= 1; vert++) {
+                        let trial = [];
+                        for (let xc of this.components)
+                            trial.push(xc.clone());
+                        this.arrangeComponents(trial, bend, vert > 0);
+                        let score = this.scoreArrangement(trial);
+                        if (best == null || score > bestScore) {
+                            best = trial;
+                            bestScore = score;
+                        }
                     }
-                }
-            this.components = best;
+                this.components = best;
+            }
+            else {
+                this.arrangeComponents(this.components, this.entry.steps.length + 1, false);
+            }
             this.width = this.height = 0;
             for (let xc of this.components) {
                 this.width = Math.max(this.width, xc.box.maxX());
@@ -14228,11 +14234,14 @@ var WebMolKit;
                                 break;
                             }
                         }
+                    let alkeneLike = arene.atoms.length == 2;
                     this.createBondCentroid(arene.centre, arene.atoms);
-                    if (isRing)
-                        this.createCircularRing(arene.atoms);
-                    else
-                        this.createCurvedPath(arene.atoms, false, arene.centre);
+                    if (!alkeneLike) {
+                        if (isRing)
+                            this.createCircularRing(arene.atoms);
+                        else
+                            this.createCurvedPath(arene.atoms, false, arene.centre);
+                    }
                     this.delocalisedAnnotation(arene.atoms, this.artifactCharge.get(arene), this.artifactUnpaired.get(arene));
                 }
             }
@@ -14400,6 +14409,12 @@ var WebMolKit;
                 }
                 this.artifactCharge.set(obj, charge);
                 this.artifactUnpaired.set(obj, unpaired);
+                for (let a1 of atoms)
+                    for (let a2 of mol.atomAdjList(a1))
+                        if (!atoms.includes(a2)) {
+                            let b = mol.findBond(a1, a2);
+                            this.bondOrder[b - 1] = 1;
+                        }
             };
             if (this.artifacts == null)
                 return;
@@ -14430,11 +14445,14 @@ var WebMolKit;
                 delocalise(ring, ring.atoms);
             }
             for (let arene of this.artifacts.getArenes()) {
+                let alkeneLike = arene.atoms.length == 2;
                 for (let n = 0; n < arene.atoms.length; n++) {
-                    let b = mol.findBond(arene.atoms[n], arene.atoms[n < arene.atoms.length - 1 ? n + 1 : 0]);
-                    if (b > 0)
-                        this.bondOrder[b - 1] = 1;
-                    b = mol.findBond(arene.centre, arene.atoms[n]);
+                    if (!alkeneLike) {
+                        let b = mol.findBond(arene.atoms[n], arene.atoms[n < arene.atoms.length - 1 ? n + 1 : 0]);
+                        if (b > 0)
+                            this.bondOrder[b - 1] = 1;
+                    }
+                    let b = mol.findBond(arene.centre, arene.atoms[n]);
                     if (b > 0)
                         this.bondOrder[b - 1] = -1;
                 }
@@ -27217,12 +27235,12 @@ var WebMolKit;
                 let dataURL = event.target.result.toString();
                 if (!dataURL)
                     return;
-                let img = $('<img/>').attr('src', dataURL);
-                img.on('load', () => {
+                let img = WebMolKit.dom('<img/>').attr({ 'src': dataURL });
+                img.el.addEventListener('load', () => {
                     let r = document.createRange();
-                    r.setStartBefore(img[0]);
-                    r.setEndAfter(img[0]);
-                    r.selectNode(img[0]);
+                    r.setStartBefore(img.el);
+                    r.setEndAfter(img.el);
+                    r.selectNode(img.el);
                     let sel = window.getSelection();
                     sel.addRange(r);
                     document.execCommand('copy');
@@ -30851,6 +30869,30 @@ var WebMolKit;
                 return true;
             for (let v of arr)
                 if (v)
+                    return false;
+            return true;
+        }
+        static iterAnyTrue(arr, callback) {
+            for (let v of arr)
+                if (callback(v))
+                    return true;
+            return false;
+        }
+        static iterAllTrue(arr, callback) {
+            for (let v of arr)
+                if (!callback(v))
+                    return false;
+            return true;
+        }
+        static iterAnyFalse(arr, callback) {
+            for (let v of arr)
+                if (!callback(v))
+                    return true;
+            return false;
+        }
+        static iterAllFalse(arr, callback) {
+            for (let v of arr)
+                if (callback(v))
                     return false;
             return true;
         }
