@@ -200,6 +200,22 @@ export class Vec
 		return arr;
 	}
 
+	// returns an array of blank arrays
+	public static genericBlankArrays<T>(sz:number):T[][]
+	{
+		let arr:T[][] = new Array(sz);
+		for (let n = 0; n < sz; n++) arr[n] = [];
+		return arr;
+	}
+
+	// creates an array of given size, using a lambda
+	public static funcArray<T>(sz:number, func:(idx?:number) => T):T[]
+	{
+		let arr:T[] = new Array(sz);
+		for (let n = 0; n < sz; n++) arr[n] = func(n);
+		return arr;
+	}
+
 	public static first<T>(arr:T[]) {return arr == null || arr.length == 0 ? null : arr[0];}
 	public static last<T>(arr:T[]) {return arr == null || arr.length == 0 ? null : arr[arr.length - 1];}
 

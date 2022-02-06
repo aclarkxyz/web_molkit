@@ -44,7 +44,7 @@ export enum ArrangeComponentAnnot
 export class ArrangeComponent
 {
 	public type:ArrangeComponentType;
-	public srcIdx:number; // index in underlying reactionsheet
+	public srcIdx:number; // index in underlying reactionsheet (i.e. reactants/reagents/products[srcIdx])
 	public step:number;	// which step it belongs to
 	public side:number; // which side of the reaction (-1=left, 1=right, 0=middle)
 	public refIdx:number; // for non-primary components, the index of the association

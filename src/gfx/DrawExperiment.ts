@@ -25,7 +25,6 @@ export class DrawExperiment
 	private entry:ExperimentEntry;
 	private measure:ArrangeMeasurement;
 	private policy:RenderPolicy;
-	private effects:RenderEffects;
 
 	private scale:number;
 	private invScale:number;
