@@ -569,7 +569,7 @@ export class DataSheet
 
 		if (tt == DataSheetColumn.String)
 		{
-			if (ft == DataSheetColumn.Integer) return obj.toSring();
+			if (ft == DataSheetColumn.Integer) return obj.toString();
 			else if (ft == DataSheetColumn.Real) return obj.toString();
 			else if (ft == DataSheetColumn.Boolean) return obj ? 'true' : 'false';
 		}
