@@ -368,7 +368,6 @@ export class DrawCanvas extends Widget implements ArrangeMeasurement
 		}
 		if (this.currentBond > 0)
 		{
-			let bfr = this.mol.bondFrom(this.currentBond), bto = this.mol.bondTo(this.currentBond);
 			this.drawBondShade(ctx, this.currentBond, CURRENT_COL, CURRENT_BORD, 0);
 		}
 
@@ -734,13 +733,13 @@ export class DrawCanvas extends Widget implements ArrangeMeasurement
 		}
 		let x2 = this.mouseX, y2 = this.mouseY;
 
-		let snapTo = this.snapToGuide(x2, y2);
-		if (snapTo != null) {x2 = snapTo[0]; y2 = snapTo[1];}
+		let snapTo = this.snapToGuide(x2, y2), snapAtom = false;
+		if (snapTo) [x2, y2, snapAtom] = snapTo;
 
 		let scale = this.pointScale;
 
-		ctx.strokeStyle = '#808080';
-		ctx.lineWidth = this.policy.data.lineSize * scale;
+		ctx.strokeStyle = snapAtom ? '#4040FF' : '#808080';
+		ctx.lineWidth = this.policy.data.lineSize * scale * (snapAtom ? 1.5 : 1);
 		drawLine(ctx, x1, y1, x2, y2);
 
 		// !! TODO: draw multiple bonds
@@ -1040,7 +1039,7 @@ export class DrawCanvas extends Widget implements ArrangeMeasurement
 	}
 
 	// if the mouse position is close to one of the snap-to points, or an existing atom, return that position
-	protected snapToGuide(x:number, y:number):number[]
+	protected snapToGuide(x:number, y:number):[number, number, boolean]
 	{
 		// if coming from a bond, only snap to other bonds
 		if (this.opBond > 0)
@@ -1051,27 +1050,27 @@ export class DrawCanvas extends Widget implements ArrangeMeasurement
 				let [bfr, bto] = this.mol.bondFromTo(-obj);
 				let px = this.angToX(0.5 * (this.mol.atomX(bfr) + this.mol.atomX(bto)));
 				let py = this.angToY(0.5 * (this.mol.atomY(bfr) + this.mol.atomY(bto)));
-				return [px, py];
+				return [px, py, false];
 			}
 			return null;
 		}
 
 		// try guides & atoms for snapping
-		let bestDSQ = Number.POSITIVE_INFINITY, bestX = 0, bestY = 0;
+		let bestDSQ = Number.POSITIVE_INFINITY, bestX = 0, bestY = 0, bestAtom = false;
 		const APPROACH = sqr(0.5 * this.pointScale);
 		if (this.dragGuides != null) for (let i = 0; i < this.dragGuides.length; i++) for (let j = 0; j < this.dragGuides[i].x.length; j++)
 		{
 			let px = this.dragGuides[i].destX[j], py = this.dragGuides[i].destY[j];
 			let dsq = norm2_xy(px - x, py - y);
-			if (dsq < APPROACH && dsq < bestDSQ) {bestDSQ = dsq; bestX = px; bestY = py;}
+			if (dsq < APPROACH && dsq < bestDSQ) [bestDSQ, bestX, bestY, bestAtom] = [dsq, px, py, false];
 		}
 		for (let n = 1; n <= this.mol.numAtoms; n++)
 		{
 			let px = this.angToX(this.mol.atomX(n)), py = this.angToY(this.mol.atomY(n));
 			let dsq = norm2_xy(px - x, py - y);
-			if (dsq < APPROACH && dsq < bestDSQ) {bestDSQ = dsq; bestX = px; bestY = py;}
+			if (dsq < APPROACH && dsq < bestDSQ) [bestDSQ, bestX, bestY, bestAtom] = [dsq, px, py, true];
 		}
-		if (isFinite(bestDSQ)) return [bestX, bestY];
+		if (isFinite(bestDSQ)) return [bestX, bestY, bestAtom];
 
 		return null;
 	}

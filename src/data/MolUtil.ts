@@ -918,7 +918,8 @@ export class MolUtil
 	}
 
 	// works out the oxidation state of a given atom; if it's a common main group with an ordinary valence, returns null to denote
-	// that it's not worth mentioning
+	// that it's not worth mentioning; oxidation state is subject/has a grey area, e.g. double bonds from metals to most atoms are
+	// counted as zero, but not for electronegative chalcogens
 	public static atomOxidationState(mol:Molecule, atom:number):number
 	{
 		if (mol.atomAdjCount(atom) == 0) return null; // just not interesting if it's isolated
@@ -930,8 +931,9 @@ export class MolUtil
 		let oxstate = mol.atomHydrogens(atom) + (nonMetal ? -mol.atomCharge(atom) : mol.atomCharge(atom));
 		for (let b of mol.atomAdjBonds(atom))
 		{
-			let bo = mol.bondOrder(b);
-			if (nonMetal) oxstate += bo; else oxstate += bo % 2;
+			let bo = mol.bondOrder(b), other = mol.bondOther(b, atom);
+			let chalco = ['O', 'S', 'Se', 'Te'].includes(mol.atomElement(other));
+			if (nonMetal || chalco) oxstate += bo; else oxstate += bo % 2;
 		}
 
 		if (atno == Chemistry.ELEMENT_H && oxstate == 1) return null;

@@ -502,23 +502,24 @@ export class MetaVector
 	//			domSVG.css({'display': 'block', 'pointer-events': 'none'});
 	// note that setting the display style to 'block' prevents the layout from adding descender padding for baseline alignment, which is never useful; and disabling
 	// pointer events for individual SVG elements is generally a good idea
-	public createSVG(prettyPrint = false):string
+	public createSVG(prettyPrint = false, withXlink = false):string
 	{
 		let xml = XML.parseXML('<svg/>');
 		let svg = xml.documentElement;
 		svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+		if (withXlink) svg.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
 		svg.setAttribute('width', this.width.toString());
 		svg.setAttribute('height', this.height.toString());
 		svg.setAttribute('viewBox', `0 0 ${this.width} ${this.height}`);
 
-		this.renderSVG(svg);
+		this.renderSVG(svg, withXlink);
 
 		return prettyPrint ? XML.toPrettyString(xml) : XML.toString(xml);
 	}
 
 	// given a DOM that represents an <svg> element, or some sub-container (such as <g>), populates it with all of the
 	// content from the graphic
-	public renderSVG(svg:Element):void
+	public renderSVG(svg:Element, withXlink = false):void
 	{
 		this.typeObj = [];
 
@@ -569,7 +570,7 @@ export class MetaVector
 				if (num == 1) this.svgOval1(svg, p); else this.svgOvalN(svg, p, n, num);
 			}
 			else if (p[0] == PRIM_PATH) this.svgPath(svg, p);
-			else if (p[0] == PRIM_TEXT) this.svgText(svg, p);
+			else if (p[0] == PRIM_TEXT) this.svgText(svg, p, withXlink);
 			else if (p[0] == PRIM_TEXTNATIVE) this.svgTextNative(svg, p);
 
 			n += num;
@@ -1076,7 +1077,7 @@ export class MetaVector
 		}
 		this.defineSVGFill(path, type.fillCol);
 	}
-	private svgText(svg:Element, p:any):void
+	private svgText(svg:Element, p:any, withXlink = true):void
 	{
 		let type = this.typeObj[p[1]] as TypeObjText;
 		let x:number = p[2], y:number = p[3];
@@ -1113,7 +1114,7 @@ export class MetaVector
 
 			let use = XML.appendElement(gscale, 'use');
 			let ref = i < 0 ? '#missing' : '#char' + i;
-			use.setAttribute('href', ref);
+			if (withXlink) use.setAttribute('xlink:href', ref); else use.setAttribute('href', ref);
 			use.setAttribute('x', dx.toString());
 
 			if (i >= 0)

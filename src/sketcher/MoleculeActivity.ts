@@ -819,6 +819,7 @@ export class MoleculeActivity
 	{
 		let mol = this.input.mol;
 		let a1 = CoordUtil.atomAtPoint(mol, x1, y1, 0.01), a2 = CoordUtil.atomAtPoint(mol, x2, y2, 0.01);
+		if (a1 > 0 && a1 == a2) return; // bond to self
 		if (a1 > 0 && a2 > 0 && mol.findBond(a1, a2) > 0) return;
 
 		this.output.mol = mol.clone();
@@ -1145,14 +1146,49 @@ export class MoleculeActivity
 
 	public execScale(mag:number):void
 	{
-		if (this.input.mol.numAtoms < 2)
+		const {mol, currentAtom, currentBond} = this.input;
+
+		if (mol.numAtoms < 2)
 		{
 			this.errmsg = 'At least 2 atoms are required.';
 			return;
 		}
 
+		// special case: a current atom is surrounded by one or more selected atoms - shift them based on what residual component they
+		// belong to; useful also for multidentate ligands
+		if (currentAtom > 0)
+		{
+			let connAtoms:number[] = [];
+			for (let a of this.subjectIndex) if (a != currentAtom && mol.findBond(currentAtom, a) > 0) connAtoms.push(a);
+			let g = Graph.fromMolecule(mol);
+			g.isolateNode(currentAtom - 1);
+
+			let anything = false;
+			for (let cc of g.calculateComponentGroups())
+			{
+				Vec.addTo(cc, 1);
+				let sz = 0, dx = 0, dy = 0;
+				for (let a of cc) if (connAtoms.includes(a))
+				{
+					dx += mol.atomX(a) - mol.atomX(currentAtom);
+					dy += mol.atomY(a) - mol.atomY(currentAtom);
+					sz++;
+				}
+				if (sz == 0) continue;
+
+				[dx, dy] = [dx / sz, dy / sz];
+				if (Math.abs(dx) < 0.1 && Math.abs(dy) < 0.1) continue;
+				[dx, dy] = [dx * (mag - 1), dy * (mag - 1)];
+
+				if (!this.output.mol) this.output.mol = mol.clone();
+				for (let a of cc) this.output.mol.setAtomPos(a, this.output.mol.atomX(a) + dx, this.output.mol.atomY(a) + dy);
+
+				anything = true;
+			}
+			if (anything) return;
+		}
+
 		// special case: subject indicates a non-ring bond, so magnify the bond distance, and shift the component of one/both sides
-		let mol = this.input.mol;
 		let b:number;
 		if (this.subjectLength == 2 && (b = mol.findBond(this.subjectIndex[0], this.subjectIndex[1])) > 0 && !mol.bondInRing(b))
 		{
@@ -1187,14 +1223,14 @@ export class MoleculeActivity
 
 		// scale about centre of gravity
 		let cx = 0, cy = 0;
-		if (this.input.currentAtom > 0)
+		if (currentAtom > 0)
 		{
-			cx = mol.atomX(this.input.currentAtom);
-			cy = mol.atomY(this.input.currentAtom);
+			cx = mol.atomX(currentAtom);
+			cy = mol.atomY(currentAtom);
 		}
-		else if (this.input.currentBond > 0)
+		else if (currentBond > 0)
 		{
-			let bfr = mol.bondFrom(this.input.currentBond), bto = mol.bondTo(this.input.currentBond);
+			let bfr = mol.bondFrom(currentBond), bto = mol.bondTo(currentBond);
 			cx = 0.5 * (mol.atomX(bfr) + mol.atomX(bto));
 			cy = 0.5 * (mol.atomY(bfr) + mol.atomY(bto));
 		}

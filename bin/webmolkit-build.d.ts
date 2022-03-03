@@ -2271,7 +2271,6 @@ declare namespace WebMolKit {
         private entry;
         private measure;
         private policy;
-        private effects;
         private scale;
         private invScale;
         preDrawComponent: (vg: MetaVector, idx: number, xc: ArrangeComponent) => void;
@@ -2699,7 +2698,7 @@ declare namespace WebMolKit {
         protected determineFauxRing(): [number[], number[]];
         protected determineDragTheta(): [number, number, number, number];
         protected determineMoveDelta(): [number, number];
-        protected snapToGuide(x: number, y: number): number[];
+        protected snapToGuide(x: number, y: number): [number, number, boolean];
         protected pickObjectCanvas(x: number, y: number, opt?: {
             noAtoms?: boolean;
             noBonds?: boolean;
@@ -3998,6 +3997,8 @@ declare namespace WebMolKit {
         static stringArray(val: string, sz: number): string[];
         static anyArray(val: any, sz: number): any[];
         static genericArray<T>(val: T, sz: number): T[];
+        static genericBlankArrays<T>(sz: number): T[][];
+        static funcArray<T>(sz: number, func: (idx?: number) => T): T[];
         static first<T>(arr: T[]): T;
         static last<T>(arr: T[]): T;
         static min(arr: number[]): number;

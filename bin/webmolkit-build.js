@@ -8437,8 +8437,9 @@ var WebMolKit;
             let nonMetal = atno == WebMolKit.Chemistry.ELEMENT_H || WebMolKit.Chemistry.ELEMENT_BLOCKS[atno] == 2;
             let oxstate = mol.atomHydrogens(atom) + (nonMetal ? -mol.atomCharge(atom) : mol.atomCharge(atom));
             for (let b of mol.atomAdjBonds(atom)) {
-                let bo = mol.bondOrder(b);
-                if (nonMetal)
+                let bo = mol.bondOrder(b), other = mol.bondOther(b, atom);
+                let chalco = ['O', 'S', 'Se', 'Te'].includes(mol.atomElement(other));
+                if (nonMetal || chalco)
                     oxstate += bo;
                 else
                     oxstate += bo % 2;
@@ -14413,7 +14414,8 @@ var WebMolKit;
                     for (let a2 of mol.atomAdjList(a1))
                         if (!atoms.includes(a2)) {
                             let b = mol.findBond(a1, a2);
-                            this.bondOrder[b - 1] = 1;
+                            if (this.bondOrder[b - 1] >= 0)
+                                this.bondOrder[b - 1] = 1;
                         }
             };
             if (this.artifacts == null)
@@ -19411,7 +19413,6 @@ var WebMolKit;
                 this.drawAtomShade(ctx, this.currentAtom, CURRENT_COL, CURRENT_BORD, 0);
             }
             if (this.currentBond > 0) {
-                let bfr = this.mol.bondFrom(this.currentBond), bto = this.mol.bondTo(this.currentBond);
                 this.drawBondShade(ctx, this.currentBond, CURRENT_COL, CURRENT_BORD, 0);
             }
             if (this.dragType == DraggingTool.Move || (this.dragType == DraggingTool.Atom && this.opAtom > 0) || this.dragType == DraggingTool.Bond) {
@@ -19698,14 +19699,12 @@ var WebMolKit;
                 y1 = this.angToY(0.5 * (this.mol.atomY(bfr) + this.mol.atomY(bto)));
             }
             let x2 = this.mouseX, y2 = this.mouseY;
-            let snapTo = this.snapToGuide(x2, y2);
-            if (snapTo != null) {
-                x2 = snapTo[0];
-                y2 = snapTo[1];
-            }
+            let snapTo = this.snapToGuide(x2, y2), snapAtom = false;
+            if (snapTo)
+                [x2, y2, snapAtom] = snapTo;
             let scale = this.pointScale;
-            ctx.strokeStyle = '#808080';
-            ctx.lineWidth = this.policy.data.lineSize * scale;
+            ctx.strokeStyle = snapAtom ? '#4040FF' : '#808080';
+            ctx.lineWidth = this.policy.data.lineSize * scale * (snapAtom ? 1.5 : 1);
             WebMolKit.drawLine(ctx, x1, y1, x2, y2);
             if (element != 'C') {
                 let fh = this.policy.data.fontSize * scale;
@@ -19968,34 +19967,28 @@ var WebMolKit;
                     let [bfr, bto] = this.mol.bondFromTo(-obj);
                     let px = this.angToX(0.5 * (this.mol.atomX(bfr) + this.mol.atomX(bto)));
                     let py = this.angToY(0.5 * (this.mol.atomY(bfr) + this.mol.atomY(bto)));
-                    return [px, py];
+                    return [px, py, false];
                 }
                 return null;
             }
-            let bestDSQ = Number.POSITIVE_INFINITY, bestX = 0, bestY = 0;
+            let bestDSQ = Number.POSITIVE_INFINITY, bestX = 0, bestY = 0, bestAtom = false;
             const APPROACH = WebMolKit.sqr(0.5 * this.pointScale);
             if (this.dragGuides != null)
                 for (let i = 0; i < this.dragGuides.length; i++)
                     for (let j = 0; j < this.dragGuides[i].x.length; j++) {
                         let px = this.dragGuides[i].destX[j], py = this.dragGuides[i].destY[j];
                         let dsq = WebMolKit.norm2_xy(px - x, py - y);
-                        if (dsq < APPROACH && dsq < bestDSQ) {
-                            bestDSQ = dsq;
-                            bestX = px;
-                            bestY = py;
-                        }
+                        if (dsq < APPROACH && dsq < bestDSQ)
+                            [bestDSQ, bestX, bestY, bestAtom] = [dsq, px, py, false];
                     }
             for (let n = 1; n <= this.mol.numAtoms; n++) {
                 let px = this.angToX(this.mol.atomX(n)), py = this.angToY(this.mol.atomY(n));
                 let dsq = WebMolKit.norm2_xy(px - x, py - y);
-                if (dsq < APPROACH && dsq < bestDSQ) {
-                    bestDSQ = dsq;
-                    bestX = px;
-                    bestY = py;
-                }
+                if (dsq < APPROACH && dsq < bestDSQ)
+                    [bestDSQ, bestX, bestY, bestAtom] = [dsq, px, py, true];
             }
             if (isFinite(bestDSQ))
-                return [bestX, bestY];
+                return [bestX, bestY, bestAtom];
             return null;
         }
         pickObjectCanvas(x, y, opt = {}) {
@@ -22400,6 +22393,8 @@ var WebMolKit;
         execBondAtom(order, type, element, x1, y1, x2, y2) {
             let mol = this.input.mol;
             let a1 = WebMolKit.CoordUtil.atomAtPoint(mol, x1, y1, 0.01), a2 = WebMolKit.CoordUtil.atomAtPoint(mol, x2, y2, 0.01);
+            if (a1 > 0 && a1 == a2)
+                return;
             if (a1 > 0 && a2 > 0 && mol.findBond(a1, a2) > 0)
                 return;
             this.output.mol = mol.clone();
@@ -22658,11 +22653,43 @@ var WebMolKit;
                 }
         }
         execScale(mag) {
-            if (this.input.mol.numAtoms < 2) {
+            const { mol, currentAtom, currentBond } = this.input;
+            if (mol.numAtoms < 2) {
                 this.errmsg = 'At least 2 atoms are required.';
                 return;
             }
-            let mol = this.input.mol;
+            if (currentAtom > 0) {
+                let connAtoms = [];
+                for (let a of this.subjectIndex)
+                    if (a != currentAtom && mol.findBond(currentAtom, a) > 0)
+                        connAtoms.push(a);
+                let g = WebMolKit.Graph.fromMolecule(mol);
+                g.isolateNode(currentAtom - 1);
+                let anything = false;
+                for (let cc of g.calculateComponentGroups()) {
+                    WebMolKit.Vec.addTo(cc, 1);
+                    let sz = 0, dx = 0, dy = 0;
+                    for (let a of cc)
+                        if (connAtoms.includes(a)) {
+                            dx += mol.atomX(a) - mol.atomX(currentAtom);
+                            dy += mol.atomY(a) - mol.atomY(currentAtom);
+                            sz++;
+                        }
+                    if (sz == 0)
+                        continue;
+                    [dx, dy] = [dx / sz, dy / sz];
+                    if (Math.abs(dx) < 0.1 && Math.abs(dy) < 0.1)
+                        continue;
+                    [dx, dy] = [dx * (mag - 1), dy * (mag - 1)];
+                    if (!this.output.mol)
+                        this.output.mol = mol.clone();
+                    for (let a of cc)
+                        this.output.mol.setAtomPos(a, this.output.mol.atomX(a) + dx, this.output.mol.atomY(a) + dy);
+                    anything = true;
+                }
+                if (anything)
+                    return;
+            }
             let b;
             if (this.subjectLength == 2 && (b = mol.findBond(this.subjectIndex[0], this.subjectIndex[1])) > 0 && !mol.bondInRing(b)) {
                 let a1 = this.subjectIndex[0], a2 = this.subjectIndex[1];
@@ -22695,12 +22722,12 @@ var WebMolKit;
                 return;
             }
             let cx = 0, cy = 0;
-            if (this.input.currentAtom > 0) {
-                cx = mol.atomX(this.input.currentAtom);
-                cy = mol.atomY(this.input.currentAtom);
+            if (currentAtom > 0) {
+                cx = mol.atomX(currentAtom);
+                cy = mol.atomY(currentAtom);
             }
-            else if (this.input.currentBond > 0) {
-                let bfr = mol.bondFrom(this.input.currentBond), bto = mol.bondTo(this.input.currentBond);
+            else if (currentBond > 0) {
+                let bfr = mol.bondFrom(currentBond), bto = mol.bondTo(currentBond);
                 cx = 0.5 * (mol.atomX(bfr) + mol.atomX(bto));
                 cy = 0.5 * (mol.atomY(bfr) + mol.atomY(bto));
             }
@@ -31002,6 +31029,18 @@ var WebMolKit;
         static genericArray(val, sz) {
             let arr = new Array(sz);
             arr.fill(val);
+            return arr;
+        }
+        static genericBlankArrays(sz) {
+            let arr = new Array(sz);
+            for (let n = 0; n < sz; n++)
+                arr[n] = [];
+            return arr;
+        }
+        static funcArray(sz, func) {
+            let arr = new Array(sz);
+            for (let n = 0; n < sz; n++)
+                arr[n] = func(n);
             return arr;
         }
         static first(arr) { return arr == null || arr.length == 0 ? null : arr[0]; }
