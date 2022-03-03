@@ -4898,7 +4898,7 @@ var WebMolKit;
                 return obj;
             if (tt == "string") {
                 if (ft == "integer")
-                    return obj.toSring();
+                    return obj.toString();
                 else if (ft == "real")
                     return obj.toString();
                 else if (ft == "boolean")
@@ -7589,11 +7589,13 @@ var WebMolKit;
                 this.atomArom = WebMolKit.Vec.maskGet(this.atomArom, atomMask);
             if (this.bondArom)
                 this.bondArom = WebMolKit.Vec.maskGet(this.bondArom, bondMask);
-            if (this.rubricTetra || this.rubricSquare || this.rubricOcta || this.rubricSides) {
+            if (this.rubricTetra || this.rubricSquare || this.rubricBipy || this.rubricOcta || this.rubricSides) {
                 if (this.rubricTetra)
                     this.rubricTetra = WebMolKit.Vec.maskGet(this.rubricTetra, atomMask);
                 if (this.rubricSquare)
                     this.rubricSquare = WebMolKit.Vec.maskGet(this.rubricSquare, atomMask);
+                if (this.rubricBipy)
+                    this.rubricBipy = WebMolKit.Vec.maskGet(this.rubricBipy, atomMask);
                 if (this.rubricOcta)
                     this.rubricOcta = WebMolKit.Vec.maskGet(this.rubricOcta, atomMask);
                 if (this.rubricSides)
@@ -7605,6 +7607,9 @@ var WebMolKit;
                 for (let n = 0; n < WebMolKit.Vec.len(this.rubricSquare); n++)
                     if (this.rubricSquare[n])
                         this.rubricSquare[n] = WebMolKit.Vec.idxGet(atomMap, this.rubricSquare[n]);
+                for (let n = 0; n < WebMolKit.Vec.len(this.rubricBipy); n++)
+                    if (this.rubricBipy[n])
+                        this.rubricBipy[n] = WebMolKit.Vec.idxGet(atomMap, this.rubricBipy[n]);
                 for (let n = 0; n < WebMolKit.Vec.len(this.rubricOcta); n++)
                     if (this.rubricOcta[n])
                         this.rubricOcta[n] = WebMolKit.Vec.idxGet(atomMap, this.rubricOcta[n]);
@@ -17773,17 +17778,19 @@ var WebMolKit;
             }
             ctx.restore();
         }
-        createSVG(prettyPrint = false) {
+        createSVG(prettyPrint = false, withXlink = false) {
             let xml = WebMolKit.XML.parseXML('<svg/>');
             let svg = xml.documentElement;
             svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+            if (withXlink)
+                svg.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
             svg.setAttribute('width', this.width.toString());
             svg.setAttribute('height', this.height.toString());
             svg.setAttribute('viewBox', `0 0 ${this.width} ${this.height}`);
-            this.renderSVG(svg);
+            this.renderSVG(svg, withXlink);
             return prettyPrint ? WebMolKit.XML.toPrettyString(xml) : WebMolKit.XML.toString(xml);
         }
-        renderSVG(svg) {
+        renderSVG(svg, withXlink = false) {
             this.typeObj = [];
             const font = WebMolKit.FontData.main;
             let defs = WebMolKit.XML.appendElement(svg, 'defs');
@@ -17843,7 +17850,7 @@ var WebMolKit;
                 else if (p[0] == PRIM_PATH)
                     this.svgPath(svg, p);
                 else if (p[0] == PRIM_TEXT)
-                    this.svgText(svg, p);
+                    this.svgText(svg, p, withXlink);
                 else if (p[0] == PRIM_TEXTNATIVE)
                     this.svgTextNative(svg, p);
                 n += num;
@@ -18252,7 +18259,7 @@ var WebMolKit;
             }
             this.defineSVGFill(path, type.fillCol);
         }
-        svgText(svg, p) {
+        svgText(svg, p, withXlink = true) {
             let type = this.typeObj[p[1]];
             let x = p[2], y = p[3];
             let txt = p[4];
@@ -18278,7 +18285,10 @@ var WebMolKit;
                 let i = font.getIndex(ch);
                 let use = WebMolKit.XML.appendElement(gscale, 'use');
                 let ref = i < 0 ? '#missing' : '#char' + i;
-                use.setAttribute('href', ref);
+                if (withXlink)
+                    use.setAttribute('xlink:href', ref);
+                else
+                    use.setAttribute('href', ref);
                 use.setAttribute('x', dx.toString());
                 if (i >= 0) {
                     dx += font.HORIZ_ADV_X[i];

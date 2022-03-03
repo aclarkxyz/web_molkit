@@ -2433,8 +2433,8 @@ declare namespace WebMolKit {
         renderInto(parent: any): HTMLCanvasElement;
         renderCanvas(canvas: HTMLCanvasElement, clearFirst?: boolean): void;
         renderContext(ctx: CanvasRenderingContext2D): void;
-        createSVG(prettyPrint?: boolean): string;
-        renderSVG(svg: Element): void;
+        createSVG(prettyPrint?: boolean, withXlink?: boolean): string;
+        renderSVG(svg: Element, withXlink?: boolean): void;
         spool(into: MetaVector): void;
         setupTypeLine(t: any[]): TypeObjLine;
         setupTypeRect(t: any[]): TypeObjRect;
