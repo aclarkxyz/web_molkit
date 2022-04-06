@@ -106,6 +106,7 @@ export class ArrangeExperiment
 	public includeAnnot = false; // whether to add annotations like primary/waste
 	public includeBlank = false; // any section with no components gets a blank placeholder
 	public includeDetails = false; // include information like yield, amount, metadata in the layout
+	public includeAtomMap = false; // display atom mapping numbers
 	public allowVertical = true; // permit vertical or bent arrangements
 	public padding = 0;
 

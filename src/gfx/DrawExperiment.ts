@@ -138,7 +138,16 @@ export class DrawExperiment
 
 		if (MolUtil.notBlank(xc.mol))
 		{
-			let arrmol = new ArrangeMolecule(xc.mol, this.layout.measure, policy, new RenderEffects());
+			let effects = new RenderEffects();
+			if (this.layout.includeAtomMap)
+			{
+				effects.atomDecoText = Vec.stringArray('', xc.mol.numAtoms);
+				effects.atomDecoCol = Vec.numberArray(policy.data.foreground, xc.mol.numAtoms);
+				effects.atomDecoSize = Vec.numberArray(0.3, xc.mol.numAtoms);
+				for (let n = 1; n <= xc.mol.numAtoms; n++) if (xc.mol.atomMapNum(n) > 0) effects.atomDecoText[n - 1] = xc.mol.atomMapNum(n).toString();
+			}
+
+			let arrmol = new ArrangeMolecule(xc.mol, this.layout.measure, policy, effects);
 			arrmol.arrange();
 			arrmol.squeezeInto(bx, by, bw, bh, 0);
 
