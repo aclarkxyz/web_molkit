@@ -13414,6 +13414,7 @@ var WebMolKit;
             this.includeAnnot = false;
             this.includeBlank = false;
             this.includeDetails = false;
+            this.includeAtomMap = false;
             this.allowVertical = true;
             this.padding = 0;
             this.scale = policy.data.pointScale;
@@ -16285,7 +16286,16 @@ var WebMolKit;
                 this.drawAnnotation(xc.annot, bx + bw, by, aw, bh);
             }
             if (WebMolKit.MolUtil.notBlank(xc.mol)) {
-                let arrmol = new WebMolKit.ArrangeMolecule(xc.mol, this.layout.measure, policy, new WebMolKit.RenderEffects());
+                let effects = new WebMolKit.RenderEffects();
+                if (this.layout.includeAtomMap) {
+                    effects.atomDecoText = WebMolKit.Vec.stringArray('', xc.mol.numAtoms);
+                    effects.atomDecoCol = WebMolKit.Vec.numberArray(policy.data.foreground, xc.mol.numAtoms);
+                    effects.atomDecoSize = WebMolKit.Vec.numberArray(0.3, xc.mol.numAtoms);
+                    for (let n = 1; n <= xc.mol.numAtoms; n++)
+                        if (xc.mol.atomMapNum(n) > 0)
+                            effects.atomDecoText[n - 1] = xc.mol.atomMapNum(n).toString();
+                }
+                let arrmol = new WebMolKit.ArrangeMolecule(xc.mol, this.layout.measure, policy, effects);
                 arrmol.arrange();
                 arrmol.squeezeInto(bx, by, bw, bh, 0);
                 if (this.preDrawMolecule)

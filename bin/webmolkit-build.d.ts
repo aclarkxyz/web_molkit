@@ -2050,6 +2050,7 @@ declare namespace WebMolKit {
         includeAnnot: boolean;
         includeBlank: boolean;
         includeDetails: boolean;
+        includeAtomMap: boolean;
         allowVertical: boolean;
         padding: number;
         static COMP_GAP_LEFT: number;
