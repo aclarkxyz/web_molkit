@@ -296,7 +296,7 @@ export class ArrangeExperiment
 		xc.step = step;
 		xc.side = -1;
 		if (MolUtil.notBlank(comp.mol)) xc.mol = comp.mol;
-		if (comp.name && (this.includeNames || MolUtil.isBlank(comp.mol))) xc.text = [comp.name];
+		if (comp.name && (this.includeNames || MolUtil.isBlank(comp.mol))) xc.text = this.wordWrapName(comp.name, xc.mol);
 		if (this.includeDetails) this.supplementText(xc, comp);
 
 		if (MolUtil.notBlank(comp.mol) && this.includeStoich && !QuantityCalc.isStoichZero(comp.stoich) && !QuantityCalc.isStoichUnity(comp.stoich))
@@ -322,7 +322,7 @@ export class ArrangeExperiment
 		xc.step = step;
 		xc.side = 0;
 		if (MolUtil.notBlank(comp.mol)) xc.mol = comp.mol;
-		if (comp.name && (this.includeNames || MolUtil.isBlank(comp.mol))) xc.text = [comp.name];
+		if (comp.name && (this.includeNames || MolUtil.isBlank(comp.mol))) xc.text = this.wordWrapName(comp.name, xc.mol);
 		if (this.includeDetails) this.supplementText(xc, comp);
 
 		if (this.includeAnnot)
@@ -350,7 +350,7 @@ export class ArrangeExperiment
 		xc.step = step;
 		xc.side = 1;
 		if (MolUtil.notBlank(comp.mol)) xc.mol = comp.mol;
-		if (comp.name && (this.includeNames || MolUtil.isBlank(comp.mol))) xc.text = [comp.name];
+		if (comp.name && (this.includeNames || MolUtil.isBlank(comp.mol))) xc.text = this.wordWrapName(comp.name, xc.mol);
 		if (this.includeDetails) this.supplementText(xc, comp);
 
 		if (this.includeStoich && !QuantityCalc.isStoichZero(comp.stoich) && !QuantityCalc.isStoichUnity(comp.stoich))
@@ -716,6 +716,44 @@ export class ArrangeExperiment
 		}
 	}
 
+	private wordWrapName(name:string, mol:Molecule):string[]
+	{
+		let minLimW = 0;
+		if (MolUtil.notBlank(mol)) minLimW = (mol.boundary().w + 2) * this.scale;
+		let limW = Math.max(minLimW, 10 * this.scale);
+		let fsz = this.scale * this.policy.data.fontSize;
+
+		let w = this.measure.measureText(name, fsz)[0];
+		if (w < limW) return [name];
+
+		let wrap = ():[string[], number] =>
+		{
+			let lines:string[] = [], residual = name, nclean = 0;
+			while (residual.length > 0)
+			{
+				let wsz = FontData.measureWidths(residual, fsz);
+				let pos = 0;
+				while (pos < wsz.length && wsz[pos] < limW) pos++;
+				for (let n = pos; n > 5; n--)
+				{
+					if (residual[n] == ' ') {pos = n; nclean++; break;}
+					if (wsz[n] < limW * 0.8) break;
+				}
+				lines.push(residual.substring(0, pos));
+				residual = residual.substring(pos).trimLeft();
+			}
+			return [lines, nclean];
+		};
+
+		let [lines, nclean] = wrap();
+		for (; limW > 50; limW -= fsz)
+		{
+			let [tryLines, tryClean] = wrap();
+			if (tryLines.length > lines.length) break;
+			if (tryClean >= nclean) [lines, nclean] = [tryLines, tryClean];
+		}
+		return lines;
+	}
 }
 
 /* EOF */ }
