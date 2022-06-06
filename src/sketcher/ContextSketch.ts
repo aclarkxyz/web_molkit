@@ -126,6 +126,7 @@ export class ContextSketch
 		this.maybeAppend(menu, '-30 \u{00B0}', 'Shift+]', ActivityType.Rotate, {'theta': -30});
 		this.maybeAppend(menu, 'H-Flip', 'Shift+,', ActivityType.Flip, {'axis': 'hor'});
 		this.maybeAppend(menu, 'V-Flip', 'Shift+.', ActivityType.Flip, {'axis': 'ver'});
+		this.maybeAppend(menu, 'Align', null, ActivityType.AlignRegular);
 
 		return menu;
 	}

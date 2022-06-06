@@ -64,6 +64,7 @@ export enum ActivityType
 	Rotate,
 	BondDist,
 	AlignAngle,
+	AlignRegular,
 	AdjustTorsion,
 	Move,
 	Ring,
@@ -226,6 +227,7 @@ export class MoleculeActivity
 		else if (this.activity == ActivityType.Rotate) this.execRotate(param.theta, param.centreX, param.centreY);
 		else if (this.activity == ActivityType.BondDist) this.execBondDist(param.dist);
 		else if (this.activity == ActivityType.AlignAngle) this.execAlignAngle(param.angle);
+		else if (this.activity == ActivityType.AlignRegular) this.execAlignRegular();
 		else if (this.activity == ActivityType.AdjustTorsion) this.execAdjustTorsion(param.angle);
 		else if (this.activity == ActivityType.Move) this.execMove(param.refAtom, param.deltaX, param.deltaY);
 		else if (this.activity == ActivityType.Ring) this.execRing(param.ringX, param.ringY, param.aromatic);
@@ -1406,6 +1408,42 @@ export class MoleculeActivity
 		{
 			let x = mol.atomX(a) - cx, y = mol.atomY(a) - cy;
 			mol.setAtomPos(a, cx + x * cosTheta - y * sinTheta, cy + x * sinTheta + y * cosTheta);
+		}
+
+		this.output.mol = mol;
+	}
+
+	public execAlignRegular():void
+	{
+		let bond = this.input.currentBond;
+		if (bond == 0)
+		{
+			this.errmsg = 'There must be a current bond.';
+			return;
+		}
+
+		let mol = this.input.mol.clone();
+		let bfr = mol.bondFrom(this.input.currentBond), bto = mol.bondTo(this.input.currentBond);
+		let theta = Math.atan2(mol.atomY(bto) - mol.atomY(bfr), mol.atomX(bto) - mol.atomX(bfr)) * RADDEG;
+		if (theta < 0) theta += 360;
+
+		let snap = Math.round(theta / 30) * 30;
+		if (Math.abs(theta - snap) < 0.001) return; // no change
+		let delta = (snap - theta) * DEGRAD;
+
+		let mask = this.input.selectedMask;
+		if (Vec.allFalse(mask)) 
+		{
+			let cc = mol.atomConnComp(bfr);
+			for (let n = 1; n <= mol.numAtoms; n++) mask[n - 1] = cc == mol.atomConnComp(n);
+		}
+		
+		let cx = 0.5 * (mol.atomX(bfr) + mol.atomX(bto)), cy = 0.5 * (mol.atomY(bfr) + mol.atomY(bto));
+		for (let n = 1; n <= mol.numAtoms; n++) if (mask[n - 1])
+		{
+			let dx = mol.atomX(n) - cx, dy = mol.atomY(n) - cy;
+			let th = Math.atan2(dy, dx) + delta, dist = norm_xy(dx, dy);
+			mol.setAtomPos(n, cx + dist * Math.cos(th), cy + dist * Math.sin(th));
 		}
 
 		this.output.mol = mol;
