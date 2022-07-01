@@ -10983,6 +10983,27 @@ var WebMolKit;
         });
     }
     WebMolKit.readTextURL = readTextURL;
+    function postJSONURL(url, params) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return new Promise((resolve, reject) => {
+                let request = new XMLHttpRequest();
+                request.open('POST', url.toString(), true);
+                request.responseType = 'text';
+                request.onload = () => {
+                    try {
+                        resolve(JSON.parse(request.response.toString()));
+                    }
+                    catch (ex) {
+                        reject('JSON parsing error on result:' + ex);
+                    }
+                };
+                request.onerror = () => reject('Failed to request URL: ' + url);
+                console.log('SENDING:' + JSON.stringify(params));
+                request.send(JSON.stringify(params));
+            });
+        });
+    }
+    WebMolKit.postJSONURL = postJSONURL;
     function yieldDOM() {
         return __awaiter(this, void 0, void 0, function* () {
             return new Promise((resolve) => setTimeout(() => resolve()));
@@ -13415,6 +13436,7 @@ var WebMolKit;
             this.includeBlank = false;
             this.includeDetails = false;
             this.includeAtomMap = false;
+            this.colourAtomMap = 0x9D1A76;
             this.allowVertical = true;
             this.padding = 0;
             this.scale = policy.data.pointScale;
@@ -13561,7 +13583,7 @@ var WebMolKit;
             if (WebMolKit.MolUtil.notBlank(comp.mol))
                 xc.mol = comp.mol;
             if (comp.name && (this.includeNames || WebMolKit.MolUtil.isBlank(comp.mol)))
-                xc.text = [comp.name];
+                xc.text = this.wordWrapName(comp.name, xc.mol);
             if (this.includeDetails)
                 this.supplementText(xc, comp);
             if (WebMolKit.MolUtil.notBlank(comp.mol) && this.includeStoich && !WebMolKit.QuantityCalc.isStoichZero(comp.stoich) && !WebMolKit.QuantityCalc.isStoichUnity(comp.stoich)) {
@@ -13587,7 +13609,7 @@ var WebMolKit;
             if (WebMolKit.MolUtil.notBlank(comp.mol))
                 xc.mol = comp.mol;
             if (comp.name && (this.includeNames || WebMolKit.MolUtil.isBlank(comp.mol)))
-                xc.text = [comp.name];
+                xc.text = this.wordWrapName(comp.name, xc.mol);
             if (this.includeDetails)
                 this.supplementText(xc, comp);
             if (this.includeAnnot) {
@@ -13613,7 +13635,7 @@ var WebMolKit;
             if (WebMolKit.MolUtil.notBlank(comp.mol))
                 xc.mol = comp.mol;
             if (comp.name && (this.includeNames || WebMolKit.MolUtil.isBlank(comp.mol)))
-                xc.text = [comp.name];
+                xc.text = this.wordWrapName(comp.name, xc.mol);
             if (this.includeDetails)
                 this.supplementText(xc, comp);
             if (this.includeStoich && !WebMolKit.QuantityCalc.isStoichZero(comp.stoich) && !WebMolKit.QuantityCalc.isStoichUnity(comp.stoich)) {
@@ -13900,6 +13922,46 @@ var WebMolKit;
                 if (descr)
                     xc.text.push(descr);
             }
+        }
+        wordWrapName(name, mol) {
+            let minLimW = 0;
+            if (WebMolKit.MolUtil.notBlank(mol))
+                minLimW = (mol.boundary().w + 2) * this.scale;
+            let limW = Math.max(minLimW, 10 * this.scale);
+            let fsz = this.scale * this.policy.data.fontSize;
+            let w = this.measure.measureText(name, fsz)[0];
+            if (w < limW)
+                return [name];
+            let wrap = () => {
+                let lines = [], residual = name, nclean = 0;
+                while (residual.length > 0) {
+                    let wsz = WebMolKit.FontData.measureWidths(residual, fsz);
+                    let pos = 0;
+                    while (pos < wsz.length && wsz[pos] < limW)
+                        pos++;
+                    for (let n = pos; n > 5; n--) {
+                        if (residual[n] == ' ') {
+                            pos = n;
+                            nclean++;
+                            break;
+                        }
+                        if (wsz[n] < limW * 0.8)
+                            break;
+                    }
+                    lines.push(residual.substring(0, pos));
+                    residual = residual.substring(pos).trimLeft();
+                }
+                return [lines, nclean];
+            };
+            let [lines, nclean] = wrap();
+            for (; limW > 50; limW -= fsz) {
+                let [tryLines, tryClean] = wrap();
+                if (tryLines.length > lines.length)
+                    break;
+                if (tryClean >= nclean)
+                    [lines, nclean] = [tryLines, tryClean];
+            }
+            return lines;
         }
     }
     ArrangeExperiment.COMP_GAP_LEFT = 0.5;
@@ -16289,7 +16351,7 @@ var WebMolKit;
                 let effects = new WebMolKit.RenderEffects();
                 if (this.layout.includeAtomMap) {
                     effects.atomDecoText = WebMolKit.Vec.stringArray('', xc.mol.numAtoms);
-                    effects.atomDecoCol = WebMolKit.Vec.numberArray(policy.data.foreground, xc.mol.numAtoms);
+                    effects.atomDecoCol = WebMolKit.Vec.numberArray(this.layout.colourAtomMap, xc.mol.numAtoms);
                     effects.atomDecoSize = WebMolKit.Vec.numberArray(0.3, xc.mol.numAtoms);
                     for (let n = 1; n <= xc.mol.numAtoms; n++)
                         if (xc.mol.atomMapNum(n) > 0)
@@ -19118,6 +19180,7 @@ var WebMolKit;
             this.maybeAppend(menu, '-30 \u{00B0}', 'Shift+]', WebMolKit.ActivityType.Rotate, { 'theta': -30 });
             this.maybeAppend(menu, 'H-Flip', 'Shift+,', WebMolKit.ActivityType.Flip, { 'axis': 'hor' });
             this.maybeAppend(menu, 'V-Flip', 'Shift+.', WebMolKit.ActivityType.Flip, { 'axis': 'ver' });
+            this.maybeAppend(menu, 'Align', null, WebMolKit.ActivityType.AlignRegular);
             return menu;
         }
         querySubMenu() {
@@ -21770,28 +21833,29 @@ var WebMolKit;
         ActivityType[ActivityType["Rotate"] = 38] = "Rotate";
         ActivityType[ActivityType["BondDist"] = 39] = "BondDist";
         ActivityType[ActivityType["AlignAngle"] = 40] = "AlignAngle";
-        ActivityType[ActivityType["AdjustTorsion"] = 41] = "AdjustTorsion";
-        ActivityType[ActivityType["Move"] = 42] = "Move";
-        ActivityType[ActivityType["Ring"] = 43] = "Ring";
-        ActivityType[ActivityType["TemplateFusion"] = 44] = "TemplateFusion";
-        ActivityType[ActivityType["AbbrevTempl"] = 45] = "AbbrevTempl";
-        ActivityType[ActivityType["AbbrevGroup"] = 46] = "AbbrevGroup";
-        ActivityType[ActivityType["AbbrevFormula"] = 47] = "AbbrevFormula";
-        ActivityType[ActivityType["AbbrevClear"] = 48] = "AbbrevClear";
-        ActivityType[ActivityType["AbbrevExpand"] = 49] = "AbbrevExpand";
-        ActivityType[ActivityType["BondArtifactPath"] = 50] = "BondArtifactPath";
-        ActivityType[ActivityType["BondArtifactRing"] = 51] = "BondArtifactRing";
-        ActivityType[ActivityType["BondArtifactArene"] = 52] = "BondArtifactArene";
-        ActivityType[ActivityType["BondArtifactClear"] = 53] = "BondArtifactClear";
-        ActivityType[ActivityType["PolymerBlock"] = 54] = "PolymerBlock";
-        ActivityType[ActivityType["AddHydrogens"] = 55] = "AddHydrogens";
-        ActivityType[ActivityType["RemoveHydrogens"] = 56] = "RemoveHydrogens";
-        ActivityType[ActivityType["QueryClear"] = 57] = "QueryClear";
-        ActivityType[ActivityType["QueryCopy"] = 58] = "QueryCopy";
-        ActivityType[ActivityType["QueryPaste"] = 59] = "QueryPaste";
-        ActivityType[ActivityType["QuerySetAtom"] = 60] = "QuerySetAtom";
-        ActivityType[ActivityType["QuerySetBond"] = 61] = "QuerySetBond";
-        ActivityType[ActivityType["QueryBondAny"] = 62] = "QueryBondAny";
+        ActivityType[ActivityType["AlignRegular"] = 41] = "AlignRegular";
+        ActivityType[ActivityType["AdjustTorsion"] = 42] = "AdjustTorsion";
+        ActivityType[ActivityType["Move"] = 43] = "Move";
+        ActivityType[ActivityType["Ring"] = 44] = "Ring";
+        ActivityType[ActivityType["TemplateFusion"] = 45] = "TemplateFusion";
+        ActivityType[ActivityType["AbbrevTempl"] = 46] = "AbbrevTempl";
+        ActivityType[ActivityType["AbbrevGroup"] = 47] = "AbbrevGroup";
+        ActivityType[ActivityType["AbbrevFormula"] = 48] = "AbbrevFormula";
+        ActivityType[ActivityType["AbbrevClear"] = 49] = "AbbrevClear";
+        ActivityType[ActivityType["AbbrevExpand"] = 50] = "AbbrevExpand";
+        ActivityType[ActivityType["BondArtifactPath"] = 51] = "BondArtifactPath";
+        ActivityType[ActivityType["BondArtifactRing"] = 52] = "BondArtifactRing";
+        ActivityType[ActivityType["BondArtifactArene"] = 53] = "BondArtifactArene";
+        ActivityType[ActivityType["BondArtifactClear"] = 54] = "BondArtifactClear";
+        ActivityType[ActivityType["PolymerBlock"] = 55] = "PolymerBlock";
+        ActivityType[ActivityType["AddHydrogens"] = 56] = "AddHydrogens";
+        ActivityType[ActivityType["RemoveHydrogens"] = 57] = "RemoveHydrogens";
+        ActivityType[ActivityType["QueryClear"] = 58] = "QueryClear";
+        ActivityType[ActivityType["QueryCopy"] = 59] = "QueryCopy";
+        ActivityType[ActivityType["QueryPaste"] = 60] = "QueryPaste";
+        ActivityType[ActivityType["QuerySetAtom"] = 61] = "QuerySetAtom";
+        ActivityType[ActivityType["QuerySetBond"] = 62] = "QuerySetBond";
+        ActivityType[ActivityType["QueryBondAny"] = 63] = "QueryBondAny";
     })(ActivityType = WebMolKit.ActivityType || (WebMolKit.ActivityType = {}));
     class MoleculeActivity {
         constructor(input, activity, param, owner) {
@@ -21922,6 +21986,8 @@ var WebMolKit;
                 this.execBondDist(param.dist);
             else if (this.activity == ActivityType.AlignAngle)
                 this.execAlignAngle(param.angle);
+            else if (this.activity == ActivityType.AlignRegular)
+                this.execAlignRegular();
             else if (this.activity == ActivityType.AdjustTorsion)
                 this.execAdjustTorsion(param.angle);
             else if (this.activity == ActivityType.Move)
@@ -22881,6 +22947,36 @@ var WebMolKit;
                 let x = mol.atomX(a) - cx, y = mol.atomY(a) - cy;
                 mol.setAtomPos(a, cx + x * cosTheta - y * sinTheta, cy + x * sinTheta + y * cosTheta);
             }
+            this.output.mol = mol;
+        }
+        execAlignRegular() {
+            let bond = this.input.currentBond;
+            if (bond == 0) {
+                this.errmsg = 'There must be a current bond.';
+                return;
+            }
+            let mol = this.input.mol.clone();
+            let bfr = mol.bondFrom(this.input.currentBond), bto = mol.bondTo(this.input.currentBond);
+            let theta = Math.atan2(mol.atomY(bto) - mol.atomY(bfr), mol.atomX(bto) - mol.atomX(bfr)) * WebMolKit.RADDEG;
+            if (theta < 0)
+                theta += 360;
+            let snap = Math.round(theta / 30) * 30;
+            if (Math.abs(theta - snap) < 0.001)
+                return;
+            let delta = (snap - theta) * WebMolKit.DEGRAD;
+            let mask = this.input.selectedMask;
+            if (WebMolKit.Vec.allFalse(mask)) {
+                let cc = mol.atomConnComp(bfr);
+                for (let n = 1; n <= mol.numAtoms; n++)
+                    mask[n - 1] = cc == mol.atomConnComp(n);
+            }
+            let cx = 0.5 * (mol.atomX(bfr) + mol.atomX(bto)), cy = 0.5 * (mol.atomY(bfr) + mol.atomY(bto));
+            for (let n = 1; n <= mol.numAtoms; n++)
+                if (mask[n - 1]) {
+                    let dx = mol.atomX(n) - cx, dy = mol.atomY(n) - cy;
+                    let th = Math.atan2(dy, dx) + delta, dist = WebMolKit.norm_xy(dx, dy);
+                    mol.setAtomPos(n, cx + dist * Math.cos(th), cy + dist * Math.sin(th));
+                }
             this.output.mol = mol;
         }
         execAdjustTorsion(angle) {

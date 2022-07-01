@@ -1698,6 +1698,7 @@ declare namespace WebMolKit {
         Insert = "Insert"
     }
     function readTextURL(url: string | URL): Promise<string>;
+    function postJSONURL(url: string | URL, params: Record<string, any>): Promise<Record<string, any>>;
     function yieldDOM(): Promise<void>;
     function empiricalScrollerSize(): Size;
 }
@@ -2051,6 +2052,7 @@ declare namespace WebMolKit {
         includeBlank: boolean;
         includeDetails: boolean;
         includeAtomMap: boolean;
+        colourAtomMap: number;
         allowVertical: boolean;
         padding: number;
         static COMP_GAP_LEFT: number;
@@ -2078,6 +2080,7 @@ declare namespace WebMolKit {
         private scoreArrangement;
         private originateBlock;
         private supplementText;
+        private wordWrapName;
     }
 }
 declare namespace WebMolKit {
@@ -2942,28 +2945,29 @@ declare namespace WebMolKit {
         Rotate = 38,
         BondDist = 39,
         AlignAngle = 40,
-        AdjustTorsion = 41,
-        Move = 42,
-        Ring = 43,
-        TemplateFusion = 44,
-        AbbrevTempl = 45,
-        AbbrevGroup = 46,
-        AbbrevFormula = 47,
-        AbbrevClear = 48,
-        AbbrevExpand = 49,
-        BondArtifactPath = 50,
-        BondArtifactRing = 51,
-        BondArtifactArene = 52,
-        BondArtifactClear = 53,
-        PolymerBlock = 54,
-        AddHydrogens = 55,
-        RemoveHydrogens = 56,
-        QueryClear = 57,
-        QueryCopy = 58,
-        QueryPaste = 59,
-        QuerySetAtom = 60,
-        QuerySetBond = 61,
-        QueryBondAny = 62
+        AlignRegular = 41,
+        AdjustTorsion = 42,
+        Move = 43,
+        Ring = 44,
+        TemplateFusion = 45,
+        AbbrevTempl = 46,
+        AbbrevGroup = 47,
+        AbbrevFormula = 48,
+        AbbrevClear = 49,
+        AbbrevExpand = 50,
+        BondArtifactPath = 51,
+        BondArtifactRing = 52,
+        BondArtifactArene = 53,
+        BondArtifactClear = 54,
+        PolymerBlock = 55,
+        AddHydrogens = 56,
+        RemoveHydrogens = 57,
+        QueryClear = 58,
+        QueryCopy = 59,
+        QueryPaste = 60,
+        QuerySetAtom = 61,
+        QuerySetBond = 62,
+        QueryBondAny = 63
     }
     interface SketchState {
         mol: Molecule;
@@ -3031,6 +3035,7 @@ declare namespace WebMolKit {
         execRotate(theta: number, centreX: number, centreY: number): void;
         execBondDist(dist: number): void;
         execAlignAngle(angle: number): void;
+        execAlignRegular(): void;
         execAdjustTorsion(angle: number): void;
         execMove(refAtom: number, deltaX: number, deltaY: number): void;
         execRing(ringX: number[], ringY: number[], aromatic: boolean): void;

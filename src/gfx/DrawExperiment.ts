@@ -142,7 +142,7 @@ export class DrawExperiment
 			if (this.layout.includeAtomMap)
 			{
 				effects.atomDecoText = Vec.stringArray('', xc.mol.numAtoms);
-				effects.atomDecoCol = Vec.numberArray(policy.data.foreground, xc.mol.numAtoms);
+				effects.atomDecoCol = Vec.numberArray(this.layout.colourAtomMap, xc.mol.numAtoms);
 				effects.atomDecoSize = Vec.numberArray(0.3, xc.mol.numAtoms);
 				for (let n = 1; n <= xc.mol.numAtoms; n++) if (xc.mol.atomMapNum(n) > 0) effects.atomDecoText[n - 1] = xc.mol.atomMapNum(n).toString();
 			}

@@ -574,10 +574,11 @@ export const enum KeyCode
 	Insert = 'Insert',
 }
 
-// fetches the contents of a file, referenced via URL, and presumed to be text formatted; conveniently wrapped in an async promise
+// fetches the contents of a file, referenced via URL, and presumed to be text formatted; conveniently wrapped in an async promise; note that a failure
+// of any kind returns null
 export async function readTextURL(url:string | URL):Promise<string>
 {
-	return new Promise<string>((resolve, reject) =>
+	return new Promise((resolve, reject) =>
 	{
 		let request = new XMLHttpRequest();
 		request.open('GET', url.toString(), true);
@@ -585,6 +586,24 @@ export async function readTextURL(url:string | URL):Promise<string>
 		request.onload = () => resolve(request.response.toString());
 		request.onerror = () => /*reject('Failed to request URL: ' + url)*/ resolve(null);
 		request.send();
+	});
+}
+
+// calls a service with the POST method, sending a JSON object, and expects a JSON object in return; will throw an exception on failure
+export async function postJSONURL(url:string | URL, params:Record<string, any>):Promise<Record<string, any>>
+{
+	return new Promise((resolve, reject) =>
+	{
+		let request = new XMLHttpRequest();
+		request.open('POST', url.toString(), true);
+		request.responseType = 'text';
+		request.onload = () => 
+		{
+			try {resolve(JSON.parse(request.response.toString()));}
+			catch (ex) {reject('JSON parsing error on result:' + ex);}
+		};
+		request.onerror = () => reject('Failed to request URL: ' + url);
+		request.send(JSON.stringify(params));
 	});
 }
 
