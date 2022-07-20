@@ -2,7 +2,7 @@ const path = require('path');
 
 module.exports = 
 {
-	entry: './val/index.ts',
+	entry: './dist/index-val.ts',
 	module: 
 	{
 		rules: 
