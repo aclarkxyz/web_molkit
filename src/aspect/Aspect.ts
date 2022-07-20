@@ -10,7 +10,10 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
+import {DataSheet} from '../data/DataSheet';
+import {MetaVector} from '../gfx/MetaVector';
+import {RenderPolicy} from '../gfx/Rendering';
+import {Vec} from '../util/Vec';
 
 /*
 	Abstract base class for all "Aspects".
@@ -118,5 +121,3 @@ export abstract class Aspect
 	public numHeaderRenderings():number {return 0;}
 	public produceHeaderRendering(idx:number):AspectTextRendering {return null;}
 }
-
-/* EOF */ }

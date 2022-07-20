@@ -10,7 +10,9 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
+import {Theme} from '../util/Theme';
+import {readTextURL} from '../util/util';
+import {Vec} from '../util/Vec';
 
 /*
 	Manages a tree of ontology (URI) terms, which is an extremely minimalist subset of the functionality of formats
@@ -192,5 +194,3 @@ export class OntologyTree
 	// ------------------ public methods --------------------
 
 }
-
-/* EOF */ }

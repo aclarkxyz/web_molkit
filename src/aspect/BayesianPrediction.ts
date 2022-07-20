@@ -10,7 +10,11 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
+import {DataSheet, DataSheetColumn} from '../data/DataSheet';
+import {MoleculeStream} from '../data/MoleculeStream';
+import {Aspect} from './Aspect';
+import {registerAspect} from './AspectList';
+import {BayesianSource} from './BayesianSource';
 
 /*
 	Bayesian prediction: records some number of outcomes from Bayesian models, noting the columns that hold the predictions themselves and
@@ -183,4 +187,3 @@ export class BayesianPrediction extends Aspect
 
 registerAspect(BayesianPrediction);
 
-/* EOF */ }

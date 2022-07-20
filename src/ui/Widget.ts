@@ -10,7 +10,8 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
+import {dom, DOM} from '../util/dom';
+import {addTooltip} from './Tooltip';
 
 /*
 	Base class for widgets. Maintains the wrapping <div> element into which everything is rendered.
@@ -20,10 +21,7 @@ export class Widget
 {
 	protected tagType = 'div';
 
-	//public content:JQuery = null;
-
 	private domContent:DOM = null;
-	public get content():JQuery {return $(this.domContent.el as HTMLElement);}
 	public get contentDOM():DOM {return this.domContent;}
 
 	constructor() {}
@@ -31,7 +29,7 @@ export class Widget
 	// create the underlying structure; the parent parameter must be jQuery- or DOM-compatible
 	public render(parent:any):void
 	{
-		if (parent.jquery) parent = (parent as JQuery)[0];
+		if (parent.jquery) parent = parent[0];
 
 		let tag = this.tagType;
 		//this.content = $(`<${tag}/>`).appendTo($(parent));
@@ -49,8 +47,7 @@ export class Widget
 	// convenience function: attaches a tooltip to the main content element, after rendering
 	public addTooltip(bodyHTML:string, titleHTML?:string):void
 	{
-		addTooltip(this.content, bodyHTML, titleHTML);
+		addTooltip(this.contentDOM, bodyHTML, titleHTML);
 	}
 }
 
-/* EOF */ }

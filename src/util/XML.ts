@@ -10,7 +10,7 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
+import {nodeText} from './util';
 
 /*
 	Utilities to supplement the rather rudimentary DOM.
@@ -180,4 +180,3 @@ export class XML
 	}
 }
 
-/* EOF */ }

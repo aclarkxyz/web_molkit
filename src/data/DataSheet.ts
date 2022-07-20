@@ -10,7 +10,9 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
+import {deepClone, safeFloat, safeInt} from '../util/util';
+import {Vec} from '../util/Vec';
+import {Molecule} from './Molecule';
 
 /*
 	Wraps an object representation of a datasheet with access functions that are analogous to the Java com.mmi.core.ds.DataSheet class.
@@ -617,5 +619,3 @@ export class DataSheet
 		return obj == null ? null : parseFloat(obj);
 	}
 }
-
-/* EOF */ }

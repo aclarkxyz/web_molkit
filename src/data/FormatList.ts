@@ -12,8 +12,6 @@
 
 /* eslint-disable key-spacing */
 
-namespace WebMolKit /* BOF */ {
-
 /*
 	Provides fixed constants for dataformats.
 
@@ -111,5 +109,3 @@ export class FormatList
 		'xlsx':		'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
 	};
 }
-
-/* EOF */ }

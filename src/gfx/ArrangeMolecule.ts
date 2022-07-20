@@ -10,7 +10,16 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
+import {BondArtifact} from '../data/BondArtifact';
+import {CoordUtil} from '../data/CoordUtil';
+import {Molecule} from '../data/Molecule';
+import {PolymerBlock, PolymerBlockConnectivity, PolymerBlockUnit} from '../data/PolymerBlock';
+import {Box, GeomUtil, Line, Oval, QuickHull} from '../util/Geom';
+import {angleDiff, clone, DEGRAD, invZ, norm2_xy, norm_xy, RADDEG, sqr, TWOPI} from '../util/util';
+import {Vec} from '../util/Vec';
+import {ArrangeMeasurement} from './ArrangeMeasurement';
+import {FontData} from './FontData';
+import {RenderEffects, RenderPolicy} from './Rendering';
 
 /*
 	The algorithm for examining the contents of a molecule representation, and converting this into graphics primitives
@@ -2689,5 +2698,3 @@ export class ArrangeMolecule
 		drawText(xpos[idxD2] - 0.5 * rx[idxD2], ypos[idxD2] - 0.5 * ry[idxD2], '*');
 	}
 }
-
-/* EOF */ }

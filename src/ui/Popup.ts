@@ -10,7 +10,10 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
+import {dom, DOM, domLegacy} from '../util/dom';
+import {installInlineCSS} from '../util/Theme';
+import {empiricalScrollerSize, setBoundaryPixels} from '../util/util';
+import {clearTooltip} from './Tooltip';
 
 /*
 	Popup: a semi-transient widget that appears onscreen above all of the rest of the content. Clicking outside of the popup's
@@ -35,12 +38,6 @@ export class Popup
 	protected domObscureForeground:DOM;
 	protected domPanelBoundary:DOM; // the dialog outline itself
 	protected domBody:DOM; // the main area, for content
-
-	// legacy versions for compatibility
-	protected get obscureBackground():JQuery {return $(this.domObscureBackground.el as HTMLElement);}
-	protected get obscureForeground():JQuery {return $(this.domObscureForeground.el as HTMLElement);}
-	protected get panelBoundary():JQuery {return $(this.domPanelBoundary.el as HTMLElement);}
-	protected get bodyDiv():JQuery {return $(this.domBody.el as HTMLElement);}
 
 	public popupBackground = 'white';
 	public callbackClose:(source?:Popup) => void = null;
@@ -107,7 +104,6 @@ export class Popup
 	}
 
 	// use this to obtain the parts of the dialog box intended for modification
-	public body():JQuery {return this.bodyDiv;}
 	public bodyDOM():DOM {return this.domBody;}
 
 	// either subclass and override this, or provide the callback
@@ -168,4 +164,3 @@ export class Popup
 	}
 }
 
-/* EOF */ }

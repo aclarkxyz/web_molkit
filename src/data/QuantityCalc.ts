@@ -10,7 +10,10 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
+import {ExperimentComponent, ExperimentComponentType, ExperimentEntry} from '../aspect/Experiment';
+import {formatDouble} from '../util/util';
+import {Vec} from '../util/Vec';
+import {MolUtil} from './MolUtil';
 
 /*
 	Quantity interconversions: for an Experiment entry, figure out all of the real-and-converted quantities, and
@@ -202,63 +205,6 @@ export class QuantityCalc
 		}
 		return highest;
 	}
-
-	/*
-	// for a given step in a reaction, adds up all the structures on both the left and right hand sides; the structures on each side are combined
-	// into a single molecule instance, and are expanded out based on the relative ratio of stoichiometry; zero stoichiometry is treated as 1
-	public static Molecule[] combinedSides(Experiment.Entry entry, int step)
-	{
-		List<Molecule> left = new ArrayList<>(), right = new ArrayList<>();
-		IntVector numer = new IntVector(), denom = new IntVector();
-
-		Component[] reactants = step == 0 ? entry.steps[0].reactants : entry.steps[step - 1].products;
-		for (Component comp : reactants) if (MolUtil.notBlank(comp.mol))
-		{
-			PairTwoInt ratio = stoichAsRatio(comp.stoich);
-			left.add(comp.mol);
-			numer.add(ratio.val1 == 0 ? 1 : ratio.val1);
-			denom.add(ratio.val2);
-		}
-		for (Component comp : entry.steps[step].reagents) if (MolUtil.notBlank(comp.mol))
-		{
-			float fract = impliedReagentStoich(comp, entry.steps[step].products);
-			PairTwoInt ratio = fract == 0 ? new PairTwoInt(1, 1) : stoichAsRatio(fract);
-			left.add(comp.mol);
-			numer.add(ratio.val1 == 0 ? 1 : ratio.val1);
-			denom.add(ratio.val2);
-		}
-
-		for (Component comp : entry.steps[step].products) if (MolUtil.notBlank(comp.mol))
-		{
-			PairTwoInt ratio = stoichAsRatio(comp.stoich);
-			right.add(comp.mol);
-			numer.add(ratio.val1 == 0 ? 1 : ratio.val1);
-			denom.add(ratio.val2);
-		}
-
-		int bigDenom = 1;
-		for (int n = 0; n < numer.size(); n++)
-		{
-			int d = denom.get(n);
-			if (d == 1) continue;
-			if (bigDenom % d != 0) bigDenom *= d;
-		}
-		// (any way to bring it back down?)
-
-		Molecule mol1 = new Molecule(), mol2 = new Molecule();
-		for (int n = 0; n < left.size(); n++)
-		{
-			int num = numer.get(n) * bigDenom / denom.get(n);
-			for (int i = 0; i < num; i++) MolUtil.append(mol1, left.get(n));
-		}
-		for (int n = 0; n < right.size(); n++)
-		{
-			int nn = left.size() + n, num = numer.get(nn) * bigDenom / denom.get(nn);
-			for (int i = 0; i < num; i++) MolUtil.append(mol2, right.get(n));
-		}
-
-		return new Molecule[]{mol1, mol2};
-	}*/
 
 	// for a given step, works out the integral stoichiometry of {reactants, reagents, components}
 	public static componentRatio(entry:ExperimentEntry, step:number):[number[], number[], number[]]
@@ -810,5 +756,3 @@ export class QuantityCalc
 		return ratio >= 0.99 && ratio <= 1.01;
 	}
 }
-
-/* EOF */ }

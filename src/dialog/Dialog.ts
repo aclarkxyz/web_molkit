@@ -10,7 +10,8 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
+import {dom, DOM, domLegacy} from '../util/dom';
+import {installInlineCSS} from '../util/Theme';
 
 /*
 	Dialog: base class for popup dialogs.
@@ -49,15 +50,6 @@ export class Dialog
 	protected domTitleButtons:DOM; // table cell where the top-right buttons go
 	protected domBody:DOM; // the main area, for content
 	protected domClose:DOM; // the close button, in case anyone wants to know
-
-	// legacy versions for compatibility
-	protected get obscureBackground():JQuery {return $(this.domObscureBackground.el as HTMLElement);}
-	protected get obscureForeground():JQuery {return $(this.domObscureForeground.el as HTMLElement);}
-	protected get panelBoundary():JQuery {return $(this.domPanelBoundary.el as HTMLElement);}
-	protected get titleDiv():JQuery {return $(this.domTitle.el as HTMLElement);}
-	protected get titleButtons():JQuery {return $(this.domTitleButtons.el as HTMLElement);}
-	protected get bodyDiv():JQuery {return $(this.domBody.el as HTMLElement);}
-	protected get btnClose():JQuery {return $(this.domClose.el as HTMLElement);}
 
 	public callbackClose:(source?:Dialog) => void = null;
 	public callbackShown:(source?:Dialog) => void = null;
@@ -166,8 +158,6 @@ export class Dialog
 	}
 
 	// use this to obtain the parts of the dialog box intended for modification
-	public body():JQuery {return this.bodyDiv;}
-	public buttons():JQuery {return this.titleButtons;}
 	public bodyDOM():DOM {return this.domBody;}
 	public buttonsDOM():DOM {return this.domTitleButtons;}
 
@@ -187,4 +177,3 @@ export class Dialog
 	}
 }
 
-/* EOF */ }

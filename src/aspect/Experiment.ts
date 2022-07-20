@@ -10,9 +10,17 @@
 	[PKG=webmolkit]
 */
 
-///<reference path='Aspect.ts'/>
-
-namespace WebMolKit /* BOF */ {
+import {DataSheet, DataSheetColumn} from '../data/DataSheet';
+import {Molecule} from '../data/Molecule';
+import {MolUtil} from '../data/MolUtil';
+import {ArrangeExperiment} from '../gfx/ArrangeExperiment';
+import {OutlineMeasurement} from '../gfx/ArrangeMeasurement';
+import {DrawExperiment} from '../gfx/DrawExperiment';
+import {MetaVector} from '../gfx/MetaVector';
+import {RenderPolicy} from '../gfx/Rendering';
+import {Vec} from '../util/Vec';
+import {Aspect, AspectGraphicRendering} from './Aspect';
+import {registerAspect} from './AspectList';
 
 /*
 	Experiment aspect: transforms groups of rows from a datasheet into a collection of structures that make up a
@@ -801,81 +809,7 @@ export class Experiment extends Aspect
 
 		return {'name': 'Scheme', 'metavec': metavec};
 	}
-
-/*	open override func numTextRenderings(row:Int) -> Int {return 1}
-	open override func produceTextRendering(row:Int, idx:Int) -> (name:String, descr:String, text:String)
-	{
-		var retName = "", retDescr = "", retText = ""
-		data.observe() {(ds:DataSheet) in (retName, retDescr, retText) = self.produceTextRendering(row:row, idx:idx, ds:ds)}
-		return (name:retName, descr:retDescr, text:retText)
-	}
-	open override func produceTextRendering(row:Int, idx:Int, ds:DataSheet) -> (name:String, descr:String, text:String)
-	{
-		assert(idx == 0, "Invalid index to Experiment.produceTextRendering")
-
-		let entry = getEntry(row, ds:ds)
-		var lines:[String] = []
-
-		if !entry.title.isEmpty {lines.append("Title: \(entry.title)")}
-
-		let datefmt = DateFormatter()
-		datefmt.dateStyle = .medium
-		datefmt.timeStyle = .medium
-
-		if let createDate = entry.createDate {lines.append("Created: \(datefmt.string(from:createDate))")}
-		if let modifyDate = entry.modifyDate {lines.append("Modified: \(datefmt.string(from:modifyDate))")}
-
-		if !entry.doi.isEmpty {lines.append("DOI: \(entry.doi)")}
-
-		let txt = lines.joined(separator:"\n")
-
-		return (name:"Header", descr:"Experiment description and metadata", text:txt)
-	}
-
-	open override func numGraphicRenderings(row:Int) -> Int {return 3}
-	open override func produceGraphicRendering(row:Int, idx:Int, policy:RenderPolicy, vg:VectorGfxBuilder) -> (name:String, vg:VectorGfxBuilder)
-	{
-		var retName = "", retVG = vg
-		data.observe() {(ds:DataSheet) in (retName, retVG) = self.produceGraphicRendering(row:row, idx:idx, policy:policy, vg:vg, ds:ds)}
-		return (name:retName, vg:retVG)
-	}
-	open override func produceGraphicRendering(row:Int, idx:Int, policy:RenderPolicy, vg:VectorGfxBuilder, ds:DataSheet) -> (name:String, vg:VectorGfxBuilder)
-	{
-		if idx == Render.Scheme
-		{
-			let entry = getEntry(row, ds:ds)
-			let layout = ArrangeExperiment(entry:entry, measure:OutlineMeasurement(scale:policy.pointScale, yUp:false), policy:policy)
-
-			layout.limitTotalW = 50 * policy.pointScale
-			layout.limitTotalH = 50 * policy.pointScale
-			layout.arrange()
-
-			//vg.drawLine(x1:0, y1:0, x2:layout.width, y2:layout.height, colour:0xFF0000, thickness:1)
-			let vgexp = DrawExperiment(layout:layout, vg:vg)
-			vgexp.draw()
-
-			return (name:"Scheme", vg:vg)
-		}
-		else if idx == Render.Quantity
-		{
-			let entry = getEntry(row, ds:ds)
-			let layout = ArrangeExpQuant(entry:entry, measure:OutlineMeasurement(scale:policy.pointScale, yUp:false), policy:policy)
-			layout.idealAspect = 1.4
-			layout.arrange()
-			layout.render(vg)
-		}
-		else if idx == Render.Metrics
-		{
-			let entry = getEntry(row, ds:ds)
-			let layout = ArrangeExpMetrics(entry:entry, measure:OutlineMeasurement(scale:policy.pointScale, yUp:false), policy:policy)
-			layout.idealAspect = 1.4
-			layout.arrange()
-			layout.render(vg)
-		}
-		return (name:"", vg:vg)
-	}*/
 }
 
 registerAspect(Experiment);
 
-/* EOF */ }

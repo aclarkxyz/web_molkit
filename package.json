@@ -2,14 +2,20 @@
 	"name": "placeholder",
 	"version": "0.0.0",
 	"devDependencies": {
+		"@typescript-eslint/eslint-plugin": "^4.7",
+		"@typescript-eslint/parser": "^4.7",
 		"electron": "^9.0",
 		"electron-packager": "^8.1.0",
-		"typescript": "^4.0",
 		"eslint": "^7.0",
-		"@typescript-eslint/parser": "^4.7",
-		"@typescript-eslint/eslint-plugin": "^4.7"
+		"ts-loader": "^9.3.1",
+		"typescript": "^4.0",
+		"webpack": "^5.73.0",
+		"webpack-cli": "^4.10.0"
 	},
 	"scripts": {
-		"eslint": "eslint src/**/*.ts"
+		"eslint": "eslint src/**/*.ts",
+		"build-debug": "webpack --config webpack-debug.config.js",
+		"build-prod": "webpack --config webpack-prod.config.js",
+		"build": "webpack --config webpack-prod.config.js && webpack --config webpack-debug.config.js"
 	}
 }

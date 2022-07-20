@@ -10,7 +10,7 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
+import {Molecule} from './Molecule';
 
 /*
 	Specifications for Open Molecule: when analyzing a structure, append all of the feature observations that apply. These will
@@ -125,4 +125,3 @@ export class OpenMolSpec
 	}
 }
 
-/* EOF */ }

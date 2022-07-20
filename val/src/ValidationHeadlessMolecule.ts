@@ -10,16 +10,18 @@
 	[PKG=webmolkit]
 */
 
-///<reference path='../../src/util/util.ts'/>
-///<reference path='../../src/util/Vec.ts'/>
-///<reference path='../../src/data/Molecule.ts'/>
-///<reference path='../../src/data/MetaMolecule.ts'/>
-///<reference path='../../src/data/MoleculeStream.ts'/>
-///<reference path='../../src/data/DataSheetStream.ts'/>
-///<reference path='../../src/data/Stereochemistry.ts'/>
-///<reference path='Validation.ts'/>
-
-namespace WebMolKit /* BOF */ {
+import {CircularFingerprints} from '../../src/calc/CircularFingerprints';
+import {DataSheet, DataSheetColumn} from '../../src/data/DataSheet';
+import {DataSheetStream} from '../../src/data/DataSheetStream';
+import {MDLMOLReader, MDLSDFReader} from '../../src/data/MDLReader';
+import {MDLMOLWriter} from '../../src/data/MDLWriter';
+import {MetaMolecule} from '../../src/data/MetaMolecule';
+import {Molecule} from '../../src/data/Molecule';
+import {MoleculeStream} from '../../src/data/MoleculeStream';
+import {Stereochemistry} from '../../src/data/Stereochemistry';
+import {orBlank, readTextURL} from '../../src/util/util';
+import {Vec} from '../../src/util/Vec';
+import {Validation} from './Validation';
 
 /*
 	Headless validation: molecule tests - algorithms that apply to molecular connection tables.
@@ -227,4 +229,3 @@ export class ValidationHeadlessMolecule extends Validation
 	}
 }
 
-/* EOF */ }

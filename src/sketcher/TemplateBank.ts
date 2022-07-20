@@ -10,7 +10,19 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
+import {TEMPLATE_FILES} from '../data/AbbrevContainer';
+import {DataSheet, DataSheetColumn} from '../data/DataSheet';
+import {DataSheetStream} from '../data/DataSheetStream';
+import {MolUtil} from '../data/MolUtil';
+import {OutlineMeasurement} from '../gfx/ArrangeMeasurement';
+import {ArrangeMolecule} from '../gfx/ArrangeMolecule';
+import {DrawMolecule} from '../gfx/DrawMolecule';
+import {MetaVector} from '../gfx/MetaVector';
+import {RenderEffects, RenderPolicy} from '../gfx/Rendering';
+import {ButtonBank} from '../ui/ButtonBank';
+import {Theme} from '../util/Theme';
+import {readTextURL} from '../util/util';
+import {ActivityType, MoleculeActivity} from './MoleculeActivity';
 
 /*
 	TemplateBank: template list... either the top-level list of template groups, or a single folder full of templates.
@@ -237,4 +249,3 @@ export class FusionBank extends ButtonBank
 	}
 }
 
-/* EOF */ }

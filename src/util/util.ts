@@ -10,7 +10,9 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
+import {DOM, dom, domLegacy} from './dom';
+import {Size} from './Geom';
+import {Vec} from './Vec';
 
 /*
 	General purpose functions. Note that these are not in the WebMolKit namespace.
@@ -49,10 +51,9 @@ export function newElement(parent:any, tag:string, attr?:Record<string, any>):El
 }
 
 // appends child text to the node
-export function addText(parent:any, text:string)
+export function addText(parent:Element, text:string)
 {
-	let el = $(parent)[0];
-	el.appendChild(document.createTextNode(text));
+	parent.appendChild(document.createTextNode(text));
 }
 
 // convenience function for adding the plural modifier, i.e. "1 thing" vs "N things"
@@ -185,7 +186,7 @@ export function notDef(v:any):boolean
 
 // given a particular event, picks out the (x,y) coordinates, and offsets them until they are in the space of the given
 // node container, which must be a parent
-export function eventCoords(event:MouseEvent | Touch | JQueryMouseEventObject, container:any):number[]
+export function eventCoords(event:MouseEvent | Touch, container:any):number[]
 {
 	let pos = domLegacy(container).offset();
 	let relX = event.pageX - pos.x;
@@ -194,17 +195,12 @@ export function eventCoords(event:MouseEvent | Touch | JQueryMouseEventObject, c
 }
 
 // sets an object's position by pixel: convenience function otherwise rather ugly code; assumes that the positioning style already configured as needed
-export function setBoundaryPixels(dom:JQuery | DOM, x:number, y:number, w:number, h:number):void
+export function setBoundaryPixels(dom:DOM, x:number, y:number, w:number, h:number):void
 {
 	dom.css({'left': x + 'px', 'top': y + 'px', 'width': w + 'px', 'height': h + 'px'});
 }
 
 // return the object's screen position as [x, y, w, h]
-export function getBoundaryPixels(dom:JQuery):[number, number, number, number]
-{
-	let offset = dom.offset();
-	return [offset.left, offset.top, dom.width(), dom.height()];
-}
 export function getBoundaryPixelsDOM(dom:DOM):[number, number, number, number]
 {
 	let offset = dom.offset();
@@ -597,7 +593,7 @@ export async function postJSONURL(url:string | URL, params:Record<string, any>):
 		let request = new XMLHttpRequest();
 		request.open('POST', url.toString(), true);
 		request.responseType = 'text';
-		request.onload = () => 
+		request.onload = () =>
 		{
 			try {resolve(JSON.parse(request.response.toString()));}
 			catch (ex) {reject('JSON parsing error on result:' + ex);}
@@ -629,4 +625,3 @@ export function empiricalScrollerSize():Size
 	return staticScrollerSize;
 }
 
-/* EOF */ }

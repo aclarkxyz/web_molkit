@@ -10,9 +10,16 @@
 	[PKG=webmolkit]
 */
 
-/* eslint-disable key-spacing */
+import {Vec} from '../util/Vec';
+import {BondArtifact} from './BondArtifact';
+import {CoordUtil} from './CoordUtil';
+import {DataSheet, DataSheetColumn} from './DataSheet';
+import {Molecule} from './Molecule';
+import {MolUtil} from './MolUtil';
+import {OpenMolSource, OpenMolSpec, OpenMolType} from './OpenMolSpec';
+import {PolymerBlock, PolymerBlockConnectivity, PolymerBlockUnit} from './PolymerBlock';
 
-namespace WebMolKit /* BOF */ {
+/* eslint-disable key-spacing */
 
 /*
 	MDL Molfile reader: a somewhat flexible input parser that can turn V2000 and V3000 Molfiles into the internal molecule
@@ -1103,5 +1110,3 @@ export class MDLSDFReader
 		}
 	}
 }
-
-/* EOF */ }
