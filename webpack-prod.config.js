@@ -22,7 +22,7 @@ module.exports =
 	{
 		path: path.resolve(__dirname, 'dist'),
 		filename: 'webmolkit.js',
-		sourceMapFilename: 'webmolkit.map',
+		sourceMapFilename: 'webmolkit.js.map',
 		library: 'WebMolKit',
 	},
 	mode: 'production',
