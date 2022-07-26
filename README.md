@@ -1,24 +1,16 @@
 # WebMolKit
 
-Cheminformatics toolkit built with _TypeScript_. Can be used to carry out some fairly sophisticated cheminformatics tasks on a contemporary web browser, such as rendering molecules for display, format conversions, calculations, interactive sketching, among other things.
+Cheminformatics toolkit built with _TypeScript_. Can be used to carry out some fairly sophisticated cheminformatics tasks on a contemporary web browser, such as rendering molecules for display, format conversions, calculations, interactive sketching, among other things. The library can be used within any JavaScript engine, including web browsers, NodeJS and Electron.
 
 ## License
 
-Copyright &copy; 2010-2021 Molecular Materials Informatics, Inc.
+Copyright &copy; 2010-2022 Molecular Materials Informatics, Inc.
 
 [http://molmatinf.com](http://molmatinf.com)
 
-All rights reserved
+All rights reserved.
 
-* **General availability**: The _WebMolKit_ library may be used by anyone under the terms set by the general [Gnu Public License (v3.0)](https://www.gnu.org/licenses/gpl-3.0.en.html). The synopsis of this license is that if you use any part of the source code in your own project, you are contractually bound to make the **entire** project available under a similar license whenever you distribute it, i.e. it's the _viral_ version of the GPL. Not to be confused with the _lesser_ version (LGPL). Also, if you are considering asserting software patents, you'd best read the GPL v3.0 terms very carefully.
-
-* **Special exception 1**: An exception to the default licensing is made for [Collaborative Drug Discovery, Inc](http://collaborativedrug.com) (CDD). CDD is permitted to use this toolkit under the terms of the [Apache License 2.0](http://www.apache.org/licenses/LICENSE-2.0), which is a non-viral license. This exception applies to any version of the toolkit in which this notice appears, i.e. if this exception is ever removed, then CDD may continue to use the version immediately prior to its removal, and is permitted to fork the code under the terms of the _Apache License_.
-
-* **Special exception 2**: An exception to the default licensing is made for [Collaborations Pharmaceuticals, Inc](http://www.collaborationspharma.com) (CP). CP is permitted to use this toolkit under the terms of the [Apache License 2.0](http://www.apache.org/licenses/LICENSE-2.0), which is a non-viral license. This exception applies to any version of the toolkit in which this notice appears, i.e. if this exception is ever removed, then CP may continue to use the version immediately prior to its removal, and is permitted to fork the code under the terms of the _Apache License_.
-
-* If the copyright owner adds additional exceptions in later releases, they will take effect as of that version.
-
-* **Owner availability**: The copyright owner, [Molecular Materials Informatics, Inc.](http://molmatinf.com), can and will exercise the liberty of using this toolkit in proprietary and/or open source software.
+The _WebMolKit_ library is made available under the terms of the [Apache License 2.0](http://www.apache.org/licenses/LICENSE-2.0), which is a non-viral license. Until July 2022 it was generally available under the GPL 3 (the viral license), but this constraint has been lifted.
 
 ## Codebase
 
@@ -34,6 +26,10 @@ $ ls bin
 ```
 
 The compilation creates the file `bin/webmolkit-build.js`. Once this is generated, the file can be used in a runtime context.
+
+The source code uses the older TypeScript namespace technology, which is the lowest common denominator packaging method, making it straightforward to include into 
+existing projects. At some point in the future it will probably be upgraded to use ES6 modules, but this currently introduces some compatibility problems for incorporating
+into a diverse range of JavaScript engines.
 
 ## Uses
 
