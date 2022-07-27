@@ -10,7 +10,19 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
+import {Molecule} from '../data/Molecule';
+import {MolUtil} from '../data/MolUtil';
+import {PolymerBlock, PolymerBlockConnectivity, PolymerBlockUnit} from '../data/PolymerBlock';
+import {Dialog} from '../dialog/Dialog';
+import {OutlineMeasurement} from '../gfx/ArrangeMeasurement';
+import {ArrangeMolecule} from '../gfx/ArrangeMolecule';
+import {DrawMolecule} from '../gfx/DrawMolecule';
+import {MetaVector} from '../gfx/MetaVector';
+import {RenderEffects, RenderPolicy} from '../gfx/Rendering';
+import {ClipboardProxy, ClipboardProxyHandler} from '../ui/ClipboardProxy';
+import {OptionList} from '../ui/OptionList';
+import {DOM, dom} from '../util/dom';
+import {Vec} from '../util/Vec';
 
 /*
 	Editing a new or existing polymer block.
@@ -379,5 +391,3 @@ export class EditPolymer extends Dialog
 		dom(gfx.createSVG()).appendTo(this.divPreview).css({'pointer-events': 'none'});
 	}
 }
-
-/* EOF */ }

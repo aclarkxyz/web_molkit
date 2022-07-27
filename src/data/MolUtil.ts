@@ -10,7 +10,13 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
+import {Vec} from '../util/Vec';
+import {Chemistry} from './Chemistry';
+import {CoordUtil} from './CoordUtil';
+import {Graph} from './Graph';
+import {Molecule} from './Molecule';
+import {PolymerBlock} from './PolymerBlock';
+import {SketchUtil} from './SketchUtil';
 
 /*
 	MolUtil: static methods for calculating molecule properties.
@@ -751,91 +757,6 @@ export class MolUtil
 		return w;
 	}
 
-/*
-	// returns the electron count of an atom: this is the sum of natural electron count, neighbouring bonds,
-	// explicit hydrogens, unpaired electrons and -charge; hydrogens inferred by the valence are included
-	// only if the countImplicit parameter is true;
-	// the return value can be used to calculate the number of remaining slots for adding new substituents
-	public static int atomElectronCount(Molecule mol, int N, boolean countImplicit)
-	{
-		int atno = mol.atomicNumber(N), blk = Chemistry.ELEMENT_BLOCKS[atno], grp = Chemistry.ELEMENT_GROUPS[atno];
-		int val = blk == 0 ? 0 : blk == 1 ? grp : blk == 2 ? grp - 10 : grp;
-		if (countImplicit) val += mol.atomHydrogens(N);
-		else if (mol.atomHExplicit(N) != Molecule.HEXPLICIT_UNKNOWN) val += mol.atomHExplicit(N);
-		val += mol.atomUnpaired(N) - mol.atomCharge(N);
-		int[] adjb = mol.atomAdjBonds(N);
-		for (int n = 0; n < adjb.length; n++) val += mol.bondOrder(adjb[n]);
-		return val;
-	}
-
-	// for a given atomic number, returns the valence limit, considering S/P/D electrons, i.e. cuts out
-	// at 18 electrons, even for f-block metals
-	public static int atomMaxValenceSPD(int atno)
-	{
-		int blk = Chemistry.ELEMENT_BLOCKS[atno];
-		//                             ?, s, p,  d, f
-		final int[] BLKVAL = new int[]{2, 2, 8, 18, 18};
-		return BLKVAL[blk];
-	}
-
-	// if the molecule has any bonds that are not of order 1, 2 or 3 then a new molecule will be constructed
-	// which has only these bond types; if no interesting bonds, returns null; a returned molecule is
-	// more suitable to writing to a format such as MDL MOL; zero bonds are typically converted into
-	// double bonds or charge-separated single bonds
-	public static Molecule reduceBondTypes(Molecule mol)
-	{
-		final int nb = mol.numBonds;
-		boolean any = false;
-		for (int n = 1; n <= nb; n++) if (mol.bondOrder(n) < 1 || mol.bondOrder(n) > 3) {any = true; break;}
-		if (!any) return null;
-
-		mol = mol.clone();
-
-		for (int n = 1; n <= nb; n++)
-		{
-			int bo = mol.bondOrder(n);
-			if (bo == 0)
-			{
-				int bfr = mol.bondFrom(n), bto = mol.bondTo(n);
-
-				// non-elements do not get to charge separate
-				int atno1 = mol.atomicNumber(bfr), atno2 = mol.atomicNumber(bto);
-				if (atno1 == 0 || atno2 == 0)
-				{
-					mol.setBondOrder(n, 1);
-					continue;
-				}
-				int val1 = atomElectronCount(mol, bfr, true), val2 = atomElectronCount(mol, bto, true);
-				int max1 = atomMaxValenceSPD(atno1), max2 = atomMaxValenceSPD(atno2);
-				boolean spc1 = val1 <= max1 - 2, spc2 = val2 <= max2 - 2;
-				if (spc1 && spc2)
-				{
-					// sufficient valence exists, so call it a double bond
-					mol.setBondOrder(n, 2);
-					continue;
-				}
-
-				// charge separate, as long as the atom receiving the negative charge has room for it
-				if (spc1)
-				{
-					mol.setAtomCharge(bfr, mol.atomCharge(bfr) - 1);
-					mol.setAtomCharge(bto, mol.atomCharge(bto) + 1);
-				}
-				if (spc2)
-				{
-					mol.setAtomCharge(bfr, mol.atomCharge(bfr) + 1);
-					mol.setAtomCharge(bto, mol.atomCharge(bto) - 1);
-				}
-
-				mol.setBondOrder(n, 1);
-			}
-			else if (bo > 3) mol.setBondOrder(n, 3);
-			else mol.setBondOrder(n, 1);
-		}
-
-		return mol;
-	}*/
-
 	// return the total number of attached hydrogens: implicit/explicit + any actual atoms connected to it
 	public static totalHydrogens(mol:Molecule, atom:number):number
 	{
@@ -969,5 +890,3 @@ export class MolUtil
 		return str;
 	}
 }
-
-/* EOF */ }

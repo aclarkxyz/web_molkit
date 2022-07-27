@@ -10,7 +10,9 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
+import {dom} from '../util/dom';
+import {eventCoords, setBoundaryPixels} from '../util/util';
+import {Popup} from './Popup';
 
 /*
 	Proxy functionality for menus, particularly the context menu.
@@ -28,7 +30,7 @@ export class MenuProxy
 {
 	// override this with true when the context menu is available
 	public hasContextMenu():boolean {return false;}
-	public openContextMenu(menuItems:MenuProxyContext[], event:JQueryMouseEventObject | MouseEvent):void {}
+	public openContextMenu(menuItems:MenuProxyContext[], event:MouseEvent):void {}
 }
 
 /*
@@ -39,7 +41,7 @@ export class MenuProxy
 export class MenuProxyWeb extends MenuProxy
 {
 	public hasContextMenu():boolean {return true;}
-	public openContextMenu(menuItems:MenuProxyContext[], event:JQueryMouseEventObject | MouseEvent):void
+	public openContextMenu(menuItems:MenuProxyContext[], event:MouseEvent):void
 	{
 		let [x, y] = eventCoords(event, document.body);
 		//let x = event.screenX, y = event.screenY;
@@ -97,5 +99,3 @@ export class MenuProxyWeb extends MenuProxy
 		popup.open();
 	}
 }
-
-/* EOF */ }

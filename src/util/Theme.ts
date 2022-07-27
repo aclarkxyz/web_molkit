@@ -10,7 +10,7 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
+import {colourCode} from './util';
 
 // public theme definition: the values for these colours can be customised; they will be converted into CSS as soon as the initialisation
 // function is called (see below); the general idea is a tetrachrome: most content is monochrome (black text on white background by default),
@@ -302,4 +302,3 @@ function composeMainCSS():string
 	`;
 }
 
-/* EOF */ }

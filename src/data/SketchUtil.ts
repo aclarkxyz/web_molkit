@@ -10,9 +10,13 @@
 	[PKG=webmolkit]
 */
 
-///<reference path='../util/util.ts'/>
-
-namespace WebMolKit /* BOF */ {
+import {GeomUtil} from '../util/Geom';
+import {angleDiff, angleDiffPos, angleNorm, DEGRAD, norm2_xy, norm_xy, sortAngles, sqr, TWOPI} from '../util/util';
+import {Vec} from '../util/Vec';
+import {Chemistry} from './Chemistry';
+import {CoordUtil} from './CoordUtil';
+import {Molecule} from './Molecule';
+import {MolUtil} from './MolUtil';
 
 /*
 	SketchUtil: static methods for calculating properties of molecules, typically of the geometric variety.
@@ -1032,5 +1036,3 @@ export class SketchUtil
 		return sprouts;
 	}
 }
-
-/* EOF */ }

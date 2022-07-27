@@ -10,9 +10,13 @@
     [PKG=webmolkit]
 */
 
-/* eslint-disable @typescript-eslint/naming-convention */
+import {DataSheet, DataSheetColumn} from '../data/DataSheet';
+import {Molecule} from '../data/Molecule';
+import {MoleculeStream} from '../data/MoleculeStream';
+import {Aspect, AspectTextRendering} from './Aspect';
+import {registerAspect} from './AspectList';
 
-namespace WebMolKit /* BOF */ {
+/* eslint-disable @typescript-eslint/naming-convention */
 
 /*
 	AssayProvenance: informs that a datasheet originates from a distinct assay measurement of a particular
@@ -357,5 +361,3 @@ export class AssayProvenance extends Aspect
 }
 
 registerAspect(AssayProvenance);
-
-/* EOF */ }

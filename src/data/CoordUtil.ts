@@ -10,7 +10,11 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
+import {angleDiff, angleNorm, DEGRAD, norm2_xy, TWOPI} from '../util/util';
+import {Vec} from '../util/Vec';
+import {Graph} from './Graph';
+import {Molecule} from './Molecule';
+import {MolUtil} from './MolUtil';
 
 /*
 	Low level utility functions for the manipulation of molecular coordinates. These functions are fairly
@@ -410,5 +414,3 @@ export class CoordUtil
 		else CoordUtil.rotateMolecule(mol2, x0, y0, deltaA);
 	}
 }
-
-/* EOF */ }

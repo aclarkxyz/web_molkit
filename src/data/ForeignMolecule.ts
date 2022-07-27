@@ -10,7 +10,8 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
+import {Vec} from '../util/Vec';
+import {Molecule} from './Molecule';
 
 /*
 	Handles some of the custom extensions that are brought in for molecules when imported from other
@@ -65,7 +66,4 @@ export class ForeignMolecule
 	// TODO: convert MDL chirality to/from rubric
 
 	// ----------------- private methods -----------------
-
 }
-
-/* EOF */ }

@@ -10,7 +10,13 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
+import {Theme} from '../util/Theme';
+import {DEGRAD, escapeHTML, norm_xy, readTextURL} from '../util/util';
+import {CoordUtil} from './CoordUtil';
+import {DataSheetColumn} from './DataSheet';
+import {DataSheetStream} from './DataSheetStream';
+import {Molecule} from './Molecule';
+import {MolUtil} from './MolUtil';
 
 export const TEMPLATE_FILES =
 [
@@ -217,5 +223,3 @@ export class AbbrevContainer
 		return [html, search.toLowerCase()];
 	}
 }
-
-/* EOF */ }

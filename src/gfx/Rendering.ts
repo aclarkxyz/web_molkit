@@ -10,7 +10,7 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
+import {clone} from '../util/util';
 
 /*
 	Wraps the RenderPolicy and RenderEffects objects, which are JSON-encoded analogs to the eponymous Java classes.
@@ -154,4 +154,3 @@ export class RenderEffects
 	public overlapAtoms:number[] = [];
 }
 
-/* EOF */ }

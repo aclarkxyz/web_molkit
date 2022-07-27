@@ -10,7 +10,11 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
+import {Box} from '../util/Geom';
+import {clone, colourAlpha, colourCanvas, colourCode, DEGRAD, newElement, pixelDensity} from '../util/util';
+import {Vec} from '../util/Vec';
+import {XML} from '../util/XML';
+import {FontData, FontDataNativeOpt} from './FontData';
 
 /*
 	MetaVector: allows the construction of a set of drawing primitives of the most basic variety. These are collected together so that they can be analyzed,
@@ -1209,5 +1213,3 @@ export class MetaVector
 		this.highY = Math.max(this.highY, y);
 	}
 }
-
-/* EOF */ }

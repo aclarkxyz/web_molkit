@@ -10,7 +10,13 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
+import {Vec} from '../util/Vec';
+import {BondArtifact} from './BondArtifact';
+import {DataSheet, DataSheetColumn} from './DataSheet';
+import {MDLMOL_VALENCE} from './MDLReader';
+import {Molecule} from './Molecule';
+import {MolUtil} from './MolUtil';
+import {PolymerBlock, PolymerBlockConnectivity} from './PolymerBlock';
 
 /*
 	MDL Molfile writer: convert the native structure format to MDL Molfile, V2000. Note that the destination format has legacy
@@ -461,5 +467,3 @@ export class MDLSDFWriter
 	// ----------------- private methods -----------------
 	
 }
-
-/* EOF */ }

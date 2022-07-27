@@ -10,7 +10,8 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
+import {DOM, dom} from '../util/dom';
+import {Box} from '../util/Geom';
 
 /*
 	Tooltips: adding popovers to widgets.
@@ -20,12 +21,12 @@ let globalPopover:DOM = null;
 let globalTooltip:Tooltip = null;
 let globalPopWatermark = 0;
 
-// adds a well behaved tooltip to the given node (element or JQuery object)
+// adds a well behaved tooltip to the given node (element or DOM object)
 export function addTooltip(parent:any, bodyHTML:string, titleHTML?:string, delay?:number):void
 {
 	Tooltip.ensureGlobal();
 
-	if (parent.jquery) parent = (parent as JQuery)[0];
+	if (parent.jquery) parent = parent[0];
 
 	let widget = dom(parent);
 	let tooltip = new Tooltip(widget, bodyHTML, titleHTML, delay == null ? 1000 : delay);
@@ -37,7 +38,7 @@ export function addTooltip(parent:any, bodyHTML:string, titleHTML?:string, delay
 // immediately raise a tooltip, with a position relative to a given widget
 export function raiseToolTip(parent:any, avoid:Box, bodyHTML:string, titleHTML?:string):void
 {
-	if (parent.jquery) parent = (parent as JQuery)[0];
+	if (parent.jquery) parent = parent[0];
 
 	clearTooltip();
 	Tooltip.ensureGlobal();
@@ -163,4 +164,3 @@ export class Tooltip
 	}
 }
 
-/* EOF */ }

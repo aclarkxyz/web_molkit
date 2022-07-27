@@ -10,7 +10,20 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
+import {Experiment, ExperimentEntry} from '../aspect/Experiment';
+import {DataSheetStream} from '../data/DataSheetStream';
+import {MolUtil} from '../data/MolUtil';
+import {QuantityCalc, QuantityCalcComp, QuantityCalcStat} from '../data/QuantityCalc';
+import {ArrangeExperiment} from '../gfx/ArrangeExperiment';
+import {OutlineMeasurement} from '../gfx/ArrangeMeasurement';
+import {ArrangeMolecule} from '../gfx/ArrangeMolecule';
+import {DrawExperiment} from '../gfx/DrawExperiment';
+import {DrawMolecule} from '../gfx/DrawMolecule';
+import {MetaVector, TextAlign} from '../gfx/MetaVector';
+import {RenderEffects, RenderPolicy} from '../gfx/Rendering';
+import {DOM, dom} from '../util/dom';
+import {escapeHTML, formatDouble, fromUTF8, htmlToRGB} from '../util/util';
+import {EmbedChemistry} from './EmbedChemistry';
 
 /*
 	Embedded reaction: renders a single reaction Experiment entry (can be multistep). Various formats are acceptable, but only one
@@ -258,7 +271,7 @@ export class EmbedReaction extends EmbedChemistry
 	}
 
 	// renders lines representing the component's text-like properties
-	private renderComponentText(parent:DOM, qc:QuantityCalcComp)
+	private renderComponentText(parent:DOM, qc:QuantityCalcComp):void
 	{
 		let title:string[] = [], content:string[] = [];
 
@@ -554,4 +567,3 @@ export class EmbedReaction extends EmbedChemistry
 	}
 }
 
-/* EOF */ }

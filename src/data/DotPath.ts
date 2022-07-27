@@ -12,7 +12,12 @@
 
 /* eslint-disable no-multi-spaces */
 
-namespace WebMolKit /* BOF */ {
+import {Chemistry} from './Chemistry';
+import {fltEqual} from '../util/util';
+import {Vec} from '../util/Vec';
+import {ForeignMoleculeExtra} from './ForeignMolecule';
+import {Graph} from './Graph';
+import {Molecule} from './Molecule';
 
 /*
 	A meta-description of a molecule that divides the molecular graph up into chunks based on their
@@ -351,5 +356,3 @@ export class DotPath
 		}
 	}
 }
-
-/* EOF */ }

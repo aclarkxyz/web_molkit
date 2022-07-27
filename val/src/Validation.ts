@@ -10,9 +10,7 @@
 	[PKG=webmolkit]
 */
 
-///<reference path='../../src/util/util.ts'/>
-
-namespace WebMolKit /* BOF */ {
+import {yieldDOM} from '../../src/util/util';
 
 /*
 	Storage class for a sequence of tests. Use pattern: inherit the class, and add each of the tests (callback functions) in the constructor; hand over the 
@@ -141,4 +139,3 @@ export class Validation
 	// ------------ private methods ------------
 }
 
-/* EOF */ }

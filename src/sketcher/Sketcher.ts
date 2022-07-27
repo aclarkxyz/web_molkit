@@ -10,9 +10,32 @@
 	[PKG=webmolkit]
 */
 
-///<reference path="DrawCanvas.ts"/>
-
-namespace WebMolKit /* BOF */ {
+import {CoordUtil} from '../data/CoordUtil';
+import {DataSheetColumn} from '../data/DataSheet';
+import {DataSheetStream} from '../data/DataSheetStream';
+import {Molecule} from '../data/Molecule';
+import {MoleculeStream} from '../data/MoleculeStream';
+import {MolUtil} from '../data/MolUtil';
+import {PolymerBlock, PolymerBlockUnit} from '../data/PolymerBlock';
+import {GuidelineSprout, SketchUtil} from '../data/SketchUtil';
+import {ArrangeMolecule} from '../gfx/ArrangeMolecule';
+import {DrawMolecule} from '../gfx/DrawMolecule';
+import {MetaVector} from '../gfx/MetaVector';
+import {RenderEffects, RenderPolicy} from '../gfx/Rendering';
+import {ButtonView, ButtonViewPosition} from '../ui/ButtonView';
+import {ClipboardProxy} from '../ui/ClipboardProxy';
+import {MenuProxy} from '../ui/MenuProxy';
+import {angleDiff, clone, DEGRAD, eventCoords, KeyCode, norm2_xy, norm_xy, RADDEG, TWOPI} from '../util/util';
+import {Vec} from '../util/Vec';
+import {CommandBank} from './CommandBank';
+import {ContextSketch} from './ContextSketch';
+import {DraggingTool, DrawCanvas, DrawCanvasDecoration} from './DrawCanvas';
+import {EditAtom} from './EditAtom';
+import {EditBond} from './EditBond';
+import {EditPolymer} from './EditPolymer';
+import {ActivityType, MoleculeActivity, SketchState, TemplatePermutation} from './MoleculeActivity';
+import {FusionBank, TemplateBank} from './TemplateBank';
+import {ToolBank, ToolBankItem} from './ToolBank';
 
 /*
 	Sketcher: a very heavyweight widget that provides 2D structure editing for a molecule.
@@ -1796,4 +1819,3 @@ export class Sketcher extends DrawCanvas
 	}
 }
 
-/* EOF */ }

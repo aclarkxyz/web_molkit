@@ -10,7 +10,12 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
+import {Graph} from '../data/Graph';
+import {Molecule} from '../data/Molecule';
+import {MolUtil} from '../data/MolUtil';
+import {GeomUtil} from '../util/Geom';
+import {angleDiffPos, DEGRAD, norm2_xy, norm_xy, signum, sqr, TWOPI} from '../util/util';
+import {Vec} from '../util/Vec';
 
 /*
 	Given a metal centre, and some number of atoms that are (or should be) connected to the metal, finds an aesthetically acceptable arrangement. It
@@ -450,5 +455,3 @@ export class MetalLigate
 		}
 	}
 }
-
-/* EOF */ }

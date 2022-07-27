@@ -10,7 +10,10 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
+import {Chemistry} from '../data/Chemistry';
+import {Graph} from '../data/Graph';
+import {Molecule} from '../data/Molecule';
+import {Vec} from '../util/Vec';
 
 /*
 	Resonance bond removal: certain algorithms/file formats store alternating single/double bonds in resonance
@@ -257,5 +260,3 @@ export class ResonanceRemover
 		return true;
 	}
 }
-
-/* EOF */ }

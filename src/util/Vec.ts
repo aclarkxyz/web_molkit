@@ -12,8 +12,6 @@
 
 /* eslint-disable comma-spacing */
 
-namespace WebMolKit /* BOF */ {
-
 /*
 	Functions that operate on arrays, for performing routine tasks.
 */
@@ -650,4 +648,3 @@ export class Permutation
 	}
 }
 
-/* EOF */ }

@@ -10,7 +10,21 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
+import {BondArtifact} from '../data/BondArtifact';
+import {Chemistry} from '../data/Chemistry';
+import {CoordUtil} from '../data/CoordUtil';
+import {Graph} from '../data/Graph';
+import {Molecule} from '../data/Molecule';
+import {MolUtil} from '../data/MolUtil';
+import {PolymerBlock} from '../data/PolymerBlock';
+import {QueryTypeAtom, QueryUtil} from '../data/QueryUtil';
+import {SketchUtil} from '../data/SketchUtil';
+import {MetaVector} from '../gfx/MetaVector';
+import {angleDiff, angleNorm, DEGRAD, norm_xy, RADDEG, TWOPI} from '../util/util';
+import {Vec} from '../util/Vec';
+import {MetalLigate} from './MetalLigate';
+import {Sketcher} from './Sketcher';
+import {FusionPermutation, TemplateFusion} from './TemplateFusion';
 
 /*
 	MoleculeActivity: command-oriented modifications of the current molecular state.
@@ -1432,12 +1446,12 @@ export class MoleculeActivity
 		let delta = (snap - theta) * DEGRAD;
 
 		let mask = this.input.selectedMask;
-		if (Vec.allFalse(mask)) 
+		if (Vec.allFalse(mask))
 		{
 			let cc = mol.atomConnComp(bfr);
 			for (let n = 1; n <= mol.numAtoms; n++) mask[n - 1] = cc == mol.atomConnComp(n);
 		}
-		
+
 		let cx = 0.5 * (mol.atomX(bfr) + mol.atomX(bto)), cy = 0.5 * (mol.atomY(bfr) + mol.atomY(bto));
 		for (let n = 1; n <= mol.numAtoms; n++) if (mask[n - 1])
 		{
@@ -1933,72 +1947,6 @@ export class MoleculeActivity
 		}
 	}
 
-	/*
-	// input: (standard)
-	// output: (standard)
-	public void execBondInsert() throws Exception
-	{
-		if (!requireSubject()) return;
-
-		if (currentBond == 0)
-		{
-			errmsg = 'There must be a current bond.';
-			return;
-		}
-		if (mol.bondInRing(currentBond))
-		{
-			errmsg = 'Cannot insert into a ring-bond.';
-			return;
-		}
-
-		int[][] sides = MolUtil.getBondSides(mol, currentBond);
-		int[] side1 = sides[0], side2 = sides[1];
-		int[] atoms = null;
-		int a1 = mol.bondFrom(currentBond), a2 = mol.bondTo(currentBond);
-		boolean sel1 = selectedMask[a1 - 1], sel2 = selectedMask[a2 - 1];
-		if (sel1 && !sel2) atoms = side1;
-		else if (!sel1 && sel2) atoms = side2;
-		else if (side1.length < side2.length) atoms = side1;
-		else atoms = side2;
-
-		int alink = Vec.indexOf(a1, atoms) >= 0 ? a1 : a2;
-		outmol = mol.clone();
-		outmol.setBondOrder(currentBond, 1);
-
-		boolean[] fragmask = Vec.booleanArray(false, mol.numAtoms);
-		for (int n = 0; n < atoms.length; n++) fragmask[atoms[n] - 1] = true;
-		Molecule frag = MolUtil.subgraphWithAttachments(outmol, fragmask);
-
-		for (int n = outmol.numAtoms; n >= 1; n--) if (fragmask[n - 1] && n != alink)
-		{
-			outmol.deleteAtomAndBonds(n);
-			if (n < alink) alink--;
-		}
-
-		mol.setAtomElement(alink, "C");
-		mol.setAtomCharge(alink, 0);
-		mol.setAtomUnpaired(alink, 0);
-		mol.setAtomHExplicit(alink, Molecule.HEXPLICIT_UNKNOWN);
-		mol.setAtomIsotope(alink, Molecule.ISOTOPE_NATURAL);
-		mol.setAtomMapNum(alink, 0);
-		mol.setAtomExtra(alink, null);
-		mol.setAtomTransient(alink, null);
-
-		TemplateFusion fusion = new TemplateFusion(outmol, frag, "");
-		fusion.setWithGuideOnly(true);
-		fusion.permuteAtom(alink);
-		if (fusion.numPerms() == 0)
-		{
-			// (should be rare or impossible)
-			errmsg = 'Unable to insert an atom.';
-			return;
-		}
-
-		outmol = fusion.getPerm(0).mol;
-		zapSubject();
-		outCurrentAtom = alink;
-	}*/
-
 	// ----------------- private methods -----------------
 
 	// if there is no subject, sets the error message and returns false
@@ -2353,5 +2301,3 @@ export class MoleculeActivity
 	}
 
 }
-
-/* EOF */ }

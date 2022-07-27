@@ -10,7 +10,9 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
+import {MDLMOLReader} from './MDLReader';
+import {MDLMOLWriter} from './MDLWriter';
+import {Molecule} from './Molecule';
 
 /*
 	Serialisation and deserialisation utilities for the Molecule object.
@@ -196,5 +198,3 @@ export class MoleculeStream
 		return ret;
 	}
 }
-
-/* EOF */ }

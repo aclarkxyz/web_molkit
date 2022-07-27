@@ -10,7 +10,17 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
+import {Molecule} from '../data/Molecule';
+import {Dialog} from '../dialog/Dialog';
+import {ClipboardProxy, ClipboardProxyHandler} from '../ui/ClipboardProxy';
+import {OptionList} from '../ui/OptionList';
+import {TabBar} from '../ui/TabBar';
+import {dom, DOM} from '../util/dom';
+import {KeyCode, norm_xy} from '../util/util';
+import {ExtraFieldsWidget} from './ExtraFieldsWidget';
+import {GeomWidget, GeomWidgetSelection, GeomWidgetSelType, GeomWidgetType} from './GeomWidget';
+import {ActivityType, MoleculeActivity, SketchState} from './MoleculeActivity';
+import {QueryFieldsWidget} from './QueryFieldsWidget';
 
 /*
 	Options for editing a single bond within a molecule.
@@ -248,4 +258,3 @@ export class EditBond extends Dialog
 	}
 }
 
-/* EOF */ }

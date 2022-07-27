@@ -10,7 +10,7 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
+import {MoleculeStream} from './MoleculeStream';
 
 /*
 	Experiment reaction metadata: utilities and definitions.
@@ -202,5 +202,3 @@ export class ExperimentMeta
 		return null;
 	}
 }
-
-/* EOF */ }

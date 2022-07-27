@@ -10,9 +10,9 @@
 	[PKG=webmolkit]
 */
 
-/* eslint-disable comma-spacing */
+import {dom} from '../util/dom';
 
-namespace WebMolKit /* BOF */ {
+/* eslint-disable comma-spacing */
 
 /*
 	FontData: stores information about the general font, sufficient to recreate and layout every glyph.
@@ -754,5 +754,3 @@ export class FontData
 		return [metrics.width, size * FUDGE, size * (-this.DESCENT / this.ASCENT) * FUDGE];
 	}
 }
-
-/* EOF */ }

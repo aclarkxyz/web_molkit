@@ -10,7 +10,12 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
+import {Vec} from '../util/Vec';
+import {Chemistry} from './Chemistry';
+import {DotPath} from './DotPath';
+import {Molecule} from './Molecule';
+import {MolUtil} from './MolUtil';
+import {Stereochemistry} from './Stereochemistry';
 
 /*
 	A "meta-molecule" is a container for a molecule which stores derived information about it. This is a compensation for the
@@ -546,4 +551,3 @@ export class MetaMolecule
 	}
 }
 
-/* EOF */ }

@@ -10,7 +10,7 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
+import {Vec} from './Vec';
 
 /*
 	Pseudorandom number generator. Uses an implementation of linear congruential generator.
@@ -75,4 +75,3 @@ export class Random
 	}
 }
 
-/* EOF */ }

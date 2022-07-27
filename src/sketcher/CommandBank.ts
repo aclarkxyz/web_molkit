@@ -10,11 +10,13 @@
 	[PKG=webmolkit]
 */
 
-///<reference path='../ui/ButtonBank.ts'/>
+import {Molecule} from '../data/Molecule';
+import {Geometry} from '../data/SketchUtil';
+import {ButtonBank, ButtonBankItem} from '../ui/ButtonBank';
+import {KeyCode} from '../util/util';
+import {ActivityType, MoleculeActivity} from './MoleculeActivity';
 
 /* eslint-disable no-multi-spaces, comma-spacing */
-
-namespace WebMolKit /* BOF */ {
 
 /*
 	CommandBank: the various bank styles that correspond to actions (select-then-do, as opposed to toolbank style which
@@ -366,4 +368,3 @@ export class CommandBank extends ButtonBank
 	}
 }
 
-/* EOF */ }

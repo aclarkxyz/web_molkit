@@ -10,7 +10,10 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
+import {dom, DOM} from '../util/dom';
+import {hasInlineCSS, installInlineCSS, Theme} from '../util/Theme';
+import {colourCode} from '../util/util';
+import {Widget} from './Widget';
 
 /*
 	TabBar: a series of option buttons with a common area underneath it, of which just one can be selected & visible.
@@ -52,11 +55,6 @@ export class TabBar extends Widget
 	}
 
 	// return the panel: each of these needs to be individually filled
-	public getPanel(idxOrName:number | string):JQuery
-	{
-		let dom = this.getPanelDOM(idxOrName);
-		return dom ? $(dom.el as HTMLElement) : null;
-	}
 	public getPanelDOM(idxOrName:number | string):DOM
 	{
 		let idx = typeof idxOrName == 'number' ? idxOrName as number : this.options.indexOf(idxOrName);
@@ -64,8 +62,8 @@ export class TabBar extends Widget
 		return this.panelDiv[idx];
 	}
 
-	// create the underlying structure; the parent parameter must be jQuery-compatible
-	public render(parent:any):void
+	// create the underlying structure
+	public render(parent:DOM | Element):void
 	{
 		super.render(parent);
 
@@ -218,4 +216,3 @@ export class TabBar extends Widget
 	}
 }
 
-/* EOF */ }

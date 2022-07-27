@@ -10,9 +10,9 @@
 	[PKG=webmolkit]
 */
 
-///<reference path='../util/util.ts'/>
-
-namespace WebMolKit /* BOF */ {
+import {Vec} from '../util/Vec';
+import {Molecule} from './Molecule';
+import {MolUtil} from './MolUtil';
 
 /*
 	Utilities for getting & setting query features, for atoms and bonds. These are all stored within the reserved "q"
@@ -351,5 +351,3 @@ export class QueryUtil
 		return list;
 	}
 }
-
-/* EOF */ }

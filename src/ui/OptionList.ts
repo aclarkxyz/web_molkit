@@ -10,7 +10,10 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
+import {dom, DOM} from '../util/dom';
+import {hasInlineCSS, installInlineCSS, Theme} from '../util/Theme';
+import {colourCode} from '../util/util';
+import {Widget} from './Widget';
 
 /*
 	OptionList: a replacement for the ghetto native HTML radio buttons. Can be used in either horizontal or vertical mode. Rendering
@@ -69,8 +72,8 @@ export class OptionList extends Widget
 		this.callbackSelect = callback;
 	}
 
-	// create the underlying structure; the parent parameter must be jQuery-compatible
-	public render(parent:any):void
+	// create the underlying structure
+	public render(parent:DOM | Element):void
 	{
 		super.render(parent);
 
@@ -209,5 +212,3 @@ export class OptionList extends Widget
 		`;
 	}
 }
-
-/* EOF */ }

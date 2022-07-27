@@ -10,7 +10,8 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
+import {DataSheet} from '../data/DataSheet';
+import {Aspect} from './Aspect';
 
 /*
 	The AspectList class is used as a way to fetch all of the recognised aspects that are installed within a given datasheet, without
@@ -86,4 +87,3 @@ export class AspectList
 	}
 }
 
-/* EOF */ }

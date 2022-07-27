@@ -10,11 +10,8 @@
 	[PKG=webmolkit]
 */
 
-///<reference path='../../src/util/util.ts'/>
-///<reference path='../../src/decl/jquery/index.d.ts'/>
-///<reference path='Validation.ts'/>
-
-namespace WebMolKit /* BOF */ {
+import {DOM, dom} from '../../src/util/dom';
+import {Validation} from './Validation';
 
 /*
     Validation test execution: runs through all the tests defined in a Validation object, and renders the results into an HTML DOM. 
@@ -80,5 +77,3 @@ export class WebValExec
 		}
 	}
 }
-
-/* EOF */ }

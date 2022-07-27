@@ -10,7 +10,7 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
+import {Vec} from './Vec';
 
 /*
 	Useful matrix functionality.
@@ -704,4 +704,3 @@ export class SingularValueDecomposition
 	}
 }
 
-/* EOF */ }
