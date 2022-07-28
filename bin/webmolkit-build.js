@@ -4388,6 +4388,18 @@ var WebMolKit;
             else
                 CoordUtil.rotateMolecule(mol2, x0, y0, deltaA);
         }
+        static atomIsWeirdLinear(mol, idx) {
+            let bonds = mol.atomAdjBonds(idx);
+            if (bonds.length != 2)
+                return false;
+            for (let n = 0; n < bonds.length; n++)
+                if (mol.bondOrder(bonds[n]) == 3)
+                    return false;
+            let adj = mol.atomAdjList(idx);
+            let th1 = Math.atan2(mol.atomY(adj[0]) - mol.atomY(idx), mol.atomX(adj[0]) - mol.atomX(idx));
+            let th2 = Math.atan2(mol.atomY(adj[1]) - mol.atomY(idx), mol.atomX(adj[1]) - mol.atomX(idx));
+            return Math.abs(WebMolKit.angleDiff(th1, th2)) >= 175 * WebMolKit.DEGRAD;
+        }
     }
     CoordUtil.OVERLAP_THRESHOLD = 0.2;
     CoordUtil.OVERLAP_THRESHOLD_SQ = CoordUtil.OVERLAP_THRESHOLD * CoordUtil.OVERLAP_THRESHOLD;
@@ -6227,6 +6239,13 @@ var WebMolKit;
                     this.atomHyd[n] = hyd - 1;
                 }
                 if (stereo > 0 && this.keepParity) {
+                    let trans = this.mol.atomTransient(a);
+                    if (stereo == 1)
+                        this.mol.setAtomTransient(a, WebMolKit.Vec.append(trans, WebMolKit.ForeignMoleculeExtra.AtomChiralMDLOdd));
+                    else if (stereo == 2)
+                        this.mol.setAtomTransient(a, WebMolKit.Vec.append(trans, WebMolKit.ForeignMoleculeExtra.AtomChiralMDLEven));
+                    else if (stereo == 3)
+                        this.mol.setAtomTransient(a, WebMolKit.Vec.append(trans, WebMolKit.ForeignMoleculeExtra.AtomChiralMDLRacemic));
                 }
                 this.explicitValence.push(val);
             }
@@ -6250,6 +6269,13 @@ var WebMolKit;
                 if (type == 4) {
                     let src = { 'row': this.pos - 1, 'col': 6, 'len': 3 };
                     this.openmol.addJoin(WebMolKit.OpenMolType.QueryResonance, null, [b], [src]);
+                    if (this.keepAromatic)
+                        this.mol.setBondTransient(b, WebMolKit.Vec.append(this.mol.bondTransient(b), WebMolKit.ForeignMoleculeExtra.BondAromatic));
+                    else {
+                        if (this.resBonds == null)
+                            this.resBonds = WebMolKit.Vec.booleanArray(false, numBonds);
+                        this.resBonds[n] = true;
+                    }
                 }
             }
             const MBLK_CHG = 1, MBLK_RAD = 2, MBLK_ISO = 3, MBLK_RGP = 4, MBLK_HYD = 5, MBLK_ZCH = 6, MBLK_ZBO = 7, MBLK_ZPA = 8, MBLK_ZRI = 9, MBLK_ZAR = 10;
@@ -6501,6 +6527,16 @@ var WebMolKit;
             }
             if (this.considerRescale)
                 WebMolKit.CoordUtil.normaliseBondDistances(mol);
+            if (this.resBonds != null) {
+                let derez = new WebMolKit.ResonanceRemover(mol, this.resBonds, this.atomHyd);
+                try {
+                    derez.perform();
+                    for (let n = 0; n < mol.numBonds; n++)
+                        mol.setBondOrder(n + 1, derez.bondOrders[n]);
+                }
+                catch (ex) {
+                }
+            }
             mol.keepTransient = false;
         }
         parseV3000() {
@@ -6652,6 +6688,13 @@ var WebMolKit;
                 let order = type >= 1 && type <= 3 ? type : type == 9 || type == 10 ? 0 : 1;
                 this.mol.addBond(bfr, bto, order);
                 if (type == 4) {
+                    if (this.keepAromatic)
+                        this.mol.setBondTransient(b, WebMolKit.Vec.append(this.mol.bondTransient(b), WebMolKit.ForeignMoleculeExtra.BondAromatic));
+                    else {
+                        if (this.resBonds == null)
+                            this.resBonds = WebMolKit.Vec.booleanArray(false, numBonds);
+                        this.resBonds[b - 1] = true;
+                    }
                 }
                 let endpts = null;
                 let attach = null;
@@ -10998,7 +11041,6 @@ var WebMolKit;
                     }
                 };
                 request.onerror = () => reject('Failed to request URL: ' + url);
-                console.log('SENDING:' + JSON.stringify(params));
                 request.send(JSON.stringify(params));
             });
         });
@@ -14094,7 +14136,7 @@ var WebMolKit;
                 }
                 let a = {
                     'anum': n,
-                    'text': mol.atomExplicit(n) || this.atomIsWeirdLinear(n) ? mol.atomElement(n) : null,
+                    'text': mol.atomExplicit(n) || WebMolKit.CoordUtil.atomIsWeirdLinear(mol, n) ? mol.atomElement(n) : null,
                     'fsz': this.fontSizePix,
                     'bold': mol.atomMapNum(n) > 0,
                     'col': this.policy.data.atomCols[mol.atomicNumber(n)],
@@ -14729,18 +14771,6 @@ var WebMolKit;
                 }
                 x += chunkw[n];
             }
-        }
-        atomIsWeirdLinear(idx) {
-            let bonds = this.mol.atomAdjBonds(idx);
-            if (bonds.length != 2)
-                return false;
-            for (let n = 0; n < bonds.length; n++)
-                if (this.mol.bondOrder(bonds[n]) == 3)
-                    return false;
-            let adj = this.mol.atomAdjList(idx);
-            let th1 = Math.atan2(this.mol.atomY(adj[0]) - this.mol.atomY(idx), this.mol.atomX(adj[0]) - this.mol.atomX(idx));
-            let th2 = Math.atan2(this.mol.atomY(adj[1]) - this.mol.atomY(idx), this.mol.atomX(adj[1]) - this.mol.atomX(idx));
-            return Math.abs(WebMolKit.angleDiff(th1, th2)) >= 175 * WebMolKit.DEGRAD;
         }
         backOffAtom(atom, x, y, fx, fy, minDist) {
             if (x == fx && y == fy)

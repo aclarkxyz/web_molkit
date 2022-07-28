@@ -206,12 +206,10 @@ export class MDLMOLReader
 
 			if (stereo > 0 && this.keepParity)
 			{
-				/* todo: retained parity flags
 				let trans = this.mol.atomTransient(a);
-				if (stereo == 1) this.mol.setAtomTransient(a, Vec.append(trans, ForeignMolecule.ATOM_CHIRAL_MDL_ODD));
-				else if (stereo == 2) this.mol.setAtomTransient(a, Vec.append(trans, ForeignMolecule.ATOM_CHIRAL_MDL_EVEN));
-				else if (stereo == 3) this.mol.setAtomTransient(a, Vec.append(trans, ForeignMolecule.ATOM_CHIRAL_MDL_RACEMIC));
-				*/
+				if (stereo == 1) this.mol.setAtomTransient(a, Vec.append(trans, ForeignMoleculeExtra.AtomChiralMDLOdd));
+				else if (stereo == 2) this.mol.setAtomTransient(a, Vec.append(trans, ForeignMoleculeExtra.AtomChiralMDLEven));
+				else if (stereo == 3) this.mol.setAtomTransient(a, Vec.append(trans, ForeignMoleculeExtra.AtomChiralMDLRacemic));
 			}
 
 			this.explicitValence.push(val);
@@ -243,13 +241,12 @@ export class MDLMOLReader
 				let src:OpenMolSource = {'row': this.pos - 1, 'col': 6, 'len': 3};
 				this.openmol.addJoin(OpenMolType.QueryResonance, null, [b], [src]);
 
-				/* todo: handle the technically incorrect 'aromatic' type
-				if (this.keepAromatic) this.mol.setBondTransient(b, Vec.append(mol.bondTransient(b), ForeignMolecule.BOND_AROMATIC));
+				if (this.keepAromatic) this.mol.setBondTransient(b, Vec.append(this.mol.bondTransient(b), ForeignMoleculeExtra.BondAromatic));
 				else
 				{
 					if (this.resBonds == null) this.resBonds = Vec.booleanArray(false, numBonds);
 					this.resBonds[n] = true;
-				}*/
+				}
 			}
 		}
 
@@ -514,15 +511,19 @@ export class MDLMOLReader
 
 		if (this.considerRescale) CoordUtil.normaliseBondDistances(mol);
 
-		/* ... to be done...
-		if (resBonds != null)
+		if (this.resBonds != null)
 		{
-			ResonanceRemover derez = new ResonanceRemover(mol, resBonds, atomHyd);
-			try {derez.perform();} catch (GraphFaultException ex) {throw new MoleculeIOException(ex);}
-			int[] bo = derez.getBondOrders();
-			final int nb = mol.numBonds;
-			for (let n = 0; n < nb; n++) mol.setBondOrder(n + 1, bo[n]);
-		}*/
+			let derez = new ResonanceRemover(mol, this.resBonds, this.atomHyd);
+			try 
+			{
+				derez.perform();
+				for (let n = 0; n < mol.numBonds; n++) mol.setBondOrder(n + 1, derez.bondOrders[n]);
+			}
+			catch (ex)
+			{
+				// silent failure: de-resonance Kekulisation failed; the aromatic bonds will be left as single
+			}
+		}
 
 		mol.keepTransient = false;
 	}
@@ -689,13 +690,12 @@ export class MDLMOLReader
 			// to store actual molecules; in this case, it is necessary to either "deresonate" the rings, or to stash the property
 			if (type == 4)
 			{
-				/* todo: handle resonance type (even though it's invalid)
-				if (keepAromatic) mol.setBondTransient(n, Vec.append(mol.bondTransient(n), ForeignMolecule.BOND_AROMATIC));
+				if (this.keepAromatic) this.mol.setBondTransient(b, Vec.append(this.mol.bondTransient(b), ForeignMoleculeExtra.BondAromatic));
 				else
 				{
-					if (resBonds == null) resBonds = Vec.booleanArray(false, numBonds);
-					resBonds[n] = true;
-				}*/
+					if (this.resBonds == null) this.resBonds = Vec.booleanArray(false, numBonds);
+					this.resBonds[b - 1] = true;
+				}
 			}
 
 			let endpts:number[] = null;

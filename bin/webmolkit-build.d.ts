@@ -810,6 +810,7 @@ declare namespace WebMolKit {
         static normaliseBondDistances(mol: Molecule): void;
         static mirrorImage(mol: Molecule): Molecule;
         static alignOrientFlip(mol1: Molecule, idx1: number[], mol2: Molecule, idx2: number[]): void;
+        static atomIsWeirdLinear(mol: Molecule, idx: number): boolean;
     }
 }
 declare namespace WebMolKit {
@@ -2222,7 +2223,6 @@ declare namespace WebMolKit {
         private setupBondOrders;
         private placeAdjunct;
         private processLabel;
-        private atomIsWeirdLinear;
         private backOffAtom;
         private ensureMinimumBondLength;
         private orderedRingList;
