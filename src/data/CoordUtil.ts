@@ -409,6 +409,20 @@ export class CoordUtil
 		}
 		else CoordUtil.rotateMolecule(mol2, x0, y0, deltaA);
 	}
+
+	// returns true if the atom has two neighbours at almost 180 degree separation, such that it is a bit on the unusual side, and
+	// should have its carbon atoms drawn explicitly
+	public static atomIsWeirdLinear(mol:Molecule, idx:number):boolean
+	{
+		let bonds = mol.atomAdjBonds(idx);
+		if (bonds.length != 2) return false;
+		for (let n = 0; n < bonds.length; n++) if (mol.bondOrder(bonds[n]) == 3) return false; // triple bonds don't trigger this
+
+		let adj = mol.atomAdjList(idx);
+		let th1 = Math.atan2(mol.atomY(adj[0]) - mol.atomY(idx), mol.atomX(adj[0]) - mol.atomX(idx));
+		let th2 = Math.atan2(mol.atomY(adj[1]) - mol.atomY(idx), mol.atomX(adj[1]) - mol.atomX(idx));
+		return Math.abs(angleDiff(th1, th2)) >= 175 * DEGRAD;
+	}
 }
 
 /* EOF */ }

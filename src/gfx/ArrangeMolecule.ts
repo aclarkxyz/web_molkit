@@ -206,7 +206,7 @@ export class ArrangeMolecule
 			let a:APoint =
 			{
 				'anum': n,
-				'text': /*this.effects.showCarbon ||*/ mol.atomExplicit(n) || this.atomIsWeirdLinear(n) ? mol.atomElement(n) : null,
+				'text': /*this.effects.showCarbon ||*/ mol.atomExplicit(n) || CoordUtil.atomIsWeirdLinear(mol, n) ? mol.atomElement(n) : null,
 				'fsz': this.fontSizePix,
 				'bold': mol.atomMapNum(n) > 0,
 				'col': this.policy.data.atomCols[mol.atomicNumber(n)],
@@ -995,20 +995,6 @@ export class ArrangeMolecule
 
 			x += chunkw[n];
 		}
-	}
-
-	// returns true if the atom has two neighbours at almost 180 degree separation, such that it is a bit on the unusual side, and
-	// should have its carbon atoms drawn explicitly
-	private atomIsWeirdLinear(idx:number):boolean
-	{
-		let bonds = this.mol.atomAdjBonds(idx);
-		if (bonds.length != 2) return false;
-		for (let n = 0; n < bonds.length; n++) if (this.mol.bondOrder(bonds[n]) == 3) return false; // triple bonds don't trigger this
-
-		let adj = this.mol.atomAdjList(idx);
-		let th1 = Math.atan2(this.mol.atomY(adj[0]) - this.mol.atomY(idx), this.mol.atomX(adj[0]) - this.mol.atomX(idx));
-		let th2 = Math.atan2(this.mol.atomY(adj[1]) - this.mol.atomY(idx), this.mol.atomX(adj[1]) - this.mol.atomX(idx));
-		return Math.abs(angleDiff(th1, th2)) >= 175 * DEGRAD;
 	}
 
 	// given that the position (X,Y) connects with atom N, and is part of a bond that connects at the other end
