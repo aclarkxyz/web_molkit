@@ -514,7 +514,7 @@ export class MDLMOLReader
 		if (this.resBonds != null)
 		{
 			let derez = new ResonanceRemover(mol, this.resBonds, this.atomHyd);
-			try 
+			try
 			{
 				derez.perform();
 				for (let n = 0; n < mol.numBonds; n++) mol.setBondOrder(n + 1, derez.bondOrders[n]);

@@ -1432,12 +1432,12 @@ export class MoleculeActivity
 		let delta = (snap - theta) * DEGRAD;
 
 		let mask = this.input.selectedMask;
-		if (Vec.allFalse(mask)) 
+		if (Vec.allFalse(mask))
 		{
 			let cc = mol.atomConnComp(bfr);
 			for (let n = 1; n <= mol.numAtoms; n++) mask[n - 1] = cc == mol.atomConnComp(n);
 		}
-		
+
 		let cx = 0.5 * (mol.atomX(bfr) + mol.atomX(bto)), cy = 0.5 * (mol.atomY(bfr) + mol.atomY(bto));
 		for (let n = 1; n <= mol.numAtoms; n++) if (mask[n - 1])
 		{

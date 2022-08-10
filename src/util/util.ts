@@ -597,7 +597,7 @@ export async function postJSONURL(url:string | URL, params:Record<string, any>):
 		let request = new XMLHttpRequest();
 		request.open('POST', url.toString(), true);
 		request.responseType = 'text';
-		request.onload = () => 
+		request.onload = () =>
 		{
 			try {resolve(JSON.parse(request.response.toString()));}
 			catch (ex) {reject('JSON parsing error on result:' + ex);}
