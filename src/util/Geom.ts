@@ -283,6 +283,12 @@ export class GeomUtil
 	{
 		return [x * tfm[0][0] + y * tfm[0][1] + tfm[0][2], x * tfm[1][0] + y * tfm[1][1] + tfm[1][2]];
 	}
+	
+	// applies the affine transform to a vector, modifying the parameter array
+	public static applyAffineArray(x:number[], y:number[], tfm:number[][]):void
+	{
+		for (let n = 0; n < x.length; n++) [x[n], y[n]] = this.applyAffine(x[n], y[n], tfm);
+	}
 
 	// returns true if the 2D affine transform contains a mirror reflection
 	public static isAffineMirror(tfm:number[][]):boolean
