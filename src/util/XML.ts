@@ -16,6 +16,21 @@ namespace WebMolKit /* BOF */ {
 	Utilities to supplement the rather rudimentary DOM.
 */
 
+// these are defined locally, in case DOM has to be used as a plugin (in NodeJS mode)
+
+const ELEMENT_NODE = 1;
+const ATTRIBUTE_NODE = 2;
+const TEXT_NODE = 3;
+const CDATA_SECTION_NODE = 4;
+const ENTITY_REFERENCE_NODE = 5;
+const ENTITY_NODE = 6;
+const PROCESSING_INSTRUCTION_NODE = 7;
+const COMMENT_NODE = 8;
+const DOCUMENT_NODE = 9;
+const DOCUMENT_TYPE_NODE = 10;
+const DOCUMENT_FRAGMENT_NODE = 11;
+const NOTATION_NODE = 12;
+
 export class XML
 {
 	// these need to be defined when running under a raw NodeJS or worker thread environment, which has the XML parsing functionality stripped out of
@@ -69,7 +84,7 @@ export class XML
 		let text = '';
 		for (let child of Array.from(el.childNodes))
 		{
-			if (child.nodeType == Node.TEXT_NODE || child.nodeType == Node.CDATA_SECTION_NODE) text += child.nodeValue;
+			if (child.nodeType == TEXT_NODE || child.nodeType == CDATA_SECTION_NODE) text += child.nodeValue;
 		}
 		return text;
 	}
@@ -145,7 +160,7 @@ export class XML
 		let node = parent.firstChild;
 		while (node != null)
 		{
-			if (node.nodeType == Node.ELEMENT_NODE && node.nodeName == tagName) return node as Element;
+			if (node.nodeType == ELEMENT_NODE && node.nodeName == tagName) return node as Element;
 			node = node.nextSibling as any;
 		}
 		return null;
@@ -159,7 +174,7 @@ export class XML
 		let node = parent.firstChild;
 		while (node != null)
 		{
-			if (node.nodeType == Node.ELEMENT_NODE && node.nodeName === tagName) list.push(node as Element);
+			if (node.nodeType == ELEMENT_NODE && node.nodeName === tagName) list.push(node as Element);
 			node = node.nextSibling as any;
 		}
 		return list;
@@ -173,7 +188,7 @@ export class XML
 		let node = parent.firstChild;
 		while (node != null)
 		{
-			if (node.nodeType == Node.ELEMENT_NODE) list.push(node as Element);
+			if (node.nodeType == ELEMENT_NODE) list.push(node as Element);
 			node = node.nextSibling as any;
 		}
 		return list;

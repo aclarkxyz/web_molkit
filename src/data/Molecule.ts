@@ -519,7 +519,7 @@ export class Molecule
 		if (this.numBonds < other.numBonds) return -1;
 		if (this.numBonds > other.numBonds) return 1;
 
-		for (let n = 1;n <= this.numAtoms; n++)
+		for (let n = 1; n <= this.numAtoms; n++)
 		{
 			if (this.atomElement(n) < other.atomElement(n)) return -1;
 			if (this.atomElement(n) > other.atomElement(n)) return 1;

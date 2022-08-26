@@ -141,10 +141,16 @@ export class MDLMOLWriter
 		}
 
 		// export bonds
+		let maskArom = ForeignMolecule.noteAromaticBonds(mol);
 		for (let n = 1; n <= mol.numBonds; n++)
 		{
 			let order = mol.bondOrder(n), type = order;
-			if (type == 0) type = 8; // the "any" type
+			let qbond = Vec.sorted(QueryUtil.queryBondOrders(mol, n) ?? []);
+			if (maskArom[n - 1] || Vec.equals(qbond, [-1])) type = 4; // the "aromatic" type
+			else if (Vec.equals(qbond, [1, 2])) type = 5; // the "single or double" type
+			else if (Vec.equals(qbond, [-1, 1])) type = 6; // the "single or aromatic" type
+			else if (Vec.equals(qbond, [-1, 2])) type = 7; // the "double or aromatic" type
+			else if (type == 0) type = 8; // the "any" type
 			else if (type > 3) type = 3; // 4-or-higher bonds are not available
 
 			let stereo = mol.bondType(n);
