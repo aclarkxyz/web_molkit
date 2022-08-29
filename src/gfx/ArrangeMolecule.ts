@@ -23,9 +23,10 @@ export interface APoint
 	anum:number; // corresponds to molecule atom index
 	text:string; // the primary label, or null if invisible
 	fsz:number; // font size for label
-	bold:boolean;
+	//bold:boolean;
 	col:number;
 	oval:Oval;
+	rotation?:number; // degrees to rotate text
 }
 
 export enum BLineType
@@ -208,7 +209,6 @@ export class ArrangeMolecule
 				'anum': n,
 				'text': /*this.effects.showCarbon ||*/ mol.atomExplicit(n) || CoordUtil.atomIsWeirdLinear(mol, n) ? mol.atomElement(n) : null,
 				'fsz': this.fontSizePix,
-				'bold': mol.atomMapNum(n) > 0,
 				'col': this.policy.data.atomCols[mol.atomicNumber(n)],
 				'oval': new Oval(this.measure.angToX(mol.atomX(n)), this.measure.angToY(mol.atomY(n)), 0, 0)
 			};
@@ -251,7 +251,6 @@ export class ArrangeMolecule
 			let col = this.effects.colBond[n];
 			if (!col) col = this.policy.data.foreground;
 
-			//if (this.policy.data.mappedColour >= 0 && mol.atomMapNum(mol.bondFrom(bfr)) > 0 && mol.atomMapNum(mol.bondTo(bto)) > 0) col = policy.mappedColour;
 			bdbl[n - 1] = bo == 2 && (bt == Molecule.BONDTYPE_NORMAL || bt == Molecule.BONDTYPE_UNKNOWN);
 
 			let a1 = this.points[bfr - 1], a2 = this.points[bto - 1];
@@ -272,11 +271,50 @@ export class ArrangeMolecule
 			let xy2 = this.backOffAtom(bto, x2, y2, x1, y1, minDist);
 			this.ensureMinimumBondLength(xy1, xy2, x1, y1, x2, y2, minDist);
 
-			// !! this is not good... make sure that it doesn't happen
-			// (handled, above) if (Math.abs(xy1[0]-xy2[0])<=1 && Math.abs(xy1[1]-xy2[1])<=1) continue; // miniscule resolution: no bond line
-
 			let sz = this.lineSizePix, head = 0;
-			//if (mol.atomMapNum(mol.bondFrom(n))>0 && mol.atomMapNum(mol.bondTo(n))>0) sz*=5.0/3;
+			let qbonds = QueryUtil.queryBondOrders(mol, n);
+			if (Vec.notBlank(qbonds))
+			{
+				Vec.sort(qbonds);
+				if (qbonds[0] == -1) {qbonds.splice(0, 1); qbonds.push(-1);}
+				let qtxt = qbonds.map((o) => o == -1 ? 'A' : o.toString()).join('');
+				let oxy = this.orthogonalDelta(xy1[0], xy1[1], xy2[0], xy2[1], 1.3 * this.bondSepPix);
+				let v = -0.5;
+				for (let i = 0; i < 2; i++, v++)
+				{
+					let lx1 = xy1[0] + v * oxy[0], ly1 = xy1[1] + v * oxy[1], lx2 = xy2[0] + v * oxy[0], ly2 = xy2[1] + v * oxy[1];
+					let b:BLine =
+					{
+						'bnum': n,
+						'bfr': bfr,
+						'bto': bto,
+						'type': BLineType.Dotted,
+						'line': new Line(lx1, ly1, lx2, ly2),
+						'size': 0.5 * sz,
+						'head': head,
+						'col': (col & 0xFFFFFF) | 0x80000000,
+					};
+					this.lines.push(b);
+					this.space.push(this.computeSpaceLine(b));
+				}
+
+				let rotation = Math.atan2(xy2[1] - xy1[1], xy2[0] - xy1[0]) * RADDEG;
+				if (rotation < -90 || rotation > 90) rotation += 180; // don't want text to be upside down
+
+				let a:APoint =
+				{
+					'anum': 0,
+					'text': qtxt,
+					'fsz': 0.35 * this.fontSizePix,
+					'col': col,
+					'oval': new Oval(0.5 * (xy1[0] + xy2[0]), 0.5 * (xy1[1] + xy2[1]), 0, 0),
+					rotation
+				};
+				this.points.push(a);
+				this.space.push(this.computeSpacePoint(a));
+
+				continue;
+			}
 
 			let ltype = BLineType.Normal;
 			if (bo == 1 && bt == Molecule.BONDTYPE_INCLINED)
@@ -776,8 +814,8 @@ export class ArrangeMolecule
 				let ext = 1.2 * (rw + rh) * inv;
 				[dx, dy] = [dx * ext, dy * ext];
 				
-				this.points.push({'anum': 0, 'text': '.', 'fsz': fsz, 'bold': false, 'col': col, 'oval': new Oval(cx + dx + ox, cy + dy + oy, r, r)});
-				this.points.push({'anum': 0, 'text': '.', 'fsz': fsz, 'bold': false, 'col': col, 'oval': new Oval(cx + dx - ox, cy + dy - oy, r, r)});
+				this.points.push({'anum': 0, 'text': '.', 'fsz': fsz, 'col': col, 'oval': new Oval(cx + dx + ox, cy + dy + oy, r, r)});
+				this.points.push({'anum': 0, 'text': '.', 'fsz': fsz, 'col': col, 'oval': new Oval(cx + dx - ox, cy + dy - oy, r, r)});
 				return;
 			}
 		}
@@ -822,7 +860,6 @@ export class ArrangeMolecule
 			'anum': 0,
 			'text': str,
 			'fsz': fsz,
-			'bold': false,
 			'col': col,
 			'oval': new Oval(cx + bestDX, cy + bestDY, rw, rh)
 		};
@@ -967,7 +1004,6 @@ export class ArrangeMolecule
 				'anum': (n == refchunk || (primary != null && primary[n])) ? anum : 0,
 				'text': chunks[n],
 				'fsz': this.fontSizePix,
-				'bold': false,
 				'col': this.policy.data.atomCols[this.mol.atomicNumber(anum)],
 				'oval': new Oval(x + 0.5 * chunkw[n], y, 0.5 * chunkw[n] * PADDING, 0.5 * this.fontSizePix * PADDING)
 			};
@@ -1467,7 +1503,6 @@ export class ArrangeMolecule
 			'anum': 0,
 			'text': 'H',
 			'fsz': a.fsz,
-			'bold': a.bold,
 			'col': a.col,
 			'oval': new Oval(a.oval.cx + dx, a.oval.cy + dy, 0.5 * wad[0] * PADDING, 0.5 * wad[1] * PADDING)
 		};
@@ -1482,7 +1517,6 @@ export class ArrangeMolecule
 				'anum': 0,
 				'text': sub,
 				'fsz': subFsz,
-				'bold': a.bold,
 				'col': a.col,
 				'oval': new Oval(ah.oval.cx + 0.5 * firstEMW * a.fsz * font.INV_UNITS_PER_EM + 0.5 * wad[0],
 								 ah.oval.cy + (1 - SSFRACT) * a.fsz, 0.5 * wad[0] * PADDING, 0.5 * wad[1] * PADDING)
@@ -1921,7 +1955,6 @@ export class ArrangeMolecule
 			'anum': 0,
 			'text': text,
 			'fsz': fsz,
-			'bold': false,
 			'col': col,
 			'oval': new Oval(x, y, rw, rh),
 		};
@@ -2002,7 +2035,6 @@ export class ArrangeMolecule
 			'anum': 0,
 			'text': text,
 			'fsz': fsz,
-			'bold': false,
 			'col': col,
 			'oval': new Oval(x, y, rw, rh),
 		};
@@ -2421,7 +2453,6 @@ export class ArrangeMolecule
 			'anum': 0,
 			'text': str,
 			'fsz': fsz,
-			'bold': false,
 			'col': this.policy.data.foreground,
 			'oval': new Oval(this.measure.angToX(bestX), this.measure.angToY(bestY), rw, rh)
 		};

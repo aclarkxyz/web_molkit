@@ -81,13 +81,13 @@ export class MDLMOLReader
 	public allowV3000 = true; // if on, will diverge to a separate track for V3000
 	public considerRescale = true; // if on, bond lengths will be rescaled if they are funky
 	public relaxed = false; // set this to true to read some not-so-valid MOLfiles
-	public keepAromatic = false; // set this to retain "type 4" bonds with foreign annotation, instead of de-rezzing
+	public keepAromatic = false; // set this to retain "type 4" bonds and other queries, instead of de-rezzing
 	public keepParity = false; // set this to bring in the "parity" labels for atoms
+	public keepQuery = true; // set this to translate query-type properties into the native equivalent
 
 	// deliverables
 	public mol:Molecule = null; // the result (or partial result, if not successful)
 	public molName = ''; // molecule name from the header, if any
-	public openmol = new OpenMolSpec();
 
 	// hydrogen count & resonance bonds supposed to be query-only, but some software abuses them to get around the structural limitations
 	public atomHyd:number[] = null;
@@ -119,11 +119,6 @@ export class MDLMOLReader
 		if (this.parseHeader)
 		{
 			this.molName = this.lines[0];
-			if (this.molName)
-			{
-				let src:OpenMolSource = {'row': 0, 'col': 0, 'len': this.molName.length};
-				this.openmol.add(OpenMolType.MoleculeName, null, null, [src]);
-			}
 			this.pos = 3;
 		}
 		this.parseCTAB();
@@ -152,7 +147,6 @@ export class MDLMOLReader
 			if (this.allowV3000 && version == 'V3000')
 			{
 				this.parseV3000();
-				this.openmol.derive(this.mol);
 				return;
 			}
 			if (version != 'V2000') throw 'Invalid MDL MOL: no Vx000 tag.';
@@ -198,8 +192,6 @@ export class MDLMOLReader
 
 			if (hyd > 0)
 			{
-				this.openmol.addJoin(OpenMolType.QueryHCount, [a]);
-
 				if (this.atomHyd == null) this.atomHyd = Vec.numberArray(Molecule.HEXPLICIT_UNKNOWN, numAtoms);
 				this.atomHyd[n] = hyd - 1;
 			}
@@ -226,7 +218,7 @@ export class MDLMOLReader
 
 			if (bfr == bto || bfr < 1 || bfr > numAtoms || bto < 1 || bto > numAtoms) throw 'Invalid MDL MOL: bond line' + (n + 1);
 
-			let order = type >= 1 && type <= 3 ? type : type == 8 ? 0 : 1;
+			let order = type >= 1 && type <= 3 ? type : type == 8 || type == 9 ? 0 : 1;
 			let style = Molecule.BONDTYPE_NORMAL;
 			if (stereo == 1) style = Molecule.BONDTYPE_INCLINED;
 			else if (stereo == 6) style = Molecule.BONDTYPE_DECLINED;
@@ -234,18 +226,27 @@ export class MDLMOLReader
 
 			let b = this.mol.addBond(bfr, bto, order, style);
 
-			// type "4" is special: it is defined to be a special query type to match aromatic bonds, but it is sometimes used
-			// to store actual molecules; in this case, it is necessary to either "deresonate" the rings, or to stash the property
-			if (type == 4)
+			if (this.keepQuery)
 			{
-				let src:OpenMolSource = {'row': this.pos - 1, 'col': 6, 'len': 3};
-				this.openmol.addJoin(OpenMolType.QueryResonance, null, [b], [src]);
-
-				if (this.keepAromatic) this.mol.setBondTransient(b, Vec.append(this.mol.bondTransient(b), ForeignMoleculeExtra.BondAromatic));
-				else
+				if (type == 4) QueryUtil.setQueryBondOrders(this.mol, b, [-1]); // aromatic query type
+				else if (type == 5) QueryUtil.setQueryBondOrders(this.mol, b, [1, 2]); // single-or-double query type
+				else if (type == 6) QueryUtil.setQueryBondOrders(this.mol, b, [-1, 1]); // single-or-aromatic query type
+				else if (type == 7) QueryUtil.setQueryBondOrders(this.mol, b, [-1, 2]); // double-or-aromatic query type
+				// ... note that type==8 should ideally be "any" ([-1,0,1,2,3]) but it's being reserved as a placeholder for zero
+				// order bonds, because dative type==9 is disallowed for V2000
+			}
+			else
+			{
+				// type "4" is special: it is defined to be a special query type to match aromatic bonds, but it is sometimes used
+				// to store actual molecules; in this case, it is necessary to either "deresonate" the rings, or to stash the property
+				if (type == 4)
 				{
-					if (this.resBonds == null) this.resBonds = Vec.booleanArray(false, numBonds);
-					this.resBonds[n] = true;
+					if (this.keepAromatic) this.mol.setBondTransient(b, Vec.append(this.mol.bondTransient(b), ForeignMoleculeExtra.BondAromatic));
+					else
+					{
+						if (this.resBonds == null) this.resBonds = Vec.booleanArray(false, numBonds);
+						this.resBonds[n] = true;
+					}
 				}
 			}
 		}
@@ -418,19 +419,9 @@ export class MDLMOLReader
 					}
 					else if (type == MBLK_ISO) this.mol.setAtomIsotope(pos, val);
 					else if (type == MBLK_RGP) this.mol.setAtomElement(pos, 'R' + val);
-					else if (type == MBLK_HYD)
-					{
-						this.mol.setAtomHExplicit(pos, val);
-						let src:OpenMolSource = {'row': this.pos - 1, 'col': 9 + 8 * n, 'len': 8};
-						this.openmol.addJoin(OpenMolType.HydrogenCounting, [pos], null, [src]);
-					}
+					else if (type == MBLK_HYD) this.mol.setAtomHExplicit(pos, val);
 					else if (type == MBLK_ZCH) this.mol.setAtomCharge(pos, val);
-					else if (type == MBLK_ZBO)
-					{
-						this.mol.setBondOrder(pos, val);
-						let src:OpenMolSource = {'row': this.pos - 1, 'col': 9 + 8 * n, 'len': 8};
-						this.openmol.addJoin(OpenMolType.ZeroOrderBonds, null, [pos], [src]);
-					}
+					else if (type == MBLK_ZBO) this.mol.setBondOrder(pos, val);
 				}
 			}
 		}
@@ -466,8 +457,6 @@ export class MDLMOLReader
 		}
 
 		for (let key of Vec.sorted(Array.from(mixtures.keys()))) this.groupMixtures.push(mixtures.get(key));
-
-		this.openmol.derive(this.mol);
 	}
 
 	// performs some intrinsic post-parse fixing
@@ -686,15 +675,26 @@ export class MDLMOLReader
 			let order = type >= 1 && type <= 3 ? type : type == 9 || type == 10 ? 0 : 1;
 			this.mol.addBond(bfr, bto, order);
 
-			// type "4" is special: it is defined to be a special query type to match aromatic bonds, but it is sometimes used
-			// to store actual molecules; in this case, it is necessary to either "deresonate" the rings, or to stash the property
-			if (type == 4)
+			if (this.keepQuery)
 			{
-				if (this.keepAromatic) this.mol.setBondTransient(b, Vec.append(this.mol.bondTransient(b), ForeignMoleculeExtra.BondAromatic));
-				else
+				if (type == 4) QueryUtil.setQueryBondOrders(this.mol, b, [-1]); // aromatic query type
+				else if (type == 5) QueryUtil.setQueryBondOrders(this.mol, b, [1, 2]); // single-or-double query type
+				else if (type == 6) QueryUtil.setQueryBondOrders(this.mol, b, [-1, 1]); // single-or-aromatic query type
+				else if (type == 7) QueryUtil.setQueryBondOrders(this.mol, b, [-1, 2]); // double-or-aromatic query type
+				else if (type == 8) QueryUtil.setQueryBondOrders(this.mol, b, [-1, 0, 1, 2, 3]); // anything
+			}
+			else
+			{
+				// type "4" is special: it is defined to be a special query type to match aromatic bonds, but it is sometimes used
+				// to store actual molecules; in this case, it is necessary to either "deresonate" the rings, or to stash the property
+				if (type == 4)
 				{
-					if (this.resBonds == null) this.resBonds = Vec.booleanArray(false, numBonds);
-					this.resBonds[b - 1] = true;
+					if (this.keepAromatic) this.mol.setBondTransient(b, Vec.append(this.mol.bondTransient(b), ForeignMoleculeExtra.BondAromatic));
+					else
+					{
+						if (this.resBonds == null) this.resBonds = Vec.booleanArray(false, numBonds);
+						this.resBonds[b - 1] = true;
+					}
 				}
 			}
 

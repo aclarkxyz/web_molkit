@@ -779,7 +779,7 @@ export class DrawCanvas extends Widget implements ArrangeMeasurement
 		for (let n = 1; n <= mol.numBonds; n++) if (QueryUtil.hasAnyQueryBond(mol, n))
 		{
 			let bits:string[] = [];
-			for (let xtra of mol.bondExtra(n)) if (xtra.startsWith('q')) bits.push(xtra);
+			for (let xtra of mol.bondExtra(n)) if (xtra.startsWith('q') && !xtra.startsWith(QueryTypeBond.Orders)) bits.push(xtra);
 
 			let num = 0, cx = 0, cy = 0;
 			for (let bl of layout.getLines()) if (bl.bnum == n)

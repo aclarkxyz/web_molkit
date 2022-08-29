@@ -132,7 +132,7 @@ export class DrawMolecule
 			}
 			if (txt.length > 0)
 			{
-				vg.drawText(cx, cy, txt, fsz, col, TextAlign.Centre | TextAlign.Middle);
+				vg.drawText(cx, cy, txt, fsz, col, TextAlign.Centre | TextAlign.Middle, p.rotation || 0);
 			}
 		}
 

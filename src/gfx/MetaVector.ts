@@ -805,6 +805,7 @@ export class MetaVector
 		let type = this.typeObj[p[1]] as TypeObjText;
 		let x:number = p[2], y:number = p[3];
 		let txt:string = p[4];
+		let direction:number = p[5];
 
 		let sz = type.size;
 		let fill = colourCanvas(type.colour);
@@ -831,8 +832,13 @@ export class MetaVector
 			if (path)
 			{
 				ctx.save();
-				ctx.translate(x + dx * scale, y);
+				let theta = direction != 0 ? direction * DEGRAD : 0;
+				if (theta == 0)
+					ctx.translate(x + dx * scale, y);
+				else
+					ctx.translate(x + Math.cos(theta) * dx * scale, y + Math.sin(theta) *  dx * scale);
 				ctx.scale(scale, -scale);
+				if (theta != 0) ctx.rotate(-theta);
 				ctx.fillStyle = fill;
 				ctx.fill(path);
 				ctx.restore();

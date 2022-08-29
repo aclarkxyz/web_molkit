@@ -1129,9 +1129,9 @@ declare namespace WebMolKit {
         relaxed: boolean;
         keepAromatic: boolean;
         keepParity: boolean;
+        keepQuery: boolean;
         mol: Molecule;
         molName: string;
-        openmol: OpenMolSpec;
         atomHyd: number[];
         resBonds: boolean[];
         explicitValence: number[];
@@ -1449,40 +1449,6 @@ declare namespace WebMolKit {
         loadFromURL(url: string): Promise<void>;
         loadContent(text: string): void;
         debugString(term: OntologyTreeTerm): string;
-    }
-}
-declare namespace WebMolKit {
-    enum OpenMolType {
-        None = 0,
-        AtomCount1000 = 1,
-        BondCount1000 = 2,
-        InlineAbbreviations = 3,
-        ZeroOrderBonds = 4,
-        HydrogenCounting = 5,
-        MoleculeName = 6,
-        QueryResonance = 7,
-        QueryHCount = 8
-    }
-    interface OpenMolSource {
-        row: number;
-        col: number;
-        len: number;
-    }
-    interface OpenMolNote {
-        type: OpenMolType;
-        atoms?: number[];
-        bonds?: number[];
-        level?: number;
-        source?: OpenMolSource[];
-    }
-    class OpenMolSpec {
-        level: number;
-        invalid: boolean;
-        notes: OpenMolNote[];
-        add(type: OpenMolType, atoms?: number[], bonds?: number[], source?: OpenMolSource[]): void;
-        addNote(note: OpenMolNote): void;
-        addJoin(type: OpenMolType, atoms?: number[], bonds?: number[], source?: OpenMolSource[]): void;
-        derive(mol: Molecule): void;
     }
 }
 declare namespace WebMolKit {
@@ -2114,9 +2080,9 @@ declare namespace WebMolKit {
         anum: number;
         text: string;
         fsz: number;
-        bold: boolean;
         col: number;
         oval: Oval;
+        rotation?: number;
     }
     enum BLineType {
         Normal = 1,
@@ -3705,6 +3671,7 @@ declare namespace WebMolKit {
         static affineRotate(theta: number): number[][];
         static affineCompose(A: number[][], B: number[][]): number[][];
         static applyAffine(x: number, y: number, tfm: number[][]): [number, number];
+        static applyAffineArray(x: number[], y: number[], tfm: number[][]): void;
         static isAffineMirror(tfm: number[][]): boolean;
         static magnitude2(v: number[]): number;
         static magnitude(v: number[]): number;
