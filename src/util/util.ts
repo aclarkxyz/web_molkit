@@ -615,6 +615,12 @@ export async function yieldDOM():Promise<void>
 	return new Promise<void>((resolve) => setTimeout(() => resolve()));
 }
 
+// pauses for some number of seconds, within an async block
+export async function pause(seconds:number):Promise<void>
+{
+	return new Promise<void>((resolve) => setTimeout(() => resolve(), seconds * 1000));
+}
+
 // practical workaround for figuring out how much space the scrollers will used when realised; on Mac-like or mobile platforms this will generally be zero,
 // whereas for Windows/Linux-like platforms it's usually around 20 pixels or so; it will finagle the DOM invisibly the first time it is called
 let staticScrollerSize:Size = null;

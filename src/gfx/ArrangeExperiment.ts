@@ -47,7 +47,6 @@ export class ArrangeComponent
 	public srcIdx:number; // index in underlying reactionsheet (i.e. reactants/reagents/products[srcIdx])
 	public step:number;	// which step it belongs to
 	public side:number; // which side of the reaction (-1=left, 1=right, 0=middle)
-	public refIdx:number; // for non-primary components, the index of the association
 	public mol:Molecule; // molecule content, if applicable
 	public text:string[]; // text content, if applicable
 	public leftNumer:string; // // to the left of the structure: may be {n}/{d} form
@@ -55,6 +54,8 @@ export class ArrangeComponent
 	public fszText:number; // text font sizes, if applicable
 	public fszLeft:number;
 	public annot = ArrangeComponentAnnot.None; // annotation glyph on the right
+	public monochromeColour:number = null; // cause the rendering to be done in a specific colour
+	public metaInfo:Record<string, any> = null; // user-controlled
 	public box = new Box(); // bounding box
 	public padding:number; // how much padding around the outer boundary
 
@@ -65,7 +66,6 @@ export class ArrangeComponent
 		dup.srcIdx = this.srcIdx;
 		dup.step = this.step;
 		dup.side = this.side;
-		dup.refIdx = this.refIdx;
 		dup.mol = this.mol;
 		dup.text = this.text;
 		dup.leftNumer = this.leftNumer;
@@ -73,6 +73,8 @@ export class ArrangeComponent
 		dup.fszText = this.fszText;
 		dup.fszLeft = this.fszLeft;
 		dup.annot = this.annot;
+		dup.monochromeColour = this.monochromeColour;
+		dup.metaInfo = this.metaInfo;
 		dup.box = this.box.clone();
 		dup.padding = this.padding;
 		return dup;
@@ -86,6 +88,17 @@ const ARROW_H = 0.5;
 const REAGENT_SCALE = 0.7;
 const PLACEHOLDER_W = 2;
 const PLACEHOLDER_H = 2;
+
+export interface ArrangeExperimentFauxComponent
+{
+	step:number;
+	type:ArrangeComponentType;
+	mol:Molecule;
+	name?:string;
+	annot?:ArrangeComponentAnnot;
+	colour?:number;
+	metaInfo?:any;
+}
 
 export class ArrangeExperiment
 {
@@ -110,6 +123,7 @@ export class ArrangeExperiment
 	public colourAtomMap = 0x9D1A76; // if above, use this colour
 	public allowVertical = true; // permit vertical or bent arrangements
 	public padding = 0;
+	public fauxComponents:ArrangeExperimentFauxComponent[] = []; // extra components to add in by request
 
 	public static COMP_GAP_LEFT = 0.5;
 	public static COMP_ANNOT_SIZE = 1;
@@ -285,6 +299,14 @@ export class ArrangeExperiment
 			}
 			if (!any && this.includeBlank) this.createBlank(ArrangeComponentType.Product, s);
 		}
+
+		// faux-components
+		for (let fc of this.fauxComponents)
+		{
+			if (fc.type == ArrangeComponentType.Reactant) this.createSegregator(ArrangeComponentType.Plus, fc.step, -1);
+			else if (fc.type == ArrangeComponentType.Product) this.createSegregator(ArrangeComponentType.Plus, fc.step, 1);
+			this.createFauxComponent(fc);
+		}
 	}
 
 	private createReactant(idx:number, step:number):void
@@ -400,6 +422,20 @@ export class ArrangeExperiment
 		xc.step = step;
 		xc.side = type == ArrangeComponentType.Reactant ? -1 : type == ArrangeComponentType.Product ? 1 : 0;
 		xc.srcIdx = -1;
+		this.components.push(xc);
+	}
+	private createFauxComponent(fc:ArrangeExperimentFauxComponent):void
+	{
+		let xc = new ArrangeComponent();
+		xc.type = fc.type;
+		xc.srcIdx = -1;
+		xc.step = fc.step;
+		xc.side = fc.type == ArrangeComponentType.Reactant ? -1 : fc.type == ArrangeComponentType.Product ? 1 : 0;
+		xc.mol = fc.mol;
+		if (fc.name) xc.text = [fc.name];
+		if (fc.annot) xc.annot = fc.annot;
+		xc.monochromeColour = fc.colour;
+		xc.metaInfo = fc.metaInfo;
 		this.components.push(xc);
 	}
 
@@ -674,13 +710,20 @@ export class ArrangeExperiment
 	// determine how good a particular arrangement is
 	private scoreArrangement(comps:ArrangeComponent[]):number
 	{
-		let w = 0;
-		for (let xc of comps) w = Math.max(w, xc.box.maxX());
+		let w = 0, h = 0;
+		for (let xc of comps) 
+		{
+			w = Math.max(w, xc.box.maxX());
+			h = Math.max(h, xc.box.maxY());
+		}
 
 		let score = 0;
 
 		// want the width to be as close as possible to the limiting width
-		score -= Math.abs(w - this.limitTotalW);
+		score -= Math.max(0, Math.abs(w - this.limitTotalW));
+
+		// .. and height?
+		//score -= Math.max(0, Math.abs(h - this.limitTotalH));
 
 		// (anything else that matters?)
 

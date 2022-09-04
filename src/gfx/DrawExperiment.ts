@@ -74,7 +74,7 @@ export class DrawExperiment
 
 		if (this.preDrawComponent) this.preDrawComponent(vg, idx, xc);
 
-		if (xc.srcIdx < 0 || (MolUtil.isBlank(xc.mol) && Vec.isBlank(xc.text)))
+		if (xc.srcIdx < 0 && MolUtil.isBlank(xc.mol) && Vec.isBlank(xc.text))
 		{
 			let fsz = 0.5 * bh;
 			vg.drawText(bx + 0.5 * bw, by + 0.5 * bh, '?', fsz, policy.data.foreground, TextAlign.Centre | TextAlign.Middle);
@@ -147,7 +147,15 @@ export class DrawExperiment
 				for (let n = 1; n <= xc.mol.numAtoms; n++) if (xc.mol.atomMapNum(n) > 0) effects.atomDecoText[n - 1] = xc.mol.atomMapNum(n).toString();
 			}
 
-			let arrmol = new ArrangeMolecule(xc.mol, this.layout.measure, policy, effects);
+			let usePolicy = policy;
+			if (xc.monochromeColour != null)
+			{
+				usePolicy = usePolicy.clone();
+				usePolicy.data.foreground = xc.monochromeColour;
+				usePolicy.data.atomCols = Vec.numberArray(xc.monochromeColour, usePolicy.data.atomCols.length);
+			}
+
+			let arrmol = new ArrangeMolecule(xc.mol, this.layout.measure, usePolicy, effects);
 			arrmol.arrange();
 			arrmol.squeezeInto(bx, by, bw, bh, 0);
 

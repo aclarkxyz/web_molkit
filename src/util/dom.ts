@@ -246,7 +246,7 @@ export class DOM
 	{
 		this.elHTML.style.setProperty(key, value);
 	}
-	public css(dict:Record<string, string | number>):DOM
+	public css(dict:Record<string, string | number | boolean>):DOM
 	{
 		for (let key in dict) this.setCSS(key, dict[key].toString());
 		return this;

@@ -61,6 +61,8 @@ export class RenderPolicy
 		}
 	}
 
+	public clone():RenderPolicy {return new RenderPolicy(this.data);}
+
 	// static methods for creating new default schemes
 	public static defaultBlackOnWhite(pixPerAng?:number):RenderPolicy
 	{
