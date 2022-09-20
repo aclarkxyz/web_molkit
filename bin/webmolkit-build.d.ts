@@ -1667,6 +1667,7 @@ declare namespace WebMolKit {
     function readTextURL(url: string | URL): Promise<string>;
     function postJSONURL(url: string | URL, params: Record<string, any>): Promise<Record<string, any>>;
     function yieldDOM(): Promise<void>;
+    function pause(seconds: number): Promise<void>;
     function empiricalScrollerSize(): Size;
 }
 declare namespace WebMolKit {
@@ -1988,7 +1989,6 @@ declare namespace WebMolKit {
         srcIdx: number;
         step: number;
         side: number;
-        refIdx: number;
         mol: Molecule;
         text: string[];
         leftNumer: string;
@@ -1996,9 +1996,20 @@ declare namespace WebMolKit {
         fszText: number;
         fszLeft: number;
         annot: ArrangeComponentAnnot;
+        monochromeColour: number;
+        metaInfo: Record<string, any>;
         box: Box;
         padding: number;
         clone(): ArrangeComponent;
+    }
+    interface ArrangeExperimentFauxComponent {
+        step: number;
+        type: ArrangeComponentType;
+        mol: Molecule;
+        name?: string;
+        annot?: ArrangeComponentAnnot;
+        colour?: number;
+        metaInfo?: any;
     }
     class ArrangeExperiment {
         entry: ExperimentEntry;
@@ -2022,6 +2033,7 @@ declare namespace WebMolKit {
         colourAtomMap: number;
         allowVertical: boolean;
         padding: number;
+        fauxComponents: ArrangeExperimentFauxComponent[];
         static COMP_GAP_LEFT: number;
         static COMP_ANNOT_SIZE: number;
         constructor(entry: ExperimentEntry, measure: ArrangeMeasurement, policy: RenderPolicy);
@@ -2038,6 +2050,7 @@ declare namespace WebMolKit {
         private createSegregator;
         private createStepMeta;
         private createBlank;
+        private createFauxComponent;
         private arrangeComponents;
         private gatherBlock;
         private arrangeMainBlock;
@@ -2450,6 +2463,7 @@ declare namespace WebMolKit {
     export class RenderPolicy {
         data: RenderData;
         constructor(data?: RenderData);
+        clone(): RenderPolicy;
         static defaultBlackOnWhite(pixPerAng?: number): RenderPolicy;
         static defaultWhiteOnBlack(pixPerAng?: number): RenderPolicy;
         static defaultColourOnWhite(pixPerAng?: number): RenderPolicy;
@@ -4084,7 +4098,7 @@ declare namespace WebMolKit {
         setValue(str: string): void;
         getCSS(key: string): string;
         setCSS(key: string, value: string): void;
-        css(dict: Record<string, string | number>): DOM;
+        css(dict: Record<string, string | number | boolean>): DOM;
         getAttr(key: string): string;
         setAttr(key: string, value: string): void;
         attr(dict: Record<string, string | number | boolean>): DOM;

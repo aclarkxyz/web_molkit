@@ -836,7 +836,7 @@ export class MetaVector
 				if (theta == 0)
 					ctx.translate(x + dx * scale, y);
 				else
-					ctx.translate(x + Math.cos(theta) * dx * scale, y + Math.sin(theta) *  dx * scale);
+					ctx.translate(x + Math.cos(theta) * dx * scale, y + Math.sin(theta) * dx * scale);
 				ctx.scale(scale, -scale);
 				if (theta != 0) ctx.rotate(-theta);
 				ctx.fillStyle = fill;

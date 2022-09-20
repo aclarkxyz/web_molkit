@@ -183,13 +183,6 @@ export class MDLMOLReader
 			}
 			this.mol.setAtomMapNum(a, mapnum);
 
-			/* todo: add in Z-support to molecule class
-			if (z != 0)
-			{
-				this.mol.setIs3D(true);
-				this.mol.setAtomZ(a, z);
-			}*/
-
 			if (hyd > 0)
 			{
 				if (this.atomHyd == null) this.atomHyd = Vec.numberArray(Molecule.HEXPLICIT_UNKNOWN, numAtoms);
@@ -632,8 +625,11 @@ export class MDLMOLReader
 			let x = parseFloat(bits[2]), y = parseFloat(bits[3]), z = parseFloat(bits[4]);
 			let map = parseInt(bits[5]);
 			this.mol.addAtom(type, x, y);
-			/* todo: handle Z in molecule
-			if (z != 0) {mol.setAtomZ(n, z); mol.setIs3D(true);}*/
+			if (z != 0)
+			{
+				this.mol.setAtomZ(a, z);
+				this.mol.setIs3D(true);
+			}
 			this.mol.setAtomMapNum(a, map);
 
 			for (let i = 6; i < bits.length; i++)

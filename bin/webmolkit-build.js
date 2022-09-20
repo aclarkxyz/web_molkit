@@ -6651,6 +6651,10 @@ var WebMolKit;
                 let x = parseFloat(bits[2]), y = parseFloat(bits[3]), z = parseFloat(bits[4]);
                 let map = parseInt(bits[5]);
                 this.mol.addAtom(type, x, y);
+                if (z != 0) {
+                    this.mol.setAtomZ(a, z);
+                    this.mol.setIs3D(true);
+                }
                 this.mol.setAtomMapNum(a, map);
                 for (let i = 6; i < bits.length; i++) {
                     let eq = bits[i].indexOf('=');
@@ -10996,6 +11000,12 @@ var WebMolKit;
         });
     }
     WebMolKit.yieldDOM = yieldDOM;
+    function pause(seconds) {
+        return __awaiter(this, void 0, void 0, function* () {
+            return new Promise((resolve) => setTimeout(() => resolve(), seconds * 1000));
+        });
+    }
+    WebMolKit.pause = pause;
     let staticScrollerSize = null;
     function empiricalScrollerSize() {
         if (staticScrollerSize)
@@ -13374,6 +13384,8 @@ var WebMolKit;
     class ArrangeComponent {
         constructor() {
             this.annot = ArrangeComponentAnnot.None;
+            this.monochromeColour = null;
+            this.metaInfo = null;
             this.box = new WebMolKit.Box();
         }
         clone() {
@@ -13382,7 +13394,6 @@ var WebMolKit;
             dup.srcIdx = this.srcIdx;
             dup.step = this.step;
             dup.side = this.side;
-            dup.refIdx = this.refIdx;
             dup.mol = this.mol;
             dup.text = this.text;
             dup.leftNumer = this.leftNumer;
@@ -13390,6 +13401,8 @@ var WebMolKit;
             dup.fszText = this.fszText;
             dup.fszLeft = this.fszLeft;
             dup.annot = this.annot;
+            dup.monochromeColour = this.monochromeColour;
+            dup.metaInfo = this.metaInfo;
             dup.box = this.box.clone();
             dup.padding = this.padding;
             return dup;
@@ -13425,6 +13438,7 @@ var WebMolKit;
             this.colourAtomMap = 0x9D1A76;
             this.allowVertical = true;
             this.padding = 0;
+            this.fauxComponents = [];
             this.scale = policy.data.pointScale;
             this.limitStructW = this.limitStructH = this.scale * 10;
             this.padding = PADDING * this.scale;
@@ -13558,6 +13572,13 @@ var WebMolKit;
                 if (!any && this.includeBlank)
                     this.createBlank(ArrangeComponentType.Product, s);
             }
+            for (let fc of this.fauxComponents) {
+                if (fc.type == ArrangeComponentType.Reactant)
+                    this.createSegregator(ArrangeComponentType.Plus, fc.step, -1);
+                else if (fc.type == ArrangeComponentType.Product)
+                    this.createSegregator(ArrangeComponentType.Plus, fc.step, 1);
+                this.createFauxComponent(fc);
+            }
         }
         createReactant(idx, step) {
             let comp = this.entry.steps[step].reactants[idx];
@@ -13668,6 +13689,21 @@ var WebMolKit;
             xc.step = step;
             xc.side = type == ArrangeComponentType.Reactant ? -1 : type == ArrangeComponentType.Product ? 1 : 0;
             xc.srcIdx = -1;
+            this.components.push(xc);
+        }
+        createFauxComponent(fc) {
+            let xc = new ArrangeComponent();
+            xc.type = fc.type;
+            xc.srcIdx = -1;
+            xc.step = fc.step;
+            xc.side = fc.type == ArrangeComponentType.Reactant ? -1 : fc.type == ArrangeComponentType.Product ? 1 : 0;
+            xc.mol = fc.mol;
+            if (fc.name)
+                xc.text = [fc.name];
+            if (fc.annot)
+                xc.annot = fc.annot;
+            xc.monochromeColour = fc.colour;
+            xc.metaInfo = fc.metaInfo;
             this.components.push(xc);
         }
         arrangeComponents(comps, bendStep, vertComp) {
@@ -13875,11 +13911,13 @@ var WebMolKit;
             return mid;
         }
         scoreArrangement(comps) {
-            let w = 0;
-            for (let xc of comps)
+            let w = 0, h = 0;
+            for (let xc of comps) {
                 w = Math.max(w, xc.box.maxX());
+                h = Math.max(h, xc.box.maxY());
+            }
             let score = 0;
-            score -= Math.abs(w - this.limitTotalW);
+            score -= Math.max(0, Math.abs(w - this.limitTotalW));
             return score;
         }
         originateBlock(block, x, y) {
@@ -16312,7 +16350,7 @@ var WebMolKit;
             let bw = xc.box.w - 2 * xc.padding, bh = xc.box.h - 2 * xc.padding;
             if (this.preDrawComponent)
                 this.preDrawComponent(vg, idx, xc);
-            if (xc.srcIdx < 0 || (WebMolKit.MolUtil.isBlank(xc.mol) && WebMolKit.Vec.isBlank(xc.text))) {
+            if (xc.srcIdx < 0 && WebMolKit.MolUtil.isBlank(xc.mol) && WebMolKit.Vec.isBlank(xc.text)) {
                 let fsz = 0.5 * bh;
                 vg.drawText(bx + 0.5 * bw, by + 0.5 * bh, '?', fsz, policy.data.foreground, WebMolKit.TextAlign.Centre | WebMolKit.TextAlign.Middle);
                 return;
@@ -16363,7 +16401,13 @@ var WebMolKit;
                         if (xc.mol.atomMapNum(n) > 0)
                             effects.atomDecoText[n - 1] = xc.mol.atomMapNum(n).toString();
                 }
-                let arrmol = new WebMolKit.ArrangeMolecule(xc.mol, this.layout.measure, policy, effects);
+                let usePolicy = policy;
+                if (xc.monochromeColour != null) {
+                    usePolicy = usePolicy.clone();
+                    usePolicy.data.foreground = xc.monochromeColour;
+                    usePolicy.data.atomCols = WebMolKit.Vec.numberArray(xc.monochromeColour, usePolicy.data.atomCols.length);
+                }
+                let arrmol = new WebMolKit.ArrangeMolecule(xc.mol, this.layout.measure, usePolicy, effects);
                 arrmol.arrange();
                 arrmol.squeezeInto(bx, by, bw, bh, 0);
                 if (this.preDrawMolecule)
@@ -18483,6 +18527,7 @@ var WebMolKit;
                 this.data = WebMolKit.clone(data);
             }
         }
+        clone() { return new RenderPolicy(this.data); }
         static defaultBlackOnWhite(pixPerAng) {
             let policy = new RenderPolicy();
             if (pixPerAng)
