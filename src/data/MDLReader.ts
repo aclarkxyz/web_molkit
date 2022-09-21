@@ -88,6 +88,7 @@ export class MDLMOLReader
 	// deliverables
 	public mol:Molecule = null; // the result (or partial result, if not successful)
 	public molName = ''; // molecule name from the header, if any
+	public overallStereoAbsolute = true; // from the counts block, overall true=interpret stereo as absolute; false=interpret as relative
 
 	// hydrogen count & resonance bonds supposed to be query-only, but some software abuses them to get around the structural limitations
 	public atomHyd:number[] = null;
@@ -153,6 +154,7 @@ export class MDLMOLReader
 		}
 		let numAtoms = parseInt(line.substring(0, 3).trim());
 		let numBonds = parseInt(line.substring(3, 6).trim());
+		if (line.length >= 15) this.overallStereoAbsolute = parseInt(line.substring(12, 15).trim()) == 1;
 
 		// read out each atom
 		for (let n = 0; n < numAtoms; n++)

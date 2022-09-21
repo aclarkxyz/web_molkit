@@ -26,6 +26,7 @@ export class MDLMOLWriter
 {
 	// options
 	public includeHeader = true; // if on, the 3 line header will be included
+	public overallStereoAbsolute = true; // from the counts block, overall true=interpret stereo as absolute; false=interpret as relative
 	public enhancedFields = true; // if on, non-standard MDL fields may be added
 	public chargeSeparate = false; // if on, zero bonds will be split out
 	public abbrevSgroups = true; // if on, abbreviations will be written as Sgroups when possible
@@ -88,7 +89,7 @@ export class MDLMOLWriter
 			else MolUtil.expandAbbrevs(mol, true);
 		}
 
-		this.lines.push(this.intrpad(mol.numAtoms, 3) + this.intrpad(mol.numBonds, 3) + '  0  0  0  0  0  0  0  0999 V2000');
+		this.lines.push(this.intrpad(mol.numAtoms, 3) + this.intrpad(mol.numBonds, 3) + '  0  0' + (this.overallStereoAbsolute ? '  1' : '  0') + '  0  0  0  0  0999 V2000');
 
 		// data to record in the following M-block
 		let chgidx:number[] = [], chgval:number[] = [];
