@@ -1,15 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<DataSheet>
-<Summary>
-<Title>Monodentate Ligands</Title><Description><![CDATA[]]></Description></Summary>
-<Header nrows="9" ncols="3">
-<Column name="Molecule" type="molecule" id="1">Molecular structure</Column>
-<Column name="Name" type="string" id="2">Template name</Column>
-<Column name="Abbrev" type="string" id="3">Optional abbreviation</Column>
-</Header>
-<Content>
-<Row id="1">
-<Cell id="1"><![CDATA[SketchEl!(20,22)
+<DataSheet><Summary><Title>Monodentate Ligands</Title><Description><![CDATA[]]></Description></Summary><Extension/><Header nrows="10" ncols="3"><Column id="1" name="Molecule" type="molecule">Molecular structure</Column><Column id="2" name="Name" type="string">Template name</Column><Column id="3" name="Abbrev" type="string">Optional abbreviation</Column></Header><Content><Row id="1"><Cell id="1"><![CDATA[SketchEl!(20,22)
 P=0.0000,0.0000;0,0,i0
 C=0.0000,2.0000;0,0,i0
 C=2.0000,-0.0000;0,0,i0
@@ -53,12 +42,7 @@ X=-2.0000,0.0000;0,0,i0
 19-16=1,0
 1-20=0,0
 !End
-]]></Cell>
-<Cell id="2"><![CDATA[triphenylphosphine]]></Cell>
-<Cell id="3"><![CDATA[P|Ph{3}]]></Cell>
-</Row>
-<Row id="2">
-<Cell id="1"><![CDATA[SketchEl!(5,4)
+]]></Cell><Cell id="2"><![CDATA[triphenylphosphine]]></Cell><Cell id="3"><![CDATA[P|Ph{3}]]></Cell></Row><Row id="2"><Cell id="1"><![CDATA[SketchEl!(5,4)
 P=0.0000,0.0000;0,0,i0
 C=0.0000,1.5000;0,0,i3
 C=1.5000,-0.0000;0,0,i3
@@ -69,12 +53,7 @@ X=-1.5000,0.0000;0,0,i0
 1-4=1,0
 1-5=0,0
 !End
-]]></Cell>
-<Cell id="2"><![CDATA[trimethylphosphine]]></Cell>
-<Cell id="3"><![CDATA[P|Me{3}]]></Cell>
-</Row>
-<Row id="3">
-<Cell id="1"><![CDATA[SketchEl!(8,8)
+]]></Cell><Cell id="2"><![CDATA[trimethylphosphine]]></Cell><Cell id="3"><![CDATA[P|Me{3}]]></Cell></Row><Row id="3"><Cell id="1"><![CDATA[SketchEl!(8,8)
 X=-2.7000,3.9500;0,0,i0
 C=-1.2000,3.9500;0,0,i0
 N=-0.3200,2.7400;0,0,i0
@@ -92,24 +71,14 @@ C=-0.7853,1.3140;0,0,i3
 5-7=1,0
 3-8=1,0
 !End
-]]></Cell>
-<Cell id="2"><![CDATA[imidazolidine]]></Cell>
-<Cell id="3"></Cell>
-</Row>
-<Row id="4">
-<Cell id="1"><![CDATA[SketchEl!(3,2)
+]]></Cell><Cell id="2"><![CDATA[imidazolidine]]></Cell><Cell id="3"/></Row><Row id="4"><Cell id="1"><![CDATA[SketchEl!(3,2)
 X=-0.9000,0.3500;0,0,i0
 C=0.6000,0.3500;0,0,e0
 O=2.1000,0.3500;0,0,i0
 1-2=0,0
 2-3=2,0
 !End
-]]></Cell>
-<Cell id="2"><![CDATA[carbonyl]]></Cell>
-<Cell id="3"></Cell>
-</Row>
-<Row id="5">
-<Cell id="1"><![CDATA[SketchEl!(6,5)
+]]></Cell><Cell id="2"><![CDATA[carbonyl]]></Cell><Cell id="3"/></Row><Row id="5"><Cell id="1"><![CDATA[SketchEl!(6,5)
 X=-2.4000,1.9714;0,0,i0
 O=-0.9000,1.9714;0,0,i0
 C=-0.1500,3.2705;0,0,i2
@@ -122,12 +91,7 @@ C=1.3500,0.6724;0,0,i3
 2-5=1,0
 5-6=1,0
 !End
-]]></Cell>
-<Cell id="2"><![CDATA[diethylether]]></Cell>
-<Cell id="3"><![CDATA[O|Et{2}]]></Cell>
-</Row>
-<Row id="6">
-<Cell id="1"><![CDATA[SketchEl!(6,6)
+]]></Cell><Cell id="2"><![CDATA[diethylether]]></Cell><Cell id="3"><![CDATA[O|Et{2}]]></Cell></Row><Row id="6"><Cell id="1"><![CDATA[SketchEl!(6,6)
 X=-2.4000,1.9714;0,0,i0
 O=-0.9000,1.9714;0,0,i0
 C=-0.0200,0.7614;0,0,i2
@@ -141,12 +105,7 @@ C=1.4100,2.7214;0,0,i2
 5-6=1,0
 6-4=1,0
 !End
-]]></Cell>
-<Cell id="2"><![CDATA[tetrahydrofuran]]></Cell>
-<Cell id="3"><![CDATA[THF]]></Cell>
-</Row>
-<Row id="7">
-<Cell id="1"><![CDATA[SketchEl!(7,6)
+]]></Cell><Cell id="2"><![CDATA[tetrahydrofuran]]></Cell><Cell id="3"><![CDATA[THF]]></Cell></Row><Row id="7"><Cell id="1"><![CDATA[SketchEl!(7,6)
 X=-1.0000,-0.9143;0,0,i0
 O=0.5000,-0.9143;0,0,i0
 C=2.0000,-0.9143;0,0,i0
@@ -161,12 +120,7 @@ H=2.7500,0.3848;0,0,i0
 4-6=1,0
 3-7=1,0
 !End
-]]></Cell>
-<Cell id="2"><![CDATA[dimethylformamide]]></Cell>
-<Cell id="3"><![CDATA[DMF]]></Cell>
-</Row>
-<Row id="8">
-<Cell id="1"><![CDATA[SketchEl!(5,4)
+]]></Cell><Cell id="2"><![CDATA[dimethylformamide]]></Cell><Cell id="3"><![CDATA[DMF]]></Cell></Row><Row id="8"><Cell id="1"><![CDATA[SketchEl!(5,4)
 X=-1.0000,-0.9143;0,0,i0
 O=0.5000,-0.9143;0,0,i0
 S=2.0000,-0.9143;0,0,i0
@@ -177,12 +131,7 @@ C=2.7500,0.3848;0,0,i3
 3-4=1,0
 3-5=1,0
 !End
-]]></Cell>
-<Cell id="2"><![CDATA[dimethylsulfoxide]]></Cell>
-<Cell id="3"><![CDATA[DMSO]]></Cell>
-</Row>
-<Row id="9">
-<Cell id="1"><![CDATA[SketchEl!(7,7)
+]]></Cell><Cell id="2"><![CDATA[dimethylsulfoxide]]></Cell><Cell id="3"><![CDATA[DMSO]]></Cell></Row><Row id="9"><Cell id="1"><![CDATA[SketchEl!(7,7)
 C=6.8500,0.0490;0,0,i1
 C=5.3500,0.0490;0,0,i1
 C=7.6000,-1.2500;0,0,i1
@@ -198,9 +147,52 @@ X=3.1000,-1.2500;0,0,i0
 6-3=1,0
 4-7=0,0
 !End
-]]></Cell>
-<Cell id="2"><![CDATA[pyridine]]></Cell>
-<Cell id="3"><![CDATA[Py]]></Cell>
-</Row>
-</Content>
-</DataSheet>
+]]></Cell><Cell id="2"><![CDATA[pyridine]]></Cell><Cell id="3"><![CDATA[Py]]></Cell></Row><Row id="10"><Cell id="1"><![CDATA[SketchEl!(22,24)
+X=0.0000,-0.1997;0,0,i0
+C=0.0000,1.9965;0,2,i0
+N=1.2135,2.8782;0,0,i0
+C=0.7500,4.3048;0,0,i1
+C=-0.7500,4.3048;0,0,i1
+N=-1.2135,2.8782;0,0,i0
+C=-2.7135,2.8782;0,0,i0
+C=2.7135,2.8782;0,0,i0
+C=-3.4635,4.1772;0,0,i0
+C=-4.9635,4.1772;0,0,i1
+C=-5.7135,2.8782;0,0,i1
+C=-4.9635,1.5791;0,0,i1
+C=-3.4635,1.5791;0,0,i0
+C=3.4635,1.5791;0,0,i0
+C=4.9635,1.5791;0,0,i1
+C=5.7135,2.8782;0,0,i1
+C=4.9635,4.1772;0,0,i1
+C=3.4635,4.1772;0,0,i0
+{^i}Pr=-2.7135,0.2801;0,0,i0,aSketchEl!(4\002C3)\000A*\003D-6.4450\002C2.0214\003B0\002C0\002Ci0\000AC\003D-4.1950\002C3.3204\003B0\002C0\002Ci3\000AC\003D-4.1950\002C0.7224\003B0\002C0\002Ci3\000AC\003D-4.9450\002C2.0214\003B0\002C0\002Ci1\000A4-2\003D1\002C0\000A4-3\003D1\002C0\000A4-1\003D1\002C0\000A!End\000A
+{^i}Pr=2.7135,0.2801;0,0,i0,aSketchEl!(4\002C3)\000A*\003D-6.4450\002C2.0214\003B0\002C0\002Ci0\000AC\003D-4.1950\002C3.3204\003B0\002C0\002Ci3\000AC\003D-4.1950\002C0.7224\003B0\002C0\002Ci3\000AC\003D-4.9450\002C2.0214\003B0\002C0\002Ci1\000A4-2\003D1\002C0\000A4-3\003D1\002C0\000A4-1\003D1\002C0\000A!End\000A
+{^i}Pr=2.7135,5.4763;0,0,i0,aSketchEl!(4\002C3)\000A*\003D-6.4450\002C2.0214\003B0\002C0\002Ci0\000AC\003D-4.1950\002C3.3204\003B0\002C0\002Ci3\000AC\003D-4.1950\002C0.7224\003B0\002C0\002Ci3\000AC\003D-4.9450\002C2.0214\003B0\002C0\002Ci1\000A4-2\003D1\002C0\000A4-3\003D1\002C0\000A4-1\003D1\002C0\000A!End\000A
+{^i}Pr=-2.7135,5.4763;0,0,i0,aSketchEl!(4\002C3)\000A*\003D-6.4450\002C2.0214\003B0\002C0\002Ci0\000AC\003D-4.1950\002C3.3204\003B0\002C0\002Ci3\000AC\003D-4.1950\002C0.7224\003B0\002C0\002Ci3\000AC\003D-4.9450\002C2.0214\003B0\002C0\002Ci1\000A4-2\003D1\002C0\000A4-3\003D1\002C0\000A4-1\003D1\002C0\000A!End\000A
+1-2=0,0
+2-3=1,0
+3-4=1,0
+4-5=2,0
+5-6=1,0
+6-2=1,0
+6-7=1,0
+3-8=1,0
+7-9=2,0
+9-10=1,0
+10-11=2,0
+11-12=1,0
+12-13=2,0
+13-7=1,0
+8-14=2,0
+14-15=1,0
+15-16=2,0
+16-17=1,0
+17-18=2,0
+18-8=1,0
+13-19=1,0
+14-20=1,0
+18-21=1,0
+9-22=1,0
+!End
+]]></Cell><Cell id="2"><![CDATA[IPr]]></Cell><Cell id="3"/></Row></Content></DataSheet>

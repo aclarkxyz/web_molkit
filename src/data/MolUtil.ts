@@ -219,6 +219,15 @@ export class MolUtil
 		}
 	}
 
+	// very common convenience function: if has abbreviations, clone and expand; otherwise return self
+	public static expandedAbbrevs(mol:Molecule):Molecule
+	{
+		if (!this.hasAnyAbbrev(mol)) return mol;
+		mol = mol.clone();
+		this.expandAbbrevs(mol, true);
+		return mol;
+	}
+
 	// expands the abbreviation for a single atom; the atom itself is deleted, and the expanded content is added to the end of the molecule; if for some
 	// reason the abbreviation is invalid, will clear the abbreviation instead
 	// return value: if something happened, mask of true = part of the expansion (including the new placeholder atom); if nothing happened, returns null
