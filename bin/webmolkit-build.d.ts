@@ -1132,6 +1132,7 @@ declare namespace WebMolKit {
         keepQuery: boolean;
         mol: Molecule;
         molName: string;
+        overallStereoAbsolute: boolean;
         atomHyd: number[];
         resBonds: boolean[];
         explicitValence: number[];
@@ -1171,6 +1172,7 @@ declare namespace WebMolKit {
     class MDLMOLWriter {
         mol: Molecule;
         includeHeader: boolean;
+        overallStereoAbsolute: boolean;
         enhancedFields: boolean;
         chargeSeparate: boolean;
         abbrevSgroups: boolean;
@@ -1261,6 +1263,7 @@ declare namespace WebMolKit {
         static convertToAbbrev(mol: Molecule, srcmask: boolean[], abbrevName: string): Molecule;
         static convertToAbbrevIndex(mol: Molecule, srcmask: boolean[], abbrevName: string): [Molecule, number];
         static expandAbbrevs(mol: Molecule, alignCoords: boolean): void;
+        static expandedAbbrevs(mol: Molecule): Molecule;
         static expandOneAbbrev(mol: Molecule, atom: number, alignCoords: boolean): boolean[];
         static expandOneAbbrevFrag(mol: Molecule, atom: number, frag: Molecule, alignCoords: boolean): boolean[];
         static clearAbbrev(mol: Molecule, atom: number): void;

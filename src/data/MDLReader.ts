@@ -199,7 +199,7 @@ export class MDLMOLReader
 				else if (stereo == 3) this.mol.setAtomTransient(a, Vec.append(trans, ForeignMoleculeExtra.AtomChiralMDLRacemic));
 			}
 
-			this.explicitValence.push(val);
+			this.explicitValence.push(val > 14 ? -1 : val);
 		}
 
 		// read out each bond

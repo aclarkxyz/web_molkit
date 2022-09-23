@@ -6157,6 +6157,7 @@ var WebMolKit;
             this.keepQuery = true;
             this.mol = null;
             this.molName = '';
+            this.overallStereoAbsolute = true;
             this.atomHyd = null;
             this.resBonds = null;
             this.explicitValence = [];
@@ -6198,6 +6199,8 @@ var WebMolKit;
             }
             let numAtoms = parseInt(line.substring(0, 3).trim());
             let numBonds = parseInt(line.substring(3, 6).trim());
+            if (line.length >= 15)
+                this.overallStereoAbsolute = parseInt(line.substring(12, 15).trim()) == 1;
             for (let n = 0; n < numAtoms; n++) {
                 line = this.nextLine();
                 if (line.length < 39)
@@ -6241,7 +6244,7 @@ var WebMolKit;
                     else if (stereo == 3)
                         this.mol.setAtomTransient(a, WebMolKit.Vec.append(trans, WebMolKit.ForeignMoleculeExtra.AtomChiralMDLRacemic));
                 }
-                this.explicitValence.push(val);
+                this.explicitValence.push(val > 14 ? -1 : val);
             }
             for (let n = 0; n < numBonds; n++) {
                 line = this.nextLine();
@@ -7072,6 +7075,7 @@ var WebMolKit;
         constructor(mol) {
             this.mol = mol;
             this.includeHeader = true;
+            this.overallStereoAbsolute = true;
             this.enhancedFields = true;
             this.chargeSeparate = false;
             this.abbrevSgroups = true;
@@ -7105,7 +7109,7 @@ var WebMolKit;
                 else
                     WebMolKit.MolUtil.expandAbbrevs(mol, true);
             }
-            this.lines.push(this.intrpad(mol.numAtoms, 3) + this.intrpad(mol.numBonds, 3) + '  0  0  0  0  0  0  0  0999 V2000');
+            this.lines.push(this.intrpad(mol.numAtoms, 3) + this.intrpad(mol.numBonds, 3) + '  0  0' + (this.overallStereoAbsolute ? '  1' : '  0') + '  0  0  0  0  0999 V2000');
             let chgidx = [], chgval = [];
             let radidx = [], radval = [];
             let isoidx = [], isoval = [];
@@ -7997,6 +8001,13 @@ var WebMolKit;
                 if (!anything)
                     break;
             }
+        }
+        static expandedAbbrevs(mol) {
+            if (!this.hasAnyAbbrev(mol))
+                return mol;
+            mol = mol.clone();
+            this.expandAbbrevs(mol, true);
+            return mol;
         }
         static expandOneAbbrev(mol, atom, alignCoords) {
             let frag = MolUtil.getAbbrev(mol, atom);
