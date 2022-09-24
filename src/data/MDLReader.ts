@@ -765,7 +765,7 @@ export class MDLMOLReader
 			let bits = this.splitWithQuotes(line);
 
 			let idx = parseInt(bits[0]);
-			if (bits.length > 3 && idx > 0 && bits[1] == 'SUP' && parseInt(bits[2]) == idx)
+			if (bits.length > 3 && idx > 0 && bits[1] == 'SUP')
 			{
 				let sup:MDLReaderSuperAtom = {'atoms': [], 'name': null};
 				for (let i = 3; i < bits.length; i++)

@@ -1183,6 +1183,8 @@ declare namespace WebMolKit {
         private lines;
         constructor(mol: Molecule);
         write(): string;
+        writeV3000(): string;
+        writeEither(): string;
         getResult(): string;
         private writeCTAB;
         private writeMBlockPair;
@@ -1194,6 +1196,8 @@ declare namespace WebMolKit {
         private partialAbbrevExpansion;
         private prepareSgroups;
         private encodePolymerBlocks;
+        writeCTAB3000(): void;
+        private packV3000List;
     }
     class MDLSDFWriter {
         ds: DataSheet;
@@ -1813,6 +1817,32 @@ declare namespace WebMolKit {
         static proposeBondRing(mol: Molecule, rsz: number, bond: number, dx: number, dy: number): [number[], number[]];
         static positionSimpleRing(mol: Molecule, rsz: number, x: number, y: number, theta: number): [number[], number[]];
         static guidelineSprouts(mol: Molecule, atom: number): GuidelineSprout[];
+    }
+}
+declare namespace WebMolKit {
+    const STEREOGROUP_EXTRA_RACEMIC = "xCHIRAC:";
+    const STEREOGROUP_EXTRA_RELATIVE = "xCHIREL:";
+    class StereoGroup {
+        private mol;
+        private chiRac;
+        private chiRel;
+        static hasStereoGroups(mol: Molecule): boolean;
+        constructor(mol: Molecule);
+        getRacemicGroups(): number[];
+        getRelativeGroups(): number[];
+        getRacemicAtoms(): number[][];
+        getRelativeAtoms(): number[][];
+        getRacemicGroupAtoms(grp: number): number[];
+        getRelativeGroupAtoms(grp: number): number[];
+        rewriteMolecule(): void;
+        harmoniseNumbering(other: StereoGroup): void;
+        createRacemic(atoms: number[]): number;
+        createRelative(atoms: number[]): number;
+        removeRacemic(grp: number): void;
+        removeRelative(grp: number): void;
+        static removeAll(mol: Molecule): void;
+        private atomHasWedge;
+        private nextIdentifier;
     }
 }
 declare namespace WebMolKit {
