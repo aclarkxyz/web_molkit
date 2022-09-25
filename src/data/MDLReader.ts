@@ -752,6 +752,11 @@ export class MDLMOLReader
 			}
 		}
 
+		let stereoGroup = new StereoGroup(this.mol);
+		for (let atoms of this.groupStereoRacemic) stereoGroup.createRacemic(atoms);
+		for (let atoms of this.groupStereoRelative) stereoGroup.createRelative(atoms);
+		stereoGroup.rewriteMolecule();
+
 		// extract S-groups
 		let superatoms = new Map<number, MDLReaderSuperAtom>();
 		for (let n = 0; n < lineSgroup.length; n++)

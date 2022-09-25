@@ -711,7 +711,7 @@ export class ArrangeExperiment
 	private scoreArrangement(comps:ArrangeComponent[]):number
 	{
 		let w = 0, h = 0;
-		for (let xc of comps) 
+		for (let xc of comps)
 		{
 			w = Math.max(w, xc.box.maxX());
 			h = Math.max(h, xc.box.maxY());

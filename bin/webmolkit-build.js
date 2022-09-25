@@ -6764,6 +6764,12 @@ var WebMolKit;
                         this.groupStereoRelative.push(this.unpackList(bits[1].substring(6)));
                 }
             }
+            let stereoGroup = new WebMolKit.StereoGroup(this.mol);
+            for (let atoms of this.groupStereoRacemic)
+                stereoGroup.createRacemic(atoms);
+            for (let atoms of this.groupStereoRelative)
+                stereoGroup.createRelative(atoms);
+            stereoGroup.rewriteMolecule();
             let superatoms = new Map();
             for (let n = 0; n < lineSgroup.length; n++) {
                 let line = lineSgroup[n];

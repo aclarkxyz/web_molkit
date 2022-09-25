@@ -526,7 +526,7 @@ export class MDLMOLWriter
 				line += ' ATOMS=' + this.packV3000List(unit.atoms);
 
 				if (unit.connect == PolymerBlockConnectivity.HeadToTail) line += ' CONNECT=HT';
-				else if (unit.connect == PolymerBlockConnectivity.HeadToHead) line += ' CONNECT=HH'
+				else if (unit.connect == PolymerBlockConnectivity.HeadToHead) line += ' CONNECT=HH';
 				else if (unit.connect == PolymerBlockConnectivity.Random) line += ' CONNECT=EU';
 
 				let bonds:number[] = [];

@@ -14,7 +14,7 @@ namespace WebMolKit /* BOF */ {
 
 /*
 	Encodes some number of stereochemistry groups into the molecule.
-	
+
 	Types:
 		Racemic ("AND"): for chiral centres in the group, the configuration indicated by the wedges is present _and_ its
 						 inverted racemic opposite is inverted as well (e.g. [R,R,S] & [S,S,R], but not any of the other
@@ -33,9 +33,9 @@ export class StereoGroup
 {
 	private chiRac = new Map<number, number[]>();
 	private chiRel = new Map<number, number[]>();
-	
+
 	// ------------ public methods ------------
-	
+
 	// useful pre-check to see if a molecule has any stereogroup metadata
 	public static hasStereoGroups(mol:Molecule):boolean
 	{
@@ -46,7 +46,7 @@ export class StereoGroup
 		}
 		return false;
 	}
-	
+
 	public constructor(private mol:Molecule)
 	{
 		this.mol = mol;
@@ -120,7 +120,7 @@ export class StereoGroup
 			for (let a of atoms) this.mol.setAtomExtra(a, [...this.mol.atomExtra(a), STEREOGROUP_EXTRA_RELATIVE + grp]);
 		}
 	}
-	
+
 	// given the numbering system used by artifacts in another object, make sure that the current ones are renumbered so that they don't clash
 	public harmoniseNumbering(other:StereoGroup):void
 	{
@@ -160,7 +160,7 @@ export class StereoGroup
 		this.chiRel.set(grp, atoms);
 		return grp;
 	}
-	
+
 	public removeRacemic(grp:number):void
 	{
 		this.chiRac.delete(grp);
@@ -188,12 +188,12 @@ export class StereoGroup
 	}
 
 	// ------------ private methods ------------
-	
+
 	// if false, the atom definitely can't be an R/S tetrahedral chiral centre
 	private atomHasWedge(atom:number):boolean
 	{
-		if (this.mol.is3D()) return true; 
-	
+		if (this.mol.is3D()) return true;
+
 		// must have at least one wedge originating from the atom, and no squigglies
 		let hasWedge = false;
 		for (let b of this.mol.atomAdjBonds(atom))
@@ -204,8 +204,8 @@ export class StereoGroup
 			if (bt == Molecule.BONDTYPE_INCLINED || bt == Molecule.BONDTYPE_DECLINED) hasWedge = true;
 		}
 		return hasWedge;
-	}	
-	
+	}
+
 	// using a disposable array, finds the next suitable identifier given that some number may already been taken
 	private nextIdentifier(inkeys:number[]):number
 	{
