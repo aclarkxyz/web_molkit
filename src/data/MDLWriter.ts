@@ -76,8 +76,8 @@ export class MDLMOLWriter
 	public writeEither():string
 	{
 		let triggered = StereoGroup.hasStereoGroups(this.mol) || this.mol.numAtoms >= 1000 || this.mol.numBonds >= 1000;
-		if (!triggered) for (let n = 1; n <= this.mol.numBonds; n++) if (this.mol.bondOrder(n) == 0) {triggered = true; break;}
-
+		if (!triggered) for (let n = 1; n <= this.mol.numBonds; n++)
+			if (this.mol.bondOrder(n) == 0 && QueryUtil.queryBondOrders(this.mol, n) == null) {triggered = true; break;}
 		if (triggered) return this.writeV3000(); else return this.write();
 	}
 
