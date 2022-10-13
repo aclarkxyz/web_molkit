@@ -103,7 +103,7 @@ export class StereoGroup
 			{
 				if (extra[i].startsWith(STEREOGROUP_EXTRA_RACEMIC) || extra[i].startsWith(STEREOGROUP_EXTRA_RELATIVE))
 				{
-					extra.slice(i, 1);
+					extra.splice(i, 1);
 					modified = true;
 				}
 			}

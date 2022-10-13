@@ -1,7 +1,7 @@
 /*
 	WebMolKit
 
-	(c) 2010-2018 Molecular Materials Informatics, Inc.
+	(c) 2010-2022 Molecular Materials Informatics, Inc.
 
 	All rights reserved
 
@@ -78,10 +78,7 @@ export class MDLMOLWriter
 		let triggered = StereoGroup.hasStereoGroups(this.mol) || this.mol.numAtoms >= 1000 || this.mol.numBonds >= 1000;
 		if (!triggered) for (let n = 1; n <= this.mol.numBonds; n++) if (this.mol.bondOrder(n) == 0) {triggered = true; break;}
 
-		if (triggered)
-			return this.writeV3000();
-		else
-			return this.write();
+		if (triggered) return this.writeV3000(); else return this.write();
 	}
 
 	public getResult():string

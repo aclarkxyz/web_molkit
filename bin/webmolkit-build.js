@@ -7110,7 +7110,14 @@ var WebMolKit;
             return this.lines.join('\n');
         }
         writeEither() {
-            if (WebMolKit.StereoGroup.hasStereoGroups(this.mol) || this.mol.numAtoms >= 1000 || this.mol.numBonds >= 1000)
+            let triggered = WebMolKit.StereoGroup.hasStereoGroups(this.mol) || this.mol.numAtoms >= 1000 || this.mol.numBonds >= 1000;
+            if (!triggered)
+                for (let n = 1; n <= this.mol.numBonds; n++)
+                    if (this.mol.bondOrder(n) == 0) {
+                        triggered = true;
+                        break;
+                    }
+            if (triggered)
                 return this.writeV3000();
             else
                 return this.write();
@@ -12339,7 +12346,7 @@ var WebMolKit;
                 let modified = false;
                 for (let i = extra.length - 1; i >= 0; i--) {
                     if (extra[i].startsWith(WebMolKit.STEREOGROUP_EXTRA_RACEMIC) || extra[i].startsWith(WebMolKit.STEREOGROUP_EXTRA_RELATIVE)) {
-                        extra.slice(i, 1);
+                        extra.splice(i, 1);
                         modified = true;
                     }
                 }
