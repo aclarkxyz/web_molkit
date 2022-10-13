@@ -8095,11 +8095,11 @@ var WebMolKit;
                 if (atom == 0)
                     continue;
                 if (junction > 0 && atom != junction)
-                    return null;
+                    return [null, null];
                 junction = atom;
             }
             if (junction == 0)
-                return null;
+                return [null, null];
             let na = mol.numAtoms, molidx = 0, fragidx = 0;
             let maskmol = WebMolKit.Vec.booleanArray(false, na), maskfrag = WebMolKit.Vec.booleanArray(false, na);
             for (let n = 0; n < na; n++) {

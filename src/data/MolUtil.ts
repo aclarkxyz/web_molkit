@@ -143,10 +143,10 @@ export class MolUtil
 
 			if (atom == 0) continue;
 
-			if (junction > 0 && atom != junction) return null;
+			if (junction > 0 && atom != junction) return [null, null];
 			junction = atom;
 		}
-		if (junction == 0) return null;
+		if (junction == 0) return [null, null];
 
 		// refine the partition based on the junction, and derive reference indices
 		let na = mol.numAtoms, molidx = 0, fragidx = 0;
