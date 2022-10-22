@@ -1649,6 +1649,11 @@ export class MoleculeActivity
 			this.errmsg = 'Inline abbreviations must be terminal with exactly one attachment point.';
 			return;
 		}
+		if (AbbrevContainer.main)
+		{
+			AbbrevContainer.main.submitMolecule(mol, true);
+			for (let n = 1; n <= mol.numAtoms; n++) if (mol.atomElement(n) == '?' && MolUtil.hasAbbrev(mol, n)) AbbrevContainer.main.substituteAbbrevName(mol, n);
+		}
 
 		this.output.mol = mol;
 		this.zapSubject();
