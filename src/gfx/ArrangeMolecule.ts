@@ -267,8 +267,8 @@ export class ArrangeMolecule
 			if (bdbl[n - 1]) continue;
 
 			let minDist = (bo == 1 && bt == Molecule.BONDTYPE_NORMAL ? MINBOND_LINE : MINBOND_EXOTIC) * measure.scale();
-			let xy1 = this.backOffAtom(bfr, x1, y1, x2, y2, minDist);
-			let xy2 = this.backOffAtom(bto, x2, y2, x1, y1, minDist);
+			let xy1 = this.shrinkBond(x1, y1, x2, y2, this.backOffAtom(bfr, x1, y1, x2, y2, minDist));
+			let xy2 = this.shrinkBond(x2, y2, x1, y1, this.backOffAtom(bto, x2, y2, x1, y1, minDist));
 			this.ensureMinimumBondLength(xy1, xy2, x1, y1, x2, y2, minDist);
 
 			let sz = this.lineSizePix, head = 0;
@@ -360,8 +360,24 @@ export class ArrangeMolecule
 			if (bo > 1 && (bt == Molecule.BONDTYPE_NORMAL || bt == Molecule.BONDTYPE_UNKNOWN))
 			{
 				let oxy = this.orthogonalDelta(xy1[0], xy1[1], xy2[0], xy2[1], this.bondSepPix);
-				let v = -0.5 * (bo - 1);
-				for (let i = 0; i < bo; i++, v++)
+
+				// check the intersections for each individual line
+				let ext1 = 1, ext2 = 1;
+				for (let i = 0, v = -0.5 * (bo - 1); i < bo; i++, v++)
+				{
+					let lx1 = xy1[0] + v * oxy[0], ly1 = xy1[1] + v * oxy[1], lx2 = xy2[0] + v * oxy[0], ly2 = xy2[1] + v * oxy[1];
+					ext1 = Math.min(ext1, this.backOffAtom(bfr, lx1, ly1, lx2, ly2, minDist));
+				}
+				xy1 = this.shrinkBond(xy1[0], xy1[1], xy2[0], xy2[1], ext1);
+				for (let i = 0, v = -0.5 * (bo - 1); i < bo; i++, v++)
+				{
+					let lx1 = xy1[0] + v * oxy[0], ly1 = xy1[1] + v * oxy[1], lx2 = xy2[0] + v * oxy[0], ly2 = xy2[1] + v * oxy[1];
+					ext2 = Math.min(ext2, this.backOffAtom(bto, lx2, ly2, lx1, ly1, minDist));
+				}
+				xy2 = this.shrinkBond(xy2[0], xy2[1], xy1[0], xy1[1], ext2);
+
+				// instantiate objects
+				for (let i = 0, v = -0.5 * (bo - 1); i < bo; i++, v++)
 				{
 					let lx1 = xy1[0] + v * oxy[0], ly1 = xy1[1] + v * oxy[1], lx2 = xy2[0] + v * oxy[0], ly2 = xy2[1] + v * oxy[1];
 					let b:BLine =
@@ -1035,18 +1051,19 @@ export class ArrangeMolecule
 
 	// given that the position (X,Y) connects with atom N, and is part of a bond that connects at the other end
 	// with (FX,FY), considers the possibility that a new (X,Y) may need to be calculated by backing up along the line;
-	private backOffAtom(atom:number, x:number, y:number, fx:number, fy:number, minDist:number):number[]
+	// the return value is the fraction the it needs to backup, i.e. 1 = don't change, <1 = needs to be shorter
+	private backOffAtom(atom:number, x:number, y:number, fx:number, fy:number, minDist:number):number
 	{
-		if (x == fx && y == fy) return [x, y]; // can happen when really small
+		if (x == fx && y == fy) return 1; // can happen when really small
 
+		let dx = x - fx, dy = y - fy, dist = norm_xy(dx, dy), inv = 1.0 / dist;
+		const BUMP = 0.1 * this.measure.scale();
+		let xbump = x + 2 * BUMP * dx * inv, ybump = y + 2 * BUMP * dy * inv;
+
+		let ext = dist;
 		let active = false;
-		let dx = 0, dy = 0, dst = 0, ext = 0;
-
-		for (let s = 0; s < this.space.length; s++)
+		for (let spc of this.space) if (spc.anum == atom)
 		{
-			let spc = this.space[s];
-			if (spc.anum != atom) continue;
-
 			const sz = spc.px.length;
 			if (sz == 0) continue;
 
@@ -1054,28 +1071,28 @@ export class ArrangeMolecule
 			{
 				let nn = n < sz - 1 ? n + 1 : 0;
 				let x1 = spc.px[n], y1 = spc.py[n], x2 = spc.px[nn], y2 = spc.py[nn];
-				if (!GeomUtil.doLineSegsIntersect(x, y, fx, fy, x1, y1, x2, y2)) continue;
+				if (!GeomUtil.doLineSegsIntersect(xbump, ybump, fx, fy, x1, y1, x2, y2)) continue;
 				let xy = GeomUtil.lineIntersect(x, y, fx, fy, x1, y1, x2, y2);
 
-				if (!active)
-				{
-					dx = x - fx;
-					dy = y - fy;
-					dst = norm_xy(dx, dy);
-					ext = dst;
-					active = true;
-				}
+				active = true;
 				ext = Math.min(ext, norm_xy(xy[0] - fx, xy[1] - fy));
 			}
 		}
 
 		if (active)
 		{
-			ext = Math.max(minDist, ext - 0.1 * this.measure.scale());
-			let idst = 1.0 / dst;
-			return [fx + ext * idst * dx, fy + ext * idst * dy];
+			ext = Math.max(minDist, ext - BUMP);
+			return ext / dist;
 		}
-		else return [x, y];
+		else return 1;
+	}
+
+	// applies the impact of the back-off extent, calculated above; returns new coordinates for [x,y]
+	private shrinkBond(x:number, y:number, fx:number, fy:number, ext:number):number[]
+	{
+		if (ext == 1) return [x, y];
+		let dx = x - fx, dy = y - fy;
+		return [fx + ext * dx, fy + ext * dy];
 	}
 
 	// for bond begin/end points, compares the current distance to the original distance, to make sure that it hasn't been
@@ -1166,13 +1183,9 @@ export class ArrangeMolecule
 
 		let a1 = this.points[bfr - 1], a2 = this.points[bto - 1];
 		let x1 = a1.oval.cx, y1 = a1.oval.cy, x2 = a2.oval.cx, y2 = a2.oval.cy;
+		let oxy = this.orthogonalDelta(x1, y1, x2, y2, this.bondSepPix);
 
 		const minDist = MINBOND_EXOTIC * this.measure.scale();
-		let xy1 = this.backOffAtom(bfr, x1, y1, x2, y2, minDist);
-		let xy2 = this.backOffAtom(bto, x2, y2, x1, y1, minDist);
-		this.ensureMinimumBondLength(xy1, xy2, x1, y1, x2, y2, minDist);
-		x1 = xy1[0]; y1 = xy1[1]; x2 = xy2[0]; y2 = xy2[1];
-
 		let dx = x2 - x1, dy = y2 - y1, btheta = Math.atan2(dy, dx);
 
 		// count number of priority atoms on either side of the bond vector
@@ -1237,9 +1250,19 @@ export class ArrangeMolecule
 		// create the bond lines
 
 		let sz = this.lineSizePix;
-		let oxy = this.orthogonalDelta(x1, y1, x2, y2, this.bondSepPix);
 		let ax1 = x1, ay1 = y1, ax2 = x2, ay2 = y2;
 		let bx1 = 0, by1 = 0, bx2 = 0, by2 = 0;
+
+		// see if either of the lines approaches too close to something and, if so, back them both off by the same extent
+		let backBothBonds = () =>
+		{
+			let ext1 = Math.min(this.backOffAtom(bfr, ax1, ay1, ax2, ay2, minDist), this.backOffAtom(bfr, bx1, by1, bx2, by2, minDist));
+			[ax1, ay1] = this.shrinkBond(ax1, ay1, ax2, ay2, ext1);
+			[bx1, by1] = this.shrinkBond(bx1, by1, bx2, by2, ext1);
+			let ext2 = Math.min(this.backOffAtom(bto, ax2, ay2, ax1, ay1, minDist), this.backOffAtom(bto, bx2, by2, bx1, by1, minDist));
+			[ax2, ay2] = this.shrinkBond(ax2, ay2, ax1, ay1, ext2);
+			[bx2, by2] = this.shrinkBond(bx2, by2, bx1, by1, ext2);
+		};
 
 		// side==0 means that the double bond straddles the line between the two points; !=0 means that the first line (A) is like a
 		// regular single bond, while the second line is an adjunct off to one side
@@ -1249,11 +1272,13 @@ export class ArrangeMolecule
 			ax2 = x2 + 0.5 * oxy[0]; ay2 = y2 + 0.5 * oxy[1];
 			bx1 = x1 - 0.5 * oxy[0]; by1 = y1 - 0.5 * oxy[1];
 			bx2 = x2 - 0.5 * oxy[0]; by2 = y2 - 0.5 * oxy[1];
+			backBothBonds();
 		}
 		else if (side > 0)
 		{
 			bx1 = x1 + oxy[0]; by1 = y1 + oxy[1];
 			bx2 = x2 + oxy[0]; by2 = y2 + oxy[1];
+			backBothBonds();
 			if (nfr.length > 1 && this.points[bfr - 1].text == null) {bx1 += oxy[1]; by1 -= oxy[0];}
 			if (nto.length > 1 && this.points[bto - 1].text == null) {bx2 -= oxy[1]; by2 += oxy[0];}
 		}
@@ -1261,6 +1286,7 @@ export class ArrangeMolecule
 		{
 			bx1 = x1 - oxy[0]; by1 = y1 - oxy[1];
 			bx2 = x2 - oxy[0]; by2 = y2 - oxy[1];
+			backBothBonds();
 			if (nfr.length > 1 && this.points[bfr - 1].text == null) {bx1 += oxy[1]; by1 -= oxy[0];}
 			if (nto.length > 1 && this.points[bto - 1].text == null) {bx2 -= oxy[1]; by2 += oxy[0];}
 		}
@@ -1302,8 +1328,6 @@ export class ArrangeMolecule
 		let head = lt == BLineType.Unknown ? 0.1 * this.scale : 0;
 		let col = this.effects.colBond[idx];
 		if (!col) col = this.policy.data.foreground;
-		//(do mapped colour?)
-		//if (this.policy.mappedColour >= 0 && this.mol.atomMapNum(this.mol.bondFrom(bfr)) > 0 && this.mol.atomMapNum(this.mol.bondTo(bto)) > 0) col = this.policy.mappedColour;
 
 		let b1:BLine =
 		{
@@ -2365,7 +2389,7 @@ export class ArrangeMolecule
 		}
 
 		const minDist = MINBOND_LINE * this.measure.scale();
-		let xy1 = this.backOffAtom(from, x1, y1, x2, y2, minDist);
+		let xy1 = this.shrinkBond(x1, y1, x2, y2, this.backOffAtom(from, x1, y1, x2, y2, minDist));
 		this.ensureMinimumBondLength(xy1, [x2, y2], x1, y1, x2, y2, minDist);
 
 		let b:BLine =

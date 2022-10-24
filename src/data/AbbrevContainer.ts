@@ -120,13 +120,24 @@ export class AbbrevContainer
 	{
 		let frag = MolUtil.getAbbrev(mol, atom);
 		if (!frag) return false;
-		//let meta = MetaMolecule.createStrictRubric(frag);
+
+		let fragExp = MolUtil.expandedAbbrevs(frag);
+		let fragMF = MolUtil.molecularFormula(fragExp);
+		let fragFP = CircularFingerprints.create(MetaMolecule.createStrictRubric(fragExp), CircularFingerprints.CLASS_ECFP6).getUniqueHashes();
 
 		for (let abbrev of this.abbrevs) if (abbrev.frag.numAtoms == frag.numAtoms)
 		{
-			//let ameta = MetaMolecule.createStrictRubric(abbrev.frag);
-			//if (meta.equivalentTo(ameta))
-			if (CoordUtil.sketchEquivalent(frag, abbrev.frag))
+			let match = CoordUtil.sketchEquivalent(frag, abbrev.frag);
+			if (!match)
+			{
+				let afragExp = MolUtil.expandedAbbrevs(abbrev.frag);
+				if (fragMF == MolUtil.molecularFormula(afragExp))
+				{
+					let afragFP = CircularFingerprints.create(MetaMolecule.createStrictRubric(afragExp), CircularFingerprints.CLASS_ECFP6).getUniqueHashes();
+					if (Vec.equals(fragFP, afragFP)) match = true;
+				}
+			}
+			if (match)
 			{
 				mol.setAtomElement(atom, abbrev.name);
 				return true;
