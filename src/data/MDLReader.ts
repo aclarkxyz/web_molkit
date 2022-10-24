@@ -227,8 +227,7 @@ export class MDLMOLReader
 				else if (type == 5) QueryUtil.setQueryBondOrders(this.mol, b, [1, 2]); // single-or-double query type
 				else if (type == 6) QueryUtil.setQueryBondOrders(this.mol, b, [-1, 1]); // single-or-aromatic query type
 				else if (type == 7) QueryUtil.setQueryBondOrders(this.mol, b, [-1, 2]); // double-or-aromatic query type
-				// ... note that type==8 should ideally be "any" ([-1,0,1,2,3]) but it's being reserved as a placeholder for zero
-				// order bonds, because dative type==9 is disallowed for V2000
+				else if (type == 8) QueryUtil.setQueryBondOrders(this.mol, b, [-1, 0, 1, 2, 3]); // any
 			}
 			else
 			{

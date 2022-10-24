@@ -6272,6 +6272,8 @@ var WebMolKit;
                         WebMolKit.QueryUtil.setQueryBondOrders(this.mol, b, [-1, 1]);
                     else if (type == 7)
                         WebMolKit.QueryUtil.setQueryBondOrders(this.mol, b, [-1, 2]);
+                    else if (type == 8)
+                        WebMolKit.QueryUtil.setQueryBondOrders(this.mol, b, [-1, 0, 1, 2, 3]);
                 }
                 else {
                     if (type == 4) {
@@ -7113,7 +7115,7 @@ var WebMolKit;
             let triggered = WebMolKit.StereoGroup.hasStereoGroups(this.mol) || this.mol.numAtoms >= 1000 || this.mol.numBonds >= 1000;
             if (!triggered)
                 for (let n = 1; n <= this.mol.numBonds; n++)
-                    if (this.mol.bondOrder(n) == 0) {
+                    if (this.mol.bondOrder(n) == 0 && WebMolKit.QueryUtil.queryBondOrders(this.mol, n) == null) {
                         triggered = true;
                         break;
                     }
@@ -7208,7 +7210,7 @@ var WebMolKit;
                     type = 6;
                 else if (WebMolKit.Vec.equals(qbond, [-1, 2]))
                     type = 7;
-                else if (type == 0)
+                else if (WebMolKit.Vec.equals(qbond, [-1, 0, 1, 2, 3]))
                     type = 8;
                 else if (type > 3)
                     type = 3;
@@ -7232,7 +7234,7 @@ var WebMolKit;
                     this.intrpad(type, 3) + this.intrpad(stereo, 3) + '  0  0  0';
                 this.lines.push(line);
                 if (this.enhancedFields) {
-                    if ((order < 1 || order > 3) || type != order) {
+                    if ((order < 1 || order > 3) || type != order && WebMolKit.Vec.isBlank(qbond)) {
                         zboidx.push(n);
                         zboval.push(order);
                     }
@@ -7465,6 +7467,8 @@ var WebMolKit;
                         type = 6;
                     else if (WebMolKit.Vec.equals(qbond, [-1, 2]))
                         type = 7;
+                    else if (WebMolKit.Vec.equals(qbond, [-1, 0, 1, 2, 3]))
+                        type = 8;
                     else if (type == 0)
                         type = 9;
                     else if (type > 3)
@@ -14502,7 +14506,7 @@ var WebMolKit;
                         qbonds.splice(0, 1);
                         qbonds.push(-1);
                     }
-                    let qtxt = qbonds.map((o) => o == -1 ? 'A' : o.toString()).join('');
+                    let qtxt = WebMolKit.Vec.equals(qbonds, [0, 1, 2, 3, -1]) ? '?' : qbonds.map((o) => o == -1 ? 'A' : o.toString()).join('');
                     let oxy = this.orthogonalDelta(xy1[0], xy1[1], xy2[0], xy2[1], 1.3 * this.bondSepPix);
                     let v = -0.5;
                     for (let i = 0; i < 2; i++, v++) {

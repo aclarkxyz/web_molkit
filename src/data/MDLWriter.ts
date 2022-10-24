@@ -168,7 +168,7 @@ export class MDLMOLWriter
 			else if (Vec.equals(qbond, [1, 2])) type = 5; // the "single or double" type
 			else if (Vec.equals(qbond, [-1, 1])) type = 6; // the "single or aromatic" type
 			else if (Vec.equals(qbond, [-1, 2])) type = 7; // the "double or aromatic" type
-			else if (type == 0) type = 8; // the "any" type
+			else if (Vec.equals(qbond, [-1, 0, 1, 2, 3])) type = 8; // the "any" type
 			else if (type > 3) type = 3; // 4-or-higher bonds are not available
 
 			let stereo = mol.bondType(n);
@@ -195,7 +195,7 @@ export class MDLMOLWriter
 
 			if (this.enhancedFields)
 			{
-				if ((order < 1 || order > 3) || type != order) {zboidx.push(n); zboval.push(order);}
+				if ((order < 1 || order > 3) || type != order && Vec.isBlank(qbond)) {zboidx.push(n); zboval.push(order);}
 				// these are for retroactive bond separation, not implemented at the moment
 				//if (xmol.bondOrder(n) != mol.bondOrder(n)) {zboidx.push(n); zboval.push(xmol.bondOrder(n));}
 			}
@@ -481,6 +481,7 @@ export class MDLMOLWriter
 				else if (Vec.equals(qbond, [1, 2])) type = 5; // the "single or double" type
 				else if (Vec.equals(qbond, [-1, 1])) type = 6; // the "single or aromatic" type
 				else if (Vec.equals(qbond, [-1, 2])) type = 7; // the "double or aromatic" type
+				else if (Vec.equals(qbond, [-1, 0, 1, 2, 3])) type = 8; // the "double or aromatic" type
 				else if (type == 0) type = 9; // the "coordination" type (zero bonds may get stripped out earlier)
 				else if (type > 3) type = 3; // 4-or-higher bonds are not available
 

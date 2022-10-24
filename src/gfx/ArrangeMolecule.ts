@@ -277,7 +277,7 @@ export class ArrangeMolecule
 			{
 				Vec.sort(qbonds);
 				if (qbonds[0] == -1) {qbonds.splice(0, 1); qbonds.push(-1);}
-				let qtxt = qbonds.map((o) => o == -1 ? 'A' : o.toString()).join('');
+				let qtxt = Vec.equals(qbonds, [0, 1, 2, 3, -1]) ? '?' : qbonds.map((o) => o == -1 ? 'A' : o.toString()).join('');
 				let oxy = this.orthogonalDelta(xy1[0], xy1[1], xy2[0], xy2[1], 1.3 * this.bondSepPix);
 				let v = -0.5;
 				for (let i = 0; i < 2; i++, v++)
