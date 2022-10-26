@@ -3390,9 +3390,21 @@ var WebMolKit;
             let frag = WebMolKit.MolUtil.getAbbrev(mol, atom);
             if (!frag)
                 return false;
+            let fragExp = WebMolKit.MolUtil.expandedAbbrevs(frag);
+            let fragMF = WebMolKit.MolUtil.molecularFormula(fragExp);
+            let fragFP = WebMolKit.CircularFingerprints.create(WebMolKit.MetaMolecule.createStrictRubric(fragExp), WebMolKit.CircularFingerprints.CLASS_ECFP6).getUniqueHashes();
             for (let abbrev of this.abbrevs)
                 if (abbrev.frag.numAtoms == frag.numAtoms) {
-                    if (WebMolKit.CoordUtil.sketchEquivalent(frag, abbrev.frag)) {
+                    let match = WebMolKit.CoordUtil.sketchEquivalent(frag, abbrev.frag);
+                    if (!match) {
+                        let afragExp = WebMolKit.MolUtil.expandedAbbrevs(abbrev.frag);
+                        if (fragMF == WebMolKit.MolUtil.molecularFormula(afragExp)) {
+                            let afragFP = WebMolKit.CircularFingerprints.create(WebMolKit.MetaMolecule.createStrictRubric(afragExp), WebMolKit.CircularFingerprints.CLASS_ECFP6).getUniqueHashes();
+                            if (WebMolKit.Vec.equals(fragFP, afragFP))
+                                match = true;
+                        }
+                    }
+                    if (match) {
                         mol.setAtomElement(atom, abbrev.name);
                         return true;
                     }
@@ -5589,6 +5601,7 @@ var WebMolKit;
         ForeignMoleculeExtra["AtomChiralMDLOdd"] = "yCHIRAL_MDL_ODD";
         ForeignMoleculeExtra["AtomChiralMDLEven"] = "yCHIRAL_MDL_EVEN";
         ForeignMoleculeExtra["AtomChiralMDLRacemic"] = "yCHIRAL_MDL_RACEMIC";
+        ForeignMoleculeExtra["AtomExplicitValence"] = "yMDL_EXPLICIT_VALENCE";
     })(ForeignMoleculeExtra = WebMolKit.ForeignMoleculeExtra || (WebMolKit.ForeignMoleculeExtra = {}));
     class ForeignMolecule {
         static noteAromaticAtoms(mol) {
@@ -5604,6 +5617,18 @@ var WebMolKit;
             for (let n = 1; n <= sz; n++)
                 mask[n - 1] = mol.bondTransient(n).indexOf(ForeignMoleculeExtra.BondAromatic) >= 0;
             return mask;
+        }
+        static markExplicitValence(mol, atom, valence) {
+            let trans = mol.atomTransient(atom).filter((tr) => !tr.startsWith(ForeignMoleculeExtra.AtomExplicitValence));
+            trans.push(`${ForeignMoleculeExtra.AtomExplicitValence}:${valence}`);
+            mol.setAtomTransient(atom, trans);
+        }
+        static noteExplicitValence(mol, atom) {
+            let trans = mol.atomTransient(atom);
+            for (let tr of trans)
+                if (tr.startsWith(ForeignMoleculeExtra.AtomExplicitValence))
+                    return parseInt(tr.substring(ForeignMoleculeExtra.AtomExplicitValence.length + 1));
+            return 0;
         }
     }
     WebMolKit.ForeignMolecule = ForeignMolecule;
@@ -6151,7 +6176,7 @@ var WebMolKit;
             this.parseExtended = true;
             this.allowV3000 = true;
             this.considerRescale = true;
-            this.relaxed = false;
+            this.relaxed = true;
             this.keepAromatic = false;
             this.keepParity = false;
             this.keepQuery = true;
@@ -6160,7 +6185,6 @@ var WebMolKit;
             this.overallStereoAbsolute = true;
             this.atomHyd = null;
             this.resBonds = null;
-            this.explicitValence = [];
             this.groupAttachAny = new Map();
             this.groupAttachAll = new Map();
             this.groupStereoAbsolute = [];
@@ -6192,6 +6216,7 @@ var WebMolKit;
                 let version = line.length >= 39 ? line.substring(34, 39) : '';
                 if (this.allowV3000 && version == 'V3000') {
                     this.parseV3000();
+                    this.mol.keepTransient = false;
                     return;
                 }
                 if (version != 'V2000')
@@ -6244,10 +6269,12 @@ var WebMolKit;
                     else if (stereo == 3)
                         this.mol.setAtomTransient(a, WebMolKit.Vec.append(trans, WebMolKit.ForeignMoleculeExtra.AtomChiralMDLRacemic));
                 }
-                this.explicitValence.push(val > 14 ? -1 : val);
+                WebMolKit.ForeignMolecule.markExplicitValence(this.mol, n + 1, val > 14 ? -1 : val);
             }
             for (let n = 0; n < numBonds; n++) {
                 line = this.nextLine();
+                if (this.relaxed && line.length >= 9 && line.length < 12)
+                    line = line.substring(0, 9) + '  0';
                 if (line.length < 12)
                     throw 'Invalid MDL MOL: bond line' + (n + 1);
                 let bfr = parseInt(line.substring(0, 3).trim()), bto = parseInt(line.substring(3, 6).trim());
@@ -6488,6 +6515,7 @@ var WebMolKit;
             }
             for (let key of WebMolKit.Vec.sorted(Array.from(mixtures.keys())))
                 this.groupMixtures.push(mixtures.get(key));
+            this.mol.keepTransient = false;
         }
         postFix() {
             const mol = this.mol;
@@ -6501,7 +6529,8 @@ var WebMolKit;
                     mol.setAtomElement(n, 'H');
                     mol.setAtomIsotope(n, 3);
                 }
-                let valence = this.explicitValence[n - 1], options = WebMolKit.MDLMOL_VALENCE[el];
+                let valence = WebMolKit.ForeignMolecule.noteExplicitValence(this.mol, n);
+                let options = WebMolKit.MDLMOL_VALENCE[el];
                 if (valence != 0) {
                     let hcount = valence < 0 || valence > 14 ? 0 : valence;
                     for (let b of mol.atomAdjBonds(n))
@@ -6539,7 +6568,6 @@ var WebMolKit;
                 catch (ex) {
                 }
             }
-            mol.keepTransient = false;
         }
         parseV3000() {
             let Section;
@@ -6647,7 +6675,6 @@ var WebMolKit;
                     throw ERRPFX + 'duplicate bond index: ' + idx;
                 bondBits[idx - 1] = bits;
             }
-            this.explicitValence = WebMolKit.Vec.numberArray(0, numAtoms);
             for (let a = 1; a <= numAtoms; a++) {
                 let bits = atomBits[a - 1];
                 if (bits == null)
@@ -6683,7 +6710,7 @@ var WebMolKit;
                         }
                     }
                     else if (key == 'VAL')
-                        this.explicitValence[a - 1] = parseInt(val);
+                        WebMolKit.ForeignMolecule.markExplicitValence(this.mol, a, parseInt(val));
                 }
             }
             for (let b = 1; b <= numBonds; b++) {
@@ -8285,6 +8312,7 @@ var WebMolKit;
             if (sum == mol.numAtoms)
                 return mol.clone();
             let frag = new WebMolKit.Molecule();
+            frag.keepTransient = true;
             for (let n = 1; n <= mol.numAtoms; n++)
                 if (mask[n - 1]) {
                     let num = frag.addAtom(mol.atomElement(n), mol.atomX(n), mol.atomY(n), mol.atomCharge(n), mol.atomUnpaired(n));
@@ -8292,14 +8320,17 @@ var WebMolKit;
                     frag.setAtomHExplicit(num, mol.atomHExplicit(n));
                     frag.setAtomMapNum(num, mol.atomMapNum(n));
                     frag.setAtomExtra(num, mol.atomExtra(n));
+                    frag.setAtomTransient(num, mol.atomTransient(n));
                 }
             for (let n = 1; n <= mol.numBonds; n++) {
                 let bfr = invidx[mol.bondFrom(n) - 1], bto = invidx[mol.bondTo(n) - 1];
                 if (bfr > 0 && bto > 0) {
                     let num = frag.addBond(bfr, bto, mol.bondOrder(n), mol.bondType(n));
                     frag.setBondExtra(num, mol.bondExtra(n));
+                    frag.setBondTransient(num, mol.bondTransient(n));
                 }
             }
+            frag.keepTransient = mol.keepTransient;
             return frag;
         }
         static subgraphIndex(mol, idx) {
@@ -8309,25 +8340,24 @@ var WebMolKit;
             for (let n = 0; n < idx.length; n++)
                 invidx[idx[n] - 1] = n + 1;
             let frag = new WebMolKit.Molecule();
-            frag.keepTransient = mol.keepTransient;
+            frag.keepTransient = true;
             for (let n = 0; n < idx.length; n++) {
                 let num = frag.addAtom(mol.atomElement(idx[n]), mol.atomX(idx[n]), mol.atomY(idx[n]), mol.atomCharge(idx[n]), mol.atomUnpaired(idx[n]));
                 frag.setAtomIsotope(num, mol.atomIsotope(idx[n]));
                 frag.setAtomHExplicit(num, mol.atomHExplicit(idx[n]));
                 frag.setAtomMapNum(num, mol.atomMapNum(idx[n]));
                 frag.setAtomExtra(num, mol.atomExtra(idx[n]));
-                if (mol.keepTransient)
-                    frag.setAtomTransient(num, mol.atomTransient(idx[n]));
+                frag.setAtomTransient(num, mol.atomTransient(idx[n]));
             }
             for (let n = 1; n <= mol.numBonds; n++) {
                 let bfr = invidx[mol.bondFrom(n) - 1], bto = invidx[mol.bondTo(n) - 1];
                 if (bfr > 0 && bto > 0) {
                     let num = frag.addBond(bfr, bto, mol.bondOrder(n), mol.bondType(n));
                     frag.setBondExtra(num, mol.bondExtra(n));
-                    if (mol.keepTransient)
-                        frag.setBondTransient(num, mol.bondTransient(n));
+                    frag.setBondTransient(num, mol.bondTransient(n));
                 }
             }
+            frag.keepTransient = mol.keepTransient;
             return frag;
         }
         static subgraphWithAttachments(mol, mask) {
@@ -14495,8 +14525,8 @@ var WebMolKit;
                 if (bdbl[n - 1])
                     continue;
                 let minDist = (bo == 1 && bt == WebMolKit.Molecule.BONDTYPE_NORMAL ? MINBOND_LINE : MINBOND_EXOTIC) * measure.scale();
-                let xy1 = this.backOffAtom(bfr, x1, y1, x2, y2, minDist);
-                let xy2 = this.backOffAtom(bto, x2, y2, x1, y1, minDist);
+                let xy1 = this.shrinkBond(x1, y1, x2, y2, this.backOffAtom(bfr, x1, y1, x2, y2, minDist));
+                let xy2 = this.shrinkBond(x2, y2, x1, y1, this.backOffAtom(bto, x2, y2, x1, y1, minDist));
                 this.ensureMinimumBondLength(xy1, xy2, x1, y1, x2, y2, minDist);
                 let sz = this.lineSizePix, head = 0;
                 let qbonds = WebMolKit.QueryUtil.queryBondOrders(mol, n);
@@ -14579,8 +14609,18 @@ var WebMolKit;
                     [xy1, xy2] = [xy2, xy1];
                 if (bo > 1 && (bt == WebMolKit.Molecule.BONDTYPE_NORMAL || bt == WebMolKit.Molecule.BONDTYPE_UNKNOWN)) {
                     let oxy = this.orthogonalDelta(xy1[0], xy1[1], xy2[0], xy2[1], this.bondSepPix);
-                    let v = -0.5 * (bo - 1);
-                    for (let i = 0; i < bo; i++, v++) {
+                    let ext1 = 1, ext2 = 1;
+                    for (let i = 0, v = -0.5 * (bo - 1); i < bo; i++, v++) {
+                        let lx1 = xy1[0] + v * oxy[0], ly1 = xy1[1] + v * oxy[1], lx2 = xy2[0] + v * oxy[0], ly2 = xy2[1] + v * oxy[1];
+                        ext1 = Math.min(ext1, this.backOffAtom(bfr, lx1, ly1, lx2, ly2, minDist));
+                    }
+                    xy1 = this.shrinkBond(xy1[0], xy1[1], xy2[0], xy2[1], ext1);
+                    for (let i = 0, v = -0.5 * (bo - 1); i < bo; i++, v++) {
+                        let lx1 = xy1[0] + v * oxy[0], ly1 = xy1[1] + v * oxy[1], lx2 = xy2[0] + v * oxy[0], ly2 = xy2[1] + v * oxy[1];
+                        ext2 = Math.min(ext2, this.backOffAtom(bto, lx2, ly2, lx1, ly1, minDist));
+                    }
+                    xy2 = this.shrinkBond(xy2[0], xy2[1], xy1[0], xy1[1], ext2);
+                    for (let i = 0, v = -0.5 * (bo - 1); i < bo; i++, v++) {
                         let lx1 = xy1[0] + v * oxy[0], ly1 = xy1[1] + v * oxy[1], lx2 = xy2[0] + v * oxy[0], ly2 = xy2[1] + v * oxy[1];
                         let b = {
                             'bnum': n,
@@ -15129,39 +15169,39 @@ var WebMolKit;
         }
         backOffAtom(atom, x, y, fx, fy, minDist) {
             if (x == fx && y == fy)
-                return [x, y];
+                return 1;
+            let dx = x - fx, dy = y - fy, dist = WebMolKit.norm_xy(dx, dy), inv = 1.0 / dist;
+            const BUMP = 0.1 * this.measure.scale();
+            let xbump = x + 2 * BUMP * dx * inv, ybump = y + 2 * BUMP * dy * inv;
+            let ext = dist;
             let active = false;
-            let dx = 0, dy = 0, dst = 0, ext = 0;
-            for (let s = 0; s < this.space.length; s++) {
-                let spc = this.space[s];
-                if (spc.anum != atom)
-                    continue;
-                const sz = spc.px.length;
-                if (sz == 0)
-                    continue;
-                for (let n = 0; n < sz; n++) {
-                    let nn = n < sz - 1 ? n + 1 : 0;
-                    let x1 = spc.px[n], y1 = spc.py[n], x2 = spc.px[nn], y2 = spc.py[nn];
-                    if (!WebMolKit.GeomUtil.doLineSegsIntersect(x, y, fx, fy, x1, y1, x2, y2))
+            for (let spc of this.space)
+                if (spc.anum == atom) {
+                    const sz = spc.px.length;
+                    if (sz == 0)
                         continue;
-                    let xy = WebMolKit.GeomUtil.lineIntersect(x, y, fx, fy, x1, y1, x2, y2);
-                    if (!active) {
-                        dx = x - fx;
-                        dy = y - fy;
-                        dst = WebMolKit.norm_xy(dx, dy);
-                        ext = dst;
+                    for (let n = 0; n < sz; n++) {
+                        let nn = n < sz - 1 ? n + 1 : 0;
+                        let x1 = spc.px[n], y1 = spc.py[n], x2 = spc.px[nn], y2 = spc.py[nn];
+                        if (!WebMolKit.GeomUtil.doLineSegsIntersect(xbump, ybump, fx, fy, x1, y1, x2, y2))
+                            continue;
+                        let xy = WebMolKit.GeomUtil.lineIntersect(x, y, fx, fy, x1, y1, x2, y2);
                         active = true;
+                        ext = Math.min(ext, WebMolKit.norm_xy(xy[0] - fx, xy[1] - fy));
                     }
-                    ext = Math.min(ext, WebMolKit.norm_xy(xy[0] - fx, xy[1] - fy));
                 }
-            }
             if (active) {
-                ext = Math.max(minDist, ext - 0.1 * this.measure.scale());
-                let idst = 1.0 / dst;
-                return [fx + ext * idst * dx, fy + ext * idst * dy];
+                ext = Math.max(minDist, ext - BUMP);
+                return ext / dist;
             }
             else
+                return 1;
+        }
+        shrinkBond(x, y, fx, fy, ext) {
+            if (ext == 1)
                 return [x, y];
+            let dx = x - fx, dy = y - fy;
+            return [fx + ext * dx, fy + ext * dy];
         }
         ensureMinimumBondLength(xy1, xy2, x1, y1, x2, y2, minDist) {
             let dx = xy2[0] - xy1[0], dy = xy2[1] - xy1[1];
@@ -15226,14 +15266,8 @@ var WebMolKit;
             let nfr = this.mol.atomAdjList(bfr), nto = this.mol.atomAdjList(bto);
             let a1 = this.points[bfr - 1], a2 = this.points[bto - 1];
             let x1 = a1.oval.cx, y1 = a1.oval.cy, x2 = a2.oval.cx, y2 = a2.oval.cy;
+            let oxy = this.orthogonalDelta(x1, y1, x2, y2, this.bondSepPix);
             const minDist = MINBOND_EXOTIC * this.measure.scale();
-            let xy1 = this.backOffAtom(bfr, x1, y1, x2, y2, minDist);
-            let xy2 = this.backOffAtom(bto, x2, y2, x1, y1, minDist);
-            this.ensureMinimumBondLength(xy1, xy2, x1, y1, x2, y2, minDist);
-            x1 = xy1[0];
-            y1 = xy1[1];
-            x2 = xy2[0];
-            y2 = xy2[1];
             let dx = x2 - x1, dy = y2 - y1, btheta = Math.atan2(dy, dx);
             let countFLeft = 0, countFRight = 0, countTLeft = 0, countTRight = 0;
             let idxFLeft = 0, idxFRight = 0, idxTLeft = 0, idxTRight = 0;
@@ -15305,9 +15339,16 @@ var WebMolKit;
             else if (countFRight > 0 || countTRight > 0)
                 side = -1;
             let sz = this.lineSizePix;
-            let oxy = this.orthogonalDelta(x1, y1, x2, y2, this.bondSepPix);
             let ax1 = x1, ay1 = y1, ax2 = x2, ay2 = y2;
             let bx1 = 0, by1 = 0, bx2 = 0, by2 = 0;
+            let backBothBonds = () => {
+                let ext1 = Math.min(this.backOffAtom(bfr, ax1, ay1, ax2, ay2, minDist), this.backOffAtom(bfr, bx1, by1, bx2, by2, minDist));
+                [ax1, ay1] = this.shrinkBond(ax1, ay1, ax2, ay2, ext1);
+                [bx1, by1] = this.shrinkBond(bx1, by1, bx2, by2, ext1);
+                let ext2 = Math.min(this.backOffAtom(bto, ax2, ay2, ax1, ay1, minDist), this.backOffAtom(bto, bx2, by2, bx1, by1, minDist));
+                [ax2, ay2] = this.shrinkBond(ax2, ay2, ax1, ay1, ext2);
+                [bx2, by2] = this.shrinkBond(bx2, by2, bx1, by1, ext2);
+            };
             if (side == 0) {
                 ax1 = x1 + 0.5 * oxy[0];
                 ay1 = y1 + 0.5 * oxy[1];
@@ -15317,12 +15358,14 @@ var WebMolKit;
                 by1 = y1 - 0.5 * oxy[1];
                 bx2 = x2 - 0.5 * oxy[0];
                 by2 = y2 - 0.5 * oxy[1];
+                backBothBonds();
             }
             else if (side > 0) {
                 bx1 = x1 + oxy[0];
                 by1 = y1 + oxy[1];
                 bx2 = x2 + oxy[0];
                 by2 = y2 + oxy[1];
+                backBothBonds();
                 if (nfr.length > 1 && this.points[bfr - 1].text == null) {
                     bx1 += oxy[1];
                     by1 -= oxy[0];
@@ -15337,6 +15380,7 @@ var WebMolKit;
                 by1 = y1 - oxy[1];
                 bx2 = x2 - oxy[0];
                 by2 = y2 - oxy[1];
+                backBothBonds();
                 if (nfr.length > 1 && this.points[bfr - 1].text == null) {
                     bx1 += oxy[1];
                     by1 -= oxy[0];
@@ -16276,7 +16320,7 @@ var WebMolKit;
                 y2 -= 0.1 * (y2 - y1);
             }
             const minDist = MINBOND_LINE * this.measure.scale();
-            let xy1 = this.backOffAtom(from, x1, y1, x2, y2, minDist);
+            let xy1 = this.shrinkBond(x1, y1, x2, y2, this.backOffAtom(from, x1, y1, x2, y2, minDist));
             this.ensureMinimumBondLength(xy1, [x2, y2], x1, y1, x2, y2, minDist);
             let b = {
                 'bnum': 0, 'bfr': from, 'bto': 0,
@@ -23510,6 +23554,12 @@ var WebMolKit;
             if (mol == null) {
                 this.errmsg = 'Inline abbreviations must be terminal with exactly one attachment point.';
                 return;
+            }
+            if (WebMolKit.AbbrevContainer.main) {
+                WebMolKit.AbbrevContainer.main.submitMolecule(mol, true);
+                for (let n = 1; n <= mol.numAtoms; n++)
+                    if (mol.atomElement(n) == '?' && WebMolKit.MolUtil.hasAbbrev(mol, n))
+                        WebMolKit.AbbrevContainer.main.substituteAbbrevName(mol, n);
             }
             this.output.mol = mol;
             this.zapSubject();

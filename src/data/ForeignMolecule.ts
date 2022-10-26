@@ -37,6 +37,9 @@ export enum ForeignMoleculeExtra
 	AtomChiralMDLOdd = 'yCHIRAL_MDL_ODD',
 	AtomChiralMDLEven= 'yCHIRAL_MDL_EVEN',
 	AtomChiralMDLRacemic = 'yCHIRAL_MDL_RACEMIC',
+
+	// annotations that carry over from supplementary MDL parsing
+	AtomExplicitValence = 'yMDL_EXPLICIT_VALENCE',
 }
 
 export class ForeignMolecule
@@ -63,6 +66,20 @@ export class ForeignMolecule
 	}
 
 	// TODO: convert MDL chirality to/from rubric
+
+	// explicit valence: 0=no information; -1=zero; >0=explicit
+	public static markExplicitValence(mol:Molecule, atom:number, valence:number):void
+	{
+		let trans = mol.atomTransient(atom).filter((tr) => !tr.startsWith(ForeignMoleculeExtra.AtomExplicitValence));
+		trans.push(`${ForeignMoleculeExtra.AtomExplicitValence}:${valence}`);
+		mol.setAtomTransient(atom, trans);
+	}
+	public static noteExplicitValence(mol:Molecule, atom:number):number
+	{
+		let trans = mol.atomTransient(atom);
+		for (let tr of trans) if (tr.startsWith(ForeignMoleculeExtra.AtomExplicitValence)) return parseInt(tr.substring(ForeignMoleculeExtra.AtomExplicitValence.length + 1));
+		return 0;
+	}
 
 	// ----------------- private methods -----------------
 

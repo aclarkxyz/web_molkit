@@ -80,7 +80,7 @@ export class MDLMOLReader
 	public parseExtended = true; // if on, extended fields are parsed; otherwise legacy MDL
 	public allowV3000 = true; // if on, will diverge to a separate track for V3000
 	public considerRescale = true; // if on, bond lengths will be rescaled if they are funky
-	public relaxed = false; // set this to true to read some not-so-valid MOLfiles
+	public relaxed = true; // set this to true to read some not-so-valid MOLfiles
 	public keepAromatic = false; // set this to retain "type 4" bonds and other queries, instead of de-rezzing
 	public keepParity = false; // set this to bring in the "parity" labels for atoms
 	public keepQuery = true; // set this to translate query-type properties into the native equivalent
@@ -95,7 +95,6 @@ export class MDLMOLReader
 	public resBonds:boolean[] = null;
 
 	// "modern" features of CTAB which are not part of the lowest common denominator
-	public explicitValence:number[] = []; // -1=zero valence, 0=no opinion, >0=specific
 	public groupAttachAny = new Map<number, number[]>(); // bond -> list of atom indices
 	public groupAttachAll = new Map<number, number[]>(); // ditto
 	public groupStereoAbsolute:number[] = []; // atom centres that have absolute stereochemistry
@@ -148,6 +147,7 @@ export class MDLMOLReader
 			if (this.allowV3000 && version == 'V3000')
 			{
 				this.parseV3000();
+				this.mol.keepTransient = false;
 				return;
 			}
 			if (version != 'V2000') throw 'Invalid MDL MOL: no Vx000 tag.';
@@ -199,13 +199,14 @@ export class MDLMOLReader
 				else if (stereo == 3) this.mol.setAtomTransient(a, Vec.append(trans, ForeignMoleculeExtra.AtomChiralMDLRacemic));
 			}
 
-			this.explicitValence.push(val > 14 ? -1 : val);
+			ForeignMolecule.markExplicitValence(this.mol, n + 1, val > 14 ? -1 : val);
 		}
 
 		// read out each bond
 		for (let n = 0; n < numBonds; n++)
 		{
 			line = this.nextLine();
+			if (this.relaxed && line.length >= 9 && line.length < 12) line = line.substring(0, 9) + '  0';
 			if (line.length < 12) throw 'Invalid MDL MOL: bond line' + (n + 1);
 
 			let bfr = parseInt(line.substring(0, 3).trim()), bto = parseInt(line.substring(3, 6).trim());
@@ -451,6 +452,8 @@ export class MDLMOLReader
 		}
 
 		for (let key of Vec.sorted(Array.from(mixtures.keys()))) this.groupMixtures.push(mixtures.get(key));
+
+		this.mol.keepTransient = false;
 	}
 
 	// performs some intrinsic post-parse fixing
@@ -468,7 +471,8 @@ export class MDLMOLReader
 			else if (el == 'T') {mol.setAtomElement(n, 'H'); mol.setAtomIsotope(n, 3);}
 
 			// valence, two correction scenarios
-			let valence = this.explicitValence[n - 1], options = MDLMOL_VALENCE[el];
+			let valence = ForeignMolecule.noteExplicitValence(this.mol, n);
+			let options = MDLMOL_VALENCE[el];
 			if (valence != 0)
 			{
 				let hcount = valence < 0 || valence > 14 ? 0 : valence;
@@ -507,8 +511,6 @@ export class MDLMOLReader
 				// silent failure: de-resonance Kekulisation failed; the aromatic bonds will be left as single
 			}
 		}
-
-		mol.keepTransient = false;
 	}
 
 	// alternate track: only look at the specially marked V3000 tags
@@ -614,8 +616,6 @@ export class MDLMOLReader
 			bondBits[idx - 1] = bits;
 		}
 
-		this.explicitValence = Vec.numberArray(0, numAtoms);
-
 		// process each atom
 		for (let a = 1; a <= numAtoms; a++)
 		{
@@ -658,7 +658,7 @@ export class MDLMOLReader
 						else if (stereo == 3) mol.setAtomTransient(n, Vec.append(trans, ForeignMolecule.ATOM_CHIRAL_MDL_RACEMIC));*/
 					}
 				}
-				else if (key == 'VAL') this.explicitValence[a - 1] = parseInt(val);
+				else if (key == 'VAL') ForeignMolecule.markExplicitValence(this.mol, a, parseInt(val));
 			}
 		}
 

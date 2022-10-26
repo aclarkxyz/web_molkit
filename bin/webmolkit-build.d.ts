@@ -1023,11 +1023,14 @@ declare namespace WebMolKit {
         BondAromatic = "yAROMATIC",
         AtomChiralMDLOdd = "yCHIRAL_MDL_ODD",
         AtomChiralMDLEven = "yCHIRAL_MDL_EVEN",
-        AtomChiralMDLRacemic = "yCHIRAL_MDL_RACEMIC"
+        AtomChiralMDLRacemic = "yCHIRAL_MDL_RACEMIC",
+        AtomExplicitValence = "yMDL_EXPLICIT_VALENCE"
     }
     class ForeignMolecule {
         static noteAromaticAtoms(mol: Molecule): boolean[];
         static noteAromaticBonds(mol: Molecule): boolean[];
+        static markExplicitValence(mol: Molecule, atom: number, valence: number): void;
+        static noteExplicitValence(mol: Molecule, atom: number): number;
     }
 }
 declare namespace WebMolKit {
@@ -1135,7 +1138,6 @@ declare namespace WebMolKit {
         overallStereoAbsolute: boolean;
         atomHyd: number[];
         resBonds: boolean[];
-        explicitValence: number[];
         groupAttachAny: Map<number, number[]>;
         groupAttachAll: Map<number, number[]>;
         groupStereoAbsolute: number[];
@@ -2236,6 +2238,7 @@ declare namespace WebMolKit {
         private placeAdjunct;
         private processLabel;
         private backOffAtom;
+        private shrinkBond;
         private ensureMinimumBondLength;
         private orderedRingList;
         private orthogonalDelta;
