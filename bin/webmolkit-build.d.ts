@@ -1129,7 +1129,6 @@ declare namespace WebMolKit {
         parseExtended: boolean;
         allowV3000: boolean;
         considerRescale: boolean;
-        relaxed: boolean;
         keepAromatic: boolean;
         keepParity: boolean;
         keepQuery: boolean;

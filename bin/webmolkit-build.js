@@ -6176,7 +6176,6 @@ var WebMolKit;
             this.parseExtended = true;
             this.allowV3000 = true;
             this.considerRescale = true;
-            this.relaxed = true;
             this.keepAromatic = false;
             this.keepParity = false;
             this.keepQuery = true;
@@ -6212,16 +6211,14 @@ var WebMolKit;
             this.mol = new WebMolKit.Molecule();
             this.mol.keepTransient = true;
             let line = this.nextLine();
-            if (!this.relaxed) {
-                let version = line.length >= 39 ? line.substring(34, 39) : '';
-                if (this.allowV3000 && version == 'V3000') {
-                    this.parseV3000();
-                    this.mol.keepTransient = false;
-                    return;
-                }
-                if (version != 'V2000')
-                    throw 'Invalid MDL MOL: no Vx000 tag.';
+            let version = line.length >= 39 ? line.substring(34, 39) : '';
+            if (this.allowV3000 && version == 'V3000') {
+                this.parseV3000();
+                this.mol.keepTransient = false;
+                return;
             }
+            if (version != 'V2000')
+                throw 'Invalid MDL MOL: no Vx000 tag.';
             let numAtoms = parseInt(line.substring(0, 3).trim());
             let numBonds = parseInt(line.substring(3, 6).trim());
             if (line.length >= 15)
@@ -6273,7 +6270,7 @@ var WebMolKit;
             }
             for (let n = 0; n < numBonds; n++) {
                 line = this.nextLine();
-                if (this.relaxed && line.length >= 9 && line.length < 12)
+                if (line.length >= 9 && line.length < 12)
                     line = line.substring(0, 9) + '  0';
                 if (line.length < 12)
                     throw 'Invalid MDL MOL: bond line' + (n + 1);

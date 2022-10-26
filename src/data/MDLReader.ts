@@ -80,7 +80,6 @@ export class MDLMOLReader
 	public parseExtended = true; // if on, extended fields are parsed; otherwise legacy MDL
 	public allowV3000 = true; // if on, will diverge to a separate track for V3000
 	public considerRescale = true; // if on, bond lengths will be rescaled if they are funky
-	public relaxed = true; // set this to true to read some not-so-valid MOLfiles
 	public keepAromatic = false; // set this to retain "type 4" bonds and other queries, instead of de-rezzing
 	public keepParity = false; // set this to bring in the "parity" labels for atoms
 	public keepQuery = true; // set this to translate query-type properties into the native equivalent
@@ -148,7 +147,7 @@ export class MDLMOLReader
 			this.mol.keepTransient = false;
 			return;
 		}
-		if (!this.relaxed && version != 'V2000') throw 'Invalid MDL MOL: no Vx000 tag.';
+		if (version != 'V2000') throw 'Invalid MDL MOL: no Vx000 tag.';
 
 		let numAtoms = parseInt(line.substring(0, 3).trim());
 		let numBonds = parseInt(line.substring(3, 6).trim());
@@ -204,7 +203,7 @@ export class MDLMOLReader
 		for (let n = 0; n < numBonds; n++)
 		{
 			line = this.nextLine();
-			if (this.relaxed && line.length >= 9 && line.length < 12) line = line.substring(0, 9) + '  0';
+			if (line.length >= 9 && line.length < 12) line = line.substring(0, 9) + '  0';
 			if (line.length < 12) throw 'Invalid MDL MOL: bond line' + (n + 1);
 
 			let bfr = parseInt(line.substring(0, 3).trim()), bto = parseInt(line.substring(3, 6).trim());
