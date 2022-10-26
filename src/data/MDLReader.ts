@@ -141,17 +141,15 @@ export class MDLMOLReader
 
 		// check out the counts line
 		let line = this.nextLine();
-		if (!this.relaxed)
+		let version = line.length >= 39 ? line.substring(34, 39) : '';
+		if (this.allowV3000 && version == 'V3000')
 		{
-			let version = line.length >= 39 ? line.substring(34, 39) : '';
-			if (this.allowV3000 && version == 'V3000')
-			{
-				this.parseV3000();
-				this.mol.keepTransient = false;
-				return;
-			}
-			if (version != 'V2000') throw 'Invalid MDL MOL: no Vx000 tag.';
+			this.parseV3000();
+			this.mol.keepTransient = false;
+			return;
 		}
+		if (!this.relaxed && version != 'V2000') throw 'Invalid MDL MOL: no Vx000 tag.';
+
 		let numAtoms = parseInt(line.substring(0, 3).trim());
 		let numBonds = parseInt(line.substring(3, 6).trim());
 		if (line.length >= 15) this.overallStereoAbsolute = parseInt(line.substring(12, 15).trim()) == 1;
