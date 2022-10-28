@@ -78,7 +78,7 @@ export class ForeignMolecule
 	{
 		let trans = mol.atomTransient(atom);
 		for (let tr of trans) if (tr.startsWith(ForeignMoleculeExtra.AtomExplicitValence)) return parseInt(tr.substring(ForeignMoleculeExtra.AtomExplicitValence.length + 1));
-		return 0;
+		return null;
 	}
 
 	// ----------------- private methods -----------------

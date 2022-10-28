@@ -5628,7 +5628,7 @@ var WebMolKit;
             for (let tr of trans)
                 if (tr.startsWith(ForeignMoleculeExtra.AtomExplicitValence))
                     return parseInt(tr.substring(ForeignMoleculeExtra.AtomExplicitValence.length + 1));
-            return 0;
+            return null;
         }
     }
     WebMolKit.ForeignMolecule = ForeignMolecule;
@@ -6266,7 +6266,8 @@ var WebMolKit;
                     else if (stereo == 3)
                         this.mol.setAtomTransient(a, WebMolKit.Vec.append(trans, WebMolKit.ForeignMoleculeExtra.AtomChiralMDLRacemic));
                 }
-                WebMolKit.ForeignMolecule.markExplicitValence(this.mol, n + 1, val > 14 ? -1 : val);
+                if (val != 0)
+                    WebMolKit.ForeignMolecule.markExplicitValence(this.mol, n + 1, val > 14 ? 0 : val);
             }
             for (let n = 0; n < numBonds; n++) {
                 line = this.nextLine();
@@ -6528,7 +6529,7 @@ var WebMolKit;
                 }
                 let valence = WebMolKit.ForeignMolecule.noteExplicitValence(this.mol, n);
                 let options = WebMolKit.MDLMOL_VALENCE[el];
-                if (valence != 0) {
+                if (valence != null) {
                     let hcount = valence < 0 || valence > 14 ? 0 : valence;
                     for (let b of mol.atomAdjBonds(n))
                         hcount -= mol.bondOrder(b);
@@ -9263,6 +9264,15 @@ var WebMolKit;
             }
             return 0;
         }
+        trashTransient() {
+            if (this.keepTransient || !this.hasTransient)
+                return;
+            for (let a of this.atoms)
+                a.transient = [];
+            for (let b of this.bonds)
+                b.transient = [];
+            this.hasTransient = false;
+        }
         trashGraph() {
             this.graph = null;
             this.graphBond = null;
@@ -9273,15 +9283,6 @@ var WebMolKit;
             this.ring5 = null;
             this.ring6 = null;
             this.ring7 = null;
-        }
-        trashTransient() {
-            if (this.keepTransient || !this.hasTransient)
-                return;
-            for (let a of this.atoms)
-                a.transient = [];
-            for (let b of this.bonds)
-                b.transient = [];
-            this.hasTransient = false;
         }
         buildGraph() {
             if (this.graph != null && this.graphBond != null)

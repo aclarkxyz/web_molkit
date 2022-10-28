@@ -558,6 +558,15 @@ export class Molecule
 		return 0;
 	}
 
+	// must be called when _any_ change to the molecule is affected; the transient extension fields are cleared out
+	public trashTransient():void
+	{
+		if (this.keepTransient || !this.hasTransient) return;
+		for (let a of this.atoms) a.transient = [];
+		for (let b of this.bonds) b.transient = [];
+		this.hasTransient = false;
+	}
+
 	// ------------ private methods ------------
 
 	// must be called when the molecule's graph changes; do not call for changing labels or coordinates
@@ -572,15 +581,6 @@ export class Molecule
 		this.ring5 = null;
 		this.ring6 = null;
 		this.ring7 = null;
-	}
-
-	// must be called when _any_ change to the molecule is affected; the transient extension fields are cleared out
-	private trashTransient():void
-	{
-		if (this.keepTransient || !this.hasTransient) return;
-		for (let a of this.atoms) a.transient = [];
-		for (let b of this.bonds) b.transient = [];
-		this.hasTransient = false;
 	}
 
 	// if the computed graph is not defined, rebuild it

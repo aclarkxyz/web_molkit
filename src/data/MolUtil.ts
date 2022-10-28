@@ -193,7 +193,7 @@ export class MolUtil
 
 		// create the excised molecule, and add in the fragment
 		let newmol = MolUtil.subgraphMask(mol, maskmol);
-		let	 newatom = newmol.addAtom(abbrevName, x, y);
+		let	newatom = newmol.addAtom(abbrevName, x, y);
 		newmol.addBond(molidx, newatom, bondOrder, bondType);
 		MolUtil.setAbbrev(newmol, newatom, frag);
 		if (polymerExtra != null) newmol.setAtomExtra(newatom, Vec.concat(newmol.atomExtra(newatom), polymerExtra));

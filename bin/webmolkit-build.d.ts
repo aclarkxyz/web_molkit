@@ -1414,8 +1414,8 @@ declare namespace WebMolKit {
         atomZ(idx: number): number;
         setAtomZ(idx: number, z: number): void;
         compareTo(other: Molecule): number;
+        trashTransient(): void;
         private trashGraph;
-        private trashTransient;
         private buildGraph;
         private buildConnComp;
         private buildRingID;

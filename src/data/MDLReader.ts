@@ -196,7 +196,7 @@ export class MDLMOLReader
 				else if (stereo == 3) this.mol.setAtomTransient(a, Vec.append(trans, ForeignMoleculeExtra.AtomChiralMDLRacemic));
 			}
 
-			ForeignMolecule.markExplicitValence(this.mol, n + 1, val > 14 ? -1 : val);
+			if (val != 0) ForeignMolecule.markExplicitValence(this.mol, n + 1, val > 14 ? 0 : val);
 		}
 
 		// read out each bond
@@ -470,7 +470,7 @@ export class MDLMOLReader
 			// valence, two correction scenarios
 			let valence = ForeignMolecule.noteExplicitValence(this.mol, n);
 			let options = MDLMOL_VALENCE[el];
-			if (valence != 0)
+			if (valence != null)
 			{
 				let hcount = valence < 0 || valence > 14 ? 0 : valence;
 				for (let b of mol.atomAdjBonds(n)) hcount -= mol.bondOrder(b);
