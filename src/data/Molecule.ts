@@ -121,11 +121,13 @@ export class Molecule
 			this.setAtomHExplicit(num, frag.atomHExplicit(n));
 			this.setAtomMapNum(num, frag.atomMapNum(n));
 			this.setAtomExtra(num, frag.atomExtra(n));
+			this.setAtomTransient(num, frag.atomTransient(n));
 		}
 		for (let n = 1; n <= frag.numBonds; n++)
 		{
 			let num = this.addBond(frag.bondFrom(n) + base, frag.bondTo(n) + base, frag.bondOrder(n), frag.bondType(n));
 			this.setBondExtra(num, frag.bondExtra(n));
+			this.setBondTransient(num, frag.bondTransient(n));
 		}
 		this.trashTransient();
 	}

@@ -40,6 +40,13 @@ export enum ForeignMoleculeExtra
 
 	// annotations that carry over from supplementary MDL parsing
 	AtomExplicitValence = 'yMDL_EXPLICIT_VALENCE',
+	AtomSgroupMultiAttach = 'yMDL_SGROUP_MULTIATTACH',
+}
+
+export interface ForeignMoleculeSgroupMulti
+{
+	name:string;
+	atoms:number[];
 }
 
 export class ForeignMolecule
@@ -70,17 +77,57 @@ export class ForeignMolecule
 	// explicit valence: 0=no information; -1=zero; >0=explicit
 	public static markExplicitValence(mol:Molecule, atom:number, valence:number):void
 	{
-		let trans = mol.atomTransient(atom).filter((tr) => !tr.startsWith(ForeignMoleculeExtra.AtomExplicitValence));
+		let trans = mol.atomTransient(atom).filter((tr) => !tr.startsWith(ForeignMoleculeExtra.AtomExplicitValence + ':'));
 		trans.push(`${ForeignMoleculeExtra.AtomExplicitValence}:${valence}`);
 		mol.setAtomTransient(atom, trans);
 	}
 	public static noteExplicitValence(mol:Molecule, atom:number):number
 	{
 		let trans = mol.atomTransient(atom);
-		for (let tr of trans) if (tr.startsWith(ForeignMoleculeExtra.AtomExplicitValence)) return parseInt(tr.substring(ForeignMoleculeExtra.AtomExplicitValence.length + 1));
+		for (let tr of trans) if (tr.startsWith(ForeignMoleculeExtra.AtomExplicitValence + ':')) return parseInt(tr.substring(ForeignMoleculeExtra.AtomExplicitValence.length + 1));
 		return null;
 	}
 
+	// S-groups with either no attachments or multiple attachments; only single-attachment S-groups are handled naturally
+	public static markSgroupMulti(mol:Molecule, name:string, atoms:number[]):void
+	{
+		let idxHigh = 0;
+		for (let n = 1; n <= mol.numAtoms; n++) for (let tag of mol.atomTransient(n)) if (tag.startsWith(ForeignMoleculeExtra.AtomSgroupMultiAttach + ':'))
+		{
+			let payload = tag.substring(ForeignMoleculeExtra.AtomSgroupMultiAttach.length + 1);
+			let comma = payload.indexOf(',');
+			if (comma <= 0) continue;
+			let idx = parseInt(payload.substring(0, comma));
+			if (!(idx > 0)) continue;
+			idxHigh = Math.max(idxHigh, idx);
+		}
+		
+		let tag = `${ForeignMoleculeExtra.AtomSgroupMultiAttach}:${idxHigh + 1},${name}`;
+		for (let a of atoms) mol.setAtomTransient(a, Vec.append(mol.atomTransient(a), tag));
+	}
+	public static hasAnySgroupMulti(mol:Molecule):boolean
+	{
+		for (let n = 1; n <= mol.numAtoms; n++) if (mol.atomTransient(n).some((tag) => tag.startsWith(ForeignMoleculeExtra.AtomSgroupMultiAttach + ':'))) return true;
+		return false;
+	}
+	public static noteAllSgroupMulti(mol:Molecule):ForeignMoleculeSgroupMulti[]
+	{
+		let map:Record<number, ForeignMoleculeSgroupMulti> = {};
+		
+		for (let n = 1; n <= mol.numAtoms; n++) for (let tag of mol.atomTransient(n)) if (tag.startsWith(ForeignMoleculeExtra.AtomSgroupMultiAttach + ':'))
+		{
+			let payload = tag.substring(ForeignMoleculeExtra.AtomSgroupMultiAttach.length + 1);
+			let comma = payload.indexOf(',');
+			if (comma <= 0) continue;
+			let idx = parseInt(payload.substring(0, comma)), name = payload.substring(comma + 1);
+			if (!(idx > 0)) continue;
+			
+			var sgm = map[idx];
+			if (sgm) sgm.atoms.push(n); else map[idx] = {name, 'atoms': [n]};
+		}
+		
+		return Object.values(map);
+	}
 	// ----------------- private methods -----------------
 
 }

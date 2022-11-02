@@ -5602,6 +5602,7 @@ var WebMolKit;
         ForeignMoleculeExtra["AtomChiralMDLEven"] = "yCHIRAL_MDL_EVEN";
         ForeignMoleculeExtra["AtomChiralMDLRacemic"] = "yCHIRAL_MDL_RACEMIC";
         ForeignMoleculeExtra["AtomExplicitValence"] = "yMDL_EXPLICIT_VALENCE";
+        ForeignMoleculeExtra["AtomSgroupMultiAttach"] = "yMDL_SGROUP_MULTIATTACH";
     })(ForeignMoleculeExtra = WebMolKit.ForeignMoleculeExtra || (WebMolKit.ForeignMoleculeExtra = {}));
     class ForeignMolecule {
         static noteAromaticAtoms(mol) {
@@ -5619,16 +5620,60 @@ var WebMolKit;
             return mask;
         }
         static markExplicitValence(mol, atom, valence) {
-            let trans = mol.atomTransient(atom).filter((tr) => !tr.startsWith(ForeignMoleculeExtra.AtomExplicitValence));
+            let trans = mol.atomTransient(atom).filter((tr) => !tr.startsWith(ForeignMoleculeExtra.AtomExplicitValence + ':'));
             trans.push(`${ForeignMoleculeExtra.AtomExplicitValence}:${valence}`);
             mol.setAtomTransient(atom, trans);
         }
         static noteExplicitValence(mol, atom) {
             let trans = mol.atomTransient(atom);
             for (let tr of trans)
-                if (tr.startsWith(ForeignMoleculeExtra.AtomExplicitValence))
+                if (tr.startsWith(ForeignMoleculeExtra.AtomExplicitValence + ':'))
                     return parseInt(tr.substring(ForeignMoleculeExtra.AtomExplicitValence.length + 1));
             return null;
+        }
+        static markSgroupMulti(mol, name, atoms) {
+            let idxHigh = 0;
+            for (let n = 1; n <= mol.numAtoms; n++)
+                for (let tag of mol.atomTransient(n))
+                    if (tag.startsWith(ForeignMoleculeExtra.AtomSgroupMultiAttach + ':')) {
+                        let payload = tag.substring(ForeignMoleculeExtra.AtomSgroupMultiAttach.length + 1);
+                        let comma = payload.indexOf(',');
+                        if (comma <= 0)
+                            continue;
+                        let idx = parseInt(payload.substring(0, comma));
+                        if (!(idx > 0))
+                            continue;
+                        idxHigh = Math.max(idxHigh, idx);
+                    }
+            let tag = `${ForeignMoleculeExtra.AtomSgroupMultiAttach}:${idxHigh + 1},${name}`;
+            for (let a of atoms)
+                mol.setAtomTransient(a, WebMolKit.Vec.append(mol.atomTransient(a), tag));
+        }
+        static hasAnySgroupMulti(mol) {
+            for (let n = 1; n <= mol.numAtoms; n++)
+                if (mol.atomTransient(n).some((tag) => tag.startsWith(ForeignMoleculeExtra.AtomSgroupMultiAttach + ':')))
+                    return true;
+            return false;
+        }
+        static noteAllSgroupMulti(mol) {
+            let map = {};
+            for (let n = 1; n <= mol.numAtoms; n++)
+                for (let tag of mol.atomTransient(n))
+                    if (tag.startsWith(ForeignMoleculeExtra.AtomSgroupMultiAttach + ':')) {
+                        let payload = tag.substring(ForeignMoleculeExtra.AtomSgroupMultiAttach.length + 1);
+                        let comma = payload.indexOf(',');
+                        if (comma <= 0)
+                            continue;
+                        let idx = parseInt(payload.substring(0, comma)), name = payload.substring(comma + 1);
+                        if (!(idx > 0))
+                            continue;
+                        var sgm = map[idx];
+                        if (sgm)
+                            sgm.atoms.push(n);
+                        else
+                            map[idx] = { name, 'atoms': [n] };
+                    }
+            return Object.values(map);
         }
     }
     WebMolKit.ForeignMolecule = ForeignMolecule;
@@ -6871,8 +6916,10 @@ var WebMolKit;
             while ((i = name.indexOf('\\n')) >= 0)
                 name = name.substring(0, i) + '}' + name.substring(i + 2);
             let [mod, abvAtom] = WebMolKit.MolUtil.convertToAbbrevIndex(this.mol, mask, name);
-            if (mod == null)
+            if (mod == null) {
+                WebMolKit.ForeignMolecule.markSgroupMulti(this.mol, name, sup.atoms);
                 return;
+            }
             this.mol = mod;
             let map = WebMolKit.Vec.maskMap(mask);
             for (let res of residual) {
@@ -7155,14 +7202,14 @@ var WebMolKit;
         writeCTAB() {
             var _a;
             let mol = this.mol;
-            if (WebMolKit.MolUtil.hasAnyAbbrev(mol)) {
+            if (WebMolKit.MolUtil.hasAnyAbbrev(mol) || WebMolKit.ForeignMolecule.hasAnySgroupMulti(mol)) {
                 mol = this.mol = mol.clone();
-                if (this.abbrevSgroups) {
+                mol.keepTransient = true;
+                if (this.abbrevSgroups)
                     this.partialAbbrevExpansion();
-                    this.prepareSgroups();
-                }
                 else
                     WebMolKit.MolUtil.expandAbbrevs(mol, true);
+                this.prepareSgroups();
             }
             this.lines.push(this.intrpad(mol.numAtoms, 3) + this.intrpad(mol.numBonds, 3) + '  0  0' + (this.overallStereoAbsolute ? '  1' : '  0') + '  0  0  0  0  0999 V2000');
             let chgidx = [], chgval = [];
@@ -7408,6 +7455,10 @@ var WebMolKit;
                     }
                 this.sgroupAtoms.push(atoms);
             }
+            for (let sg of WebMolKit.ForeignMolecule.noteAllSgroupMulti(mol)) {
+                this.sgroupNames.push(sg.name);
+                this.sgroupAtoms.push(sg.atoms);
+            }
         }
         encodePolymerBlocks(idx) {
             let polymers = new WebMolKit.PolymerBlock(this.mol);
@@ -7440,14 +7491,14 @@ var WebMolKit;
         writeCTAB3000() {
             var _a;
             let mol = this.mol;
-            if (WebMolKit.MolUtil.hasAnyAbbrev(mol)) {
+            if (WebMolKit.MolUtil.hasAnyAbbrev(mol) || WebMolKit.ForeignMolecule.hasAnySgroupMulti(mol)) {
                 mol = this.mol = mol.clone();
-                if (this.abbrevSgroups) {
+                mol.keepTransient = true;
+                if (this.abbrevSgroups)
                     this.partialAbbrevExpansion();
-                    this.prepareSgroups();
-                }
                 else
                     WebMolKit.MolUtil.expandAbbrevs(mol, true);
+                this.prepareSgroups();
             }
             let numSgroups = 0;
             const PFX = 'M  V30 ';
@@ -8832,10 +8883,12 @@ var WebMolKit;
                 this.setAtomHExplicit(num, frag.atomHExplicit(n));
                 this.setAtomMapNum(num, frag.atomMapNum(n));
                 this.setAtomExtra(num, frag.atomExtra(n));
+                this.setAtomTransient(num, frag.atomTransient(n));
             }
             for (let n = 1; n <= frag.numBonds; n++) {
                 let num = this.addBond(frag.bondFrom(n) + base, frag.bondTo(n) + base, frag.bondOrder(n), frag.bondType(n));
                 this.setBondExtra(num, frag.bondExtra(n));
+                this.setBondTransient(num, frag.bondTransient(n));
             }
             this.trashTransient();
         }
@@ -14883,6 +14936,19 @@ var WebMolKit;
             for (let b of this.lines)
                 b.col = col;
         }
+        spatialCongestion(x, y, thresh) {
+            if (thresh == null)
+                thresh = 0.001;
+            let congest = 0;
+            for (let n = 0; n < this.points.length; n++) {
+                let a = this.points[n];
+                if (a == null)
+                    continue;
+                let dx = a.oval.cx - x, dy = a.oval.cy - y;
+                congest += 1 / (dx * dx + dy * dy + thresh);
+            }
+            return congest;
+        }
         clone() {
             let dup = new ArrangeMolecule(this.mol, this.measure, this.policy, this.effects);
             dup.scale = this.scale;
@@ -15907,19 +15973,6 @@ var WebMolKit;
                     return [idxFLeft, idxTLeft];
             }
             return null;
-        }
-        spatialCongestion(x, y, thresh) {
-            if (thresh == null)
-                thresh = 0.001;
-            let congest = 0;
-            for (let n = 0; n < this.points.length; n++) {
-                let a = this.points[n];
-                if (a == null)
-                    continue;
-                let dx = a.oval.cx - x, dy = a.oval.cy - y;
-                congest += 1 / (dx * dx + dy * dy + thresh);
-            }
-            return congest;
         }
         annotateAtom(atom, text, col, fsz) {
             let [tw, ta] = this.measure.measureText(text, fsz);

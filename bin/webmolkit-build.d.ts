@@ -1024,13 +1024,21 @@ declare namespace WebMolKit {
         AtomChiralMDLOdd = "yCHIRAL_MDL_ODD",
         AtomChiralMDLEven = "yCHIRAL_MDL_EVEN",
         AtomChiralMDLRacemic = "yCHIRAL_MDL_RACEMIC",
-        AtomExplicitValence = "yMDL_EXPLICIT_VALENCE"
+        AtomExplicitValence = "yMDL_EXPLICIT_VALENCE",
+        AtomSgroupMultiAttach = "yMDL_SGROUP_MULTIATTACH"
+    }
+    interface ForeignMoleculeSgroupMulti {
+        name: string;
+        atoms: number[];
     }
     class ForeignMolecule {
         static noteAromaticAtoms(mol: Molecule): boolean[];
         static noteAromaticBonds(mol: Molecule): boolean[];
         static markExplicitValence(mol: Molecule, atom: number, valence: number): void;
         static noteExplicitValence(mol: Molecule, atom: number): number;
+        static markSgroupMulti(mol: Molecule, name: string, atoms: number[]): void;
+        static hasAnySgroupMulti(mol: Molecule): boolean;
+        static noteAllSgroupMulti(mol: Molecule): ForeignMoleculeSgroupMulti[];
     }
 }
 declare namespace WebMolKit {
@@ -2232,6 +2240,7 @@ declare namespace WebMolKit {
         squeezeInto(x: number, y: number, w: number, h: number, padding?: number): void;
         limitBounds(w: number, h: number): void;
         monochromate(col: number): void;
+        spatialCongestion(x: number, y: number, thresh?: number): number;
         clone(): ArrangeMolecule;
         private setupBondOrders;
         private placeAdjunct;
@@ -2250,7 +2259,6 @@ declare namespace WebMolKit {
         private countPolyViolations;
         private adjustBondPosition;
         private priorityDoubleSubstit;
-        private spatialCongestion;
         private annotateAtom;
         private annotateBond;
         private boxOverlaps;

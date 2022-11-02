@@ -94,15 +94,15 @@ export class MDLMOLWriter
 		let mol = this.mol;
 
 		// if allowed to write Sgroups, some abbreviations may be retained for the subsequent steps
-		if (MolUtil.hasAnyAbbrev(mol))
+		if (MolUtil.hasAnyAbbrev(mol) || ForeignMolecule.hasAnySgroupMulti(mol))
 		{
 			mol = this.mol = mol.clone();
+			mol.keepTransient = true;
 			if (this.abbrevSgroups)
-			{
 				this.partialAbbrevExpansion();
-				this.prepareSgroups();
-			}
-			else MolUtil.expandAbbrevs(mol, true);
+			else
+				MolUtil.expandAbbrevs(mol, true);
+			this.prepareSgroups();
 		}
 
 		this.lines.push(this.intrpad(mol.numAtoms, 3) + this.intrpad(mol.numBonds, 3) + '  0  0' + (this.overallStereoAbsolute ? '  1' : '  0') + '  0  0  0  0  0999 V2000');
@@ -382,6 +382,13 @@ export class MDLMOLWriter
 			}
 			this.sgroupAtoms.push(atoms);
 		}
+
+		// also encode foreign-annotated Sgroups
+		for (let sg of ForeignMolecule.noteAllSgroupMulti(mol))
+		{
+			this.sgroupNames.push(sg.name);
+			this.sgroupAtoms.push(sg.atoms);
+		}
 	}
 
 	// use a variant of Sgroups for any polymer blocks
@@ -423,15 +430,15 @@ export class MDLMOLWriter
 		let mol = this.mol;
 
 		// if allowed to write Sgroups, some abbreviations may be retained for the subsequent steps
-		if (MolUtil.hasAnyAbbrev(mol))
+		if (MolUtil.hasAnyAbbrev(mol) || ForeignMolecule.hasAnySgroupMulti(mol))
 		{
 			mol = this.mol = mol.clone();
+			mol.keepTransient = true;
 			if (this.abbrevSgroups)
-			{
 				this.partialAbbrevExpansion();
-				this.prepareSgroups();
-			}
-			else MolUtil.expandAbbrevs(mol, true);
+			else
+				MolUtil.expandAbbrevs(mol, true);
+			this.prepareSgroups();
 		}
 
 		let numSgroups = 0; // (does this matter?)

@@ -836,7 +836,11 @@ export class MDLMOLReader
 		while ((i = name.indexOf('\\n')) >= 0) name = name.substring(0, i) + '}' + name.substring(i + 2);
 
 		let [mod, abvAtom] = MolUtil.convertToAbbrevIndex(this.mol, mask, name);
-		if (mod == null) return;
+		if (mod == null)
+		{
+			ForeignMolecule.markSgroupMulti(this.mol, name, sup.atoms);
+			return;
+		}
 		this.mol = mod;
 
 		// correct atom indices for ensuing superatom blocks

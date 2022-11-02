@@ -706,6 +706,22 @@ export class ArrangeMolecule
 		for (let b of this.lines) b.col = col;
 	}
 
+	// for a specific location, returns a measure of how "congested" it is; lower values mean that the point is generally far away
+	// from things
+	public spatialCongestion(x:number, y:number, thresh?:number):number
+	{
+		if (thresh == null) thresh = 0.001;
+		let congest = 0;
+		for (let n = 0; n < this.points.length; n++)
+		{
+			let a = this.points[n];
+			if (a == null) continue;
+			let dx = a.oval.cx - x, dy = a.oval.cy - y;
+			congest += 1 / (dx * dx + dy * dy + thresh);
+		}
+		return congest;
+	}
+
 	// makes a moderately deep copy: the layout metrics can be tinkered with, but not the core ingredients
 	public clone():ArrangeMolecule
 	{
@@ -1903,22 +1919,6 @@ export class ArrangeMolecule
 		}
 
 		return null;
-	}
-
-	// for a specific location, returns a measure of how "congested" it is; lower values mean that the point is generally far away
-	// from things
-	private spatialCongestion(x:number, y:number, thresh?:number):number
-	{
-		if (thresh == null) thresh = 0.001;
-		let congest = 0;
-		for (let n = 0; n < this.points.length; n++)
-		{
-			let a = this.points[n];
-			if (a == null) continue;
-			let dx = a.oval.cx - x, dy = a.oval.cy - y;
-			congest += 1 / (dx * dx + dy * dy + thresh);
-		}
-		return congest;
 	}
 
 	// adding additional non-core annotations, later on in the process; it is assumed that there is no directional preference
