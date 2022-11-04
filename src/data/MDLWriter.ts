@@ -91,13 +91,12 @@ export class MDLMOLWriter
 	// writes the main block
    	private writeCTAB():void
    	{
-		let mol = this.mol;
+		let mol = this.mol = this.mol.clone();
+		mol.keepTransient = true;
 
 		// if allowed to write Sgroups, some abbreviations may be retained for the subsequent steps
 		if (MolUtil.hasAnyAbbrev(mol) || ForeignMolecule.hasAnySgroupMulti(mol))
 		{
-			mol = this.mol = mol.clone();
-			mol.keepTransient = true;
 			if (this.abbrevSgroups)
 				this.partialAbbrevExpansion();
 			else
@@ -105,7 +104,29 @@ export class MDLMOLWriter
 			this.prepareSgroups();
 		}
 
-		this.lines.push(this.intrpad(mol.numAtoms, 3) + this.intrpad(mol.numBonds, 3) + '  0  0' + (this.overallStereoAbsolute ? '  1' : '  0') + '  0  0  0  0  0999 V2000');
+		// pre-encode atom lists
+		let atomList1:string[] = [], atomList2:string[] = [];
+		for (let n = 1; n <= mol.numAtoms; n++)
+		{
+			let elements:string[] = null;
+			let logic = 'F';
+			elements = QueryUtil.queryAtomElements(mol, n);
+			if (elements == null) {elements = QueryUtil.queryAtomElementsNot(mol, n); logic = 'T';}
+			if (elements == null) continue;
+
+			mol.setAtomElement(n, 'L');
+
+			let line = this.intrpad(n, 3) + ' ' + logic + '  ' + this.intrpad(elements.length, 3);
+			for (let el of elements) line += this.intrpad(Molecule.elementAtomicNumber(el), 4);
+			atomList1.push(line);
+
+			line = 'M  ALS ' + this.intrpad(n, 3) + this.intrpad(elements.length, 3) + ' ' + logic + ' ';
+			for (let el of elements) line += this.rpad(el, 4);
+			atomList2.push(line);
+		}
+
+		this.lines.push(this.intrpad(mol.numAtoms, 3) + this.intrpad(mol.numBonds, 3) + this.intrpad(atomList1.length, 3) +
+						'  0' + (this.overallStereoAbsolute ? '  1' : '  0') + '  0  0  0  0  0999 V2000');
 
 		// data to record in the following M-block
 		let chgidx:number[] = [], chgval:number[] = [];
@@ -200,6 +221,9 @@ export class MDLMOLWriter
 				//if (xmol.bondOrder(n) != mol.bondOrder(n)) {zboidx.push(n); zboval.push(xmol.bondOrder(n));}
 			}
 		}
+
+		this.lines.push(...atomList1);
+		this.lines.push(...atomList2);
 
 		// export the additional blocks
 		this.writeMBlockPair('CHG', chgidx, chgval);
@@ -455,6 +479,15 @@ export class MDLMOLWriter
 		for (let n = 1; n <= mol.numAtoms; n++)
 		{
 			let label = mol.atomElement(n);
+
+			let qel = QueryUtil.queryAtomElements(mol, n);
+			if (qel != null) label = '[' + qel.join(',') + ']';
+			else
+			{
+				qel = QueryUtil.queryAtomElementsNot(mol, n);
+				if (qel != null) label = 'NOT [' + qel.join(',') + ']';
+			}
+
 			if (label.includes(' ')) label = `"${label}"`;
 			let x = mol.atomX(n), y = mol.atomY(n);
 			let z = mol.is3D() ? mol.atomZ(n) : 0;

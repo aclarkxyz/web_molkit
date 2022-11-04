@@ -380,6 +380,18 @@ export class MDLMOLReader
 					this.groupLinkNodes.push(node);
 				}
 			}
+			else if (line.startsWith('M  ALS'))
+			{
+				let atom = parseInt(line.substring(7, 10).trim());
+				let len = parseInt(line.substring(10, 13).trim());
+				let logic = line.charAt(14);
+				let elements:string[] = [];
+				for (let n = 0; n < len; n++) elements.push(line.substring(16 + n * 4, 20 + n * 4).trim());
+
+				this.mol.setAtomElement(atom, '*');
+				if (logic == 'F') QueryUtil.setQueryAtomElements(this.mol, atom, elements);
+				else if (logic == 'T') QueryUtil.setQueryAtomElementsNot(this.mol, atom, elements);
+			}
 
 			if (type == MBLK_ZPA || type == MBLK_ZRI || type == MBLK_ZAR)
 			{
@@ -620,6 +632,8 @@ export class MDLMOLReader
 			if (bits == null) throw ERRPFX + 'atom definition missing for #' + a;
 
 			let type = bits[1];
+			if (type.length > 2 && type.startsWith('"') && type.endsWith('"')) type = type.substring(1, type.length - 1);
+
 			let x = parseFloat(bits[2]), y = parseFloat(bits[3]), z = parseFloat(bits[4]);
 			let map = parseInt(bits[5]);
 			this.mol.addAtom(type, x, y);
@@ -629,6 +643,8 @@ export class MDLMOLReader
 				this.mol.setIs3D(true);
 			}
 			this.mol.setAtomMapNum(a, map);
+
+			this.parseQueryAtomList(this.mol, a);
 
 			for (let i = 6; i < bits.length; i++)
 			{
@@ -819,6 +835,23 @@ export class MDLMOLReader
 			superatoms.delete(key);
 			this.applySuperAtom(value, Array.from(superatoms.values()));
 		}
+	}
+
+	// if it's a V3000-style atom list, mark it up
+	private parseQueryAtomList(mol:Molecule, atom:number):void
+	{
+		let label = mol.atomElement(atom);
+		let not = false;
+		if (label.startsWith('NOT ')) {label = label.substring(4); not = true;}
+		if (label.length < 2 || !label.startsWith('[') || !label.endsWith(']')) return;
+		label = label.substring(1, label.length - 1);
+		let elements = label.split(',');
+
+		mol.setAtomElement(atom, '*');
+		if (!not)
+			QueryUtil.setQueryAtomElements(mol, atom, elements);
+		else
+			QueryUtil.setQueryAtomElementsNot(mol, atom, elements);
 	}
 
 	// applies a superatom block: turns the definition itself into an abbreviation if possible; also modifies any remaining superatoms so that their indexes
