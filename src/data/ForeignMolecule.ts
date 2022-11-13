@@ -122,7 +122,7 @@ export class ForeignMolecule
 			let idx = parseInt(payload.substring(0, comma)), name = payload.substring(comma + 1);
 			if (!(idx > 0)) continue;
 			
-			var sgm = map[idx];
+			let sgm = map[idx];
 			if (sgm) sgm.atoms.push(n); else map[idx] = {name, 'atoms': [n]};
 		}
 		

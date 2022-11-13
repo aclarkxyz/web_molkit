@@ -100,6 +100,9 @@ export interface SketchState
 
 	// only used in specific circumstances
 	permutations?:FusionPermutation[];
+
+	// alternate outcome provided occasionally
+	altmol?:Molecule;
 }
 
 export interface TemplatePermutation
@@ -833,6 +836,13 @@ export class MoleculeActivity
 
 	public execBondSwitch():void
 	{
+		if (this.input.altmol)
+		{
+			this.output.mol = this.input.altmol;
+			this.output.altmol = this.input.mol;
+			return;
+		}
+
 		if (!this.requireSubject()) return;
 
 		let mol = this.input.mol;
@@ -2093,7 +2103,7 @@ export class MoleculeActivity
 			return;
 		}
 
-		let bx = 0, by = 0, best = 0;
+		let bx:number[] = [], by:number[] = [], bscore:number[] = [];
 		for (let n = 0; n < ang.length; n++)
 		{
 			let x = mol.atomX(atom) + Molecule.IDEALBOND * Math.cos(ang[n]);
@@ -2103,13 +2113,25 @@ export class MoleculeActivity
 				score += Math.abs(angleNorm(ang[n])) * 1E-8; // rounding error bias for pointing right
 			else
 				score += Math.abs(angleDiff(0.5 * Math.PI, ang[n])) * 1E-8; // bias for pointing up
-			if (n == 0 || score < best) {best = score; bx = x; by = y;}
+
+			bx.push(x);
+			by.push(y);
+			bscore.push(score);
 		}
+		let idx = Vec.idxSort(bscore);
 
 		this.output.mol = mol.clone();
-		let anum = CoordUtil.atomAtPoint(this.output.mol, bx, by);
-		if (anum == 0) anum = this.output.mol.addAtom('C', bx, by);
+		let anum = CoordUtil.atomAtPoint(this.output.mol, bx[idx[0]], by[idx[0]]);
+		if (anum == 0) anum = this.output.mol.addAtom('C', bx[idx[0]], by[idx[0]]);
 		MolUtil.addBond(this.output.mol, atom, anum, order, type);
+
+		if (idx.length >= 2)
+		{
+			this.output.altmol = mol.clone();
+			anum = CoordUtil.atomAtPoint(this.output.altmol, bx[idx[1]], by[idx[1]]);
+			if (anum == 0) anum = this.output.altmol.addAtom('C', bx[idx[1]], by[idx[1]]);
+			MolUtil.addBond(this.output.altmol, atom, anum, order, type);
+		}
 	}
 
 	// support for bond order

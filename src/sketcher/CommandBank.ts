@@ -125,7 +125,7 @@ const COMMANDS_BOND:ButtonBankItem[] =
 	{'id': 'bondQAny', 'imageFN': 'BondQAny', 'helpText': 'Query bond that matches anything.'},
 	{'id': 'addtwo', 'imageFN': 'BondAddTwo', 'helpText': 'Add two new bonds to the subject atom.', 'mnemonic': 'Shift+D'},
 	{'id': 'insert', 'imageFN': 'BondInsert', 'helpText': 'Insert a methylene into the subject bond.', 'mnemonic': ''},
-	{'id': 'switch', 'imageFN': 'BondSwitch', 'helpText': 'Cycle through likely bond geometries.', 'mnemonic': ''},
+	{'id': 'switch', 'imageFN': 'BondSwitch', 'helpText': 'Cycle through likely bond geometries.', 'mnemonic': '\''},
 	{'id': 'rotate', 'imageFN': 'BondRotate', 'helpText': 'Rotate bond to invert substituent orientation.', 'mnemonic': ''},
 	{'id': 'linear', 'imageFN': 'BondLinear', 'helpText': 'Apply linear geometry.', 'mnemonic': 'Shift+V'},
 	{'id': 'trigonal', 'imageFN': 'BondTrigonal', 'helpText': 'Apply trigonal geometry.', 'mnemonic': 'Shift+W'},
