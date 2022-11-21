@@ -13,7 +13,8 @@
 namespace WebMolKit /* BOF */ {
 
 /*
-	Wraps the RenderPolicy and RenderEffects objects, which are JSON-encoded analogs to the eponymous Java classes.
+	RenderPolicy: controls the parameters of rendering for molecules (and some composites like reactions). These policies are
+	general, i.e. can apply to any instantiated molecule instance.
 */
 
 interface RenderData
@@ -34,7 +35,6 @@ export class RenderPolicy
 {
 	public data:RenderData;
 
-	// constructor: either provide an existing JSON representation of a RenderPolicy,
 	constructor(data?:RenderData)
 	{
 		if (!data)
@@ -120,6 +120,11 @@ export class RenderPolicy
 	}
 }
 
+/*
+	RenderEffects: provides the ability to request additional drawing effects for a specific molecule instance, in
+	addition to the basic rendering.
+*/
+
 export class RenderEffects
 {
 	// optional replacement colours, by object index: to override defaults
@@ -154,6 +159,77 @@ export class RenderEffects
 
 	// list of atom indices which are considered to be "overlapping", i.e. this is bad
 	public overlapAtoms:number[] = [];
+}
+
+/*
+	RenderMnemonics: a convenient container for recording information about a rendering process, which is useful for
+	validation procedures.
+*/
+
+export enum RenderMnemonicType
+{
+	Atom = 'A',
+	Bond = 'B',
+	Artifact = 'R',
+	Effect = 'E',
+}
+
+export interface RenderMnemonicItem
+{
+	type:RenderMnemonicType | string; // general category: known type or custom
+	details:string; // arbitrary information about the payload, keep it concise, don't use the separator ('|')
+	coords?:number[];
+}
+
+export class RenderMnemonics
+{
+	public items:RenderMnemonicItem[] = [];
+
+	// ------------ public methods ------------
+
+	constructor(encoded?:string)
+	{
+		let lines = (encoded || '').split('&');
+		for (let line of lines)
+		{
+			let bits = line.split('|');
+			if (bits.length != 3) continue;
+			let item:RenderMnemonicItem =
+			{
+				'type': bits[0],
+				'details': bits[1],
+				'coords': bits[2].split(',').map((str) => parseFloat(str)),
+			};
+			this.items.push(item);
+		}
+	}
+
+	public append(type:RenderMnemonicType | string, details:string, coords?:number[]):void
+	{
+		for (let n = details.length - 1; n >= 0; n--) if (details[n] == '|' || details[n] == '&') details = details.substring(0, n) + details.substring(n + 1);
+		this.items.push({type, details, coords});
+	}
+
+	public serialise():string
+	{
+		let lines:string[] = [];
+		for (let item of this.items)
+		{
+			let coords = (item.coords ?? []).map((coord) => coord.toFixed(1)).join(',');
+			lines.push(`${item.type}|${item.details}|${coords}`);
+		}
+		return lines.join('&');
+	}
+
+	// produce a quasi-human-readable representation of the mnemonics, so that two sets can be compared with each other;
+	// a sans-coordinate version is provided as well, in case a rougher comparison is wanted
+	public packWithCoords():string {return this.serialise();}
+	public packWithoutCoords():string
+	{
+		return this.items.map((item) => `${item.type}|${item.details}`).join('&');
+	}
+
+	// ------------ private methods ------------
 }
 
 /* EOF */ }

@@ -479,6 +479,8 @@ export class MDLMOLReader
 			if (el == 'D') {mol.setAtomElement(n, 'H'); mol.setAtomIsotope(n, 2);}
 			else if (el == 'T') {mol.setAtomElement(n, 'H'); mol.setAtomIsotope(n, 3);}
 
+			if (mol.is3D && mol.atomZ(n) === undefined) mol.setAtomZ(n, 0);
+
 			// valence, two correction scenarios
 			let valence = ForeignMolecule.noteExplicitValence(this.mol, n);
 			let options = MDLMOL_VALENCE[el];

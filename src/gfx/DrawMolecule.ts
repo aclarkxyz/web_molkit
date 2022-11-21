@@ -22,6 +22,8 @@ namespace WebMolKit /* BOF */ {
 
 export class DrawMolecule
 {
+	public mnemonics:RenderMnemonics = null; // set this externally to request
+
 	private mol:Molecule;
 	private policy:RenderPolicy;
 	private effects:RenderEffects;
@@ -76,17 +78,46 @@ export class DrawMolecule
 			if (b.type == BLineType.Normal)
 			{
 				vg.drawLine(b.line.x1, b.line.y1, b.line.x2, b.line.y2, b.col, b.size);
+				this.mnemonics?.append(RenderMnemonicType.Bond, 'L', [b.line.x1, b.line.y1, b.line.x2, b.line.y2]);
 			}
-			else if (b.type == BLineType.Inclined) this.drawBondInclined(b);
-			else if (b.type == BLineType.Declined) this.drawBondDeclined(b);
-			else if (b.type == BLineType.Unknown) this.drawBondUnknown(b);
-			else if (b.type == BLineType.Dotted || b.type == BLineType.DotDir) this.drawBondDotted(b);
-			else if (b.type == BLineType.IncDouble || b.type == BLineType.IncTriple || b.type == BLineType.IncQuadruple) this.drawBondIncMulti(b);
+			else if (b.type == BLineType.Inclined)
+			{
+				this.drawBondInclined(b);
+				this.mnemonics?.append(RenderMnemonicType.Bond, 'I', [b.line.x1, b.line.y1, b.line.x2, b.line.y2]);
+			}
+			else if (b.type == BLineType.Declined)
+			{
+				this.drawBondDeclined(b);
+				this.mnemonics?.append(RenderMnemonicType.Bond, 'D', [b.line.x1, b.line.y1, b.line.x2, b.line.y2]);
+			}
+			else if (b.type == BLineType.Unknown)
+			{
+				this.drawBondUnknown(b);
+				this.mnemonics?.append(RenderMnemonicType.Bond, 'U', [b.line.x1, b.line.y1, b.line.x2, b.line.y2]);
+			}
+			else if (b.type == BLineType.Dotted || b.type == BLineType.DotDir)
+			{
+				this.drawBondDotted(b);
+				this.mnemonics?.append(RenderMnemonicType.Bond, 'O', [b.line.x1, b.line.y1, b.line.x2, b.line.y2]);
+			}
+			else if (b.type == BLineType.IncDouble || b.type == BLineType.IncTriple || b.type == BLineType.IncQuadruple)
+			{
+				this.drawBondIncMulti(b);
+				this.mnemonics?.append(RenderMnemonicType.Bond, 'M', [b.line.x1, b.line.y1, b.line.x2, b.line.y2]);
+			}
 		}
 
 		let fg = policy.data.foreground;
-		for (let r of layout.getRings()) vg.drawOval(r.cx, r.cy, r.rw, r.rh, fg, r.size, MetaVector.NOCOLOUR);
-		for (let p of layout.getPaths()) vg.drawPath(p.px, p.py, p.ctrl, false, fg, p.size, MetaVector.NOCOLOUR, false);
+		for (let r of layout.getRings())
+		{
+			vg.drawOval(r.cx, r.cy, r.rw, r.rh, fg, r.size, MetaVector.NOCOLOUR);
+			this.mnemonics?.append(RenderMnemonicType.Artifact, 'Ring', [r.cx, r.cy, r.rw, r.rh]);
+		}
+		for (let p of layout.getPaths())
+		{
+			vg.drawPath(p.px, p.py, p.ctrl, false, fg, p.size, MetaVector.NOCOLOUR, false);
+			this.mnemonics?.append(RenderMnemonicType.Artifact, 'Path', [...p.px, ...p.py]);
+		}
 
 		for (let n = 0; n < layout.numPoints(); n++)
 		{
@@ -94,9 +125,13 @@ export class DrawMolecule
 			if (effects.hideBonds.has(p.anum)) continue;
 
 			let txt = p.text;
-			if (txt == null) continue; // is a point, so do not draw anything
-			let fsz = p.fsz;
 			let cx = p.oval.cx, cy = p.oval.cy, rw = p.oval.rw;
+			if (txt == null)
+			{
+				this.mnemonics?.append(RenderMnemonicType.Atom, '.', [cx, cy]);
+				continue; // is a point, so do not draw anything
+			}
+			let fsz = p.fsz;
 			let col = p.col;
 
 			while (txt.endsWith('.'))
@@ -133,7 +168,9 @@ export class DrawMolecule
 			if (txt.length > 0)
 			{
 				vg.drawText(cx, cy, txt, fsz, col, TextAlign.Centre | TextAlign.Middle, p.rotation || 0);
+				this.mnemonics?.append(RenderMnemonicType.Atom, txt, [cx, cy]);
 			}
+			else this.mnemonics?.append(RenderMnemonicType.Atom, '.', [cx, cy]);
 		}
 
 		this.drawOverEffects();
@@ -169,6 +206,8 @@ export class DrawMolecule
 				vg.drawOval(a.oval.cx - rw, y, dw, dw, MetaVector.NOCOLOUR, 0, col);
 				vg.drawOval(a.oval.cx + rw, y, dw, dw, MetaVector.NOCOLOUR, 0, col);
 			}
+
+			this.mnemonics?.append(RenderMnemonicType.Effect, 'Dot', [a.oval.cx, a.oval.cy, a.oval.rw, a.oval.rh]);
 		}
 
 		for (let key in effects.dottedRectOutline)
@@ -192,6 +231,8 @@ export class DrawMolecule
 				vg.drawOval(a.oval.cx - rw, y, sz, sz, MetaVector.NOCOLOUR, 0, col);
 				vg.drawOval(a.oval.cx + rw, y, sz, sz, MetaVector.NOCOLOUR, 0, col);
 			}
+
+			this.mnemonics?.append(RenderMnemonicType.Effect, 'Rect', [a.oval.cx, a.oval.cy, a.oval.rw, a.oval.rh]);
 		}
 
 		for (let key in effects.dottedBondCross)
@@ -222,6 +263,8 @@ export class DrawMolecule
 				let x = cx + p * ox, y = cy + p * oy;
 				vg.drawOval(x, y, sz, sz, MetaVector.NOCOLOUR, 0, col);
 			}
+
+			this.mnemonics?.append(RenderMnemonicType.Effect, 'Crossing', [x1, y1, x2, y2]);
 		}
 	}
 
@@ -235,6 +278,8 @@ export class DrawMolecule
 			let rad = scale * 0.2;
 			vg.drawLine(p.oval.cx - rad, p.oval.cy - rad, p.oval.cx + rad, p.oval.cy + rad, 0xFF0000, 1);
 			vg.drawLine(p.oval.cx + rad, p.oval.cy - rad, p.oval.cx - rad, p.oval.cy + rad, 0xFF0000, 1);
+
+			this.mnemonics?.append(RenderMnemonicType.Effect, 'Overlap', [p.oval.cx, p.oval.cy, p.oval.rw, p.oval.rh]);
 		}
 
 		for (let n = 0, num = Math.min(effects.atomCircleSz.length, mol.numAtoms); n < num; n++) if (effects.atomCircleSz[n] > 0)
@@ -242,6 +287,8 @@ export class DrawMolecule
 			let dw = effects.atomCircleSz[n] * scale, col = effects.atomCircleCol[n];
 			let p = layout.getPoint(n);
 			vg.drawOval(p.oval.cx, p.oval.cy, dw, dw, MetaVector.NOCOLOUR, 0, col);
+
+			this.mnemonics?.append(RenderMnemonicType.Effect, 'Circle', [p.oval.cx, p.oval.cy, p.oval.rw, p.oval.rh]);
 		}
 	}
 

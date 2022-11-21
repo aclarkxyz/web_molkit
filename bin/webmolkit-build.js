@@ -6492,6 +6492,19 @@ var WebMolKit;
                         this.groupLinkNodes.push(node);
                     }
                 }
+                else if (line.startsWith('M  ALS')) {
+                    let atom = parseInt(line.substring(7, 10).trim());
+                    let len = parseInt(line.substring(10, 13).trim());
+                    let logic = line.charAt(14);
+                    let elements = [];
+                    for (let n = 0; n < len; n++)
+                        elements.push(line.substring(16 + n * 4, 20 + n * 4).trim());
+                    this.mol.setAtomElement(atom, '*');
+                    if (logic == 'F')
+                        WebMolKit.QueryUtil.setQueryAtomElements(this.mol, atom, elements);
+                    else if (logic == 'T')
+                        WebMolKit.QueryUtil.setQueryAtomElementsNot(this.mol, atom, elements);
+                }
                 if (type == MBLK_ZPA || type == MBLK_ZRI || type == MBLK_ZAR) {
                     let len = parseInt(line.substring(6, 9).trim()), blk = parseInt(line.substring(9, 13).trim());
                     let map = type == MBLK_ZPA ? resPaths : type == MBLK_ZRI ? resRings : arenes;
@@ -6572,6 +6585,8 @@ var WebMolKit;
                     mol.setAtomElement(n, 'H');
                     mol.setAtomIsotope(n, 3);
                 }
+                if (mol.is3D && mol.atomZ(n) === undefined)
+                    mol.setAtomZ(n, 0);
                 let valence = WebMolKit.ForeignMolecule.noteExplicitValence(this.mol, n);
                 let options = WebMolKit.MDLMOL_VALENCE[el];
                 if (valence != null) {
@@ -6723,6 +6738,8 @@ var WebMolKit;
                 if (bits == null)
                     throw ERRPFX + 'atom definition missing for #' + a;
                 let type = bits[1];
+                if (type.length > 2 && type.startsWith('"') && type.endsWith('"'))
+                    type = type.substring(1, type.length - 1);
                 let x = parseFloat(bits[2]), y = parseFloat(bits[3]), z = parseFloat(bits[4]);
                 let map = parseInt(bits[5]);
                 this.mol.addAtom(type, x, y);
@@ -6731,6 +6748,7 @@ var WebMolKit;
                     this.mol.setIs3D(true);
                 }
                 this.mol.setAtomMapNum(a, map);
+                this.parseQueryAtomList(this.mol, a);
                 for (let i = 6; i < bits.length; i++) {
                     let eq = bits[i].indexOf('=');
                     if (eq < 0)
@@ -6900,6 +6918,23 @@ var WebMolKit;
                 superatoms.delete(key);
                 this.applySuperAtom(value, Array.from(superatoms.values()));
             }
+        }
+        parseQueryAtomList(mol, atom) {
+            let label = mol.atomElement(atom);
+            let not = false;
+            if (label.startsWith('NOT ')) {
+                label = label.substring(4);
+                not = true;
+            }
+            if (label.length < 2 || !label.startsWith('[') || !label.endsWith(']'))
+                return;
+            label = label.substring(1, label.length - 1);
+            let elements = label.split(',');
+            mol.setAtomElement(atom, '*');
+            if (!not)
+                WebMolKit.QueryUtil.setQueryAtomElements(mol, atom, elements);
+            else
+                WebMolKit.QueryUtil.setQueryAtomElementsNot(mol, atom, elements);
         }
         applySuperAtom(sup, residual) {
             if (sup.name == null || WebMolKit.Vec.isBlank(sup.atoms))
@@ -7201,17 +7236,38 @@ var WebMolKit;
         }
         writeCTAB() {
             var _a;
-            let mol = this.mol;
+            let mol = this.mol = this.mol.clone();
+            mol.keepTransient = true;
             if (WebMolKit.MolUtil.hasAnyAbbrev(mol) || WebMolKit.ForeignMolecule.hasAnySgroupMulti(mol)) {
-                mol = this.mol = mol.clone();
-                mol.keepTransient = true;
                 if (this.abbrevSgroups)
                     this.partialAbbrevExpansion();
                 else
                     WebMolKit.MolUtil.expandAbbrevs(mol, true);
                 this.prepareSgroups();
             }
-            this.lines.push(this.intrpad(mol.numAtoms, 3) + this.intrpad(mol.numBonds, 3) + '  0  0' + (this.overallStereoAbsolute ? '  1' : '  0') + '  0  0  0  0  0999 V2000');
+            let atomList1 = [], atomList2 = [];
+            for (let n = 1; n <= mol.numAtoms; n++) {
+                let elements = null;
+                let logic = 'F';
+                elements = WebMolKit.QueryUtil.queryAtomElements(mol, n);
+                if (elements == null) {
+                    elements = WebMolKit.QueryUtil.queryAtomElementsNot(mol, n);
+                    logic = 'T';
+                }
+                if (elements == null)
+                    continue;
+                mol.setAtomElement(n, 'L');
+                let line = this.intrpad(n, 3) + ' ' + logic + '  ' + this.intrpad(elements.length, 3);
+                for (let el of elements)
+                    line += this.intrpad(WebMolKit.Molecule.elementAtomicNumber(el), 4);
+                atomList1.push(line);
+                line = 'M  ALS ' + this.intrpad(n, 3) + this.intrpad(elements.length, 3) + ' ' + logic + ' ';
+                for (let el of elements)
+                    line += this.rpad(el, 4);
+                atomList2.push(line);
+            }
+            this.lines.push(this.intrpad(mol.numAtoms, 3) + this.intrpad(mol.numBonds, 3) + this.intrpad(atomList1.length, 3) +
+                '  0' + (this.overallStereoAbsolute ? '  1' : '  0') + '  0  0  0  0  0999 V2000');
             let chgidx = [], chgval = [];
             let radidx = [], radval = [];
             let isoidx = [], isoval = [];
@@ -7312,6 +7368,8 @@ var WebMolKit;
                     }
                 }
             }
+            this.lines.push(...atomList1);
+            this.lines.push(...atomList2);
             this.writeMBlockPair('CHG', chgidx, chgval);
             this.writeMBlockPair('RAD', radidx, radval);
             this.writeMBlockPair('ISO', isoidx, isoval);
@@ -7508,6 +7566,14 @@ var WebMolKit;
             this.lines.push(PFX + 'BEGIN ATOM');
             for (let n = 1; n <= mol.numAtoms; n++) {
                 let label = mol.atomElement(n);
+                let qel = WebMolKit.QueryUtil.queryAtomElements(mol, n);
+                if (qel != null)
+                    label = '[' + qel.join(',') + ']';
+                else {
+                    qel = WebMolKit.QueryUtil.queryAtomElementsNot(mol, n);
+                    if (qel != null)
+                        label = 'NOT [' + qel.join(',') + ']';
+                }
                 if (label.includes(' '))
                     label = `"${label}"`;
                 let x = mol.atomX(n), y = mol.atomY(n);
@@ -16944,6 +17010,7 @@ var WebMolKit;
         constructor(layout, vg) {
             this.layout = layout;
             this.vg = vg;
+            this.mnemonics = null;
             this.mol = layout.getMolecule();
             this.policy = layout.getPolicy();
             this.effects = layout.getEffects();
@@ -16956,6 +17023,7 @@ var WebMolKit;
         getPolicy() { return this.policy; }
         getEffects() { return this.effects; }
         draw() {
+            var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l;
             let DRAW_SPACE = false;
             if (DRAW_SPACE) {
                 let bounds = this.layout.determineBoundary();
@@ -16975,32 +17043,49 @@ var WebMolKit;
                     continue;
                 if (b.type == WebMolKit.BLineType.Normal) {
                     vg.drawLine(b.line.x1, b.line.y1, b.line.x2, b.line.y2, b.col, b.size);
+                    (_a = this.mnemonics) === null || _a === void 0 ? void 0 : _a.append(WebMolKit.RenderMnemonicType.Bond, 'L', [b.line.x1, b.line.y1, b.line.x2, b.line.y2]);
                 }
-                else if (b.type == WebMolKit.BLineType.Inclined)
+                else if (b.type == WebMolKit.BLineType.Inclined) {
                     this.drawBondInclined(b);
-                else if (b.type == WebMolKit.BLineType.Declined)
+                    (_b = this.mnemonics) === null || _b === void 0 ? void 0 : _b.append(WebMolKit.RenderMnemonicType.Bond, 'I', [b.line.x1, b.line.y1, b.line.x2, b.line.y2]);
+                }
+                else if (b.type == WebMolKit.BLineType.Declined) {
                     this.drawBondDeclined(b);
-                else if (b.type == WebMolKit.BLineType.Unknown)
+                    (_c = this.mnemonics) === null || _c === void 0 ? void 0 : _c.append(WebMolKit.RenderMnemonicType.Bond, 'D', [b.line.x1, b.line.y1, b.line.x2, b.line.y2]);
+                }
+                else if (b.type == WebMolKit.BLineType.Unknown) {
                     this.drawBondUnknown(b);
-                else if (b.type == WebMolKit.BLineType.Dotted || b.type == WebMolKit.BLineType.DotDir)
+                    (_d = this.mnemonics) === null || _d === void 0 ? void 0 : _d.append(WebMolKit.RenderMnemonicType.Bond, 'U', [b.line.x1, b.line.y1, b.line.x2, b.line.y2]);
+                }
+                else if (b.type == WebMolKit.BLineType.Dotted || b.type == WebMolKit.BLineType.DotDir) {
                     this.drawBondDotted(b);
-                else if (b.type == WebMolKit.BLineType.IncDouble || b.type == WebMolKit.BLineType.IncTriple || b.type == WebMolKit.BLineType.IncQuadruple)
+                    (_e = this.mnemonics) === null || _e === void 0 ? void 0 : _e.append(WebMolKit.RenderMnemonicType.Bond, 'O', [b.line.x1, b.line.y1, b.line.x2, b.line.y2]);
+                }
+                else if (b.type == WebMolKit.BLineType.IncDouble || b.type == WebMolKit.BLineType.IncTriple || b.type == WebMolKit.BLineType.IncQuadruple) {
                     this.drawBondIncMulti(b);
+                    (_f = this.mnemonics) === null || _f === void 0 ? void 0 : _f.append(WebMolKit.RenderMnemonicType.Bond, 'M', [b.line.x1, b.line.y1, b.line.x2, b.line.y2]);
+                }
             }
             let fg = policy.data.foreground;
-            for (let r of layout.getRings())
+            for (let r of layout.getRings()) {
                 vg.drawOval(r.cx, r.cy, r.rw, r.rh, fg, r.size, WebMolKit.MetaVector.NOCOLOUR);
-            for (let p of layout.getPaths())
+                (_g = this.mnemonics) === null || _g === void 0 ? void 0 : _g.append(WebMolKit.RenderMnemonicType.Artifact, 'Ring', [r.cx, r.cy, r.rw, r.rh]);
+            }
+            for (let p of layout.getPaths()) {
                 vg.drawPath(p.px, p.py, p.ctrl, false, fg, p.size, WebMolKit.MetaVector.NOCOLOUR, false);
+                (_h = this.mnemonics) === null || _h === void 0 ? void 0 : _h.append(WebMolKit.RenderMnemonicType.Artifact, 'Path', [...p.px, ...p.py]);
+            }
             for (let n = 0; n < layout.numPoints(); n++) {
                 let p = layout.getPoint(n);
                 if (effects.hideBonds.has(p.anum))
                     continue;
                 let txt = p.text;
-                if (txt == null)
-                    continue;
-                let fsz = p.fsz;
                 let cx = p.oval.cx, cy = p.oval.cy, rw = p.oval.rw;
+                if (txt == null) {
+                    (_j = this.mnemonics) === null || _j === void 0 ? void 0 : _j.append(WebMolKit.RenderMnemonicType.Atom, '.', [cx, cy]);
+                    continue;
+                }
+                let fsz = p.fsz;
                 let col = p.col;
                 while (txt.endsWith('.')) {
                     let dw = rw / txt.length;
@@ -17029,11 +17114,15 @@ var WebMolKit;
                 }
                 if (txt.length > 0) {
                     vg.drawText(cx, cy, txt, fsz, col, WebMolKit.TextAlign.Centre | WebMolKit.TextAlign.Middle, p.rotation || 0);
+                    (_k = this.mnemonics) === null || _k === void 0 ? void 0 : _k.append(WebMolKit.RenderMnemonicType.Atom, txt, [cx, cy]);
                 }
+                else
+                    (_l = this.mnemonics) === null || _l === void 0 ? void 0 : _l.append(WebMolKit.RenderMnemonicType.Atom, '.', [cx, cy]);
             }
             this.drawOverEffects();
         }
         drawUnderEffects() {
+            var _a, _b, _c;
             let mol = this.mol, policy = this.policy, effects = this.effects, layout = this.layout, scale = this.scale, vg = this.vg;
             for (let n = 0, num = Math.min(effects.atomFrameDotSz.length, mol.numAtoms); n < num; n++) {
                 if (effects.hideAtoms.has(n + 1))
@@ -17054,6 +17143,7 @@ var WebMolKit;
                     vg.drawOval(a.oval.cx - rw, y, dw, dw, WebMolKit.MetaVector.NOCOLOUR, 0, col);
                     vg.drawOval(a.oval.cx + rw, y, dw, dw, WebMolKit.MetaVector.NOCOLOUR, 0, col);
                 }
+                (_a = this.mnemonics) === null || _a === void 0 ? void 0 : _a.append(WebMolKit.RenderMnemonicType.Effect, 'Dot', [a.oval.cx, a.oval.cy, a.oval.rw, a.oval.rh]);
             }
             for (let key in effects.dottedRectOutline) {
                 let atom = parseInt(key), col = effects.dottedRectOutline[key];
@@ -17073,6 +17163,7 @@ var WebMolKit;
                     vg.drawOval(a.oval.cx - rw, y, sz, sz, WebMolKit.MetaVector.NOCOLOUR, 0, col);
                     vg.drawOval(a.oval.cx + rw, y, sz, sz, WebMolKit.MetaVector.NOCOLOUR, 0, col);
                 }
+                (_b = this.mnemonics) === null || _b === void 0 ? void 0 : _b.append(WebMolKit.RenderMnemonicType.Effect, 'Rect', [a.oval.cx, a.oval.cy, a.oval.rw, a.oval.rh]);
             }
             for (let key in effects.dottedBondCross) {
                 let bond = parseInt(key), col = effects.dottedBondCross[key];
@@ -17098,21 +17189,25 @@ var WebMolKit;
                     let x = cx + p * ox, y = cy + p * oy;
                     vg.drawOval(x, y, sz, sz, WebMolKit.MetaVector.NOCOLOUR, 0, col);
                 }
+                (_c = this.mnemonics) === null || _c === void 0 ? void 0 : _c.append(WebMolKit.RenderMnemonicType.Effect, 'Crossing', [x1, y1, x2, y2]);
             }
         }
         drawOverEffects() {
+            var _a, _b;
             let mol = this.mol, policy = this.policy, effects = this.effects, layout = this.layout, scale = this.scale, vg = this.vg;
             for (let a of effects.overlapAtoms) {
                 let p = layout.getPoint(a - 1);
                 let rad = scale * 0.2;
                 vg.drawLine(p.oval.cx - rad, p.oval.cy - rad, p.oval.cx + rad, p.oval.cy + rad, 0xFF0000, 1);
                 vg.drawLine(p.oval.cx + rad, p.oval.cy - rad, p.oval.cx - rad, p.oval.cy + rad, 0xFF0000, 1);
+                (_a = this.mnemonics) === null || _a === void 0 ? void 0 : _a.append(WebMolKit.RenderMnemonicType.Effect, 'Overlap', [p.oval.cx, p.oval.cy, p.oval.rw, p.oval.rh]);
             }
             for (let n = 0, num = Math.min(effects.atomCircleSz.length, mol.numAtoms); n < num; n++)
                 if (effects.atomCircleSz[n] > 0) {
                     let dw = effects.atomCircleSz[n] * scale, col = effects.atomCircleCol[n];
                     let p = layout.getPoint(n);
                     vg.drawOval(p.oval.cx, p.oval.cy, dw, dw, WebMolKit.MetaVector.NOCOLOUR, 0, col);
+                    (_b = this.mnemonics) === null || _b === void 0 ? void 0 : _b.append(WebMolKit.RenderMnemonicType.Effect, 'Circle', [p.oval.cx, p.oval.cy, p.oval.rw, p.oval.rh]);
                 }
         }
         drawBondInclined(b) {
@@ -19035,6 +19130,50 @@ var WebMolKit;
         }
     }
     WebMolKit.RenderEffects = RenderEffects;
+    let RenderMnemonicType;
+    (function (RenderMnemonicType) {
+        RenderMnemonicType["Atom"] = "A";
+        RenderMnemonicType["Bond"] = "B";
+        RenderMnemonicType["Artifact"] = "R";
+        RenderMnemonicType["Effect"] = "E";
+    })(RenderMnemonicType = WebMolKit.RenderMnemonicType || (WebMolKit.RenderMnemonicType = {}));
+    class RenderMnemonics {
+        constructor(encoded) {
+            this.items = [];
+            let lines = (encoded || '').split('&');
+            for (let line of lines) {
+                let bits = line.split('|');
+                if (bits.length != 3)
+                    continue;
+                let item = {
+                    'type': bits[0],
+                    'details': bits[1],
+                    'coords': bits[2].split(',').map((str) => parseFloat(str)),
+                };
+                this.items.push(item);
+            }
+        }
+        append(type, details, coords) {
+            for (let n = details.length - 1; n >= 0; n--)
+                if (details[n] == '|' || details[n] == '&')
+                    details = details.substring(0, n) + details.substring(n + 1);
+            this.items.push({ type, details, coords });
+        }
+        serialise() {
+            var _a;
+            let lines = [];
+            for (let item of this.items) {
+                let coords = ((_a = item.coords) !== null && _a !== void 0 ? _a : []).map((coord) => coord.toFixed(1)).join(',');
+                lines.push(`${item.type}|${item.details}|${coords}`);
+            }
+            return lines.join('&');
+        }
+        packWithCoords() { return this.serialise(); }
+        packWithoutCoords() {
+            return this.items.map((item) => `${item.type}|${item.details}`).join('&');
+        }
+    }
+    WebMolKit.RenderMnemonics = RenderMnemonics;
 })(WebMolKit || (WebMolKit = {}));
 var WebMolKit;
 (function (WebMolKit) {

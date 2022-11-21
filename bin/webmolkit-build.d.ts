@@ -1160,6 +1160,7 @@ declare namespace WebMolKit {
         private parseCTAB;
         private postFix;
         private parseV3000;
+        private parseQueryAtomList;
         private applySuperAtom;
         private applyPolymerBlock;
         private withoutQuotes;
@@ -2316,6 +2317,7 @@ declare namespace WebMolKit {
     class DrawMolecule {
         private layout;
         private vg;
+        mnemonics: RenderMnemonics;
         private mol;
         private policy;
         private effects;
@@ -2531,6 +2533,25 @@ declare namespace WebMolKit {
         bondDecoCol: number[];
         bondDecoSize: number[];
         overlapAtoms: number[];
+    }
+    export enum RenderMnemonicType {
+        Atom = "A",
+        Bond = "B",
+        Artifact = "R",
+        Effect = "E"
+    }
+    export interface RenderMnemonicItem {
+        type: RenderMnemonicType | string;
+        details: string;
+        coords?: number[];
+    }
+    export class RenderMnemonics {
+        items: RenderMnemonicItem[];
+        constructor(encoded?: string);
+        append(type: RenderMnemonicType | string, details: string, coords?: number[]): void;
+        serialise(): string;
+        packWithCoords(): string;
+        packWithoutCoords(): string;
     }
     export {};
 }
