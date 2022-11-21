@@ -26,8 +26,8 @@ namespace WebMolKit /* BOF */ {
 	interpret that as what it is.
 */
 
-export const STEREOGROUP_EXTRA_RACEMIC = "xCHIRAC:"; // racemic (often rendered as "and")
-export const STEREOGROUP_EXTRA_RELATIVE = "xCHIREL:"; // relative (often rendered as "or")
+export const STEREOGROUP_EXTRA_RACEMIC = 'xCHIRAC:'; // racemic (often rendered as "and")
+export const STEREOGROUP_EXTRA_RELATIVE = 'xCHIREL:'; // relative (often rendered as "or")
 
 export class StereoGroup
 {
@@ -73,12 +73,12 @@ export class StereoGroup
 		// clean each one up, or remove if invalid
 		for (let [grp, atoms] of this.chiRac.entries())
 		{
-			for (let n = atoms.length - 1; n>= 0; n--) if (!this.atomHasWedge(atoms[n])) atoms.splice(n, 1);
+			for (let n = atoms.length - 1; n >= 0; n--) if (!this.atomHasWedge(atoms[n])) atoms.splice(n, 1);
 			if (atoms.length > 0) this.chiRac.set(grp, atoms); else this.chiRac.delete(grp);
 		}
 		for (let [grp, atoms] of this.chiRel.entries())
 		{
-			for (let n = atoms.length - 1; n>= 0; n--) if (!this.atomHasWedge(atoms[n])) atoms.splice(n, 1);
+			for (let n = atoms.length - 1; n >= 0; n--) if (!this.atomHasWedge(atoms[n])) atoms.splice(n, 1);
 			if (atoms.length > 0) this.chiRel.set(grp, atoms); else this.chiRel.delete(grp);
 		}
 	}

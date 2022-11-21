@@ -560,7 +560,7 @@ export class MDLMOLWriter
 			for (let id of polymers.getIDList())
 			{
 				let sid = sgroups.length + 1;
-				var unit = polymers.getUnit(id);
+				let unit = polymers.getUnit(id);
 
 				let line = `${PFX}${sid} SRU 0`;
 
@@ -593,10 +593,10 @@ export class MDLMOLWriter
 
 		let collections:string[] = [];
 
-		var stereoGroup = new StereoGroup(mol);
+		let stereoGroup = new StereoGroup(mol);
 		let racidx = 0, relidx = 0;
-		for (let atoms of stereoGroup.getRacemicAtoms()) collections.push(PFX + 'MDLV30/STERAC' + (++racidx) + " ATOMS=" + this.packV3000List(atoms));
-		for (let atoms of stereoGroup.getRelativeAtoms()) collections.push(PFX + 'MDLV30/STEREL' + (++relidx) + " ATOMS=" + this.packV3000List(atoms));
+		for (let atoms of stereoGroup.getRacemicAtoms()) collections.push(PFX + 'MDLV30/STERAC' + (++racidx) + ' ATOMS=' + this.packV3000List(atoms));
+		for (let atoms of stereoGroup.getRelativeAtoms()) collections.push(PFX + 'MDLV30/STEREL' + (++relidx) + ' ATOMS=' + this.packV3000List(atoms));
 
 		if (collections.length > 0)
 		{

@@ -88,6 +88,11 @@ export class ButtonView extends Widget
 	{
 		this.parentWidth = width;
 		this.parentHeight = height;
+		if (this.contentDOM)
+		{
+			this.applyOffset();
+			this.redraw();
+		}
 	}
 
 	// --------------------------------------- public methods ---------------------------------------
