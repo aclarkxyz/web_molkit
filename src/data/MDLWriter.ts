@@ -22,6 +22,15 @@ namespace WebMolKit /* BOF */ {
 	molecules; the best strategy is to avoid using it whenever possible, but it is so often not.
 */
 
+interface Sgroup
+{
+	type:string;
+	name:string;
+	atoms:number[];
+}
+
+const VPFX = 'M  V30 ';
+
 export class MDLMOLWriter
 {
 	// options
@@ -33,9 +42,8 @@ export class MDLMOLWriter
 	public polymerBlocks = true; // write polymer blocks, if any
 	public molName = ''; // optional name to include in the header (if any)
 
-	// some number of superatom abbreviation groups, each of which is a list of atom indices
-	private sgroupNames:string[] = [];
-	private sgroupAtoms:number[][] = [];
+	// some number of superatom abbreviation groups, there being several types
+	private sgroups:Sgroup[] = [];
 
 	// content in progress
 	private lines:string[] = [];
@@ -95,7 +103,7 @@ export class MDLMOLWriter
 		mol.keepTransient = true;
 
 		// if allowed to write Sgroups, some abbreviations may be retained for the subsequent steps
-		if (MolUtil.hasAnyAbbrev(mol) || ForeignMolecule.hasAnySgroupMulti(mol))
+		if (MolUtil.hasAnyAbbrev(mol) || ForeignMolecule.hasAnySgroupMultiAttach(mol) || ForeignMolecule.hasAnySgroupMultiRepeat(mol))
 		{
 			if (this.abbrevSgroups)
 				this.partialAbbrevExpansion();
@@ -246,24 +254,35 @@ export class MDLMOLWriter
 
 		// encode Sgroups
 		let inSgroup = Vec.booleanArray(false, mol.numAtoms);
-		for (let s = 0; s < this.sgroupAtoms.length; s++)
+		for (let s = 0; s < this.sgroups.length; s++)
 		{
-			let sgroup = this.sgroupAtoms[s];
-			for (let n of sgroup) inSgroup[n - 1] = true;
+			let sg = this.sgroups[s];
+			for (let n of sg.atoms) inSgroup[n - 1] = true;
 
 			let sidx = this.intrpad(s + 1, 4);
-			this.lines.push('M  STY  1' + sidx + ' SUP');
-			for (let n = 0; n < sgroup.length; n += 15)
+			this.lines.push('M  STY  1' + sidx + ' ' + sg.type);
+			for (let n = 0; n < sg.atoms.length; n += 15)
 			{
-				let sz = Math.min(sgroup.length - n, 15);
+				let sz = Math.min(sg.atoms.length - n, 15);
 				let line = 'M  SAL' + sidx + this.intrpad(sz, 3);
-				for (let i = 0; i < sz; i++) line += this.intrpad(sgroup[n + i], 4);
+				for (let i = 0; i < sz; i++) line += this.intrpad(sg.atoms[n + i], 4);
 				this.lines.push(line);
 			}
-			this.lines.push('M  SMT' + sidx + ' ' + this.sgroupNames[s]);
+			this.lines.push('M  SMT' + sidx + ' ' + sg.name);
+			if (sg.type == 'MUL')
+			{
+				let mult = parseInt(sg.name), unit = sg.atoms.length / mult;
+				for (let n = 0; n < unit; n += 15)
+				{
+					let sz = Math.min(unit - n, 15);
+					let line = 'M  SPA' + sidx + this.intrpad(sz, 3);
+					for (let i = 0; i < sz; i++) line += this.intrpad(sg.atoms[n + i], 4);
+					this.lines.push(line);
+				}
+			}
 		}
 
-		if (this.polymerBlocks) this.encodePolymerBlocks(this.sgroupAtoms.length);
+		if (this.polymerBlocks) this.encodePolymerBlocks(this.sgroups.length);
 
 		// export long atom names
 		for (let n = 1; n <= mol.numAtoms; n++) if (mol.atomElement(n).length > 2)
@@ -386,7 +405,7 @@ export class MDLMOLWriter
 
 		for (let n = 1; n <= mol.numAtoms; n++) if (MolUtil.hasAbbrev(mol, n))
 		{
-			this.sgroupNames.push(mol.atomElement(n));
+			this.sgroups.push({'type': 'SUP', 'name': mol.atomElement(n), 'atoms': null});
 			let mask = MolUtil.expandOneAbbrev(mol, n, true);
 			if (mask == null) continue;
 			next--;
@@ -396,7 +415,7 @@ export class MDLMOLWriter
 		}
 
 		// extract the layers one at a time
-		for (let idx = -1; idx >= next; idx--)
+		for (let idx = -1, p = 0; idx >= next; idx--, p++)
 		{
 			let atoms:number[] = [];
 			for (let n = 1; n <= mol.numAtoms; n++) if (mol.atomMapNum(n) == idx)
@@ -404,15 +423,12 @@ export class MDLMOLWriter
 				atoms.push(n);
 				mol.setAtomMapNum(n, 0);
 			}
-			this.sgroupAtoms.push(atoms);
+			this.sgroups[p].atoms = atoms;
 		}
 
 		// also encode foreign-annotated Sgroups
-		for (let sg of ForeignMolecule.noteAllSgroupMulti(mol))
-		{
-			this.sgroupNames.push(sg.name);
-			this.sgroupAtoms.push(sg.atoms);
-		}
+		for (let ma of ForeignMolecule.noteAllSgroupMultiAttach(mol)) this.sgroups.push({'type': 'SUP', 'name': ma.name, 'atoms': ma.atoms});
+		for (let mr of ForeignMolecule.noteAllSgroupMultiRepeat(mol)) this.sgroups.push({'type': 'MUL', 'name': mr.mult.toString(), 'atoms': mr.atoms});
 	}
 
 	// use a variant of Sgroups for any polymer blocks
@@ -454,7 +470,7 @@ export class MDLMOLWriter
 		let mol = this.mol;
 
 		// if allowed to write Sgroups, some abbreviations may be retained for the subsequent steps
-		if (MolUtil.hasAnyAbbrev(mol) || ForeignMolecule.hasAnySgroupMulti(mol))
+		if (MolUtil.hasAnyAbbrev(mol) || ForeignMolecule.hasAnySgroupMultiAttach(mol) || ForeignMolecule.hasAnySgroupMultiRepeat(mol))
 		{
 			mol = this.mol = mol.clone();
 			mol.keepTransient = true;
@@ -465,16 +481,14 @@ export class MDLMOLWriter
 			this.prepareSgroups();
 		}
 
-		let numSgroups = 0; // (does this matter?)
-
-		const PFX = 'M  V30 ';
+		let sgroupText = this.populateV3000Sgroups();
 
 		this.lines.push('  0  0  0     0  0            999 V3000');
-		this.lines.push(PFX + 'BEGIN CTAB');
+		this.lines.push(VPFX + 'BEGIN CTAB');
 
-		this.lines.push(PFX + `COUNTS ${mol.numAtoms} ${mol.numBonds} ${numSgroups} 0 ${this.overallStereoAbsolute ? 1 : 0}`);
+		this.lines.push(VPFX + `COUNTS ${mol.numAtoms} ${mol.numBonds} ${sgroupText.length} 0 ${this.overallStereoAbsolute ? 1 : 0}`);
 
-		this.lines.push(PFX + 'BEGIN ATOM');
+		this.lines.push(VPFX + 'BEGIN ATOM');
 
 		for (let n = 1; n <= mol.numAtoms; n++)
 		{
@@ -494,7 +508,7 @@ export class MDLMOLWriter
 			let mapnum = mol.atomMapNum(n), chg = mol.atomCharge(n), unp = mol.atomUnpaired(n);
 			let isotope = mol.atomIsotope(n), val = this.mdlValence(mol, n, -1);
 
-			let line = `${PFX}${n} ${label} ${x.toFixed(4)} ${y.toFixed(4)} ${z.toFixed(4)} ${mapnum}`;
+			let line = `${VPFX}${n} ${label} ${x.toFixed(4)} ${y.toFixed(4)} ${z.toFixed(4)} ${mapnum}`;
 
 			if (chg != 0) line += ' CHG=' + chg;
 			if (unp == 1) line += ' RAD=2';
@@ -505,11 +519,11 @@ export class MDLMOLWriter
 			this.lines.push(line);
 		}
 
-		this.lines.push(PFX + 'END ATOM');
+		this.lines.push(VPFX + 'END ATOM');
 
 		if (mol.numBonds > 0)
 		{
-			this.lines.push(PFX + 'BEGIN BOND');
+			this.lines.push(VPFX + 'BEGIN BOND');
 
 			let maskArom = ForeignMolecule.noteAromaticBonds(mol);
 			for (let n = 1; n <= mol.numBonds; n++)
@@ -527,7 +541,7 @@ export class MDLMOLWriter
 
 				let stereo = mol.bondType(n);
 
-				let line = `${PFX}${n} ${type} ${bfr} ${bto}`;
+				let line = `${VPFX}${n} ${type} ${bfr} ${bto}`;
 
 				if (stereo == Molecule.BONDTYPE_INCLINED) line += ' CFG=1';
 				else if (stereo == Molecule.BONDTYPE_DECLINED) line += ' CFG=3';
@@ -538,20 +552,58 @@ export class MDLMOLWriter
 				this.lines.push(line);
 			}
 
-			this.lines.push(PFX + 'END BOND');
+			this.lines.push(VPFX + 'END BOND');
 		}
 
-		let sgroups:string[] = [];
-
-		for (let s = 0; s < this.sgroupAtoms.length; s++)
+		if (sgroupText.length > 0)
 		{
-			let sid = sgroups.length + 1;
-			let atoms = this.sgroupAtoms[s], name = this.sgroupNames[s];
+			this.lines.push(VPFX + 'BEGIN SGROUP');
+			this.lines.push(...sgroupText);
+			this.lines.push(VPFX + 'END SGROUP');
+		}
 
-			let line = `${PFX}${sid} SUP 0`;
-			line += ' LABEL=' + (name.includes(' ') ? `"${name}"` : name);
-			line += ' ATOMS=' + this.packV3000List(atoms);
-			sgroups.push(line);
+		let collections:string[] = [];
+
+		let stereoGroup = new StereoGroup(mol);
+		let racidx = 0, relidx = 0;
+		for (let atoms of stereoGroup.getRacemicAtoms()) collections.push(VPFX + 'MDLV30/STERAC' + (++racidx) + ' ATOMS=' + this.packV3000List(atoms));
+		for (let atoms of stereoGroup.getRelativeAtoms()) collections.push(VPFX + 'MDLV30/STEREL' + (++relidx) + ' ATOMS=' + this.packV3000List(atoms));
+
+		if (collections.length > 0)
+		{
+			this.lines.push(VPFX + 'BEGIN COLLECTION');
+			this.lines.push(...collections);
+			this.lines.push(VPFX + 'END COLLECTION');
+		}
+
+		this.lines.push(VPFX + 'END CTAB');
+		this.lines.push('M  END');
+	}
+
+	private populateV3000Sgroups():string[]
+	{
+		let mol = this.mol;
+		let lines:string[] = [];
+
+		for (let s = 0; s < this.sgroups.length; s++)
+		{
+			let sg = this.sgroups[s];
+			let sid = lines.length + 1;
+
+			let txt = `${VPFX}${sid} ${sg.type} 0`;
+			if (sg.type == 'SUP')
+			{
+				txt += ' LABEL=' + (sg.name.includes(' ') ? `"${sg.name}"` : sg.name);
+				txt += ' ATOMS=' + this.packV3000List(sg.atoms);
+			}
+			else // 'MUL'
+			{
+				let mult = parseInt(sg.name), unit = sg.atoms.length / mult;
+				txt += ' MULT=' + sg.name;
+				txt += ' ATOMS=' + this.packV3000List(sg.atoms);
+				txt += ' PATOMS=' + this.packV3000List(sg.atoms.slice(0, unit));
+			}
+			lines.push(txt);
 		}
 
 		if (this.polymerBlocks)
@@ -559,16 +611,16 @@ export class MDLMOLWriter
 			let polymers = new PolymerBlock(mol);
 			for (let id of polymers.getIDList())
 			{
-				let sid = sgroups.length + 1;
+				let sid = lines.length + 1;
 				let unit = polymers.getUnit(id);
 
-				let line = `${PFX}${sid} SRU 0`;
+				let txt = `${VPFX}${sid} SRU 0`;
 
-				line += ' ATOMS=' + this.packV3000List(unit.atoms);
+				txt += ' ATOMS=' + this.packV3000List(unit.atoms);
 
-				if (unit.connect == PolymerBlockConnectivity.HeadToTail) line += ' CONNECT=HT';
-				else if (unit.connect == PolymerBlockConnectivity.HeadToHead) line += ' CONNECT=HH';
-				else if (unit.connect == PolymerBlockConnectivity.Random) line += ' CONNECT=EU';
+				if (unit.connect == PolymerBlockConnectivity.HeadToTail) txt += ' CONNECT=HT';
+				else if (unit.connect == PolymerBlockConnectivity.HeadToHead) txt += ' CONNECT=HH';
+				else if (unit.connect == PolymerBlockConnectivity.Random) txt += ' CONNECT=EU';
 
 				let bonds:number[] = [];
 				for (let n = 1; n <= mol.numBonds; n++)
@@ -576,37 +628,15 @@ export class MDLMOLWriter
 					let fl1 = unit.atoms.includes(mol.bondFrom(n)), fl2 = unit.atoms.includes(mol.bondTo(n));
 					if ((fl1 && !fl2) || (!fl1 && fl2)) bonds.push(n);
 				}
-				if (bonds.length > 0) line += ' BONDS=' + this.packV3000List(bonds);
+				if (bonds.length > 0) txt += ' BONDS=' + this.packV3000List(bonds);
 
-				if (unit.bondConn != null) line += ' XBCORR=' + this.packV3000List(unit.bondConn);
+				if (unit.bondConn != null) txt += ' XBCORR=' + this.packV3000List(unit.bondConn);
 
-				sgroups.push(line);
+				lines.push(txt);
 			}
 		}
 
-		if (sgroups.length > 0)
-		{
-			this.lines.push(PFX + 'BEGIN SGROUP');
-			this.lines.push(...sgroups);
-			this.lines.push(PFX + 'END SGROUP');
-		}
-
-		let collections:string[] = [];
-
-		let stereoGroup = new StereoGroup(mol);
-		let racidx = 0, relidx = 0;
-		for (let atoms of stereoGroup.getRacemicAtoms()) collections.push(PFX + 'MDLV30/STERAC' + (++racidx) + ' ATOMS=' + this.packV3000List(atoms));
-		for (let atoms of stereoGroup.getRelativeAtoms()) collections.push(PFX + 'MDLV30/STEREL' + (++relidx) + ' ATOMS=' + this.packV3000List(atoms));
-
-		if (collections.length > 0)
-		{
-			this.lines.push(PFX + 'BEGIN COLLECTION');
-			this.lines.push(...collections);
-			this.lines.push(PFX + 'END COLLECTION');
-		}
-
-		this.lines.push(PFX + 'END CTAB');
-		this.lines.push('M  END');
+		return lines;
 	}
 
 	private packV3000List(values:number[]):string

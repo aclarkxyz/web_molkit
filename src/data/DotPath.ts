@@ -212,7 +212,7 @@ export class DotPath
 			bondsum[bto - 1] += bo;
 
 			// respect externally indicated aromaticity
-			if (mol.bondTransient(n).indexOf(ForeignMoleculeExtra.BondAromatic) >= 0)
+			if (mol.bondTransient(n).indexOf(ForeignMoleculeTransient.BondAromatic) >= 0)
 			{
 				pibonded[bfr - 1] = true;
 				pibonded[bto - 1] = true;

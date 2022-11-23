@@ -191,9 +191,9 @@ export class MDLMOLReader
 			if (stereo > 0 && this.keepParity)
 			{
 				let trans = this.mol.atomTransient(a);
-				if (stereo == 1) this.mol.setAtomTransient(a, Vec.append(trans, ForeignMoleculeExtra.AtomChiralMDLOdd));
-				else if (stereo == 2) this.mol.setAtomTransient(a, Vec.append(trans, ForeignMoleculeExtra.AtomChiralMDLEven));
-				else if (stereo == 3) this.mol.setAtomTransient(a, Vec.append(trans, ForeignMoleculeExtra.AtomChiralMDLRacemic));
+				if (stereo == 1) this.mol.setAtomTransient(a, Vec.append(trans, ForeignMoleculeTransient.AtomChiralMDLOdd));
+				else if (stereo == 2) this.mol.setAtomTransient(a, Vec.append(trans, ForeignMoleculeTransient.AtomChiralMDLEven));
+				else if (stereo == 3) this.mol.setAtomTransient(a, Vec.append(trans, ForeignMoleculeTransient.AtomChiralMDLRacemic));
 			}
 
 			if (val != 0) ForeignMolecule.markExplicitValence(this.mol, n + 1, val > 14 ? 0 : val);
@@ -233,7 +233,7 @@ export class MDLMOLReader
 				// to store actual molecules; in this case, it is necessary to either "deresonate" the rings, or to stash the property
 				if (type == 4)
 				{
-					if (this.keepAromatic) this.mol.setBondTransient(b, Vec.append(this.mol.bondTransient(b), ForeignMoleculeExtra.BondAromatic));
+					if (this.keepAromatic) this.mol.setBondTransient(b, Vec.append(this.mol.bondTransient(b), ForeignMoleculeTransient.BondAromatic));
 					else
 					{
 						if (this.resBonds == null) this.resBonds = Vec.booleanArray(false, numBonds);
@@ -285,7 +285,7 @@ export class MDLMOLReader
 					let stype = line.substring(14 + 8 * n, 17 + 8 * n);
 					if (stype == 'SUP') superatoms.set(idx, {'atoms': [], 'name': null});
 					else if (stype == 'MIX' || stype == 'FOR') mixtures.set(idx, {'index': idx, 'parent': 0, 'atoms': [], 'type': stype});
-					else if (stype == 'SRU' || stype == 'COP') superatoms.set(idx, {'atoms': [], 'name': null, 'bracketType': stype});
+					else if (stype == 'SRU' || stype == 'COP' || stype == 'MUL') superatoms.set(idx, {'atoms': [], 'name': null, 'bracketType': stype});
 				}
 			}
 			else if (line.startsWith('M  SPL'))
@@ -701,7 +701,7 @@ export class MDLMOLReader
 				// to store actual molecules; in this case, it is necessary to either "deresonate" the rings, or to stash the property
 				if (type == 4)
 				{
-					if (this.keepAromatic) this.mol.setBondTransient(b, Vec.append(this.mol.bondTransient(b), ForeignMoleculeExtra.BondAromatic));
+					if (this.keepAromatic) this.mol.setBondTransient(b, Vec.append(this.mol.bondTransient(b), ForeignMoleculeTransient.BondAromatic));
 					else
 					{
 						if (this.resBonds == null) this.resBonds = Vec.booleanArray(false, numBonds);
@@ -804,7 +804,7 @@ export class MDLMOLReader
 				}
 				this.groupMixtures.push(mix);
 			}
-			else if (bits.length > 3 && idx > 0 && (bits[1] == 'SRU' || bits[1] == 'COP') && parseInt(bits[2]) == idx)
+			else if (bits.length > 3 && idx > 0 && (bits[1] == 'SRU' || bits[1] == 'COP' || bits[1] == 'MUL') /*&& parseInt(bits[2]) == idx*/)
 			{
 				let sup:MDLReaderSuperAtom = {'atoms': [], 'name': null, 'bracketType': bits[1]};
 				for (let i = 3; i < bits.length; i++)
@@ -814,6 +814,7 @@ export class MDLMOLReader
 					else if (bits[i].startsWith('LABEL=')) sup.name = this.withoutQuotes(bits[i].substring(6));
 					else if (bits[i].startsWith('CONNECT=')) sup.connectType = bits[i].substring(8);
 					else if (bits[i].startsWith('XBCORR=')) sup.bondConn = this.unpackList(bits[i].substring(7));
+					else if (bits[i].startsWith('MULT=')) sup.name = this.withoutQuotes(bits[i].substring(5));
 				}
 				superatoms.set(idx, sup);
 			}
@@ -873,7 +874,7 @@ export class MDLMOLReader
 		let [mod, abvAtom] = MolUtil.convertToAbbrevIndex(this.mol, mask, name);
 		if (mod == null)
 		{
-			ForeignMolecule.markSgroupMulti(this.mol, name, sup.atoms);
+			ForeignMolecule.markSgroupMultiAttach(this.mol, name, sup.atoms);
 			return;
 		}
 		this.mol = mod;
@@ -900,6 +901,13 @@ export class MDLMOLReader
 	// deals with a superatom block that is marked as
 	private applyPolymerBlock(sup:MDLReaderSuperAtom):void
 	{
+		if (sup.bracketType == 'MUL')
+		{
+			let mult = parseInt(sup.name);
+			ForeignMolecule.markSgroupMultiRepeat(this.mol, mult, sup.atoms);
+			return;
+		}
+
 		let poly = new PolymerBlock(this.mol);
 		let connect:PolymerBlockConnectivity = null;
 		if (sup.connectType == null) {}

@@ -5295,7 +5295,7 @@ var WebMolKit;
                 }
                 bondsum[bfr - 1] += bo;
                 bondsum[bto - 1] += bo;
-                if (mol.bondTransient(n).indexOf(WebMolKit.ForeignMoleculeExtra.BondAromatic) >= 0) {
+                if (mol.bondTransient(n).indexOf(WebMolKit.ForeignMoleculeTransient.BondAromatic) >= 0) {
                     pibonded[bfr - 1] = true;
                     pibonded[bto - 1] = true;
                 }
@@ -5594,49 +5594,50 @@ var WebMolKit;
 })(WebMolKit || (WebMolKit = {}));
 var WebMolKit;
 (function (WebMolKit) {
-    let ForeignMoleculeExtra;
-    (function (ForeignMoleculeExtra) {
-        ForeignMoleculeExtra["AtomAromatic"] = "yAROMATIC";
-        ForeignMoleculeExtra["BondAromatic"] = "yAROMATIC";
-        ForeignMoleculeExtra["AtomChiralMDLOdd"] = "yCHIRAL_MDL_ODD";
-        ForeignMoleculeExtra["AtomChiralMDLEven"] = "yCHIRAL_MDL_EVEN";
-        ForeignMoleculeExtra["AtomChiralMDLRacemic"] = "yCHIRAL_MDL_RACEMIC";
-        ForeignMoleculeExtra["AtomExplicitValence"] = "yMDL_EXPLICIT_VALENCE";
-        ForeignMoleculeExtra["AtomSgroupMultiAttach"] = "yMDL_SGROUP_MULTIATTACH";
-    })(ForeignMoleculeExtra = WebMolKit.ForeignMoleculeExtra || (WebMolKit.ForeignMoleculeExtra = {}));
+    let ForeignMoleculeTransient;
+    (function (ForeignMoleculeTransient) {
+        ForeignMoleculeTransient["AtomAromatic"] = "yAROMATIC";
+        ForeignMoleculeTransient["BondAromatic"] = "yAROMATIC";
+        ForeignMoleculeTransient["AtomChiralMDLOdd"] = "yCHIRAL_MDL_ODD";
+        ForeignMoleculeTransient["AtomChiralMDLEven"] = "yCHIRAL_MDL_EVEN";
+        ForeignMoleculeTransient["AtomChiralMDLRacemic"] = "yCHIRAL_MDL_RACEMIC";
+        ForeignMoleculeTransient["AtomExplicitValence"] = "yMDL_EXPLICIT_VALENCE";
+        ForeignMoleculeTransient["AtomSgroupMultiAttach"] = "yMDL_SGROUP_MULTIATTACH";
+        ForeignMoleculeTransient["AtomSgroupMultiRepeat"] = "yMDL_SGROUP_MULTIREPEAT";
+    })(ForeignMoleculeTransient = WebMolKit.ForeignMoleculeTransient || (WebMolKit.ForeignMoleculeTransient = {}));
     class ForeignMolecule {
         static noteAromaticAtoms(mol) {
             const sz = mol.numAtoms;
             let mask = WebMolKit.Vec.booleanArray(false, sz);
             for (let n = 1; n <= sz; n++)
-                mask[n - 1] = mol.atomTransient(n).indexOf(ForeignMoleculeExtra.AtomAromatic) >= 0;
+                mask[n - 1] = mol.atomTransient(n).indexOf(ForeignMoleculeTransient.AtomAromatic) >= 0;
             return mask;
         }
         static noteAromaticBonds(mol) {
             const sz = mol.numBonds;
             let mask = WebMolKit.Vec.booleanArray(false, sz);
             for (let n = 1; n <= sz; n++)
-                mask[n - 1] = mol.bondTransient(n).indexOf(ForeignMoleculeExtra.BondAromatic) >= 0;
+                mask[n - 1] = mol.bondTransient(n).indexOf(ForeignMoleculeTransient.BondAromatic) >= 0;
             return mask;
         }
         static markExplicitValence(mol, atom, valence) {
-            let trans = mol.atomTransient(atom).filter((tr) => !tr.startsWith(ForeignMoleculeExtra.AtomExplicitValence + ':'));
-            trans.push(`${ForeignMoleculeExtra.AtomExplicitValence}:${valence}`);
+            let trans = mol.atomTransient(atom).filter((tr) => !tr.startsWith(ForeignMoleculeTransient.AtomExplicitValence + ':'));
+            trans.push(`${ForeignMoleculeTransient.AtomExplicitValence}:${valence}`);
             mol.setAtomTransient(atom, trans);
         }
         static noteExplicitValence(mol, atom) {
             let trans = mol.atomTransient(atom);
             for (let tr of trans)
-                if (tr.startsWith(ForeignMoleculeExtra.AtomExplicitValence + ':'))
-                    return parseInt(tr.substring(ForeignMoleculeExtra.AtomExplicitValence.length + 1));
+                if (tr.startsWith(ForeignMoleculeTransient.AtomExplicitValence + ':'))
+                    return parseInt(tr.substring(ForeignMoleculeTransient.AtomExplicitValence.length + 1));
             return null;
         }
-        static markSgroupMulti(mol, name, atoms) {
+        static markSgroupMultiAttach(mol, name, atoms) {
             let idxHigh = 0;
             for (let n = 1; n <= mol.numAtoms; n++)
                 for (let tag of mol.atomTransient(n))
-                    if (tag.startsWith(ForeignMoleculeExtra.AtomSgroupMultiAttach + ':')) {
-                        let payload = tag.substring(ForeignMoleculeExtra.AtomSgroupMultiAttach.length + 1);
+                    if (tag.startsWith(ForeignMoleculeTransient.AtomSgroupMultiAttach + ':')) {
+                        let payload = tag.substring(ForeignMoleculeTransient.AtomSgroupMultiAttach.length + 1);
                         let comma = payload.indexOf(',');
                         if (comma <= 0)
                             continue;
@@ -5645,33 +5646,79 @@ var WebMolKit;
                             continue;
                         idxHigh = Math.max(idxHigh, idx);
                     }
-            let tag = `${ForeignMoleculeExtra.AtomSgroupMultiAttach}:${idxHigh + 1},${name}`;
+            let tag = `${ForeignMoleculeTransient.AtomSgroupMultiAttach}:${idxHigh + 1},${name}`;
             for (let a of atoms)
                 mol.setAtomTransient(a, WebMolKit.Vec.append(mol.atomTransient(a), tag));
         }
-        static hasAnySgroupMulti(mol) {
+        static hasAnySgroupMultiAttach(mol) {
             for (let n = 1; n <= mol.numAtoms; n++)
-                if (mol.atomTransient(n).some((tag) => tag.startsWith(ForeignMoleculeExtra.AtomSgroupMultiAttach + ':')))
+                if (mol.atomTransient(n).some((tag) => tag.startsWith(ForeignMoleculeTransient.AtomSgroupMultiAttach + ':')))
                     return true;
             return false;
         }
-        static noteAllSgroupMulti(mol) {
+        static noteAllSgroupMultiAttach(mol) {
             let map = {};
             for (let n = 1; n <= mol.numAtoms; n++)
                 for (let tag of mol.atomTransient(n))
-                    if (tag.startsWith(ForeignMoleculeExtra.AtomSgroupMultiAttach + ':')) {
-                        let payload = tag.substring(ForeignMoleculeExtra.AtomSgroupMultiAttach.length + 1);
+                    if (tag.startsWith(ForeignMoleculeTransient.AtomSgroupMultiAttach + ':')) {
+                        let payload = tag.substring(ForeignMoleculeTransient.AtomSgroupMultiAttach.length + 1);
                         let comma = payload.indexOf(',');
                         if (comma <= 0)
                             continue;
                         let idx = parseInt(payload.substring(0, comma)), name = payload.substring(comma + 1);
                         if (!(idx > 0))
                             continue;
-                        var sgm = map[idx];
+                        let sgm = map[idx];
                         if (sgm)
                             sgm.atoms.push(n);
                         else
                             map[idx] = { name, 'atoms': [n] };
+                    }
+            return Object.values(map);
+        }
+        static markSgroupMultiRepeat(mol, mult, atoms) {
+            let idxHigh = 0;
+            for (let n = 1; n <= mol.numAtoms; n++)
+                for (let tag of mol.atomTransient(n))
+                    if (tag.startsWith(ForeignMoleculeTransient.AtomSgroupMultiRepeat + ':')) {
+                        let payload = tag.substring(ForeignMoleculeTransient.AtomSgroupMultiRepeat.length + 1);
+                        let comma = payload.indexOf(',');
+                        if (comma <= 0)
+                            continue;
+                        let idx = parseInt(payload.substring(0, comma));
+                        if (idx <= 0)
+                            continue;
+                        idxHigh = Math.max(idxHigh, idx);
+                    }
+            let unit = atoms.length / mult;
+            let tag = `${ForeignMoleculeTransient.AtomSgroupMultiRepeat}:${idxHigh + 1},${mult},${unit},`;
+            for (let n = 0; n < atoms.length; n++)
+                mol.setAtomTransient(atoms[n], WebMolKit.Vec.append(mol.atomTransient(atoms[n]), tag + (n + 1)));
+        }
+        static hasAnySgroupMultiRepeat(mol) {
+            for (let n = 1; n <= mol.numAtoms; n++)
+                if (mol.atomTransient(n).some((tag) => tag.startsWith(ForeignMoleculeTransient.AtomSgroupMultiRepeat + ':')))
+                    return true;
+            return false;
+        }
+        static noteAllSgroupMultiRepeat(mol) {
+            let map = {};
+            for (let n = 1; n <= mol.numAtoms; n++)
+                for (let tag of mol.atomTransient(n))
+                    if (tag.startsWith(ForeignMoleculeTransient.AtomSgroupMultiRepeat + ':')) {
+                        let payload = tag.substring(ForeignMoleculeTransient.AtomSgroupMultiRepeat.length + 1);
+                        let bits = payload.split(',');
+                        if (bits.length < 4)
+                            continue;
+                        let idx = parseInt(bits[0]), mult = parseInt(bits[1]), unit = parseInt(bits[2]), pos = parseInt(bits[3]);
+                        if (!(idx > 0) || mult < 2 || unit < 1 || pos < 1 || pos > mult * unit)
+                            continue;
+                        let mr = map[idx];
+                        if (mr == null)
+                            map[idx] = mr = { mult, unit, 'atoms': WebMolKit.Vec.numberArray(0, mult * unit) };
+                        else if (mr.mult != mult || mr.unit != unit)
+                            continue;
+                        mr.atoms[pos - 1] = n;
                     }
             return Object.values(map);
         }
@@ -6305,11 +6352,11 @@ var WebMolKit;
                 if (stereo > 0 && this.keepParity) {
                     let trans = this.mol.atomTransient(a);
                     if (stereo == 1)
-                        this.mol.setAtomTransient(a, WebMolKit.Vec.append(trans, WebMolKit.ForeignMoleculeExtra.AtomChiralMDLOdd));
+                        this.mol.setAtomTransient(a, WebMolKit.Vec.append(trans, WebMolKit.ForeignMoleculeTransient.AtomChiralMDLOdd));
                     else if (stereo == 2)
-                        this.mol.setAtomTransient(a, WebMolKit.Vec.append(trans, WebMolKit.ForeignMoleculeExtra.AtomChiralMDLEven));
+                        this.mol.setAtomTransient(a, WebMolKit.Vec.append(trans, WebMolKit.ForeignMoleculeTransient.AtomChiralMDLEven));
                     else if (stereo == 3)
-                        this.mol.setAtomTransient(a, WebMolKit.Vec.append(trans, WebMolKit.ForeignMoleculeExtra.AtomChiralMDLRacemic));
+                        this.mol.setAtomTransient(a, WebMolKit.Vec.append(trans, WebMolKit.ForeignMoleculeTransient.AtomChiralMDLRacemic));
                 }
                 if (val != 0)
                     WebMolKit.ForeignMolecule.markExplicitValence(this.mol, n + 1, val > 14 ? 0 : val);
@@ -6348,7 +6395,7 @@ var WebMolKit;
                 else {
                     if (type == 4) {
                         if (this.keepAromatic)
-                            this.mol.setBondTransient(b, WebMolKit.Vec.append(this.mol.bondTransient(b), WebMolKit.ForeignMoleculeExtra.BondAromatic));
+                            this.mol.setBondTransient(b, WebMolKit.Vec.append(this.mol.bondTransient(b), WebMolKit.ForeignMoleculeTransient.BondAromatic));
                         else {
                             if (this.resBonds == null)
                                 this.resBonds = WebMolKit.Vec.booleanArray(false, numBonds);
@@ -6404,7 +6451,7 @@ var WebMolKit;
                             superatoms.set(idx, { 'atoms': [], 'name': null });
                         else if (stype == 'MIX' || stype == 'FOR')
                             mixtures.set(idx, { 'index': idx, 'parent': 0, 'atoms': [], 'type': stype });
-                        else if (stype == 'SRU' || stype == 'COP')
+                        else if (stype == 'SRU' || stype == 'COP' || stype == 'MUL')
                             superatoms.set(idx, { 'atoms': [], 'name': null, 'bracketType': stype });
                     }
                 }
@@ -6796,7 +6843,7 @@ var WebMolKit;
                 else {
                     if (type == 4) {
                         if (this.keepAromatic)
-                            this.mol.setBondTransient(b, WebMolKit.Vec.append(this.mol.bondTransient(b), WebMolKit.ForeignMoleculeExtra.BondAromatic));
+                            this.mol.setBondTransient(b, WebMolKit.Vec.append(this.mol.bondTransient(b), WebMolKit.ForeignMoleculeTransient.BondAromatic));
                         else {
                             if (this.resBonds == null)
                                 this.resBonds = WebMolKit.Vec.booleanArray(false, numBonds);
@@ -6889,7 +6936,7 @@ var WebMolKit;
                     }
                     this.groupMixtures.push(mix);
                 }
-                else if (bits.length > 3 && idx > 0 && (bits[1] == 'SRU' || bits[1] == 'COP') && parseInt(bits[2]) == idx) {
+                else if (bits.length > 3 && idx > 0 && (bits[1] == 'SRU' || bits[1] == 'COP' || bits[1] == 'MUL')) {
                     let sup = { 'atoms': [], 'name': null, 'bracketType': bits[1] };
                     for (let i = 3; i < bits.length; i++) {
                         if (bits[i].startsWith('ATOMS='))
@@ -6902,6 +6949,8 @@ var WebMolKit;
                             sup.connectType = bits[i].substring(8);
                         else if (bits[i].startsWith('XBCORR='))
                             sup.bondConn = this.unpackList(bits[i].substring(7));
+                        else if (bits[i].startsWith('MULT='))
+                            sup.name = this.withoutQuotes(bits[i].substring(5));
                     }
                     superatoms.set(idx, sup);
                 }
@@ -6952,7 +7001,7 @@ var WebMolKit;
                 name = name.substring(0, i) + '}' + name.substring(i + 2);
             let [mod, abvAtom] = WebMolKit.MolUtil.convertToAbbrevIndex(this.mol, mask, name);
             if (mod == null) {
-                WebMolKit.ForeignMolecule.markSgroupMulti(this.mol, name, sup.atoms);
+                WebMolKit.ForeignMolecule.markSgroupMultiAttach(this.mol, name, sup.atoms);
                 return;
             }
             this.mol = mod;
@@ -6973,6 +7022,11 @@ var WebMolKit;
             }
         }
         applyPolymerBlock(sup) {
+            if (sup.bracketType == 'MUL') {
+                let mult = parseInt(sup.name);
+                WebMolKit.ForeignMolecule.markSgroupMultiRepeat(this.mol, mult, sup.atoms);
+                return;
+            }
             let poly = new WebMolKit.PolymerBlock(this.mol);
             let connect = null;
             if (sup.connectType == null) { }
@@ -7186,6 +7240,7 @@ var WebMolKit;
 })(WebMolKit || (WebMolKit = {}));
 var WebMolKit;
 (function (WebMolKit) {
+    const VPFX = 'M  V30 ';
     class MDLMOLWriter {
         constructor(mol) {
             this.mol = mol;
@@ -7196,8 +7251,7 @@ var WebMolKit;
             this.abbrevSgroups = true;
             this.polymerBlocks = true;
             this.molName = '';
-            this.sgroupNames = [];
-            this.sgroupAtoms = [];
+            this.sgroups = [];
             this.lines = [];
         }
         write() {
@@ -7238,7 +7292,7 @@ var WebMolKit;
             var _a;
             let mol = this.mol = this.mol.clone();
             mol.keepTransient = true;
-            if (WebMolKit.MolUtil.hasAnyAbbrev(mol) || WebMolKit.ForeignMolecule.hasAnySgroupMulti(mol)) {
+            if (WebMolKit.MolUtil.hasAnyAbbrev(mol) || WebMolKit.ForeignMolecule.hasAnySgroupMultiAttach(mol) || WebMolKit.ForeignMolecule.hasAnySgroupMultiRepeat(mol)) {
                 if (this.abbrevSgroups)
                     this.partialAbbrevExpansion();
                 else
@@ -7388,23 +7442,33 @@ var WebMolKit;
                     this.writeMBlockFlat('ZAR', ++idx, WebMolKit.Vec.prepend(arene.atoms, arene.centre));
             }
             let inSgroup = WebMolKit.Vec.booleanArray(false, mol.numAtoms);
-            for (let s = 0; s < this.sgroupAtoms.length; s++) {
-                let sgroup = this.sgroupAtoms[s];
-                for (let n of sgroup)
+            for (let s = 0; s < this.sgroups.length; s++) {
+                let sg = this.sgroups[s];
+                for (let n of sg.atoms)
                     inSgroup[n - 1] = true;
                 let sidx = this.intrpad(s + 1, 4);
-                this.lines.push('M  STY  1' + sidx + ' SUP');
-                for (let n = 0; n < sgroup.length; n += 15) {
-                    let sz = Math.min(sgroup.length - n, 15);
+                this.lines.push('M  STY  1' + sidx + ' ' + sg.type);
+                for (let n = 0; n < sg.atoms.length; n += 15) {
+                    let sz = Math.min(sg.atoms.length - n, 15);
                     let line = 'M  SAL' + sidx + this.intrpad(sz, 3);
                     for (let i = 0; i < sz; i++)
-                        line += this.intrpad(sgroup[n + i], 4);
+                        line += this.intrpad(sg.atoms[n + i], 4);
                     this.lines.push(line);
                 }
-                this.lines.push('M  SMT' + sidx + ' ' + this.sgroupNames[s]);
+                this.lines.push('M  SMT' + sidx + ' ' + sg.name);
+                if (sg.type == 'MUL') {
+                    let mult = parseInt(sg.name), unit = sg.atoms.length / mult;
+                    for (let n = 0; n < unit; n += 15) {
+                        let sz = Math.min(unit - n, 15);
+                        let line = 'M  SPA' + sidx + this.intrpad(sz, 3);
+                        for (let i = 0; i < sz; i++)
+                            line += this.intrpad(sg.atoms[n + i], 4);
+                        this.lines.push(line);
+                    }
+                }
             }
             if (this.polymerBlocks)
-                this.encodePolymerBlocks(this.sgroupAtoms.length);
+                this.encodePolymerBlocks(this.sgroups.length);
             for (let n = 1; n <= mol.numAtoms; n++)
                 if (mol.atomElement(n).length > 2) {
                     this.lines.push('A  ' + this.intrpad(n, 3));
@@ -7494,7 +7558,7 @@ var WebMolKit;
             let next = 0;
             for (let n = 1; n <= mol.numAtoms; n++)
                 if (WebMolKit.MolUtil.hasAbbrev(mol, n)) {
-                    this.sgroupNames.push(mol.atomElement(n));
+                    this.sgroups.push({ 'type': 'SUP', 'name': mol.atomElement(n), 'atoms': null });
                     let mask = WebMolKit.MolUtil.expandOneAbbrev(mol, n, true);
                     if (mask == null)
                         continue;
@@ -7504,19 +7568,19 @@ var WebMolKit;
                             mol.setAtomMapNum(i + 1, next);
                     n--;
                 }
-            for (let idx = -1; idx >= next; idx--) {
+            for (let idx = -1, p = 0; idx >= next; idx--, p++) {
                 let atoms = [];
                 for (let n = 1; n <= mol.numAtoms; n++)
                     if (mol.atomMapNum(n) == idx) {
                         atoms.push(n);
                         mol.setAtomMapNum(n, 0);
                     }
-                this.sgroupAtoms.push(atoms);
+                this.sgroups[p].atoms = atoms;
             }
-            for (let sg of WebMolKit.ForeignMolecule.noteAllSgroupMulti(mol)) {
-                this.sgroupNames.push(sg.name);
-                this.sgroupAtoms.push(sg.atoms);
-            }
+            for (let ma of WebMolKit.ForeignMolecule.noteAllSgroupMultiAttach(mol))
+                this.sgroups.push({ 'type': 'SUP', 'name': ma.name, 'atoms': ma.atoms });
+            for (let mr of WebMolKit.ForeignMolecule.noteAllSgroupMultiRepeat(mol))
+                this.sgroups.push({ 'type': 'MUL', 'name': mr.mult.toString(), 'atoms': mr.atoms });
         }
         encodePolymerBlocks(idx) {
             let polymers = new WebMolKit.PolymerBlock(this.mol);
@@ -7549,7 +7613,7 @@ var WebMolKit;
         writeCTAB3000() {
             var _a;
             let mol = this.mol;
-            if (WebMolKit.MolUtil.hasAnyAbbrev(mol) || WebMolKit.ForeignMolecule.hasAnySgroupMulti(mol)) {
+            if (WebMolKit.MolUtil.hasAnyAbbrev(mol) || WebMolKit.ForeignMolecule.hasAnySgroupMultiAttach(mol) || WebMolKit.ForeignMolecule.hasAnySgroupMultiRepeat(mol)) {
                 mol = this.mol = mol.clone();
                 mol.keepTransient = true;
                 if (this.abbrevSgroups)
@@ -7558,12 +7622,11 @@ var WebMolKit;
                     WebMolKit.MolUtil.expandAbbrevs(mol, true);
                 this.prepareSgroups();
             }
-            let numSgroups = 0;
-            const PFX = 'M  V30 ';
+            let sgroupText = this.populateV3000Sgroups();
             this.lines.push('  0  0  0     0  0            999 V3000');
-            this.lines.push(PFX + 'BEGIN CTAB');
-            this.lines.push(PFX + `COUNTS ${mol.numAtoms} ${mol.numBonds} ${numSgroups} 0 ${this.overallStereoAbsolute ? 1 : 0}`);
-            this.lines.push(PFX + 'BEGIN ATOM');
+            this.lines.push(VPFX + 'BEGIN CTAB');
+            this.lines.push(VPFX + `COUNTS ${mol.numAtoms} ${mol.numBonds} ${sgroupText.length} 0 ${this.overallStereoAbsolute ? 1 : 0}`);
+            this.lines.push(VPFX + 'BEGIN ATOM');
             for (let n = 1; n <= mol.numAtoms; n++) {
                 let label = mol.atomElement(n);
                 let qel = WebMolKit.QueryUtil.queryAtomElements(mol, n);
@@ -7580,7 +7643,7 @@ var WebMolKit;
                 let z = mol.is3D() ? mol.atomZ(n) : 0;
                 let mapnum = mol.atomMapNum(n), chg = mol.atomCharge(n), unp = mol.atomUnpaired(n);
                 let isotope = mol.atomIsotope(n), val = this.mdlValence(mol, n, -1);
-                let line = `${PFX}${n} ${label} ${x.toFixed(4)} ${y.toFixed(4)} ${z.toFixed(4)} ${mapnum}`;
+                let line = `${VPFX}${n} ${label} ${x.toFixed(4)} ${y.toFixed(4)} ${z.toFixed(4)} ${mapnum}`;
                 if (chg != 0)
                     line += ' CHG=' + chg;
                 if (unp == 1)
@@ -7593,9 +7656,9 @@ var WebMolKit;
                     line += ' VAL=' + val;
                 this.lines.push(line);
             }
-            this.lines.push(PFX + 'END ATOM');
+            this.lines.push(VPFX + 'END ATOM');
             if (mol.numBonds > 0) {
-                this.lines.push(PFX + 'BEGIN BOND');
+                this.lines.push(VPFX + 'BEGIN BOND');
                 let maskArom = WebMolKit.ForeignMolecule.noteAromaticBonds(mol);
                 for (let n = 1; n <= mol.numBonds; n++) {
                     let bfr = mol.bondFrom(n), bto = mol.bondTo(n);
@@ -7616,7 +7679,7 @@ var WebMolKit;
                     else if (type > 3)
                         type = 3;
                     let stereo = mol.bondType(n);
-                    let line = `${PFX}${n} ${type} ${bfr} ${bto}`;
+                    let line = `${VPFX}${n} ${type} ${bfr} ${bto}`;
                     if (stereo == WebMolKit.Molecule.BONDTYPE_INCLINED)
                         line += ' CFG=1';
                     else if (stereo == WebMolKit.Molecule.BONDTYPE_DECLINED)
@@ -7627,30 +7690,60 @@ var WebMolKit;
                         line += ' DISP=COORD';
                     this.lines.push(line);
                 }
-                this.lines.push(PFX + 'END BOND');
+                this.lines.push(VPFX + 'END BOND');
             }
-            let sgroups = [];
-            for (let s = 0; s < this.sgroupAtoms.length; s++) {
-                let sid = sgroups.length + 1;
-                let atoms = this.sgroupAtoms[s], name = this.sgroupNames[s];
-                let line = `${PFX}${sid} SUP 0`;
-                line += ' LABEL=' + (name.includes(' ') ? `"${name}"` : name);
-                line += ' ATOMS=' + this.packV3000List(atoms);
-                sgroups.push(line);
+            if (sgroupText.length > 0) {
+                this.lines.push(VPFX + 'BEGIN SGROUP');
+                this.lines.push(...sgroupText);
+                this.lines.push(VPFX + 'END SGROUP');
+            }
+            let collections = [];
+            let stereoGroup = new WebMolKit.StereoGroup(mol);
+            let racidx = 0, relidx = 0;
+            for (let atoms of stereoGroup.getRacemicAtoms())
+                collections.push(VPFX + 'MDLV30/STERAC' + (++racidx) + ' ATOMS=' + this.packV3000List(atoms));
+            for (let atoms of stereoGroup.getRelativeAtoms())
+                collections.push(VPFX + 'MDLV30/STEREL' + (++relidx) + ' ATOMS=' + this.packV3000List(atoms));
+            if (collections.length > 0) {
+                this.lines.push(VPFX + 'BEGIN COLLECTION');
+                this.lines.push(...collections);
+                this.lines.push(VPFX + 'END COLLECTION');
+            }
+            this.lines.push(VPFX + 'END CTAB');
+            this.lines.push('M  END');
+        }
+        populateV3000Sgroups() {
+            let mol = this.mol;
+            let lines = [];
+            for (let s = 0; s < this.sgroups.length; s++) {
+                let sg = this.sgroups[s];
+                let sid = lines.length + 1;
+                let txt = `${VPFX}${sid} ${sg.type} 0`;
+                if (sg.type == 'SUP') {
+                    txt += ' LABEL=' + (sg.name.includes(' ') ? `"${sg.name}"` : sg.name);
+                    txt += ' ATOMS=' + this.packV3000List(sg.atoms);
+                }
+                else {
+                    let mult = parseInt(sg.name), unit = sg.atoms.length / mult;
+                    txt += ' MULT=' + sg.name;
+                    txt += ' ATOMS=' + this.packV3000List(sg.atoms);
+                    txt += ' PATOMS=' + this.packV3000List(sg.atoms.slice(0, unit));
+                }
+                lines.push(txt);
             }
             if (this.polymerBlocks) {
                 let polymers = new WebMolKit.PolymerBlock(mol);
                 for (let id of polymers.getIDList()) {
-                    let sid = sgroups.length + 1;
-                    var unit = polymers.getUnit(id);
-                    let line = `${PFX}${sid} SRU 0`;
-                    line += ' ATOMS=' + this.packV3000List(unit.atoms);
+                    let sid = lines.length + 1;
+                    let unit = polymers.getUnit(id);
+                    let txt = `${VPFX}${sid} SRU 0`;
+                    txt += ' ATOMS=' + this.packV3000List(unit.atoms);
                     if (unit.connect == WebMolKit.PolymerBlockConnectivity.HeadToTail)
-                        line += ' CONNECT=HT';
+                        txt += ' CONNECT=HT';
                     else if (unit.connect == WebMolKit.PolymerBlockConnectivity.HeadToHead)
-                        line += ' CONNECT=HH';
+                        txt += ' CONNECT=HH';
                     else if (unit.connect == WebMolKit.PolymerBlockConnectivity.Random)
-                        line += ' CONNECT=EU';
+                        txt += ' CONNECT=EU';
                     let bonds = [];
                     for (let n = 1; n <= mol.numBonds; n++) {
                         let fl1 = unit.atoms.includes(mol.bondFrom(n)), fl2 = unit.atoms.includes(mol.bondTo(n));
@@ -7658,31 +7751,13 @@ var WebMolKit;
                             bonds.push(n);
                     }
                     if (bonds.length > 0)
-                        line += ' BONDS=' + this.packV3000List(bonds);
+                        txt += ' BONDS=' + this.packV3000List(bonds);
                     if (unit.bondConn != null)
-                        line += ' XBCORR=' + this.packV3000List(unit.bondConn);
-                    sgroups.push(line);
+                        txt += ' XBCORR=' + this.packV3000List(unit.bondConn);
+                    lines.push(txt);
                 }
             }
-            if (sgroups.length > 0) {
-                this.lines.push(PFX + 'BEGIN SGROUP');
-                this.lines.push(...sgroups);
-                this.lines.push(PFX + 'END SGROUP');
-            }
-            let collections = [];
-            var stereoGroup = new WebMolKit.StereoGroup(mol);
-            let racidx = 0, relidx = 0;
-            for (let atoms of stereoGroup.getRacemicAtoms())
-                collections.push(PFX + 'MDLV30/STERAC' + (++racidx) + " ATOMS=" + this.packV3000List(atoms));
-            for (let atoms of stereoGroup.getRelativeAtoms())
-                collections.push(PFX + 'MDLV30/STEREL' + (++relidx) + " ATOMS=" + this.packV3000List(atoms));
-            if (collections.length > 0) {
-                this.lines.push(PFX + 'BEGIN COLLECTION');
-                this.lines.push(...collections);
-                this.lines.push(PFX + 'END COLLECTION');
-            }
-            this.lines.push(PFX + 'END CTAB');
-            this.lines.push('M  END');
+            return lines;
         }
         packV3000List(values) {
             let str = '(' + values.length;
@@ -12432,8 +12507,8 @@ var WebMolKit;
 })(WebMolKit || (WebMolKit = {}));
 var WebMolKit;
 (function (WebMolKit) {
-    WebMolKit.STEREOGROUP_EXTRA_RACEMIC = "xCHIRAC:";
-    WebMolKit.STEREOGROUP_EXTRA_RELATIVE = "xCHIREL:";
+    WebMolKit.STEREOGROUP_EXTRA_RACEMIC = 'xCHIRAC:';
+    WebMolKit.STEREOGROUP_EXTRA_RELATIVE = 'xCHIREL:';
     class StereoGroup {
         constructor(mol) {
             this.mol = mol;
@@ -19314,7 +19389,7 @@ var WebMolKit;
         { 'id': 'bondQAny', 'imageFN': 'BondQAny', 'helpText': 'Query bond that matches anything.' },
         { 'id': 'addtwo', 'imageFN': 'BondAddTwo', 'helpText': 'Add two new bonds to the subject atom.', 'mnemonic': 'Shift+D' },
         { 'id': 'insert', 'imageFN': 'BondInsert', 'helpText': 'Insert a methylene into the subject bond.', 'mnemonic': '' },
-        { 'id': 'switch', 'imageFN': 'BondSwitch', 'helpText': 'Cycle through likely bond geometries.', 'mnemonic': '' },
+        { 'id': 'switch', 'imageFN': 'BondSwitch', 'helpText': 'Cycle through likely bond geometries.', 'mnemonic': '\'' },
         { 'id': 'rotate', 'imageFN': 'BondRotate', 'helpText': 'Rotate bond to invert substituent orientation.', 'mnemonic': '' },
         { 'id': 'linear', 'imageFN': 'BondLinear', 'helpText': 'Apply linear geometry.', 'mnemonic': 'Shift+V' },
         { 'id': 'trigonal', 'imageFN': 'BondTrigonal', 'helpText': 'Apply trigonal geometry.', 'mnemonic': 'Shift+W' },
@@ -23119,6 +23194,11 @@ var WebMolKit;
             this.output.mol.addBond(a1, a2, order, type);
         }
         execBondSwitch() {
+            if (this.input.altmol) {
+                this.output.mol = this.input.altmol;
+                this.output.altmol = this.input.mol;
+                return;
+            }
             if (!this.requireSubject())
                 return;
             let mol = this.input.mol;
@@ -24048,7 +24128,7 @@ var WebMolKit;
                 this.errmsg = 'Could not find a suitable geometry for a new substituent.';
                 return;
             }
-            let bx = 0, by = 0, best = 0;
+            let bx = [], by = [], bscore = [];
             for (let n = 0; n < ang.length; n++) {
                 let x = mol.atomX(atom) + WebMolKit.Molecule.IDEALBOND * Math.cos(ang[n]);
                 let y = mol.atomY(atom) + WebMolKit.Molecule.IDEALBOND * Math.sin(ang[n]);
@@ -24057,17 +24137,23 @@ var WebMolKit;
                     score += Math.abs(WebMolKit.angleNorm(ang[n])) * 1E-8;
                 else
                     score += Math.abs(WebMolKit.angleDiff(0.5 * Math.PI, ang[n])) * 1E-8;
-                if (n == 0 || score < best) {
-                    best = score;
-                    bx = x;
-                    by = y;
-                }
+                bx.push(x);
+                by.push(y);
+                bscore.push(score);
             }
+            let idx = WebMolKit.Vec.idxSort(bscore);
             this.output.mol = mol.clone();
-            let anum = WebMolKit.CoordUtil.atomAtPoint(this.output.mol, bx, by);
+            let anum = WebMolKit.CoordUtil.atomAtPoint(this.output.mol, bx[idx[0]], by[idx[0]]);
             if (anum == 0)
-                anum = this.output.mol.addAtom('C', bx, by);
+                anum = this.output.mol.addAtom('C', bx[idx[0]], by[idx[0]]);
             WebMolKit.MolUtil.addBond(this.output.mol, atom, anum, order, type);
+            if (idx.length >= 2) {
+                this.output.altmol = mol.clone();
+                anum = WebMolKit.CoordUtil.atomAtPoint(this.output.altmol, bx[idx[1]], by[idx[1]]);
+                if (anum == 0)
+                    anum = this.output.altmol.addAtom('C', bx[idx[1]], by[idx[1]]);
+                WebMolKit.MolUtil.addBond(this.output.altmol, atom, anum, order, type);
+            }
         }
         performBondChange(order, type) {
             let mol = this.input.mol;
@@ -26996,6 +27082,10 @@ var WebMolKit;
         setParentSize(width, height) {
             this.parentWidth = width;
             this.parentHeight = height;
+            if (this.contentDOM) {
+                this.applyOffset();
+                this.redraw();
+            }
         }
         get topBank() {
             return this.stack.length > 0 ? this.stack[this.stack.length - 1] : null;

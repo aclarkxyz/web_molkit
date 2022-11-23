@@ -26,7 +26,7 @@ namespace WebMolKit /* BOF */ {
 	being used or modified.
 */
 
-export enum ForeignMoleculeExtra
+export enum ForeignMoleculeTransient
 {
 	// generic flags for remarking that an atom/bond is aromatic; commonly used by SMILES, for MDL Molfile queries (and illegal structures)
 	// and a number of other formats which use this concept
@@ -41,11 +41,19 @@ export enum ForeignMoleculeExtra
 	// annotations that carry over from supplementary MDL parsing
 	AtomExplicitValence = 'yMDL_EXPLICIT_VALENCE',
 	AtomSgroupMultiAttach = 'yMDL_SGROUP_MULTIATTACH',
+	AtomSgroupMultiRepeat = 'yMDL_SGROUP_MULTIREPEAT',
 }
 
-export interface ForeignMoleculeSgroupMulti
+export interface ForeignMoleculeSgroupMultiAttach
 {
 	name:string;
+	atoms:number[];
+}
+
+export interface ForeignMoleculeSgroupMultiRepeat
+{
+	mult:number;
+	unit:number;
 	atoms:number[];
 }
 
@@ -59,7 +67,7 @@ export class ForeignMolecule
 	{
 		const sz = mol.numAtoms;
 		let mask = Vec.booleanArray(false, sz);
-		for (let n = 1; n <= sz; n++) mask[n - 1] = mol.atomTransient(n).indexOf(ForeignMoleculeExtra.AtomAromatic) >= 0;
+		for (let n = 1; n <= sz; n++) mask[n - 1] = mol.atomTransient(n).indexOf(ForeignMoleculeTransient.AtomAromatic) >= 0;
 		return mask;
 	}
 
@@ -68,7 +76,7 @@ export class ForeignMolecule
 	{
 		const sz = mol.numBonds;
 		let mask = Vec.booleanArray(false, sz);
-		for (let n = 1; n <= sz; n++) mask[n - 1] = mol.bondTransient(n).indexOf(ForeignMoleculeExtra.BondAromatic) >= 0;
+		for (let n = 1; n <= sz; n++) mask[n - 1] = mol.bondTransient(n).indexOf(ForeignMoleculeTransient.BondAromatic) >= 0;
 		return mask;
 	}
 
@@ -77,57 +85,106 @@ export class ForeignMolecule
 	// explicit valence: 0=no information; -1=zero; >0=explicit
 	public static markExplicitValence(mol:Molecule, atom:number, valence:number):void
 	{
-		let trans = mol.atomTransient(atom).filter((tr) => !tr.startsWith(ForeignMoleculeExtra.AtomExplicitValence + ':'));
-		trans.push(`${ForeignMoleculeExtra.AtomExplicitValence}:${valence}`);
+		let trans = mol.atomTransient(atom).filter((tr) => !tr.startsWith(ForeignMoleculeTransient.AtomExplicitValence + ':'));
+		trans.push(`${ForeignMoleculeTransient.AtomExplicitValence}:${valence}`);
 		mol.setAtomTransient(atom, trans);
 	}
 	public static noteExplicitValence(mol:Molecule, atom:number):number
 	{
 		let trans = mol.atomTransient(atom);
-		for (let tr of trans) if (tr.startsWith(ForeignMoleculeExtra.AtomExplicitValence + ':')) return parseInt(tr.substring(ForeignMoleculeExtra.AtomExplicitValence.length + 1));
+		for (let tr of trans) if (tr.startsWith(ForeignMoleculeTransient.AtomExplicitValence + ':')) return parseInt(tr.substring(ForeignMoleculeTransient.AtomExplicitValence.length + 1));
 		return null;
 	}
 
 	// S-groups with either no attachments or multiple attachments; only single-attachment S-groups are handled naturally
-	public static markSgroupMulti(mol:Molecule, name:string, atoms:number[]):void
+	public static markSgroupMultiAttach(mol:Molecule, name:string, atoms:number[]):void
 	{
 		let idxHigh = 0;
-		for (let n = 1; n <= mol.numAtoms; n++) for (let tag of mol.atomTransient(n)) if (tag.startsWith(ForeignMoleculeExtra.AtomSgroupMultiAttach + ':'))
+		for (let n = 1; n <= mol.numAtoms; n++) for (let tag of mol.atomTransient(n)) if (tag.startsWith(ForeignMoleculeTransient.AtomSgroupMultiAttach + ':'))
 		{
-			let payload = tag.substring(ForeignMoleculeExtra.AtomSgroupMultiAttach.length + 1);
+			let payload = tag.substring(ForeignMoleculeTransient.AtomSgroupMultiAttach.length + 1);
 			let comma = payload.indexOf(',');
 			if (comma <= 0) continue;
 			let idx = parseInt(payload.substring(0, comma));
 			if (!(idx > 0)) continue;
 			idxHigh = Math.max(idxHigh, idx);
 		}
-		
-		let tag = `${ForeignMoleculeExtra.AtomSgroupMultiAttach}:${idxHigh + 1},${name}`;
+
+		let tag = `${ForeignMoleculeTransient.AtomSgroupMultiAttach}:${idxHigh + 1},${name}`;
 		for (let a of atoms) mol.setAtomTransient(a, Vec.append(mol.atomTransient(a), tag));
 	}
-	public static hasAnySgroupMulti(mol:Molecule):boolean
+	public static hasAnySgroupMultiAttach(mol:Molecule):boolean
 	{
-		for (let n = 1; n <= mol.numAtoms; n++) if (mol.atomTransient(n).some((tag) => tag.startsWith(ForeignMoleculeExtra.AtomSgroupMultiAttach + ':'))) return true;
+		for (let n = 1; n <= mol.numAtoms; n++)
+			if (mol.atomTransient(n).some((tag) => tag.startsWith(ForeignMoleculeTransient.AtomSgroupMultiAttach + ':'))) return true;
 		return false;
 	}
-	public static noteAllSgroupMulti(mol:Molecule):ForeignMoleculeSgroupMulti[]
+	public static noteAllSgroupMultiAttach(mol:Molecule):ForeignMoleculeSgroupMultiAttach[]
 	{
-		let map:Record<number, ForeignMoleculeSgroupMulti> = {};
-		
-		for (let n = 1; n <= mol.numAtoms; n++) for (let tag of mol.atomTransient(n)) if (tag.startsWith(ForeignMoleculeExtra.AtomSgroupMultiAttach + ':'))
+		let map:Record<number, ForeignMoleculeSgroupMultiAttach> = {};
+
+		for (let n = 1; n <= mol.numAtoms; n++) for (let tag of mol.atomTransient(n)) if (tag.startsWith(ForeignMoleculeTransient.AtomSgroupMultiAttach + ':'))
 		{
-			let payload = tag.substring(ForeignMoleculeExtra.AtomSgroupMultiAttach.length + 1);
+			let payload = tag.substring(ForeignMoleculeTransient.AtomSgroupMultiAttach.length + 1);
 			let comma = payload.indexOf(',');
 			if (comma <= 0) continue;
 			let idx = parseInt(payload.substring(0, comma)), name = payload.substring(comma + 1);
 			if (!(idx > 0)) continue;
-			
+
 			let sgm = map[idx];
 			if (sgm) sgm.atoms.push(n); else map[idx] = {name, 'atoms': [n]};
 		}
-		
+
 		return Object.values(map);
 	}
+
+	// S-groups that mark repeating units, where the "parent" set is rendered with a bracket+suffix "[]n"; the molecule is fully expanded out, so that the
+	// graph connectivity is that of the real molecule, with the non-parent atoms being hidden & finagled for rendering purposes
+	public static markSgroupMultiRepeat(mol:Molecule, mult:number, atoms:number[]):void
+	{
+		let idxHigh = 0;
+		for (let n = 1; n <= mol.numAtoms; n++) for (let tag of mol.atomTransient(n)) if (tag.startsWith(ForeignMoleculeTransient.AtomSgroupMultiRepeat + ':'))
+		{
+			let payload = tag.substring(ForeignMoleculeTransient.AtomSgroupMultiRepeat.length + 1);
+			let comma = payload.indexOf(',');
+			if (comma <= 0) continue;
+			let idx = parseInt(payload.substring(0, comma));
+			if (idx <= 0) continue;
+			idxHigh = Math.max(idxHigh, idx);
+		}
+
+		let unit = atoms.length / mult;
+		let tag = `${ForeignMoleculeTransient.AtomSgroupMultiRepeat}:${idxHigh + 1},${mult},${unit},`;
+		for (let n = 0; n < atoms.length; n++) mol.setAtomTransient(atoms[n], Vec.append(mol.atomTransient(atoms[n]), tag + (n + 1)));
+	}
+	public static hasAnySgroupMultiRepeat(mol:Molecule):boolean
+	{
+		for (let n = 1; n <= mol.numAtoms; n++)
+			if (mol.atomTransient(n).some((tag) => tag.startsWith(ForeignMoleculeTransient.AtomSgroupMultiRepeat + ':'))) return true;
+		return false;
+	}
+	public static noteAllSgroupMultiRepeat(mol:Molecule):ForeignMoleculeSgroupMultiRepeat[]
+	{
+		let map:Record<number, ForeignMoleculeSgroupMultiRepeat> = {};
+
+		for (let n = 1; n <= mol.numAtoms; n++) for (let tag of mol.atomTransient(n)) if (tag.startsWith(ForeignMoleculeTransient.AtomSgroupMultiRepeat + ':'))
+		{
+			let payload = tag.substring(ForeignMoleculeTransient.AtomSgroupMultiRepeat.length + 1);
+			let bits = payload.split(',');
+			if (bits.length < 4) continue;
+			let idx = parseInt(bits[0]), mult = parseInt(bits[1]), unit = parseInt(bits[2]), pos = parseInt(bits[3]);
+			if (!(idx > 0) || mult < 2 || unit < 1 || pos < 1 || pos > mult * unit) continue;
+
+			let mr = map[idx];
+			if (mr == null) map[idx] = mr = {mult, unit, 'atoms': Vec.numberArray(0, mult * unit)};
+			else if (mr.mult != mult || mr.unit != unit) continue;
+
+			mr.atoms[pos - 1] = n;
+		}
+
+		return Object.values(map);
+	}
+
 	// ----------------- private methods -----------------
 
 }

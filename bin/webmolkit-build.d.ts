@@ -1018,17 +1018,23 @@ declare namespace WebMolKit {
     }
 }
 declare namespace WebMolKit {
-    enum ForeignMoleculeExtra {
+    enum ForeignMoleculeTransient {
         AtomAromatic = "yAROMATIC",
         BondAromatic = "yAROMATIC",
         AtomChiralMDLOdd = "yCHIRAL_MDL_ODD",
         AtomChiralMDLEven = "yCHIRAL_MDL_EVEN",
         AtomChiralMDLRacemic = "yCHIRAL_MDL_RACEMIC",
         AtomExplicitValence = "yMDL_EXPLICIT_VALENCE",
-        AtomSgroupMultiAttach = "yMDL_SGROUP_MULTIATTACH"
+        AtomSgroupMultiAttach = "yMDL_SGROUP_MULTIATTACH",
+        AtomSgroupMultiRepeat = "yMDL_SGROUP_MULTIREPEAT"
     }
-    interface ForeignMoleculeSgroupMulti {
+    interface ForeignMoleculeSgroupMultiAttach {
         name: string;
+        atoms: number[];
+    }
+    interface ForeignMoleculeSgroupMultiRepeat {
+        mult: number;
+        unit: number;
         atoms: number[];
     }
     class ForeignMolecule {
@@ -1036,9 +1042,12 @@ declare namespace WebMolKit {
         static noteAromaticBonds(mol: Molecule): boolean[];
         static markExplicitValence(mol: Molecule, atom: number, valence: number): void;
         static noteExplicitValence(mol: Molecule, atom: number): number;
-        static markSgroupMulti(mol: Molecule, name: string, atoms: number[]): void;
-        static hasAnySgroupMulti(mol: Molecule): boolean;
-        static noteAllSgroupMulti(mol: Molecule): ForeignMoleculeSgroupMulti[];
+        static markSgroupMultiAttach(mol: Molecule, name: string, atoms: number[]): void;
+        static hasAnySgroupMultiAttach(mol: Molecule): boolean;
+        static noteAllSgroupMultiAttach(mol: Molecule): ForeignMoleculeSgroupMultiAttach[];
+        static markSgroupMultiRepeat(mol: Molecule, mult: number, atoms: number[]): void;
+        static hasAnySgroupMultiRepeat(mol: Molecule): boolean;
+        static noteAllSgroupMultiRepeat(mol: Molecule): ForeignMoleculeSgroupMultiRepeat[];
     }
 }
 declare namespace WebMolKit {
@@ -1188,8 +1197,7 @@ declare namespace WebMolKit {
         abbrevSgroups: boolean;
         polymerBlocks: boolean;
         molName: string;
-        private sgroupNames;
-        private sgroupAtoms;
+        private sgroups;
         private lines;
         constructor(mol: Molecule);
         write(): string;
@@ -1207,6 +1215,7 @@ declare namespace WebMolKit {
         private prepareSgroups;
         private encodePolymerBlocks;
         writeCTAB3000(): void;
+        private populateV3000Sgroups;
         private packV3000List;
     }
     class MDLSDFWriter {
@@ -3019,6 +3028,7 @@ declare namespace WebMolKit {
         currentBond: number;
         selectedMask: boolean[];
         permutations?: FusionPermutation[];
+        altmol?: Molecule;
     }
     interface TemplatePermutation {
         mol: string;
