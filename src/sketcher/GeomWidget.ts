@@ -75,7 +75,7 @@ export class GeomWidget extends Widget
 				this.torsA.push(order[n] + 1);
 				this.torsB.push(order[n < order.length - 1 ? n + 1 : 0] + 1);
 			}
-			this.selected = {'type': GeomWidgetSelType.Position, 'idx': 0};
+			this.selected = {type: GeomWidgetSelType.Position, idx: 0};
 		}
 		else // Bond
 		{
@@ -90,7 +90,7 @@ export class GeomWidget extends Widget
 			link(a1, a2);
 			for (let a of mol.atomAdjList(a1)) if (a != a2) link(a1, a);
 			for (let a of mol.atomAdjList(a2)) if (a != a1) link(a2, a);
-			this.selected = {'type': GeomWidgetSelType.Link, 'idx': 0};
+			this.selected = {type: GeomWidgetSelType.Link, idx: 0};
 		}
 	}
 
@@ -261,7 +261,7 @@ export class GeomWidget extends Widget
 	private whichSelection(x:number, y:number):GeomWidgetSelection
 	{
 		let cx = this.posX[0], cy = this.posY[0];
-		if (norm_xy(x - cx, y - cy) <= this.posRad) return {'type': GeomWidgetSelType.Position, 'idx': 0};
+		if (norm_xy(x - cx, y - cy) <= this.posRad) return {type: GeomWidgetSelType.Position, idx: 0};
 		let maxRad = 0;
 		for (let n = 1; n < this.atomSubset.length; n++) maxRad = Math.max(maxRad, norm_xy(this.posX[n] - cx, this.posY[n] - cy) + this.posRad);
 		if (norm_xy(x - cx, y - cy) > maxRad) return null;
@@ -274,7 +274,7 @@ export class GeomWidget extends Widget
 			let delta = Math.abs(angleDiff(Math.atan2(this.posY[this.linkB[n]] - cy, this.posX[this.linkB[n]] - cx), theta));
 			if (delta < 10 * DEGRAD && delta < closeDelta)
 			{
-				closeSel = {'type': GeomWidgetSelType.Link, 'idx': n};
+				closeSel = {type: GeomWidgetSelType.Link, idx: n};
 				closeDelta = delta;
 			}
 		}
@@ -287,7 +287,7 @@ export class GeomWidget extends Widget
 			let delta = Math.abs(angleDiff(midtheta, theta));
 			if (delta < closeDelta)
 			{
-				closeSel = {'type': GeomWidgetSelType.Torsion, 'idx': n};
+				closeSel = {type: GeomWidgetSelType.Torsion, idx: n};
 				closeDelta = delta;
 			}
 		}

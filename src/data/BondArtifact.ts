@@ -292,7 +292,7 @@ export class BondArtifact
 		if (blk <= 0) return;
 
 		let res = this.resPaths.get(blk);
-		if (res == null) this.resPaths.set(blk, res = {'atoms': Vec.numberArray(0, this.mol.numAtoms)});
+		if (res == null) this.resPaths.set(blk, res = {atoms: Vec.numberArray(0, this.mol.numAtoms)});
 
 		let idx = bits.length >= 2 ? safeInt(bits[1], 0) : 0;
 		if (res.atoms.indexOf(atom) >= 0) return;
@@ -304,7 +304,7 @@ export class BondArtifact
 		if (blk <= 0) return;
 
 		let res = this.resRings.get(blk);
-		if (res == null) this.resRings.set(blk, res = {'atoms': Vec.numberArray(0, this.mol.numAtoms)});
+		if (res == null) this.resRings.set(blk, res = {atoms: Vec.numberArray(0, this.mol.numAtoms)});
 
 		let idx = bits.length >= 2 ? safeInt(bits[1], 0) : 0;
 		if (res.atoms.indexOf(atom) >= 0) return;
@@ -316,7 +316,7 @@ export class BondArtifact
 		if (blk <= 0) return;
 
 		let res = this.arenes.get(blk);
-		if (res == null) this.arenes.set(blk, res = {'centre': 0, 'atoms': Vec.numberArray(0, this.mol.numAtoms)});
+		if (res == null) this.arenes.set(blk, res = {centre: 0, atoms: Vec.numberArray(0, this.mol.numAtoms)});
 
 		let idx = bits.length >= 2 ? safeInt(bits[1], 0) : 0;
 		if (res.atoms.indexOf(atom) >= 0) return;
@@ -390,14 +390,14 @@ export class BondArtifact
 	private atomsAsPath(atoms:number[]):BondArtifactResPath
 	{
 		if (atoms.length < 2) return null;
-		let path:BondArtifactResPath = {'atoms': atoms};
+		let path:BondArtifactResPath = {atoms: atoms};
 		if (!this.pathify(path.atoms, false)) return null;
 		return path;
 	}
 	private atomsAsRing(atoms:number[]):BondArtifactResRing
 	{
 		if (atoms.length < 3) return null;
-		let ring:BondArtifactResRing = {'atoms': atoms};
+		let ring:BondArtifactResRing = {atoms: atoms};
 		if (!this.pathify(ring.atoms, true)) return null;
 		return ring;
 	}
@@ -425,7 +425,7 @@ export class BondArtifact
 			for (let n = 1; n < sz; n++) if (g.numEdges(n) > g.numEdges(best)) best = n;
 		}
 
-		let arene:BondArtifactArene = {'centre': atoms[best], 'atoms': Vec.remove(atoms, best)};
+		let arene:BondArtifactArene = {centre: atoms[best], atoms: Vec.remove(atoms, best)};
 		if (!this.pathify(arene.atoms, false)) return null;
 		return arene;
 	}

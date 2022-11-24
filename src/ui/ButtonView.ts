@@ -409,7 +409,7 @@ export class ButtonView extends Widget
 		{
 			for (let n = 0; n < bank.buttons.length; n++) if (bestLayout[y][x] == bank.buttons[n].id)
 			{
-				let b = bank.buttons[n], d:ButtonViewDisplay = {'id': b.id};
+				let b = bank.buttons[n], d:ButtonViewDisplay = {id: b.id};
 				d.x = outPadding + inPadding + popWidth + (this.idealSize + inPadding) * x;
 				d.y = outPadding + inPadding + popHeight + (this.idealSize + inPadding) * y;
 				if (this.position == ButtonViewPosition.Right) d.x += this.gripHeight;
@@ -426,7 +426,7 @@ export class ButtonView extends Widget
 	{
 		if (this.position == ButtonViewPosition.Centre) return;
 
-		let d:ButtonViewDisplay = {'id': '*'}, spc = 3;
+		let d:ButtonViewDisplay = {id: '*'}, spc = 3;
 		if (this.position == ButtonViewPosition.Left)
 		{
 			d.width = this.gripHeight - spc;

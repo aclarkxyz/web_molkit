@@ -55,7 +55,7 @@ export class MeasurementData extends Aspect
 	public static SUFFIX_UNITS = '_units';
 	public static SUFFIX_MOD = '_mod';
 
-	private header:MeasurementDataHeader = {'units': [], 'fields': []};
+	private header:MeasurementDataHeader = {units: [], fields: []};
 
 	// ----------------- public methods -----------------
 
@@ -127,7 +127,7 @@ export class MeasurementData extends Aspect
 	}
 	public getValueField(row:number, field:MeasurementDataField):MeasurementDataValue
 	{
-		let value:MeasurementDataValue = {'value': Number.NaN, 'error': Number.NaN, 'units': '', 'mod': ''};
+		let value:MeasurementDataValue = {value: Number.NaN, error: Number.NaN, units: '', mod: ''};
 
 		let colValue = this.ds.findColByName(field.name + MeasurementData.SUFFIX_VALUE, DataSheetColumn.Real);
 		let colError = this.ds.findColByName(field.name + MeasurementData.SUFFIX_ERROR, DataSheetColumn.Real);
@@ -193,7 +193,7 @@ export class MeasurementData extends Aspect
 	// assuming that the underlying datasheet definitely is a datasheet, makes any necessary corrections to force it into compliance
 	private parseAndCorrect():void
 	{
-		this.header = {'units': [], 'fields': []};
+		this.header = {units: [], fields: []};
 
 		let got = false;
 		for (let n = 0; n < this.ds.numExtensions; n++) if (this.ds.getExtType(n) == MeasurementData.CODE)
@@ -234,7 +234,7 @@ export class MeasurementData extends Aspect
 	// interprets the string metadata from the extensions
 	private parseMetaData(content:string):MeasurementDataHeader
 	{
-		let header:MeasurementDataHeader = {'units': [], 'fields': []};
+		let header:MeasurementDataHeader = {units: [], fields: []};
 
 		for (let line of content.split(/\r?\n/))
 		{
@@ -243,12 +243,12 @@ export class MeasurementData extends Aspect
 			if (line.startsWith('unit='))
 			{
 				let bits = line.substring(eq + 1).split(',');
-				if (bits.length >= 2) header.units.push({'name': MoleculeStream.skUnescape(bits[0]), 'uri': MoleculeStream.skUnescape(bits[1])});
+				if (bits.length >= 2) header.units.push({name: MoleculeStream.skUnescape(bits[0]), uri: MoleculeStream.skUnescape(bits[1])});
 			}
 			else if (line.startsWith('field='))
 			{
 				let bits = line.substring(eq + 1).split(',');
-				let f:MeasurementDataField = {'name': MoleculeStream.skUnescape(bits[0]), 'units': [], 'defnURI': []};
+				let f:MeasurementDataField = {name: MoleculeStream.skUnescape(bits[0]), units: [], defnURI: []};
 				for (let n = 1; n < bits.length; n++) f.units.push(MoleculeStream.skUnescape(bits[n]));
 				header.fields.push(f);
 			}

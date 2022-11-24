@@ -182,7 +182,7 @@ export class AbbrevContainer
 		}
 
 		let [html, search] = this.formatAbbrevLabel(name);
-		let abv:AbbrevContainerFrag = {'name': name, 'frag': frag, 'nameHTML': html, 'nameSearch': search};
+		let abv:AbbrevContainerFrag = {name, frag, nameHTML: html, nameSearch: search};
 		if (hit < 0)
 		{
 			if (promote) this.abbrevs.unshift(abv); else this.abbrevs.push(abv);

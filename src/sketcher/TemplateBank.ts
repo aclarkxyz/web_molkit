@@ -82,7 +82,7 @@ export class TemplateBank extends ButtonBank
 
 		for (let n = 0; n < groups.length; n++)
 		{
-			this.buttons.push({'id': groups[n], 'metavec': preview[n], 'helpText': titles[n]});
+			this.buttons.push({id: groups[n], metavec: preview[n], helpText: titles[n]});
 		}
 	}
 
@@ -93,7 +93,7 @@ export class TemplateBank extends ButtonBank
 
 		for (let n = 0 ; n < names.length; n++)
 		{
-			this.buttons.push({'id': n.toString(), 'metavec': preview[n], 'helpText': names[n]});
+			this.buttons.push({id: n.toString(), metavec: preview[n], helpText: names[n]});
 			// !! do something with abbrev & mnemonic
 		}
 	}
@@ -108,7 +108,7 @@ export class TemplateBank extends ButtonBank
 		else
 		{
 			let idx = parseInt(id);
-			let param = {'fragNative': this.templates.molecules[idx]};
+			let param = {fragNative: this.templates.molecules[idx]};
 			new MoleculeActivity(this.owner.getState(), ActivityType.TemplateFusion, param, this.owner).execute();
 		}
 	}
@@ -128,7 +128,7 @@ export class TemplateBank extends ButtonBank
 	// use the resource data to prepare button icons for the template groups
 	private prepareSubGroups():void
 	{
-		this.subgroups = {'groups': TemplateBank.resourceList, 'titles': [], 'preview': []};
+		this.subgroups = {groups: TemplateBank.resourceList, titles: [], preview: []};
 		let sz = this.buttonView.idealSize, msz = 0.5 * (sz - 2);
 
 		let policy = RenderPolicy.defaultBlackOnWhite();
@@ -170,7 +170,7 @@ export class TemplateBank extends ButtonBank
 		let idx = TemplateBank.resourceList.indexOf(this.group);
 		let ds = TemplateBank.resourceData[idx];
 
-		this.templates = {'molecules': [], 'names': [], 'abbrev': [], 'mnemonic': [], 'preview': []};
+		this.templates = {molecules: [], names: [], abbrev: [], mnemonic: [], preview: []};
 
 		let sz = this.buttonView.idealSize;
 
@@ -217,9 +217,9 @@ export class FusionBank extends ButtonBank
 	{
 		this.buttons = [];
 
-		this.buttons.push({'id': 'accept', 'imageFN': 'GenericAccept', 'helpText': 'Apply this template.'});
-		this.buttons.push({'id': 'prev', 'imageFN': 'TemplatePrev', 'helpText': 'Show previous fusion option.'});
-		this.buttons.push({'id': 'next', 'imageFN': 'TemplateNext', 'helpText': 'Show next fusion option.'});
+		this.buttons.push({id: 'accept', imageFN: 'GenericAccept', helpText: 'Apply this template.'});
+		this.buttons.push({id: 'prev', imageFN: 'TemplatePrev', helpText: 'Show previous fusion option.'});
+		this.buttons.push({id: 'next', imageFN: 'TemplateNext', helpText: 'Show next fusion option.'});
 		// (inline?)
 	}
 

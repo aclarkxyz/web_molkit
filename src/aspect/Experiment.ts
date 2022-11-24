@@ -799,7 +799,7 @@ export class Experiment extends Aspect
 		new DrawExperiment(layout, metavec).draw();
 		metavec.normalise();
 
-		return {'name': 'Scheme', 'metavec': metavec};
+		return {name: 'Scheme', metavec: metavec};
 	}
 
 /*	open override func numTextRenderings(row:Int) -> Int {return 1}

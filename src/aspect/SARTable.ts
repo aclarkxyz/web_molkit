@@ -193,7 +193,7 @@ export class SARTable extends Aspect
 	// interprets the string metadata from the extensions
 	private parseMetaData(content:string):SARTableFields
 	{
-		let fields:SARTableFields = {'construct': null, 'locked': null, 'scaffold': null, 'substituents': [], 'metadata': []};
+		let fields:SARTableFields = {construct: null, locked: null, scaffold: null, substituents: [], metadata: []};
 
 		for (let line of content.split(/\r?\n/))
 		{
@@ -292,7 +292,7 @@ export class SARTable extends Aspect
 			else metavec.drawText(0, 0, '?', 15, 0x000000);
 
 			metavec.normalise();
-			return {'name': fields.construct, 'metavec': metavec};
+			return {name: fields.construct, metavec: metavec};
 		}
 		else if (idx == SARTable.RENDER_SCAFFOLD)
 		{
@@ -331,7 +331,7 @@ export class SARTable extends Aspect
 			else metavec.drawText(0, 0, '?', 15, 0x000000);
 
 			metavec.normalise();
-			return {'name': fields.scaffold, 'metavec': metavec};
+			return {name: fields.scaffold, metavec: metavec};
 		}
 		else if (idx >= SARTable.RENDER_SUBSTITUENT && idx < SARTable.RENDER_SUBSTITUENT + fields.substituents.length)
 		{
@@ -379,7 +379,7 @@ export class SARTable extends Aspect
 			}
 
 			metavec.normalise();
-			return {'name': sname, 'metavec': metavec};
+			return {name: sname, metavec: metavec};
 		}
 
 		return null;

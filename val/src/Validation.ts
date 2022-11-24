@@ -59,7 +59,7 @@ export class Validation
 	// adds a test to the list; note that when it gets called, 'this' will be set to the object instance
 	public add(title:string, func:() => void):void
 	{
-		this.tests.push({'title': title, 'func': func});
+		this.tests.push({title, func});
 	}
 
 	// external access to tests, with the intention of running them and obtaining results

@@ -221,8 +221,8 @@ export class EditBond extends Dialog
 			{
 				let dist = parseFloat(strval1);
 				if (isNaN(dist) || Math.abs(dist) > 100) return; // non-sane
-				let instate:SketchState = {'mol': mol, 'currentAtom': 0, 'currentBond': mol.findBond(atoms[0], atoms[1]), 'selectedMask': null};
-				let molact = new MoleculeActivity(instate, ActivityType.BondDist, {'dist': dist});
+				let instate:SketchState = {mol, currentAtom: 0, currentBond: mol.findBond(atoms[0], atoms[1]), selectedMask: null};
+				let molact = new MoleculeActivity(instate, ActivityType.BondDist, {dist});
 				molact.execute();
 				this.mol = molact.output.mol;
 				return;

@@ -773,7 +773,7 @@ export class DrawCanvas extends Widget implements ArrangeMeasurement
 			for (let xtra of mol.atomExtra(n)) if (xtra.startsWith('q')) bits.push(xtra);
 			let ap = layout.getPoint(n - 1);
 
-			annots.push({'txt': bits.join(','), 'x': ap.oval.cx + ap.oval.rw, 'y': ap.oval.cy});
+			annots.push({txt: bits.join(','), x: ap.oval.cx + ap.oval.rw, y: ap.oval.cy});
 		}
 
 		for (let n = 1; n <= mol.numBonds; n++) if (QueryUtil.hasAnyQueryBond(mol, n))
@@ -789,7 +789,7 @@ export class DrawCanvas extends Widget implements ArrangeMeasurement
 				cy += bl.line.y1 + bl.line.y2;
 			}
 
-			annots.push({'txt': bits.join(','), 'x': cx / num, 'y': cy / num});
+			annots.push({txt: bits.join(','), x: cx / num, y: cy / num});
 		}
 
 		// NOTE: displaying the encoded syntax directly; this should ideally be replaced by a nicer rendering mnemonic

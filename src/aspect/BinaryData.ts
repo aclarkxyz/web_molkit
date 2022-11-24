@@ -131,7 +131,7 @@ export class BinaryData extends Aspect
 			if (line == 'field:')
 			{
 				if (f != null) fields.push(f as BinaryDataField);
-				f = {'colNameSource': '', 'colNameDest': '', 'thresholdValue': 0.5, 'thresholdRelation': '>='};
+				f = {colNameSource: '', colNameDest: '', thresholdValue: 0.5, thresholdRelation: '>='};
 				continue;
 			}
 

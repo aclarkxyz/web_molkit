@@ -51,7 +51,7 @@ export class MetalLigate
 			for (let a of ligandAttach) if (cc.indexOf(a) >= 0) {anything = true; break;}
 			if (!anything) continue;
 
-			let lig:Ligand = {'atoms': cc, 'attach': []};
+			let lig:Ligand = {atoms: cc, attach: []};
 			lig.atoms = cc;
 			let anyAttached = false;
 			for (let a of lig.atoms) if (mol.findBond(a, metalAtom) > 0) {anyAttached = true; break;}

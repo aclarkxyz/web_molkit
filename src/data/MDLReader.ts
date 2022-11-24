@@ -283,9 +283,9 @@ export class MDLMOLReader
 				{
 					let idx = parseInt(line.substring(9 + 8 * n, 13 + 8 * n).trim());
 					let stype = line.substring(14 + 8 * n, 17 + 8 * n);
-					if (stype == 'SUP') superatoms.set(idx, {'atoms': [], 'name': null});
-					else if (stype == 'MIX' || stype == 'FOR') mixtures.set(idx, {'index': idx, 'parent': 0, 'atoms': [], 'type': stype});
-					else if (stype == 'SRU' || stype == 'COP' || stype == 'MUL') superatoms.set(idx, {'atoms': [], 'name': null, 'bracketType': stype});
+					if (stype == 'SUP') superatoms.set(idx, {atoms: [], name: null});
+					else if (stype == 'MIX' || stype == 'FOR') mixtures.set(idx, {index: idx, parent: 0, atoms: [], type: stype});
+					else if (stype == 'SRU' || stype == 'COP' || stype == 'MUL') superatoms.set(idx, {atoms: [], name: null, bracketType: stype});
 				}
 			}
 			else if (line.startsWith('M  SPL'))
@@ -786,7 +786,7 @@ export class MDLMOLReader
 			let idx = parseInt(bits[0]);
 			if (bits.length > 3 && idx > 0 && bits[1] == 'SUP')
 			{
-				let sup:MDLReaderSuperAtom = {'atoms': [], 'name': null};
+				let sup:MDLReaderSuperAtom = {atoms: [], name: null};
 				for (let i = 3; i < bits.length; i++)
 				{
 					if (bits[i].startsWith('ATOMS=')) sup.atoms = this.unpackList(bits[i].substring(6));
@@ -796,7 +796,7 @@ export class MDLMOLReader
 			}
 			else if (bits.length > 3 && idx > 0 && (bits[1] == 'MIX' || bits[1] == 'FOR') && parseInt(bits[2]) == idx)
 			{
-				let mix:MDLReaderGroupMixture = {'index': idx, 'parent': 0, 'atoms': null, 'type': bits[1]};
+				let mix:MDLReaderGroupMixture = {index: idx, parent: 0, atoms: null, type: bits[1]};
 				for (let i = 3; i < bits.length; i++)
 				{
 					if (bits[i].startsWith('ATOMS=')) mix.atoms = this.unpackList(bits[i].substring(6));
@@ -806,7 +806,7 @@ export class MDLMOLReader
 			}
 			else if (bits.length > 3 && idx > 0 && (bits[1] == 'SRU' || bits[1] == 'COP' || bits[1] == 'MUL') /*&& parseInt(bits[2]) == idx*/)
 			{
-				let sup:MDLReaderSuperAtom = {'atoms': [], 'name': null, 'bracketType': bits[1]};
+				let sup:MDLReaderSuperAtom = {atoms: [], name: null, bracketType: bits[1]};
 				for (let i = 3; i < bits.length; i++)
 				{
 					if (bits[i].startsWith('ATOMS=')) sup.atoms = this.unpackList(bits[i].substring(6));

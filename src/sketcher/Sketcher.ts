@@ -535,7 +535,7 @@ export class Sketcher extends DrawCanvas
 		}
 
 		// special deal for pasting query-only features
-		let molact = new MoleculeActivity(this.getState(), ActivityType.QueryPaste, {'qmol': mol});
+		let molact = new MoleculeActivity(this.getState(), ActivityType.QueryPaste, {qmol: mol});
 		molact.execute();
 		if (molact.output.mol)
 		{
@@ -543,7 +543,7 @@ export class Sketcher extends DrawCanvas
 			return;
 		}
 
-		let param = {'fragNative': mol.toString()};
+		let param = {fragNative: mol.toString()};
 		new MoleculeActivity(this.getState(), ActivityType.TemplateFusion, param, this).execute();
 	}
 
@@ -1514,7 +1514,7 @@ export class Sketcher extends DrawCanvas
 			}
 			else if (element)
 			{
-				let param:any = {'element': element, 'keepAbbrev': true};
+				let param:any = {element, keepAbbrev: true};
 				if (this.opAtom == 0)
 				{
 					let x = this.xToAng(this.clickX), y = this.yToAng(this.clickY);
@@ -1550,7 +1550,7 @@ export class Sketcher extends DrawCanvas
 					'currentBond': this.opBond,
 					'selectedMask': null as boolean[]
 				};
-				let molact = new MoleculeActivity(state, ActivityType.Charge, {'delta': this.toolChargeDelta}, this);
+				let molact = new MoleculeActivity(state, ActivityType.Charge, {delta: this.toolChargeDelta}, this);
 				molact.execute();
 			}
 		}
@@ -1565,9 +1565,9 @@ export class Sketcher extends DrawCanvas
 			};
 			let molact:MoleculeActivity;
 			if (this.toolBondType == Molecule.BONDTYPE_NORMAL)
-				molact = new MoleculeActivity(state, ActivityType.BondOrder, {'order': this.toolBondOrder}, this);
+				molact = new MoleculeActivity(state, ActivityType.BondOrder, {order: this.toolBondOrder}, this);
 			else
-				molact = new MoleculeActivity(state, ActivityType.BondType, {'type': this.toolBondType}, this);
+				molact = new MoleculeActivity(state, ActivityType.BondType, {type: this.toolBondType}, this);
 			molact.execute();
 		}
 	}
@@ -1608,7 +1608,7 @@ export class Sketcher extends DrawCanvas
 			let [x0, y0, theta, magnitude] = this.determineDragTheta();
 			let degrees = -theta * RADDEG;
 			let mx = this.xToAng(x0), my = this.yToAng(y0);
-			let molact = new MoleculeActivity(this.getState(), ActivityType.Rotate, {'theta': degrees, 'centreX': mx, 'centreY': my}, this);
+			let molact = new MoleculeActivity(this.getState(), ActivityType.Rotate, {theta: degrees, centreX: mx, centreY: my}, this);
 			molact.execute();
 		}
 		else if (this.dragType == DraggingTool.Move)
@@ -1616,7 +1616,7 @@ export class Sketcher extends DrawCanvas
 			let [dx, dy] = this.determineMoveDelta();
 			let scale = this.pointScale;
 			// note: in a future iteration, make the 'Move' action do rotate-snap-rebond, and call it during the mousemove, to give dynamic feedback
-			let molact = new MoleculeActivity(this.getState(), ActivityType.Move, {'refAtom': this.opAtom, 'deltaX': dx / scale, 'deltaY': -dy / scale}, this);
+			let molact = new MoleculeActivity(this.getState(), ActivityType.Move, {refAtom: this.opAtom, deltaX: dx / scale, deltaY: -dy / scale}, this);
 			molact.execute();
 		}
 		else if (this.dragType == DraggingTool.Ring)
@@ -1667,7 +1667,7 @@ export class Sketcher extends DrawCanvas
 				[x2, y2] = snapTo;
 				if (this.opBond > 0)
 				{
-					let toObj = this.pickObject(x2, y2, {'noAtoms': true});
+					let toObj = this.pickObject(x2, y2, {noAtoms: true});
 					if (toObj < 0)
 					{
 						this.connectPolymerBlock(this.opBond, -toObj);

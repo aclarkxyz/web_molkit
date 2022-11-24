@@ -628,21 +628,21 @@ export class MetaVector
 	{
 		let thickness = t[1] * this.scale;
 		let colour = t[2];
-		return {'thickness': thickness, 'colour': colour};
+		return {thickness, colour};
 	}
 	public setupTypeRect(t:any[]):TypeObjRect
 	{
 		let edgeCol = t[1];
 		let fillCol = t[2];
 		let thickness = t[3] * this.scale;
-		return {'edgeCol': edgeCol, 'fillCol': fillCol, 'thickness': thickness};
+		return {edgeCol, fillCol, thickness};
 	}
 	public setupTypeOval(t:any[]):TypeObjOval
 	{
 		let edgeCol = t[1];
 		let fillCol = t[2];
 		let thickness = t[3] * this.scale;
-		return {'edgeCol': edgeCol, 'fillCol': fillCol, 'thickness': thickness};
+		return {edgeCol, fillCol, thickness};
 	}
 	public setupTypePath(t:any[]):TypeObjPath
 	{
@@ -650,21 +650,21 @@ export class MetaVector
 		let fillCol = t[2];
 		let thickness = t[3] * this.scale;
 		let hardEdge = t[4];
-		return {'edgeCol': edgeCol, 'fillCol': fillCol, 'thickness': thickness, 'hardEdge': hardEdge};
+		return {edgeCol, fillCol, thickness, hardEdge};
 	}
 	public setupTypeText(t:any[]):TypeObjText
 	{
-		let sz = t[1] * this.scale;
+		let size = t[1] * this.scale;
 		let colour = t[2];
-		return {'colour': colour, 'size': sz};
+		return {colour, size};
 	}
 	public setupTypeTextNative(t:any[]):TypeObjTextNative
 	{
 		let family = t[1];
-		let sz = t[2] * this.scale;
+		let size = t[2] * this.scale;
 		let colour = t[3];
 		let opt = t[4];
-		return {'colour': colour, 'family': family, 'size': sz, 'opt': opt};
+		return {colour, family, size, opt};
 	}
 
 	// perform actual rendering for the primitives

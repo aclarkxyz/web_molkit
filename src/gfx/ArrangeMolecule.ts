@@ -846,8 +846,8 @@ export class ArrangeMolecule
 				let ext = 1.2 * (rw + rh) * inv;
 				[dx, dy] = [dx * ext, dy * ext];
 				
-				this.points.push({'anum': 0, 'text': '.', 'fsz': fsz, 'col': col, 'oval': new Oval(cx + dx + ox, cy + dy + oy, r, r)});
-				this.points.push({'anum': 0, 'text': '.', 'fsz': fsz, 'col': col, 'oval': new Oval(cx + dx - ox, cy + dy - oy, r, r)});
+				this.points.push({anum: 0, text: '.', fsz, col, oval: new Oval(cx + dx + ox, cy + dy + oy, r, r)});
+				this.points.push({anum: 0, text: '.', fsz, col, oval: new Oval(cx + dx - ox, cy + dy - oy, r, r)});
 				return;
 			}
 		}
@@ -2239,7 +2239,7 @@ export class ArrangeMolecule
 			else regDist = dist;
 		}
 
-		let r:XRing = {'atoms': atoms, 'cx': cx, 'cy': cy, 'rw': 0, 'rh': 0, 'size': 0};
+		let r:XRing = {atoms, cx, cy, rw: 0, rh: 0, size: 0};
 		if (isRegular)
 		{
 			r.rw = r.rh = GeomUtil.fitCircle(bx, by);
@@ -2361,7 +2361,7 @@ export class ArrangeMolecule
 		let sx = score1 < score2 ? sx1 : sx2;
 		let sy = score1 < score2 ? sy1 : sy2;
 
-		let p:XPath = {'atoms': atoms, 'px': null, 'py': null, 'ctrl': null, 'size': this.lineSizePix};
+		let p:XPath = {atoms, px: null, py: null, ctrl: null, size: this.lineSizePix};
 		this.splineInterpolate(p, sx, sy);
 		this.paths.push(p);
 
@@ -2525,7 +2525,7 @@ export class ArrangeMolecule
 			let in1 = unit.atoms.indexOf(a1) >= 0, in2 = unit.atoms.indexOf(a2) >= 0;
 			let bracket:Bracket = null;
 			if (in1 && !in2) bracket = {a1, a2};
-			else if (in2 && !in1) bracket = {'a1': a2, 'a2': a1};
+			else if (in2 && !in1) bracket = {a1: a2, a2: a1};
 			else continue;
 
 			bracket.x1 = mol.atomX(bracket.a1);
@@ -2574,16 +2574,16 @@ export class ArrangeMolecule
 		else if (brackets.length == 0)
 		{
 			let ym = 0.5 * (minY + maxY);
-			brackets.push({'x1': minX, 'y1': ym, 'x2': minX - 1, 'y2': ym});
-			brackets.push({'x1': maxX, 'y1': ym, 'x2': maxX + 1, 'y2': ym});
+			brackets.push({x1: minX, y1: ym, x2: minX - 1, y2: ym});
+			brackets.push({x1: maxX, y1: ym, x2: maxX + 1, y2: ym});
 			tagidx = 1;
 			isOuter = true;
 		}
 
 		let bsz1 = (isOuter ? 0.5 * (maxY - minY + 1) : isLinear ? 1.0 : 0.5) * this.scale, bsz2 = 0.2 * this.scale;
 
-		const BASE_LINE = {'bnum': 0, 'bfr': 0, 'bto': 0, 'type': BLineType.Normal, 'size': this.lineSizePix, 'head': 0, 'col': this.policy.data.foreground};
-		const BASE_TEXT = {'anum': 0, 'fsz': 0.7 * this.fontSizePix, 'bold': false, 'col': this.policy.data.foreground};
+		const BASE_LINE = {bnum: 0, bfr: 0, bto: 0, type: BLineType.Normal, size: this.lineSizePix, head: 0, col: this.policy.data.foreground};
+		const BASE_TEXT = {anum: 0, fsz: 0.7 * this.fontSizePix, bold: false, col: this.policy.data.foreground};
 
 		for (let n = 0; n < brackets.length; n++)
 		{
@@ -2695,8 +2695,8 @@ export class ArrangeMolecule
 			ry.push(...[oy, oy]);
 		}
 
-		const BASE_LINE = {'bnum': 0, 'bfr': 0, 'bto': 0, 'type': BLineType.Normal, 'size': this.lineSizePix, 'head': 0, 'col': this.policy.data.foreground};
-		const BASE_TEXT = {'anum': 0, 'fsz': 0.7 * this.fontSizePix, 'bold': false, 'col': this.policy.data.foreground};
+		const BASE_LINE = {bnum: 0, bfr: 0, bto: 0, type: BLineType.Normal, size: this.lineSizePix, head: 0, col: this.policy.data.foreground};
+		const BASE_TEXT = {anum: 0, fsz: 0.7 * this.fontSizePix, bold: false, col: this.policy.data.foreground};
 
 		let drawLine = (x1:number, y1:number, x2:number, y2:number):void =>
 		{

@@ -405,7 +405,7 @@ export class MDLMOLWriter
 
 		for (let n = 1; n <= mol.numAtoms; n++) if (MolUtil.hasAbbrev(mol, n))
 		{
-			this.sgroups.push({'type': 'SUP', 'name': mol.atomElement(n), 'atoms': null});
+			this.sgroups.push({type: 'SUP', name: mol.atomElement(n), atoms: null});
 			let mask = MolUtil.expandOneAbbrev(mol, n, true);
 			if (mask == null) continue;
 			next--;
@@ -427,8 +427,8 @@ export class MDLMOLWriter
 		}
 
 		// also encode foreign-annotated Sgroups
-		for (let ma of ForeignMolecule.noteAllSgroupMultiAttach(mol)) this.sgroups.push({'type': 'SUP', 'name': ma.name, 'atoms': ma.atoms});
-		for (let mr of ForeignMolecule.noteAllSgroupMultiRepeat(mol)) this.sgroups.push({'type': 'MUL', 'name': mr.mult.toString(), 'atoms': mr.atoms});
+		for (let ma of ForeignMolecule.noteAllSgroupMultiAttach(mol)) this.sgroups.push({type: 'SUP', name: ma.name, atoms: ma.atoms});
+		for (let mr of ForeignMolecule.noteAllSgroupMultiRepeat(mol)) this.sgroups.push({type: 'MUL', name: mr.mult.toString(), atoms: mr.atoms});
 	}
 
 	// use a variant of Sgroups for any polymer blocks

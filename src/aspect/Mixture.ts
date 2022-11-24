@@ -53,7 +53,7 @@ export class Mixture extends Aspect
 	public static NAME = 'Mixture';
 
 	public static SUFFIX_VALUE = '';
-	private header:MixtureHeader = {'attributes': []};
+	private header:MixtureHeader = {attributes: []};
 
 	// ----------------- public methods -----------------
 
@@ -98,7 +98,7 @@ export class Mixture extends Aspect
 	// assuming that the underlying datasheet definitely is a datasheet, makes any necessary corrections to force it into compliance
 	private parseAndCorrect():void
 	{
-		this.header = {'attributes': []};
+		this.header = {attributes: []};
 
 		let got = false;
 		for (let n = 0; n < this.ds.numExtensions; n++) if (this.ds.getExtType(n) == Mixture.CODE)
@@ -118,7 +118,7 @@ export class Mixture extends Aspect
 	// interprets the string metadata from the extensions
 	private parseMetaData(content:string):MixtureHeader
 	{
-		let header:MixtureHeader = {'attributes': []};
+		let header:MixtureHeader = {attributes: []};
 
 		for (let line of content.split(/\r?\n/))
 		{

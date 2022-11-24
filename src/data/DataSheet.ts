@@ -143,7 +143,7 @@ export class DataSheet
 		}
 
 		// molecule instances need to be cloned explicitly
-		const {'colData': outCols, 'rowData': outRows} = data;
+		const {colData: outCols, rowData: outRows} = data;
 		for (let c = outCols.length - 1; c >= 0; c--) if (outCols[c].type == DataSheetColumn.Molecule)
 		{
 			for (let r = outRows.length - 1; r >= 0; r--) if (outRows[r][c] != null && outRows[r][c] instanceof Molecule)
@@ -203,13 +203,13 @@ export class DataSheet
 	public appendExtension(name:string, type:string, data:string):number
 	{
 		this.data.numExtens++;
-		this.data.extData.push({'name': name, 'type': type, 'data': data});
+		this.data.extData.push({name, type, data});
 		return this.data.numExtens - 1;
 	}
 	public insertExtension(idx:number, name:string, type:string, data:string):void
 	{
 		this.data.numExtens++;
-		this.data.extData.splice(idx, 0, {'name': name, 'type': type, 'data': data});
+		this.data.extData.splice(idx, 0, {name, type, data});
 	}
 	public deleteExtension(idx:number):void
 	{
@@ -399,14 +399,14 @@ export class DataSheet
 	public appendColumn(name:string, type:DataSheetColumn, descr:string):number
 	{
 		this.data.numCols++;
-		this.data.colData.push({'name': name, 'type': type, 'descr': descr});
+		this.data.colData.push({name, type, descr});
 		for (let n = 0; n < this.data.numRows; n++) this.data.rowData[n].push(null);
 		return this.data.numCols - 1;
 	}
 	public insertColumn(col:number, name:string, type:DataSheetColumn, descr:string):void
 	{
 		this.data.numCols++;
-		this.data.colData.splice(col, 0, {'name': name, 'type': type, 'descr': descr});
+		this.data.colData.splice(col, 0, {name, type, descr});
 		for (let n = 0; n < this.data.numRows; n++) this.data.rowData[n].splice(col, 0, null);
 	}
 	public deleteColumn(col:number):void

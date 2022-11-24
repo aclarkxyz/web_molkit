@@ -419,8 +419,8 @@ export class EditAtom extends Dialog
 				if (isNaN(dist) || Math.abs(dist) > 100) return; // non-sane
 				let mask = Vec.booleanArray(false, mol.numAtoms);
 				mask[atoms[1] - 1] = true;
-				let instate:SketchState = {'mol': mol, 'currentAtom': 0, 'currentBond': mol.findBond(atoms[0], atoms[1]), 'selectedMask': mask};
-				let molact = new MoleculeActivity(instate, ActivityType.BondDist, {'dist': dist});
+				let instate:SketchState = {mol, currentAtom: 0, currentBond: mol.findBond(atoms[0], atoms[1]), 'selectedMask': mask};
+				let molact = new MoleculeActivity(instate, ActivityType.BondDist, {dist});
 				molact.execute();
 				if (molact.output.mol) this.mol = molact.output.mol;
 				return;
@@ -431,8 +431,8 @@ export class EditAtom extends Dialog
 				if (isNaN(angle)) return; // non-sane
 				let mask = Vec.booleanArray(false, mol.numAtoms);
 				mask[atoms[1] - 1] = true;
-				let instate:SketchState = {'mol': mol, 'currentAtom': 0, 'currentBond': mol.findBond(atoms[0], atoms[1]), 'selectedMask': mask};
-				let molact = new MoleculeActivity(instate, ActivityType.AlignAngle, {'angle': angle * DEGRAD});
+				let instate:SketchState = {mol, currentAtom: 0, currentBond: mol.findBond(atoms[0], atoms[1]), selectedMask: mask};
+				let molact = new MoleculeActivity(instate, ActivityType.AlignAngle, {angle: angle * DEGRAD});
 				molact.execute();
 				if (molact.output.mol) this.mol = molact.output.mol;
 				return;
@@ -444,8 +444,8 @@ export class EditAtom extends Dialog
 			if (isNaN(angle)) return; // non-sane
 			let mask = Vec.booleanArray(false, mol.numAtoms);
 			for (let a of atoms) mask[a - 1] = true;
-			let instate:SketchState = {'mol': mol, 'currentAtom': atoms[2], 'currentBond': 0, 'selectedMask': mask};
-			let molact = new MoleculeActivity(instate, ActivityType.AdjustTorsion, {'angle': angle * DEGRAD});
+			let instate:SketchState = {mol, currentAtom: atoms[2], currentBond: 0, selectedMask: mask};
+			let molact = new MoleculeActivity(instate, ActivityType.AdjustTorsion, {angle: angle * DEGRAD});
 			molact.execute();
 			if (molact.output.mol) this.mol = molact.output.mol;
 			return;
