@@ -43,9 +43,9 @@ export class AxisLabeller
 		{
 			this.notches.push(
 			{
-				'label': this.minVal.toString(),
-				'value': this.minVal,
-				'pos': 0.5 * this.width
+				label: this.minVal.toString(),
+				value: this.minVal,
+				pos: 0.5 * this.width
 			});
 			return;
 		}
@@ -58,17 +58,14 @@ export class AxisLabeller
 		// find boundaries by rounding the minimum & maximum values, such that they can be squeezed into the edge zones of the axis
 		let loT:number = null, hiT:number = null;
 		const bumpLess = 1 - 1E-5, bumpMore = 1 + 1E-5;
-//console.log('TVALUES:'+minT+','+maxT+', DIR='+dir);
 		got: for (let outer = 1E-10; outer <= 1E11; outer *= 10) for (let inner of [0.2, 0.5, 1])
 		{
 			let mag = outer * inner, inv = 1.0 / mag;
-//console.log('outer:'+outer+' inner:'+inner+' mag:'+mag);
 
 			let t1 = Math.floor(minVal * mag * bumpLess) * inv, t2 = Math.round(minVal * mag) * inv, t3 = Math.ceil(minVal * mag * bumpMore) * inv;
 			let t4 = Math.floor(maxVal * mag * bumpLess) * inv, t5 = Math.round(maxVal * mag) * inv, t6 = Math.ceil(maxVal * mag * bumpMore) * inv;
 			let p1 = position(t1), p2 = position(t2), p3 = position(t3);
 			let p4 = position(t4), p5 = position(t5), p6 = position(t6);
-//console.log(' t:'+[t1,t2,t3,t4,t5,t6]+' p:'+[p1,p2,p3,p4,p5,p6]);
 
 			if ((fltEqual(p1, 0) || p1 >= 0) && p1 <= 0.1 * width) loT = t1;
 			else if ((fltEqual(p2, 0) || p2 >= 0) && p2 <= 0.1 * width) loT = t2;
@@ -79,8 +76,6 @@ export class AxisLabeller
 			else if (p5 >= 0.9 * width && (fltEqual(p5, width) || p5 <= width)) hiT = t5;
 			else if (p4 >= 0.9 * width && (fltEqual(p4, width) || p4 <= width)) hiT = t4;
 			else continue;
-
-//console.log(' GOT:'+loT+','+hiT);
 
 			// (record the mag, for subsequent spacing purposes?)
 			break got;
@@ -93,15 +88,15 @@ export class AxisLabeller
 		let loVal = this.inverse(loT), hiVal = this.inverse(hiT);
 		this.notches.push(
 		{
-			'label': this.formatNumber(loVal),
-			'value': loVal,
-			'pos': position(loT)
+			label: this.formatNumber(loVal),
+			value: loVal,
+			pos: position(loT)
 		});
 		this.notches.push(
 		{
-			'label': this.formatNumber(hiVal),
-			'value': hiVal,
-			'pos': position(hiT)
+			label: this.formatNumber(hiVal),
+			value: hiVal,
+			pos: position(hiT)
 		});
 	}
 

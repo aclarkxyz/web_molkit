@@ -724,14 +724,14 @@ export class Sketcher extends DrawCanvas
 		{
 			let g:GuidelineSprout =
 			{
-				'atom': this.opAtom,
-				'orders': [order],
-				'x': [],
-				'y': [],
-				'sourceX': this.opAtom == 0 ? this.clickX : this.angToX(this.mol.atomX(this.opAtom)),
-				'sourceY': this.opAtom == 0 ? this.clickY : this.angToY(this.mol.atomY(this.opAtom)),
-				'destX': [],
-				'destY': []
+				atom: this.opAtom,
+				orders: [order],
+				x: [],
+				y: [],
+				sourceX: this.opAtom == 0 ? this.clickX : this.angToX(this.mol.atomX(this.opAtom)),
+				sourceY: this.opAtom == 0 ? this.clickY : this.angToY(this.mol.atomY(this.opAtom)),
+				destX: [],
+				destY: []
 			};
 
 			let mx = this.opAtom == 0 ? this.xToAng(this.clickX) : this.mol.atomX(this.opAtom);
@@ -976,9 +976,9 @@ export class Sketcher extends DrawCanvas
 
 		let param:any =
 		{
-			'ringX': rx,
-			'ringY': ry,
-			'aromatic': aromatic
+			ringX: rx,
+			ringY: ry,
+			aromatic: aromatic
 		};
 		let molact = new MoleculeActivity(this.getState(), ActivityType.Ring, param, this);
 		molact.execute();
@@ -1626,9 +1626,9 @@ export class Sketcher extends DrawCanvas
 			{
 				let param:any =
 				{
-					'ringX': ringX,
-					'ringY': ringY,
-					'aromatic': this.toolRingArom
+					ringX: ringX,
+					ringY: ringY,
+					aromatic: this.toolRingArom
 				};
 				let molact = new MoleculeActivity(this.getState(), ActivityType.Ring, param, this);
 				molact.execute();
@@ -1642,13 +1642,13 @@ export class Sketcher extends DrawCanvas
 
 			let param:any =
 			{
-				'order': 1,
-				'type': Molecule.BONDTYPE_NORMAL,
-				'element': this.toolAtomSymbol,
-				'x1': this.mol.atomX(this.opAtom),
-				'y1': this.mol.atomY(this.opAtom),
-				'x2': this.xToAng(x2),
-				'y2': this.yToAng(y2)
+				order: 1,
+				type: Molecule.BONDTYPE_NORMAL,
+				element: this.toolAtomSymbol,
+				x1: this.mol.atomX(this.opAtom),
+				y1: this.mol.atomY(this.opAtom),
+				x2: this.xToAng(x2),
+				y2: this.yToAng(y2)
 			};
 
 			if (this.toolAtomSymbol == 'A') param.element = window.prompt('Enter element symbol:', '');
@@ -1678,13 +1678,13 @@ export class Sketcher extends DrawCanvas
 
 			let param:any =
 			{
-				'order': this.toolBondOrder,
-				'type': this.toolBondType,
-				'element': 'C',
-				'x1': this.opAtom == 0 ? this.xToAng(this.clickX) : this.mol.atomX(this.opAtom),
-				'y1': this.opAtom == 0 ? this.yToAng(this.clickY) : this.mol.atomY(this.opAtom),
-				'x2': this.xToAng(x2),
-				'y2': this.yToAng(y2)
+				order: this.toolBondOrder,
+				type: this.toolBondType,
+				element: 'C',
+				x1: this.opAtom == 0 ? this.xToAng(this.clickX) : this.mol.atomX(this.opAtom),
+				y1: this.opAtom == 0 ? this.yToAng(this.clickY) : this.mol.atomY(this.opAtom),
+				x2: this.xToAng(x2),
+				y2: this.yToAng(y2)
 			};
 			let molact = new MoleculeActivity(this.getState(), ActivityType.BondAtom, param, this);
 			molact.execute();

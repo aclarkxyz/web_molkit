@@ -1017,10 +1017,10 @@ export class SketchUtil
 		{
 			let sprout:GuidelineSprout =
 			{
-				'atom': atom,
-				'orders': ords[n],
-				'x': [],
-				'y': [],
+				atom: atom,
+				orders: ords[n],
+				x: [],
+				y: [],
 			};
 			for (let i = 0; i < angs[n].length; i++)
 			{

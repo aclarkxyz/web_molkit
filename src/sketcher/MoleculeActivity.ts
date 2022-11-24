@@ -130,10 +130,10 @@ export class MoleculeActivity
 	{
 		this.output =
 		{
-			'mol': null,
-			'currentAtom': -1,
-			'currentBond': -1,
-			'selectedMask': null
+			mol: null,
+			currentAtom: -1,
+			currentBond: -1,
+			selectedMask: null
 		};
 
 		let na = this.input.mol.numAtoms;

@@ -213,11 +213,11 @@ export class DataSheetStream
 
 		let json =
 		{
-			'title': data.title,
-			'description': data.description,
-			'colData': deepClone(data.colData),
-			'rowData': rowData,
-			'extData': deepClone(data.extData),
+			title: data.title,
+			description: data.description,
+			colData: deepClone(data.colData),
+			rowData: rowData,
+			extData: deepClone(data.extData),
 		};
 		return json;
 	}

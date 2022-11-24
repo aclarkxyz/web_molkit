@@ -391,11 +391,11 @@ export class ButtonView extends Widget
 		{
 			let d:ButtonViewDisplay =
 			{
-				'id': '!',
-				'x': outPadding + inPadding,
-				'y': outPadding + inPadding,
-				'width': popWidth - inPadding,
-				'height': popHeight - inPadding
+				id: '!',
+				x: outPadding + inPadding,
+				y: outPadding + inPadding,
+				width: popWidth - inPadding,
+				height: popHeight - inPadding
 			};
 			if (this.position == ButtonViewPosition.Right) d.x += this.gripHeight;
 			else if (this.position == ButtonViewPosition.Bottom) d.y += this.gripHeight;

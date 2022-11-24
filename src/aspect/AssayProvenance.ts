@@ -313,10 +313,10 @@ export class AssayProvenance extends Aspect
 		{
 			let tr:AspectTextRendering =
 			{
-				'name': 'Activity',
-				'descr': 'Activity measurement details for this record',
-				'text': '',
-				'type': Aspect.TEXT_PLAIN
+				name: 'Activity',
+				descr: 'Activity measurement details for this record',
+				text: '',
+				type: Aspect.TEXT_PLAIN
 			};
 
 			let val = this.getValue(row), error = this.getError(row);
@@ -336,10 +336,10 @@ export class AssayProvenance extends Aspect
 		{
 			let tr:AspectTextRendering =
 			{
-				'name': 'Source',
-				'descr': 'Origin of the structure and activity measurement',
-				'text': '',
-				'type': Aspect.TEXT_LINK
+				name: 'Source',
+				descr: 'Origin of the structure and activity measurement',
+				text: '',
+				type: Aspect.TEXT_LINK
 			};
 
 			let url = this.getSourceURI(row);

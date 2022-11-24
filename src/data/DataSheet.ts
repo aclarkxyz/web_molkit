@@ -96,14 +96,14 @@ export class DataSheet
 		let {numCols, numRows, colData, rowData} = this.data;
 		let data:DataSheetContent =
 		{
-			'title': this.data.title,
-			'description': this.data.description,
-			'numCols': numCols,
-			'numRows': withRows ? numRows : 0,
-			'numExtens': this.data.numExtens,
-			'colData': deepClone(colData),
-			'rowData': withRows ? new Array(numRows) : [],
-			'extData': deepClone(this.data.extData),
+			title: this.data.title,
+			description: this.data.description,
+			numCols: numCols,
+			numRows: withRows ? numRows : 0,
+			numExtens: this.data.numExtens,
+			colData: deepClone(colData),
+			rowData: withRows ? new Array(numRows) : [],
+			extData: deepClone(this.data.extData),
 		};
 		if (withRows) for (let r = 0; r < numRows; r++)
 		{
@@ -126,14 +126,14 @@ export class DataSheet
 		let {numCols, numRows, colData, rowData} = this.data;
 		let data:DataSheetContent =
 		{
-			'title': this.data.title,
-			'description': this.data.description,
-			'numCols': Vec.maskCount(colMask),
-			'numRows': rowMask ? Vec.maskCount(rowMask) : 0,
-			'numExtens': inclExtn ? this.data.numExtens : 0,
-			'colData': deepClone(Vec.maskGet(colData, colMask)),
-			'rowData': [],
-			'extData': inclExtn ? deepClone(this.data.extData) : [],
+			title: this.data.title,
+			description: this.data.description,
+			numCols: Vec.maskCount(colMask),
+			numRows: rowMask ? Vec.maskCount(rowMask) : 0,
+			numExtens: inclExtn ? this.data.numExtens : 0,
+			colData: deepClone(Vec.maskGet(colData, colMask)),
+			rowData: [],
+			extData: inclExtn ? deepClone(this.data.extData) : [],
 		};
 
 		if (rowMask) for (let r = 0; r < numRows; r++) if (rowMask[r])
@@ -520,14 +520,14 @@ export class DataSheet
 	{
 		let newData =
 		{
-			'title': this.data.title,
-			'description': this.data.description,
-			'numCols': this.data.numCols,
-			'numRows': 1,
-			'numExtens': this.data.numExtens,
-			'colData': this.data.colData.slice(0),
-			'rowData': [this.data.rowData[row].slice(0)],
-			'extData': this.data.extData.slice(0)
+			title: this.data.title,
+			description: this.data.description,
+			numCols: this.data.numCols,
+			numRows: 1,
+			numExtens: this.data.numExtens,
+			colData: this.data.colData.slice(0),
+			rowData: [this.data.rowData[row].slice(0)],
+			extData: this.data.extData.slice(0)
 		};
 		return new DataSheet(newData);
 	}

@@ -62,10 +62,10 @@ export class DrawCanvas extends Widget implements ArrangeMeasurement
 
 	protected viewOpt:DrawCanvasViewOpt =
 	{
-		'decoration': DrawCanvasDecoration.Stereochemistry,
-		'showOxState': true,
-		'showQuery': true,
-		'showArtifacts': true,
+		decoration: DrawCanvasDecoration.Stereochemistry,
+		showOxState: true,
+		showQuery: true,
+		showArtifacts: true,
 	};
 
 	protected width = 0;
@@ -168,10 +168,10 @@ export class DrawCanvas extends Widget implements ArrangeMeasurement
 	{
 		let state:SketchState =
 		{
-			'mol': this.mol.clone(),
-			'currentAtom': this.currentAtom,
-			'currentBond': this.currentBond,
-			'selectedMask': this.selectedMask == null ? null : this.selectedMask.slice(0)
+			mol: this.mol.clone(),
+			currentAtom: this.currentAtom,
+			currentBond: this.currentBond,
+			selectedMask: this.selectedMask == null ? null : this.selectedMask.slice(0)
 		};
 		return state;
 	}

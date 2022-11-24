@@ -366,10 +366,10 @@ export class MDLMOLReader
 				{
 					let node:MDLReaderLinkNode =
 					{
-						'atom': parseInt(line.substring(9 + 8 * n, 13 + 8 * n).trim()),
-						'nbrs': [],
-						'minRep': 1,
-						'maxRep': parseInt(line.substring(13 + 8 * n, 17 + 8 * n).trim()),
+						atom: parseInt(line.substring(9 + 8 * n, 13 + 8 * n).trim()),
+						nbrs: [],
+						minRep: 1,
+						maxRep: parseInt(line.substring(13 + 8 * n, 17 + 8 * n).trim()),
 					};
 
 					let nbr1 = parseInt(line.substring(17 + 8 * n, 21 + 8 * n).trim());
@@ -562,10 +562,10 @@ export class MDLMOLReader
 
 					let node:MDLReaderLinkNode =
 					{
-						'atom': 0,
-						'nbrs': [],
-						'minRep': parseInt(bits[0]),
-						'maxRep': parseInt(bits[1])
+						atom: 0,
+						nbrs: [],
+						minRep: parseInt(bits[0]),
+						maxRep: parseInt(bits[1])
 					};
 
 					// convert the list of bond {a1,a2} into central atom / neighbours

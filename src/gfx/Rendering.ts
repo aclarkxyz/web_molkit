@@ -41,16 +41,16 @@ export class RenderPolicy
 		{
 			data =
 			{
-				'name': 'default',
-				'pointScale': 20,
-				'resolutionDPI': 100,
-				'fontSize': 0.65,
-				'lineSize': 0.075,
-				'bondSep': 0.2,
-				'defaultPadding': 0.2,
-				'foreground': 0x000000,
-				'background': 0xFFFFFF,
-				'atomCols': new Array(112)
+				name: 'default',
+				pointScale: 20,
+				resolutionDPI: 100,
+				fontSize: 0.65,
+				lineSize: 0.075,
+				bondSep: 0.2,
+				defaultPadding: 0.2,
+				foreground: 0x000000,
+				background: 0xFFFFFF,
+				atomCols: new Array(112)
 			};
 			for (let n = 0; n <= 111; n++) data.atomCols[n] = 0x000000;
 			this.data = data;
@@ -196,9 +196,9 @@ export class RenderMnemonics
 			if (bits.length != 3) continue;
 			let item:RenderMnemonicItem =
 			{
-				'type': bits[0],
-				'details': bits[1],
-				'coords': bits[2].split(',').map((str) => parseFloat(str)),
+				type: bits[0],
+				details: bits[1],
+				coords: bits[2].split(',').map((str) => parseFloat(str)),
 			};
 			this.items.push(item);
 		}

@@ -323,10 +323,10 @@ export class DotPath
 
 			let p:DotPathBlock =
 			{
-				'atoms': cc,
-				'bonds': [],
-				'numer': 0,
-				'denom': 0
+				atoms: cc,
+				bonds: [],
+				numer: 0,
+				denom: 0
 			};
 			for (let n = 1; n <= nb; n++) if (amask[mol.bondFrom(n) - 1] && amask[mol.bondTo(n) - 1]) p.bonds.push(n);
 

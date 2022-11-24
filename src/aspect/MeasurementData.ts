@@ -323,10 +323,10 @@ export class MeasurementData extends Aspect
 
 		let tr:AspectTextRendering =
 		{
-			'name': field.name,
-			'descr': colField < 0 ? '' : this.ds.colDescr(colField),
-			'text': '',
-			'type': Aspect.TEXT_PLAIN
+			name: field.name,
+			descr: colField < 0 ? '' : this.ds.colDescr(colField),
+			text: '',
+			type: Aspect.TEXT_PLAIN
 		};
 
 		let datum = this.getValue(row, idx);

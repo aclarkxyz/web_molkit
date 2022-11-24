@@ -94,11 +94,11 @@ export class SARTable extends Aspect
 		let fields = this.getFields();
 		let entry:SARTableEntry =
 		{
-			'construct': this.ds.getMolecule(row, fields.construct),
-			'locked': !!this.ds.getBoolean(row, fields.locked),
-			'scaffold': this.ds.getMolecule(row, fields.scaffold),
-			'substNames': [],
-			'substituents': []
+			construct: this.ds.getMolecule(row, fields.construct),
+			locked: !!this.ds.getBoolean(row, fields.locked),
+			scaffold: this.ds.getMolecule(row, fields.scaffold),
+			substNames: [],
+			substituents: []
 		};
 		for (let subst of fields.substituents)
 		{
@@ -163,11 +163,11 @@ export class SARTable extends Aspect
 	{
 		let fields:SARTableFields =
 		{
-			'construct': 'Molecule',
-			'locked': 'Molecule_locked',
-			'scaffold': 'Scaffold',
-			'substituents': [],
-			'metadata': []
+			construct: 'Molecule',
+			locked: 'Molecule_locked',
+			scaffold: 'Scaffold',
+			substituents: [],
+			metadata: []
 		};
 
 		let got = false;

@@ -331,10 +331,10 @@ var WebMolKit;
             let header = this.getHeader();
             if (idx == 0) {
                 let tr = {
-                    'name': 'Activity',
-                    'descr': 'Activity measurement details for this record',
-                    'text': '',
-                    'type': WebMolKit.Aspect.TEXT_PLAIN
+                    name: 'Activity',
+                    descr: 'Activity measurement details for this record',
+                    text: '',
+                    type: WebMolKit.Aspect.TEXT_PLAIN
                 };
                 let val = this.getValue(row), error = this.getError(row);
                 let units = this.getUnits(row), rel = this.getRelation(row);
@@ -352,10 +352,10 @@ var WebMolKit;
             }
             else if (idx == 1) {
                 let tr = {
-                    'name': 'Source',
-                    'descr': 'Origin of the structure and activity measurement',
-                    'text': '',
-                    'type': WebMolKit.Aspect.TEXT_LINK
+                    name: 'Source',
+                    descr: 'Origin of the structure and activity measurement',
+                    text: '',
+                    type: WebMolKit.Aspect.TEXT_LINK
                 };
                 let url = this.getSourceURI(row);
                 for (let pfx in header.prefixes)
@@ -716,7 +716,7 @@ var WebMolKit;
                 if (line == 'field:') {
                     if (f != null)
                         fields.push(f);
-                    f = { 'colNameSource': '', 'colNameDest': '', 'thresholdValue': 0.5, 'thresholdRelation': '>=' };
+                    f = { colNameSource: '', colNameDest: '', thresholdValue: 0.5, thresholdRelation: '>=' };
                     continue;
                 }
                 if (f == null)
@@ -1388,7 +1388,7 @@ var WebMolKit;
             let metavec = new WebMolKit.MetaVector();
             new WebMolKit.DrawExperiment(layout, metavec).draw();
             metavec.normalise();
-            return { 'name': 'Scheme', 'metavec': metavec };
+            return { name: 'Scheme', metavec: metavec };
         }
     }
     Experiment.CODE = 'org.mmi.aspect.Experiment';
@@ -1482,7 +1482,7 @@ var WebMolKit;
     class MeasurementData extends WebMolKit.Aspect {
         constructor(ds, allowModify) {
             super(MeasurementData.CODE, ds, allowModify);
-            this.header = { 'units': [], 'fields': [] };
+            this.header = { units: [], fields: [] };
             this.setup();
         }
         static isMeasurementData(ds) {
@@ -1529,7 +1529,7 @@ var WebMolKit;
             return this.getValueField(row, this.header.fields[fldidx]);
         }
         getValueField(row, field) {
-            let value = { 'value': Number.NaN, 'error': Number.NaN, 'units': '', 'mod': '' };
+            let value = { value: Number.NaN, error: Number.NaN, units: '', mod: '' };
             let colValue = this.ds.findColByName(field.name + MeasurementData.SUFFIX_VALUE, "real");
             let colError = this.ds.findColByName(field.name + MeasurementData.SUFFIX_ERROR, "real");
             let colUnits = this.ds.findColByName(field.name + MeasurementData.SUFFIX_UNITS, "string");
@@ -1593,7 +1593,7 @@ var WebMolKit;
             this.parseAndCorrect();
         }
         parseAndCorrect() {
-            this.header = { 'units': [], 'fields': [] };
+            this.header = { units: [], fields: [] };
             let got = false;
             for (let n = 0; n < this.ds.numExtensions; n++)
                 if (this.ds.getExtType(n) == MeasurementData.CODE) {
@@ -1622,7 +1622,7 @@ var WebMolKit;
             }
         }
         parseMetaData(content) {
-            let header = { 'units': [], 'fields': [] };
+            let header = { units: [], fields: [] };
             for (let line of content.split(/\r?\n/)) {
                 let eq = line.indexOf('=');
                 if (eq < 0)
@@ -1630,11 +1630,11 @@ var WebMolKit;
                 if (line.startsWith('unit=')) {
                     let bits = line.substring(eq + 1).split(',');
                     if (bits.length >= 2)
-                        header.units.push({ 'name': WebMolKit.MoleculeStream.skUnescape(bits[0]), 'uri': WebMolKit.MoleculeStream.skUnescape(bits[1]) });
+                        header.units.push({ name: WebMolKit.MoleculeStream.skUnescape(bits[0]), uri: WebMolKit.MoleculeStream.skUnescape(bits[1]) });
                 }
                 else if (line.startsWith('field=')) {
                     let bits = line.substring(eq + 1).split(',');
-                    let f = { 'name': WebMolKit.MoleculeStream.skUnescape(bits[0]), 'units': [], 'defnURI': [] };
+                    let f = { name: WebMolKit.MoleculeStream.skUnescape(bits[0]), units: [], defnURI: [] };
                     for (let n = 1; n < bits.length; n++)
                         f.units.push(WebMolKit.MoleculeStream.skUnescape(bits[n]));
                     header.fields.push(f);
@@ -1693,10 +1693,10 @@ var WebMolKit;
             let field = this.header.fields[idx];
             let colField = this.ds.findColByName(field.name);
             let tr = {
-                'name': field.name,
-                'descr': colField < 0 ? '' : this.ds.colDescr(colField),
-                'text': '',
-                'type': WebMolKit.Aspect.TEXT_PLAIN
+                name: field.name,
+                descr: colField < 0 ? '' : this.ds.colDescr(colField),
+                text: '',
+                type: WebMolKit.Aspect.TEXT_PLAIN
             };
             let datum = this.getValue(row, idx);
             if (!Number.isNaN(datum.value)) {
@@ -1739,7 +1739,7 @@ var WebMolKit;
     class Mixture extends WebMolKit.Aspect {
         constructor(ds, allowModify) {
             super(Mixture.CODE, ds, allowModify);
-            this.header = { 'attributes': [] };
+            this.header = { attributes: [] };
             this.setup();
         }
         static isMixture(ds) {
@@ -1765,7 +1765,7 @@ var WebMolKit;
             this.parseAndCorrect();
         }
         parseAndCorrect() {
-            this.header = { 'attributes': [] };
+            this.header = { attributes: [] };
             let got = false;
             for (let n = 0; n < this.ds.numExtensions; n++)
                 if (this.ds.getExtType(n) == Mixture.CODE) {
@@ -1779,7 +1779,7 @@ var WebMolKit;
             }
         }
         parseMetaData(content) {
-            let header = { 'attributes': [] };
+            let header = { attributes: [] };
             for (let line of content.split(/\r?\n/)) {
                 let eq = line.indexOf('=');
                 if (eq < 0)
@@ -1868,11 +1868,11 @@ var WebMolKit;
         getEntry(row) {
             let fields = this.getFields();
             let entry = {
-                'construct': this.ds.getMolecule(row, fields.construct),
-                'locked': !!this.ds.getBoolean(row, fields.locked),
-                'scaffold': this.ds.getMolecule(row, fields.scaffold),
-                'substNames': [],
-                'substituents': []
+                construct: this.ds.getMolecule(row, fields.construct),
+                locked: !!this.ds.getBoolean(row, fields.locked),
+                scaffold: this.ds.getMolecule(row, fields.scaffold),
+                substNames: [],
+                substituents: []
             };
             for (let subst of fields.substituents) {
                 entry.substNames.push(subst);
@@ -1919,11 +1919,11 @@ var WebMolKit;
         }
         parseAndCorrect() {
             let fields = {
-                'construct': 'Molecule',
-                'locked': 'Molecule_locked',
-                'scaffold': 'Scaffold',
-                'substituents': [],
-                'metadata': []
+                construct: 'Molecule',
+                locked: 'Molecule_locked',
+                scaffold: 'Scaffold',
+                substituents: [],
+                metadata: []
             };
             let got = false;
             for (let n = 0; n < this.ds.numExtensions; n++)
@@ -1943,7 +1943,7 @@ var WebMolKit;
             }
         }
         parseMetaData(content) {
-            let fields = { 'construct': null, 'locked': null, 'scaffold': null, 'substituents': [], 'metadata': [] };
+            let fields = { construct: null, locked: null, scaffold: null, substituents: [], metadata: [] };
             for (let line of content.split(/\r?\n/)) {
                 let pos = line.indexOf('=');
                 if (pos < 0)
@@ -2028,7 +2028,7 @@ var WebMolKit;
                 else
                     metavec.drawText(0, 0, '?', 15, 0x000000);
                 metavec.normalise();
-                return { 'name': fields.construct, 'metavec': metavec };
+                return { name: fields.construct, metavec: metavec };
             }
             else if (idx == SARTable.RENDER_SCAFFOLD) {
                 let mol = ds.getMolecule(row, fields.scaffold);
@@ -2059,7 +2059,7 @@ var WebMolKit;
                 else
                     metavec.drawText(0, 0, '?', 15, 0x000000);
                 metavec.normalise();
-                return { 'name': fields.scaffold, 'metavec': metavec };
+                return { name: fields.scaffold, metavec: metavec };
             }
             else if (idx >= SARTable.RENDER_SUBSTITUENT && idx < SARTable.RENDER_SUBSTITUENT + fields.substituents.length) {
                 let sidx = idx - SARTable.RENDER_SUBSTITUENT, sname = fields.substituents[sidx];
@@ -2103,7 +2103,7 @@ var WebMolKit;
                     metavec.drawText(0, 0, txt, 15, 0x000000);
                 }
                 metavec.normalise();
-                return { 'name': sname, 'metavec': metavec };
+                return { name: sname, metavec: metavec };
             }
             return null;
         }
@@ -2929,7 +2929,7 @@ var WebMolKit;
                 if (this.amask[n]) {
                     this.identity[n] = this.initialIdentityECFP(n + 1);
                     this.atomGroup[n] = [n + 1];
-                    this.applyNewFP({ 'hashCode': this.identity[n], 'iteration': 0, 'atoms': this.atomGroup[n], 'centralAtom': n + 1 });
+                    this.applyNewFP({ hashCode: this.identity[n], iteration: 0, atoms: this.atomGroup[n], centralAtom: n + 1 });
                 }
             let niter = this.kind;
             for (let iter = 1; iter <= niter; iter++) {
@@ -2941,7 +2941,7 @@ var WebMolKit;
                 for (let n = 0; n < na; n++)
                     if (this.amask[n]) {
                         this.atomGroup[n] = this.growAtoms(this.atomGroup[n]);
-                        this.considerNewFP({ 'hashCode': this.identity[n], 'iteration': iter, 'atoms': this.atomGroup[n], 'centralAtom': n + 1 });
+                        this.considerNewFP({ hashCode: this.identity[n], iteration: iter, atoms: this.atomGroup[n], centralAtom: n + 1 });
                     }
             }
         }
@@ -3439,7 +3439,7 @@ var WebMolKit;
                 break;
             }
             let [html, search] = this.formatAbbrevLabel(name);
-            let abv = { 'name': name, 'frag': frag, 'nameHTML': html, 'nameSearch': search };
+            let abv = { name, frag, nameHTML: html, nameSearch: search };
             if (hit < 0) {
                 if (promote)
                     this.abbrevs.unshift(abv);
@@ -3707,7 +3707,7 @@ var WebMolKit;
                 return;
             let res = this.resPaths.get(blk);
             if (res == null)
-                this.resPaths.set(blk, res = { 'atoms': WebMolKit.Vec.numberArray(0, this.mol.numAtoms) });
+                this.resPaths.set(blk, res = { atoms: WebMolKit.Vec.numberArray(0, this.mol.numAtoms) });
             let idx = bits.length >= 2 ? WebMolKit.safeInt(bits[1], 0) : 0;
             if (res.atoms.indexOf(atom) >= 0)
                 return;
@@ -3722,7 +3722,7 @@ var WebMolKit;
                 return;
             let res = this.resRings.get(blk);
             if (res == null)
-                this.resRings.set(blk, res = { 'atoms': WebMolKit.Vec.numberArray(0, this.mol.numAtoms) });
+                this.resRings.set(blk, res = { atoms: WebMolKit.Vec.numberArray(0, this.mol.numAtoms) });
             let idx = bits.length >= 2 ? WebMolKit.safeInt(bits[1], 0) : 0;
             if (res.atoms.indexOf(atom) >= 0)
                 return;
@@ -3737,7 +3737,7 @@ var WebMolKit;
                 return;
             let res = this.arenes.get(blk);
             if (res == null)
-                this.arenes.set(blk, res = { 'centre': 0, 'atoms': WebMolKit.Vec.numberArray(0, this.mol.numAtoms) });
+                this.arenes.set(blk, res = { centre: 0, atoms: WebMolKit.Vec.numberArray(0, this.mol.numAtoms) });
             let idx = bits.length >= 2 ? WebMolKit.safeInt(bits[1], 0) : 0;
             if (res.atoms.indexOf(atom) >= 0)
                 return;
@@ -3807,7 +3807,7 @@ var WebMolKit;
         atomsAsPath(atoms) {
             if (atoms.length < 2)
                 return null;
-            let path = { 'atoms': atoms };
+            let path = { atoms: atoms };
             if (!this.pathify(path.atoms, false))
                 return null;
             return path;
@@ -3815,7 +3815,7 @@ var WebMolKit;
         atomsAsRing(atoms) {
             if (atoms.length < 3)
                 return null;
-            let ring = { 'atoms': atoms };
+            let ring = { atoms: atoms };
             if (!this.pathify(ring.atoms, true))
                 return null;
             return ring;
@@ -3841,7 +3841,7 @@ var WebMolKit;
                     if (g.numEdges(n) > g.numEdges(best))
                         best = n;
             }
-            let arene = { 'centre': atoms[best], 'atoms': WebMolKit.Vec.remove(atoms, best) };
+            let arene = { centre: atoms[best], atoms: WebMolKit.Vec.remove(atoms, best) };
             if (!this.pathify(arene.atoms, false))
                 return null;
             return arene;
@@ -4454,14 +4454,14 @@ var WebMolKit;
         clone(withRows = true) {
             let { numCols, numRows, colData, rowData } = this.data;
             let data = {
-                'title': this.data.title,
-                'description': this.data.description,
-                'numCols': numCols,
-                'numRows': withRows ? numRows : 0,
-                'numExtens': this.data.numExtens,
-                'colData': WebMolKit.deepClone(colData),
-                'rowData': withRows ? new Array(numRows) : [],
-                'extData': WebMolKit.deepClone(this.data.extData),
+                title: this.data.title,
+                description: this.data.description,
+                numCols: numCols,
+                numRows: withRows ? numRows : 0,
+                numExtens: this.data.numExtens,
+                colData: WebMolKit.deepClone(colData),
+                rowData: withRows ? new Array(numRows) : [],
+                extData: WebMolKit.deepClone(this.data.extData),
             };
             if (withRows)
                 for (let r = 0; r < numRows; r++) {
@@ -4479,14 +4479,14 @@ var WebMolKit;
         cloneMask(colMask, rowMask = null, inclExtn = true) {
             let { numCols, numRows, colData, rowData } = this.data;
             let data = {
-                'title': this.data.title,
-                'description': this.data.description,
-                'numCols': WebMolKit.Vec.maskCount(colMask),
-                'numRows': rowMask ? WebMolKit.Vec.maskCount(rowMask) : 0,
-                'numExtens': inclExtn ? this.data.numExtens : 0,
-                'colData': WebMolKit.deepClone(WebMolKit.Vec.maskGet(colData, colMask)),
-                'rowData': [],
-                'extData': inclExtn ? WebMolKit.deepClone(this.data.extData) : [],
+                title: this.data.title,
+                description: this.data.description,
+                numCols: WebMolKit.Vec.maskCount(colMask),
+                numRows: rowMask ? WebMolKit.Vec.maskCount(rowMask) : 0,
+                numExtens: inclExtn ? this.data.numExtens : 0,
+                colData: WebMolKit.deepClone(WebMolKit.Vec.maskGet(colData, colMask)),
+                rowData: [],
+                extData: inclExtn ? WebMolKit.deepClone(this.data.extData) : [],
             };
             if (rowMask)
                 for (let r = 0; r < numRows; r++)
@@ -4494,7 +4494,7 @@ var WebMolKit;
                         let inRow = rowData[r], outRow = WebMolKit.Vec.maskGet(inRow, colMask);
                         data.rowData.push(outRow);
                     }
-            const { 'colData': outCols, 'rowData': outRows } = data;
+            const { colData: outCols, rowData: outRows } = data;
             for (let c = outCols.length - 1; c >= 0; c--)
                 if (outCols[c].type == "molecule") {
                     for (let r = outRows.length - 1; r >= 0; r--)
@@ -4539,12 +4539,12 @@ var WebMolKit;
         }
         appendExtension(name, type, data) {
             this.data.numExtens++;
-            this.data.extData.push({ 'name': name, 'type': type, 'data': data });
+            this.data.extData.push({ name, type, data });
             return this.data.numExtens - 1;
         }
         insertExtension(idx, name, type, data) {
             this.data.numExtens++;
-            this.data.extData.splice(idx, 0, { 'name': name, 'type': type, 'data': data });
+            this.data.extData.splice(idx, 0, { name, type, data });
         }
         deleteExtension(idx) {
             this.data.extData.splice(idx, 1);
@@ -4752,14 +4752,14 @@ var WebMolKit;
         }
         appendColumn(name, type, descr) {
             this.data.numCols++;
-            this.data.colData.push({ 'name': name, 'type': type, 'descr': descr });
+            this.data.colData.push({ name, type, descr });
             for (let n = 0; n < this.data.numRows; n++)
                 this.data.rowData[n].push(null);
             return this.data.numCols - 1;
         }
         insertColumn(col, name, type, descr) {
             this.data.numCols++;
-            this.data.colData.splice(col, 0, { 'name': name, 'type': type, 'descr': descr });
+            this.data.colData.splice(col, 0, { name, type, descr });
             for (let n = 0; n < this.data.numRows; n++)
                 this.data.rowData[n].splice(col, 0, null);
         }
@@ -4878,14 +4878,14 @@ var WebMolKit;
         }
         exciseSingleRow(row) {
             let newData = {
-                'title': this.data.title,
-                'description': this.data.description,
-                'numCols': this.data.numCols,
-                'numRows': 1,
-                'numExtens': this.data.numExtens,
-                'colData': this.data.colData.slice(0),
-                'rowData': [this.data.rowData[row].slice(0)],
-                'extData': this.data.extData.slice(0)
+                title: this.data.title,
+                description: this.data.description,
+                numCols: this.data.numCols,
+                numRows: 1,
+                numExtens: this.data.numExtens,
+                colData: this.data.colData.slice(0),
+                rowData: [this.data.rowData[row].slice(0)],
+                extData: this.data.extData.slice(0)
             };
             return new DataSheet(newData);
         }
@@ -5137,11 +5137,11 @@ var WebMolKit;
                 }
             }
             let json = {
-                'title': data.title,
-                'description': data.description,
-                'colData': WebMolKit.deepClone(data.colData),
-                'rowData': rowData,
-                'extData': WebMolKit.deepClone(data.extData),
+                title: data.title,
+                description: data.description,
+                colData: WebMolKit.deepClone(data.colData),
+                rowData: rowData,
+                extData: WebMolKit.deepClone(data.extData),
             };
             return json;
         }
@@ -5392,10 +5392,10 @@ var WebMolKit;
                 let amask = WebMolKit.Vec.idxMask(cc, na);
                 WebMolKit.Vec.addTo(cc, 1);
                 let p = {
-                    'atoms': cc,
-                    'bonds': [],
-                    'numer': 0,
-                    'denom': 0
+                    atoms: cc,
+                    bonds: [],
+                    numer: 0,
+                    denom: 0
                 };
                 for (let n = 1; n <= nb; n++)
                     if (amask[mol.bondFrom(n) - 1] && amask[mol.bondTo(n) - 1])
@@ -6448,11 +6448,11 @@ var WebMolKit;
                         let idx = parseInt(line.substring(9 + 8 * n, 13 + 8 * n).trim());
                         let stype = line.substring(14 + 8 * n, 17 + 8 * n);
                         if (stype == 'SUP')
-                            superatoms.set(idx, { 'atoms': [], 'name': null });
+                            superatoms.set(idx, { atoms: [], name: null });
                         else if (stype == 'MIX' || stype == 'FOR')
-                            mixtures.set(idx, { 'index': idx, 'parent': 0, 'atoms': [], 'type': stype });
+                            mixtures.set(idx, { index: idx, parent: 0, atoms: [], type: stype });
                         else if (stype == 'SRU' || stype == 'COP' || stype == 'MUL')
-                            superatoms.set(idx, { 'atoms': [], 'name': null, 'bracketType': stype });
+                            superatoms.set(idx, { atoms: [], name: null, bracketType: stype });
                     }
                 }
                 else if (line.startsWith('M  SPL')) {
@@ -6525,10 +6525,10 @@ var WebMolKit;
                     let len = parseInt(line.substring(6, 9).trim());
                     for (let n = 0; n < len; n++) {
                         let node = {
-                            'atom': parseInt(line.substring(9 + 8 * n, 13 + 8 * n).trim()),
-                            'nbrs': [],
-                            'minRep': 1,
-                            'maxRep': parseInt(line.substring(13 + 8 * n, 17 + 8 * n).trim()),
+                            atom: parseInt(line.substring(9 + 8 * n, 13 + 8 * n).trim()),
+                            nbrs: [],
+                            minRep: 1,
+                            maxRep: parseInt(line.substring(13 + 8 * n, 17 + 8 * n).trim()),
                         };
                         let nbr1 = parseInt(line.substring(17 + 8 * n, 21 + 8 * n).trim());
                         let nbr2 = parseInt(line.substring(21 + 8 * n, 25 + 8 * n).trim());
@@ -6719,10 +6719,10 @@ var WebMolKit;
                     if (line.startsWith('LINKNODE ')) {
                         let bits = this.splitWithQuotes(line.substring(9));
                         let node = {
-                            'atom': 0,
-                            'nbrs': [],
-                            'minRep': parseInt(bits[0]),
-                            'maxRep': parseInt(bits[1])
+                            atom: 0,
+                            nbrs: [],
+                            minRep: parseInt(bits[0]),
+                            maxRep: parseInt(bits[1])
                         };
                         let nb = parseInt(bits[2]);
                         let atoms = [];
@@ -6917,7 +6917,7 @@ var WebMolKit;
                 let bits = this.splitWithQuotes(line);
                 let idx = parseInt(bits[0]);
                 if (bits.length > 3 && idx > 0 && bits[1] == 'SUP') {
-                    let sup = { 'atoms': [], 'name': null };
+                    let sup = { atoms: [], name: null };
                     for (let i = 3; i < bits.length; i++) {
                         if (bits[i].startsWith('ATOMS='))
                             sup.atoms = this.unpackList(bits[i].substring(6));
@@ -6927,7 +6927,7 @@ var WebMolKit;
                     superatoms.set(idx, sup);
                 }
                 else if (bits.length > 3 && idx > 0 && (bits[1] == 'MIX' || bits[1] == 'FOR') && parseInt(bits[2]) == idx) {
-                    let mix = { 'index': idx, 'parent': 0, 'atoms': null, 'type': bits[1] };
+                    let mix = { index: idx, parent: 0, atoms: null, type: bits[1] };
                     for (let i = 3; i < bits.length; i++) {
                         if (bits[i].startsWith('ATOMS='))
                             mix.atoms = this.unpackList(bits[i].substring(6));
@@ -6937,7 +6937,7 @@ var WebMolKit;
                     this.groupMixtures.push(mix);
                 }
                 else if (bits.length > 3 && idx > 0 && (bits[1] == 'SRU' || bits[1] == 'COP' || bits[1] == 'MUL')) {
-                    let sup = { 'atoms': [], 'name': null, 'bracketType': bits[1] };
+                    let sup = { atoms: [], name: null, bracketType: bits[1] };
                     for (let i = 3; i < bits.length; i++) {
                         if (bits[i].startsWith('ATOMS='))
                             sup.atoms = this.unpackList(bits[i].substring(6));
@@ -7558,7 +7558,7 @@ var WebMolKit;
             let next = 0;
             for (let n = 1; n <= mol.numAtoms; n++)
                 if (WebMolKit.MolUtil.hasAbbrev(mol, n)) {
-                    this.sgroups.push({ 'type': 'SUP', 'name': mol.atomElement(n), 'atoms': null });
+                    this.sgroups.push({ type: 'SUP', name: mol.atomElement(n), atoms: null });
                     let mask = WebMolKit.MolUtil.expandOneAbbrev(mol, n, true);
                     if (mask == null)
                         continue;
@@ -7578,9 +7578,9 @@ var WebMolKit;
                 this.sgroups[p].atoms = atoms;
             }
             for (let ma of WebMolKit.ForeignMolecule.noteAllSgroupMultiAttach(mol))
-                this.sgroups.push({ 'type': 'SUP', 'name': ma.name, 'atoms': ma.atoms });
+                this.sgroups.push({ type: 'SUP', name: ma.name, atoms: ma.atoms });
             for (let mr of WebMolKit.ForeignMolecule.noteAllSgroupMultiRepeat(mol))
-                this.sgroups.push({ 'type': 'MUL', 'name': mr.mult.toString(), 'atoms': mr.atoms });
+                this.sgroups.push({ type: 'MUL', name: mr.mult.toString(), atoms: mr.atoms });
         }
         encodePolymerBlocks(idx) {
             let polymers = new WebMolKit.PolymerBlock(this.mol);
@@ -12477,10 +12477,10 @@ var WebMolKit;
             for (let n = 0; n < 3; n++)
                 if (angs[n] != null) {
                     let sprout = {
-                        'atom': atom,
-                        'orders': ords[n],
-                        'x': [],
-                        'y': [],
+                        atom: atom,
+                        orders: ords[n],
+                        x: [],
+                        y: [],
                     };
                     for (let i = 0; i < angs[n].length; i++) {
                         sprout.x[i] = cx + Math.cos(angs[n][i]) * WebMolKit.Molecule.IDEALBOND;
@@ -14675,11 +14675,11 @@ var WebMolKit;
                     continue;
                 }
                 let a = {
-                    'anum': n,
-                    'text': mol.atomExplicit(n) || WebMolKit.CoordUtil.atomIsWeirdLinear(mol, n) ? mol.atomElement(n) : null,
-                    'fsz': this.fontSizePix,
-                    'col': this.policy.data.atomCols[mol.atomicNumber(n)],
-                    'oval': new WebMolKit.Oval(this.measure.angToX(mol.atomX(n)), this.measure.angToY(mol.atomY(n)), 0, 0)
+                    anum: n,
+                    text: mol.atomExplicit(n) || WebMolKit.CoordUtil.atomIsWeirdLinear(mol, n) ? mol.atomElement(n) : null,
+                    fsz: this.fontSizePix,
+                    col: this.policy.data.atomCols[mol.atomicNumber(n)],
+                    oval: new WebMolKit.Oval(this.measure.angToX(mol.atomX(n)), this.measure.angToY(mol.atomY(n)), 0, 0)
                 };
                 let overCol = this.effects.colAtom[n];
                 if (overCol)
@@ -14734,14 +14734,14 @@ var WebMolKit;
                     for (let i = 0; i < 2; i++, v++) {
                         let lx1 = xy1[0] + v * oxy[0], ly1 = xy1[1] + v * oxy[1], lx2 = xy2[0] + v * oxy[0], ly2 = xy2[1] + v * oxy[1];
                         let b = {
-                            'bnum': n,
-                            'bfr': bfr,
-                            'bto': bto,
-                            'type': BLineType.Dotted,
-                            'line': new WebMolKit.Line(lx1, ly1, lx2, ly2),
-                            'size': 0.5 * sz,
-                            'head': head,
-                            'col': (col & 0xFFFFFF) | 0x80000000,
+                            bnum: n,
+                            bfr,
+                            bto,
+                            type: BLineType.Dotted,
+                            line: new WebMolKit.Line(lx1, ly1, lx2, ly2),
+                            size: 0.5 * sz,
+                            head,
+                            col: (col & 0xFFFFFF) | 0x80000000,
                         };
                         this.lines.push(b);
                         this.space.push(this.computeSpaceLine(b));
@@ -14750,11 +14750,11 @@ var WebMolKit;
                     if (rotation < -90 || rotation > 90)
                         rotation += 180;
                     let a = {
-                        'anum': 0,
-                        'text': qtxt,
-                        'fsz': 0.35 * this.fontSizePix,
-                        'col': col,
-                        'oval': new WebMolKit.Oval(0.5 * (xy1[0] + xy2[0]), 0.5 * (xy1[1] + xy2[1]), 0, 0),
+                        anum: 0,
+                        text: qtxt,
+                        fsz: 0.35 * this.fontSizePix,
+                        col,
+                        oval: new WebMolKit.Oval(0.5 * (xy1[0] + xy2[0]), 0.5 * (xy1[1] + xy2[1]), 0, 0),
                         rotation
                     };
                     this.points.push(a);
@@ -14815,14 +14815,14 @@ var WebMolKit;
                     for (let i = 0, v = -0.5 * (bo - 1); i < bo; i++, v++) {
                         let lx1 = xy1[0] + v * oxy[0], ly1 = xy1[1] + v * oxy[1], lx2 = xy2[0] + v * oxy[0], ly2 = xy2[1] + v * oxy[1];
                         let b = {
-                            'bnum': n,
-                            'bfr': bfr,
-                            'bto': bto,
-                            'type': ltype,
-                            'line': new WebMolKit.Line(lx1, ly1, lx2, ly2),
-                            'size': sz,
-                            'head': head,
-                            'col': col
+                            bnum: n,
+                            bfr,
+                            bto,
+                            type: ltype,
+                            line: new WebMolKit.Line(lx1, ly1, lx2, ly2),
+                            size: sz,
+                            head,
+                            col
                         };
                         this.lines.push(b);
                         this.space.push(this.computeSpaceLine(b));
@@ -14830,14 +14830,14 @@ var WebMolKit;
                 }
                 else {
                     let b = {
-                        'bnum': n,
-                        'bfr': bfr,
-                        'bto': bto,
-                        'type': ltype,
-                        'line': new WebMolKit.Line(xy1[0], xy1[1], xy2[0], xy2[1]),
-                        'size': sz,
-                        'head': head,
-                        'col': col
+                        bnum: n,
+                        bfr,
+                        bto,
+                        type: ltype,
+                        line: new WebMolKit.Line(xy1[0], xy1[1], xy2[0], xy2[1]),
+                        size: sz,
+                        head,
+                        col
                     };
                     this.lines.push(b);
                     this.space.push(this.computeSpaceLine(b));
@@ -14907,11 +14907,11 @@ var WebMolKit;
                     let a = this.points[n];
                     let box = new WebMolKit.Box(a.oval.cx - dw, a.oval.cy - dw, 2 * dw, 2 * dw);
                     let spc = {
-                        'anum': 0,
-                        'bnum': 0,
-                        'box': box,
-                        'px': [box.minX(), box.maxX(), box.maxX(), box.minX()],
-                        'py': [box.minY(), box.minY(), box.maxY(), box.maxY()]
+                        anum: 0,
+                        bnum: 0,
+                        box,
+                        px: [box.minX(), box.maxX(), box.maxX(), box.minX()],
+                        py: [box.minY(), box.minY(), box.maxY(), box.maxY()]
                     };
                     this.space.push(spc);
                 }
@@ -15186,8 +15186,8 @@ var WebMolKit;
                     let ox = dy * inv * 2.5 * r, oy = -dx * inv * 2.5 * r;
                     let ext = 1.2 * (rw + rh) * inv;
                     [dx, dy] = [dx * ext, dy * ext];
-                    this.points.push({ 'anum': 0, 'text': '.', 'fsz': fsz, 'col': col, 'oval': new WebMolKit.Oval(cx + dx + ox, cy + dy + oy, r, r) });
-                    this.points.push({ 'anum': 0, 'text': '.', 'fsz': fsz, 'col': col, 'oval': new WebMolKit.Oval(cx + dx - ox, cy + dy - oy, r, r) });
+                    this.points.push({ anum: 0, text: '.', fsz, col, oval: new WebMolKit.Oval(cx + dx + ox, cy + dy + oy, r, r) });
+                    this.points.push({ anum: 0, text: '.', fsz, col, oval: new WebMolKit.Oval(cx + dx - ox, cy + dy - oy, r, r) });
                     return;
                 }
             }
@@ -15227,19 +15227,19 @@ var WebMolKit;
             }
             a =
                 {
-                    'anum': 0,
-                    'text': str,
-                    'fsz': fsz,
-                    'col': col,
-                    'oval': new WebMolKit.Oval(cx + bestDX, cy + bestDY, rw, rh)
+                    anum: 0,
+                    text: str,
+                    fsz,
+                    col,
+                    oval: new WebMolKit.Oval(cx + bestDX, cy + bestDY, rw, rh)
                 };
             this.points.push(a);
             let spc = {
-                'anum': 0,
-                'bnum': 0,
-                'box': new WebMolKit.Box(a.oval.cx - rw, a.oval.cy - rh, 2 * rw, 2 * rh),
-                'px': [a.oval.cx - rw, a.oval.cx + rw, a.oval.cx + rw, a.oval.cx - rw],
-                'py': [a.oval.cy - rh, a.oval.cy - rh, a.oval.cy + rh, a.oval.cy + rh]
+                anum: 0,
+                bnum: 0,
+                box: new WebMolKit.Box(a.oval.cx - rw, a.oval.cy - rh, 2 * rw, 2 * rh),
+                px: [a.oval.cx - rw, a.oval.cx + rw, a.oval.cx + rw, a.oval.cx - rw],
+                py: [a.oval.cy - rh, a.oval.cy - rh, a.oval.cy + rh, a.oval.cy + rh]
             };
             this.space.push(spc);
         }
@@ -15348,11 +15348,11 @@ var WebMolKit;
             x -= 0.5 * chunkw[refchunk];
             for (let n = 0; n < chunks.length; n++) {
                 let a = {
-                    'anum': (n == refchunk || (primary != null && primary[n])) ? anum : 0,
-                    'text': chunks[n],
-                    'fsz': this.fontSizePix,
-                    'col': this.policy.data.atomCols[this.mol.atomicNumber(anum)],
-                    'oval': new WebMolKit.Oval(x + 0.5 * chunkw[n], y, 0.5 * chunkw[n] * PADDING, 0.5 * this.fontSizePix * PADDING)
+                    anum: (n == refchunk || (primary != null && primary[n])) ? anum : 0,
+                    text: chunks[n],
+                    fsz: this.fontSizePix,
+                    col: this.policy.data.atomCols[this.mol.atomicNumber(anum)],
+                    oval: new WebMolKit.Oval(x + 0.5 * chunkw[n], y, 0.5 * chunkw[n] * PADDING, 0.5 * this.fontSizePix * PADDING)
                 };
                 if (position != null && position[n] != 0) {
                     a.fsz *= SSFRACT;
@@ -15636,24 +15636,24 @@ var WebMolKit;
             if (!col)
                 col = this.policy.data.foreground;
             let b1 = {
-                'bnum': idx,
-                'bfr': bfr,
-                'bto': bto,
-                'type': lt,
-                'line': new WebMolKit.Line(ax1, ay1, ax2, ay2),
-                'size': sz,
-                'head': head,
-                'col': col
+                bnum: idx,
+                bfr,
+                bto,
+                type: lt,
+                line: new WebMolKit.Line(ax1, ay1, ax2, ay2),
+                size: sz,
+                head,
+                col
             };
             let b2 = {
-                'bnum': idx,
-                'bfr': bfr,
-                'bto': bto,
-                'type': lt,
-                'line': new WebMolKit.Line(bx1, by1, bx2, by2),
-                'size': sz,
-                'head': head,
-                'col': col
+                bnum: idx,
+                bfr,
+                bto,
+                type: lt,
+                line: new WebMolKit.Line(bx1, by1, bx2, by2),
+                size: sz,
+                head,
+                col
             };
             this.lines.push(b1);
             this.lines.push(b2);
@@ -15796,22 +15796,22 @@ var WebMolKit;
             let wad = this.measure.measureText('H', a.fsz);
             const PADDING = 1.1;
             let ah = {
-                'anum': 0,
-                'text': 'H',
-                'fsz': a.fsz,
-                'col': a.col,
-                'oval': new WebMolKit.Oval(a.oval.cx + dx, a.oval.cy + dy, 0.5 * wad[0] * PADDING, 0.5 * wad[1] * PADDING)
+                anum: 0,
+                text: 'H',
+                fsz: a.fsz,
+                col: a.col,
+                oval: new WebMolKit.Oval(a.oval.cx + dx, a.oval.cy + dy, 0.5 * wad[0] * PADDING, 0.5 * wad[1] * PADDING)
             };
             this.points.push(ah);
             if (sub.length > 0) {
                 const subFsz = SSFRACT * a.fsz;
                 wad = this.measure.measureText(sub, subFsz);
                 let an = {
-                    'anum': 0,
-                    'text': sub,
-                    'fsz': subFsz,
-                    'col': a.col,
-                    'oval': new WebMolKit.Oval(ah.oval.cx + 0.5 * firstEMW * a.fsz * font.INV_UNITS_PER_EM + 0.5 * wad[0], ah.oval.cy + (1 - SSFRACT) * a.fsz, 0.5 * wad[0] * PADDING, 0.5 * wad[1] * PADDING)
+                    anum: 0,
+                    text: sub,
+                    fsz: subFsz,
+                    col: a.col,
+                    oval: new WebMolKit.Oval(ah.oval.cx + 0.5 * firstEMW * a.fsz * font.INV_UNITS_PER_EM + 0.5 * wad[0], ah.oval.cy + (1 - SSFRACT) * a.fsz, 0.5 * wad[0] * PADDING, 0.5 * wad[1] * PADDING)
                 };
                 this.points.push(an);
             }
@@ -15819,22 +15819,22 @@ var WebMolKit;
             WebMolKit.Vec.addTo(outlineY, dy);
             let minX = WebMolKit.Vec.min(outlineX), minY = WebMolKit.Vec.min(outlineY);
             let spc = {
-                'anum': 0,
-                'bnum': 0,
-                'box': new WebMolKit.Box(minX, minY, WebMolKit.Vec.max(outlineX) - minX, WebMolKit.Vec.max(outlineY) - minY),
-                'px': outlineX,
-                'py': outlineY
+                anum: 0,
+                bnum: 0,
+                box: new WebMolKit.Box(minX, minY, WebMolKit.Vec.max(outlineX) - minX, WebMolKit.Vec.max(outlineY) - minY),
+                px: outlineX,
+                py: outlineY
             };
             this.space.push(spc);
             return true;
         }
         computeSpacePoint(a) {
             let s = {
-                'anum': a.anum,
-                'bnum': 0,
-                'box': new WebMolKit.Box(),
-                'px': [],
-                'py': []
+                anum: a.anum,
+                bnum: 0,
+                box: new WebMolKit.Box(),
+                px: [],
+                py: []
             };
             const font = WebMolKit.FontData.main;
             let outlineX = [], outlineY = [];
@@ -15896,11 +15896,11 @@ var WebMolKit;
         }
         computeSpaceLine(b) {
             let s = {
-                'anum': 0,
-                'bnum': b.bnum,
-                'box': new WebMolKit.Box(),
-                'px': [],
-                'py': []
+                anum: 0,
+                bnum: b.bnum,
+                box: new WebMolKit.Box(),
+                px: [],
+                py: []
             };
             if (b.type == BLineType.Normal || b.type == BLineType.Dotted || b.type == BLineType.DotDir) {
                 s.px = [b.line.x1, b.line.x2];
@@ -16159,19 +16159,19 @@ var WebMolKit;
             }
             let x = cx + bestDX, y = cy + bestDY;
             let an = {
-                'anum': 0,
-                'text': text,
-                'fsz': fsz,
-                'col': col,
-                'oval': new WebMolKit.Oval(x, y, rw, rh),
+                anum: 0,
+                text,
+                fsz,
+                col,
+                oval: new WebMolKit.Oval(x, y, rw, rh),
             };
             this.points.push(an);
             let spc = {
-                'anum': 0,
-                'bnum': 0,
-                'box': new WebMolKit.Box(x - rw, y - rh, 2 * rw, 2 * rh),
-                'px': [x - rw, x + rw, x + rw, x - rw],
-                'py': [y - rh, y - rh, y + rh, y + rh],
+                anum: 0,
+                bnum: 0,
+                box: new WebMolKit.Box(x - rw, y - rh, 2 * rw, 2 * rh),
+                px: [x - rw, x + rw, x + rw, x - rw],
+                py: [y - rh, y - rh, y + rh, y + rh],
             };
             this.space.push(spc);
         }
@@ -16227,19 +16227,19 @@ var WebMolKit;
             }
             let x = cx + bestDX, y = cy + bestDY;
             let an = {
-                'anum': 0,
-                'text': text,
-                'fsz': fsz,
-                'col': col,
-                'oval': new WebMolKit.Oval(x, y, rw, rh),
+                anum: 0,
+                text,
+                fsz,
+                col,
+                oval: new WebMolKit.Oval(x, y, rw, rh),
             };
             this.points.push(an);
             let spc = {
-                'anum': 0,
-                'bnum': 0,
-                'box': new WebMolKit.Box(x - rw, y - rh, 2 * rw, 2 * rh),
-                'px': [x - rw, x + rw, x + rw, x - rw],
-                'py': [y - rh, y - rh, y + rh, y + rh],
+                anum: 0,
+                bnum: 0,
+                box: new WebMolKit.Box(x - rw, y - rh, 2 * rw, 2 * rh),
+                px: [x - rw, x + rw, x + rw, x - rw],
+                py: [y - rh, y - rh, y + rh, y + rh],
             };
             this.space.push(spc);
         }
@@ -16304,14 +16304,14 @@ var WebMolKit;
                         let delta = b2.size / dist * (b2.type == BLineType.Normal ? 2 : 4);
                         if (ext > delta && ext < 1 - delta) {
                             let b3 = {
-                                'bnum': b2.bnum,
-                                'bfr': b2.bfr,
-                                'bto': b2.bto,
-                                'type': b2.type,
-                                'line': b2.line.clone(),
-                                'size': b2.size,
-                                'head': b2.head,
-                                'col': b2.col
+                                bnum: b2.bnum,
+                                bfr: b2.bfr,
+                                bto: b2.bto,
+                                type: b2.type,
+                                line: b2.line.clone(),
+                                size: b2.size,
+                                head: b2.head,
+                                col: b2.col
                             };
                             this.lines.push(b3);
                             b2.line.x2 = b2.line.x1 + dx * (ext - delta);
@@ -16387,7 +16387,7 @@ var WebMolKit;
                 else
                     regDist = dist;
             }
-            let r = { 'atoms': atoms, 'cx': cx, 'cy': cy, 'rw': 0, 'rh': 0, 'size': 0 };
+            let r = { atoms, cx, cy, rw: 0, rh: 0, size: 0 };
             if (isRegular) {
                 r.rw = r.rh = WebMolKit.GeomUtil.fitCircle(bx, by);
             }
@@ -16493,7 +16493,7 @@ var WebMolKit;
             score2 *= ncross2 + 1;
             let sx = score1 < score2 ? sx1 : sx2;
             let sy = score1 < score2 ? sy1 : sy2;
-            let p = { 'atoms': atoms, 'px': null, 'py': null, 'ctrl': null, 'size': this.lineSizePix };
+            let p = { atoms, px: null, py: null, ctrl: null, size: this.lineSizePix };
             this.splineInterpolate(p, sx, sy);
             this.paths.push(p);
         }
@@ -16515,9 +16515,14 @@ var WebMolKit;
             let xy1 = this.shrinkBond(x1, y1, x2, y2, this.backOffAtom(from, x1, y1, x2, y2, minDist));
             this.ensureMinimumBondLength(xy1, [x2, y2], x1, y1, x2, y2, minDist);
             let b = {
-                'bnum': 0, 'bfr': from, 'bto': 0,
-                'type': BLineType.Normal, 'line': new WebMolKit.Line(xy1[0], xy1[1], x2, y2),
-                'size': this.lineSizePix, 'head': 0, 'col': this.policy.data.foreground
+                bnum: 0,
+                bfr: from,
+                bto: 0,
+                type: BLineType.Normal,
+                line: new WebMolKit.Line(xy1[0], xy1[1], x2, y2),
+                size: this.lineSizePix,
+                head: 0,
+                col: this.policy.data.foreground
             };
             this.lines.push(b);
             this.space.push(this.computeSpaceLine(b));
@@ -16604,19 +16609,19 @@ var WebMolKit;
             let wad = this.measure.measureText(str, fsz);
             let rw = 0.55 * wad[0], rh = 0.55 * wad[1];
             let a = {
-                'anum': 0,
-                'text': str,
-                'fsz': fsz,
-                'col': this.policy.data.foreground,
-                'oval': new WebMolKit.Oval(this.measure.angToX(bestX), this.measure.angToY(bestY), rw, rh)
+                anum: 0,
+                text: str,
+                fsz,
+                col: this.policy.data.foreground,
+                oval: new WebMolKit.Oval(this.measure.angToX(bestX), this.measure.angToY(bestY), rw, rh)
             };
             this.points.push(a);
             let spc = {
-                'anum': 0,
-                'bnum': 0,
-                'box': new WebMolKit.Box(a.oval.cx - rw, a.oval.cy - rh, 2 * rw, 2 * rh),
-                'px': [a.oval.cx - rw, a.oval.cx + rw, a.oval.cx + rw, a.oval.cx - rw],
-                'py': [a.oval.cy - rh, a.oval.cy - rh, a.oval.cy + rh, a.oval.cy + rh]
+                anum: 0,
+                bnum: 0,
+                box: new WebMolKit.Box(a.oval.cx - rw, a.oval.cy - rh, 2 * rw, 2 * rh),
+                px: [a.oval.cx - rw, a.oval.cx + rw, a.oval.cx + rw, a.oval.cx - rw],
+                py: [a.oval.cy - rh, a.oval.cy - rh, a.oval.cy + rh, a.oval.cy + rh]
             };
             this.space.push(spc);
         }
@@ -16634,7 +16639,7 @@ var WebMolKit;
                 if (in1 && !in2)
                     bracket = { a1, a2 };
                 else if (in2 && !in1)
-                    bracket = { 'a1': a2, 'a2': a1 };
+                    bracket = { a1: a2, a2: a1 };
                 else
                     continue;
                 bracket.x1 = mol.atomX(bracket.a1);
@@ -16677,14 +16682,14 @@ var WebMolKit;
             }
             else if (brackets.length == 0) {
                 let ym = 0.5 * (minY + maxY);
-                brackets.push({ 'x1': minX, 'y1': ym, 'x2': minX - 1, 'y2': ym });
-                brackets.push({ 'x1': maxX, 'y1': ym, 'x2': maxX + 1, 'y2': ym });
+                brackets.push({ x1: minX, y1: ym, x2: minX - 1, y2: ym });
+                brackets.push({ x1: maxX, y1: ym, x2: maxX + 1, y2: ym });
                 tagidx = 1;
                 isOuter = true;
             }
             let bsz1 = (isOuter ? 0.5 * (maxY - minY + 1) : isLinear ? 1.0 : 0.5) * this.scale, bsz2 = 0.2 * this.scale;
-            const BASE_LINE = { 'bnum': 0, 'bfr': 0, 'bto': 0, 'type': BLineType.Normal, 'size': this.lineSizePix, 'head': 0, 'col': this.policy.data.foreground };
-            const BASE_TEXT = { 'anum': 0, 'fsz': 0.7 * this.fontSizePix, 'bold': false, 'col': this.policy.data.foreground };
+            const BASE_LINE = { bnum: 0, bfr: 0, bto: 0, type: BLineType.Normal, size: this.lineSizePix, head: 0, col: this.policy.data.foreground };
+            const BASE_TEXT = { anum: 0, fsz: 0.7 * this.fontSizePix, bold: false, col: this.policy.data.foreground };
             for (let n = 0; n < brackets.length; n++) {
                 let bracket = brackets[n];
                 let x1 = measure.angToX(bracket.x1), y1 = measure.angToY(bracket.y1);
@@ -16781,8 +16786,8 @@ var WebMolKit;
                 rx.push(...[ox, ox]);
                 ry.push(...[oy, oy]);
             }
-            const BASE_LINE = { 'bnum': 0, 'bfr': 0, 'bto': 0, 'type': BLineType.Normal, 'size': this.lineSizePix, 'head': 0, 'col': this.policy.data.foreground };
-            const BASE_TEXT = { 'anum': 0, 'fsz': 0.7 * this.fontSizePix, 'bold': false, 'col': this.policy.data.foreground };
+            const BASE_LINE = { bnum: 0, bfr: 0, bto: 0, type: BLineType.Normal, size: this.lineSizePix, head: 0, col: this.policy.data.foreground };
+            const BASE_TEXT = { anum: 0, fsz: 0.7 * this.fontSizePix, bold: false, col: this.policy.data.foreground };
             let drawLine = (x1, y1, x2, y2) => {
                 let line = Object.assign(Object.assign({}, BASE_LINE), { 'line': new WebMolKit.Line(x1, y1, x2, y2) });
                 this.lines.push(line);
@@ -16827,9 +16832,9 @@ var WebMolKit;
         calculate() {
             if (this.minVal == this.maxVal) {
                 this.notches.push({
-                    'label': this.minVal.toString(),
-                    'value': this.minVal,
-                    'pos': 0.5 * this.width
+                    label: this.minVal.toString(),
+                    value: this.minVal,
+                    pos: 0.5 * this.width
                 });
                 return;
             }
@@ -16867,14 +16872,14 @@ var WebMolKit;
                 return;
             let loVal = this.inverse(loT), hiVal = this.inverse(hiT);
             this.notches.push({
-                'label': this.formatNumber(loVal),
-                'value': loVal,
-                'pos': position(loT)
+                label: this.formatNumber(loVal),
+                value: loVal,
+                pos: position(loT)
             });
             this.notches.push({
-                'label': this.formatNumber(hiVal),
-                'value': hiVal,
-                'pos': position(hiT)
+                label: this.formatNumber(hiVal),
+                value: hiVal,
+                pos: position(hiT)
             });
         }
         formatNumber(num) {
@@ -18616,38 +18621,38 @@ var WebMolKit;
         setupTypeLine(t) {
             let thickness = t[1] * this.scale;
             let colour = t[2];
-            return { 'thickness': thickness, 'colour': colour };
+            return { thickness, colour };
         }
         setupTypeRect(t) {
             let edgeCol = t[1];
             let fillCol = t[2];
             let thickness = t[3] * this.scale;
-            return { 'edgeCol': edgeCol, 'fillCol': fillCol, 'thickness': thickness };
+            return { edgeCol, fillCol, thickness };
         }
         setupTypeOval(t) {
             let edgeCol = t[1];
             let fillCol = t[2];
             let thickness = t[3] * this.scale;
-            return { 'edgeCol': edgeCol, 'fillCol': fillCol, 'thickness': thickness };
+            return { edgeCol, fillCol, thickness };
         }
         setupTypePath(t) {
             let edgeCol = t[1];
             let fillCol = t[2];
             let thickness = t[3] * this.scale;
             let hardEdge = t[4];
-            return { 'edgeCol': edgeCol, 'fillCol': fillCol, 'thickness': thickness, 'hardEdge': hardEdge };
+            return { edgeCol, fillCol, thickness, hardEdge };
         }
         setupTypeText(t) {
-            let sz = t[1] * this.scale;
+            let size = t[1] * this.scale;
             let colour = t[2];
-            return { 'colour': colour, 'size': sz };
+            return { colour, size };
         }
         setupTypeTextNative(t) {
             let family = t[1];
-            let sz = t[2] * this.scale;
+            let size = t[2] * this.scale;
             let colour = t[3];
             let opt = t[4];
-            return { 'colour': colour, 'family': family, 'size': sz, 'opt': opt };
+            return { colour, family, size, opt };
         }
         renderLine(ctx, p) {
             let type = this.typeObj[p[1]];
@@ -19109,16 +19114,16 @@ var WebMolKit;
             if (!data) {
                 data =
                     {
-                        'name': 'default',
-                        'pointScale': 20,
-                        'resolutionDPI': 100,
-                        'fontSize': 0.65,
-                        'lineSize': 0.075,
-                        'bondSep': 0.2,
-                        'defaultPadding': 0.2,
-                        'foreground': 0x000000,
-                        'background': 0xFFFFFF,
-                        'atomCols': new Array(112)
+                        name: 'default',
+                        pointScale: 20,
+                        resolutionDPI: 100,
+                        fontSize: 0.65,
+                        lineSize: 0.075,
+                        bondSep: 0.2,
+                        defaultPadding: 0.2,
+                        foreground: 0x000000,
+                        background: 0xFFFFFF,
+                        atomCols: new Array(112)
                     };
                 for (let n = 0; n <= 111; n++)
                     data.atomCols[n] = 0x000000;
@@ -19221,9 +19226,9 @@ var WebMolKit;
                 if (bits.length != 3)
                     continue;
                 let item = {
-                    'type': bits[0],
-                    'details': bits[1],
-                    'coords': bits[2].split(',').map((str) => parseFloat(str)),
+                    type: bits[0],
+                    details: bits[1],
+                    coords: bits[2].split(',').map((str) => parseFloat(str)),
                 };
                 this.items.push(item);
             }
@@ -19340,114 +19345,114 @@ var WebMolKit;
         CommandType[CommandType["Noble"] = 10] = "Noble";
     })(CommandType || (CommandType = {}));
     const COMMANDS_MAIN = [
-        { 'id': 'undo', 'imageFN': 'MainUndo', 'helpText': 'Undo last change.', 'mnemonic': 'CmdOrCtrl+Z' },
-        { 'id': 'redo', 'imageFN': 'MainRedo', 'helpText': 'Cancel last undo.', 'mnemonic': 'CmdOrCtrl+Shift+Z' },
-        { 'id': 'zoomin', 'imageFN': 'MainZoomIn', 'helpText': 'Zoom in.', 'mnemonic': '=' },
-        { 'id': 'zoomout', 'imageFN': 'MainZoomOut', 'helpText': 'Zoom out.', 'mnemonic': '-' },
-        { 'id': 'zoomfit', 'imageFN': 'MainZoomFit', 'helpText': 'Show whole diagram onscreen.', 'mnemonic': '' },
-        { 'id': 'selside', 'imageFN': 'MainSelSide', 'helpText': 'Select alternate side of current atom or bond.', 'mnemonic': 'E' },
-        { 'id': 'selall', 'imageFN': 'MainSelAll', 'helpText': 'Select all atoms.', 'mnemonic': 'Shift+A' },
-        { 'id': 'selnone', 'imageFN': 'MainSelNone', 'helpText': 'Clear selection.', 'mnemonic': 'Shift+Q' },
-        { 'id': 'delete', 'imageFN': 'MainDelete', 'helpText': 'Delete selected atoms and bonds.', 'mnemonic': 'D' },
-        { 'id': 'cut', 'imageFN': 'MainCut', 'helpText': 'Copy selection to clipboard, and remove.', 'mnemonic': 'CmdOrCtrl+X' },
-        { 'id': 'copy', 'imageFN': 'MainCopy', 'helpText': 'Copy selection to clipboard.', 'mnemonic': 'CmdOrCtrl+C' },
-        { 'id': 'paste', 'imageFN': 'MainPaste', 'helpText': 'Paste clipboard contents.' },
-        { 'id': 'atom', 'imageFN': 'MainAtom', 'helpText': 'Open the Atom submenu.', 'isSubMenu': true, 'mnemonic': 'A' },
-        { 'id': 'bond', 'imageFN': 'MainBond', 'helpText': 'Open the Bond submenu.', 'isSubMenu': true, 'mnemonic': 'B' },
-        { 'id': 'select', 'imageFN': 'MainSelect', 'helpText': 'Open the Selection submenu.', 'isSubMenu': true, 'mnemonic': 'S' },
-        { 'id': 'move', 'imageFN': 'MainMove', 'helpText': 'Open the Move submenu.', 'isSubMenu': true, 'mnemonic': 'M' },
+        { id: 'undo', imageFN: 'MainUndo', helpText: 'Undo last change.', mnemonic: 'CmdOrCtrl+Z' },
+        { id: 'redo', imageFN: 'MainRedo', helpText: 'Cancel last undo.', mnemonic: 'CmdOrCtrl+Shift+Z' },
+        { id: 'zoomin', imageFN: 'MainZoomIn', helpText: 'Zoom in.', mnemonic: '=' },
+        { id: 'zoomout', imageFN: 'MainZoomOut', helpText: 'Zoom out.', mnemonic: '-' },
+        { id: 'zoomfit', imageFN: 'MainZoomFit', helpText: 'Show whole diagram onscreen.', mnemonic: '' },
+        { id: 'selside', imageFN: 'MainSelSide', helpText: 'Select alternate side of current atom or bond.', mnemonic: 'E' },
+        { id: 'selall', imageFN: 'MainSelAll', helpText: 'Select all atoms.', mnemonic: 'Shift+A' },
+        { id: 'selnone', imageFN: 'MainSelNone', helpText: 'Clear selection.', mnemonic: 'Shift+Q' },
+        { id: 'delete', imageFN: 'MainDelete', helpText: 'Delete selected atoms and bonds.', mnemonic: 'D' },
+        { id: 'cut', imageFN: 'MainCut', helpText: 'Copy selection to clipboard, and remove.', mnemonic: 'CmdOrCtrl+X' },
+        { id: 'copy', imageFN: 'MainCopy', helpText: 'Copy selection to clipboard.', mnemonic: 'CmdOrCtrl+C' },
+        { id: 'paste', imageFN: 'MainPaste', helpText: 'Paste clipboard contents.' },
+        { id: 'atom', imageFN: 'MainAtom', helpText: 'Open the Atom submenu.', isSubMenu: true, mnemonic: 'A' },
+        { id: 'bond', imageFN: 'MainBond', helpText: 'Open the Bond submenu.', isSubMenu: true, mnemonic: 'B' },
+        { id: 'select', imageFN: 'MainSelect', helpText: 'Open the Selection submenu.', isSubMenu: true, mnemonic: 'S' },
+        { id: 'move', imageFN: 'MainMove', helpText: 'Open the Move submenu.', isSubMenu: true, mnemonic: 'M' },
     ];
     const COMMANDS_ATOM = [
-        { 'id': 'element:C', 'text': 'C', 'helpText': 'Change elements to Carbon.', 'mnemonic': 'Shift+C' },
-        { 'id': 'element:N', 'text': 'N', 'helpText': 'Change elements to Nitrogen.', 'mnemonic': 'Shift+N' },
-        { 'id': 'element:O', 'text': 'O', 'helpText': 'Change elements to Oxygen.', 'mnemonic': 'Shift+O' },
-        { 'id': 'element:S', 'text': 'S', 'helpText': 'Change elements to Sulfur.', 'mnemonic': 'Shift+S' },
-        { 'id': 'element:P', 'text': 'P', 'helpText': 'Change elements to Phosphorus.', 'mnemonic': 'Shift+P' },
-        { 'id': 'element:H', 'text': 'H', 'helpText': 'Change elements to Hydrogen.', 'mnemonic': 'Shift+H' },
-        { 'id': 'element:F', 'text': 'F', 'helpText': 'Change elements to Fluorine.', 'mnemonic': 'Shift+F' },
-        { 'id': 'element:Cl', 'text': 'Cl', 'helpText': 'Change elements to Chlorine.', 'mnemonic': 'Shift+L' },
-        { 'id': 'element:Br', 'text': 'Br', 'helpText': 'Change elements to Bromine.', 'mnemonic': 'Shift+B' },
-        { 'id': 'element:I', 'text': 'I', 'helpText': 'Change elements to Iodine.', 'mnemonic': 'Shift+I' },
-        { 'id': 'plus', 'imageFN': 'AtomPlus', 'helpText': 'Increase the atom charge.', 'mnemonic': 'Shift+=', 'key': '+' },
-        { 'id': 'minus', 'imageFN': 'AtomMinus', 'helpText': 'Decrease the atom charge.', 'mnemonic': 'Shift+-', 'key': '_' },
-        { 'id': 'abbrev', 'imageFN': 'AtomAbbrev', 'helpText': 'Open list of common labels.', 'isSubMenu': true, 'mnemonic': '' },
-        { 'id': 'sblock', 'imageFN': 'AtomSBlock', 'helpText': 'Open list of s-block elements.', 'isSubMenu': true, 'mnemonic': '' },
-        { 'id': 'pblock', 'imageFN': 'AtomPBlock', 'helpText': 'Open list of p-block elements.', 'isSubMenu': true, 'mnemonic': '' },
-        { 'id': 'dblock', 'imageFN': 'AtomDBlock', 'helpText': 'Open list of d-block elements.', 'isSubMenu': true, 'mnemonic': '' },
-        { 'id': 'fblock', 'imageFN': 'AtomFBlock', 'helpText': 'Open list of f-block elements.', 'isSubMenu': true, 'mnemonic': '' },
-        { 'id': 'noble', 'imageFN': 'AtomNoble', 'helpText': 'Open list of noble elements.', 'isSubMenu': true, 'mnemonic': '' },
+        { id: 'element:C', text: 'C', helpText: 'Change elements to Carbon.', mnemonic: 'Shift+C' },
+        { id: 'element:N', text: 'N', helpText: 'Change elements to Nitrogen.', mnemonic: 'Shift+N' },
+        { id: 'element:O', text: 'O', helpText: 'Change elements to Oxygen.', mnemonic: 'Shift+O' },
+        { id: 'element:S', text: 'S', helpText: 'Change elements to Sulfur.', mnemonic: 'Shift+S' },
+        { id: 'element:P', text: 'P', helpText: 'Change elements to Phosphorus.', mnemonic: 'Shift+P' },
+        { id: 'element:H', text: 'H', helpText: 'Change elements to Hydrogen.', mnemonic: 'Shift+H' },
+        { id: 'element:F', text: 'F', helpText: 'Change elements to Fluorine.', mnemonic: 'Shift+F' },
+        { id: 'element:Cl', text: 'Cl', helpText: 'Change elements to Chlorine.', mnemonic: 'Shift+L' },
+        { id: 'element:Br', text: 'Br', helpText: 'Change elements to Bromine.', mnemonic: 'Shift+B' },
+        { id: 'element:I', text: 'I', helpText: 'Change elements to Iodine.', mnemonic: 'Shift+I' },
+        { id: 'plus', imageFN: 'AtomPlus', helpText: 'Increase the atom charge.', mnemonic: 'Shift+=', key: '+' },
+        { id: 'minus', imageFN: 'AtomMinus', helpText: 'Decrease the atom charge.', mnemonic: 'Shift+-', key: '_' },
+        { id: 'abbrev', imageFN: 'AtomAbbrev', helpText: 'Open list of common labels.', isSubMenu: true, mnemonic: '' },
+        { id: 'sblock', imageFN: 'AtomSBlock', helpText: 'Open list of s-block elements.', isSubMenu: true, mnemonic: '' },
+        { id: 'pblock', imageFN: 'AtomPBlock', helpText: 'Open list of p-block elements.', isSubMenu: true, mnemonic: '' },
+        { id: 'dblock', imageFN: 'AtomDBlock', helpText: 'Open list of d-block elements.', isSubMenu: true, mnemonic: '' },
+        { id: 'fblock', imageFN: 'AtomFBlock', helpText: 'Open list of f-block elements.', isSubMenu: true, mnemonic: '' },
+        { id: 'noble', imageFN: 'AtomNoble', helpText: 'Open list of noble elements.', isSubMenu: true, mnemonic: '' },
     ];
     const COMMANDS_BOND = [
-        { 'id': 'one', 'imageFN': 'BondOne', 'helpText': 'Create or set bonds to single.', 'mnemonic': '1' },
-        { 'id': 'two', 'imageFN': 'BondTwo', 'helpText': 'Create or set bonds to double.', 'mnemonic': '2' },
-        { 'id': 'three', 'imageFN': 'BondThree', 'helpText': 'Create or set bonds to triple.', 'mnemonic': '3' },
-        { 'id': 'four', 'imageFN': 'BondFour', 'helpText': 'Create or set bonds to quadruple.', 'mnemonic': '' },
-        { 'id': 'zero', 'imageFN': 'BondZero', 'helpText': 'Create or set bonds to zero-order.', 'mnemonic': '0' },
-        { 'id': 'inclined', 'imageFN': 'BondUp', 'helpText': 'Create or set bonds to inclined.', 'mnemonic': '5' },
-        { 'id': 'declined', 'imageFN': 'BondDown', 'helpText': 'Create or set bonds to declined.', 'mnemonic': '6' },
-        { 'id': 'squig', 'imageFN': 'BondSquig', 'helpText': 'Create or set bonds to unknown stereochemistry.', 'mnemonic': '4' },
-        { 'id': 'bondQAny', 'imageFN': 'BondQAny', 'helpText': 'Query bond that matches anything.' },
-        { 'id': 'addtwo', 'imageFN': 'BondAddTwo', 'helpText': 'Add two new bonds to the subject atom.', 'mnemonic': 'Shift+D' },
-        { 'id': 'insert', 'imageFN': 'BondInsert', 'helpText': 'Insert a methylene into the subject bond.', 'mnemonic': '' },
-        { 'id': 'switch', 'imageFN': 'BondSwitch', 'helpText': 'Cycle through likely bond geometries.', 'mnemonic': '\'' },
-        { 'id': 'rotate', 'imageFN': 'BondRotate', 'helpText': 'Rotate bond to invert substituent orientation.', 'mnemonic': '' },
-        { 'id': 'linear', 'imageFN': 'BondLinear', 'helpText': 'Apply linear geometry.', 'mnemonic': 'Shift+V' },
-        { 'id': 'trigonal', 'imageFN': 'BondTrigonal', 'helpText': 'Apply trigonal geometry.', 'mnemonic': 'Shift+W' },
-        { 'id': 'tetra1', 'imageFN': 'BondTetra1', 'helpText': 'Apply tetrahedral geometry #1.', 'mnemonic': 'Shift+E' },
-        { 'id': 'tetra2', 'imageFN': 'BondTetra2', 'helpText': 'Apply tetrahedral geometry #2.', 'mnemonic': 'Shift+R' },
-        { 'id': 'sqplan', 'imageFN': 'BondSqPlan', 'helpText': 'Apply square planar geometry.', 'mnemonic': 'Shift+T' },
-        { 'id': 'octa1', 'imageFN': 'BondOcta1', 'helpText': 'Apply octahedral geometry #1.', 'mnemonic': 'Shift+Y' },
-        { 'id': 'octa2', 'imageFN': 'BondOcta2', 'helpText': 'Apply octahedral geometry #2.', 'mnemonic': 'Shift+U' },
-        { 'id': 'metalligate', 'imageFN': 'BondMetalLigate', 'helpText': 'Arrange ligands around metal centre.', 'mnemonic': '' },
-        { 'id': 'artifactpath', 'imageFN': 'BondArtifactPath', 'helpText': 'Add a path bond artifact.', 'mnemonic': '' },
-        { 'id': 'artifactring', 'imageFN': 'BondArtifactRing', 'helpText': 'Add a ring bond artifact.', 'mnemonic': '' },
-        { 'id': 'artifactarene', 'imageFN': 'BondArtifactArene', 'helpText': 'Add an arene bond artifact.', 'mnemonic': '' },
-        { 'id': 'artifactclear', 'imageFN': 'BondArtifactClear', 'helpText': 'Remove a bond artifact.', 'mnemonic': '' },
-        { 'id': 'polymer', 'imageFN': 'BondPolymer', 'helpText': 'Create a polymer block.', 'mnemonic': '' },
+        { id: 'one', imageFN: 'BondOne', helpText: 'Create or set bonds to single.', mnemonic: '1' },
+        { id: 'two', imageFN: 'BondTwo', helpText: 'Create or set bonds to double.', mnemonic: '2' },
+        { id: 'three', imageFN: 'BondThree', helpText: 'Create or set bonds to triple.', mnemonic: '3' },
+        { id: 'four', imageFN: 'BondFour', helpText: 'Create or set bonds to quadruple.', mnemonic: '' },
+        { id: 'zero', imageFN: 'BondZero', helpText: 'Create or set bonds to zero-order.', mnemonic: '0' },
+        { id: 'inclined', imageFN: 'BondUp', helpText: 'Create or set bonds to inclined.', mnemonic: '5' },
+        { id: 'declined', imageFN: 'BondDown', helpText: 'Create or set bonds to declined.', mnemonic: '6' },
+        { id: 'squig', imageFN: 'BondSquig', helpText: 'Create or set bonds to unknown stereochemistry.', mnemonic: '4' },
+        { id: 'bondQAny', imageFN: 'BondQAny', helpText: 'Query bond that matches anything.' },
+        { id: 'addtwo', imageFN: 'BondAddTwo', helpText: 'Add two new bonds to the subject atom.', mnemonic: 'Shift+D' },
+        { id: 'insert', imageFN: 'BondInsert', helpText: 'Insert a methylene into the subject bond.', mnemonic: '' },
+        { id: 'switch', imageFN: 'BondSwitch', helpText: 'Cycle through likely bond geometries.', mnemonic: '\'' },
+        { id: 'rotate', imageFN: 'BondRotate', helpText: 'Rotate bond to invert substituent orientation.', mnemonic: '' },
+        { id: 'linear', imageFN: 'BondLinear', helpText: 'Apply linear geometry.', mnemonic: 'Shift+V' },
+        { id: 'trigonal', imageFN: 'BondTrigonal', helpText: 'Apply trigonal geometry.', mnemonic: 'Shift+W' },
+        { id: 'tetra1', imageFN: 'BondTetra1', helpText: 'Apply tetrahedral geometry #1.', mnemonic: 'Shift+E' },
+        { id: 'tetra2', imageFN: 'BondTetra2', helpText: 'Apply tetrahedral geometry #2.', mnemonic: 'Shift+R' },
+        { id: 'sqplan', imageFN: 'BondSqPlan', helpText: 'Apply square planar geometry.', mnemonic: 'Shift+T' },
+        { id: 'octa1', imageFN: 'BondOcta1', helpText: 'Apply octahedral geometry #1.', mnemonic: 'Shift+Y' },
+        { id: 'octa2', imageFN: 'BondOcta2', helpText: 'Apply octahedral geometry #2.', mnemonic: 'Shift+U' },
+        { id: 'metalligate', imageFN: 'BondMetalLigate', helpText: 'Arrange ligands around metal centre.', mnemonic: '' },
+        { id: 'artifactpath', imageFN: 'BondArtifactPath', helpText: 'Add a path bond artifact.', mnemonic: '' },
+        { id: 'artifactring', imageFN: 'BondArtifactRing', helpText: 'Add a ring bond artifact.', mnemonic: '' },
+        { id: 'artifactarene', imageFN: 'BondArtifactArene', helpText: 'Add an arene bond artifact.', mnemonic: '' },
+        { id: 'artifactclear', imageFN: 'BondArtifactClear', helpText: 'Remove a bond artifact.', mnemonic: '' },
+        { id: 'polymer', imageFN: 'BondPolymer', helpText: 'Create a polymer block.', mnemonic: '' },
     ];
     const COMMANDS_SELECT = [
-        { 'id': 'selgrow', 'imageFN': 'SelectionGrow', 'helpText': 'Add adjacent atoms to selection.', 'mnemonic': '' },
-        { 'id': 'selshrink', 'imageFN': 'SelectionShrink', 'helpText': 'Unselect exterior atoms.', 'mnemonic': '' },
-        { 'id': 'selchain', 'imageFN': 'SelectionChain', 'helpText': 'Extend selection to non-ring atoms.', 'mnemonic': '' },
-        { 'id': 'smallring', 'imageFN': 'SelectionSmRing', 'helpText': 'Extend selection to small rings.', 'mnemonic': '' },
-        { 'id': 'ringblock', 'imageFN': 'SelectionRingBlk', 'helpText': 'Extend selection to ring blocks.', 'mnemonic': '' },
-        { 'id': 'curelement', 'imageFN': 'SelectionCurElement', 'helpText': 'Select all atoms of current element type.', 'mnemonic': '' },
-        { 'id': 'selprev', 'imageFN': 'MainSelPrev', 'helpText': 'Select previous connected component.', 'mnemonic': '[' },
-        { 'id': 'selnext', 'imageFN': 'MainSelNext', 'helpText': 'Select next connected component.', 'mnemonic': ']' },
-        { 'id': 'toggle', 'imageFN': 'SelectionToggle', 'helpText': 'Toggle selection of current.', 'mnemonic': ',' },
-        { 'id': 'uncurrent', 'imageFN': 'SelectionUncurrent', 'helpText': 'Undefine current object.', 'mnemonic': '.' },
-        { 'id': 'join', 'imageFN': 'MoveJoin', 'helpText': 'Overlapping atoms will be joined as one.', 'mnemonic': '' },
-        { 'id': 'new', 'imageFN': 'MainNew', 'helpText': 'Clear the molecular structure.', 'mnemonic': '' },
-        { 'id': 'inline', 'imageFN': 'AtomInline', 'helpText': 'Make selected atoms into an inline abbreviation.', 'mnemonic': '/' },
-        { 'id': 'formula', 'imageFN': 'AtomFormula', 'helpText': 'Make selected atoms into their molecule formula.', 'mnemonic': '\\' },
-        { 'id': 'expandabbrev', 'imageFN': 'AtomExpandAbbrev', 'helpText': 'Expand out the inline abbreviation.', 'mnemonic': 'Shift+/', 'key': '/' },
-        { 'id': 'clearabbrev', 'imageFN': 'AtomClearAbbrev', 'helpText': 'Remove inline abbreviation.', 'mnemonic': 'Shift+\\', 'key': '\\' },
+        { id: 'selgrow', imageFN: 'SelectionGrow', helpText: 'Add adjacent atoms to selection.', mnemonic: '' },
+        { id: 'selshrink', imageFN: 'SelectionShrink', helpText: 'Unselect exterior atoms.', mnemonic: '' },
+        { id: 'selchain', imageFN: 'SelectionChain', helpText: 'Extend selection to non-ring atoms.', mnemonic: '' },
+        { id: 'smallring', imageFN: 'SelectionSmRing', helpText: 'Extend selection to small rings.', mnemonic: '' },
+        { id: 'ringblock', imageFN: 'SelectionRingBlk', helpText: 'Extend selection to ring blocks.', mnemonic: '' },
+        { id: 'curelement', imageFN: 'SelectionCurElement', helpText: 'Select all atoms of current element type.', mnemonic: '' },
+        { id: 'selprev', imageFN: 'MainSelPrev', helpText: 'Select previous connected component.', mnemonic: '[' },
+        { id: 'selnext', imageFN: 'MainSelNext', helpText: 'Select next connected component.', mnemonic: ']' },
+        { id: 'toggle', imageFN: 'SelectionToggle', helpText: 'Toggle selection of current.', mnemonic: ',' },
+        { id: 'uncurrent', imageFN: 'SelectionUncurrent', helpText: 'Undefine current object.', mnemonic: '.' },
+        { id: 'join', imageFN: 'MoveJoin', helpText: 'Overlapping atoms will be joined as one.', mnemonic: '' },
+        { id: 'new', imageFN: 'MainNew', helpText: 'Clear the molecular structure.', mnemonic: '' },
+        { id: 'inline', imageFN: 'AtomInline', helpText: 'Make selected atoms into an inline abbreviation.', mnemonic: '/' },
+        { id: 'formula', imageFN: 'AtomFormula', helpText: 'Make selected atoms into their molecule formula.', mnemonic: '\\' },
+        { id: 'expandabbrev', imageFN: 'AtomExpandAbbrev', helpText: 'Expand out the inline abbreviation.', mnemonic: 'Shift+/', key: '/' },
+        { id: 'clearabbrev', imageFN: 'AtomClearAbbrev', helpText: 'Remove inline abbreviation.', mnemonic: 'Shift+\\', key: '\\' },
     ];
     const COMMANDS_MOVE = [
-        { 'id': 'up', 'imageFN': 'MoveUp', 'helpText': 'Move subject atoms up slightly.', 'mnemonic': 'Shift+Up', 'key': "ArrowUp" },
-        { 'id': 'down', 'imageFN': 'MoveDown', 'helpText': 'Move subject atoms down slightly.', 'mnemonic': 'Shift+Down', 'key': "ArrowDown" },
-        { 'id': 'left', 'imageFN': 'MoveLeft', 'helpText': 'Move subject atoms slightly to the left.', 'mnemonic': 'Shift+Left', 'key': "ArrowLeft" },
-        { 'id': 'right', 'imageFN': 'MoveRight', 'helpText': 'Move subject atoms slightly to the right.', 'mnemonic': 'Shift+Right', 'key': "ArrowRight" },
-        { 'id': 'uplots', 'imageFN': 'MoveUpLots', 'helpText': 'Move subject atoms up somewhat.', 'mnemonic': '' },
-        { 'id': 'downlots', 'imageFN': 'MoveDownLots', 'helpText': 'Move subject atoms down somewhat.', 'mnemonic': '' },
-        { 'id': 'leftlots', 'imageFN': 'MoveLeftLots', 'helpText': 'Move subject atoms somewhat to the left.', 'mnemonic': '' },
-        { 'id': 'rightlots', 'imageFN': 'MoveRightLots', 'helpText': 'Move subject atoms somewhat to the right.', 'mnemonic': '' },
-        { 'id': 'upfar', 'imageFN': 'MoveUpFar', 'helpText': 'Move subject atoms far up.', 'mnemonic': '' },
-        { 'id': 'downfar', 'imageFN': 'MoveDownFar', 'helpText': 'Move subject atoms far down.', 'mnemonic': '' },
-        { 'id': 'leftfar', 'imageFN': 'MoveLeftFar', 'helpText': 'Move subject atoms far to the left.', 'mnemonic': '' },
-        { 'id': 'rightfar', 'imageFN': 'MoveRightFar', 'helpText': 'Move subject atoms far to the right.', 'mnemonic': '' },
-        { 'id': 'rotp01', 'imageFN': 'MoveRotP01', 'helpText': 'Rotate 1\u00B0 counter-clockwise.', 'mnemonic': '' },
-        { 'id': 'rotm01', 'imageFN': 'MoveRotM01', 'helpText': 'Rotate 1\u00B0 clockwise.', 'mnemonic': '' },
-        { 'id': 'rotp05', 'imageFN': 'MoveRotP05', 'helpText': 'Rotate 5\u00B0 counter-clockwise.', 'mnemonic': '' },
-        { 'id': 'rotm05', 'imageFN': 'MoveRotM05', 'helpText': 'Rotate 5\u00B0 clockwise.', 'mnemonic': '' },
-        { 'id': 'rotp15', 'imageFN': 'MoveRotP15', 'helpText': 'Rotate 15\u00B0 counter-clockwise.', 'mnemonic': '' },
-        { 'id': 'rotm15', 'imageFN': 'MoveRotM15', 'helpText': 'Rotate 15\u00B0 clockwise.', 'mnemonic': '' },
-        { 'id': 'rotp30', 'imageFN': 'MoveRotP30', 'helpText': 'Rotate 30\u00B0 counter-clockwise.', 'mnemonic': 'Shift+[', 'key': '{' },
-        { 'id': 'rotm30', 'imageFN': 'MoveRotM30', 'helpText': 'Rotate 30\u00B0 clockwise.', 'mnemonic': 'Shift+]', 'key': '}' },
-        { 'id': 'hflip', 'imageFN': 'MoveHFlip', 'helpText': 'Flip subject atoms horizontally.', 'mnemonic': 'Shift+,', 'key': ',' },
-        { 'id': 'vflip', 'imageFN': 'MoveVFlip', 'helpText': 'Flip subject atoms vertically.', 'mnemonic': 'Shift+.', 'key': '.' },
-        { 'id': 'shrink', 'imageFN': 'MoveShrink', 'helpText': 'Decrease subject bond distances.', 'mnemonic': 'Shift+Z' },
-        { 'id': 'grow', 'imageFN': 'MoveGrow', 'helpText': 'Increase subject bond distances.', 'mnemonic': 'Shift+X' },
+        { id: 'up', imageFN: 'MoveUp', helpText: 'Move subject atoms up slightly.', mnemonic: 'Shift+Up', key: "ArrowUp" },
+        { id: 'down', imageFN: 'MoveDown', helpText: 'Move subject atoms down slightly.', mnemonic: 'Shift+Down', key: "ArrowDown" },
+        { id: 'left', imageFN: 'MoveLeft', helpText: 'Move subject atoms slightly to the left.', mnemonic: 'Shift+Left', key: "ArrowLeft" },
+        { id: 'right', imageFN: 'MoveRight', helpText: 'Move subject atoms slightly to the right.', mnemonic: 'Shift+Right', key: "ArrowRight" },
+        { id: 'uplots', imageFN: 'MoveUpLots', helpText: 'Move subject atoms up somewhat.', mnemonic: '' },
+        { id: 'downlots', imageFN: 'MoveDownLots', helpText: 'Move subject atoms down somewhat.', mnemonic: '' },
+        { id: 'leftlots', imageFN: 'MoveLeftLots', helpText: 'Move subject atoms somewhat to the left.', mnemonic: '' },
+        { id: 'rightlots', imageFN: 'MoveRightLots', helpText: 'Move subject atoms somewhat to the right.', mnemonic: '' },
+        { id: 'upfar', imageFN: 'MoveUpFar', helpText: 'Move subject atoms far up.', mnemonic: '' },
+        { id: 'downfar', imageFN: 'MoveDownFar', helpText: 'Move subject atoms far down.', mnemonic: '' },
+        { id: 'leftfar', imageFN: 'MoveLeftFar', helpText: 'Move subject atoms far to the left.', mnemonic: '' },
+        { id: 'rightfar', imageFN: 'MoveRightFar', helpText: 'Move subject atoms far to the right.', mnemonic: '' },
+        { id: 'rotp01', imageFN: 'MoveRotP01', helpText: 'Rotate 1\u00B0 counter-clockwise.', mnemonic: '' },
+        { id: 'rotm01', imageFN: 'MoveRotM01', helpText: 'Rotate 1\u00B0 clockwise.', mnemonic: '' },
+        { id: 'rotp05', imageFN: 'MoveRotP05', helpText: 'Rotate 5\u00B0 counter-clockwise.', mnemonic: '' },
+        { id: 'rotm05', imageFN: 'MoveRotM05', helpText: 'Rotate 5\u00B0 clockwise.', mnemonic: '' },
+        { id: 'rotp15', imageFN: 'MoveRotP15', helpText: 'Rotate 15\u00B0 counter-clockwise.', mnemonic: '' },
+        { id: 'rotm15', imageFN: 'MoveRotM15', helpText: 'Rotate 15\u00B0 clockwise.', mnemonic: '' },
+        { id: 'rotp30', imageFN: 'MoveRotP30', helpText: 'Rotate 30\u00B0 counter-clockwise.', mnemonic: 'Shift+[', key: '{' },
+        { id: 'rotm30', imageFN: 'MoveRotM30', helpText: 'Rotate 30\u00B0 clockwise.', mnemonic: 'Shift+]', key: '}' },
+        { id: 'hflip', imageFN: 'MoveHFlip', helpText: 'Flip subject atoms horizontally.', mnemonic: 'Shift+,', key: ',' },
+        { id: 'vflip', imageFN: 'MoveVFlip', helpText: 'Flip subject atoms vertically.', mnemonic: 'Shift+.', key: '.' },
+        { id: 'shrink', imageFN: 'MoveShrink', helpText: 'Decrease subject bond distances.', mnemonic: 'Shift+Z' },
+        { id: 'grow', imageFN: 'MoveGrow', helpText: 'Increase subject bond distances.', mnemonic: 'Shift+X' },
     ];
     class CommandBank extends WebMolKit.ButtonBank {
         constructor(owner, cmdType = CommandType.Main) {
@@ -19486,7 +19491,7 @@ var WebMolKit;
         }
         populateElements(elements) {
             for (let el of elements) {
-                this.buttons.push({ 'id': `element:${el}`, 'text': el, 'helpText': `Change elements to ${el}.` });
+                this.buttons.push({ id: `element:${el}`, text: el, helpText: `Change elements to ${el}.` });
             }
         }
         hitButton(id) {
@@ -19494,7 +19499,7 @@ var WebMolKit;
             if (id.startsWith('element:')) {
                 let el = id.substring(8);
                 actv = WebMolKit.ActivityType.Element;
-                param = { 'element': el };
+                param = { element: el };
             }
             else if (id == 'delete')
                 actv = WebMolKit.ActivityType.Delete;
@@ -19536,71 +19541,71 @@ var WebMolKit;
                 actv = WebMolKit.ActivityType.SelectSide;
             else if (id == 'plus') {
                 actv = WebMolKit.ActivityType.Charge;
-                param = { 'delta': 1 };
+                param = { delta: 1 };
             }
             else if (id == 'minus') {
                 actv = WebMolKit.ActivityType.Charge;
-                param = { 'delta': -1 };
+                param = { delta: -1 };
             }
             else if (id == 'one') {
                 actv = WebMolKit.ActivityType.BondOrder;
-                param = { 'order': 1 };
+                param = { order: 1 };
             }
             else if (id == 'two') {
                 actv = WebMolKit.ActivityType.BondOrder;
-                param = { 'order': 2 };
+                param = { order: 2 };
             }
             else if (id == 'three') {
                 actv = WebMolKit.ActivityType.BondOrder;
-                param = { 'order': 3 };
+                param = { order: 3 };
             }
             else if (id == 'four') {
                 actv = WebMolKit.ActivityType.BondOrder;
-                param = { 'order': 4 };
+                param = { order: 4 };
             }
             else if (id == 'zero') {
                 actv = WebMolKit.ActivityType.BondOrder;
-                param = { 'order': 0 };
+                param = { order: 0 };
             }
             else if (id == 'inclined') {
                 actv = WebMolKit.ActivityType.BondType;
-                param = { 'type': WebMolKit.Molecule.BONDTYPE_INCLINED };
+                param = { type: WebMolKit.Molecule.BONDTYPE_INCLINED };
             }
             else if (id == 'declined') {
                 actv = WebMolKit.ActivityType.BondType;
-                param = { 'type': WebMolKit.Molecule.BONDTYPE_DECLINED };
+                param = { type: WebMolKit.Molecule.BONDTYPE_DECLINED };
             }
             else if (id == 'squig') {
                 actv = WebMolKit.ActivityType.BondType;
-                param = { 'type': WebMolKit.Molecule.BONDTYPE_UNKNOWN };
+                param = { type: WebMolKit.Molecule.BONDTYPE_UNKNOWN };
             }
             else if (id == 'linear') {
                 actv = WebMolKit.ActivityType.BondGeom;
-                param = { 'geom': WebMolKit.Geometry.Linear };
+                param = { geom: WebMolKit.Geometry.Linear };
             }
             else if (id == 'trigonal') {
                 actv = WebMolKit.ActivityType.BondGeom;
-                param = { 'geom': WebMolKit.Geometry.Trigonal };
+                param = { geom: WebMolKit.Geometry.Trigonal };
             }
             else if (id == 'tetra1') {
                 actv = WebMolKit.ActivityType.BondGeom;
-                param = { 'geom': WebMolKit.Geometry.Tetra1 };
+                param = { geom: WebMolKit.Geometry.Tetra1 };
             }
             else if (id == 'tetra2') {
                 actv = WebMolKit.ActivityType.BondGeom;
-                param = { 'geom': WebMolKit.Geometry.Tetra2 };
+                param = { geom: WebMolKit.Geometry.Tetra2 };
             }
             else if (id == 'sqplan') {
                 actv = WebMolKit.ActivityType.BondGeom;
-                param = { 'geom': WebMolKit.Geometry.SqPlan };
+                param = { geom: WebMolKit.Geometry.SqPlan };
             }
             else if (id == 'octa1') {
                 actv = WebMolKit.ActivityType.BondGeom;
-                param = { 'geom': WebMolKit.Geometry.Octa1 };
+                param = { geom: WebMolKit.Geometry.Octa1 };
             }
             else if (id == 'octa2') {
                 actv = WebMolKit.ActivityType.BondGeom;
-                param = { 'geom': WebMolKit.Geometry.Octa2 };
+                param = { geom: WebMolKit.Geometry.Octa2 };
             }
             else if (id == 'switch')
                 actv = WebMolKit.ActivityType.BondSwitch;
@@ -19658,99 +19663,99 @@ var WebMolKit;
                 actv = WebMolKit.ActivityType.AbbrevExpand;
             else if (id == 'up') {
                 actv = WebMolKit.ActivityType.Nudge;
-                param = { 'dir': 'up' };
+                param = { dir: 'up' };
             }
             else if (id == 'down') {
                 actv = WebMolKit.ActivityType.Nudge;
-                param = { 'dir': 'down' };
+                param = { dir: 'down' };
             }
             else if (id == 'left') {
                 actv = WebMolKit.ActivityType.Nudge;
-                param = { 'dir': 'left' };
+                param = { dir: 'left' };
             }
             else if (id == 'right') {
                 actv = WebMolKit.ActivityType.Nudge;
-                param = { 'dir': 'right' };
+                param = { dir: 'right' };
             }
             else if (id == 'uplots') {
                 actv = WebMolKit.ActivityType.NudgeLots;
-                param = { 'dir': 'up' };
+                param = { dir: 'up' };
             }
             else if (id == 'downlots') {
                 actv = WebMolKit.ActivityType.NudgeLots;
-                param = { 'dir': 'down' };
+                param = { dir: 'down' };
             }
             else if (id == 'leftlots') {
                 actv = WebMolKit.ActivityType.NudgeLots;
-                param = { 'dir': 'left' };
+                param = { dir: 'left' };
             }
             else if (id == 'rightlots') {
                 actv = WebMolKit.ActivityType.NudgeLots;
-                param = { 'dir': 'right' };
+                param = { dir: 'right' };
             }
             else if (id == 'upfar') {
                 actv = WebMolKit.ActivityType.NudgeFar;
-                param = { 'dir': 'up' };
+                param = { dir: 'up' };
             }
             else if (id == 'downfar') {
                 actv = WebMolKit.ActivityType.NudgeFar;
-                param = { 'dir': 'down' };
+                param = { dir: 'down' };
             }
             else if (id == 'leftfar') {
                 actv = WebMolKit.ActivityType.NudgeFar;
-                param = { 'dir': 'left' };
+                param = { dir: 'left' };
             }
             else if (id == 'rightfar') {
                 actv = WebMolKit.ActivityType.NudgeFar;
-                param = { 'dir': 'right' };
+                param = { dir: 'right' };
             }
             else if (id == 'rotp01') {
                 actv = WebMolKit.ActivityType.Rotate;
-                param = { 'theta': 1 };
+                param = { theta: 1 };
             }
             else if (id == 'rotm01') {
                 actv = WebMolKit.ActivityType.Rotate;
-                param = { 'theta': -1 };
+                param = { theta: -1 };
             }
             else if (id == 'rotp05') {
                 actv = WebMolKit.ActivityType.Rotate;
-                param = { 'theta': 5 };
+                param = { theta: 5 };
             }
             else if (id == 'rotm05') {
                 actv = WebMolKit.ActivityType.Rotate;
-                param = { 'theta': -5 };
+                param = { theta: -5 };
             }
             else if (id == 'rotp15') {
                 actv = WebMolKit.ActivityType.Rotate;
-                param = { 'theta': 15 };
+                param = { theta: 15 };
             }
             else if (id == 'rotm15') {
                 actv = WebMolKit.ActivityType.Rotate;
-                param = { 'theta': -15 };
+                param = { theta: -15 };
             }
             else if (id == 'rotp30') {
                 actv = WebMolKit.ActivityType.Rotate;
-                param = { 'theta': 30 };
+                param = { theta: 30 };
             }
             else if (id == 'rotm30') {
                 actv = WebMolKit.ActivityType.Rotate;
-                param = { 'theta': -30 };
+                param = { theta: -30 };
             }
             else if (id == 'hflip') {
                 actv = WebMolKit.ActivityType.Flip;
-                param = { 'axis': 'hor' };
+                param = { axis: 'hor' };
             }
             else if (id == 'vflip') {
                 actv = WebMolKit.ActivityType.Flip;
-                param = { 'axis': 'ver' };
+                param = { axis: 'ver' };
             }
             else if (id == 'shrink') {
                 actv = WebMolKit.ActivityType.Scale;
-                param = { 'mag': 1 / 1.1 };
+                param = { mag: 1 / 1.1 };
             }
             else if (id == 'grow') {
                 actv = WebMolKit.ActivityType.Scale;
-                param = { 'mag': 1.1 };
+                param = { mag: 1.1 };
             }
             else if (id == 'bondQAny')
                 actv = WebMolKit.ActivityType.QueryBondAny;
@@ -19806,28 +19811,28 @@ var WebMolKit;
             let menu = [];
             if (sketcher.canUndo() || sketcher.canRedo()) {
                 if (sketcher.canUndo())
-                    menu.push({ 'label': 'Undo', 'accelerator': 'CmdOrCtrl+Z', 'click': () => sketcher.performUndo() });
+                    menu.push({ label: 'Undo', accelerator: 'CmdOrCtrl+Z', click: () => sketcher.performUndo() });
                 if (sketcher.canRedo())
-                    menu.push({ 'label': 'Redo', 'accelerator': 'CmdOrCtrl+Shift+Z', 'click': () => sketcher.performRedo() });
+                    menu.push({ label: 'Redo', accelerator: 'CmdOrCtrl+Shift+Z', click: () => sketcher.performRedo() });
                 menu.push(null);
             }
             if (state.currentAtom > 0 || state.currentBond > 0)
-                menu.push({ 'label': 'Edit', 'accelerator': 'Enter', 'click': () => sketcher.editCurrent() });
+                menu.push({ label: 'Edit', 'accelerator': 'Enter', click: () => sketcher.editCurrent() });
             this.maybeAppend(menu, 'Delete', 'D', WebMolKit.ActivityType.Delete);
             this.maybeAppend(menu, 'Cut', 'CmdOrCtrl+X', WebMolKit.ActivityType.Cut);
             this.maybeAppend(menu, 'Copy', 'CmdOrCtrl+C', WebMolKit.ActivityType.Copy);
             if (this.proxyClip.canAlwaysGet())
-                menu.push({ 'label': 'Paste', 'accelerator': 'CmdOrCtrl+V', 'click': () => sketcher.performPaste() });
-            this.maybeAppend(menu, 'Charge +', 'Shift+=', WebMolKit.ActivityType.Charge, { 'delta': 1 });
-            this.maybeAppend(menu, 'Charge -', 'Shift+-', WebMolKit.ActivityType.Charge, { 'delta': -1 });
-            this.maybeAppend(menu, 'Bond Order 0', '0', WebMolKit.ActivityType.BondOrder, { 'order': 0 });
-            this.maybeAppend(menu, 'Bond Order 1', '1', WebMolKit.ActivityType.BondOrder, { 'order': 1 });
-            this.maybeAppend(menu, 'Bond Order 2', '2', WebMolKit.ActivityType.BondOrder, { 'order': 2 });
-            this.maybeAppend(menu, 'Bond Order 3', '3', WebMolKit.ActivityType.BondOrder, { 'order': 3 });
-            this.maybeAppend(menu, 'Bond Order 4', null, WebMolKit.ActivityType.BondOrder, { 'order': 4 });
-            this.maybeAppend(menu, 'Unknown Stereochemistry', '4', WebMolKit.ActivityType.BondType, { 'type': WebMolKit.Molecule.BONDTYPE_UNKNOWN });
-            this.maybeAppend(menu, 'Bond Wedge Up', '5', WebMolKit.ActivityType.BondType, { 'type': WebMolKit.Molecule.BONDTYPE_INCLINED });
-            this.maybeAppend(menu, 'Bond Wedge Down', '6', WebMolKit.ActivityType.BondType, { 'type': WebMolKit.Molecule.BONDTYPE_DECLINED });
+                menu.push({ label: 'Paste', 'accelerator': 'CmdOrCtrl+V', click: () => sketcher.performPaste() });
+            this.maybeAppend(menu, 'Charge +', 'Shift+=', WebMolKit.ActivityType.Charge, { delta: 1 });
+            this.maybeAppend(menu, 'Charge -', 'Shift+-', WebMolKit.ActivityType.Charge, { delta: -1 });
+            this.maybeAppend(menu, 'Bond Order 0', '0', WebMolKit.ActivityType.BondOrder, { order: 0 });
+            this.maybeAppend(menu, 'Bond Order 1', '1', WebMolKit.ActivityType.BondOrder, { order: 1 });
+            this.maybeAppend(menu, 'Bond Order 2', '2', WebMolKit.ActivityType.BondOrder, { order: 2 });
+            this.maybeAppend(menu, 'Bond Order 3', '3', WebMolKit.ActivityType.BondOrder, { order: 3 });
+            this.maybeAppend(menu, 'Bond Order 4', null, WebMolKit.ActivityType.BondOrder, { order: 4 });
+            this.maybeAppend(menu, 'Unknown Stereochemistry', '4', WebMolKit.ActivityType.BondType, { type: WebMolKit.Molecule.BONDTYPE_UNKNOWN });
+            this.maybeAppend(menu, 'Bond Wedge Up', '5', WebMolKit.ActivityType.BondType, { type: WebMolKit.Molecule.BONDTYPE_INCLINED });
+            this.maybeAppend(menu, 'Bond Wedge Down', '6', WebMolKit.ActivityType.BondType, { type: WebMolKit.Molecule.BONDTYPE_DECLINED });
             this.maybeAppend(menu, 'Switch Geometry', null, WebMolKit.ActivityType.BondSwitch);
             this.maybeAppend(menu, 'Add Two Bonds', 'Shift+D', WebMolKit.ActivityType.BondAddTwo);
             this.maybeAppend(menu, 'Insert Atom', null, WebMolKit.ActivityType.BondInsert);
@@ -19838,10 +19843,10 @@ var WebMolKit;
             this.maybeAppend(menu, 'Expand Abbreviation', 'Shift+/', WebMolKit.ActivityType.AbbrevExpand);
             let rotateSub = this.rotateSubMenu();
             if (WebMolKit.Vec.notBlank(rotateSub))
-                menu.push({ 'label': 'Rotate', 'subMenu': rotateSub });
+                menu.push({ label: 'Rotate', subMenu: rotateSub });
             let querySub = this.querySubMenu();
             if (WebMolKit.Vec.notBlank(querySub))
-                menu.push({ 'label': 'Query', 'subMenu': querySub });
+                menu.push({ label: 'Query', subMenu: querySub });
             let poly = new WebMolKit.PolymerBlock(state.mol);
             for (let units of poly.getUnits()) {
                 let a1 = state.currentAtom, a2 = 0;
@@ -19849,14 +19854,14 @@ var WebMolKit;
                     [a1, a2] = state.mol.bondFromTo(state.currentBond);
                 if (units.atoms.includes(a1) || units.atoms.includes(a2)) {
                     let label = 'Polymer Block (' + units.atoms.length + ' atom' + (units.atoms.length == 1 ? '' : 's') + ')';
-                    menu.push({ 'label': label, 'click': () => sketcher.performPolymerBlock(units.atoms) });
+                    menu.push({ label: label, click: () => sketcher.performPolymerBlock(units.atoms) });
                 }
             }
             if (menu.length > 0)
                 menu.push(null);
-            menu.push({ 'label': 'Scale to Fit', 'click': () => sketcher.autoScale() });
-            menu.push({ 'label': 'Zoom In', 'accelerator': '=', 'click': () => sketcher.zoom(1.25) });
-            menu.push({ 'label': 'Zoom Out', 'accelerator': '-', 'click': () => sketcher.zoom(0.8) });
+            menu.push({ label: 'Scale to Fit', click: () => sketcher.autoScale() });
+            menu.push({ label: 'Zoom In', 'accelerator': '=', click: () => sketcher.zoom(1.25) });
+            menu.push({ label: 'Zoom Out', 'accelerator': '-', click: () => sketcher.zoom(0.8) });
             return menu;
         }
         maybeAppend(menu, title, accelerator, activ, param = null) {
@@ -19864,7 +19869,7 @@ var WebMolKit;
             molact.execute();
             if (!molact.output.mol && !molact.toClipboard)
                 return;
-            menu.push({ 'label': title, 'accelerator': accelerator, 'click': () => {
+            menu.push({ label: title, 'accelerator': accelerator, click: () => {
                     this.sketcher.setState(molact.output, true);
                     if (molact.toClipboard)
                         this.proxyClip.setString(molact.toClipboard);
@@ -19873,16 +19878,16 @@ var WebMolKit;
         rotateSubMenu() {
             let menu = [];
             this.maybeAppend(menu, 'Bond', null, WebMolKit.ActivityType.BondRotate);
-            this.maybeAppend(menu, '+1 \u{00B0}', null, WebMolKit.ActivityType.Rotate, { 'theta': 1 });
-            this.maybeAppend(menu, '-1 \u{00B0}', null, WebMolKit.ActivityType.Rotate, { 'theta': -1 });
-            this.maybeAppend(menu, '+5 \u{00B0}', null, WebMolKit.ActivityType.Rotate, { 'theta': 5 });
-            this.maybeAppend(menu, '-5 \u{00B0}', null, WebMolKit.ActivityType.Rotate, { 'theta': -5 });
-            this.maybeAppend(menu, '+15 \u{00B0}', null, WebMolKit.ActivityType.Rotate, { 'theta': 15 });
-            this.maybeAppend(menu, '-15 \u{00B0}', null, WebMolKit.ActivityType.Rotate, { 'theta': -15 });
-            this.maybeAppend(menu, '+30 \u{00B0}', 'Shift+[', WebMolKit.ActivityType.Rotate, { 'theta': 30 });
-            this.maybeAppend(menu, '-30 \u{00B0}', 'Shift+]', WebMolKit.ActivityType.Rotate, { 'theta': -30 });
-            this.maybeAppend(menu, 'H-Flip', 'Shift+,', WebMolKit.ActivityType.Flip, { 'axis': 'hor' });
-            this.maybeAppend(menu, 'V-Flip', 'Shift+.', WebMolKit.ActivityType.Flip, { 'axis': 'ver' });
+            this.maybeAppend(menu, '+1 \u{00B0}', null, WebMolKit.ActivityType.Rotate, { theta: 1 });
+            this.maybeAppend(menu, '-1 \u{00B0}', null, WebMolKit.ActivityType.Rotate, { theta: -1 });
+            this.maybeAppend(menu, '+5 \u{00B0}', null, WebMolKit.ActivityType.Rotate, { theta: 5 });
+            this.maybeAppend(menu, '-5 \u{00B0}', null, WebMolKit.ActivityType.Rotate, { theta: -5 });
+            this.maybeAppend(menu, '+15 \u{00B0}', null, WebMolKit.ActivityType.Rotate, { theta: 15 });
+            this.maybeAppend(menu, '-15 \u{00B0}', null, WebMolKit.ActivityType.Rotate, { theta: -15 });
+            this.maybeAppend(menu, '+30 \u{00B0}', 'Shift+[', WebMolKit.ActivityType.Rotate, { theta: 30 });
+            this.maybeAppend(menu, '-30 \u{00B0}', 'Shift+]', WebMolKit.ActivityType.Rotate, { theta: -30 });
+            this.maybeAppend(menu, 'H-Flip', 'Shift+,', WebMolKit.ActivityType.Flip, { axis: 'hor' });
+            this.maybeAppend(menu, 'V-Flip', 'Shift+.', WebMolKit.ActivityType.Flip, { axis: 'ver' });
             this.maybeAppend(menu, 'Align', null, WebMolKit.ActivityType.AlignRegular);
             return menu;
         }
@@ -19954,10 +19959,10 @@ var WebMolKit;
             this.offsetY = 0;
             this.pointScale = 1;
             this.viewOpt = {
-                'decoration': DrawCanvasDecoration.Stereochemistry,
-                'showOxState': true,
-                'showQuery': true,
-                'showArtifacts': true,
+                decoration: DrawCanvasDecoration.Stereochemistry,
+                showOxState: true,
+                showQuery: true,
+                showArtifacts: true,
             };
             this.width = 0;
             this.height = 0;
@@ -20034,10 +20039,10 @@ var WebMolKit;
         }
         getState() {
             let state = {
-                'mol': this.mol.clone(),
-                'currentAtom': this.currentAtom,
-                'currentBond': this.currentBond,
-                'selectedMask': this.selectedMask == null ? null : this.selectedMask.slice(0)
+                mol: this.mol.clone(),
+                currentAtom: this.currentAtom,
+                currentBond: this.currentBond,
+                selectedMask: this.selectedMask == null ? null : this.selectedMask.slice(0)
             };
             return state;
         }
@@ -20510,7 +20515,7 @@ var WebMolKit;
                         if (xtra.startsWith('q'))
                             bits.push(xtra);
                     let ap = layout.getPoint(n - 1);
-                    annots.push({ 'txt': bits.join(','), 'x': ap.oval.cx + ap.oval.rw, 'y': ap.oval.cy });
+                    annots.push({ txt: bits.join(','), x: ap.oval.cx + ap.oval.rw, y: ap.oval.cy });
                 }
             for (let n = 1; n <= mol.numBonds; n++)
                 if (WebMolKit.QueryUtil.hasAnyQueryBond(mol, n)) {
@@ -20525,7 +20530,7 @@ var WebMolKit;
                             cx += bl.line.x1 + bl.line.x2;
                             cy += bl.line.y1 + bl.line.y2;
                         }
-                    annots.push({ 'txt': bits.join(','), 'x': cx / num, 'y': cy / num });
+                    annots.push({ txt: bits.join(','), x: cx / num, y: cy / num });
                 }
             let fh = 0.7 * this.policy.data.fontSize * this.pointScale;
             for (let annot of annots) {
@@ -21227,8 +21232,8 @@ var WebMolKit;
                         return;
                     let mask = WebMolKit.Vec.booleanArray(false, mol.numAtoms);
                     mask[atoms[1] - 1] = true;
-                    let instate = { 'mol': mol, 'currentAtom': 0, 'currentBond': mol.findBond(atoms[0], atoms[1]), 'selectedMask': mask };
-                    let molact = new WebMolKit.MoleculeActivity(instate, WebMolKit.ActivityType.BondDist, { 'dist': dist });
+                    let instate = { mol, currentAtom: 0, currentBond: mol.findBond(atoms[0], atoms[1]), 'selectedMask': mask };
+                    let molact = new WebMolKit.MoleculeActivity(instate, WebMolKit.ActivityType.BondDist, { dist });
                     molact.execute();
                     if (molact.output.mol)
                         this.mol = molact.output.mol;
@@ -21240,8 +21245,8 @@ var WebMolKit;
                         return;
                     let mask = WebMolKit.Vec.booleanArray(false, mol.numAtoms);
                     mask[atoms[1] - 1] = true;
-                    let instate = { 'mol': mol, 'currentAtom': 0, 'currentBond': mol.findBond(atoms[0], atoms[1]), 'selectedMask': mask };
-                    let molact = new WebMolKit.MoleculeActivity(instate, WebMolKit.ActivityType.AlignAngle, { 'angle': angle * WebMolKit.DEGRAD });
+                    let instate = { mol, currentAtom: 0, currentBond: mol.findBond(atoms[0], atoms[1]), selectedMask: mask };
+                    let molact = new WebMolKit.MoleculeActivity(instate, WebMolKit.ActivityType.AlignAngle, { angle: angle * WebMolKit.DEGRAD });
                     molact.execute();
                     if (molact.output.mol)
                         this.mol = molact.output.mol;
@@ -21255,8 +21260,8 @@ var WebMolKit;
                 let mask = WebMolKit.Vec.booleanArray(false, mol.numAtoms);
                 for (let a of atoms)
                     mask[a - 1] = true;
-                let instate = { 'mol': mol, 'currentAtom': atoms[2], 'currentBond': 0, 'selectedMask': mask };
-                let molact = new WebMolKit.MoleculeActivity(instate, WebMolKit.ActivityType.AdjustTorsion, { 'angle': angle * WebMolKit.DEGRAD });
+                let instate = { mol, currentAtom: atoms[2], currentBond: 0, selectedMask: mask };
+                let molact = new WebMolKit.MoleculeActivity(instate, WebMolKit.ActivityType.AdjustTorsion, { angle: angle * WebMolKit.DEGRAD });
                 molact.execute();
                 if (molact.output.mol)
                     this.mol = molact.output.mol;
@@ -21321,9 +21326,9 @@ var WebMolKit;
                 if (this.currentAbbrev != n && !this.abbrevList[n].nameSearch.includes(search))
                     continue;
                 let entry = {
-                    'tr': WebMolKit.dom('<tr/>').appendTo(this.tableAbbrev),
-                    'idx': n,
-                    'bgcol': this.abbrevEntries.length % 2 == 0 ? '#FFFFFF' : '#F8F8F8'
+                    tr: WebMolKit.dom('<tr/>').appendTo(this.tableAbbrev),
+                    idx: n,
+                    bgcol: this.abbrevEntries.length % 2 == 0 ? '#FFFFFF' : '#F8F8F8'
                 };
                 entry.tr.setCSS('background-color', this.currentAbbrev == entry.idx ? WebMolKit.colourCode(WebMolKit.Theme.lowlight) : entry.bgcol);
                 let tdLabel = WebMolKit.dom('<td/>').appendTo(entry.tr), tdStruct = WebMolKit.dom('<td/>').appendTo(entry.tr);
@@ -21517,8 +21522,8 @@ var WebMolKit;
                     let dist = parseFloat(strval1);
                     if (isNaN(dist) || Math.abs(dist) > 100)
                         return;
-                    let instate = { 'mol': mol, 'currentAtom': 0, 'currentBond': mol.findBond(atoms[0], atoms[1]), 'selectedMask': null };
-                    let molact = new WebMolKit.MoleculeActivity(instate, WebMolKit.ActivityType.BondDist, { 'dist': dist });
+                    let instate = { mol, currentAtom: 0, currentBond: mol.findBond(atoms[0], atoms[1]), selectedMask: null };
+                    let molact = new WebMolKit.MoleculeActivity(instate, WebMolKit.ActivityType.BondDist, { dist });
                     molact.execute();
                     this.mol = molact.output.mol;
                     return;
@@ -21951,7 +21956,7 @@ var WebMolKit;
                     this.torsA.push(order[n] + 1);
                     this.torsB.push(order[n < order.length - 1 ? n + 1 : 0] + 1);
                 }
-                this.selected = { 'type': GeomWidgetSelType.Position, 'idx': 0 };
+                this.selected = { type: GeomWidgetSelType.Position, idx: 0 };
             }
             else {
                 const bond = idx;
@@ -21968,7 +21973,7 @@ var WebMolKit;
                 for (let a of mol.atomAdjList(a2))
                     if (a != a1)
                         link(a2, a);
-                this.selected = { 'type': GeomWidgetSelType.Link, 'idx': 0 };
+                this.selected = { type: GeomWidgetSelType.Link, idx: 0 };
             }
         }
         render(parent) {
@@ -22105,7 +22110,7 @@ var WebMolKit;
         whichSelection(x, y) {
             let cx = this.posX[0], cy = this.posY[0];
             if (WebMolKit.norm_xy(x - cx, y - cy) <= this.posRad)
-                return { 'type': GeomWidgetSelType.Position, 'idx': 0 };
+                return { type: GeomWidgetSelType.Position, idx: 0 };
             let maxRad = 0;
             for (let n = 1; n < this.atomSubset.length; n++)
                 maxRad = Math.max(maxRad, WebMolKit.norm_xy(this.posX[n] - cx, this.posY[n] - cy) + this.posRad);
@@ -22116,7 +22121,7 @@ var WebMolKit;
             for (let n = 0; n < this.linkB.length; n++) {
                 let delta = Math.abs(WebMolKit.angleDiff(Math.atan2(this.posY[this.linkB[n]] - cy, this.posX[this.linkB[n]] - cx), theta));
                 if (delta < 10 * WebMolKit.DEGRAD && delta < closeDelta) {
-                    closeSel = { 'type': GeomWidgetSelType.Link, 'idx': n };
+                    closeSel = { type: GeomWidgetSelType.Link, idx: n };
                     closeDelta = delta;
                 }
             }
@@ -22126,7 +22131,7 @@ var WebMolKit;
                 let midtheta = theta1 + 0.5 * (WebMolKit.angleDiff(theta2, theta1));
                 let delta = Math.abs(WebMolKit.angleDiff(midtheta, theta));
                 if (delta < closeDelta) {
-                    closeSel = { 'type': GeomWidgetSelType.Torsion, 'idx': n };
+                    closeSel = { type: GeomWidgetSelType.Torsion, idx: n };
                     closeDelta = delta;
                 }
             }
@@ -22165,7 +22170,7 @@ var WebMolKit;
                     }
                 if (!anything)
                     continue;
-                let lig = { 'atoms': cc, 'attach': [] };
+                let lig = { atoms: cc, attach: [] };
                 lig.atoms = cc;
                 let anyAttached = false;
                 for (let a of lig.atoms)
@@ -22569,10 +22574,10 @@ var WebMolKit;
             this.toClipboard = null;
             this.output =
                 {
-                    'mol': null,
-                    'currentAtom': -1,
-                    'currentBond': -1,
-                    'selectedMask': null
+                    mol: null,
+                    currentAtom: -1,
+                    currentBond: -1,
+                    selectedMask: null
                 };
             let na = this.input.mol.numAtoms;
             if (this.input.selectedMask == null)
@@ -25068,13 +25073,13 @@ var WebMolKit;
                 this.defineMolecule(mol, true, true, true);
                 return;
             }
-            let molact = new WebMolKit.MoleculeActivity(this.getState(), WebMolKit.ActivityType.QueryPaste, { 'qmol': mol });
+            let molact = new WebMolKit.MoleculeActivity(this.getState(), WebMolKit.ActivityType.QueryPaste, { qmol: mol });
             molact.execute();
             if (molact.output.mol) {
                 this.defineMolecule(molact.output.mol, false, true, true);
                 return;
             }
-            let param = { 'fragNative': mol.toString() };
+            let param = { fragNative: mol.toString() };
             new WebMolKit.MoleculeActivity(this.getState(), WebMolKit.ActivityType.TemplateFusion, param, this).execute();
         }
         pickTemplatePermutation(idx) {
@@ -25199,14 +25204,14 @@ var WebMolKit;
         determineDragGuide(order) {
             if (this.opAtom == 0 || this.mol.atomAdjCount(this.opAtom) == 0) {
                 let g = {
-                    'atom': this.opAtom,
-                    'orders': [order],
-                    'x': [],
-                    'y': [],
-                    'sourceX': this.opAtom == 0 ? this.clickX : this.angToX(this.mol.atomX(this.opAtom)),
-                    'sourceY': this.opAtom == 0 ? this.clickY : this.angToY(this.mol.atomY(this.opAtom)),
-                    'destX': [],
-                    'destY': []
+                    atom: this.opAtom,
+                    orders: [order],
+                    x: [],
+                    y: [],
+                    sourceX: this.opAtom == 0 ? this.clickX : this.angToX(this.mol.atomX(this.opAtom)),
+                    sourceY: this.opAtom == 0 ? this.clickY : this.angToY(this.mol.atomY(this.opAtom)),
+                    destX: [],
+                    destY: []
                 };
                 let mx = this.opAtom == 0 ? this.xToAng(this.clickX) : this.mol.atomX(this.opAtom);
                 let my = this.opAtom == 0 ? this.yToAng(this.clickY) : this.mol.atomY(this.opAtom);
@@ -25429,9 +25434,9 @@ var WebMolKit;
             if (!rx)
                 return;
             let param = {
-                'ringX': rx,
-                'ringY': ry,
-                'aromatic': aromatic
+                ringX: rx,
+                ringY: ry,
+                aromatic: aromatic
             };
             let molact = new WebMolKit.MoleculeActivity(this.getState(), WebMolKit.ActivityType.Ring, param, this);
             molact.execute();
@@ -25847,7 +25852,7 @@ var WebMolKit;
                     dlg.open();
                 }
                 else if (element) {
-                    let param = { 'element': element, 'keepAbbrev': true };
+                    let param = { element, keepAbbrev: true };
                     if (this.opAtom == 0) {
                         let x = this.xToAng(this.clickX), y = this.yToAng(this.clickY);
                         if (this.mol.numAtoms == 0) {
@@ -25867,7 +25872,7 @@ var WebMolKit;
             else if (this.dragType == WebMolKit.DraggingTool.Charge) {
                 if (this.opAtom > 0 || this.opBond > 0) {
                     let state = Object.assign(Object.assign({}, this.getState()), { 'currentAtom': this.opAtom, 'currentBond': this.opBond, 'selectedMask': null });
-                    let molact = new WebMolKit.MoleculeActivity(state, WebMolKit.ActivityType.Charge, { 'delta': this.toolChargeDelta }, this);
+                    let molact = new WebMolKit.MoleculeActivity(state, WebMolKit.ActivityType.Charge, { delta: this.toolChargeDelta }, this);
                     molact.execute();
                 }
             }
@@ -25875,9 +25880,9 @@ var WebMolKit;
                 let state = Object.assign(Object.assign({}, this.getState()), { 'currentAtom': this.opAtom, 'currentBond': this.opBond, 'selectedMask': null });
                 let molact;
                 if (this.toolBondType == WebMolKit.Molecule.BONDTYPE_NORMAL)
-                    molact = new WebMolKit.MoleculeActivity(state, WebMolKit.ActivityType.BondOrder, { 'order': this.toolBondOrder }, this);
+                    molact = new WebMolKit.MoleculeActivity(state, WebMolKit.ActivityType.BondOrder, { order: this.toolBondOrder }, this);
                 else
-                    molact = new WebMolKit.MoleculeActivity(state, WebMolKit.ActivityType.BondType, { 'type': this.toolBondType }, this);
+                    molact = new WebMolKit.MoleculeActivity(state, WebMolKit.ActivityType.BondType, { type: this.toolBondType }, this);
                 molact.execute();
             }
         }
@@ -25911,22 +25916,22 @@ var WebMolKit;
                 let [x0, y0, theta, magnitude] = this.determineDragTheta();
                 let degrees = -theta * WebMolKit.RADDEG;
                 let mx = this.xToAng(x0), my = this.yToAng(y0);
-                let molact = new WebMolKit.MoleculeActivity(this.getState(), WebMolKit.ActivityType.Rotate, { 'theta': degrees, 'centreX': mx, 'centreY': my }, this);
+                let molact = new WebMolKit.MoleculeActivity(this.getState(), WebMolKit.ActivityType.Rotate, { theta: degrees, centreX: mx, centreY: my }, this);
                 molact.execute();
             }
             else if (this.dragType == WebMolKit.DraggingTool.Move) {
                 let [dx, dy] = this.determineMoveDelta();
                 let scale = this.pointScale;
-                let molact = new WebMolKit.MoleculeActivity(this.getState(), WebMolKit.ActivityType.Move, { 'refAtom': this.opAtom, 'deltaX': dx / scale, 'deltaY': -dy / scale }, this);
+                let molact = new WebMolKit.MoleculeActivity(this.getState(), WebMolKit.ActivityType.Move, { refAtom: this.opAtom, deltaX: dx / scale, deltaY: -dy / scale }, this);
                 molact.execute();
             }
             else if (this.dragType == WebMolKit.DraggingTool.Ring) {
                 let [ringX, ringY] = this.determineFauxRing();
                 if (ringX != null) {
                     let param = {
-                        'ringX': ringX,
-                        'ringY': ringY,
-                        'aromatic': this.toolRingArom
+                        ringX: ringX,
+                        ringY: ringY,
+                        aromatic: this.toolRingArom
                     };
                     let molact = new WebMolKit.MoleculeActivity(this.getState(), WebMolKit.ActivityType.Ring, param, this);
                     molact.execute();
@@ -25938,13 +25943,13 @@ var WebMolKit;
                 if (snapTo != null)
                     [x2, y2] = snapTo;
                 let param = {
-                    'order': 1,
-                    'type': WebMolKit.Molecule.BONDTYPE_NORMAL,
-                    'element': this.toolAtomSymbol,
-                    'x1': this.mol.atomX(this.opAtom),
-                    'y1': this.mol.atomY(this.opAtom),
-                    'x2': this.xToAng(x2),
-                    'y2': this.yToAng(y2)
+                    order: 1,
+                    type: WebMolKit.Molecule.BONDTYPE_NORMAL,
+                    element: this.toolAtomSymbol,
+                    x1: this.mol.atomX(this.opAtom),
+                    y1: this.mol.atomY(this.opAtom),
+                    x2: this.xToAng(x2),
+                    y2: this.yToAng(y2)
                 };
                 if (this.toolAtomSymbol == 'A')
                     param.element = window.prompt('Enter element symbol:', '');
@@ -25959,7 +25964,7 @@ var WebMolKit;
                 if (snapTo != null) {
                     [x2, y2] = snapTo;
                     if (this.opBond > 0) {
-                        let toObj = this.pickObject(x2, y2, { 'noAtoms': true });
+                        let toObj = this.pickObject(x2, y2, { noAtoms: true });
                         if (toObj < 0) {
                             this.connectPolymerBlock(this.opBond, -toObj);
                             return;
@@ -25967,13 +25972,13 @@ var WebMolKit;
                     }
                 }
                 let param = {
-                    'order': this.toolBondOrder,
-                    'type': this.toolBondType,
-                    'element': 'C',
-                    'x1': this.opAtom == 0 ? this.xToAng(this.clickX) : this.mol.atomX(this.opAtom),
-                    'y1': this.opAtom == 0 ? this.yToAng(this.clickY) : this.mol.atomY(this.opAtom),
-                    'x2': this.xToAng(x2),
-                    'y2': this.yToAng(y2)
+                    order: this.toolBondOrder,
+                    type: this.toolBondType,
+                    element: 'C',
+                    x1: this.opAtom == 0 ? this.xToAng(this.clickX) : this.mol.atomX(this.opAtom),
+                    y1: this.opAtom == 0 ? this.yToAng(this.clickY) : this.mol.atomY(this.opAtom),
+                    x2: this.xToAng(x2),
+                    y2: this.yToAng(y2)
                 };
                 let molact = new WebMolKit.MoleculeActivity(this.getState(), WebMolKit.ActivityType.BondAtom, param, this);
                 molact.execute();
@@ -26095,13 +26100,13 @@ var WebMolKit;
         populateGroups() {
             let groups = this.subgroups.groups, titles = this.subgroups.titles, preview = this.subgroups.preview;
             for (let n = 0; n < groups.length; n++) {
-                this.buttons.push({ 'id': groups[n], 'metavec': preview[n], 'helpText': titles[n] });
+                this.buttons.push({ id: groups[n], metavec: preview[n], helpText: titles[n] });
             }
         }
         populateTemplates() {
             let names = this.templates.names, abbrev = this.templates.abbrev, mnemonic = this.templates.mnemonic, preview = this.templates.preview;
             for (let n = 0; n < names.length; n++) {
-                this.buttons.push({ 'id': n.toString(), 'metavec': preview[n], 'helpText': names[n] });
+                this.buttons.push({ id: n.toString(), metavec: preview[n], helpText: names[n] });
             }
         }
         hitButton(id) {
@@ -26110,7 +26115,7 @@ var WebMolKit;
             }
             else {
                 let idx = parseInt(id);
-                let param = { 'fragNative': this.templates.molecules[idx] };
+                let param = { fragNative: this.templates.molecules[idx] };
                 new WebMolKit.MoleculeActivity(this.owner.getState(), WebMolKit.ActivityType.TemplateFusion, param, this.owner).execute();
             }
         }
@@ -26125,7 +26130,7 @@ var WebMolKit;
             });
         }
         prepareSubGroups() {
-            this.subgroups = { 'groups': TemplateBank.resourceList, 'titles': [], 'preview': [] };
+            this.subgroups = { groups: TemplateBank.resourceList, titles: [], preview: [] };
             let sz = this.buttonView.idealSize, msz = 0.5 * (sz - 2);
             let policy = WebMolKit.RenderPolicy.defaultBlackOnWhite();
             policy.data.pointScale = 10;
@@ -26155,7 +26160,7 @@ var WebMolKit;
         prepareTemplates() {
             let idx = TemplateBank.resourceList.indexOf(this.group);
             let ds = TemplateBank.resourceData[idx];
-            this.templates = { 'molecules': [], 'names': [], 'abbrev': [], 'mnemonic': [], 'preview': [] };
+            this.templates = { molecules: [], names: [], abbrev: [], mnemonic: [], preview: [] };
             let sz = this.buttonView.idealSize;
             let policy = WebMolKit.RenderPolicy.defaultBlackOnWhite();
             policy.data.pointScale = 12;
@@ -26193,9 +26198,9 @@ var WebMolKit;
         }
         update() {
             this.buttons = [];
-            this.buttons.push({ 'id': 'accept', 'imageFN': 'GenericAccept', 'helpText': 'Apply this template.' });
-            this.buttons.push({ 'id': 'prev', 'imageFN': 'TemplatePrev', 'helpText': 'Show previous fusion option.' });
-            this.buttons.push({ 'id': 'next', 'imageFN': 'TemplateNext', 'helpText': 'Show next fusion option.' });
+            this.buttons.push({ id: 'accept', imageFN: 'GenericAccept', helpText: 'Apply this template.' });
+            this.buttons.push({ id: 'prev', imageFN: 'TemplatePrev', helpText: 'Show previous fusion option.' });
+            this.buttons.push({ id: 'next', imageFN: 'TemplateNext', helpText: 'Show next fusion option.' });
         }
         hitButton(id) {
             if (id == 'accept')
@@ -26979,32 +26984,32 @@ var WebMolKit;
         ToolBankItem["ElementPfx"] = "element:";
     })(ToolBankItem = WebMolKit.ToolBankItem || (WebMolKit.ToolBankItem = {}));
     const TOOLS_MAIN = [
-        { 'id': ToolBankItem.Arrow, 'imageFN': 'ToolSelect', 'helpText': 'Selection tool.', 'mnemonic': 'Escape' },
-        { 'id': ToolBankItem.Rotate, 'imageFN': 'ToolRotate', 'helpText': 'Rotate subject atoms.', 'mnemonic': '' },
-        { 'id': ToolBankItem.Pan, 'imageFN': 'ToolPan', 'helpText': 'Pan the viewport around the screen.', 'mnemonic': '' },
-        { 'id': ToolBankItem.Drag, 'imageFN': 'ToolDrag', 'helpText': 'Drag selected atoms to new positions.', 'mnemonic': '' },
-        { 'id': ToolBankItem.Erasor, 'imageFN': 'ToolErasor', 'helpText': 'Delete atoms or bonds by selecting.', 'mnemonic': 'Delete' },
-        { 'id': ToolBankItem.BondOrder0, 'imageFN': 'BondZero', 'helpText': 'Create or change a bond to zero order.', 'mnemonic': 'Shift+0', 'key': ')' },
-        { 'id': ToolBankItem.BondOrder1, 'imageFN': 'BondOne', 'helpText': 'Create or change a bond to single.', 'mnemonic': 'Shift+1', 'key': '!' },
-        { 'id': ToolBankItem.BondOrder2, 'imageFN': 'BondTwo', 'helpText': 'Create or change a bond to double.', 'mnemonic': 'Shift+2', 'key': '@' },
-        { 'id': ToolBankItem.BondOrder3, 'imageFN': 'BondThree', 'helpText': 'Create or change a bond to triple.', 'mnemonic': 'Shift+3', 'key': '#' },
-        { 'id': ToolBankItem.BondUnknown, 'imageFN': 'BondSquig', 'helpText': 'Create or change a bond to unknown stereochemistry.', 'mnemonic': 'Shift+4', 'key': '$' },
-        { 'id': ToolBankItem.BondInclined, 'imageFN': 'BondUp', 'helpText': 'Create or change a bond to up-wedge.', 'mnemonic': 'Shift+5', 'key': '%' },
-        { 'id': ToolBankItem.BondDeclined, 'imageFN': 'BondDown', 'helpText': 'Create or change a bond to down-wedge.', 'mnemonic': 'Shift+6', 'key': '^' },
-        { 'id': ToolBankItem.RingAliph, 'imageFN': 'ToolRing', 'helpText': 'Create plain ring.', 'mnemonic': 'Shift+7', 'key': '&' },
-        { 'id': ToolBankItem.RingArom, 'imageFN': 'ToolArom', 'helpText': 'Create aromatic ring.', 'mnemonic': 'Shift+8', 'key': '*' },
-        { 'id': ToolBankItem.AtomPlus, 'imageFN': 'AtomPlus', 'helpText': 'Increase charge on atom.', 'mnemonic': '' },
-        { 'id': ToolBankItem.AtomMinus, 'imageFN': 'AtomMinus', 'helpText': 'Decrease charge on atom.', 'mnemonic': '' },
-        { 'id': ToolBankItem.ElementPfx + 'C', 'text': 'C', 'helpText': 'Change elements to Carbon.', 'mnemonic': '' },
-        { 'id': ToolBankItem.ElementPfx + 'N', 'text': 'N', 'helpText': 'Change elements to Nitrogen.', 'mnemonic': '' },
-        { 'id': ToolBankItem.ElementPfx + 'O', 'text': 'O', 'helpText': 'Change elements to Oxygen.', 'mnemonic': '' },
-        { 'id': ToolBankItem.ElementPfx + 'S', 'text': 'S', 'helpText': 'Change elements to Sulfur.', 'mnemonic': '' },
-        { 'id': ToolBankItem.ElementPfx + 'P', 'text': 'P', 'helpText': 'Change elements to Phosphorus.', 'mnemonic': '' },
-        { 'id': ToolBankItem.ElementPfx + 'H', 'text': 'H', 'helpText': 'Change elements to Hydrogen.', 'mnemonic': '' },
-        { 'id': ToolBankItem.ElementPfx + 'F', 'text': 'F', 'helpText': 'Change elements to Fluorine.', 'mnemonic': '' },
-        { 'id': ToolBankItem.ElementPfx + 'Cl', 'text': 'Cl', 'helpText': 'Change elements to Chlorine.', 'mnemonic': '' },
-        { 'id': ToolBankItem.ElementPfx + 'Br', 'text': 'Br', 'helpText': 'Change elements to Bromine.', 'mnemonic': '' },
-        { 'id': ToolBankItem.ElementPfx + 'A', 'text': 'A', 'helpText': 'Pick other element.', 'mnemonic': '' }
+        { id: ToolBankItem.Arrow, imageFN: 'ToolSelect', helpText: 'Selection tool.', mnemonic: 'Escape' },
+        { id: ToolBankItem.Rotate, imageFN: 'ToolRotate', helpText: 'Rotate subject atoms.', mnemonic: '' },
+        { id: ToolBankItem.Pan, imageFN: 'ToolPan', helpText: 'Pan the viewport around the screen.', mnemonic: '' },
+        { id: ToolBankItem.Drag, imageFN: 'ToolDrag', helpText: 'Drag selected atoms to new positions.', mnemonic: '' },
+        { id: ToolBankItem.Erasor, imageFN: 'ToolErasor', helpText: 'Delete atoms or bonds by selecting.', mnemonic: 'Delete' },
+        { id: ToolBankItem.BondOrder0, imageFN: 'BondZero', helpText: 'Create or change a bond to zero order.', mnemonic: 'Shift+0', 'key': ')' },
+        { id: ToolBankItem.BondOrder1, imageFN: 'BondOne', helpText: 'Create or change a bond to single.', mnemonic: 'Shift+1', 'key': '!' },
+        { id: ToolBankItem.BondOrder2, imageFN: 'BondTwo', helpText: 'Create or change a bond to double.', mnemonic: 'Shift+2', 'key': '@' },
+        { id: ToolBankItem.BondOrder3, imageFN: 'BondThree', helpText: 'Create or change a bond to triple.', mnemonic: 'Shift+3', 'key': '#' },
+        { id: ToolBankItem.BondUnknown, imageFN: 'BondSquig', helpText: 'Create or change a bond to unknown stereochemistry.', mnemonic: 'Shift+4', 'key': '$' },
+        { id: ToolBankItem.BondInclined, imageFN: 'BondUp', helpText: 'Create or change a bond to up-wedge.', mnemonic: 'Shift+5', 'key': '%' },
+        { id: ToolBankItem.BondDeclined, imageFN: 'BondDown', helpText: 'Create or change a bond to down-wedge.', mnemonic: 'Shift+6', 'key': '^' },
+        { id: ToolBankItem.RingAliph, imageFN: 'ToolRing', helpText: 'Create plain ring.', mnemonic: 'Shift+7', 'key': '&' },
+        { id: ToolBankItem.RingArom, imageFN: 'ToolArom', helpText: 'Create aromatic ring.', mnemonic: 'Shift+8', 'key': '*' },
+        { id: ToolBankItem.AtomPlus, imageFN: 'AtomPlus', helpText: 'Increase charge on atom.', mnemonic: '' },
+        { id: ToolBankItem.AtomMinus, imageFN: 'AtomMinus', helpText: 'Decrease charge on atom.', mnemonic: '' },
+        { id: ToolBankItem.ElementPfx + 'C', 'text': 'C', helpText: 'Change elements to Carbon.', mnemonic: '' },
+        { id: ToolBankItem.ElementPfx + 'N', 'text': 'N', helpText: 'Change elements to Nitrogen.', mnemonic: '' },
+        { id: ToolBankItem.ElementPfx + 'O', 'text': 'O', helpText: 'Change elements to Oxygen.', mnemonic: '' },
+        { id: ToolBankItem.ElementPfx + 'S', 'text': 'S', helpText: 'Change elements to Sulfur.', mnemonic: '' },
+        { id: ToolBankItem.ElementPfx + 'P', 'text': 'P', helpText: 'Change elements to Phosphorus.', mnemonic: '' },
+        { id: ToolBankItem.ElementPfx + 'H', 'text': 'H', helpText: 'Change elements to Hydrogen.', mnemonic: '' },
+        { id: ToolBankItem.ElementPfx + 'F', 'text': 'F', helpText: 'Change elements to Fluorine.', mnemonic: '' },
+        { id: ToolBankItem.ElementPfx + 'Cl', 'text': 'Cl', helpText: 'Change elements to Chlorine.', mnemonic: '' },
+        { id: ToolBankItem.ElementPfx + 'Br', 'text': 'Br', helpText: 'Change elements to Bromine.', mnemonic: '' },
+        { id: ToolBankItem.ElementPfx + 'A', 'text': 'A', helpText: 'Pick other element.', mnemonic: '' }
     ];
     class ToolBank extends WebMolKit.ButtonBank {
         constructor(owner) {
@@ -27299,11 +27304,11 @@ var WebMolKit;
             this.addGripButton();
             if (popWidth > 0 || popHeight > 0) {
                 let d = {
-                    'id': '!',
-                    'x': outPadding + inPadding,
-                    'y': outPadding + inPadding,
-                    'width': popWidth - inPadding,
-                    'height': popHeight - inPadding
+                    id: '!',
+                    x: outPadding + inPadding,
+                    y: outPadding + inPadding,
+                    width: popWidth - inPadding,
+                    height: popHeight - inPadding
                 };
                 if (this.position == ButtonViewPosition.Right)
                     d.x += this.gripHeight;
@@ -27319,7 +27324,7 @@ var WebMolKit;
                 for (let x = 0; x < ncols; x++) {
                     for (let n = 0; n < bank.buttons.length; n++)
                         if (bestLayout[y][x] == bank.buttons[n].id) {
-                            let b = bank.buttons[n], d = { 'id': b.id };
+                            let b = bank.buttons[n], d = { id: b.id };
                             d.x = outPadding + inPadding + popWidth + (this.idealSize + inPadding) * x;
                             d.y = outPadding + inPadding + popHeight + (this.idealSize + inPadding) * y;
                             if (this.position == ButtonViewPosition.Right)
@@ -27335,7 +27340,7 @@ var WebMolKit;
         addGripButton() {
             if (this.position == ButtonViewPosition.Centre)
                 return;
-            let d = { 'id': '*' }, spc = 3;
+            let d = { id: '*' }, spc = 3;
             if (this.position == ButtonViewPosition.Left) {
                 d.width = this.gripHeight - spc;
                 d.height = this.gripWidth - 2 * spc;
@@ -32730,7 +32735,7 @@ var WebMolKit;
             });
         }
         add(title, func) {
-            this.tests.push({ 'title': title, 'func': func });
+            this.tests.push({ title, func });
         }
         get count() { return this.tests.length; }
         getTitle(idx) { return this.tests[idx].title; }

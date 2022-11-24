@@ -206,11 +206,11 @@ export class ArrangeMolecule
 			// proceed with a regular atom symbol
 			let a:APoint =
 			{
-				'anum': n,
-				'text': /*this.effects.showCarbon ||*/ mol.atomExplicit(n) || CoordUtil.atomIsWeirdLinear(mol, n) ? mol.atomElement(n) : null,
-				'fsz': this.fontSizePix,
-				'col': this.policy.data.atomCols[mol.atomicNumber(n)],
-				'oval': new Oval(this.measure.angToX(mol.atomX(n)), this.measure.angToY(mol.atomY(n)), 0, 0)
+				anum: n,
+				text: /*this.effects.showCarbon ||*/ mol.atomExplicit(n) || CoordUtil.atomIsWeirdLinear(mol, n) ? mol.atomElement(n) : null,
+				fsz: this.fontSizePix,
+				col: this.policy.data.atomCols[mol.atomicNumber(n)],
+				oval: new Oval(this.measure.angToX(mol.atomX(n)), this.measure.angToY(mol.atomY(n)), 0, 0)
 			};
 			let overCol = this.effects.colAtom[n];
 			if (overCol) a.col = overCol;
@@ -285,14 +285,14 @@ export class ArrangeMolecule
 					let lx1 = xy1[0] + v * oxy[0], ly1 = xy1[1] + v * oxy[1], lx2 = xy2[0] + v * oxy[0], ly2 = xy2[1] + v * oxy[1];
 					let b:BLine =
 					{
-						'bnum': n,
-						'bfr': bfr,
-						'bto': bto,
-						'type': BLineType.Dotted,
-						'line': new Line(lx1, ly1, lx2, ly2),
-						'size': 0.5 * sz,
-						'head': head,
-						'col': (col & 0xFFFFFF) | 0x80000000,
+						bnum: n,
+						bfr,
+						bto,
+						type: BLineType.Dotted,
+						line: new Line(lx1, ly1, lx2, ly2),
+						size: 0.5 * sz,
+						head,
+						col: (col & 0xFFFFFF) | 0x80000000,
 					};
 					this.lines.push(b);
 					this.space.push(this.computeSpaceLine(b));
@@ -303,11 +303,11 @@ export class ArrangeMolecule
 
 				let a:APoint =
 				{
-					'anum': 0,
-					'text': qtxt,
-					'fsz': 0.35 * this.fontSizePix,
-					'col': col,
-					'oval': new Oval(0.5 * (xy1[0] + xy2[0]), 0.5 * (xy1[1] + xy2[1]), 0, 0),
+					anum: 0,
+					text: qtxt,
+					fsz: 0.35 * this.fontSizePix,
+					col,
+					oval: new Oval(0.5 * (xy1[0] + xy2[0]), 0.5 * (xy1[1] + xy2[1]), 0, 0),
 					rotation
 				};
 				this.points.push(a);
@@ -382,14 +382,14 @@ export class ArrangeMolecule
 					let lx1 = xy1[0] + v * oxy[0], ly1 = xy1[1] + v * oxy[1], lx2 = xy2[0] + v * oxy[0], ly2 = xy2[1] + v * oxy[1];
 					let b:BLine =
 					{
-						'bnum': n,
-						'bfr': bfr,
-						'bto': bto,
-						'type': ltype,
-						'line': new Line(lx1, ly1, lx2, ly2),
-						'size': sz,
-						'head': head,
-						'col': col
+						bnum: n,
+						bfr,
+						bto,
+						type: ltype,
+						line: new Line(lx1, ly1, lx2, ly2),
+						size: sz,
+						head,
+						col
 					};
 					this.lines.push(b);
 					this.space.push(this.computeSpaceLine(b));
@@ -400,14 +400,14 @@ export class ArrangeMolecule
 				// just one line, of whatever style was determined
 				let b:BLine =
 				{
-					'bnum': n,
-					'bfr': bfr,
-					'bto': bto,
-					'type': ltype,
-					'line': new Line(xy1[0], xy1[1], xy2[0], xy2[1]),
-					'size': sz,
-					'head': head,
-					'col': col
+					bnum: n,
+					bfr,
+					bto,
+					type: ltype,
+					line: new Line(xy1[0], xy1[1], xy2[0], xy2[1]),
+					size: sz,
+					head,
+					col
 				};
 				this.lines.push(b);
 				this.space.push(this.computeSpaceLine(b));
@@ -483,11 +483,11 @@ export class ArrangeMolecule
 			let box = new Box(a.oval.cx - dw, a.oval.cy - dw, 2 * dw, 2 * dw);
 			let spc:SpaceFiller =
 			{
-				'anum': 0,
-				'bnum': 0,
-				'box': box,
-				'px': [box.minX(), box.maxX(), box.maxX(), box.minX()],
-				'py': [box.minY(), box.minY(), box.maxY(), box.maxY()]
+				anum: 0,
+				bnum: 0,
+				box,
+				px: [box.minX(), box.maxX(), box.maxX(), box.minX()],
+				py: [box.minY(), box.minY(), box.maxY(), box.maxY()]
 			};
 			this.space.push(spc);
 		}
@@ -845,7 +845,7 @@ export class ArrangeMolecule
 				let ox = dy * inv * 2.5 * r, oy = -dx * inv * 2.5 * r;
 				let ext = 1.2 * (rw + rh) * inv;
 				[dx, dy] = [dx * ext, dy * ext];
-				
+
 				this.points.push({anum: 0, text: '.', fsz, col, oval: new Oval(cx + dx + ox, cy + dy + oy, r, r)});
 				this.points.push({anum: 0, text: '.', fsz, col, oval: new Oval(cx + dx - ox, cy + dy - oy, r, r)});
 				return;
@@ -889,11 +889,11 @@ export class ArrangeMolecule
 		// create a point for it
 		a =
 		{
-			'anum': 0,
-			'text': str,
-			'fsz': fsz,
-			'col': col,
-			'oval': new Oval(cx + bestDX, cy + bestDY, rw, rh)
+			anum: 0,
+			text: str,
+			fsz,
+			col,
+			oval: new Oval(cx + bestDX, cy + bestDY, rw, rh)
 		};
 		this.points.push(a);
 
@@ -901,11 +901,11 @@ export class ArrangeMolecule
 		// TODO: spacefiller should use the glyph rather than just a box...
 		let spc:SpaceFiller =
 		{
-			'anum': 0,
-			'bnum': 0,
-			'box': new Box(a.oval.cx - rw, a.oval.cy - rh, 2 * rw, 2 * rh),
-			'px': [a.oval.cx - rw, a.oval.cx + rw, a.oval.cx + rw, a.oval.cx - rw],
-			'py': [a.oval.cy - rh, a.oval.cy - rh, a.oval.cy + rh, a.oval.cy + rh]
+			anum: 0,
+			bnum: 0,
+			box: new Box(a.oval.cx - rw, a.oval.cy - rh, 2 * rw, 2 * rh),
+			px: [a.oval.cx - rw, a.oval.cx + rw, a.oval.cx + rw, a.oval.cx - rw],
+			py: [a.oval.cy - rh, a.oval.cy - rh, a.oval.cy + rh, a.oval.cy + rh]
 		};
 		this.space.push(spc);
 	}
@@ -1033,11 +1033,11 @@ export class ArrangeMolecule
 		{
 			let a:APoint =
 			{
-				'anum': (n == refchunk || (primary != null && primary[n])) ? anum : 0,
-				'text': chunks[n],
-				'fsz': this.fontSizePix,
-				'col': this.policy.data.atomCols[this.mol.atomicNumber(anum)],
-				'oval': new Oval(x + 0.5 * chunkw[n], y, 0.5 * chunkw[n] * PADDING, 0.5 * this.fontSizePix * PADDING)
+				anum: (n == refchunk || (primary != null && primary[n])) ? anum : 0,
+				text: chunks[n],
+				fsz: this.fontSizePix,
+				col: this.policy.data.atomCols[this.mol.atomicNumber(anum)],
+				oval: new Oval(x + 0.5 * chunkw[n], y, 0.5 * chunkw[n] * PADDING, 0.5 * this.fontSizePix * PADDING)
 			};
 
 			if (position != null && position[n] != 0)
@@ -1347,25 +1347,25 @@ export class ArrangeMolecule
 
 		let b1:BLine =
 		{
-			'bnum': idx,
-			'bfr': bfr,
-			'bto': bto,
-			'type': lt,
-			'line': new Line(ax1, ay1, ax2, ay2),
-			'size': sz,
-			'head': head,
-			'col': col
+			bnum: idx,
+			bfr,
+			bto,
+			type: lt,
+			line: new Line(ax1, ay1, ax2, ay2),
+			size: sz,
+			head,
+			col
 		};
 		let b2:BLine =
 		{
-			'bnum': idx,
-			'bfr': bfr,
-			'bto': bto,
-			'type': lt,
-			'line': new Line(bx1, by1, bx2, by2),
-			'size': sz,
-			'head': head,
-			'col': col
+			bnum: idx,
+			bfr,
+			bto,
+			type: lt,
+			line: new Line(bx1, by1, bx2, by2),
+			size: sz,
+			head,
+			col
 		};
 
 		this.lines.push(b1);
@@ -1540,11 +1540,11 @@ export class ArrangeMolecule
 		const PADDING = 1.1;
 		let ah:APoint =
 		{
-			'anum': 0,
-			'text': 'H',
-			'fsz': a.fsz,
-			'col': a.col,
-			'oval': new Oval(a.oval.cx + dx, a.oval.cy + dy, 0.5 * wad[0] * PADDING, 0.5 * wad[1] * PADDING)
+			anum: 0,
+			text: 'H',
+			fsz: a.fsz,
+			col: a.col,
+			oval: new Oval(a.oval.cx + dx, a.oval.cy + dy, 0.5 * wad[0] * PADDING, 0.5 * wad[1] * PADDING)
 		};
 		this.points.push(ah);
 
@@ -1554,11 +1554,11 @@ export class ArrangeMolecule
 			wad = this.measure.measureText(sub, subFsz);
 			let an:APoint =
 			{
-				'anum': 0,
-				'text': sub,
-				'fsz': subFsz,
-				'col': a.col,
-				'oval': new Oval(ah.oval.cx + 0.5 * firstEMW * a.fsz * font.INV_UNITS_PER_EM + 0.5 * wad[0],
+				anum: 0,
+				text: sub,
+				fsz: subFsz,
+				col: a.col,
+				oval: new Oval(ah.oval.cx + 0.5 * firstEMW * a.fsz * font.INV_UNITS_PER_EM + 0.5 * wad[0],
 								 ah.oval.cy + (1 - SSFRACT) * a.fsz, 0.5 * wad[0] * PADDING, 0.5 * wad[1] * PADDING)
 			};
 			this.points.push(an);
@@ -1570,11 +1570,11 @@ export class ArrangeMolecule
 		let minX = Vec.min(outlineX), minY = Vec.min(outlineY);
 		let spc:SpaceFiller =
 		{
-			'anum': 0,
-			'bnum': 0,
-			'box': new Box(minX, minY, Vec.max(outlineX) - minX, Vec.max(outlineY) - minY),
-			'px': outlineX,
-			'py': outlineY
+			anum: 0,
+			bnum: 0,
+			box: new Box(minX, minY, Vec.max(outlineX) - minX, Vec.max(outlineY) - minY),
+			px: outlineX,
+			py: outlineY
 		};
 		this.space.push(spc);
 
@@ -1586,11 +1586,11 @@ export class ArrangeMolecule
 	{
 		let s:SpaceFiller =
 		{
-			'anum': a.anum,
-			'bnum': 0,
-			'box': new Box(),
-			'px': [],
-			'py': []
+			anum: a.anum,
+			bnum: 0,
+			box: new Box(),
+			px: [],
+			py: []
 		};
 
 		const font = FontData.main;
@@ -1673,11 +1673,11 @@ export class ArrangeMolecule
 	{
 		let s:SpaceFiller =
 		{
-			'anum': 0,
-			'bnum': b.bnum,
-			'box': new Box(),
-			'px': [],
-			'py': []
+			anum: 0,
+			bnum: b.bnum,
+			box: new Box(),
+			px: [],
+			py: []
 		};
 		if (b.type == BLineType.Normal || b.type == BLineType.Dotted || b.type == BLineType.DotDir)
 		{
@@ -1976,22 +1976,22 @@ export class ArrangeMolecule
 		// create a point for it
 		let an:APoint =
 		{
-			'anum': 0,
-			'text': text,
-			'fsz': fsz,
-			'col': col,
-			'oval': new Oval(x, y, rw, rh),
+			anum: 0,
+			text,
+			fsz,
+			col,
+			oval: new Oval(x, y, rw, rh),
 		};
 		this.points.push(an);
 
 		// create a square spacefiller
 		let spc:SpaceFiller =
 		{
-			'anum': 0,
-			'bnum': 0,
-			'box': new Box(x - rw, y - rh, 2 * rw, 2 * rh),
-			'px': [x - rw, x + rw, x + rw, x - rw],
-			'py': [y - rh, y - rh, y + rh, y + rh],
+			anum: 0,
+			bnum: 0,
+			box: new Box(x - rw, y - rh, 2 * rw, 2 * rh),
+			px: [x - rw, x + rw, x + rw, x - rw],
+			py: [y - rh, y - rh, y + rh, y + rh],
 		};
 		this.space.push(spc);
 	}
@@ -2056,22 +2056,22 @@ export class ArrangeMolecule
 		// create a point for it
 		let an:APoint =
 		{
-			'anum': 0,
-			'text': text,
-			'fsz': fsz,
-			'col': col,
-			'oval': new Oval(x, y, rw, rh),
+			anum: 0,
+			text,
+			fsz,
+			col,
+			oval: new Oval(x, y, rw, rh),
 		};
 		this.points.push(an);
 
 		// create a square spacefiller
 		let spc:SpaceFiller =
 		{
-			'anum': 0,
-			'bnum': 0,
-			'box': new Box(x - rw, y - rh, 2 * rw, 2 * rh),
-			'px': [x - rw, x + rw, x + rw, x - rw],
-			'py': [y - rh, y - rh, y + rh, y + rh],
+			anum: 0,
+			bnum: 0,
+			box: new Box(x - rw, y - rh, 2 * rw, 2 * rh),
+			px: [x - rw, x + rw, x + rw, x - rw],
+			py: [y - rh, y - rh, y + rh, y + rh],
 		};
 		this.space.push(spc);
 	}
@@ -2157,14 +2157,14 @@ export class ArrangeMolecule
 					{
 						let b3:BLine =
 						{
-							'bnum': b2.bnum,
-							'bfr': b2.bfr,
-							'bto': b2.bto,
-							'type': b2.type,
-							'line': b2.line.clone(),
-							'size': b2.size,
-							'head': b2.head,
-							'col': b2.col
+							bnum: b2.bnum,
+							bfr: b2.bfr,
+							bto: b2.bto,
+							type: b2.type,
+							line: b2.line.clone(),
+							size: b2.size,
+							head: b2.head,
+							col: b2.col
 						};
 						this.lines.push(b3);
 						b2.line.x2 = b2.line.x1 + dx * (ext - delta);
@@ -2394,9 +2394,14 @@ export class ArrangeMolecule
 
 		let b:BLine =
 		{
-			'bnum': 0, 'bfr': from, 'bto': 0,
-			'type': BLineType.Normal, 'line': new Line(xy1[0], xy1[1], x2, y2),
-			'size': this.lineSizePix, 'head': 0, 'col': this.policy.data.foreground
+			bnum: 0,
+			bfr: from,
+			bto: 0,
+			type: BLineType.Normal,
+			line: new Line(xy1[0], xy1[1], x2, y2),
+			size: this.lineSizePix,
+			head: 0,
+			col: this.policy.data.foreground
 		};
 		this.lines.push(b);
 		this.space.push(this.computeSpaceLine(b));
@@ -2474,22 +2479,22 @@ export class ArrangeMolecule
 		// create a point for it
 		let a:APoint =
 		{
-			'anum': 0,
-			'text': str,
-			'fsz': fsz,
-			'col': this.policy.data.foreground,
-			'oval': new Oval(this.measure.angToX(bestX), this.measure.angToY(bestY), rw, rh)
+			anum: 0,
+			text: str,
+			fsz,
+			col: this.policy.data.foreground,
+			oval: new Oval(this.measure.angToX(bestX), this.measure.angToY(bestY), rw, rh)
 		};
 		this.points.push(a);
 
 		// create a square spacefiller
 		let spc:SpaceFiller =
 		{
-			'anum': 0,
-			'bnum': 0,
-			'box': new Box(a.oval.cx - rw, a.oval.cy - rh, 2 * rw, 2 * rh),
-			'px': [a.oval.cx - rw, a.oval.cx + rw, a.oval.cx + rw, a.oval.cx - rw],
-			'py': [a.oval.cy - rh, a.oval.cy - rh, a.oval.cy + rh, a.oval.cy + rh]
+			anum: 0,
+			bnum: 0,
+			box: new Box(a.oval.cx - rw, a.oval.cy - rh, 2 * rw, 2 * rh),
+			px: [a.oval.cx - rw, a.oval.cx + rw, a.oval.cx + rw, a.oval.cx - rw],
+			py: [a.oval.cy - rh, a.oval.cy - rh, a.oval.cy + rh, a.oval.cy + rh]
 		};
 		this.space.push(spc);
 	}
@@ -2532,7 +2537,7 @@ export class ArrangeMolecule
 			bracket.y1 = mol.atomY(bracket.a1);
 			bracket.x2 = mol.atomX(bracket.a2);
 			bracket.y2 = mol.atomY(bracket.a2);
-			
+
 			bracket.shared = false;
 			for (let other of allUnits) if (unit !== other && other.atoms.includes(bracket.a2))
 			{

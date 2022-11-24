@@ -532,9 +532,9 @@ export class EditAtom extends Dialog
 
 			let entry:EditAtomAbbrev =
 			{
-				'tr': dom('<tr/>').appendTo(this.tableAbbrev),
-				'idx': n,
-				'bgcol': this.abbrevEntries.length % 2 == 0 ? '#FFFFFF' : '#F8F8F8'
+				tr: dom('<tr/>').appendTo(this.tableAbbrev),
+				idx: n,
+				bgcol: this.abbrevEntries.length % 2 == 0 ? '#FFFFFF' : '#F8F8F8'
 			};
 			entry.tr.setCSS('background-color', this.currentAbbrev == entry.idx ? colourCode(Theme.lowlight) : entry.bgcol);
 			let tdLabel = dom('<td/>').appendTo(entry.tr), tdStruct = dom('<td/>').appendTo(entry.tr);
