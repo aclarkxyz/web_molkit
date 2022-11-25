@@ -1531,9 +1531,9 @@ export class Sketcher extends DrawCanvas
 				let state =
 				{
 					...this.getState(),
-					'currentAtom': this.opAtom,
-					'currentBond': 0,
-					'selectedMask': null as boolean[]
+					currentAtom: this.opAtom,
+					currentBond: 0,
+					selectedMask: null as boolean[]
 				};
 				let molact = new MoleculeActivity(state, ActivityType.Element, param, this);
 				molact.execute();
@@ -1546,9 +1546,9 @@ export class Sketcher extends DrawCanvas
 				let state =
 				{
 					...this.getState(),
-					'currentAtom': this.opAtom,
-					'currentBond': this.opBond,
-					'selectedMask': null as boolean[]
+					currentAtom: this.opAtom,
+					currentBond: this.opBond,
+					selectedMask: null as boolean[]
 				};
 				let molact = new MoleculeActivity(state, ActivityType.Charge, {delta: this.toolChargeDelta}, this);
 				molact.execute();
@@ -1559,9 +1559,9 @@ export class Sketcher extends DrawCanvas
 			let state =
 			{
 				...this.getState(),
-				'currentAtom': this.opAtom,
-				'currentBond': this.opBond,
-				'selectedMask': null as boolean[]
+				currentAtom: this.opAtom,
+				currentBond: this.opBond,
+				selectedMask: null as boolean[]
 			};
 			let molact:MoleculeActivity;
 			if (this.toolBondType == Molecule.BONDTYPE_NORMAL)
@@ -1595,9 +1595,9 @@ export class Sketcher extends DrawCanvas
 				let state =
 				{
 					...this.getState(),
-					'currentAtom': 0,
-					'currentBond': 0,
-					'selectedMask': this.lassoMask
+					currentAtom: 0,
+					currentBond: 0,
+					selectedMask: this.lassoMask
 				};
 				let molact = new MoleculeActivity(state, ActivityType.Delete, {}, this);
 				molact.execute();
