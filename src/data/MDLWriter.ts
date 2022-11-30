@@ -27,6 +27,11 @@ interface Sgroup
 	type:string;
 	name:string;
 	atoms:number[];
+
+	// DAT only
+	value?:string;
+	unit?:string;
+	query?:string;
 }
 
 const VPFX = 'M  V30 ';
@@ -103,7 +108,7 @@ export class MDLMOLWriter
 		mol.keepTransient = true;
 
 		// if allowed to write Sgroups, some abbreviations may be retained for the subsequent steps
-		if (MolUtil.hasAnyAbbrev(mol) || ForeignMolecule.hasAnySgroupMultiAttach(mol) || ForeignMolecule.hasAnySgroupMultiRepeat(mol))
+		if (MolUtil.hasAnyAbbrev(mol) || ForeignMolecule.hasAnySgroupMultiAttach(mol) || ForeignMolecule.hasAnySgroupMultiRepeat(mol) || ForeignMolecule.hasAnySgroupData(mol))
 		{
 			if (this.abbrevSgroups)
 				this.partialAbbrevExpansion();
@@ -129,7 +134,7 @@ export class MDLMOLWriter
 			atomList1.push(line);
 
 			line = 'M  ALS ' + this.intrpad(n, 3) + this.intrpad(elements.length, 3) + ' ' + logic + ' ';
-			for (let el of elements) line += this.rpad(el, 4);
+			for (let el of elements) line += this.pad(el, 4);
 			atomList2.push(line);
 		}
 
@@ -268,7 +273,7 @@ export class MDLMOLWriter
 				for (let i = 0; i < sz; i++) line += this.intrpad(sg.atoms[n + i], 4);
 				this.lines.push(line);
 			}
-			this.lines.push('M  SMT' + sidx + ' ' + sg.name);
+			if (sg.type != 'DAT') this.lines.push('M  SMT' + sidx + ' ' + sg.name);
 			if (sg.type == 'MUL')
 			{
 				let mult = parseInt(sg.name), unit = sg.atoms.length / mult;
@@ -279,6 +284,11 @@ export class MDLMOLWriter
 					for (let i = 0; i < sz; i++) line += this.intrpad(sg.atoms[n + i], 4);
 					this.lines.push(line);
 				}
+			}
+			if (sg.type == 'DAT')
+			{
+				this.lines.push('M  SDT' + sidx + ' ' + this.pad(sg.name, 32) + this.pad(sg.unit, 20) + sg.query);
+				this.lines.push('M  SED' + sidx + ' ' + sg.value);
 			}
 		}
 
@@ -340,6 +350,11 @@ export class MDLMOLWriter
 	private rpad(str:string, sz:number):string
 	{
 		while (str.length < sz) str = ' ' + str;
+		return str;
+	}
+	private pad(str:string, sz:number):string
+	{
+		while (str.length < sz) str += ' ';
 		return str;
 	}
 
@@ -429,6 +444,7 @@ export class MDLMOLWriter
 		// also encode foreign-annotated Sgroups
 		for (let ma of ForeignMolecule.noteAllSgroupMultiAttach(mol)) this.sgroups.push({type: 'SUP', name: ma.name, atoms: ma.atoms});
 		for (let mr of ForeignMolecule.noteAllSgroupMultiRepeat(mol)) this.sgroups.push({type: 'MUL', name: mr.mult.toString(), atoms: mr.atoms});
+		for (let dat of ForeignMolecule.noteAllSgroupData(mol)) this.sgroups.push({type: 'DAT', name: dat.name, value: dat.value, unit: dat.unit, query: dat.query, atoms: dat.atoms});
 	}
 
 	// use a variant of Sgroups for any polymer blocks
@@ -470,7 +486,7 @@ export class MDLMOLWriter
 		let mol = this.mol;
 
 		// if allowed to write Sgroups, some abbreviations may be retained for the subsequent steps
-		if (MolUtil.hasAnyAbbrev(mol) || ForeignMolecule.hasAnySgroupMultiAttach(mol) || ForeignMolecule.hasAnySgroupMultiRepeat(mol))
+		if (MolUtil.hasAnyAbbrev(mol) || ForeignMolecule.hasAnySgroupMultiAttach(mol) || ForeignMolecule.hasAnySgroupMultiRepeat(mol) || ForeignMolecule.hasAnySgroupData(mol))
 		{
 			mol = this.mol = mol.clone();
 			mol.keepTransient = true;
@@ -596,12 +612,18 @@ export class MDLMOLWriter
 				txt += ' LABEL=' + (sg.name.includes(' ') ? `"${sg.name}"` : sg.name);
 				txt += ' ATOMS=' + this.packV3000List(sg.atoms);
 			}
-			else // 'MUL'
+			else if (sg.type == 'MUL')
 			{
 				let mult = parseInt(sg.name), unit = sg.atoms.length / mult;
 				txt += ' MULT=' + sg.name;
 				txt += ' ATOMS=' + this.packV3000List(sg.atoms);
 				txt += ' PATOMS=' + this.packV3000List(sg.atoms.slice(0, unit));
+			}
+			else if (sg.type == 'DAT')
+			{
+				txt += ' ATOMS=' + this.packV3000List(sg.atoms);
+				txt += ' FIELDNAME=' + (sg.name.includes(' ') ? `"${sg.name}"` : sg.name);
+				txt += ' FIELDDATA=' + (sg.value.includes(' ') ? `"${sg.value}"` : sg.value);
 			}
 			lines.push(txt);
 		}

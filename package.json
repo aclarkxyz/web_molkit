@@ -5,7 +5,7 @@
 		"electron": "^9.0",
 		"electron-packager": "^8.1.0",
 		"typescript": "^4.8",
-		"eslint": "^7.0",
+		"eslint": "7.15",
 		"@typescript-eslint/parser": "^4.7",
 		"@typescript-eslint/eslint-plugin": "^4.7"
 	},

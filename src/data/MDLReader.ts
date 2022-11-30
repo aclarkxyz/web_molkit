@@ -71,6 +71,11 @@ export interface MDLReaderSuperAtom
 	connectType?:string;
 	bonds?:number[];
 	bondConn?:number[];
+
+	// data groups
+	value?:string;
+	unit?:string;
+	query?:string;
 }
 
 export class MDLMOLReader
@@ -285,7 +290,7 @@ export class MDLMOLReader
 					let stype = line.substring(14 + 8 * n, 17 + 8 * n);
 					if (stype == 'SUP') superatoms.set(idx, {atoms: [], name: null});
 					else if (stype == 'MIX' || stype == 'FOR') mixtures.set(idx, {index: idx, parent: 0, atoms: [], type: stype});
-					else if (stype == 'SRU' || stype == 'COP' || stype == 'MUL') superatoms.set(idx, {atoms: [], name: null, bracketType: stype});
+					else if (stype == 'SRU' || stype == 'COP' || stype == 'MUL' || stype == 'DAT') superatoms.set(idx, {atoms: [], name: null, bracketType: stype});
 				}
 			}
 			else if (line.startsWith('M  SPL'))
@@ -336,6 +341,23 @@ export class MDLMOLReader
 				let idx = parseInt(line.substring(6, 10).trim());
 				let sup = superatoms.get(idx);
 				if (sup != null) sup.name = line.substring(11).trim();
+			}
+			else if (line.startsWith('M  SDT'))
+			{
+				let idx = parseInt(line.substring(6, 10).trim());
+				let sup = superatoms.get(idx);
+				if (sup)
+				{
+					sup.name = line.substring(11, 43).trim();
+					sup.unit = line.substring(43, 63).trim();
+					sup.query = line.substring(63).trim();
+				}
+			}
+			else if (line.startsWith('M  SED'))
+			{
+				let idx = parseInt(line.substring(6, 10).trim());
+				let sup = superatoms.get(idx);
+				if (sup) sup.value = line.substring(11).trim();
 			}
 			else if (line.startsWith('M  SCN'))
 			{
@@ -804,7 +826,7 @@ export class MDLMOLReader
 				}
 				this.groupMixtures.push(mix);
 			}
-			else if (bits.length > 3 && idx > 0 && (bits[1] == 'SRU' || bits[1] == 'COP' || bits[1] == 'MUL') /*&& parseInt(bits[2]) == idx*/)
+			else if (bits.length > 3 && idx > 0 && (bits[1] == 'SRU' || bits[1] == 'COP' || bits[1] == 'MUL' || bits[1] == 'DAT'))
 			{
 				let sup:MDLReaderSuperAtom = {atoms: [], name: null, bracketType: bits[1]};
 				for (let i = 3; i < bits.length; i++)
@@ -815,6 +837,8 @@ export class MDLMOLReader
 					else if (bits[i].startsWith('CONNECT=')) sup.connectType = bits[i].substring(8);
 					else if (bits[i].startsWith('XBCORR=')) sup.bondConn = this.unpackList(bits[i].substring(7));
 					else if (bits[i].startsWith('MULT=')) sup.name = this.withoutQuotes(bits[i].substring(5));
+					else if (bits[i].startsWith('FIELDNAME=')) sup.name = this.withoutQuotes(bits[i].substring(10));
+					else if (bits[i].startsWith('FIELDDATA=')) sup.value = this.withoutQuotes(bits[i].substring(10));
 				}
 				superatoms.set(idx, sup);
 			}
@@ -905,6 +929,11 @@ export class MDLMOLReader
 		{
 			let mult = parseInt(sup.name);
 			ForeignMolecule.markSgroupMultiRepeat(this.mol, mult, sup.atoms);
+			return;
+		}
+		if (sup.bracketType == 'DAT')
+		{
+			if (sup.atoms != null) ForeignMolecule.markSgroupData(this.mol, sup.name, sup.value, sup.unit, sup.query, sup.atoms);
 			return;
 		}
 

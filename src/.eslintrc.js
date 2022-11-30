@@ -66,7 +66,7 @@ module.exports =
 		'no-trailing-spaces': ['error', {'skipBlankLines': true, 'ignoreComments': true}],
 		'no-multi-spaces': ['error'],
 		'no-undef-init': ['error'],
-		'quote-props': ['error', 'always'],
+		//'quote-props': ['error', 'always'],
 		'semi': ['error', 'always'],
 		'space-before-function-paren': ['error', {'anonymous': 'never', 'named': 'never', 'asyncArrow': 'always'}],
 		'space-in-parens': ['error', 'never'],

@@ -42,6 +42,7 @@ export enum ForeignMoleculeTransient
 	AtomExplicitValence = 'yMDL_EXPLICIT_VALENCE',
 	AtomSgroupMultiAttach = 'yMDL_SGROUP_MULTIATTACH',
 	AtomSgroupMultiRepeat = 'yMDL_SGROUP_MULTIREPEAT',
+	AtomSgroupData = 'yMDL_SGROUP_DATA',
 }
 
 export interface ForeignMoleculeSgroupMultiAttach
@@ -54,6 +55,15 @@ export interface ForeignMoleculeSgroupMultiRepeat
 {
 	mult:number;
 	unit:number;
+	atoms:number[];
+}
+
+export interface ForeignMoleculeSgroupData
+{
+	name:string;
+	value:string;
+	unit:string;
+	query:string;
 	atoms:number[];
 }
 
@@ -132,7 +142,7 @@ export class ForeignMolecule
 			if (!(idx > 0)) continue;
 
 			let sgm = map[idx];
-			if (sgm) sgm.atoms.push(n); else map[idx] = {name, 'atoms': [n]};
+			if (sgm) sgm.atoms.push(n); else map[idx] = {name, atoms: [n]};
 		}
 
 		return Object.values(map);
@@ -176,10 +186,58 @@ export class ForeignMolecule
 			if (!(idx > 0) || mult < 2 || unit < 1 || pos < 1 || pos > mult * unit) continue;
 
 			let mr = map[idx];
-			if (mr == null) map[idx] = mr = {mult, unit, 'atoms': Vec.numberArray(0, mult * unit)};
+			if (mr == null) map[idx] = mr = {mult, unit, atoms: Vec.numberArray(0, mult * unit)};
 			else if (mr.mult != mult || mr.unit != unit) continue;
 
 			mr.atoms[pos - 1] = n;
+		}
+
+		return Object.values(map);
+	}
+
+	// data S-groups can attach arbitrary data concepts to a group of atoms
+	public static markSgroupData(mol:Molecule, name:string, value:string, unit:string, query:string, atoms:number[]):void
+	{
+		let idxHigh = 0;
+		for (let n = 1; n <= mol.numAtoms; n++) for (let tag of mol.atomTransient(n)) if (tag.startsWith(ForeignMoleculeTransient.AtomSgroupData + ':'))
+		{
+			let payload = tag.substring(ForeignMoleculeTransient.AtomSgroupData.length + 1);
+			let comma = payload.indexOf(',');
+			if (comma <= 0) continue;
+			let idx = parseInt(payload.substring(0, comma));
+			if (idx <= 0) continue;
+			idxHigh = Math.max(idxHigh, idx);
+		}
+
+		let bits = [(idxHigh + 1).toString(), name, value, unit, query];
+		for (let n = 1; n < bits.length; n++) bits[n] = (bits[n] ?? '').replace(/\,/g, '@@');
+		let tag = ForeignMoleculeTransient.AtomSgroupData + ':' + bits.join(',');
+		for (let n = 0; n < atoms.length; n++) mol.setAtomTransient(atoms[n], Vec.append(mol.atomTransient(atoms[n]), tag));
+	}
+	public static hasAnySgroupData(mol:Molecule):boolean
+	{
+		for (let n = 1; n <= mol.numAtoms; n++)
+			if (mol.atomTransient(n).some((tag) => tag.startsWith(ForeignMoleculeTransient.AtomSgroupData + ':'))) return true;
+		return false;
+	}
+	public static noteAllSgroupData(mol:Molecule):ForeignMoleculeSgroupData[]
+	{
+		let map:Record<number, ForeignMoleculeSgroupData> = {};
+
+		for (let n = 1; n <= mol.numAtoms; n++) for (let tag of mol.atomTransient(n)) if (tag.startsWith(ForeignMoleculeTransient.AtomSgroupData + ':'))
+		{
+			let payload = tag.substring(ForeignMoleculeTransient.AtomSgroupData.length + 1);
+			let bits = payload.split(',');
+			if (bits.length < 5) continue;
+			let idx = parseInt(bits[0]);
+			for (let i = 1; i < 5; i++) bits[i] = bits[i].replace(/\@\@/g, ',');
+			if (!(idx > 0)) continue;
+
+			let sd = map[idx];
+			if (sd)
+				sd.atoms.push(n);
+			else
+				map[idx] = {name: bits[1], value: bits[2], unit: bits[3], query: bits[4], atoms: [n]};
 		}
 
 		return Object.values(map);
