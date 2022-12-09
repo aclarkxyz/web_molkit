@@ -71,8 +71,9 @@ export class MolUtil
 		let attidx = 0;
 		for (let n = 1; n <= frag.numAtoms; n++) if (frag.atomElement(n) == MolUtil.ABBREV_ATTACHMENT)
 		{
-			if (attidx > 0) throw 'Multiple attachment points indicated: invalid.';
+			//if (attidx > 0) throw 'Multiple attachment points indicated: invalid.';
 			attidx = n;
+			break;
 		}
 		if (attidx == 0) throw 'No attachment points indicated.';
 		if (attidx >= 2)
@@ -190,6 +191,7 @@ export class MolUtil
 			else if (bondOrder != frag.bondOrder(b)) bondOrder = 1;
 		}
 		x *= inv; y *= inv;
+		if (fragidx > 1) frag.swapAtoms(fragidx, 1);
 
 		// create the excised molecule, and add in the fragment
 		let newmol = MolUtil.subgraphMask(mol, maskmol);
