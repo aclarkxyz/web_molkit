@@ -20,12 +20,14 @@ export class QueryFieldsWidget extends Widget
 {
 	private inputCharges:DOM;
 	private optAromatic:OptionList;
+	private optUnsaturated:OptionList;
 	private chkNotElements:DOM;
 	private inputElements:DOM;
 	private chkNotRingSizes:DOM;
 	private inputRingSizes:DOM;
 	private optRingBlock:OptionList;
 	private inputNumRings:DOM;
+	private inputRingBonds:DOM;
 	private inputAdjacency:DOM;
 	private inputBondSums:DOM;
 	private inputValences:DOM;
@@ -76,6 +78,10 @@ export class QueryFieldsWidget extends Widget
 			this.optAromatic = new OptionList(['Maybe', 'Yes', 'No']);
 			this.optAromatic.render(dom('<div/>').appendTo(grid).css({'grid-area': `${row} / value`}));
 
+			dom('<div>Unsaturated</div>').appendTo(grid).css({'grid-area': `${++row} / title`});
+			this.optUnsaturated = new OptionList(['Maybe', 'Yes', 'No']);
+			this.optUnsaturated.render(dom('<div/>').appendTo(grid).css({'grid-area': `${row} / value`}));
+
 			dom('<div>Elements</div>').appendTo(grid).css({'grid-area': `${++row} / title`});
 			[this.chkNotElements, this.inputElements] = makeToggleInput();
 
@@ -88,6 +94,9 @@ export class QueryFieldsWidget extends Widget
 
 			dom('<div># Small Rings</div>').appendTo(grid).css({'grid-area': `${++row} / title`});
 			this.inputNumRings = makeInput();
+
+			dom('<div># Ring Bonds</div>').appendTo(grid).css({'grid-area': `${++row} / title`});
+			this.inputRingBonds = makeInput();
 
 			dom('<div>Adjacency</div>').appendTo(grid).css({'grid-area': `${++row} / title`});
 			this.inputAdjacency = makeInput();
@@ -142,6 +151,9 @@ export class QueryFieldsWidget extends Widget
 		let arom = this.optAromatic.getSelectedIndex();
 		if (arom > 0) QueryUtil.setQueryAtomAromatic(mol, atom, arom == 1);
 
+		let unsat = this.optUnsaturated.getSelectedIndex();
+		if (unsat > 0) QueryUtil.setQueryAtomUnsaturated(mol, atom, unsat == 1);
+
 		let elem = this.splitStrings(this.inputElements.getValue());
 		if (elem)
 		{
@@ -165,6 +177,9 @@ export class QueryFieldsWidget extends Widget
 
 		let nring = this.splitNumbers(this.inputNumRings.getValue());
 		if (nring) QueryUtil.setQueryAtomNumRings(mol, atom, nring);
+
+		let rbc = this.splitNumbers(this.inputRingBonds.getValue());
+		if (rbc) QueryUtil.setQueryAtomRingBonds(mol, atom, rbc);
 
 		let adj = this.splitNumbers(this.inputAdjacency.getValue());
 		if (adj) QueryUtil.setQueryAtomAdjacency(mol, atom, adj);
@@ -217,12 +232,14 @@ export class QueryFieldsWidget extends Widget
 
 		let chg = QueryUtil.queryAtomCharges(mol, atom);
 		let arom = QueryUtil.queryAtomAromatic(mol, atom);
+		let unsat = QueryUtil.queryAtomUnsaturated(mol, atom);
 		let elem = QueryUtil.queryAtomElements(mol, atom);
 		let elemNot = QueryUtil.queryAtomElementsNot(mol, atom);
 		let ringsz = QueryUtil.queryAtomRingSizes(mol, atom);
 		let ringszNot = QueryUtil.queryAtomRingSizesNot(mol, atom);
 		let ringblk = QueryUtil.queryAtomRingBlock(mol, atom);
 		let nring = QueryUtil.queryAtomNumRings(mol, atom);
+		let rbc = QueryUtil.queryAtomRingBonds(mol, atom);
 		let adj = QueryUtil.queryAtomAdjacency(mol, atom);
 		let bond = QueryUtil.queryAtomBondSums(mol, atom);
 		let val = QueryUtil.queryAtomValences(mol, atom);
@@ -233,12 +250,14 @@ export class QueryFieldsWidget extends Widget
 
 		this.inputCharges.setValue(Vec.notBlank(chg) ? chg.join(',') : '');
 		this.optAromatic.setSelectedIndex(arom == null ? 0 : arom ? 1 : 2);
+		this.optUnsaturated.setSelectedIndex(unsat == null ? 0 : unsat ? 1 : 2);
 		this.chkNotElements.elInput.checked = Vec.isBlank(elem) && Vec.notBlank(elemNot);
 		this.inputElements.setValue(Vec.notBlank(elem) ? elem.join(',') : Vec.notBlank(elemNot) ? elemNot.join(',') : '');
 		this.chkNotRingSizes.elInput.checked = Vec.isBlank(ringsz) && Vec.notBlank(ringszNot);
 		this.inputRingSizes.setValue(Vec.notBlank(ringsz) ? ringsz.join(',') : Vec.notBlank(ringszNot) ? ringszNot.join(',') : '');
 		this.optRingBlock.setSelectedIndex(ringblk == null ? 0 : ringblk ? 1 : 2);
 		this.inputNumRings.setValue(Vec.notBlank(nring) ? nring.join(',') : '');
+		this.inputRingBonds.setValue(Vec.notBlank(rbc) ? rbc.join(',') : '');
 		this.inputAdjacency.setValue(Vec.notBlank(adj) ? adj.join(',') : '');
 		this.inputBondSums.setValue(Vec.notBlank(bond) ? bond.join(',') : '');
 		this.inputValences.setValue(Vec.notBlank(val) ? val.join(',') : '');
