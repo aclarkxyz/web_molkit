@@ -348,7 +348,7 @@ export class MDLMOLReader
 				let sup = superatoms.get(idx);
 				if (sup)
 				{
-					sup.name = line.substring(11, 43).trim();
+					sup.name = line.substring(11, 41).trim();
 					sup.unit = line.substring(43, 63).trim();
 					sup.query = line.substring(63).trim();
 				}

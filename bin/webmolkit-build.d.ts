@@ -1026,7 +1026,8 @@ declare namespace WebMolKit {
         AtomChiralMDLRacemic = "yCHIRAL_MDL_RACEMIC",
         AtomExplicitValence = "yMDL_EXPLICIT_VALENCE",
         AtomSgroupMultiAttach = "yMDL_SGROUP_MULTIATTACH",
-        AtomSgroupMultiRepeat = "yMDL_SGROUP_MULTIREPEAT"
+        AtomSgroupMultiRepeat = "yMDL_SGROUP_MULTIREPEAT",
+        AtomSgroupData = "yMDL_SGROUP_DATA"
     }
     interface ForeignMoleculeSgroupMultiAttach {
         name: string;
@@ -1035,6 +1036,13 @@ declare namespace WebMolKit {
     interface ForeignMoleculeSgroupMultiRepeat {
         mult: number;
         unit: number;
+        atoms: number[];
+    }
+    interface ForeignMoleculeSgroupData {
+        name: string;
+        value: string;
+        unit: string;
+        query: string;
         atoms: number[];
     }
     class ForeignMolecule {
@@ -1048,6 +1056,9 @@ declare namespace WebMolKit {
         static markSgroupMultiRepeat(mol: Molecule, mult: number, atoms: number[]): void;
         static hasAnySgroupMultiRepeat(mol: Molecule): boolean;
         static noteAllSgroupMultiRepeat(mol: Molecule): ForeignMoleculeSgroupMultiRepeat[];
+        static markSgroupData(mol: Molecule, name: string, value: string, unit: string, query: string, atoms: number[]): void;
+        static hasAnySgroupData(mol: Molecule): boolean;
+        static noteAllSgroupData(mol: Molecule): ForeignMoleculeSgroupData[];
     }
 }
 declare namespace WebMolKit {
@@ -1140,6 +1151,9 @@ declare namespace WebMolKit {
         connectType?: string;
         bonds?: number[];
         bondConn?: number[];
+        value?: string;
+        unit?: string;
+        query?: string;
     }
     class MDLMOLReader {
         parseHeader: boolean;
@@ -1210,6 +1224,7 @@ declare namespace WebMolKit {
         private writeMBlockFlatIdxFirst;
         private intrpad;
         private rpad;
+        private pad;
         private mdlValence;
         private partialAbbrevExpansion;
         private prepareSgroups;
