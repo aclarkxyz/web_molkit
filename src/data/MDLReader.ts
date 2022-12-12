@@ -95,7 +95,6 @@ export class MDLMOLReader
 	public overallStereoAbsolute = true; // from the counts block, overall true=interpret stereo as absolute; false=interpret as relative
 
 	// hydrogen count & resonance bonds supposed to be query-only, but some software abuses them to get around the structural limitations
-	public atomHyd:number[] = null;
 	public resBonds:boolean[] = null;
 
 	// "modern" features of CTAB which are not part of the lowest common denominator
@@ -187,11 +186,7 @@ export class MDLMOLReader
 			}
 			this.mol.setAtomMapNum(a, mapnum);
 
-			if (hyd > 0)
-			{
-				if (this.atomHyd == null) this.atomHyd = Vec.numberArray(Molecule.HEXPLICIT_UNKNOWN, numAtoms);
-				this.atomHyd[n] = hyd - 1;
-			}
+			if (hyd > 0) QueryUtil.setQueryAtomHydrogens(this.mol, a, [hyd - 1]);
 
 			if (stereo > 0 && this.keepParity)
 			{
@@ -250,7 +245,7 @@ export class MDLMOLReader
 
 		// examine anything in the M-block
 		const MBLK_CHG = 1, MBLK_RAD = 2, MBLK_ISO = 3, MBLK_RGP = 4, MBLK_HYD = 5, MBLK_ZCH = 6, MBLK_ZBO = 7,
-			  MBLK_ZPA = 8, MBLK_ZRI = 9, MBLK_ZAR = 10;
+			  MBLK_ZPA = 8, MBLK_ZRI = 9, MBLK_ZAR = 10, MBLK_RBC = 11, MBLK_SUB = 12, MBLK_UNS = 13;
 		let resPaths = new Map<number, number[]>(), resRings = new Map<number, number[]>(), arenes = new Map<number, number[]>();
 		let superatoms = new Map<number, MDLReaderSuperAtom>(), mixtures = new Map<number, MDLReaderGroupMixture>();
 
@@ -270,6 +265,9 @@ export class MDLMOLReader
 			else if (this.parseExtended && line.startsWith('M  ZPA')) type = MBLK_ZPA;
 			else if (this.parseExtended && line.startsWith('M  ZRI')) type = MBLK_ZRI;
 			else if (this.parseExtended && line.startsWith('M  ZAR')) type = MBLK_ZAR;
+			else if (this.parseExtended && line.startsWith('M  RBC')) type = MBLK_RBC;
+			else if (this.parseExtended && line.startsWith('M  SUB')) type = MBLK_SUB;
+			else if (this.parseExtended && line.startsWith('M  UNS')) type = MBLK_UNS;
 			else if (line.startsWith('A  ') && line.length >= 6)
 			{
 				let anum = parseInt(line.substring(3, 6).trim());
@@ -448,6 +446,22 @@ export class MDLMOLReader
 					else if (type == MBLK_HYD) this.mol.setAtomHExplicit(pos, val);
 					else if (type == MBLK_ZCH) this.mol.setAtomCharge(pos, val);
 					else if (type == MBLK_ZBO) this.mol.setBondOrder(pos, val);
+					else if (type == MBLK_RBC && val != 0)
+					{
+						if (val == -2) val = this.countRingBonds(pos);
+						else if (val == -1) val = 0;
+						QueryUtil.setQueryAtomRingBonds(this.mol, pos, [val]);
+					}
+					else if (type == MBLK_SUB && val != 0)
+					{
+						if (val == -2) val = this.countSubstitutions(pos);
+						else if (val == -1) val = 0;
+						QueryUtil.setQueryAtomAdjacency(this.mol, pos, [val]);
+					}
+					else if (type == MBLK_UNS)
+					{
+						if (val == 1) QueryUtil.setQueryAtomUnsaturated(this.mol, pos, true);
+					}
 				}
 			}
 		}
@@ -533,7 +547,7 @@ export class MDLMOLReader
 
 		if (this.resBonds != null)
 		{
-			let derez = new ResonanceRemover(mol, this.resBonds, this.atomHyd);
+			let derez = new ResonanceRemover(mol, this.resBonds, null);
 			try
 			{
 				derez.perform();
@@ -553,6 +567,8 @@ export class MDLMOLReader
 		let inCTAB = false, section:Section = null;
 		let lineCounts:string = null;
 		let lineAtom:string[] = [], lineBond:string[] = [], lineColl:string[] = [], lineSgroup:string[] = [];
+
+		let asdrawnRBC:number[] = [], asdrawnSUB:number[] = [];
 
 		const ERRPFX = 'Invalid MDL MOL V3000: ';
 
@@ -696,6 +712,28 @@ export class MDLMOLReader
 					}
 				}
 				else if (key == 'VAL') ForeignMolecule.markExplicitValence(this.mol, a, parseInt(val));
+				else if (key == 'HCOUNT')
+				{
+					let hyd = parseInt(val);
+					if (hyd != 0) QueryUtil.setQueryAtomHydrogens(this.mol, a, [Math.max(hyd, 0)]);
+				}
+				else if (key == 'RBCNT')
+				{
+					let rbc = parseInt(val);
+					if (rbc == -2) asdrawnRBC.push(a);
+					else if (rbc != 0) QueryUtil.setQueryAtomRingBonds(this.mol, a, [Math.max(rbc, 0)]);
+				}
+				else if (key == 'SUBST')
+				{
+					let sub = parseInt(val);
+					if (sub == -2) asdrawnSUB.push(a);
+					else if (sub != 0) QueryUtil.setQueryAtomAdjacency(this.mol, a, [Math.max(sub, 0)]);
+				}
+				else if (key == 'UNSAT')
+				{
+					let uns = parseInt(val);
+					if (uns == 1) QueryUtil.setQueryAtomUnsaturated(this.mol, a, true);
+				}
 			}
 		}
 
@@ -761,6 +799,9 @@ export class MDLMOLReader
 				else if (attach == 'ANY') this.groupAttachAny.set(b, endpts);
 			}
 		}
+
+		for (let atom of asdrawnRBC) QueryUtil.setQueryAtomRingBonds(this.mol, atom, [this.countRingBonds(atom)]);
+		for (let atom of asdrawnSUB) QueryUtil.setQueryAtomAdjacency(this.mol, atom, [this.countSubstitutions(atom)]);
 
 		this.postFix();
 
@@ -1018,6 +1059,20 @@ export class MDLMOLReader
 		for (let bit of str.split(' ')) values.push(parseInt(bit));
 		if (values[0] != values.length - 1) return null;
 		return Vec.remove(values, 0);
+	}
+
+	// used when an incoming property is designated "as drawn"
+	private countRingBonds(atom:number):number
+	{
+		let count = 0;
+		for (let b of this.mol.atomAdjBonds(atom)) if (this.mol.bondInRing(b)) count++;
+		return count;
+	}
+	private countSubstitutions(atom:number):number
+	{
+		let count = 0;
+		for (let adj of this.mol.atomAdjList(atom)) if (this.mol.atomElement(adj) != 'H') count++;
+		return count;
 	}
 }
 

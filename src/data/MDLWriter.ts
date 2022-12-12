@@ -149,6 +149,9 @@ export class MDLMOLWriter
 		let hydidx:number[] = [], hydval:number[] = [];
 		let zchidx:number[] = [], zchval:number[] = [];
 		let zboidx:number[] = [], zboval:number[] = [];
+		let rbcidx:number[] = [], rbcval:number[] = [];
+		let subidx:number[] = [], subval:number[] = [];
+		let unsidx:number[] = [], unsval:number[] = [];
 
 		// export atoms, and make a few notes along the way
 		for (let n = 1; n <= mol.numAtoms; n++)
@@ -177,7 +180,11 @@ export class MDLMOLWriter
 
 			let val = this.mdlValence(mol, n, 15);
 
-			line += this.intrpad(chg, 3) + '  0  0  0' + this.intrpad(val, 3) + '  0  0  0' + this.intrpad(mapnum, 3) + '  0  0';
+			let qhyd = QueryUtil.queryAtomHydrogens(mol, n);
+			let hyd = 0;
+			if (Vec.len(qhyd) == 1) hyd = qhyd[0] + 1;
+
+			line += this.intrpad(chg, 3) + '  0  0' + this.intrpad(hyd, 3) + this.intrpad(val, 3) + '  0  0  0' + this.intrpad(mapnum, 3) + '  0  0';
 
 			this.lines.push(line);
 
@@ -190,6 +197,12 @@ export class MDLMOLWriter
 			if (rad == 1) {radidx.push(n); radval.push(2);}
 			if (rad == 2) {radidx.push(n); radval.push(1);}
 			if (mol.atomIsotope(n) != Molecule.ISOTOPE_NATURAL) {isoidx.push(n); isoval.push(mol.atomIsotope(n));}
+
+			let qrbc = QueryUtil.queryAtomRingBonds(mol, n), qsub = QueryUtil.queryAtomAdjacency(mol, n);
+			let quns = QueryUtil.queryAtomUnsaturated(mol, n);
+			if (Vec.len(qrbc) == 1) {rbcidx.push(n); rbcval.push(qrbc[0] == 0 ? -1 : qrbc[0]);}
+			if (Vec.len(qsub) == 1) {subidx.push(n); subval.push(qsub[0] == 0 ? -1 : qsub[0]);}
+			if (quns == true) {unsidx.push(n); unsval.push(1);}
 		}
 
 		// export bonds
@@ -246,6 +259,9 @@ export class MDLMOLWriter
 		this.writeMBlockPair('HYD', hydidx, hydval);
 		this.writeMBlockPair('ZCH', zchidx, zchval);
 		this.writeMBlockPair('ZBO', zboidx, zboval);
+		this.writeMBlockPair('RBC', rbcidx, rbcval);
+		this.writeMBlockPair('SUB', subidx, subval);
+		this.writeMBlockPair('UNS', unsidx, unsval);
 
 		// write bond artifacts, one line each
 		if (this.enhancedFields)
@@ -531,6 +547,13 @@ export class MDLMOLWriter
 			else if (unp == 2) line += ' RAD=1';
 			if (isotope != 0) line += ' MASS=' + isotope;
 			if (val != 0) line += ' VAL=' + val;
+
+			let qhyd = QueryUtil.queryAtomHydrogens(mol, n), qrbc = QueryUtil.queryAtomRingBonds(mol, n), qsub = QueryUtil.queryAtomAdjacency(mol, n);
+			let quns = QueryUtil.queryAtomUnsaturated(mol, n);
+			if (Vec.len(qhyd) == 1) line += ' HCOUNT=' + (qhyd[0] == 0 ? -1 : qhyd[0]);
+			if (Vec.len(qrbc) == 1) line += ' RBCNT=' + (qrbc[0] == 0 ? -1 : qrbc[0]);
+			if (Vec.len(qsub) == 1) line += ' SUBST=' + (qsub[0] == 0 ? -1 : qsub[0]);
+			if (quns == true) line += ' UNSAT=1';
 
 			this.lines.push(line);
 		}

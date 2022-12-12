@@ -1,7 +1,7 @@
 /*
     WebMolKit
 
-    (c) 2010-2021 Molecular Materials Informatics, Inc.
+    (c) 2010-2022 Molecular Materials Informatics, Inc.
 
     All rights reserved
 
@@ -23,12 +23,14 @@ export enum QueryTypeAtom
 {
 	Charges = 'qC:',		// allowed charges
 	Aromatic = 'qA:',		// yes/no; must/not have an aromatic bond
+	Unsaturated = 'qU:',	// qU: yes/no; must/must not have a multiple bond (2 or higher)
 	Elements = 'qE:',		// allowed elements (in addition to atom's label, if not '*')
 	ElementsNot = 'qE!',	// disallowed elements (only relevant if label is '*')
 	RingSizes = 'qR:',		// list of small ring sizes that the atom must participate in
 	RingSizesNot = 'qR!',	// list of small ring sizes that the atom must not participate in
 	RingBlock = 'qB:',		// yes/no; whether the atom must be in a ring block
 	NumRings = 'qN:',		// list of allowed numbers of small rings (3..7) the atom may occur in
+	RingBonds = 'qG:',		// qG: list of allowed # of bonds that are in a ring
 	Adjacency = 'qJ:',		// list of allowed adjacency counts
 	BondSums = 'qO:',		// list of allowed sums of adjacent bond orders
 	Valences = 'qV:',		// list of allowed valences (sum:BO - chg + unp + hyd)
@@ -201,6 +203,8 @@ export class QueryUtil
 		{return this.parseIntegers(this.queryAtomString(mol, atom, QueryTypeAtom.Charges));}
 	public static queryAtomAromatic(mol:Molecule, atom:number):boolean
 		{return this.parseBoolean(this.queryAtomString(mol, atom, QueryTypeAtom.Aromatic));}
+	public static queryAtomUnsaturated(mol:Molecule, atom:number):boolean
+		{return this.parseBoolean(this.queryAtomString(mol, atom, QueryTypeAtom.Unsaturated));}
 	public static queryAtomElements(mol:Molecule, atom:number):string[]
 		{return this.parseStrings(this.queryAtomString(mol, atom, QueryTypeAtom.Elements));}
 	public static queryAtomElementsNot(mol:Molecule, atom:number):string[]
@@ -213,6 +217,8 @@ export class QueryUtil
 		{return this.parseBoolean(this.queryAtomString(mol, atom, QueryTypeAtom.RingBlock));}
 	public static queryAtomNumRings(mol:Molecule, atom:number):number[]
 		{return this.parseIntegers(this.queryAtomString(mol, atom, QueryTypeAtom.NumRings));}
+	public static queryAtomRingBonds(mol:Molecule, atom:number):number[]
+		{return this.parseIntegers(this.queryAtomString(mol, atom, QueryTypeAtom.RingBonds));}
 	public static queryAtomAdjacency(mol:Molecule, atom:number):number[]
 		{return this.parseIntegers(this.queryAtomString(mol, atom, QueryTypeAtom.Adjacency));}
 	public static queryAtomBondSums(mol:Molecule, atom:number):number[]
@@ -245,6 +251,8 @@ export class QueryUtil
 		{this.setQueryAtom(mol, atom, QueryTypeAtom.Charges, this.formatIntegers(value));}
 	public static setQueryAtomAromatic(mol:Molecule, atom:number, value:boolean):void
 		{this.setQueryAtom(mol, atom, QueryTypeAtom.Aromatic, this.formatBoolean(value));}
+	public static setQueryAtomUnsaturated(mol:Molecule, atom:number, value:boolean):void
+		{this.setQueryAtom(mol, atom, QueryTypeAtom.Unsaturated, this.formatBoolean(value));}
 	public static setQueryAtomElements(mol:Molecule, atom:number, value:string[]):void
 		{this.setQueryAtom(mol, atom, QueryTypeAtom.Elements, this.formatStrings(value));}
 	public static setQueryAtomElementsNot(mol:Molecule, atom:number, value:string[]):void
@@ -257,6 +265,8 @@ export class QueryUtil
 		{this.setQueryAtom(mol, atom, QueryTypeAtom.RingBlock, this.formatBoolean(value));}
 	public static setQueryAtomNumRings(mol:Molecule, atom:number, value:number[]):void
 		{this.setQueryAtom(mol, atom, QueryTypeAtom.NumRings, this.formatIntegers(value));}
+	public static setQueryAtomRingBonds(mol:Molecule, atom:number, value:number[]):void
+		{this.setQueryAtom(mol, atom, QueryTypeAtom.RingBonds, this.formatIntegers(value));}
 	public static setQueryAtomAdjacency(mol:Molecule, atom:number, value:number[]):void
 		{this.setQueryAtom(mol, atom, QueryTypeAtom.Adjacency, this.formatIntegers(value));}
 	public static setQueryAtomBondSums(mol:Molecule, atom:number, value:number[]):void
