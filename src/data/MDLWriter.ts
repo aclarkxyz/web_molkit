@@ -178,13 +178,13 @@ export class MDLMOLWriter
 			else if (chg >= 1 && chg <= 3) chg = 4 - chg;
 			else chg = 0;
 
-			let val = this.mdlValence(mol, n, 15);
-
 			let qhyd = QueryUtil.queryAtomHydrogens(mol, n);
 			let hyd = 0;
 			if (Vec.len(qhyd) == 1) hyd = qhyd[0] + 1;
 
-			line += this.intrpad(chg, 3) + '  0  0' + this.intrpad(hyd, 3) + this.intrpad(val, 3) + '  0  0  0' + this.intrpad(mapnum, 3) + '  0  0';
+			let val = this.mdlValence(mol, n, 15);
+
+			line += this.intrpad(chg, 3) + '  0' + this.intrpad(hyd, 3) + '  0' + this.intrpad(val, 3) + '  0  0  0' + this.intrpad(mapnum, 3) + '  0  0';
 
 			this.lines.push(line);
 
@@ -378,6 +378,9 @@ export class MDLMOLWriter
 	// needs to be explicitly zero, the 'zeroVal' parameter is returned (should be 15 for V2000, -1 for V3000)
 	private mdlValence(mol:Molecule, atom:number, zeroVal:number):number
 	{
+		let marked = ForeignMolecule.noteExplicitValence(mol, atom);
+		if (marked != null) return marked > 0 ? marked : zeroVal;
+
 		let hyd = mol.atomHydrogens(atom), el = mol.atomElement(atom);
 		let options = MDLMOL_VALENCE[el];
 
@@ -390,8 +393,8 @@ export class MDLMOLWriter
 		for (let b of mol.atomAdjBonds(atom)) bondSum += mol.bondOrder(b);
 		let nativeVal = chgmod + /*mol.atomUnpaired(atom) +*/ hyd + bondSum;
 
-		// if there are valence options and this is the first one, it should work out
-		if (options && options[0] == nativeVal) return 0;
+		// if this is consistent with an existing valence option, no need
+		if (options?.includes(nativeVal)) return 0;
 
 		// NOTE: in cases with multiple valence options, like S[2,4,6], it would be possible to leave the valence unmarked
 		// when the previous state is indicated, e.g. for S{val=3} ==> +1 H to get to val=4; or we could just mark the

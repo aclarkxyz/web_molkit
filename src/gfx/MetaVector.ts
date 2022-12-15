@@ -298,22 +298,21 @@ export class MetaVector
 		}
 
 		let metrics = font.measureTextNative(txt, fontFamily, fontSize, opt);
-		let bx = 0, by = 0;
 
 		if ((align & TextAlign.Left) != 0) {}
-		else if ((align & TextAlign.Right) != 0) bx = -metrics[0];
-		else /* centre */ bx = -0.5 * metrics[0];
+		else if ((align & TextAlign.Right) != 0) x = -metrics[0];
+		else /* centre */ x = -0.5 * metrics[0];
 
-		if ((align & TextAlign.Middle) != 0) by += 0.5 * metrics[1];
-		else if ((align & TextAlign.Top) != 0) by += metrics[1];
-		else if ((align & TextAlign.Bottom) != 0) by -= metrics[2];
+		if ((align & TextAlign.Middle) != 0) y += 0.5 * metrics[1];
+		else if ((align & TextAlign.Top) != 0) y += metrics[1];
+		else if ((align & TextAlign.Bottom) != 0) y -= metrics[2];
 		// else: baseline
 
 		this.updateBounds(x, y - metrics[1]);
 		this.updateBounds(x + metrics[0], y + metrics[2]);
 
 		let typeidx = this.findOrCreateType([PRIM_TEXTNATIVE, fontFamily, fontSize, colour, opt]);
-		this.prims.push([PRIM_TEXTNATIVE, typeidx, x + bx, y + by, txt]);
+		this.prims.push([PRIM_TEXTNATIVE, typeidx, x, y, txt]);
 	}
 
 	// query the boundaries of the drawing, post factum

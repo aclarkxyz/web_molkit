@@ -6325,7 +6325,6 @@ var WebMolKit;
             this.mol = null;
             this.molName = '';
             this.overallStereoAbsolute = true;
-            this.atomHyd = null;
             this.resBonds = null;
             this.groupAttachAny = new Map();
             this.groupAttachAll = new Map();
@@ -6395,11 +6394,8 @@ var WebMolKit;
                     this.mol.setIs3D(true);
                 }
                 this.mol.setAtomMapNum(a, mapnum);
-                if (hyd > 0) {
-                    if (this.atomHyd == null)
-                        this.atomHyd = WebMolKit.Vec.numberArray(WebMolKit.Molecule.HEXPLICIT_UNKNOWN, numAtoms);
-                    this.atomHyd[n] = hyd - 1;
-                }
+                if (hyd > 0)
+                    WebMolKit.QueryUtil.setQueryAtomHydrogens(this.mol, a, [hyd - 1]);
                 if (stereo > 0 && this.keepParity) {
                     let trans = this.mol.atomTransient(a);
                     if (stereo == 1)
@@ -6455,7 +6451,7 @@ var WebMolKit;
                     }
                 }
             }
-            const MBLK_CHG = 1, MBLK_RAD = 2, MBLK_ISO = 3, MBLK_RGP = 4, MBLK_HYD = 5, MBLK_ZCH = 6, MBLK_ZBO = 7, MBLK_ZPA = 8, MBLK_ZRI = 9, MBLK_ZAR = 10;
+            const MBLK_CHG = 1, MBLK_RAD = 2, MBLK_ISO = 3, MBLK_RGP = 4, MBLK_HYD = 5, MBLK_ZCH = 6, MBLK_ZBO = 7, MBLK_ZPA = 8, MBLK_ZRI = 9, MBLK_ZAR = 10, MBLK_RBC = 11, MBLK_SUB = 12, MBLK_UNS = 13;
             let resPaths = new Map(), resRings = new Map(), arenes = new Map();
             let superatoms = new Map(), mixtures = new Map();
             while (true) {
@@ -6483,6 +6479,12 @@ var WebMolKit;
                     type = MBLK_ZRI;
                 else if (this.parseExtended && line.startsWith('M  ZAR'))
                     type = MBLK_ZAR;
+                else if (this.parseExtended && line.startsWith('M  RBC'))
+                    type = MBLK_RBC;
+                else if (this.parseExtended && line.startsWith('M  SUB'))
+                    type = MBLK_SUB;
+                else if (this.parseExtended && line.startsWith('M  UNS'))
+                    type = MBLK_UNS;
                 else if (line.startsWith('A  ') && line.length >= 6) {
                     let anum = parseInt(line.substring(3, 6).trim());
                     if (anum >= 1 && anum <= this.mol.numAtoms) {
@@ -6656,6 +6658,24 @@ var WebMolKit;
                             this.mol.setAtomCharge(pos, val);
                         else if (type == MBLK_ZBO)
                             this.mol.setBondOrder(pos, val);
+                        else if (type == MBLK_RBC && val != 0) {
+                            if (val == -2)
+                                val = this.countRingBonds(pos);
+                            else if (val == -1)
+                                val = 0;
+                            WebMolKit.QueryUtil.setQueryAtomRingBonds(this.mol, pos, [val]);
+                        }
+                        else if (type == MBLK_SUB && val != 0) {
+                            if (val == -2)
+                                val = this.countSubstitutions(pos);
+                            else if (val == -1)
+                                val = 0;
+                            WebMolKit.QueryUtil.setQueryAtomAdjacency(this.mol, pos, [val]);
+                        }
+                        else if (type == MBLK_UNS) {
+                            if (val == 1)
+                                WebMolKit.QueryUtil.setQueryAtomUnsaturated(this.mol, pos, true);
+                        }
                     }
                 }
             }
@@ -6730,7 +6750,7 @@ var WebMolKit;
             if (this.considerRescale)
                 WebMolKit.CoordUtil.normaliseBondDistances(mol);
             if (this.resBonds != null) {
-                let derez = new WebMolKit.ResonanceRemover(mol, this.resBonds, this.atomHyd);
+                let derez = new WebMolKit.ResonanceRemover(mol, this.resBonds, null);
                 try {
                     derez.perform();
                     for (let n = 0; n < mol.numBonds; n++)
@@ -6751,6 +6771,7 @@ var WebMolKit;
             let inCTAB = false, section = null;
             let lineCounts = null;
             let lineAtom = [], lineBond = [], lineColl = [], lineSgroup = [];
+            let asdrawnRBC = [], asdrawnSUB = [];
             const ERRPFX = 'Invalid MDL MOL V3000: ';
             while (true) {
                 let line = this.nextLine();
@@ -6885,6 +6906,30 @@ var WebMolKit;
                     }
                     else if (key == 'VAL')
                         WebMolKit.ForeignMolecule.markExplicitValence(this.mol, a, parseInt(val));
+                    else if (key == 'HCOUNT') {
+                        let hyd = parseInt(val);
+                        if (hyd != 0)
+                            WebMolKit.QueryUtil.setQueryAtomHydrogens(this.mol, a, [Math.max(hyd, 0)]);
+                    }
+                    else if (key == 'RBCNT') {
+                        let rbc = parseInt(val);
+                        if (rbc == -2)
+                            asdrawnRBC.push(a);
+                        else if (rbc != 0)
+                            WebMolKit.QueryUtil.setQueryAtomRingBonds(this.mol, a, [Math.max(rbc, 0)]);
+                    }
+                    else if (key == 'SUBST') {
+                        let sub = parseInt(val);
+                        if (sub == -2)
+                            asdrawnSUB.push(a);
+                        else if (sub != 0)
+                            WebMolKit.QueryUtil.setQueryAtomAdjacency(this.mol, a, [Math.max(sub, 0)]);
+                    }
+                    else if (key == 'UNSAT') {
+                        let uns = parseInt(val);
+                        if (uns == 1)
+                            WebMolKit.QueryUtil.setQueryAtomUnsaturated(this.mol, a, true);
+                    }
                 }
             }
             for (let b = 1; b <= numBonds; b++) {
@@ -6946,6 +6991,10 @@ var WebMolKit;
                         this.groupAttachAny.set(b, endpts);
                 }
             }
+            for (let atom of asdrawnRBC)
+                WebMolKit.QueryUtil.setQueryAtomRingBonds(this.mol, atom, [this.countRingBonds(atom)]);
+            for (let atom of asdrawnSUB)
+                WebMolKit.QueryUtil.setQueryAtomAdjacency(this.mol, atom, [this.countSubstitutions(atom)]);
             this.postFix();
             for (let n = 0; n < lineColl.length; n++) {
                 let line = lineColl[n];
@@ -7178,6 +7227,20 @@ var WebMolKit;
                 return null;
             return WebMolKit.Vec.remove(values, 0);
         }
+        countRingBonds(atom) {
+            let count = 0;
+            for (let b of this.mol.atomAdjBonds(atom))
+                if (this.mol.bondInRing(b))
+                    count++;
+            return count;
+        }
+        countSubstitutions(atom) {
+            let count = 0;
+            for (let adj of this.mol.atomAdjList(atom))
+                if (this.mol.atomElement(adj) != 'H')
+                    count++;
+            return count;
+        }
     }
     WebMolKit.MDLMOLReader = MDLMOLReader;
     class MDLSDFReader {
@@ -7404,6 +7467,9 @@ var WebMolKit;
             let hydidx = [], hydval = [];
             let zchidx = [], zchval = [];
             let zboidx = [], zboval = [];
+            let rbcidx = [], rbcval = [];
+            let subidx = [], subval = [];
+            let unsidx = [], unsval = [];
             for (let n = 1; n <= mol.numAtoms; n++) {
                 let x = mol.atomX(n), y = mol.atomY(n);
                 let z = mol.is3D() ? mol.atomZ(n) : 0;
@@ -7429,8 +7495,12 @@ var WebMolKit;
                     chg = 4 - chg;
                 else
                     chg = 0;
+                let qhyd = WebMolKit.QueryUtil.queryAtomHydrogens(mol, n);
+                let hyd = 0;
+                if (WebMolKit.Vec.len(qhyd) == 1)
+                    hyd = qhyd[0] + 1;
                 let val = this.mdlValence(mol, n, 15);
-                line += this.intrpad(chg, 3) + '  0  0  0' + this.intrpad(val, 3) + '  0  0  0' + this.intrpad(mapnum, 3) + '  0  0';
+                line += this.intrpad(chg, 3) + '  0' + this.intrpad(hyd, 3) + '  0' + this.intrpad(val, 3) + '  0  0  0' + this.intrpad(mapnum, 3) + '  0  0';
                 this.lines.push(line);
                 if (mol.atomCharge(n) != 0) {
                     chgidx.push(n);
@@ -7453,6 +7523,20 @@ var WebMolKit;
                 if (mol.atomIsotope(n) != WebMolKit.Molecule.ISOTOPE_NATURAL) {
                     isoidx.push(n);
                     isoval.push(mol.atomIsotope(n));
+                }
+                let qrbc = WebMolKit.QueryUtil.queryAtomRingBonds(mol, n), qsub = WebMolKit.QueryUtil.queryAtomAdjacency(mol, n);
+                let quns = WebMolKit.QueryUtil.queryAtomUnsaturated(mol, n);
+                if (WebMolKit.Vec.len(qrbc) == 1) {
+                    rbcidx.push(n);
+                    rbcval.push(qrbc[0] == 0 ? -1 : qrbc[0]);
+                }
+                if (WebMolKit.Vec.len(qsub) == 1) {
+                    subidx.push(n);
+                    subval.push(qsub[0] == 0 ? -1 : qsub[0]);
+                }
+                if (quns == true) {
+                    unsidx.push(n);
+                    unsval.push(1);
                 }
             }
             let maskArom = WebMolKit.ForeignMolecule.noteAromaticBonds(mol);
@@ -7506,6 +7590,9 @@ var WebMolKit;
             this.writeMBlockPair('HYD', hydidx, hydval);
             this.writeMBlockPair('ZCH', zchidx, zchval);
             this.writeMBlockPair('ZBO', zboidx, zboval);
+            this.writeMBlockPair('RBC', rbcidx, rbcval);
+            this.writeMBlockPair('SUB', subidx, subval);
+            this.writeMBlockPair('UNS', unsidx, unsval);
             if (this.enhancedFields) {
                 let artifacts = new WebMolKit.BondArtifact(this.mol);
                 let idx = 0;
@@ -7600,6 +7687,9 @@ var WebMolKit;
             return str;
         }
         mdlValence(mol, atom, zeroVal) {
+            let marked = WebMolKit.ForeignMolecule.noteExplicitValence(mol, atom);
+            if (marked != null)
+                return marked > 0 ? marked : zeroVal;
             let hyd = mol.atomHydrogens(atom), el = mol.atomElement(atom);
             let options = WebMolKit.MDLMOL_VALENCE[el];
             if (options == null && hyd == 0)
@@ -7610,7 +7700,7 @@ var WebMolKit;
             for (let b of mol.atomAdjBonds(atom))
                 bondSum += mol.bondOrder(b);
             let nativeVal = chgmod + hyd + bondSum;
-            if (options && options[0] == nativeVal)
+            if (options === null || options === void 0 ? void 0 : options.includes(nativeVal))
                 return 0;
             let val = nativeVal - chgmod;
             return val <= 0 || val > 14 ? zeroVal : val;
@@ -7741,6 +7831,16 @@ var WebMolKit;
                     line += ' MASS=' + isotope;
                 if (val != 0)
                     line += ' VAL=' + val;
+                let qhyd = WebMolKit.QueryUtil.queryAtomHydrogens(mol, n), qrbc = WebMolKit.QueryUtil.queryAtomRingBonds(mol, n), qsub = WebMolKit.QueryUtil.queryAtomAdjacency(mol, n);
+                let quns = WebMolKit.QueryUtil.queryAtomUnsaturated(mol, n);
+                if (WebMolKit.Vec.len(qhyd) == 1)
+                    line += ' HCOUNT=' + (qhyd[0] == 0 ? -1 : qhyd[0]);
+                if (WebMolKit.Vec.len(qrbc) == 1)
+                    line += ' RBCNT=' + (qrbc[0] == 0 ? -1 : qrbc[0]);
+                if (WebMolKit.Vec.len(qsub) == 1)
+                    line += ' SUBST=' + (qsub[0] == 0 ? -1 : qsub[0]);
+                if (quns == true)
+                    line += ' UNSAT=1';
                 this.lines.push(line);
             }
             this.lines.push(VPFX + 'END ATOM');
@@ -8343,9 +8443,8 @@ var WebMolKit;
             let attidx = 0;
             for (let n = 1; n <= frag.numAtoms; n++)
                 if (frag.atomElement(n) == MolUtil.ABBREV_ATTACHMENT) {
-                    if (attidx > 0)
-                        throw 'Multiple attachment points indicated: invalid.';
                     attidx = n;
+                    break;
                 }
             if (attidx == 0)
                 throw 'No attachment points indicated.';
@@ -8457,6 +8556,8 @@ var WebMolKit;
             }
             x *= inv;
             y *= inv;
+            if (fragidx > 1)
+                frag.swapAtoms(fragidx, 1);
             let newmol = MolUtil.subgraphMask(mol, maskmol);
             let newatom = newmol.addAtom(abbrevName, x, y);
             newmol.addBond(molidx, newatom, bondOrder, bondType);
@@ -11516,12 +11617,14 @@ var WebMolKit;
     (function (QueryTypeAtom) {
         QueryTypeAtom["Charges"] = "qC:";
         QueryTypeAtom["Aromatic"] = "qA:";
+        QueryTypeAtom["Unsaturated"] = "qU:";
         QueryTypeAtom["Elements"] = "qE:";
         QueryTypeAtom["ElementsNot"] = "qE!";
         QueryTypeAtom["RingSizes"] = "qR:";
         QueryTypeAtom["RingSizesNot"] = "qR!";
         QueryTypeAtom["RingBlock"] = "qB:";
         QueryTypeAtom["NumRings"] = "qN:";
+        QueryTypeAtom["RingBonds"] = "qG:";
         QueryTypeAtom["Adjacency"] = "qJ:";
         QueryTypeAtom["BondSums"] = "qO:";
         QueryTypeAtom["Valences"] = "qV:";
@@ -11674,12 +11777,14 @@ var WebMolKit;
         }
         static queryAtomCharges(mol, atom) { return this.parseIntegers(this.queryAtomString(mol, atom, QueryTypeAtom.Charges)); }
         static queryAtomAromatic(mol, atom) { return this.parseBoolean(this.queryAtomString(mol, atom, QueryTypeAtom.Aromatic)); }
+        static queryAtomUnsaturated(mol, atom) { return this.parseBoolean(this.queryAtomString(mol, atom, QueryTypeAtom.Unsaturated)); }
         static queryAtomElements(mol, atom) { return this.parseStrings(this.queryAtomString(mol, atom, QueryTypeAtom.Elements)); }
         static queryAtomElementsNot(mol, atom) { return this.parseStrings(this.queryAtomString(mol, atom, QueryTypeAtom.ElementsNot)); }
         static queryAtomRingSizes(mol, atom) { return this.parseIntegers(this.queryAtomString(mol, atom, QueryTypeAtom.RingSizes)); }
         static queryAtomRingSizesNot(mol, atom) { return this.parseIntegers(this.queryAtomString(mol, atom, QueryTypeAtom.RingSizesNot)); }
         static queryAtomRingBlock(mol, atom) { return this.parseBoolean(this.queryAtomString(mol, atom, QueryTypeAtom.RingBlock)); }
         static queryAtomNumRings(mol, atom) { return this.parseIntegers(this.queryAtomString(mol, atom, QueryTypeAtom.NumRings)); }
+        static queryAtomRingBonds(mol, atom) { return this.parseIntegers(this.queryAtomString(mol, atom, QueryTypeAtom.RingBonds)); }
         static queryAtomAdjacency(mol, atom) { return this.parseIntegers(this.queryAtomString(mol, atom, QueryTypeAtom.Adjacency)); }
         static queryAtomBondSums(mol, atom) { return this.parseIntegers(this.queryAtomString(mol, atom, QueryTypeAtom.BondSums)); }
         static queryAtomValences(mol, atom) { return this.parseIntegers(this.queryAtomString(mol, atom, QueryTypeAtom.Valences)); }
@@ -11694,12 +11799,14 @@ var WebMolKit;
         static queryBondOrders(mol, bond) { return this.parseIntegers(this.queryBondString(mol, bond, QueryTypeBond.Orders)); }
         static setQueryAtomCharges(mol, atom, value) { this.setQueryAtom(mol, atom, QueryTypeAtom.Charges, this.formatIntegers(value)); }
         static setQueryAtomAromatic(mol, atom, value) { this.setQueryAtom(mol, atom, QueryTypeAtom.Aromatic, this.formatBoolean(value)); }
+        static setQueryAtomUnsaturated(mol, atom, value) { this.setQueryAtom(mol, atom, QueryTypeAtom.Unsaturated, this.formatBoolean(value)); }
         static setQueryAtomElements(mol, atom, value) { this.setQueryAtom(mol, atom, QueryTypeAtom.Elements, this.formatStrings(value)); }
         static setQueryAtomElementsNot(mol, atom, value) { this.setQueryAtom(mol, atom, QueryTypeAtom.ElementsNot, this.formatStrings(value)); }
         static setQueryAtomRingSizes(mol, atom, value) { this.setQueryAtom(mol, atom, QueryTypeAtom.RingSizes, this.formatIntegers(value)); }
         static setQueryAtomRingSizesNot(mol, atom, value) { this.setQueryAtom(mol, atom, QueryTypeAtom.RingSizesNot, this.formatIntegers(value)); }
         static setQueryAtomRingBlock(mol, atom, value) { this.setQueryAtom(mol, atom, QueryTypeAtom.RingBlock, this.formatBoolean(value)); }
         static setQueryAtomNumRings(mol, atom, value) { this.setQueryAtom(mol, atom, QueryTypeAtom.NumRings, this.formatIntegers(value)); }
+        static setQueryAtomRingBonds(mol, atom, value) { this.setQueryAtom(mol, atom, QueryTypeAtom.RingBonds, this.formatIntegers(value)); }
         static setQueryAtomAdjacency(mol, atom, value) { this.setQueryAtom(mol, atom, QueryTypeAtom.Adjacency, this.formatIntegers(value)); }
         static setQueryAtomBondSums(mol, atom, value) { this.setQueryAtom(mol, atom, QueryTypeAtom.BondSums, this.formatIntegers(value)); }
         static setQueryAtomValences(mol, atom, value) { this.setQueryAtom(mol, atom, QueryTypeAtom.Valences, this.formatIntegers(value)); }
@@ -18429,22 +18536,21 @@ var WebMolKit;
                     this.charMissing = true;
             }
             let metrics = font.measureTextNative(txt, fontFamily, fontSize, opt);
-            let bx = 0, by = 0;
             if ((align & TextAlign.Left) != 0) { }
             else if ((align & TextAlign.Right) != 0)
-                bx = -metrics[0];
+                x = -metrics[0];
             else
-                bx = -0.5 * metrics[0];
+                x = -0.5 * metrics[0];
             if ((align & TextAlign.Middle) != 0)
-                by += 0.5 * metrics[1];
+                y += 0.5 * metrics[1];
             else if ((align & TextAlign.Top) != 0)
-                by += metrics[1];
+                y += metrics[1];
             else if ((align & TextAlign.Bottom) != 0)
-                by -= metrics[2];
+                y -= metrics[2];
             this.updateBounds(x, y - metrics[1]);
             this.updateBounds(x + metrics[0], y + metrics[2]);
             let typeidx = this.findOrCreateType([PRIM_TEXTNATIVE, fontFamily, fontSize, colour, opt]);
-            this.prims.push([PRIM_TEXTNATIVE, typeidx, x + bx, y + by, txt]);
+            this.prims.push([PRIM_TEXTNATIVE, typeidx, x, y, txt]);
         }
         boundLowX() { return this.lowX; }
         boundLowY() { return this.lowY; }
@@ -24607,6 +24713,9 @@ var WebMolKit;
                 WebMolKit.dom('<div>Aromatic</div>').appendTo(grid).css({ 'grid-area': `${++row} / title` });
                 this.optAromatic = new WebMolKit.OptionList(['Maybe', 'Yes', 'No']);
                 this.optAromatic.render(WebMolKit.dom('<div/>').appendTo(grid).css({ 'grid-area': `${row} / value` }));
+                WebMolKit.dom('<div>Unsaturated</div>').appendTo(grid).css({ 'grid-area': `${++row} / title` });
+                this.optUnsaturated = new WebMolKit.OptionList(['Maybe', 'Yes', 'No']);
+                this.optUnsaturated.render(WebMolKit.dom('<div/>').appendTo(grid).css({ 'grid-area': `${row} / value` }));
                 WebMolKit.dom('<div>Elements</div>').appendTo(grid).css({ 'grid-area': `${++row} / title` });
                 [this.chkNotElements, this.inputElements] = makeToggleInput();
                 WebMolKit.dom('<div>Ring Sizes</div>').appendTo(grid).css({ 'grid-area': `${++row} / title` });
@@ -24616,6 +24725,8 @@ var WebMolKit;
                 this.optRingBlock.render(WebMolKit.dom('<div/>').appendTo(grid).css({ 'grid-area': `${row} / value` }));
                 WebMolKit.dom('<div># Small Rings</div>').appendTo(grid).css({ 'grid-area': `${++row} / title` });
                 this.inputNumRings = makeInput();
+                WebMolKit.dom('<div># Ring Bonds</div>').appendTo(grid).css({ 'grid-area': `${++row} / title` });
+                this.inputRingBonds = makeInput();
                 WebMolKit.dom('<div>Adjacency</div>').appendTo(grid).css({ 'grid-area': `${++row} / title` });
                 this.inputAdjacency = makeInput();
                 WebMolKit.dom('<div>Bond Sums</div>').appendTo(grid).css({ 'grid-area': `${++row} / title` });
@@ -24652,6 +24763,9 @@ var WebMolKit;
             let arom = this.optAromatic.getSelectedIndex();
             if (arom > 0)
                 WebMolKit.QueryUtil.setQueryAtomAromatic(mol, atom, arom == 1);
+            let unsat = this.optUnsaturated.getSelectedIndex();
+            if (unsat > 0)
+                WebMolKit.QueryUtil.setQueryAtomUnsaturated(mol, atom, unsat == 1);
             let elem = this.splitStrings(this.inputElements.getValue());
             if (elem) {
                 if (!this.chkNotElements.elInput.checked)
@@ -24672,6 +24786,9 @@ var WebMolKit;
             let nring = this.splitNumbers(this.inputNumRings.getValue());
             if (nring)
                 WebMolKit.QueryUtil.setQueryAtomNumRings(mol, atom, nring);
+            let rbc = this.splitNumbers(this.inputRingBonds.getValue());
+            if (rbc)
+                WebMolKit.QueryUtil.setQueryAtomRingBonds(mol, atom, rbc);
             let adj = this.splitNumbers(this.inputAdjacency.getValue());
             if (adj)
                 WebMolKit.QueryUtil.setQueryAtomAdjacency(mol, atom, adj);
@@ -24712,12 +24829,14 @@ var WebMolKit;
             const { mol, atom } = this;
             let chg = WebMolKit.QueryUtil.queryAtomCharges(mol, atom);
             let arom = WebMolKit.QueryUtil.queryAtomAromatic(mol, atom);
+            let unsat = WebMolKit.QueryUtil.queryAtomUnsaturated(mol, atom);
             let elem = WebMolKit.QueryUtil.queryAtomElements(mol, atom);
             let elemNot = WebMolKit.QueryUtil.queryAtomElementsNot(mol, atom);
             let ringsz = WebMolKit.QueryUtil.queryAtomRingSizes(mol, atom);
             let ringszNot = WebMolKit.QueryUtil.queryAtomRingSizesNot(mol, atom);
             let ringblk = WebMolKit.QueryUtil.queryAtomRingBlock(mol, atom);
             let nring = WebMolKit.QueryUtil.queryAtomNumRings(mol, atom);
+            let rbc = WebMolKit.QueryUtil.queryAtomRingBonds(mol, atom);
             let adj = WebMolKit.QueryUtil.queryAtomAdjacency(mol, atom);
             let bond = WebMolKit.QueryUtil.queryAtomBondSums(mol, atom);
             let val = WebMolKit.QueryUtil.queryAtomValences(mol, atom);
@@ -24727,12 +24846,14 @@ var WebMolKit;
             let fragNot = WebMolKit.QueryUtil.queryAtomSubFragsNot(mol, atom);
             this.inputCharges.setValue(WebMolKit.Vec.notBlank(chg) ? chg.join(',') : '');
             this.optAromatic.setSelectedIndex(arom == null ? 0 : arom ? 1 : 2);
+            this.optUnsaturated.setSelectedIndex(unsat == null ? 0 : unsat ? 1 : 2);
             this.chkNotElements.elInput.checked = WebMolKit.Vec.isBlank(elem) && WebMolKit.Vec.notBlank(elemNot);
             this.inputElements.setValue(WebMolKit.Vec.notBlank(elem) ? elem.join(',') : WebMolKit.Vec.notBlank(elemNot) ? elemNot.join(',') : '');
             this.chkNotRingSizes.elInput.checked = WebMolKit.Vec.isBlank(ringsz) && WebMolKit.Vec.notBlank(ringszNot);
             this.inputRingSizes.setValue(WebMolKit.Vec.notBlank(ringsz) ? ringsz.join(',') : WebMolKit.Vec.notBlank(ringszNot) ? ringszNot.join(',') : '');
             this.optRingBlock.setSelectedIndex(ringblk == null ? 0 : ringblk ? 1 : 2);
             this.inputNumRings.setValue(WebMolKit.Vec.notBlank(nring) ? nring.join(',') : '');
+            this.inputRingBonds.setValue(WebMolKit.Vec.notBlank(rbc) ? rbc.join(',') : '');
             this.inputAdjacency.setValue(WebMolKit.Vec.notBlank(adj) ? adj.join(',') : '');
             this.inputBondSums.setValue(WebMolKit.Vec.notBlank(bond) ? bond.join(',') : '');
             this.inputValences.setValue(WebMolKit.Vec.notBlank(val) ? val.join(',') : '');

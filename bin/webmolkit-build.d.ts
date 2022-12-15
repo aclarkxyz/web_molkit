@@ -1166,7 +1166,6 @@ declare namespace WebMolKit {
         mol: Molecule;
         molName: string;
         overallStereoAbsolute: boolean;
-        atomHyd: number[];
         resBonds: boolean[];
         groupAttachAny: Map<number, number[]>;
         groupAttachAll: Map<number, number[]>;
@@ -1189,6 +1188,8 @@ declare namespace WebMolKit {
         private withoutQuotes;
         private splitWithQuotes;
         private unpackList;
+        private countRingBonds;
+        private countSubstitutions;
     }
     class MDLSDFReader {
         ds: DataSheet;
@@ -1715,12 +1716,14 @@ declare namespace WebMolKit {
     enum QueryTypeAtom {
         Charges = "qC:",
         Aromatic = "qA:",
+        Unsaturated = "qU:",
         Elements = "qE:",
         ElementsNot = "qE!",
         RingSizes = "qR:",
         RingSizesNot = "qR!",
         RingBlock = "qB:",
         NumRings = "qN:",
+        RingBonds = "qG:",
         Adjacency = "qJ:",
         BondSums = "qO:",
         Valences = "qV:",
@@ -1753,12 +1756,14 @@ declare namespace WebMolKit {
         static setQueryBond(mol: Molecule, bond: number, type: QueryTypeBond, str: string): void;
         static queryAtomCharges(mol: Molecule, atom: number): number[];
         static queryAtomAromatic(mol: Molecule, atom: number): boolean;
+        static queryAtomUnsaturated(mol: Molecule, atom: number): boolean;
         static queryAtomElements(mol: Molecule, atom: number): string[];
         static queryAtomElementsNot(mol: Molecule, atom: number): string[];
         static queryAtomRingSizes(mol: Molecule, atom: number): number[];
         static queryAtomRingSizesNot(mol: Molecule, atom: number): number[];
         static queryAtomRingBlock(mol: Molecule, atom: number): boolean;
         static queryAtomNumRings(mol: Molecule, atom: number): number[];
+        static queryAtomRingBonds(mol: Molecule, atom: number): number[];
         static queryAtomAdjacency(mol: Molecule, atom: number): number[];
         static queryAtomBondSums(mol: Molecule, atom: number): number[];
         static queryAtomValences(mol: Molecule, atom: number): number[];
@@ -1773,12 +1778,14 @@ declare namespace WebMolKit {
         static queryBondOrders(mol: Molecule, bond: number): number[];
         static setQueryAtomCharges(mol: Molecule, atom: number, value: number[]): void;
         static setQueryAtomAromatic(mol: Molecule, atom: number, value: boolean): void;
+        static setQueryAtomUnsaturated(mol: Molecule, atom: number, value: boolean): void;
         static setQueryAtomElements(mol: Molecule, atom: number, value: string[]): void;
         static setQueryAtomElementsNot(mol: Molecule, atom: number, value: string[]): void;
         static setQueryAtomRingSizes(mol: Molecule, atom: number, value: number[]): void;
         static setQueryAtomRingSizesNot(mol: Molecule, atom: number, value: number[]): void;
         static setQueryAtomRingBlock(mol: Molecule, atom: number, value: boolean): void;
         static setQueryAtomNumRings(mol: Molecule, atom: number, value: number[]): void;
+        static setQueryAtomRingBonds(mol: Molecule, atom: number, value: number[]): void;
         static setQueryAtomAdjacency(mol: Molecule, atom: number, value: number[]): void;
         static setQueryAtomBondSums(mol: Molecule, atom: number, value: number[]): void;
         static setQueryAtomValences(mol: Molecule, atom: number, value: number[]): void;
@@ -3160,12 +3167,14 @@ declare namespace WebMolKit {
         private bond;
         private inputCharges;
         private optAromatic;
+        private optUnsaturated;
         private chkNotElements;
         private inputElements;
         private chkNotRingSizes;
         private inputRingSizes;
         private optRingBlock;
         private inputNumRings;
+        private inputRingBonds;
         private inputAdjacency;
         private inputBondSums;
         private inputValences;
