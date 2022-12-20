@@ -32,6 +32,9 @@ interface Sgroup
 	value?:string;
 	unit?:string;
 	query?:string;
+
+	// MUL only
+	parent?:number;
 }
 
 const VPFX = 'M  V30 ';
@@ -300,6 +303,7 @@ export class MDLMOLWriter
 					for (let i = 0; i < sz; i++) line += this.intrpad(sg.atoms[n + i], 4);
 					this.lines.push(line);
 				}
+				if (sg.parent > 0) this.lines.push('M  SPL    1' + sidx + this.intrpad(sg.parent, 4));
 			}
 			if (sg.type == 'DAT')
 			{
@@ -464,6 +468,23 @@ export class MDLMOLWriter
 		for (let ma of ForeignMolecule.noteAllSgroupMultiAttach(mol)) this.sgroups.push({type: 'SUP', name: ma.name, atoms: ma.atoms});
 		for (let mr of ForeignMolecule.noteAllSgroupMultiRepeat(mol)) this.sgroups.push({type: 'MUL', name: mr.mult.toString(), atoms: mr.atoms});
 		for (let dat of ForeignMolecule.noteAllSgroupData(mol)) this.sgroups.push({type: 'DAT', name: dat.name, value: dat.value, unit: dat.unit, query: dat.query, atoms: dat.atoms});
+
+		// whenever a MUL group is subsumed by another, need to name that as the parent
+		for (let n = 0; n < this.sgroups.length; n++)
+		{
+			let sg = this.sgroups[n];
+			if (sg.type != 'MUL') continue;
+			let bestIdx = -1, bestSize = Number.MAX_SAFE_INTEGER;
+			skip: for (let i = 0; i < this.sgroups.length; i++) if (i != n)
+			{
+				var look = this.sgroups[i];
+				if (look.type != 'MUL' || look.atoms.length >= bestSize) continue;
+				for (let a of look.atoms) if (!sg.atoms.includes(a)) continue skip;
+				bestIdx = i;
+				bestSize = look.atoms.length;
+			}
+			if (bestIdx >= 0) sg.parent = bestIdx + 1;
+		}
 	}
 
 	// use a variant of Sgroups for any polymer blocks
@@ -644,6 +665,7 @@ export class MDLMOLWriter
 				txt += ' MULT=' + sg.name;
 				txt += ' ATOMS=' + this.packV3000List(sg.atoms);
 				txt += ' PATOMS=' + this.packV3000List(sg.atoms.slice(0, unit));
+				if (sg.parent > 0) txt += ' PARENT=' + sg.parent;
 			}
 			else if (sg.type == 'DAT')
 			{
