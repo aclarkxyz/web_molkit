@@ -479,7 +479,7 @@ export class MDLMOLWriter
 			{
 				var look = this.sgroups[i];
 				if (look.type != 'MUL' || look.atoms.length >= bestSize) continue;
-				for (let a of look.atoms) if (!sg.atoms.includes(a)) continue skip;
+				for (let a of sg.atoms) if (!look.atoms.includes(a)) continue skip;
 				bestIdx = i;
 				bestSize = look.atoms.length;
 			}
