@@ -300,8 +300,8 @@ export class MetaVector
 		let metrics = font.measureTextNative(txt, fontFamily, fontSize, opt);
 
 		if ((align & TextAlign.Left) != 0) {}
-		else if ((align & TextAlign.Right) != 0) x = -metrics[0];
-		else /* centre */ x = -0.5 * metrics[0];
+		else if ((align & TextAlign.Right) != 0) x -= metrics[0];
+		else /* centre */ x -= 0.5 * metrics[0];
 
 		if ((align & TextAlign.Middle) != 0) y += 0.5 * metrics[1];
 		else if ((align & TextAlign.Top) != 0) y += metrics[1];
