@@ -63,15 +63,15 @@ export class MoleculeStream
 		}
 
 		// opening and closing lines
-		let bits = lines[0].match(/^SketchEl\!\((\d+)\,(\d+)\)/);
-		if (!bits) return null;
-		let numAtoms = parseInt(bits[1]), numBonds = parseInt(bits[2]);
+		let hdr = lines[0].match(/^SketchEl\!\((\d+)\,(\d+)\)/);
+		if (!hdr) return null;
+		let numAtoms = parseInt(hdr[1]), numBonds = parseInt(hdr[2]);
 		if (lines.length < 2 + numAtoms + numBonds) return null;
 		if (!lines[1 + numAtoms + numBonds].match(/^!End/)) return null;
 
 		for (let n = 0; n < numAtoms; n++)
 		{
-			bits = lines[1 + n].split(/[=,;]/);
+			let bits = lines[1 + n].split(/[=,;]/);
 			let num = mol.addAtom(MoleculeStream.skUnescape(bits[0]), parseFloat(bits[1]), parseFloat(bits[2]), parseInt(bits[3]), parseInt(bits[4]));
 			let extra:string[] = [], trans:string[] = [];
 			for (let i = 5; i < bits.length; i++)
@@ -91,7 +91,7 @@ export class MoleculeStream
 		}
 		for (let n = 0; n < numBonds; n++)
 		{
-			bits = lines[1 + numAtoms + n].split(/[=,]/);
+			let bits = lines[1 + numAtoms + n].split(/[=,]/);
 			let frto = bits[0].split('-');
 			let bfr = parseInt(frto[0].trim()), bto = parseInt(frto[1].trim());
 			if (bfr == bto) continue; // silent trimming
