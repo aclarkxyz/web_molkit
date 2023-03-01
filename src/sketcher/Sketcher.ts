@@ -22,6 +22,7 @@ export class Sketcher extends DrawCanvas
 {
 	// callbacks
 	public onChangeMolecule:(mol:Molecule) => void;
+	public callbackSpecialPaste:(str:string) => Promise<Molecule> = null; // define this to add special layer for clipboard interpretation
 
 	public inDialog = false; // set to true while a modal dialog is open
 	public initialFocus = true; // normally want to bogart the focus upon creation, but not always
@@ -509,22 +510,40 @@ export class Sketcher extends DrawCanvas
 	// pasted text from clipboard (can be activated from outside the widget, so is public)
 	public pasteText(str:string):void
 	{
-		let mol = MoleculeStream.readUnknown(str);
-		if (!mol)
+		const pasteLocal = () =>
 		{
-			let ds = DataSheetStream.readXML(str);
-			if (ds)
+			let mol = MoleculeStream.readUnknown(str);
+			if (!mol)
 			{
-				outer: for (let r = 0; r < ds.numRows; r++) for (let c = 0; c < ds.numCols; c++) if (ds.colType(c) == DataSheetColumn.Molecule && ds.notNull(r, c))
+				let ds = DataSheetStream.readXML(str);
+				if (ds)
 				{
-					mol = ds.getMolecule(r, c);
-					break outer;
+					outer: for (let r = 0; r < ds.numRows; r++) for (let c = 0; c < ds.numCols; c++) if (ds.colType(c) == DataSheetColumn.Molecule && ds.notNull(r, c))
+					{
+						mol = ds.getMolecule(r, c);
+						break outer;
+					}
 				}
 			}
-		}
 
-		if (mol != null) this.pasteMolecule(mol);
-		else alert('Text from clipboard is not a valid molecule.');
+			if (mol != null) this.pasteMolecule(mol);
+			else alert('Text from clipboard is not a valid molecule.');
+		};
+
+console.log('CB:'+(!!this.callbackSpecialPaste));
+		if (this.callbackSpecialPaste)
+		{
+			(async () =>
+			{
+				let mol = await this.callbackSpecialPaste(str);
+console.log('awaited:'+mol);
+				if (mol) 
+					this.pasteMolecule(mol); 
+				else 
+					pasteLocal();
+			})();
+		}
+		else pasteLocal();
 	}
 	public pasteMolecule(mol:Molecule):void
 	{
