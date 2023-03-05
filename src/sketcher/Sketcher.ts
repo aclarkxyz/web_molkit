@@ -530,16 +530,14 @@ export class Sketcher extends DrawCanvas
 			else alert('Text from clipboard is not a valid molecule.');
 		};
 
-console.log('CB:'+(!!this.callbackSpecialPaste));
 		if (this.callbackSpecialPaste)
 		{
 			(async () =>
 			{
 				let mol = await this.callbackSpecialPaste(str);
-console.log('awaited:'+mol);
-				if (mol) 
-					this.pasteMolecule(mol); 
-				else 
+				if (mol)
+					this.pasteMolecule(mol);
+				else
 					pasteLocal();
 			})();
 		}

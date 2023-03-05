@@ -635,4 +635,37 @@ export function empiricalScrollerSize():Size
 	return staticScrollerSize;
 }
 
+// returns # of permutations between the two strings, where 0 means that the two strings are identical; strings are case sensitive;
+// performance isn't linear, so be careful with rate limiting steps
+export function stringSimilarityPermutations(str1:string, str2:string):number
+{
+	if (!str1 || !str2) return 0;
+	const ch1 = Array.from(str1), len1 = ch1.length;
+	const ch2 = Array.from(str2), len2 = ch2.length;
+
+	let levenshteinDistance = (sz1:number, sz2:number):number =>
+	{
+		let dist:number[][] = [];
+		for (let i = 0; i <= sz1; i++)
+		{
+			dist.push(Vec.numberArray(0, sz2 + 1));
+			dist[i][0] = i;
+		}
+		for (let j = 1; j <= sz2; j++) dist[0][j] = j;
+
+		for (let j = 1; j <= sz2; j++) for (let i = 1; i <= sz1; i++)
+		{
+			let cost = ch1[i - 1] == ch2[j - 1] ? 0 : 1;
+			dist[i][j] = Math.min(Math.min(dist[i - 1][j] + 1, dist[i][j - 1] + 1), dist[i - 1][j - 1] + cost);
+		}
+		return dist[sz1][sz2];
+	};
+
+	let cost = ch1[len1 - 1] == ch2[len2 - 1] ? 0 : 1;
+	let lev1 = levenshteinDistance(len1 - 1, len2) + 1;
+	let lev2 = levenshteinDistance(len1, len2 - 1) + 1;
+	let lev3 = levenshteinDistance(len1 - 1, len2 - 1) + cost;
+	return Math.min(Math.min(lev1, lev2), lev3);
+}
+
 /* EOF */ }

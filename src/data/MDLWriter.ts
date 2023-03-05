@@ -477,7 +477,7 @@ export class MDLMOLWriter
 			let bestIdx = -1, bestSize = Number.MAX_SAFE_INTEGER;
 			skip: for (let i = 0; i < this.sgroups.length; i++) if (i != n)
 			{
-				var look = this.sgroups[i];
+				let look = this.sgroups[i];
 				if (look.type != 'MUL' || look.atoms.length >= bestSize) continue;
 				for (let a of sg.atoms) if (!look.atoms.includes(a)) continue skip;
 				bestIdx = i;
