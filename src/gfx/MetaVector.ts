@@ -291,11 +291,11 @@ export class MetaVector
 
 		if (align == null) align = TextAlign.Left | TextAlign.Baseline;
 		const font = FontData.main;
-		for (let n = 0; n < txt.length; n++)
+		/*for (let n = 0; n < txt.length; n++)
 		{
 			let i = font.getIndex(txt.charAt(n));
 			if (i >= 0) this.charMask[i] = true; else this.charMissing = true;
-		}
+		}*/
 
 		let metrics = font.measureTextNative(txt, fontFamily, fontSize, opt);
 

@@ -1674,6 +1674,7 @@ declare namespace WebMolKit {
     function findNode(parent: Node, name: string): Element;
     function findNodes(parent: Node, name: string): Element[];
     function pathRoundedRect(x1: number, y1: number, x2: number, y2: number, rad: number): Path2D;
+    function coordsRoundedRect(x1: number, y1: number, x2: number, y2: number, rad: number): [number[], number[], boolean[]];
     function drawLine(ctx: CanvasRenderingContext2D, x1: number, y1: number, x2: number, y2: number): void;
     const ASCENT_FUDGE = 1.4;
     function fontSansSerif(ascent: number): string;
@@ -1711,6 +1712,7 @@ declare namespace WebMolKit {
     function yieldDOM(): Promise<void>;
     function pause(seconds: number): Promise<void>;
     function empiricalScrollerSize(): Size;
+    function stringSimilarityPermutations(str1: string, str2: string): number;
 }
 declare namespace WebMolKit {
     enum QueryTypeAtom {
@@ -2110,7 +2112,9 @@ declare namespace WebMolKit {
         fauxComponents: ArrangeExperimentFauxComponent[];
         static COMP_GAP_LEFT: number;
         static COMP_ANNOT_SIZE: number;
+        private extraText;
         constructor(entry: ExperimentEntry, measure: ArrangeMeasurement, policy: RenderPolicy);
+        includeExtraText(step: number, type: ExperimentComponentType, idx: number, txt: string): void;
         arrange(): void;
         get numComponents(): number;
         getComponent(idx: number): ArrangeComponent;
@@ -3194,6 +3198,7 @@ declare namespace WebMolKit {
 declare namespace WebMolKit {
     class Sketcher extends DrawCanvas {
         onChangeMolecule: (mol: Molecule) => void;
+        callbackSpecialPaste: (str: string) => Promise<Molecule>;
         inDialog: boolean;
         initialFocus: boolean;
         useToolBank: boolean;

@@ -379,6 +379,15 @@ export function pathRoundedRect(x1:number, y1:number, x2:number, y2:number, rad:
 	return path;
 }
 
+// returns a rounded rect definition w. control points
+export function coordsRoundedRect(x1:number, y1:number, x2:number, y2:number, rad:number):[number[], number[], boolean[]]
+{
+	let px = [x2 - rad, x2, x2, x2, x2, x2 - rad, x1 + rad, x1, x1, x1, x1, x1 + rad];
+	let py = [y1, y1, y1 + rad, y2 - rad, y2, y2, y2, y2, y2 - rad, y1 + rad, y1, y1];
+	let ctrl = [false, true, false, false, true, false, false, true, false, false, true, false];
+	return [px, py, ctrl];
+}
+
 // convenience functions
 export function drawLine(ctx:CanvasRenderingContext2D, x1:number, y1:number, x2:number, y2:number)
 {

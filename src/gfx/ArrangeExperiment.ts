@@ -48,7 +48,7 @@ export class ArrangeComponent
 	public step:number;	// which step it belongs to
 	public side:number; // which side of the reaction (-1=left, 1=right, 0=middle)
 	public mol:Molecule; // molecule content, if applicable
-	public text:string[]; // text content, if applicable
+	public text:string[] = []; // text content, if applicable
 	public leftNumer:string; // // to the left of the structure: may be {n}/{d} form
 	public leftDenom:string;
 	public fszText:number; // text font sizes, if applicable
@@ -128,6 +128,8 @@ export class ArrangeExperiment
 	public static COMP_GAP_LEFT = 0.5;
 	public static COMP_ANNOT_SIZE = 1;
 
+	private extraText:Record<string, string[]> = {}; // key {step:type:idx}
+
 	// --------------------- public methods ---------------------
 
 	// sets up the object with the mandatory information
@@ -136,6 +138,14 @@ export class ArrangeExperiment
 		this.scale = policy.data.pointScale;
 		this.limitStructW = this.limitStructH = this.scale * 10;
 		this.padding = PADDING * this.scale;
+	}
+
+	// optional text decoration to add to a particular component
+	public includeExtraText(step:number, type:ExperimentComponentType, idx:number, txt:string):void
+	{
+		if (!txt) return;
+		let key = `${step}:${type}:${idx}`;
+		this.extraText[key] = Vec.append(this.extraText[key], txt);
 	}
 
 	// carries out the arrangement
@@ -333,6 +343,10 @@ export class ArrangeExperiment
 			else xc.leftNumer = comp.stoich;
 		}
 		if (this.includeAnnot && MolUtil.notBlank(comp.mol) && comp.primary) xc.annot = ArrangeComponentAnnot.Primary;
+
+		let key = `${step}:${ExperimentComponentType.Reactant}:${idx}`;
+		xc.text.push(...(this.extraText[key] ?? []));
+
 		this.components.push(xc);
 	}
 	private createReagent(idx:number, step:number):void
@@ -361,6 +375,9 @@ export class ArrangeExperiment
 			}
 		}
 
+		let key = `${step}:${ExperimentComponentType.Reagent}:${idx}`;
+		xc.text.push(...(this.extraText[key] ?? []));
+
 		this.components.push(xc);
 	}
 	private createProduct(idx:number, step:number):void
@@ -387,6 +404,10 @@ export class ArrangeExperiment
 			else xc.leftNumer = comp.stoich;
 		}
 		if (this.includeAnnot && MolUtil.notBlank(comp.mol) && comp.waste) xc.annot = ArrangeComponentAnnot.Waste;
+
+		let key = `${step}:${ExperimentComponentType.Product}:${idx}`;
+		xc.text.push(...(this.extraText[key] ?? []));
+
 		this.components.push(xc);
 	}
 	private createSegregator(type:ArrangeComponentType, step:number, side:number):void
@@ -743,8 +764,6 @@ export class ArrangeExperiment
 	// add in other text information about the comment, if desired
 	private supplementText(xc:ArrangeComponent, comp:ExperimentComponent):void
 	{
-		if (!xc.text) xc.text = [];
-
 		if (comp.mass > 0) xc.text.push(QuantityCalc.formatMass(comp.mass));
 		if (comp.volume > 0) xc.text.push(QuantityCalc.formatVolume(comp.volume));
 		if (comp.moles > 0) xc.text.push(QuantityCalc.formatMoles(comp.moles));
