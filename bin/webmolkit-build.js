@@ -6826,7 +6826,7 @@ var WebMolKit;
                     }
                 }
             }
-            let counts = lineCounts.split(/\s+/);
+            let counts = lineCounts.trim().split(/\s+/);
             if (counts.length < 2)
                 throw ERRPFX + 'counts line malformatted';
             let numAtoms = parseInt(counts[0]), numBonds = parseInt(counts[1]);
@@ -30306,6 +30306,7 @@ var WebMolKit;
         }
         static outlinePolygon(x, y, diameter) {
             let del = new WebMolKit.Triangulation2D(x, y);
+            del = new WebMolKit.Triangulation2D(x, y);
             let concave = del.trimConcave(diameter);
             let idx = del.traceOutline(concave);
             return [WebMolKit.Vec.idxGet(x, idx), WebMolKit.Vec.idxGet(y, idx)];
@@ -31573,25 +31574,30 @@ var WebMolKit;
             const threshSq = WebMolKit.sqr(threshold);
             const { sz, px, py } = this;
             let tri = this.triangles.slice(0);
-            let edgeCount = new Map();
+            let edge = [];
+            for (let n = 0, i = 0; i < tri.length; n++, i += 3) {
+                edge.push(sz * Math.min(tri[i + 0], tri[i + 1]) + Math.max(tri[i + 0], tri[i + 1]));
+                edge.push(sz * Math.min(tri[i + 0], tri[i + 2]) + Math.max(tri[i + 0], tri[i + 2]));
+                edge.push(sz * Math.min(tri[i + 1], tri[i + 2]) + Math.max(tri[i + 1], tri[i + 2]));
+            }
+            let uniqueEdges = WebMolKit.Vec.uniqueUnstable(edge);
+            for (let n = 0; n < edge.length; n++)
+                edge[n] = uniqueEdges.indexOf(edge[n]);
+            let edgeCount = new Array(edge.length);
             while (true) {
                 const ntri = tri.length / 3;
-                edgeCount.clear();
+                edgeCount.fill(0);
                 for (let n = 0, i = 0; n < ntri; n++, i += 3) {
-                    const e1 = sz * Math.min(tri[i + 0], tri[i + 1]) + Math.max(tri[i + 0], tri[i + 1]);
-                    const e2 = sz * Math.min(tri[i + 0], tri[i + 2]) + Math.max(tri[i + 0], tri[i + 2]);
-                    const e3 = sz * Math.min(tri[i + 1], tri[i + 2]) + Math.max(tri[i + 1], tri[i + 2]);
-                    edgeCount.set(e1, (edgeCount.get(e1) || 0) + 1);
-                    edgeCount.set(e2, (edgeCount.get(e2) || 0) + 1);
-                    edgeCount.set(e3, (edgeCount.get(e3) || 0) + 1);
+                    edgeCount[edge[i + 0]]++;
+                    edgeCount[edge[i + 1]]++;
+                    edgeCount[edge[i + 2]]++;
                 }
                 let mask = WebMolKit.Vec.booleanArray(true, ntri);
                 for (let n = 0, i = 0; n < ntri; n++, i += 3) {
+                    const c1 = edgeCount[edge[i + 0]];
+                    const c2 = edgeCount[edge[i + 1]];
+                    const c3 = edgeCount[edge[i + 2]];
                     const i1 = tri[i], i2 = tri[i + 1], i3 = tri[i + 2];
-                    const e1 = sz * Math.min(i1, i2) + Math.max(i1, i2);
-                    const e2 = sz * Math.min(i1, i3) + Math.max(i1, i3);
-                    const e3 = sz * Math.min(i2, i3) + Math.max(i2, i3);
-                    const c1 = edgeCount.get(e1), c2 = edgeCount.get(e2), c3 = edgeCount.get(e3);
                     if (c1 == 1 && c2 != 1 && c3 != 1)
                         mask[n] = WebMolKit.norm2_xy(px[i1] - px[i2], py[i1] - py[i2]) < threshSq;
                     else if (c1 != 1 && c2 == 1 && c3 != 1)
@@ -31601,19 +31607,24 @@ var WebMolKit;
                 }
                 if (WebMolKit.Vec.allTrue(mask))
                     break;
-                let rep = new Array(WebMolKit.Vec.maskCount(mask) * 3);
-                for (let n = 0, i = 0, j = 0; n < ntri; n++, i += 3)
+                let repTri = new Array(WebMolKit.Vec.maskCount(mask) * 3);
+                let repEdge = new Array(WebMolKit.Vec.maskCount(mask) * 3);
+                for (let n = 0, i = 0, j = 0, k = 0; n < ntri; n++, i += 3)
                     if (mask[n]) {
-                        rep[j++] = tri[i];
-                        rep[j++] = tri[i + 1];
-                        rep[j++] = tri[i + 2];
+                        repTri[j++] = tri[i];
+                        repTri[j++] = tri[i + 1];
+                        repTri[j++] = tri[i + 2];
+                        repEdge[k++] = edge[i];
+                        repEdge[k++] = edge[i + 1];
+                        repEdge[k++] = edge[i + 2];
                     }
-                tri = rep;
+                tri = repTri;
+                edge = repEdge;
             }
             return tri;
         }
         traceOutline(tri) {
-            const ntri = tri.length / 3;
+            const npt = tri.length, ntri = npt / 3;
             const { sz, px, py } = this;
             let edgeCount = new Map();
             for (let n = 0, i = 0; n < ntri; n++, i += 3) {
@@ -31624,22 +31635,22 @@ var WebMolKit;
                 edgeCount.set(e2, (edgeCount.get(e2) || 0) + 1);
                 edgeCount.set(e3, (edgeCount.get(e3) || 0) + 1);
             }
-            let edges = [];
+            let edgePairs = [];
             for (let entry of edgeCount.entries())
                 if (entry[1] == 1) {
                     const e = entry[0];
                     const i1 = Math.floor(e / sz), i2 = e % sz;
-                    edges.push(i1);
-                    edges.push(i2);
+                    edgePairs.push(i1);
+                    edgePairs.push(i2);
                 }
-            const idx = WebMolKit.Vec.uniqueUnstable(edges);
+            const idx = WebMolKit.Vec.uniqueUnstable(edgePairs);
             const isz = idx.length;
             const idxMap = new Map();
             for (let n = 0; n < isz; n++)
                 idxMap.set(idx[n], n);
             let g1 = WebMolKit.Vec.numberArray(-1, isz), g2 = WebMolKit.Vec.numberArray(-1, isz);
-            for (let n = 0; n < edges.length; n += 2) {
-                const i1 = idxMap.get(edges[n]), i2 = idxMap.get(edges[n + 1]);
+            for (let n = 0; n < edgePairs.length; n += 2) {
+                const i1 = idxMap.get(edgePairs[n]), i2 = idxMap.get(edgePairs[n + 1]);
                 if (g1[i1] < 0)
                     g1[i1] = i2;
                 else

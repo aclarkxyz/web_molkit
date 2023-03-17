@@ -93,33 +93,41 @@ export class Triangulation2D
 
 		const {sz, px, py} = this;
 		let tri = this.triangles.slice(0);
-		let edgeCount = new Map<number, number>();
+		
+		// setup an edgelist, which we need for rapid tabulation
+		let edge:number[] = [];
+		for (let n = 0, i = 0; i < tri.length; n++, i += 3)
+		{
+			edge.push(sz * Math.min(tri[i + 0], tri[i + 1]) + Math.max(tri[i + 0], tri[i + 1]));
+			edge.push(sz * Math.min(tri[i + 0], tri[i + 2]) + Math.max(tri[i + 0], tri[i + 2]));
+			edge.push(sz * Math.min(tri[i + 1], tri[i + 2]) + Math.max(tri[i + 1], tri[i + 2]));
+		}
+		let uniqueEdges = Vec.uniqueUnstable(edge);
+		for (let n = 0; n < edge.length; n++) edge[n] = uniqueEdges.indexOf(edge[n]);
+		
+		let edgeCount:number[] = new Array(edge.length);
 
 		while (true)
 		{
 			const ntri = tri.length / 3;
 
 			// count the # of instances per edge
-			edgeCount.clear();
+			edgeCount.fill(0);
 			for (let n = 0, i = 0; n < ntri; n++, i += 3)
 			{
-				const e1 = sz * Math.min(tri[i + 0], tri[i + 1]) + Math.max(tri[i + 0], tri[i + 1]);
-				const e2 = sz * Math.min(tri[i + 0], tri[i + 2]) + Math.max(tri[i + 0], tri[i + 2]);
-				const e3 = sz * Math.min(tri[i + 1], tri[i + 2]) + Math.max(tri[i + 1], tri[i + 2]);
-				edgeCount.set(e1, (edgeCount.get(e1) || 0) + 1);
-				edgeCount.set(e2, (edgeCount.get(e2) || 0) + 1);
-				edgeCount.set(e3, (edgeCount.get(e3) || 0) + 1);
+				edgeCount[edge[i + 0]]++;
+				edgeCount[edge[i + 1]]++;
+				edgeCount[edge[i + 2]]++;
 			}
 
 			// any triangle that has one long unique (outer) edge gets the chop
 			let mask = Vec.booleanArray(true, ntri);
 			for (let n = 0, i = 0; n < ntri; n++, i += 3)
 			{
+				const c1 = edgeCount[edge[i + 0]];
+				const c2 = edgeCount[edge[i + 1]];
+				const c3 = edgeCount[edge[i + 2]];
 				const i1 = tri[i], i2 = tri[i + 1], i3 = tri[i + 2];
-				const e1 = sz * Math.min(i1, i2) + Math.max(i1, i2);
-				const e2 = sz * Math.min(i1, i3) + Math.max(i1, i3);
-				const e3 = sz * Math.min(i2, i3) + Math.max(i2, i3);
-				const c1 = edgeCount.get(e1), c2 = edgeCount.get(e2), c3 = edgeCount.get(e3);
 
 				if (c1 == 1 && c2 != 1 && c3 != 1) mask[n] = norm2_xy(px[i1] - px[i2], py[i1] - py[i2]) < threshSq;
 				else if (c1 != 1 && c2 == 1 && c3 != 1) mask[n] = norm2_xy(px[i1] - px[i3], py[i1] - py[i3]) < threshSq;
@@ -129,14 +137,19 @@ export class Triangulation2D
 			if (Vec.allTrue(mask)) break;
 
 			// create a smaller version
-			let rep:number[] = new Array(Vec.maskCount(mask) * 3);
-			for (let n = 0, i = 0, j = 0; n < ntri; n++, i += 3) if (mask[n])
+			let repTri:number[] = new Array(Vec.maskCount(mask) * 3);
+			let repEdge:number[] = new Array(Vec.maskCount(mask) * 3);
+			for (let n = 0, i = 0, j = 0, k = 0; n < ntri; n++, i += 3) if (mask[n])
 			{
-				rep[j++] = tri[i];
-				rep[j++] = tri[i + 1];
-				rep[j++] = tri[i + 2];
+				repTri[j++] = tri[i];
+				repTri[j++] = tri[i + 1];
+				repTri[j++] = tri[i + 2];
+				repEdge[k++] = edge[i];
+				repEdge[k++] = edge[i + 1];
+				repEdge[k++] = edge[i + 2];
 			}
-			tri = rep;
+			tri = repTri;
+			edge = repEdge;
 		}
 
 		return tri;
@@ -145,7 +158,7 @@ export class Triangulation2D
 	// finds the set of points that traces the outline; the triangles can either be the original set (convex) or the trimmed set (concave)
 	public traceOutline(tri:number[]):number[]
 	{
-		const ntri = tri.length / 3;
+		const npt = tri.length, ntri = npt / 3;
 		const {sz, px, py} = this;
 
 		let edgeCount = new Map<number, number>();
@@ -162,25 +175,25 @@ export class Triangulation2D
 		}
 
 		// collect the unique (outer) edges
-		let edges:number[] = [];
+		let edgePairs:number[] = [];
 		for (let entry of edgeCount.entries()) if (entry[1] == 1)
 		{
 			const e = entry[0];
 			const i1 = Math.floor(e / sz), i2 = e % sz;
-			edges.push(i1);
-			edges.push(i2);
+			edgePairs.push(i1);
+			edgePairs.push(i2);
 		}
 
 		// list the constituent indices, and make a divalent graph
-		const idx = Vec.uniqueUnstable(edges);
+		const idx = Vec.uniqueUnstable(edgePairs);
 		const isz = idx.length;
 		const idxMap = new Map<number, number>();
 		for (let n = 0; n < isz; n++) idxMap.set(idx[n], n);
 		let g1 = Vec.numberArray(-1, isz), g2 = Vec.numberArray(-1, isz);
-		for (let n = 0; n < edges.length; n += 2)
+		for (let n = 0; n < edgePairs.length; n += 2)
 		{
 			//int i1 = Arrays.binarySearch(idx, edges.get(n)), i2 = Arrays.binarySearch(idx, edges.get(n + 1));
-			const i1 = idxMap.get(edges[n]), i2 = idxMap.get(edges[n + 1]);
+			const i1 = idxMap.get(edgePairs[n]), i2 = idxMap.get(edgePairs[n + 1]);
 			if (g1[i1] < 0) g1[i1] = i2; else g2[i1] = i2;
 			if (g1[i2] < 0) g1[i2] = i1; else g2[i2] = i1;
 		}

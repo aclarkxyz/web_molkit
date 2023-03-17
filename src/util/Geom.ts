@@ -283,7 +283,7 @@ export class GeomUtil
 	{
 		return [x * tfm[0][0] + y * tfm[0][1] + tfm[0][2], x * tfm[1][0] + y * tfm[1][1] + tfm[1][2]];
 	}
-	
+
 	// applies the affine transform to a vector, modifying the parameter array
 	public static applyAffineArray(x:number[], y:number[], tfm:number[][]):void
 	{

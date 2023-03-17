@@ -625,7 +625,7 @@ export class MDLMOLReader
 			// (silently ignore other stuff; don't care)
 		}
 
-		let counts = lineCounts.split(/\s+/);
+		let counts = lineCounts.trim().split(/\s+/);
 		if (counts.length < 2) throw ERRPFX + 'counts line malformatted';
 		let numAtoms = parseInt(counts[0]), numBonds = parseInt(counts[1]);
 		if (numAtoms < 0 || numAtoms > lineAtom.length) throw ERRPFX + 'unreasonable atom count: ' + numAtoms;
