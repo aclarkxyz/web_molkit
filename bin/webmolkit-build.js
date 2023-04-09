@@ -116,15 +116,15 @@ var WebMolKit;
     }
     WebMolKit.AssayProvenanceHeader = AssayProvenanceHeader;
     class AssayProvenance extends WebMolKit.Aspect {
-        constructor(ds, allowModify) {
-            super(AssayProvenance.CODE, ds, allowModify);
-            this.setup();
-        }
         static isAssayProvenance(ds) {
             for (let n = 0; n < ds.numExtensions; n++)
                 if (ds.getExtType(n) == AssayProvenance.CODE)
                     return true;
             return false;
+        }
+        constructor(ds, allowModify) {
+            super(AssayProvenance.CODE, ds, allowModify);
+            this.setup();
         }
         getHeader() {
             for (let n = 0; n < this.ds.numExtensions; n++)
@@ -401,15 +401,15 @@ var WebMolKit;
     }
     WebMolKit.BayesianPredictionOutcome = BayesianPredictionOutcome;
     class BayesianPrediction extends WebMolKit.Aspect {
-        constructor(ds, allowModify) {
-            super(BayesianPrediction.CODE, ds, allowModify);
-            this.setup();
-        }
         static isBayesianPrediction(ds) {
             for (let n = 0; n < ds.numExtensions; n++)
                 if (ds.getExtType(n) == BayesianPrediction.CODE)
                     return true;
             return false;
+        }
+        constructor(ds, allowModify) {
+            super(BayesianPrediction.CODE, ds, allowModify);
+            this.setup();
         }
         getModels() {
             let content = '';
@@ -541,15 +541,15 @@ var WebMolKit;
     }
     WebMolKit.BayesianSourceModel = BayesianSourceModel;
     class BayesianSource extends WebMolKit.Aspect {
-        constructor(ds, allowModify) {
-            super(BayesianSource.CODE, ds, allowModify);
-            this.setup();
-        }
         static isBayesianSource(ds) {
             for (let n = 0; n < ds.numExtensions; n++)
                 if (ds.getExtType(n) == BayesianSource.CODE)
                     return true;
             return false;
+        }
+        constructor(ds, allowModify) {
+            super(BayesianSource.CODE, ds, allowModify);
+            this.setup();
         }
         getModels() {
             let content = '';
@@ -636,16 +636,16 @@ var WebMolKit;
     }
     WebMolKit.BinaryDataField = BinaryDataField;
     class BinaryData extends WebMolKit.Aspect {
-        constructor(ds, allowModify) {
-            super(BinaryData.CODE, ds, allowModify);
-            this.fields = [];
-            this.setup();
-        }
         static isBinaryData(ds) {
             for (let n = 0; n < ds.numExtensions; n++)
                 if (ds.getExtType(n) == BinaryData.CODE)
                     return true;
             return false;
+        }
+        constructor(ds, allowModify) {
+            super(BinaryData.CODE, ds, allowModify);
+            this.fields = [];
+            this.setup();
         }
         getFields() {
             return WebMolKit.deepClone(this.fields);
@@ -921,6 +921,12 @@ var WebMolKit;
     }
     WebMolKit.ExperimentEntry = ExperimentEntry;
     class Experiment extends WebMolKit.Aspect {
+        static isExperiment(ds) {
+            for (let n = 0; n < ds.numExtensions; n++)
+                if (ds.getExtType(n) == Experiment.CODE)
+                    return true;
+            return false;
+        }
         constructor(ds, allowModify) {
             super(Experiment.CODE, ds, allowModify);
             if (Object.keys(Experiment.COLUMN_DESCRIPTIONS).length == 0) {
@@ -963,12 +969,6 @@ var WebMolKit;
                 v[Experiment.COLNAME_PRODUCT_META] = 'Additional product metadata';
             }
             this.setup();
-        }
-        static isExperiment(ds) {
-            for (let n = 0; n < ds.numExtensions; n++)
-                if (ds.getExtType(n) == Experiment.CODE)
-                    return true;
-            return false;
         }
         isFirstStep(row) {
             if (this.ds.notNull(row, Experiment.COLNAME_EXPERIMENT_CREATEDATE))
@@ -1480,16 +1480,16 @@ var WebMolKit;
 var WebMolKit;
 (function (WebMolKit) {
     class MeasurementData extends WebMolKit.Aspect {
-        constructor(ds, allowModify) {
-            super(MeasurementData.CODE, ds, allowModify);
-            this.header = { units: [], fields: [] };
-            this.setup();
-        }
         static isMeasurementData(ds) {
             for (let n = 0; n < ds.numExtensions; n++)
                 if (ds.getExtType(n) == MeasurementData.CODE)
                     return true;
             return false;
+        }
+        constructor(ds, allowModify) {
+            super(MeasurementData.CODE, ds, allowModify);
+            this.header = { units: [], fields: [] };
+            this.setup();
         }
         getHeader() {
             return this.header;
@@ -1737,16 +1737,16 @@ var WebMolKit;
         MixtureAttributeType["Property"] = "property";
     })(MixtureAttributeType = WebMolKit.MixtureAttributeType || (WebMolKit.MixtureAttributeType = {}));
     class Mixture extends WebMolKit.Aspect {
-        constructor(ds, allowModify) {
-            super(Mixture.CODE, ds, allowModify);
-            this.header = { attributes: [] };
-            this.setup();
-        }
         static isMixture(ds) {
             for (let n = 0; n < ds.numExtensions; n++)
                 if (ds.getExtType(n) == Mixture.CODE)
                     return true;
             return false;
+        }
+        constructor(ds, allowModify) {
+            super(Mixture.CODE, ds, allowModify);
+            this.header = { attributes: [] };
+            this.setup();
         }
         getHeader() {
             return this.header;
@@ -1840,15 +1840,15 @@ var WebMolKit;
 var WebMolKit;
 (function (WebMolKit) {
     class SARTable extends WebMolKit.Aspect {
-        constructor(ds, allowModify) {
-            super(SARTable.CODE, ds, allowModify);
-            this.setup();
-        }
         static isSARTable(ds) {
             for (let n = 0; n < ds.numExtensions; n++)
                 if (ds.getExtType(n) == SARTable.CODE)
                     return true;
             return false;
+        }
+        constructor(ds, allowModify) {
+            super(SARTable.CODE, ds, allowModify);
+            this.setup();
         }
         getFields() {
             for (let n = 0; n < this.ds.numExtensions; n++)
@@ -10060,12 +10060,12 @@ var WebMolKit;
         'units'
     ];
     class OntologyTree {
+        static get main() { return globalInstance; }
         constructor() {
             this.roots = [];
             this.mapTerms = new Map();
             this.alreadyLoaded = new Set();
         }
-        static get main() { return globalInstance; }
         static init() {
             return __awaiter(this, void 0, void 0, function* () {
                 if (globalInstance)
@@ -10528,17 +10528,6 @@ var WebMolKit;
     }
     WebMolKit.GreenMetrics = GreenMetrics;
     class QuantityCalc {
-        constructor(entry) {
-            this.entry = entry;
-            this.quantities = [];
-            this.primaryMoles = [];
-            this.idxPrimary = [];
-            this.idxYield = [];
-            this.allMassReact = [];
-            this.allMassProd = [];
-            this.allMassWaste = [];
-            this.greenMetrics = [];
-        }
         static isStoichZero(stoich) {
             if (this.isStoichUnity(stoich))
                 return false;
@@ -10671,6 +10660,17 @@ var WebMolKit;
             for (let n = 0; n < entry.steps[step].products.length; n++, p++)
                 ratioProducts.push(numer[p] * bigDenom / denom[p]);
             return [ratioReactants, ratioReagents, ratioProducts];
+        }
+        constructor(entry) {
+            this.entry = entry;
+            this.quantities = [];
+            this.primaryMoles = [];
+            this.idxPrimary = [];
+            this.idxYield = [];
+            this.allMassReact = [];
+            this.allMassProd = [];
+            this.allMassWaste = [];
+            this.greenMetrics = [];
         }
         calculate() {
             this.classifyTypes();
@@ -12766,6 +12766,16 @@ var WebMolKit;
     WebMolKit.STEREOGROUP_EXTRA_RACEMIC = 'xCHIRAC:';
     WebMolKit.STEREOGROUP_EXTRA_RELATIVE = 'xCHIREL:';
     class StereoGroup {
+        static hasStereoGroups(mol) {
+            for (let n = 1; n <= mol.numAtoms; n++) {
+                let extra = mol.atomExtra(n);
+                if (extra != null)
+                    for (let str of extra)
+                        if (str.startsWith(WebMolKit.STEREOGROUP_EXTRA_RACEMIC) || str.startsWith(WebMolKit.STEREOGROUP_EXTRA_RELATIVE))
+                            return true;
+            }
+            return false;
+        }
         constructor(mol) {
             this.mol = mol;
             this.chiRac = new Map();
@@ -12805,16 +12815,6 @@ var WebMolKit;
                 else
                     this.chiRel.delete(grp);
             }
-        }
-        static hasStereoGroups(mol) {
-            for (let n = 1; n <= mol.numAtoms; n++) {
-                let extra = mol.atomExtra(n);
-                if (extra != null)
-                    for (let str of extra)
-                        if (str.startsWith(WebMolKit.STEREOGROUP_EXTRA_RACEMIC) || str.startsWith(WebMolKit.STEREOGROUP_EXTRA_RELATIVE))
-                            return true;
-            }
-            return false;
         }
         getRacemicGroups() { return Array.from(this.chiRac.keys()); }
         getRelativeGroups() { return Array.from(this.chiRel.keys()); }
@@ -13662,6 +13662,13 @@ var WebMolKit;
     }
 `;
     class Dialog {
+        get obscureBackground() { return $(this.domObscureBackground.el); }
+        get obscureForeground() { return $(this.domObscureForeground.el); }
+        get panelBoundary() { return $(this.domPanelBoundary.el); }
+        get titleDiv() { return $(this.domTitle.el); }
+        get titleButtons() { return $(this.domTitleButtons.el); }
+        get bodyDiv() { return $(this.domBody.el); }
+        get btnClose() { return $(this.domClose.el); }
         constructor(parent = null) {
             this.minPortionWidth = 80;
             this.maxPortionWidth = 80;
@@ -13677,13 +13684,6 @@ var WebMolKit;
             this.parent = WebMolKit.domLegacy(parent);
             WebMolKit.installInlineCSS('dialog', CSS_DIALOG);
         }
-        get obscureBackground() { return $(this.domObscureBackground.el); }
-        get obscureForeground() { return $(this.domObscureForeground.el); }
-        get panelBoundary() { return $(this.domPanelBoundary.el); }
-        get titleDiv() { return $(this.domTitle.el); }
-        get titleButtons() { return $(this.domTitleButtons.el); }
-        get bodyDiv() { return $(this.domBody.el); }
-        get btnClose() { return $(this.domClose.el); }
         onClose(callback) {
             this.callbackClose = callback;
         }
@@ -14857,25 +14857,6 @@ var WebMolKit;
     const MINBOND_LINE = 0.25;
     const MINBOND_EXOTIC = 0.5;
     class ArrangeMolecule {
-        constructor(mol, measure, policy, effects = new WebMolKit.RenderEffects()) {
-            this.mol = mol;
-            this.measure = measure;
-            this.policy = policy;
-            this.effects = effects;
-            this.points = [];
-            this.lines = [];
-            this.rings = [];
-            this.paths = [];
-            this.space = [];
-            this.wantArtifacts = true;
-            this.artifacts = null;
-            this.bondOrder = [];
-            this.atomCharge = [];
-            this.atomUnpaired = [];
-            this.artifactCharge = new Map();
-            this.artifactUnpaired = new Map();
-            this.artifactFract = new Map();
-        }
         static guestimateSize(mol, policy, maxW, maxH) {
             let box = mol.boundary();
             let minX = box.minX(), minY = box.minY(), maxX = box.maxX(), maxY = box.maxY();
@@ -14906,6 +14887,25 @@ var WebMolKit;
                 h = maxH;
             }
             return [w, h];
+        }
+        constructor(mol, measure, policy, effects = new WebMolKit.RenderEffects()) {
+            this.mol = mol;
+            this.measure = measure;
+            this.policy = policy;
+            this.effects = effects;
+            this.points = [];
+            this.lines = [];
+            this.rings = [];
+            this.paths = [];
+            this.space = [];
+            this.wantArtifacts = true;
+            this.artifacts = null;
+            this.bondOrder = [];
+            this.atomCharge = [];
+            this.atomUnpaired = [];
+            this.artifactCharge = new Map();
+            this.artifactUnpaired = new Map();
+            this.artifactFract = new Map();
         }
         getMolecule() { return this.mol; }
         getMeasure() { return this.measure; }
@@ -20166,12 +20166,12 @@ var WebMolKit;
 var WebMolKit;
 (function (WebMolKit) {
     class Widget {
+        get content() { return $(this.domContent.el); }
+        get contentDOM() { return this.domContent; }
         constructor() {
             this.tagType = 'div';
             this.domContent = null;
         }
-        get content() { return $(this.domContent.el); }
-        get contentDOM() { return this.domContent; }
         render(parent) {
             if (parent.jquery)
                 parent = parent[0];
@@ -29468,6 +29468,10 @@ var WebMolKit;
 	}
 `;
     class Popup {
+        get obscureBackground() { return $(this.domObscureBackground.el); }
+        get obscureForeground() { return $(this.domObscureForeground.el); }
+        get panelBoundary() { return $(this.domPanelBoundary.el); }
+        get bodyDiv() { return $(this.domBody.el); }
         constructor(parent) {
             this.popupBackground = 'white';
             this.callbackClose = null;
@@ -29475,10 +29479,6 @@ var WebMolKit;
             this.parent = WebMolKit.domLegacy(parent);
             WebMolKit.installInlineCSS('popup', CSS_POPUP);
         }
-        get obscureBackground() { return $(this.domObscureBackground.el); }
-        get obscureForeground() { return $(this.domObscureForeground.el); }
-        get panelBoundary() { return $(this.domPanelBoundary.el); }
-        get bodyDiv() { return $(this.domBody.el); }
         onClose(callback) {
             this.callbackClose = callback;
         }
@@ -29753,12 +29753,6 @@ var WebMolKit;
     }
     WebMolKit.clearTooltip = clearTooltip;
     class Tooltip {
-        constructor(widget, bodyHTML, titleHTML, delay) {
-            this.widget = widget;
-            this.bodyHTML = bodyHTML;
-            this.titleHTML = titleHTML;
-            this.delay = delay;
-        }
         static ensureGlobal() {
             if (globalPopover == null) {
                 globalPopover = WebMolKit.dom('<div/>').css({ 'position': 'absolute', 'z-index': 22000, 'display': 'none' });
@@ -29766,6 +29760,12 @@ var WebMolKit;
                 globalPopover.css({ 'color': 'black', 'border': '1px solid black', 'border-radius': '4px' });
                 globalPopover.appendTo(document.body);
             }
+        }
+        constructor(widget, bodyHTML, titleHTML, delay) {
+            this.widget = widget;
+            this.bodyHTML = bodyHTML;
+            this.titleHTML = titleHTML;
+            this.delay = delay;
         }
         start() {
             globalPopover.setCSS('display', 'none');
@@ -30306,7 +30306,6 @@ var WebMolKit;
         }
         static outlinePolygon(x, y, diameter) {
             let del = new WebMolKit.Triangulation2D(x, y);
-            del = new WebMolKit.Triangulation2D(x, y);
             let concave = del.trimConcave(diameter);
             let idx = del.traceOutline(concave);
             return [WebMolKit.Vec.idxGet(x, idx), WebMolKit.Vec.idxGet(y, idx)];
@@ -30466,12 +30465,12 @@ var WebMolKit;
     }
     WebMolKit.RollingBall = RollingBall;
     class Pos {
+        static zero() { return new Pos(); }
+        static fromArray(src) { return new Pos(src[0], src[1]); }
         constructor(x, y) {
             this.x = x == null ? 0 : x;
             this.y = y == null ? 0 : y;
         }
-        static zero() { return new Pos(); }
-        static fromArray(src) { return new Pos(src[0], src[1]); }
         clone() { return new Pos(this.x, this.y); }
         equals(other) { return this.x == other.x && this.y == other.y; }
         scaleBy(mag) {
@@ -30494,12 +30493,12 @@ var WebMolKit;
     }
     WebMolKit.Pos = Pos;
     class Size {
+        static zero() { return new Size(); }
+        static fromArray(src) { return new Size(src[0], src[1]); }
         constructor(w, h) {
             this.w = w == null ? 0 : w;
             this.h = h == null ? 0 : h;
         }
-        static zero() { return new Size(); }
-        static fromArray(src) { return new Size(src[0], src[1]); }
         clone() { return new Size(this.w, this.h); }
         equals(other) { return this.w == other.w && this.h == other.h; }
         isZero() { return this.w == 0 && this.h == 0; }
@@ -30525,16 +30524,16 @@ var WebMolKit;
     }
     WebMolKit.Size = Size;
     class Box {
+        static zero() { return new Box(); }
+        static fromSize(sz) { return new Box(0, 0, sz.w, sz.h); }
+        static fromOval(oval) { return new Box(oval.cx - oval.rw, oval.cy - oval.rh, 2 * oval.rw, 2 * oval.rh); }
+        static fromArray(src) { return new Box(src[0], src[1], src[2], src[3]); }
         constructor(x, y, w, h) {
             this.x = x == null ? 0 : x;
             this.y = y == null ? 0 : y;
             this.w = w == null ? 0 : w;
             this.h = h == null ? 0 : h;
         }
-        static zero() { return new Box(); }
-        static fromSize(sz) { return new Box(0, 0, sz.w, sz.h); }
-        static fromOval(oval) { return new Box(oval.cx - oval.rw, oval.cy - oval.rh, 2 * oval.rw, 2 * oval.rh); }
-        static fromArray(src) { return new Box(src[0], src[1], src[2], src[3]); }
         clone() { return new Box(this.x, this.y, this.w, this.h); }
         equals(other) { return this.x == other.x && this.y == other.y && this.w == other.w && this.h == other.h; }
         getPos() { return new Pos(this.x, this.y); }
@@ -30605,15 +30604,15 @@ var WebMolKit;
     }
     WebMolKit.Box = Box;
     class Oval {
+        static zero() { return new Oval(); }
+        static fromBox(box) { return new Oval(box.x + 0.5 * box.w, box.y + 0.5 * box.h, 0.5 * box.w, 0.5 * box.h); }
+        static fromArray(src) { return new Oval(src[0], src[1], src[2], src[3]); }
         constructor(cx, cy, rw, rh) {
             this.cx = cx == null ? 0 : cx;
             this.cy = cy == null ? 0 : cy;
             this.rw = rw == null ? 0 : rw;
             this.rh = rh == null ? 0 : rh;
         }
-        static zero() { return new Oval(); }
-        static fromBox(box) { return new Oval(box.x + 0.5 * box.w, box.y + 0.5 * box.h, 0.5 * box.w, 0.5 * box.h); }
-        static fromArray(src) { return new Oval(src[0], src[1], src[2], src[3]); }
         clone() { return new Oval(this.cx, this.cy, this.rw, this.rh); }
         setCentre(pos) {
             this.cx = pos.x;
@@ -30649,13 +30648,13 @@ var WebMolKit;
     }
     WebMolKit.Oval = Oval;
     class Line {
+        static zero() { return new Line(); }
         constructor(x1, y1, x2, y2) {
             this.x1 = x1 == null ? 0 : x1;
             this.y1 = y1 == null ? 0 : y1;
             this.x2 = x2 == null ? 0 : x2;
             this.y2 = y2 == null ? 0 : y2;
         }
-        static zero() { return new Line(); }
         clone() { return new Line(this.x1, this.y1, this.x2, this.y2); }
         setPos1(pos) {
             this.x1 = pos.x;

@@ -182,7 +182,7 @@ export class ExperimentMeta
 		else if (type == ExperimentMetaType.Time)
 		{
 			if (value == null) return null;
-			if (value < 1)
+			if (value as number < 1)
 			{
 				let mins = value as number * 60;
 				return `${formatFloat(mins, 2)} min${mins == 1 ? '' : 's'}`;
