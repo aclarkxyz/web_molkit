@@ -161,13 +161,13 @@ export class MDLMOLReader
 		for (let n = 0; n < numAtoms; n++)
 		{
 			line = this.nextLine();
-			if (line.length < 39) throw 'Invalid MDL MOL: atom line' + (n + 1);
+			if (line.length < 34) throw 'Invalid MDL MOL: atom line' + (n + 1);
 
 			let x = parseFloat(line.substring(0, 10).trim());
 			let y = parseFloat(line.substring(10, 20).trim());
 			let z = parseFloat(line.substring(20, 30).trim());
 			let el = line.substring(31, 34).trim();
-			let chg = parseInt(line.substring(36, 39).trim()), rad = 0;
+			let chg = line.length < 39 ? 0 : parseInt(line.substring(36, 39).trim()), rad = 0;
 			let stereo = line.length < 42 ? 0 : parseInt(line.substring(39, 42).trim());
 			let hyd = line.length < 45 ? 0 : parseInt(line.substring(42, 45).trim());
 			let val = line.length < 51 ? 0 : parseInt(line.substring(48, 51).trim());
