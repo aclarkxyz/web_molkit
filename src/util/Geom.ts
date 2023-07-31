@@ -811,8 +811,6 @@ export class Box
 		this.h = sz.h;
 	}
 
-	public isZero():boolean {return this.w == 0 && this.h == 0;}
-
 	public minX():number {return this.x;}
 	public minY():number {return this.y;}
 	public midX():number {return this.x + 0.5 * this.w;}
@@ -881,6 +879,7 @@ export class Box
 		return new Box(x1, y1, x2 - x1, y2 - y1);
 	}
 
+	public isZero():boolean {return this.w == 0 && this.h == 0;} // deprecated
 	public isEmpty():boolean {return this.w == 0 && this.h == 0;}
 	public notEmpty():boolean {return this.w > 0 || this.h > 0;}
 
