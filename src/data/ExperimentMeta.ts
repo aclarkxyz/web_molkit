@@ -49,6 +49,7 @@ export enum ExperimentMetaRoleType
 	Reagent = 'reagent',
 	Catalyst = 'catalyst',
 	Solvent = 'solvent',
+	Adjunct = 'adjunct',
 }
 
 export class ExperimentMeta
