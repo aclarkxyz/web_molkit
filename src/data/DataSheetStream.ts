@@ -102,7 +102,7 @@ export class DataSheetStream
 	}
 
 	// instantiate with a JSON object, which is basically the title, description, columns, rows & extensions
-	public static readJSON(json:any):DataSheet
+	public static readJSON(json:Record<string, any>):DataSheet
 	{
 		if (!json.colData || !json.rowData) throw 'Not a JSON-formatted datasheet.';
 		return new DataSheet(deepClone(json));
