@@ -51,6 +51,12 @@ export class Widget
 	{
 		addTooltip(this.content, bodyHTML, titleHTML);
 	}
+
+	// convenience wrapper
+	public grabFocus():void
+	{
+		this.domContent.grabFocus();
+	}
 }
 
 /* EOF */ }
