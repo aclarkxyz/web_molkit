@@ -343,6 +343,30 @@ export class CoordUtil
 		}
 	}
 
+	// recalibrates the molecule so that the coordinates are somewhere near the origin
+	public static centreMolecule(mol:Molecule):void
+	{
+		if (MolUtil.isBlank(mol)) return;
+		
+		let x = MolUtil.arrayAtomX(mol), y = MolUtil.arrayAtomY(mol);
+		let sz = x.length;
+		let invsz = 1.0 / sz;
+		let meanX = Vec.sum(x) * invsz, meanY = Vec.sum(y) * invsz;
+		let closest = Number.POSITIVE_INFINITY;
+		let deltaX = 0, deltaY = 0;
+		for (let n = 0; n < sz; n++)
+		{
+			let dsq = norm2_xy(x[n] - meanX, y[n] - meanY);
+			if (dsq < closest)
+			{
+				deltaX = -x[n];
+				deltaY = -y[n];
+				closest = dsq;
+			}
+		}
+		for (let n = 0; n < sz; n++) mol.setAtomPos(n + 1, x[n] + deltaX, y[n] + deltaY);
+	}
+
 	// returns an inverted version of the molecule, by switching one axis (X); if there are any inclined/declined bonds, they are
 	// also inverted
 	public static mirrorImage(mol:Molecule):Molecule

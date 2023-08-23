@@ -784,6 +784,7 @@ export class Box
 	public h:number;
 
 	public static zero():Box {return new Box();}
+	public static fromBounds(x1:number, y1:number, x2:number, y2:number) {return new Box(x1, y1, x2 - x1, y2 - y1);}
 	public static fromSize(sz:Size):Box {return new Box(0, 0, sz.w, sz.h);}
 	public static fromOval(oval:Oval):Box {return new Box(oval.cx - oval.rw, oval.cy - oval.rh, 2 * oval.rw, 2 * oval.rh);}
 	public static fromArray(src:number[]):Box {return new Box(src[0], src[1], src[2], src[3]);}
