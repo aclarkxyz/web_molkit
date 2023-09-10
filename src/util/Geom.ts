@@ -957,6 +957,7 @@ export class Line
 	public y2:number;
 
 	public static zero():Line {return new Line();}
+	public static fromPos(pos1:Pos, pos2:Pos):Line {return new Line(pos1.x, pos1.y, pos2.x, pos2.y);}
 	constructor(x1?:number, y1?:number, x2?:number, y2?:number)
 	{
 		this.x1 = x1 == null ? 0 : x1;
