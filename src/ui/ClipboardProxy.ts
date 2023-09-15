@@ -101,7 +101,7 @@ export class ClipboardProxyWeb extends ClipboardProxy
 		document.addEventListener('copy', (event:ClipboardEvent) =>
 		{
 			if (this.busy) return null;
-			if (this.currentHandler().copyEvent(false, this))
+			if (this.currentHandler()?.copyEvent(false, this))
 			{
 				event.preventDefault();
 				return false;
@@ -110,7 +110,7 @@ export class ClipboardProxyWeb extends ClipboardProxy
 		document.addEventListener('cut', (event:ClipboardEvent) =>
 		{
 			if (this.busy) return null;
-			if (this.currentHandler().copyEvent(true, this))
+			if (this.currentHandler()?.copyEvent(true, this))
 			{
 				event.preventDefault();
 				return false;
@@ -124,7 +124,7 @@ export class ClipboardProxyWeb extends ClipboardProxy
 			if (wnd.clipboardData && wnd.clipboardData.getData) this.lastContent = wnd.clipboardData.getData('Text');
 			else if (event.clipboardData && event.clipboardData.getData) this.lastContent = event.clipboardData.getData('text/plain');
 
-			let consumed = this.currentHandler().pasteEvent(this);
+			let consumed = this.currentHandler()?.pasteEvent(this);
 
 			this.lastContent = null;
 

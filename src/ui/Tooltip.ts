@@ -98,7 +98,7 @@ export class Tooltip
 		globalTooltip = this;
 
 		let pop = globalPopover;
-		pop.css({'max-width': '20em'});
+		pop.css({'max-width': '40em'});
 		pop.empty();
 		let div = dom('<div/>').appendTo(pop).css({'padding': '0.3em'});
 

@@ -4341,6 +4341,26 @@ var WebMolKit;
                 mol.setAtomPos(n, x, y);
             }
         }
+        static centreMolecule(mol) {
+            if (WebMolKit.MolUtil.isBlank(mol))
+                return;
+            let x = WebMolKit.MolUtil.arrayAtomX(mol), y = WebMolKit.MolUtil.arrayAtomY(mol);
+            let sz = x.length;
+            let invsz = 1.0 / sz;
+            let meanX = WebMolKit.Vec.sum(x) * invsz, meanY = WebMolKit.Vec.sum(y) * invsz;
+            let closest = Number.POSITIVE_INFINITY;
+            let deltaX = 0, deltaY = 0;
+            for (let n = 0; n < sz; n++) {
+                let dsq = WebMolKit.norm2_xy(x[n] - meanX, y[n] - meanY);
+                if (dsq < closest) {
+                    deltaX = -x[n];
+                    deltaY = -y[n];
+                    closest = dsq;
+                }
+            }
+            for (let n = 0; n < sz; n++)
+                mol.setAtomPos(n + 1, x[n] + deltaX, y[n] + deltaY);
+        }
         static mirrorImage(mol) {
             mol = mol.clone();
             for (let n = 1; n <= mol.numAtoms; n++)
@@ -5453,6 +5473,7 @@ var WebMolKit;
         ExperimentMetaRoleType["Reagent"] = "reagent";
         ExperimentMetaRoleType["Catalyst"] = "catalyst";
         ExperimentMetaRoleType["Solvent"] = "solvent";
+        ExperimentMetaRoleType["Adjunct"] = "adjunct";
     })(ExperimentMetaRoleType = WebMolKit.ExperimentMetaRoleType || (WebMolKit.ExperimentMetaRoleType = {}));
     class ExperimentMeta {
         static unpackMeta(str) {
@@ -20186,6 +20207,9 @@ var WebMolKit;
         addTooltip(bodyHTML, titleHTML) {
             WebMolKit.addTooltip(this.content, bodyHTML, titleHTML);
         }
+        grabFocus() {
+            this.domContent.grabFocus();
+        }
     }
     WebMolKit.Widget = Widget;
 })(WebMolKit || (WebMolKit = {}));
@@ -28332,29 +28356,32 @@ var WebMolKit;
             this.fakeTextArea = null;
             this.busy = false;
             document.addEventListener('copy', (event) => {
+                var _a;
                 if (this.busy)
                     return null;
-                if (this.currentHandler().copyEvent(false, this)) {
+                if ((_a = this.currentHandler()) === null || _a === void 0 ? void 0 : _a.copyEvent(false, this)) {
                     event.preventDefault();
                     return false;
                 }
             });
             document.addEventListener('cut', (event) => {
+                var _a;
                 if (this.busy)
                     return null;
-                if (this.currentHandler().copyEvent(true, this)) {
+                if ((_a = this.currentHandler()) === null || _a === void 0 ? void 0 : _a.copyEvent(true, this)) {
                     event.preventDefault();
                     return false;
                 }
             });
             document.addEventListener('paste', (event) => {
+                var _a;
                 let wnd = window;
                 this.lastContent = null;
                 if (wnd.clipboardData && wnd.clipboardData.getData)
                     this.lastContent = wnd.clipboardData.getData('Text');
                 else if (event.clipboardData && event.clipboardData.getData)
                     this.lastContent = event.clipboardData.getData('text/plain');
-                let consumed = this.currentHandler().pasteEvent(this);
+                let consumed = (_a = this.currentHandler()) === null || _a === void 0 ? void 0 : _a.pasteEvent(this);
                 this.lastContent = null;
                 if (consumed) {
                     event.preventDefault();
@@ -29785,7 +29812,7 @@ var WebMolKit;
                 return;
             globalTooltip = this;
             let pop = globalPopover;
-            pop.css({ 'max-width': '20em' });
+            pop.css({ 'max-width': '40em' });
             pop.empty();
             let div = WebMolKit.dom('<div/>').appendTo(pop).css({ 'padding': '0.3em' });
             let hasTitle = this.titleHTML != null && this.titleHTML.length > 0, hasBody = this.bodyHTML != null && this.bodyHTML.length > 0;
@@ -30531,6 +30558,7 @@ var WebMolKit;
             this.h = h == null ? 0 : h;
         }
         static zero() { return new Box(); }
+        static fromBounds(x1, y1, x2, y2) { return new Box(x1, y1, x2 - x1, y2 - y1); }
         static fromSize(sz) { return new Box(0, 0, sz.w, sz.h); }
         static fromOval(oval) { return new Box(oval.cx - oval.rw, oval.cy - oval.rh, 2 * oval.rw, 2 * oval.rh); }
         static fromArray(src) { return new Box(src[0], src[1], src[2], src[3]); }
@@ -30546,7 +30574,6 @@ var WebMolKit;
             this.w = sz.w;
             this.h = sz.h;
         }
-        isZero() { return this.w == 0 && this.h == 0; }
         minX() { return this.x; }
         minY() { return this.y; }
         midX() { return this.x + 0.5 * this.w; }
@@ -30598,6 +30625,7 @@ var WebMolKit;
             let y1 = Math.min(this.y, other.y), y2 = Math.max(this.y + this.h, other.y + other.h);
             return new Box(x1, y1, x2 - x1, y2 - y1);
         }
+        isZero() { return this.w == 0 && this.h == 0; }
         isEmpty() { return this.w == 0 && this.h == 0; }
         notEmpty() { return this.w > 0 || this.h > 0; }
         toString() { return '[' + this.x + ',' + this.y + ';' + this.w + ',' + this.h + ']'; }
@@ -30655,6 +30683,7 @@ var WebMolKit;
             this.y2 = y2 == null ? 0 : y2;
         }
         static zero() { return new Line(); }
+        static fromPos(pos1, pos2) { return new Line(pos1.x, pos1.y, pos2.x, pos2.y); }
         clone() { return new Line(this.x1, this.y1, this.x2, this.y2); }
         setPos1(pos) {
             this.x1 = pos.x;

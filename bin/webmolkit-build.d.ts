@@ -808,6 +808,7 @@ declare namespace WebMolKit {
         static angleNeighbours(mol: Molecule, atom: number): number[];
         static mergeAtoms(mol: Molecule, oldN: number, newN: number): void;
         static normaliseBondDistances(mol: Molecule): void;
+        static centreMolecule(mol: Molecule): void;
         static mirrorImage(mol: Molecule): Molecule;
         static alignOrientFlip(mol1: Molecule, idx1: number[], mol2: Molecule, idx2: number[]): void;
         static atomIsWeirdLinear(mol: Molecule, idx: number): boolean;
@@ -902,7 +903,7 @@ declare namespace WebMolKit {
 declare namespace WebMolKit {
     class DataSheetStream {
         static readXML(strXML: string): DataSheet;
-        static readJSON(json: any): DataSheet;
+        static readJSON(json: Record<string, any>): DataSheet;
         static writeXML(ds: DataSheet): string;
         static writeJSON(ds: DataSheet): any;
     }
@@ -973,7 +974,8 @@ declare namespace WebMolKit {
     enum ExperimentMetaRoleType {
         Reagent = "reagent",
         Catalyst = "catalyst",
-        Solvent = "solvent"
+        Solvent = "solvent",
+        Adjunct = "adjunct"
     }
     class ExperimentMeta {
         static APPLICABILITY: {
@@ -2661,6 +2663,7 @@ declare namespace WebMolKit {
         render(parent: any): void;
         remove(): void;
         addTooltip(bodyHTML: string, titleHTML?: string): void;
+        grabFocus(): void;
     }
 }
 declare namespace WebMolKit {
@@ -3859,6 +3862,7 @@ declare namespace WebMolKit {
         w: number;
         h: number;
         static zero(): Box;
+        static fromBounds(x1: number, y1: number, x2: number, y2: number): Box;
         static fromSize(sz: Size): Box;
         static fromOval(oval: Oval): Box;
         static fromArray(src: number[]): Box;
@@ -3869,7 +3873,6 @@ declare namespace WebMolKit {
         setPos(pos: Pos): void;
         getSize(): Size;
         setSize(sz: Size): void;
-        isZero(): boolean;
         minX(): number;
         minY(): number;
         midX(): number;
@@ -3887,6 +3890,7 @@ declare namespace WebMolKit {
         intersection(other: Box): Box;
         contains(x: number, y: number): boolean;
         union(other: Box): Box;
+        isZero(): boolean;
         isEmpty(): boolean;
         notEmpty(): boolean;
         toString(): string;
@@ -3919,6 +3923,7 @@ declare namespace WebMolKit {
         x2: number;
         y2: number;
         static zero(): Line;
+        static fromPos(pos1: Pos, pos2: Pos): Line;
         constructor(x1?: number, y1?: number, x2?: number, y2?: number);
         clone(): Line;
         setPos1(pos: Pos): void;
