@@ -176,7 +176,7 @@ export class MolUtil
 		frag.setAtomCharge(fragidx, 0);
 		frag.setAtomUnpaired(fragidx, 0);
 		frag.setAtomHExplicit(fragidx, Molecule.HEXPLICIT_UNKNOWN);
-		frag.setAtomMapNum(fragidx, 0);
+		for (let n = 1; n <= frag.numAtoms; n++) frag.setAtomMapNum(n, 0);
 		frag.setAtomExtra(fragidx, []);
 		frag.setAtomTransient(fragidx, []);
 		let adj = frag.atomAdjList(fragidx);
@@ -244,6 +244,7 @@ export class MolUtil
 		}
 
 		let m = mol.atomMapNum(atom);
+		for (let n = 1; n <= frag.numAtoms; n++) frag.setAtomMapNum(n, 0);
 		if (m > 0) for (let n of frag.atomAdjList(1)) frag.setAtomMapNum(n, m);
 
 		return MolUtil.expandOneAbbrevFrag(mol, atom, frag, alignCoords);
