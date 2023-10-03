@@ -116,15 +116,15 @@ var WebMolKit;
     }
     WebMolKit.AssayProvenanceHeader = AssayProvenanceHeader;
     class AssayProvenance extends WebMolKit.Aspect {
-        constructor(ds, allowModify) {
-            super(AssayProvenance.CODE, ds, allowModify);
-            this.setup();
-        }
         static isAssayProvenance(ds) {
             for (let n = 0; n < ds.numExtensions; n++)
                 if (ds.getExtType(n) == AssayProvenance.CODE)
                     return true;
             return false;
+        }
+        constructor(ds, allowModify) {
+            super(AssayProvenance.CODE, ds, allowModify);
+            this.setup();
         }
         getHeader() {
             for (let n = 0; n < this.ds.numExtensions; n++)
@@ -401,15 +401,15 @@ var WebMolKit;
     }
     WebMolKit.BayesianPredictionOutcome = BayesianPredictionOutcome;
     class BayesianPrediction extends WebMolKit.Aspect {
-        constructor(ds, allowModify) {
-            super(BayesianPrediction.CODE, ds, allowModify);
-            this.setup();
-        }
         static isBayesianPrediction(ds) {
             for (let n = 0; n < ds.numExtensions; n++)
                 if (ds.getExtType(n) == BayesianPrediction.CODE)
                     return true;
             return false;
+        }
+        constructor(ds, allowModify) {
+            super(BayesianPrediction.CODE, ds, allowModify);
+            this.setup();
         }
         getModels() {
             let content = '';
@@ -541,15 +541,15 @@ var WebMolKit;
     }
     WebMolKit.BayesianSourceModel = BayesianSourceModel;
     class BayesianSource extends WebMolKit.Aspect {
-        constructor(ds, allowModify) {
-            super(BayesianSource.CODE, ds, allowModify);
-            this.setup();
-        }
         static isBayesianSource(ds) {
             for (let n = 0; n < ds.numExtensions; n++)
                 if (ds.getExtType(n) == BayesianSource.CODE)
                     return true;
             return false;
+        }
+        constructor(ds, allowModify) {
+            super(BayesianSource.CODE, ds, allowModify);
+            this.setup();
         }
         getModels() {
             let content = '';
@@ -636,16 +636,16 @@ var WebMolKit;
     }
     WebMolKit.BinaryDataField = BinaryDataField;
     class BinaryData extends WebMolKit.Aspect {
-        constructor(ds, allowModify) {
-            super(BinaryData.CODE, ds, allowModify);
-            this.fields = [];
-            this.setup();
-        }
         static isBinaryData(ds) {
             for (let n = 0; n < ds.numExtensions; n++)
                 if (ds.getExtType(n) == BinaryData.CODE)
                     return true;
             return false;
+        }
+        constructor(ds, allowModify) {
+            super(BinaryData.CODE, ds, allowModify);
+            this.fields = [];
+            this.setup();
         }
         getFields() {
             return WebMolKit.deepClone(this.fields);
@@ -921,6 +921,12 @@ var WebMolKit;
     }
     WebMolKit.ExperimentEntry = ExperimentEntry;
     class Experiment extends WebMolKit.Aspect {
+        static isExperiment(ds) {
+            for (let n = 0; n < ds.numExtensions; n++)
+                if (ds.getExtType(n) == Experiment.CODE)
+                    return true;
+            return false;
+        }
         constructor(ds, allowModify) {
             super(Experiment.CODE, ds, allowModify);
             if (Object.keys(Experiment.COLUMN_DESCRIPTIONS).length == 0) {
@@ -963,12 +969,6 @@ var WebMolKit;
                 v[Experiment.COLNAME_PRODUCT_META] = 'Additional product metadata';
             }
             this.setup();
-        }
-        static isExperiment(ds) {
-            for (let n = 0; n < ds.numExtensions; n++)
-                if (ds.getExtType(n) == Experiment.CODE)
-                    return true;
-            return false;
         }
         isFirstStep(row) {
             if (this.ds.notNull(row, Experiment.COLNAME_EXPERIMENT_CREATEDATE))
@@ -1480,16 +1480,16 @@ var WebMolKit;
 var WebMolKit;
 (function (WebMolKit) {
     class MeasurementData extends WebMolKit.Aspect {
-        constructor(ds, allowModify) {
-            super(MeasurementData.CODE, ds, allowModify);
-            this.header = { units: [], fields: [] };
-            this.setup();
-        }
         static isMeasurementData(ds) {
             for (let n = 0; n < ds.numExtensions; n++)
                 if (ds.getExtType(n) == MeasurementData.CODE)
                     return true;
             return false;
+        }
+        constructor(ds, allowModify) {
+            super(MeasurementData.CODE, ds, allowModify);
+            this.header = { units: [], fields: [] };
+            this.setup();
         }
         getHeader() {
             return this.header;
@@ -1737,16 +1737,16 @@ var WebMolKit;
         MixtureAttributeType["Property"] = "property";
     })(MixtureAttributeType = WebMolKit.MixtureAttributeType || (WebMolKit.MixtureAttributeType = {}));
     class Mixture extends WebMolKit.Aspect {
-        constructor(ds, allowModify) {
-            super(Mixture.CODE, ds, allowModify);
-            this.header = { attributes: [] };
-            this.setup();
-        }
         static isMixture(ds) {
             for (let n = 0; n < ds.numExtensions; n++)
                 if (ds.getExtType(n) == Mixture.CODE)
                     return true;
             return false;
+        }
+        constructor(ds, allowModify) {
+            super(Mixture.CODE, ds, allowModify);
+            this.header = { attributes: [] };
+            this.setup();
         }
         getHeader() {
             return this.header;
@@ -1840,15 +1840,15 @@ var WebMolKit;
 var WebMolKit;
 (function (WebMolKit) {
     class SARTable extends WebMolKit.Aspect {
-        constructor(ds, allowModify) {
-            super(SARTable.CODE, ds, allowModify);
-            this.setup();
-        }
         static isSARTable(ds) {
             for (let n = 0; n < ds.numExtensions; n++)
                 if (ds.getExtType(n) == SARTable.CODE)
                     return true;
             return false;
+        }
+        constructor(ds, allowModify) {
+            super(SARTable.CODE, ds, allowModify);
+            this.setup();
         }
         getFields() {
             for (let n = 0; n < this.ds.numExtensions; n++)
@@ -8583,7 +8583,8 @@ var WebMolKit;
             frag.setAtomCharge(fragidx, 0);
             frag.setAtomUnpaired(fragidx, 0);
             frag.setAtomHExplicit(fragidx, WebMolKit.Molecule.HEXPLICIT_UNKNOWN);
-            frag.setAtomMapNum(fragidx, 0);
+            for (let n = 1; n <= frag.numAtoms; n++)
+                frag.setAtomMapNum(n, 0);
             frag.setAtomExtra(fragidx, []);
             frag.setAtomTransient(fragidx, []);
             let adj = frag.atomAdjList(fragidx);
@@ -8639,6 +8640,8 @@ var WebMolKit;
                 return null;
             }
             let m = mol.atomMapNum(atom);
+            for (let n = 1; n <= frag.numAtoms; n++)
+                frag.setAtomMapNum(n, 0);
             if (m > 0)
                 for (let n of frag.atomAdjList(1))
                     frag.setAtomMapNum(n, m);
@@ -10081,12 +10084,12 @@ var WebMolKit;
         'units'
     ];
     class OntologyTree {
+        static get main() { return globalInstance; }
         constructor() {
             this.roots = [];
             this.mapTerms = new Map();
             this.alreadyLoaded = new Set();
         }
-        static get main() { return globalInstance; }
         static init() {
             return __awaiter(this, void 0, void 0, function* () {
                 if (globalInstance)
@@ -10549,17 +10552,6 @@ var WebMolKit;
     }
     WebMolKit.GreenMetrics = GreenMetrics;
     class QuantityCalc {
-        constructor(entry) {
-            this.entry = entry;
-            this.quantities = [];
-            this.primaryMoles = [];
-            this.idxPrimary = [];
-            this.idxYield = [];
-            this.allMassReact = [];
-            this.allMassProd = [];
-            this.allMassWaste = [];
-            this.greenMetrics = [];
-        }
         static isStoichZero(stoich) {
             if (this.isStoichUnity(stoich))
                 return false;
@@ -10692,6 +10684,17 @@ var WebMolKit;
             for (let n = 0; n < entry.steps[step].products.length; n++, p++)
                 ratioProducts.push(numer[p] * bigDenom / denom[p]);
             return [ratioReactants, ratioReagents, ratioProducts];
+        }
+        constructor(entry) {
+            this.entry = entry;
+            this.quantities = [];
+            this.primaryMoles = [];
+            this.idxPrimary = [];
+            this.idxYield = [];
+            this.allMassReact = [];
+            this.allMassProd = [];
+            this.allMassWaste = [];
+            this.greenMetrics = [];
         }
         calculate() {
             this.classifyTypes();
@@ -12787,6 +12790,16 @@ var WebMolKit;
     WebMolKit.STEREOGROUP_EXTRA_RACEMIC = 'xCHIRAC:';
     WebMolKit.STEREOGROUP_EXTRA_RELATIVE = 'xCHIREL:';
     class StereoGroup {
+        static hasStereoGroups(mol) {
+            for (let n = 1; n <= mol.numAtoms; n++) {
+                let extra = mol.atomExtra(n);
+                if (extra != null)
+                    for (let str of extra)
+                        if (str.startsWith(WebMolKit.STEREOGROUP_EXTRA_RACEMIC) || str.startsWith(WebMolKit.STEREOGROUP_EXTRA_RELATIVE))
+                            return true;
+            }
+            return false;
+        }
         constructor(mol) {
             this.mol = mol;
             this.chiRac = new Map();
@@ -12826,16 +12839,6 @@ var WebMolKit;
                 else
                     this.chiRel.delete(grp);
             }
-        }
-        static hasStereoGroups(mol) {
-            for (let n = 1; n <= mol.numAtoms; n++) {
-                let extra = mol.atomExtra(n);
-                if (extra != null)
-                    for (let str of extra)
-                        if (str.startsWith(WebMolKit.STEREOGROUP_EXTRA_RACEMIC) || str.startsWith(WebMolKit.STEREOGROUP_EXTRA_RELATIVE))
-                            return true;
-            }
-            return false;
         }
         getRacemicGroups() { return Array.from(this.chiRac.keys()); }
         getRelativeGroups() { return Array.from(this.chiRel.keys()); }
@@ -13683,6 +13686,13 @@ var WebMolKit;
     }
 `;
     class Dialog {
+        get obscureBackground() { return $(this.domObscureBackground.el); }
+        get obscureForeground() { return $(this.domObscureForeground.el); }
+        get panelBoundary() { return $(this.domPanelBoundary.el); }
+        get titleDiv() { return $(this.domTitle.el); }
+        get titleButtons() { return $(this.domTitleButtons.el); }
+        get bodyDiv() { return $(this.domBody.el); }
+        get btnClose() { return $(this.domClose.el); }
         constructor(parent = null) {
             this.minPortionWidth = 80;
             this.maxPortionWidth = 80;
@@ -13698,13 +13708,6 @@ var WebMolKit;
             this.parent = WebMolKit.domLegacy(parent);
             WebMolKit.installInlineCSS('dialog', CSS_DIALOG);
         }
-        get obscureBackground() { return $(this.domObscureBackground.el); }
-        get obscureForeground() { return $(this.domObscureForeground.el); }
-        get panelBoundary() { return $(this.domPanelBoundary.el); }
-        get titleDiv() { return $(this.domTitle.el); }
-        get titleButtons() { return $(this.domTitleButtons.el); }
-        get bodyDiv() { return $(this.domBody.el); }
-        get btnClose() { return $(this.domClose.el); }
         onClose(callback) {
             this.callbackClose = callback;
         }
@@ -14878,25 +14881,6 @@ var WebMolKit;
     const MINBOND_LINE = 0.25;
     const MINBOND_EXOTIC = 0.5;
     class ArrangeMolecule {
-        constructor(mol, measure, policy, effects = new WebMolKit.RenderEffects()) {
-            this.mol = mol;
-            this.measure = measure;
-            this.policy = policy;
-            this.effects = effects;
-            this.points = [];
-            this.lines = [];
-            this.rings = [];
-            this.paths = [];
-            this.space = [];
-            this.wantArtifacts = true;
-            this.artifacts = null;
-            this.bondOrder = [];
-            this.atomCharge = [];
-            this.atomUnpaired = [];
-            this.artifactCharge = new Map();
-            this.artifactUnpaired = new Map();
-            this.artifactFract = new Map();
-        }
         static guestimateSize(mol, policy, maxW, maxH) {
             let box = mol.boundary();
             let minX = box.minX(), minY = box.minY(), maxX = box.maxX(), maxY = box.maxY();
@@ -14927,6 +14911,25 @@ var WebMolKit;
                 h = maxH;
             }
             return [w, h];
+        }
+        constructor(mol, measure, policy, effects = new WebMolKit.RenderEffects()) {
+            this.mol = mol;
+            this.measure = measure;
+            this.policy = policy;
+            this.effects = effects;
+            this.points = [];
+            this.lines = [];
+            this.rings = [];
+            this.paths = [];
+            this.space = [];
+            this.wantArtifacts = true;
+            this.artifacts = null;
+            this.bondOrder = [];
+            this.atomCharge = [];
+            this.atomUnpaired = [];
+            this.artifactCharge = new Map();
+            this.artifactUnpaired = new Map();
+            this.artifactFract = new Map();
         }
         getMolecule() { return this.mol; }
         getMeasure() { return this.measure; }
@@ -18441,12 +18444,54 @@ var WebMolKit;
         TextAlign[TextAlign["Top"] = 8] = "Top";
         TextAlign[TextAlign["Bottom"] = 16] = "Bottom";
     })(TextAlign = WebMolKit.TextAlign || (WebMolKit.TextAlign = {}));
-    const PRIM_LINE = 1;
-    const PRIM_RECT = 2;
-    const PRIM_OVAL = 3;
-    const PRIM_PATH = 4;
-    const PRIM_TEXT = 5;
-    const PRIM_TEXTNATIVE = 6;
+    let PrimClass;
+    (function (PrimClass) {
+        PrimClass[PrimClass["Line"] = 1] = "Line";
+        PrimClass[PrimClass["Rect"] = 2] = "Rect";
+        PrimClass[PrimClass["Oval"] = 3] = "Oval";
+        PrimClass[PrimClass["Path"] = 4] = "Path";
+        PrimClass[PrimClass["Text"] = 5] = "Text";
+        PrimClass[PrimClass["TextNative"] = 6] = "TextNative";
+    })(PrimClass || (PrimClass = {}));
+    class SpoolSVG {
+        constructor(prettyPrint) {
+            this.prettyPrint = prettyPrint;
+            this.lines = [];
+            this.depth = 0;
+        }
+        spool(str) { if ((str === null || str === void 0 ? void 0 : str.length) > 0)
+            this.lines.push(str); }
+        start(str) {
+            if (this.prettyPrint && this.depth > 0)
+                this.lines.push('  '.repeat(this.depth));
+            this.spool(str);
+        }
+        stop(str) {
+            this.spool(str);
+            if (this.prettyPrint)
+                this.lines.push('\n');
+        }
+        whole(str) {
+            if (this.prettyPrint && this.depth > 0)
+                this.lines.push('  '.repeat(this.depth));
+            this.spool(str);
+            if (this.prettyPrint)
+                this.lines.push('\n');
+        }
+        attr(key, val) {
+            var _a;
+            if (typeof val == 'number') {
+                val = val.toFixed(4);
+                let match = (_a = /^(.*\.\d*?[1-9]+)0+$/.exec(val)) !== null && _a !== void 0 ? _a : /^(.*)\.0+$/.exec(val);
+                if (match)
+                    val = match[1];
+            }
+            this.spool(` ${key}="${val}"`);
+        }
+        inc() { this.depth++; }
+        dec() { this.depth--; }
+        toString() { return this.lines.join(''); }
+    }
     class MetaVector {
         constructor(vec) {
             this.types = [];
@@ -18474,8 +18519,8 @@ var WebMolKit;
                 if (vec.prims != null)
                     this.prims = vec.prims;
                 for (let p of this.prims)
-                    if (p[0] == PRIM_TEXT) {
-                        let txt = p[4];
+                    if (p.primClass == PrimClass.Text) {
+                        let { txt } = p;
                         for (let n = 0; n < txt.length; n++) {
                             let i = font.getIndex(txt.charAt(n));
                             if (i >= 0)
@@ -18489,11 +18534,11 @@ var WebMolKit;
         drawLine(x1, y1, x2, y2, colour, thickness) {
             if (thickness == null)
                 thickness = 1;
-            let typeidx = this.findOrCreateType([PRIM_LINE, thickness, colour]);
+            let typeidx = this.findOrCreateType({ primClass: PrimClass.Line, thickness, colour });
             const bump = 0.5 * thickness;
             this.updateBounds(Math.min(x1, x2) - bump, Math.min(y1, y2) - bump);
             this.updateBounds(Math.max(x1, x2) + bump, Math.max(y1, y2) + bump);
-            this.prims.push([PRIM_LINE, typeidx, x1, y1, x2, y2]);
+            this.prims.push({ primClass: PrimClass.Line, typeidx, x1, y1, x2, y2 });
         }
         drawRect(x, y, w, h, edgeCol, thickness, fillCol) {
             if (edgeCol == null)
@@ -18502,11 +18547,11 @@ var WebMolKit;
                 fillCol = MetaVector.NOCOLOUR;
             if (thickness == null)
                 thickness = 1;
-            let typeidx = this.findOrCreateType([PRIM_RECT, edgeCol, fillCol, thickness]);
+            let typeidx = this.findOrCreateType({ primClass: PrimClass.Rect, edgeCol, fillCol, thickness });
             const bump = 0.5 * thickness;
             this.updateBounds(x - bump, y - bump);
             this.updateBounds(x + w + bump, y + h + bump);
-            this.prims.push([PRIM_RECT, typeidx, x, y, w, h]);
+            this.prims.push({ primClass: PrimClass.Rect, typeidx, x, y, w, h });
         }
         drawOval(cx, cy, rw, rh, edgeCol, thickness, fillCol) {
             if (edgeCol == null)
@@ -18518,8 +18563,8 @@ var WebMolKit;
             const bump = 0.5 * thickness;
             this.updateBounds(cx - rw - bump, cy - rh - bump);
             this.updateBounds(cx + rw + bump, cy + rh + bump);
-            let typeidx = this.findOrCreateType([PRIM_OVAL, edgeCol, fillCol, thickness]);
-            this.prims.push([PRIM_OVAL, typeidx, cx, cy, rw, rh]);
+            let typeidx = this.findOrCreateType({ primClass: PrimClass.Oval, edgeCol, fillCol, thickness });
+            this.prims.push({ primClass: PrimClass.Oval, typeidx, cx, cy, rw, rh });
         }
         drawPath(xpoints, ypoints, ctrlFlags, isClosed, edgeCol, thickness, fillCol, hardEdge) {
             if (edgeCol == null)
@@ -18536,8 +18581,8 @@ var WebMolKit;
                 if (bump != 0)
                     this.updateBounds(xpoints[n] + bump, ypoints[n] + bump);
             }
-            let typeidx = this.findOrCreateType([PRIM_PATH, edgeCol, fillCol, thickness, hardEdge]);
-            this.prims.push([PRIM_PATH, typeidx, xpoints.length, WebMolKit.clone(xpoints), WebMolKit.clone(ypoints), WebMolKit.clone(ctrlFlags), isClosed]);
+            let typeidx = this.findOrCreateType({ primClass: PrimClass.Path, edgeCol, fillCol, thickness, hardEdge });
+            this.prims.push({ primClass: PrimClass.Path, typeidx, count: xpoints.length, x: [...xpoints], y: [...ypoints], ctrl: [...ctrlFlags], closed: isClosed });
         }
         drawPoly(xpoints, ypoints, edgeCol, thickness, fillCol, hardEdge) {
             this.drawPath(xpoints, ypoints, null, true, edgeCol, thickness, fillCol, hardEdge);
@@ -18612,8 +18657,8 @@ var WebMolKit;
                 this.updateBounds(x + bx + rx2 * cosTheta - ry2 * sinTheta, y + by + rx2 * sinTheta + ry2 * cosTheta);
                 this.updateBounds(x + bx + rx1 * cosTheta - ry2 * sinTheta, y + by + rx1 * sinTheta + ry2 * cosTheta);
             }
-            let typeidx = this.findOrCreateType([PRIM_TEXT, size, colour]);
-            this.prims.push([PRIM_TEXT, typeidx, x + bx, y + by, txt, direction]);
+            let typeidx = this.findOrCreateType({ primClass: PrimClass.Text, size, colour });
+            this.prims.push({ primClass: PrimClass.Text, typeidx, x: x + bx, y: y + by, txt, direction });
         }
         drawTextNative(x, y, txt, fontFamily, fontSize, colour, align, opt) {
             if (!opt)
@@ -18635,8 +18680,8 @@ var WebMolKit;
                 y -= metrics[2];
             this.updateBounds(x, y - metrics[1]);
             this.updateBounds(x + metrics[0], y + metrics[2]);
-            let typeidx = this.findOrCreateType([PRIM_TEXTNATIVE, fontFamily, fontSize, colour, opt]);
-            this.prims.push([PRIM_TEXTNATIVE, typeidx, x, y, txt]);
+            let typeidx = this.findOrCreateType({ primClass: PrimClass.TextNative, family: fontFamily, size: fontSize, colour, opt });
+            this.prims.push({ primClass: PrimClass.TextNative, typeidx, x, y, txt });
         }
         boundLowX() { return this.lowX; }
         boundLowY() { return this.lowY; }
@@ -18684,53 +18729,58 @@ var WebMolKit;
             if (ox == 0 && oy == 0 && sw == 1 && sh == 1)
                 return;
             for (let a of this.prims) {
-                const type = a[0];
-                if (type == PRIM_LINE) {
-                    a[2] = ox + a[2] * sw;
-                    a[3] = oy + a[3] * sh;
-                    a[4] = ox + a[4] * sw;
-                    a[5] = oy + a[5] * sh;
+                const type = a.primClass;
+                if (type == PrimClass.Line) {
+                    let line = a;
+                    line.x1 = ox + line.x1 * sw;
+                    line.y1 = oy + line.y1 * sh;
+                    line.x2 = ox + line.x2 * sw;
+                    line.y2 = oy + line.y2 * sh;
                 }
-                else if (type == PRIM_RECT) {
-                    a[2] = ox + a[2] * sw;
-                    a[3] = oy + a[3] * sh;
-                    a[4] = a[4] * sw;
-                    a[5] = a[5] * sh;
+                else if (type == PrimClass.Rect) {
+                    let rect = a;
+                    rect.x = ox + rect.x * sw;
+                    rect.y = oy + rect.y * sh;
+                    rect.w = rect.w * sw;
+                    rect.h = rect.h * sh;
                 }
-                else if (type == PRIM_OVAL) {
-                    a[2] = ox + a[2] * sw;
-                    a[3] = oy + a[3] * sh;
-                    a[4] *= sw;
-                    a[5] *= sh;
+                else if (type == PrimClass.Oval) {
+                    let oval = a;
+                    oval.cx = ox + oval.cx * sw;
+                    oval.cy = oy + oval.cy * sh;
+                    oval.rw *= sw;
+                    oval.rh *= sh;
                 }
-                else if (type == PRIM_PATH) {
-                    let sz = a[2], px = a[3], py = a[4];
+                else if (type == PrimClass.Path) {
+                    let path = a;
+                    let sz = path.count, px = path.x, py = path.y;
                     for (let n = 0; n < sz; n++) {
                         px[n] = ox + px[n] * sw;
                         py[n] = oy + py[n] * sh;
                     }
                 }
-                else if (type == PRIM_TEXT || type == PRIM_TEXTNATIVE) {
-                    a[2] = ox + a[2] * sw;
-                    a[3] = oy + a[3] * sh;
+                else if (type == PrimClass.Text || type == PrimClass.TextNative) {
+                    let text = a;
+                    text.x = ox + text.x * sw;
+                    text.y = oy + text.y * sh;
                 }
             }
             let swsh = 0.5 * (sw + sh);
             if (swsh != 1)
                 for (let t of this.types) {
-                    const type = t[0];
-                    if (type == PRIM_LINE)
-                        t[1] *= swsh;
-                    else if (type == PRIM_RECT)
-                        t[3] *= swsh;
-                    else if (type == PRIM_OVAL)
-                        t[3] *= swsh;
-                    else if (type == PRIM_PATH)
-                        t[3] *= swsh;
-                    else if (type == PRIM_TEXT)
-                        t[1] *= swsh;
-                    else if (type == PRIM_TEXTNATIVE)
-                        t[2] *= swsh;
+                    const type = t.primClass;
+                    if (type == PrimClass.Line)
+                        t.thickness *= swsh;
+                    else if (type == PrimClass.Rect)
+                        t.thickness *= swsh;
+                    else if (type == PrimClass.Oval)
+                        t.thickness *= swsh;
+                    else if (type == PrimClass.Path)
+                        t.thickness *= swsh;
+                    else if (type == PrimClass.Text)
+                        t.size *= swsh;
+                    else if (type == PrimClass.TextNative)
+                        t.size *= swsh;
                 }
             this.lowX = ox + this.lowX * sw;
             this.lowY = oy + this.lowY * sh;
@@ -18760,189 +18810,197 @@ var WebMolKit;
             this.typeObj = [];
             for (let n = 0; n < this.types.length; n++) {
                 let t = this.types[n];
-                if (t[0] == PRIM_LINE)
+                if (t.primClass == PrimClass.Line)
                     this.typeObj[n] = this.setupTypeLine(t);
-                else if (t[0] == PRIM_RECT)
+                else if (t.primClass == PrimClass.Rect)
                     this.typeObj[n] = this.setupTypeRect(t);
-                else if (t[0] == PRIM_OVAL)
+                else if (t.primClass == PrimClass.Oval)
                     this.typeObj[n] = this.setupTypeOval(t);
-                else if (t[0] == PRIM_PATH)
+                else if (t.primClass == PrimClass.Path)
                     this.typeObj[n] = this.setupTypePath(t);
-                else if (t[0] == PRIM_TEXT)
+                else if (t.primClass == PrimClass.Text)
                     this.typeObj[n] = this.setupTypeText(t);
-                else if (t[0] == PRIM_TEXTNATIVE)
+                else if (t.primClass == PrimClass.TextNative)
                     this.typeObj[n] = this.setupTypeTextNative(t);
             }
             for (let n = 0; n < this.prims.length; n++) {
                 let p = this.prims[n];
-                if (p[0] == PRIM_LINE)
+                if (p.primClass == PrimClass.Line)
                     this.renderLine(ctx, p);
-                else if (p[0] == PRIM_RECT)
+                else if (p.primClass == PrimClass.Rect)
                     this.renderRect(ctx, p);
-                else if (p[0] == PRIM_OVAL)
+                else if (p.primClass == PrimClass.Oval)
                     this.renderOval(ctx, p);
-                else if (p[0] == PRIM_PATH)
+                else if (p.primClass == PrimClass.Path)
                     this.renderPath(ctx, p);
-                else if (p[0] == PRIM_TEXT)
+                else if (p.primClass == PrimClass.Text)
                     this.renderText(ctx, p);
-                else if (p[0] == PRIM_TEXTNATIVE)
+                else if (p.primClass == PrimClass.TextNative)
                     this.renderTextNative(ctx, p);
             }
             ctx.restore();
         }
         createSVG(prettyPrint = false, withXlink = false) {
-            let xml = WebMolKit.XML.parseXML('<svg/>');
-            let svg = xml.documentElement;
-            svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+            prettyPrint = true;
+            let svg = new SpoolSVG(prettyPrint);
+            svg.start('<svg xmlns="http://www.w3.org/2000/svg"');
             if (withXlink)
-                svg.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
-            svg.setAttribute('width', this.width.toString());
-            svg.setAttribute('height', this.height.toString());
-            svg.setAttribute('viewBox', `0 0 ${this.width} ${this.height}`);
+                svg.attr('xmlns:xlink', 'http://www.w3.org/1999/xlink');
+            svg.attr('width', this.width);
+            svg.attr('height', this.height);
+            svg.attr('viewBox', `0 0 ${this.width} ${this.height}`);
+            svg.stop('>');
+            svg.inc();
             this.renderSVG(svg, withXlink);
-            return prettyPrint ? WebMolKit.XML.toPrettyString(xml) : WebMolKit.XML.toString(xml);
+            svg.dec();
+            svg.whole('</svg>');
+            console.log('SVG:\n' + svg.toString());
+            return svg.toString();
         }
         renderSVG(svg, withXlink = false) {
             this.typeObj = [];
             const font = WebMolKit.FontData.main;
-            let defs = WebMolKit.XML.appendElement(svg, 'defs');
+            svg.whole('<defs>');
+            svg.inc();
             if (this.charMissing) {
-                let path = WebMolKit.XML.appendElement(defs, 'path');
-                path.setAttribute('id', 'missing');
-                path.setAttribute('d', font.MISSING_DATA);
-                path.setAttribute('edge', 'none');
+                svg.start('<path');
+                svg.attr('id', 'missing');
+                svg.attr('d', font.MISSING_DATA);
+                svg.attr('edge', 'none');
+                svg.stop('/>');
             }
             for (let n = 0; n < font.UNICODE.length; n++)
                 if (this.charMask[n]) {
-                    let path = WebMolKit.XML.appendElement(defs, 'path');
-                    path.setAttribute('id', 'char' + n);
-                    path.setAttribute('d', font.GLYPH_DATA[n]);
-                    path.setAttribute('edge', 'none');
+                    svg.start('<path');
+                    svg.attr('id', 'char' + n);
+                    svg.attr('d', font.GLYPH_DATA[n]);
+                    svg.attr('edge', 'none');
+                    svg.stop('/>');
                 }
+            svg.dec();
+            svg.whole('</defs>');
             for (let n = 0; n < this.types.length; n++) {
                 let t = this.types[n];
-                if (t[0] == PRIM_LINE)
+                if (t.primClass == PrimClass.Line)
                     this.typeObj[n] = this.setupTypeLine(t);
-                else if (t[0] == PRIM_RECT)
+                else if (t.primClass == PrimClass.Rect)
                     this.typeObj[n] = this.setupTypeRect(t);
-                else if (t[0] == PRIM_OVAL)
+                else if (t.primClass == PrimClass.Oval)
                     this.typeObj[n] = this.setupTypeOval(t);
-                else if (t[0] == PRIM_PATH)
+                else if (t.primClass == PrimClass.Path)
                     this.typeObj[n] = this.setupTypePath(t);
-                else if (t[0] == PRIM_TEXT)
+                else if (t.primClass == PrimClass.Text)
                     this.typeObj[n] = this.setupTypeText(t);
-                else if (t[0] == PRIM_TEXTNATIVE)
+                else if (t.primClass == PrimClass.TextNative)
                     this.typeObj[n] = this.setupTypeTextNative(t);
             }
             for (let n = 0; n < this.prims.length;) {
                 let p = this.prims[n], num = 1;
-                if (p[0] != PRIM_PATH && p[0] != PRIM_TEXT && p[0] != PRIM_TEXTNATIVE) {
+                if (p.primClass != PrimClass.Path && p.primClass != PrimClass.Text && p.primClass != PrimClass.TextNative) {
                     for (; n + num < this.prims.length; num++)
-                        if (this.prims[n + num][0] != p[0] || this.prims[n + num][1] != p[1])
+                        if (this.prims[n + num].primClass != p.primClass || this.prims[n + num].typeidx != p.typeidx)
                             break;
                 }
-                if (p[0] == PRIM_LINE) {
+                if (p.primClass == PrimClass.Line) {
                     if (num == 1)
                         this.svgLine1(svg, p);
                     else
-                        this.svgLineN(svg, p, n, num);
+                        this.svgLineN(svg, this.prims.slice(n, n + num));
                 }
-                else if (p[0] == PRIM_RECT) {
+                else if (p.primClass == PrimClass.Rect) {
                     if (num == 1)
                         this.svgRect1(svg, p);
                     else
-                        this.svgRectN(svg, p, n, num);
+                        this.svgRectN(svg, this.prims.slice(n, n + num));
                 }
-                else if (p[0] == PRIM_OVAL) {
+                else if (p.primClass == PrimClass.Oval) {
                     if (num == 1)
                         this.svgOval1(svg, p);
                     else
-                        this.svgOvalN(svg, p, n, num);
+                        this.svgOvalN(svg, this.prims.slice(n, n + num));
                 }
-                else if (p[0] == PRIM_PATH)
+                else if (p.primClass == PrimClass.Path)
                     this.svgPath(svg, p);
-                else if (p[0] == PRIM_TEXT)
+                else if (p.primClass == PrimClass.Text)
                     this.svgText(svg, p, withXlink);
-                else if (p[0] == PRIM_TEXTNATIVE)
+                else if (p.primClass == PrimClass.TextNative)
                     this.svgTextNative(svg, p);
                 n += num;
             }
         }
         spool(into) {
             for (let p of this.prims) {
-                if (p[0] == PRIM_LINE) {
-                    let [_, typeidx, x1, y1, x2, y2] = p;
-                    let [, thickness, colour] = this.types[typeidx];
+                if (p.primClass == PrimClass.Line) {
+                    let { typeidx, x1, y1, x2, y2 } = p;
+                    let { thickness, colour } = this.types[typeidx];
                     into.drawLine(x1, y1, x2, y2, colour, thickness);
                 }
-                else if (p[0] == PRIM_RECT) {
-                    let [_, typeidx, x, y, w, h] = p;
-                    let [, edgeCol, fillCol, thickness] = this.types[typeidx];
+                else if (p.primClass == PrimClass.Rect) {
+                    let { typeidx, x, y, w, h } = p;
+                    let { edgeCol, fillCol, thickness } = this.types[typeidx];
                     into.drawRect(x, y, w, h, edgeCol, thickness, fillCol);
                 }
-                else if (p[0] == PRIM_OVAL) {
-                    let [_, typeidx, x, y, w, h] = p;
-                    let [, edgeCol, fillCol, thickness] = this.types[typeidx];
-                    into.drawOval(x, y, w, h, edgeCol, thickness, fillCol);
+                else if (p.primClass == PrimClass.Oval) {
+                    let { typeidx, cx, cy, rw, rh } = p;
+                    let { edgeCol, fillCol, thickness } = this.types[typeidx];
+                    into.drawOval(cx, cy, rw, rh, edgeCol, thickness, fillCol);
                 }
-                else if (p[0] == PRIM_PATH) {
-                    let [_, typeidx, numPoints, xpoints, ypoints, ctrlFlags, isClosed] = p;
-                    let [, edgeCol, fillCol, thickness, hardEdge] = this.types[typeidx];
-                    into.drawPath(xpoints, ypoints, ctrlFlags, isClosed, edgeCol, thickness, fillCol, hardEdge);
+                else if (p.primClass == PrimClass.Path) {
+                    let { typeidx, count, x, y, ctrl, closed } = p;
+                    let { edgeCol, fillCol, thickness, hardEdge } = this.types[typeidx];
+                    into.drawPath(x, y, ctrl, closed, edgeCol, thickness, fillCol, hardEdge);
                 }
-                else if (p[0] == PRIM_TEXT) {
-                    let [_, typeidx, x, y, txt, direction] = p;
-                    let [, size, colour] = this.types[typeidx];
+                else if (p.primClass == PrimClass.Text) {
+                    let { typeidx, x, y, txt, direction } = p;
+                    let { size, colour } = this.types[typeidx];
                     into.drawText(x, y, txt, size, colour, null, direction);
                 }
-                else if (p[0] == PRIM_TEXTNATIVE) {
-                    let [_, typeidx, x, y, txt] = p;
-                    let [, fontFamily, fontSize, colour] = this.types[typeidx];
-                    into.drawTextNative(x, y, txt, fontFamily, fontSize, colour);
+                else if (p.primClass == PrimClass.TextNative) {
+                    let { typeidx, x, y, txt } = p;
+                    let { family, size, colour } = this.types[typeidx];
+                    into.drawTextNative(x, y, txt, family, size, colour);
                 }
             }
         }
         setupTypeLine(t) {
-            let thickness = t[1] * this.scale;
-            let colour = t[2];
-            return { thickness, colour };
+            let thickness = t.thickness * this.scale;
+            let colour = t.colour;
+            return { primClass: t.primClass, thickness, colour };
         }
         setupTypeRect(t) {
-            let edgeCol = t[1];
-            let fillCol = t[2];
-            let thickness = t[3] * this.scale;
-            return { edgeCol, fillCol, thickness };
+            let edgeCol = t.edgeCol;
+            let fillCol = t.fillCol;
+            let thickness = t.thickness * this.scale;
+            return { primClass: t.primClass, edgeCol, fillCol, thickness };
         }
         setupTypeOval(t) {
-            let edgeCol = t[1];
-            let fillCol = t[2];
-            let thickness = t[3] * this.scale;
-            return { edgeCol, fillCol, thickness };
+            let edgeCol = t.edgeCol;
+            let fillCol = t.fillCol;
+            let thickness = t.thickness * this.scale;
+            return { primClass: t.primClass, edgeCol, fillCol, thickness };
         }
         setupTypePath(t) {
-            let edgeCol = t[1];
-            let fillCol = t[2];
-            let thickness = t[3] * this.scale;
-            let hardEdge = t[4];
-            return { edgeCol, fillCol, thickness, hardEdge };
+            let edgeCol = t.edgeCol;
+            let fillCol = t.fillCol;
+            let thickness = t.thickness * this.scale;
+            let hardEdge = t.hardEdge;
+            return { primClass: t.primClass, edgeCol, fillCol, thickness, hardEdge };
         }
         setupTypeText(t) {
-            let size = t[1] * this.scale;
-            let colour = t[2];
-            return { colour, size };
+            let size = t.size * this.scale;
+            let colour = t.colour;
+            return { primClass: t.primClass, colour, size };
         }
         setupTypeTextNative(t) {
-            let family = t[1];
-            let size = t[2] * this.scale;
-            let colour = t[3];
-            let opt = t[4];
-            return { colour, family, size, opt };
+            let family = t.family;
+            let size = t.size * this.scale;
+            let colour = t.colour;
+            let opt = t.opt;
+            return { primClass: t.primClass, colour, family, size, opt };
         }
-        renderLine(ctx, p) {
-            let type = this.typeObj[p[1]];
-            let x1 = p[2], y1 = p[3];
-            let x2 = p[4], y2 = p[5];
-            let colour = type.colour;
+        renderLine(ctx, line) {
+            let { x1, y1, x2, y2 } = line;
+            let { colour, thickness } = this.typeObj[line.typeidx];
             x1 = this.offsetX + this.scale * x1;
             y1 = this.offsetY + this.scale * y1;
             x2 = this.offsetX + this.scale * x2;
@@ -18952,16 +19010,14 @@ var WebMolKit;
                 ctx.moveTo(x1, y1);
                 ctx.lineTo(x2, y2);
                 ctx.strokeStyle = WebMolKit.colourCanvas(colour);
-                ctx.lineWidth = type.thickness;
+                ctx.lineWidth = thickness;
                 ctx.lineCap = 'round';
                 ctx.stroke();
             }
         }
-        renderRect(ctx, p) {
-            let type = this.typeObj[p[1]];
-            let x = p[2], y = p[3];
-            let w = p[4], h = p[5];
-            let edgeCol = type.edgeCol, fillCol = type.fillCol;
+        renderRect(ctx, rect) {
+            let { x, y, w, h } = rect;
+            let { edgeCol, fillCol, thickness } = this.typeObj[rect.typeidx];
             x = this.offsetX + this.scale * x;
             y = this.offsetY + this.scale * y;
             w *= this.scale;
@@ -18972,16 +19028,14 @@ var WebMolKit;
             }
             if (edgeCol != MetaVector.NOCOLOUR) {
                 ctx.strokeStyle = WebMolKit.colourCanvas(edgeCol);
-                ctx.lineWidth = type.thickness;
+                ctx.lineWidth = thickness;
                 ctx.lineCap = 'square';
                 ctx.strokeRect(x, y, w, h);
             }
         }
-        renderOval(ctx, p) {
-            let type = this.typeObj[p[1]];
-            let cx = p[2], cy = p[3];
-            let rw = p[4], rh = p[5];
-            let edgeCol = type.edgeCol, fillCol = type.fillCol;
+        renderOval(ctx, oval) {
+            let { cx, cy, rw, rh } = oval;
+            let { edgeCol, fillCol, thickness } = this.typeObj[oval.typeidx];
             cx = this.offsetX + this.scale * cx;
             cy = this.offsetY + this.scale * cy;
             rw *= this.scale;
@@ -18994,22 +19048,18 @@ var WebMolKit;
             }
             if (edgeCol != MetaVector.NOCOLOUR) {
                 ctx.strokeStyle = WebMolKit.colourCanvas(edgeCol);
-                ctx.lineWidth = type.thickness;
+                ctx.lineWidth = thickness;
                 ctx.beginPath();
                 ctx.ellipse(cx, cy, rw, rh, 0, 0, 2 * Math.PI, true);
                 ctx.stroke();
             }
         }
-        renderPath(ctx, p) {
-            let type = this.typeObj[p[1]];
-            let npts = p[2];
-            if (npts == 0)
-                return;
-            let x = WebMolKit.Vec.duplicate(p[3]), y = WebMolKit.Vec.duplicate(p[4]);
-            let ctrl = p[5];
-            let isClosed = p[6];
-            let edgeCol = type.edgeCol, fillCol = type.fillCol;
-            for (let n = 0; n < npts; n++) {
+        renderPath(ctx, path) {
+            let { count, x, y, ctrl, closed } = path;
+            let { edgeCol, fillCol, thickness, hardEdge } = this.typeObj[path.typeidx];
+            x = [...x];
+            y = [...y];
+            for (let n = 0; n < count; n++) {
                 x[n] = this.offsetX + this.scale * x[n];
                 y[n] = this.offsetY + this.scale * y[n];
             }
@@ -19020,45 +19070,42 @@ var WebMolKit;
                     continue;
                 ctx.beginPath();
                 ctx.moveTo(x[0], y[0]);
-                for (let i = 1; i < npts; i++) {
+                for (let i = 1; i < count; i++) {
                     if (!ctrl || !ctrl[i]) {
                         ctx.lineTo(x[i], y[i]);
                     }
-                    else if (i < npts - 1 && !ctrl[i + 1]) {
+                    else if (i < count - 1 && !ctrl[i + 1]) {
                         ctx.quadraticCurveTo(x[i], y[i], x[i + 1], y[i + 1]);
                         i++;
                     }
-                    else if (i < npts - 1 && !ctrl[i + 2]) {
+                    else if (i < count - 1 && !ctrl[i + 2]) {
                         ctx.bezierCurveTo(x[i], y[i], x[i + 1], y[i + 1], x[i + 2], y[i + 2]);
                         i += 2;
                     }
                 }
-                if (isClosed)
+                if (closed)
                     ctx.closePath();
                 if (layer == 1) {
-                    ctx.fillStyle = WebMolKit.colourCanvas(type.fillCol);
+                    ctx.fillStyle = WebMolKit.colourCanvas(fillCol);
                     ctx.fill();
                 }
                 else {
-                    ctx.strokeStyle = WebMolKit.colourCanvas(type.edgeCol);
-                    ctx.lineWidth = type.thickness;
-                    ctx.lineCap = type.hardEdge ? 'square' : 'round';
-                    ctx.lineJoin = type.hardEdge ? 'miter' : 'round';
+                    ctx.strokeStyle = WebMolKit.colourCanvas(edgeCol);
+                    ctx.lineWidth = thickness;
+                    ctx.lineCap = hardEdge ? 'square' : 'round';
+                    ctx.lineJoin = hardEdge ? 'miter' : 'round';
                     ctx.stroke();
                 }
             }
         }
-        renderText(ctx, p) {
-            let type = this.typeObj[p[1]];
-            let x = p[2], y = p[3];
-            let txt = p[4];
-            let direction = p[5];
-            let sz = type.size;
-            let fill = WebMolKit.colourCanvas(type.colour);
+        renderText(ctx, text) {
+            let { x, y, txt, direction } = text;
+            let { size, colour } = this.typeObj[text.typeidx];
+            let fill = WebMolKit.colourCanvas(colour);
             x = this.offsetX + this.scale * x;
             y = this.offsetY + this.scale * y;
             let font = WebMolKit.FontData.main;
-            let scale = sz / font.UNITS_PER_EM;
+            let scale = size * this.scale / font.UNITS_PER_EM;
             let dx = 0;
             for (let n = 0; n < txt.length; n++) {
                 let ch = txt.charAt(n);
@@ -19089,12 +19136,10 @@ var WebMolKit;
                     dx += font.getKerning(ch, txt.charAt(n + 1));
             }
         }
-        renderTextNative(ctx, p) {
-            let type = this.typeObj[p[1]];
-            let x = p[2], y = p[3];
-            let txt = p[4];
-            let family = type.family, sz = type.size, opt = type.opt;
-            let fill = WebMolKit.colourCanvas(type.colour);
+        renderTextNative(ctx, text) {
+            let { x, y, txt } = text;
+            let { size, colour, family, opt } = this.typeObj[text.typeidx];
+            let fill = WebMolKit.colourCanvas(colour);
             x = this.offsetX + this.scale * x;
             y = this.offsetY + this.scale * y;
             ctx.save();
@@ -19103,212 +19148,220 @@ var WebMolKit;
                 pfx += 'bold ';
             if (opt.italic)
                 pfx += 'italic ';
-            ctx.font = pfx + sz + 'px ' + family;
+            ctx.font = pfx + (size * this.scale) + 'px ' + family;
             ctx.fillStyle = fill;
             ctx.fillText(txt, x, y);
             ctx.restore();
         }
-        svgLine1(svg, p) {
-            let type = this.typeObj[p[1]];
-            let x1 = p[2], y1 = p[3];
-            let x2 = p[4], y2 = p[5];
+        svgLine1(svg, line) {
+            let { x1, y1, x2, y2 } = line;
+            let { colour, thickness } = this.typeObj[line.typeidx];
             x1 = this.offsetX + this.scale * x1;
             y1 = this.offsetY + this.scale * y1;
             x2 = this.offsetX + this.scale * x2;
             y2 = this.offsetY + this.scale * y2;
-            if (type.colour != MetaVector.NOCOLOUR) {
-                let line = WebMolKit.XML.appendElement(svg, 'line');
-                line.setAttribute('x1', x1.toString());
-                line.setAttribute('y1', y1.toString());
-                line.setAttribute('x2', x2.toString());
-                line.setAttribute('y2', y2.toString());
-                this.defineSVGStroke(line, type.colour);
-                line.setAttribute('stroke-width', type.thickness.toString());
-                line.setAttribute('stroke-linecap', 'round');
+            if (colour != MetaVector.NOCOLOUR) {
+                svg.start('<line');
+                svg.attr('x1', x1);
+                svg.attr('y1', y1);
+                svg.attr('x2', x2);
+                svg.attr('y2', y2);
+                this.defineSVGStroke(svg, colour);
+                svg.attr('stroke-width', thickness);
+                svg.attr('stroke-linecap', 'round');
+                svg.stop('/>');
             }
         }
-        svgLineN(svg, p, pos, sz) {
-            let type = this.typeObj[p[1]];
-            if (type.colour == MetaVector.NOCOLOUR)
-                return;
-            let g = WebMolKit.XML.appendElement(svg, 'g');
-            this.defineSVGStroke(g, type.colour);
-            g.setAttribute('stroke-width', type.thickness.toString());
-            g.setAttribute('stroke-linecap', 'round');
-            for (let n = 0; n < sz; n++) {
-                let p = this.prims[pos + n];
-                let x1 = p[2], y1 = p[3];
-                let x2 = p[4], y2 = p[5];
+        svgLineN(svg, lines) {
+            let { colour, thickness } = this.typeObj[lines[0].typeidx];
+            svg.start('<g');
+            this.defineSVGStroke(svg, colour);
+            svg.attr('stroke-width', thickness);
+            svg.attr('stroke-linecap', 'round');
+            svg.stop('>');
+            svg.inc();
+            for (let line of lines) {
+                let { x1, y1, x2, y2 } = line;
                 x1 = this.offsetX + this.scale * x1;
                 y1 = this.offsetY + this.scale * y1;
                 x2 = this.offsetX + this.scale * x2;
                 y2 = this.offsetY + this.scale * y2;
-                let line = WebMolKit.XML.appendElement(g, 'line');
-                line.setAttribute('x1', x1.toString());
-                line.setAttribute('y1', y1.toString());
-                line.setAttribute('x2', x2.toString());
-                line.setAttribute('y2', y2.toString());
+                svg.start('<line');
+                svg.attr('x1', x1);
+                svg.attr('y1', y1);
+                svg.attr('x2', x2);
+                svg.attr('y2', y2);
+                svg.stop('/>');
             }
+            svg.dec();
+            svg.whole('</g>');
         }
-        svgRect1(svg, p) {
-            let type = this.typeObj[p[1]];
-            let x = p[2], y = p[3];
-            let w = p[4], h = p[5];
+        svgRect1(svg, rect) {
+            let { x, y, w, h } = rect;
+            let { edgeCol, fillCol, thickness } = this.typeObj[rect.typeidx];
             x = this.offsetX + this.scale * x;
             y = this.offsetY + this.scale * y;
             w *= this.scale;
             h *= this.scale;
-            let rect = WebMolKit.XML.appendElement(svg, 'rect');
-            rect.setAttribute('x', x.toString());
-            rect.setAttribute('y', y.toString());
-            rect.setAttribute('width', w.toString());
-            rect.setAttribute('height', h.toString());
-            this.defineSVGStroke(rect, type.edgeCol);
-            if (type.edgeCol != MetaVector.NOCOLOUR) {
-                rect.setAttribute('stroke-width', type.thickness.toString());
-                rect.setAttribute('stroke-linecap', 'square');
+            svg.start('<rect');
+            svg.attr('x', x);
+            svg.attr('y', y);
+            svg.attr('width', w);
+            svg.attr('height', h);
+            this.defineSVGStroke(svg, edgeCol);
+            if (edgeCol != MetaVector.NOCOLOUR) {
+                svg.attr('stroke-width', thickness);
+                svg.attr('stroke-linecap', 'square');
             }
-            this.defineSVGFill(rect, type.fillCol);
+            this.defineSVGFill(svg, fillCol);
+            svg.stop('/>');
         }
-        svgRectN(svg, p, pos, sz) {
-            let type = this.typeObj[p[1]];
-            let g = WebMolKit.XML.appendElement(svg, 'g');
-            this.defineSVGStroke(g, type.edgeCol);
-            if (type.edgeCol != MetaVector.NOCOLOUR) {
-                g.setAttribute('stroke-width', type.thickness.toString());
-                g.setAttribute('stroke-linecap', 'square');
+        svgRectN(svg, rects) {
+            let { edgeCol, fillCol, thickness } = this.typeObj[rects[0].typeidx];
+            svg.start('<g');
+            this.defineSVGStroke(svg, edgeCol);
+            if (edgeCol != MetaVector.NOCOLOUR) {
+                svg.attr('stroke-width', thickness);
+                svg.attr('stroke-linecap', 'square');
             }
-            this.defineSVGFill(g, type.fillCol);
-            for (let n = 0; n < sz; n++) {
-                let p = this.prims[pos + n];
-                let x = p[2], y = p[3];
-                let w = p[4], h = p[5];
+            this.defineSVGFill(svg, fillCol);
+            svg.stop('>');
+            svg.inc();
+            for (let rect of rects) {
+                let { x, y, w, h } = rect;
                 x = this.offsetX + this.scale * x;
                 y = this.offsetY + this.scale * y;
                 w *= this.scale;
                 h *= this.scale;
-                let rect = WebMolKit.XML.appendElement(g, 'rect');
-                rect.setAttribute('x', x.toString());
-                rect.setAttribute('y', y.toString());
-                rect.setAttribute('width', w.toString());
-                rect.setAttribute('height', h.toString());
+                svg.start('<rect');
+                svg.attr('x', x);
+                svg.attr('y', y);
+                svg.attr('width', w);
+                svg.attr('height', h);
+                svg.stop('/>');
             }
+            svg.dec();
+            svg.whole('</g>');
         }
-        svgOval1(svg, p) {
-            let type = this.typeObj[p[1]];
-            let cx = p[2], cy = p[3];
-            let rw = p[4], rh = p[5];
+        svgOval1(svg, oval) {
+            let { cx, cy, rw, rh } = oval;
+            let { edgeCol, fillCol, thickness } = this.typeObj[oval.typeidx];
             cx = this.offsetX + this.scale * cx;
             cy = this.offsetY + this.scale * cy;
             rw *= this.scale;
             rh *= this.scale;
-            let oval = WebMolKit.XML.appendElement(svg, 'ellipse');
-            oval.setAttribute('cx', cx.toString());
-            oval.setAttribute('cy', cy.toString());
-            oval.setAttribute('rx', rw.toString());
-            oval.setAttribute('ry', rh.toString());
-            this.defineSVGStroke(oval, type.edgeCol);
-            if (type.edgeCol != MetaVector.NOCOLOUR) {
-                oval.setAttribute('stroke-width', type.thickness.toString());
+            svg.start('<ellipse');
+            svg.attr('cx', cx);
+            svg.attr('cy', cy);
+            svg.attr('rx', rw);
+            svg.attr('ry', rh);
+            this.defineSVGStroke(svg, edgeCol);
+            if (edgeCol != MetaVector.NOCOLOUR) {
+                svg.attr('stroke-width', thickness);
             }
-            this.defineSVGFill(oval, type.fillCol);
+            this.defineSVGFill(svg, fillCol);
+            svg.stop('/>');
         }
-        svgOvalN(svg, p, pos, sz) {
-            let type = this.typeObj[p[1]];
-            let g = WebMolKit.XML.appendElement(svg, 'g');
-            this.defineSVGStroke(g, type.edgeCol);
-            if (type.edgeCol != MetaVector.NOCOLOUR) {
-                g.setAttribute('stroke-width', type.thickness.toString());
+        svgOvalN(svg, ovals) {
+            let { edgeCol, fillCol, thickness } = this.typeObj[ovals[0].typeidx];
+            svg.start('<g');
+            this.defineSVGStroke(svg, edgeCol);
+            if (edgeCol != MetaVector.NOCOLOUR) {
+                svg.attr('stroke-width', thickness);
             }
-            this.defineSVGFill(g, type.fillCol);
-            for (let n = 0; n < sz; n++) {
-                let p = this.prims[pos + n];
-                let cx = p[2], cy = p[3];
-                let rw = p[4], rh = p[5];
+            this.defineSVGFill(svg, fillCol);
+            svg.stop('>');
+            svg.inc();
+            for (let oval of ovals) {
+                let { cx, cy, rw, rh } = oval;
                 cx = this.offsetX + this.scale * cx;
                 cy = this.offsetY + this.scale * cy;
                 rw *= this.scale;
                 rh *= this.scale;
-                let oval = WebMolKit.XML.appendElement(g, 'ellipse');
-                oval.setAttribute('cx', cx.toString());
-                oval.setAttribute('cy', cy.toString());
-                oval.setAttribute('rx', rw.toString());
-                oval.setAttribute('ry', rh.toString());
+                svg.start('<ellipse');
+                svg.attr('cx', cx);
+                svg.attr('cy', cy);
+                svg.attr('rx', rw);
+                svg.attr('ry', rh);
+                svg.stop('/>');
             }
+            svg.dec();
+            svg.whole('</g>');
         }
-        svgPath(svg, p) {
-            let type = this.typeObj[p[1]];
-            let npts = p[2];
-            if (npts == 0)
-                return;
-            let x = p[3].slice(0), y = p[4].slice(0);
-            let ctrl = p[5];
-            let isClosed = p[6];
-            for (let n = 0; n < npts; n++) {
+        svgPath(svg, path) {
+            let { count, x, y, ctrl, closed } = path;
+            let { edgeCol, fillCol, thickness, hardEdge } = this.typeObj[path.typeidx];
+            x = [...x];
+            y = [...y];
+            for (let n = 0; n < count; n++) {
                 x[n] = this.offsetX + this.scale * x[n];
                 y[n] = this.offsetY + this.scale * y[n];
             }
             let shape = 'M ' + x[0] + ' ' + y[0];
             let n = 1;
-            while (n < npts) {
+            while (n < count) {
                 if (!ctrl || !ctrl[n]) {
                     shape += ' L ' + x[n] + ' ' + y[n];
                     n++;
                 }
-                else if (ctrl[n] && n < npts - 1 && !ctrl[n + 1]) {
+                else if (ctrl[n] && n < count - 1 && !ctrl[n + 1]) {
                     shape += ' Q ' + x[n] + ' ' + y[n] + ' ' + x[n + 1] + ' ' + y[n + 1];
                     n += 2;
                 }
-                else if (ctrl[n] && n < npts - 2 && ctrl[n + 1] && !ctrl[n + 2]) {
+                else if (ctrl[n] && n < count - 2 && ctrl[n + 1] && !ctrl[n + 2]) {
                     shape += ' C ' + x[n] + ' ' + y[n] + ' ' + x[n + 1] + ' ' + y[n + 1] + ' ' + x[n + 2] + ' ' + y[n + 2];
                     n += 3;
                 }
                 else
                     n++;
             }
-            if (isClosed)
+            if (closed)
                 shape += ' Z';
-            let path = WebMolKit.XML.appendElement(svg, 'path');
-            path.setAttribute('d', shape);
-            this.defineSVGStroke(path, type.edgeCol);
-            if (type.edgeCol != MetaVector.NOCOLOUR) {
-                path.setAttribute('stroke-width', type.thickness.toString());
-                path.setAttribute('stroke-linejoin', type.hardEdge ? 'miter' : 'round');
-                path.setAttribute('stroke-linecap', type.hardEdge ? 'square' : 'round');
+            svg.start('<path');
+            svg.attr('d', shape);
+            this.defineSVGStroke(svg, edgeCol);
+            if (edgeCol != MetaVector.NOCOLOUR) {
+                svg.attr('stroke-width', thickness);
+                svg.attr('stroke-linejoin', hardEdge ? 'miter' : 'round');
+                svg.attr('stroke-linecap', hardEdge ? 'square' : 'round');
             }
-            this.defineSVGFill(path, type.fillCol);
+            this.defineSVGFill(svg, fillCol);
+            svg.stop('/>');
         }
-        svgText(svg, p, withXlink = true) {
-            let type = this.typeObj[p[1]];
-            let x = p[2], y = p[3];
-            let txt = p[4];
-            let direction = p[5];
-            let sz = type.size;
+        svgText(svg, text, withXlink = true) {
+            let { x, y, txt, direction } = text;
+            let { size, colour } = this.typeObj[text.typeidx];
             x = this.offsetX + this.scale * x;
             y = this.offsetY + this.scale * y;
             let font = WebMolKit.FontData.main;
-            let scale = sz / font.UNITS_PER_EM;
-            let parent = svg;
+            let scale = size * this.scale / font.UNITS_PER_EM;
             if (direction != 0) {
-                parent = WebMolKit.XML.appendElement(parent, 'g');
-                parent.setAttribute('transform', `rotate(${direction},${x},${y})`);
+                svg.start('<g');
+                svg.attr('transform', `rotate(${direction},${x},${y})`);
+                svg.stop('>');
+                svg.inc();
             }
-            let gdelta = WebMolKit.XML.appendElement(parent, 'g');
-            gdelta.setAttribute('transform', 'translate(' + x + ',' + y + ')');
-            this.defineSVGFill(gdelta, type.colour);
-            let gscale = WebMolKit.XML.appendElement(gdelta, 'g');
-            gscale.setAttribute('transform', 'scale(' + scale + ',' + (-scale) + ')');
+            svg.start('<g');
+            svg.attr('transform', 'translate(' + x + ',' + y + ')');
+            this.defineSVGFill(svg, colour);
+            svg.stop('>');
+            svg.inc();
+            svg.start('<g');
+            svg.attr('transform', 'scale(' + scale + ',' + (-scale) + ')');
+            svg.stop('>');
+            svg.inc();
             let dx = 0;
             for (let n = 0; n < txt.length; n++) {
                 let ch = txt.charAt(n);
                 let i = font.getIndex(ch);
-                let use = WebMolKit.XML.appendElement(gscale, 'use');
+                svg.start('<use');
                 let ref = i < 0 ? '#missing' : '#char' + i;
                 if (withXlink)
-                    use.setAttribute('xlink:href', ref);
+                    svg.attr('xlink:href', ref);
                 else
-                    use.setAttribute('href', ref);
-                use.setAttribute('x', dx.toString());
+                    svg.attr('href', ref);
+                svg.attr('x', dx);
+                svg.stop('/>');
                 if (i >= 0) {
                     dx += font.HORIZ_ADV_X[i];
                     if (n < txt.length - 1)
@@ -19317,57 +19370,62 @@ var WebMolKit;
                 else
                     dx += font.MISSING_HORZ;
             }
+            svg.dec();
+            svg.whole('</g>');
+            svg.dec();
+            svg.whole('</g>');
+            if (direction != 0) {
+                svg.dec();
+                svg.whole('</g>');
+            }
         }
-        svgTextNative(svg, p) {
-            let type = this.typeObj[p[1]];
-            let x = p[2], y = p[3];
-            let txt = p[4];
-            let family = type.family, sz = type.size, opt = type.opt;
+        svgTextNative(svg, text) {
+            let { x, y, txt } = text;
+            let { size, colour, family, opt } = this.typeObj[text.typeidx];
             x = this.offsetX + this.scale * x;
             y = this.offsetY + this.scale * y;
-            let colour = WebMolKit.colourCanvas(type.colour);
-            let style = `fill: ${colour}; font-family: ${family}; font-size: ${sz};`;
+            let fill = WebMolKit.colourCanvas(colour);
+            let style = `fill: ${fill}; font-family: ${family}; font-size: ${size * this.scale};`;
             if (opt.bold)
                 style += ' font-weight: bold;';
             if (opt.italic)
                 style += ' font-style: italic;';
-            let node = WebMolKit.XML.appendElement(svg, 'text');
-            node.setAttribute('xml:space', 'preserve');
-            node.setAttribute('x', x.toString());
-            node.setAttribute('y', y.toString());
-            node.setAttribute('style', style);
-            WebMolKit.XML.setText(node, txt);
+            const escapeXML = (str) => {
+                return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+            };
+            svg.start('<text');
+            svg.attr('xml:space', 'preserve');
+            svg.attr('x', x);
+            svg.attr('y', y);
+            svg.attr('style', style);
+            svg.stop('>' + escapeXML(txt) + '</text>');
         }
-        defineSVGStroke(obj, col) {
+        defineSVGStroke(svg, col) {
             if (col == MetaVector.NOCOLOUR) {
-                obj.setAttribute('stroke-opacity', '0');
+                svg.attr('stroke-opacity', '0');
                 return;
             }
-            obj.setAttribute('stroke', WebMolKit.colourCode(col));
+            svg.attr('stroke', WebMolKit.colourCode(col));
             let alpha = WebMolKit.colourAlpha(col);
             if (alpha != 1)
-                obj.setAttribute('stroke-opacity', alpha.toString());
+                svg.attr('stroke-opacity', alpha);
         }
-        defineSVGFill(obj, col) {
+        defineSVGFill(svg, col) {
             if (col == MetaVector.NOCOLOUR) {
-                obj.setAttribute('fill-opacity', '0');
+                svg.attr('fill-opacity', '0');
                 return;
             }
-            obj.setAttribute('fill', WebMolKit.colourCode(col));
+            svg.attr('fill', WebMolKit.colourCode(col));
             let alpha = WebMolKit.colourAlpha(col);
             if (alpha != 1)
-                obj.setAttribute('fill-opacity', alpha.toString());
+                svg.attr('fill-opacity', alpha);
         }
         findOrCreateType(typeDef) {
             for (let i = 0; i < this.types.length; i++) {
-                if (this.types[i].length != typeDef.length)
+                if (this.types[i].primClass != typeDef.primClass)
                     continue;
-                let match = true;
-                for (let j = 0; j < typeDef.length; j++)
-                    if (typeDef[j] != this.types[i][j]) {
-                        match = false;
-                        break;
-                    }
+                let keys = Object.keys(this.types);
+                let match = keys.every((k) => typeDef[k] == this.types[i][k]);
                 if (match)
                     return i;
             }
@@ -20187,12 +20245,12 @@ var WebMolKit;
 var WebMolKit;
 (function (WebMolKit) {
     class Widget {
+        get content() { return $(this.domContent.el); }
+        get contentDOM() { return this.domContent; }
         constructor() {
             this.tagType = 'div';
             this.domContent = null;
         }
-        get content() { return $(this.domContent.el); }
-        get contentDOM() { return this.domContent; }
         render(parent) {
             if (parent.jquery)
                 parent = parent[0];
@@ -29495,6 +29553,10 @@ var WebMolKit;
 	}
 `;
     class Popup {
+        get obscureBackground() { return $(this.domObscureBackground.el); }
+        get obscureForeground() { return $(this.domObscureForeground.el); }
+        get panelBoundary() { return $(this.domPanelBoundary.el); }
+        get bodyDiv() { return $(this.domBody.el); }
         constructor(parent) {
             this.popupBackground = 'white';
             this.callbackClose = null;
@@ -29502,10 +29564,6 @@ var WebMolKit;
             this.parent = WebMolKit.domLegacy(parent);
             WebMolKit.installInlineCSS('popup', CSS_POPUP);
         }
-        get obscureBackground() { return $(this.domObscureBackground.el); }
-        get obscureForeground() { return $(this.domObscureForeground.el); }
-        get panelBoundary() { return $(this.domPanelBoundary.el); }
-        get bodyDiv() { return $(this.domBody.el); }
         onClose(callback) {
             this.callbackClose = callback;
         }
@@ -29780,12 +29838,6 @@ var WebMolKit;
     }
     WebMolKit.clearTooltip = clearTooltip;
     class Tooltip {
-        constructor(widget, bodyHTML, titleHTML, delay) {
-            this.widget = widget;
-            this.bodyHTML = bodyHTML;
-            this.titleHTML = titleHTML;
-            this.delay = delay;
-        }
         static ensureGlobal() {
             if (globalPopover == null) {
                 globalPopover = WebMolKit.dom('<div/>').css({ 'position': 'absolute', 'z-index': 22000, 'display': 'none' });
@@ -29793,6 +29845,12 @@ var WebMolKit;
                 globalPopover.css({ 'color': 'black', 'border': '1px solid black', 'border-radius': '4px' });
                 globalPopover.appendTo(document.body);
             }
+        }
+        constructor(widget, bodyHTML, titleHTML, delay) {
+            this.widget = widget;
+            this.bodyHTML = bodyHTML;
+            this.titleHTML = titleHTML;
+            this.delay = delay;
         }
         start() {
             globalPopover.setCSS('display', 'none');
@@ -30492,12 +30550,12 @@ var WebMolKit;
     }
     WebMolKit.RollingBall = RollingBall;
     class Pos {
+        static zero() { return new Pos(); }
+        static fromArray(src) { return new Pos(src[0], src[1]); }
         constructor(x, y) {
             this.x = x == null ? 0 : x;
             this.y = y == null ? 0 : y;
         }
-        static zero() { return new Pos(); }
-        static fromArray(src) { return new Pos(src[0], src[1]); }
         clone() { return new Pos(this.x, this.y); }
         equals(other) { return this.x == other.x && this.y == other.y; }
         scaleBy(mag) {
@@ -30520,12 +30578,12 @@ var WebMolKit;
     }
     WebMolKit.Pos = Pos;
     class Size {
+        static zero() { return new Size(); }
+        static fromArray(src) { return new Size(src[0], src[1]); }
         constructor(w, h) {
             this.w = w == null ? 0 : w;
             this.h = h == null ? 0 : h;
         }
-        static zero() { return new Size(); }
-        static fromArray(src) { return new Size(src[0], src[1]); }
         clone() { return new Size(this.w, this.h); }
         equals(other) { return this.w == other.w && this.h == other.h; }
         isZero() { return this.w == 0 && this.h == 0; }
@@ -30551,17 +30609,17 @@ var WebMolKit;
     }
     WebMolKit.Size = Size;
     class Box {
+        static zero() { return new Box(); }
+        static fromBounds(x1, y1, x2, y2) { return new Box(x1, y1, x2 - x1, y2 - y1); }
+        static fromSize(sz) { return new Box(0, 0, sz.w, sz.h); }
+        static fromOval(oval) { return new Box(oval.cx - oval.rw, oval.cy - oval.rh, 2 * oval.rw, 2 * oval.rh); }
+        static fromArray(src) { return new Box(src[0], src[1], src[2], src[3]); }
         constructor(x, y, w, h) {
             this.x = x == null ? 0 : x;
             this.y = y == null ? 0 : y;
             this.w = w == null ? 0 : w;
             this.h = h == null ? 0 : h;
         }
-        static zero() { return new Box(); }
-        static fromBounds(x1, y1, x2, y2) { return new Box(x1, y1, x2 - x1, y2 - y1); }
-        static fromSize(sz) { return new Box(0, 0, sz.w, sz.h); }
-        static fromOval(oval) { return new Box(oval.cx - oval.rw, oval.cy - oval.rh, 2 * oval.rw, 2 * oval.rh); }
-        static fromArray(src) { return new Box(src[0], src[1], src[2], src[3]); }
         clone() { return new Box(this.x, this.y, this.w, this.h); }
         equals(other) { return this.x == other.x && this.y == other.y && this.w == other.w && this.h == other.h; }
         getPos() { return new Pos(this.x, this.y); }
@@ -30632,15 +30690,15 @@ var WebMolKit;
     }
     WebMolKit.Box = Box;
     class Oval {
+        static zero() { return new Oval(); }
+        static fromBox(box) { return new Oval(box.x + 0.5 * box.w, box.y + 0.5 * box.h, 0.5 * box.w, 0.5 * box.h); }
+        static fromArray(src) { return new Oval(src[0], src[1], src[2], src[3]); }
         constructor(cx, cy, rw, rh) {
             this.cx = cx == null ? 0 : cx;
             this.cy = cy == null ? 0 : cy;
             this.rw = rw == null ? 0 : rw;
             this.rh = rh == null ? 0 : rh;
         }
-        static zero() { return new Oval(); }
-        static fromBox(box) { return new Oval(box.x + 0.5 * box.w, box.y + 0.5 * box.h, 0.5 * box.w, 0.5 * box.h); }
-        static fromArray(src) { return new Oval(src[0], src[1], src[2], src[3]); }
         clone() { return new Oval(this.cx, this.cy, this.rw, this.rh); }
         setCentre(pos) {
             this.cx = pos.x;
@@ -30676,14 +30734,14 @@ var WebMolKit;
     }
     WebMolKit.Oval = Oval;
     class Line {
+        static zero() { return new Line(); }
+        static fromPos(pos1, pos2) { return new Line(pos1.x, pos1.y, pos2.x, pos2.y); }
         constructor(x1, y1, x2, y2) {
             this.x1 = x1 == null ? 0 : x1;
             this.y1 = y1 == null ? 0 : y1;
             this.x2 = x2 == null ? 0 : x2;
             this.y2 = y2 == null ? 0 : y2;
         }
-        static zero() { return new Line(); }
-        static fromPos(pos1, pos2) { return new Line(pos1.x, pos1.y, pos2.x, pos2.y); }
         clone() { return new Line(this.x1, this.y1, this.x2, this.y2); }
         setPos1(pos) {
             this.x1 = pos.x;

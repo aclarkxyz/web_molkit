@@ -42,48 +42,147 @@ export enum TextAlign
 	Bottom = 16
 }
 
-const PRIM_LINE = 1;
-const PRIM_RECT = 2;
-const PRIM_OVAL = 3;
-const PRIM_PATH = 4;
-const PRIM_TEXT = 5;
-const PRIM_TEXTNATIVE = 6;
+enum PrimClass
+{
+	Line = 1,
+	Rect = 2,
+	Oval = 3,
+	Path = 4,
+	Text = 5,
+	TextNative = 6,
+}
 
-interface TypeObjLine
+interface PrimBase
+{
+	primClass:PrimClass;
+	typeidx:number;
+}
+interface TypeBase
+{
+	primClass:PrimClass;
+}
+
+interface LinePrim extends PrimBase
+{
+	x1:number;
+	y1:number;
+	x2:number;
+	y2:number;
+}
+interface LineType extends TypeBase
 {
 	thickness:number;
 	colour:number;
 }
-interface TypeObjRect
+
+interface RectPrim extends PrimBase
+{
+	x:number;
+	y:number;
+	w:number;
+	h:number;
+}
+interface RectType extends TypeBase
 {
 	edgeCol:number;
 	fillCol:number;
 	thickness:number;
 }
-interface TypeObjOval
+
+interface OvalPrim extends PrimBase
+{
+	cx:number;
+	cy:number;
+	rw:number;
+	rh:number;
+}
+interface OvalType extends TypeBase
 {
 	edgeCol:number;
 	fillCol:number;
 	thickness:number;
 }
-interface TypeObjPath
+
+interface PathPrim extends PrimBase
+{
+	count:number;
+	x:number[];
+	y:number[];
+	ctrl:boolean[];
+	closed:boolean;
+}
+interface PathType extends TypeBase
 {
 	edgeCol:number;
 	fillCol:number;
 	thickness:number;
 	hardEdge:boolean;
 }
-interface TypeObjText
+
+interface TextPrim extends PrimBase
+{
+	x:number;
+	y:number;
+	txt:string;
+	direction:number;
+}
+interface TextType extends TypeBase
 {
 	size:number;
 	colour:number;
 }
-interface TypeObjTextNative
+
+interface TextNativePrim extends PrimBase
+{
+	x:number;
+	y:number;
+	txt:string;
+}
+interface TextNativeType extends TypeBase
 {
 	family:string;
 	size:number;
 	colour:number;
 	opt:FontDataNativeOpt;
+}
+
+class SpoolSVG
+{
+	private lines:string[] = [];
+	private depth = 0;
+	
+	constructor(private prettyPrint:boolean) {}
+	public spool(str:string) {if (str?.length > 0) this.lines.push(str);}
+	public start(str:string):void
+	{
+		if (this.prettyPrint && this.depth > 0) this.lines.push('  '.repeat(this.depth));
+		this.spool(str);
+	}
+	public stop(str:string):void
+	{
+		this.spool(str);
+		if (this.prettyPrint) this.lines.push('\n');
+	}
+	public whole(str:string):void
+	{
+		if (this.prettyPrint && this.depth > 0) this.lines.push('  '.repeat(this.depth));
+		this.spool(str);
+		if (this.prettyPrint) this.lines.push('\n');
+
+	}
+	public attr(key:string, val:string | number):void
+	{
+		if (typeof val == 'number') 
+		{
+			val = val.toFixed(4);
+			let match = /^(.*\.\d*?[1-9]+)0+$/.exec(val) ?? /^(.*)\.0+$/.exec(val);
+			if (match) val = match[1];
+		}
+		this.spool(` ${key}="${val}"`);
+	}
+	public inc():void {this.depth++;}
+	public dec():void {this.depth--;}
+	public toString():string {return this.lines.join('');}
 }
 
 export class MetaVector
@@ -92,9 +191,9 @@ export class MetaVector
 
 	public static NOCOLOUR = -1;
 
-	private types:any[] = [];
-	private prims:any[] = [];
-	private typeObj:(TypeObjLine | TypeObjRect | TypeObjOval | TypeObjPath | TypeObjText | TypeObjTextNative)[];
+	private types:TypeBase[] = [];
+	private prims:PrimBase[] = [];
+	private typeObj:TypeBase[];
 	public width:number = 0;
 	public height:number = 0;
 	public offsetX = 0;
@@ -128,9 +227,9 @@ export class MetaVector
 			if (vec.prims != null) this.prims = vec.prims;
 
 			// extract char-mask
-			for (let p of this.prims) if (p[0] == PRIM_TEXT)
+			for (let p of this.prims) if (p.primClass == PrimClass.Text)
 			{
-				let txt = p[4];
+				let {txt} = (p as TextPrim);
 				for (let n = 0; n < txt.length; n++)
 				{
 					let i = font.getIndex(txt.charAt(n));
@@ -144,26 +243,26 @@ export class MetaVector
 	public drawLine(x1:number, y1:number, x2:number, y2:number, colour:number, thickness:number):void
 	{
 		if (thickness == null) thickness = 1;
-		let typeidx = this.findOrCreateType([PRIM_LINE, thickness, colour]);
+		let typeidx = this.findOrCreateType({primClass: PrimClass.Line, thickness, colour} as LineType);
 
 		const bump = 0.5 * thickness;
 		this.updateBounds(Math.min(x1, x2) - bump, Math.min(y1, y2) - bump);
 		this.updateBounds(Math.max(x1, x2) + bump, Math.max(y1, y2) + bump);
 
-		this.prims.push([PRIM_LINE, typeidx, x1, y1, x2, y2]);
+		this.prims.push({primClass: PrimClass.Line, typeidx, x1, y1, x2, y2} as LinePrim);
 	}
 	public drawRect(x:number, y:number, w:number, h:number, edgeCol:number, thickness:number, fillCol:number):void
 	{
 		if (edgeCol == null) edgeCol = MetaVector.NOCOLOUR;
 		if (fillCol == null) fillCol = MetaVector.NOCOLOUR;
 		if (thickness == null) thickness = 1;
-		let typeidx = this.findOrCreateType([PRIM_RECT, edgeCol, fillCol, thickness]);
+		let typeidx = this.findOrCreateType({primClass: PrimClass.Rect, edgeCol, fillCol, thickness} as RectType);
 
 		const bump = 0.5 * thickness;
 		this.updateBounds(x - bump, y - bump);
 		this.updateBounds(x + w + bump, y + h + bump);
 
-		this.prims.push([PRIM_RECT, typeidx, x, y, w, h]);
+		this.prims.push({primClass: PrimClass.Rect, typeidx, x, y, w, h} as RectPrim);
 	}
 	public drawOval(cx:number, cy:number, rw:number, rh:number, edgeCol:number, thickness:number, fillCol:number):void
 	{
@@ -175,8 +274,8 @@ export class MetaVector
 		this.updateBounds(cx - rw - bump, cy - rh - bump);
 		this.updateBounds(cx + rw + bump, cy + rh + bump);
 
-		let typeidx = this.findOrCreateType([PRIM_OVAL, edgeCol, fillCol, thickness]);
-		this.prims.push([PRIM_OVAL, typeidx, cx, cy, rw, rh]);
+		let typeidx = this.findOrCreateType({primClass: PrimClass.Oval, edgeCol, fillCol, thickness} as OvalType);
+		this.prims.push({primClass: PrimClass.Oval, typeidx, cx, cy, rw, rh} as OvalPrim);
 	}
 	public drawPath(xpoints:number[], ypoints:number[], ctrlFlags:boolean[], isClosed:boolean,
 					edgeCol:number, thickness:number, fillCol:number, hardEdge:boolean):void
@@ -194,8 +293,9 @@ export class MetaVector
 			if (bump != 0) this.updateBounds(xpoints[n] + bump, ypoints[n] + bump);
 		}
 
-		let typeidx = this.findOrCreateType([PRIM_PATH, edgeCol, fillCol, thickness, hardEdge]);
-		this.prims.push([PRIM_PATH, typeidx, xpoints.length, clone(xpoints), clone(ypoints), clone(ctrlFlags), isClosed]);
+		let typeidx = this.findOrCreateType({primClass: PrimClass.Path, edgeCol, fillCol, thickness, hardEdge} as PathType);
+		this.prims.push({primClass: PrimClass.Path, typeidx, count: xpoints.length, 
+						 x: Vec.duplicate(xpoints), y: Vec.duplicate(ypoints), ctrl: ctrlFlags &&  [...ctrlFlags], closed: isClosed} as PathPrim);
 	}
 	public drawPoly(xpoints:number[], ypoints:number[], edgeCol:number, thickness:number, fillCol:number, hardEdge:boolean):void
 	{
@@ -278,8 +378,8 @@ export class MetaVector
 			this.updateBounds(x + bx + rx1 * cosTheta - ry2 * sinTheta, y + by + rx1 * sinTheta + ry2 * cosTheta);
 		}
 
-		let typeidx = this.findOrCreateType([PRIM_TEXT, size, colour]);
-		this.prims.push([PRIM_TEXT, typeidx, x + bx, y + by, txt, direction]);
+		let typeidx = this.findOrCreateType({primClass: PrimClass.Text, size, colour} as TextType);
+		this.prims.push({primClass: PrimClass.Text, typeidx, x: x + bx, y: y + by, txt, direction} as TextPrim);
 	}
 
 	// render *native* text, which is defined by an HTML/CSS font specifier; this is different from the built-in text in that it presumes that the device
@@ -291,11 +391,6 @@ export class MetaVector
 
 		if (align == null) align = TextAlign.Left | TextAlign.Baseline;
 		const font = FontData.main;
-		/*for (let n = 0; n < txt.length; n++)
-		{
-			let i = font.getIndex(txt.charAt(n));
-			if (i >= 0) this.charMask[i] = true; else this.charMissing = true;
-		}*/
 
 		let metrics = font.measureTextNative(txt, fontFamily, fontSize, opt);
 
@@ -311,8 +406,8 @@ export class MetaVector
 		this.updateBounds(x, y - metrics[1]);
 		this.updateBounds(x + metrics[0], y + metrics[2]);
 
-		let typeidx = this.findOrCreateType([PRIM_TEXTNATIVE, fontFamily, fontSize, colour, opt]);
-		this.prims.push([PRIM_TEXTNATIVE, typeidx, x, y, txt]);
+		let typeidx = this.findOrCreateType({primClass: PrimClass.TextNative, family: fontFamily, size: fontSize, colour, opt} as TextNativeType);
+		this.prims.push({primClass: PrimClass.TextNative, typeidx, x, y, txt} as TextNativePrim);
 	}
 
 	// query the boundaries of the drawing, post factum
@@ -382,53 +477,58 @@ export class MetaVector
 
 		for (let a of this.prims)
 		{
-			const type = a[0];
-			if (type == PRIM_LINE)
+			const type = a.primClass;
+			if (type == PrimClass.Line)
 			{
-				a[2] = ox + a[2] * sw;
-				a[3] = oy + a[3] * sh;
-				a[4] = ox + a[4] * sw;
-				a[5] = oy + a[5] * sh;
+				let line = a as LinePrim;
+				line.x1 = ox + line.x1 * sw;
+				line.y1 = oy + line.y1 * sh;
+				line.x2 = ox + line.x2 * sw;
+				line.y2 = oy + line.y2 * sh;
 			}
-			else if (type == PRIM_RECT)
+			else if (type == PrimClass.Rect)
 			{
-				a[2] = ox + a[2] * sw;
-				a[3] = oy + a[3] * sh;
-				a[4] = a[4] * sw;
-				a[5] = a[5] * sh;
+				let rect = a as RectPrim;
+				rect.x = ox + rect.x * sw;
+				rect.y = oy + rect.y * sh;
+				rect.w = rect.w * sw;
+				rect.h = rect.h * sh;
 			}
-			else if (type == PRIM_OVAL)
+			else if (type == PrimClass.Oval)
 			{
-				a[2] = ox + a[2] * sw;
-				a[3] = oy + a[3] * sh;
-				a[4] *= sw;
-				a[5] *= sh;
+				let oval = a as OvalPrim;
+				oval.cx = ox + oval.cx * sw;
+				oval.cy = oy + oval.cy * sh;
+				oval.rw *= sw;
+				oval.rh *= sh;
 			}
-			else if (type == PRIM_PATH)
+			else if (type == PrimClass.Path)
 			{
-				let sz = a[2], px = a[3], py = a[4];
+				let path = a as PathPrim;
+				let sz = path.count, px = path.x, py = path.y;
 				for (let n = 0; n < sz; n++)
 				{
 					px[n] = ox + px[n] * sw;
 					py[n] = oy + py[n] * sh;
 				}
 			}
-			else if (type == PRIM_TEXT || type == PRIM_TEXTNATIVE)
+			else if (type == PrimClass.Text || type == PrimClass.TextNative)
 			{
-				a[2] = ox + a[2] * sw;
-				a[3] = oy + a[3] * sh;
+				let text = a as TextPrim | TextNativePrim;
+				text.x = ox + text.x * sw;
+				text.y = oy + text.y * sh;
 			}
 		}
 		let swsh = 0.5 * (sw + sh);
 		if (swsh != 1) for (let t of this.types)
 		{
-			const type = t[0];
-			if (type == PRIM_LINE) t[1] *= swsh;
-			else if (type == PRIM_RECT) t[3] *= swsh;
-			else if (type == PRIM_OVAL) t[3] *= swsh;
-			else if (type == PRIM_PATH) t[3] *= swsh;
-			else if (type == PRIM_TEXT) t[1] *= swsh;
-			else if (type == PRIM_TEXTNATIVE) t[2] *= swsh;
+			const type = t.primClass;
+			if (type == PrimClass.Line) (t as LineType).thickness *= swsh;
+			else if (type == PrimClass.Rect) (t as RectType).thickness *= swsh;
+			else if (type == PrimClass.Oval) (t as OvalType).thickness *= swsh;
+			else if (type == PrimClass.Path) (t as PathType).thickness *= swsh;
+			else if (type == PrimClass.Text) (t as TextType).size *= swsh;
+			else if (type == PrimClass.TextNative) (t as TextNativeType).size *= swsh;
 		}
 
 		this.lowX = ox + this.lowX * sw;
@@ -451,8 +551,6 @@ export class MetaVector
 		let ctx = canvas.getContext('2d');
 		if (clearFirst) ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-		//let w = canvas.style.width ? parseInt(canvas.style.width) : canvas.width / this.density;
-		//let h = canvas.style.height ? parseInt(canvas.style.height) : canvas.height / this.density;
 		let w = this.width, h = this.height;
 
 		this.density = pixelDensity();
@@ -475,22 +573,22 @@ export class MetaVector
 		for (let n = 0; n < this.types.length; n++)
 		{
 			let t = this.types[n];
-			if (t[0] == PRIM_LINE) this.typeObj[n] = this.setupTypeLine(t);
-			else if (t[0] == PRIM_RECT) this.typeObj[n] = this.setupTypeRect(t);
-			else if (t[0] == PRIM_OVAL) this.typeObj[n] = this.setupTypeOval(t);
-			else if (t[0] == PRIM_PATH) this.typeObj[n] = this.setupTypePath(t);
-			else if (t[0] == PRIM_TEXT) this.typeObj[n] = this.setupTypeText(t);
-			else if (t[0] == PRIM_TEXTNATIVE) this.typeObj[n] = this.setupTypeTextNative(t);
+			if (t.primClass == PrimClass.Line) this.typeObj[n] = this.setupTypeLine(t as LineType);
+			else if (t.primClass == PrimClass.Rect) this.typeObj[n] = this.setupTypeRect(t as RectType);
+			else if (t.primClass == PrimClass.Oval) this.typeObj[n] = this.setupTypeOval(t as OvalType);
+			else if (t.primClass == PrimClass.Path) this.typeObj[n] = this.setupTypePath(t as PathType);
+			else if (t.primClass == PrimClass.Text) this.typeObj[n] = this.setupTypeText(t as TextType);
+			else if (t.primClass == PrimClass.TextNative) this.typeObj[n] = this.setupTypeTextNative(t as TextNativeType);
 		}
 		for (let n = 0; n < this.prims.length; n++)
 		{
 			let p = this.prims[n];
-			if (p[0] == PRIM_LINE) this.renderLine(ctx, p);
-			else if (p[0] == PRIM_RECT) this.renderRect(ctx, p);
-			else if (p[0] == PRIM_OVAL) this.renderOval(ctx, p);
-			else if (p[0] == PRIM_PATH) this.renderPath(ctx, p);
-			else if (p[0] == PRIM_TEXT) this.renderText(ctx, p);
-			else if (p[0] == PRIM_TEXTNATIVE) this.renderTextNative(ctx, p);
+			if (p.primClass == PrimClass.Line) this.renderLine(ctx, p as LinePrim);
+			else if (p.primClass == PrimClass.Rect) this.renderRect(ctx, p as RectPrim);
+			else if (p.primClass == PrimClass.Oval) this.renderOval(ctx, p as OvalPrim);
+			else if (p.primClass == PrimClass.Path) this.renderPath(ctx, p as PathPrim);
+			else if (p.primClass == PrimClass.Text) this.renderText(ctx, p as TextPrim);
+			else if (p.primClass == PrimClass.TextNative) this.renderTextNative(ctx, p as TextNativePrim);
 		}
 
 		ctx.restore();
@@ -503,74 +601,91 @@ export class MetaVector
 	// pointer events for individual SVG elements is generally a good idea
 	public createSVG(prettyPrint = false, withXlink = false):string
 	{
-		let xml = XML.parseXML('<svg/>');
-		let svg = xml.documentElement;
-		svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
-		if (withXlink) svg.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
-		svg.setAttribute('width', this.width.toString());
-		svg.setAttribute('height', this.height.toString());
-		svg.setAttribute('viewBox', `0 0 ${this.width} ${this.height}`);
-
+		let svg = new SpoolSVG(prettyPrint);
+		svg.start('<svg xmlns="http://www.w3.org/2000/svg"');
+		if (withXlink) svg.attr('xmlns:xlink', 'http://www.w3.org/1999/xlink');
+		svg.attr('width', this.width);
+		svg.attr('height', this.height);
+		svg.attr('viewBox', `0 0 ${this.width} ${this.height}`);
+		svg.stop('>');
+		svg.inc();
+		
 		this.renderSVG(svg, withXlink);
-
-		return prettyPrint ? XML.toPrettyString(xml) : XML.toString(xml);
+		
+		svg.dec();
+		svg.whole('</svg>');
+		return svg.toString();
 	}
 
 	// given a DOM that represents an <svg> element, or some sub-container (such as <g>), populates it with all of the
 	// content from the graphic
-	public renderSVG(svg:Element, withXlink = false):void
+	public renderSVG(svg:SpoolSVG, withXlink = false):void
 	{
 		this.typeObj = [];
 
 		const font = FontData.main;
-		let defs = XML.appendElement(svg, 'defs');
+		svg.whole('<defs>');
+		svg.inc();
 		if (this.charMissing)
 		{
-			let path = XML.appendElement(defs, 'path');
-			path.setAttribute('id', 'missing');
-			path.setAttribute('d', font.MISSING_DATA);
-			path.setAttribute('edge', 'none');
+			svg.start('<path');
+			svg.attr('id', 'missing');
+			svg.attr('d', font.MISSING_DATA);
+			svg.attr('edge', 'none');
+			svg.stop('/>');
 		}
 		for (let n = 0; n < font.UNICODE.length; n++) if (this.charMask[n])
 		{
-			let path = XML.appendElement(defs, 'path');
-			path.setAttribute('id', 'char' + n);
-			path.setAttribute('d', font.GLYPH_DATA[n]);
-			path.setAttribute('edge', 'none');
+			svg.start('<path');
+			svg.attr('id', 'char' + n);
+			svg.attr('d', font.GLYPH_DATA[n]);
+			svg.attr('edge', 'none');
+			svg.stop('/>');
 		}
+		svg.dec();
+		svg.whole('</defs>');
 
 		for (let n = 0; n < this.types.length; n++)
 		{
 			let t = this.types[n];
-			if (t[0] == PRIM_LINE) this.typeObj[n] = this.setupTypeLine(t);
-			else if (t[0] == PRIM_RECT) this.typeObj[n] = this.setupTypeRect(t);
-			else if (t[0] == PRIM_OVAL) this.typeObj[n] = this.setupTypeOval(t);
-			else if (t[0] == PRIM_PATH) this.typeObj[n] = this.setupTypePath(t);
-			else if (t[0] == PRIM_TEXT) this.typeObj[n] = this.setupTypeText(t);
-			else if (t[0] == PRIM_TEXTNATIVE) this.typeObj[n] = this.setupTypeTextNative(t);
+			if (t.primClass == PrimClass.Line) this.typeObj[n] = this.setupTypeLine(t as LineType);
+			else if (t.primClass == PrimClass.Rect) this.typeObj[n] = this.setupTypeRect(t as RectType);
+			else if (t.primClass == PrimClass.Oval) this.typeObj[n] = this.setupTypeOval(t as OvalType);
+			else if (t.primClass == PrimClass.Path) this.typeObj[n] = this.setupTypePath(t as PathType);
+			else if (t.primClass == PrimClass.Text) this.typeObj[n] = this.setupTypeText(t as TextType);
+			else if (t.primClass == PrimClass.TextNative) this.typeObj[n] = this.setupTypeTextNative(t as TextNativeType);
 		}
 		for (let n = 0; n < this.prims.length;)
 		{
 			let p = this.prims[n], num = 1;
-			if (p[0] != PRIM_PATH && p[0] != PRIM_TEXT && p[0] != PRIM_TEXTNATIVE)
+			if (p.primClass != PrimClass.Path && p.primClass != PrimClass.Text && p.primClass != PrimClass.TextNative)
 			{
-				for (; n + num < this.prims.length; num++) if (this.prims[n + num][0] != p[0] || this.prims[n + num][1] != p[1]) break;
+				for (; n + num < this.prims.length; num++) if (this.prims[n + num].primClass != p.primClass || this.prims[n + num].typeidx != p.typeidx) break;
 			}
-			if (p[0] == PRIM_LINE)
+			if (p.primClass == PrimClass.Line)
 			{
-				if (num == 1) this.svgLine1(svg, p); else this.svgLineN(svg, p, n, num);
+				if (num == 1)
+					this.svgLine1(svg, p as LinePrim); 
+				else 
+					this.svgLineN(svg, this.prims.slice(n, n + num) as LinePrim[]);
 			}
-			else if (p[0] == PRIM_RECT)
+			else if (p.primClass == PrimClass.Rect)
 			{
-				if (num == 1) this.svgRect1(svg, p); else this.svgRectN(svg, p, n, num);
+				if (num == 1)
+					this.svgRect1(svg, p as RectPrim);
+				else 
+					this.svgRectN(svg, this.prims.slice(n, n + num) as RectPrim[]);
 			}
-			else if (p[0] == PRIM_OVAL)
+			else if (p.primClass == PrimClass.Oval)
 			{
-				if (num == 1) this.svgOval1(svg, p); else this.svgOvalN(svg, p, n, num);
+				if (num == 1)
+					this.svgOval1(svg, p as OvalPrim); 
+				else 
+					this.svgOvalN(svg, this.prims.slice(n, n + num) as OvalPrim[]);
 			}
-			else if (p[0] == PRIM_PATH) this.svgPath(svg, p);
-			else if (p[0] == PRIM_TEXT) this.svgText(svg, p, withXlink);
-			else if (p[0] == PRIM_TEXTNATIVE) this.svgTextNative(svg, p);
+			else if (p.primClass == PrimClass.Path) this.svgPath(svg, p as PathPrim);
+			else if (p.primClass == PrimClass.Text) this.svgText(svg, p as TextPrim, withXlink);
+			else if (p.primClass == PrimClass.TextNative) this.svgTextNative(svg, p as TextNativePrim);
 
 			n += num;
 		}
@@ -581,41 +696,41 @@ export class MetaVector
 	{
 		for (let p of this.prims)
 		{
-			if (p[0] == PRIM_LINE)
+			if (p.primClass == PrimClass.Line)
 			{
-				let [_, typeidx, x1, y1, x2, y2] = p;
-				let [, thickness, colour] = this.types[typeidx];
+				let {typeidx, x1, y1, x2, y2} = p as LinePrim;
+				let {thickness, colour} = this.types[typeidx] as LineType;
 				into.drawLine(x1, y1, x2, y2, colour, thickness);
 			}
-			else if (p[0] == PRIM_RECT)
+			else if (p.primClass == PrimClass.Rect)
 			{
-				let [_, typeidx, x, y, w, h] = p;
-				let [, edgeCol, fillCol, thickness] = this.types[typeidx];
+				let {typeidx, x, y, w, h} = p as RectPrim;
+				let {edgeCol, fillCol, thickness} = this.types[typeidx] as RectType;
 				into.drawRect(x, y, w, h, edgeCol, thickness, fillCol);
 			}
-			else if (p[0] == PRIM_OVAL)
+			else if (p.primClass == PrimClass.Oval)
 			{
-				let [_, typeidx, x, y, w, h] = p;
-				let [, edgeCol, fillCol, thickness] = this.types[typeidx];
-				into.drawOval(x, y, w, h, edgeCol, thickness, fillCol);
+				let {typeidx, cx, cy, rw, rh} = p as OvalPrim;
+				let {edgeCol, fillCol, thickness} = this.types[typeidx] as OvalType;
+				into.drawOval(cx, cy, rw, rh, edgeCol, thickness, fillCol);
 			}
-			else if (p[0] == PRIM_PATH)
+			else if (p.primClass == PrimClass.Path)
 			{
-				let [_, typeidx, numPoints, xpoints, ypoints, ctrlFlags, isClosed] = p;
-				let [, edgeCol, fillCol, thickness, hardEdge] = this.types[typeidx];
-				into.drawPath(xpoints, ypoints, ctrlFlags, isClosed, edgeCol, thickness, fillCol, hardEdge);
+				let {typeidx, count, x, y, ctrl, closed} = p as PathPrim;
+				let {edgeCol, fillCol, thickness, hardEdge} = this.types[typeidx] as PathType;
+				into.drawPath(x, y, ctrl, closed, edgeCol, thickness, fillCol, hardEdge);
 			}
-			else if (p[0] == PRIM_TEXT)
+			else if (p.primClass == PrimClass.Text)
 			{
-				let [_, typeidx, x, y, txt, direction] = p;
-				let [, size, colour] = this.types[typeidx];
+				let {typeidx, x, y, txt, direction} = p as TextPrim;
+				let {size, colour} = this.types[typeidx] as TextType;
 				into.drawText(x, y, txt, size, colour, null, direction);
 			}
-			else if (p[0] == PRIM_TEXTNATIVE)
+			else if (p.primClass == PrimClass.TextNative)
 			{
-				let [_, typeidx, x, y, txt] = p;
-				let [, fontFamily, fontSize, colour] = this.types[typeidx];
-				into.drawTextNative(x, y, txt, fontFamily, fontSize, colour);
+				let {typeidx, x, y, txt} = p as TextNativePrim;
+				let {family, size, colour} = this.types[typeidx] as TextNativeType;
+				into.drawTextNative(x, y, txt, family, size, colour);
 			}
 		}
 	}
@@ -623,56 +738,54 @@ export class MetaVector
 	// ------------ private methods ------------
 
 	// transform stored types into renderables
-	public setupTypeLine(t:any[]):TypeObjLine
+	public setupTypeLine(t:LineType):LineType
 	{
-		let thickness = t[1] * this.scale;
-		let colour = t[2];
-		return {thickness, colour};
+		let thickness = t.thickness * this.scale;
+		let colour = t.colour;
+		return {primClass: t.primClass, thickness, colour};
 	}
-	public setupTypeRect(t:any[]):TypeObjRect
+	public setupTypeRect(t:RectType):RectType
 	{
-		let edgeCol = t[1];
-		let fillCol = t[2];
-		let thickness = t[3] * this.scale;
-		return {edgeCol, fillCol, thickness};
+		let edgeCol = t.edgeCol;
+		let fillCol = t.fillCol;
+		let thickness = t.thickness * this.scale;
+		return {primClass: t.primClass, edgeCol, fillCol, thickness};
 	}
-	public setupTypeOval(t:any[]):TypeObjOval
+	public setupTypeOval(t:OvalType):OvalType
 	{
-		let edgeCol = t[1];
-		let fillCol = t[2];
-		let thickness = t[3] * this.scale;
-		return {edgeCol, fillCol, thickness};
+		let edgeCol = t.edgeCol;
+		let fillCol = t.fillCol;
+		let thickness = t.thickness * this.scale;
+		return {primClass: t.primClass, edgeCol, fillCol, thickness};
 	}
-	public setupTypePath(t:any[]):TypeObjPath
+	public setupTypePath(t:PathType):PathType
 	{
-		let edgeCol = t[1];
-		let fillCol = t[2];
-		let thickness = t[3] * this.scale;
-		let hardEdge = t[4];
-		return {edgeCol, fillCol, thickness, hardEdge};
+		let edgeCol = t.edgeCol;
+		let fillCol = t.fillCol;
+		let thickness = t.thickness * this.scale;
+		let hardEdge = t.hardEdge;
+		return {primClass: t.primClass, edgeCol, fillCol, thickness, hardEdge};
 	}
-	public setupTypeText(t:any[]):TypeObjText
+	public setupTypeText(t:TextType):TextType
 	{
-		let size = t[1] * this.scale;
-		let colour = t[2];
-		return {colour, size};
+		let size = t.size * this.scale;
+		let colour = t.colour;
+		return {primClass: t.primClass, colour, size};
 	}
-	public setupTypeTextNative(t:any[]):TypeObjTextNative
+	public setupTypeTextNative(t:TextNativeType):TextNativeType
 	{
-		let family = t[1];
-		let size = t[2] * this.scale;
-		let colour = t[3];
-		let opt = t[4];
-		return {colour, family, size, opt};
+		let family = t.family;
+		let size = t.size * this.scale;
+		let colour = t.colour;
+		let opt = t.opt;
+		return {primClass: t.primClass, colour, family, size, opt};
 	}
 
 	// perform actual rendering for the primitives
-	public renderLine(ctx:CanvasRenderingContext2D, p:any):void
+	public renderLine(ctx:CanvasRenderingContext2D, line:LinePrim):void
 	{
-		let type = this.typeObj[p[1]] as TypeObjLine;
-		let x1:number = p[2], y1:number = p[3];
-		let x2:number = p[4], y2:number = p[5];
-		let colour:number = type.colour;
+		let {x1, y1, x2, y2} = line;
+		let {colour, thickness} = this.typeObj[line.typeidx] as LineType;
 
 		x1 = this.offsetX + this.scale * x1;
 		y1 = this.offsetY + this.scale * y1;
@@ -684,17 +797,15 @@ export class MetaVector
 			ctx.moveTo(x1, y1);
 			ctx.lineTo(x2, y2);
 			ctx.strokeStyle = colourCanvas(colour);
-			ctx.lineWidth = type.thickness;
+			ctx.lineWidth = thickness;
 			ctx.lineCap = 'round';
 			ctx.stroke();
 		}
 	}
-	public renderRect(ctx:CanvasRenderingContext2D, p:any):void
+	public renderRect(ctx:CanvasRenderingContext2D, rect:RectPrim):void
 	{
-		let type = this.typeObj[p[1]] as TypeObjRect;
-		let x:number = p[2], y:number = p[3];
-		let w:number = p[4], h:number = p[5];
-		let edgeCol:number = type.edgeCol, fillCol:number = type.fillCol;
+		let {x, y, w, h} = rect;
+		let {edgeCol, fillCol, thickness} = this.typeObj[rect.typeidx] as RectType;
 
 		x = this.offsetX + this.scale * x;
 		y = this.offsetY + this.scale * y;
@@ -709,17 +820,15 @@ export class MetaVector
 		if (edgeCol != MetaVector.NOCOLOUR)
 		{
 			ctx.strokeStyle = colourCanvas(edgeCol);
-			ctx.lineWidth = type.thickness;
+			ctx.lineWidth = thickness;
 			ctx.lineCap = 'square';
 			ctx.strokeRect(x, y, w, h);
 		}
 	}
-	public renderOval(ctx:CanvasRenderingContext2D, p:any):void
+	public renderOval(ctx:CanvasRenderingContext2D, oval:OvalPrim):void
 	{
-		let type = this.typeObj[p[1]] as TypeObjOval;
-		let cx:number = p[2], cy:number = p[3];
-		let rw:number = p[4], rh:number = p[5];
-		let edgeCol:number = type.edgeCol, fillCol:number = type.fillCol;
+		let {cx, cy, rw, rh} = oval;
+		let {edgeCol, fillCol, thickness} = this.typeObj[oval.typeidx] as OvalType;
 
 		cx = this.offsetX + this.scale * cx;
 		cy = this.offsetY + this.scale * cy;
@@ -736,23 +845,20 @@ export class MetaVector
 		if (edgeCol != MetaVector.NOCOLOUR)
 		{
 			ctx.strokeStyle = colourCanvas(edgeCol);
-			ctx.lineWidth = type.thickness;
+			ctx.lineWidth = thickness;
 			ctx.beginPath();
 			ctx.ellipse(cx, cy, rw, rh, 0, 0, 2 * Math.PI, true);
 			ctx.stroke();
 		}
 	}
-	public renderPath(ctx:CanvasRenderingContext2D, p:any):void
+	public renderPath(ctx:CanvasRenderingContext2D, path:PathPrim):void
 	{
-		let type = this.typeObj[p[1]] as TypeObjPath;
-		let npts:number = p[2];
-		if (npts == 0) return;
-		let x = Vec.duplicate(p[3] as number[]), y = Vec.duplicate(p[4] as number[]);
-		let ctrl:boolean[] = p[5];
-		let isClosed:boolean = p[6];
-		let edgeCol:number = type.edgeCol, fillCol:number = type.fillCol;
+		let {count, x, y, ctrl, closed} = path;
+		let {edgeCol, fillCol, thickness, hardEdge} = this.typeObj[path.typeidx] as PathType;
 
-		for (let n = 0; n < npts; n++)
+		x = [...x];
+		y = [...y];
+		for (let n = 0; n < count; n++)
 		{
 			x[n] = this.offsetX + this.scale * x[n];
 			y[n] = this.offsetY + this.scale * y[n];
@@ -765,56 +871,53 @@ export class MetaVector
 
 			ctx.beginPath();
 			ctx.moveTo(x[0], y[0]);
-			for (let i = 1; i < npts; i++)
+			for (let i = 1; i < count; i++)
 			{
 				if (!ctrl || !ctrl[i])
 				{
 					ctx.lineTo(x[i], y[i]);
 				}
-				else if (i < npts - 1 && !ctrl[i + 1])
+				else if (i < count - 1 && !ctrl[i + 1])
 				{
 					ctx.quadraticCurveTo(x[i], y[i], x[i + 1], y[i + 1]);
 					i++;
 				}
-				else if (i < npts - 1 && !ctrl[i + 2])
+				else if (i < count - 1 && !ctrl[i + 2])
 				{
 					ctx.bezierCurveTo(x[i], y[i], x[i + 1], y[i + 1], x[i + 2], y[i + 2]);
 					i += 2;
 				}
 			}
-			if (isClosed) ctx.closePath();
+			if (closed) ctx.closePath();
 
 			if (layer == 1)
 			{
-				ctx.fillStyle = colourCanvas(type.fillCol);
+				ctx.fillStyle = colourCanvas(fillCol);
 				ctx.fill();
 			}
 			else
 			{
-				ctx.strokeStyle = colourCanvas(type.edgeCol);
-				ctx.lineWidth = type.thickness;
-				ctx.lineCap = type.hardEdge ? 'square' : 'round';
-				ctx.lineJoin = type.hardEdge ? 'miter' : 'round';
+				ctx.strokeStyle = colourCanvas(edgeCol);
+				ctx.lineWidth = thickness;
+				ctx.lineCap = hardEdge ? 'square' : 'round';
+				ctx.lineJoin = hardEdge ? 'miter' : 'round';
 				ctx.stroke();
 			}
 		}
 	}
-	private renderText(ctx:CanvasRenderingContext2D, p:any):void
+	private renderText(ctx:CanvasRenderingContext2D, text:TextPrim):void
 	{
-		let type = this.typeObj[p[1]] as TypeObjText;
-		let x:number = p[2], y:number = p[3];
-		let txt:string = p[4];
-		let direction:number = p[5];
+		let {x, y, txt, direction} = text;
+		let {size, colour} = this.typeObj[text.typeidx] as TextType;
 
-		let sz = type.size;
-		let fill = colourCanvas(type.colour);
+		let fill = colourCanvas(colour);
 
 		x = this.offsetX + this.scale * x;
 		y = this.offsetY + this.scale * y;
 
 		let font = FontData.main;
 
-		let scale = sz / font.UNITS_PER_EM;
+		let scale = size * this.scale / font.UNITS_PER_EM;
 		let dx = 0;
 		for (let n = 0; n < txt.length; n++)
 		{
@@ -847,14 +950,12 @@ export class MetaVector
 			if (n < txt.length - 1) dx += font.getKerning(ch, txt.charAt(n + 1));
 		}
 	}
-	private renderTextNative(ctx:CanvasRenderingContext2D, p:any):void
+	private renderTextNative(ctx:CanvasRenderingContext2D, text:TextNativePrim):void
 	{
-		let type = this.typeObj[p[1]] as TypeObjTextNative;
-		let x:number = p[2], y:number = p[3];
-		let txt:string = p[4];
+		let {x, y, txt} = text;
+		let {size, colour, family, opt} = this.typeObj[text.typeidx] as TextNativeType;
 
-		let family:string = type.family, sz:number = type.size, opt:FontDataNativeOpt = type.opt;
-		let fill = colourCanvas(type.colour);
+		let fill = colourCanvas(colour);
 
 		x = this.offsetX + this.scale * x;
 		y = this.offsetY + this.scale * y;
@@ -864,7 +965,7 @@ export class MetaVector
 		let pfx = '';
 		if (opt.bold) pfx += 'bold ';
 		if (opt.italic) pfx += 'italic ';
-		ctx.font = pfx + sz + 'px ' + family;
+		ctx.font = pfx + (size * this.scale) + 'px ' + family;
 		ctx.fillStyle = fill;
 		ctx.fillText(txt, x, y);
 		ctx.restore();
@@ -872,176 +973,186 @@ export class MetaVector
 
 	// create SVG object for each primitive
 	// perform actual rendering for the primitives
-	public svgLine1(svg:Element, p:any):void
+	public svgLine1(svg:SpoolSVG, line:LinePrim):void
 	{
-		let type = this.typeObj[p[1]] as TypeObjLine;
-		let x1:number = p[2], y1:number = p[3];
-		let x2:number = p[4], y2:number = p[5];
+		let {x1, y1, x2, y2} = line;
+		let {colour, thickness} = this.typeObj[line.typeidx] as LineType;
 
 		x1 = this.offsetX + this.scale * x1;
 		y1 = this.offsetY + this.scale * y1;
 		x2 = this.offsetX + this.scale * x2;
 		y2 = this.offsetY + this.scale * y2;
 
-		if (type.colour != MetaVector.NOCOLOUR)
+		if (colour != MetaVector.NOCOLOUR)
 		{
-			let line = XML.appendElement(svg, 'line');
-			line.setAttribute('x1', x1.toString());
-			line.setAttribute('y1', y1.toString());
-			line.setAttribute('x2', x2.toString());
-			line.setAttribute('y2', y2.toString());
-			this.defineSVGStroke(line, type.colour);
-			line.setAttribute('stroke-width', type.thickness.toString());
-			line.setAttribute('stroke-linecap', 'round');
+			svg.start('<line');
+			svg.attr('x1', x1);
+			svg.attr('y1', y1);
+			svg.attr('x2', x2);
+			svg.attr('y2', y2);
+			this.defineSVGStroke(svg, colour);
+			svg.attr('stroke-width', thickness);
+			svg.attr('stroke-linecap', 'round');
+			svg.stop('/>');
 		}
 	}
-	public svgLineN(svg:Element, p:any, pos:number, sz:number):void
+	public svgLineN(svg:SpoolSVG, lines:LinePrim[]):void
 	{
-		let type = this.typeObj[p[1]] as TypeObjLine;
-		if (type.colour == MetaVector.NOCOLOUR) return;
+		let {colour, thickness} = this.typeObj[lines[0].typeidx] as LineType;
 
-		let g = XML.appendElement(svg, 'g');
-		this.defineSVGStroke(g, type.colour);
-		g.setAttribute('stroke-width', type.thickness.toString());
-		g.setAttribute('stroke-linecap', 'round');
+		svg.start('<g');
+		this.defineSVGStroke(svg, colour);
+		svg.attr('stroke-width', thickness);
+		svg.attr('stroke-linecap', 'round');
+		svg.stop('>');
+		svg.inc();
 
-		for (let n = 0; n < sz; n++)
+		for (let line of lines)
 		{
-			let p = this.prims[pos + n];
-			let x1:number = p[2], y1:number = p[3];
-			let x2:number = p[4], y2:number = p[5];
+			let {x1, y1, x2, y2} = line;
 
 			x1 = this.offsetX + this.scale * x1;
 			y1 = this.offsetY + this.scale * y1;
 			x2 = this.offsetX + this.scale * x2;
 			y2 = this.offsetY + this.scale * y2;
 
-			let line = XML.appendElement(g, 'line');
-			line.setAttribute('x1', x1.toString());
-			line.setAttribute('y1', y1.toString());
-			line.setAttribute('x2', x2.toString());
-			line.setAttribute('y2', y2.toString());
+			svg.start('<line');
+			svg.attr('x1', x1);
+			svg.attr('y1', y1);
+			svg.attr('x2', x2);
+			svg.attr('y2', y2);
+			svg.stop('/>');
 		}
+
+		svg.dec();
+		svg.whole('</g>');
 	}
-	public svgRect1(svg:Element, p:any):void
+	public svgRect1(svg:SpoolSVG, rect:RectPrim):void
 	{
-		let type = this.typeObj[p[1]] as TypeObjRect;
-		let x:number = p[2], y:number = p[3];
-		let w:number = p[4], h:number = p[5];
+		let {x, y, w, h} = rect;
+		let {edgeCol, fillCol, thickness} = this.typeObj[rect.typeidx] as RectType;
 
 		x = this.offsetX + this.scale * x;
 		y = this.offsetY + this.scale * y;
 		w *= this.scale;
 		h *= this.scale;
 
-		let rect = XML.appendElement(svg, 'rect');
-		rect.setAttribute('x', x.toString());
-		rect.setAttribute('y', y.toString());
-		rect.setAttribute('width', w.toString());
-		rect.setAttribute('height', h.toString());
+		svg.start('<rect');
+		svg.attr('x', x);
+		svg.attr('y', y);
+		svg.attr('width', w);
+		svg.attr('height', h);
 
-		this.defineSVGStroke(rect, type.edgeCol);
-		if (type.edgeCol != MetaVector.NOCOLOUR)
+		this.defineSVGStroke(svg, edgeCol);
+		if (edgeCol != MetaVector.NOCOLOUR)
 		{
-			rect.setAttribute('stroke-width', type.thickness.toString());
-			rect.setAttribute('stroke-linecap', 'square');
+			svg.attr('stroke-width', thickness);
+			svg.attr('stroke-linecap', 'square');
 		}
-		this.defineSVGFill(rect, type.fillCol);
+		this.defineSVGFill(svg, fillCol);
+		svg.stop('/>');
 	}
-	public svgRectN(svg:Element, p:any, pos:number, sz:number):void
+	public svgRectN(svg:SpoolSVG, rects:RectPrim[]):void
 	{
-		let type = this.typeObj[p[1]] as TypeObjRect;
+		let {edgeCol, fillCol, thickness} = this.typeObj[rects[0].typeidx] as RectType;
 
-		let g = XML.appendElement(svg, 'g');
-		this.defineSVGStroke(g, type.edgeCol);
-		if (type.edgeCol != MetaVector.NOCOLOUR)
+		svg.start('<g');
+		this.defineSVGStroke(svg, edgeCol);
+		if (edgeCol != MetaVector.NOCOLOUR)
 		{
-			g.setAttribute('stroke-width', type.thickness.toString());
-			g.setAttribute('stroke-linecap', 'square');
+			svg.attr('stroke-width', thickness);
+			svg.attr('stroke-linecap', 'square');
 		}
-		this.defineSVGFill(g, type.fillCol);
+		this.defineSVGFill(svg, fillCol);
+		svg.stop('>');
+		svg.inc();
 
-		for (let n = 0; n < sz; n++)
+		for (let rect of rects)
 		{
-			let p = this.prims[pos + n];
-			let x:number = p[2], y:number = p[3];
-			let w:number = p[4], h:number = p[5];
+			let {x, y, w, h} = rect;
 
 			x = this.offsetX + this.scale * x;
 			y = this.offsetY + this.scale * y;
 			w *= this.scale;
 			h *= this.scale;
 
-			let rect = XML.appendElement(g, 'rect');
-			rect.setAttribute('x', x.toString());
-			rect.setAttribute('y', y.toString());
-			rect.setAttribute('width', w.toString());
-			rect.setAttribute('height', h.toString());
+			svg.start('<rect');
+			svg.attr('x', x);
+			svg.attr('y', y);
+			svg.attr('width', w);
+			svg.attr('height', h);
+			svg.stop('/>');
 		}
+
+		svg.dec();
+		svg.whole('</g>');
 	}
-	public svgOval1(svg:Element, p:any):void
+	public svgOval1(svg:SpoolSVG, oval:OvalPrim):void
 	{
-		let type = this.typeObj[p[1]] as TypeObjOval;
-		let cx:number = p[2], cy:number = p[3];
-		let rw:number = p[4], rh:number = p[5];
+		let {cx, cy, rw, rh} = oval;
+		let {edgeCol, fillCol, thickness} = this.typeObj[oval.typeidx] as OvalType;
 
 		cx = this.offsetX + this.scale * cx;
 		cy = this.offsetY + this.scale * cy;
 		rw *= this.scale;
 		rh *= this.scale;
 
-		let oval = XML.appendElement(svg, 'ellipse');
-		oval.setAttribute('cx', cx.toString());
-		oval.setAttribute('cy', cy.toString());
-		oval.setAttribute('rx', rw.toString());
-		oval.setAttribute('ry', rh.toString());
+		svg.start('<ellipse');
+		svg.attr('cx', cx);
+		svg.attr('cy', cy);
+		svg.attr('rx', rw);
+		svg.attr('ry', rh);
 
-		this.defineSVGStroke(oval, type.edgeCol);
-		if (type.edgeCol != MetaVector.NOCOLOUR)
+		this.defineSVGStroke(svg, edgeCol);
+		if (edgeCol != MetaVector.NOCOLOUR)
 		{
-			oval.setAttribute('stroke-width', type.thickness.toString());
+			svg.attr('stroke-width', thickness);
 		}
-		this.defineSVGFill(oval, type.fillCol);
+		this.defineSVGFill(svg, fillCol);
+		svg.stop('/>');
 	}
-	public svgOvalN(svg:Element, p:any, pos:number, sz:number):void
+	public svgOvalN(svg:SpoolSVG, ovals:OvalPrim[]):void
 	{
-		let type = this.typeObj[p[1]] as TypeObjOval;
-		let g = XML.appendElement(svg, 'g');
-		this.defineSVGStroke(g, type.edgeCol);
-		if (type.edgeCol != MetaVector.NOCOLOUR)
-		{
-			g.setAttribute('stroke-width', type.thickness.toString());
-		}
-		this.defineSVGFill(g, type.fillCol);
+		let {edgeCol, fillCol, thickness} = this.typeObj[ovals[0].typeidx] as OvalType;
 
-		for (let n = 0; n < sz; n++)
+		svg.start('<g');
+		this.defineSVGStroke(svg, edgeCol);
+		if (edgeCol != MetaVector.NOCOLOUR)
 		{
-			let p = this.prims[pos + n];
-			let cx:number = p[2], cy:number = p[3];
-			let rw:number = p[4], rh:number = p[5];
+			svg.attr('stroke-width', thickness);
+		}
+		this.defineSVGFill(svg, fillCol);
+		svg.stop('>');
+		svg.inc();
+
+		for (let oval of ovals)
+		{
+			let {cx, cy, rw, rh} = oval;
 
 			cx = this.offsetX + this.scale * cx;
 			cy = this.offsetY + this.scale * cy;
 			rw *= this.scale;
 			rh *= this.scale;
 
-			let oval = XML.appendElement(g, 'ellipse');
-			oval.setAttribute('cx', cx.toString());
-			oval.setAttribute('cy', cy.toString());
-			oval.setAttribute('rx', rw.toString());
-			oval.setAttribute('ry', rh.toString());
+			svg.start('<ellipse');
+			svg.attr('cx', cx);
+			svg.attr('cy', cy);
+			svg.attr('rx', rw);
+			svg.attr('ry', rh);
+			svg.stop('/>');
 		}
-	}
-	public svgPath(svg:Element, p:any):void
-	{
-		let type = this.typeObj[p[1]] as TypeObjPath;
-		let npts = p[2];
-		if (npts == 0) return;
-		let x:number[] = p[3].slice(0), y:number[] = p[4].slice(0);
-		let ctrl:boolean[] = p[5];
-		let isClosed:boolean = p[6];
 
-		for (let n = 0; n < npts; n++)
+		svg.dec();
+		svg.whole('</g>');
+	}
+	public svgPath(svg:SpoolSVG, path:PathPrim):void
+	{
+		let {count, x, y, ctrl, closed} = path;
+		let {edgeCol, fillCol, thickness, hardEdge} = this.typeObj[path.typeidx] as PathType;
+
+		x = [...x];
+		y = [...y];
+		for (let n = 0; n < count; n++)
 		{
 			x[n] = this.offsetX + this.scale * x[n];
 			y[n] = this.offsetY + this.scale * y[n];
@@ -1049,67 +1160,70 @@ export class MetaVector
 
 		let shape = 'M ' + x[0] + ' ' + y[0];
 		let n = 1;
-		while (n < npts)
+		while (n < count)
 		{
 			if (!ctrl || !ctrl[n])
 			{
 				shape += ' L ' + x[n] + ' ' + y[n];
 				n++;
 			}
-			else if (ctrl[n] && n < npts - 1 && !ctrl[n + 1])
+			else if (ctrl[n] && n < count - 1 && !ctrl[n + 1])
 			{
 				shape += ' Q ' + x[n] + ' ' + y[n] + ' ' + x[n + 1] + ' ' + y[n + 1];
 				n += 2;
 			}
-			else if (ctrl[n] && n < npts - 2 && ctrl[n + 1] && !ctrl[n + 2])
+			else if (ctrl[n] && n < count - 2 && ctrl[n + 1] && !ctrl[n + 2])
 			{
 				shape += ' C ' + x[n] + ' ' + y[n] + ' ' + x[n + 1] + ' ' + y[n + 1] + ' ' + x[n + 2] + ' ' + y[n + 2];
 				n += 3;
 			}
 			else n++; // (dunno, so skip)
 		}
-		if (isClosed) shape += ' Z';
+		if (closed) shape += ' Z';
 
-		let path = XML.appendElement(svg, 'path');
-		path.setAttribute('d', shape);
-
-		this.defineSVGStroke(path, type.edgeCol);
-		if (type.edgeCol != MetaVector.NOCOLOUR)
+		svg.start('<path');
+		svg.attr('d', shape);
+		
+		this.defineSVGStroke(svg, edgeCol);
+		if (edgeCol != MetaVector.NOCOLOUR)
 		{
-			path.setAttribute('stroke-width', type.thickness.toString());
-			path.setAttribute('stroke-linejoin', type.hardEdge ? 'miter' : 'round');
-			path.setAttribute('stroke-linecap', type.hardEdge ? 'square' : 'round');
+			svg.attr('stroke-width', thickness);
+			svg.attr('stroke-linejoin', hardEdge ? 'miter' : 'round');
+			svg.attr('stroke-linecap', hardEdge ? 'square' : 'round');
 		}
-		this.defineSVGFill(path, type.fillCol);
+		this.defineSVGFill(svg, fillCol);
+		svg.stop('/>');
 	}
-	private svgText(svg:Element, p:any, withXlink = true):void
+	private svgText(svg:SpoolSVG, text:TextPrim, withXlink = true):void
 	{
-		let type = this.typeObj[p[1]] as TypeObjText;
-		let x:number = p[2], y:number = p[3];
-		let txt:string = p[4];
-		let direction:number = p[5];
-
-		let sz = type.size;
+		let {x, y, txt, direction} = text;
+		let {size, colour} = this.typeObj[text.typeidx] as TextType;
 
 		x = this.offsetX + this.scale * x;
 		y = this.offsetY + this.scale * y;
 
 		let font = FontData.main;
 
-		let scale = sz / font.UNITS_PER_EM;
+		let scale = size * this.scale / font.UNITS_PER_EM;
 
-		let parent = svg;
 		if (direction != 0)
 		{
-			parent = XML.appendElement(parent, 'g');
-			parent.setAttribute('transform', `rotate(${direction},${x},${y})`);
+			svg.start('<g');
+			svg.attr('transform', `rotate(${direction},${x},${y})`);
+			svg.stop('>');
+			svg.inc();
 		}
 
-		let gdelta = XML.appendElement(parent, 'g');
-		gdelta.setAttribute('transform', 'translate(' + x + ',' + y + ')');
-		this.defineSVGFill(gdelta, type.colour);
-		let gscale = XML.appendElement(gdelta, 'g');
-		gscale.setAttribute('transform', 'scale(' + scale + ',' + (-scale) + ')');
+		svg.start('<g');
+		svg.attr('transform', 'translate(' + x + ',' + y + ')');
+		this.defineSVGFill(svg, colour);
+		svg.stop('>');
+		svg.inc();
+
+		svg.start('<g');
+		svg.attr('transform', 'scale(' + scale + ',' + (-scale) + ')');
+		svg.stop('>');
+		svg.inc();
 
 		let dx = 0;
 		for (let n = 0; n < txt.length; n++)
@@ -1117,10 +1231,11 @@ export class MetaVector
 			let ch = txt.charAt(n);
 			let i = font.getIndex(ch);
 
-			let use = XML.appendElement(gscale, 'use');
+			svg.start('<use');
 			let ref = i < 0 ? '#missing' : '#char' + i;
-			if (withXlink) use.setAttribute('xlink:href', ref); else use.setAttribute('href', ref);
-			use.setAttribute('x', dx.toString());
+			if (withXlink) svg.attr('xlink:href', ref); else svg.attr('href', ref);
+			svg.attr('x', dx);
+			svg.stop('/>');
 
 			if (i >= 0)
 			{
@@ -1129,69 +1244,78 @@ export class MetaVector
 			}
 			else dx += font.MISSING_HORZ;
 		}
-	}
-	private svgTextNative(svg:Element, p:any):void
-	{
-		let type = this.typeObj[p[1]] as TypeObjTextNative;
-		let x = p[2], y = p[3];
-		let txt = p[4];
 
-		let family = type.family, sz = type.size, opt:FontDataNativeOpt = type.opt;
+		svg.dec();
+		svg.whole('</g>');
+
+		svg.dec();
+		svg.whole('</g>');
+
+		if (direction != 0)
+		{
+			svg.dec();
+			svg.whole('</g>');
+		}
+	}
+	private svgTextNative(svg:SpoolSVG, text:TextNativePrim):void
+	{
+		let {x, y, txt} = text;
+		let {size, colour, family, opt} = this.typeObj[text.typeidx] as TextNativeType;
 
 		x = this.offsetX + this.scale * x;
 		y = this.offsetY + this.scale * y;
 
-		let colour = colourCanvas(type.colour);
-		let style = `fill: ${colour}; font-family: ${family}; font-size: ${sz};`;
+		let fill = colourCanvas(colour);
+		let style = `fill: ${fill}; font-family: ${family}; font-size: ${size * this.scale};`;
 		if (opt.bold) style += ' font-weight: bold;';
 		if (opt.italic) style += ' font-style: italic;';
 
-		let node = XML.appendElement(svg, 'text');
-		node.setAttribute('xml:space', 'preserve');
-		node.setAttribute('x', x.toString());
-		node.setAttribute('y', y.toString());
-		node.setAttribute('style', style);
-		XML.setText(node, txt);
+		const escapeXML = (str:string):string =>
+		{
+			return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+		};
+
+		svg.start('<text');
+		svg.attr('xml:space', 'preserve');
+		svg.attr('x', x);
+		svg.attr('y', y);
+		svg.attr('style', style);
+		svg.stop('>' + escapeXML(txt) + '</text>');
 	}
 
 	// utility for SVG
-	private defineSVGStroke(obj:Element, col:number):void
+	private defineSVGStroke(svg:SpoolSVG, col:number):void
 	{
 		if (col == MetaVector.NOCOLOUR)
 		{
-			obj.setAttribute('stroke-opacity', '0');
+			svg.attr('stroke-opacity', '0');
 			return;
 		}
-		obj.setAttribute('stroke', colourCode(col));
+		svg.attr('stroke', colourCode(col));
 		let alpha = colourAlpha(col);
-		if (alpha != 1) obj.setAttribute('stroke-opacity', alpha.toString());
-
+		if (alpha != 1) svg.attr('stroke-opacity', alpha);
 	}
-	private defineSVGFill(obj:Element, col:number):void
+	private defineSVGFill(svg:SpoolSVG, col:number):void
 	{
 		if (col == MetaVector.NOCOLOUR)
 		{
-			obj.setAttribute('fill-opacity', '0');
+			svg.attr('fill-opacity', '0');
 			return;
 		}
-		obj.setAttribute('fill', colourCode(col));
+		svg.attr('fill', colourCode(col));
 		let alpha = colourAlpha(col);
-		if (alpha != 1) obj.setAttribute('fill-opacity', alpha.toString());
+		if (alpha != 1) svg.attr('fill-opacity', alpha);
 	}
 
 	// for a type definition array, see if it exists in the list, and return that index - or if not, push it on
-	private findOrCreateType(typeDef:any)
+	private findOrCreateType(typeDef:TypeBase)
 	{
-		for (let i = 0; i < this.types.length; i++)
+		for (let n = 0; n < this.types.length; n++)
 		{
-			if (this.types[i].length != typeDef.length) continue;
-			let match = true;
-			for (let j = 0; j < typeDef.length; j++) if (typeDef[j] != this.types[i][j])
-			{
-				match = false;
-				break;
-			}
-			if (match) return i;
+			if (this.types[n].primClass != typeDef.primClass) continue;
+			let keys = Object.keys(typeDef);
+			let match = keys.every((k) => (typeDef as any)[k] == (this.types[n] as any)[k]);
+			if (match) return n;
 		}
 		this.types.push(typeDef);
 		return this.types.length - 1;

@@ -2429,35 +2429,89 @@ declare namespace WebMolKit {
         Top = 8,
         Bottom = 16
     }
-    interface TypeObjLine {
+    enum PrimClass {
+        Line = 1,
+        Rect = 2,
+        Oval = 3,
+        Path = 4,
+        Text = 5,
+        TextNative = 6
+    }
+    interface PrimBase {
+        primClass: PrimClass;
+        typeidx: number;
+    }
+    interface TypeBase {
+        primClass: PrimClass;
+    }
+    interface LinePrim extends PrimBase {
+        x1: number;
+        y1: number;
+        x2: number;
+        y2: number;
+    }
+    interface LineType extends TypeBase {
         thickness: number;
         colour: number;
     }
-    interface TypeObjRect {
+    interface RectPrim extends PrimBase {
+        x: number;
+        y: number;
+        w: number;
+        h: number;
+    }
+    interface RectType extends TypeBase {
         edgeCol: number;
         fillCol: number;
         thickness: number;
     }
-    interface TypeObjOval {
+    interface OvalPrim extends PrimBase {
+        cx: number;
+        cy: number;
+        rw: number;
+        rh: number;
+    }
+    interface OvalType extends TypeBase {
         edgeCol: number;
         fillCol: number;
         thickness: number;
     }
-    interface TypeObjPath {
+    interface PathPrim extends PrimBase {
+        count: number;
+        x: number[];
+        y: number[];
+        ctrl: boolean[];
+        closed: boolean;
+    }
+    interface PathType extends TypeBase {
         edgeCol: number;
         fillCol: number;
         thickness: number;
         hardEdge: boolean;
     }
-    interface TypeObjText {
+    interface TextType extends TypeBase {
         size: number;
         colour: number;
     }
-    interface TypeObjTextNative {
+    interface TextNativeType extends TypeBase {
         family: string;
         size: number;
         colour: number;
         opt: FontDataNativeOpt;
+    }
+    class SpoolSVG {
+        private prettyPrint;
+        private lines;
+        private depth;
+        constructor(prettyPrint: boolean);
+        spool(str: string): void;
+        start(str: string): void;
+        stop(str: string): void;
+        whole(str: string): void;
+        attr(key: string, val: string | number): void;
+        inc(): void;
+        dec(): void;
+        toString(): string;
     }
     export class MetaVector {
         static NOCOLOUR: number;
@@ -2468,7 +2522,7 @@ declare namespace WebMolKit {
         height: number;
         offsetX: number;
         offsetY: number;
-        scale: number;
+        private scale;
         density: number;
         private charMask;
         private charMissing;
@@ -2499,27 +2553,27 @@ declare namespace WebMolKit {
         renderCanvas(canvas: HTMLCanvasElement, clearFirst?: boolean): void;
         renderContext(ctx: CanvasRenderingContext2D): void;
         createSVG(prettyPrint?: boolean, withXlink?: boolean): string;
-        renderSVG(svg: Element, withXlink?: boolean): void;
+        renderSVG(svg: SpoolSVG, withXlink?: boolean): void;
         spool(into: MetaVector): void;
-        setupTypeLine(t: any[]): TypeObjLine;
-        setupTypeRect(t: any[]): TypeObjRect;
-        setupTypeOval(t: any[]): TypeObjOval;
-        setupTypePath(t: any[]): TypeObjPath;
-        setupTypeText(t: any[]): TypeObjText;
-        setupTypeTextNative(t: any[]): TypeObjTextNative;
-        renderLine(ctx: CanvasRenderingContext2D, p: any): void;
-        renderRect(ctx: CanvasRenderingContext2D, p: any): void;
-        renderOval(ctx: CanvasRenderingContext2D, p: any): void;
-        renderPath(ctx: CanvasRenderingContext2D, p: any): void;
+        setupTypeLine(t: LineType): LineType;
+        setupTypeRect(t: RectType): RectType;
+        setupTypeOval(t: OvalType): OvalType;
+        setupTypePath(t: PathType): PathType;
+        setupTypeText(t: TextType): TextType;
+        setupTypeTextNative(t: TextNativeType): TextNativeType;
+        renderLine(ctx: CanvasRenderingContext2D, line: LinePrim): void;
+        renderRect(ctx: CanvasRenderingContext2D, rect: RectPrim): void;
+        renderOval(ctx: CanvasRenderingContext2D, oval: OvalPrim): void;
+        renderPath(ctx: CanvasRenderingContext2D, path: PathPrim): void;
         private renderText;
         private renderTextNative;
-        svgLine1(svg: Element, p: any): void;
-        svgLineN(svg: Element, p: any, pos: number, sz: number): void;
-        svgRect1(svg: Element, p: any): void;
-        svgRectN(svg: Element, p: any, pos: number, sz: number): void;
-        svgOval1(svg: Element, p: any): void;
-        svgOvalN(svg: Element, p: any, pos: number, sz: number): void;
-        svgPath(svg: Element, p: any): void;
+        svgLine1(svg: SpoolSVG, line: LinePrim): void;
+        svgLineN(svg: SpoolSVG, lines: LinePrim[]): void;
+        svgRect1(svg: SpoolSVG, rect: RectPrim): void;
+        svgRectN(svg: SpoolSVG, rects: RectPrim[]): void;
+        svgOval1(svg: SpoolSVG, oval: OvalPrim): void;
+        svgOvalN(svg: SpoolSVG, ovals: OvalPrim[]): void;
+        svgPath(svg: SpoolSVG, path: PathPrim): void;
         private svgText;
         private svgTextNative;
         private defineSVGStroke;
