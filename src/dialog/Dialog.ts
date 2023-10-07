@@ -24,6 +24,10 @@ const CSS_DIALOG = `
 		color: black;
 		user-select: none;
     }
+	*.wmk-noscroll
+	{
+		overflow: hidden;
+	}
 `;
 
 export class Dialog
@@ -85,6 +89,7 @@ export class Dialog
 	public open():void
 	{
 		let body = this.parent || dom(document.body);
+		body.addClass('wmk-noscroll');
 
 		let zindex = 20000;
 
@@ -155,6 +160,9 @@ export class Dialog
 	{
 		this.domObscureBackground.remove();
 		this.domObscureForeground.remove();
+
+		let body = this.parent || dom(document.body);
+		body.removeClass('wmk-noscroll');
 
 		if (this.callbackClose) this.callbackClose(this);
 	}
