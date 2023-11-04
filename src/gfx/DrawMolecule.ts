@@ -68,12 +68,36 @@ export class DrawMolecule
 
 		// emit the drawing elements as vector primitives
 
-		let layout = this.layout, effects = this.effects, policy = this.policy, vg = this.vg;
+		let {mol, layout, effects, policy, vg} = this;
+
+		// special deal: bonds that are drawn together
+		let hideBonds = new Set<number>(effects.hideBonds);
+		for (let i = 1; i <= mol.numBonds; i++) if (mol.bondType(i) == Molecule.BONDTYPE_INCLINED && !hideBonds.has(i))
+		{
+			let atom = mol.bondTo(i);
+			if (layout.getPoint(atom - 1).text) continue; // invisible carbon only
+			for (let j of mol.atomAdjBonds(atom)) if (j != i && mol.bondType(j) == Molecule.BONDTYPE_INCLINED && mol.bondTo(j) == atom && !hideBonds.has(j))
+			{
+				let b1 = layout.getLines().find((b) => b.bnum == i);
+				let b2 = layout.getLines().find((b) => b.bnum == j);
+
+				let th1 = Math.atan2(b1.line.y1 - b1.line.y2, b1.line.x1 - b1.line.x2);
+				let th2 = Math.atan2(b2.line.y1 - b2.line.y2, b2.line.x1 - b2.line.x2);
+				if (Math.abs(angleDiff(th1, th2)) < 170 * DEGRAD)
+				{
+					this.drawFusedWedge(b1, b2);
+					this.mnemonics?.append(RenderMnemonicType.Artifact, 'Fused', [b1.line.x1, b1.line.y1, b1.line.x2, b1.line.y2, b2.line.x1, b2.line.y1, b2.line.x2, b2.line.y2]);
+					hideBonds.add(i);
+					hideBonds.add(j);
+					break;
+				}
+			}
+		}
 
 		for (let n = 0; n < layout.numLines(); n++)
 		{
 			let b = layout.getLine(n);
-			if (effects.hideBonds.has(b.bnum)) continue;
+			if (hideBonds.has(b.bnum)) continue;
 
 			if (b.type == BLineType.Normal)
 			{
@@ -385,6 +409,33 @@ export class DrawMolecule
 
 		this.vg.drawPoly(px, py, MetaVector.NOCOLOUR, 0, col, true);
 	}
+	private drawFusedWedge(b1:BLine, b2:BLine):void
+	{
+		const terminalPoints = (b:BLine, other:BLine):{outerX:number, outerY:number, innerX:number, innerY:number} =>
+		{
+			let x1 = b.line.x1, y1 = b.line.y1, x2 = b.line.x2, y2 = b.line.y2;
+			let dx = x2 - x1, dy = y2 - y1;
+			let norm = b.head / Math.sqrt(dx * dx + dy * dy);
+			let ox = norm * dy, oy = -norm * dx;
+			
+			let tx1 = x2 - ox, ty1 = y2 - oy, tx2 = x2 + ox, ty2 = y2 + oy;
+			let dsq1 = norm2_xy(tx1 - other.line.x1, ty1 - other.line.y1);
+			let dsq2 = norm2_xy(tx2 - other.line.x1, ty2 - other.line.y1);
+			if (dsq1 > dsq2)
+				return {outerX: tx1, outerY: ty1, innerX: tx2, innerY: ty2};
+			else
+				return {outerX: tx2, outerY: ty2, innerX: tx1, innerY: ty1};
+		};
+
+		let u = terminalPoints(b1, b2), v = terminalPoints(b2, b1);
+
+		let [innerX, innerY] = GeomUtil.lineIntersect(b1.line.x1, b1.line.y1, u.innerX, u.innerY, b2.line.x1, b2.line.y1, v.innerX, v.innerY);
+
+		let px = [b1.line.x1, u.outerX, v.outerX, b2.line.x1, innerX];
+		let py = [b1.line.y1, u.outerY, v.outerY, b2.line.y1, innerY];
+		this.vg.drawPoly(px, py, MetaVector.NOCOLOUR, 0, b1.col, true);
+	}
+
 	private drawBondDeclined(b:BLine):void
 	{
 		let x1 = b.line.x1, y1 = b.line.y1, x2 = b.line.x2, y2 = b.line.y2;
