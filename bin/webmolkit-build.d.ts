@@ -2370,6 +2370,7 @@ declare namespace WebMolKit {
         private drawUnderEffects;
         private drawOverEffects;
         private drawBondInclined;
+        private drawFusedWedge;
         private drawBondDeclined;
         private drawBondUnknown;
         private drawBondDotted;
