@@ -2522,7 +2522,7 @@ declare namespace WebMolKit {
         height: number;
         offsetX: number;
         offsetY: number;
-        private scale;
+        scale: number;
         density: number;
         private charMask;
         private charMissing;
@@ -2714,7 +2714,7 @@ declare namespace WebMolKit {
         get content(): JQuery;
         get contentDOM(): DOM;
         constructor();
-        render(parent: any): void;
+        render(parent: DOM | Element | JQuery): void;
         remove(): void;
         addTooltip(bodyHTML: string, titleHTML?: string): void;
         grabFocus(): void;
