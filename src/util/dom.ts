@@ -317,6 +317,11 @@ export class DOM
 	{
 		return new Size(this.width(), this.height());
 	}
+	public area():Box
+	{
+		let pos = this.offset();
+		return new Box(pos.x, pos.y, this.width(), this.height());
+	}
 
 	// shorthand for defining the precise rectangle in pixels
 	public setBoundaryPixels(x:number, y:number, w:number, h:number):void

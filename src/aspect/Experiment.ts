@@ -536,7 +536,7 @@ export class Experiment extends Aspect
 	// pulls out the respective component types from the underlying fields
 	private fetchReactant(row:number, idx:number):ExperimentComponent
 	{
-		let mol = this.ds.getMolecule(row, `${Experiment.COLNAME_REACTANT_MOL}${idx}`);
+		let mol = this.ds.getMoleculeClone(row, `${Experiment.COLNAME_REACTANT_MOL}${idx}`);
 		let name = this.ds.getString(row, `${Experiment.COLNAME_REACTANT_NAME}${idx}`);
 		if (MolUtil.isBlank(mol) && !name) return null;
 
@@ -555,7 +555,7 @@ export class Experiment extends Aspect
 	}
 	private fetchProduct(row:number, idx:number):ExperimentComponent
 	{
-		let mol = this.ds.getMolecule(row, `${Experiment.COLNAME_PRODUCT_MOL}${idx}`);
+		let mol = this.ds.getMoleculeClone(row, `${Experiment.COLNAME_PRODUCT_MOL}${idx}`);
 		let name = this.ds.getString(row, `${Experiment.COLNAME_PRODUCT_NAME}${idx}`);
 		if (MolUtil.isBlank(mol) && !name) return null;
 
@@ -575,7 +575,7 @@ export class Experiment extends Aspect
 	}
 	private fetchReagent(row:number, idx:number):ExperimentComponent
 	{
-		let mol = this.ds.getMolecule(row, `${Experiment.COLNAME_REAGENT_MOL}${idx}`);
+		let mol = this.ds.getMoleculeClone(row, `${Experiment.COLNAME_REAGENT_MOL}${idx}`);
 		let name = this.ds.getString(row, `${Experiment.COLNAME_REAGENT_NAME}${idx}`);
 		if (MolUtil.isBlank(mol) && !name) return null;
 
