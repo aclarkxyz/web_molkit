@@ -111,6 +111,7 @@ export class ExperimentMeta
 			if (value != null && (vtype == ExperimentMetaValue.Number || vtype == ExperimentMetaValue.Optional)) value = parseFloat(value);
 			list.push([type, value]);
 		}
+		list.sort((l1, l2) => (l1[0] as string).localeCompare(l2[0] as string));
 		return list;
 	}
 
