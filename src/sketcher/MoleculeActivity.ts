@@ -89,6 +89,7 @@ export enum ActivityType
 	QuerySetAtom,
 	QuerySetBond,
 	QueryBondAny,
+	SproutDirection,
 }
 
 export interface SketchState
@@ -264,6 +265,7 @@ export class MoleculeActivity
 		else if (this.activity == ActivityType.QuerySetAtom) this.execQuerySetAtom();
 		else if (this.activity == ActivityType.QuerySetBond) this.execQuerySetBond();
 		else if (this.activity == ActivityType.QueryBondAny) this.execQueryBondAny();
+		else if (this.activity == ActivityType.SproutDirection) this.execSproutDirection(param.deltaX, param.deltaY);
 
 		this.finish();
 	}
@@ -1939,12 +1941,43 @@ export class MoleculeActivity
 			return;
 		}
 
-		this.output.mol = this.input.mol.clone();
+		this.output.mol = mol.clone();
 
 		for (let b of bonds)
 		{
 			this.output.mol.setBondOrder(b, 0);
 			QueryUtil.setQueryBondOrders(this.output.mol, b, [-1, 0, 1, 2, 3, 4]);
+		}
+	}
+
+	public execSproutDirection(deltaX:number, deltaY:number):void
+	{
+		if (!this.requireCurrent()) return;
+		if (deltaX == 0 && deltaY == 0) return;
+
+		const {mol, currentAtom} = this.input;
+
+		let angleOptions = SketchUtil.primeDirections(mol, currentAtom) ?? SketchUtil.exitVectors(mol, currentAtom);
+		if (angleOptions.length == 0) return;
+
+		let theta = Math.atan2(deltaY, deltaX);
+		let idx = Vec.idxMin(angleOptions.map((look) => Math.abs(angleDiff(theta, look))));
+		let px = mol.atomX(currentAtom) + Molecule.IDEALBOND * Math.cos(angleOptions[idx]);
+		let py = mol.atomY(currentAtom) + Molecule.IDEALBOND * Math.sin(angleOptions[idx]);
+		
+		this.output.mol = mol.clone();
+		let newAtom = this.output.mol.addAtom('C', px, py);
+		this.output.mol.addBond(currentAtom, newAtom, 1);
+		this.output.mol = SketchUtil.joinOverlappingAtoms(this.output.mol, Vec.booleanArray(true, this.output.mol.numAtoms)) ?? this.output.mol;
+
+		for (let n = 1; n <= this.output.mol.numAtoms; n++)
+		{
+			let dx = this.output.mol.atomX(n) - px, dy = this.output.mol.atomY(n) - py;
+			if (norm2_xy(dx, dy) < CoordUtil.OVERLAP_THRESHOLD_SQ)
+			{
+				this.output.currentAtom = n;
+				break;
+			}
 		}
 	}
 

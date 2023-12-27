@@ -16,14 +16,35 @@ namespace WebMolKit /* BOF */ {
 	Tooltips: adding popovers to widgets.
 */
 
-let globalPopover:DOM = null;
+const CSS_TOOLTIP = `
+    *.wmk-tooltip-outer
+    {
+		position: absolute;
+		border-radius: 4px;
+		border: 1px solid black;
+		background-color: white;
+		padding: 1px;
+		pointer-events: none;
+        font-family: 'Open Sans', sans-serif;
+		font-size: 14px;
+    }
+	*.wmk-tooltip-inner
+	{
+		color: white;
+		border-radius: 4px;
+		background-color: black;
+		padding: 0.3em;
+		max-width: calc(min(40em, 50vw));
+	}
+`;
+
 let globalTooltip:Tooltip = null;
 let globalPopWatermark = 0;
 
 // adds a well behaved tooltip to the given node (element or JQuery object)
 export function addTooltip(parent:any, bodyHTML:string, titleHTML?:string, delay?:number):void
 {
-	Tooltip.ensureGlobal();
+	installInlineCSS('tooltip', CSS_TOOLTIP);
 
 	if (parent.jquery) parent = (parent as JQuery)[0];
 
@@ -37,10 +58,11 @@ export function addTooltip(parent:any, bodyHTML:string, titleHTML?:string, delay
 // immediately raise a tooltip, with a position relative to a given widget
 export function raiseToolTip(parent:any, avoid:Box, bodyHTML:string, titleHTML?:string):void
 {
+	installInlineCSS('tooltip', CSS_TOOLTIP);
+
 	if (parent.jquery) parent = (parent as JQuery)[0];
 
 	clearTooltip();
-	Tooltip.ensureGlobal();
 	new Tooltip(dom(parent), bodyHTML, titleHTML, 0).raise(avoid);
 }
 
@@ -49,23 +71,13 @@ export function clearTooltip():void
 {
 	if (globalTooltip == null) return;
 	globalPopWatermark++;
-	globalTooltip.lower();
+	globalTooltip.stop();
 }
 
 export class Tooltip
 {
 	private watermark:number;
-
-	public static ensureGlobal()
-	{
-		if (globalPopover == null)
-		{
-			globalPopover = dom('<div/>').css({'position': 'absolute', 'z-index': 22000, 'display': 'none'});
-			globalPopover.css({'background-color': '#F0F0FF', 'background-image': 'linear-gradient(to right bottom, #FFFFFF, #D0D0FF)'});
-			globalPopover.css({'color': 'black', 'border': '1px solid black', 'border-radius': '4px'});
-			globalPopover.appendTo(document.body);
-		}
-	}
+	private domTooltip:DOM = null;
 
 	constructor(private widget:DOM, private bodyHTML:string, private titleHTML:string, private delay:number)
 	{
@@ -74,7 +86,6 @@ export class Tooltip
 	// raise the tooltip after a delay, assuming someone else hasn't bogarted it in the meanwhile
 	public start()
 	{
-		globalPopover.setCSS('display', 'none');
 		this.watermark = ++globalPopWatermark;
 
 		window.setTimeout(() =>
@@ -86,8 +97,11 @@ export class Tooltip
 	// lower the tooltip, if it is still owned by this widget
 	public stop()
 	{
-		//console.log('STOP:[' + this.bodyHTML + '] watermark=' + this.watermark + '/' + globalPopWatermark);
-		if (this.watermark == globalPopWatermark) this.lower();
+		if (this.domTooltip)
+		{
+			this.domTooltip.remove();
+			this.domTooltip = null;
+		}
 		globalPopWatermark++;
 	}
 
@@ -96,11 +110,11 @@ export class Tooltip
 		if (!this.widget.exists()) return; // 'tis gone
 
 		globalTooltip = this;
+		if (this.domTooltip) return;
 
-		let pop = globalPopover;
-		pop.css({'max-width': '40em'});
-		pop.empty();
-		let div = dom('<div/>').appendTo(pop).css({'padding': '0.3em'});
+		let pop = this.domTooltip = dom('<div/>').class('wmk-tooltip-outer').css({'visibility': 'hidden'}).appendTo(document.body);
+		pop.css({});
+		let div = dom('<div/>').appendTo(pop).class('wmk-tooltip-inner');
 
 		let hasTitle = this.titleHTML != null && this.titleHTML.length > 0, hasBody = this.bodyHTML != null && this.bodyHTML.length > 0;
 
@@ -138,28 +152,21 @@ export class Tooltip
 			posX += window.pageXOffset;
 			posY += window.pageYOffset;
 
-			pop.css({'left': `${posX}px`, 'top': `${posY}px`});
+			pop.css({'left': `${posX}px`, 'top': `${posY}px`, 'visibility': 'visible'});
 		};
 
-		setPosition();
-		pop.setCSS('display', 'block');
+		pop.css({'left': '0px', 'top': '0px'});
 		setTimeout(() => setPosition(), 1);
 
 		let checkParent = () =>
 		{
 			if (this.watermark != globalPopWatermark) return; // someone else owns it now
 			if (!this.widget.isVisible())
-				pop.setCSS('display', 'none');
+				this.stop();
 			else
 				setTimeout(checkParent, 100);
 		};
 		setTimeout(checkParent, 100);
-	}
-
-	public lower()
-	{
-		let pop = globalPopover;
-		pop.setCSS('display', 'none');
 	}
 }
 

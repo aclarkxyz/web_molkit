@@ -361,7 +361,6 @@ export class Sketcher extends DrawCanvas
 	// flag, which defaults to true: determines whether the current state will be pushed onto the undo-stack before making the change
 	public setState(state:SketchState, withStashUndo:boolean = true):void
 	{
-		//if (withStashUndo) this.stashUndo();
 		this.stopTemplateFusion();
 
 		if (state.mol != null) this.defineMolecule(state.mol.clone(), false, withStashUndo, true);
@@ -375,7 +374,7 @@ export class Sketcher extends DrawCanvas
 	// appends the current state to the undo-stack
 	public stashUndo():void
 	{
-		if (this.undoStack.length == 0 && this.mol.numAtoms == 0) return; // don't put empty stuff at the beginning
+		//if (this.undoStack.length == 0 && this.mol.numAtoms == 0) return; // don't put empty stuff at the beginning
 		let state = this.getState();
 
 		this.undoStack.push(state);
@@ -1001,6 +1000,28 @@ export class Sketcher extends DrawCanvas
 		molact.execute();
 	}
 
+	// get sprout direction ready
+	private ctrlArrowKey(dx:number, dy:number):void
+	{
+		let watermark = ++this.cursorWatermark;
+		this.cursorDX += dx;
+		this.cursorDY += dy;
+		setTimeout(() =>
+		{
+			if (watermark == this.cursorWatermark) 
+			{
+				this.sproutDirection(this.cursorDX, this.cursorDY);
+				this.cursorDX = this.cursorDY = 0;
+			}
+		}, 100);
+	}
+
+	// starting with the current atom, creates a new bond jumping outward
+	private sproutDirection(deltaX:number, deltaY:number):void
+	{
+		new MoleculeActivity(this.getState(), ActivityType.SproutDirection, {deltaX, deltaY}, this).execute();
+	}
+
 	// --------------------------------------- toolkit events ---------------------------------------
 
 	// event responses
@@ -1117,7 +1138,7 @@ export class Sketcher extends DrawCanvas
 		let mod = (event.shiftKey ? 'S' : '') + (event.ctrlKey || event.metaKey ? 'C' : '') + (event.altKey ? 'A' : ''); // (meta==cmd on mac; alt=opt on mac)
 		let nomod = !event.shiftKey && !event.ctrlKey && !event.altKey && !event.metaKey;
 
-		//console.log(`Sketcher/Key:${key} Mod:${mod}`);
+		console.log(`Sketcher/Key:${key} Mod:${mod}`);
 
 		if (key == KeyCode.Enter) this.editCurrent();
 		else if (key == KeyCode.Left && nomod) this.hitArrowKey(-1, 0);
@@ -1144,6 +1165,18 @@ export class Sketcher extends DrawCanvas
 		else if (key == 'c' && mod == 'C' && this.proxyClip) this.proxyClip.triggerCopy(false);
 		else if (key == 'x' && mod == 'C' && this.proxyClip) this.proxyClip.triggerCopy(true);
 		else if (key == 'v' && mod == 'C' && this.proxyClip && this.proxyClip.canAlwaysGet()) this.proxyClip.triggerPaste();
+		else if (key == KeyCode.Left && mod == 'C') this.ctrlArrowKey(-1, 0);
+		else if (key == KeyCode.Right && mod == 'C') this.ctrlArrowKey(1, 0);
+		else if (key == KeyCode.Up && mod == 'C') this.ctrlArrowKey(0, 1);
+		else if (key == KeyCode.Down && mod == 'C') this.ctrlArrowKey(0, -1);
+		else if (key == '1' && mod == 'C') this.sproutDirection(-1, -1);
+		else if (key == '2' && mod == 'C') this.sproutDirection(0, -1);
+		else if (key == '3' && mod == 'C') this.sproutDirection(1, -1);
+		else if (key == '4' && mod == 'C') this.sproutDirection(-1, 0);
+		else if (key == '6' && mod == 'C') this.sproutDirection(1, 0);
+		else if (key == '7' && mod == 'C') this.sproutDirection(-1, 1);
+		else if (key == '8' && mod == 'C') this.sproutDirection(0, 1);
+		else if (key == '9' && mod == 'C') this.sproutDirection(1, 1);
 		else return; // allow the key to percolate upward
 
 		event.preventDefault();
