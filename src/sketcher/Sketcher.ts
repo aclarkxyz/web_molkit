@@ -502,8 +502,10 @@ export class Sketcher extends DrawCanvas
 	// bring up the interactive editing mode for current object, if any
 	public editCurrent():void
 	{
-		if (this.currentAtom > 0) this.editAtom(this.currentAtom);
-		else if (this.currentBond > 0) this.editBond(this.currentBond);
+		if (this.currentBond > 0) 
+			this.editBond(this.currentBond);
+		else
+			this.editAtom(this.currentAtom);
 	}
 
 	// pasted text from clipboard (can be activated from outside the widget, so is public)
@@ -821,8 +823,6 @@ export class Sketcher extends DrawCanvas
 	// interactively edit the given atom/bond
 	private editAtom(atom:number):void
 	{
-		if (atom == 0) return;
-
 		let dlg = new EditAtom(this.mol, atom, this.proxyClip, () =>
 		{
 			if (this.mol.compareTo(dlg.mol) != 0) this.defineMolecule(dlg.mol, false, true, true);
@@ -833,6 +833,12 @@ export class Sketcher extends DrawCanvas
 			this.inDialog = false;
 			this.grabFocus();
 		};
+		if (atom == 0 && this.mol.numAtoms > 0)
+		{
+			let box = this.mol.boundary();
+			dlg.newX = box.maxX() + Molecule.IDEALBOND;;
+			dlg.newY = box.midY();
+		}
 		this.inDialog = true;
 		dlg.open();
 	}
@@ -1138,7 +1144,7 @@ export class Sketcher extends DrawCanvas
 		let mod = (event.shiftKey ? 'S' : '') + (event.ctrlKey || event.metaKey ? 'C' : '') + (event.altKey ? 'A' : ''); // (meta==cmd on mac; alt=opt on mac)
 		let nomod = !event.shiftKey && !event.ctrlKey && !event.altKey && !event.metaKey;
 
-		console.log(`Sketcher/Key:${key} Mod:${mod}`);
+		//console.log(`Sketcher/Key:${key} Mod:${mod}`);
 
 		if (key == KeyCode.Enter) this.editCurrent();
 		else if (key == KeyCode.Left && nomod) this.hitArrowKey(-1, 0);
