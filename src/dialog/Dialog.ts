@@ -94,13 +94,13 @@ export class Dialog
 		let zindex = 20000;
 
 		let bg = this.domObscureBackground = dom('<div/>').appendTo(body);
-		bg.css({'position': 'fixed', 'z-index': zindex});
+		bg.css({'position': 'fixed'/*, 'z-index': zindex*/});
 		bg.css({'left': '0', 'right': '0', 'top': '0', 'bottom': '0'});
 		bg.css({'background-color': 'black', 'opacity': 0.8});
 		bg.onClick(() => this.close());
 
 		let fg = this.domObscureForeground = dom('<div/>').appendTo(body);
-		fg.css({'position': 'fixed', 'z-index': zindex + 1});
+		fg.css({'position': 'fixed'/*, 'z-index': zindex + 1*/});
 		fg.css({'left': '0', 'right': '0', 'top': '0', 'bottom': '0'});
 
 		let pb = this.domPanelBoundary = dom('<div class="wmk-dialog"/>').appendTo(fg);

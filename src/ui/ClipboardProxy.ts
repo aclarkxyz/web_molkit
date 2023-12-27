@@ -179,29 +179,6 @@ export class ClipboardProxyWeb extends ClipboardProxy
 	}
 	public setImage(blob:Blob):void
 	{
-		/*this.busy = true;
-		let rdr = new FileReader();
-		rdr.onload = (event) =>
-		{
-			let dataURL = event.target.result.toString();
-			if (!dataURL) return;
-
-			let img = dom('<img/>').attr({'src': dataURL});
-			img.el.addEventListener('load', () =>
-			{
-				let r = document.createRange();
-				r.setStartBefore(img.el);
-				r.setEndAfter(img.el);
-				r.selectNode(img.el);
-				let sel = window.getSelection();
-				sel.addRange(r);
-				document.execCommand('copy');
-				img.remove();
-				this.busy = false;
-			});
-			img.appendTo(document.body);
-		};
-		rdr.readAsDataURL(blob);*/
 		let item = new ClipboardItem({'image/png': blob});
 		this.busy = true;
 		(async () =>
