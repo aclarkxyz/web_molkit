@@ -36,6 +36,8 @@ export function domLegacy(obj:any):DOM
 	return dom(obj);
 }
 
+export type CSSDictionary = Record<string, string | number | boolean>;
+
 export class DOM
 {
 	constructor(public el:Element)
@@ -246,7 +248,7 @@ export class DOM
 	{
 		this.elHTML.style.setProperty(key, value);
 	}
-	public css(dict:Record<string, string | number | boolean>):DOM
+	public css(dict:CSSDictionary):DOM
 	{
 		for (let key in dict) this.setCSS(key, dict[key].toString());
 		return this;

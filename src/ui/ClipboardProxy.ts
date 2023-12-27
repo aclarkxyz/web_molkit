@@ -179,7 +179,7 @@ export class ClipboardProxyWeb extends ClipboardProxy
 	}
 	public setImage(blob:Blob):void
 	{
-		this.busy = true;
+		/*this.busy = true;
 		let rdr = new FileReader();
 		rdr.onload = (event) =>
 		{
@@ -201,7 +201,14 @@ export class ClipboardProxyWeb extends ClipboardProxy
 			});
 			img.appendTo(document.body);
 		};
-		rdr.readAsDataURL(blob);
+		rdr.readAsDataURL(blob);*/
+		let item = new ClipboardItem({'image/png': blob});
+		this.busy = true;
+		(async () =>
+		{
+			await navigator.clipboard.write([item]);
+			this.busy = false;
+		})();
 	}
 
 	// ------------ private methods ------------
