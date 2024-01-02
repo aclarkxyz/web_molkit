@@ -1957,11 +1957,15 @@ export class MoleculeActivity
 
 		const {mol, currentAtom} = this.input;
 
-		let angleOptions = SketchUtil.primeDirections(mol, currentAtom) ?? SketchUtil.exitVectors(mol, currentAtom);
+		let angleOptions:number[];
+		if (mol.atomAdjCount(currentAtom) == 0)
+			angleOptions = Vec.identity0(12).map((n) => n * TWOPI / 12);
+		else 
+			angleOptions = SketchUtil.primeDirections(mol, currentAtom) ?? SketchUtil.exitVectors(mol, currentAtom);
 		if (angleOptions.length == 0) return;
 
 		let theta = Math.atan2(deltaY, deltaX);
-		let idx = Vec.idxMin(angleOptions.map((look) => Math.abs(angleDiff(theta, look))));
+		let idx = Vec.idxMin(angleOptions.map((look) => Math.abs(angleDiff(theta, look)) + 0.01 * Math.abs(Math.sin(look))));
 		let px = mol.atomX(currentAtom) + Molecule.IDEALBOND * Math.cos(angleOptions[idx]);
 		let py = mol.atomY(currentAtom) + Molecule.IDEALBOND * Math.sin(angleOptions[idx]);
 		

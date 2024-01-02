@@ -991,7 +991,7 @@ export class Sketcher extends DrawCanvas
 				let bound = mol.boundary();
 				[x, y] = [bound.maxX() + Molecule.IDEALBOND, bound.midY()];
 			}
-			[rx, ry] = SketchUtil.proposeNewRing(this.mol, rsz, x, y, 1, 0, false);
+			[rx, ry] = SketchUtil.proposeNewRing(this.mol, rsz, x, y, 0, -1, false);
 		}
 
 		if (!rx) return;

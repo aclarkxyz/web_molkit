@@ -159,8 +159,8 @@ const COMMANDS_SELECT:ButtonBankItem[] =
 	{id: 'new', imageFN: 'MainNew', helpText: 'Clear the molecular structure.', mnemonic: ''},
 	{id: 'inline', imageFN: 'AtomInline', helpText: 'Make selected atoms into an inline abbreviation.', mnemonic: '/'},
 	{id: 'formula', imageFN: 'AtomFormula', helpText: 'Make selected atoms into their molecule formula.', mnemonic: '\\'},
-	{id: 'expandabbrev', imageFN: 'AtomExpandAbbrev', helpText: 'Expand out the inline abbreviation.', mnemonic: 'Shift+/', key: '/'},
-	{id: 'clearabbrev', imageFN: 'AtomClearAbbrev', helpText: 'Remove inline abbreviation.', mnemonic: 'Shift+\\', key: '\\'},
+	{id: 'expandabbrev', imageFN: 'AtomExpandAbbrev', helpText: 'Expand out the inline abbreviation.', mnemonic: 'Shift+/', key: '?'},
+	{id: 'clearabbrev', imageFN: 'AtomClearAbbrev', helpText: 'Remove inline abbreviation.', mnemonic: 'Shift+\\', key: '|'},
 ];
 const COMMANDS_MOVE:ButtonBankItem[] =
 [
@@ -184,8 +184,8 @@ const COMMANDS_MOVE:ButtonBankItem[] =
 	{id: 'rotm15', imageFN: 'MoveRotM15', helpText: 'Rotate 15\u00B0 clockwise.', mnemonic: ''},
 	{id: 'rotp30', imageFN: 'MoveRotP30', helpText: 'Rotate 30\u00B0 counter-clockwise.', mnemonic: 'Shift+[', key: '{'},
 	{id: 'rotm30', imageFN: 'MoveRotM30', helpText: 'Rotate 30\u00B0 clockwise.', mnemonic: 'Shift+]', key: '}'},
-	{id: 'hflip', imageFN: 'MoveHFlip', helpText: 'Flip subject atoms horizontally.', mnemonic: 'Shift+,', key: ','},
-	{id: 'vflip', imageFN: 'MoveVFlip', helpText: 'Flip subject atoms vertically.', mnemonic: 'Shift+.', key: '.'},
+	{id: 'hflip', imageFN: 'MoveHFlip', helpText: 'Flip subject atoms horizontally.', mnemonic: 'Shift+,', key: '<'},
+	{id: 'vflip', imageFN: 'MoveVFlip', helpText: 'Flip subject atoms vertically.', mnemonic: 'Shift+.', key: '>'},
 	{id: 'shrink', imageFN: 'MoveShrink', helpText: 'Decrease subject bond distances.', mnemonic: 'Shift+Z'},
 	{id: 'grow', imageFN: 'MoveGrow', helpText: 'Increase subject bond distances.', mnemonic: 'Shift+X'},
 ];

@@ -888,7 +888,7 @@ export class SketchUtil
 	// simple new rings grafted onto existing components, or not
 	public static proposeNewRing(mol:Molecule, rsz:number, x:number, y:number, dx:number, dy:number, snap:boolean):[number[], number[]]
 	{
-		let theta = Math.atan2(dy, dx);
+		let theta = dy == 0 && dx == 0 ? 0.5 * Math.PI : Math.atan2(dy, dx);
 		if (snap)
 		{
 			const chunk = 30 * DEGRAD;

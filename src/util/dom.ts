@@ -97,7 +97,7 @@ export class DOM
 		let domList:DOM[] = [];
 		for (let child = this.el.firstElementChild; child; child = child.nextElementSibling)
 		{
-			if (tag && child.tagName != tag) continue;
+			if (tag && child.tagName.toLocaleLowerCase() != tag.toLocaleLowerCase()) continue;
 			domList.push(new DOM(child));
 		}
 		return domList;

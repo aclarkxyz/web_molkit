@@ -102,7 +102,8 @@ export class Tooltip
 			this.domTooltip.remove();
 			this.domTooltip = null;
 		}
-		globalPopWatermark++;
+		//globalPopWatermark++;
+		this.watermark = -1; // stop any raise in progress
 	}
 
 	public raise(avoid?:Box)
@@ -160,8 +161,7 @@ export class Tooltip
 
 		let checkParent = () =>
 		{
-			if (this.watermark != globalPopWatermark) return; // someone else owns it now
-			if (!this.widget.isVisible())
+			if (this.watermark != globalPopWatermark || !this.widget.isVisible() || !this.widget.exists())
 				this.stop();
 			else
 				setTimeout(checkParent, 100);

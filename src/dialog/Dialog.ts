@@ -88,10 +88,10 @@ export class Dialog
 	// creates all the DOM objects and shows the dialog; details such as title should be setup before calling this
 	public open():void
 	{
+		clearTooltip();
+
 		let body = this.parent || dom(document.body);
 		body.addClass('wmk-noscroll');
-
-		let zindex = 20000;
 
 		let bg = this.domObscureBackground = dom('<div/>').appendTo(body);
 		bg.css({'position': 'fixed'/*, 'z-index': zindex*/});
@@ -158,6 +158,8 @@ export class Dialog
 	// closes and hides the dialog
 	public close():void
 	{
+		clearTooltip();
+
 		this.domObscureBackground.remove();
 		this.domObscureForeground.remove();
 

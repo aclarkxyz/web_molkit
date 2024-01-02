@@ -61,6 +61,8 @@ export class Popup
 	// creates all the DOM objects and shows the dialog; details such as title should be setup before calling this
 	public open():void
 	{
+		clearTooltip();
+
 		let body = dom(document.documentElement);
 
 		let zindex = 21000;
@@ -91,6 +93,8 @@ export class Popup
 	// closes and hides the dialog
 	public close():void
 	{
+		clearTooltip();
+
 		this.domPanelBoundary.remove();
 		this.domObscureBackground.remove();
 		this.domObscureForeground.remove();
@@ -138,7 +142,8 @@ export class Popup
 
 		let setPosition = ():void =>
 		{
-			let popW = pb.width(), popH = pb.height();
+			//let popW = pb.width(), popH = pb.height();
+			let popW = this.domBody.width(), popH = this.domBody.height();
 			let posX = 0, posY = 0;
 
 			if (wy2 + GAP + popH < winH) posY = wy2 + GAP;
@@ -162,7 +167,7 @@ export class Popup
 			setBoundaryPixels(pb, posX, posY, popW, popH);
 		};
 
-		setPosition();
+		//setPosition();
 		//pb.show();
 		window.setTimeout(() => setPosition());
 	}
