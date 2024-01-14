@@ -21,7 +21,7 @@ namespace WebMolKit /* BOF */ {
 export class Sketcher extends DrawCanvas
 {
 	// callbacks
-	public onChangeMolecule:(mol:Molecule) => void;
+	public callbackChangeMolecule:(mol:Molecule) => void;
 	public callbackSpecialPaste:(str:string) => Promise<Molecule> = null; // define this to add special layer for clipboard interpretation
 
 	public inDialog = false; // set to true while a modal dialog is open
@@ -74,7 +74,7 @@ export class Sketcher extends DrawCanvas
 		this.stopTemplateFusion();
 
 		this.mol = mol.clone();
-		if (this.onChangeMolecule) this.onChangeMolecule(this.mol);
+		if (this.callbackChangeMolecule) this.callbackChangeMolecule(this.mol);
 
 		// note: inefficient; make it compute on demand
 		this.guidelines = [];
