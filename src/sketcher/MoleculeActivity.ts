@@ -908,15 +908,15 @@ export class MoleculeActivity
 			this.errmsg = 'Cannot rotate a ring-bond.';
 			return;
 		}
-		if (mol.atomAdjCount(mol.bondFrom(bond)) == 1 || mol.atomAdjCount(mol.bondTo(bond)) == 1)
+		if (mol.atomAdjCount(mol.bondFrom(bond)) == 1 && mol.atomAdjCount(mol.bondTo(bond)) == 1)
 		{
-			this.errmsg = 'Terminal bonds do not rotate.';
+			this.errmsg = 'Two-atom components do not rotate.';
 			return;
 		}
 
 		mol = mol.clone();
 
-		let [atom1, atom2, side] = this.mobileSide(bond);
+		let [atom1, atom2, side] = this.mobileSide(bond, true);
 		let cx = mol.atomX(atom1), cy = mol.atomY(atom1);
 		let theta = Math.atan2(mol.atomY(atom1) - mol.atomY(atom2), mol.atomX(atom1) - mol.atomX(atom2));
 		for (let a of side) if (a != atom1)
@@ -2364,8 +2364,8 @@ export class MoleculeActivity
 	}
 
 	// assuming the bond is not in a ring, figures out which side is "lighter", and returns the opposite; note that if one of the two
-	// bond atoms is selected, then that one is picked preferentially
-	private mobileSide(bond:number):[number, number, number[]]
+	// bond atoms is selected, then that one is picked preferentially; if requested, it will not consider a "terminal" end
+	private mobileSide(bond:number, disqualTerminal = false):[number, number, number[]]
 	{
 		let {mol} = this.input;
 		let atom1 = mol.bondFrom(bond), atom2 = mol.bondTo(bond);
@@ -2384,7 +2384,9 @@ export class MoleculeActivity
 		for (let a of side1) if (this.isSelected(a)) {sel1 = true; break;}
 		for (let a of side2) if (this.isSelected(a)) {sel2 = true; break;}
 
-		if (sel1 && !sel2) {}
+		if (disqualTerminal && mol.atomAdjCount(atom1) == 1) return [atom2, atom1, side2];
+		else if (disqualTerminal && mol.atomAdjCount(atom2) == 1) return [atom1, atom2, side1];
+		else if (sel1 && !sel2) {}
 		else if ((sel2 && !sel1) || weight2 < weight1) return [atom2, atom1, side2];
 		return [atom1, atom2, side1];
 	}
