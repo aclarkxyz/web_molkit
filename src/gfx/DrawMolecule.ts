@@ -1,7 +1,7 @@
 /*
     WebMolKit
 
-    (c) 2010-2018 Molecular Materials Informatics, Inc.
+    (c) 2010-2024 Molecular Materials Informatics, Inc.
 
     All rights reserved
 
@@ -134,8 +134,17 @@ export class DrawMolecule
 		let fg = policy.data.foreground;
 		for (let r of layout.getRings())
 		{
-			vg.drawOval(r.cx, r.cy, r.rw, r.rh, fg, r.size, MetaVector.NOCOLOUR);
-			this.mnemonics?.append(RenderMnemonicType.Artifact, 'Ring', [r.cx, r.cy, r.rw, r.rh]);
+			if (r.theta != 0)
+			{
+				var bez = GeomUtil.createBezierEllipse(r.cx, r.cy, r.rw, r.rh, r.theta);
+				vg.drawPath(bez.px, bez.py, bez.ctrl, true, fg, r.size, MetaVector.NOCOLOUR, false);
+				this.mnemonics?.append(RenderMnemonicType.Artifact, 'Ring', [r.cx, r.cy, r.rw, r.rh, r.theta]);
+			}
+			else 
+			{
+				vg.drawOval(r.cx, r.cy, r.rw, r.rh, fg, r.size, MetaVector.NOCOLOUR);
+				this.mnemonics?.append(RenderMnemonicType.Artifact, 'Ring', [r.cx, r.cy, r.rw, r.rh]);
+			}
 		}
 		for (let p of layout.getPaths())
 		{

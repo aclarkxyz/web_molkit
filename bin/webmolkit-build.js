@@ -1165,7 +1165,7 @@ var WebMolKit;
             return [nreactants, nproducts, nreagents];
         }
         fetchReactant(row, idx) {
-            let mol = this.ds.getMolecule(row, `${Experiment.COLNAME_REACTANT_MOL}${idx}`);
+            let mol = this.ds.getMoleculeClone(row, `${Experiment.COLNAME_REACTANT_MOL}${idx}`);
             let name = this.ds.getString(row, `${Experiment.COLNAME_REACTANT_NAME}${idx}`);
             if (WebMolKit.MolUtil.isBlank(mol) && !name)
                 return null;
@@ -1185,7 +1185,7 @@ var WebMolKit;
             return comp;
         }
         fetchProduct(row, idx) {
-            let mol = this.ds.getMolecule(row, `${Experiment.COLNAME_PRODUCT_MOL}${idx}`);
+            let mol = this.ds.getMoleculeClone(row, `${Experiment.COLNAME_PRODUCT_MOL}${idx}`);
             let name = this.ds.getString(row, `${Experiment.COLNAME_PRODUCT_NAME}${idx}`);
             if (WebMolKit.MolUtil.isBlank(mol) && !name)
                 return null;
@@ -1206,7 +1206,7 @@ var WebMolKit;
             return comp;
         }
         fetchReagent(row, idx) {
-            let mol = this.ds.getMolecule(row, `${Experiment.COLNAME_REAGENT_MOL}${idx}`);
+            let mol = this.ds.getMoleculeClone(row, `${Experiment.COLNAME_REAGENT_MOL}${idx}`);
             let name = this.ds.getString(row, `${Experiment.COLNAME_REAGENT_NAME}${idx}`);
             if (WebMolKit.MolUtil.isBlank(mol) && !name)
                 return null;
@@ -5490,6 +5490,7 @@ var WebMolKit;
                         value = parseFloat(value);
                     list.push([type, value]);
                 }
+            list.sort((l1, l2) => l1[0].localeCompare(l2[0]));
             return list;
         }
         static packMeta(list) {
@@ -12667,7 +12668,7 @@ var WebMolKit;
             return WebMolKit.GeomUtil.uniqueAngles(angles, 2 * WebMolKit.DEGRAD);
         }
         static proposeNewRing(mol, rsz, x, y, dx, dy, snap) {
-            let theta = Math.atan2(dy, dx);
+            let theta = dy == 0 && dx == 0 ? 0.5 * Math.PI : Math.atan2(dy, dx);
             if (snap) {
                 const chunk = 30 * WebMolKit.DEGRAD;
                 theta = Math.round(theta / chunk) * chunk;
@@ -13719,16 +13720,16 @@ var WebMolKit;
             this.callbackShown = callback;
         }
         open() {
+            WebMolKit.clearTooltip();
             let body = this.parent || WebMolKit.dom(document.body);
             body.addClass('wmk-noscroll');
-            let zindex = 20000;
             let bg = this.domObscureBackground = WebMolKit.dom('<div/>').appendTo(body);
-            bg.css({ 'position': 'fixed', 'z-index': zindex });
+            bg.css({ 'position': 'fixed' });
             bg.css({ 'left': '0', 'right': '0', 'top': '0', 'bottom': '0' });
             bg.css({ 'background-color': 'black', 'opacity': 0.8 });
             bg.onClick(() => this.close());
             let fg = this.domObscureForeground = WebMolKit.dom('<div/>').appendTo(body);
-            fg.css({ 'position': 'fixed', 'z-index': zindex + 1 });
+            fg.css({ 'position': 'fixed' });
             fg.css({ 'left': '0', 'right': '0', 'top': '0', 'bottom': '0' });
             let pb = this.domPanelBoundary = WebMolKit.dom('<div class="wmk-dialog"/>').appendTo(fg);
             pb.css({ 'min-width': this.minPortionWidth + '%' });
@@ -13777,6 +13778,7 @@ var WebMolKit;
                 this.callbackShown(this);
         }
         close() {
+            WebMolKit.clearTooltip();
             this.domObscureBackground.remove();
             this.domObscureForeground.remove();
             let body = this.parent || WebMolKit.dom(document.body);
@@ -16639,17 +16641,17 @@ var WebMolKit;
             }
         }
         createCircularRing(atoms) {
-            let cx = 0, cy = 0;
-            for (let a of atoms) {
-                let pt = this.points[a - 1];
-                cx += pt.oval.cx;
-                cy += pt.oval.cy;
+            let px = new Array(atoms.length), py = new Array(atoms.length);
+            for (let n = 0; n < atoms.length; n++) {
+                let pt = this.points[atoms[n] - 1];
+                px[n] = pt.oval.cx;
+                py[n] = pt.oval.cy;
             }
-            cx /= atoms.length;
-            cy /= atoms.length;
+            let cx = WebMolKit.Vec.sum(px) / atoms.length, cy = WebMolKit.Vec.sum(py) / atoms.length;
             let bx = [], by = [];
             let isRegular = true;
             let regDist = Number.NaN;
+            const FRACT = 0.7;
             for (let a of atoms) {
                 let pt = this.points[a - 1];
                 let x0 = pt.oval.cx - cx, y0 = pt.oval.cy - cy, x1 = x0 - pt.oval.rw, x2 = x0 + pt.oval.rw, y1 = y0 - pt.oval.rh, y2 = y0 + pt.oval.rh;
@@ -16670,7 +16672,6 @@ var WebMolKit;
                 bx.push(x2);
                 by.push(y2);
                 let dist = WebMolKit.norm_xy(x0, y0), theta = Math.atan2(y0, x0);
-                const FRACT = 0.7;
                 bx.push(FRACT * dist * Math.cos(theta));
                 by.push(FRACT * dist * Math.sin(theta));
                 for (let b of this.mol.atomAdjList(a))
@@ -16689,33 +16690,22 @@ var WebMolKit;
                 else
                     regDist = dist;
             }
-            let r = { atoms, cx, cy, rw: 0, rh: 0, size: 0 };
+            let r = { atoms, cx, cy, rw: 0, rh: 0, theta: 0, size: 0 };
             if (isRegular) {
                 r.rw = r.rh = WebMolKit.GeomUtil.fitCircle(bx, by);
             }
             else {
-                let lowX = WebMolKit.Vec.min(bx) - 10 * WebMolKit.Vec.range(bx), highX = WebMolKit.Vec.max(bx) + 10 * WebMolKit.Vec.range(bx);
-                let lowY = WebMolKit.Vec.min(by) - 10 * WebMolKit.Vec.range(by), highY = WebMolKit.Vec.max(by) + 10 * WebMolKit.Vec.range(by);
-                let minX = Number.POSITIVE_INFINITY, maxX = Number.NEGATIVE_INFINITY, minY = Number.POSITIVE_INFINITY, maxY = Number.NEGATIVE_INFINITY;
-                for (let n = 0; n < atoms.length; n++) {
-                    let nn = n < atoms.length - 1 ? n + 1 : 0;
-                    let p1 = this.points[atoms[n] - 1], p2 = this.points[atoms[nn] - 1];
-                    let x1 = p1.oval.cx - cx - 0.1 * (p2.oval.cx - p1.oval.cx), y1 = p1.oval.cy - cy - 0.1 * (p2.oval.cy - p1.oval.cy);
-                    let x2 = p2.oval.cx - cx + 0.1 * (p2.oval.cx - p1.oval.cx), y2 = p2.oval.cy - cy + 0.1 * (p2.oval.cy - p1.oval.cy);
-                    if (WebMolKit.GeomUtil.doLineSegsIntersect(x1, y1, x2, y2, lowX, 0, highX, 0)) {
-                        let xy = WebMolKit.GeomUtil.lineIntersect(x1, y1, x2, y2, lowX, 0, highX, 0);
-                        minX = Math.min(minX, xy[0]);
-                        maxX = Math.max(maxX, xy[0]);
-                    }
-                    if (WebMolKit.GeomUtil.doLineSegsIntersect(x1, y1, x2, y2, 0, lowY, 0, highY)) {
-                        let xy = WebMolKit.GeomUtil.lineIntersect(x1, y1, x2, y2, 0, lowY, 0, highY);
-                        minY = Math.min(minY, xy[1]);
-                        maxY = Math.max(maxY, xy[1]);
-                    }
-                }
-                let rwh = WebMolKit.GeomUtil.fitEllipse(bx, by, minX, minY, maxX, maxY);
-                r.rw = rwh[0];
-                r.rh = rwh[1];
+                let mdist = 0;
+                for (let n = 0; n < atoms.length; n++)
+                    mdist += WebMolKit.norm_xy(px[n] - cx, py[n] - cy);
+                let margin = mdist / atoms.length * (1 - FRACT);
+                var fit = new WebMolKit.FitRotatedEllipse(px, py, margin);
+                fit.calculate();
+                r.cx = fit.cx;
+                r.cy = fit.cy;
+                r.rw = fit.rw;
+                r.rh = fit.rh;
+                r.theta = fit.theta;
             }
             r.size = this.lineSizePix;
             this.rings.push(r);
@@ -17405,7 +17395,7 @@ var WebMolKit;
         getPolicy() { return this.policy; }
         getEffects() { return this.effects; }
         draw() {
-            var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m;
+            var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o;
             let DRAW_SPACE = false;
             if (DRAW_SPACE) {
                 let bounds = this.layout.determineBoundary();
@@ -17471,12 +17461,19 @@ var WebMolKit;
             }
             let fg = policy.data.foreground;
             for (let r of layout.getRings()) {
-                vg.drawOval(r.cx, r.cy, r.rw, r.rh, fg, r.size, WebMolKit.MetaVector.NOCOLOUR);
-                (_h = this.mnemonics) === null || _h === void 0 ? void 0 : _h.append(WebMolKit.RenderMnemonicType.Artifact, 'Ring', [r.cx, r.cy, r.rw, r.rh]);
+                if (r.theta != 0) {
+                    var bez = WebMolKit.GeomUtil.createBezierEllipse(r.cx, r.cy, r.rw, r.rh, r.theta);
+                    vg.drawPath(bez.px, bez.py, bez.ctrl, true, fg, r.size, WebMolKit.MetaVector.NOCOLOUR, false);
+                    (_h = this.mnemonics) === null || _h === void 0 ? void 0 : _h.append(WebMolKit.RenderMnemonicType.Artifact, 'Ring', [r.cx, r.cy, r.rw, r.rh, r.theta]);
+                }
+                else {
+                    vg.drawOval(r.cx, r.cy, r.rw, r.rh, fg, r.size, WebMolKit.MetaVector.NOCOLOUR);
+                    (_j = this.mnemonics) === null || _j === void 0 ? void 0 : _j.append(WebMolKit.RenderMnemonicType.Artifact, 'Ring', [r.cx, r.cy, r.rw, r.rh]);
+                }
             }
             for (let p of layout.getPaths()) {
                 vg.drawPath(p.px, p.py, p.ctrl, false, fg, p.size, WebMolKit.MetaVector.NOCOLOUR, false);
-                (_j = this.mnemonics) === null || _j === void 0 ? void 0 : _j.append(WebMolKit.RenderMnemonicType.Artifact, 'Path', [...p.px, ...p.py]);
+                (_k = this.mnemonics) === null || _k === void 0 ? void 0 : _k.append(WebMolKit.RenderMnemonicType.Artifact, 'Path', [...p.px, ...p.py]);
             }
             for (let n = 0; n < layout.numPoints(); n++) {
                 let p = layout.getPoint(n);
@@ -17485,7 +17482,7 @@ var WebMolKit;
                 let txt = p.text;
                 let cx = p.oval.cx, cy = p.oval.cy, rw = p.oval.rw;
                 if (txt == null) {
-                    (_k = this.mnemonics) === null || _k === void 0 ? void 0 : _k.append(WebMolKit.RenderMnemonicType.Atom, '.', [cx, cy]);
+                    (_l = this.mnemonics) === null || _l === void 0 ? void 0 : _l.append(WebMolKit.RenderMnemonicType.Atom, '.', [cx, cy]);
                     continue;
                 }
                 let fsz = p.fsz;
@@ -17517,10 +17514,10 @@ var WebMolKit;
                 }
                 if (txt.length > 0) {
                     vg.drawText(cx, cy, txt, fsz, col, WebMolKit.TextAlign.Centre | WebMolKit.TextAlign.Middle, p.rotation || 0);
-                    (_l = this.mnemonics) === null || _l === void 0 ? void 0 : _l.append(WebMolKit.RenderMnemonicType.Atom, txt, [cx, cy]);
+                    (_m = this.mnemonics) === null || _m === void 0 ? void 0 : _m.append(WebMolKit.RenderMnemonicType.Atom, txt, [cx, cy]);
                 }
                 else
-                    (_m = this.mnemonics) === null || _m === void 0 ? void 0 : _m.append(WebMolKit.RenderMnemonicType.Atom, '.', [cx, cy]);
+                    (_o = this.mnemonics) === null || _o === void 0 ? void 0 : _o.append(WebMolKit.RenderMnemonicType.Atom, '.', [cx, cy]);
             }
             this.drawOverEffects();
         }
@@ -19814,8 +19811,8 @@ var WebMolKit;
         { id: 'new', imageFN: 'MainNew', helpText: 'Clear the molecular structure.', mnemonic: '' },
         { id: 'inline', imageFN: 'AtomInline', helpText: 'Make selected atoms into an inline abbreviation.', mnemonic: '/' },
         { id: 'formula', imageFN: 'AtomFormula', helpText: 'Make selected atoms into their molecule formula.', mnemonic: '\\' },
-        { id: 'expandabbrev', imageFN: 'AtomExpandAbbrev', helpText: 'Expand out the inline abbreviation.', mnemonic: 'Shift+/', key: '/' },
-        { id: 'clearabbrev', imageFN: 'AtomClearAbbrev', helpText: 'Remove inline abbreviation.', mnemonic: 'Shift+\\', key: '\\' },
+        { id: 'expandabbrev', imageFN: 'AtomExpandAbbrev', helpText: 'Expand out the inline abbreviation.', mnemonic: 'Shift+/', key: '?' },
+        { id: 'clearabbrev', imageFN: 'AtomClearAbbrev', helpText: 'Remove inline abbreviation.', mnemonic: 'Shift+\\', key: '|' },
     ];
     const COMMANDS_MOVE = [
         { id: 'up', imageFN: 'MoveUp', helpText: 'Move subject atoms up slightly.', mnemonic: 'Shift+Up', key: "ArrowUp" },
@@ -19838,8 +19835,8 @@ var WebMolKit;
         { id: 'rotm15', imageFN: 'MoveRotM15', helpText: 'Rotate 15\u00B0 clockwise.', mnemonic: '' },
         { id: 'rotp30', imageFN: 'MoveRotP30', helpText: 'Rotate 30\u00B0 counter-clockwise.', mnemonic: 'Shift+[', key: '{' },
         { id: 'rotm30', imageFN: 'MoveRotM30', helpText: 'Rotate 30\u00B0 clockwise.', mnemonic: 'Shift+]', key: '}' },
-        { id: 'hflip', imageFN: 'MoveHFlip', helpText: 'Flip subject atoms horizontally.', mnemonic: 'Shift+,', key: ',' },
-        { id: 'vflip', imageFN: 'MoveVFlip', helpText: 'Flip subject atoms vertically.', mnemonic: 'Shift+.', key: '.' },
+        { id: 'hflip', imageFN: 'MoveHFlip', helpText: 'Flip subject atoms horizontally.', mnemonic: 'Shift+,', key: '<' },
+        { id: 'vflip', imageFN: 'MoveVFlip', helpText: 'Flip subject atoms vertically.', mnemonic: 'Shift+.', key: '>' },
         { id: 'shrink', imageFN: 'MoveShrink', helpText: 'Decrease subject bond distances.', mnemonic: 'Shift+Z' },
         { id: 'grow', imageFN: 'MoveGrow', helpText: 'Increase subject bond distances.', mnemonic: 'Shift+X' },
     ];
@@ -22956,6 +22953,7 @@ var WebMolKit;
         ActivityType[ActivityType["QuerySetAtom"] = 61] = "QuerySetAtom";
         ActivityType[ActivityType["QuerySetBond"] = 62] = "QuerySetBond";
         ActivityType[ActivityType["QueryBondAny"] = 63] = "QueryBondAny";
+        ActivityType[ActivityType["SproutDirection"] = 64] = "SproutDirection";
     })(ActivityType = WebMolKit.ActivityType || (WebMolKit.ActivityType = {}));
     class MoleculeActivity {
         constructor(input, activity, param, owner) {
@@ -23131,6 +23129,8 @@ var WebMolKit;
                 this.execQuerySetBond();
             else if (this.activity == ActivityType.QueryBondAny)
                 this.execQueryBondAny();
+            else if (this.activity == ActivityType.SproutDirection)
+                this.execSproutDirection(param.deltaX, param.deltaY);
             this.finish();
         }
         finish() {
@@ -23643,12 +23643,12 @@ var WebMolKit;
                 this.errmsg = 'Cannot rotate a ring-bond.';
                 return;
             }
-            if (mol.atomAdjCount(mol.bondFrom(bond)) == 1 || mol.atomAdjCount(mol.bondTo(bond)) == 1) {
-                this.errmsg = 'Terminal bonds do not rotate.';
+            if (mol.atomAdjCount(mol.bondFrom(bond)) == 1 && mol.atomAdjCount(mol.bondTo(bond)) == 1) {
+                this.errmsg = 'Two-atom components do not rotate.';
                 return;
             }
             mol = mol.clone();
-            let [atom1, atom2, side] = this.mobileSide(bond);
+            let [atom1, atom2, side] = this.mobileSide(bond, true);
             let cx = mol.atomX(atom1), cy = mol.atomY(atom1);
             let theta = Math.atan2(mol.atomY(atom1) - mol.atomY(atom2), mol.atomX(atom1) - mol.atomX(atom2));
             for (let a of side)
@@ -24459,10 +24459,40 @@ var WebMolKit;
                 this.errmsg = 'Must select at least one bond.';
                 return;
             }
-            this.output.mol = this.input.mol.clone();
+            this.output.mol = mol.clone();
             for (let b of bonds) {
                 this.output.mol.setBondOrder(b, 0);
                 WebMolKit.QueryUtil.setQueryBondOrders(this.output.mol, b, [-1, 0, 1, 2, 3, 4]);
+            }
+        }
+        execSproutDirection(deltaX, deltaY) {
+            var _a, _b;
+            if (!this.requireCurrent())
+                return;
+            if (deltaX == 0 && deltaY == 0)
+                return;
+            const { mol, currentAtom } = this.input;
+            let angleOptions;
+            if (mol.atomAdjCount(currentAtom) == 0)
+                angleOptions = WebMolKit.Vec.identity0(12).map((n) => n * WebMolKit.TWOPI / 12);
+            else
+                angleOptions = (_a = WebMolKit.SketchUtil.primeDirections(mol, currentAtom)) !== null && _a !== void 0 ? _a : WebMolKit.SketchUtil.exitVectors(mol, currentAtom);
+            if (angleOptions.length == 0)
+                return;
+            let theta = Math.atan2(deltaY, deltaX);
+            let idx = WebMolKit.Vec.idxMin(angleOptions.map((look) => Math.abs(WebMolKit.angleDiff(theta, look)) + 0.01 * Math.abs(Math.sin(look))));
+            let px = mol.atomX(currentAtom) + WebMolKit.Molecule.IDEALBOND * Math.cos(angleOptions[idx]);
+            let py = mol.atomY(currentAtom) + WebMolKit.Molecule.IDEALBOND * Math.sin(angleOptions[idx]);
+            this.output.mol = mol.clone();
+            let newAtom = this.output.mol.addAtom('C', px, py);
+            this.output.mol.addBond(currentAtom, newAtom, 1);
+            this.output.mol = (_b = WebMolKit.SketchUtil.joinOverlappingAtoms(this.output.mol, WebMolKit.Vec.booleanArray(true, this.output.mol.numAtoms))) !== null && _b !== void 0 ? _b : this.output.mol;
+            for (let n = 1; n <= this.output.mol.numAtoms; n++) {
+                let dx = this.output.mol.atomX(n) - px, dy = this.output.mol.atomY(n) - py;
+                if (WebMolKit.norm2_xy(dx, dy) < WebMolKit.CoordUtil.OVERLAP_THRESHOLD_SQ) {
+                    this.output.currentAtom = n;
+                    break;
+                }
             }
         }
         requireSubject() {
@@ -24699,7 +24729,7 @@ var WebMolKit;
             }
             return true;
         }
-        mobileSide(bond) {
+        mobileSide(bond, disqualTerminal = false) {
             let { mol } = this.input;
             let atom1 = mol.bondFrom(bond), atom2 = mol.bondTo(bond);
             let g = WebMolKit.Graph.fromMolecule(mol);
@@ -24724,7 +24754,11 @@ var WebMolKit;
                     sel2 = true;
                     break;
                 }
-            if (sel1 && !sel2) { }
+            if (disqualTerminal && mol.atomAdjCount(atom1) == 1)
+                return [atom2, atom1, side2];
+            else if (disqualTerminal && mol.atomAdjCount(atom2) == 1)
+                return [atom1, atom2, side1];
+            else if (sel1 && !sel2) { }
             else if ((sel2 && !sel1) || weight2 < weight1)
                 return [atom2, atom1, side2];
             return [atom1, atom2, side1];
@@ -25126,8 +25160,8 @@ var WebMolKit;
                 this.stashUndo();
             this.stopTemplateFusion();
             this.mol = mol.clone();
-            if (this.onChangeMolecule)
-                this.onChangeMolecule(this.mol);
+            if (this.callbackChangeMolecule)
+                this.callbackChangeMolecule(this.mol);
             this.guidelines = [];
             for (let n = 1; n <= this.mol.numAtoms; n++) {
                 for (let sprout of WebMolKit.SketchUtil.guidelineSprouts(this.mol, n))
@@ -25366,8 +25400,6 @@ var WebMolKit;
             this.delayedRedraw();
         }
         stashUndo() {
-            if (this.undoStack.length == 0 && this.mol.numAtoms == 0)
-                return;
             let state = this.getState();
             this.undoStack.push(state);
             while (this.undoStack.length > Sketcher.UNDO_SIZE) {
@@ -25453,10 +25485,10 @@ var WebMolKit;
             this.delayedRedraw();
         }
         editCurrent() {
-            if (this.currentAtom > 0)
-                this.editAtom(this.currentAtom);
-            else if (this.currentBond > 0)
+            if (this.currentBond > 0)
                 this.editBond(this.currentBond);
+            else
+                this.editAtom(this.currentAtom);
         }
         pasteText(str) {
             const pasteLocal = () => {
@@ -25698,8 +25730,6 @@ var WebMolKit;
             return guides;
         }
         editAtom(atom) {
-            if (atom == 0)
-                return;
             let dlg = new WebMolKit.EditAtom(this.mol, atom, this.proxyClip, () => {
                 if (this.mol.compareTo(dlg.mol) != 0)
                     this.defineMolecule(dlg.mol, false, true, true);
@@ -25709,6 +25739,12 @@ var WebMolKit;
                 this.inDialog = false;
                 this.grabFocus();
             };
+            if (atom == 0 && this.mol.numAtoms > 0) {
+                let box = this.mol.boundary();
+                dlg.newX = box.maxX() + WebMolKit.Molecule.IDEALBOND;
+                ;
+                dlg.newY = box.midY();
+            }
             this.inDialog = true;
             dlg.open();
         }
@@ -25850,7 +25886,7 @@ var WebMolKit;
                     let bound = mol.boundary();
                     [x, y] = [bound.maxX() + WebMolKit.Molecule.IDEALBOND, bound.midY()];
                 }
-                [rx, ry] = WebMolKit.SketchUtil.proposeNewRing(this.mol, rsz, x, y, 1, 0, false);
+                [rx, ry] = WebMolKit.SketchUtil.proposeNewRing(this.mol, rsz, x, y, 0, -1, false);
             }
             if (!rx)
                 return;
@@ -25861,6 +25897,20 @@ var WebMolKit;
             };
             let molact = new WebMolKit.MoleculeActivity(this.getState(), WebMolKit.ActivityType.Ring, param, this);
             molact.execute();
+        }
+        ctrlArrowKey(dx, dy) {
+            let watermark = ++this.cursorWatermark;
+            this.cursorDX += dx;
+            this.cursorDY += dy;
+            setTimeout(() => {
+                if (watermark == this.cursorWatermark) {
+                    this.sproutDirection(this.cursorDX, this.cursorDY);
+                    this.cursorDX = this.cursorDY = 0;
+                }
+            }, 100);
+        }
+        sproutDirection(deltaX, deltaY) {
+            new WebMolKit.MoleculeActivity(this.getState(), WebMolKit.ActivityType.SproutDirection, { deltaX, deltaY }, this).execute();
         }
         mouseClick(event) {
             event.stopPropagation();
@@ -25987,6 +26037,30 @@ var WebMolKit;
                 this.proxyClip.triggerCopy(true);
             else if (key == 'v' && mod == 'C' && this.proxyClip && this.proxyClip.canAlwaysGet())
                 this.proxyClip.triggerPaste();
+            else if (key == "ArrowLeft" && mod == 'C')
+                this.ctrlArrowKey(-1, 0);
+            else if (key == "ArrowRight" && mod == 'C')
+                this.ctrlArrowKey(1, 0);
+            else if (key == "ArrowUp" && mod == 'C')
+                this.ctrlArrowKey(0, 1);
+            else if (key == "ArrowDown" && mod == 'C')
+                this.ctrlArrowKey(0, -1);
+            else if (key == '1' && mod == 'C')
+                this.sproutDirection(-1, -1);
+            else if (key == '2' && mod == 'C')
+                this.sproutDirection(0, -1);
+            else if (key == '3' && mod == 'C')
+                this.sproutDirection(1, -1);
+            else if (key == '4' && mod == 'C')
+                this.sproutDirection(-1, 0);
+            else if (key == '6' && mod == 'C')
+                this.sproutDirection(1, 0);
+            else if (key == '7' && mod == 'C')
+                this.sproutDirection(-1, 1);
+            else if (key == '8' && mod == 'C')
+                this.sproutDirection(0, 1);
+            else if (key == '9' && mod == 'C')
+                this.sproutDirection(1, 1);
             else
                 return;
             event.preventDefault();
@@ -28525,27 +28599,12 @@ var WebMolKit;
                 fallbackWorkaround();
         }
         setImage(blob) {
+            let item = new ClipboardItem({ 'image/png': blob });
             this.busy = true;
-            let rdr = new FileReader();
-            rdr.onload = (event) => {
-                let dataURL = event.target.result.toString();
-                if (!dataURL)
-                    return;
-                let img = WebMolKit.dom('<img/>').attr({ 'src': dataURL });
-                img.el.addEventListener('load', () => {
-                    let r = document.createRange();
-                    r.setStartBefore(img.el);
-                    r.setEndAfter(img.el);
-                    r.selectNode(img.el);
-                    let sel = window.getSelection();
-                    sel.addRange(r);
-                    document.execCommand('copy');
-                    img.remove();
-                    this.busy = false;
-                });
-                img.appendTo(document.body);
-            };
-            rdr.readAsDataURL(blob);
+            (() => __awaiter(this, void 0, void 0, function* () {
+                yield navigator.clipboard.write([item]);
+                this.busy = false;
+            }))();
         }
     }
     WebMolKit.ClipboardProxyWeb = ClipboardProxyWeb;
@@ -29615,6 +29674,7 @@ var WebMolKit;
             this.callbackClose = callback;
         }
         open() {
+            WebMolKit.clearTooltip();
             let body = WebMolKit.dom(document.documentElement);
             let zindex = 21000;
             let bg = this.domObscureBackground = WebMolKit.dom('<div/>').appendTo(body);
@@ -29634,6 +29694,7 @@ var WebMolKit;
             this.positionAndShow();
         }
         close() {
+            WebMolKit.clearTooltip();
             this.domPanelBoundary.remove();
             this.domObscureBackground.remove();
             this.domObscureForeground.remove();
@@ -29663,7 +29724,7 @@ var WebMolKit;
             pb.css({ 'max-width': maxW + 'px' });
             let scrollSize = WebMolKit.empiricalScrollerSize();
             let setPosition = () => {
-                let popW = pb.width(), popH = pb.height();
+                let popW = this.domBody.width(), popH = this.domBody.height();
                 let posX = 0, posY = 0;
                 if (wy2 + GAP + popH < winH)
                     posY = wy2 + GAP;
@@ -29685,7 +29746,6 @@ var WebMolKit;
                     posX = wx2 - popW;
                 WebMolKit.setBoundaryPixels(pb, posX, posY, popW, popH);
             };
-            setPosition();
             window.setTimeout(() => setPosition());
         }
     }
@@ -29856,11 +29916,31 @@ var WebMolKit;
 })(WebMolKit || (WebMolKit = {}));
 var WebMolKit;
 (function (WebMolKit) {
-    let globalPopover = null;
+    const CSS_TOOLTIP = `
+    *.wmk-tooltip-outer
+    {
+		position: absolute;
+		border-radius: 4px;
+		border: 1px solid black;
+		background-color: white;
+		padding: 1px;
+		pointer-events: none;
+        font-family: 'Open Sans', sans-serif;
+		font-size: 14px;
+    }
+	*.wmk-tooltip-inner
+	{
+		color: white;
+		border-radius: 4px;
+		background-color: black;
+		padding: 0.3em;
+		max-width: calc(min(40em, 50vw));
+	}
+`;
     let globalTooltip = null;
     let globalPopWatermark = 0;
     function addTooltip(parent, bodyHTML, titleHTML, delay) {
-        Tooltip.ensureGlobal();
+        WebMolKit.installInlineCSS('tooltip', CSS_TOOLTIP);
         if (parent.jquery)
             parent = parent[0];
         let widget = WebMolKit.dom(parent);
@@ -29870,10 +29950,10 @@ var WebMolKit;
     }
     WebMolKit.addTooltip = addTooltip;
     function raiseToolTip(parent, avoid, bodyHTML, titleHTML) {
+        WebMolKit.installInlineCSS('tooltip', CSS_TOOLTIP);
         if (parent.jquery)
             parent = parent[0];
         clearTooltip();
-        Tooltip.ensureGlobal();
         new Tooltip(WebMolKit.dom(parent), bodyHTML, titleHTML, 0).raise(avoid);
     }
     WebMolKit.raiseToolTip = raiseToolTip;
@@ -29881,26 +29961,18 @@ var WebMolKit;
         if (globalTooltip == null)
             return;
         globalPopWatermark++;
-        globalTooltip.lower();
+        globalTooltip.stop();
     }
     WebMolKit.clearTooltip = clearTooltip;
     class Tooltip {
-        static ensureGlobal() {
-            if (globalPopover == null) {
-                globalPopover = WebMolKit.dom('<div/>').css({ 'position': 'absolute', 'z-index': 22000, 'display': 'none' });
-                globalPopover.css({ 'background-color': '#F0F0FF', 'background-image': 'linear-gradient(to right bottom, #FFFFFF, #D0D0FF)' });
-                globalPopover.css({ 'color': 'black', 'border': '1px solid black', 'border-radius': '4px' });
-                globalPopover.appendTo(document.body);
-            }
-        }
         constructor(widget, bodyHTML, titleHTML, delay) {
             this.widget = widget;
             this.bodyHTML = bodyHTML;
             this.titleHTML = titleHTML;
             this.delay = delay;
+            this.domTooltip = null;
         }
         start() {
-            globalPopover.setCSS('display', 'none');
             this.watermark = ++globalPopWatermark;
             window.setTimeout(() => {
                 if (this.watermark == globalPopWatermark)
@@ -29908,18 +29980,21 @@ var WebMolKit;
             }, this.delay);
         }
         stop() {
-            if (this.watermark == globalPopWatermark)
-                this.lower();
-            globalPopWatermark++;
+            if (this.domTooltip) {
+                this.domTooltip.remove();
+                this.domTooltip = null;
+            }
+            this.watermark = -1;
         }
         raise(avoid) {
             if (!this.widget.exists())
                 return;
             globalTooltip = this;
-            let pop = globalPopover;
-            pop.css({ 'max-width': '40em' });
-            pop.empty();
-            let div = WebMolKit.dom('<div/>').appendTo(pop).css({ 'padding': '0.3em' });
+            if (this.domTooltip)
+                return;
+            let pop = this.domTooltip = WebMolKit.dom('<div/>').class('wmk-tooltip-outer').css({ 'visibility': 'hidden' }).appendTo(document.body);
+            pop.css({});
+            let div = WebMolKit.dom('<div/>').appendTo(pop).class('wmk-tooltip-inner');
             let hasTitle = this.titleHTML != null && this.titleHTML.length > 0, hasBody = this.bodyHTML != null && this.bodyHTML.length > 0;
             if (hasTitle)
                 WebMolKit.dom('<div/>').appendTo(div).setHTML('<b>' + this.titleHTML + '</b>');
@@ -29953,24 +30028,17 @@ var WebMolKit;
                     posY = wy2 + GAP;
                 posX += window.pageXOffset;
                 posY += window.pageYOffset;
-                pop.css({ 'left': `${posX}px`, 'top': `${posY}px` });
+                pop.css({ 'left': `${posX}px`, 'top': `${posY}px`, 'visibility': 'visible' });
             };
-            setPosition();
-            pop.setCSS('display', 'block');
+            pop.css({ 'left': '0px', 'top': '0px' });
             setTimeout(() => setPosition(), 1);
             let checkParent = () => {
-                if (this.watermark != globalPopWatermark)
-                    return;
-                if (!this.widget.isVisible())
-                    pop.setCSS('display', 'none');
+                if (this.watermark != globalPopWatermark || !this.widget.isVisible() || !this.widget.exists())
+                    this.stop();
                 else
                     setTimeout(checkParent, 100);
             };
             setTimeout(checkParent, 100);
-        }
-        lower() {
-            let pop = globalPopover;
-            pop.setCSS('display', 'none');
         }
     }
     WebMolKit.Tooltip = Tooltip;
@@ -30071,6 +30139,167 @@ var WebMolKit;
         }
     }
     WebMolKit.WebMenu = WebMenu;
+})(WebMolKit || (WebMolKit = {}));
+var WebMolKit;
+(function (WebMolKit) {
+    class FitRotatedEllipse {
+        constructor(px, py, margin) {
+            this.px = px;
+            this.py = py;
+            this.margin = margin;
+            this.theta = 0;
+            this.stop = false;
+        }
+        calculate() {
+            this.setupParameters();
+            if (stop)
+                return;
+            this.currentScore = this.calculateScore(this.cx, this.cy, this.rw, this.rh, this.theta);
+            this.coarseDiscovery();
+            this.fineImprovement();
+        }
+        getSpline() {
+            return WebMolKit.GeomUtil.createBezierEllipse(this.cx, this.cy, this.rw, this.rh, this.theta);
+        }
+        setupParameters() {
+            const { px, py } = this, psz = px.length;
+            this.cx = WebMolKit.Vec.sum(px) / psz;
+            this.cy = WebMolKit.Vec.sum(py) / psz;
+            let ptheta = new Array(psz);
+            for (let n = 0; n < psz; n++)
+                ptheta[n] = Math.atan2(py[n] - this.cy, px[n] - this.cx);
+            let order = WebMolKit.Vec.idxSort(ptheta);
+            this.px = WebMolKit.Vec.idxGet(px, order);
+            this.py = WebMolKit.Vec.idxGet(py, order);
+            this.rw = this.rh = 1;
+        }
+        coarseDiscovery() {
+            const { margin } = this, psz = this.px.length;
+            let deltaD = 0.1 * margin, deltaR = 0.5 * deltaD;
+            const DELTA_OPTIONS = [
+                { dx: -1, dy: 0, dw: 0, dh: 0 },
+                { dx: 1, dy: 0, dw: 0, dh: 0 },
+                { dx: 0, dy: -1, dw: 0, dh: 0 },
+                { dx: 0, dy: 1, dw: 0, dh: 0 },
+                { dx: 0, dy: 0, dw: -1, dh: 0 },
+                { dx: 0, dy: 0, dw: 1, dh: 0 },
+                { dx: 0, dy: 0, dw: 0, dh: -1 },
+                { dx: 0, dy: 0, dw: 0, dh: 1 },
+            ];
+            const MULTI_THETA = WebMolKit.Vec.mul([0, -5, 5, -10, 10, -15, 15, -20, 20, -25, 25, -30, 30, -35, 35, -40, 40, -45, 45], WebMolKit.DEGRAD);
+            for (let sanity = 0; sanity < 1000; sanity++) {
+                let anything = false;
+                let bestScore = this.currentScore;
+                let bestCX = this.cx, bestCY = this.cy, bestRW = this.rw, bestRH = this.rh, bestTheta = this.theta;
+                for (let delta of DELTA_OPTIONS) {
+                    let newCX = this.cx + delta.dx * deltaD;
+                    let newCY = this.cy + delta.dy * deltaD;
+                    let newRW = this.rw + delta.dw * deltaR;
+                    let newRH = this.rh + delta.dh * deltaR;
+                    for (let newTheta of MULTI_THETA) {
+                        let newScore = this.calculateScore(newCX, newCY, newRW, newRH, newTheta);
+                        if (newScore > bestScore && !WebMolKit.fltEqual(newScore, bestScore)) {
+                            anything = true;
+                            bestScore = newScore;
+                            bestCX = newCX;
+                            bestCY = newCY;
+                            bestRW = newRW;
+                            bestRH = newRH;
+                            bestTheta = newTheta;
+                        }
+                    }
+                }
+                if (!anything)
+                    break;
+                this.currentScore = bestScore;
+                this.cx = bestCX;
+                this.cy = bestCY;
+                this.rw = bestRW;
+                this.rh = bestRH;
+                this.theta = bestTheta;
+            }
+        }
+        fineImprovement() {
+            const { margin } = this, psz = this.px.length;
+            let deltaD = 0.1 * margin, deltaR = 0.5 * deltaD, deltaT = 1 * WebMolKit.DEGRAD;
+            const REDUCTION = 2.0 / 3;
+            const MAX_REDUCTIONS = 20;
+            for (let reduc = 0; reduc < MAX_REDUCTIONS; reduc++) {
+                let anything = false;
+                let bestScore = this.currentScore;
+                let bestCX = this.cx, bestCY = this.cy, bestRW = this.rw, bestRH = this.rh, bestTheta = this.theta;
+                for (let dCX = -1; dCX <= 1; dCX++) {
+                    let newCX = this.cx + dCX * deltaD;
+                    for (let dCY = -1; dCY <= 1; dCY++) {
+                        let newCY = this.cy + dCY * deltaD;
+                        for (let dRW = -1; dRW <= 1; dRW++) {
+                            let newRW = this.rw + dRW * deltaR;
+                            for (let dRH = -1; dRH <= 1; dRH++) {
+                                let newRH = this.rh + dRH * deltaR;
+                                for (let dT = -1; dT <= 1; dT++) {
+                                    if (dCX == 0 && dCY == 0 && dRW == 0 && dRH == 0 && dT == 0)
+                                        continue;
+                                    let newTheta = this.theta + dT * deltaT;
+                                    let newScore = this.calculateScore(newCX, newCY, newRW, newRH, newTheta);
+                                    if (newScore > bestScore && !WebMolKit.fltEqual(newScore, bestScore)) {
+                                        anything = true;
+                                        bestScore = newScore;
+                                        bestCX = newCX;
+                                        bestCY = newCY;
+                                        bestRW = newRW;
+                                        bestRH = newRH;
+                                        bestTheta = newTheta;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                if (anything) {
+                    this.currentScore = bestScore;
+                    this.cx = bestCX;
+                    this.cy = bestCY;
+                    this.rw = bestRW;
+                    this.rh = bestRH;
+                    this.theta = bestTheta;
+                }
+                else {
+                    reduc++;
+                    deltaD *= REDUCTION;
+                    deltaR *= REDUCTION;
+                    deltaT *= REDUCTION;
+                }
+            }
+        }
+        calculateScore(cx, cy, rw, rh, theta) {
+            const { px, py, margin } = this, psz = px.length;
+            const nseg = 24;
+            let cosTheta = Math.cos(theta), sinTheta = Math.sin(theta);
+            let incrAlpha = WebMolKit.TWOPI / nseg;
+            let closestDSQ = WebMolKit.Vec.numberArray(Number.POSITIVE_INFINITY, psz);
+            for (let n = 0; n < nseg; n++) {
+                let alpha = n * incrAlpha;
+                let cosAlpha = Math.cos(alpha), sinAlpha = Math.sin(alpha);
+                let dx = rw * cosAlpha * cosTheta - rh * sinAlpha * sinTheta;
+                let dy = rw * cosAlpha * sinTheta + rh * sinAlpha * cosTheta;
+                let d = WebMolKit.norm_xy(dx, dy) + margin, eth = Math.atan2(dy, dx);
+                let x = cx + d * Math.cos(eth);
+                let y = cy + d * Math.sin(eth);
+                for (let i = 0; i < psz; i++) {
+                    let ii = i == psz - 1 ? 0 : i + 1;
+                    if (WebMolKit.GeomUtil.doLineSegsIntersect(cx, cy, x, y, px[i], py[i], px[ii], py[ii]))
+                        return 0;
+                }
+                for (let i = 0; i < psz; i++)
+                    closestDSQ[i] = Math.min(closestDSQ[i], WebMolKit.norm2_xy(x - px[i], y - py[i]));
+            }
+            let proxSum = 0;
+            for (let dsq of closestDSQ)
+                proxSum += 1.0 / (1 + Math.sqrt(dsq));
+            return rw * rh + proxSum;
+        }
+    }
+    WebMolKit.FitRotatedEllipse = FitRotatedEllipse;
 })(WebMolKit || (WebMolKit = {}));
 var WebMolKit;
 (function (WebMolKit) {
@@ -30344,6 +30573,35 @@ var WebMolKit;
             let D = b * b - a * c;
             let k = (Math.sqrt(D) - b) / a;
             return [x1 + k * t1x, y1 + k * t1y, x2 + k * t2x, y2 + k * t2y];
+        }
+        static createBezierEllipse(cx, cy, rw, rh, theta) {
+            let nseg = 24, npt = 2 * nseg + 1;
+            let cosTheta = Math.cos(theta), sinTheta = Math.sin(theta);
+            let incrAlpha = WebMolKit.TWOPI / nseg;
+            let px = new Array(npt), py = new Array(npt);
+            for (let n = 0; n < nseg; n++) {
+                let alpha = n * incrAlpha;
+                let cosAlpha = Math.cos(alpha), sinAlpha = Math.sin(alpha);
+                px[n * 2] = rw * cosAlpha * cosTheta - rh * sinAlpha * sinTheta + cx;
+                py[n * 2] = rw * cosAlpha * sinTheta + rh * sinAlpha * cosTheta + cy;
+            }
+            px[npt - 1] = px[0];
+            py[npt - 1] = py[0];
+            let smooth = 0.3;
+            for (let n = 0; n < nseg; n++) {
+                let n1 = (n - 1 + nseg) % nseg;
+                let n2 = n;
+                let n3 = (n + 1) % nseg;
+                let n4 = (n + 2) % nseg;
+                let x1 = px[n1 * 2], x2 = px[n2 * 2], x3 = px[n3 * 2], x4 = px[n4 * 2];
+                let y1 = py[n1 * 2], y2 = py[n2 * 2], y3 = py[n3 * 2], y4 = py[n4 * 2];
+                px[n * 2 + 1] = 0.5 * (x2 + x3 + smooth * (x2 - x1 + x3 - x4));
+                py[n * 2 + 1] = 0.5 * (y2 + y3 + smooth * (y2 - y1 + y3 - y4));
+            }
+            let ctrl = new Array(npt);
+            for (let n = 0; n < npt; n++)
+                ctrl[n] = (n & 1) == 1;
+            return { px, py, ctrl };
         }
         static fitCircle(x, y) {
             let dsq = Number.POSITIVE_INFINITY;
@@ -32917,7 +33175,7 @@ var WebMolKit;
         children(tag) {
             let domList = [];
             for (let child = this.el.firstElementChild; child; child = child.nextElementSibling) {
-                if (tag && child.tagName != tag)
+                if (tag && child.tagName.toLocaleLowerCase() != tag.toLocaleLowerCase())
                     continue;
                 domList.push(new DOM(child));
             }
@@ -33075,6 +33333,10 @@ var WebMolKit;
         }
         size() {
             return new WebMolKit.Size(this.width(), this.height());
+        }
+        area() {
+            let pos = this.offset();
+            return new WebMolKit.Box(pos.x, pos.y, this.width(), this.height());
         }
         setBoundaryPixels(x, y, w, h) {
             this.css({ 'left': `${x}px`, 'top': `${y}px`, 'width': `${w}px`, 'height': `${h}px` });

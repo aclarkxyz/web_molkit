@@ -16,6 +16,13 @@ namespace WebMolKit /* BOF */ {
 	Geometry utilities, which are typically graphics related.
 */
 
+export interface Spline
+{
+	px:number[];
+	py:number[];
+	ctrl:boolean[];
+}
+
 export class GeomUtil
 {
 	// static: returns true if the point (x,y) is inside the given polygon (px,py)
@@ -368,6 +375,54 @@ export class GeomUtil
 
 		return [x1 + k * t1x, y1 + k * t1y, x2 + k * t2x, y2 + k * t2y];
 	}
+
+	// creates a bezier-type curve that renders a whole ellipse; the parameters (w,h) are the dimensions of the ellipse, where w is parallel to theta and
+	// h is perpendicular to it (i.e. if theta is 0, it's an ordinary ellipse that is aligned with the axes); the result is imprecise: it emits a series of
+	// points corresponding to angular increments and throws in some quadratic smoothing - it should be visually indistinguishable from the real thing	
+	public static createBezierEllipse(cx:number, cy:number, rw:number, rh:number, theta:number):Spline
+	{
+		/*
+			From https://math.stackexchange.com/questions/2645689/what-is-the-parametric-equation-of-a-rotated-ellipse-given-the-angle-of-rotatio
+			x(α)=Rx.cos(α).cos(θ) − Ry.sin(α).sin(θ) + Cx
+			y(α)=Rx.cos(α).sin(θ) + Ry.sin(α).cos(θ) + Cy
+		*/
+		
+		let nseg = 24, npt = 2 * nseg + 1;
+		let cosTheta = Math.cos(theta), sinTheta = Math.sin(theta);		
+		let incrAlpha = TWOPI / nseg;
+
+		let px:number[] = new Array(npt), py:number[] = new Array(npt);
+		for (let n = 0; n < nseg; n++)
+		{
+			let alpha = n * incrAlpha;
+			let cosAlpha = Math.cos(alpha), sinAlpha = Math.sin(alpha);
+			
+			px[n * 2] = rw * cosAlpha * cosTheta - rh * sinAlpha * sinTheta + cx;
+			py[n * 2] = rw * cosAlpha * sinTheta + rh * sinAlpha * cosTheta + cy;
+		}
+		
+		px[npt - 1] = px[0];
+		py[npt - 1] = py[0];
+		
+		let smooth = 0.3;
+		for (let n = 0; n < nseg; n++)
+		{
+			let n1 = (n - 1 + nseg) % nseg;
+			let n2 = n;
+			let n3 = (n + 1) % nseg;
+			let n4 = (n + 2) % nseg;
+			let x1 = px[n1 * 2], x2 = px[n2 * 2], x3 = px[n3 * 2], x4 = px[n4 * 2];
+			let y1 = py[n1 * 2], y2 = py[n2 * 2], y3 = py[n3 * 2], y4 = py[n4 * 2];
+			px[n * 2 + 1] = 0.5 * (x2 + x3 + smooth * (x2 - x1 + x3 - x4));
+			py[n * 2 + 1] = 0.5 * (y2 + y3 + smooth * (y2 - y1 + y3 - y4));
+		}
+		
+		let ctrl:boolean[] = new Array(npt);
+		for (let n = 0; n < npt; n++) ctrl[n] = (n & 1) == 1;
+		
+		return {px, py, ctrl};
+	}
+
 
 	// for a set of points that are presumed to be normalised about the origin, determines the radius of the closest approach
 	public static fitCircle(x:number[], y:number[]):number

@@ -1,7 +1,7 @@
 /*
 	WebMolKit
 
-	(c) 2010-2018 Molecular Materials Informatics, Inc.
+	(c) 2010-2024 Molecular Materials Informatics, Inc.
 
 	All rights reserved
 
@@ -61,6 +61,7 @@ export interface XRing
 	cy:number;
 	rw:number;
 	rh:number;
+	theta:number;
 	size:number; // line size
 }
 
@@ -2194,19 +2195,19 @@ export class ArrangeMolecule
 	// draw a circle at the interior of a group of atoms, as in, ring-style benzene
 	private createCircularRing(atoms:number[]):void
 	{
-		let cx = 0, cy = 0;
-		for (let a of atoms)
+		let px:number[] = new Array(atoms.length), py:number[] = new Array(atoms.length);
+		for (let n = 0; n < atoms.length; n++)
 		{
-			let pt = this.points[a - 1];
-			cx += pt.oval.cx;
-			cy += pt.oval.cy;
+			let pt = this.points[atoms[n] - 1];
+			px[n] = pt.oval.cx;
+			py[n] = pt.oval.cy;
 		}
-		cx /= atoms.length;
-		cy /= atoms.length;
+		let cx = Vec.sum(px) / atoms.length, cy = Vec.sum(py) / atoms.length;
 
 		let bx:number[] = [], by:number[] = [];
 		let isRegular = true;
 		let regDist = Number.NaN;
+		const FRACT = 0.7;
 		for (let a of atoms)
 		{
 			let pt = this.points[a - 1];
@@ -2220,7 +2221,6 @@ export class ArrangeMolecule
 			bx.push(x2); by.push(y1);
 			bx.push(x2); by.push(y2);
 			let dist = norm_xy(x0, y0), theta = Math.atan2(y0, x0);
-			const FRACT = 0.7;
 			bx.push(FRACT * dist * Math.cos(theta));
 			by.push(FRACT * dist * Math.sin(theta));
 
@@ -2239,14 +2239,14 @@ export class ArrangeMolecule
 			else regDist = dist;
 		}
 
-		let r:XRing = {atoms, cx, cy, rw: 0, rh: 0, size: 0};
+		let r:XRing = {atoms, cx, cy, rw: 0, rh: 0, theta: 0, size: 0};
 		if (isRegular)
 		{
 			r.rw = r.rh = GeomUtil.fitCircle(bx, by);
 		}
 		else
 		{
-			let lowX = Vec.min(bx) - 10 * Vec.range(bx), highX = Vec.max(bx) + 10 * Vec.range(bx);
+			/*let lowX = Vec.min(bx) - 10 * Vec.range(bx), highX = Vec.max(bx) + 10 * Vec.range(bx);
 			let lowY = Vec.min(by) - 10 * Vec.range(by), highY = Vec.max(by) + 10 * Vec.range(by);
 			let minX = Number.POSITIVE_INFINITY, maxX = Number.NEGATIVE_INFINITY, minY = Number.POSITIVE_INFINITY, maxY = Number.NEGATIVE_INFINITY;
 			for (let n = 0; n < atoms.length; n++)
@@ -2271,7 +2271,18 @@ export class ArrangeMolecule
 
 			let rwh = GeomUtil.fitEllipse(bx, by, minX, minY, maxX, maxY);
 			r.rw = rwh[0];
-			r.rh = rwh[1];
+			r.rh = rwh[1];*/
+
+			let mdist = 0;
+			for (let n = 0; n < atoms.length; n++) mdist += norm_xy(px[n] - cx, py[n] - cy);
+			let margin = mdist / atoms.length * (1 - FRACT);
+			var fit = new FitRotatedEllipse(px, py, margin);
+			fit.calculate();
+			r.cx = fit.cx;
+			r.cy = fit.cy;
+			r.rw = fit.rw;
+			r.rh = fit.rh;
+			r.theta = fit.theta;
 		}
 		r.size = this.lineSizePix;
 		this.rings.push(r);

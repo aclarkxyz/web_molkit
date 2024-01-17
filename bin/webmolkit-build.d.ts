@@ -2204,6 +2204,7 @@ declare namespace WebMolKit {
         cy: number;
         rw: number;
         rh: number;
+        theta: number;
         size: number;
     }
     interface XPath {
@@ -3104,7 +3105,8 @@ declare namespace WebMolKit {
         QueryPaste = 60,
         QuerySetAtom = 61,
         QuerySetBond = 62,
-        QueryBondAny = 63
+        QueryBondAny = 63,
+        SproutDirection = 64
     }
     interface SketchState {
         mol: Molecule;
@@ -3193,6 +3195,7 @@ declare namespace WebMolKit {
         execQuerySetAtom(): void;
         execQuerySetBond(): void;
         execQueryBondAny(): void;
+        execSproutDirection(deltaX: number, deltaY: number): void;
         private requireSubject;
         private requireAtoms;
         private requireCurrent;
@@ -3255,7 +3258,7 @@ declare namespace WebMolKit {
 }
 declare namespace WebMolKit {
     class Sketcher extends DrawCanvas {
-        onChangeMolecule: (mol: Molecule) => void;
+        callbackChangeMolecule: (mol: Molecule) => void;
         callbackSpecialPaste: (str: string) => Promise<Molecule>;
         inDialog: boolean;
         initialFocus: boolean;
@@ -3344,6 +3347,8 @@ declare namespace WebMolKit {
         private jumpFromCurrentBond;
         private jumpFromNowhere;
         private createRing;
+        private ctrlArrowKey;
+        private sproutDirection;
         private mouseClick;
         private mouseDoubleClick;
         private mouseDown;
@@ -3798,12 +3803,11 @@ declare namespace WebMolKit {
         private titleHTML;
         private delay;
         private watermark;
-        static ensureGlobal(): void;
+        private domTooltip;
         constructor(widget: DOM, bodyHTML: string, titleHTML: string, delay: number);
         start(): void;
         stop(): void;
         raise(avoid?: Box): void;
-        lower(): void;
     }
 }
 declare namespace WebMolKit {
@@ -3824,6 +3828,32 @@ declare namespace WebMolKit {
     }
 }
 declare namespace WebMolKit {
+    class FitRotatedEllipse {
+        px: number[];
+        py: number[];
+        margin: number;
+        cx: number;
+        cy: number;
+        rw: number;
+        rh: number;
+        theta: number;
+        private stop;
+        private currentScore;
+        constructor(px: number[], py: number[], margin: number);
+        calculate(): void;
+        getSpline(): Spline;
+        private setupParameters;
+        private coarseDiscovery;
+        private fineImprovement;
+        private calculateScore;
+    }
+}
+declare namespace WebMolKit {
+    interface Spline {
+        px: number[];
+        py: number[];
+        ctrl: boolean[];
+    }
     class GeomUtil {
         static pointInPolygon(x: number, y: number, px: number[], py: number[]): boolean;
         static areLinesParallel(x1: number, y1: number, x2: number, y2: number, x3: number, y3: number, x4: number, y4: number): boolean;
@@ -3856,6 +3886,7 @@ declare namespace WebMolKit {
         static normalised(v: number[]): number[];
         static acuteAngle(v1: number[], v2: number[]): number;
         static arcControlPoints(rad: number, x1: number, y1: number, x2: number, y2: number): [number, number, number, number];
+        static createBezierEllipse(cx: number, cy: number, rw: number, rh: number, theta: number): Spline;
         static fitCircle(x: number[], y: number[]): number;
         static fitEllipse(px: number[], py: number[], minX: number, minY: number, maxX: number, maxY: number): number[];
         static superimpose(ax: number[], ay: number[], bx: number[], by: number[]): number[][];
@@ -4227,6 +4258,7 @@ declare namespace WebMolKit {
 declare namespace WebMolKit {
     function dom(obj: Element | DOM | string): DOM;
     function domLegacy(obj: any): DOM;
+    type CSSDictionary = Record<string, string | number | boolean>;
     class DOM {
         el: Element;
         constructor(el: Element);
@@ -4261,7 +4293,7 @@ declare namespace WebMolKit {
         setValue(str: string): void;
         getCSS(key: string): string;
         setCSS(key: string, value: string): void;
-        css(dict: Record<string, string | number | boolean>): DOM;
+        css(dict: CSSDictionary): DOM;
         getAttr(key: string): string;
         setAttr(key: string, value: string): void;
         attr(dict: Record<string, string | number | boolean>): DOM;
@@ -4275,6 +4307,7 @@ declare namespace WebMolKit {
         height(): number;
         offset(): Pos;
         size(): Size;
+        area(): Box;
         setBoundaryPixels(x: number, y: number, w: number, h: number): void;
         hasFocus(): boolean;
         grabFocus(delay?: boolean): void;
