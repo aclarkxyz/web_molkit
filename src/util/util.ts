@@ -51,7 +51,7 @@ export function newElement(parent:any, tag:string, attr?:Record<string, any>):El
 // appends child text to the node
 export function addText(parent:any, text:string)
 {
-	let el = $(parent)[0];
+	let el = dom(parent).el;
 	el.appendChild(document.createTextNode(text));
 }
 
@@ -185,7 +185,7 @@ export function notDef(v:any):boolean
 
 // given a particular event, picks out the (x,y) coordinates, and offsets them until they are in the space of the given
 // node container, which must be a parent
-export function eventCoords(event:MouseEvent | Touch | JQueryMouseEventObject, container:any):number[]
+export function eventCoords(event:MouseEvent | Touch, container:any):number[]
 {
 	let pos = domLegacy(container).offset();
 	let relX = event.pageX - pos.x;
@@ -194,17 +194,12 @@ export function eventCoords(event:MouseEvent | Touch | JQueryMouseEventObject, c
 }
 
 // sets an object's position by pixel: convenience function otherwise rather ugly code; assumes that the positioning style already configured as needed
-export function setBoundaryPixels(dom:JQuery | DOM, x:number, y:number, w:number, h:number):void
+export function setBoundaryPixels(dom:DOM, x:number, y:number, w:number, h:number):void
 {
 	dom.css({'left': x + 'px', 'top': y + 'px', 'width': w + 'px', 'height': h + 'px'});
 }
 
 // return the object's screen position as [x, y, w, h]
-export function getBoundaryPixels(dom:JQuery):[number, number, number, number]
-{
-	let offset = dom.offset();
-	return [offset.left, offset.top, dom.width(), dom.height()];
-}
 export function getBoundaryPixelsDOM(dom:DOM):[number, number, number, number]
 {
 	let offset = dom.offset();

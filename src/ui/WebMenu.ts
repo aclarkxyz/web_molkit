@@ -17,6 +17,7 @@ namespace WebMolKit /* BOF */ {
 	analogous to that used by Electron, so this can be used as an explicit substitution.
 */
 
+/*
 const CSS_WEBMENU = `
 	*.wmk-webmenubar
 	{
@@ -74,17 +75,17 @@ export class WebMenu extends Widget
 
 		for (let item of this.barItems)
 		{
-			let dom = $('<span></span>').appendTo(this.content);
-			dom.addClass('wmk-webmenuitem');
-			dom.text(item.label ? item.label : '?');
-			dom.click((event:JQueryEventObject) => {this.activateMenu(dom, item); event.preventDefault();});
-			dom.dblclick((event:JQueryEventObject) => event.preventDefault());
+			let span = dom('<span/>').appendTo(this.content);
+			span.addClass('wmk-webmenuitem');
+			span.setText(item.label ? item.label : '?');
+			span.onClick((event) => {this.activateMenu(dom, item); event.preventDefault();});
+			span.onDblClick((event) => event.preventDefault());
 		}
 	}
 
 	// ------------ private methods ------------
 
-	private activateMenu(parent:JQuery, item:WebMenuItem)
+	private activateMenu(parent:DOM, item:WebMenuItem)
 	{
 		if (item.click)
 		{
@@ -97,7 +98,7 @@ export class WebMenu extends Widget
 			return;
 		}
 
-		let wx1 = parent.offset().left, wy1 = parent.offset().top;
+		let wx1 = parent.offset().x, wy1 = parent.offset().y;
 		let wx2 = wx1 + parent.width(), wy2 = wy1 + parent.height();
 		let menuX = 0, menuY = 0;
 		if (this.obscureBackground)
@@ -110,15 +111,15 @@ export class WebMenu extends Widget
 			menuX = wx1;
 			menuY = wy2;
 
-			let bg = this.obscureBackground = $('<span></span>').appendTo($(document.documentElement));
-			bg.css('width', '100%');
-			bg.css('height', document.documentElement.clientHeight + 'px');
-			bg.css('position', 'absolute');
-			bg.css('left', 0);
-			bg.css('top', 0);
+			let bg = this.obscureBackground = dom('<span/>').appendTo(document.documentElement);
+			bg.setCSS('width', '100%');
+			bg.setCSS('height', document.documentElement.clientHeight + 'px');
+			bg.setCSS('position', 'absolute');
+			bg.setCSS('left', 0);
+			bg.setCSS('top', 0);
 
 			bg.css('z-index', 9999);
-			bg.click(() => this.deactivateMenu());
+			bg.onClick(() => this.deactivateMenu());
 			bg.show();
 			this.obscureBackground = bg;
 		}
@@ -147,5 +148,6 @@ export class WebMenu extends Widget
 		this.obscureBackground = null;
 	}
 }
+*/
 
 /* EOF */ }

@@ -11,7 +11,6 @@
 */
 
 ///<reference path='../../src/util/util.ts'/>
-///<reference path='../../src/decl/jquery/index.d.ts'/>
 ///<reference path='Validation.ts'/>
 
 namespace WebMolKit /* BOF */ {

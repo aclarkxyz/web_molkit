@@ -11148,7 +11148,7 @@ var WebMolKit;
     }
     WebMolKit.newElement = newElement;
     function addText(parent, text) {
-        let el = $(parent)[0];
+        let el = WebMolKit.dom(parent).el;
         el.appendChild(document.createTextNode(text));
     }
     WebMolKit.addText = addText;
@@ -11271,11 +11271,6 @@ var WebMolKit;
         dom.css({ 'left': x + 'px', 'top': y + 'px', 'width': w + 'px', 'height': h + 'px' });
     }
     WebMolKit.setBoundaryPixels = setBoundaryPixels;
-    function getBoundaryPixels(dom) {
-        let offset = dom.offset();
-        return [offset.left, offset.top, dom.width(), dom.height()];
-    }
-    WebMolKit.getBoundaryPixels = getBoundaryPixels;
     function getBoundaryPixelsDOM(dom) {
         let offset = dom.offset();
         return [offset.x, offset.y, dom.width(), dom.height()];
@@ -13691,13 +13686,6 @@ var WebMolKit;
 	}
 `;
     class Dialog {
-        get obscureBackground() { return $(this.domObscureBackground.el); }
-        get obscureForeground() { return $(this.domObscureForeground.el); }
-        get panelBoundary() { return $(this.domPanelBoundary.el); }
-        get titleDiv() { return $(this.domTitle.el); }
-        get titleButtons() { return $(this.domTitleButtons.el); }
-        get bodyDiv() { return $(this.domBody.el); }
-        get btnClose() { return $(this.domClose.el); }
         constructor(parent = null) {
             this.minPortionWidth = 80;
             this.maxPortionWidth = 80;
@@ -13789,8 +13777,6 @@ var WebMolKit;
         bump() {
             this.repositionSize();
         }
-        body() { return this.bodyDiv; }
-        buttons() { return this.titleButtons; }
         bodyDOM() { return this.domBody; }
         buttonsDOM() { return this.domTitleButtons; }
         populate() {
@@ -13879,336 +13865,6 @@ var WebMolKit;
         }
     }
     WebMolKit.EditCompound = EditCompound;
-})(WebMolKit || (WebMolKit = {}));
-var WebMolKit;
-(function (WebMolKit) {
-    const ARROWWIDTH = 30;
-    const COLCYCLE = ['#89A54E', '#71588F', '#4198AF', '#DB843D', '#93A9CF', '#D19392', '#4572A7', '#AA4643'];
-    class MapReaction extends WebMolKit.Dialog {
-        constructor(mol1, mol2) {
-            super();
-            this.callbackSave = null;
-            this.scale = 1;
-            this.highlighted = [0, 0];
-            this.pressed = [0, 0];
-            this.mol1 = mol1.clone();
-            this.mol2 = mol2.clone();
-            this.policy = WebMolKit.RenderPolicy.defaultBlackOnWhite();
-            this.policy.data.pointScale = 40;
-            this.title = 'Map Reaction Atoms';
-            this.minPortionWidth = 20;
-            this.maxPortionWidth = 95;
-        }
-        getMolecule1() { return this.mol1; }
-        getMolecule2() { return this.mol2; }
-        populate() {
-            let buttons = this.buttons(), body = this.body();
-            this.btnClear = $('<button class="button button-default">Clear</button>').appendTo(buttons);
-            this.btnClear.click(() => this.clearAllMappings());
-            buttons.append(' ');
-            buttons.append(this.btnClose);
-            buttons.append(' ');
-            this.btnSave = $('<button class="button button-primary">Save</button>').appendTo(buttons);
-            this.btnSave.click(() => { if (this.callbackSave)
-                this.callbackSave(this); });
-            let measure = new WebMolKit.OutlineMeasurement(0, 0, this.policy.data.pointScale);
-            let effects = new WebMolKit.RenderEffects();
-            this.layout1 = new WebMolKit.ArrangeMolecule(this.mol1, measure, this.policy, effects);
-            this.layout1.arrange();
-            this.layout2 = new WebMolKit.ArrangeMolecule(this.mol2, measure, this.policy, effects);
-            this.layout2.arrange();
-            this.setupPanel();
-        }
-        setupPanel() {
-            let bounds1 = this.layout1.determineBoundary(), w1 = bounds1[2] - bounds1[0], h1 = bounds1[3] - bounds1[1];
-            let bounds2 = this.layout2.determineBoundary(), w2 = bounds2[2] - bounds2[0], h2 = bounds2[3] - bounds2[1];
-            let maxWidth = 0.9 * $(window).width(), maxHeight = 0.8 * $(window).height();
-            this.padding = 1 * this.policy.data.pointScale;
-            let scale1 = (maxWidth - ARROWWIDTH) / (w1 + w2 + 4 * this.padding);
-            let scale2 = maxHeight / (h1 + 2 * this.padding);
-            let scale3 = maxHeight / (bounds2[3] - bounds2[1] + 2 * this.padding);
-            this.scale = Math.min(1, Math.min(scale1, Math.min(scale2, scale3)));
-            this.canvasW = Math.ceil((w1 + w2 + 4 * this.padding) * this.scale + ARROWWIDTH);
-            this.canvasH = Math.ceil((Math.max(h1, h2) + 2 * this.padding) * this.scale);
-            this.box1 = new WebMolKit.Box(0, 0, w1 + 2 * this.padding, this.canvasH);
-            this.boxArrow = new WebMolKit.Box(this.box1.maxX(), 0, ARROWWIDTH, this.canvasH);
-            this.box2 = new WebMolKit.Box(this.boxArrow.maxX(), 0, w2 + 2 * this.padding, this.canvasH);
-            this.layout1.squeezeInto(this.box1.x, this.box1.y, this.box1.w, this.box1.h);
-            this.layout2.squeezeInto(this.box2.x, this.box2.y, this.box2.w, this.box2.h);
-            let div = $('<div></div>').appendTo(this.body());
-            div.css('position', 'relative');
-            div.css('width', this.canvasW + 'px');
-            div.css('height', this.canvasH + 'px');
-            let density = WebMolKit.pixelDensity();
-            let styleCanvas = 'position: absolute; left: 0; top: 0; width: ' + this.canvasW + 'px; height: ' + this.canvasH + 'px;';
-            let styleOverlay = styleCanvas + 'pointer-events: none;';
-            this.canvas = WebMolKit.newElement(div, 'canvas', { 'width': this.canvasW * density, 'height': this.canvasH * density, 'style': styleCanvas });
-            let ctx = this.canvas.getContext('2d');
-            ctx.scale(density, density);
-            this.redrawCanvas();
-            $(this.canvas).mousedown((event) => { event.preventDefault(); this.mouseDown(event); });
-            $(this.canvas).mouseup((event) => this.mouseUp(event));
-            $(this.canvas).mouseenter((event) => this.mouseEnter(event));
-            $(this.canvas).mouseleave((event) => this.mouseLeave(event));
-            $(this.canvas).mousemove((event) => this.mouseMove(event));
-            this.drawnMols = WebMolKit.newElement(div, 'canvas', { 'width': this.canvasW * density, 'height': this.canvasH * density, 'style': styleOverlay });
-            ctx = this.drawnMols.getContext('2d');
-            ctx.scale(density, density);
-            let vg1 = new WebMolKit.MetaVector(), vg2 = new WebMolKit.MetaVector();
-            new WebMolKit.DrawMolecule(this.layout1, vg1).draw();
-            new WebMolKit.DrawMolecule(this.layout2, vg2).draw();
-            vg1.renderContext(ctx);
-            vg2.renderContext(ctx);
-            this.bump();
-        }
-        redrawCanvas() {
-            let ctx = this.canvas.getContext('2d');
-            let w = this.canvasW, h = this.canvasH;
-            ctx.clearRect(0, 0, w, h);
-            let arrowX1 = this.boxArrow.minX(), arrowX2 = this.boxArrow.maxX(), arrowY = this.boxArrow.midY();
-            ctx.beginPath();
-            ctx.moveTo(arrowX1, arrowY);
-            ctx.lineTo(arrowX2 - 2, arrowY);
-            ctx.strokeStyle = 'black';
-            ctx.lineWidth = 2;
-            ctx.stroke();
-            ctx.beginPath();
-            ctx.moveTo(arrowX2, arrowY);
-            ctx.lineTo(arrowX2 - 8, arrowY - 5);
-            ctx.lineTo(arrowX2 - 8, arrowY + 5);
-            ctx.fillStyle = 'black';
-            ctx.fill();
-            this.drawHighlights(ctx, 1, this.highlighted[0] == 1 ? this.highlighted[1] : 0);
-            this.drawHighlights(ctx, 2, this.highlighted[0] == 2 ? this.highlighted[1] : 0);
-            if (this.pressed[0] > 0) {
-                let compatMask = this.compatibilityMask(this.pressed[0], this.pressed[1]);
-                ctx.strokeStyle = '#808080';
-                ctx.lineWidth = 1;
-                if (this.pressed[0] == 1) {
-                    for (let n = 1; n <= this.mol2.numAtoms; n++)
-                        if (compatMask[n - 1]) {
-                            let [cx, cy, rw, rh] = this.getAtomPos(2, n);
-                            ctx.beginPath();
-                            ctx.ellipse(cx, cy, rw, rh, 0, 0, WebMolKit.TWOPI, false);
-                            ctx.stroke();
-                        }
-                }
-                else {
-                    for (let n = 1; n <= this.mol1.numAtoms; n++)
-                        if (compatMask[n - 1]) {
-                            let [cx, cy, rw, rh] = this.getAtomPos(1, n);
-                            ctx.beginPath();
-                            ctx.ellipse(cx, cy, rw, rh, 0, 0, WebMolKit.TWOPI, false);
-                            ctx.stroke();
-                        }
-                }
-                let [cx1, cy1, rw1, rh1] = this.getAtomPos(this.pressed[0], this.pressed[1]);
-                ctx.beginPath();
-                ctx.ellipse(cx1, cy1, rw1, rh1, 0, 0, WebMolKit.TWOPI, false);
-                ctx.fillStyle = '#808080';
-                ctx.fill();
-                let dx = this.dragToX, dy = this.dragToY;
-                let dest = this.pickAtom(dx, dy, this.pressed[0] == 2 ? compatMask : null, this.pressed[0] == 1 ? compatMask : null);
-                if (dest[0] == 3 - this.pressed[0]) {
-                    let [cx2, cy2, rw2, rh2] = this.getAtomPos(dest[0], dest[1]);
-                    ctx.beginPath();
-                    ctx.ellipse(cx2, cy2, rw2, rh2, 0, 0, WebMolKit.TWOPI, false);
-                    ctx.fillStyle = '#808080';
-                    ctx.fill();
-                    dx = cx2;
-                    dy = cy2;
-                }
-                ctx.beginPath();
-                ctx.moveTo(cx1, cy1);
-                ctx.lineTo(dx, dy);
-                ctx.strokeStyle = '#808080';
-                ctx.lineWidth = 1;
-                ctx.stroke();
-            }
-        }
-        drawHighlights(ctx, side, highlight) {
-            const mol = side == 1 ? this.mol1 : this.mol2;
-            const layout = side == 1 ? this.layout1 : this.layout2;
-            const offsetX = side == 1 ? this.offsetX1 : this.offsetX2;
-            const offsetY = side == 1 ? this.offsetY1 : this.offsetY2;
-            const scale = this.scale;
-            for (let n = 1; n <= mol.numAtoms; n++) {
-                let mapnum = mol.atomMapNum(n);
-                if (mapnum == 0 && n != highlight)
-                    continue;
-                let [cx, cy, rw, rh] = this.getAtomPos(side, n);
-                if (mapnum > 0) {
-                    let col = COLCYCLE[(mapnum - 1) % COLCYCLE.length];
-                    ctx.beginPath();
-                    ctx.ellipse(cx, cy, rw, rh, 0, 0, WebMolKit.TWOPI, false);
-                    ctx.fillStyle = col;
-                    ctx.fill();
-                    if (n == highlight) {
-                        let oside = 3 - side, omol = side == 1 ? this.mol2 : this.mol1;
-                        for (let i = 1; i <= omol.numAtoms; i++)
-                            if (omol.atomMapNum(i) == mapnum) {
-                                let [dx, dy] = this.getAtomPos(oside, i);
-                                ctx.beginPath();
-                                ctx.moveTo(cx, cy);
-                                ctx.lineTo(dx, dy);
-                                ctx.strokeStyle = col;
-                                ctx.lineWidth = 1;
-                                ctx.stroke();
-                            }
-                    }
-                }
-                if (n == highlight) {
-                    ctx.beginPath();
-                    ctx.ellipse(cx, cy, rw, rh, 0, 0, WebMolKit.TWOPI, false);
-                    ctx.strokeStyle = '#404040';
-                    ctx.lineWidth = 1;
-                    ctx.stroke();
-                }
-            }
-        }
-        pickAtom(x, y, mask1, mask2) {
-            let ret = [0, 0];
-            let bestDist = Number.POSITIVE_INFINITY;
-            let threshsq = WebMolKit.sqr(this.layout1.getScale() * 1.0 * this.policy.data.pointScale);
-            for (let n = 0; n < this.mol1.numAtoms; n++) {
-                if (mask1 && !mask1[n])
-                    continue;
-                let pt = this.layout1.getPoint(n);
-                let dsq = WebMolKit.norm2_xy(x - pt.oval.cx, y - pt.oval.cy);
-                if (dsq < threshsq && dsq < bestDist) {
-                    ret = [1, n + 1];
-                    bestDist = dsq;
-                }
-            }
-            threshsq = WebMolKit.sqr(this.layout2.getScale() * 1.0 * this.policy.data.pointScale);
-            for (let n = 0; n < this.mol2.numAtoms; n++) {
-                if (mask2 && !mask2[n])
-                    continue;
-                let pt = this.layout2.getPoint(n);
-                let dsq = WebMolKit.norm2_xy(x - pt.oval.cx, y - pt.oval.cy);
-                if (dsq < threshsq && dsq < bestDist) {
-                    ret = [2, n + 1];
-                    bestDist = dsq;
-                }
-            }
-            return ret;
-        }
-        getAtomPos(side, atom) {
-            let layout = side == 1 ? this.layout1 : this.layout2;
-            let ox = side == 1 ? this.offsetX1 : this.offsetX2, oy = side == 1 ? this.offsetY1 : this.offsetY2;
-            let pt = layout.getPoint(atom - 1);
-            let rw = Math.max(0.5 * this.policy.data.pointScale, pt.oval.rw) * this.scale, rh = Math.max(0.5 * this.policy.data.pointScale, pt.oval.rh) * this.scale;
-            return [pt.oval.cx, pt.oval.cy, rw, rh];
-        }
-        compatibilityMask(side, atom) {
-            let mask = [];
-            let mol1 = side == 1 ? this.mol1 : this.mol2, mol2 = side == 1 ? this.mol2 : this.mol1;
-            let el = mol1.atomElement(atom), iso = mol1.atomIsotope(atom), map = mol1.atomMapNum(atom);
-            for (let n = 1; n <= mol2.numAtoms; n++) {
-                let match = el == mol2.atomElement(n) && iso == mol2.atomIsotope(n);
-                match = match && (map == 0 || mol2.atomMapNum(n) == 0);
-                mask.push(match);
-            }
-            return mask;
-        }
-        connectAtoms(side, atom1, atom2) {
-            let mol1 = side == 1 ? this.mol1 : this.mol2, mol2 = side == 1 ? this.mol2 : this.mol1;
-            let map = mol1.atomMapNum(atom1);
-            if (map == 0)
-                map = mol2.atomMapNum(atom2);
-            if (map == 0) {
-                let allnums = new Set();
-                for (let n = 1; n <= mol1.numAtoms; n++)
-                    allnums.add(mol1.atomMapNum(n));
-                for (let n = 1; n <= mol2.numAtoms; n++)
-                    allnums.add(mol2.atomMapNum(n));
-                for (map = 1; allnums.has(map); map++)
-                    ;
-            }
-            mol1.setAtomMapNum(atom1, map);
-            mol2.setAtomMapNum(atom2, map);
-        }
-        autoConnect() {
-        }
-        clearAllMappings() {
-            let anything = false;
-            for (let n = 1; n <= this.mol1.numAtoms; n++)
-                if (this.mol1.atomMapNum(n) > 0) {
-                    this.mol1.setAtomMapNum(n, 0);
-                    anything = true;
-                }
-            for (let n = 1; n <= this.mol2.numAtoms; n++)
-                if (this.mol2.atomMapNum(n) > 0) {
-                    this.mol2.setAtomMapNum(n, 0);
-                    anything = true;
-                }
-            if (anything)
-                this.redrawCanvas();
-        }
-        clearMapping(side, atom) {
-            let map = side == 1 ? this.mol1.atomMapNum(atom) : this.mol2.atomMapNum(atom);
-            if (map == 0)
-                return;
-            for (let n = 1; n <= this.mol1.numAtoms; n++)
-                if (this.mol1.atomMapNum(n) == map)
-                    this.mol1.setAtomMapNum(n, 0);
-            for (let n = 1; n <= this.mol2.numAtoms; n++)
-                if (this.mol2.atomMapNum(n) == map)
-                    this.mol2.setAtomMapNum(n, 0);
-        }
-        mouseDown(event) {
-            let xy = WebMolKit.eventCoords(event, this.canvas);
-            this.pressed = this.pickAtom(xy[0], xy[1]);
-            this.dragToX = xy[0];
-            this.dragToY = xy[1];
-            this.redrawCanvas();
-        }
-        mouseUp(event) {
-            let xy = WebMolKit.eventCoords(event, this.canvas);
-            if (this.pressed[0] > 0) {
-                let dest = this.pickAtom(xy[0], xy[1]);
-                if (dest[0] == this.pressed[0] && dest[1] == this.pressed[1]) {
-                    this.clearMapping(dest[0], dest[1]);
-                }
-                else {
-                    let compatMask = this.compatibilityMask(this.pressed[0], this.pressed[1]);
-                    dest = this.pickAtom(xy[0], xy[1], this.pressed[0] == 2 ? compatMask : null, this.pressed[0] == 1 ? compatMask : null);
-                    if (dest[0] == 3 - this.pressed[0]) {
-                        this.connectAtoms(this.pressed[0], this.pressed[1], dest[1]);
-                        this.autoConnect();
-                    }
-                }
-                this.pressed = [0, 0];
-            }
-            this.highlighted = this.pickAtom(xy[0], xy[1]);
-            this.redrawCanvas();
-        }
-        mouseEnter(event) {
-        }
-        mouseLeave(event) {
-            if (this.highlighted[0] > 0 || this.pressed[0] > 0) {
-                this.highlighted = [0, 0];
-                this.pressed = [0, 0];
-                this.redrawCanvas();
-            }
-        }
-        mouseMove(event) {
-            let xy = WebMolKit.eventCoords(event, this.canvas);
-            if (this.pressed[0] > 0) {
-                this.dragToX = xy[0];
-                this.dragToY = xy[1];
-                this.redrawCanvas();
-            }
-            else {
-                let high = this.pickAtom(xy[0], xy[1]);
-                if (high[0] != this.highlighted[0] || high[1] != this.highlighted[1]) {
-                    this.highlighted = high;
-                    this.redrawCanvas();
-                }
-            }
-        }
-    }
-    WebMolKit.MapReaction = MapReaction;
 })(WebMolKit || (WebMolKit = {}));
 var WebMolKit;
 (function (WebMolKit) {
@@ -20289,15 +19945,12 @@ var WebMolKit;
 var WebMolKit;
 (function (WebMolKit) {
     class Widget {
-        get content() { return $(this.domContent.el); }
         get contentDOM() { return this.domContent; }
         constructor() {
             this.tagType = 'div';
             this.domContent = null;
         }
         render(parent) {
-            if (parent.jquery)
-                parent = parent[0];
             let tag = this.tagType;
             this.domContent = WebMolKit.dom(`<${tag}/>`).appendTo(parent);
         }
@@ -20307,7 +19960,7 @@ var WebMolKit;
             this.domContent = null;
         }
         addTooltip(bodyHTML, titleHTML) {
-            WebMolKit.addTooltip(this.content, bodyHTML, titleHTML);
+            WebMolKit.addTooltip(this.contentDOM, bodyHTML, titleHTML);
         }
         grabFocus() {
             this.domContent.grabFocus();
@@ -28329,168 +27982,6 @@ var WebMolKit;
 })(WebMolKit || (WebMolKit = {}));
 var WebMolKit;
 (function (WebMolKit) {
-    const BUTTON_DIAMETER = 50;
-    const BUTTON_HPADDING = 4;
-    const BUTTON_VPADDING = 2;
-    const STATE_NORMAL = 'normal';
-    const STATE_SELECTED = 'selected';
-    const STATE_DISABLED = 'disabled';
-    class CircleButton extends WebMolKit.Widget {
-        constructor(icon) {
-            super();
-            this.icon = icon;
-            this.state = STATE_NORMAL;
-            this.isHighlight = false;
-            this.isPressed = false;
-            this.progressFraction = null;
-            this.callbackAction = null;
-        }
-        render(parent) {
-            super.render(parent);
-            this.content.addClass('no_selection');
-            const diameter = BUTTON_DIAMETER;
-            const width = diameter, height = diameter;
-            let div = this.content;
-            let density = WebMolKit.pixelDensity();
-            div.css('width', width + 2 * BUTTON_HPADDING);
-            div.css('height', height + 2 * BUTTON_VPADDING);
-            div.css('position', 'relative');
-            let canvasStyle = 'position: absolute; left: ' + BUTTON_HPADDING + 'px; top: ' + BUTTON_VPADDING + 'px;';
-            canvasStyle += 'pointer-events: none;';
-            function renderSolid(col1, col2) {
-                let node = WebMolKit.newElement(div, 'canvas', { 'width': width * density, 'height': height * density, 'style': canvasStyle });
-                node.style.width = width + 'px';
-                node.style.height = height + 'px';
-                let ctx = node.getContext('2d');
-                ctx.save();
-                ctx.scale(density, density);
-                ctx.beginPath();
-                ctx.arc(0.5 * width, 0.5 * height, 0.5 * diameter - 1, 0, 2 * Math.PI, true);
-                ctx.clip();
-                let grad = ctx.createLinearGradient(0, 0, width, height);
-                grad.addColorStop(0, col1);
-                grad.addColorStop(1, col2);
-                ctx.fillStyle = grad;
-                ctx.fillRect(0, 0, width, height);
-                ctx.restore();
-                return node;
-            }
-            function renderBorder(lw) {
-                let node = WebMolKit.newElement(div, 'canvas', { 'width': width * density, 'height': height * density, 'style': canvasStyle });
-                node.style.width = width + 'px';
-                node.style.height = height + 'px';
-                let ctx = node.getContext('2d');
-                ctx.save();
-                ctx.scale(density, density);
-                ctx.beginPath();
-                ctx.arc(0.5 * width, 0.5 * height, 0.5 * diameter - 0.5 * (1 + lw), 0, 2 * Math.PI, true);
-                ctx.strokeStyle = 'black';
-                ctx.lineWidth = lw;
-                ctx.stroke();
-                ctx.restore();
-                return node;
-            }
-            this.normalBackgr = renderSolid('#FFFFFF', '#D0D0D0');
-            this.selectedBackgr = renderSolid('#47D5D2', '#008FD1');
-            this.pressedBackgr = renderSolid('#00CA59', '#008650');
-            this.disabledBackgr = renderSolid('white', 'white');
-            this.ringProgress = WebMolKit.newElement(div, 'canvas', { 'width': width * density, 'height': height * density, 'style': canvasStyle });
-            this.ringProgress.style.width = width + 'px';
-            this.ringProgress.style.height = height + 'px';
-            this.ringProgress.getContext('2d').scale(density, density);
-            this.ringProgress.hidden = true;
-            this.thinBorder = renderBorder(1);
-            this.thickBorder = renderBorder(2);
-            let svgurl = WebMolKit.Theme.BASE_URL + '/img/icons/' + this.icon;
-            this.svg = WebMolKit.newElement(div, 'object', { 'width': width, 'height': height, 'style': canvasStyle, 'data': svgurl, 'type': 'image/svg+xml' });
-            this.updateLayers();
-            div.mouseenter(() => this.mouseEnter());
-            div.mouseleave(() => this.mouseLeave());
-            div.mousedown(() => this.mouseDown());
-            div.mouseup(() => this.mouseUp());
-            div.click(() => this.mouseClicked());
-        }
-        setProgress(fraction) {
-            if (this.progressFraction == fraction)
-                return;
-            this.progressFraction = fraction;
-            this.ringProgress.hidden = false;
-            let diameter = BUTTON_DIAMETER, mid = 0.5 * diameter, outer = mid - 1, inner = 0.8 * mid;
-            let ctx = this.ringProgress.getContext('2d');
-            ctx.clearRect(0, 0, diameter, diameter);
-            ctx.strokeStyle = 'rgba(80,80,80,0.5)';
-            ctx.lineWidth = 1;
-            ctx.beginPath();
-            ctx.ellipse(mid, mid, inner + 0.5, inner + 0.5, 0, 0, WebMolKit.TWOPI, false);
-            ctx.stroke();
-            if (this.progressFraction == 0) {
-                ctx.lineWidth = 1;
-                ctx.strokeStyle = '#47D5D2';
-                WebMolKit.drawLine(ctx, mid, mid - inner, mid, mid - outer);
-                return;
-            }
-            let delta = WebMolKit.TWOPI * fraction;
-            let theta1 = -0.5 * Math.PI, theta2 = theta1 + delta;
-            ctx.save();
-            ctx.beginPath();
-            ctx.moveTo(mid, mid - outer);
-            ctx.arc(mid, mid, outer, theta1, theta2, false);
-            ctx.lineTo(mid + inner * Math.cos(theta2), mid + inner * Math.sin(theta2));
-            ctx.arc(mid, mid, inner, theta2, theta1, true);
-            ctx.closePath();
-            let grad = ctx.createRadialGradient(mid, mid, inner, mid, mid, outer);
-            grad.addColorStop(0, '#47D5D2');
-            grad.addColorStop(1, '#008FD2');
-            ctx.fillStyle = grad;
-            ctx.fill();
-            ctx.restore();
-        }
-        clearProgress() {
-            this.progressFraction = null;
-            this.ringProgress.hidden = true;
-        }
-        updateLayers() {
-            let setVisible = (canvas, visible) => canvas.style.display = visible ? 'block' : 'none';
-            setVisible(this.pressedBackgr, this.isPressed);
-            setVisible(this.normalBackgr, !this.isPressed && this.state == STATE_NORMAL);
-            setVisible(this.selectedBackgr, !this.isPressed && this.state == STATE_SELECTED);
-            setVisible(this.disabledBackgr, !this.isPressed && this.state == STATE_DISABLED);
-            let highlight = this.isHighlight;
-            if (this.state == STATE_DISABLED) {
-                highlight = false;
-                this.content.css('cursor', 'no-drop');
-            }
-            else
-                this.content.css('cursor', 'pointer');
-            setVisible(this.thinBorder, !highlight);
-            setVisible(this.thickBorder, highlight);
-        }
-        mouseEnter() {
-            this.isHighlight = true;
-            this.updateLayers();
-        }
-        mouseLeave() {
-            this.isHighlight = false;
-            this.isPressed = false;
-            this.updateLayers();
-        }
-        mouseDown() {
-            this.isPressed = this.state != STATE_DISABLED;
-            this.updateLayers();
-        }
-        mouseUp() {
-            this.isPressed = false;
-            this.updateLayers();
-        }
-        mouseClicked() {
-            if (this.callbackAction)
-                this.callbackAction(this);
-        }
-    }
-    WebMolKit.CircleButton = CircleButton;
-})(WebMolKit || (WebMolKit = {}));
-var WebMolKit;
-(function (WebMolKit) {
     class ClipboardProxyHandler {
         copyEvent(andCut, proxy) { return false; }
         pasteEvent(proxy) { return false; }
@@ -29659,10 +29150,6 @@ var WebMolKit;
 	}
 `;
     class Popup {
-        get obscureBackground() { return $(this.domObscureBackground.el); }
-        get obscureForeground() { return $(this.domObscureForeground.el); }
-        get panelBoundary() { return $(this.domPanelBoundary.el); }
-        get bodyDiv() { return $(this.domBody.el); }
         constructor(parent) {
             this.popupBackground = 'white';
             this.callbackClose = null;
@@ -29705,7 +29192,6 @@ var WebMolKit;
         bump() {
             this.positionAndShow();
         }
-        body() { return this.bodyDiv; }
         bodyDOM() { return this.domBody; }
         populate() {
             if (this.callbackPopulate)
@@ -29774,10 +29260,6 @@ var WebMolKit;
         }
         getSelectedValue() {
             return this.options[this.selidx];
-        }
-        getPanel(idxOrName) {
-            let dom = this.getPanelDOM(idxOrName);
-            return dom ? $(dom.el) : null;
         }
         getPanelDOM(idxOrName) {
             let idx = typeof idxOrName == 'number' ? idxOrName : this.options.indexOf(idxOrName);
@@ -29941,8 +29423,6 @@ var WebMolKit;
     let globalPopWatermark = 0;
     function addTooltip(parent, bodyHTML, titleHTML, delay) {
         WebMolKit.installInlineCSS('tooltip', CSS_TOOLTIP);
-        if (parent.jquery)
-            parent = parent[0];
         let widget = WebMolKit.dom(parent);
         let tooltip = new Tooltip(widget, bodyHTML, titleHTML, delay == null ? 1000 : delay);
         widget.onMouseEnter(() => tooltip.start());
@@ -29951,8 +29431,6 @@ var WebMolKit;
     WebMolKit.addTooltip = addTooltip;
     function raiseToolTip(parent, avoid, bodyHTML, titleHTML) {
         WebMolKit.installInlineCSS('tooltip', CSS_TOOLTIP);
-        if (parent.jquery)
-            parent = parent[0];
         clearTooltip();
         new Tooltip(WebMolKit.dom(parent), bodyHTML, titleHTML, 0).raise(avoid);
     }
@@ -30045,121 +29523,64 @@ var WebMolKit;
 })(WebMolKit || (WebMolKit = {}));
 var WebMolKit;
 (function (WebMolKit) {
-    const CSS_WEBMENU = `
-	*.wmk-webmenubar
-	{
-		font-family: 'Open Sans', sans-serif;
-		background-color: black;
-		color: white;
-		width: 100%;
-	}
-	*.wmk-webmenudrop
-	{
-		font-family: 'Open Sans', sans-serif;
-		background-color: rgba(0,0,0,0.7);
-		color: white;
-	}
-	*.wmk-webmenuitem
-	{
-		font-family: 'Open Sans', sans-serif;
-		color: white;
-		padding: 0 0.5em 0 0.5em;
-	}
-	*.wmk-webmenuitem:hover
-	{
-		background-color: #0000FF;
-		cursor: pointer;
-	}
-`;
-    class WebMenu extends WebMolKit.Widget {
-        constructor(barItems) {
-            super();
-            this.barItems = barItems;
-            this.topItems = [];
-            if (!WebMolKit.hasInlineCSS('webmenu'))
-                WebMolKit.installInlineCSS('webmenu', CSS_WEBMENU);
-        }
-        render(parent) {
-            super.render(parent);
-            this.content.addClass('wmk-webmenubar');
-            for (let item of this.barItems) {
-                let dom = $('<span></span>').appendTo(this.content);
-                dom.addClass('wmk-webmenuitem');
-                dom.text(item.label ? item.label : '?');
-                dom.click((event) => { this.activateMenu(dom, item); event.preventDefault(); });
-                dom.dblclick((event) => event.preventDefault());
-            }
-        }
-        activateMenu(parent, item) {
-            if (item.click) {
-                item.click();
-                return;
-            }
-            if (WebMolKit.Vec.len(item.submenu) == 0) {
-                return;
-            }
-            let wx1 = parent.offset().left, wy1 = parent.offset().top;
-            let wx2 = wx1 + parent.width(), wy2 = wy1 + parent.height();
-            let menuX = 0, menuY = 0;
-            if (this.obscureBackground) {
-                menuX = wx2;
-                menuY = wy1;
-            }
-            else {
-                menuX = wx1;
-                menuY = wy2;
-                let bg = this.obscureBackground = $('<span></span>').appendTo($(document.documentElement));
-                bg.css('width', '100%');
-                bg.css('height', document.documentElement.clientHeight + 'px');
-                bg.css('position', 'absolute');
-                bg.css('left', 0);
-                bg.css('top', 0);
-                bg.css('z-index', 9999);
-                bg.click(() => this.deactivateMenu());
-                bg.show();
-                this.obscureBackground = bg;
-            }
-            let container = $('<div></div>');
-            container.addClass('wmk-webmenudrop');
-            container.css('position', 'absolute');
-            container.css('left', `${menuX}px`);
-            container.css('top', `${menuY}px`);
-            for (let subitem of item.submenu) {
-                let dom = $('<div></div>').appendTo(container);
-                dom.addClass('wmk-webmenuitem');
-                dom.text(subitem.label ? subitem.label : '?');
-                dom.click((event) => { this.activateMenu(dom, subitem); event.preventDefault(); });
-                dom.dblclick((event) => event.preventDefault());
-            }
-            this.obscureBackground.append(container);
-        }
-        deactivateMenu() {
-            this.obscureBackground.remove();
-            this.obscureBackground = null;
-        }
-    }
-    WebMolKit.WebMenu = WebMenu;
-})(WebMolKit || (WebMolKit = {}));
-var WebMolKit;
-(function (WebMolKit) {
+    const CACHE_SIZE = 1000;
     class FitRotatedEllipse {
         constructor(px, py, margin) {
             this.px = px;
             this.py = py;
             this.margin = margin;
             this.theta = 0;
+            this.fullySymmetric = false;
             this.stop = false;
+            this.hashKey = JSON.stringify([this.px, this.py]);
         }
         calculate() {
+            if (this.lookupCache())
+                return;
             this.setupParameters();
-            if (stop)
+            if (this.stop)
                 return;
             this.currentScore = this.calculateScore(this.cx, this.cy, this.rw, this.rh, this.theta);
             this.coarseDiscovery();
             this.fineImprovement();
+            if (Math.abs(this.theta) < 1 * WebMolKit.DEGRAD)
+                this.theta = 0;
+            this.saveCache();
         }
         getSpline() {
             return WebMolKit.GeomUtil.createBezierEllipse(this.cx, this.cy, this.rw, this.rh, this.theta);
+        }
+        lookupCache() {
+            let hashKey = this.hashKey;
+            let look = FitRotatedEllipse.cacheMap.get(hashKey);
+            if (look) {
+                this.cx = look.cx;
+                this.cy = look.cy;
+                this.rw = look.rw;
+                this.rh = look.rh;
+                this.theta = look.theta;
+                const { cacheVal } = FitRotatedEllipse;
+                for (let n = cacheVal.length - 1; n >= 0; n--)
+                    if (cacheVal[n].hashKey == hashKey) {
+                        if (n < cacheVal.length - 1) {
+                            cacheVal.push(cacheVal[n]);
+                            cacheVal.splice(n, 1);
+                        }
+                        break;
+                    }
+                return true;
+            }
+            return false;
+        }
+        saveCache() {
+            let hashKey = this.hashKey;
+            const { cacheVal, cacheMap } = FitRotatedEllipse;
+            cacheVal.push(this);
+            cacheMap.set(hashKey, this);
+            while (cacheVal.length > CACHE_SIZE) {
+                cacheMap.delete(cacheVal[0].hashKey);
+                cacheVal.splice(0);
+            }
         }
         setupParameters() {
             const { px, py } = this, psz = px.length;
@@ -30172,6 +29593,25 @@ var WebMolKit;
             this.px = WebMolKit.Vec.idxGet(px, order);
             this.py = WebMolKit.Vec.idxGet(py, order);
             this.rw = this.rh = 1;
+            this.fullySymmetric = true;
+            const THRESHOLD = 0.001;
+            const canFindPoint = (x, y, avoid) => {
+                for (let n = 0; n < psz; n++)
+                    if (n != avoid) {
+                        if (Math.abs(px[n] - x) < THRESHOLD && Math.abs(py[n] - y) < THRESHOLD)
+                            return true;
+                    }
+                return false;
+            };
+            for (let n = 0; n < psz; n++) {
+                let dx = px[n] - this.cx, dy = py[n] - this.cy;
+                if (Math.abs(dx) < THRESHOLD || Math.abs(dy) < THRESHOLD)
+                    continue;
+                if (!canFindPoint(this.cx - dx, py[n], n) && !canFindPoint(px[n], this.cy - dy, n)) {
+                    this.fullySymmetric = false;
+                    break;
+                }
+            }
         }
         coarseDiscovery() {
             const { margin } = this, psz = this.px.length;
@@ -30186,7 +29626,7 @@ var WebMolKit;
                 { dx: 0, dy: 0, dw: 0, dh: -1 },
                 { dx: 0, dy: 0, dw: 0, dh: 1 },
             ];
-            const MULTI_THETA = WebMolKit.Vec.mul([0, -5, 5, -10, 10, -15, 15, -20, 20, -25, 25, -30, 30, -35, 35, -40, 40, -45, 45], WebMolKit.DEGRAD);
+            const DELTA_THETA = WebMolKit.Vec.mul([0, -5, 5, -10, 10, -15, 15, -20, 20, -25, 25, -30, 30, -35, 35, -40, 40, -45, 45], WebMolKit.DEGRAD);
             for (let sanity = 0; sanity < 1000; sanity++) {
                 let anything = false;
                 let bestScore = this.currentScore;
@@ -30196,7 +29636,7 @@ var WebMolKit;
                     let newCY = this.cy + delta.dy * deltaD;
                     let newRW = this.rw + delta.dw * deltaR;
                     let newRH = this.rh + delta.dh * deltaR;
-                    for (let newTheta of MULTI_THETA) {
+                    for (let newTheta of DELTA_THETA) {
                         let newScore = this.calculateScore(newCX, newCY, newRW, newRH, newTheta);
                         if (newScore > bestScore && !WebMolKit.fltEqual(newScore, bestScore)) {
                             anything = true;
@@ -30296,9 +29736,13 @@ var WebMolKit;
             let proxSum = 0;
             for (let dsq of closestDSQ)
                 proxSum += 1.0 / (1 + Math.sqrt(dsq));
+            if (this.fullySymmetric)
+                proxSum -= Math.abs(theta);
             return rw * rh + proxSum;
         }
     }
+    FitRotatedEllipse.cacheVal = [];
+    FitRotatedEllipse.cacheMap = new Map();
     WebMolKit.FitRotatedEllipse = FitRotatedEllipse;
 })(WebMolKit || (WebMolKit = {}));
 var WebMolKit;

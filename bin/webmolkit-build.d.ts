@@ -1,4 +1,3 @@
-/// <reference path="../src/decl/jquery/index.d.ts" />
 declare namespace WebMolKit {
     interface AspectTextRendering {
         name: string;
@@ -1647,9 +1646,8 @@ declare namespace WebMolKit {
     function nodeText(node: Node): string;
     function isDef(v: any): boolean;
     function notDef(v: any): boolean;
-    function eventCoords(event: MouseEvent | Touch | JQueryMouseEventObject, container: any): number[];
-    function setBoundaryPixels(dom: JQuery | DOM, x: number, y: number, w: number, h: number): void;
-    function getBoundaryPixels(dom: JQuery): [number, number, number, number];
+    function eventCoords(event: MouseEvent | Touch, container: any): number[];
+    function setBoundaryPixels(dom: DOM, x: number, y: number, w: number, h: number): void;
     function getBoundaryPixelsDOM(dom: DOM): [number, number, number, number];
     function getOffsetPixelsDOM(dom: DOM): [number, number, number, number];
     function norm_xy(dx: number, dy: number): number;
@@ -1951,13 +1949,6 @@ declare namespace WebMolKit {
         protected domTitleButtons: DOM;
         protected domBody: DOM;
         protected domClose: DOM;
-        protected get obscureBackground(): JQuery;
-        protected get obscureForeground(): JQuery;
-        protected get panelBoundary(): JQuery;
-        protected get titleDiv(): JQuery;
-        protected get titleButtons(): JQuery;
-        protected get bodyDiv(): JQuery;
-        protected get btnClose(): JQuery;
         callbackClose: (source?: Dialog) => void;
         callbackShown: (source?: Dialog) => void;
         constructor(parent?: any);
@@ -1966,8 +1957,6 @@ declare namespace WebMolKit {
         open(): void;
         close(): void;
         bump(): void;
-        body(): JQuery;
-        buttons(): JQuery;
         bodyDOM(): DOM;
         buttonsDOM(): DOM;
         protected populate(): void;
@@ -1997,54 +1986,6 @@ declare namespace WebMolKit {
         actionPaste(): void;
         actionUndo(): void;
         actionRedo(): void;
-    }
-}
-declare namespace WebMolKit {
-    class MapReaction extends Dialog {
-        private btnClear;
-        private btnSave;
-        callbackSave: (source?: MapReaction) => void;
-        private mol1;
-        private mol2;
-        private policy;
-        private layout1;
-        private layout2;
-        private box1;
-        private box2;
-        private boxArrow;
-        private padding;
-        private scale;
-        private offsetX1;
-        private offsetY1;
-        private offsetX2;
-        private offsetY2;
-        private canvasW;
-        private canvasH;
-        private canvas;
-        private drawnMols;
-        private highlighted;
-        private pressed;
-        private dragToX;
-        private dragToY;
-        constructor(mol1: Molecule, mol2: Molecule);
-        getMolecule1(): Molecule;
-        getMolecule2(): Molecule;
-        protected populate(): void;
-        private setupPanel;
-        private redrawCanvas;
-        private drawHighlights;
-        private pickAtom;
-        private getAtomPos;
-        private compatibilityMask;
-        private connectAtoms;
-        private autoConnect;
-        private clearAllMappings;
-        private clearMapping;
-        private mouseDown;
-        private mouseUp;
-        private mouseEnter;
-        private mouseLeave;
-        private mouseMove;
     }
 }
 declare namespace WebMolKit {
@@ -2713,10 +2654,9 @@ declare namespace WebMolKit {
     class Widget {
         protected tagType: string;
         private domContent;
-        get content(): JQuery;
         get contentDOM(): DOM;
         constructor();
-        render(parent: DOM | Element | JQuery): void;
+        render(parent: DOM | Element): void;
         remove(): void;
         addTooltip(bodyHTML: string, titleHTML?: string): void;
         grabFocus(): void;
@@ -3569,34 +3509,6 @@ declare namespace WebMolKit {
     }
 }
 declare namespace WebMolKit {
-    class CircleButton extends Widget {
-        private icon;
-        private state;
-        private isHighlight;
-        private isPressed;
-        private normalBackgr;
-        private selectedBackgr;
-        private pressedBackgr;
-        private disabledBackgr;
-        private ringProgress;
-        private thinBorder;
-        private thickBorder;
-        private svg;
-        private progressFraction;
-        callbackAction: (source?: CircleButton) => void;
-        constructor(icon: string);
-        render(parent: any): void;
-        setProgress(fraction: number): void;
-        clearProgress(): void;
-        private updateLayers;
-        private mouseEnter;
-        private mouseLeave;
-        private mouseDown;
-        private mouseUp;
-        private mouseClicked;
-    }
-}
-declare namespace WebMolKit {
     class ClipboardProxyHandler {
         copyEvent(andCut: boolean, proxy: ClipboardProxy): boolean;
         pasteEvent(proxy: ClipboardProxy): boolean;
@@ -3713,11 +3625,11 @@ declare namespace WebMolKit {
     }
     class MenuProxy {
         hasContextMenu(): boolean;
-        openContextMenu(menuItems: MenuProxyContext[], event: JQueryMouseEventObject | MouseEvent): void;
+        openContextMenu(menuItems: MenuProxyContext[], event: MouseEvent): void;
     }
     class MenuProxyWeb extends MenuProxy {
         hasContextMenu(): boolean;
-        openContextMenu(menuItems: MenuProxyContext[], event: JQueryMouseEventObject | MouseEvent): void;
+        openContextMenu(menuItems: MenuProxyContext[], event: MouseEvent): void;
     }
 }
 declare namespace WebMolKit {
@@ -3751,10 +3663,6 @@ declare namespace WebMolKit {
         protected domObscureForeground: DOM;
         protected domPanelBoundary: DOM;
         protected domBody: DOM;
-        protected get obscureBackground(): JQuery;
-        protected get obscureForeground(): JQuery;
-        protected get panelBoundary(): JQuery;
-        protected get bodyDiv(): JQuery;
         popupBackground: string;
         callbackClose: (source?: Popup) => void;
         callbackPopulate: (source?: Popup) => void;
@@ -3763,7 +3671,6 @@ declare namespace WebMolKit {
         open(): void;
         close(): void;
         bump(): void;
-        body(): JQuery;
         bodyDOM(): DOM;
         protected populate(): void;
         private positionAndShow;
@@ -3782,7 +3689,6 @@ declare namespace WebMolKit {
         onSelect(callback: (idx: number, source?: TabBar) => void): void;
         getSelectedIndex(): number;
         getSelectedValue(): string;
-        getPanel(idxOrName: number | string): JQuery;
         getPanelDOM(idxOrName: number | string): DOM;
         render(parent: any): void;
         clickButton(idx: number): void;
@@ -3811,37 +3717,28 @@ declare namespace WebMolKit {
     }
 }
 declare namespace WebMolKit {
-    interface WebMenuItem {
-        label: string;
-        type?: string;
-        click?: () => void;
-        submenu?: WebMenuItem[];
-    }
-    class WebMenu extends Widget {
-        private barItems;
-        private topItems;
-        private obscureBackground;
-        constructor(barItems: WebMenuItem[]);
-        render(parent: any): void;
-        private activateMenu;
-        private deactivateMenu;
-    }
 }
 declare namespace WebMolKit {
     class FitRotatedEllipse {
         px: number[];
         py: number[];
         margin: number;
+        private static cacheVal;
+        private static cacheMap;
         cx: number;
         cy: number;
         rw: number;
         rh: number;
         theta: number;
+        private fullySymmetric;
         private stop;
         private currentScore;
+        private hashKey;
         constructor(px: number[], py: number[], margin: number);
         calculate(): void;
         getSpline(): Spline;
+        private lookupCache;
+        private saveCache;
         private setupParameters;
         private coarseDiscovery;
         private fineImprovement;

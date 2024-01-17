@@ -23,16 +23,13 @@ export class Widget
 	//public content:JQuery = null;
 
 	private domContent:DOM = null;
-	public get content():JQuery {return $(this.domContent.el as HTMLElement);}
 	public get contentDOM():DOM {return this.domContent;}
 
 	constructor() {}
 
 	// create the underlying structure; the parent parameter must be jQuery- or DOM-compatible
-	public render(parent:DOM | Element | JQuery):void
+	public render(parent:DOM | Element):void
 	{
-		if ((parent as JQuery).jquery) parent = (parent as JQuery)[0];
-
 		let tag = this.tagType;
 		this.domContent = dom(`<${tag}/>`).appendTo(parent as (DOM | Element));
 	}
@@ -47,7 +44,7 @@ export class Widget
 	// convenience function: attaches a tooltip to the main content element, after rendering
 	public addTooltip(bodyHTML:string, titleHTML?:string):void
 	{
-		addTooltip(this.content, bodyHTML, titleHTML);
+		addTooltip(this.contentDOM, bodyHTML, titleHTML);
 	}
 
 	// convenience wrapper

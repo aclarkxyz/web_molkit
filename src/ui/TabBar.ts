@@ -52,11 +52,6 @@ export class TabBar extends Widget
 	}
 
 	// return the panel: each of these needs to be individually filled
-	public getPanel(idxOrName:number | string):JQuery
-	{
-		let dom = this.getPanelDOM(idxOrName);
-		return dom ? $(dom.el as HTMLElement) : null;
-	}
 	public getPanelDOM(idxOrName:number | string):DOM
 	{
 		let idx = typeof idxOrName == 'number' ? idxOrName as number : this.options.indexOf(idxOrName);

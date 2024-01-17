@@ -46,8 +46,6 @@ export function addTooltip(parent:any, bodyHTML:string, titleHTML?:string, delay
 {
 	installInlineCSS('tooltip', CSS_TOOLTIP);
 
-	if (parent.jquery) parent = (parent as JQuery)[0];
-
 	let widget = dom(parent);
 	let tooltip = new Tooltip(widget, bodyHTML, titleHTML, delay == null ? 1000 : delay);
 
@@ -59,8 +57,6 @@ export function addTooltip(parent:any, bodyHTML:string, titleHTML?:string, delay
 export function raiseToolTip(parent:any, avoid:Box, bodyHTML:string, titleHTML?:string):void
 {
 	installInlineCSS('tooltip', CSS_TOOLTIP);
-
-	if (parent.jquery) parent = (parent as JQuery)[0];
 
 	clearTooltip();
 	new Tooltip(dom(parent), bodyHTML, titleHTML, 0).raise(avoid);

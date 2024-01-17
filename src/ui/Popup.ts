@@ -36,12 +36,6 @@ export class Popup
 	protected domPanelBoundary:DOM; // the dialog outline itself
 	protected domBody:DOM; // the main area, for content
 
-	// legacy versions for compatibility
-	protected get obscureBackground():JQuery {return $(this.domObscureBackground.el as HTMLElement);}
-	protected get obscureForeground():JQuery {return $(this.domObscureForeground.el as HTMLElement);}
-	protected get panelBoundary():JQuery {return $(this.domPanelBoundary.el as HTMLElement);}
-	protected get bodyDiv():JQuery {return $(this.domBody.el as HTMLElement);}
-
 	public popupBackground = 'white';
 	public callbackClose:(source?:Popup) => void = null;
 	public callbackPopulate:(source?:Popup) => void = null;
@@ -111,7 +105,6 @@ export class Popup
 	}
 
 	// use this to obtain the parts of the dialog box intended for modification
-	public body():JQuery {return this.bodyDiv;}
 	public bodyDOM():DOM {return this.domBody;}
 
 	// either subclass and override this, or provide the callback
