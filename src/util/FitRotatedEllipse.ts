@@ -39,7 +39,8 @@ export class FitRotatedEllipse
 	public theta = 0;
 
 	// working variables
-	private fullySymmetric = false; // true if X/Y both symmetrical, if so, forbid rotation
+	private psz:number;
+	private invpsz:number;
 	private stop = false;
 	private currentScore:number;
 	private hashKey:string;
@@ -58,12 +59,12 @@ export class FitRotatedEllipse
 		this.setupParameters();
 		if (this.stop) return;
 
-		this.currentScore = this.calculateScore(this.cx, this.cy, this.rw, this.rh, this.theta);
+		this.currentScore = this.calculateScore(this.cx, this.cy, this.rw, this.rh);
 
 		this.coarseDiscovery();
 		this.fineImprovement();
 
-		if (Math.abs(this.theta) < 1 * DEGRAD) this.theta = 0;
+		this.theta = -this.theta;
 
 		this.saveCache();
 	}
@@ -122,46 +123,67 @@ export class FitRotatedEllipse
 
 	private setupParameters():void
 	{
-		const {px, py} = this, psz = px.length;
-
-		this.cx = Vec.sum(px) / psz;
-		this.cy = Vec.sum(py) / psz;
-		let ptheta:number[] = new Array(psz);
-		for (let n = 0; n < psz; n++) ptheta[n] = Math.atan2(py[n] - this.cy, px[n] - this.cx);
-		let order = Vec.idxSort(ptheta);
-		this.px = Vec.idxGet(px, order);
-		this.py = Vec.idxGet(py, order);
-
-		this.rw = this.rh = 1;
-		// let closeDSQ = Number.POSITIVE_INFINITY;
-		// for (let n = 0; n < psz; n++) closeDSQ = Math.min(closeDSQ, norm2_xy(px[n] - this.cx, py[n] - this.cy));
-		// this.rw = this.rh = 0.1 * Math.sqrt(closeDSQ);
-
-		this.fullySymmetric = true;
-		const THRESHOLD = 0.001;
-		const canFindPoint = (x:number, y:number, avoid:number):boolean =>
+		const psz = this.psz = this.px.length;
+		const invpsz = this.invpsz = 1.0 / psz;
+		this.cx = Vec.sum(this.px) * invpsz;
+		this.cy = Vec.sum(this.py) * invpsz;
+		let ptheta:number[] = new Array(psz), pdist:number[] = new Array(psz);
+		for (let n = 0; n < psz; n++) 
 		{
-			for (let n = 0; n < psz; n++) if (n != avoid)
+			ptheta[n] = Math.atan2(this.py[n] - this.cy, this.px[n] - this.cx);
+			pdist[n] = norm_xy(this.px[n] - this.cx, this.py[n] - this.cy);
+		}
+		let order = Vec.idxSort(ptheta);
+		this.px = Vec.idxGet(this.px, order);
+		this.py = Vec.idxGet(this.py, order);
+		ptheta = Vec.idxGet(ptheta, order);
+		pdist = Vec.idxGet(pdist, order);
+		
+		let buffX:number[] = new Array(psz), buffY:number[] = new Array(psz);
+		const rotatedScore = (ptheta:number[], pdist:number[], rtheta:number):number =>
+		{
+			for (let n = 0; n < psz; n++) 
 			{
-				if (Math.abs(px[n] - x) < THRESHOLD && Math.abs(py[n] - y) < THRESHOLD) return true;
+				buffX[n] = pdist[n] * Math.cos(ptheta[n] + rtheta);
+				buffY[n] = pdist[n] * Math.sin(ptheta[n] + rtheta);
 			}
-			return false;
+			let scx = Vec.sum(buffX) * invpsz, scy = Vec.sum(buffY) * invpsz;
+			let devx = 0, devy = 0;
+			for (let n = 0; n < psz; n++) 
+			{
+				devx += sqr(buffX[n] - scx);
+				devy += Math.abs(buffY[n] - scy);
+			}
+			return devy / (1 + devx);
 		};
+
+		let bestScore = Number.POSITIVE_INFINITY;
+		for (let n = 0; n < 360; n++)
+		{
+			let th = n * DEGRAD;
+			let score = rotatedScore(ptheta, pdist, th);
+			if (score < bestScore) {this.theta = th; bestScore = score;}
+		}
+		for (let dth = -1; dth <= 1; dth += 0.05)
+		{
+			let th = this.theta + dth * DEGRAD;
+			let score = rotatedScore(ptheta, pdist, th);
+			if (score < bestScore) {this.theta = th; bestScore = score;}
+		}
 		for (let n = 0; n < psz; n++)
 		{
-			let dx = px[n] - this.cx, dy = py[n] - this.cy;
-			if (Math.abs(dx) < THRESHOLD || Math.abs(dy) < THRESHOLD) continue;
-			if (!canFindPoint(this.cx - dx, py[n], n) && !canFindPoint(px[n], this.cy - dy, n))
-			{
-				this.fullySymmetric = false;
-				break;
-			}
+			this.px[n] = this.cx + pdist[n] * Math.cos(ptheta[n] + this.theta);
+			this.py[n] = this.cy + pdist[n] * Math.sin(ptheta[n] + this.theta);
 		}
+		this.cx = Vec.sum(this.px) * invpsz;
+		this.cy = Vec.sum(this.py) * invpsz;
+		
+		this.rw = this.rh = 1;
 	}
 
 	private coarseDiscovery():void
 	{
-		const {margin} = this, psz = this.px.length;
+		const {margin} = this;
 
 		let deltaD = 0.1 * margin, deltaR = 0.5 * deltaD;
 		const DELTA_OPTIONS:{dx:number, dy:number, dw:number, dh:number}[] =
@@ -175,13 +197,12 @@ export class FitRotatedEllipse
 			{dx:0, dy:0, dw:0, dh:-1},
 			{dx:0, dy:0, dw:0, dh:1},
 		];
-		const DELTA_THETA = Vec.mul([0, -5, 5, -10, 10, -15, 15, -20, 20, -25, 25, -30, 30, -35, 35, -40, 40, -45, 45], DEGRAD);
 
 		for (let sanity = 0; sanity < 1000; sanity++)
 		{
 			let anything = false;
 			let bestScore = this.currentScore;
-			let bestCX = this.cx, bestCY = this.cy, bestRW = this.rw, bestRH = this.rh, bestTheta = this.theta;
+			let bestCX = this.cx, bestCY = this.cy, bestRW = this.rw, bestRH = this.rh;
 
 			for (let delta of DELTA_OPTIONS)
 			{
@@ -190,19 +211,15 @@ export class FitRotatedEllipse
 				let newRW = this.rw + delta.dw * deltaR;
 				let newRH = this.rh + delta.dh * deltaR;
 
-				for (let newTheta of DELTA_THETA)
+				let newScore = this.calculateScore(newCX, newCY, newRW, newRH);
+				if (newScore > bestScore && !fltEqual(newScore, bestScore))
 				{
-					let newScore = this.calculateScore(newCX, newCY, newRW, newRH, newTheta);
-					if (newScore > bestScore && !fltEqual(newScore, bestScore))
-					{
-						anything = true;
-						bestScore = newScore;
-						bestCX = newCX;
-						bestCY = newCY;
-						bestRW = newRW;
-						bestRH = newRH;
-						bestTheta = newTheta;
-					}
+					anything = true;
+					bestScore = newScore;
+					bestCX = newCX;
+					bestCY = newCY;
+					bestRW = newRW;
+					bestRH = newRH;
 				}
 			}
 
@@ -213,22 +230,21 @@ export class FitRotatedEllipse
 			this.cy = bestCY;
 			this.rw = bestRW;
 			this.rh = bestRH;
-			this.theta = bestTheta;
 		}
 	}
 
 	private fineImprovement():void
 	{
-		const {margin} = this, psz = this.px.length;
+		const {margin} = this;
 
-		let deltaD = 0.1 * margin, deltaR = 0.5 * deltaD, deltaT = 1 * DEGRAD;
+		let deltaD = 0.1 * margin, deltaR = 0.5 * deltaD;
 		const REDUCTION = 2.0 / 3;
 		const MAX_REDUCTIONS = 20;
 		for (let reduc = 0; reduc < MAX_REDUCTIONS; reduc++)
 		{
 			let anything = false;
 			let bestScore = this.currentScore;
-			let bestCX = this.cx, bestCY = this.cy, bestRW = this.rw, bestRH = this.rh, bestTheta = this.theta;
+			let bestCX = this.cx, bestCY = this.cy, bestRW = this.rw, bestRH = this.rh;
 
 			for (let dCX = -1; dCX <= 1; dCX++)
 			{
@@ -242,21 +258,16 @@ export class FitRotatedEllipse
 						for (let dRH = -1; dRH <= 1; dRH++)
 						{
 							let newRH = this.rh + dRH * deltaR;
-							for (let dT = -1; dT <= 1; dT++)
+							if (dCX == 0 && dCY == 0 && dRW == 0 && dRH == 0) continue;
+							let newScore = this.calculateScore(newCX, newCY, newRW, newRH);
+							if (newScore > bestScore && !fltEqual(newScore, bestScore))
 							{
-								if (dCX == 0 && dCY == 0 && dRW == 0 && dRH == 0 && dT == 0) continue;
-								let newTheta = this.theta + dT * deltaT;
-								let newScore = this.calculateScore(newCX, newCY, newRW, newRH, newTheta);
-								if (newScore > bestScore && !fltEqual(newScore, bestScore))
-								{
-									anything = true;
-									bestScore = newScore;
-									bestCX = newCX;
-									bestCY = newCY;
-									bestRW = newRW;
-									bestRH = newRH;
-									bestTheta = newTheta;
-								}
+								anything = true;
+								bestScore = newScore;
+								bestCX = newCX;
+								bestCY = newCY;
+								bestRW = newRW;
+								bestRH = newRH;
 							}
 						}
 					}
@@ -270,26 +281,24 @@ export class FitRotatedEllipse
 				this.cy = bestCY;
 				this.rw = bestRW;
 				this.rh = bestRH;
-				this.theta = bestTheta;
 			}
 			else
 			{
 				reduc++;
 				deltaD *= REDUCTION;
 				deltaR *= REDUCTION;
-				deltaT *= REDUCTION;
 			}
 		}
 	}
 
 	// calculate a score for a given state; higher is better, zero is unacceptable
-	private calculateScore(cx:number, cy:number, rw:number, rh:number, theta:number):number
+	private calculateScore(cx:number, cy:number, rw:number, rh:number,):number
 	{
 		const {px, py, margin} = this, psz = px.length;
 
 		// radiate out a series of "spokes" that make up points of the rotated ellipse; if any of these crosses an outline segment
 		const nseg = 24;
-		let cosTheta = Math.cos(theta), sinTheta = Math.sin(theta);
+		let cosTheta = 1, sinTheta = 0;
 		let incrAlpha = TWOPI / nseg;
 
 		let closestDSQ = Vec.numberArray(Number.POSITIVE_INFINITY, psz);
@@ -316,7 +325,6 @@ export class FitRotatedEllipse
 
 		let proxSum = 0;
 		for (let dsq of closestDSQ) proxSum += 1.0 / (1 + Math.sqrt(dsq));
-		if (this.fullySymmetric) proxSum -= Math.abs(theta);
 
 		// it isn't violated, so bigger is better
 		return rw * rh + proxSum;
