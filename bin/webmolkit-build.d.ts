@@ -3730,7 +3730,8 @@ declare namespace WebMolKit {
         rw: number;
         rh: number;
         theta: number;
-        private fullySymmetric;
+        private psz;
+        private invpsz;
         private stop;
         private currentScore;
         private hashKey;
