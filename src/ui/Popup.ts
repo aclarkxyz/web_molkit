@@ -59,19 +59,19 @@ export class Popup
 
 		let body = dom(document.documentElement);
 
-		let zindex = 21000;
+		//let zindex = 21000;
 
 		let bg = this.domObscureBackground = dom('<div/>').appendTo(body);
-		bg.css({'position': 'fixed', 'z-index': zindex});
+		bg.css({'position': 'fixed'/*, 'z-index': zindex*/});
 		bg.css({'left': '0', 'right': '0', 'top': '0', 'bottom': '0'});
 		bg.css({'background-color': 'black', 'opacity': 0.2});
 
 		let fg = this.domObscureForeground = dom('<div/>').appendTo(body);
-		fg.css({'position': 'fixed', 'z-index': zindex + 1});
+		fg.css({'position': 'fixed'/*, 'z-index': zindex + 1*/});
 		fg.css({'left': '0', 'right': '0', 'top': '0', 'bottom': '0'});
 		fg.onClick(() => this.close());
 
-		let pb = this.domPanelBoundary = dom('<div class="wmk-popup"/>').appendTo(fg);
+		let pb = this.domPanelBoundary = dom('<div class="wmk-popup"/>').appendTo(fg).css({'visibility': 'hidden'});
 		pb.onClick((event:MouseEvent) => event.stopPropagation()); // don't let the click percolate upward to the close event
 		pb.css({'background-color': this.popupBackground, 'border': '1px solid black'});
 		pb.css({'position': 'absolute', 'overflow': 'auto'});
@@ -158,11 +158,10 @@ export class Popup
 			else if (popW < wx2) posX = wx2 - popW;
 
 			setBoundaryPixels(pb, posX, posY, popW, popH);
+			pb.css({'visibility': 'visible'});
 		};
 
-		//setPosition();
-		//pb.show();
-		window.setTimeout(() => setPosition());
+		setTimeout(() => setPosition());
 	}
 }
 
