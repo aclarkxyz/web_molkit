@@ -29162,7 +29162,7 @@ var WebMolKit;
         }
         open() {
             WebMolKit.clearTooltip();
-            let body = WebMolKit.dom(document.documentElement);
+            let body = WebMolKit.dom(document.body);
             let bg = this.domObscureBackground = WebMolKit.dom('<div/>').appendTo(body);
             bg.css({ 'position': 'fixed' });
             bg.css({ 'left': '0', 'right': '0', 'top': '0', 'bottom': '0' });

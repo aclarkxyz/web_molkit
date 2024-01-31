@@ -57,7 +57,7 @@ export class Popup
 	{
 		clearTooltip();
 
-		let body = dom(document.documentElement);
+		let body = dom(document.body);
 
 		//let zindex = 21000;
 
