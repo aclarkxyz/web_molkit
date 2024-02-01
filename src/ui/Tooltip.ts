@@ -53,6 +53,19 @@ export function addTooltip(parent:any, bodyHTML:string, titleHTML?:string, delay
 	widget.onMouseLeave(() => tooltip.stop());
 }
 
+// variation of above where the body content is created by a callback function: use when content is expensive
+export function addTooltipPromise(parent:any, bodyCallback:() => Promise<string>, titleHTML?:string, delay?:number):void
+{
+	installInlineCSS('tooltip', CSS_TOOLTIP);
+
+	let widget = dom(parent);
+	let tooltip = new Tooltip(widget, null, titleHTML, delay == null ? 1000 : delay);
+	tooltip.bodyCallback = bodyCallback;
+
+	widget.onMouseEnter(() => tooltip.start());
+	widget.onMouseLeave(() => tooltip.stop());
+}
+
 // immediately raise a tooltip, with a position relative to a given widget
 export function raiseToolTip(parent:any, avoid:Box, bodyHTML:string, titleHTML?:string):void
 {
@@ -72,6 +85,8 @@ export function clearTooltip():void
 
 export class Tooltip
 {
+	public bodyCallback:() => Promise<string>;
+
 	private watermark:number;
 	private domTooltip:DOM = null;
 
@@ -84,10 +99,15 @@ export class Tooltip
 	{
 		this.watermark = ++globalPopWatermark;
 
-		window.setTimeout(() =>
+		(async () =>
 		{
-			if (this.watermark == globalPopWatermark) this.raise();
-		}, this.delay);
+			if (this.bodyHTML == null && this.bodyCallback) this.bodyHTML = await this.bodyCallback();
+
+			window.setTimeout(() =>
+			{
+				if (this.watermark == globalPopWatermark) this.raise();
+			}, this.delay);
+		})();
 	}
 
 	// lower the tooltip, if it is still owned by this widget
