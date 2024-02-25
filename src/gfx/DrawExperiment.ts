@@ -106,12 +106,13 @@ export class DrawExperiment
 
 		//vg.drawRect(bx, by, bw, bh, 0x0000FF, 1, null);
 
+		let stoichPos:{tx?:number, th?:number, lx?:number, lw?:number} = {};
 		if (xc.leftNumer)
 		{
 			let wad1 = this.measure.measureText(xc.leftNumer, xc.fszLeft);
 			if (!xc.leftDenom)
 			{
-				vg.drawText(bx, by + 0.5 * bh, xc.leftNumer, xc.fszLeft, policy.data.foreground, TextAlign.Left | TextAlign.Middle);
+				stoichPos.tx = bx;
 				let useW = wad1[0] + ArrangeExperiment.COMP_GAP_LEFT * (wad1[1] + wad1[2]);
 				bx += useW;
 				bw -= useW;
@@ -121,13 +122,14 @@ export class DrawExperiment
 				let wad2 = this.measure.measureText(xc.leftDenom, xc.fszLeft);
 				let tw = Math.max(wad1[0], wad2[0]);
 				let x = bx + 0.5 * tw, y = by + 0.5 * bh;
-				vg.drawText(x, y, xc.leftNumer, xc.fszLeft, policy.data.foreground, TextAlign.Centre | TextAlign.Bottom);
-				vg.drawText(x, y + wad1[2], xc.leftDenom, xc.fszLeft, policy.data.foreground, TextAlign.Centre | TextAlign.Top);
-				vg.drawLine(bx, y, bx + tw, y, policy.data.foreground, this.scale * 0.03);
+				stoichPos.tx = x;
+				stoichPos.th = wad1[2];
+				stoichPos.lx = bx;
+				stoichPos.lw = tw;
 				let useW = tw + ArrangeExperiment.COMP_GAP_LEFT * (wad1[1] + wad1[2]);
 				bx += useW;
 				bw -= useW;
-			}
+			}			
 		}
 		if (xc.annot != 0)
 		{
@@ -136,6 +138,7 @@ export class DrawExperiment
 			this.drawAnnotation(xc.annot, bx + bw, by, aw, bh);
 		}
 
+		let baseY = by + 0.5 * bh;
 		if (MolUtil.notBlank(xc.mol))
 		{
 			let effects = new RenderEffects();
@@ -158,6 +161,7 @@ export class DrawExperiment
 			let arrmol = new ArrangeMolecule(xc.mol, this.layout.measure, usePolicy, effects);
 			arrmol.arrange();
 			arrmol.squeezeInto(bx, by, bw, bh, 0);
+			baseY = this.calculateMoleculeBaseline(arrmol) ?? baseY;
 
 			if (this.preDrawMolecule) this.preDrawMolecule(vg, idx, xc, arrmol);
 
@@ -167,6 +171,17 @@ export class DrawExperiment
 			if (this.postDrawMolecule) this.postDrawMolecule(vg, idx, xc, arrmol);
 
 			this.molDrawn[idx] = arrmol;
+		}
+
+		if (xc.leftNumer && !xc.leftDenom)
+		{
+			vg.drawText(stoichPos.tx, baseY, xc.leftNumer, xc.fszLeft, policy.data.foreground, TextAlign.Left | TextAlign.Middle);
+		}
+		else if (xc.leftNumer && xc.leftDenom)
+		{
+			vg.drawText(stoichPos.tx, baseY, xc.leftNumer, xc.fszLeft, policy.data.foreground, TextAlign.Centre | TextAlign.Bottom);
+			vg.drawText(stoichPos.tx, baseY + stoichPos.th, xc.leftDenom, xc.fszLeft, policy.data.foreground, TextAlign.Centre | TextAlign.Top);
+			vg.drawLine(stoichPos.lx, baseY, stoichPos.lx + stoichPos.lw, baseY, policy.data.foreground, this.scale * 0.03);
 		}
 	}
 	private drawSymbolArrow(xc:ArrangeComponent):void
@@ -270,6 +285,27 @@ export class DrawExperiment
 			y1 - oy * 0.5 * linesz
 		];
 		this.vg.drawPoly(px, py, MetaVector.NOCOLOUR, 0, colour, true);
+	}
+
+	// finds a Y-position that runs through approximately the centre of the molecule, for purposes of sub-positioning; returns null if there's nothing
+	// really meaningful
+	private calculateMoleculeBaseline(arrmol:ArrangeMolecule):number
+	{
+		let mol = arrmol.getMolecule();
+		let midY = mol.boundary().midY();
+		let ax = Number.POSITIVE_INFINITY, ay:number = null, baseY:number = null;
+		const TOLERANCE = 0.1;
+		for (let n = 1; n <= mol.numAtoms; n++)
+		{
+			let x = mol.atomX(n), y = mol.atomY(n);
+			if (Math.abs(y - midY) < TOLERANCE && x < ax) 
+			{
+				[ax, ay] = [x, y];
+				baseY = arrmol.getPoint(n - 1).oval.cy;
+			}
+		}
+
+		return baseY;
 	}
 }
 

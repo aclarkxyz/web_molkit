@@ -135,7 +135,7 @@ export class ArrangeMolecule
 			for (let ch of mol.atomElement(n)) if (!'|{}^'.includes(ch)) numsym++;
 			let plusH = mol.atomHydrogens(n) > 0 ? 1 : 0;
 			const aw = 0.5 * 0.7 * fontSize * (numsym + plusH);
-			const ah = 0.5 * fontSize * (1 + plusH);
+			const ah = 0.75 * fontSize * (1 + 0.2 * plusH);
 			const ax = mol.atomX(n), ay = mol.atomY(n);
 			minX = Math.min(minX, ax - aw);
 			maxX = Math.max(maxX, ax + aw);
