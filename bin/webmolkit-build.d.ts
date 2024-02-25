@@ -2290,6 +2290,7 @@ declare namespace WebMolKit {
         private drawSymbolPlus;
         private drawAnnotation;
         private drawArrow;
+        private calculateMoleculeBaseline;
     }
 }
 declare namespace WebMolKit {
