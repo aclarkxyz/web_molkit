@@ -3701,6 +3701,7 @@ declare namespace WebMolKit {
 }
 declare namespace WebMolKit {
     function addTooltip(parent: any, bodyHTML: string, titleHTML?: string, delay?: number): void;
+    function addTooltipPromise(parent: any, bodyCallback: () => Promise<string>, titleHTML?: string, delay?: number): void;
     function raiseToolTip(parent: any, avoid: Box, bodyHTML: string, titleHTML?: string): void;
     function clearTooltip(): void;
     class Tooltip {
@@ -3708,6 +3709,7 @@ declare namespace WebMolKit {
         private bodyHTML;
         private titleHTML;
         private delay;
+        bodyCallback: () => Promise<string>;
         private watermark;
         private domTooltip;
         constructor(widget: DOM, bodyHTML: string, titleHTML: string, delay: number);
