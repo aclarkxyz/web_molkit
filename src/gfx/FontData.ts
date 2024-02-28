@@ -723,12 +723,11 @@ export class FontData
 		if (ctx == null && this.ctxReference) return;
 		if (ctx == null)
 		{
-			/*let canvas = $('<canvas/>').appendTo(document.body);
-			this.ctxReference = (canvas[0] as HTMLCanvasElement).getContext('2d');
-			canvas.remove();*/
-			let canvas = dom('<canvas/>').appendTo(document.body);
+			/*let canvas = dom('<canvas/>').appendTo(document.body);
 			this.ctxReference = (canvas.el as HTMLCanvasElement).getContext('2d');
-			canvas.remove();
+			canvas.remove();*/
+			let canvas = new OffscreenCanvas(256, 256);
+			this.ctxReference = canvas.getContext('2d') as unknown as CanvasRenderingContext2D;
 		}
 		else this.ctxReference = ctx;
 	}

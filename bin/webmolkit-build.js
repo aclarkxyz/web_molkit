@@ -18131,9 +18131,8 @@ var WebMolKit;
             if (ctx == null && this.ctxReference)
                 return;
             if (ctx == null) {
-                let canvas = WebMolKit.dom('<canvas/>').appendTo(document.body);
-                this.ctxReference = canvas.el.getContext('2d');
-                canvas.remove();
+                let canvas = new OffscreenCanvas(256, 256);
+                this.ctxReference = canvas.getContext('2d');
             }
             else
                 this.ctxReference = ctx;
