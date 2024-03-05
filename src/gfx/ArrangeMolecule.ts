@@ -1271,7 +1271,7 @@ export class ArrangeMolecule
 		let bx1 = 0, by1 = 0, bx2 = 0, by2 = 0;
 
 		// see if either of the lines approaches too close to something and, if so, back them both off by the same extent
-		let backBothBonds = () =>
+		/*let backBothBonds = () =>
 		{
 			let ext1 = Math.min(this.backOffAtom(bfr, ax1, ay1, ax2, ay2, minDist), this.backOffAtom(bfr, bx1, by1, bx2, by2, minDist));
 			[ax1, ay1] = this.shrinkBond(ax1, ay1, ax2, ay2, ext1);
@@ -1279,7 +1279,7 @@ export class ArrangeMolecule
 			let ext2 = Math.min(this.backOffAtom(bto, ax2, ay2, ax1, ay1, minDist), this.backOffAtom(bto, bx2, by2, bx1, by1, minDist));
 			[ax2, ay2] = this.shrinkBond(ax2, ay2, ax1, ay1, ext2);
 			[bx2, by2] = this.shrinkBond(bx2, by2, bx1, by1, ext2);
-		};
+		};*/
 
 		// side==0 means that the double bond straddles the line between the two points; !=0 means that the first line (A) is like a
 		// regular single bond, while the second line is an adjunct off to one side
@@ -1289,13 +1289,13 @@ export class ArrangeMolecule
 			ax2 = x2 + 0.5 * oxy[0]; ay2 = y2 + 0.5 * oxy[1];
 			bx1 = x1 - 0.5 * oxy[0]; by1 = y1 - 0.5 * oxy[1];
 			bx2 = x2 - 0.5 * oxy[0]; by2 = y2 - 0.5 * oxy[1];
-			backBothBonds();
+			//backBothBonds();
 		}
 		else if (side > 0)
 		{
 			bx1 = x1 + oxy[0]; by1 = y1 + oxy[1];
 			bx2 = x2 + oxy[0]; by2 = y2 + oxy[1];
-			backBothBonds();
+			//backBothBonds();
 			if (nfr.length > 1 && this.points[bfr - 1].text == null) {bx1 += oxy[1]; by1 -= oxy[0];}
 			if (nto.length > 1 && this.points[bto - 1].text == null) {bx2 -= oxy[1]; by2 += oxy[0];}
 		}
@@ -1303,7 +1303,7 @@ export class ArrangeMolecule
 		{
 			bx1 = x1 - oxy[0]; by1 = y1 - oxy[1];
 			bx2 = x2 - oxy[0]; by2 = y2 - oxy[1];
-			backBothBonds();
+			//backBothBonds();
 			if (nfr.length > 1 && this.points[bfr - 1].text == null) {bx1 += oxy[1]; by1 -= oxy[0];}
 			if (nto.length > 1 && this.points[bto - 1].text == null) {bx2 -= oxy[1]; by2 += oxy[0];}
 		}
@@ -1320,6 +1320,24 @@ export class ArrangeMolecule
 				this.bumpAtomPosition(bto, 0.5 * oxy[0] * side, 0.5 * oxy[1] * side);
 			}
 		}
+
+		// see if either of the lines approaches too close to something and, if so, back them both off by the same extent
+		/*let xy:number[];
+        let ext1 = Math.min(this.backOffAtom(bfr, ax1, ay1, ax2, ay2, minDist), this.backOffAtom(bfr, bx1, by1, bx2, by2, minDist));
+		xy = this.shrinkBond(ax1, ay1, ax2, ay2, ext1); ax1 = xy[0]; ay1 = xy[1];
+		xy = this.shrinkBond(bx1, by1, bx2, by2, ext1); bx1 = xy[0]; by1 = xy[1];
+        let ext2 = Math.min(this.backOffAtom(bto, ax2, ay2, ax1, ay1, minDist), this.backOffAtom(bto, bx2, by2, bx1, by1, minDist));
+		xy = this.shrinkBond(ax2, ay2, ax1, ay1, ext2); ax2 = xy[0]; ay2 = xy[1];
+		xy = this.shrinkBond(bx2, by2, bx1, by1, ext2); bx2 = xy[0]; by2 = xy[1];*/
+		let xy:number[], ext:number;
+		ext = this.backOffAtom(bfr, ax1, ay1, ax2, ay2, minDist);
+		xy = this.shrinkBond(ax1, ay1, ax2, ay2, ext); ax1 = xy[0]; ay1 = xy[1];
+		ext = this.backOffAtom(bfr, bx1, by1, bx2, by2, minDist);
+		xy = this.shrinkBond(bx1, by1, bx2, by2, ext); bx1 = xy[0]; by1 = xy[1];
+		ext = this.backOffAtom(bto, ax2, ay2, ax1, ay1, minDist);
+		xy = this.shrinkBond(ax2, ay2, ax1, ay1, ext); ax2 = xy[0]; ay2 = xy[1];
+		ext = this.backOffAtom(bto, bx2, by2, bx1, by1, minDist);
+		xy = this.shrinkBond(bx2, by2, bx1, by1, ext); bx2 = xy[0]; by2 = xy[1];		
 
 		// if both sides are evenly balanced, want to make the double bonds intersect with their adjacent bonds
 		if (side == 0 && !noshift)
@@ -1408,7 +1426,7 @@ export class ArrangeMolecule
 
 			let extraX = font.getOutlineX(g), extraY = font.getOutlineY(g);
 			Vec.addTo(extraX, emw / SSFRACT);
-			Vec.addTo(extraY, (SSFRACT - 1) * font.ASCENT);
+			Vec.addTo(extraY, (SSFRACT - 1) * font.ASCENT * 1.30);
 			Vec.mulBy(extraX, SSFRACT);
 			Vec.mulBy(extraY, SSFRACT);
 			outlineX = outlineX.concat(extraX);
@@ -1425,7 +1443,7 @@ export class ArrangeMolecule
 		}
 
 		// transform the outline into the right position
-		let emdx = -0.5 * firstEMW, emdy = 0.5 * font.ASCENT;
+		let emdx = -0.5 * firstEMW, emdy = 0.5 * font.ASCENT * font.ASCENT_FUDGE;
 		for (let n = 0; n < outlineX.length; n++)
 		{
 			outlineX[n] = a.oval.cx + (emdx + outlineX[n]) * emscale;
@@ -1643,7 +1661,7 @@ export class ArrangeMolecule
 				outlineY = qh.hullY;
 			}
 
-			let emdx = -0.5 * emw, emdy = 0.5 * font.ASCENT;
+			let emdx = -0.5 * emw, emdy = 0.5 * font.ASCENT * font.ASCENT_FUDGE;
 			let emscale = a.fsz * font.INV_UNITS_PER_EM;
 			for (let n = 0; n < outlineX.length; n++)
 			{

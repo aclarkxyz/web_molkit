@@ -15506,14 +15506,6 @@ var WebMolKit;
             let sz = this.lineSizePix;
             let ax1 = x1, ay1 = y1, ax2 = x2, ay2 = y2;
             let bx1 = 0, by1 = 0, bx2 = 0, by2 = 0;
-            let backBothBonds = () => {
-                let ext1 = Math.min(this.backOffAtom(bfr, ax1, ay1, ax2, ay2, minDist), this.backOffAtom(bfr, bx1, by1, bx2, by2, minDist));
-                [ax1, ay1] = this.shrinkBond(ax1, ay1, ax2, ay2, ext1);
-                [bx1, by1] = this.shrinkBond(bx1, by1, bx2, by2, ext1);
-                let ext2 = Math.min(this.backOffAtom(bto, ax2, ay2, ax1, ay1, minDist), this.backOffAtom(bto, bx2, by2, bx1, by1, minDist));
-                [ax2, ay2] = this.shrinkBond(ax2, ay2, ax1, ay1, ext2);
-                [bx2, by2] = this.shrinkBond(bx2, by2, bx1, by1, ext2);
-            };
             if (side == 0) {
                 ax1 = x1 + 0.5 * oxy[0];
                 ay1 = y1 + 0.5 * oxy[1];
@@ -15523,14 +15515,12 @@ var WebMolKit;
                 by1 = y1 - 0.5 * oxy[1];
                 bx2 = x2 - 0.5 * oxy[0];
                 by2 = y2 - 0.5 * oxy[1];
-                backBothBonds();
             }
             else if (side > 0) {
                 bx1 = x1 + oxy[0];
                 by1 = y1 + oxy[1];
                 bx2 = x2 + oxy[0];
                 by2 = y2 + oxy[1];
-                backBothBonds();
                 if (nfr.length > 1 && this.points[bfr - 1].text == null) {
                     bx1 += oxy[1];
                     by1 -= oxy[0];
@@ -15545,7 +15535,6 @@ var WebMolKit;
                 by1 = y1 - oxy[1];
                 bx2 = x2 - oxy[0];
                 by2 = y2 - oxy[1];
-                backBothBonds();
                 if (nfr.length > 1 && this.points[bfr - 1].text == null) {
                     bx1 += oxy[1];
                     by1 -= oxy[0];
@@ -15563,6 +15552,23 @@ var WebMolKit;
                     this.bumpAtomPosition(bto, 0.5 * oxy[0] * side, 0.5 * oxy[1] * side);
                 }
             }
+            let xy, ext;
+            ext = this.backOffAtom(bfr, ax1, ay1, ax2, ay2, minDist);
+            xy = this.shrinkBond(ax1, ay1, ax2, ay2, ext);
+            ax1 = xy[0];
+            ay1 = xy[1];
+            ext = this.backOffAtom(bfr, bx1, by1, bx2, by2, minDist);
+            xy = this.shrinkBond(bx1, by1, bx2, by2, ext);
+            bx1 = xy[0];
+            by1 = xy[1];
+            ext = this.backOffAtom(bto, ax2, ay2, ax1, ay1, minDist);
+            xy = this.shrinkBond(ax2, ay2, ax1, ay1, ext);
+            ax2 = xy[0];
+            ay2 = xy[1];
+            ext = this.backOffAtom(bto, bx2, by2, bx1, by1, minDist);
+            xy = this.shrinkBond(bx2, by2, bx1, by1, ext);
+            bx2 = xy[0];
+            by2 = xy[1];
             if (side == 0 && !noshift) {
                 let xy = null;
                 if (this.points[bfr - 1].text == null && !this.mol.bondInRing(idx)) {
@@ -15640,7 +15646,7 @@ var WebMolKit;
                 }
                 let extraX = font.getOutlineX(g), extraY = font.getOutlineY(g);
                 WebMolKit.Vec.addTo(extraX, emw / SSFRACT);
-                WebMolKit.Vec.addTo(extraY, (SSFRACT - 1) * font.ASCENT);
+                WebMolKit.Vec.addTo(extraY, (SSFRACT - 1) * font.ASCENT * 1.30);
                 WebMolKit.Vec.mulBy(extraX, SSFRACT);
                 WebMolKit.Vec.mulBy(extraY, SSFRACT);
                 outlineX = outlineX.concat(extraX);
@@ -15652,7 +15658,7 @@ var WebMolKit;
                 outlineX = qh.hullX;
                 outlineY = qh.hullY;
             }
-            let emdx = -0.5 * firstEMW, emdy = 0.5 * font.ASCENT;
+            let emdx = -0.5 * firstEMW, emdy = 0.5 * font.ASCENT * font.ASCENT_FUDGE;
             for (let n = 0; n < outlineX.length; n++) {
                 outlineX[n] = a.oval.cx + (emdx + outlineX[n]) * emscale;
                 outlineY[n] = a.oval.cy + (emdy - outlineY[n]) * emscale * this.ymul;
@@ -15834,7 +15840,7 @@ var WebMolKit;
                     outlineX = qh.hullX;
                     outlineY = qh.hullY;
                 }
-                let emdx = -0.5 * emw, emdy = 0.5 * font.ASCENT;
+                let emdx = -0.5 * emw, emdy = 0.5 * font.ASCENT * font.ASCENT_FUDGE;
                 let emscale = a.fsz * font.INV_UNITS_PER_EM;
                 for (let n = 0; n < outlineX.length; n++) {
                     outlineX[n] = a.oval.cx + (emdx + outlineX[n]) * emscale;
