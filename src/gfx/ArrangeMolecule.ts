@@ -1074,8 +1074,8 @@ export class ArrangeMolecule
 		if (x == fx && y == fy) return 1; // can happen when really small
 
 		let dx = x - fx, dy = y - fy, dist = norm_xy(dx, dy), inv = 1.0 / dist;
-		const BUMP = 0.1 * this.measure.scale();
-		let xbump = x + 2 * BUMP * dx * inv, ybump = y + 2 * BUMP * dy * inv;
+		const bump = 0.1 * this.measure.scale();
+		let xbump = x + 2 * bump * dx * inv, ybump = y + 2 * bump * dy * inv;
 
 		let ext = dist;
 		let active = false;
@@ -1098,7 +1098,7 @@ export class ArrangeMolecule
 
 		if (active)
 		{
-			ext = Math.max(minDist, ext - BUMP);
+			ext = Math.max(minDist, ext - bump);
 			return ext / dist;
 		}
 		else return 1;
@@ -1270,17 +1270,6 @@ export class ArrangeMolecule
 		let ax1 = x1, ay1 = y1, ax2 = x2, ay2 = y2;
 		let bx1 = 0, by1 = 0, bx2 = 0, by2 = 0;
 
-		// see if either of the lines approaches too close to something and, if so, back them both off by the same extent
-		/*let backBothBonds = () =>
-		{
-			let ext1 = Math.min(this.backOffAtom(bfr, ax1, ay1, ax2, ay2, minDist), this.backOffAtom(bfr, bx1, by1, bx2, by2, minDist));
-			[ax1, ay1] = this.shrinkBond(ax1, ay1, ax2, ay2, ext1);
-			[bx1, by1] = this.shrinkBond(bx1, by1, bx2, by2, ext1);
-			let ext2 = Math.min(this.backOffAtom(bto, ax2, ay2, ax1, ay1, minDist), this.backOffAtom(bto, bx2, by2, bx1, by1, minDist));
-			[ax2, ay2] = this.shrinkBond(ax2, ay2, ax1, ay1, ext2);
-			[bx2, by2] = this.shrinkBond(bx2, by2, bx1, by1, ext2);
-		};*/
-
 		// side==0 means that the double bond straddles the line between the two points; !=0 means that the first line (A) is like a
 		// regular single bond, while the second line is an adjunct off to one side
 		if (side == 0)
@@ -1289,13 +1278,11 @@ export class ArrangeMolecule
 			ax2 = x2 + 0.5 * oxy[0]; ay2 = y2 + 0.5 * oxy[1];
 			bx1 = x1 - 0.5 * oxy[0]; by1 = y1 - 0.5 * oxy[1];
 			bx2 = x2 - 0.5 * oxy[0]; by2 = y2 - 0.5 * oxy[1];
-			//backBothBonds();
 		}
 		else if (side > 0)
 		{
 			bx1 = x1 + oxy[0]; by1 = y1 + oxy[1];
 			bx2 = x2 + oxy[0]; by2 = y2 + oxy[1];
-			//backBothBonds();
 			if (nfr.length > 1 && this.points[bfr - 1].text == null) {bx1 += oxy[1]; by1 -= oxy[0];}
 			if (nto.length > 1 && this.points[bto - 1].text == null) {bx2 -= oxy[1]; by2 += oxy[0];}
 		}
@@ -1303,7 +1290,6 @@ export class ArrangeMolecule
 		{
 			bx1 = x1 - oxy[0]; by1 = y1 - oxy[1];
 			bx2 = x2 - oxy[0]; by2 = y2 - oxy[1];
-			//backBothBonds();
 			if (nfr.length > 1 && this.points[bfr - 1].text == null) {bx1 += oxy[1]; by1 -= oxy[0];}
 			if (nto.length > 1 && this.points[bto - 1].text == null) {bx2 -= oxy[1]; by2 += oxy[0];}
 		}
@@ -1322,22 +1308,15 @@ export class ArrangeMolecule
 		}
 
 		// see if either of the lines approaches too close to something and, if so, back them both off by the same extent
-		/*let xy:number[];
-        let ext1 = Math.min(this.backOffAtom(bfr, ax1, ay1, ax2, ay2, minDist), this.backOffAtom(bfr, bx1, by1, bx2, by2, minDist));
-		xy = this.shrinkBond(ax1, ay1, ax2, ay2, ext1); ax1 = xy[0]; ay1 = xy[1];
-		xy = this.shrinkBond(bx1, by1, bx2, by2, ext1); bx1 = xy[0]; by1 = xy[1];
-        let ext2 = Math.min(this.backOffAtom(bto, ax2, ay2, ax1, ay1, minDist), this.backOffAtom(bto, bx2, by2, bx1, by1, minDist));
-		xy = this.shrinkBond(ax2, ay2, ax1, ay1, ext2); ax2 = xy[0]; ay2 = xy[1];
-		xy = this.shrinkBond(bx2, by2, bx1, by1, ext2); bx2 = xy[0]; by2 = xy[1];*/
-		let xy:number[], ext:number;
+		let ext:number;
 		ext = this.backOffAtom(bfr, ax1, ay1, ax2, ay2, minDist);
-		xy = this.shrinkBond(ax1, ay1, ax2, ay2, ext); ax1 = xy[0]; ay1 = xy[1];
+		if (ext < 1) {let [dx, dy] = [(1 - ext) * (ax1 - ax2), (1 - ext) * (ay1 - ay2)]; ax1 -= dx; ay1 -= dy; bx1 -= dx; by1 -= dy;}
 		ext = this.backOffAtom(bfr, bx1, by1, bx2, by2, minDist);
-		xy = this.shrinkBond(bx1, by1, bx2, by2, ext); bx1 = xy[0]; by1 = xy[1];
+		if (ext < 1) {let [dx, dy] = [(1 - ext) * (bx1 - bx2), (1 - ext) * (by1 - by2)]; ax1 -= dx; ay1 -= dy; bx1 -= dx; by1 -= dy;}
 		ext = this.backOffAtom(bto, ax2, ay2, ax1, ay1, minDist);
-		xy = this.shrinkBond(ax2, ay2, ax1, ay1, ext); ax2 = xy[0]; ay2 = xy[1];
+		if (ext < 1) {let [dx, dy] = [(1 - ext) * (ax2 - ax1), (1 - ext) * (ay2 - ay1)]; ax2 -= dx; ay2 -= dy; bx2 -= dx; by2 -= dy;}
 		ext = this.backOffAtom(bto, bx2, by2, bx1, by1, minDist);
-		xy = this.shrinkBond(bx2, by2, bx1, by1, ext); bx2 = xy[0]; by2 = xy[1];		
+		if (ext < 1) {let [dx, dy] = [(1 - ext) * (bx2 - bx1), (1 - ext) * (by2 - by1)]; ax2 -= dx; ay2 -= dy; bx2 -= dx; by2 -= dy;}
 
 		// if both sides are evenly balanced, want to make the double bonds intersect with their adjacent bonds
 		if (side == 0 && !noshift)

@@ -15336,8 +15336,8 @@ var WebMolKit;
             if (x == fx && y == fy)
                 return 1;
             let dx = x - fx, dy = y - fy, dist = WebMolKit.norm_xy(dx, dy), inv = 1.0 / dist;
-            const BUMP = 0.1 * this.measure.scale();
-            let xbump = x + 2 * BUMP * dx * inv, ybump = y + 2 * BUMP * dy * inv;
+            const bump = 0.1 * this.measure.scale();
+            let xbump = x + 2 * bump * dx * inv, ybump = y + 2 * bump * dy * inv;
             let ext = dist;
             let active = false;
             for (let spc of this.space)
@@ -15356,7 +15356,7 @@ var WebMolKit;
                     }
                 }
             if (active) {
-                ext = Math.max(minDist, ext - BUMP);
+                ext = Math.max(minDist, ext - bump);
                 return ext / dist;
             }
             else
@@ -15552,23 +15552,39 @@ var WebMolKit;
                     this.bumpAtomPosition(bto, 0.5 * oxy[0] * side, 0.5 * oxy[1] * side);
                 }
             }
-            let xy, ext;
+            let ext;
             ext = this.backOffAtom(bfr, ax1, ay1, ax2, ay2, minDist);
-            xy = this.shrinkBond(ax1, ay1, ax2, ay2, ext);
-            ax1 = xy[0];
-            ay1 = xy[1];
+            if (ext < 1) {
+                let [dx, dy] = [(1 - ext) * (ax1 - ax2), (1 - ext) * (ay1 - ay2)];
+                ax1 -= dx;
+                ay1 -= dy;
+                bx1 -= dx;
+                by1 -= dy;
+            }
             ext = this.backOffAtom(bfr, bx1, by1, bx2, by2, minDist);
-            xy = this.shrinkBond(bx1, by1, bx2, by2, ext);
-            bx1 = xy[0];
-            by1 = xy[1];
+            if (ext < 1) {
+                let [dx, dy] = [(1 - ext) * (bx1 - bx2), (1 - ext) * (by1 - by2)];
+                ax1 -= dx;
+                ay1 -= dy;
+                bx1 -= dx;
+                by1 -= dy;
+            }
             ext = this.backOffAtom(bto, ax2, ay2, ax1, ay1, minDist);
-            xy = this.shrinkBond(ax2, ay2, ax1, ay1, ext);
-            ax2 = xy[0];
-            ay2 = xy[1];
+            if (ext < 1) {
+                let [dx, dy] = [(1 - ext) * (ax2 - ax1), (1 - ext) * (ay2 - ay1)];
+                ax2 -= dx;
+                ay2 -= dy;
+                bx2 -= dx;
+                by2 -= dy;
+            }
             ext = this.backOffAtom(bto, bx2, by2, bx1, by1, minDist);
-            xy = this.shrinkBond(bx2, by2, bx1, by1, ext);
-            bx2 = xy[0];
-            by2 = xy[1];
+            if (ext < 1) {
+                let [dx, dy] = [(1 - ext) * (bx2 - bx1), (1 - ext) * (by2 - by1)];
+                ax2 -= dx;
+                ay2 -= dy;
+                bx2 -= dx;
+                by2 -= dy;
+            }
             if (side == 0 && !noshift) {
                 let xy = null;
                 if (this.points[bfr - 1].text == null && !this.mol.bondInRing(idx)) {
