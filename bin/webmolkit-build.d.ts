@@ -2226,6 +2226,7 @@ declare namespace WebMolKit {
         private placeAdjunct;
         private processLabel;
         private backOffAtom;
+        private backOffAtomDelta;
         private shrinkBond;
         private ensureMinimumBondLength;
         private orderedRingList;

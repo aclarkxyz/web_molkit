@@ -1104,6 +1104,16 @@ export class ArrangeMolecule
 		else return 1;
 	}
 
+	// as above, except returns {reduced distance squared, dx, dy}
+	private backOffAtomDelta(atom:number, x:number, y:number, fx:number, fy:number, minDist:number):number[]
+	{
+		let ext = this.backOffAtom(atom, x, y, fx, fy, minDist);
+		if (ext >= 1) return null;
+		ext = 1 - ext;
+		let dx = (fx - x) * ext, dy = (fy - y) * ext;
+		return [norm2_xy(dx, dy), dx, dy];
+	}
+
 	// applies the impact of the back-off extent, calculated above; returns new coordinates for [x,y]
 	private shrinkBond(x:number, y:number, fx:number, fy:number, ext:number):number[]
 	{
@@ -1308,15 +1318,24 @@ export class ArrangeMolecule
 		}
 
 		// see if either of the lines approaches too close to something and, if so, back them both off by the same extent
-		let ext:number;
-		ext = this.backOffAtom(bfr, ax1, ay1, ax2, ay2, minDist);
-		if (ext < 1) {let [dx, dy] = [(1 - ext) * (ax1 - ax2), (1 - ext) * (ay1 - ay2)]; ax1 -= dx; ay1 -= dy; bx1 -= dx; by1 -= dy;}
-		ext = this.backOffAtom(bfr, bx1, by1, bx2, by2, minDist);
-		if (ext < 1) {let [dx, dy] = [(1 - ext) * (bx1 - bx2), (1 - ext) * (by1 - by2)]; ax1 -= dx; ay1 -= dy; bx1 -= dx; by1 -= dy;}
-		ext = this.backOffAtom(bto, ax2, ay2, ax1, ay1, minDist);
-		if (ext < 1) {let [dx, dy] = [(1 - ext) * (ax2 - ax1), (1 - ext) * (ay2 - ay1)]; ax2 -= dx; ay2 -= dy; bx2 -= dx; by2 -= dy;}
-		ext = this.backOffAtom(bto, bx2, by2, bx1, by1, minDist);
-		if (ext < 1) {let [dx, dy] = [(1 - ext) * (bx2 - bx1), (1 - ext) * (by2 - by1)]; ax2 -= dx; ay2 -= dy; bx2 -= dx; by2 -= dy;}
+		let delta1 = this.backOffAtomDelta(bfr, ax1, ay1, ax2, ay2, minDist), delta2 = this.backOffAtomDelta(bfr, bx1, by1, bx2, by2, minDist);
+		if (delta1 != null || delta2 != null)
+		{
+			let delta = (delta1 == null ? 0 : delta1[0]) > (delta2 == null ? 0 : delta2[0]) ? delta1 : delta2;
+			ax1 += delta[1];
+			ay1 += delta[2];
+			bx1 += delta[1];
+			by1 += delta[2];
+		}
+		let delta3 = this.backOffAtomDelta(bto, ax2, ay2, ax1, ay1, minDist), delta4 = this.backOffAtomDelta(bto, bx2, by2, bx1, by1, minDist);
+		if (delta3 != null || delta4 != null)
+		{
+			let delta = (delta3 == null ? 0 : delta3[0]) > (delta4 == null ? 0 : delta4[0]) ? delta3 : delta4;
+			ax2 += delta[1];
+			ay2 += delta[2];
+			bx2 += delta[1];
+			by2 += delta[2];
+		}
 
 		// if both sides are evenly balanced, want to make the double bonds intersect with their adjacent bonds
 		if (side == 0 && !noshift)
