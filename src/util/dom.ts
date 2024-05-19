@@ -244,9 +244,9 @@ export class DOM
 	{
 		return this.elHTML.style.getPropertyValue(key);
 	}
-	public setCSS(key:string, value:string):void
+	public setCSS(key:string, value:string | number):void
 	{
-		this.elHTML.style.setProperty(key, value);
+		this.elHTML.style.setProperty(key, value?.toString());
 	}
 	public css(dict:CSSDictionary):DOM
 	{

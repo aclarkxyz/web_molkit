@@ -44,6 +44,7 @@ export class Dialog
 	public topMargin = 50; // pixels to reserve along the top
 	public title = 'Dialog';
 	public allowScroller = true; // if true, vertical scrolling is enabled
+	public zindex:number = null; // optionally the use of zindex, to ensure it goes on top (usually not necessary)
 
 	// content information that can be accessed after opening
 	protected domObscureBackground:DOM; // grey covering banner
@@ -93,6 +94,12 @@ export class Dialog
 		let fg = this.domObscureForeground = dom('<div/>').appendTo(body);
 		fg.css({'position': 'fixed'/*, 'z-index': zindex + 1*/});
 		fg.css({'left': '0', 'right': '0', 'top': '0', 'bottom': '0'});
+
+		if (this.zindex > 0)
+		{
+			bg.setCSS('z-index', this.zindex);
+			fg.setCSS('z-index', this.zindex + 1);
+		}
 
 		let pb = this.domPanelBoundary = dom('<div class="wmk-dialog"/>').appendTo(fg);
 		pb.css({'min-width': this.minPortionWidth + '%'});

@@ -62,22 +62,38 @@ const CSS_PERIODICTABLE = `
 	{
 		background-color: #313062;
 	}
+	*.wmk-periodictable-block1:hover
+	{
+		background-color: #414072;
+	}
 	*.wmk-periodictable-block2
 	{
 		background-color: #205224;
+	}
+	*.wmk-periodictable-block2:hover
+	{
+		background-color: #306234;
 	}
 	*.wmk-periodictable-block3
 	{
 		background-color: #522818;
 	}
+	*.wmk-periodictable-block3:hover
+	{
+		background-color: #623828;
+	}
 	*.wmk-periodictable-block4
 	{
 		background-color: #575212;
 	}
+	*.wmk-periodictable-block4:block
+	{
+		background-color: #676222;
+	}
 	*.wmk-periodictable-selected
 	{
-		background-color: #FFFFFF;
-		color: #000000;
+		background-color: #FFFFFF !important;
+		color: #000000 !important;
 		cursor: default;
 	}
 `;
@@ -88,7 +104,7 @@ export class PeriodicTableWidget extends Widget
 	private callbackDoubleClick:() => void;
 
 	private divList:DOM[] = [];
-	private selectedAtno = 0;
+	private selectedAtno:number[] = [];
 
 	// ------------ public methods ------------
 
@@ -156,14 +172,32 @@ export class PeriodicTableWidget extends Widget
 	public changeElement(element:string):void
 	{
 		let atno = Chemistry.ELEMENTS.indexOf(element);
-		if (atno == this.selectedAtno) return;
+		this.selectedAtno = [atno];
+		this.updateSelected();
+		/*if (atno == this.selectedAtno) return;
 		if (this.selectedAtno > 0) this.divList[this.selectedAtno - 1].removeClass('wmk-periodictable-selected');
 		this.selectedAtno = atno;
-		if (this.selectedAtno > 0) this.divList[this.selectedAtno - 1].addClass('wmk-periodictable-selected');
+		if (this.selectedAtno > 0) this.divList[this.selectedAtno - 1].addClass('wmk-periodictable-selected');*/
+	}
+
+	public setSelectedElements(elementList:string[]):void
+	{
+		this.selectedAtno = elementList.map((el) => Chemistry.ELEMENTS.indexOf(el)).filter((atno) => atno > 0);
+		this.updateSelected();
 	}
 
 	// ------------ private methods ------------
 
+	private updateSelected():void
+	{
+		for (let n = 1; n <= this.divList.length; n++)
+		{
+			if (this.selectedAtno.includes(n))
+				this.divList[n - 1].addClass('wmk-periodictable-selected');
+			else
+				this.divList[n - 1].removeClass('wmk-periodictable-selected');
+		}
+	}
 }
 
 /* EOF */ }

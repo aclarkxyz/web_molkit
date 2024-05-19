@@ -24,11 +24,17 @@ export interface MenuProxyContext
 	accelerator?:string;
 }
 
+export interface MenuProxyOptions
+{
+	callbackClose?:() => void;
+	overrideObscureOpacity?:number;
+}
+
 export class MenuProxy
 {
 	// override this with true when the context menu is available
 	public hasContextMenu():boolean {return false;}
-	public openContextMenu(menuItems:MenuProxyContext[], event:MouseEvent):void {}
+	public openContextMenu(menuItems:MenuProxyContext[], event:MouseEvent, opt?:MenuProxyOptions):void {}
 }
 
 /*
@@ -39,7 +45,7 @@ export class MenuProxy
 export class MenuProxyWeb extends MenuProxy
 {
 	public hasContextMenu():boolean {return true;}
-	public openContextMenu(menuItems:MenuProxyContext[], event:MouseEvent):void
+	public openContextMenu(menuItems:MenuProxyContext[], event:MouseEvent, opt?:MenuProxyOptions):void
 	{
 		let [x, y] = eventCoords(event, document.body);
 		//let x = event.screenX, y = event.screenY;
@@ -47,6 +53,7 @@ export class MenuProxyWeb extends MenuProxy
 		setBoundaryPixels(divCursor, x - 5, y - 5, 10, 10);
 		let currentFocus = dom(document.activeElement);
 		let popup = new Popup(divCursor);
+		if (opt?.overrideObscureOpacity != null) popup.obscureOpacity = opt?.overrideObscureOpacity;
  		popup.callbackPopulate = () =>
 		{
 			popup.bodyDOM().css({'user-select': 'none', 'font-size': '16px'});
@@ -93,6 +100,7 @@ export class MenuProxyWeb extends MenuProxy
 		{
 			divCursor.remove();
 			currentFocus.grabFocus();
+			if (opt?.callbackClose) opt?.callbackClose();
 		};
 		popup.open();
 	}

@@ -37,6 +37,7 @@ export class Popup
 	protected domBody:DOM; // the main area, for content
 
 	public popupBackground = 'white';
+	public obscureOpacity = 0.2;
 	public callbackClose:(source?:Popup) => void = null;
 	public callbackPopulate:(source?:Popup) => void = null;
 
@@ -64,7 +65,7 @@ export class Popup
 		let bg = this.domObscureBackground = dom('<div/>').appendTo(body);
 		bg.css({'position': 'fixed'/*, 'z-index': zindex*/});
 		bg.css({'left': '0', 'right': '0', 'top': '0', 'bottom': '0'});
-		bg.css({'background-color': 'black', 'opacity': 0.2});
+		bg.css({'background-color': 'black', 'opacity': this.obscureOpacity});
 
 		let fg = this.domObscureForeground = dom('<div/>').appendTo(body);
 		fg.css({'position': 'fixed'/*, 'z-index': zindex + 1*/});
