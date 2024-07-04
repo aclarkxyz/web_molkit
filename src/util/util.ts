@@ -603,8 +603,13 @@ export async function postJSONURL(url:string | URL, params:Record<string, any>):
 		request.responseType = 'text';
 		request.onload = () =>
 		{
-			try {resolve(JSON.parse(request.response.toString()));}
-			catch (ex) {reject('JSON parsing error on result:' + ex);}
+			let txt = request.response.toString();
+			try {resolve(JSON.parse(txt));}
+			catch (ex) 
+			{
+				let snippet = txt.substring(0, Math.min(200, txt.length)) + (txt.length > 200 ? '...etc...' : '');
+				reject('JSON parsing error on result:' + ex + ' for text: ' + snippet);
+			}
 		};
 		request.onerror = () => reject('Failed to request URL: ' + url);
 		request.send(JSON.stringify(params));
