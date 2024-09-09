@@ -11624,11 +11624,13 @@ var WebMolKit;
                 request.open('POST', url.toString(), true);
                 request.responseType = 'text';
                 request.onload = () => {
+                    let txt = request.response.toString();
                     try {
-                        resolve(JSON.parse(request.response.toString()));
+                        resolve(JSON.parse(txt));
                     }
                     catch (ex) {
-                        reject('JSON parsing error on result:' + ex);
+                        let snippet = txt.substring(0, Math.min(200, txt.length)) + (txt.length > 200 ? '...etc...' : '');
+                        reject('JSON parsing error on result:' + ex + ' for text: ' + snippet);
                     }
                 };
                 request.onerror = () => reject('Failed to request URL: ' + url);
@@ -13696,6 +13698,7 @@ var WebMolKit;
             this.topMargin = 50;
             this.title = 'Dialog';
             this.allowScroller = true;
+            this.zindex = null;
             this.callbackClose = null;
             this.callbackShown = null;
             this.parent = WebMolKit.domLegacy(parent);
@@ -13719,6 +13722,10 @@ var WebMolKit;
             let fg = this.domObscureForeground = WebMolKit.dom('<div/>').appendTo(body);
             fg.css({ 'position': 'fixed' });
             fg.css({ 'left': '0', 'right': '0', 'top': '0', 'bottom': '0' });
+            if (this.zindex > 0) {
+                bg.setCSS('z-index', this.zindex);
+                fg.setCSS('z-index', this.zindex + 1);
+            }
             let pb = this.domPanelBoundary = WebMolKit.dom('<div class="wmk-dialog"/>').appendTo(fg);
             pb.css({ 'min-width': this.minPortionWidth + '%' });
             if (this.maximumWidth > 0)
@@ -17173,7 +17180,7 @@ var WebMolKit;
             }
             for (let n = 0; n < layout.numPoints(); n++) {
                 let p = layout.getPoint(n);
-                if (effects.hideBonds.has(p.anum))
+                if (effects.hideAtoms.has(p.anum))
                     continue;
                 let txt = p.text;
                 let cx = p.oval.cx, cy = p.oval.cy, rw = p.oval.rw;
@@ -24520,22 +24527,38 @@ var WebMolKit;
 	{
 		background-color: #313062;
 	}
+	*.wmk-periodictable-block1:hover
+	{
+		background-color: #414072;
+	}
 	*.wmk-periodictable-block2
 	{
 		background-color: #205224;
+	}
+	*.wmk-periodictable-block2:hover
+	{
+		background-color: #306234;
 	}
 	*.wmk-periodictable-block3
 	{
 		background-color: #522818;
 	}
+	*.wmk-periodictable-block3:hover
+	{
+		background-color: #623828;
+	}
 	*.wmk-periodictable-block4
 	{
 		background-color: #575212;
 	}
+	*.wmk-periodictable-block4:block
+	{
+		background-color: #676222;
+	}
 	*.wmk-periodictable-selected
 	{
-		background-color: #FFFFFF;
-		color: #000000;
+		background-color: #FFFFFF !important;
+		color: #000000 !important;
 		cursor: default;
 	}
 `;
@@ -24543,7 +24566,7 @@ var WebMolKit;
         constructor() {
             super();
             this.divList = [];
-            this.selectedAtno = 0;
+            this.selectedAtno = [];
             WebMolKit.installInlineCSS('periodictable', CSS_PERIODICTABLE);
         }
         render(parent) {
@@ -24588,13 +24611,20 @@ var WebMolKit;
         }
         changeElement(element) {
             let atno = WebMolKit.Chemistry.ELEMENTS.indexOf(element);
-            if (atno == this.selectedAtno)
-                return;
-            if (this.selectedAtno > 0)
-                this.divList[this.selectedAtno - 1].removeClass('wmk-periodictable-selected');
-            this.selectedAtno = atno;
-            if (this.selectedAtno > 0)
-                this.divList[this.selectedAtno - 1].addClass('wmk-periodictable-selected');
+            this.selectedAtno = [atno];
+            this.updateSelected();
+        }
+        setSelectedElements(elementList) {
+            this.selectedAtno = elementList.map((el) => WebMolKit.Chemistry.ELEMENTS.indexOf(el)).filter((atno) => atno > 0);
+            this.updateSelected();
+        }
+        updateSelected() {
+            for (let n = 1; n <= this.divList.length; n++) {
+                if (this.selectedAtno.includes(n))
+                    this.divList[n - 1].addClass('wmk-periodictable-selected');
+                else
+                    this.divList[n - 1].removeClass('wmk-periodictable-selected');
+            }
         }
     }
     WebMolKit.PeriodicTableWidget = PeriodicTableWidget;
@@ -28977,17 +29007,19 @@ var WebMolKit;
 (function (WebMolKit) {
     class MenuProxy {
         hasContextMenu() { return false; }
-        openContextMenu(menuItems, event) { }
+        openContextMenu(menuItems, event, opt) { }
     }
     WebMolKit.MenuProxy = MenuProxy;
     class MenuProxyWeb extends MenuProxy {
         hasContextMenu() { return true; }
-        openContextMenu(menuItems, event) {
+        openContextMenu(menuItems, event, opt) {
             let [x, y] = WebMolKit.eventCoords(event, document.body);
             let divCursor = WebMolKit.dom('<div/>').appendTo(document.body).css({ 'position': 'absolute', 'user-select': 'none' });
             WebMolKit.setBoundaryPixels(divCursor, x - 5, y - 5, 10, 10);
             let currentFocus = WebMolKit.dom(document.activeElement);
             let popup = new WebMolKit.Popup(divCursor);
+            if ((opt === null || opt === void 0 ? void 0 : opt.overrideObscureOpacity) != null)
+                popup.obscureOpacity = opt === null || opt === void 0 ? void 0 : opt.overrideObscureOpacity;
             popup.callbackPopulate = () => {
                 popup.bodyDOM().css({ 'user-select': 'none', 'font-size': '16px' });
                 for (let menuItem of menuItems) {
@@ -29025,6 +29057,8 @@ var WebMolKit;
             popup.callbackClose = () => {
                 divCursor.remove();
                 currentFocus.grabFocus();
+                if (opt === null || opt === void 0 ? void 0 : opt.callbackClose)
+                    opt === null || opt === void 0 ? void 0 : opt.callbackClose();
             };
             popup.open();
         }
@@ -29191,6 +29225,7 @@ var WebMolKit;
     class Popup {
         constructor(parent) {
             this.popupBackground = 'white';
+            this.obscureOpacity = 0.2;
             this.callbackClose = null;
             this.callbackPopulate = null;
             this.parent = WebMolKit.domLegacy(parent);
@@ -29205,7 +29240,7 @@ var WebMolKit;
             let bg = this.domObscureBackground = WebMolKit.dom('<div/>').appendTo(body);
             bg.css({ 'position': 'fixed' });
             bg.css({ 'left': '0', 'right': '0', 'top': '0', 'bottom': '0' });
-            bg.css({ 'background-color': 'black', 'opacity': 0.2 });
+            bg.css({ 'background-color': 'black', 'opacity': this.obscureOpacity });
             let fg = this.domObscureForeground = WebMolKit.dom('<div/>').appendTo(body);
             fg.css({ 'position': 'fixed' });
             fg.css({ 'left': '0', 'right': '0', 'top': '0', 'bottom': '0' });
@@ -32773,7 +32808,7 @@ var WebMolKit;
             return this.elHTML.style.getPropertyValue(key);
         }
         setCSS(key, value) {
-            this.elHTML.style.setProperty(key, value);
+            this.elHTML.style.setProperty(key, value === null || value === void 0 ? void 0 : value.toString());
         }
         css(dict) {
             for (let key in dict)

@@ -1144,7 +1144,7 @@ export class Sketcher extends DrawCanvas
 		let mod = (event.shiftKey ? 'S' : '') + (event.ctrlKey || event.metaKey ? 'C' : '') + (event.altKey ? 'A' : ''); // (meta==cmd on mac; alt=opt on mac)
 		let nomod = !event.shiftKey && !event.ctrlKey && !event.altKey && !event.metaKey;
 
-		//console.log(`Sketcher/Key:${key} Mod:${mod}`);
+		// console.log(`Sketcher/Key:${key} Mod:${mod} Date:${new Date()}`);
 
 		if (key == KeyCode.Enter) this.editCurrent();
 		else if (key == KeyCode.Left && nomod) this.hitArrowKey(-1, 0);

@@ -85,6 +85,8 @@ export abstract class ButtonBank
 			else break;
 		}
 
+		//console.log('MatchKey:',{mkey,mshift,mctrl,malt,mmeta});
+
 		if (mshift != event.shiftKey) return false;
 		if (mctrl != event.ctrlKey) return false;
 		if (malt != event.altKey) return false;

@@ -1942,6 +1942,7 @@ declare namespace WebMolKit {
         topMargin: number;
         title: string;
         allowScroller: boolean;
+        zindex: number;
         protected domObscureBackground: DOM;
         protected domObscureForeground: DOM;
         protected domPanelBoundary: DOM;
@@ -3165,6 +3166,8 @@ declare namespace WebMolKit {
         onSelect(callback: (element: string) => void): void;
         onDoubleClick(callback: () => void): void;
         changeElement(element: string): void;
+        setSelectedElements(elementList: string[]): void;
+        private updateSelected;
     }
 }
 declare namespace WebMolKit {
@@ -3625,13 +3628,17 @@ declare namespace WebMolKit {
         subMenu?: MenuProxyContext[];
         accelerator?: string;
     }
+    interface MenuProxyOptions {
+        callbackClose?: () => void;
+        overrideObscureOpacity?: number;
+    }
     class MenuProxy {
         hasContextMenu(): boolean;
-        openContextMenu(menuItems: MenuProxyContext[], event: MouseEvent): void;
+        openContextMenu(menuItems: MenuProxyContext[], event: MouseEvent, opt?: MenuProxyOptions): void;
     }
     class MenuProxyWeb extends MenuProxy {
         hasContextMenu(): boolean;
-        openContextMenu(menuItems: MenuProxyContext[], event: MouseEvent): void;
+        openContextMenu(menuItems: MenuProxyContext[], event: MouseEvent, opt?: MenuProxyOptions): void;
     }
 }
 declare namespace WebMolKit {
@@ -3666,6 +3673,7 @@ declare namespace WebMolKit {
         protected domPanelBoundary: DOM;
         protected domBody: DOM;
         popupBackground: string;
+        obscureOpacity: number;
         callbackClose: (source?: Popup) => void;
         callbackPopulate: (source?: Popup) => void;
         constructor(parent: any);
@@ -4194,7 +4202,7 @@ declare namespace WebMolKit {
         getValue(): string;
         setValue(str: string): void;
         getCSS(key: string): string;
-        setCSS(key: string, value: string): void;
+        setCSS(key: string, value: string | number): void;
         css(dict: CSSDictionary): DOM;
         getAttr(key: string): string;
         setAttr(key: string, value: string): void;

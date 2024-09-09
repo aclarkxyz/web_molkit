@@ -155,7 +155,7 @@ export class DrawMolecule
 		for (let n = 0; n < layout.numPoints(); n++)
 		{
 			let p = layout.getPoint(n);
-			if (effects.hideBonds.has(p.anum)) continue;
+			if (effects.hideAtoms.has(p.anum)) continue;
 
 			let txt = p.text;
 			let cx = p.oval.cx, cy = p.oval.cy, rw = p.oval.rw;
