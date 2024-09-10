@@ -8813,7 +8813,7 @@ var WebMolKit;
         }
         static append(mol, frag) {
             let boxm = mol.boundary(), boxf = frag.boundary();
-            let dx = boxm.maxX() + WebMolKit.Molecule.IDEALBOND - boxm.minX();
+            let dx = boxm.maxX() + WebMolKit.Molecule.IDEALBOND - boxf.minX();
             let dy = 0.5 * (boxm.minY() + boxm.maxY() - boxf.minY() - boxf.maxY());
             let top = mol.numAtoms;
             mol.append(frag);
