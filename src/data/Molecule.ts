@@ -485,7 +485,7 @@ export class Molecule
 		if (this.atoms.length == 0) return Box.zero();
 		let x1 = this.atoms[0].x, x2 = x1;
 		let y1 = this.atoms[0].y, y2 = y1;
-		for (let n = 1; n <= this.atoms.length; n++)
+		for (let n = 1; n < this.atoms.length; n++)
 		{
 			x1 = Math.min(x1, this.atoms[n].x);
 			y1 = Math.min(y1, this.atoms[n].y);
