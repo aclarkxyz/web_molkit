@@ -130,7 +130,20 @@ export class Tooltip
 		if (this.domTooltip) return;
 
 		let pop = this.domTooltip = dom('<div/>').class('wmk-tooltip-outer').css({'visibility': 'hidden'}).appendTo(document.body);
-		pop.css({});
+
+		// special deal: if the parent widget has an ancestor with z-index set, then perpetuate that kludge
+		let sanity = 50;
+		for (let ancestor = this.widget; ancestor; ancestor = ancestor.parent())
+		{
+			if (--sanity == 0) break;
+			let zindex = parseInt(ancestor.elHTML.style.zIndex);
+			if (zindex > 0)
+			{
+				pop.setCSS('z-index', (zindex + 1000).toString());
+				break;
+			}
+		}
+
 		let div = dom('<div/>').appendTo(pop).class('wmk-tooltip-inner');
 
 		let hasTitle = this.titleHTML != null && this.titleHTML.length > 0, hasBody = this.bodyHTML != null && this.bodyHTML.length > 0;
