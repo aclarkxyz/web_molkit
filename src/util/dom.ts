@@ -36,7 +36,10 @@ export function domLegacy(obj:any):DOM
 	return dom(obj);
 }
 
-export type CSSDictionary = Record<string, string | number | boolean>;
+export type CSSDictionary = Record<string, string | number | boolean> |
+{
+	'display': 'none' | 'block' | 'inline-block' | 'flex' | 'inline-flex' | 'grid' | 'inline-grid';
+};
 
 export class DOM
 {
@@ -250,7 +253,7 @@ export class DOM
 	}
 	public css(dict:CSSDictionary):DOM
 	{
-		for (let key in dict) this.setCSS(key, dict[key].toString());
+		for (let key in dict) this.setCSS(key, (dict as Record<string, any>)[key].toString());
 		return this;
 	}
 
@@ -329,6 +332,12 @@ export class DOM
 	public setBoundaryPixels(x:number, y:number, w:number, h:number):void
 	{
 		this.css({'left': `${x}px`, 'top': `${y}px`, 'width': `${w}px`, 'height': `${h}px`});
+	}
+
+	// similar convenience for size in hard pixels
+	public setSizePixels(w:number, h:number):void
+	{
+		this.css({'width': `${w}px`, 'height': `${h}px`});
 	}
 
 	// focus: testing and taking focus; note that focus grabbing often works better with a short delay, hence the convenient option

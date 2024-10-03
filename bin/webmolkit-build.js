@@ -29558,7 +29558,16 @@ var WebMolKit;
             if (this.domTooltip)
                 return;
             let pop = this.domTooltip = WebMolKit.dom('<div/>').class('wmk-tooltip-outer').css({ 'visibility': 'hidden' }).appendTo(document.body);
-            pop.css({});
+            let sanity = 50;
+            for (let ancestor = this.widget; ancestor; ancestor = ancestor.parent()) {
+                if (--sanity == 0)
+                    break;
+                let zindex = parseInt(ancestor.elHTML.style.zIndex);
+                if (zindex > 0) {
+                    pop.setCSS('z-index', (zindex + 1000).toString());
+                    break;
+                }
+            }
             let div = WebMolKit.dom('<div/>').appendTo(pop).class('wmk-tooltip-inner');
             let hasTitle = this.titleHTML != null && this.titleHTML.length > 0, hasBody = this.bodyHTML != null && this.bodyHTML.length > 0;
             if (hasTitle)
