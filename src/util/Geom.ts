@@ -51,8 +51,14 @@ export class GeomUtil
 	// this still returns true if the lines are actually on top of each other; note that this is for lines, not line segments
 	public static areLinesParallel(x1:number, y1:number, x2:number, y2:number, x3:number, y3:number, x4:number, y4:number):boolean
 	{
-		let dxa = x2 - x1, dxb = x4 - x3, dya = y2 - y1, dyb = y4 - y3;
-		return (realEqual(dxa, dxb) && realEqual(dya, dyb)) || (realEqual(dxa, -dxb) && realEqual(dya, -dyb));
+		let dxa = x2 - x1, dya = y2 - y1, dxb = x4 - x3, dyb = y4 - y3;
+		let xmajorA = Math.abs(dxa) > Math.abs(dya), xmajorB = Math.abs(dxb) > Math.abs(dyb);
+		if (xmajorA != xmajorB) return false;
+		const EPS = 1E-6;
+		if (xmajorA)
+			return Math.abs(dya / dxa - dyb / dxb) < EPS;
+		else
+			return Math.abs(dxa / dya - dxb / dyb) < EPS;
 	}
 
 	// for the lines L1-->L2 and L3-->L4, calculate and return the intersection; note that this for lines, not line segments;
