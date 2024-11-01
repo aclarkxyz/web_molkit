@@ -1007,6 +1007,13 @@ export class Oval
 		return new Oval(this.cx + dx, this.cy + dy, this.rw, this.rh);
 	}
 
+	public contains(x:number, y:number):boolean
+	{
+		let dx = x - this.cx, dy = y - this.cy;
+		let a = dx / this.rw, b = dy / this.rh;
+		return a * a + b * b <= 1;
+	}
+
 	public toString():string {return '[' + this.cx + ',' + this.cy + ';' + this.rw + ',' + this.rh + ']';}
 }
 

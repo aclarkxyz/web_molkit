@@ -215,11 +215,13 @@ export function getOffsetPixelsDOM(dom:DOM):[number, number, number, number]
 // geometry functions
 export function norm_xy(dx:number, dy:number):number
 {
-	return Math.sqrt(dx * dx + dy * dy);
+	//return Math.sqrt(dx * dx + dy * dy);
+	return Math.hypot(dx, dy);
 }
 export function norm_xyz(dx:number, dy:number, dz:number):number
 {
-	return Math.sqrt(dx * dx + dy * dy + dz * dz);
+	//return Math.sqrt(dx * dx + dy * dy + dz * dz);
+	return Math.hypot(dx, dy, dz);
 }
 export function norm2_xy(dx:number, dy:number):number
 {
