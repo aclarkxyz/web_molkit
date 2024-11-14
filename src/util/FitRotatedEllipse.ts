@@ -128,7 +128,7 @@ export class FitRotatedEllipse
 		this.cx = Vec.sum(this.px) * invpsz;
 		this.cy = Vec.sum(this.py) * invpsz;
 		let ptheta:number[] = new Array(psz), pdist:number[] = new Array(psz);
-		for (let n = 0; n < psz; n++) 
+		for (let n = 0; n < psz; n++)
 		{
 			ptheta[n] = Math.atan2(this.py[n] - this.cy, this.px[n] - this.cx);
 			pdist[n] = norm_xy(this.px[n] - this.cx, this.py[n] - this.cy);
@@ -138,18 +138,18 @@ export class FitRotatedEllipse
 		this.py = Vec.idxGet(this.py, order);
 		ptheta = Vec.idxGet(ptheta, order);
 		pdist = Vec.idxGet(pdist, order);
-		
+
 		let buffX:number[] = new Array(psz), buffY:number[] = new Array(psz);
 		const rotatedScore = (ptheta:number[], pdist:number[], rtheta:number):number =>
 		{
-			for (let n = 0; n < psz; n++) 
+			for (let n = 0; n < psz; n++)
 			{
 				buffX[n] = pdist[n] * Math.cos(ptheta[n] + rtheta);
 				buffY[n] = pdist[n] * Math.sin(ptheta[n] + rtheta);
 			}
 			let scx = Vec.sum(buffX) * invpsz, scy = Vec.sum(buffY) * invpsz;
 			let devx = 0, devy = 0;
-			for (let n = 0; n < psz; n++) 
+			for (let n = 0; n < psz; n++)
 			{
 				devx += sqr(buffX[n] - scx);
 				devy += Math.abs(buffY[n] - scy);
@@ -177,7 +177,7 @@ export class FitRotatedEllipse
 		}
 		this.cx = Vec.sum(this.px) * invpsz;
 		this.cy = Vec.sum(this.py) * invpsz;
-		
+
 		this.rw = this.rh = 1;
 	}
 
@@ -188,14 +188,14 @@ export class FitRotatedEllipse
 		let deltaD = 0.1 * margin, deltaR = 0.5 * deltaD;
 		const DELTA_OPTIONS:{dx:number, dy:number, dw:number, dh:number}[] =
 		[
-			{dx:-1, dy:0, dw:0, dh:0},
-			{dx:1, dy:0, dw:0, dh:0},
-			{dx:0, dy:-1, dw:0, dh:0},
-			{dx:0, dy:1, dw:0, dh:0},
-			{dx:0, dy:0, dw:-1, dh:0},
-			{dx:0, dy:0, dw:1, dh:0},
-			{dx:0, dy:0, dw:0, dh:-1},
-			{dx:0, dy:0, dw:0, dh:1},
+			{dx: -1, dy: 0, dw: 0, dh: 0},
+			{dx: 1, dy: 0, dw: 0, dh: 0},
+			{dx: 0, dy: -1, dw: 0, dh: 0},
+			{dx: 0, dy: 1, dw: 0, dh: 0},
+			{dx: 0, dy: 0, dw: -1, dh: 0},
+			{dx: 0, dy: 0, dw: 1, dh: 0},
+			{dx: 0, dy: 0, dw: 0, dh: -1},
+			{dx: 0, dy: 0, dw: 0, dh: 1},
 		];
 
 		for (let sanity = 0; sanity < 1000; sanity++)

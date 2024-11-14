@@ -569,6 +569,24 @@ export class Molecule
 		this.hasTransient = false;
 	}
 
+	// convenience methods
+	public appendAtomExtra(atom:number, extra:string):void
+	{
+		this.getAtom(atom).extra.push(extra);
+	}
+	public appendAtomTransient(atom:number, trans:string):void
+	{
+		this.getAtom(atom).transient.push(trans);
+	}
+	public appendBondExtra(bond:number, extra:string):void
+	{
+		this.getBond(bond).extra.push(extra);
+	}
+	public appendBondTransient(bond:number, trans:string):void
+	{
+		this.getBond(bond).transient.push(trans);
+	}
+
 	// ------------ private methods ------------
 
 	// must be called when the molecule's graph changes; do not call for changing labels or coordinates

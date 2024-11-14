@@ -140,7 +140,7 @@ export class DrawMolecule
 				vg.drawPath(bez.px, bez.py, bez.ctrl, true, fg, r.size, MetaVector.NOCOLOUR, false);
 				this.mnemonics?.append(RenderMnemonicType.Artifact, 'Ring', [r.cx, r.cy, r.rw, r.rh, r.theta]);
 			}
-			else 
+			else
 			{
 				vg.drawOval(r.cx, r.cy, r.rw, r.rh, fg, r.size, MetaVector.NOCOLOUR);
 				this.mnemonics?.append(RenderMnemonicType.Artifact, 'Ring', [r.cx, r.cy, r.rw, r.rh]);
@@ -426,7 +426,7 @@ export class DrawMolecule
 			let dx = x2 - x1, dy = y2 - y1;
 			let norm = b.head / Math.sqrt(dx * dx + dy * dy);
 			let ox = norm * dy, oy = -norm * dx;
-			
+
 			let tx1 = x2 - ox, ty1 = y2 - oy, tx2 = x2 + ox, ty2 = y2 + oy;
 			let dsq1 = norm2_xy(tx1 - other.line.x1, ty1 - other.line.y1);
 			let dsq2 = norm2_xy(tx2 - other.line.x1, ty2 - other.line.y1);

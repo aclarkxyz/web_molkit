@@ -150,7 +150,7 @@ class SpoolSVG
 {
 	private lines:string[] = [];
 	private depth = 0;
-	
+
 	constructor(private prettyPrint:boolean) {}
 	public spool(str:string) {if (str?.length > 0) this.lines.push(str);}
 	public start(str:string):void
@@ -172,7 +172,7 @@ class SpoolSVG
 	}
 	public attr(key:string, val:string | number):void
 	{
-		if (typeof val == 'number') 
+		if (typeof val == 'number')
 		{
 			val = val.toFixed(4);
 			let match = /^(.*\.\d*?[1-9]+)0+$/.exec(val) ?? /^(.*)\.0+$/.exec(val);
@@ -294,8 +294,8 @@ export class MetaVector
 		}
 
 		let typeidx = this.findOrCreateType({primClass: PrimClass.Path, edgeCol, fillCol, thickness, hardEdge} as PathType);
-		this.prims.push({primClass: PrimClass.Path, typeidx, count: xpoints.length, 
-						 x: Vec.duplicate(xpoints), y: Vec.duplicate(ypoints), ctrl: ctrlFlags &&  [...ctrlFlags], closed: isClosed} as PathPrim);
+		this.prims.push({primClass: PrimClass.Path, typeidx, count: xpoints.length,
+						 x: Vec.duplicate(xpoints), y: Vec.duplicate(ypoints), ctrl: ctrlFlags && [...ctrlFlags], closed: isClosed} as PathPrim);
 	}
 	public drawPoly(xpoints:number[], ypoints:number[], edgeCol:number, thickness:number, fillCol:number, hardEdge:boolean):void
 	{
@@ -609,9 +609,9 @@ export class MetaVector
 		svg.attr('viewBox', `0 0 ${this.width} ${this.height}`);
 		svg.stop('>');
 		svg.inc();
-		
+
 		this.renderSVG(svg, withXlink);
-		
+
 		svg.dec();
 		svg.whole('</svg>');
 		return svg.toString();
@@ -665,22 +665,22 @@ export class MetaVector
 			if (p.primClass == PrimClass.Line)
 			{
 				if (num == 1)
-					this.svgLine1(svg, p as LinePrim); 
-				else 
+					this.svgLine1(svg, p as LinePrim);
+				else
 					this.svgLineN(svg, this.prims.slice(n, n + num) as LinePrim[]);
 			}
 			else if (p.primClass == PrimClass.Rect)
 			{
 				if (num == 1)
 					this.svgRect1(svg, p as RectPrim);
-				else 
+				else
 					this.svgRectN(svg, this.prims.slice(n, n + num) as RectPrim[]);
 			}
 			else if (p.primClass == PrimClass.Oval)
 			{
 				if (num == 1)
-					this.svgOval1(svg, p as OvalPrim); 
-				else 
+					this.svgOval1(svg, p as OvalPrim);
+				else
 					this.svgOvalN(svg, this.prims.slice(n, n + num) as OvalPrim[]);
 			}
 			else if (p.primClass == PrimClass.Path) this.svgPath(svg, p as PathPrim);
@@ -1183,7 +1183,7 @@ export class MetaVector
 
 		svg.start('<path');
 		svg.attr('d', shape);
-		
+
 		this.defineSVGStroke(svg, edgeCol);
 		if (edgeCol != MetaVector.NOCOLOUR)
 		{

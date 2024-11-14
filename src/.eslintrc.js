@@ -70,11 +70,14 @@ module.exports =
 		'semi': ['error', 'always'],
 		'space-before-function-paren': ['error', {'anonymous': 'never', 'named': 'never', 'asyncArrow': 'always'}],
 		'space-in-parens': ['error', 'never'],
-		'@typescript-eslint/member-delimiter-style':
+		/*'@typescript-eslint/member-delimiter-style':
 		[
 			'error',
-			{'multiline': {'delimiter': 'semi', 'requireLast': true}, 'singleline': {'delimiter': 'semi', 'requireLast': false}},
-		],
+			{
+				'multiline': {'delimiter': 'semi', 'requireLast': true}, 
+				'singleline': {'delimiter': 'semi', 'requireLast': false}
+			},
+		],*/
 		'no-extra-semi': ['error'],
 		'no-self-assign': ['error'],
 		'no-self-compare': ['error'],

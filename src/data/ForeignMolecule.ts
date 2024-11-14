@@ -43,6 +43,11 @@ export enum ForeignMoleculeTransient
 	AtomSgroupMultiAttach = 'yMDL_SGROUP_MULTIATTACH',
 	AtomSgroupMultiRepeat = 'yMDL_SGROUP_MULTIREPEAT',
 	AtomSgroupData = 'yMDL_SGROUP_DATA',
+
+	// references to SCSR templates
+	AtomSCSRClass = 'yMDL_SCSR_CLASS',
+	AtomSCSRSeqID = 'yMDL_SCSR_SEQID',
+	AtomSCSRAttchOrd = 'yMDL_SCSR_ATTCHORD',
 }
 
 export interface ForeignMoleculeSgroupMultiAttach
@@ -65,6 +70,13 @@ export interface ForeignMoleculeSgroupData
 	unit:string;
 	query:string;
 	atoms:number[];
+}
+
+export interface ForeignMoleculeTemplateDefn
+{
+	name:string;
+	natReplace:string;
+	mol:Molecule;
 }
 
 export class ForeignMolecule
@@ -107,7 +119,7 @@ export class ForeignMolecule
 	}
 
 	// S-groups with either no attachments or multiple attachments; only single-attachment S-groups are handled naturally
-	public static markSgroupMultiAttach(mol:Molecule, name:string, atoms:number[]):void
+	public static markSgroupMultiAttach(mol:Molecule, name:string, atoms:number[], keyval:Record<string, string>):void
 	{
 		let idxHigh = 0;
 		for (let n = 1; n <= mol.numAtoms; n++) for (let tag of mol.atomTransient(n)) if (tag.startsWith(ForeignMoleculeTransient.AtomSgroupMultiAttach + ':'))
@@ -121,6 +133,7 @@ export class ForeignMolecule
 		}
 
 		let tag = `${ForeignMoleculeTransient.AtomSgroupMultiAttach}:${idxHigh + 1},${name}`;
+		for (let [key, val] of Object.entries(keyval)) tag += ',' + key + '=' + val;
 		for (let a of atoms) mol.setAtomTransient(a, Vec.append(mol.atomTransient(a), tag));
 	}
 	public static hasAnySgroupMultiAttach(mol:Molecule):boolean

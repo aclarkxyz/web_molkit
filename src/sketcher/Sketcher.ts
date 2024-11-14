@@ -502,7 +502,7 @@ export class Sketcher extends DrawCanvas
 	// bring up the interactive editing mode for current object, if any
 	public editCurrent():void
 	{
-		if (this.currentBond > 0) 
+		if (this.currentBond > 0)
 			this.editBond(this.currentBond);
 		else
 			this.editAtom(this.currentAtom);
@@ -836,7 +836,7 @@ export class Sketcher extends DrawCanvas
 		if (atom == 0 && this.mol.numAtoms > 0)
 		{
 			let box = this.mol.boundary();
-			dlg.newX = box.maxX() + Molecule.IDEALBOND;;
+			dlg.newX = box.maxX() + Molecule.IDEALBOND;
 			dlg.newY = box.midY();
 		}
 		this.inDialog = true;
@@ -1014,7 +1014,7 @@ export class Sketcher extends DrawCanvas
 		this.cursorDY += dy;
 		setTimeout(() =>
 		{
-			if (watermark == this.cursorWatermark) 
+			if (watermark == this.cursorWatermark)
 			{
 				this.sproutDirection(this.cursorDX, this.cursorDY);
 				this.cursorDX = this.cursorDY = 0;

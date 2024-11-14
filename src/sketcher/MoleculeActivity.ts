@@ -1960,7 +1960,7 @@ export class MoleculeActivity
 		let angleOptions:number[];
 		if (mol.atomAdjCount(currentAtom) == 0)
 			angleOptions = Vec.identity0(12).map((n) => n * TWOPI / 12);
-		else 
+		else
 			angleOptions = SketchUtil.primeDirections(mol, currentAtom) ?? SketchUtil.exitVectors(mol, currentAtom);
 		if (angleOptions.length == 0) return;
 
@@ -1968,7 +1968,7 @@ export class MoleculeActivity
 		let idx = Vec.idxMin(angleOptions.map((look) => Math.abs(angleDiff(theta, look)) + 0.01 * Math.abs(Math.sin(look))));
 		let px = mol.atomX(currentAtom) + Molecule.IDEALBOND * Math.cos(angleOptions[idx]);
 		let py = mol.atomY(currentAtom) + Molecule.IDEALBOND * Math.sin(angleOptions[idx]);
-		
+
 		this.output.mol = mol.clone();
 		let newAtom = this.output.mol.addAtom('C', px, py);
 		this.output.mol.addBond(currentAtom, newAtom, 1);

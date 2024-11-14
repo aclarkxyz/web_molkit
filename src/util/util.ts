@@ -607,7 +607,7 @@ export async function postJSONURL(url:string | URL, params:Record<string, any>):
 		{
 			let txt = request.response.toString();
 			try {resolve(JSON.parse(txt));}
-			catch (ex) 
+			catch (ex)
 			{
 				let snippet = txt.substring(0, Math.min(200, txt.length)) + (txt.length > 200 ? '...etc...' : '');
 				reject('JSON parsing error on result:' + ex + ' for text: ' + snippet);

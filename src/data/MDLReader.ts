@@ -76,6 +76,11 @@ export interface MDLReaderSuperAtom
 	value?:string;
 	unit?:string;
 	query?:string;
+
+	// for SCSR templates
+	templateClass?:string;
+	natReplace?:string;
+	attachPoints?:string[];
 }
 
 export class MDLMOLReader
@@ -105,6 +110,7 @@ export class MDLMOLReader
 	public groupStereoRelative:number[][] = []; // blocks of atoms which exist in their drawn configuration OR the opposite
 	public groupLinkNodes:MDLReaderLinkNode[] = []; // so-called link nodes, aka repeating atom
 	public groupMixtures:MDLReaderGroupMixture[] = []; // mixture collections, which may overlap
+	public scsrTemplates:ForeignMoleculeTemplateDefn[] = null; // templates (SCSR = self-contained sequence representation)
 
 	private pos = 0;
 	private lines:string[];
@@ -563,35 +569,42 @@ export class MDLMOLReader
 	// alternate track: only look at the specially marked V3000 tags
 	private parseV3000():void
 	{
-		enum Section {ATOM, BOND, COLL, SGROUP}
-		let inCTAB = false, section:Section = null;
+		enum Section {Atom, Bond, Coll, SGroup, Template}
+		let inCTAB = false, inTemplate = false;
+		let section:Section = null;
+
 		let lineCounts:string = null;
 		let lineAtom:string[] = [], lineBond:string[] = [], lineColl:string[] = [], lineSgroup:string[] = [];
-
 		let asdrawnRBC:number[] = [], asdrawnSUB:number[] = [];
+
+		let templateBlocks:string[][] = [];
 
 		const ERRPFX = 'Invalid MDL MOL V3000: ';
 
 		while (true)
 		{
-			let line = this.nextLine();
-			if (line == 'M  END') break; // graceful end
+			let fullLine = this.nextLine();
+			if (fullLine == 'M  END') break; // graceful end
 
-			if (!line.startsWith('M  V30 ')) continue;
-			line = line.substring(7);
+			if (!fullLine.startsWith('M  V30 ')) continue;
+			let line = fullLine.substring(7);
 
-			if (line.startsWith('COUNTS ')) lineCounts = line.substring(7);
+			if (line.startsWith('BEGIN TEMPLATE')) inTemplate = true;
+			else if (line.startsWith('END TEMPLATE')) inTemplate = false;
+			else if (line.startsWith('TEMPLATE ') && inTemplate) templateBlocks.push([fullLine]);
+			else if (inTemplate && templateBlocks != null) Vec.last(templateBlocks).push(fullLine);
+			else if (line.startsWith('COUNTS ')) lineCounts = line.substring(7);
 			else if (line.startsWith('BEGIN CTAB')) inCTAB = true;
-			else if (line.startsWith('BEGIN ATOM')) section = Section.ATOM;
-			else if (line.startsWith('BEGIN BOND')) section = Section.BOND;
-			else if (line.startsWith('BEGIN COLLECTION')) section = Section.COLL;
-			else if (line.startsWith('BEGIN SGROUP')) section = Section.SGROUP;
+			else if (line.startsWith('BEGIN ATOM')) section = Section.Atom;
+			else if (line.startsWith('BEGIN BOND')) section = Section.Bond;
+			else if (line.startsWith('BEGIN COLLECTION')) section = Section.Coll;
+			else if (line.startsWith('BEGIN SGROUP')) section = Section.SGroup;
 			else if (line.startsWith('END ')) section = null;
 			// TO DO: make sure these are nested properly, bug out if not
-			else if (inCTAB && section == Section.ATOM) lineAtom.push(line);
-			else if (inCTAB && section == Section.BOND) lineBond.push(line);
-			else if (inCTAB && section == Section.COLL) lineColl.push(line);
-			else if (inCTAB && section == Section.SGROUP) lineSgroup.push(line);
+			else if (inCTAB && section == Section.Atom) lineAtom.push(line);
+			else if (inCTAB && section == Section.Bond) lineBond.push(line);
+			else if (inCTAB && section == Section.Coll) lineColl.push(line);
+			else if (inCTAB && section == Section.SGroup) lineSgroup.push(line);
 			else if (inCTAB && section == null)
 			{
 				if (line.startsWith('LINKNODE '))
@@ -712,6 +725,19 @@ export class MDLMOLReader
 					}
 				}
 				else if (key == 'VAL') ForeignMolecule.markExplicitValence(this.mol, a, parseInt(val));
+				else if (key == 'CLASS')
+				{
+					this.mol.appendAtomTransient(a, ForeignMoleculeTransient.AtomSCSRClass + ':' + val);
+				}
+				else if (key == 'SEQID')
+				{
+					this.mol.appendAtomTransient(a, ForeignMoleculeTransient.AtomSCSRSeqID + ':' + val);
+				}
+				else if (key == 'ATTCHORD')
+				{
+					let attch = this.unpackStrings(val);
+					if (attch != null) this.mol.appendAtomTransient(a, ForeignMoleculeTransient.AtomSCSRAttchOrd + ':' + attch.join(','));
+				}
 				else if (key == 'HCOUNT')
 				{
 					let hyd = parseInt(val);
@@ -854,6 +880,10 @@ export class MDLMOLReader
 				{
 					if (bits[i].startsWith('ATOMS=')) sup.atoms = this.unpackList(bits[i].substring(6));
 					else if (bits[i].startsWith('LABEL=')) sup.name = this.withoutQuotes(bits[i].substring(6));
+					else if (bits[i].startsWith('XBONDS=')) sup.bonds = this.unpackList(bits[i].substring(7));
+					else if (bits[i].startsWith('CLASS=')) sup.templateClass = this.withoutQuotes(bits[i].substring(6));
+					else if (bits[i].startsWith('NATREPLACE=')) sup.natReplace = this.withoutQuotes(bits[i].substring(11));
+					else if (bits[i].startsWith('SAP=')) sup.attachPoints = this.unpackStrings(bits[i].substring(4));
 				}
 				superatoms.set(idx, sup);
 			}
@@ -903,6 +933,11 @@ export class MDLMOLReader
 			superatoms.delete(key);
 			this.applySuperAtom(value, Array.from(superatoms.values()));
 		}
+
+		if (templateBlocks.length > 0)
+		{
+			this.scsrTemplates = templateBlocks.map((lines) => this.parseV3000Template(lines));
+		}
 	}
 
 	// if it's a V3000-style atom list, mark it up
@@ -936,10 +971,16 @@ export class MDLMOLReader
 		while ((i = name.indexOf('\\s')) >= 0) name = name.substring(0, i) + '{' + name.substring(i + 2);
 		while ((i = name.indexOf('\\n')) >= 0) name = name.substring(0, i) + '}' + name.substring(i + 2);
 
-		let [mod, abvAtom] = MolUtil.convertToAbbrevIndex(this.mol, mask, name);
+		let [mod, abvAtom] = !sup.templateClass ? MolUtil.convertToAbbrevIndex(this.mol, mask, name) : [null, null];
 		if (mod == null)
 		{
-			ForeignMolecule.markSgroupMultiAttach(this.mol, name, sup.atoms);
+			let keyval:Record<string, string> = {};
+			if (sup.bonds) keyval['bonds'] = sup.bonds.join(' ');
+			if (sup.templateClass) keyval['templateClass'] = sup.templateClass;
+			if (sup.natReplace) keyval['natReplace'] = sup.natReplace;
+			if (sup.attachPoints) keyval['attachPoints'] = sup.attachPoints.join(' ');
+
+			ForeignMolecule.markSgroupMultiAttach(this.mol, name, sup.atoms, keyval);
 			return;
 		}
 		this.mol = mod;
@@ -1014,6 +1055,27 @@ export class MDLMOLReader
 		poly.createUnit(unit);
 	}
 
+	// parse out the sub-molecule SCSR template from V3000
+	private parseV3000Template(lines:string[]):ForeignMoleculeTemplateDefn
+	{
+		let header = lines[0];
+		let bits = this.splitWithQuotes(header.substring('M  V30 TEMPLATE '.length));
+		let name = bits[1], natReplace:string = null;
+		for (let n = 2; n < bits.length; n++)
+		{
+			if (bits[n].startsWith('NATREPLACE=')) natReplace = bits[n].substring(11);
+		}
+		
+		lines[0] = '  0  0  0  0  0  0  0  0  0  0  0 V3000';
+		lines.push('M  END');
+
+		let mdl = new MDLMOLReader(lines.join('\n'));
+		mdl.parseHeader = false;
+		mdl.parse();
+
+		return {name, natReplace, mol: mdl.mol};
+	}
+
 	// removes surrounding quotes, if any
 	private withoutQuotes(str:string):string
 	{
@@ -1058,6 +1120,15 @@ export class MDLMOLReader
 		let values:number[] = [];
 		for (let bit of str.split(' ')) values.push(parseInt(bit));
 		if (values[0] != values.length - 1) return null;
+		return Vec.remove(values, 0);
+	}
+	private unpackStrings(str:string):string[]
+	{
+		if (!str.startsWith('(') || !str.endsWith(')')) return null;
+
+		str = str.substring(1, str.length - 1);
+		let values = str.split(' ');
+		if (parseInt(values[0]) != values.length - 1) return null;
 		return Vec.remove(values, 0);
 	}
 

@@ -129,7 +129,7 @@ export class DrawExperiment
 				let useW = tw + ArrangeExperiment.COMP_GAP_LEFT * (wad1[1] + wad1[2]);
 				bx += useW;
 				bw -= useW;
-			}			
+			}
 		}
 		if (xc.annot != 0)
 		{
@@ -298,7 +298,7 @@ export class DrawExperiment
 		for (let n = 1; n <= mol.numAtoms; n++)
 		{
 			let x = mol.atomX(n), y = mol.atomY(n);
-			if (Math.abs(y - midY) < TOLERANCE && x < ax) 
+			if (Math.abs(y - midY) < TOLERANCE && x < ax)
 			{
 				[ax, ay] = [x, y];
 				baseY = arrmol.getPoint(n - 1).oval.cy;
