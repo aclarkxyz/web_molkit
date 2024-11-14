@@ -120,7 +120,7 @@ export class ForeignMolecule
 	}
 
 	// S-groups with either no attachments or multiple attachments; only single-attachment S-groups are handled naturally
-	public static markSgroupMultiAttach(mol:Molecule, name:string, atoms:number[], keyval:Record<string, string>):void
+	public static markSgroupMultiAttach(mol:Molecule, name:string, atoms:number[], keyval:Record<string, string> = {}):void
 	{
 		let idxHigh = 0;
 		for (let n = 1; n <= mol.numAtoms; n++) for (let tag of mol.atomTransient(n)) if (tag.startsWith(ForeignMoleculeTransient.AtomSgroupMultiAttach + ':'))
