@@ -549,7 +549,7 @@ export class MDLMOLReader
 			}
 		}
 
-		if (this.considerRescale) CoordUtil.normaliseBondDistances(mol);
+		if (this.considerRescale && Vec.isBlank(this.scsrTemplates)) CoordUtil.normaliseBondDistances(mol);
 
 		if (this.resBonds != null)
 		{
