@@ -54,6 +54,7 @@ export interface ForeignMoleculeSgroupMultiAttach
 {
 	name:string;
 	atoms:number[];
+	keyval:Record<string, string>;
 }
 
 export interface ForeignMoleculeSgroupMultiRepeat
@@ -149,13 +150,25 @@ export class ForeignMolecule
 		for (let n = 1; n <= mol.numAtoms; n++) for (let tag of mol.atomTransient(n)) if (tag.startsWith(ForeignMoleculeTransient.AtomSgroupMultiAttach + ':'))
 		{
 			let payload = tag.substring(ForeignMoleculeTransient.AtomSgroupMultiAttach.length + 1);
-			let comma = payload.indexOf(',');
+			/*let comma = payload.indexOf(',');
 			if (comma <= 0) continue;
 			let idx = parseInt(payload.substring(0, comma)), name = payload.substring(comma + 1);
-			if (!(idx > 0)) continue;
+			if (!(idx > 0)) continue;*/
+			let bits = payload.split(',');
+			if (bits.length < 2) continue;
+			let idx = parseInt(bits[0]), name = bits[1];
+			if (!(idx > 0) || !name) continue;
+
+			let keyval:Record<string, string> = {};
+			for (let i = 2; i < bits.length; i++)
+			{
+				let eq = bits[i].indexOf('=');
+				if (eq < 0) continue;
+				keyval[bits[i].substring(0, eq)] = bits[i].substring(eq + 1);
+			}
 
 			let sgm = map[idx];
-			if (sgm) sgm.atoms.push(n); else map[idx] = {name, atoms: [n]};
+			if (sgm) sgm.atoms.push(n); else map[idx] = {name, atoms: [n], keyval};
 		}
 
 		return Object.values(map);

@@ -1028,11 +1028,15 @@ declare namespace WebMolKit {
         AtomExplicitValence = "yMDL_EXPLICIT_VALENCE",
         AtomSgroupMultiAttach = "yMDL_SGROUP_MULTIATTACH",
         AtomSgroupMultiRepeat = "yMDL_SGROUP_MULTIREPEAT",
-        AtomSgroupData = "yMDL_SGROUP_DATA"
+        AtomSgroupData = "yMDL_SGROUP_DATA",
+        AtomSCSRClass = "yMDL_SCSR_CLASS",
+        AtomSCSRSeqID = "yMDL_SCSR_SEQID",
+        AtomSCSRAttchOrd = "yMDL_SCSR_ATTCHORD"
     }
     interface ForeignMoleculeSgroupMultiAttach {
         name: string;
         atoms: number[];
+        keyval: Record<string, string>;
     }
     interface ForeignMoleculeSgroupMultiRepeat {
         mult: number;
@@ -1046,12 +1050,17 @@ declare namespace WebMolKit {
         query: string;
         atoms: number[];
     }
+    interface ForeignMoleculeTemplateDefn {
+        name: string;
+        natReplace: string;
+        mol: Molecule;
+    }
     class ForeignMolecule {
         static noteAromaticAtoms(mol: Molecule): boolean[];
         static noteAromaticBonds(mol: Molecule): boolean[];
         static markExplicitValence(mol: Molecule, atom: number, valence: number): void;
         static noteExplicitValence(mol: Molecule, atom: number): number;
-        static markSgroupMultiAttach(mol: Molecule, name: string, atoms: number[]): void;
+        static markSgroupMultiAttach(mol: Molecule, name: string, atoms: number[], keyval: Record<string, string>): void;
         static hasAnySgroupMultiAttach(mol: Molecule): boolean;
         static noteAllSgroupMultiAttach(mol: Molecule): ForeignMoleculeSgroupMultiAttach[];
         static markSgroupMultiRepeat(mol: Molecule, mult: number, atoms: number[]): void;
@@ -1155,6 +1164,9 @@ declare namespace WebMolKit {
         value?: string;
         unit?: string;
         query?: string;
+        templateClass?: string;
+        natReplace?: string;
+        attachPoints?: string[];
     }
     class MDLMOLReader {
         parseHeader: boolean;
@@ -1175,6 +1187,7 @@ declare namespace WebMolKit {
         groupStereoRelative: number[][];
         groupLinkNodes: MDLReaderLinkNode[];
         groupMixtures: MDLReaderGroupMixture[];
+        scsrTemplates: ForeignMoleculeTemplateDefn[];
         private pos;
         private lines;
         constructor(strData: string);
@@ -1186,9 +1199,11 @@ declare namespace WebMolKit {
         private parseQueryAtomList;
         private applySuperAtom;
         private applyPolymerBlock;
+        private parseV3000Template;
         private withoutQuotes;
         private splitWithQuotes;
         private unpackList;
+        private unpackStrings;
         private countRingBonds;
         private countSubstitutions;
     }
@@ -1450,6 +1465,10 @@ declare namespace WebMolKit {
         setAtomZ(idx: number, z: number): void;
         compareTo(other: Molecule): number;
         trashTransient(): void;
+        appendAtomExtra(atom: number, extra: string): void;
+        appendAtomTransient(atom: number, trans: string): void;
+        appendBondExtra(bond: number, extra: string): void;
+        appendBondTransient(bond: number, trans: string): void;
         private trashGraph;
         private buildGraph;
         private buildConnComp;
@@ -3911,6 +3930,7 @@ declare namespace WebMolKit {
         offsetBy(dx: number, dy: number): void;
         withScaleBy(mag: number): Oval;
         withOffsetBy(dx: number, dy: number): Oval;
+        contains(x: number, y: number): boolean;
         toString(): string;
     }
     class Line {
@@ -4168,7 +4188,9 @@ declare namespace WebMolKit {
 declare namespace WebMolKit {
     function dom(obj: Element | DOM | string): DOM;
     function domLegacy(obj: any): DOM;
-    type CSSDictionary = Record<string, string | number | boolean>;
+    type CSSDictionary = Record<string, string | number | boolean> | {
+        'display': 'none' | 'block' | 'inline-block' | 'flex' | 'inline-flex' | 'grid' | 'inline-grid';
+    };
     class DOM {
         el: Element;
         constructor(el: Element);
@@ -4219,6 +4241,7 @@ declare namespace WebMolKit {
         size(): Size;
         area(): Box;
         setBoundaryPixels(x: number, y: number, w: number, h: number): void;
+        setSizePixels(w: number, h: number): void;
         hasFocus(): boolean;
         grabFocus(delay?: boolean): void;
         removeEvent(id: string, callback: any): void;
