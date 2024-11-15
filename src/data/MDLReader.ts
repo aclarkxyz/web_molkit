@@ -883,7 +883,11 @@ export class MDLMOLReader
 					else if (bits[i].startsWith('XBONDS=')) sup.bonds = this.unpackList(bits[i].substring(7));
 					else if (bits[i].startsWith('CLASS=')) sup.templateClass = this.withoutQuotes(bits[i].substring(6));
 					else if (bits[i].startsWith('NATREPLACE=')) sup.natReplace = this.withoutQuotes(bits[i].substring(11));
-					else if (bits[i].startsWith('SAP=')) sup.attachPoints = this.unpackStrings(bits[i].substring(4));
+					else if (bits[i].startsWith('SAP=')) 
+					{
+						const pts = this.unpackStrings(bits[i].substring(4));
+						sup.attachPoints = [...(sup.attachPoints ?? []), ...pts];
+					}
 				}
 				superatoms.set(idx, sup);
 			}

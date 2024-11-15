@@ -1060,7 +1060,7 @@ declare namespace WebMolKit {
         static noteAromaticBonds(mol: Molecule): boolean[];
         static markExplicitValence(mol: Molecule, atom: number, valence: number): void;
         static noteExplicitValence(mol: Molecule, atom: number): number;
-        static markSgroupMultiAttach(mol: Molecule, name: string, atoms: number[], keyval: Record<string, string>): void;
+        static markSgroupMultiAttach(mol: Molecule, name: string, atoms: number[], keyval?: Record<string, string>): void;
         static hasAnySgroupMultiAttach(mol: Molecule): boolean;
         static noteAllSgroupMultiAttach(mol: Molecule): ForeignMoleculeSgroupMultiAttach[];
         static markSgroupMultiRepeat(mol: Molecule, mult: number, atoms: number[]): void;

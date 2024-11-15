@@ -5658,7 +5658,7 @@ var WebMolKit;
                     return parseInt(tr.substring(ForeignMoleculeTransient.AtomExplicitValence.length + 1));
             return null;
         }
-        static markSgroupMultiAttach(mol, name, atoms, keyval) {
+        static markSgroupMultiAttach(mol, name, atoms, keyval = {}) {
             let idxHigh = 0;
             for (let n = 1; n <= mol.numAtoms; n++)
                 for (let tag of mol.atomTransient(n))
@@ -6782,7 +6782,7 @@ var WebMolKit;
                         }
                 }
             }
-            if (this.considerRescale)
+            if (this.considerRescale && WebMolKit.Vec.isBlank(this.scsrTemplates))
                 WebMolKit.CoordUtil.normaliseBondDistances(mol);
             if (this.resBonds != null) {
                 let derez = new WebMolKit.ResonanceRemover(mol, this.resBonds, null);
@@ -6796,6 +6796,7 @@ var WebMolKit;
             }
         }
         parseV3000() {
+            var _a;
             let Section;
             (function (Section) {
                 Section[Section["Atom"] = 0] = "Atom";
@@ -7101,8 +7102,10 @@ var WebMolKit;
                             sup.templateClass = this.withoutQuotes(bits[i].substring(6));
                         else if (bits[i].startsWith('NATREPLACE='))
                             sup.natReplace = this.withoutQuotes(bits[i].substring(11));
-                        else if (bits[i].startsWith('SAP='))
-                            sup.attachPoints = this.unpackStrings(bits[i].substring(4));
+                        else if (bits[i].startsWith('SAP=')) {
+                            const pts = this.unpackStrings(bits[i].substring(4));
+                            sup.attachPoints = [...((_a = sup.attachPoints) !== null && _a !== void 0 ? _a : []), ...pts];
+                        }
                     }
                     superatoms.set(idx, sup);
                 }
