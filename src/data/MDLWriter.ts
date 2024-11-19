@@ -476,7 +476,7 @@ export class MDLMOLWriter
 		}
 
 		// also encode foreign-annotated Sgroups
-		for (let ma of ForeignMolecule.noteAllSgroupMultiAttach(mol)) 
+		for (let ma of ForeignMolecule.noteAllSgroupMultiAttach(mol))
 		{
 			let sg:Sgroup = {type: 'SUP', name: ma.name, atoms: ma.atoms};
 
@@ -608,7 +608,7 @@ export class MDLMOLWriter
 			{
 				if (trans.startsWith(ForeignMoleculeTransient.AtomSCSRClass)) line += ' CLASS=' + trans.substring(ForeignMoleculeTransient.AtomSCSRClass.length + 1);
 				else if (trans.startsWith(ForeignMoleculeTransient.AtomSCSRSeqID)) line += ' SEQID=' + trans.substring(ForeignMoleculeTransient.AtomSCSRSeqID.length + 1);
-				else if (trans.startsWith(ForeignMoleculeTransient.AtomSCSRAttchOrd)) 
+				else if (trans.startsWith(ForeignMoleculeTransient.AtomSCSRAttchOrd))
 				{
 					let bits = trans.substring(ForeignMoleculeTransient.AtomSCSRAttchOrd.length + 1).split(',');
 					line += ' ATTCHORD=' + this.packV3000Strings(bits);
@@ -698,6 +698,17 @@ export class MDLMOLWriter
 			{
 				txt += ' LABEL=' + (sg.name.includes(' ') ? `"${sg.name}"` : sg.name);
 				txt += ' ATOMS=' + this.packV3000List(sg.atoms);
+				if (sg.bonds) txt += ' XBONDS=' + this.packV3000List(sg.bonds);
+				if (sg.templateClass) txt += ' CLASS=' + sg.templateClass;
+				if (sg.natReplace) txt += ' NATREPLACE=' + sg.natReplace;
+				if (sg.attachPoints)
+				{
+					for (let n = 0; n + 2 < sg.attachPoints.length; n += 3)
+					{
+						let v1 = sg.attachPoints[n], v2 = sg.attachPoints[n + 1], v3 = sg.attachPoints[n + 2];
+						txt += ` SAP=(3 ${v1} ${v2} ${v3})`;
+					}
+				}
 			}
 			else if (sg.type == 'MUL')
 			{
@@ -758,7 +769,7 @@ export class MDLMOLWriter
 			let line = VPFX + 'TEMPLATE ' + (n + 1) + ' ' + defn.name;
 			if (defn.natReplace) line += ' NATREPLACE=' + defn.natReplace;
 			this.lines.push(line);
-			
+
 			var tmdl = new MDLMOLWriter(defn.mol);
 			tmdl.includeHeader = false;
 			tmdl.includeCounts = false;
