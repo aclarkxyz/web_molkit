@@ -1222,12 +1222,15 @@ declare namespace WebMolKit {
     class MDLMOLWriter {
         mol: Molecule;
         includeHeader: boolean;
+        includeCounts: boolean;
+        includeEnd: boolean;
         overallStereoAbsolute: boolean;
         enhancedFields: boolean;
         chargeSeparate: boolean;
         abbrevSgroups: boolean;
         polymerBlocks: boolean;
         molName: string;
+        scsrTemplates: ForeignMoleculeTemplateDefn[];
         private sgroups;
         private lines;
         constructor(mol: Molecule);
@@ -1248,7 +1251,9 @@ declare namespace WebMolKit {
         private encodePolymerBlocks;
         writeCTAB3000(): void;
         private populateV3000Sgroups;
+        private populateSCSRTemplates;
         private packV3000List;
+        private packV3000Strings;
     }
     class MDLSDFWriter {
         ds: DataSheet;
