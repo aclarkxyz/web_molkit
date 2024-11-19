@@ -332,7 +332,7 @@ export class MDLMOLWriter
 			this.lines.push(mol.atomElement(n));
 		}
 
-		if (!this.includeEnd) this.lines.push('M  END');
+		if (this.includeEnd) this.lines.push('M  END');
    	}
 
 	// writes a specific sub-block, e.g. M__CHG, etc., where each pair of idx/val is a separate entity
