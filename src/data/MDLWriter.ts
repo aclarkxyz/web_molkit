@@ -680,7 +680,7 @@ export class MDLMOLWriter
 
 		if (Vec.notBlank(this.scsrTemplates)) this.populateSCSRTemplates();
 
-		if (!this.includeEnd) this.lines.push('M  END');
+		if (this.includeEnd) this.lines.push('M  END');
 	}
 
 	private populateV3000Sgroups():string[]
