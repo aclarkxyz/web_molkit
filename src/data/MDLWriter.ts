@@ -35,6 +35,12 @@ interface Sgroup
 
 	// MUL only
 	parent?:number;
+
+	// for SCSR templates
+	bonds?:number[];
+	templateClass?:string;
+	natReplace?:string;
+	attachPoints?:string[];
 }
 
 const VPFX = 'M  V30 ';
@@ -43,12 +49,17 @@ export class MDLMOLWriter
 {
 	// options
 	public includeHeader = true; // if on, the 3 line header will be included
+	public includeCounts = true; // if on, the subsequent 1 line of counts will be included (V3000 only, ignored in V2000 mode)
+	public includeEnd = true; // if on, the final M__END will be included
 	public overallStereoAbsolute = true; // from the counts block, overall true=interpret stereo as absolute; false=interpret as relative
 	public enhancedFields = true; // if on, non-standard MDL fields may be added
 	public chargeSeparate = false; // if on, zero bonds will be split out
 	public abbrevSgroups = true; // if on, abbreviations will be written as Sgroups when possible
 	public polymerBlocks = true; // write polymer blocks, if any
 	public molName = ''; // optional name to include in the header (if any)
+
+	// provide these template definitions if they need to be written out with the molecule
+	public scsrTemplates:ForeignMoleculeTemplateDefn[] = null;
 
 	// some number of superatom abbreviation groups, there being several types
 	private sgroups:Sgroup[] = [];
@@ -91,7 +102,7 @@ export class MDLMOLWriter
 	// writes out V3000 if there is metadata that cannot be represented in the older format, V2000 otherwise
 	public writeEither():string
 	{
-		let triggered = StereoGroup.hasStereoGroups(this.mol) || this.mol.numAtoms >= 1000 || this.mol.numBonds >= 1000;
+		let triggered = StereoGroup.hasStereoGroups(this.mol) || this.mol.numAtoms >= 1000 || this.mol.numBonds >= 1000 || Vec.notBlank(this.scsrTemplates);
 		if (!triggered) for (let n = 1; n <= this.mol.numBonds; n++)
 			if (this.mol.bondOrder(n) == 0 && QueryUtil.queryBondOrders(this.mol, n) == null) {triggered = true; break;}
 		if (triggered) return this.writeV3000(); else return this.write();
@@ -321,7 +332,7 @@ export class MDLMOLWriter
 			this.lines.push(mol.atomElement(n));
 		}
 
-		this.lines.push('M  END');
+		if (!this.includeEnd) this.lines.push('M  END');
    	}
 
 	// writes a specific sub-block, e.g. M__CHG, etc., where each pair of idx/val is a separate entity
@@ -465,7 +476,21 @@ export class MDLMOLWriter
 		}
 
 		// also encode foreign-annotated Sgroups
-		for (let ma of ForeignMolecule.noteAllSgroupMultiAttach(mol)) this.sgroups.push({type: 'SUP', name: ma.name, atoms: ma.atoms});
+		for (let ma of ForeignMolecule.noteAllSgroupMultiAttach(mol)) 
+		{
+			let sg:Sgroup = {type: 'SUP', name: ma.name, atoms: ma.atoms};
+
+			let str = ma.keyval['bonds'];
+			if (str) sg.bonds = str.split(' ').map((v) => parseInt(v));
+
+			sg.templateClass = ma.keyval['templateClass'] ;
+			sg.natReplace = ma.keyval['natReplace'];
+
+			str = ma.keyval['attachPoints'];
+			if (str) sg.attachPoints = str.split(' ');
+
+			this.sgroups.push(sg);
+		}
 		for (let mr of ForeignMolecule.noteAllSgroupMultiRepeat(mol)) this.sgroups.push({type: 'MUL', name: mr.mult.toString(), atoms: mr.atoms});
 		for (let dat of ForeignMolecule.noteAllSgroupData(mol)) this.sgroups.push({type: 'DAT', name: dat.name, value: dat.value, unit: dat.unit, query: dat.query, atoms: dat.atoms});
 
@@ -539,7 +564,7 @@ export class MDLMOLWriter
 
 		let sgroupText = this.populateV3000Sgroups();
 
-		this.lines.push('  0  0  0     0  0            999 V3000');
+		if (this.includeCounts) this.lines.push('  0  0  0     0  0            999 V3000');
 		this.lines.push(VPFX + 'BEGIN CTAB');
 
 		this.lines.push(VPFX + `COUNTS ${mol.numAtoms} ${mol.numBonds} ${sgroupText.length} 0 ${this.overallStereoAbsolute ? 1 : 0}`);
@@ -578,6 +603,18 @@ export class MDLMOLWriter
 			if (Vec.len(qrbc) == 1) line += ' RBCNT=' + (qrbc[0] == 0 ? -1 : qrbc[0]);
 			if (Vec.len(qsub) == 1) line += ' SUBST=' + (qsub[0] == 0 ? -1 : qsub[0]);
 			if (quns == true) line += ' UNSAT=1';
+
+			for (let trans of mol.atomTransient(n))
+			{
+				if (trans.startsWith(ForeignMoleculeTransient.AtomSCSRClass)) line += ' CLASS=' + trans.substring(ForeignMoleculeTransient.AtomSCSRClass.length + 1);
+				else if (trans.startsWith(ForeignMoleculeTransient.AtomSCSRSeqID)) line += ' SEQID=' + trans.substring(ForeignMoleculeTransient.AtomSCSRSeqID.length + 1);
+				else if (trans.startsWith(ForeignMoleculeTransient.AtomSCSRAttchOrd)) 
+				{
+					let bits = trans.substring(ForeignMoleculeTransient.AtomSCSRAttchOrd.length + 1).split(',');
+					line += ' ATTCHORD=' + this.packV3000Strings(bits);
+				}
+			}
+
 
 			this.lines.push(line);
 		}
@@ -640,7 +677,10 @@ export class MDLMOLWriter
 		}
 
 		this.lines.push(VPFX + 'END CTAB');
-		this.lines.push('M  END');
+
+		if (Vec.notBlank(this.scsrTemplates)) this.populateSCSRTemplates();
+
+		if (!this.includeEnd) this.lines.push('M  END');
 	}
 
 	private populateV3000Sgroups():string[]
@@ -709,7 +749,33 @@ export class MDLMOLWriter
 		return lines;
 	}
 
+	private populateSCSRTemplates():void
+	{
+		this.lines.push(VPFX + 'BEGIN TEMPLATE');
+		for (let n = 0; n < this.scsrTemplates.length; n++)
+		{
+			var defn = this.scsrTemplates[n];
+			let line = VPFX + 'TEMPLATE ' + (n + 1) + ' ' + defn.name;
+			if (defn.natReplace) line += ' NATREPLACE=' + defn.natReplace;
+			this.lines.push(line);
+			
+			var tmdl = new MDLMOLWriter(defn.mol);
+			tmdl.includeHeader = false;
+			tmdl.includeCounts = false;
+			tmdl.includeEnd = false;
+			let molfile = tmdl.writeV3000();
+			for (line of molfile.trimEnd().split('\n')) this.lines.push(line);
+		}
+		this.lines.push(VPFX + 'END TEMPLATE');
+	}
+
 	private packV3000List(values:number[]):string
+	{
+		let str = '(' + values.length;
+		for (let v of values) str += ' ' + v;
+		return str + ')';
+	}
+	private packV3000Strings(values:string[]):string
 	{
 		let str = '(' + values.length;
 		for (let v of values) str += ' ' + v;

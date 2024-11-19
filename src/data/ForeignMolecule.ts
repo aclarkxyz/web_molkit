@@ -127,8 +127,8 @@ export class ForeignMolecule
 		{
 			let payload = tag.substring(ForeignMoleculeTransient.AtomSgroupMultiAttach.length + 1);
 			let comma = payload.indexOf(',');
-			if (comma <= 0) continue;
-			let idx = parseInt(payload.substring(0, comma));
+			let bits = payload.split(',');
+			let idx = parseInt(bits[0]);
 			if (!(idx > 0)) continue;
 			idxHigh = Math.max(idxHigh, idx);
 		}
@@ -150,10 +150,6 @@ export class ForeignMolecule
 		for (let n = 1; n <= mol.numAtoms; n++) for (let tag of mol.atomTransient(n)) if (tag.startsWith(ForeignMoleculeTransient.AtomSgroupMultiAttach + ':'))
 		{
 			let payload = tag.substring(ForeignMoleculeTransient.AtomSgroupMultiAttach.length + 1);
-			/*let comma = payload.indexOf(',');
-			if (comma <= 0) continue;
-			let idx = parseInt(payload.substring(0, comma)), name = payload.substring(comma + 1);
-			if (!(idx > 0)) continue;*/
 			let bits = payload.split(',');
 			if (bits.length < 2) continue;
 			let idx = parseInt(bits[0]), name = bits[1];
