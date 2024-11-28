@@ -38,6 +38,7 @@ export class Popup
 
 	public popupBackground = 'white';
 	public obscureOpacity = 0.2;
+	public zindex:number = null; // optionally the use of zindex, to ensure it goes on top (usually not necessary)
 	public callbackClose:(source?:Popup) => void = null;
 	public callbackPopulate:(source?:Popup) => void = null;
 
@@ -71,6 +72,12 @@ export class Popup
 		fg.css({'position': 'fixed'/*, 'z-index': zindex + 1*/});
 		fg.css({'left': '0', 'right': '0', 'top': '0', 'bottom': '0'});
 		fg.onClick(() => this.close());
+
+		if (this.zindex > 0)
+		{
+			bg.setCSS('z-index', this.zindex);
+			fg.setCSS('z-index', this.zindex + 1);
+		}
 
 		let pb = this.domPanelBoundary = dom('<div class="wmk-popup"/>').appendTo(fg).css({'visibility': 'hidden'});
 		pb.onClick((event:MouseEvent) => event.stopPropagation()); // don't let the click percolate upward to the close event
