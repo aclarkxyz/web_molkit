@@ -515,6 +515,8 @@ export class MDLMOLReader
 		// post-fixing
 		for (let n = 1; n <= mol.numAtoms; n++)
 		{
+			if (!MolUtil.hasAbbrev(mol, n) || mol.atomTransient(n).some((str) => str.startsWith(ForeignMoleculeTransient.AtomSCSRClass))) continue;
+
 			let el = mol.atomElement(n);
 
 			// shortcuts for isotope "elements"
