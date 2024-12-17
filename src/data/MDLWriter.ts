@@ -626,6 +626,8 @@ export class MDLMOLWriter
 			this.lines.push(VPFX + 'BEGIN BOND');
 
 			let maskArom = ForeignMolecule.noteAromaticBonds(mol);
+			let maskHBond = ForeignMolecule.noteZeroHydrogenBonds(mol); // (note: dative bond is the default kind of 0-order bond, so only need to note h-bond subclass
+		
 			for (let n = 1; n <= mol.numBonds; n++)
 			{
 				let bfr = mol.bondFrom(n), bto = mol.bondTo(n);
@@ -636,7 +638,13 @@ export class MDLMOLWriter
 				else if (Vec.equals(qbond, [-1, 1])) type = 6; // the "single or aromatic" type
 				else if (Vec.equals(qbond, [-1, 2])) type = 7; // the "double or aromatic" type
 				else if (Vec.equals(qbond, [-1, 0, 1, 2, 3])) type = 8; // the "double or aromatic" type
-				else if (type == 0) type = 9; // the "coordination" type (zero bonds may get stripped out earlier)
+				else if (type == 0) 
+				{
+					if (!maskHBond[n - 1])
+						type = 9; // the "coordination" type
+					else
+						type = 10; // the "H-bond" type
+				}
 				else if (type > 3) type = 3; // 4-or-higher bonds are not available
 
 				let stereo = mol.bondType(n);
@@ -647,7 +655,7 @@ export class MDLMOLWriter
 				else if (stereo == Molecule.BONDTYPE_DECLINED) line += ' CFG=3';
 				else if (stereo == Molecule.BONDTYPE_UNKNOWN) line += ' CFG=2';
 
-				if (order == 0) line += ' DISP=COORD';
+				if (order == 0 && !maskHBond[n - 1]) line += ' DISP=COORD';
 
 				this.lines.push(line);
 			}

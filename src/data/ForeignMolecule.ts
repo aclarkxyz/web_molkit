@@ -33,6 +33,10 @@ export enum ForeignMoleculeTransient
 	AtomAromatic = 'yAROMATIC',
 	BondAromatic = 'yAROMATIC',
 
+	// specialisations of zero-order bonds: the MDL world supports "dative" and "hydrogen" which are both 0-order but have particular meaning
+	BondZeroDative = 'yZERO_DATIVE',
+	BondZeroHydrogen = 'yZERO_HYDROGEN',
+
 	// the atom-centred chirality settings, used explicitly by MDL Molfiles to denote chirality, or mixtures
 	AtomChiralMDLOdd = 'yCHIRAL_MDL_ODD',
 	AtomChiralMDLEven= 'yCHIRAL_MDL_EVEN',
@@ -100,6 +104,22 @@ export class ForeignMolecule
 		const sz = mol.numBonds;
 		let mask = Vec.booleanArray(false, sz);
 		for (let n = 1; n <= sz; n++) mask[n - 1] = mol.bondTransient(n).indexOf(ForeignMoleculeTransient.BondAromatic) >= 0;
+		return mask;
+	}
+
+	// returns a mask for zero-order bonds that are marked as dative/hydrogen respectively
+	public static noteZeroDativeBonds(mol:Molecule):boolean[]
+	{
+		const sz = mol.numBonds;
+		let mask = Vec.booleanArray(false, sz);
+		for (let n = 1; n <= sz; n++) mask[n - 1] = mol.bondTransient(n).includes(ForeignMoleculeTransient.BondZeroDative);
+		return mask;
+	}
+	public static noteZeroHydrogenBonds(mol:Molecule):boolean[]
+	{
+		const sz = mol.numBonds;
+		let mask = Vec.booleanArray(false, sz);
+		for (let n = 1; n <= sz; n++) mask[n - 1] = mol.bondTransient(n).includes(ForeignMoleculeTransient.BondZeroHydrogen);
 		return mask;
 	}
 

@@ -1,7 +1,7 @@
 /*
 	WebMolKit
 
-	(c) 2010-2020 Molecular Materials Informatics, Inc.
+	(c) 2010-2024 Molecular Materials Informatics, Inc.
 
 	All rights reserved
 
@@ -217,13 +217,15 @@ export class MDLMOLReader
 
 			if (bfr == bto || bfr < 1 || bfr > numAtoms || bto < 1 || bto > numAtoms) throw 'Invalid MDL MOL: bond line' + (n + 1);
 
-			let order = type >= 1 && type <= 3 ? type : type == 8 || type == 9 ? 0 : 1;
+			let order = type >= 1 && type <= 3 ? type : type == 8 || type == 9 || type == 10 ? 0 : 1;
 			let style = Molecule.BONDTYPE_NORMAL;
 			if (stereo == 1) style = Molecule.BONDTYPE_INCLINED;
 			else if (stereo == 6) style = Molecule.BONDTYPE_DECLINED;
 			else if (stereo == 3 || stereo == 4) style = Molecule.BONDTYPE_UNKNOWN;
 
 			let b = this.mol.addBond(bfr, bto, order, style);
+			if (type == 9) this.mol.appendBondTransient(b, ForeignMoleculeTransient.BondZeroDative);
+			if (type == 9) this.mol.appendBondTransient(b, ForeignMoleculeTransient.BondZeroHydrogen);
 
 			if (this.keepQuery)
 			{
@@ -515,7 +517,7 @@ export class MDLMOLReader
 		// post-fixing
 		for (let n = 1; n <= mol.numAtoms; n++)
 		{
-			if (!MolUtil.hasAbbrev(mol, n) || mol.atomTransient(n).some((str) => str.startsWith(ForeignMoleculeTransient.AtomSCSRClass))) continue;
+			if (MolUtil.hasAbbrev(mol, n) || mol.atomTransient(n).some((str) => str.startsWith(ForeignMoleculeTransient.AtomSCSRClass))) continue;
 
 			let el = mol.atomElement(n);
 
@@ -774,6 +776,8 @@ export class MDLMOLReader
 			let type = parseInt(bits[1]), bfr = parseInt(bits[2]), bto = parseInt(bits[3]);
 			let order = type >= 1 && type <= 3 ? type : type == 9 || type == 10 ? 0 : 1;
 			this.mol.addBond(bfr, bto, order);
+			if (type == 9) this.mol.appendBondTransient(b, ForeignMoleculeTransient.BondZeroDative);
+			if (type == 10) this.mol.appendBondTransient(b, ForeignMoleculeTransient.BondZeroHydrogen);
 
 			if (this.keepQuery)
 			{
