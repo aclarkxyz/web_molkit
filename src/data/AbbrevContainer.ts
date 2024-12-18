@@ -10,6 +10,17 @@
 	[PKG=webmolkit]
 */
 
+import {CircularFingerprints} from '../calc/CircularFingerprints';
+import {Theme} from '../util/Theme';
+import {DEGRAD, escapeHTML, norm_xy, readTextURL} from '../util/util';
+import {Vec} from '../util/Vec';
+import {CoordUtil} from './CoordUtil';
+import {DataSheetColumn} from './DataSheet';
+import {DataSheetStream} from './DataSheetStream';
+import {MetaMolecule} from './MetaMolecule';
+import {Molecule} from './Molecule';
+import {MolUtil} from './MolUtil';
+
 export const TEMPLATE_FILES =
 [
 	'rings',

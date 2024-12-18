@@ -10,7 +10,12 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
+import {MetaMolecule} from '../data/MetaMolecule';
+import {Molecule} from '../data/Molecule';
+import {MolUtil} from '../data/MolUtil';
+import {norm2_xy} from '../util/util';
+import {Vec} from '../util/Vec';
+import {CircularFingerprints, CircularFP} from './CircularFingerprints';
 
 /*
 	A specialisation of the BayesianModel class, which operates exclusively on Circular (ECFP/FCFP) fingerprints.
@@ -733,4 +738,3 @@ export class BayesianModel
 	}
 }
 
-/* EOF */ }

@@ -10,7 +10,18 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
+import {CoordUtil} from '../data/CoordUtil';
+import {MDLMOLReader} from '../data/MDLReader';
+import {Molecule} from '../data/Molecule';
+import {OutlineMeasurement} from '../gfx/ArrangeMeasurement';
+import {ArrangeMolecule} from '../gfx/ArrangeMolecule';
+import {DrawMolecule} from '../gfx/DrawMolecule';
+import {MetaVector} from '../gfx/MetaVector';
+import {RenderEffects, RenderPolicy} from '../gfx/Rendering';
+import {dom} from '../util/dom';
+import {Size} from '../util/Geom';
+import {DEGRAD, htmlToRGB} from '../util/util';
+import {EmbedChemistry} from './EmbedChemistry';
 
 /*
 	Embedded molecule: displays a single molecular structure, with a variety of available rendering options. The structure display is static
@@ -191,4 +202,3 @@ export class EmbedMolecule extends EmbedChemistry
 
 }
 
-/* EOF */ }

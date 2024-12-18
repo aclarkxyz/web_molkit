@@ -10,7 +10,8 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
+import {norm2_xy, norm_xy, sqr} from './util';
+import {Vec} from './Vec';
 
 /*
 	Delaunay triangulator: takes a jumble of 2D points and converts them into a collection of triangles. This initially generates a collection of
@@ -672,4 +673,3 @@ export class Triangulation2D
 	}
 }
 
-/* EOF */ }

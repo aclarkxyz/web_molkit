@@ -10,7 +10,7 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
+import {ButtonBank, ButtonBankItem} from '../ui/ButtonBank';
 
 /*
 	ToolBank: buttons for the Sketcher main command bank.
@@ -107,4 +107,3 @@ export class ToolBank extends ButtonBank
 	}
 }
 
-/* EOF */ }

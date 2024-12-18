@@ -10,7 +10,10 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
+import {Chemistry} from '../data/Chemistry';
+import {Widget} from '../ui/Widget';
+import {dom, DOM} from '../util/dom';
+import {installInlineCSS} from '../util/Theme';
 
 /*
 	Interactive periodic table for picking elements.
@@ -200,4 +203,3 @@ export class PeriodicTableWidget extends Widget
 	}
 }
 
-/* EOF */ }

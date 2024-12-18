@@ -10,7 +10,9 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
+import {dom} from '../util/dom';
+import {eventCoords, setBoundaryPixels} from '../util/util';
+import {Popup} from './Popup';
 
 /*
 	Proxy functionality for menus, particularly the context menu.
@@ -106,4 +108,3 @@ export class MenuProxyWeb extends MenuProxy
 	}
 }
 
-/* EOF */ }

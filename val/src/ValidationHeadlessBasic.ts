@@ -15,7 +15,9 @@
 ///<reference path='../../src/gfx/AxisLabeller.ts'/>
 ///<reference path='Validation.ts'/>
 
-namespace WebMolKit /* BOF */ {
+import {AxisLabeller} from '../../src/gfx/AxisLabeller';
+import {Vec} from '../../src/util/Vec';
+import {Validation} from './Validation';
 
 /*
     Headless validation: basic tests - simple things like vector operators and common utilities.
@@ -77,4 +79,3 @@ export class ValidationHeadlessBasic extends Validation
 	}
 }
 
-/* EOF */ }

@@ -10,6 +10,13 @@
 	[PKG=webmolkit]
 */
 
+import {fltEqual} from '../util/util';
+import {Vec} from '../util/Vec';
+import {Chemistry} from './Chemistry';
+import {ForeignMoleculeTransient} from './ForeignMolecule';
+import {Graph} from './Graph';
+import {Molecule} from './Molecule';
+
 /* eslint-disable no-multi-spaces */
 
 /*

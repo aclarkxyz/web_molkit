@@ -10,7 +10,27 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
+import {AbbrevContainer, AbbrevContainerFrag} from '../data/AbbrevContainer';
+import {Molecule} from '../data/Molecule';
+import {MolUtil} from '../data/MolUtil';
+import {Dialog} from '../dialog/Dialog';
+import {OutlineMeasurement} from '../gfx/ArrangeMeasurement';
+import {ArrangeMolecule} from '../gfx/ArrangeMolecule';
+import {DrawMolecule} from '../gfx/DrawMolecule';
+import {MetaVector} from '../gfx/MetaVector';
+import {RenderEffects, RenderPolicy} from '../gfx/Rendering';
+import {ClipboardProxy, ClipboardProxyHandler} from '../ui/ClipboardProxy';
+import {OptionList} from '../ui/OptionList';
+import {TabBar} from '../ui/TabBar';
+import {dom, DOM} from '../util/dom';
+import {Theme} from '../util/Theme';
+import {angleDiffPos, colourCode, DEGRAD, KeyCode, norm_xy, RADDEG} from '../util/util';
+import {Vec} from '../util/Vec';
+import {ExtraFieldsWidget} from './ExtraFieldsWidget';
+import {GeomWidget, GeomWidgetSelection, GeomWidgetSelType, GeomWidgetType} from './GeomWidget';
+import {ActivityType, MoleculeActivity, SketchState} from './MoleculeActivity';
+import {PeriodicTableWidget} from './PeriodicTableWidget';
+import {QueryFieldsWidget} from './QueryFieldsWidget';
 
 /*
 	Options for editing a single atom within a molecule.
@@ -588,4 +608,3 @@ export class EditAtom extends Dialog
 	}
 }
 
-/* EOF */ }

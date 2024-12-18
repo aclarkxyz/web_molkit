@@ -10,7 +10,13 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
+import {GeomUtil} from '../util/Geom';
+import {angleDiff, angleDiffPos, DEGRAD, norm2_xyz, norm_xyz} from '../util/util';
+import {Permutation, Vec} from '../util/Vec';
+import {Chemistry} from './Chemistry';
+import {MetaMolecule} from './MetaMolecule';
+import {Molecule} from './Molecule';
+import {MolUtil} from './MolUtil';
 
 /*
 	Calculation of the stereochemical properties of a molecule, such as R/S and E/Z isomer labels.
@@ -936,4 +942,3 @@ export class Stereochemistry
 	}
 }
 
-/* EOF */ }

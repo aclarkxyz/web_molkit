@@ -10,6 +10,13 @@
     [PKG=webmolkit]
 */
 
+import {DataSheet} from '../data/DataSheet';
+import {MoleculeStream} from '../data/MoleculeStream';
+import {Vec} from '../util/Vec';
+import {Aspect} from './Aspect';
+import {registerAspect} from './AspectList';
+import {MeasurementData} from './MeasurementData';
+
 /*
 	Mixture: stores metadata about various columns such that they can be corralled into a hierarchical form that represents
 	a mixed group of chemical substances, where individual components and branches have structure, name, quantity and various

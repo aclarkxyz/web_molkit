@@ -10,6 +10,12 @@
 	[PKG=webmolkit]
 */
 
+import {Chemistry} from '../data/Chemistry';
+import {MetaMolecule} from '../data/MetaMolecule';
+import {Molecule} from '../data/Molecule';
+import {MolUtil} from '../data/MolUtil';
+import {Permutation, Vec} from '../util/Vec';
+
 /*
 	Circular fingerprints: for generating ECFP-2/4/6 and FCFP-2/4/6 fingerprints. These are described by:
 

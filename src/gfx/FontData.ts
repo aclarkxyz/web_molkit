@@ -12,8 +12,6 @@
 
 /* eslint-disable comma-spacing */
 
-namespace WebMolKit /* BOF */ {
-
 /*
 	FontData: stores information about the general font, sufficient to recreate and layout every glyph.
 */
@@ -754,4 +752,3 @@ export class FontData
 	}
 }
 
-/* EOF */ }

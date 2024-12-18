@@ -10,7 +10,8 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
+import {Vec} from '../util/Vec';
+import {Molecule} from './Molecule';
 
 /*
 	Polymer blocks: handles metadata instructions that mark up sections of the molecule as being blocks that are assembled in a
@@ -363,4 +364,3 @@ export class PolymerBlock
 	}
 }
 
-/* EOF */ }

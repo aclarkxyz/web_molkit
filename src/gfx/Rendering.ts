@@ -10,7 +10,7 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
+import {clone} from '../util/util';
 
 /*
 	RenderPolicy: controls the parameters of rendering for molecules (and some composites like reactions). These policies are
@@ -232,4 +232,3 @@ export class RenderMnemonics
 	// ------------ private methods ------------
 }
 
-/* EOF */ }

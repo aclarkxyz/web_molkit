@@ -12,9 +12,13 @@
 
 ///<reference path='../ui/ButtonBank.ts'/>
 
-/* eslint-disable no-multi-spaces, comma-spacing */
+import {Molecule} from '../data/Molecule';
+import {Geometry} from '../data/SketchUtil';
+import {ButtonBank, ButtonBankItem} from '../ui/ButtonBank';
+import {KeyCode} from '../util/util';
+import {ActivityType, MoleculeActivity} from './MoleculeActivity';
 
-namespace WebMolKit /* BOF */ {
+/* eslint-disable no-multi-spaces, comma-spacing */
 
 /*
 	CommandBank: the various bank styles that correspond to actions (select-then-do, as opposed to toolbank style which
@@ -365,5 +369,3 @@ export class CommandBank extends ButtonBank
 		return false;
 	}
 }
-
-/* EOF */ }

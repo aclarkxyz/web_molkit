@@ -10,7 +10,13 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
+import {Vec} from '../util/Vec';
+import {Chemistry} from './Chemistry';
+import {CoordUtil} from './CoordUtil';
+import {Graph} from './Graph';
+import {Molecule} from './Molecule';
+import {PolymerBlock} from './PolymerBlock';
+import {SketchUtil} from './SketchUtil';
 
 /*
 	MolUtil: static methods for calculating molecule properties.
@@ -989,4 +995,3 @@ export class MolUtil
 	}
 }
 
-/* EOF */ }

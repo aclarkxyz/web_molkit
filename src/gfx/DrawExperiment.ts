@@ -10,7 +10,16 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
+import {ExperimentEntry} from '../aspect/Experiment';
+import {MolUtil} from '../data/MolUtil';
+import {invZ, norm_xy} from '../util/util';
+import {Vec} from '../util/Vec';
+import {ArrangeComponent, ArrangeComponentAnnot, ArrangeComponentType, ArrangeExperiment} from './ArrangeExperiment';
+import {ArrangeMeasurement} from './ArrangeMeasurement';
+import {ArrangeMolecule} from './ArrangeMolecule';
+import {DrawMolecule} from './DrawMolecule';
+import {MetaVector, TextAlign} from './MetaVector';
+import {RenderEffects, RenderPolicy} from './Rendering';
 
 /*
 	Controlling class for drawing a molecule in a vector graphics format: this turns an "arranged molecule" instance into the series of primitives that
@@ -309,4 +318,3 @@ export class DrawExperiment
 	}
 }
 
-/* EOF */ }

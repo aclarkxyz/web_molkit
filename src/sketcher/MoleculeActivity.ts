@@ -10,7 +10,22 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
+import {AbbrevContainer} from '../data/AbbrevContainer';
+import {BondArtifact} from '../data/BondArtifact';
+import {Chemistry} from '../data/Chemistry';
+import {CoordUtil} from '../data/CoordUtil';
+import {Graph} from '../data/Graph';
+import {Molecule} from '../data/Molecule';
+import {MolUtil} from '../data/MolUtil';
+import {PolymerBlock} from '../data/PolymerBlock';
+import {QueryTypeAtom, QueryUtil} from '../data/QueryUtil';
+import {SketchUtil} from '../data/SketchUtil';
+import {MetaVector} from '../gfx/MetaVector';
+import {angleDiff, angleNorm, DEGRAD, norm2_xy, norm_xy, RADDEG, TWOPI} from '../util/util';
+import {Vec} from '../util/Vec';
+import {MetalLigate} from './MetalLigate';
+import {Sketcher} from './Sketcher';
+import {FusionPermutation, TemplateFusion} from './TemplateFusion';
 
 /*
 	MoleculeActivity: command-oriented modifications of the current molecular state.
@@ -2420,4 +2435,3 @@ export class MoleculeActivity
 
 }
 
-/* EOF */ }

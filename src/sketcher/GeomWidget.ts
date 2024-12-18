@@ -10,7 +10,14 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
+import {Molecule} from '../data/Molecule';
+import {MetaVector} from '../gfx/MetaVector';
+import {Widget} from '../ui/Widget';
+import {dom, DOM} from '../util/dom';
+import {GeomUtil} from '../util/Geom';
+import {Theme} from '../util/Theme';
+import {angleDiff, DEGRAD, eventCoords, norm_xy, TWOPI} from '../util/util';
+import {Vec} from '../util/Vec';
 
 /*
 	Geometry editing widget to support atom/bond editing dialogs.
@@ -304,4 +311,3 @@ export class GeomWidget extends Widget
 	}
 }
 
-/* EOF */ }

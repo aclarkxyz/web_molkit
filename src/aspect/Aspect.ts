@@ -10,6 +10,11 @@
 	[PKG=webmolkit]
 */
 
+import {DataSheet} from '../data/DataSheet';
+import {MetaVector} from '../gfx/MetaVector';
+import {RenderPolicy} from '../gfx/Rendering';
+import {Vec} from '../util/Vec';
+
 /*
 	Abstract base class for all "Aspects".
 

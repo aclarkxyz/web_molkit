@@ -10,7 +10,11 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
+import {Box} from '../util/Geom';
+import {deepClone} from '../util/util';
+import {Vec} from '../util/Vec';
+import {Chemistry} from './Chemistry';
+import {MoleculeStream} from './MoleculeStream';
 
 /*
 	A dynamic representation of a molecule, which is analogous to the com.mmi.core.mol.Molecule class.
@@ -845,4 +849,3 @@ export class Molecule
 	}
 }
 
-/* EOF */ }

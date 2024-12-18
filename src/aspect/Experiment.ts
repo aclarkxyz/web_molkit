@@ -12,6 +12,18 @@
 
 ///<reference path='Aspect.ts'/>
 
+import {DataSheet, DataSheetColumn} from '../data/DataSheet';
+import {Molecule} from '../data/Molecule';
+import {MolUtil} from '../data/MolUtil';
+import {ArrangeExperiment} from '../gfx/ArrangeExperiment';
+import {OutlineMeasurement} from '../gfx/ArrangeMeasurement';
+import {DrawExperiment} from '../gfx/DrawExperiment';
+import {MetaVector} from '../gfx/MetaVector';
+import {RenderPolicy} from '../gfx/Rendering';
+import {Vec} from '../util/Vec';
+import {Aspect, AspectGraphicRendering} from './Aspect';
+import {registerAspect} from './AspectList';
+
 /*
 	Experiment aspect: transforms groups of rows from a datasheet into a collection of structures that make up a
 	multistep reaction, along with accompanying quantities and other miscellaneous information.

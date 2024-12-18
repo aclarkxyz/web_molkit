@@ -10,7 +10,16 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
+import {Vec} from '../util/Vec';
+import {BondArtifact} from './BondArtifact';
+import {DataSheet, DataSheetColumn} from './DataSheet';
+import {ForeignMolecule, ForeignMoleculeTemplateDefn, ForeignMoleculeTransient} from './ForeignMolecule';
+import {MDLMOL_VALENCE} from './MDLReader';
+import {Molecule} from './Molecule';
+import {MolUtil} from './MolUtil';
+import {PolymerBlock, PolymerBlockConnectivity} from './PolymerBlock';
+import {QueryUtil} from './QueryUtil';
+import {StereoGroup} from './StereoGroup';
 
 /*
 	MDL Molfile writer: convert the native structure format to MDL Molfile. Both the older (V2000) and newer (V3000) formats are
@@ -869,4 +878,3 @@ export class MDLSDFWriter
 
 }
 
-/* EOF */ }

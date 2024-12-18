@@ -10,7 +10,15 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
+import {BondArtifact} from '../data/BondArtifact';
+import {CoordUtil} from '../data/CoordUtil';
+import {Graph} from '../data/Graph';
+import {Molecule} from '../data/Molecule';
+import {MolUtil} from '../data/MolUtil';
+import {PolymerBlock} from '../data/PolymerBlock';
+import {SketchUtil} from '../data/SketchUtil';
+import {angleDiff, DEGRAD, norm_xy, RADDEG} from '../util/util';
+import {Vec} from '../util/Vec';
 
 /*
     Algorithm class that exists for the purpose of generating some number of template-fusion permutations,
@@ -930,4 +938,3 @@ export class TemplateFusion
 	}
 }
 
-/* EOF */ }

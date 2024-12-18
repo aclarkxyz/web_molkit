@@ -8,12 +8,10 @@ export * from '../src/aspect/Experiment';
 export * from '../src/aspect/MeasurementData';
 export * from '../src/aspect/Mixture';
 export * from '../src/aspect/SARTable';
-
 export * from '../src/calc/BayesianModel';
 export * from '../src/calc/BuildSMILES';
 export * from '../src/calc/CircularFingerprints';
 export * from '../src/calc/ResonanceRemover';
-
 export * from '../src/data/AbbrevContainer';
 export * from '../src/data/BondArtifact';
 export * from '../src/data/Chemistry';
@@ -37,10 +35,8 @@ export * from '../src/data/QuantityCalc';
 export * from '../src/data/QueryUtil';
 export * from '../src/data/SketchUtil';
 export * from '../src/data/Stereochemistry';
-
 export * from '../src/dialog/Dialog';
 export * from '../src/dialog/EditCompound';
-
 export * from '../src/gfx/ArrangeExperiment';
 export * from '../src/gfx/ArrangeMeasurement';
 export * from '../src/gfx/ArrangeMolecule';
@@ -50,7 +46,6 @@ export * from '../src/gfx/DrawMolecule';
 export * from '../src/gfx/FontData';
 export * from '../src/gfx/MetaVector';
 export * from '../src/gfx/Rendering';
-
 export * from '../src/sketcher/CommandBank';
 export * from '../src/sketcher/ContextSketch';
 export * from '../src/sketcher/DrawCanvas';
@@ -67,7 +62,6 @@ export * from '../src/sketcher/Sketcher';
 export * from '../src/sketcher/TemplateBank';
 export * from '../src/sketcher/TemplateFusion';
 export * from '../src/sketcher/ToolBank';
-
 export * from '../src/ui/ButtonBank';
 export * from '../src/ui/ButtonView';
 export * from '../src/ui/ClipboardProxy';
@@ -81,7 +75,6 @@ export * from '../src/ui/Popup';
 export * from '../src/ui/TabBar';
 export * from '../src/ui/Tooltip';
 export * from '../src/ui/Widget';
-
 export * from '../src/util/Geom';
 export * from '../src/util/Matrix';
 export * from '../src/util/Random';

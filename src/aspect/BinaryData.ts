@@ -10,6 +10,13 @@
     [PKG=webmolkit]
 */
 
+import {DataSheet, DataSheetColumn} from '../data/DataSheet';
+import {MoleculeStream} from '../data/MoleculeStream';
+import {deepClone} from '../util/util';
+import {Aspect} from './Aspect';
+import {registerAspect} from './AspectList';
+import {MeasurementData} from './MeasurementData';
+
 /*
 	BinaryData: describes how continuous numeric data can be transformed into a true/false value, which is often an effective way
 	to describe data where the criteria & binary data are known, but the precursor data may or may not.

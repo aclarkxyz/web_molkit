@@ -10,6 +10,10 @@
 	[PKG=webmolkit]
 */
 
+import {DOM, dom, domLegacy} from './dom';
+import {Size} from './Geom';
+import {Vec} from './Vec';
+
 /*
 	General purpose functions. Note that these are not in the WebMolKit namespace.
 */

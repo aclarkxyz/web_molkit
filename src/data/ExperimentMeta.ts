@@ -10,6 +10,8 @@
 	[PKG=webmolkit]
 */
 
+import {MoleculeStream} from './MoleculeStream';
+
 /*
 	Experiment reaction metadata: utilities and definitions.
 */

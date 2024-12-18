@@ -10,8 +10,6 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
-
 /*
 	Utilities to supplement the rather rudimentary DOM.
 */
@@ -96,7 +94,7 @@ export class XML
 		if (parent == null) return null;
 		let el = this.findElement(parent, tagName);
 		if (el == null) return null;
-		return nodeText(el);
+		return this.nodeText(el);
 	}
 
 	// creates and appends an element
@@ -195,4 +193,3 @@ export class XML
 	}
 }
 
-/* EOF */ }

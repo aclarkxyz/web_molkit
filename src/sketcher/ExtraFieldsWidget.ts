@@ -10,7 +10,9 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
+import {Molecule} from '../data/Molecule';
+import {Widget} from '../ui/Widget';
+import {dom, DOM} from '../util/dom';
 
 /*
 	Supporting widget for editing extra/transient fields, from either atoms or bonds.
@@ -103,4 +105,3 @@ export class ExtraFieldsWidget extends Widget
 	}
 }
 
-/* EOF */ }

@@ -12,8 +12,8 @@
 	},
 	"scripts": {
 		"lint": "eslint src/**/*.ts",
-		"build-debug": "webpack --config webpack-debug.config.js",
-		"build-prod": "webpack --config webpack-prod.config.js",
-		"build": "webpack --config webpack-prod.config.js && webpack --config webpack-debug.config.js"
+		"build-src": "webpack --config webpack-src.config.js",
+		"build-val": "webpack --config webpack-val.config.js",
+		"build": "webpack --config webpack-src.config.js && webpack --config webpack-val.config.js"
 	}
 }

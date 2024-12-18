@@ -10,6 +10,19 @@
 	[PKG=webmolkit]
 */
 
+import {DataSheet, DataSheetColumn} from '../data/DataSheet';
+import {Molecule} from '../data/Molecule';
+import {MoleculeStream} from '../data/MoleculeStream';
+import {MolUtil} from '../data/MolUtil';
+import {OutlineMeasurement} from '../gfx/ArrangeMeasurement';
+import {ArrangeMolecule} from '../gfx/ArrangeMolecule';
+import {DrawMolecule} from '../gfx/DrawMolecule';
+import {MetaVector} from '../gfx/MetaVector';
+import {RenderEffects, RenderPolicy} from '../gfx/Rendering';
+import {Vec} from '../util/Vec';
+import {Aspect, AspectGraphicRendering} from './Aspect';
+import {registerAspect} from './AspectList';
+
 /*
 	SAR Table: provides scaffold/substituent/molecule equivalence based on fragment placeholders (R-groups).
 

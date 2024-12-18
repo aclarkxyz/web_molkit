@@ -10,7 +10,10 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
+import {ExperimentComponent, ExperimentComponentType, ExperimentEntry} from '../aspect/Experiment';
+import {formatDouble} from '../util/util';
+import {Vec} from '../util/Vec';
+import {MolUtil} from './MolUtil';
 
 /*
 	Quantity interconversions: for an Experiment entry, figure out all of the real-and-converted quantities, and
@@ -811,4 +814,3 @@ export class QuantityCalc
 	}
 }
 
-/* EOF */ }

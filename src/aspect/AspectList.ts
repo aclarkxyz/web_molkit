@@ -10,6 +10,9 @@
 	[PKG=webmolkit]
 */
 
+import {DataSheet} from '../data/DataSheet';
+import {Aspect} from './Aspect';
+
 /*
 	The AspectList class is used as a way to fetch all of the recognised aspects that are installed within a given datasheet, without
 	having to manually invoke each of the classes individually. Each aspect that is implemented within the toolkit needs to be added

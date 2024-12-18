@@ -10,6 +10,11 @@
 	[PKG=webmolkit]
 */
 
+import {safeInt} from '../util/util';
+import {Vec} from '../util/Vec';
+import {Graph} from './Graph';
+import {Molecule} from './Molecule';
+
 /*
 	Bond artifacts: looks for metadata instructions that indicate that certain core bond types should be drawn in some way other than
 	the minimalistic bond primitives that are available in the core datastructure.

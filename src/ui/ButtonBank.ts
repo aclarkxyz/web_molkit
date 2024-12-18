@@ -10,7 +10,7 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
+import {ButtonView} from './ButtonView';
 
 /*
 	ButtonBank: abstract base class for providing a "bank of buttons". The instance is expected to server up a list
@@ -98,4 +98,3 @@ export abstract class ButtonBank
 	}
 }
 
-/* EOF */ }

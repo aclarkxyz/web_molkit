@@ -10,6 +10,12 @@
 	[PKG=webmolkit]
 */
 
+import {deepClone, findNode, findNodes, nodeText} from '../util/util';
+import {XML} from '../util/XML';
+import {DataSheet, DataSheetColumn} from './DataSheet';
+import {Molecule} from './Molecule';
+import {MoleculeStream} from './MoleculeStream';
+
 /*
 	Serialisation and deserialisation utilities for the DataSheet object.
 

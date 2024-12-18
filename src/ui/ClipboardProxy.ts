@@ -10,7 +10,7 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
+import {Vec} from '../util/Vec';
 
 /*
 	ClipboardProxy: abstract base class for two different methods for clipboard access. One is the usual web page method,
@@ -192,4 +192,3 @@ export class ClipboardProxyWeb extends ClipboardProxy
 
 }
 
-/* EOF */ }

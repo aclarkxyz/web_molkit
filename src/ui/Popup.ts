@@ -10,7 +10,10 @@
 	[PKG=webmolkit]
 */
 
-import {setBoundaryPixels} from "../util/util";
+import {dom, DOM, domLegacy} from '../util/dom';
+import {installInlineCSS} from '../util/Theme';
+import {empiricalScrollerSize, setBoundaryPixels} from '../util/util';
+import {clearTooltip} from './Tooltip';
 
 /*
 	Popup: a semi-transient widget that appears onscreen above all of the rest of the content. Clicking outside of the popup's

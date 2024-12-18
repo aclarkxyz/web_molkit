@@ -10,6 +10,12 @@
     [PKG=webmolkit]
 */
 
+import {DataSheet, DataSheetColumn} from '../data/DataSheet';
+import {Molecule} from '../data/Molecule';
+import {MoleculeStream} from '../data/MoleculeStream';
+import {Aspect, AspectTextRendering} from './Aspect';
+import {registerAspect} from './AspectList';
+
 /* eslint-disable @typescript-eslint/naming-convention */
 
 /*

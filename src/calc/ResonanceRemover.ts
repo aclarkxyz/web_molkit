@@ -10,6 +10,11 @@
 	[PKG=webmolkit]
 */
 
+import {Chemistry} from '../data/Chemistry';
+import {Graph} from '../data/Graph';
+import {Molecule} from '../data/Molecule';
+import {Vec} from '../util/Vec';
+
 /*
 	Resonance bond removal: certain algorithms/file formats store alternating single/double bonds in resonance
 	form, most commonly the bonds of aromatic rings. The native molecule format does not support resonance style
@@ -76,8 +81,8 @@ export class ResonanceRemover
 		{
 			let atno = mol.atomicNumber(n);
 			let val = atno == Chemistry.ELEMENT_C ? 4 :
-					atno == Chemistry.ELEMENT_N || atno == Chemistry.ELEMENT_P || atno == Chemistry.ELEMENT_B ? 3 :
-					atno == Chemistry.ELEMENT_O || atno == Chemistry.ELEMENT_S ? 2 : -1;
+				atno == Chemistry.ELEMENT_N || atno == Chemistry.ELEMENT_P || atno == Chemistry.ELEMENT_B ? 3 :
+				atno == Chemistry.ELEMENT_O || atno == Chemistry.ELEMENT_S ? 2 : -1;
 			if (val < 0) {exclude[n - 1] = true; continue;}
 
 			val += mol.atomCharge(n);

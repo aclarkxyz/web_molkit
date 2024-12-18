@@ -10,7 +10,12 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
+import {Molecule} from '../data/Molecule';
+import {Sketcher} from '../sketcher/Sketcher';
+import {ClipboardProxy, ClipboardProxyHandler} from '../ui/ClipboardProxy';
+import {MenuProxy} from '../ui/MenuProxy';
+import {dom, DOM} from '../util/dom';
+import {Dialog} from './Dialog';
 
 /*
 	Provides a wrapper dialog for the editing of a molecule. The main feature is an instance of molsync.ui.EditMolecule, but it also adds
@@ -130,4 +135,3 @@ export class EditCompound extends Dialog
 
 }
 
-/* EOF */ }

@@ -10,7 +10,8 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
+import {Vec} from '../util/Vec';
+import {Molecule} from './Molecule';
 
 /*
 	Encodes some number of stereochemistry groups into the molecule.
@@ -216,4 +217,3 @@ export class StereoGroup
 	}
 }
 
-/* EOF */ }

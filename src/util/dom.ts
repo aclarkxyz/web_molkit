@@ -10,9 +10,8 @@
 	[PKG=webmolkit]
 */
 
-///<reference path='Geom.ts'/>
-
-namespace WebMolKit /* BOF */ {
+import {Box, Pos, Size} from './Geom';
+import {XML} from './XML';
 
 /*
 	DOM: lightweight domain object wrapper that's intended to provide a subset of the functionality of JQuery. Most
@@ -441,4 +440,3 @@ export class DOM
 	}
 }
 
-/* EOF */ }

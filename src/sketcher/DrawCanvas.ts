@@ -12,7 +12,29 @@
 
 ///<reference path='../ui/Widget.ts'/>
 
-namespace WebMolKit /* BOF */ {
+import {Chemistry} from '../data/Chemistry';
+import {CoordUtil} from '../data/CoordUtil';
+import {MetaMolecule} from '../data/MetaMolecule';
+import {Molecule} from '../data/Molecule';
+import {MolUtil} from '../data/MolUtil';
+import {PolymerBlock, POLYMERBLOCK_SPECIAL_UNCAPPED, PolymerBlockConnectivity, PolymerBlockUnit} from '../data/PolymerBlock';
+import {QueryTypeBond, QueryUtil} from '../data/QueryUtil';
+import {GuidelineSprout, SketchUtil} from '../data/SketchUtil';
+import {Stereochemistry} from '../data/Stereochemistry';
+import {ArrangeMeasurement} from '../gfx/ArrangeMeasurement';
+import {APoint, ArrangeMolecule} from '../gfx/ArrangeMolecule';
+import {DrawMolecule} from '../gfx/DrawMolecule';
+import {FontData} from '../gfx/FontData';
+import {MetaVector} from '../gfx/MetaVector';
+import {RenderEffects, RenderPolicy} from '../gfx/Rendering';
+import {Widget} from '../ui/Widget';
+import {dom, DOM} from '../util/dom';
+import {GeomUtil} from '../util/Geom';
+import {Theme} from '../util/Theme';
+import {colourCanvas, drawLine, fontSansSerif, invZ, norm2_xy, norm_xy, pixelDensity, setBoundaryPixels, sqr, TWOPI} from '../util/util';
+import {Vec} from '../util/Vec';
+import {SketchState, TemplatePermutation} from './MoleculeActivity';
+import {FusionBank} from './TemplateBank';
 
 /*
 	DrawCanvas: base class for the sketcher, which handles all of the rendering functionality for the live object.
@@ -1247,4 +1269,3 @@ export class DrawCanvas extends Widget implements ArrangeMeasurement
 	}
 }
 
-/* EOF */ }

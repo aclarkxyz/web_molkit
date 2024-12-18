@@ -10,8 +10,6 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
-
 /*
 	WebMenu: constructs a menu bar that's useful for embedding inside web pages. The control datastructure is
 	analogous to that used by Electron, so this can be used as an explicit substitution.
@@ -150,4 +148,3 @@ export class WebMenu extends Widget
 }
 */
 
-/* EOF */ }

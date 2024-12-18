@@ -10,7 +10,14 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
+import {FontData} from '../gfx/FontData';
+import {MetaVector} from '../gfx/MetaVector';
+import {dom, DOM} from '../util/dom';
+import {Theme} from '../util/Theme';
+import {colourCanvas, eventCoords, newElement, pathRoundedRect, pixelDensity, setBoundaryPixels} from '../util/util';
+import {Vec} from '../util/Vec';
+import {ButtonBank, ButtonBankItem} from './ButtonBank';
+import {Widget} from './Widget';
 
 /*
 	ButtonView: a container for a stack of ButtonBanks. The ButtonView handles all the display/user interaction parts
@@ -607,7 +614,7 @@ export class ButtonView extends Widget
 						if (match) keyText = match[1] + (this.isMacLike ? 'Cmd' : 'Ctrl') + match[2];
 						txt += ' [' + keyText + ']';
 					}
-					addTooltip(d.helpSpan, txt);
+					this.addTooltip(d.helpSpan.el.outerHTML, txt);
 				}
 				setBoundaryPixels(d.helpSpan, d.x, d.y, d.width, d.height);
 			}
@@ -1038,4 +1045,3 @@ export class ButtonView extends Widget
 	}
 }
 
-/* EOF */ }

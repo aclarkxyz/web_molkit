@@ -10,6 +10,11 @@
 	[PKG=webmolkit]
 */
 
+import {DataSheet} from '../data/DataSheet';
+import {MoleculeStream} from '../data/MoleculeStream';
+import {Aspect} from './Aspect';
+import {registerAspect} from './AspectList';
+
 /*
 	BayesianSource: tracks some number of numeric columns which can be used to create Bayesian models. Keeps track of various pre-processing
 	requirements (e.g. threshold), parameters (e.g. folding) and metadata (e.g. description).

@@ -10,7 +10,12 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
+import {Molecule} from '../data/Molecule';
+import {QueryUtil} from '../data/QueryUtil';
+import {OptionList} from '../ui/OptionList';
+import {Widget} from '../ui/Widget';
+import {dom, DOM} from '../util/dom';
+import {Vec} from '../util/Vec';
 
 /*
 	Supporting widget for editing query fields, for an atom or a bond.
@@ -303,4 +308,3 @@ export class QueryFieldsWidget extends Widget
 	}
 }
 
-/* EOF */ }

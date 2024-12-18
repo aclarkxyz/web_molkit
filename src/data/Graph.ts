@@ -10,7 +10,8 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
+import {Vec} from '../util/Vec';
+import {Molecule} from './Molecule';
 
 /*
 	Representation of a unidirectional graph which has simple node labels, and no edge labels. Connections are stored in neighbour
@@ -521,4 +522,3 @@ export class Graph
 	}
 }
 
-/* EOF */ }

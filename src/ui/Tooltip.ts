@@ -10,6 +10,10 @@
 	[PKG=webmolkit]
 */
 
+import {DOM, dom} from '../util/dom';
+import {Box} from '../util/Geom';
+import {installInlineCSS} from '../util/Theme';
+
 /*
 	Tooltips: adding popovers to widgets.
 */
