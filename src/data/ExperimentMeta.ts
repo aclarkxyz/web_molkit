@@ -10,8 +10,6 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
-
 /*
 	Experiment reaction metadata: utilities and definitions.
 */
@@ -205,4 +203,3 @@ export class ExperimentMeta
 	}
 }
 
-/* EOF */ }

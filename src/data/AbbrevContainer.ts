@@ -10,8 +10,6 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
-
 export const TEMPLATE_FILES =
 [
 	'rings',
@@ -229,4 +227,3 @@ export class AbbrevContainer
 	}
 }
 
-/* EOF */ }

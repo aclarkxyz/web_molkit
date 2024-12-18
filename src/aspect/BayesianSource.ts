@@ -10,8 +10,6 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
-
 /*
 	BayesianSource: tracks some number of numeric columns which can be used to create Bayesian models. Keeps track of various pre-processing
 	requirements (e.g. threshold), parameters (e.g. folding) and metadata (e.g. description).
@@ -137,4 +135,3 @@ export class BayesianSource extends Aspect
 
 registerAspect(BayesianSource);
 
-/* EOF */ }

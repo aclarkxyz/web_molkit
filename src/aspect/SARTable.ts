@@ -10,8 +10,6 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
-
 /*
 	SAR Table: provides scaffold/substituent/molecule equivalence based on fragment placeholders (R-groups).
 
@@ -388,4 +386,3 @@ export class SARTable extends Aspect
 
 registerAspect(SARTable);
 
-/* EOF */ }

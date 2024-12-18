@@ -10,8 +10,6 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
-
 /*
 	Bond artifacts: looks for metadata instructions that indicate that certain core bond types should be drawn in some way other than
 	the minimalistic bond primitives that are available in the core datastructure.
@@ -440,4 +438,3 @@ export class BondArtifact
 	}
 }
 
-/* EOF */ }

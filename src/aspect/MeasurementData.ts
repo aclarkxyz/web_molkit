@@ -10,8 +10,6 @@
     [PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
-
 /*
 	Measurement: provides some number of measurement fields, which augment an ordinary numeric field to add units,
     modifier, error and overall metadata. This aspect is useful for collecting multiple columns of measurements such as
@@ -343,4 +341,3 @@ export class MeasurementData extends Aspect
 
 registerAspect(MeasurementData);
 
-/* EOF */ }

@@ -10,7 +10,7 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
+import {setBoundaryPixels} from "../util/util";
 
 /*
 	Popup: a semi-transient widget that appears onscreen above all of the rest of the content. Clicking outside of the popup's
@@ -173,4 +173,3 @@ export class Popup
 	}
 }
 
-/* EOF */ }

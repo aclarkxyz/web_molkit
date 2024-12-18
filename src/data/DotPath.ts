@@ -12,8 +12,6 @@
 
 /* eslint-disable no-multi-spaces */
 
-namespace WebMolKit /* BOF */ {
-
 /*
 	A meta-description of a molecule that divides the molecular graph up into chunks based on their
 	ability to provide pi-like resonance electrons. Atoms that are deemed to be invariant to the passage
@@ -352,4 +350,3 @@ export class DotPath
 	}
 }
 
-/* EOF */ }

@@ -10,8 +10,6 @@
     [PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
-
 /*
 	BinaryData: describes how continuous numeric data can be transformed into a true/false value, which is often an effective way
 	to describe data where the criteria & binary data are known, but the precursor data may or may not.
@@ -176,4 +174,3 @@ export class BinaryData extends Aspect
 
 registerAspect(BinaryData);
 
-/* EOF */ }

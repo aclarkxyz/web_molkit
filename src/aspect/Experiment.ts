@@ -12,8 +12,6 @@
 
 ///<reference path='Aspect.ts'/>
 
-namespace WebMolKit /* BOF */ {
-
 /*
 	Experiment aspect: transforms groups of rows from a datasheet into a collection of structures that make up a
 	multistep reaction, along with accompanying quantities and other miscellaneous information.
@@ -878,4 +876,3 @@ export class Experiment extends Aspect
 
 registerAspect(Experiment);
 
-/* EOF */ }

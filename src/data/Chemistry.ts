@@ -13,8 +13,6 @@
 /* eslint-disable comma-spacing, no-multi-spaces */
 /* eslint-disable @typescript-eslint/naming-convention */
 
-namespace WebMolKit /* BOF */ {
-
 export class Chemistry
 {
 	// NOTE: the value of ELEMENTS.length is the number of elements supported by MMTk; all atom number indices should be between
@@ -268,4 +266,3 @@ export class Chemistry
 	public static ELEMENT_Cn = 112;
 }
 
-/* EOF */ }

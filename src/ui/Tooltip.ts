@@ -10,8 +10,6 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
-
 /*
 	Tooltips: adding popovers to widgets.
 */
@@ -199,4 +197,3 @@ export class Tooltip
 	}
 }
 
-/* EOF */ }

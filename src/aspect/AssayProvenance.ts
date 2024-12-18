@@ -12,8 +12,6 @@
 
 /* eslint-disable @typescript-eslint/naming-convention */
 
-namespace WebMolKit /* BOF */ {
-
 /*
 	AssayProvenance: informs that a datasheet originates from a distinct assay measurement of a particular
 	biological target or property, and that each row represents a compound and a measurement. There is some
@@ -358,4 +356,3 @@ export class AssayProvenance extends Aspect
 
 registerAspect(AssayProvenance);
 
-/* EOF */ }

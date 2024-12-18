@@ -10,8 +10,6 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
-
 /*
 	Resonance bond removal: certain algorithms/file formats store alternating single/double bonds in resonance
 	form, most commonly the bonds of aromatic rings. The native molecule format does not support resonance style
@@ -258,4 +256,3 @@ export class ResonanceRemover
 	}
 }
 
-/* EOF */ }

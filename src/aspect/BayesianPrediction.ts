@@ -10,8 +10,6 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
-
 /*
 	Bayesian prediction: records some number of outcomes from Bayesian models, noting the columns that hold the predictions themselves and
 	keeping some metadata about each.
@@ -183,4 +181,3 @@ export class BayesianPrediction extends Aspect
 
 registerAspect(BayesianPrediction);
 
-/* EOF */ }

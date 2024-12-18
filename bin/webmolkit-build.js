@@ -5620,6 +5620,8 @@ var WebMolKit;
     (function (ForeignMoleculeTransient) {
         ForeignMoleculeTransient["AtomAromatic"] = "yAROMATIC";
         ForeignMoleculeTransient["BondAromatic"] = "yAROMATIC";
+        ForeignMoleculeTransient["BondZeroDative"] = "yZERO_DATIVE";
+        ForeignMoleculeTransient["BondZeroHydrogen"] = "yZERO_HYDROGEN";
         ForeignMoleculeTransient["AtomChiralMDLOdd"] = "yCHIRAL_MDL_ODD";
         ForeignMoleculeTransient["AtomChiralMDLEven"] = "yCHIRAL_MDL_EVEN";
         ForeignMoleculeTransient["AtomChiralMDLRacemic"] = "yCHIRAL_MDL_RACEMIC";
@@ -5644,6 +5646,20 @@ var WebMolKit;
             let mask = WebMolKit.Vec.booleanArray(false, sz);
             for (let n = 1; n <= sz; n++)
                 mask[n - 1] = mol.bondTransient(n).indexOf(ForeignMoleculeTransient.BondAromatic) >= 0;
+            return mask;
+        }
+        static noteZeroDativeBonds(mol) {
+            const sz = mol.numBonds;
+            let mask = WebMolKit.Vec.booleanArray(false, sz);
+            for (let n = 1; n <= sz; n++)
+                mask[n - 1] = mol.bondTransient(n).includes(ForeignMoleculeTransient.BondZeroDative);
+            return mask;
+        }
+        static noteZeroHydrogenBonds(mol) {
+            const sz = mol.numBonds;
+            let mask = WebMolKit.Vec.booleanArray(false, sz);
+            for (let n = 1; n <= sz; n++)
+                mask[n - 1] = mol.bondTransient(n).includes(ForeignMoleculeTransient.BondZeroHydrogen);
             return mask;
         }
         static markExplicitValence(mol, atom, valence) {
@@ -6452,7 +6468,7 @@ var WebMolKit;
                 let type = parseInt(line.substring(6, 9).trim()), stereo = parseInt(line.substring(9, 12).trim());
                 if (bfr == bto || bfr < 1 || bfr > numAtoms || bto < 1 || bto > numAtoms)
                     throw 'Invalid MDL MOL: bond line' + (n + 1);
-                let order = type >= 1 && type <= 3 ? type : type == 8 || type == 9 ? 0 : 1;
+                let order = type >= 1 && type <= 3 ? type : type == 8 || type == 9 || type == 10 ? 0 : 1;
                 let style = WebMolKit.Molecule.BONDTYPE_NORMAL;
                 if (stereo == 1)
                     style = WebMolKit.Molecule.BONDTYPE_INCLINED;
@@ -6461,6 +6477,10 @@ var WebMolKit;
                 else if (stereo == 3 || stereo == 4)
                     style = WebMolKit.Molecule.BONDTYPE_UNKNOWN;
                 let b = this.mol.addBond(bfr, bto, order, style);
+                if (type == 9)
+                    this.mol.appendBondTransient(b, WebMolKit.ForeignMoleculeTransient.BondZeroDative);
+                if (type == 9)
+                    this.mol.appendBondTransient(b, WebMolKit.ForeignMoleculeTransient.BondZeroHydrogen);
                 if (this.keepQuery) {
                     if (type == 4)
                         WebMolKit.QueryUtil.setQueryBondOrders(this.mol, b, [-1]);
@@ -6743,6 +6763,8 @@ var WebMolKit;
         postFix() {
             const mol = this.mol;
             for (let n = 1; n <= mol.numAtoms; n++) {
+                if (WebMolKit.MolUtil.hasAbbrev(mol, n) || mol.atomTransient(n).some((str) => str.startsWith(WebMolKit.ForeignMoleculeTransient.AtomSCSRClass)))
+                    continue;
                 let el = mol.atomElement(n);
                 if (el == 'D') {
                     mol.setAtomElement(n, 'H');
@@ -6996,6 +7018,10 @@ var WebMolKit;
                 let type = parseInt(bits[1]), bfr = parseInt(bits[2]), bto = parseInt(bits[3]);
                 let order = type >= 1 && type <= 3 ? type : type == 9 || type == 10 ? 0 : 1;
                 this.mol.addBond(bfr, bto, order);
+                if (type == 9)
+                    this.mol.appendBondTransient(b, WebMolKit.ForeignMoleculeTransient.BondZeroDative);
+                if (type == 10)
+                    this.mol.appendBondTransient(b, WebMolKit.ForeignMoleculeTransient.BondZeroHydrogen);
                 if (this.keepQuery) {
                     if (type == 4)
                         WebMolKit.QueryUtil.setQueryBondOrders(this.mol, b, [-1]);
@@ -7749,7 +7775,7 @@ var WebMolKit;
                     this.lines.push('A  ' + this.intrpad(n, 3));
                     this.lines.push(mol.atomElement(n));
                 }
-            if (!this.includeEnd)
+            if (this.includeEnd)
                 this.lines.push('M  END');
         }
         writeMBlockPair(token, idx, val) {
@@ -7996,6 +8022,7 @@ var WebMolKit;
             if (mol.numBonds > 0) {
                 this.lines.push(VPFX + 'BEGIN BOND');
                 let maskArom = WebMolKit.ForeignMolecule.noteAromaticBonds(mol);
+                let maskHBond = WebMolKit.ForeignMolecule.noteZeroHydrogenBonds(mol);
                 for (let n = 1; n <= mol.numBonds; n++) {
                     let bfr = mol.bondFrom(n), bto = mol.bondTo(n);
                     let order = mol.bondOrder(n), type = order;
@@ -8010,8 +8037,12 @@ var WebMolKit;
                         type = 7;
                     else if (WebMolKit.Vec.equals(qbond, [-1, 0, 1, 2, 3]))
                         type = 8;
-                    else if (type == 0)
-                        type = 9;
+                    else if (type == 0) {
+                        if (!maskHBond[n - 1])
+                            type = 9;
+                        else
+                            type = 10;
+                    }
                     else if (type > 3)
                         type = 3;
                     let stereo = mol.bondType(n);
@@ -8022,7 +8053,7 @@ var WebMolKit;
                         line += ' CFG=3';
                     else if (stereo == WebMolKit.Molecule.BONDTYPE_UNKNOWN)
                         line += ' CFG=2';
-                    if (order == 0)
+                    if (order == 0 && !maskHBond[n - 1])
                         line += ' DISP=COORD';
                     this.lines.push(line);
                 }
@@ -8048,7 +8079,7 @@ var WebMolKit;
             this.lines.push(VPFX + 'END CTAB');
             if (WebMolKit.Vec.notBlank(this.scsrTemplates))
                 this.populateSCSRTemplates();
-            if (!this.includeEnd)
+            if (this.includeEnd)
                 this.lines.push('M  END');
         }
         populateV3000Sgroups() {
@@ -8061,6 +8092,18 @@ var WebMolKit;
                 if (sg.type == 'SUP') {
                     txt += ' LABEL=' + (sg.name.includes(' ') ? `"${sg.name}"` : sg.name);
                     txt += ' ATOMS=' + this.packV3000List(sg.atoms);
+                    if (sg.bonds)
+                        txt += ' XBONDS=' + this.packV3000List(sg.bonds);
+                    if (sg.templateClass)
+                        txt += ' CLASS=' + sg.templateClass;
+                    if (sg.natReplace)
+                        txt += ' NATREPLACE=' + sg.natReplace;
+                    if (sg.attachPoints) {
+                        for (let n = 0; n + 2 < sg.attachPoints.length; n += 3) {
+                            let v1 = sg.attachPoints[n], v2 = sg.attachPoints[n + 1], v3 = sg.attachPoints[n + 2];
+                            txt += ` SAP=(3 ${v1} ${v2} ${v3})`;
+                        }
+                    }
                 }
                 else if (sg.type == 'MUL') {
                     let mult = parseInt(sg.name), unit = sg.atoms.length / mult;
@@ -29370,6 +29413,7 @@ var WebMolKit;
         constructor(parent) {
             this.popupBackground = 'white';
             this.obscureOpacity = 0.2;
+            this.zindex = null;
             this.callbackClose = null;
             this.callbackPopulate = null;
             this.parent = WebMolKit.domLegacy(parent);
@@ -29389,6 +29433,10 @@ var WebMolKit;
             fg.css({ 'position': 'fixed' });
             fg.css({ 'left': '0', 'right': '0', 'top': '0', 'bottom': '0' });
             fg.onClick(() => this.close());
+            if (this.zindex > 0) {
+                bg.setCSS('z-index', this.zindex);
+                fg.setCSS('z-index', this.zindex + 1);
+            }
             let pb = this.domPanelBoundary = WebMolKit.dom('<div class="wmk-popup"/>').appendTo(fg).css({ 'visibility': 'hidden' });
             pb.onClick((event) => event.stopPropagation());
             pb.css({ 'background-color': this.popupBackground, 'border': '1px solid black' });

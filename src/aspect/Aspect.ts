@@ -10,8 +10,6 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
-
 /*
 	Abstract base class for all "Aspects".
 
@@ -119,4 +117,3 @@ export abstract class Aspect
 	public produceHeaderRendering(idx:number):AspectTextRendering {return null;}
 }
 
-/* EOF */ }

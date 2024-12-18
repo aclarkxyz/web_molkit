@@ -10,8 +10,6 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
-
 /*
 	Serialisation and deserialisation utilities for the DataSheet object.
 
@@ -224,4 +222,3 @@ export class DataSheetStream
 
 }
 
-/* EOF */ }

@@ -10,8 +10,6 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
-
 /*
 	Circular fingerprints: for generating ECFP-2/4/6 and FCFP-2/4/6 fingerprints. These are described by:
 
@@ -334,4 +332,3 @@ export class CircularFingerprints
 	}
 }
 
-/* EOF */ }

@@ -10,8 +10,6 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
-
 /*
 	TabBar: a series of option buttons with a common area underneath it, of which just one can be selected & visible.
 */
@@ -213,4 +211,3 @@ export class TabBar extends Widget
 	}
 }
 
-/* EOF */ }

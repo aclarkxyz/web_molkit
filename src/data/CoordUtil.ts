@@ -10,8 +10,6 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
-
 /*
 	Low level utility functions for the manipulation of molecular coordinates. These functions are fairly
 	utilitarian, and don't have a lot of chemical logic encoded within them.
@@ -449,4 +447,3 @@ export class CoordUtil
 	}
 }
 
-/* EOF */ }

@@ -1022,6 +1022,8 @@ declare namespace WebMolKit {
     enum ForeignMoleculeTransient {
         AtomAromatic = "yAROMATIC",
         BondAromatic = "yAROMATIC",
+        BondZeroDative = "yZERO_DATIVE",
+        BondZeroHydrogen = "yZERO_HYDROGEN",
         AtomChiralMDLOdd = "yCHIRAL_MDL_ODD",
         AtomChiralMDLEven = "yCHIRAL_MDL_EVEN",
         AtomChiralMDLRacemic = "yCHIRAL_MDL_RACEMIC",
@@ -1058,6 +1060,8 @@ declare namespace WebMolKit {
     class ForeignMolecule {
         static noteAromaticAtoms(mol: Molecule): boolean[];
         static noteAromaticBonds(mol: Molecule): boolean[];
+        static noteZeroDativeBonds(mol: Molecule): boolean[];
+        static noteZeroHydrogenBonds(mol: Molecule): boolean[];
         static markExplicitValence(mol: Molecule, atom: number, valence: number): void;
         static noteExplicitValence(mol: Molecule, atom: number): number;
         static markSgroupMultiAttach(mol: Molecule, name: string, atoms: number[], keyval?: Record<string, string>): void;
@@ -3698,6 +3702,7 @@ declare namespace WebMolKit {
         protected domBody: DOM;
         popupBackground: string;
         obscureOpacity: number;
+        zindex: number;
         callbackClose: (source?: Popup) => void;
         callbackPopulate: (source?: Popup) => void;
         constructor(parent: any);

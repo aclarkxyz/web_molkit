@@ -10,8 +10,6 @@
     [PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
-
 /*
 	Mixture: stores metadata about various columns such that they can be corralled into a hierarchical form that represents
 	a mixed group of chemical substances, where individual components and branches have structure, name, quantity and various
@@ -178,4 +176,3 @@ export class Mixture extends Aspect
 
 registerAspect(Mixture);
 
-/* EOF */ }
