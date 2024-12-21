@@ -10,7 +10,7 @@
 	[PKG=webmolkit]
 */
 
-import {TEMPLATE_FILES} from '../data/AbbrevContainer';
+import {AbbrevContainer} from '../data/AbbrevContainer';
 import {DataSheet, DataSheetColumn} from '../data/DataSheet';
 import {DataSheetStream} from '../data/DataSheetStream';
 import {MolUtil} from '../data/MolUtil';
@@ -20,8 +20,6 @@ import {DrawMolecule} from '../gfx/DrawMolecule';
 import {MetaVector} from '../gfx/MetaVector';
 import {RenderEffects, RenderPolicy} from '../gfx/Rendering';
 import {ButtonBank} from '../ui/ButtonBank';
-import {Theme} from '../util/Theme';
-import {readTextURL} from '../util/util';
 import {ActivityType, MoleculeActivity} from './MoleculeActivity';
 
 /*
@@ -126,13 +124,12 @@ export class TemplateBank extends ButtonBank
 	}
 
 	// loads up the resource datasheets one at a time, and stashes them in the static container
-	private async loadResourceData():Promise<void>
+	private loadResourceData():void
 	{
-		for (let fn of TEMPLATE_FILES)
+		for (let key of AbbrevContainer.getTemplateKeys())
 		{
-			let url = Theme.RESOURCE_URL + '/data/templates/' + fn + '.ds';
-			let dsstr = await readTextURL(url);
-			TemplateBank.resourceList.push(fn);
+			let dsstr =  AbbrevContainer.getTemplateData(key);
+			TemplateBank.resourceList.push(key);
 			TemplateBank.resourceData.push(DataSheetStream.readXML(dsstr));
 		}
 	}
@@ -218,6 +215,10 @@ export class TemplateBank extends ButtonBank
 	}
 }
 
+import svgGenericAccept from '@reswmk/img/actions/GenericAccept.svg';
+import svgTemplatePrev from '@reswmk/img/actions/TemplatePrev.svg';
+import svgTemplateNext from '@reswmk/img/actions/TemplateNext.svg';
+
 export class FusionBank extends ButtonBank
 {
 	constructor(protected owner:any)
@@ -229,10 +230,12 @@ export class FusionBank extends ButtonBank
 	{
 		this.buttons = [];
 
-		this.buttons.push({id: 'accept', imageFN: 'GenericAccept', helpText: 'Apply this template.'});
+		/*this.buttons.push({id: 'accept', imageFN: 'GenericAccept', helpText: 'Apply this template.'});
 		this.buttons.push({id: 'prev', imageFN: 'TemplatePrev', helpText: 'Show previous fusion option.'});
-		this.buttons.push({id: 'next', imageFN: 'TemplateNext', helpText: 'Show next fusion option.'});
-		// (inline?)
+		this.buttons.push({id: 'next', imageFN: 'TemplateNext', helpText: 'Show next fusion option.'});*/
+		this.buttons.push({id: 'accept', svg: svgGenericAccept, helpText: 'Apply this template.'});
+		this.buttons.push({id: 'prev', svg: svgTemplatePrev, helpText: 'Show previous fusion option.'});
+		this.buttons.push({id: 'next', svg: svgTemplateNext, helpText: 'Show next fusion option.'});
 	}
 
 	// react to a button click

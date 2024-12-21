@@ -10,12 +10,18 @@
 		"target": "ES6",
 		"lib": ["es2022", "dom"],
 		"types": [],
-		"declaration": true
+		"declaration": true,
+		"moduleResolution": "node",
+		"paths": 
+		{
+			"@reswmk/*": ["./res/*"],
+		}
 	},
 	"include": 
 	[
 		"src/**/*.ts",
-		"val/**/*.ts"
+		"val/**/*.ts",
+		"res/**/*.svg",
 	],
 	"exclude":
 	[

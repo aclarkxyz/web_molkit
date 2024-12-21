@@ -200,51 +200,95 @@ const COMMANDS_BOND:ButtonBankItem[] =
 	{id: 'artifactclear', svg: svgBondArtifactClear, helpText: 'Remove a bond artifact.', mnemonic: ''},
 	{id: 'polymer', svg: svgBondPolymer, helpText: 'Create a polymer block.', mnemonic: ''},
 ];
+
+import svgSelectionGrow from '@reswmk/img/actions/SelectionGrow.svg';
+import svgSelectionShrink from '@reswmk/img/actions/SelectionShrink.svg';
+import svgSelectionChain from '@reswmk/img/actions/SelectionChain.svg';
+import svgSelectionSmRing from '@reswmk/img/actions/SelectionSmRing.svg';
+import svgSelectionRingBlk from '@reswmk/img/actions/SelectionRingBlk.svg';
+import svgSelectionCurElement from '@reswmk/img/actions/SelectionCurElement.svg';
+import svgMainSelPrev from '@reswmk/img/actions/MainSelPrev.svg';
+import svgMainSelNext from '@reswmk/img/actions/MainSelNext.svg';
+import svgSelectionToggle from '@reswmk/img/actions/SelectionToggle.svg';
+import svgSelectionUncurrent from '@reswmk/img/actions/SelectionUncurrent.svg';
+import svgMoveJoin from '@reswmk/img/actions/MoveJoin.svg';
+import svgMainNew from '@reswmk/img/actions/MainNew.svg';
+import svgAtomInline from '@reswmk/img/actions/AtomInline.svg';
+import svgAtomFormula from '@reswmk/img/actions/AtomFormula.svg';
+import svgAtomExpandAbbrev from '@reswmk/img/actions/AtomExpandAbbrev.svg';
+import svgAtomClearAbbrev from '@reswmk/img/actions/AtomClearAbbrev.svg';
+
 const COMMANDS_SELECT:ButtonBankItem[] =
 [
-	{id: 'selgrow', imageFN: 'SelectionGrow', helpText: 'Add adjacent atoms to selection.', mnemonic: ''},
-	{id: 'selshrink', imageFN: 'SelectionShrink', helpText: 'Unselect exterior atoms.', mnemonic: ''},
-	{id: 'selchain', imageFN: 'SelectionChain', helpText: 'Extend selection to non-ring atoms.', mnemonic: ''},
-	{id: 'smallring', imageFN: 'SelectionSmRing', helpText: 'Extend selection to small rings.', mnemonic: ''},
-	{id: 'ringblock', imageFN: 'SelectionRingBlk', helpText: 'Extend selection to ring blocks.', mnemonic: ''},
-	{id: 'curelement', imageFN: 'SelectionCurElement', helpText: 'Select all atoms of current element type.', mnemonic: ''},
-	{id: 'selprev', imageFN: 'MainSelPrev', helpText: 'Select previous connected component.', mnemonic: '['},
-	{id: 'selnext', imageFN: 'MainSelNext', helpText: 'Select next connected component.', mnemonic: ']'},
-	{id: 'toggle', imageFN: 'SelectionToggle', helpText: 'Toggle selection of current.', mnemonic: ','},
-	{id: 'uncurrent', imageFN: 'SelectionUncurrent', helpText: 'Undefine current object.', mnemonic: '.'},
-	{id: 'join', imageFN: 'MoveJoin', helpText: 'Overlapping atoms will be joined as one.', mnemonic: ''},
-	{id: 'new', imageFN: 'MainNew', helpText: 'Clear the molecular structure.', mnemonic: ''},
-	{id: 'inline', imageFN: 'AtomInline', helpText: 'Make selected atoms into an inline abbreviation.', mnemonic: '/'},
-	{id: 'formula', imageFN: 'AtomFormula', helpText: 'Make selected atoms into their molecule formula.', mnemonic: '\\'},
-	{id: 'expandabbrev', imageFN: 'AtomExpandAbbrev', helpText: 'Expand out the inline abbreviation.', mnemonic: 'Shift+/', key: '?'},
-	{id: 'clearabbrev', imageFN: 'AtomClearAbbrev', helpText: 'Remove inline abbreviation.', mnemonic: 'Shift+\\', key: '|'},
+	{id: 'selgrow', svg: svgSelectionGrow, helpText: 'Add adjacent atoms to selection.', mnemonic: ''},
+	{id: 'selshrink', svg: svgSelectionShrink, helpText: 'Unselect exterior atoms.', mnemonic: ''},
+	{id: 'selchain', svg: svgSelectionChain, helpText: 'Extend selection to non-ring atoms.', mnemonic: ''},
+	{id: 'smallring', svg: svgSelectionSmRing, helpText: 'Extend selection to small rings.', mnemonic: ''},
+	{id: 'ringblock', svg: svgSelectionRingBlk, helpText: 'Extend selection to ring blocks.', mnemonic: ''},
+	{id: 'curelement', svg: svgSelectionCurElement, helpText: 'Select all atoms of current element type.', mnemonic: ''},
+	{id: 'selprev', svg: svgMainSelPrev, helpText: 'Select previous connected component.', mnemonic: '['},
+	{id: 'selnext', svg: svgMainSelNext, helpText: 'Select next connected component.', mnemonic: ']'},
+	{id: 'toggle', svg: svgSelectionToggle, helpText: 'Toggle selection of current.', mnemonic: ','},
+	{id: 'uncurrent', svg: svgSelectionUncurrent, helpText: 'Undefine current object.', mnemonic: '.'},
+	{id: 'join', svg: svgMoveJoin, helpText: 'Overlapping atoms will be joined as one.', mnemonic: ''},
+	{id: 'new', svg: svgMainNew, helpText: 'Clear the molecular structure.', mnemonic: ''},
+	{id: 'inline', svg: svgAtomInline, helpText: 'Make selected atoms into an inline abbreviation.', mnemonic: '/'},
+	{id: 'formula', svg: svgAtomFormula, helpText: 'Make selected atoms into their molecule formula.', mnemonic: '\\'},
+	{id: 'expandabbrev', svg: svgAtomExpandAbbrev, helpText: 'Expand out the inline abbreviation.', mnemonic: 'Shift+/', key: '?'},
+	{id: 'clearabbrev', svg: svgAtomClearAbbrev, helpText: 'Remove inline abbreviation.', mnemonic: 'Shift+\\', key: '|'},
 ];
+
+import svgMoveUp from '@reswmk/img/actions/MoveUp.svg';
+import svgMoveDown from '@reswmk/img/actions/MoveDown.svg';
+import svgMoveLeft from '@reswmk/img/actions/MoveLeft.svg';
+import svgMoveRight from '@reswmk/img/actions/MoveRight.svg';
+import svgMoveUpLots from '@reswmk/img/actions/MoveUpLots.svg';
+import svgMoveDownLots from '@reswmk/img/actions/MoveDownLots.svg';
+import svgMoveLeftLots from '@reswmk/img/actions/MoveLeftLots.svg';
+import svgMoveRightLots from '@reswmk/img/actions/MoveRightLots.svg';
+import svgMoveUpFar from '@reswmk/img/actions/MoveUpFar.svg';
+import svgMoveDownFar from '@reswmk/img/actions/MoveDownFar.svg';
+import svgMoveLeftFar from '@reswmk/img/actions/MoveLeftFar.svg';
+import svgMoveRightFar from '@reswmk/img/actions/MoveRightFar.svg';
+import svgMoveRotP01 from '@reswmk/img/actions/MoveRotP01.svg';
+import svgMoveRotM01 from '@reswmk/img/actions/MoveRotM01.svg';
+import svgMoveRotP05 from '@reswmk/img/actions/MoveRotP05.svg';
+import svgMoveRotM05 from '@reswmk/img/actions/MoveRotM05.svg';
+import svgMoveRotP15 from '@reswmk/img/actions/MoveRotP15.svg';
+import svgMoveRotM15 from '@reswmk/img/actions/MoveRotM15.svg';
+import svgMoveRotP30 from '@reswmk/img/actions/MoveRotP30.svg';
+import svgMoveRotM30 from '@reswmk/img/actions/MoveRotM30.svg';
+import svgMoveHFlip from '@reswmk/img/actions/MoveHFlip.svg';
+import svgMoveVFlip from '@reswmk/img/actions/MoveVFlip.svg';
+import svgMoveShrink from '@reswmk/img/actions/MoveShrink.svg';
+import svgMoveGrow from '@reswmk/img/actions/MoveGrow.svg';
+
 const COMMANDS_MOVE:ButtonBankItem[] =
 [
-	{id: 'up', imageFN: 'MoveUp', helpText: 'Move subject atoms up slightly.', mnemonic: 'Shift+Up', key: KeyCode.Up},
-	{id: 'down', imageFN: 'MoveDown', helpText: 'Move subject atoms down slightly.', mnemonic: 'Shift+Down', key: KeyCode.Down},
-	{id: 'left', imageFN: 'MoveLeft', helpText: 'Move subject atoms slightly to the left.', mnemonic: 'Shift+Left', key: KeyCode.Left},
-	{id: 'right', imageFN: 'MoveRight', helpText: 'Move subject atoms slightly to the right.', mnemonic: 'Shift+Right', key: KeyCode.Right},
-	{id: 'uplots', imageFN: 'MoveUpLots', helpText: 'Move subject atoms up somewhat.', mnemonic: ''},
-	{id: 'downlots', imageFN: 'MoveDownLots', helpText: 'Move subject atoms down somewhat.', mnemonic: ''},
-	{id: 'leftlots', imageFN: 'MoveLeftLots', helpText: 'Move subject atoms somewhat to the left.', mnemonic: ''},
-	{id: 'rightlots', imageFN: 'MoveRightLots', helpText: 'Move subject atoms somewhat to the right.', mnemonic: ''},
-	{id: 'upfar', imageFN: 'MoveUpFar', helpText: 'Move subject atoms far up.', mnemonic: ''},
-	{id: 'downfar', imageFN: 'MoveDownFar', helpText: 'Move subject atoms far down.', mnemonic: ''},
-	{id: 'leftfar', imageFN: 'MoveLeftFar', helpText: 'Move subject atoms far to the left.', mnemonic: ''},
-	{id: 'rightfar', imageFN: 'MoveRightFar', helpText: 'Move subject atoms far to the right.', mnemonic: ''},
-	{id: 'rotp01', imageFN: 'MoveRotP01', helpText: 'Rotate 1\u00B0 counter-clockwise.', mnemonic: ''},
-	{id: 'rotm01', imageFN: 'MoveRotM01', helpText: 'Rotate 1\u00B0 clockwise.', mnemonic: ''},
-	{id: 'rotp05', imageFN: 'MoveRotP05', helpText: 'Rotate 5\u00B0 counter-clockwise.', mnemonic: ''},
-	{id: 'rotm05', imageFN: 'MoveRotM05', helpText: 'Rotate 5\u00B0 clockwise.', mnemonic: ''},
-	{id: 'rotp15', imageFN: 'MoveRotP15', helpText: 'Rotate 15\u00B0 counter-clockwise.', mnemonic: ''},
-	{id: 'rotm15', imageFN: 'MoveRotM15', helpText: 'Rotate 15\u00B0 clockwise.', mnemonic: ''},
-	{id: 'rotp30', imageFN: 'MoveRotP30', helpText: 'Rotate 30\u00B0 counter-clockwise.', mnemonic: 'Shift+[', key: '{'},
-	{id: 'rotm30', imageFN: 'MoveRotM30', helpText: 'Rotate 30\u00B0 clockwise.', mnemonic: 'Shift+]', key: '}'},
-	{id: 'hflip', imageFN: 'MoveHFlip', helpText: 'Flip subject atoms horizontally.', mnemonic: 'Shift+,', key: '<'},
-	{id: 'vflip', imageFN: 'MoveVFlip', helpText: 'Flip subject atoms vertically.', mnemonic: 'Shift+.', key: '>'},
-	{id: 'shrink', imageFN: 'MoveShrink', helpText: 'Decrease subject bond distances.', mnemonic: 'Shift+Z'},
-	{id: 'grow', imageFN: 'MoveGrow', helpText: 'Increase subject bond distances.', mnemonic: 'Shift+X'},
+	{id: 'up', svg: svgMoveUp, helpText: 'Move subject atoms up slightly.', mnemonic: 'Shift+Up', key: KeyCode.Up},
+	{id: 'down', svg: svgMoveDown, helpText: 'Move subject atoms down slightly.', mnemonic: 'Shift+Down', key: KeyCode.Down},
+	{id: 'left', svg: svgMoveLeft, helpText: 'Move subject atoms slightly to the left.', mnemonic: 'Shift+Left', key: KeyCode.Left},
+	{id: 'right', svg: svgMoveRight, helpText: 'Move subject atoms slightly to the right.', mnemonic: 'Shift+Right', key: KeyCode.Right},
+	{id: 'uplots', svg: svgMoveUpLots, helpText: 'Move subject atoms up somewhat.', mnemonic: ''},
+	{id: 'downlots', svg: svgMoveDownLots, helpText: 'Move subject atoms down somewhat.', mnemonic: ''},
+	{id: 'leftlots', svg: svgMoveLeftLots, helpText: 'Move subject atoms somewhat to the left.', mnemonic: ''},
+	{id: 'rightlots', svg: svgMoveRightLots, helpText: 'Move subject atoms somewhat to the right.', mnemonic: ''},
+	{id: 'upfar', svg: svgMoveUpFar, helpText: 'Move subject atoms far up.', mnemonic: ''},
+	{id: 'downfar', svg: svgMoveDownFar, helpText: 'Move subject atoms far down.', mnemonic: ''},
+	{id: 'leftfar', svg: svgMoveLeftFar, helpText: 'Move subject atoms far to the left.', mnemonic: ''},
+	{id: 'rightfar', svg: svgMoveRightFar, helpText: 'Move subject atoms far to the right.', mnemonic: ''},
+	{id: 'rotp01', svg: svgMoveRotP01, helpText: 'Rotate 1\u00B0 counter-clockwise.', mnemonic: ''},
+	{id: 'rotm01', svg: svgMoveRotM01, helpText: 'Rotate 1\u00B0 clockwise.', mnemonic: ''},
+	{id: 'rotp05', svg: svgMoveRotP05, helpText: 'Rotate 5\u00B0 counter-clockwise.', mnemonic: ''},
+	{id: 'rotm05', svg: svgMoveRotM05, helpText: 'Rotate 5\u00B0 clockwise.', mnemonic: ''},
+	{id: 'rotp15', svg: svgMoveRotP15, helpText: 'Rotate 15\u00B0 counter-clockwise.', mnemonic: ''},
+	{id: 'rotm15', svg: svgMoveRotM15, helpText: 'Rotate 15\u00B0 clockwise.', mnemonic: ''},
+	{id: 'rotp30', svg: svgMoveRotP30, helpText: 'Rotate 30\u00B0 counter-clockwise.', mnemonic: 'Shift+[', key: '{'},
+	{id: 'rotm30', svg: svgMoveRotM30, helpText: 'Rotate 30\u00B0 clockwise.', mnemonic: 'Shift+]', key: '}'},
+	{id: 'hflip', svg: svgMoveHFlip, helpText: 'Flip subject atoms horizontally.', mnemonic: 'Shift+,', key: '<'},
+	{id: 'vflip', svg: svgMoveVFlip, helpText: 'Flip subject atoms vertically.', mnemonic: 'Shift+.', key: '>'},
+	{id: 'shrink', svg: svgMoveShrink, helpText: 'Decrease subject bond distances.', mnemonic: 'Shift+Z'},
+	{id: 'grow', svg: svgMoveGrow, helpText: 'Increase subject bond distances.', mnemonic: 'Shift+X'},
 ];
 
 /* ... the old style, where files are referred to explicitly: in case it needs to be rolled back

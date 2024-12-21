@@ -12,11 +12,18 @@ module.exports =
 				use: 'ts-loader',
 				exclude: /node_modules/,
 			},
+			{test: /\.svg$/, loader: 'raw-loader'},
+			{test: /\.ds$/, loader: 'raw-loader'},
+			{test: /\.onto$/, loader: 'raw-loader'},
 		],
 	},
 	resolve: 
 	{
 		extensions: ['.ts', '.js'],
+		alias: 
+		{
+			"@reswmk": path.resolve(__dirname, "res"),
+		} 
 	},
 	performance: 
 	{
