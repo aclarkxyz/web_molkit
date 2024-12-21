@@ -31,7 +31,8 @@ import {ButtonView} from './ButtonView';
 export interface ButtonBankItem
 {
 	id:string;
-	imageFN?:string;
+	imageFN?:string; // provide a URL for the SVG...
+	svg?:string; // ... or provide the SVG text directly
 	metavec?:any; // either an instance of MetaVector or a dictionary that can be used to make one (server-generated: semi-deprecated)
 	helpText:string;
 	isSubMenu?:boolean;
