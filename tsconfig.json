@@ -8,12 +8,17 @@
 		"outDir": "dist",
 		"sourceMap": true,
 		"target": "ES6",
-		"lib": ["es2020", "dom"],
+		"lib": ["es2022", "dom"],
+		"types": [],
 		"declaration": true
 	},
 	"include": 
 	[
 		"src/**/*.ts",
 		"val/**/*.ts"
+	],
+	"exclude":
+	[
+		"node_modules"
 	]
 }

@@ -27,7 +27,7 @@ module.exports =
 	output: 
 	{
 		path: path.resolve(__dirname, 'dist'),
-		filename: 'webmolkit-debug.js',
+		filename: 'webmolkit-validate.js',
 		library: 'WebMolKit',
 	},
 	mode: 'development',

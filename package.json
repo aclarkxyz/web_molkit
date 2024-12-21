@@ -1,6 +1,18 @@
 {
-	"name": "placeholder",
-	"version": "0.0.0",
+	"name": "webmolkit",
+	"description": "Cheminformatics functionality for JavaScript platforms",
+	"author": "Dr. Alex M. Clark",
+	"license": "Apache 2",
+	"version": "2.0.0",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/aclarkxyz/web_molkit.git"
+  	},
+	"main": ".",
+	"types": ".",
+	"files": [
+		"*"
+	],
 	"devDependencies": {
 		"typescript": "^5",
 		"eslint": "7.15",
@@ -12,8 +24,9 @@
 	},
 	"scripts": {
 		"lint": "eslint src/**/*.ts",
+		"build-tsc": "tsc",
 		"build-src": "webpack --config webpack-src.config.js",
 		"build-val": "webpack --config webpack-val.config.js",
-		"build": "webpack --config webpack-src.config.js && webpack --config webpack-val.config.js"
+		"build": "tsc && webpack --config webpack-src.config.js && webpack --config webpack-val.config.js"
 	}
 }
