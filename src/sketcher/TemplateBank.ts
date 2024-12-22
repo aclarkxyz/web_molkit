@@ -61,15 +61,12 @@ export class TemplateBank extends ButtonBank
 		policy.data.lineSize *= 1.5;
 		policy.data.bondSep *= 1.5;
 
-		(async () =>
-		{
-			if (TemplateBank.resourceData.length == 0) await this.loadResourceData();
+		if (TemplateBank.resourceData.length == 0) this.loadResourceData();
 
-			if (this.group == null)
-				this.prepareSubGroups();
-			else
-				this.prepareTemplates();
-		})();
+		if (this.group == null)
+			this.prepareSubGroups();
+		else
+			this.prepareTemplates();
 	}
 
 	// populate the buttons

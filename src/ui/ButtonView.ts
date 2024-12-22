@@ -633,7 +633,6 @@ export class ButtonView extends Widget
 			else if (b.svg != null)
 			{
 				d.imgDOM = dom('<div/>').appendTo(this.contentDOM).css({'display': 'block', 'position': 'absolute', 'pointer-events': 'none'});
-				// d.imgDOM.appendHTML(b.svg);
 				const sz = this.prefabImgSize;
 				const bx = d.x + Math.floor(0.5 * (d.width - sz));
 				const by = d.y + Math.floor(0.5 * (d.height - sz));

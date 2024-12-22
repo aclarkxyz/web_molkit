@@ -103,7 +103,7 @@ export class AbbrevContainer
 	{
 		if (this.main) return;
 
-		if (!Theme.RESOURCE_URL) throw ('RPC resource URL not defined.');
+		// if (!Theme.RESOURCE_URL) throw ('RPC resource URL not defined.');
 
 		this.main = new AbbrevContainer();
 
