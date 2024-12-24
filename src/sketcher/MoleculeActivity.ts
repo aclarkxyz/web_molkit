@@ -187,7 +187,7 @@ export class MoleculeActivity
 
 	// provide the optional owner parameter: if defined, then it will be called after the operation is complete
 	// (note: this is anachronistic, and should be refactored out)
-	public setOwner(owner:any):void
+	public setOwner(owner:Sketcher):void
 	{
 		this.owner = owner;
 	}
@@ -260,7 +260,7 @@ export class MoleculeActivity
 		}*/
 		else if (this.activity == ActivityType.TemplateFusion)
 		{
-			this.execTemplateFusion(Molecule.fromString(param.fragNative));
+			this.execTemplateFusion(param.frag ?? Molecule.fromString(param.fragNative));
 			if (this.owner) this.owner.setPermutations(this.output.permutations as any as TemplatePermutation[]);
 			return;
 		}

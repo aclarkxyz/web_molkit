@@ -3,4 +3,5 @@ node_modules
 package-lock.json
 dist/src
 dist/val
-
+.npmrc
+webmolkit*.tgz

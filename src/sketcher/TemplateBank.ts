@@ -215,6 +215,7 @@ export class TemplateBank extends ButtonBank
 import svgGenericAccept from '@reswmk/img/actions/GenericAccept.svg';
 import svgTemplatePrev from '@reswmk/img/actions/TemplatePrev.svg';
 import svgTemplateNext from '@reswmk/img/actions/TemplateNext.svg';
+import {KeyCode} from '../util/util';
 
 export class FusionBank extends ButtonBank
 {
@@ -241,6 +242,26 @@ export class FusionBank extends ButtonBank
 		if (id == 'accept') this.owner.templateAccept();
 		else if (id == 'prev') this.owner.templateRotate(-1);
 		else if (id == 'next') this.owner.templateRotate(1);
+	}
+
+	public claimKey(event:KeyboardEvent):boolean
+	{
+		if (event.key == KeyCode.Enter)
+		{
+			this.owner.templateAccept();
+			return true;
+		}
+		else if (event.key == KeyCode.Left || event.key == KeyCode.Up)
+		{
+			this.owner.templateRotate(-1);
+			return true;
+		}
+		else if (event.key == KeyCode.Right || event.key == KeyCode.Down)
+		{
+			this.owner.templateRotate(1);
+			return true;
+		}
+		return false;
 	}
 
 	public bankClosed()
