@@ -10,8 +10,6 @@
 	[PKG=webmolkit]
 */
 
-///<reference path='../ui/Widget.ts'/>
-
 import {Chemistry} from '../mol/Chemistry';
 import {CoordUtil} from '../mol/CoordUtil';
 import {MetaMolecule} from '../mol/MetaMolecule';
@@ -679,9 +677,8 @@ export class DrawCanvas extends Widget implements ArrangeMeasurement
 		if (this.layout == null) return;
 
 		let x1 = 0, y1 = 0, x2 = 0, y2 = 0, nb = 0, sz = 0;
-		for (let n = 0; n < this.layout.numLines(); n++)
+		for (let l of this.layout.getUnsplitLines() ?? this.layout.getLines())
 		{
-			let l = this.layout.getLine(n);
 			if (l.bnum != bond) continue;
 			x1 += l.line.x1; y1 += l.line.y1; x2 += l.line.x2; y2 += l.line.y2;
 			nb++;

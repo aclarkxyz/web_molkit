@@ -10,8 +10,6 @@
 	[PKG=webmolkit]
 */
 
-///<reference path='Aspect.ts'/>
-
 import {DataSheet, DataSheetColumn} from '../ds/DataSheet';
 import {Molecule} from '../mol/Molecule';
 import {MolUtil} from '../mol/MolUtil';

@@ -78,6 +78,28 @@ export class Graph
 		return g;
 	}
 
+	// builds a graph with a molecule subset
+	public static fromMoleculeMask(mol:Molecule, mask:boolean[]):Graph
+	{
+		let count = Vec.maskCount(mask);
+		let map = Vec.maskMap(mask);
+	
+		let g = new Graph(count);
+		g.indices = Vec.maskIdx(mask);
+		Vec.addTo(g.indices, 1); // make it 1-based
+	
+		for (let n = 0; n < count; n++)
+		{
+			let adj = mol.atomAdjList(g.indices[n]);
+			let sz = 0;
+			for (let i = 0; i < adj.length; i++) if (mask[adj[i] - 1]) sz++;
+			g.nbrs[n] = [];
+			for (let i = 0; i < adj.length; i++) if (mask[adj[i] - 1]) g.nbrs[n].push(adj[i] - 1);
+		}
+		
+		return g;
+	}
+
 	// when a neighbour list is already available, construction is essentially immediate; note that the neighbour list is not cloned at all,
 	// and it may be corrupted if graph modification methods are called
 	public static fromNeighbours(nbrs:number[][]):Graph

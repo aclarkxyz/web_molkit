@@ -10,6 +10,7 @@
 	[PKG=webmolkit]
 */
 
+import {PseudoEmbedding} from '@wmk/mol/PseudoEmbedding';
 import {BondArtifact} from '../mol/BondArtifact';
 import {CoordUtil} from '../mol/CoordUtil';
 import {Molecule} from '../mol/Molecule';
@@ -17,7 +18,7 @@ import {PolymerBlock, PolymerBlockConnectivity, PolymerBlockUnit} from '../mol/P
 import {QueryUtil} from '../mol/QueryUtil';
 import {FitRotatedEllipse} from '../util/FitRotatedEllipse';
 import {Box, GeomUtil, Line, Oval, QuickHull} from '../util/Geom';
-import {angleDiff, clone, DEGRAD, invZ, norm2_xy, norm_xy, RADDEG, sqr, TWOPI} from '../util/util';
+import {angleDiff, clone, deepClone, DEGRAD, invZ, norm2_xy, norm_xy, RADDEG, sqr, TWOPI} from '../util/util';
 import {Vec} from '../util/Vec';
 import {ArrangeMeasurement} from './ArrangeMeasurement';
 import {FontData} from './FontData';
@@ -34,7 +35,6 @@ export interface APoint
 	anum:number; // corresponds to molecule atom index
 	text:string; // the primary label, or null if invisible
 	fsz:number; // font size for label
-	//bold:boolean;
 	col:number;
 	oval:Oval;
 	rotation?:number; // degrees to rotate text
@@ -118,6 +118,10 @@ export class ArrangeMolecule
 	private rings:XRing[] = [];
 	private paths:XPath[] = [];
 	private space:SpaceFiller[] = [];
+
+	// special field: if the layout algorithm split up lines on account of them crossing each other, it stashes the original list here,
+	// in case the original is needed
+	private unsplitLines:BLine[] = null;
 
 	// bond artifacts: by default they are derived automatically, but can also be disabled; these properties are also used to
 	// override the default rendering of atom/bond properties
@@ -536,15 +540,13 @@ export class ArrangeMolecule
 		}
 
 		// perform a pseudo-embedding of the structure to resolve line-crossings
-/* ... to be done....
-		PseudoEmbedding emb = new PseudoEmbedding(mol);
+		let emb = new PseudoEmbedding(mol);
 		emb.calculateCrossings();
-		for (int n = 0; n < emb.numCrossings(); n++)
+		for (let cross of emb.crossings)
 		{
-			PseudoEmbedding.LineCrossing c = emb.getCrossing(n);
-			if (c.higher == 1) resolveLineCrossings(c.bond1, c.bond2);
-			else if (c.higher == 2) resolveLineCrossings(c.bond2, c.bond1);
-		}*/
+			if (cross.higher == 1) this.resolveLineCrossings(cross.bond1, cross.bond2);
+			else if (cross.higher == 2) this.resolveLineCrossings(cross.bond2, cross.bond1);
+		}
 
 		// create polymer brackets
 		let polymers = new PolymerBlock(mol);
@@ -560,6 +562,9 @@ export class ArrangeMolecule
 	public numLines():number {return this.lines.length;}
 	public getLine(idx:number):BLine {return this.lines[idx];}
 	public getLines():BLine[] {return this.lines;}
+
+	// bond lines prior to splitting: if none happened, returns null
+	public getUnsplitLines():BLine[] {return this.unsplitLines;}
 
 	// access to extra ring/resonance information
 	public numRings():number {return this.rings.length;}
@@ -578,7 +583,7 @@ export class ArrangeMolecule
 	public offsetEverything(dx:number, dy:number):void
 	{
 		for (let a of this.points) a.oval.offsetBy(dx, dy);
-		for (let b of this.lines) b.line.offsetBy(dx, dy);
+		for (let b of [...this.lines, ...(this.unsplitLines ?? [])]) b.line.offsetBy(dx, dy);
 		for (let r of this.rings)
 		{
 			r.cx += dx;
@@ -615,7 +620,7 @@ export class ArrangeMolecule
 			a.oval.scaleBy(scaleBy);
 			a.fsz *= scaleBy;
 		}
-		for (let b of this.lines)
+		for (let b of [...this.lines, ...(this.unsplitLines ?? [])])
 		{
 			b.line.scaleBy(scaleBy);
 			b.size *= scaleBy;
@@ -664,8 +669,6 @@ export class ArrangeMolecule
 			bounds[2] = Math.max(bounds[2], spc.box.x + spc.box.w);
 			bounds[3] = Math.max(bounds[3], spc.box.y + spc.box.h);
 		}
-
-		// !! factor in the boundary...
 
 		return bounds;
 	}
@@ -2151,27 +2154,31 @@ export class ArrangeMolecule
 	// arranged lines matching these indices, so that they might be split up
 	private resolveLineCrossings(bondHigher:number, bondLower:number):void
 	{
+		const TYPES = [BLineType.Normal, BLineType.Dotted, BLineType.DotDir];
+
+		const stashOriginals = () =>
+		{
+			if (!this.unsplitLines) this.unsplitLines = this.lines.map((b) =>
+			{
+				return {...b, line: b.line.clone()};
+			});
+		};
+
 		while (true)
 		{
 			let anything = false;
 
-			for (let i1 = 0; i1 < this.lines.length; i1++)
+			let linesHigher = this.lines.filter((b) => b.bnum == bondHigher && TYPES.includes(b.type));
+			let linesLower = this.lines.filter((b) => b.bnum == bondLower && TYPES.includes(b.type));
+
+			for (let b1 of linesHigher)
 			{
-				let b1 = this.lines[i1];
-				if (b1.bnum != bondHigher) continue;
-				if (b1.type != BLineType.Normal && b1.type != BLineType.Dotted && b1.type != BLineType.DotDir) continue;
-
-				for (let i2 = 0; i2 < this.lines.length; i2++)
+				for (let b2 of linesLower)
 				{
-					let b2 = this.lines[i2];
-					// note: b1 is on top, b2 is on bottom
-
-					if (b2.bnum != bondLower) continue;
-					if (b2.type == BLineType.DotDir) b2.type = BLineType.Dotted; // zap the directionality when splitting in two
-					if (b2.type != BLineType.Normal && b2.type != BLineType.Dotted) continue;
-
 					// make sure they don't share an atom
 					if (b1.bfr == b2.bfr || b1.bfr == b2.bto || b1.bto == b2.bfr || b1.bto == b2.bto) continue;
+
+					if (b2.type == BLineType.DotDir) b2.type = BLineType.Dotted; // zap the directionality when splitting in two
 
 					if (!GeomUtil.doLineSegsIntersect(b1.line.x1, b1.line.y1, b1.line.x2, b1.line.y2, b2.line.x1, b2.line.y1, b2.line.x2, b2.line.y2)) continue;
 					let xy = GeomUtil.lineIntersect(b1.line.x1, b1.line.y1, b1.line.x2, b1.line.y2, b2.line.x1, b2.line.y1, b2.line.x2, b2.line.y2);
@@ -2183,6 +2190,7 @@ export class ArrangeMolecule
 					let delta = b2.size / dist * (b2.type == BLineType.Normal ? 2 : 4);
 					if (ext > delta && ext < 1 - delta)
 					{
+						stashOriginals();
 						let b3:BLine =
 						{
 							bnum: b2.bnum,
@@ -2203,12 +2211,14 @@ export class ArrangeMolecule
 					}
 					else if (ext > delta)
 					{
+						stashOriginals();
 						b2.line.x2 = b2.line.x1 + dx * (ext - delta);
 						b2.line.y2 = b2.line.y1 + dy * (ext - delta);
 						anything = true;
 					}
 					else if (ext < 1 - delta)
 					{
+						stashOriginals();
 						b2.line.x1 = b2.line.x1 + dx * (ext + delta);
 						b2.line.y1 = b2.line.y1 + dy * (ext + delta);
 						anything = true;

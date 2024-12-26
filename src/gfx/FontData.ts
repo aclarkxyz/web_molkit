@@ -14,6 +14,11 @@
 
 /*
 	FontData: stores information about the general font, sufficient to recreate and layout every glyph.
+
+	This is to support the MetaVector class, which renders SVG/Canvas text using this embedded font, thus guaranteeing
+	that the output is identical on every platform in every graphics format, and making the metrics available ahead of
+	time. This may seem pedantic, but for rendering molecules it is the only way to obtain really excellent results,
+	because it is necessary to calculate the bond-to-element intercept to a subpixel resolution.
 */
 
 export interface FontDataNativeOpt

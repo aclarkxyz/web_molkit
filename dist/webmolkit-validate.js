@@ -7603,17 +7603,19 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   ArrangeMolecule: () => (/* binding */ ArrangeMolecule),
 /* harmony export */   BLineType: () => (/* binding */ BLineType)
 /* harmony export */ });
-/* harmony import */ var _mol_BondArtifact__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../mol/BondArtifact */ "./src/mol/BondArtifact.ts");
-/* harmony import */ var _mol_CoordUtil__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../mol/CoordUtil */ "./src/mol/CoordUtil.ts");
-/* harmony import */ var _mol_Molecule__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../mol/Molecule */ "./src/mol/Molecule.ts");
-/* harmony import */ var _mol_PolymerBlock__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../mol/PolymerBlock */ "./src/mol/PolymerBlock.ts");
-/* harmony import */ var _mol_QueryUtil__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../mol/QueryUtil */ "./src/mol/QueryUtil.ts");
-/* harmony import */ var _util_FitRotatedEllipse__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../util/FitRotatedEllipse */ "./src/util/FitRotatedEllipse.ts");
-/* harmony import */ var _util_Geom__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ../util/Geom */ "./src/util/Geom.ts");
-/* harmony import */ var _util_util__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ../util/util */ "./src/util/util.ts");
-/* harmony import */ var _util_Vec__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ../util/Vec */ "./src/util/Vec.ts");
-/* harmony import */ var _FontData__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ./FontData */ "./src/gfx/FontData.ts");
-/* harmony import */ var _Rendering__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ./Rendering */ "./src/gfx/Rendering.ts");
+/* harmony import */ var _wmk_mol_PseudoEmbedding__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @wmk/mol/PseudoEmbedding */ "./src/mol/PseudoEmbedding.ts");
+/* harmony import */ var _mol_BondArtifact__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../mol/BondArtifact */ "./src/mol/BondArtifact.ts");
+/* harmony import */ var _mol_CoordUtil__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../mol/CoordUtil */ "./src/mol/CoordUtil.ts");
+/* harmony import */ var _mol_Molecule__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../mol/Molecule */ "./src/mol/Molecule.ts");
+/* harmony import */ var _mol_PolymerBlock__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../mol/PolymerBlock */ "./src/mol/PolymerBlock.ts");
+/* harmony import */ var _mol_QueryUtil__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../mol/QueryUtil */ "./src/mol/QueryUtil.ts");
+/* harmony import */ var _util_FitRotatedEllipse__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ../util/FitRotatedEllipse */ "./src/util/FitRotatedEllipse.ts");
+/* harmony import */ var _util_Geom__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ../util/Geom */ "./src/util/Geom.ts");
+/* harmony import */ var _util_util__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ../util/util */ "./src/util/util.ts");
+/* harmony import */ var _util_Vec__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ../util/Vec */ "./src/util/Vec.ts");
+/* harmony import */ var _FontData__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ./FontData */ "./src/gfx/FontData.ts");
+/* harmony import */ var _Rendering__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! ./Rendering */ "./src/gfx/Rendering.ts");
+
 
 
 
@@ -7671,7 +7673,7 @@ class ArrangeMolecule {
         }
         return [w, h];
     }
-    constructor(mol, measure, policy, effects = new _Rendering__WEBPACK_IMPORTED_MODULE_10__.RenderEffects()) {
+    constructor(mol, measure, policy, effects = new _Rendering__WEBPACK_IMPORTED_MODULE_11__.RenderEffects()) {
         this.mol = mol;
         this.measure = measure;
         this.policy = policy;
@@ -7681,6 +7683,7 @@ class ArrangeMolecule {
         this.rings = [];
         this.paths = [];
         this.space = [];
+        this.unsplitLines = null;
         this.wantArtifacts = true;
         this.artifacts = null;
         this.bondOrder = [];
@@ -7707,8 +7710,8 @@ class ArrangeMolecule {
         this.ymul = measure.yIsUp() ? -1 : 1;
         let artmask = null;
         if (this.wantArtifacts && this.artifacts == null) {
-            this.artifacts = new _mol_BondArtifact__WEBPACK_IMPORTED_MODULE_0__.BondArtifact(mol);
-            artmask = _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.booleanArray(false, mol.numAtoms);
+            this.artifacts = new _mol_BondArtifact__WEBPACK_IMPORTED_MODULE_1__.BondArtifact(mol);
+            artmask = _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.booleanArray(false, mol.numAtoms);
             for (let path of this.artifacts.getResPaths())
                 for (let a of path.atoms)
                     artmask[a - 1] = true;
@@ -7730,10 +7733,10 @@ class ArrangeMolecule {
             }
             let a = {
                 anum: n,
-                text: mol.atomExplicit(n) || _mol_CoordUtil__WEBPACK_IMPORTED_MODULE_1__.CoordUtil.atomIsWeirdLinear(mol, n) ? mol.atomElement(n) : null,
+                text: mol.atomExplicit(n) || _mol_CoordUtil__WEBPACK_IMPORTED_MODULE_2__.CoordUtil.atomIsWeirdLinear(mol, n) ? mol.atomElement(n) : null,
                 fsz: this.fontSizePix,
                 col: this.policy.data.atomCols[mol.atomicNumber(n)],
-                oval: new _util_Geom__WEBPACK_IMPORTED_MODULE_6__.Oval(this.measure.angToX(mol.atomX(n)), this.measure.angToY(mol.atomY(n)), 0, 0)
+                oval: new _util_Geom__WEBPACK_IMPORTED_MODULE_7__.Oval(this.measure.angToX(mol.atomX(n)), this.measure.angToY(mol.atomY(n)), 0, 0)
             };
             let overCol = this.effects.colAtom[n];
             if (overCol)
@@ -7752,7 +7755,7 @@ class ArrangeMolecule {
         for (let n = 1; n <= mol.numAtoms; n++)
             if (this.points[n - 1] == null)
                 this.processLabel(n);
-        let bdbl = _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.booleanArray(false, mol.numBonds);
+        let bdbl = _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.booleanArray(false, mol.numBonds);
         for (let n = 1; n <= mol.numBonds; n++) {
             let bfr = mol.bondFrom(n), bto = mol.bondTo(n);
             let bt = mol.bondType(n), bo = this.bondOrder[n - 1];
@@ -7761,7 +7764,7 @@ class ArrangeMolecule {
             let col = this.effects.colBond[n];
             if (!col)
                 col = this.policy.data.foreground;
-            bdbl[n - 1] = bo == 2 && (bt == _mol_Molecule__WEBPACK_IMPORTED_MODULE_2__.Molecule.BONDTYPE_NORMAL || bt == _mol_Molecule__WEBPACK_IMPORTED_MODULE_2__.Molecule.BONDTYPE_UNKNOWN);
+            bdbl[n - 1] = bo == 2 && (bt == _mol_Molecule__WEBPACK_IMPORTED_MODULE_3__.Molecule.BONDTYPE_NORMAL || bt == _mol_Molecule__WEBPACK_IMPORTED_MODULE_3__.Molecule.BONDTYPE_UNKNOWN);
             let a1 = this.points[bfr - 1], a2 = this.points[bto - 1];
             let x1 = a1.oval.cx, y1 = a1.oval.cy, x2 = a2.oval.cx, y2 = a2.oval.cy;
             if (Math.abs(x2 - x1) <= 1 && Math.abs(y2 - y1) <= 1) {
@@ -7770,19 +7773,19 @@ class ArrangeMolecule {
             }
             if (bdbl[n - 1])
                 continue;
-            let minDist = (bo == 1 && bt == _mol_Molecule__WEBPACK_IMPORTED_MODULE_2__.Molecule.BONDTYPE_NORMAL ? MINBOND_LINE : MINBOND_EXOTIC) * measure.scale();
+            let minDist = (bo == 1 && bt == _mol_Molecule__WEBPACK_IMPORTED_MODULE_3__.Molecule.BONDTYPE_NORMAL ? MINBOND_LINE : MINBOND_EXOTIC) * measure.scale();
             let xy1 = this.shrinkBond(x1, y1, x2, y2, this.backOffAtom(bfr, x1, y1, x2, y2, minDist));
             let xy2 = this.shrinkBond(x2, y2, x1, y1, this.backOffAtom(bto, x2, y2, x1, y1, minDist));
             this.ensureMinimumBondLength(xy1, xy2, x1, y1, x2, y2, minDist);
             let sz = this.lineSizePix, head = 0;
-            let qbonds = _mol_QueryUtil__WEBPACK_IMPORTED_MODULE_4__.QueryUtil.queryBondOrders(mol, n);
-            if (_util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.notBlank(qbonds)) {
-                _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.sort(qbonds);
+            let qbonds = _mol_QueryUtil__WEBPACK_IMPORTED_MODULE_5__.QueryUtil.queryBondOrders(mol, n);
+            if (_util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.notBlank(qbonds)) {
+                _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.sort(qbonds);
                 if (qbonds[0] == -1) {
                     qbonds.splice(0, 1);
                     qbonds.push(-1);
                 }
-                let qtxt = _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.equals(qbonds, [0, 1, 2, 3, -1]) ? '?' : qbonds.map((o) => o == -1 ? 'A' : o.toString()).join('');
+                let qtxt = _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.equals(qbonds, [0, 1, 2, 3, -1]) ? '?' : qbonds.map((o) => o == -1 ? 'A' : o.toString()).join('');
                 let oxy = this.orthogonalDelta(xy1[0], xy1[1], xy2[0], xy2[1], 1.3 * this.bondSepPix);
                 let v = -0.5;
                 for (let i = 0; i < 2; i++, v++) {
@@ -7792,7 +7795,7 @@ class ArrangeMolecule {
                         bfr,
                         bto,
                         type: BLineType.Dotted,
-                        line: new _util_Geom__WEBPACK_IMPORTED_MODULE_6__.Line(lx1, ly1, lx2, ly2),
+                        line: new _util_Geom__WEBPACK_IMPORTED_MODULE_7__.Line(lx1, ly1, lx2, ly2),
                         size: 0.5 * sz,
                         head,
                         col: (col & 0xFFFFFF) | 0x80000000,
@@ -7800,7 +7803,7 @@ class ArrangeMolecule {
                     this.lines.push(b);
                     this.space.push(this.computeSpaceLine(b));
                 }
-                let rotation = Math.atan2(xy2[1] - xy1[1], xy2[0] - xy1[0]) * _util_util__WEBPACK_IMPORTED_MODULE_7__.RADDEG;
+                let rotation = Math.atan2(xy2[1] - xy1[1], xy2[0] - xy1[0]) * _util_util__WEBPACK_IMPORTED_MODULE_8__.RADDEG;
                 if (rotation < -90 || rotation > 90)
                     rotation += 180;
                 let a = {
@@ -7808,7 +7811,7 @@ class ArrangeMolecule {
                     text: qtxt,
                     fsz: 0.35 * this.fontSizePix,
                     col,
-                    oval: new _util_Geom__WEBPACK_IMPORTED_MODULE_6__.Oval(0.5 * (xy1[0] + xy2[0]), 0.5 * (xy1[1] + xy2[1]), 0, 0),
+                    oval: new _util_Geom__WEBPACK_IMPORTED_MODULE_7__.Oval(0.5 * (xy1[0] + xy2[0]), 0.5 * (xy1[1] + xy2[1]), 0, 0),
                     rotation
                 };
                 this.points.push(a);
@@ -7816,31 +7819,31 @@ class ArrangeMolecule {
                 continue;
             }
             let ltype = BLineType.Normal;
-            if (bo == 1 && bt == _mol_Molecule__WEBPACK_IMPORTED_MODULE_2__.Molecule.BONDTYPE_INCLINED) {
+            if (bo == 1 && bt == _mol_Molecule__WEBPACK_IMPORTED_MODULE_3__.Molecule.BONDTYPE_INCLINED) {
                 ltype = BLineType.Inclined;
                 head = 0.15 * measure.scale();
             }
-            else if (bo == 1 && bt == _mol_Molecule__WEBPACK_IMPORTED_MODULE_2__.Molecule.BONDTYPE_DECLINED) {
+            else if (bo == 1 && bt == _mol_Molecule__WEBPACK_IMPORTED_MODULE_3__.Molecule.BONDTYPE_DECLINED) {
                 ltype = BLineType.Declined;
                 head = 0.15 * measure.scale();
             }
-            else if (bt == _mol_Molecule__WEBPACK_IMPORTED_MODULE_2__.Molecule.BONDTYPE_UNKNOWN) {
+            else if (bt == _mol_Molecule__WEBPACK_IMPORTED_MODULE_3__.Molecule.BONDTYPE_UNKNOWN) {
                 ltype = BLineType.Unknown;
                 head = 0.2 * measure.scale();
             }
             else if (bo == 0) {
-                if (bt == _mol_Molecule__WEBPACK_IMPORTED_MODULE_2__.Molecule.BONDTYPE_INCLINED || bt == _mol_Molecule__WEBPACK_IMPORTED_MODULE_2__.Molecule.BONDTYPE_DECLINED)
+                if (bt == _mol_Molecule__WEBPACK_IMPORTED_MODULE_3__.Molecule.BONDTYPE_INCLINED || bt == _mol_Molecule__WEBPACK_IMPORTED_MODULE_3__.Molecule.BONDTYPE_DECLINED)
                     ltype = BLineType.DotDir;
                 else
                     ltype = BLineType.Dotted;
             }
-            else if ((bo == 2 || bo == 3 || bo == 4) && (bt == _mol_Molecule__WEBPACK_IMPORTED_MODULE_2__.Molecule.BONDTYPE_INCLINED || bt == _mol_Molecule__WEBPACK_IMPORTED_MODULE_2__.Molecule.BONDTYPE_DECLINED)) {
+            else if ((bo == 2 || bo == 3 || bo == 4) && (bt == _mol_Molecule__WEBPACK_IMPORTED_MODULE_3__.Molecule.BONDTYPE_INCLINED || bt == _mol_Molecule__WEBPACK_IMPORTED_MODULE_3__.Molecule.BONDTYPE_DECLINED)) {
                 ltype = bo == 2 ? BLineType.IncDouble : bo == 3 ? BLineType.IncTriple : BLineType.IncQuadruple;
                 head = (bo == 2 ? 0.20 : 0.25) * measure.scale();
             }
             if (bo == 0) {
                 let dx = xy2[0] - xy1[0], dy = xy2[1] - xy1[1];
-                let d = (0,_util_util__WEBPACK_IMPORTED_MODULE_7__.norm_xy)(dx, dy), invD = 1 / d;
+                let d = (0,_util_util__WEBPACK_IMPORTED_MODULE_8__.norm_xy)(dx, dy), invD = 1 / d;
                 let ox = 0.5 * dx * invD * this.bondSepPix, oy = 0.5 * dy * invD * this.bondSepPix;
                 if (mol.atomAdjCount(bfr) > 1) {
                     xy1[0] += ox;
@@ -7851,9 +7854,9 @@ class ArrangeMolecule {
                     xy2[1] -= oy;
                 }
             }
-            if (bo != 1 && bt == _mol_Molecule__WEBPACK_IMPORTED_MODULE_2__.Molecule.BONDTYPE_DECLINED)
+            if (bo != 1 && bt == _mol_Molecule__WEBPACK_IMPORTED_MODULE_3__.Molecule.BONDTYPE_DECLINED)
                 [xy1, xy2] = [xy2, xy1];
-            if (bo > 1 && (bt == _mol_Molecule__WEBPACK_IMPORTED_MODULE_2__.Molecule.BONDTYPE_NORMAL || bt == _mol_Molecule__WEBPACK_IMPORTED_MODULE_2__.Molecule.BONDTYPE_UNKNOWN)) {
+            if (bo > 1 && (bt == _mol_Molecule__WEBPACK_IMPORTED_MODULE_3__.Molecule.BONDTYPE_NORMAL || bt == _mol_Molecule__WEBPACK_IMPORTED_MODULE_3__.Molecule.BONDTYPE_UNKNOWN)) {
                 let oxy = this.orthogonalDelta(xy1[0], xy1[1], xy2[0], xy2[1], this.bondSepPix);
                 let ext1 = 1, ext2 = 1;
                 for (let i = 0, v = -0.5 * (bo - 1); i < bo; i++, v++) {
@@ -7873,7 +7876,7 @@ class ArrangeMolecule {
                         bfr,
                         bto,
                         type: ltype,
-                        line: new _util_Geom__WEBPACK_IMPORTED_MODULE_6__.Line(lx1, ly1, lx2, ly2),
+                        line: new _util_Geom__WEBPACK_IMPORTED_MODULE_7__.Line(lx1, ly1, lx2, ly2),
                         size: sz,
                         head,
                         col
@@ -7888,7 +7891,7 @@ class ArrangeMolecule {
                     bfr,
                     bto,
                     type: ltype,
-                    line: new _util_Geom__WEBPACK_IMPORTED_MODULE_6__.Line(xy1[0], xy1[1], xy2[0], xy2[1]),
+                    line: new _util_Geom__WEBPACK_IMPORTED_MODULE_7__.Line(xy1[0], xy1[1], xy2[0], xy2[1]),
                     size: sz,
                     head,
                     col
@@ -7910,7 +7913,7 @@ class ArrangeMolecule {
         for (let i = 1; i <= mol.numBonds; i++)
             if (bdbl[i - 1])
                 this.processDoubleBond(i, this.priorityDoubleSubstit(i));
-        let hcount = _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.numberArray(0, mol.numAtoms);
+        let hcount = _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.numberArray(0, mol.numAtoms);
         for (let n = 1; n <= mol.numAtoms; n++)
             hcount[n - 1] = this.points[n - 1].text == null ? 0 : mol.atomHydrogens(n);
         for (let n = 0; n < mol.numAtoms; n++)
@@ -7920,10 +7923,10 @@ class ArrangeMolecule {
             if (hcount[n] > 0)
                 this.placeHydrogen(n, hcount[n], false);
         for (let n = 1; n <= mol.numAtoms; n++)
-            if (mol.atomIsotope(n) != _mol_Molecule__WEBPACK_IMPORTED_MODULE_2__.Molecule.ISOTOPE_NATURAL) {
+            if (mol.atomIsotope(n) != _mol_Molecule__WEBPACK_IMPORTED_MODULE_3__.Molecule.ISOTOPE_NATURAL) {
                 let isostr = mol.atomIsotope(n).toString();
                 let col = policy.data.atomCols[mol.atomicNumber(n)];
-                this.placeAdjunct(n, isostr, this.fontSizePix * 0.6, col, 150 * _util_util__WEBPACK_IMPORTED_MODULE_7__.DEGRAD);
+                this.placeAdjunct(n, isostr, this.fontSizePix * 0.6, col, 150 * _util_util__WEBPACK_IMPORTED_MODULE_8__.DEGRAD);
             }
         for (let n = 1; n <= mol.numAtoms; n++) {
             let str = '';
@@ -7941,7 +7944,7 @@ class ArrangeMolecule {
             if (str.length == 0)
                 continue;
             let col = policy.data.atomCols[mol.atomicNumber(n)];
-            this.placeAdjunct(n, str, str.length == 1 ? 0.8 * this.fontSizePix : 0.6 * this.fontSizePix, col, 30 * _util_util__WEBPACK_IMPORTED_MODULE_7__.DEGRAD);
+            this.placeAdjunct(n, str, str.length == 1 ? 0.8 * this.fontSizePix : 0.6 * this.fontSizePix, col, 30 * _util_util__WEBPACK_IMPORTED_MODULE_8__.DEGRAD);
         }
         for (let n = 0; n < effects.atomDecoText.length; n++) {
             let txt = effects.atomDecoText[n];
@@ -7959,7 +7962,7 @@ class ArrangeMolecule {
             if (effects.atomCircleSz[n] > 0) {
                 let dw = effects.atomCircleSz[n] * this.scale;
                 let a = this.points[n];
-                let box = new _util_Geom__WEBPACK_IMPORTED_MODULE_6__.Box(a.oval.cx - dw, a.oval.cy - dw, 2 * dw, 2 * dw);
+                let box = new _util_Geom__WEBPACK_IMPORTED_MODULE_7__.Box(a.oval.cx - dw, a.oval.cy - dw, 2 * dw, 2 * dw);
                 let spc = {
                     anum: 0,
                     bnum: 0,
@@ -7999,7 +8002,15 @@ class ArrangeMolecule {
                 this.delocalisedAnnotation(arene.atoms, this.artifactCharge.get(arene), this.artifactUnpaired.get(arene));
             }
         }
-        let polymers = new _mol_PolymerBlock__WEBPACK_IMPORTED_MODULE_3__.PolymerBlock(mol);
+        let emb = new _wmk_mol_PseudoEmbedding__WEBPACK_IMPORTED_MODULE_0__.PseudoEmbedding(mol);
+        emb.calculateCrossings();
+        for (let cross of emb.crossings) {
+            if (cross.higher == 1)
+                this.resolveLineCrossings(cross.bond1, cross.bond2);
+            else if (cross.higher == 2)
+                this.resolveLineCrossings(cross.bond2, cross.bond1);
+        }
+        let polymers = new _mol_PolymerBlock__WEBPACK_IMPORTED_MODULE_4__.PolymerBlock(mol);
         for (let id of polymers.getIDList())
             this.processPolymerUnit(polymers.getUnit(id), polymers.getUnits());
     }
@@ -8009,6 +8020,7 @@ class ArrangeMolecule {
     numLines() { return this.lines.length; }
     getLine(idx) { return this.lines[idx]; }
     getLines() { return this.lines; }
+    getUnsplitLines() { return this.unsplitLines; }
     numRings() { return this.rings.length; }
     getRing(idx) { return this.rings[idx]; }
     getRings() { return this.rings; }
@@ -8019,22 +8031,23 @@ class ArrangeMolecule {
     getSpace(idx) { return this.space[idx]; }
     getSpaces() { return this.space; }
     offsetEverything(dx, dy) {
+        var _a;
         for (let a of this.points)
             a.oval.offsetBy(dx, dy);
-        for (let b of this.lines)
+        for (let b of [...this.lines, ...((_a = this.unsplitLines) !== null && _a !== void 0 ? _a : [])])
             b.line.offsetBy(dx, dy);
         for (let r of this.rings) {
             r.cx += dx;
             r.cy += dy;
         }
         for (let p of this.paths) {
-            _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.addTo(p.px, dx);
-            _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.addTo(p.py, dy);
+            _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.addTo(p.px, dx);
+            _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.addTo(p.py, dy);
         }
         for (let spc of this.space) {
             spc.box.offsetBy(dx, dy);
-            _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.addTo(spc.px, dx);
-            _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.addTo(spc.py, dy);
+            _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.addTo(spc.px, dx);
+            _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.addTo(spc.py, dy);
         }
     }
     offsetOrigin() {
@@ -8043,6 +8056,7 @@ class ArrangeMolecule {
             this.offsetEverything(-bounds[0], -bounds[1]);
     }
     scaleEverything(scaleBy) {
+        var _a;
         if (scaleBy == 1)
             return;
         this.scale *= scaleBy;
@@ -8050,7 +8064,7 @@ class ArrangeMolecule {
             a.oval.scaleBy(scaleBy);
             a.fsz *= scaleBy;
         }
-        for (let b of this.lines) {
+        for (let b of [...this.lines, ...((_a = this.unsplitLines) !== null && _a !== void 0 ? _a : [])]) {
             b.line.scaleBy(scaleBy);
             b.size *= scaleBy;
             b.head *= scaleBy;
@@ -8063,14 +8077,14 @@ class ArrangeMolecule {
             r.size *= scaleBy;
         }
         for (let p of this.paths) {
-            _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.mulBy(p.px, scaleBy);
-            _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.mulBy(p.py, scaleBy);
+            _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.mulBy(p.px, scaleBy);
+            _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.mulBy(p.py, scaleBy);
             p.size *= scaleBy;
         }
         for (let spc of this.space) {
             spc.box.scaleBy(scaleBy);
-            _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.mulBy(spc.px, scaleBy);
-            _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.mulBy(spc.py, scaleBy);
+            _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.mulBy(spc.px, scaleBy);
+            _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.mulBy(spc.py, scaleBy);
         }
     }
     determineBoundary(padding) {
@@ -8078,7 +8092,7 @@ class ArrangeMolecule {
             padding = 0;
         if (this.space.length == 0)
             return [0, 0, 2 * padding, 2 * padding];
-        let bounds = _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.numberArray(0, 4);
+        let bounds = _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.numberArray(0, 4);
         let spc = this.space[0];
         bounds[0] = spc.box.x;
         bounds[1] = spc.box.y;
@@ -8095,7 +8109,7 @@ class ArrangeMolecule {
     }
     determineBoundaryBox() {
         let [x1, y1, x2, y2] = this.determineBoundary();
-        return new _util_Geom__WEBPACK_IMPORTED_MODULE_6__.Box(x1, y1, x2 - x1, y2 - y1);
+        return new _util_Geom__WEBPACK_IMPORTED_MODULE_7__.Box(x1, y1, x2 - x1, y2 - y1);
     }
     squeezeInto(x, y, w, h, padding) {
         if (padding != null && padding > 0) {
@@ -8113,7 +8127,7 @@ class ArrangeMolecule {
             if (bh > h)
                 downScale = Math.min(downScale, h / bh);
             this.scaleEverything(downScale);
-            _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.mulBy(bounds, downScale);
+            _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.mulBy(bounds, downScale);
         }
         this.offsetEverything(x - bounds[0] + 0.5 * (w - bounds[2] + bounds[0]), y - bounds[1] + 0.5 * (h - bounds[3] + bounds[1]));
     }
@@ -8152,11 +8166,11 @@ class ArrangeMolecule {
         dup.fontSizePix = this.fontSizePix;
         dup.ymul = this.ymul;
         for (let a of this.points)
-            dup.points.push((0,_util_util__WEBPACK_IMPORTED_MODULE_7__.clone)(a));
+            dup.points.push((0,_util_util__WEBPACK_IMPORTED_MODULE_8__.clone)(a));
         for (let b of this.lines)
-            dup.lines.push((0,_util_util__WEBPACK_IMPORTED_MODULE_7__.clone)(b));
+            dup.lines.push((0,_util_util__WEBPACK_IMPORTED_MODULE_8__.clone)(b));
         for (let s of this.space)
-            dup.space.push((0,_util_util__WEBPACK_IMPORTED_MODULE_7__.clone)(s));
+            dup.space.push((0,_util_util__WEBPACK_IMPORTED_MODULE_8__.clone)(s));
         return dup;
     }
     setupBondOrders() {
@@ -8235,22 +8249,22 @@ class ArrangeMolecule {
             let zeroBonds = this.mol.atomAdjBonds(atom).filter((b) => this.mol.bondOrder(b) == 0);
             if (zeroBonds.length == 1) {
                 let zpt = this.getPoint(this.mol.bondOther(zeroBonds[0], atom) - 1);
-                let dx = zpt.oval.cx - cx, dy = zpt.oval.cy - cy, inv = 1 / (0,_util_util__WEBPACK_IMPORTED_MODULE_7__.norm_xy)(dx, dy);
+                let dx = zpt.oval.cx - cx, dy = zpt.oval.cy - cy, inv = 1 / (0,_util_util__WEBPACK_IMPORTED_MODULE_8__.norm_xy)(dx, dy);
                 let r = fsz * 0.15;
                 let ox = dy * inv * 2.5 * r, oy = -dx * inv * 2.5 * r;
                 let ext = 1.2 * (rw + rh) * inv;
                 [dx, dy] = [dx * ext, dy * ext];
-                this.points.push({ anum: 0, text: '.', fsz, col, oval: new _util_Geom__WEBPACK_IMPORTED_MODULE_6__.Oval(cx + dx + ox, cy + dy + oy, r, r) });
-                this.points.push({ anum: 0, text: '.', fsz, col, oval: new _util_Geom__WEBPACK_IMPORTED_MODULE_6__.Oval(cx + dx - ox, cy + dy - oy, r, r) });
+                this.points.push({ anum: 0, text: '.', fsz, col, oval: new _util_Geom__WEBPACK_IMPORTED_MODULE_7__.Oval(cx + dx + ox, cy + dy + oy, r, r) });
+                this.points.push({ anum: 0, text: '.', fsz, col, oval: new _util_Geom__WEBPACK_IMPORTED_MODULE_7__.Oval(cx + dx - ox, cy + dy - oy, r, r) });
                 return;
             }
         }
         let bestScore = 0, bestDX = 0, bestDY = 0;
-        let px = _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.numberArray(0, 4), py = _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.numberArray(0, 4);
+        let px = _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.numberArray(0, 4), py = _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.numberArray(0, 4);
         let angThresh = 10;
         let shorted = false;
         for (let ext = 0.5 * (a.oval.rw + a.oval.rh); !shorted && ext < 1.5 * this.measure.scale(); ext += 0.1 * this.measure.scale()) {
-            const DELTA = 5 * _util_util__WEBPACK_IMPORTED_MODULE_7__.DEGRAD;
+            const DELTA = 5 * _util_util__WEBPACK_IMPORTED_MODULE_8__.DEGRAD;
             for (let d = 0; !shorted && d < Math.PI - 0.0001; d += DELTA)
                 for (let s = -1; s <= 1; s += 2) {
                     let dang = d * s + (s > 0 ? DELTA : 0), ang = angdir + dang;
@@ -8266,7 +8280,7 @@ class ArrangeMolecule {
                     py[3] = y2;
                     let viol = this.countPolyViolations(px, py, null, false);
                     let score = 10 * viol + Math.abs(dang) + 10 * ext;
-                    let shortCircuit = viol == 0 && Math.abs(dang) < (angThresh + 1) * _util_util__WEBPACK_IMPORTED_MODULE_7__.DEGRAD;
+                    let shortCircuit = viol == 0 && Math.abs(dang) < (angThresh + 1) * _util_util__WEBPACK_IMPORTED_MODULE_8__.DEGRAD;
                     if (bestScore == 0 || shortCircuit || score < bestScore) {
                         bestScore = score;
                         bestDX = dx;
@@ -8285,13 +8299,13 @@ class ArrangeMolecule {
                 text: str,
                 fsz,
                 col,
-                oval: new _util_Geom__WEBPACK_IMPORTED_MODULE_6__.Oval(cx + bestDX, cy + bestDY, rw, rh)
+                oval: new _util_Geom__WEBPACK_IMPORTED_MODULE_7__.Oval(cx + bestDX, cy + bestDY, rw, rh)
             };
         this.points.push(a);
         let spc = {
             anum: 0,
             bnum: 0,
-            box: new _util_Geom__WEBPACK_IMPORTED_MODULE_6__.Box(a.oval.cx - rw, a.oval.cy - rh, 2 * rw, 2 * rh),
+            box: new _util_Geom__WEBPACK_IMPORTED_MODULE_7__.Box(a.oval.cx - rw, a.oval.cy - rh, 2 * rw, 2 * rh),
             px: [a.oval.cx - rw, a.oval.cx + rw, a.oval.cx + rw, a.oval.cx - rw],
             py: [a.oval.cy - rh, a.oval.cy - rh, a.oval.cy + rh, a.oval.cy + rh]
         };
@@ -8302,7 +8316,7 @@ class ArrangeMolecule {
         let left = 0, right = 0;
         let adj = this.mol.atomAdjList(anum);
         for (let n = 0; n < adj.length; n++) {
-            let theta = Math.atan2(this.mol.atomY(adj[n]) - ay, this.mol.atomX(adj[n]) - ax) * _util_util__WEBPACK_IMPORTED_MODULE_7__.RADDEG;
+            let theta = Math.atan2(this.mol.atomY(adj[n]) - ay, this.mol.atomX(adj[n]) - ax) * _util_util__WEBPACK_IMPORTED_MODULE_8__.RADDEG;
             if (theta >= -15 && theta <= 15)
                 right += 3;
             else if (theta >= -85 && theta <= 85)
@@ -8323,8 +8337,8 @@ class ArrangeMolecule {
         else if (right < left)
             side = 1;
         else {
-            let score1 = _mol_CoordUtil__WEBPACK_IMPORTED_MODULE_1__.CoordUtil.congestionPoint(this.mol, ax - 1, ay);
-            let score2 = _mol_CoordUtil__WEBPACK_IMPORTED_MODULE_1__.CoordUtil.congestionPoint(this.mol, ax + 1, ay);
+            let score1 = _mol_CoordUtil__WEBPACK_IMPORTED_MODULE_2__.CoordUtil.congestionPoint(this.mol, ax - 1, ay);
+            let score2 = _mol_CoordUtil__WEBPACK_IMPORTED_MODULE_2__.CoordUtil.congestionPoint(this.mol, ax + 1, ay);
             if (score1 < 0.5 * score2)
                 side = -1;
             else
@@ -8350,7 +8364,7 @@ class ArrangeMolecule {
             let bpri = [];
             let blocks = label.split('|');
             if (side < 0)
-                blocks = _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.reverse(blocks);
+                blocks = _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.reverse(blocks);
             let buff = '';
             for (let i = 0; i < blocks.length; i++) {
                 let isPrimary = (side >= 0 && i == 0) || (side < 0 && i == blocks.length - 1);
@@ -8388,7 +8402,7 @@ class ArrangeMolecule {
         }
         let PADDING = 1.1;
         let SSFRACT = 0.6;
-        let chunkw = _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.numberArray(0, chunks.length);
+        let chunkw = _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.numberArray(0, chunks.length);
         let tw = 0;
         for (let n = 0; n < chunks.length; n++) {
             chunkw[n] = this.measure.measureText(chunks[n], this.fontSizePix)[0];
@@ -8406,7 +8420,7 @@ class ArrangeMolecule {
                 text: chunks[n],
                 fsz: this.fontSizePix,
                 col: this.policy.data.atomCols[this.mol.atomicNumber(anum)],
-                oval: new _util_Geom__WEBPACK_IMPORTED_MODULE_6__.Oval(x + 0.5 * chunkw[n], y, 0.5 * chunkw[n] * PADDING, 0.5 * this.fontSizePix * PADDING)
+                oval: new _util_Geom__WEBPACK_IMPORTED_MODULE_7__.Oval(x + 0.5 * chunkw[n], y, 0.5 * chunkw[n] * PADDING, 0.5 * this.fontSizePix * PADDING)
             };
             if (position != null && position[n] != 0) {
                 a.fsz *= SSFRACT;
@@ -8429,7 +8443,7 @@ class ArrangeMolecule {
     backOffAtom(atom, x, y, fx, fy, minDist) {
         if (x == fx && y == fy)
             return 1;
-        let dx = x - fx, dy = y - fy, dist = (0,_util_util__WEBPACK_IMPORTED_MODULE_7__.norm_xy)(dx, dy), inv = 1.0 / dist;
+        let dx = x - fx, dy = y - fy, dist = (0,_util_util__WEBPACK_IMPORTED_MODULE_8__.norm_xy)(dx, dy), inv = 1.0 / dist;
         const bump = 0.1 * this.measure.scale();
         let xbump = x + 2 * bump * dx * inv, ybump = y + 2 * bump * dy * inv;
         let ext = dist;
@@ -8442,11 +8456,11 @@ class ArrangeMolecule {
                 for (let n = 0; n < sz; n++) {
                     let nn = n < sz - 1 ? n + 1 : 0;
                     let x1 = spc.px[n], y1 = spc.py[n], x2 = spc.px[nn], y2 = spc.py[nn];
-                    if (!_util_Geom__WEBPACK_IMPORTED_MODULE_6__.GeomUtil.doLineSegsIntersect(xbump, ybump, fx, fy, x1, y1, x2, y2))
+                    if (!_util_Geom__WEBPACK_IMPORTED_MODULE_7__.GeomUtil.doLineSegsIntersect(xbump, ybump, fx, fy, x1, y1, x2, y2))
                         continue;
-                    let xy = _util_Geom__WEBPACK_IMPORTED_MODULE_6__.GeomUtil.lineIntersect(x, y, fx, fy, x1, y1, x2, y2);
+                    let xy = _util_Geom__WEBPACK_IMPORTED_MODULE_7__.GeomUtil.lineIntersect(x, y, fx, fy, x1, y1, x2, y2);
                     active = true;
-                    ext = Math.min(ext, (0,_util_util__WEBPACK_IMPORTED_MODULE_7__.norm_xy)(xy[0] - fx, xy[1] - fy));
+                    ext = Math.min(ext, (0,_util_util__WEBPACK_IMPORTED_MODULE_8__.norm_xy)(xy[0] - fx, xy[1] - fy));
                 }
             }
         if (active) {
@@ -8462,7 +8476,7 @@ class ArrangeMolecule {
             return null;
         ext = 1 - ext;
         let dx = (fx - x) * ext, dy = (fy - y) * ext;
-        return [(0,_util_util__WEBPACK_IMPORTED_MODULE_7__.norm2_xy)(dx, dy), dx, dy];
+        return [(0,_util_util__WEBPACK_IMPORTED_MODULE_8__.norm2_xy)(dx, dy), dx, dy];
     }
     shrinkBond(x, y, fx, fy, ext) {
         if (ext == 1)
@@ -8472,11 +8486,11 @@ class ArrangeMolecule {
     }
     ensureMinimumBondLength(xy1, xy2, x1, y1, x2, y2, minDist) {
         let dx = xy2[0] - xy1[0], dy = xy2[1] - xy1[1];
-        let dsq = (0,_util_util__WEBPACK_IMPORTED_MODULE_7__.norm2_xy)(dx, dy);
-        minDist = Math.min(minDist, (0,_util_util__WEBPACK_IMPORTED_MODULE_7__.norm_xy)(x2 - x1, y2 - y1));
-        if (dsq >= (0,_util_util__WEBPACK_IMPORTED_MODULE_7__.sqr)(minDist - 0.0001))
+        let dsq = (0,_util_util__WEBPACK_IMPORTED_MODULE_8__.norm2_xy)(dx, dy);
+        minDist = Math.min(minDist, (0,_util_util__WEBPACK_IMPORTED_MODULE_8__.norm_xy)(x2 - x1, y2 - y1));
+        if (dsq >= (0,_util_util__WEBPACK_IMPORTED_MODULE_8__.sqr)(minDist - 0.0001))
             return;
-        let d12 = Math.sqrt(dsq), d1 = (0,_util_util__WEBPACK_IMPORTED_MODULE_7__.norm_xy)(xy1[0] - x1, xy1[1] - y1), d2 = (0,_util_util__WEBPACK_IMPORTED_MODULE_7__.norm_xy)(x2 - xy2[0], y2 - xy2[1]);
+        let d12 = Math.sqrt(dsq), d1 = (0,_util_util__WEBPACK_IMPORTED_MODULE_8__.norm_xy)(xy1[0] - x1, xy1[1] - y1), d2 = (0,_util_util__WEBPACK_IMPORTED_MODULE_8__.norm_xy)(x2 - xy2[0], y2 - xy2[1]);
         let mag = 1 - minDist / d12, invD12 = 1.0 / (d1 + d2), mag1 = d1 * mag * invD12, mag2 = d2 * mag * invD12;
         xy1[0] -= dx * mag1;
         xy1[1] -= dy * mag1;
@@ -8492,20 +8506,20 @@ class ArrangeMolecule {
                 rings.push(nring[j]);
         }
         let ringsz = rings.length;
-        let ringbusy = _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.numberArray(0, this.mol.numAtoms);
+        let ringbusy = _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.numberArray(0, this.mol.numAtoms);
         for (let n = 0; n < ringsz; n++) {
             let r = rings[n];
             for (let i = 0; i < r.length; i++)
                 ringbusy[r[i] - 1]++;
         }
-        let ringscore = _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.numberArray(0, ringsz);
+        let ringscore = _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.numberArray(0, ringsz);
         for (let n = 0; n < ringsz; n++) {
             let r = rings[n];
             for (let i = 0; i < r.length; i++)
                 ringscore[n] += ringbusy[r[i] - 1];
         }
-        let ringorder = _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.idxSort(ringscore);
-        let resbcount = _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.numberArray(0, ringsz), maxbcount = 0;
+        let ringorder = _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.idxSort(ringscore);
+        let resbcount = _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.numberArray(0, ringsz), maxbcount = 0;
         for (let n = 0; n < ringsz; n++) {
             let r = rings[ringorder[n]];
             for (let i = 0; i < r.length; i++) {
@@ -8524,7 +8538,7 @@ class ArrangeMolecule {
         return ret;
     }
     orthogonalDelta(x1, y1, x2, y2, d) {
-        let ox = y1 - y2, oy = x2 - x1, dsq = (0,_util_util__WEBPACK_IMPORTED_MODULE_7__.norm2_xy)(ox, oy);
+        let ox = y1 - y2, oy = x2 - x1, dsq = (0,_util_util__WEBPACK_IMPORTED_MODULE_8__.norm2_xy)(ox, oy);
         let sc = dsq > 0 ? d / Math.sqrt(dsq) : 1;
         return [ox * sc, oy * sc];
     }
@@ -8552,8 +8566,8 @@ class ArrangeMolecule {
                 for (let i = 0; i < (priority == null ? 0 : priority.length); i++)
                     if (priority[i] == nfr[n])
                         ispri = true;
-                let theta = (0,_util_util__WEBPACK_IMPORTED_MODULE_7__.angleDiff)(Math.atan2(this.points[nfr[n] - 1].oval.cy - y1, this.points[nfr[n] - 1].oval.cx - x1), btheta);
-                if (Math.abs(theta) * _util_util__WEBPACK_IMPORTED_MODULE_7__.RADDEG > 175) {
+                let theta = (0,_util_util__WEBPACK_IMPORTED_MODULE_8__.angleDiff)(Math.atan2(this.points[nfr[n] - 1].oval.cy - y1, this.points[nfr[n] - 1].oval.cx - x1), btheta);
+                if (Math.abs(theta) * _util_util__WEBPACK_IMPORTED_MODULE_8__.RADDEG > 175) {
                     noshift = true;
                     break;
                 }
@@ -8581,8 +8595,8 @@ class ArrangeMolecule {
                 for (let i = 0; i < (priority == null ? 0 : priority.length); i++)
                     if (priority[i] == nto[n])
                         ispri = true;
-                let theta = (0,_util_util__WEBPACK_IMPORTED_MODULE_7__.angleDiff)(Math.atan2(this.points[nto[n] - 1].oval.cy - y2, this.points[nto[n] - 1].oval.cx - x2), btheta);
-                if (Math.abs(theta) * _util_util__WEBPACK_IMPORTED_MODULE_7__.RADDEG > 175) {
+                let theta = (0,_util_util__WEBPACK_IMPORTED_MODULE_8__.angleDiff)(Math.atan2(this.points[nto[n] - 1].oval.cy - y2, this.points[nto[n] - 1].oval.cx - x2), btheta);
+                if (Math.abs(theta) * _util_util__WEBPACK_IMPORTED_MODULE_8__.RADDEG > 175) {
                     noshift = true;
                     break;
                 }
@@ -8697,7 +8711,7 @@ class ArrangeMolecule {
                 }
             }
         }
-        let lt = this.mol.bondType(idx) == _mol_Molecule__WEBPACK_IMPORTED_MODULE_2__.Molecule.BONDTYPE_UNKNOWN ? BLineType.Unknown : BLineType.Normal;
+        let lt = this.mol.bondType(idx) == _mol_Molecule__WEBPACK_IMPORTED_MODULE_3__.Molecule.BONDTYPE_UNKNOWN ? BLineType.Unknown : BLineType.Normal;
         let head = lt == BLineType.Unknown ? 0.1 * this.scale : 0;
         let col = this.effects.colBond[idx];
         if (!col)
@@ -8707,7 +8721,7 @@ class ArrangeMolecule {
             bfr,
             bto,
             type: lt,
-            line: new _util_Geom__WEBPACK_IMPORTED_MODULE_6__.Line(ax1, ay1, ax2, ay2),
+            line: new _util_Geom__WEBPACK_IMPORTED_MODULE_7__.Line(ax1, ay1, ax2, ay2),
             size: sz,
             head,
             col
@@ -8717,7 +8731,7 @@ class ArrangeMolecule {
             bfr,
             bto,
             type: lt,
-            line: new _util_Geom__WEBPACK_IMPORTED_MODULE_6__.Line(bx1, by1, bx2, by2),
+            line: new _util_Geom__WEBPACK_IMPORTED_MODULE_7__.Line(bx1, by1, bx2, by2),
             size: sz,
             head,
             col
@@ -8728,7 +8742,7 @@ class ArrangeMolecule {
         this.space.push(this.computeSpaceLine(b2));
     }
     placeHydrogen(idx, hcount, fussy) {
-        let font = _FontData__WEBPACK_IMPORTED_MODULE_9__.FontData.main;
+        let font = _FontData__WEBPACK_IMPORTED_MODULE_10__.FontData.main;
         const SSFRACT = 0.6;
         const GLYPH_H = font.getIndex('H');
         let a = this.points[idx];
@@ -8746,16 +8760,16 @@ class ArrangeMolecule {
                 emw += font.getKerning(chp, ch) * SSFRACT;
             }
             let extraX = font.getOutlineX(g), extraY = font.getOutlineY(g);
-            _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.addTo(extraX, emw / SSFRACT);
-            _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.addTo(extraY, (SSFRACT - 1) * font.ASCENT * 1.30);
-            _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.mulBy(extraX, SSFRACT);
-            _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.mulBy(extraY, SSFRACT);
+            _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.addTo(extraX, emw / SSFRACT);
+            _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.addTo(extraY, (SSFRACT - 1) * font.ASCENT * 1.30);
+            _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.mulBy(extraX, SSFRACT);
+            _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.mulBy(extraY, SSFRACT);
             outlineX = outlineX.concat(extraX);
             outlineY = outlineY.concat(extraY);
             emw += font.HORIZ_ADV_X[g] * SSFRACT;
         }
         if (sub.length > 0) {
-            let qh = new _util_Geom__WEBPACK_IMPORTED_MODULE_6__.QuickHull(outlineX, outlineY, 0);
+            let qh = new _util_Geom__WEBPACK_IMPORTED_MODULE_7__.QuickHull(outlineX, outlineY, 0);
             outlineX = qh.hullX;
             outlineY = qh.hullY;
         }
@@ -8812,11 +8826,11 @@ class ArrangeMolecule {
                     ty = (1.1 * srcWAD[1] + 0.5 * srcWAD[2]) * -this.ymul;
                 else if (quad[n] == 3)
                     ty = (1.1 * srcWAD[1] + 0.5 * srcWAD[2]) * this.ymul;
-                _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.addTo(outlineX, tx);
-                _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.addTo(outlineY, ty);
+                _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.addTo(outlineX, tx);
+                _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.addTo(outlineY, ty);
                 let viol = this.countPolyViolations(outlineX, outlineY, null, true);
-                _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.addTo(outlineX, -tx);
-                _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.addTo(outlineY, -ty);
+                _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.addTo(outlineX, -tx);
+                _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.addTo(outlineY, -ty);
                 if (viol == 0) {
                     dx = tx;
                     dy = ty;
@@ -8827,7 +8841,7 @@ class ArrangeMolecule {
                 return false;
         }
         else {
-            const mx1 = _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.min(outlineY), mx2 = _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.max(outlineX), my1 = _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.min(outlineY), my2 = _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.max(outlineY), cx = 0.5 * (mx1 + mx2), cy = 0.5 * (my1 + my2);
+            const mx1 = _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.min(outlineY), mx2 = _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.max(outlineX), my1 = _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.min(outlineY), my2 = _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.max(outlineY), cx = 0.5 * (mx1 + mx2), cy = 0.5 * (my1 + my2);
             const mag = 1 + this.measure.scale() * this.policy.data.fontSize * ArrangeMolecule.FONT_CORRECT * 0.1 / Math.max(mx2 - cx, my2 - cy);
             const psz = outlineX.length;
             let magPX = outlineX.slice(0), magPY = outlineY.slice(0);
@@ -8838,13 +8852,13 @@ class ArrangeMolecule {
             let bestScore = 0, bestExt = 0, bestAng = 0;
             for (let ext = 0.5 * (a.oval.rw + a.oval.rh); ext < 1.5 * this.measure.scale(); ext += 0.1 * this.measure.scale()) {
                 let anyNoClash = false;
-                for (let ang = 0; ang < 2 * Math.PI; ang += 5 * _util_util__WEBPACK_IMPORTED_MODULE_7__.DEGRAD) {
+                for (let ang = 0; ang < 2 * Math.PI; ang += 5 * _util_util__WEBPACK_IMPORTED_MODULE_8__.DEGRAD) {
                     let tx = ext * Math.cos(ang), ty = ext * Math.sin(ang);
-                    _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.addTo(magPX, tx);
-                    _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.addTo(magPY, ty);
+                    _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.addTo(magPX, tx);
+                    _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.addTo(magPY, ty);
                     let viol = this.countPolyViolations(magPX, magPY, null, false);
-                    _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.addTo(magPX, -tx);
-                    _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.addTo(magPY, -ty);
+                    _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.addTo(magPX, -tx);
+                    _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.addTo(magPY, -ty);
                     if (viol == 0)
                         anyNoClash = true;
                     let score = 10 * viol + this.spatialCongestion(a.oval.cx + tx, a.oval.cy + ty, 0.5) + 2 * ext;
@@ -8867,7 +8881,7 @@ class ArrangeMolecule {
             text: 'H',
             fsz: a.fsz,
             col: a.col,
-            oval: new _util_Geom__WEBPACK_IMPORTED_MODULE_6__.Oval(a.oval.cx + dx, a.oval.cy + dy, 0.5 * wad[0] * PADDING, 0.5 * wad[1] * PADDING)
+            oval: new _util_Geom__WEBPACK_IMPORTED_MODULE_7__.Oval(a.oval.cx + dx, a.oval.cy + dy, 0.5 * wad[0] * PADDING, 0.5 * wad[1] * PADDING)
         };
         this.points.push(ah);
         if (sub.length > 0) {
@@ -8878,17 +8892,17 @@ class ArrangeMolecule {
                 text: sub,
                 fsz: subFsz,
                 col: a.col,
-                oval: new _util_Geom__WEBPACK_IMPORTED_MODULE_6__.Oval(ah.oval.cx + 0.5 * firstEMW * a.fsz * font.INV_UNITS_PER_EM + 0.5 * wad[0], ah.oval.cy + (1 - SSFRACT) * a.fsz, 0.5 * wad[0] * PADDING, 0.5 * wad[1] * PADDING)
+                oval: new _util_Geom__WEBPACK_IMPORTED_MODULE_7__.Oval(ah.oval.cx + 0.5 * firstEMW * a.fsz * font.INV_UNITS_PER_EM + 0.5 * wad[0], ah.oval.cy + (1 - SSFRACT) * a.fsz, 0.5 * wad[0] * PADDING, 0.5 * wad[1] * PADDING)
             };
             this.points.push(an);
         }
-        _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.addTo(outlineX, dx);
-        _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.addTo(outlineY, dy);
-        let minX = _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.min(outlineX), minY = _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.min(outlineY);
+        _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.addTo(outlineX, dx);
+        _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.addTo(outlineY, dy);
+        let minX = _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.min(outlineX), minY = _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.min(outlineY);
         let spc = {
             anum: 0,
             bnum: 0,
-            box: new _util_Geom__WEBPACK_IMPORTED_MODULE_6__.Box(minX, minY, _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.max(outlineX) - minX, _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.max(outlineY) - minY),
+            box: new _util_Geom__WEBPACK_IMPORTED_MODULE_7__.Box(minX, minY, _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.max(outlineX) - minX, _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.max(outlineY) - minY),
             px: outlineX,
             py: outlineY
         };
@@ -8899,11 +8913,11 @@ class ArrangeMolecule {
         let s = {
             anum: a.anum,
             bnum: 0,
-            box: new _util_Geom__WEBPACK_IMPORTED_MODULE_6__.Box(),
+            box: new _util_Geom__WEBPACK_IMPORTED_MODULE_7__.Box(),
             px: [],
             py: []
         };
-        const font = _FontData__WEBPACK_IMPORTED_MODULE_9__.FontData.main;
+        const font = _FontData__WEBPACK_IMPORTED_MODULE_10__.FontData.main;
         let outlineX = [], outlineY = [];
         let emw = 0, nglyphs = 0;
         if (a.text != null) {
@@ -8919,7 +8933,7 @@ class ArrangeMolecule {
                     else {
                         let extraX = font.getOutlineX(i), extraY = font.getOutlineY(i);
                         if (extraX.length > 0) {
-                            _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.addTo(extraX, emw);
+                            _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.addTo(extraX, emw);
                             outlineX = outlineX.concat(extraX);
                             outlineY = outlineY.concat(extraY);
                             nglyphs++;
@@ -8937,7 +8951,7 @@ class ArrangeMolecule {
         }
         if (outlineX.length > 0) {
             if (nglyphs > 1) {
-                let qh = new _util_Geom__WEBPACK_IMPORTED_MODULE_6__.QuickHull(outlineX, outlineY, 0);
+                let qh = new _util_Geom__WEBPACK_IMPORTED_MODULE_7__.QuickHull(outlineX, outlineY, 0);
                 outlineX = qh.hullX;
                 outlineY = qh.hullY;
             }
@@ -8949,11 +8963,11 @@ class ArrangeMolecule {
             }
             s.px = outlineX;
             s.py = outlineY;
-            let minX = _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.min(outlineX), minY = _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.min(outlineY);
-            s.box = new _util_Geom__WEBPACK_IMPORTED_MODULE_6__.Box(minX, minY, _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.max(outlineX) - minX, _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.max(outlineY) - minY);
+            let minX = _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.min(outlineX), minY = _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.min(outlineY);
+            s.box = new _util_Geom__WEBPACK_IMPORTED_MODULE_7__.Box(minX, minY, _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.max(outlineX) - minX, _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.max(outlineY) - minY);
         }
         else {
-            s.box = _util_Geom__WEBPACK_IMPORTED_MODULE_6__.Box.fromOval(a.oval);
+            s.box = _util_Geom__WEBPACK_IMPORTED_MODULE_7__.Box.fromOval(a.oval);
             if (s.box.w > 0 && s.box.h > 0) {
                 s.px = [s.box.minX(), s.box.maxX(), s.box.maxX(), s.box.minX()];
                 s.py = [s.box.minY(), s.box.minY(), s.box.maxY(), s.box.maxY()];
@@ -8965,7 +8979,7 @@ class ArrangeMolecule {
         let s = {
             anum: 0,
             bnum: b.bnum,
-            box: new _util_Geom__WEBPACK_IMPORTED_MODULE_6__.Box(),
+            box: new _util_Geom__WEBPACK_IMPORTED_MODULE_7__.Box(),
             px: [],
             py: []
         };
@@ -8986,10 +9000,10 @@ class ArrangeMolecule {
                 s.py = [b.line.y1, b.line.y2 - oy, b.line.y2 + oy];
             }
         }
-        s.box.x = _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.min(s.px) - b.size;
-        s.box.y = _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.min(s.py) - b.size;
-        s.box.w = _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.max(s.px) - s.box.x + b.size;
-        s.box.h = _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.max(s.py) - s.box.y + b.size;
+        s.box.x = _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.min(s.px) - b.size;
+        s.box.y = _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.min(s.py) - b.size;
+        s.box.w = _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.max(s.px) - s.box.x + b.size;
+        s.box.h = _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.max(s.py) - s.box.y + b.size;
         return s;
     }
     bumpAtomPosition(atom, dx, dy) {
@@ -9002,14 +9016,14 @@ class ArrangeMolecule {
                 continue;
             s.box.x += dx;
             s.box.y += dy;
-            _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.addTo(s.px, dx);
-            _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.addTo(s.py, dy);
+            _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.addTo(s.px, dx);
+            _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.addTo(s.py, dy);
         }
     }
     spaceSubset(x, y, w, h) {
         let subset = [];
         for (let s of this.space)
-            if (_util_Geom__WEBPACK_IMPORTED_MODULE_6__.GeomUtil.rectsIntersect(x, y, w, h, s.box.x, s.box.y, s.box.w, s.box.h))
+            if (_util_Geom__WEBPACK_IMPORTED_MODULE_7__.GeomUtil.rectsIntersect(x, y, w, h, s.box.x, s.box.y, s.box.w, s.box.h))
                 subset.push(s);
         return subset;
     }
@@ -9018,7 +9032,7 @@ class ArrangeMolecule {
             space = this.space;
         let hits = 0;
         const psz = px.length, nspc = space.length;
-        let pr = new _util_Geom__WEBPACK_IMPORTED_MODULE_6__.Box(), sr = new _util_Geom__WEBPACK_IMPORTED_MODULE_6__.Box();
+        let pr = new _util_Geom__WEBPACK_IMPORTED_MODULE_7__.Box(), sr = new _util_Geom__WEBPACK_IMPORTED_MODULE_7__.Box();
         for (let i1 = 0; i1 < psz; i1++) {
             let i2 = i1 < psz - 1 ? i1 + 1 : 0;
             pr.x = Math.min(px[i1], px[i2]) - 1;
@@ -9044,7 +9058,7 @@ class ArrangeMolecule {
                     sr.h = Math.max(spc.py[j1], spc.py[j2]) - sr.y + 2;
                     if (!pr.intersects(sr))
                         continue;
-                    if (_util_Geom__WEBPACK_IMPORTED_MODULE_6__.GeomUtil.doLineSegsIntersect(px[i1], py[i1], px[i2], py[i2], spc.px[j1], spc.py[j1], spc.px[j2], spc.py[j2])) {
+                    if (_util_Geom__WEBPACK_IMPORTED_MODULE_7__.GeomUtil.doLineSegsIntersect(px[i1], py[i1], px[i2], py[i2], spc.px[j1], spc.py[j1], spc.px[j2], spc.py[j2])) {
                         if (shortCircuit)
                             return 1;
                         hits++;
@@ -9055,10 +9069,10 @@ class ArrangeMolecule {
                 }
             }
         }
-        pr.x = _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.min(px);
-        pr.y = _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.min(py);
-        pr.w = _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.max(px) - pr.x;
-        pr.h = _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.max(py) - pr.y;
+        pr.x = _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.min(px);
+        pr.y = _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.min(py);
+        pr.w = _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.max(px) - pr.x;
+        pr.h = _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.max(py) - pr.y;
         for (let n = nspc - 1; n >= 0; n--) {
             let spc = space[n];
             sr.x = spc.box.x;
@@ -9068,14 +9082,14 @@ class ArrangeMolecule {
             if (!pr.intersects(sr))
                 continue;
             for (let i = spc.px.length - 1; i >= 0; i--)
-                if (_util_Geom__WEBPACK_IMPORTED_MODULE_6__.GeomUtil.pointInPolygon(spc.px[i], spc.py[i], px, py)) {
+                if (_util_Geom__WEBPACK_IMPORTED_MODULE_7__.GeomUtil.pointInPolygon(spc.px[i], spc.py[i], px, py)) {
                     if (shortCircuit)
                         return 1;
                     hits++;
                     break;
                 }
             for (let i = 0; i < psz; i++)
-                if (_util_Geom__WEBPACK_IMPORTED_MODULE_6__.GeomUtil.pointInPolygon(px[i], py[i], spc.px, spc.py)) {
+                if (_util_Geom__WEBPACK_IMPORTED_MODULE_7__.GeomUtil.pointInPolygon(px[i], py[i], spc.px, spc.py)) {
                     if (shortCircuit)
                         return 1;
                     hits++;
@@ -9089,7 +9103,7 @@ class ArrangeMolecule {
             return null;
         for (let n = 0; n < this.lines.length; n++) {
             let b = this.lines[n];
-            if (this.mol.bondOrder(b.bnum) != 1 || this.mol.bondType(b.bnum) != _mol_Molecule__WEBPACK_IMPORTED_MODULE_2__.Molecule.BONDTYPE_NORMAL)
+            if (this.mol.bondOrder(b.bnum) != 1 || this.mol.bondType(b.bnum) != _mol_Molecule__WEBPACK_IMPORTED_MODULE_3__.Molecule.BONDTYPE_NORMAL)
                 continue;
             let alt = false;
             if (this.mol.bondFrom(b.bnum) == bf && this.mol.bondTo(b.bnum) == bt) { }
@@ -9097,10 +9111,10 @@ class ArrangeMolecule {
                 alt = true;
             else
                 continue;
-            let th = (0,_util_util__WEBPACK_IMPORTED_MODULE_7__.angleDiff)(Math.atan2(b.line.y2 - b.line.y1, b.line.x2 - b.line.x1), Math.atan2(y2 - y1, x2 - x1)) * _util_util__WEBPACK_IMPORTED_MODULE_7__.RADDEG;
+            let th = (0,_util_util__WEBPACK_IMPORTED_MODULE_8__.angleDiff)(Math.atan2(b.line.y2 - b.line.y1, b.line.x2 - b.line.x1), Math.atan2(y2 - y1, x2 - x1)) * _util_util__WEBPACK_IMPORTED_MODULE_8__.RADDEG;
             if ((th > -5 && th < 5) || th > 175 || th < -175)
                 continue;
-            let xy = _util_Geom__WEBPACK_IMPORTED_MODULE_6__.GeomUtil.lineIntersect(b.line.x1, b.line.y1, b.line.x2, b.line.y2, x1, y1, x2, y2);
+            let xy = _util_Geom__WEBPACK_IMPORTED_MODULE_7__.GeomUtil.lineIntersect(b.line.x1, b.line.y1, b.line.x2, b.line.y2, x1, y1, x2, y2);
             if (this.mol.atomRingBlock(bt) == 0) {
                 if (alt) {
                     b.line.x1 = xy[0];
@@ -9124,7 +9138,7 @@ class ArrangeMolecule {
         let idxFLeft = 0, idxFRight = 0, idxTLeft = 0, idxTRight = 0;
         for (let n = 0; n < nf.length; n++)
             if (nf[n] != bt) {
-                let theta = (0,_util_util__WEBPACK_IMPORTED_MODULE_7__.angleDiff)(Math.atan2(this.points[nf[n] - 1].oval.cy - y1, this.points[nf[n] - 1].oval.cx - x1), btheta);
+                let theta = (0,_util_util__WEBPACK_IMPORTED_MODULE_8__.angleDiff)(Math.atan2(this.points[nf[n] - 1].oval.cy - y1, this.points[nf[n] - 1].oval.cx - x1), btheta);
                 if (theta > 0) {
                     if (idxFLeft != 0)
                         return null;
@@ -9138,7 +9152,7 @@ class ArrangeMolecule {
             }
         for (let n = 0; n < nt.length; n++)
             if (nt[n] != bf) {
-                let theta = (0,_util_util__WEBPACK_IMPORTED_MODULE_7__.angleDiff)(Math.atan2(this.points[nt[n] - 1].oval.cy - y2, this.points[nt[n] - 1].oval.cx - x2), btheta);
+                let theta = (0,_util_util__WEBPACK_IMPORTED_MODULE_8__.angleDiff)(Math.atan2(this.points[nt[n] - 1].oval.cy - y2, this.points[nt[n] - 1].oval.cx - x2), btheta);
                 if (theta > 0) {
                     if (idxTLeft != 0)
                         return null;
@@ -9192,7 +9206,7 @@ class ArrangeMolecule {
             otherTheta.push(Math.atan2(dy, dx));
         }
         let minExt = 0.5 * (a.oval.rw + a.oval.rh), stepsz = 0.1 * this.scale, nsteps = 8;
-        let angsteps = 36, angsz = _util_util__WEBPACK_IMPORTED_MODULE_7__.TWOPI / angsteps;
+        let angsteps = 36, angsz = _util_util__WEBPACK_IMPORTED_MODULE_8__.TWOPI / angsteps;
         let bestScore = Number.POSITIVE_INFINITY, bestDX = 0, bestDY = 0;
         let px = [0, 0, 0, 0], py = [0, 0, 0, 0];
         let limX = rw + minExt + nsteps * stepsz, limY = rh + minExt + nsteps * stepsz;
@@ -9214,7 +9228,7 @@ class ArrangeMolecule {
                 let viol = this.countPolyViolations(px, py, subSpace, false);
                 let score = viol * 1000;
                 for (let oth of otherTheta)
-                    score -= Math.abs((0,_util_util__WEBPACK_IMPORTED_MODULE_7__.angleDiff)(th, oth));
+                    score -= Math.abs((0,_util_util__WEBPACK_IMPORTED_MODULE_8__.angleDiff)(th, oth));
                 if (score < bestScore) {
                     bestScore = score;
                     bestDX = dx;
@@ -9230,13 +9244,13 @@ class ArrangeMolecule {
             text,
             fsz,
             col,
-            oval: new _util_Geom__WEBPACK_IMPORTED_MODULE_6__.Oval(x, y, rw, rh),
+            oval: new _util_Geom__WEBPACK_IMPORTED_MODULE_7__.Oval(x, y, rw, rh),
         };
         this.points.push(an);
         let spc = {
             anum: 0,
             bnum: 0,
-            box: new _util_Geom__WEBPACK_IMPORTED_MODULE_6__.Box(x - rw, y - rh, 2 * rw, 2 * rh),
+            box: new _util_Geom__WEBPACK_IMPORTED_MODULE_7__.Box(x - rw, y - rh, 2 * rw, 2 * rh),
             px: [x - rw, x + rw, x + rw, x - rw],
             py: [y - rh, y - rh, y + rh, y + rh],
         };
@@ -9260,7 +9274,7 @@ class ArrangeMolecule {
                 otherTheta.push(Math.atan2(dy, dx));
             }
         let minExt = 0.2 * this.scale * this.bondOrder[bond - 1], stepsz = 0.1 * this.scale, nsteps = 8;
-        let angsteps = 36, angsz = _util_util__WEBPACK_IMPORTED_MODULE_7__.TWOPI / angsteps;
+        let angsteps = 36, angsz = _util_util__WEBPACK_IMPORTED_MODULE_8__.TWOPI / angsteps;
         let bestScore = Number.POSITIVE_INFINITY, bestDX = 0, bestDY = 0;
         let px = [0, 0, 0, 0], py = [0, 0, 0, 0];
         let limX = rw + minExt + nsteps * stepsz, limY = rh + minExt + nsteps * stepsz;
@@ -9282,7 +9296,7 @@ class ArrangeMolecule {
                 let viol = this.countPolyViolations(px, py, subSpace, false);
                 let score = viol * 1000;
                 for (let oth of otherTheta)
-                    score -= Math.abs((0,_util_util__WEBPACK_IMPORTED_MODULE_7__.angleDiff)(th, oth));
+                    score -= Math.abs((0,_util_util__WEBPACK_IMPORTED_MODULE_8__.angleDiff)(th, oth));
                 if (score < bestScore) {
                     bestScore = score;
                     bestDX = dx;
@@ -9298,13 +9312,13 @@ class ArrangeMolecule {
             text,
             fsz,
             col,
-            oval: new _util_Geom__WEBPACK_IMPORTED_MODULE_6__.Oval(x, y, rw, rh),
+            oval: new _util_Geom__WEBPACK_IMPORTED_MODULE_7__.Oval(x, y, rw, rh),
         };
         this.points.push(an);
         let spc = {
             anum: 0,
             bnum: 0,
-            box: new _util_Geom__WEBPACK_IMPORTED_MODULE_6__.Box(x - rw, y - rh, 2 * rw, 2 * rh),
+            box: new _util_Geom__WEBPACK_IMPORTED_MODULE_7__.Box(x - rw, y - rh, 2 * rw, 2 * rh),
             px: [x - rw, x + rw, x + rw, x - rw],
             py: [y - rh, y - rh, y + rh, y + rh],
         };
@@ -9332,44 +9346,44 @@ class ArrangeMolecule {
                 return true;
             if (wx2 >= vx1 && wx2 <= vx2 && wy2 >= vy1 && wy2 <= vy2)
                 return true;
-            if (_util_Geom__WEBPACK_IMPORTED_MODULE_6__.GeomUtil.doLineSegsIntersect(wx1, wy1, wx2, wy2, vx1, vy1, vx2, vy1))
+            if (_util_Geom__WEBPACK_IMPORTED_MODULE_7__.GeomUtil.doLineSegsIntersect(wx1, wy1, wx2, wy2, vx1, vy1, vx2, vy1))
                 return true;
-            if (_util_Geom__WEBPACK_IMPORTED_MODULE_6__.GeomUtil.doLineSegsIntersect(wx1, wy1, wx2, wy2, vx1, vy2, vx2, vy2))
+            if (_util_Geom__WEBPACK_IMPORTED_MODULE_7__.GeomUtil.doLineSegsIntersect(wx1, wy1, wx2, wy2, vx1, vy2, vx2, vy2))
                 return true;
-            if (_util_Geom__WEBPACK_IMPORTED_MODULE_6__.GeomUtil.doLineSegsIntersect(wx1, wy1, wx2, wy2, vx1, vy1, vx1, vy2))
+            if (_util_Geom__WEBPACK_IMPORTED_MODULE_7__.GeomUtil.doLineSegsIntersect(wx1, wy1, wx2, wy2, vx1, vy1, vx1, vy2))
                 return true;
-            if (_util_Geom__WEBPACK_IMPORTED_MODULE_6__.GeomUtil.doLineSegsIntersect(wx1, wy1, wx2, wy2, vx2, vy1, vx2, vy2))
+            if (_util_Geom__WEBPACK_IMPORTED_MODULE_7__.GeomUtil.doLineSegsIntersect(wx1, wy1, wx2, wy2, vx2, vy1, vx2, vy2))
                 return true;
         }
         return false;
     }
     resolveLineCrossings(bondHigher, bondLower) {
+        const TYPES = [BLineType.Normal, BLineType.Dotted, BLineType.DotDir];
+        const stashOriginals = () => {
+            if (!this.unsplitLines)
+                this.unsplitLines = this.lines.map((b) => {
+                    return Object.assign(Object.assign({}, b), { line: b.line.clone() });
+                });
+        };
         while (true) {
             let anything = false;
-            for (let i1 = 0; i1 < this.lines.length; i1++) {
-                let b1 = this.lines[i1];
-                if (b1.bnum != bondHigher)
-                    continue;
-                if (b1.type != BLineType.Normal && b1.type != BLineType.Dotted && b1.type != BLineType.DotDir)
-                    continue;
-                for (let i2 = 0; i2 < this.lines.length; i2++) {
-                    let b2 = this.lines[i2];
-                    if (b2.bnum != bondLower)
+            let linesHigher = this.lines.filter((b) => b.bnum == bondHigher && TYPES.includes(b.type));
+            let linesLower = this.lines.filter((b) => b.bnum == bondLower && TYPES.includes(b.type));
+            for (let b1 of linesHigher) {
+                for (let b2 of linesLower) {
+                    if (b1.bfr == b2.bfr || b1.bfr == b2.bto || b1.bto == b2.bfr || b1.bto == b2.bto)
                         continue;
                     if (b2.type == BLineType.DotDir)
                         b2.type = BLineType.Dotted;
-                    if (b2.type != BLineType.Normal && b2.type != BLineType.Dotted)
+                    if (!_util_Geom__WEBPACK_IMPORTED_MODULE_7__.GeomUtil.doLineSegsIntersect(b1.line.x1, b1.line.y1, b1.line.x2, b1.line.y2, b2.line.x1, b2.line.y1, b2.line.x2, b2.line.y2))
                         continue;
-                    if (b1.bfr == b2.bfr || b1.bfr == b2.bto || b1.bto == b2.bfr || b1.bto == b2.bto)
-                        continue;
-                    if (!_util_Geom__WEBPACK_IMPORTED_MODULE_6__.GeomUtil.doLineSegsIntersect(b1.line.x1, b1.line.y1, b1.line.x2, b1.line.y2, b2.line.x1, b2.line.y1, b2.line.x2, b2.line.y2))
-                        continue;
-                    let xy = _util_Geom__WEBPACK_IMPORTED_MODULE_6__.GeomUtil.lineIntersect(b1.line.x1, b1.line.y1, b1.line.x2, b1.line.y2, b2.line.x1, b2.line.y1, b2.line.x2, b2.line.y2);
+                    let xy = _util_Geom__WEBPACK_IMPORTED_MODULE_7__.GeomUtil.lineIntersect(b1.line.x1, b1.line.y1, b1.line.x2, b1.line.y2, b2.line.x1, b2.line.y1, b2.line.x2, b2.line.y2);
                     let dx = b2.line.x2 - b2.line.x1, dy = b2.line.y2 - b2.line.y1;
                     let ext = Math.abs(dx) > Math.abs(dy) ? (xy[0] - b2.line.x1) / dx : (xy[1] - b2.line.y1) / dy;
-                    let dist = (0,_util_util__WEBPACK_IMPORTED_MODULE_7__.norm_xy)(dx, dy);
+                    let dist = (0,_util_util__WEBPACK_IMPORTED_MODULE_8__.norm_xy)(dx, dy);
                     let delta = b2.size / dist * (b2.type == BLineType.Normal ? 2 : 4);
                     if (ext > delta && ext < 1 - delta) {
+                        stashOriginals();
                         let b3 = {
                             bnum: b2.bnum,
                             bfr: b2.bfr,
@@ -9388,11 +9402,13 @@ class ArrangeMolecule {
                         anything = true;
                     }
                     else if (ext > delta) {
+                        stashOriginals();
                         b2.line.x2 = b2.line.x1 + dx * (ext - delta);
                         b2.line.y2 = b2.line.y1 + dy * (ext - delta);
                         anything = true;
                     }
                     else if (ext < 1 - delta) {
+                        stashOriginals();
                         b2.line.x1 = b2.line.x1 + dx * (ext + delta);
                         b2.line.y1 = b2.line.y1 + dy * (ext + delta);
                         anything = true;
@@ -9410,7 +9426,7 @@ class ArrangeMolecule {
             px[n] = pt.oval.cx;
             py[n] = pt.oval.cy;
         }
-        let cx = _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.sum(px) / atoms.length, cy = _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.sum(py) / atoms.length;
+        let cx = _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.sum(px) / atoms.length, cy = _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.sum(py) / atoms.length;
         let bx = [], by = [];
         let isRegular = true;
         let regDist = Number.NaN;
@@ -9434,14 +9450,14 @@ class ArrangeMolecule {
             by.push(y1);
             bx.push(x2);
             by.push(y2);
-            let dist = (0,_util_util__WEBPACK_IMPORTED_MODULE_7__.norm_xy)(x0, y0), theta = Math.atan2(y0, x0);
+            let dist = (0,_util_util__WEBPACK_IMPORTED_MODULE_8__.norm_xy)(x0, y0), theta = Math.atan2(y0, x0);
             bx.push(FRACT * dist * Math.cos(theta));
             by.push(FRACT * dist * Math.sin(theta));
             for (let b of this.mol.atomAdjList(a))
                 if (atoms.indexOf(b) >= 0) {
                     let pb = this.points[b - 1];
                     let mx = 0.5 * (pt.oval.cx + pb.oval.cx) - cx, my = 0.5 * (pt.oval.cy + pb.oval.cy) - cy;
-                    let mdist = (0,_util_util__WEBPACK_IMPORTED_MODULE_7__.norm_xy)(mx, my), mtheta = Math.atan2(my, mx);
+                    let mdist = (0,_util_util__WEBPACK_IMPORTED_MODULE_8__.norm_xy)(mx, my), mtheta = Math.atan2(my, mx);
                     bx.push(FRACT * mdist * Math.cos(mtheta));
                     by.push(FRACT * mdist * Math.sin(mtheta));
                 }
@@ -9455,14 +9471,14 @@ class ArrangeMolecule {
         }
         let r = { atoms, cx, cy, rw: 0, rh: 0, theta: 0, size: 0 };
         if (isRegular) {
-            r.rw = r.rh = _util_Geom__WEBPACK_IMPORTED_MODULE_6__.GeomUtil.fitCircle(bx, by);
+            r.rw = r.rh = _util_Geom__WEBPACK_IMPORTED_MODULE_7__.GeomUtil.fitCircle(bx, by);
         }
         else {
             let mdist = 0;
             for (let n = 0; n < atoms.length; n++)
-                mdist += (0,_util_util__WEBPACK_IMPORTED_MODULE_7__.norm_xy)(px[n] - cx, py[n] - cy);
+                mdist += (0,_util_util__WEBPACK_IMPORTED_MODULE_8__.norm_xy)(px[n] - cx, py[n] - cy);
             let margin = mdist / atoms.length * (1 - FRACT);
-            var fit = new _util_FitRotatedEllipse__WEBPACK_IMPORTED_MODULE_5__.FitRotatedEllipse(px, py, margin);
+            var fit = new _util_FitRotatedEllipse__WEBPACK_IMPORTED_MODULE_6__.FitRotatedEllipse(px, py, margin);
             fit.calculate();
             r.cx = fit.cx;
             r.cy = fit.cy;
@@ -9483,14 +9499,14 @@ class ArrangeMolecule {
             symbol.push(pt.text != null);
         }
         let ox = [], oy = [];
-        const EXT = _mol_Molecule__WEBPACK_IMPORTED_MODULE_2__.Molecule.IDEALBOND * 0.25 * this.scale;
+        const EXT = _mol_Molecule__WEBPACK_IMPORTED_MODULE_3__.Molecule.IDEALBOND * 0.25 * this.scale;
         for (let n = 0; n < sz - 1; n++) {
-            let dx = x[n + 1] - x[n], dy = y[n + 1] - y[n], invD = EXT * (0,_util_util__WEBPACK_IMPORTED_MODULE_7__.invZ)((0,_util_util__WEBPACK_IMPORTED_MODULE_7__.norm_xy)(dx, dy));
+            let dx = x[n + 1] - x[n], dy = y[n + 1] - y[n], invD = EXT * (0,_util_util__WEBPACK_IMPORTED_MODULE_8__.invZ)((0,_util_util__WEBPACK_IMPORTED_MODULE_8__.norm_xy)(dx, dy));
             ox.push(dy * invD);
             oy.push(-dx * invD);
         }
         const FAR = 1.2, CLOSE = 0.7;
-        let sx1 = _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.numberArray(0, sz), sy1 = _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.numberArray(0, sz), sx2 = _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.numberArray(0, sz), sy2 = _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.numberArray(0, sz);
+        let sx1 = _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.numberArray(0, sz), sy1 = _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.numberArray(0, sz), sx2 = _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.numberArray(0, sz), sy2 = _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.numberArray(0, sz);
         const capA = symbol[0] ? FAR : CLOSE;
         if (!fractional) {
             sx1[0] = x[0] + ox[0] * capA;
@@ -9541,8 +9557,8 @@ class ArrangeMolecule {
         }
         let score1 = 0, score2 = 0;
         for (let n = 0; n < sz - 1; n++) {
-            score1 += (0,_util_util__WEBPACK_IMPORTED_MODULE_7__.norm_xy)(sx1[n + 1] - sx1[n], sy1[n + 1] - sy1[n]);
-            score2 += (0,_util_util__WEBPACK_IMPORTED_MODULE_7__.norm_xy)(sx2[n + 1] - sx2[n], sy2[n + 1] - sy2[n]);
+            score1 += (0,_util_util__WEBPACK_IMPORTED_MODULE_8__.norm_xy)(sx1[n + 1] - sx1[n], sy1[n + 1] - sy1[n]);
+            score2 += (0,_util_util__WEBPACK_IMPORTED_MODULE_8__.norm_xy)(sx2[n + 1] - sx2[n], sy2[n + 1] - sy2[n]);
         }
         score1 *= ncross1 + 1;
         score2 *= ncross2 + 1;
@@ -9574,7 +9590,7 @@ class ArrangeMolecule {
             bfr: from,
             bto: 0,
             type: BLineType.Normal,
-            line: new _util_Geom__WEBPACK_IMPORTED_MODULE_6__.Line(xy1[0], xy1[1], x2, y2),
+            line: new _util_Geom__WEBPACK_IMPORTED_MODULE_7__.Line(xy1[0], xy1[1], x2, y2),
             size: this.lineSizePix,
             head: 0,
             col: this.policy.data.foreground
@@ -9589,40 +9605,40 @@ class ArrangeMolecule {
             if (n == 0) {
                 let dx = x[n + 1] - x[n], dy = y[n + 1] - y[n];
                 let qx = x[n] + scale * dx, qy = y[n] + scale * dy;
-                path.px = _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.append(path.px, x[n]);
-                path.py = _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.append(path.py, y[n]);
-                path.ctrl = _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.append(path.ctrl, false);
-                path.px = _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.append(path.px, qx);
-                path.py = _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.append(path.py, qy);
-                path.ctrl = _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.append(path.ctrl, true);
+                path.px = _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.append(path.px, x[n]);
+                path.py = _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.append(path.py, y[n]);
+                path.ctrl = _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.append(path.ctrl, false);
+                path.px = _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.append(path.px, qx);
+                path.py = _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.append(path.py, qy);
+                path.ctrl = _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.append(path.ctrl, true);
             }
             else if (n == sz - 1) {
                 let dx = x[n] - x[n - 1], dy = y[n] - y[n - 1];
                 let qx = x[n] - scale * dx, qy = y[n] - scale * dy;
-                path.px = _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.append(path.px, qx);
-                path.py = _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.append(path.py, qy);
-                path.ctrl = _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.append(path.ctrl, true);
-                path.px = _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.append(path.px, x[n]);
-                path.py = _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.append(path.py, y[n]);
-                path.ctrl = _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.append(path.ctrl, false);
+                path.px = _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.append(path.px, qx);
+                path.py = _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.append(path.py, qy);
+                path.ctrl = _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.append(path.ctrl, true);
+                path.px = _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.append(path.px, x[n]);
+                path.py = _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.append(path.py, y[n]);
+                path.ctrl = _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.append(path.ctrl, false);
             }
             else {
                 let dx = x[n + 1] - x[n - 1], dy = y[n + 1] - y[n - 1];
-                let invD = (0,_util_util__WEBPACK_IMPORTED_MODULE_7__.invZ)((0,_util_util__WEBPACK_IMPORTED_MODULE_7__.norm_xy)(dx, dy));
+                let invD = (0,_util_util__WEBPACK_IMPORTED_MODULE_8__.invZ)((0,_util_util__WEBPACK_IMPORTED_MODULE_8__.norm_xy)(dx, dy));
                 dx *= invD;
                 dy *= invD;
-                let d1 = scale * (0,_util_util__WEBPACK_IMPORTED_MODULE_7__.norm_xy)(x[n] - x[n - 1], y[n] - y[n - 1]), d2 = scale * (0,_util_util__WEBPACK_IMPORTED_MODULE_7__.norm_xy)(x[n + 1] - x[n], y[n + 1] - y[n]);
+                let d1 = scale * (0,_util_util__WEBPACK_IMPORTED_MODULE_8__.norm_xy)(x[n] - x[n - 1], y[n] - y[n - 1]), d2 = scale * (0,_util_util__WEBPACK_IMPORTED_MODULE_8__.norm_xy)(x[n + 1] - x[n], y[n + 1] - y[n]);
                 let qx1 = x[n] - dx * d1, qy1 = y[n] - dy * d1;
                 let qx2 = x[n] + dx * d2, qy2 = y[n] + dy * d2;
-                path.px = _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.append(path.px, qx1);
-                path.py = _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.append(path.py, qy1);
-                path.ctrl = _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.append(path.ctrl, true);
-                path.px = _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.append(path.px, x[n]);
-                path.py = _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.append(path.py, y[n]);
-                path.ctrl = _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.append(path.ctrl, false);
-                path.px = _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.append(path.px, qx2);
-                path.py = _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.append(path.py, qy2);
-                path.ctrl = _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.append(path.ctrl, true);
+                path.px = _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.append(path.px, qx1);
+                path.py = _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.append(path.py, qy1);
+                path.ctrl = _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.append(path.ctrl, true);
+                path.px = _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.append(path.px, x[n]);
+                path.py = _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.append(path.py, y[n]);
+                path.ctrl = _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.append(path.ctrl, false);
+                path.px = _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.append(path.px, qx2);
+                path.py = _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.append(path.py, qy2);
+                path.ctrl = _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.append(path.ctrl, true);
             }
         }
     }
@@ -9650,10 +9666,10 @@ class ArrangeMolecule {
         }
         bestX /= sz;
         bestY /= sz;
-        let bestScore = _mol_CoordUtil__WEBPACK_IMPORTED_MODULE_1__.CoordUtil.congestionPoint(mol, bestX, bestY);
+        let bestScore = _mol_CoordUtil__WEBPACK_IMPORTED_MODULE_2__.CoordUtil.congestionPoint(mol, bestX, bestY);
         for (let n = 1; n < sz - 1; n++) {
             let x = 0.5 * (mol.atomX(atoms[n - 1]) + mol.atomX(atoms[n + 1])), y = 0.5 * (mol.atomY(atoms[n - 1]) + mol.atomY(atoms[n + 1]));
-            let score = _mol_CoordUtil__WEBPACK_IMPORTED_MODULE_1__.CoordUtil.congestionPoint(mol, x, y);
+            let score = _mol_CoordUtil__WEBPACK_IMPORTED_MODULE_2__.CoordUtil.congestionPoint(mol, x, y);
             if (score < bestScore) {
                 bestScore = score;
                 bestX = x;
@@ -9668,20 +9684,20 @@ class ArrangeMolecule {
             text: str,
             fsz,
             col: this.policy.data.foreground,
-            oval: new _util_Geom__WEBPACK_IMPORTED_MODULE_6__.Oval(this.measure.angToX(bestX), this.measure.angToY(bestY), rw, rh)
+            oval: new _util_Geom__WEBPACK_IMPORTED_MODULE_7__.Oval(this.measure.angToX(bestX), this.measure.angToY(bestY), rw, rh)
         };
         this.points.push(a);
         let spc = {
             anum: 0,
             bnum: 0,
-            box: new _util_Geom__WEBPACK_IMPORTED_MODULE_6__.Box(a.oval.cx - rw, a.oval.cy - rh, 2 * rw, 2 * rh),
+            box: new _util_Geom__WEBPACK_IMPORTED_MODULE_7__.Box(a.oval.cx - rw, a.oval.cy - rh, 2 * rw, 2 * rh),
             px: [a.oval.cx - rw, a.oval.cx + rw, a.oval.cx + rw, a.oval.cx - rw],
             py: [a.oval.cy - rh, a.oval.cy - rh, a.oval.cy + rh, a.oval.cy + rh]
         };
         this.space.push(spc);
     }
     processPolymerUnit(unit, allUnits) {
-        if (_util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.len(unit.bondConn) == 4) {
+        if (_util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.len(unit.bondConn) == 4) {
             this.processPolymerUnitPair(unit);
             return;
         }
@@ -9719,8 +9735,8 @@ class ArrangeMolecule {
         }
         let tagidx = 0;
         let atomX = unit.atoms.map((a) => mol.atomX(a)), atomY = unit.atoms.map((a) => mol.atomY(a));
-        let minX = _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.min(atomX), minY = _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.min(atomY);
-        let maxX = _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.max(atomX), maxY = _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.max(atomY);
+        let minX = _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.min(atomX), minY = _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.min(atomY);
+        let maxX = _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.max(atomX), maxY = _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.max(atomY);
         for (let n = 1; n < brackets.length; n++) {
             let b1 = brackets[tagidx], b2 = brackets[n];
             let score1 = b1.x2 - minX - b1.y2 + minY;
@@ -9733,7 +9749,7 @@ class ArrangeMolecule {
             let left = brackets[tagidx == 0 ? 1 : 0], right = brackets[tagidx];
             let theta1 = Math.atan2(left.y2 - left.y1, left.x2 - left.x1);
             let theta2 = Math.atan2(right.y2 - right.y1, right.x2 - right.x1);
-            isLinear = (theta1 > 145 * _util_util__WEBPACK_IMPORTED_MODULE_7__.DEGRAD || theta1 < -145 * _util_util__WEBPACK_IMPORTED_MODULE_7__.DEGRAD) && theta2 < 35 * _util_util__WEBPACK_IMPORTED_MODULE_7__.DEGRAD && theta2 > -35 * _util_util__WEBPACK_IMPORTED_MODULE_7__.DEGRAD;
+            isLinear = (theta1 > 145 * _util_util__WEBPACK_IMPORTED_MODULE_8__.DEGRAD || theta1 < -145 * _util_util__WEBPACK_IMPORTED_MODULE_8__.DEGRAD) && theta2 < 35 * _util_util__WEBPACK_IMPORTED_MODULE_8__.DEGRAD && theta2 > -35 * _util_util__WEBPACK_IMPORTED_MODULE_8__.DEGRAD;
         }
         else if (brackets.length == 0) {
             let ym = 0.5 * (minY + maxY);
@@ -9771,16 +9787,16 @@ class ArrangeMolecule {
                     x2--;
                 }
             }
-            let invDist = (0,_util_util__WEBPACK_IMPORTED_MODULE_7__.invZ)((0,_util_util__WEBPACK_IMPORTED_MODULE_7__.norm_xy)(x2 - x1, y2 - y1));
+            let invDist = (0,_util_util__WEBPACK_IMPORTED_MODULE_8__.invZ)((0,_util_util__WEBPACK_IMPORTED_MODULE_8__.norm_xy)(x2 - x1, y2 - y1));
             let dx = (x2 - x1) * invDist, dy = (y2 - y1) * invDist;
             let ox = dy, oy = -dx;
             let px2 = mx - bsz1 * ox, py2 = my - bsz1 * oy;
             let px3 = mx + bsz1 * ox, py3 = my + bsz1 * oy;
             let px1 = px2 - bsz2 * dx, py1 = py2 - bsz2 * dy;
             let px4 = px3 - bsz2 * dx, py4 = py3 - bsz2 * dy;
-            let line1 = Object.assign(Object.assign({}, BASE_LINE), { 'line': new _util_Geom__WEBPACK_IMPORTED_MODULE_6__.Line(px1, py1, px2, py2) });
-            let line2 = Object.assign(Object.assign({}, BASE_LINE), { 'line': new _util_Geom__WEBPACK_IMPORTED_MODULE_6__.Line(px2, py2, px3, py3) });
-            let line3 = Object.assign(Object.assign({}, BASE_LINE), { 'line': new _util_Geom__WEBPACK_IMPORTED_MODULE_6__.Line(px3, py3, px4, py4) });
+            let line1 = Object.assign(Object.assign({}, BASE_LINE), { 'line': new _util_Geom__WEBPACK_IMPORTED_MODULE_7__.Line(px1, py1, px2, py2) });
+            let line2 = Object.assign(Object.assign({}, BASE_LINE), { 'line': new _util_Geom__WEBPACK_IMPORTED_MODULE_7__.Line(px2, py2, px3, py3) });
+            let line3 = Object.assign(Object.assign({}, BASE_LINE), { 'line': new _util_Geom__WEBPACK_IMPORTED_MODULE_7__.Line(px3, py3, px4, py4) });
             this.lines.push(line1);
             this.lines.push(line2);
             this.lines.push(line3);
@@ -9793,22 +9809,22 @@ class ArrangeMolecule {
                     [xx, yy] = [px2 - 0.5 * this.scale * ox, py2 - 0.5 * this.scale * oy];
                 else
                     [xx, yy] = [px2 + bsz2 * 2 * dx, py2 + bsz2 * 2 * dy];
-                let pt1 = Object.assign(Object.assign({}, BASE_TEXT), { 'text': 'n', 'oval': new _util_Geom__WEBPACK_IMPORTED_MODULE_6__.Oval(xx, yy, 0, 0) });
+                let pt1 = Object.assign(Object.assign({}, BASE_TEXT), { 'text': 'n', 'oval': new _util_Geom__WEBPACK_IMPORTED_MODULE_7__.Oval(xx, yy, 0, 0) });
                 this.points.push(pt1);
                 this.space.push(this.computeSpacePoint(pt1));
                 if (unit.connect != null) {
                     let text = '?';
-                    if (unit.connect == _mol_PolymerBlock__WEBPACK_IMPORTED_MODULE_3__.PolymerBlockConnectivity.HeadToTail)
+                    if (unit.connect == _mol_PolymerBlock__WEBPACK_IMPORTED_MODULE_4__.PolymerBlockConnectivity.HeadToTail)
                         text = 'ht';
-                    else if (unit.connect == _mol_PolymerBlock__WEBPACK_IMPORTED_MODULE_3__.PolymerBlockConnectivity.HeadToHead)
+                    else if (unit.connect == _mol_PolymerBlock__WEBPACK_IMPORTED_MODULE_4__.PolymerBlockConnectivity.HeadToHead)
                         text = 'hh';
-                    else if (unit.connect == _mol_PolymerBlock__WEBPACK_IMPORTED_MODULE_3__.PolymerBlockConnectivity.Random)
+                    else if (unit.connect == _mol_PolymerBlock__WEBPACK_IMPORTED_MODULE_4__.PolymerBlockConnectivity.Random)
                         text = 'eu';
                     if (bracket.shared)
                         [xx, yy] = [px3 + 0.5 * this.scale * ox, py3 + 0.5 * this.scale * oy];
                     else
                         [xx, yy] = [px3 + bsz2 * 2.5 * dx, py3 + bsz2 * 2.5 * dy];
-                    let pt2 = Object.assign(Object.assign({}, BASE_TEXT), { 'text': text, 'oval': new _util_Geom__WEBPACK_IMPORTED_MODULE_6__.Oval(xx, yy, 0, 0) });
+                    let pt2 = Object.assign(Object.assign({}, BASE_TEXT), { 'text': text, 'oval': new _util_Geom__WEBPACK_IMPORTED_MODULE_7__.Oval(xx, yy, 0, 0) });
                     this.points.push(pt2);
                     this.space.push(this.computeSpacePoint(pt2));
                 }
@@ -9823,19 +9839,19 @@ class ArrangeMolecule {
             xpos.push(measure.angToX(0.5 * (mol.atomX(bfr) + mol.atomX(bto))));
             ypos.push(measure.angToY(0.5 * (mol.atomY(bfr) + mol.atomY(bto))));
         }
-        let cx = _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.sum(xpos) * 0.25, cy = _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.sum(ypos) * 0.25;
+        let cx = _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.sum(xpos) * 0.25, cy = _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.sum(ypos) * 0.25;
         let bsz = 0.5 * this.scale;
         let rx = [], ry = [];
         for (let [i1, i2] of [[0, 1], [2, 3]]) {
-            let dx = xpos[i2] - xpos[i1], dy = ypos[i2] - ypos[i1], inv = bsz * (0,_util_util__WEBPACK_IMPORTED_MODULE_7__.invZ)((0,_util_util__WEBPACK_IMPORTED_MODULE_7__.norm_xy)(dx, dy) + 0.001);
+            let dx = xpos[i2] - xpos[i1], dy = ypos[i2] - ypos[i1], inv = bsz * (0,_util_util__WEBPACK_IMPORTED_MODULE_8__.invZ)((0,_util_util__WEBPACK_IMPORTED_MODULE_8__.norm_xy)(dx, dy) + 0.001);
             [dx, dy] = [dx * inv, dy * inv];
             xpos[i1] -= 2 * dx;
             ypos[i1] -= 2 * dy;
             xpos[i2] += 2 * dx;
             ypos[i2] += 2 * dy;
             let ox = dy, oy = -dx;
-            let dsq1 = (0,_util_util__WEBPACK_IMPORTED_MODULE_7__.norm2_xy)(0.5 * (xpos[i1] + xpos[i2]) + ox - cx, 0.5 * (ypos[i1] + ypos[i2]) + oy - cy);
-            let dsq2 = (0,_util_util__WEBPACK_IMPORTED_MODULE_7__.norm2_xy)(0.5 * (xpos[i1] + xpos[i2]) - ox - cx, 0.5 * (ypos[i1] + ypos[i2]) - oy - cy);
+            let dsq1 = (0,_util_util__WEBPACK_IMPORTED_MODULE_8__.norm2_xy)(0.5 * (xpos[i1] + xpos[i2]) + ox - cx, 0.5 * (ypos[i1] + ypos[i2]) + oy - cy);
+            let dsq2 = (0,_util_util__WEBPACK_IMPORTED_MODULE_8__.norm2_xy)(0.5 * (xpos[i1] + xpos[i2]) - ox - cx, 0.5 * (ypos[i1] + ypos[i2]) - oy - cy);
             if (dsq2 < dsq1)
                 [ox, oy] = [-ox, -oy];
             rx.push(...[ox, ox]);
@@ -9844,12 +9860,12 @@ class ArrangeMolecule {
         const BASE_LINE = { bnum: 0, bfr: 0, bto: 0, type: BLineType.Normal, size: this.lineSizePix, head: 0, col: this.policy.data.foreground };
         const BASE_TEXT = { anum: 0, fsz: 0.7 * this.fontSizePix, bold: false, col: this.policy.data.foreground };
         let drawLine = (x1, y1, x2, y2) => {
-            let line = Object.assign(Object.assign({}, BASE_LINE), { 'line': new _util_Geom__WEBPACK_IMPORTED_MODULE_6__.Line(x1, y1, x2, y2) });
+            let line = Object.assign(Object.assign({}, BASE_LINE), { 'line': new _util_Geom__WEBPACK_IMPORTED_MODULE_7__.Line(x1, y1, x2, y2) });
             this.lines.push(line);
             this.space.push(this.computeSpaceLine(line));
         };
         let drawText = (x, y, txt) => {
-            let pt = Object.assign(Object.assign({}, BASE_TEXT), { 'text': txt, 'oval': new _util_Geom__WEBPACK_IMPORTED_MODULE_6__.Oval(x, y, 0, 0) });
+            let pt = Object.assign(Object.assign({}, BASE_TEXT), { 'text': txt, 'oval': new _util_Geom__WEBPACK_IMPORTED_MODULE_7__.Oval(x, y, 0, 0) });
             this.points.push(pt);
             this.space.push(this.computeSpacePoint(pt));
         };
@@ -9859,11 +9875,11 @@ class ArrangeMolecule {
         drawLine(xpos[2], ypos[2], xpos[3], ypos[3]);
         drawLine(xpos[2], ypos[2], xpos[2] + rx[2], ypos[2] + ry[2]);
         drawLine(xpos[3], ypos[3], xpos[3] + rx[3], ypos[3] + ry[3]);
-        let xmin = _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.min(xpos), ymin = _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.min(ypos);
+        let xmin = _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.min(xpos), ymin = _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.min(ypos);
         let dist = [];
         for (let n = 0; n < 4; n++)
             dist.push(xpos[n] - xmin + ypos[n] - ymin);
-        let idxN = _util_Vec__WEBPACK_IMPORTED_MODULE_8__.Vec.idxMax(dist);
+        let idxN = _util_Vec__WEBPACK_IMPORTED_MODULE_9__.Vec.idxMax(dist);
         drawText(xpos[idxN] - rx[idxN], ypos[idxN] - ry[idxN], 'n');
         let idxD2 = idxN + (idxN % 2 == 1 ? -1 : 1), idxD1 = (idxD2 + 2) % 4;
         drawText(xpos[idxD1] - 0.5 * rx[idxD1], ypos[idxD1] - 0.5 * ry[idxD1], '*');
@@ -16433,6 +16449,25 @@ class Graph {
         }
         return g;
     }
+    static fromMoleculeMask(mol, mask) {
+        let count = _util_Vec__WEBPACK_IMPORTED_MODULE_0__.Vec.maskCount(mask);
+        let map = _util_Vec__WEBPACK_IMPORTED_MODULE_0__.Vec.maskMap(mask);
+        let g = new Graph(count);
+        g.indices = _util_Vec__WEBPACK_IMPORTED_MODULE_0__.Vec.maskIdx(mask);
+        _util_Vec__WEBPACK_IMPORTED_MODULE_0__.Vec.addTo(g.indices, 1);
+        for (let n = 0; n < count; n++) {
+            let adj = mol.atomAdjList(g.indices[n]);
+            let sz = 0;
+            for (let i = 0; i < adj.length; i++)
+                if (mask[adj[i] - 1])
+                    sz++;
+            g.nbrs[n] = [];
+            for (let i = 0; i < adj.length; i++)
+                if (mask[adj[i] - 1])
+                    g.nbrs[n].push(adj[i] - 1);
+        }
+        return g;
+    }
     static fromNeighbours(nbrs) {
         let g = new Graph();
         g.nbrs = nbrs;
@@ -19077,6 +19112,298 @@ class PolymerBlock {
             if (keys[n + 1] != keys[n] + 1)
                 return keys[n] + 1;
         return keys[keys.length - 1] + 1;
+    }
+}
+
+
+/***/ }),
+
+/***/ "./src/mol/PseudoEmbedding.ts":
+/*!************************************!*\
+  !*** ./src/mol/PseudoEmbedding.ts ***!
+  \************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   PseudoEmbedding: () => (/* binding */ PseudoEmbedding)
+/* harmony export */ });
+/* harmony import */ var _wmk_util_Geom__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @wmk/util/Geom */ "./src/util/Geom.ts");
+/* harmony import */ var _util_Vec__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../util/Vec */ "./src/util/Vec.ts");
+/* harmony import */ var _Molecule__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./Molecule */ "./src/mol/Molecule.ts");
+/* harmony import */ var _Graph__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./Graph */ "./src/mol/Graph.ts");
+/* harmony import */ var _wmk_util_util__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! @wmk/util/util */ "./src/util/util.ts");
+
+
+
+
+
+class PseudoEmbedding {
+    constructor(mol) {
+        this.mol = mol;
+        this.bondMask = null;
+        this.crossings = [];
+    }
+    calculateCrossings() {
+        const { mol, bondMask, crossings } = this;
+        let na = mol.numAtoms, nb = mol.numBonds;
+        let maskCross = _util_Vec__WEBPACK_IMPORTED_MODULE_1__.Vec.booleanArray(false, na);
+        for (let i = 1; i < nb; i++) {
+            if (bondMask && !bondMask[i - 1])
+                continue;
+            let x1 = mol.atomX(mol.bondFrom(i)), y1 = mol.atomY(mol.bondFrom(i));
+            let x2 = mol.atomX(mol.bondTo(i)), y2 = mol.atomY(mol.bondTo(i));
+            let dx = x2 - x1, dy = y2 - y1;
+            x1 += dx * 0.001;
+            y1 += dy * 0.001;
+            x2 -= dx * 0.001;
+            y2 -= dy * 0.001;
+            for (let j = i + 1; j <= nb; j++) {
+                if (bondMask && !bondMask[j - 1])
+                    continue;
+                let x3 = mol.atomX(mol.bondFrom(j)), y3 = mol.atomY(mol.bondFrom(j));
+                let x4 = mol.atomX(mol.bondTo(j)), y4 = mol.atomY(mol.bondTo(j));
+                dx = x4 - x3;
+                dy = y4 - y3;
+                x3 += dx * 0.001;
+                y3 += dy * 0.001;
+                x4 -= dx * 0.001;
+                y4 -= dy * 0.001;
+                if (_wmk_util_Geom__WEBPACK_IMPORTED_MODULE_0__.GeomUtil.doLineSegsIntersect(x1, y1, x2, y2, x3, y3, x4, y4)) {
+                    crossings.push({ bond1: i, bond2: j, higher: 0 });
+                    maskCross[mol.bondFrom(i) - 1] = true;
+                    maskCross[mol.bondTo(i) - 1] = true;
+                    maskCross[mol.bondFrom(j) - 1] = true;
+                    maskCross[mol.bondTo(j) - 1] = true;
+                }
+            }
+        }
+        if (crossings.length == 0)
+            return;
+        let crossRblk = new Set();
+        for (let n = 1; n <= na; n++) {
+            let rblk = mol.atomRingBlock(n);
+            if (rblk > 0)
+                crossRblk.add(rblk);
+        }
+        for (let n = 1; n <= na; n++)
+            if (!maskCross[n - 1]) {
+                let rblk = mol.atomRingBlock(n);
+                if (rblk > 0 && crossRblk.has(rblk))
+                    maskCross[n - 1] = true;
+            }
+        let maskComp = this.connectMaskedComponents(maskCross);
+        let g = _Graph__WEBPACK_IMPORTED_MODULE_3__.Graph.fromMoleculeMask(mol, maskComp);
+        let ccgrp = g.calculateComponentGroups();
+        for (let n = 0; n < ccgrp.length; n++) {
+            for (let i = 0; i < ccgrp[n].length; i++)
+                ccgrp[n][i] = g.getIndex(ccgrp[n][i]);
+            this.embedComponent(ccgrp[n]);
+        }
+    }
+    connectMaskedComponents(imask) {
+        const { mol } = this;
+        let omask = _util_Vec__WEBPACK_IMPORTED_MODULE_1__.Vec.duplicate(imask);
+        let gmol = _Graph__WEBPACK_IMPORTED_MODULE_3__.Graph.fromMolecule(mol);
+        let na = mol.numAtoms, nb = mol.numBonds;
+        let maskNever = _util_Vec__WEBPACK_IMPORTED_MODULE_1__.Vec.booleanArray(false, na);
+        while (true) {
+            let anything = false;
+            for (let n = 1; n <= nb; n++) {
+                let bfr = mol.bondFrom(n), bto = mol.bondTo(n);
+                let aidx = 0;
+                if (omask[bfr - 1] && !omask[bto - 1])
+                    aidx = bto;
+                else if (omask[bto - 1] && !omask[bfr - 1])
+                    aidx = bfr;
+                else
+                    continue;
+                if (maskNever[aidx - 1])
+                    continue;
+                let g = gmol.clone();
+                g.removeEdge(bfr - 1, bto - 1);
+                let cc = g.calculateComponents();
+                let hit = false;
+                for (let i = 0; i < na; i++)
+                    if (omask[i] && cc[i] == cc[aidx - 1]) {
+                        hit = true;
+                        break;
+                    }
+                if (hit) {
+                    omask[aidx - 1] = true;
+                    anything = true;
+                }
+                else
+                    maskNever[aidx - 1] = true;
+            }
+            if (!anything)
+                break;
+        }
+        return omask;
+    }
+    embedComponent(atoms) {
+        const { mol, crossings } = this;
+        let na = mol.numAtoms, gsz = atoms.length;
+        let amask = _util_Vec__WEBPACK_IMPORTED_MODULE_1__.Vec.booleanArray(false, na);
+        for (let n = 0; n < gsz; n++)
+            amask[atoms[n] - 1] = true;
+        let z = _util_Vec__WEBPACK_IMPORTED_MODULE_1__.Vec.numberArray(0, gsz), newZ = new Array(gsz);
+        if (this.seedFromInternalWedges(atoms, amask, z)) { }
+        else if (this.seedFromExternalWedges(atoms, amask, z)) { }
+        else if (this.seedFromPerspective(atoms, amask, z)) { }
+        else if (this.seedFromDensity(atoms, amask, z)) { }
+        else
+            return;
+        let ucount = this.normaliseHeights(z);
+        while (ucount < gsz) {
+            this.expandOutward(z, newZ, atoms, amask);
+            let ncount = this.normaliseHeights(newZ);
+            if (ncount == ucount)
+                break;
+            for (let n = 0; n < gsz; n++)
+                z[n] = newZ[n];
+            ucount = ncount;
+        }
+        for (let cross of crossings) {
+            if (amask[mol.bondFrom(cross.bond1) - 1])
+                this.updateCrossing(cross, atoms, z);
+        }
+    }
+    seedFromInternalWedges(atoms, amask, z) {
+        const { mol } = this;
+        let nb = mol.numBonds;
+        let success = false;
+        for (let n = 1; n <= nb; n++) {
+            let bt = mol.bondType(n);
+            if (bt != _Molecule__WEBPACK_IMPORTED_MODULE_2__.Molecule.BONDTYPE_INCLINED && bt != _Molecule__WEBPACK_IMPORTED_MODULE_2__.Molecule.BONDTYPE_DECLINED)
+                continue;
+            let bfr = mol.bondFrom(n), bto = mol.bondTo(n);
+            if (!amask[bfr - 1] || !amask[bto - 1])
+                continue;
+            if (bt == _Molecule__WEBPACK_IMPORTED_MODULE_2__.Molecule.BONDTYPE_INCLINED) {
+                z[atoms.indexOf(bfr)] -= 0.5;
+                z[atoms.indexOf(bto)] += 0.5;
+            }
+            else {
+                z[atoms.indexOf(bfr)] += 0.5;
+                z[atoms.indexOf(bto)] -= 0.5;
+            }
+            success = true;
+        }
+        return success;
+    }
+    seedFromExternalWedges(atoms, amask, z) {
+        const { mol } = this;
+        let nb = mol.numBonds;
+        let success = false;
+        for (let n = 1; n <= nb; n++) {
+            let bt = mol.bondType(n);
+            if (bt != _Molecule__WEBPACK_IMPORTED_MODULE_2__.Molecule.BONDTYPE_INCLINED && bt != _Molecule__WEBPACK_IMPORTED_MODULE_2__.Molecule.BONDTYPE_DECLINED)
+                continue;
+            let bfr = mol.bondFrom(n), bto = mol.bondTo(n);
+            if (amask[bfr - 1]) {
+                z[atoms.indexOf(bfr)] += bt == _Molecule__WEBPACK_IMPORTED_MODULE_2__.Molecule.BONDTYPE_INCLINED ? 1 : -1;
+                success = true;
+            }
+            else if (amask[bto - 1]) {
+                z[atoms.indexOf(bto)] += bt == _Molecule__WEBPACK_IMPORTED_MODULE_2__.Molecule.BONDTYPE_INCLINED ? -1 : 1;
+                success = true;
+            }
+        }
+        return success;
+    }
+    seedFromPerspective(atoms, amask, z) {
+        const { mol } = this;
+        let nb = mol.numBonds;
+        let avgdist = 0, maxdist = 0;
+        let count = 0, bidx = 0;
+        for (let n = 1; n <= nb; n++) {
+            let bfr = mol.bondFrom(n), bto = mol.bondTo(n);
+            if (!amask[bfr - 1] || !amask[bto - 1])
+                continue;
+            let d = (0,_wmk_util_util__WEBPACK_IMPORTED_MODULE_4__.norm_xy)(mol.atomX(bfr) - mol.atomX(bto), mol.atomY(bfr) - mol.atomY(bto));
+            avgdist += d;
+            count++;
+            if (d > maxdist) {
+                maxdist = d;
+                bidx = n;
+            }
+        }
+        if (count == 0 || bidx == 0)
+            return false;
+        avgdist /= count;
+        if (maxdist < avgdist * 1.02)
+            return false;
+        z[atoms.indexOf(mol.bondFrom(bidx))] = 1;
+        z[atoms.indexOf(mol.bondTo(bidx))] = 1;
+        return true;
+    }
+    seedFromDensity(atoms, amask, z) {
+        const { mol } = this;
+        let highIdx = 0;
+        let highCongest = 0;
+        for (let i = 0; i < atoms.length; i++) {
+            let x1 = mol.atomX(atoms[i]), y1 = mol.atomY(atoms[i]);
+            let congest = 0;
+            for (let j = 0; j < atoms.length; j++)
+                if (i != j)
+                    congest += 1.0 / (0.001 + (0,_wmk_util_util__WEBPACK_IMPORTED_MODULE_4__.norm2_xy)(mol.atomX(atoms[j]) - x1, mol.atomY(atoms[j]) - y1));
+            if (congest > highCongest) {
+                highIdx = atoms[i];
+                highCongest = congest;
+            }
+        }
+        if (highIdx == 0)
+            return false;
+        z[atoms.indexOf(highIdx)] = 1;
+        return true;
+    }
+    normaliseHeights(z) {
+        _util_Vec__WEBPACK_IMPORTED_MODULE_1__.Vec.addTo(z, -_util_Vec__WEBPACK_IMPORTED_MODULE_1__.Vec.min(z));
+        let eps = _util_Vec__WEBPACK_IMPORTED_MODULE_1__.Vec.max(z) * 1E-6;
+        let idx = _util_Vec__WEBPACK_IMPORTED_MODULE_1__.Vec.idxSort(z);
+        let prevZ = -1;
+        let mark = 0;
+        for (let n = 0; n < idx.length; n++) {
+            if (prevZ < 0 || Math.abs(prevZ - z[idx[n]]) > eps)
+                mark++;
+            prevZ = z[idx[n]];
+            z[idx[n]] = mark;
+        }
+        _util_Vec__WEBPACK_IMPORTED_MODULE_1__.Vec.addTo(z, -0.5 * (1 + _util_Vec__WEBPACK_IMPORTED_MODULE_1__.Vec.max(z)));
+        return mark;
+    }
+    expandOutward(z, newZ, atoms, amask) {
+        const { mol } = this;
+        let gsz = atoms.length;
+        for (let n = 0; n < gsz; n++)
+            newZ[n] = z[n];
+        for (let n = 0; n < gsz; n++) {
+            let adj = mol.atomAdjList(atoms[n]);
+            for (let i = 0; i < adj.length; i++)
+                if (amask[adj[i] - 1])
+                    newZ[atoms.indexOf(adj[i])] += 0.1 * z[n];
+        }
+    }
+    updateCrossing(cross, atoms, z) {
+        const { mol } = this;
+        let bfr1 = mol.bondFrom(cross.bond1), bto1 = mol.bondTo(cross.bond1);
+        let bfr2 = mol.bondFrom(cross.bond2), bto2 = mol.bondTo(cross.bond2);
+        let idx1 = atoms.indexOf(bfr1), idx2 = atoms.indexOf(bto1);
+        let idx3 = atoms.indexOf(bfr2), idx4 = atoms.indexOf(bto2);
+        if (idx1 < 0 || idx2 < 0 || idx3 < 0 || idx4 < 0)
+            return;
+        let x1a = mol.atomX(bfr1), y1a = mol.atomY(bfr1), x1b = mol.atomX(bto1), y1b = mol.atomY(bto1);
+        let x2a = mol.atomX(bfr2), y2a = mol.atomY(bfr2), x2b = mol.atomX(bto2), y2b = mol.atomY(bto2);
+        let xy = _wmk_util_Geom__WEBPACK_IMPORTED_MODULE_0__.GeomUtil.lineIntersect(x1a, y1a, x1b, y1b, x2a, y2a, x2b, y2b);
+        let dx1 = x1b - x1a, dy1 = y1b - y1a, dx2 = x2b - x2a, dy2 = y2b - y2a;
+        let ext1 = Math.abs(dx1) > Math.abs(dy1) ? (xy[0] - x1a) / dx1 : (xy[1] - y1a) / dy1;
+        let ext2 = Math.abs(dx2) > Math.abs(dy2) ? (xy[0] - x2a) / dx2 : (xy[1] - y2a) / dy2;
+        if (ext1 < 0 || ext1 > 1 || ext2 < 0 || ext2 > 1)
+            return;
+        let z1a = z[idx1], z1b = z[idx2], z2a = z[idx3], z2b = z[idx4];
+        let z1 = z1a + ext1 * (z1b - z1a), z2 = z2a + ext2 * (z2b - z2a);
+        cross.higher = z1 > z2 ? 1 : 2;
     }
 }
 
@@ -23345,11 +23672,11 @@ class DrawCanvas extends _ui_Widget__WEBPACK_IMPORTED_MODULE_14__.Widget {
         }
     }
     drawBondShade(ctx, bond, fillCol, borderCol, anghalo) {
+        var _a;
         if (this.layout == null)
             return;
         let x1 = 0, y1 = 0, x2 = 0, y2 = 0, nb = 0, sz = 0;
-        for (let n = 0; n < this.layout.numLines(); n++) {
-            let l = this.layout.getLine(n);
+        for (let l of (_a = this.layout.getUnsplitLines()) !== null && _a !== void 0 ? _a : this.layout.getLines()) {
             if (l.bnum != bond)
                 continue;
             x1 += l.line.x1;
@@ -37396,6 +37723,7 @@ class Validation {
         this.tests = [];
         this.setupError = null;
         this.rec = {};
+        this.context = null;
     }
     init() {
         return __awaiter(this, void 0, void 0, function* () {
@@ -37416,11 +37744,13 @@ class Validation {
             this.recentError = null;
             let timeStarted = new Date().getTime();
             try {
+                this.context = null;
                 yield this.tests[idx].func.call(this);
             }
             catch (e) {
                 this.recentSuccess = false;
                 if (this.recentError == null) {
+                    console.log('Context: ' + JSON.stringify(this.context, null, 4));
                     this.recentError = 'Exception: ' + (e.message || e);
                     if (e.fileName)
                         this.recentError += ', file: ' + e.fileName;
@@ -37447,8 +37777,8 @@ class Validation {
         this.recentError = message;
         throw '!';
     }
-    assertEqual(thing1, thing2, message) {
-        if (thing1 == thing2)
+    assertEqual(got, want, message) {
+        if (got == want)
             return;
         this.recentError = message;
         throw '!';
@@ -37572,6 +37902,11 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _wmk_util_Vec__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! @wmk/util/Vec */ "./src/util/Vec.ts");
 /* harmony import */ var _wmk_calc_CircularFingerprints__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! @wmk/calc/CircularFingerprints */ "./src/calc/CircularFingerprints.ts");
 /* harmony import */ var _wmk_io_MDLWriter__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! @wmk/io/MDLWriter */ "./src/io/MDLWriter.ts");
+/* harmony import */ var _wmk_gfx_Rendering__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! @wmk/gfx/Rendering */ "./src/gfx/Rendering.ts");
+/* harmony import */ var _wmk_gfx_ArrangeMeasurement__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! @wmk/gfx/ArrangeMeasurement */ "./src/gfx/ArrangeMeasurement.ts");
+/* harmony import */ var _wmk_gfx_ArrangeMolecule__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(/*! @wmk/gfx/ArrangeMolecule */ "./src/gfx/ArrangeMolecule.ts");
+/* harmony import */ var _wmk_gfx_DrawMolecule__WEBPACK_IMPORTED_MODULE_14__ = __webpack_require__(/*! @wmk/gfx/DrawMolecule */ "./src/gfx/DrawMolecule.ts");
+/* harmony import */ var _wmk_gfx_MetaVector__WEBPACK_IMPORTED_MODULE_15__ = __webpack_require__(/*! @wmk/gfx/MetaVector */ "./src/gfx/MetaVector.ts");
 var __awaiter = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -37581,6 +37916,11 @@ var __awaiter = (undefined && undefined.__awaiter) || function (thisArg, _argume
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+
+
+
+
+
 
 
 
@@ -37604,6 +37944,7 @@ class ValidationHeadlessMolecule extends _Validation__WEBPACK_IMPORTED_MODULE_1_
         this.add('Calculate stereochemistry', this.calcStereoChem);
         this.add('Circular ECFP6 fingerprints', this.calcFingerprints);
         this.add('Molfile Round-trip', this.molfileRoundTrip);
+        this.add('Rendering structures', this.renderingStructures);
     }
     init() {
         return __awaiter(this, void 0, void 0, function* () {
@@ -37615,6 +37956,7 @@ class ValidationHeadlessMolecule extends _Validation__WEBPACK_IMPORTED_MODULE_1_
             this.molStereo = _wmk_mol_Molecule__WEBPACK_IMPORTED_MODULE_0__.Molecule.fromString(yield (0,_wmk_util_util__WEBPACK_IMPORTED_MODULE_2__.readTextURL)(this.urlBase + 'stereo.el' + BUMP));
             this.dsCircular = _wmk_io_DataSheetStream__WEBPACK_IMPORTED_MODULE_3__.DataSheetStream.readXML(yield (0,_wmk_util_util__WEBPACK_IMPORTED_MODULE_2__.readTextURL)(this.urlBase + 'circular.ds' + BUMP));
             this.dsRoundtrip = _wmk_io_DataSheetStream__WEBPACK_IMPORTED_MODULE_3__.DataSheetStream.readXML(yield (0,_wmk_util_util__WEBPACK_IMPORTED_MODULE_2__.readTextURL)(this.urlBase + 'roundtrip.ds' + BUMP));
+            this.dsRendering = _wmk_io_DataSheetStream__WEBPACK_IMPORTED_MODULE_3__.DataSheetStream.readXML(yield (0,_wmk_util_util__WEBPACK_IMPORTED_MODULE_2__.readTextURL)(this.urlBase + 'rendering.ds' + BUMP));
         });
     }
     parseSketchEl() {
@@ -37706,6 +38048,7 @@ class ValidationHeadlessMolecule extends _Validation__WEBPACK_IMPORTED_MODULE_1_
             this.assert(this.dsCircular != null, 'datasheet not loaded');
             const ds = this.dsCircular;
             for (let n = 0; n < ds.numRows; n++) {
+                this.context = { row: n + 1, count: ds.numRows, notes: [] };
                 let mol = ds.getMolecule(n, 'Molecule');
                 let ecfp0 = [], ecfp2 = [], ecfp4 = [], ecfp6 = [];
                 for (let fp of ds.getString(n, 'ECFP0').split(','))
@@ -37742,59 +38085,86 @@ class ValidationHeadlessMolecule extends _Validation__WEBPACK_IMPORTED_MODULE_1_
         return __awaiter(this, void 0, void 0, function* () {
             const ds = this.dsRoundtrip;
             for (let n = 0; n < ds.numRows; n++) {
-                let strRow = 'row#' + (n + 1);
+                this.context = { row: n + 1, count: ds.numRows, notes: [] };
                 let mol = ds.getMolecule(n, 'Molecule');
                 let mdl = new _wmk_io_MDLWriter__WEBPACK_IMPORTED_MODULE_10__.MDLMOLWriter(mol).write();
                 let alt = new _wmk_io_MDLReader__WEBPACK_IMPORTED_MODULE_5__.MDLMOLReader(mdl).parse();
-                this.assert(mol.numAtoms == alt.numAtoms && mol.numBonds == alt.numBonds, strRow + ', atom/bond count differs');
+                this.assert(mol.numAtoms == alt.numAtoms && mol.numBonds == alt.numBonds, 'atom/bond count differs');
                 let problems = [];
                 for (let i = 1; i <= mol.numAtoms; i++) {
                     if (mol.atomElement(i) != alt.atomElement(i))
-                        problems.push(strRow + '/atom #' + i + ': elements different');
+                        problems.push('/atom #' + i + ': elements different');
                     if (mol.atomCharge(i) != alt.atomCharge(i))
-                        problems.push(strRow + '/atom #' + i + ': charges different');
+                        problems.push('/atom #' + i + ': charges different');
                     if (mol.atomUnpaired(i) != alt.atomUnpaired(i))
-                        problems.push(strRow + '/atom #' + i + ': unpaired different');
+                        problems.push('/atom #' + i + ': unpaired different');
                     if (mol.atomIsotope(i) != alt.atomIsotope(i))
-                        problems.push(strRow + '/atom #' + i + ': isotope different');
+                        problems.push('/atom #' + i + ': isotope different');
                     if (mol.atomMapNum(i) != alt.atomMapNum(i))
-                        problems.push(strRow + '/atom #' + i + ': mapnum different');
+                        problems.push('/atom #' + i + ': mapnum different');
                     if (mol.atomHydrogens(i) != alt.atomHydrogens(i))
-                        problems.push(strRow + '/atom #' + i + ': hydrogens different');
+                        problems.push('/atom #' + i + ': hydrogens different');
                     if (mol.atomHExplicit(i) != alt.atomHExplicit(i))
-                        problems.push(strRow + '/atom #' + i + ': explicitH different');
+                        problems.push('/atom #' + i + ': explicitH different');
                 }
                 for (let i = 1; i <= mol.numBonds; i++) {
                     if (mol.bondOrder(i) != alt.bondOrder(i))
-                        problems.push(strRow + '/bond #' + i + ': bond orders different');
+                        problems.push('/bond #' + i + ': bond orders different');
                     if (mol.bondType(i) != alt.bondType(i))
-                        problems.push(strRow + '/bond #' + i + ': bond types different');
+                        problems.push('/bond #' + i + ': bond types different');
                 }
                 if (problems.length > 0) {
-                    console.log('Round trip problems:');
+                    this.context.notes.push('Round trip problems:');
                     for (let p of problems)
-                        console.log(p);
-                    console.log('Original molecule:\n' + mol);
-                    console.log('MDL Molfile CTAB:\n' + mdl);
-                    console.log('Parsed back molecule:\n' + alt);
+                        this.context.notes.push(p);
+                    this.context.notes.push('Original molecule:\n' + mol);
+                    this.context.notes.push('MDL Molfile CTAB:\n' + mdl);
+                    this.context.notes.push('Parsed back molecule:\n' + alt);
                 }
                 this.assert(problems.length == 0, problems.join('; '));
                 let wantMDL = ds.getString(n, 'Molfile');
                 if (mdl.trim() != (0,_wmk_util_util__WEBPACK_IMPORTED_MODULE_2__.orBlank)(wantMDL).trim()) {
-                    console.log(strRow);
                     if (!wantMDL)
-                        console.log('Molfile missing from validation data.');
+                        this.context.notes.push('Molfile missing from validation data.');
                     else
-                        console.log('Desired Molfile:\n' + wantMDL);
-                    console.log('Got Molfile:\n' + mdl);
+                        this.context.notes.push('Desired Molfile:\n' + wantMDL);
+                    this.context.notes.push('Got Molfile:\n' + mdl);
                     let linesWant = wantMDL.split('\n'), linesGot = mdl.split('\n');
                     for (let i = 0; i < Math.max(linesWant.length, linesGot.length); i++)
                         if (linesWant[i] != linesGot[i]) {
-                            console.log(`Line #${i + 1}: want [${linesWant[i]}], got [${linesGot[i]}]`);
+                            this.context.notes.push(`Line #${i + 1}: want [${linesWant[i]}], got [${linesGot[i]}]`);
                             break;
                         }
-                    this.assert(false, strRow + ': initial Molfile invalid');
+                    this.assert(false, 'initial Molfile invalid');
                 }
+            }
+        });
+    }
+    renderingStructures() {
+        return __awaiter(this, void 0, void 0, function* () {
+            const ds = this.dsRendering;
+            let policy = _wmk_gfx_Rendering__WEBPACK_IMPORTED_MODULE_11__.RenderPolicy.defaultColourOnWhite();
+            policy.data.pointScale = 15;
+            let effects = new _wmk_gfx_Rendering__WEBPACK_IMPORTED_MODULE_11__.RenderEffects();
+            let measure = new _wmk_gfx_ArrangeMeasurement__WEBPACK_IMPORTED_MODULE_12__.OutlineMeasurement(0, 0, policy.data.pointScale);
+            for (let n = 0; n < ds.numRows; n++) {
+                this.context = { row: n + 1, count: ds.numRows, notes: [] };
+                let mol = ds.getMolecule(n, 'Molecule');
+                let wantMnemonic = ds.getString(n, 'Mnemonic').trim();
+                let layout = new _wmk_gfx_ArrangeMolecule__WEBPACK_IMPORTED_MODULE_13__.ArrangeMolecule(mol, measure, policy, effects);
+                layout.arrange();
+                let metavec = new _wmk_gfx_MetaVector__WEBPACK_IMPORTED_MODULE_15__.MetaVector();
+                let draw = new _wmk_gfx_DrawMolecule__WEBPACK_IMPORTED_MODULE_14__.DrawMolecule(layout, metavec);
+                draw.mnemonics = new _wmk_gfx_Rendering__WEBPACK_IMPORTED_MODULE_11__.RenderMnemonics();
+                draw.draw();
+                metavec.normalise();
+                let gotMnemonic = draw.mnemonics.packWithCoords();
+                this.context.notes.push(metavec.createSVG());
+                this.context.notes.push('Got Mnemonic:');
+                this.context.notes.push(`<div><tt>${(0,_wmk_util_util__WEBPACK_IMPORTED_MODULE_2__.escapeHTML)(gotMnemonic)}</tt></div>`);
+                this.context.notes.push('Want Mnemonic:');
+                this.context.notes.push(`<div><tt>${(0,_wmk_util_util__WEBPACK_IMPORTED_MODULE_2__.escapeHTML)(wantMnemonic || 'not provided')}</tt></div>`);
+                this.assertEqual(gotMnemonic, wantMnemonic, 'mnemonics did not match');
             }
         });
     }
@@ -37889,28 +38259,28 @@ class WebValExec {
     constructor(validation) {
         this.validation = validation;
     }
-    runTests(parent) {
+    runTests(domParent) {
         return __awaiter(this, void 0, void 0, function* () {
-            let domParent = (0,_src_util_dom__WEBPACK_IMPORTED_MODULE_0__.dom)(parent);
+            const { validation } = this;
             domParent.empty();
-            if (this.validation.setupError) {
+            if (validation.setupError) {
                 let div = (0,_src_util_dom__WEBPACK_IMPORTED_MODULE_0__.dom)('<div/>').appendTo(domParent).css({ 'color': 'red' });
-                div.setText('Setup failed: ' + this.validation.setupError);
+                div.setText('Setup failed: ' + validation.setupError);
                 return;
             }
             let table = (0,_src_util_dom__WEBPACK_IMPORTED_MODULE_0__.dom)('<table/>').appendTo(domParent);
             let tdStatus = [], tdInfo = [];
-            for (let n = 0; n < this.validation.count; n++) {
+            for (let n = 0; n < validation.count; n++) {
                 let tr = (0,_src_util_dom__WEBPACK_IMPORTED_MODULE_0__.dom)('<tr/>').appendTo(table);
                 let td = (0,_src_util_dom__WEBPACK_IMPORTED_MODULE_0__.dom)('<td valign="top"/>').appendTo(tr);
                 tdStatus.push(td);
                 td = (0,_src_util_dom__WEBPACK_IMPORTED_MODULE_0__.dom)('<td valign="top"></td>').appendTo(tr);
-                td.setText(this.validation.getTitle(n));
+                td.setText(validation.getTitle(n));
                 tdInfo.push(td);
             }
-            for (let n = 0; n < this.validation.count; n++) {
+            for (let n = 0; n < validation.count; n++) {
                 tdStatus[n].setHTML('&#9744;');
-                let [success, message, time] = yield this.validation.runTest(n);
+                let [success, message, time] = yield validation.runTest(n);
                 if (success) {
                     tdStatus[n].setHTML('&#9745;');
                     if (time >= 0.001) {
@@ -37924,9 +38294,29 @@ class WebValExec {
                     para.setText(message ? message : 'failed');
                     tdStatus[n].setCSS('background-color', '#FFF0F0');
                     tdInfo[n].setCSS('background-color', '#FFF0F0');
+                    let divOuter = (0,_src_util_dom__WEBPACK_IMPORTED_MODULE_0__.dom)('<div/>').appendTo(tdInfo[n]).css({ 'padding-left': '0.5em' });
+                    this.makeContextReport(divOuter, validation.context);
                 }
             }
         });
+    }
+    makeContextReport(domNotes, context) {
+        const { subcategory, row, count, notes } = context !== null && context !== void 0 ? context : {};
+        if (subcategory)
+            (0,_src_util_dom__WEBPACK_IMPORTED_MODULE_0__.dom)('<div/>').appendTo(domNotes).setText(`Subcategory: ${subcategory}`);
+        if (row != null) {
+            let str = `Row: ${row}`;
+            if (count != null)
+                str += ` / Count: ${count}`;
+            (0,_src_util_dom__WEBPACK_IMPORTED_MODULE_0__.dom)('<div/>').appendTo(domNotes).setText(str);
+        }
+        for (let note of notes !== null && notes !== void 0 ? notes : []) {
+            let divItem = (0,_src_util_dom__WEBPACK_IMPORTED_MODULE_0__.dom)('<div/>').appendTo(domNotes);
+            if (note.startsWith('<svg') || note.startsWith('<div'))
+                divItem.appendHTML(note);
+            else
+                divItem.setText(note);
+        }
     }
 }
 

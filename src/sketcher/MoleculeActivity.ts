@@ -19,7 +19,7 @@ import {Molecule} from '../mol/Molecule';
 import {MolUtil} from '../mol/MolUtil';
 import {PolymerBlock} from '../mol/PolymerBlock';
 import {QueryTypeAtom, QueryUtil} from '../mol/QueryUtil';
-import {SketchUtil} from '../mol/SketchUtil';
+import {Geometry, SketchUtil} from '../mol/SketchUtil';
 import {MetaVector} from '../gfx/MetaVector';
 import {angleDiff, angleNorm, DEGRAD, norm2_xy, norm_xy, RADDEG, TWOPI} from '../util/util';
 import {Vec} from '../util/Vec';
@@ -30,11 +30,10 @@ import {FusionPermutation, TemplateFusion} from './TemplateFusion';
 /*
 	MoleculeActivity: command-oriented modifications of the current molecular state.
 
-	The invocation differs from the iOS/BlackBerry equivalents: rather than dividing each task into 2 parts, for testing
-	whether an action is possible and actually carrying it out, there are two different functions: evaluate and execute.
-	Evaluation is a very shallow analysis of whether a command has any chance of being relevant for the current state. If
-	the amount of effort involved in figuring it out is non-trivial (e.g. requires an RPC), it will just return yes. The
-	execution mode is charged with the duty of updating the EditMolecule state, or reporting any errors that might occur.
+	The pattern is to start with a molecule and its selection state, and apply a unit operation. The primitive operations have
+	been boiled down to a minimal subset, which was originally inspired by implementing a Sketcher UI for mobile devices with
+	limited input bandwidth. The paradigm is still quite useful for desktop environments because it lends itself well to power
+	users.
 */
 
 export enum ActivityType
@@ -107,6 +106,39 @@ export enum ActivityType
 	SproutDirection,
 }
 
+export interface ActivityParam
+{
+	element?:string;
+	positionX?:number;
+	positionY?:number;
+	keepAbbrev?:boolean;
+	delta?:number;
+	order?:number;
+	geom?:Geometry;
+	type?:number;
+	x1?:number;
+	y1?:number;
+	x2?:number;
+	y2?:number;
+	dir?:string;
+	axis?:string;
+	mag?:number;
+	theta?:number;
+	centreX?:number;
+	centreY?:number;
+	dist?:number;
+	angle?:number;
+	refAtom?:number;
+	deltaX?:number;
+	deltaY?:number;
+	ringX?:number[];
+	ringY?:number[];
+	aromatic?:boolean;
+	frag?:Molecule;
+	fragNative?:string;
+	qmol?:Molecule;
+}
+
 export interface SketchState
 {
 	mol:Molecule;
@@ -142,7 +174,7 @@ export class MoleculeActivity
 	public errmsg:string;
 	public toClipboard:string = null;
 
-	constructor(public input:SketchState, public activity:ActivityType, private param:Record<string, any>, private owner?:Sketcher)
+	constructor(public input:SketchState, public activity:ActivityType, private param:ActivityParam, private owner?:Sketcher)
 	{
 		this.output =
 		{
@@ -822,7 +854,7 @@ export class MoleculeActivity
 			this.execConnect(order, type);
 	}
 
-	public execBondGeom(geom:number):void
+	public execBondGeom(geom:Geometry):void
 	{
 		let bond = this.subjectLength == 2 ? this.input.mol.findBond(this.subjectIndex[0], this.subjectIndex[1]) : 0;
 		if (this.subjectLength == 0 || this.subjectLength > 2 || (this.subjectLength == 2 && bond == 0))
@@ -1904,7 +1936,7 @@ export class MoleculeActivity
 	{
 		if (!this.requireSubject()) return;
 
-		let qmol:Molecule = this.param.qmol;
+		let qmol = this.param.qmol;
 		if (!qmol) {}
 		else if (qmol.numAtoms == 1 && qmol.atomElement(1) == '*' && QueryUtil.hasAnyQueryAtom(qmol, 1))
 		{
@@ -2235,7 +2267,7 @@ export class MoleculeActivity
 	}
 
 	// support for atom-geometry
-	private performBondGeomAtom(geom:number, atom:number):void
+	private performBondGeomAtom(geom:Geometry, atom:number):void
 	{
 		let mol = this.input.mol;
 
@@ -2286,7 +2318,7 @@ export class MoleculeActivity
 	}
 
 	// support for bond-geometry
-	private performBondGeomBond(geom:number, bond:number):void
+	private performBondGeomBond(geom:Geometry, bond:number):void
 	{
 		let mol = this.input.mol;
 

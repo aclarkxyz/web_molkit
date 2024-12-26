@@ -24,15 +24,15 @@
 <script>
 	let wmk = WebMolKit;
 	
-	async function runModule(module, dom)
+	async function runModule(module, domTests)
 	{
 		await module.init();
-		new wmk.WebValExec(module).runTests(dom);
+		new wmk.WebValExec(module).runTests(domTests);
 	}
 
-	(async () => await runModule(new wmk.ValidationHeadlessBasic(), document.getElementById('basic')))();
-	(async () => await runModule(new wmk.ValidationHeadlessMolecule('../data/'), document.getElementById('molecule')))();
-	(async () => await runModule(new wmk.ValidationHeadlessReaction('../data/'), document.getElementById('reaction')))();
+	(async () => await runModule(new wmk.ValidationHeadlessBasic(), wmk.DOM.find('#basic')))();
+	(async () => await runModule(new wmk.ValidationHeadlessMolecule('../data/'), wmk.DOM.find('#molecule')))();
+	(async () => await runModule(new wmk.ValidationHeadlessReaction('../data/'), wmk.DOM.find('#reaction')))();
 
 	wmk.DOM.find('#final').setHTML('<p><b>Finished.</b></p>');
 </script>

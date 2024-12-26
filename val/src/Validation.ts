@@ -23,6 +23,14 @@ export interface ValidationTest
 	func:() => void;
 }
 
+export interface ValidationContext
+{
+	subcategory?:string;
+	row?:number; // typically 1..{count}
+	count?:number; // usually # rows in datasheet
+	notes?:string[]; // arbitrary strings, <svg> autodetected
+}
+
 export class Validation
 {
 
@@ -39,6 +47,9 @@ export class Validation
 
 	// validation tests can use this to store situational data, especially when subsequent tests re-use data from previous tests
 	public rec:Record<string, any> = {};
+
+	// each test should set this value before doing anything interesting, in order to provide feedback when something goes wrong
+	public context:ValidationContext = null;
 
 	// ------------ public methods ------------
 
@@ -72,7 +83,11 @@ export class Validation
 		
 		let timeStarted = new Date().getTime();
 
-		try {await this.tests[idx].func.call(this);}
+		try 
+		{
+			this.context = null; // the test itself should replace this if possible
+			await this.tests[idx].func.call(this);
+		}
 		catch (e)
 		{
 			// two scenarios: rogue exceptions that happened during the validation are caught and converted into error messages with debug
@@ -80,6 +95,7 @@ export class Validation
 			this.recentSuccess = false;
 			if (this.recentError == null)
 			{
+				console.log('Context: ' + JSON.stringify(this.context, null, 4));
 				this.recentError = 'Exception: ' + (e.message || e);
 				if (e.fileName) this.recentError += ', file: ' + e.fileName;
 				if (e.lineNumber) this.recentError += ', line: ' + e.lineNumber;
@@ -101,7 +117,6 @@ export class Validation
 	// call this to give the DOM a chance to update itself
 	public async gasp()
 	{
-		//await (() => new Promise((resolve) => setTimeout(() => resolve(), 0)))();
 		await yieldDOM();
 	}
 
@@ -112,9 +127,9 @@ export class Validation
 		this.recentError = message;
 		throw '!';
 	}
-	public assertEqual(thing1:any, thing2:any, message?:string):void
+	public assertEqual(got:any, want:any, message?:string):void
 	{
-		if (thing1 == thing2) return;
+		if (got == want) return;
 		this.recentError = message;
 		throw '!';
 	}

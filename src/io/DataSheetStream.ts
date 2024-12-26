@@ -19,8 +19,11 @@ import {MoleculeStream} from './MoleculeStream';
 /*
 	Serialisation and deserialisation utilities for the DataSheet object.
 
-	Note that the DataSheet class has a JSON property (.data) that is already suitable for sending back and forth
-	between the server when a JSON-formatted datasheet is required.
+	Format handling is done via the XML class, which by default wraps the internal browser DOM. This is unfortunately not implemented
+	on certain JavaScript engines, like basic NodeJS or web-worker: see the notes in that class for how to plugin a replacement.
+
+	Note that the DataSheet class has a JSON property (.data) that contains all the content. This can be used as a quick serialisation
+	option when persistence is not required (e.g. sending a datasheet to a web-worker or RPC service). 
 */
 
 export class DataSheetStream

@@ -264,7 +264,7 @@ export class SketchUtil
 	}
 
 	// returns whether or not there is any way in which the given values of theta can match the indicated geometry
-	public static matchAngleGeometry(geom:number, theta:number[]):boolean
+	public static matchAngleGeometry(geom:Geometry, theta:number[]):boolean
 	{
 		if (theta.length <= 1) return true; // always possible
 
@@ -424,7 +424,7 @@ export class SketchUtil
 		}
 
 		// done with special cases: include all geometries sensible for the topology
-		let geom:number[] = [];
+		let geom:Geometry[] = [];
 		if (atblk == 0) geom = [Geometry.Trigonal, Geometry.SqPlan];
 		else if (atblk == 1) geom = [Geometry.Trigonal, Geometry.SqPlan, Geometry.Octa1, Geometry.Octa2];
 		else if (atblk == 2)
@@ -472,7 +472,7 @@ export class SketchUtil
 
 	// for a given geometry code, looks for ways to map the current set of angles onto the predefined set; when a lock is
 	// found, the unoccupied positions are summarised and returned; if there is no way to perform the map, null is returned
-	public static mapAngleSubstituent(geom:number, ang:number[]):number[]
+	public static mapAngleSubstituent(geom:Geometry, ang:number[]):number[]
 	{
 		let gtheta = SketchUtil.GEOM_ANGLES[geom];
 		const asz = ang.length, gsz = gtheta.length;
@@ -522,7 +522,7 @@ export class SketchUtil
 	// for a given molecule, ensures that a specific atom fits a given geometry template; if so, returns null; if not, looks for
 	// a way to fit the bonds into the geometry template with minimum perturbation, and applies the result by rotating the
 	// bonds as necessary; bonds that occur in rings constrain the options significantly
-	public static refitAtomGeometry(mol:Molecule, atom:number, geom:number):Molecule
+	public static refitAtomGeometry(mol:Molecule, atom:number, geom:Geometry):Molecule
 	{
 		let gtheta = SketchUtil.GEOM_ANGLES[geom];
 		let gsz = gtheta.length;
