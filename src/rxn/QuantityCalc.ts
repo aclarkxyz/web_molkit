@@ -13,7 +13,7 @@
 import {ExperimentComponent, ExperimentComponentType, ExperimentEntry} from '../aspect/Experiment';
 import {formatDouble} from '../util/util';
 import {Vec} from '../util/Vec';
-import {MolUtil} from './MolUtil';
+import {MolUtil} from '../mol/MolUtil';
 
 /*
 	Quantity interconversions: for an Experiment entry, figure out all of the real-and-converted quantities, and

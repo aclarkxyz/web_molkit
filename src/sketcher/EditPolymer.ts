@@ -10,9 +10,9 @@
 	[PKG=webmolkit]
 */
 
-import {Molecule} from '../data/Molecule';
-import {MolUtil} from '../data/MolUtil';
-import {PolymerBlock, PolymerBlockConnectivity, PolymerBlockUnit} from '../data/PolymerBlock';
+import {Molecule} from '../mol/Molecule';
+import {MolUtil} from '../mol/MolUtil';
+import {PolymerBlock, PolymerBlockConnectivity, PolymerBlockUnit} from '../mol/PolymerBlock';
 import {Dialog} from '../dialog/Dialog';
 import {OutlineMeasurement} from '../gfx/ArrangeMeasurement';
 import {ArrangeMolecule} from '../gfx/ArrangeMolecule';

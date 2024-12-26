@@ -12,10 +12,10 @@
 
 import {Vec} from '../util/Vec';
 import {Chemistry} from './Chemistry';
-import {DotPath} from './DotPath';
+import {DotPath} from '../mol/DotPath';
 import {Molecule} from './Molecule';
 import {MolUtil} from './MolUtil';
-import {Stereochemistry} from './Stereochemistry';
+import {Stereochemistry} from '../mol/Stereochemistry';
 
 /*
 	A "meta-molecule" is a container for a molecule which stores derived information about it. This is a compensation for the

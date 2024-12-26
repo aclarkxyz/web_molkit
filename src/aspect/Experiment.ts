@@ -12,9 +12,9 @@
 
 ///<reference path='Aspect.ts'/>
 
-import {DataSheet, DataSheetColumn} from '../data/DataSheet';
-import {Molecule} from '../data/Molecule';
-import {MolUtil} from '../data/MolUtil';
+import {DataSheet, DataSheetColumn} from '../ds/DataSheet';
+import {Molecule} from '../mol/Molecule';
+import {MolUtil} from '../mol/MolUtil';
 import {ArrangeExperiment} from '../gfx/ArrangeExperiment';
 import {OutlineMeasurement} from '../gfx/ArrangeMeasurement';
 import {DrawExperiment} from '../gfx/DrawExperiment';

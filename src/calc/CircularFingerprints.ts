@@ -10,10 +10,10 @@
 	[PKG=webmolkit]
 */
 
-import {Chemistry} from '../data/Chemistry';
-import {MetaMolecule} from '../data/MetaMolecule';
-import {Molecule} from '../data/Molecule';
-import {MolUtil} from '../data/MolUtil';
+import {Chemistry} from '../mol/Chemistry';
+import {MetaMolecule} from '../mol/MetaMolecule';
+import {Molecule} from '../mol/Molecule';
+import {MolUtil} from '../mol/MolUtil';
 import {Permutation, Vec} from '../util/Vec';
 
 /*

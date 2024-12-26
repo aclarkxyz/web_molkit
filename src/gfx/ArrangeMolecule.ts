@@ -10,11 +10,11 @@
 	[PKG=webmolkit]
 */
 
-import {BondArtifact} from '../data/BondArtifact';
-import {CoordUtil} from '../data/CoordUtil';
-import {Molecule} from '../data/Molecule';
-import {PolymerBlock, PolymerBlockConnectivity, PolymerBlockUnit} from '../data/PolymerBlock';
-import {QueryUtil} from '../data/QueryUtil';
+import {BondArtifact} from '../mol/BondArtifact';
+import {CoordUtil} from '../mol/CoordUtil';
+import {Molecule} from '../mol/Molecule';
+import {PolymerBlock, PolymerBlockConnectivity, PolymerBlockUnit} from '../mol/PolymerBlock';
+import {QueryUtil} from '../mol/QueryUtil';
 import {FitRotatedEllipse} from '../util/FitRotatedEllipse';
 import {Box, GeomUtil, Line, Oval, QuickHull} from '../util/Geom';
 import {angleDiff, clone, DEGRAD, invZ, norm2_xy, norm_xy, RADDEG, sqr, TWOPI} from '../util/util';

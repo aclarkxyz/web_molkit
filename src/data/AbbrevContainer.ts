@@ -14,12 +14,12 @@ import {CircularFingerprints} from '../calc/CircularFingerprints';
 import {Theme} from '../util/Theme';
 import {DEGRAD, escapeHTML, norm_xy, readTextURL} from '../util/util';
 import {Vec} from '../util/Vec';
-import {CoordUtil} from './CoordUtil';
-import {DataSheetColumn} from './DataSheet';
-import {DataSheetStream} from './DataSheetStream';
-import {MetaMolecule} from './MetaMolecule';
-import {Molecule} from './Molecule';
-import {MolUtil} from './MolUtil';
+import {CoordUtil} from '../mol/CoordUtil';
+import {DataSheetColumn} from '../ds/DataSheet';
+import {DataSheetStream} from '../io/DataSheetStream';
+import {MetaMolecule} from '../mol/MetaMolecule';
+import {Molecule} from '../mol/Molecule';
+import {MolUtil} from '../mol/MolUtil';
 
 import dsRings from '@reswmk/data/templates/rings.ds';
 import dsTermGrp from '@reswmk/data/templates/termgrp.ds';

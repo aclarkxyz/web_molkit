@@ -10,14 +10,14 @@
 	[PKG=webmolkit]
 */
 
-import {CoordUtil} from '../data/CoordUtil';
-import {DataSheetColumn} from '../data/DataSheet';
-import {DataSheetStream} from '../data/DataSheetStream';
-import {Molecule} from '../data/Molecule';
-import {MoleculeStream} from '../data/MoleculeStream';
-import {MolUtil} from '../data/MolUtil';
-import {PolymerBlock, PolymerBlockUnit} from '../data/PolymerBlock';
-import {GuidelineSprout, SketchUtil} from '../data/SketchUtil';
+import {CoordUtil} from '../mol/CoordUtil';
+import {DataSheetColumn} from '../ds/DataSheet';
+import {DataSheetStream} from '../io/DataSheetStream';
+import {Molecule} from '../mol/Molecule';
+import {MoleculeStream} from '../io/MoleculeStream';
+import {MolUtil} from '../mol/MolUtil';
+import {PolymerBlock, PolymerBlockUnit} from '../mol/PolymerBlock';
+import {GuidelineSprout, SketchUtil} from '../mol/SketchUtil';
 import {ArrangeMolecule} from '../gfx/ArrangeMolecule';
 import {DrawMolecule} from '../gfx/DrawMolecule';
 import {MetaVector} from '../gfx/MetaVector';

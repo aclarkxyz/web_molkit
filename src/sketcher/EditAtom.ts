@@ -11,8 +11,8 @@
 */
 
 import {AbbrevContainer, AbbrevContainerFrag} from '../data/AbbrevContainer';
-import {Molecule} from '../data/Molecule';
-import {MolUtil} from '../data/MolUtil';
+import {Molecule} from '../mol/Molecule';
+import {MolUtil} from '../mol/MolUtil';
 import {Dialog} from '../dialog/Dialog';
 import {OutlineMeasurement} from '../gfx/ArrangeMeasurement';
 import {ArrangeMolecule} from '../gfx/ArrangeMolecule';

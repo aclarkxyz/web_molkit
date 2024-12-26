@@ -10,9 +10,9 @@
 	[PKG=webmolkit]
 */
 
-import {MetaMolecule} from '../data/MetaMolecule';
-import {Molecule} from '../data/Molecule';
-import {MolUtil} from '../data/MolUtil';
+import {MetaMolecule} from '../mol/MetaMolecule';
+import {Molecule} from '../mol/Molecule';
+import {MolUtil} from '../mol/MolUtil';
 import {norm2_xy} from '../util/util';
 import {Vec} from '../util/Vec';
 import {CircularFingerprints, CircularFP} from './CircularFingerprints';

@@ -10,7 +10,7 @@
 	[PKG=webmolkit]
 */
 
-import {Chemistry} from '../data/Chemistry';
+import {Chemistry} from '../mol/Chemistry';
 import {Widget} from '../ui/Widget';
 import {dom, DOM} from '../util/dom';
 import {installInlineCSS} from '../util/Theme';

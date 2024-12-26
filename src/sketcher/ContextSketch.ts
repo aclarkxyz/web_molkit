@@ -10,8 +10,8 @@
 	[PKG=webmolkit]
 */
 
-import {Molecule} from '../data/Molecule';
-import {PolymerBlock} from '../data/PolymerBlock';
+import {Molecule} from '../mol/Molecule';
+import {PolymerBlock} from '../mol/PolymerBlock';
 import {ClipboardProxy} from '../ui/ClipboardProxy';
 import {MenuProxyContext} from '../ui/MenuProxy';
 import {Vec} from '../util/Vec';

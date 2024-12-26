@@ -10,9 +10,9 @@
 	[PKG=webmolkit]
 */
 
-import {CoordUtil} from '../data/CoordUtil';
-import {MDLMOLReader} from '../data/MDLReader';
-import {Molecule} from '../data/Molecule';
+import {CoordUtil} from '../mol/CoordUtil';
+import {MDLMOLReader} from '../io/MDLReader';
+import {Molecule} from '../mol/Molecule';
 import {OutlineMeasurement} from '../gfx/ArrangeMeasurement';
 import {ArrangeMolecule} from '../gfx/ArrangeMolecule';
 import {DrawMolecule} from '../gfx/DrawMolecule';

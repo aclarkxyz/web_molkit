@@ -22,6 +22,7 @@ module.exports =
 		extensions: ['.ts', '.js'],
 		alias: 
 		{
+			"@wmk": path.resolve(__dirname, "src"),
 			"@reswmk": path.resolve(__dirname, "res"),
 		} 
 	},

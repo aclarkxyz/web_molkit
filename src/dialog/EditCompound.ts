@@ -10,7 +10,7 @@
 	[PKG=webmolkit]
 */
 
-import {Molecule} from '../data/Molecule';
+import {Molecule} from '../mol/Molecule';
 import {Sketcher} from '../sketcher/Sketcher';
 import {ClipboardProxy, ClipboardProxyHandler} from '../ui/ClipboardProxy';
 import {MenuProxy} from '../ui/MenuProxy';

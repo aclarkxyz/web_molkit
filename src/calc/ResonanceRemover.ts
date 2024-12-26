@@ -10,9 +10,9 @@
 	[PKG=webmolkit]
 */
 
-import {Chemistry} from '../data/Chemistry';
-import {Graph} from '../data/Graph';
-import {Molecule} from '../data/Molecule';
+import {Chemistry} from '../mol/Chemistry';
+import {Graph} from '../mol/Graph';
+import {Molecule} from '../mol/Molecule';
 import {Vec} from '../util/Vec';
 
 /*

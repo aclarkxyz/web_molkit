@@ -11,7 +11,7 @@
 */
 
 import {ExperimentEntry} from '../aspect/Experiment';
-import {MolUtil} from '../data/MolUtil';
+import {MolUtil} from '../mol/MolUtil';
 import {invZ, norm_xy} from '../util/util';
 import {Vec} from '../util/Vec';
 import {ArrangeComponent, ArrangeComponentAnnot, ArrangeComponentType, ArrangeExperiment} from './ArrangeExperiment';

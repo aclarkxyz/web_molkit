@@ -11,15 +11,15 @@
 */
 
 import {AbbrevContainer} from '../data/AbbrevContainer';
-import {BondArtifact} from '../data/BondArtifact';
-import {Chemistry} from '../data/Chemistry';
-import {CoordUtil} from '../data/CoordUtil';
-import {Graph} from '../data/Graph';
-import {Molecule} from '../data/Molecule';
-import {MolUtil} from '../data/MolUtil';
-import {PolymerBlock} from '../data/PolymerBlock';
-import {QueryTypeAtom, QueryUtil} from '../data/QueryUtil';
-import {SketchUtil} from '../data/SketchUtil';
+import {BondArtifact} from '../mol/BondArtifact';
+import {Chemistry} from '../mol/Chemistry';
+import {CoordUtil} from '../mol/CoordUtil';
+import {Graph} from '../mol/Graph';
+import {Molecule} from '../mol/Molecule';
+import {MolUtil} from '../mol/MolUtil';
+import {PolymerBlock} from '../mol/PolymerBlock';
+import {QueryTypeAtom, QueryUtil} from '../mol/QueryUtil';
+import {SketchUtil} from '../mol/SketchUtil';
 import {MetaVector} from '../gfx/MetaVector';
 import {angleDiff, angleNorm, DEGRAD, norm2_xy, norm_xy, RADDEG, TWOPI} from '../util/util';
 import {Vec} from '../util/Vec';

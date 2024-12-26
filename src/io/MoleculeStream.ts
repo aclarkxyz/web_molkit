@@ -12,7 +12,7 @@
 
 import {MDLMOLReader} from './MDLReader';
 import {MDLMOLWriter} from './MDLWriter';
-import {Molecule} from './Molecule';
+import {Molecule} from '../mol/Molecule';
 
 /*
 	Serialisation and deserialisation utilities for the Molecule object.

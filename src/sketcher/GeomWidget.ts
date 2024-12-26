@@ -10,7 +10,7 @@
 	[PKG=webmolkit]
 */
 
-import {Molecule} from '../data/Molecule';
+import {Molecule} from '../mol/Molecule';
 import {MetaVector} from '../gfx/MetaVector';
 import {Widget} from '../ui/Widget';
 import {dom, DOM} from '../util/dom';

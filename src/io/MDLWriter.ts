@@ -11,15 +11,15 @@
 */
 
 import {Vec} from '../util/Vec';
-import {BondArtifact} from './BondArtifact';
-import {DataSheet, DataSheetColumn} from './DataSheet';
-import {ForeignMolecule, ForeignMoleculeTemplateDefn, ForeignMoleculeTransient} from './ForeignMolecule';
+import {BondArtifact} from '../mol/BondArtifact';
+import {DataSheet, DataSheetColumn} from '../ds/DataSheet';
+import {ForeignMolecule, ForeignMoleculeTemplateDefn, ForeignMoleculeTransient} from '../mol/ForeignMolecule';
 import {MDLMOL_VALENCE} from './MDLReader';
-import {Molecule} from './Molecule';
-import {MolUtil} from './MolUtil';
-import {PolymerBlock, PolymerBlockConnectivity} from './PolymerBlock';
-import {QueryUtil} from './QueryUtil';
-import {StereoGroup} from './StereoGroup';
+import {Molecule} from '../mol/Molecule';
+import {MolUtil} from '../mol/MolUtil';
+import {PolymerBlock, PolymerBlockConnectivity} from '../mol/PolymerBlock';
+import {QueryUtil} from '../mol/QueryUtil';
+import {StereoGroup} from '../mol/StereoGroup';
 
 /*
 	MDL Molfile writer: convert the native structure format to MDL Molfile. Both the older (V2000) and newer (V3000) formats are
@@ -61,7 +61,7 @@ export class MDLMOLWriter
 	public includeCounts = true; // if on, the subsequent 1 line of counts will be included (V3000 only, ignored in V2000 mode)
 	public includeEnd = true; // if on, the final M__END will be included
 	public overallStereoAbsolute = true; // from the counts block, overall true=interpret stereo as absolute; false=interpret as relative
-	public enhancedFields = true; // if on, non-standard MDL fields may be added
+	public enhancedFields = false; // if on, non-standard MDL fields may be added
 	public chargeSeparate = false; // if on, zero bonds will be split out
 	public abbrevSgroups = true; // if on, abbreviations will be written as Sgroups when possible
 	public polymerBlocks = true; // write polymer blocks, if any
@@ -417,8 +417,12 @@ export class MDLMOLWriter
 		for (let b of mol.atomAdjBonds(atom)) bondSum += mol.bondOrder(b);
 		let nativeVal = chgmod + /*mol.atomUnpaired(atom) +*/ hyd + bondSum;
 
-		// if this is consistent with an existing valence option, no need
-		if (options?.includes(nativeVal)) return 0;
+		// if this is consistent with the "next highest valence option" (relative to bonds & charge), can leave it unaffected
+		if (options) for (let optVal of options) if (optVal >= chgmod + bondSum)
+		{
+			if (optVal == nativeVal) return 0; // it checks out
+			break;
+		}
 
 		// NOTE: in cases with multiple valence options, like S[2,4,6], it would be possible to leave the valence unmarked
 		// when the previous state is indicated, e.g. for S{val=3} ==> +1 H to get to val=4; or we could just mark the
@@ -636,7 +640,7 @@ export class MDLMOLWriter
 
 			let maskArom = ForeignMolecule.noteAromaticBonds(mol);
 			let maskHBond = ForeignMolecule.noteZeroHydrogenBonds(mol); // (note: dative bond is the default kind of 0-order bond, so only need to note h-bond subclass
-		
+
 			for (let n = 1; n <= mol.numBonds; n++)
 			{
 				let bfr = mol.bondFrom(n), bto = mol.bondTo(n);
@@ -647,7 +651,7 @@ export class MDLMOLWriter
 				else if (Vec.equals(qbond, [-1, 1])) type = 6; // the "single or aromatic" type
 				else if (Vec.equals(qbond, [-1, 2])) type = 7; // the "double or aromatic" type
 				else if (Vec.equals(qbond, [-1, 0, 1, 2, 3])) type = 8; // the "double or aromatic" type
-				else if (type == 0) 
+				else if (type == 0)
 				{
 					if (!maskHBond[n - 1])
 						type = 9; // the "coordination" type

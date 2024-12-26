@@ -16,7 +16,7 @@ import {Vec} from '../util/Vec';
 import {Chemistry} from './Chemistry';
 import {CoordUtil} from './CoordUtil';
 import {Molecule} from './Molecule';
-import {MolUtil} from './MolUtil';
+import {MolUtil} from '../mol/MolUtil';
 
 /*
 	SketchUtil: static methods for calculating properties of molecules, typically of the geometric variety.

@@ -11,9 +11,9 @@
 */
 
 import {Experiment, ExperimentEntry} from '../aspect/Experiment';
-import {DataSheetStream} from '../data/DataSheetStream';
-import {MolUtil} from '../data/MolUtil';
-import {QuantityCalc, QuantityCalcComp, QuantityCalcStat} from '../data/QuantityCalc';
+import {DataSheetStream} from '../io/DataSheetStream';
+import {MolUtil} from '../mol/MolUtil';
+import {QuantityCalc, QuantityCalcComp, QuantityCalcStat} from '../rxn/QuantityCalc';
 import {ArrangeExperiment} from '../gfx/ArrangeExperiment';
 import {OutlineMeasurement} from '../gfx/ArrangeMeasurement';
 import {ArrangeMolecule} from '../gfx/ArrangeMolecule';

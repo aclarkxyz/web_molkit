@@ -10,14 +10,10 @@
 	[PKG=webmolkit]
 */
 
-///<reference path='../../src/util/util.ts'/>
-///<reference path='../../src/util/Vec.ts'/>
-///<reference path='../../src/gfx/AxisLabeller.ts'/>
-///<reference path='Validation.ts'/>
-
-import {AxisLabeller} from '../../src/gfx/AxisLabeller';
-import {Vec} from '../../src/util/Vec';
+import {Vec} from '@wmk/util/Vec';
 import {Validation} from './Validation';
+import {AxisLabeller} from '@wmk/gfx/AxisLabeller';
+
 
 /*
     Headless validation: basic tests - simple things like vector operators and common utilities.

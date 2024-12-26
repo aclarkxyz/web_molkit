@@ -15,7 +15,7 @@ import {Chemistry} from './Chemistry';
 import {CoordUtil} from './CoordUtil';
 import {Graph} from './Graph';
 import {Molecule} from './Molecule';
-import {PolymerBlock} from './PolymerBlock';
+import {PolymerBlock} from '../mol/PolymerBlock';
 import {SketchUtil} from './SketchUtil';
 
 /*

@@ -10,10 +10,10 @@
 	[PKG=webmolkit]
 */
 
-import {DataSheet, DataSheetColumn} from '../data/DataSheet';
-import {Molecule} from '../data/Molecule';
-import {MoleculeStream} from '../data/MoleculeStream';
-import {MolUtil} from '../data/MolUtil';
+import {DataSheet, DataSheetColumn} from '../ds/DataSheet';
+import {Molecule} from '../mol/Molecule';
+import {MoleculeStream} from '../io/MoleculeStream';
+import {MolUtil} from '../mol/MolUtil';
 import {OutlineMeasurement} from '../gfx/ArrangeMeasurement';
 import {ArrangeMolecule} from '../gfx/ArrangeMolecule';
 import {DrawMolecule} from '../gfx/DrawMolecule';

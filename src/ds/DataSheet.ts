@@ -12,7 +12,7 @@
 
 import {deepClone, safeFloat, safeInt} from '../util/util';
 import {Vec} from '../util/Vec';
-import {Molecule} from './Molecule';
+import {Molecule} from '../mol/Molecule';
 
 /*
 	Wraps an object representation of a datasheet with access functions that are analogous to the Java com.mmi.core.ds.DataSheet class.

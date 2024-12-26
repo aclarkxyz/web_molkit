@@ -10,7 +10,7 @@
     [PKG=webmolkit]
 */
 
-import {Molecule} from '../data/Molecule';
+import {Molecule} from '../mol/Molecule';
 import {GeomUtil} from '../util/Geom';
 import {angleDiff, DEGRAD, invZ, norm2_xy, norm_xy} from '../util/util';
 import {Vec} from '../util/Vec';

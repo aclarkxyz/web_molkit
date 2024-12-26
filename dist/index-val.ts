@@ -1,4 +1,4 @@
-//export * from './index-src';
+export * from './index-src';
 
 export * from '../val/src/Validation';
 export * from '../val/src/ValidationHeadlessBasic';

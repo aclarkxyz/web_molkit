@@ -15,31 +15,13 @@ export * from '../src/calc/CircularFingerprints';
 export * from '../src/calc/ResonanceRemover';
 
 export * from '../src/data/AbbrevContainer';
-export * from '../src/data/BondArtifact';
-export * from '../src/data/Chemistry';
-export * from '../src/data/CoordUtil';
-export * from '../src/data/DataSheet';
-export * from '../src/data/DataSheetStream';
-export * from '../src/data/DotPath';
-export * from '../src/data/ExperimentMeta';
-export * from '../src/data/ForeignMolecule';
 export * from '../src/data/FormatList';
-export * from '../src/data/Graph';
-export * from '../src/data/MDLReader';
-export * from '../src/data/MDLWriter';
-export * from '../src/data/MetaMolecule';
-export * from '../src/data/MolUtil';
-export * from '../src/data/Molecule';
-export * from '../src/data/MoleculeStream';
 export * from '../src/data/OntologyTree';
-export * from '../src/data/PolymerBlock';
-export * from '../src/data/QuantityCalc';
-export * from '../src/data/QueryUtil';
-export * from '../src/data/SketchUtil';
-export * from '../src/data/Stereochemistry';
 
 export * from '../src/dialog/Dialog';
 export * from '../src/dialog/EditCompound';
+
+export * from '../src/ds/DataSheet';
 
 export * from '../src/gfx/ArrangeExperiment';
 export * from '../src/gfx/ArrangeMeasurement';
@@ -50,6 +32,28 @@ export * from '../src/gfx/DrawMolecule';
 export * from '../src/gfx/FontData';
 export * from '../src/gfx/MetaVector';
 export * from '../src/gfx/Rendering';
+
+export * from '../src/io/DataSheetStream';
+export * from '../src/io/MDLReader';
+export * from '../src/io/MDLWriter';
+export * from '../src/io/MoleculeStream';
+
+export * from '../src/mol/BondArtifact';
+export * from '../src/mol/Chemistry';
+export * from '../src/mol/CoordUtil';
+export * from '../src/mol/DotPath';
+export * from '../src/mol/ForeignMolecule';
+export * from '../src/mol/Graph';
+export * from '../src/mol/MetaMolecule';
+export * from '../src/mol/MolUtil';
+export * from '../src/mol/Molecule';
+export * from '../src/mol/PolymerBlock';
+export * from '../src/mol/QueryUtil';
+export * from '../src/mol/SketchUtil';
+export * from '../src/mol/Stereochemistry';
+
+export * from '../src/rxn/ExperimentMeta';
+export * from '../src/rxn/QuantityCalc';
 
 export * from '../src/sketcher/CommandBank';
 export * from '../src/sketcher/ContextSketch';

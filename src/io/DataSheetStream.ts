@@ -12,8 +12,8 @@
 
 import {deepClone, findNode, findNodes, nodeText} from '../util/util';
 import {XML} from '../util/XML';
-import {DataSheet, DataSheetColumn} from './DataSheet';
-import {Molecule} from './Molecule';
+import {DataSheet, DataSheetColumn} from '../ds/DataSheet';
+import {Molecule} from '../mol/Molecule';
 import {MoleculeStream} from './MoleculeStream';
 
 /*

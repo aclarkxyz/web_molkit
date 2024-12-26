@@ -11,9 +11,9 @@
 */
 
 import {AbbrevContainer} from '../data/AbbrevContainer';
-import {DataSheet, DataSheetColumn} from '../data/DataSheet';
-import {DataSheetStream} from '../data/DataSheetStream';
-import {MolUtil} from '../data/MolUtil';
+import {DataSheet, DataSheetColumn} from '../ds/DataSheet';
+import {DataSheetStream} from '../io/DataSheetStream';
+import {MolUtil} from '../mol/MolUtil';
 import {OutlineMeasurement} from '../gfx/ArrangeMeasurement';
 import {ArrangeMolecule} from '../gfx/ArrangeMolecule';
 import {DrawMolecule} from '../gfx/DrawMolecule';

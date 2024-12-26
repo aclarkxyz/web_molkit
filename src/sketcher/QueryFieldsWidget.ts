@@ -10,8 +10,8 @@
 	[PKG=webmolkit]
 */
 
-import {Molecule} from '../data/Molecule';
-import {QueryUtil} from '../data/QueryUtil';
+import {Molecule} from '../mol/Molecule';
+import {QueryUtil} from '../mol/QueryUtil';
 import {OptionList} from '../ui/OptionList';
 import {Widget} from '../ui/Widget';
 import {dom, DOM} from '../util/dom';

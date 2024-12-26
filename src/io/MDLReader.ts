@@ -12,15 +12,15 @@
 
 import {ResonanceRemover} from '../calc/ResonanceRemover';
 import {Vec} from '../util/Vec';
-import {BondArtifact} from './BondArtifact';
-import {CoordUtil} from './CoordUtil';
-import {DataSheet, DataSheetColumn} from './DataSheet';
-import {ForeignMolecule, ForeignMoleculeTemplateDefn, ForeignMoleculeTransient} from './ForeignMolecule';
-import {Molecule} from './Molecule';
-import {MolUtil} from './MolUtil';
-import {PolymerBlock, PolymerBlockConnectivity, PolymerBlockUnit} from './PolymerBlock';
-import {QueryUtil} from './QueryUtil';
-import {StereoGroup} from './StereoGroup';
+import {BondArtifact} from '../mol/BondArtifact';
+import {CoordUtil} from '../mol/CoordUtil';
+import {DataSheet, DataSheetColumn} from '../ds/DataSheet';
+import {ForeignMolecule, ForeignMoleculeTemplateDefn, ForeignMoleculeTransient} from '../mol/ForeignMolecule';
+import {Molecule} from '../mol/Molecule';
+import {MolUtil} from '../mol/MolUtil';
+import {PolymerBlock, PolymerBlockConnectivity, PolymerBlockUnit} from '../mol/PolymerBlock';
+import {QueryUtil} from '../mol/QueryUtil';
+import {StereoGroup} from '../mol/StereoGroup';
 
 /* eslint-disable key-spacing */
 

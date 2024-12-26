@@ -12,15 +12,15 @@
 
 ///<reference path='../ui/Widget.ts'/>
 
-import {Chemistry} from '../data/Chemistry';
-import {CoordUtil} from '../data/CoordUtil';
-import {MetaMolecule} from '../data/MetaMolecule';
-import {Molecule} from '../data/Molecule';
-import {MolUtil} from '../data/MolUtil';
-import {PolymerBlock, POLYMERBLOCK_SPECIAL_UNCAPPED, PolymerBlockConnectivity, PolymerBlockUnit} from '../data/PolymerBlock';
-import {QueryTypeBond, QueryUtil} from '../data/QueryUtil';
-import {GuidelineSprout, SketchUtil} from '../data/SketchUtil';
-import {Stereochemistry} from '../data/Stereochemistry';
+import {Chemistry} from '../mol/Chemistry';
+import {CoordUtil} from '../mol/CoordUtil';
+import {MetaMolecule} from '../mol/MetaMolecule';
+import {Molecule} from '../mol/Molecule';
+import {MolUtil} from '../mol/MolUtil';
+import {PolymerBlock, POLYMERBLOCK_SPECIAL_UNCAPPED, PolymerBlockConnectivity, PolymerBlockUnit} from '../mol/PolymerBlock';
+import {QueryTypeBond, QueryUtil} from '../mol/QueryUtil';
+import {GuidelineSprout, SketchUtil} from '../mol/SketchUtil';
+import {Stereochemistry} from '../mol/Stereochemistry';
 import {ArrangeMeasurement} from '../gfx/ArrangeMeasurement';
 import {APoint, ArrangeMolecule} from '../gfx/ArrangeMolecule';
 import {DrawMolecule} from '../gfx/DrawMolecule';

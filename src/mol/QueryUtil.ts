@@ -12,7 +12,7 @@
 
 import {Vec} from '../util/Vec';
 import {Molecule} from './Molecule';
-import {MolUtil} from './MolUtil';
+import {MolUtil} from '../mol/MolUtil';
 
 /*
 	Utilities for getting & setting query features, for atoms and bonds. These are all stored within the reserved "q"

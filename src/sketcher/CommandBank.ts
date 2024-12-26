@@ -12,8 +12,8 @@
 
 ///<reference path='../ui/ButtonBank.ts'/>
 
-import {Molecule} from '../data/Molecule';
-import {Geometry} from '../data/SketchUtil';
+import {Molecule} from '../mol/Molecule';
+import {Geometry} from '../mol/SketchUtil';
 import {ButtonBank, ButtonBankItem} from '../ui/ButtonBank';
 import {KeyCode} from '../util/util';
 import {ActivityType, MoleculeActivity} from './MoleculeActivity';

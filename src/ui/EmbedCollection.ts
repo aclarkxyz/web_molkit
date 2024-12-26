@@ -12,9 +12,9 @@
 
 import {Aspect} from '../aspect/Aspect';
 import {AspectList} from '../aspect/AspectList';
-import {DataSheet, DataSheetColumn} from '../data/DataSheet';
-import {DataSheetStream} from '../data/DataSheetStream';
-import {MDLSDFReader} from '../data/MDLReader';
+import {DataSheet, DataSheetColumn} from '../ds/DataSheet';
+import {DataSheetStream} from '../io/DataSheetStream';
+import {MDLSDFReader} from '../io/MDLReader';
 import {OutlineMeasurement} from '../gfx/ArrangeMeasurement';
 import {ArrangeMolecule} from '../gfx/ArrangeMolecule';
 import {DrawMolecule} from '../gfx/DrawMolecule';

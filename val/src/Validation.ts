@@ -10,7 +10,7 @@
 	[PKG=webmolkit]
 */
 
-import {yieldDOM} from '../../src/util/util';
+import {yieldDOM} from '@wmk/util/util';
 
 /*
 	Storage class for a sequence of tests. Use pattern: inherit the class, and add each of the tests (callback functions) in the constructor; hand over the 

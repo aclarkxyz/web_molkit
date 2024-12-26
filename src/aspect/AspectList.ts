@@ -10,7 +10,7 @@
 	[PKG=webmolkit]
 */
 
-import {DataSheet} from '../data/DataSheet';
+import {DataSheet} from '../ds/DataSheet';
 import {Aspect} from './Aspect';
 
 /*

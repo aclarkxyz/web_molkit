@@ -11,10 +11,10 @@
 */
 
 import {ExperimentComponent, ExperimentComponentType, ExperimentEntry} from '../aspect/Experiment';
-import {ExperimentMeta, ExperimentMetaApplic} from '../data/ExperimentMeta';
-import {Molecule} from '../data/Molecule';
-import {MolUtil} from '../data/MolUtil';
-import {QuantityCalc} from '../data/QuantityCalc';
+import {ExperimentMeta, ExperimentMetaApplic} from '../rxn/ExperimentMeta';
+import {Molecule} from '../mol/Molecule';
+import {MolUtil} from '../mol/MolUtil';
+import {QuantityCalc} from '../rxn/QuantityCalc';
 import {Box, Pos, Size} from '../util/Geom';
 import {realEqual} from '../util/util';
 import {Vec} from '../util/Vec';

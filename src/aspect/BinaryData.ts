@@ -10,8 +10,8 @@
     [PKG=webmolkit]
 */
 
-import {DataSheet, DataSheetColumn} from '../data/DataSheet';
-import {MoleculeStream} from '../data/MoleculeStream';
+import {DataSheet, DataSheetColumn} from '../ds/DataSheet';
+import {MoleculeStream} from '../io/MoleculeStream';
 import {deepClone} from '../util/util';
 import {Aspect} from './Aspect';
 import {registerAspect} from './AspectList';

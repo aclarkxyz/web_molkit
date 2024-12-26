@@ -14,7 +14,7 @@ import {angleDiff, angleNorm, DEGRAD, norm2_xy, TWOPI} from '../util/util';
 import {Vec} from '../util/Vec';
 import {Graph} from './Graph';
 import {Molecule} from './Molecule';
-import {MolUtil} from './MolUtil';
+import {MolUtil} from '../mol/MolUtil';
 
 /*
 	Low level utility functions for the manipulation of molecular coordinates. These functions are fairly
