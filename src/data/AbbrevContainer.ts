@@ -37,24 +37,6 @@ import dsAminoAcids from '@reswmk/data/templates/aminoacids.ds';
 import dsBiomolecules from '@reswmk/data/templates/biomolecules.ds';
 import dsSaccharides from '@reswmk/data/templates/saccharides.ds';
 
-/*export const TEMPLATE_FILES =
-[
-	'rings',
-	'termgrp',
-	'funcgrp',
-	'protgrp',
-	'nonplrings',
-	'largerings',
-	'crownethers',
-	'ligmonodent',
-	'ligbident',
-	'ligtrident',
-	'ligmultident',
-	'cagecmplx',
-	'aminoacids',
-	'biomolecules',
-	'saccharides'
-];*/
 const TEMPLATE_SOURCE:Record<string, string> =
 {
 	'rings': dsRings,

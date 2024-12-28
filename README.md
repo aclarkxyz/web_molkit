@@ -98,7 +98,7 @@ $ npm i webmolkit
 The bare minimum `main.js` file creates the sketcher window:
 
 ```
-const { app, BrowserWindow } = require('electron');
+const {app, BrowserWindow} = require('electron');
 
 function createWindow()
 {

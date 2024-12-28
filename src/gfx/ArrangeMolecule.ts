@@ -125,7 +125,8 @@ export class ArrangeMolecule
 
 	// bond artifacts: by default they are derived automatically, but can also be disabled; these properties are also used to
 	// override the default rendering of atom/bond properties
-	private wantArtifacts = true;
+	private wantArtifacts = true; // turn this off to not draw things like arenes and resonance
+	private wantCrossings = true; // turn this off to prevent crossed bonds from doing the over/under segmentation
 	private artifacts:BondArtifact = null;
 	private bondOrder:number[] = []; // replacement bond orders; special case: -1 for do-not-draw
 	private atomCharge:number[] = [];
@@ -179,9 +180,12 @@ export class ArrangeMolecule
 	public getScale():number {return this.scale;} // may be different from measure.scale() if modified after layout
 
 	// bond artifacts: can decide whether they're to be derived, or provide them already
-	public setWantArtifacts(want:boolean) {this.wantArtifacts = want;}
+	public setWantArtifacts(want:boolean):void {this.wantArtifacts = want;}
 	public getArtifacts():BondArtifact {return this.artifacts;}
 	public setArtifacts(artifacts:BondArtifact):void {this.artifacts = artifacts;}
+
+	// want line crossing resolution
+	public setWantCrossings(want:boolean):void {this.wantCrossings = want;}
 
 	// the action method: call this before accessing any of the resultant data
 	public arrange():void
@@ -540,12 +544,15 @@ export class ArrangeMolecule
 		}
 
 		// perform a pseudo-embedding of the structure to resolve line-crossings
-		let emb = new PseudoEmbedding(mol);
-		emb.calculateCrossings();
-		for (let cross of emb.crossings)
+		if (this.wantCrossings)
 		{
-			if (cross.higher == 1) this.resolveLineCrossings(cross.bond1, cross.bond2);
-			else if (cross.higher == 2) this.resolveLineCrossings(cross.bond2, cross.bond1);
+			let emb = new PseudoEmbedding(mol);
+			emb.calculateCrossings();
+			for (let cross of emb.crossings)
+			{
+				if (cross.higher == 1) this.resolveLineCrossings(cross.bond1, cross.bond2);
+				else if (cross.higher == 2) this.resolveLineCrossings(cross.bond2, cross.bond1);
+			}
 		}
 
 		// create polymer brackets

@@ -7685,6 +7685,7 @@ class ArrangeMolecule {
         this.space = [];
         this.unsplitLines = null;
         this.wantArtifacts = true;
+        this.wantCrossings = true;
         this.artifacts = null;
         this.bondOrder = [];
         this.atomCharge = [];
@@ -7701,6 +7702,7 @@ class ArrangeMolecule {
     setWantArtifacts(want) { this.wantArtifacts = want; }
     getArtifacts() { return this.artifacts; }
     setArtifacts(artifacts) { this.artifacts = artifacts; }
+    setWantCrossings(want) { this.wantCrossings = want; }
     arrange() {
         const { mol, measure, policy, effects } = this;
         this.scale = measure.scale();
@@ -8002,13 +8004,15 @@ class ArrangeMolecule {
                 this.delocalisedAnnotation(arene.atoms, this.artifactCharge.get(arene), this.artifactUnpaired.get(arene));
             }
         }
-        let emb = new _wmk_mol_PseudoEmbedding__WEBPACK_IMPORTED_MODULE_0__.PseudoEmbedding(mol);
-        emb.calculateCrossings();
-        for (let cross of emb.crossings) {
-            if (cross.higher == 1)
-                this.resolveLineCrossings(cross.bond1, cross.bond2);
-            else if (cross.higher == 2)
-                this.resolveLineCrossings(cross.bond2, cross.bond1);
+        if (this.wantCrossings) {
+            let emb = new _wmk_mol_PseudoEmbedding__WEBPACK_IMPORTED_MODULE_0__.PseudoEmbedding(mol);
+            emb.calculateCrossings();
+            for (let cross of emb.crossings) {
+                if (cross.higher == 1)
+                    this.resolveLineCrossings(cross.bond1, cross.bond2);
+                else if (cross.higher == 2)
+                    this.resolveLineCrossings(cross.bond2, cross.bond1);
+            }
         }
         let polymers = new _mol_PolymerBlock__WEBPACK_IMPORTED_MODULE_4__.PolymerBlock(mol);
         for (let id of polymers.getIDList())

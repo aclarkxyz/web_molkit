@@ -23,7 +23,7 @@ import {MoleculeStream} from '../io/MoleculeStream';
 	representation.
 */
 
-class Atom
+export class Atom
 {
 	public element:string;
 	public x:number;
@@ -38,7 +38,7 @@ class Atom
 	public transient:string[];
 }
 
-class Bond
+export class Bond
 {
 	public from:number;
 	public to:number;
@@ -91,9 +91,6 @@ export class Molecule
 
 	public clone():Molecule
 	{
-		/*let dup = Molecule.fromString(this.toString());
-		dup.keepTransient = this.keepTransient;*/
-
 		let dup = new Molecule();
 		dup.atoms = deepClone(this.atoms);
 		dup.bonds = deepClone(this.bonds);
@@ -137,6 +134,8 @@ export class Molecule
 	}
 
 	public get numAtoms():number {return this.atoms.length;}
+
+	// fetches the atom definition: this should be treated as read-only
 	public getAtom(idx:number):Atom
 	{
 		if (idx < 1 || idx > this.atoms.length)
@@ -156,6 +155,8 @@ export class Molecule
 	public atomTransient(idx:number):string[] {return this.getAtom(idx).transient.slice(0);}
 
 	public get numBonds():number {return this.bonds.length;}
+
+	// fetches the atom definition: this should be treated as read-only
 	public getBond(idx:number):Bond
 	{
 		if (idx < 1 || idx > this.bonds.length)
@@ -589,6 +590,125 @@ export class Molecule
 	public appendBondTransient(bond:number, trans:string):void
 	{
 		this.getBond(bond).transient.push(trans);
+	}
+
+	// getting atom & bond information in cloned form, and also setting from passed object; note that because of the cloning operation,
+	// this does add a bit of overhead, so it is not necessarily recommended for rate limiting steps
+	public getAtomCloned(idx:number):Atom {return deepClone(this.getAtom(idx));}
+	public getBondCloned(idx:number):Bond {return deepClone(this.getBond(idx));}
+	public setAtom(idx:number, atom:Atom):void
+	{	
+		if (!atom) return;
+		let curr = this.getAtom(idx);
+		if (atom.element != curr.element) this.setAtomElement(idx, atom.element);
+		if (atom.x != curr.x) this.setAtomX(idx, atom.x);
+		if (atom.y != curr.y) this.setAtomY(idx, atom.y);
+		if (atom.z != curr.z) this.setAtomZ(idx, atom.z);
+		if (atom.charge != curr.charge) this.setAtomCharge(idx, atom.charge);
+		if (atom.unpaired != curr.unpaired) this.setAtomUnpaired(idx, atom.unpaired);
+		if (atom.isotope != curr.isotope) this.setAtomIsotope(idx, atom.isotope);
+		if (atom.hExplicit != curr.hExplicit) this.setAtomHExplicit(idx, atom.hExplicit);
+		if (atom.mapNum != curr.mapNum) this.setAtomMapNum(idx, atom.mapNum);
+		if (!Vec.equals(atom.extra, curr.extra)) this.setAtomExtra(idx, atom.extra);
+		if (!Vec.equals(atom.transient, curr.transient)) this.setAtomTransient(idx, atom.transient);
+	}
+	public setBond(idx:number, bond:Bond):void
+	{
+		if (bond == null) return;
+		let curr = this.getBond(idx);
+		if (bond.from != curr.from) this.setBondFrom(idx, bond.from);
+		if (bond.to != curr.to) this.setBondTo(idx, bond.to);
+		if (bond.order != curr.order) this.setBondOrder(idx, bond.order);
+		if (bond.type != curr.type) this.setBondType(idx, bond.type);
+		if (!Vec.equals(bond.extra, curr.extra)) this.setBondExtra(idx, bond.extra);
+		if (!Vec.equals(bond.transient, curr.transient)) this.setBondTransient(idx, bond.transient);
+	}
+
+	// modify some or all of the atoms or bonds; note that the passed object has been cloned, so the callback function can modify the content and
+	// return it; a returned value of same or null means make no change; there is some overhead for the object cloning, so avoid for rate limiting steps
+	public modifyAtoms(lambda:(idx:number, atom:Atom) => Atom)
+	{
+		for (let n = 1; n <= this.numAtoms; n++) 
+		{
+			var mod = lambda(n, this.getAtomCloned(n));
+			if (mod != null) this.setAtom(n, mod);
+		}
+	}
+	public modifyAtomsIndices(atomIndices:number[], lambda:(idx:number, atom:Atom) => Atom)
+	{
+		for (let n of atomIndices)
+		{
+			var mod = lambda(n, this.getAtomCloned(n));
+			if (mod != null) this.setAtom(n, mod);
+		}
+	}
+	public modifyBonds(lambda:(idx:number, bond:Bond) => Bond)
+	{
+		for (let n = 1; n <= this.numBonds; n++) 
+		{
+			var mod = lambda(n, this.getBondCloned(n));
+			if (mod != null) this.setBond(n, mod);
+		}
+	}
+	public modifyBondsIndices(bondIndices:number[], lambda:(idx:number, bond:Bond) => Bond)
+	{
+		for (let n of bondIndices)
+		{
+			var mod = lambda(n, this.getBondCloned(n));
+			if (mod != null) this.setBond(n, mod);
+		}
+	}
+
+	// locate atom or bond that matches criteria; note that the object passed through is not cloned, so do not modify it
+	public findAtomMatch(lambda:(atom:Atom) => boolean):number
+	{
+		for (let n = 1; n <= this.numAtoms; n++) if (lambda(this.getAtom(n))) return n;
+		return 0;
+	}
+	public findBondMatch(lambda:(bond:Bond) => boolean):number
+	{
+		for (let n = 1; n <= this.numBonds; n++) if (lambda(this.getBond(n))) return n;
+		return 0;
+	}
+	public findAllAtoms(lambda:(atom:Atom) => boolean):number[]
+	{
+		let indices:number[] = [];
+		for (let n = 1; n <= this.numAtoms; n++) if (lambda(this.getAtom(n))) indices.push(n);
+		return indices;
+	}
+	public findAllBonds(lambda:(bond:Bond) => boolean):number[]
+	{
+		let indices:number[] = [];
+		for (let n = 1; n <= this.numBonds; n++) if (lambda(this.getBond(n))) indices.push(n);
+		return indices;
+	}
+
+	// allows atoms or bonds to be mapped into some other datastructure; note that the object passed through is not cloned, so do not modify it
+	public mapAtoms<T>(lambda:(atom:Atom) => T):T[]
+	{
+		let ret:T[] = new Array(this.numAtoms);
+		for (let n = 1; n <= this.numAtoms; n++) ret[n - 1] = lambda(this.getAtom(n));
+		return ret;
+	}
+	public mapBonds<T>(lambda:(bond:Bond) => T):T[]
+	{
+		let ret:T[] = new Array(this.numBonds);
+		for (let n = 1; n <= this.numBonds; n++) ret[n - 1] = lambda(this.getBond(n));
+		return ret;
+	}
+	public mapAtomsIndices<T>(atomIndices:number[], lambda:(atom:Atom) => T):T[]
+	{
+		let ret:T[] = new Array(atomIndices.length);
+		let pos = 0;
+		for (let n of atomIndices) ret[pos++] = lambda(this.getAtom(n));
+		return ret;
+	}
+	public mapBondsIndices<T>(bondIndices:number[], lambda:(bond:Bond) => T):T[]
+	{
+		let ret:T[] = new Array(bondIndices.length);
+		let pos = 0;
+		for (let n of bondIndices) ret[pos++] = lambda(this.getBond(n));
+		return ret;
 	}
 
 	// ------------ private methods ------------
