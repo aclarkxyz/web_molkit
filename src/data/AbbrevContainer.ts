@@ -80,18 +80,16 @@ export class AbbrevContainer
 	public static getTemplateData(key:string):string {return TEMPLATE_SOURCE[key];}
 
 	// needs to be called once per lifecycle, in order to ensure that the necessary resources are loaded
-	public static needsSetup() {return !this.main;}
-	public static async setupData()
+	public static needsSetup():boolean {return !this.main;}
+	public static async setupData():Promise<void>
 	{
 		if (this.main) return;
-
-		// if (!Theme.RESOURCE_URL) throw ('RPC resource URL not defined.');
 
 		this.main = new AbbrevContainer();
 
 		for (let key of this.getTemplateKeys())
 		{
-			let dsstr =  this.getTemplateData(key);
+			let dsstr = this.getTemplateData(key);
 			let ds = DataSheetStream.readXML(dsstr);
 
 			let colMol = ds.firstColOfType(DataSheetColumn.Molecule), colAbbrev = ds.findColByName('Abbrev', DataSheetColumn.String);

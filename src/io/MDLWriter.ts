@@ -628,7 +628,6 @@ export class MDLMOLWriter
 				}
 			}
 
-
 			this.lines.push(line);
 		}
 

@@ -1647,6 +1647,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   AspectList: () => (/* reexport safe */ _src_aspect_AspectList__WEBPACK_IMPORTED_MODULE_1__.AspectList),
 /* harmony export */   AssayProvenance: () => (/* reexport safe */ _src_aspect_AssayProvenance__WEBPACK_IMPORTED_MODULE_2__.AssayProvenance),
 /* harmony export */   AssayProvenanceHeader: () => (/* reexport safe */ _src_aspect_AssayProvenance__WEBPACK_IMPORTED_MODULE_2__.AssayProvenanceHeader),
+/* harmony export */   Atom: () => (/* reexport safe */ _src_mol_Molecule__WEBPACK_IMPORTED_MODULE_41__.Atom),
 /* harmony export */   AxisLabeller: () => (/* reexport safe */ _src_gfx_AxisLabeller__WEBPACK_IMPORTED_MODULE_23__.AxisLabeller),
 /* harmony export */   BLineType: () => (/* reexport safe */ _src_gfx_ArrangeMolecule__WEBPACK_IMPORTED_MODULE_22__.BLineType),
 /* harmony export */   BONDARTIFACT_EXTRA_ARENE: () => (/* reexport safe */ _src_mol_BondArtifact__WEBPACK_IMPORTED_MODULE_33__.BONDARTIFACT_EXTRA_ARENE),
@@ -1660,6 +1661,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   BayesianSourceModel: () => (/* reexport safe */ _src_aspect_BayesianSource__WEBPACK_IMPORTED_MODULE_4__.BayesianSourceModel),
 /* harmony export */   BinaryData: () => (/* reexport safe */ _src_aspect_BinaryData__WEBPACK_IMPORTED_MODULE_5__.BinaryData),
 /* harmony export */   BinaryDataField: () => (/* reexport safe */ _src_aspect_BinaryData__WEBPACK_IMPORTED_MODULE_5__.BinaryDataField),
+/* harmony export */   Bond: () => (/* reexport safe */ _src_mol_Molecule__WEBPACK_IMPORTED_MODULE_41__.Bond),
 /* harmony export */   BondArtifact: () => (/* reexport safe */ _src_mol_BondArtifact__WEBPACK_IMPORTED_MODULE_33__.BondArtifact),
 /* harmony export */   Box: () => (/* reexport safe */ _src_util_Geom__WEBPACK_IMPORTED_MODULE_77__.Box),
 /* harmony export */   BuildSMILES: () => (/* reexport safe */ _src_calc_BuildSMILES__WEBPACK_IMPORTED_MODULE_11__.BuildSMILES),
@@ -14721,6 +14723,87 @@ __webpack_require__.r(__webpack_exports__);
 
 
 
+const ESCAPED_CHARS = '\n\t\\,=';
+function escape(str) {
+    let buff = null;
+    for (let n = 0; n < str.length; n++) {
+        let ch = str.charAt(n);
+        let escape = ESCAPED_CHARS.includes(ch), ctrl = ch.charCodeAt(0) < 32;
+        if (buff == null && (escape || ctrl)) {
+            buff = str.substring(0, n);
+        }
+        if (escape) {
+            if (ch == '\n')
+                buff += '\\n';
+            else if (ch == '\t')
+                buff += '\\t';
+            else
+                buff += '\\' + ch;
+        }
+        else if (ctrl) { }
+        else if (buff != null)
+            buff += ch;
+    }
+    return buff !== null && buff !== void 0 ? buff : str;
+}
+function writeKeyVals(keyvals) {
+    let str = '';
+    let multiline = [];
+    for (let kv of keyvals) {
+        if (!kv.includes('\n'))
+            str += ',' + escape(kv);
+        else
+            multiline.push(kv);
+    }
+    str += '\n';
+    for (let kv of multiline) {
+        let lines = kv.trimEnd().split('\n');
+        for (let n = 0; n < lines.length; n++) {
+            str += `${n == 0 ? '.' : ':'}${lines[n]}\n`;
+        }
+    }
+    return str;
+}
+function readNextChunk(line, pos, term, mandatory) {
+    let end = pos, sz = line.length;
+    if (pos >= sz) {
+        if (mandatory)
+            throw new Error('Molecule missing line fragment');
+        return null;
+    }
+    let escaped = false;
+    while (end < sz) {
+        let ch = line.charAt(end);
+        if (ch == '\\') {
+            if (end == sz - 1)
+                throw new Error('Escape character \\ at end of line');
+            escaped = true;
+            end += 2;
+        }
+        else if (ch == term)
+            break;
+        else
+            end++;
+    }
+    if (!escaped)
+        return { str: line.substring(pos, end), pos: end };
+    var str = '';
+    for (let n = pos; n < end; n++) {
+        let ch = line.charAt(n);
+        if (ch == '\\') {
+            ch = line.charAt(++n);
+            if (ch == 'n')
+                str += '\n';
+            else if (ch == 't')
+                str += '\t';
+            else
+                str += ch;
+        }
+        else
+            str += ch;
+    }
+    return { str, pos: end };
+}
 class MoleculeStream {
     static readUnknown(strData) {
         if (strData.startsWith('"')) {
@@ -14742,6 +14825,156 @@ class MoleculeStream {
         return mol;
     }
     static readNative(strData) {
+        if (strData.startsWith('SketchEl!'))
+            return this.readNativeLegacy(strData);
+        let mol = new _mol_Molecule__WEBPACK_IMPORTED_MODULE_2__.Molecule();
+        mol.keepTransient = true;
+        let lines = strData.split(/\r?\n/);
+        let match = lines[0].match(/^Elements\!\((\d+),(\d+)\)$/);
+        if (!match)
+            throw new Error('Not an Elements molecule file.');
+        let numAtoms = parseInt(match[1]), numBonds = parseInt(match[2]);
+        if (!(numAtoms >= 0))
+            throw new Error(`Invalid atom count: ${match[1]}`);
+        if (!(numBonds >= 0))
+            throw new Error(`Invalid bond count: ${match[2]}`);
+        const MSG_PREMATURE = 'Molecule atom content ends prematurely';
+        const MSG_UNEXPECTED = 'Molecule unexpected end tag';
+        const parseIntHard = (str) => {
+            let v = parseInt(str);
+            if (Number.isNaN(v))
+                throw new Error(`Malformed integer: ${str}`);
+            return v;
+        };
+        const parseFloatHard = (str) => {
+            let v = parseFloat(str);
+            if (Number.isNaN(v))
+                throw new Error(`Malformed float: ${str}`);
+            return v;
+        };
+        const applyAtomProperty = (atom, str) => {
+            if (!str)
+                return;
+            let pfx = str.charAt(0);
+            if (pfx == 'z')
+                mol.setAtomZ(atom, parseFloatHard(str.substring(1)));
+            else if (pfx == 'c')
+                mol.setAtomCharge(atom, parseIntHard(str.substring(1)));
+            else if (pfx == 'u')
+                mol.setAtomUnpaired(atom, parseIntHard(str.substring(1)));
+            else if (pfx == 'h')
+                mol.setAtomHExplicit(atom, parseIntHard(str.substring(1)));
+            else if (pfx == 'i')
+                mol.setAtomIsotope(atom, parseIntHard(str.substring(1)));
+            else if (pfx == 'm')
+                mol.setAtomMapNum(atom, parseIntHard(str.substring(1)));
+            else if (pfx == 'y')
+                mol.appendAtomTransient(atom, str);
+            else
+                mol.appendAtomExtra(atom, str);
+        };
+        const applyBondProperty = (bond, str) => {
+            if (!str)
+                return;
+            let pfx = str.charAt(0);
+            if (pfx == 'i')
+                mol.setBondType(bond, _mol_Molecule__WEBPACK_IMPORTED_MODULE_2__.Molecule.BONDTYPE_INCLINED);
+            else if (pfx == 'd')
+                mol.setBondType(bond, _mol_Molecule__WEBPACK_IMPORTED_MODULE_2__.Molecule.BONDTYPE_DECLINED);
+            else if (pfx == 'u')
+                mol.setBondType(bond, _mol_Molecule__WEBPACK_IMPORTED_MODULE_2__.Molecule.BONDTYPE_UNKNOWN);
+            else if (pfx == 'y')
+                mol.appendBondTransient(bond, str);
+            else
+                mol.appendBondExtra(bond, str);
+        };
+        let lnum = 1;
+        for (let n = 1; n <= numAtoms; n++) {
+            if (!lines[lnum])
+                throw new Error(MSG_PREMATURE);
+            let chunkEl = readNextChunk(lines[lnum], 0, '=', true);
+            let chunkX = readNextChunk(lines[lnum], chunkEl.pos + 1, ',', true);
+            let chunkY = readNextChunk(lines[lnum], chunkX.pos + 1, ',', true);
+            let x = parseFloatHard(chunkX.str), y = parseFloatHard(chunkY.str);
+            mol.addAtom(chunkEl.str, x, y);
+            let pos = chunkY.pos + 1;
+            while (true) {
+                var chunk = readNextChunk(lines[lnum], pos, ',', false);
+                if (chunk == null)
+                    break;
+                applyAtomProperty(n, chunk.str);
+                pos = chunk.pos + 1;
+            }
+            lnum++;
+            while (true) {
+                if (!lines[lnum])
+                    throw new Error(MSG_PREMATURE);
+                if (lines[lnum] == '!End') {
+                    if (n == numAtoms && numBonds == 0)
+                        break;
+                    throw new Error(MSG_UNEXPECTED);
+                }
+                if (!lines[lnum].startsWith('.'))
+                    break;
+                var buff = lines[lnum].substring(1);
+                while (true) {
+                    lnum++;
+                    if (!lines[lnum])
+                        throw new Error(MSG_PREMATURE);
+                    if (!lines[lnum].startsWith(':'))
+                        break;
+                    buff += '\n' + lines[lnum].substring(1);
+                }
+                applyAtomProperty(n, buff);
+            }
+        }
+        for (let n = 1; n <= numBonds; n++) {
+            if (!lines[lnum])
+                throw new Error(MSG_PREMATURE);
+            var chunkFrom = readNextChunk(lines[lnum], 0, '-', true);
+            var chunkTo = readNextChunk(lines[lnum], chunkFrom.pos + 1, '=', true);
+            var chunkOrder = readNextChunk(lines[lnum], chunkTo.pos + 1, ',', true);
+            let bfr = parseIntHard(chunkFrom.str), bto = parseIntHard(chunkTo.str), order = parseIntHard(chunkOrder.str);
+            if (bfr < 1 || bfr > numAtoms || bto < 1 || bto > numAtoms || order < 0 || order > 4)
+                throw new Error('Invalid bond specification');
+            mol.addBond(bfr, bto, order);
+            let pos = chunkOrder.pos + 1;
+            while (true) {
+                var chunk = readNextChunk(lines[lnum], pos, ',', false);
+                if (chunk == null)
+                    break;
+                applyBondProperty(n, chunk.str);
+                pos = chunk.pos + 1;
+            }
+            lnum++;
+            while (true) {
+                if (!lines[lnum])
+                    throw new Error(MSG_PREMATURE);
+                if (lines[lnum] == '!End') {
+                    if (n == numBonds)
+                        break;
+                    throw new Error(MSG_UNEXPECTED);
+                }
+                if (!lines[lnum].startsWith('.'))
+                    break;
+                let buff = lines[lnum].substring(1);
+                while (true) {
+                    lnum++;
+                    if (!lines[lnum])
+                        throw new Error(MSG_PREMATURE);
+                    if (!lines[lnum].startsWith(':'))
+                        break;
+                    buff += '\n' + lines[lnum].substring(1);
+                }
+                applyBondProperty(n, buff);
+            }
+        }
+        if (lines[lnum] != '!End')
+            throw new Error('Molecule end tag missing');
+        mol.keepTransient = false;
+        return mol;
+    }
+    static readNativeLegacy(strData) {
         let mol = new _mol_Molecule__WEBPACK_IMPORTED_MODULE_2__.Molecule();
         mol.keepTransient = true;
         let lines = strData.split(/\r?\n/);
@@ -14812,6 +15045,52 @@ class MoleculeStream {
         return mol;
     }
     static writeNative(mol) {
+        if (!this.formatV2Elements)
+            return this.writeNativeLegacy(mol);
+        let bits = [`Elements!(${mol.numAtoms},${mol.numBonds})\n`];
+        const roundedNumber = (v) => {
+            return (Math.round(v * 1E4) * 1E-4).toFixed(4);
+        };
+        for (let n = 1; n <= mol.numAtoms; n++) {
+            let el = mol.atomElement(n), x = roundedNumber(mol.atomX(n)), y = roundedNumber(mol.atomY(n));
+            bits.push(`${escape(el)}=${x},${y}`);
+            let keyvals = [];
+            if (mol.is3D())
+                keyvals.push(`z${roundedNumber(mol.atomZ(n))}`);
+            let chg = mol.atomCharge(n), unp = mol.atomUnpaired(n), hyd = mol.atomHExplicit(n), iso = mol.atomIsotope(n), map = mol.atomMapNum(n);
+            if (chg != 0)
+                keyvals.push(`c${chg}`);
+            if (unp != 0)
+                keyvals.push(`u${unp}`);
+            if (hyd != _mol_Molecule__WEBPACK_IMPORTED_MODULE_2__.Molecule.HEXPLICIT_UNKNOWN)
+                keyvals.push(`h${hyd}`);
+            if (iso != _mol_Molecule__WEBPACK_IMPORTED_MODULE_2__.Molecule.ISOTOPE_NATURAL)
+                keyvals.push(`i${iso}`);
+            if (map > 0)
+                keyvals.push(`m${map}`);
+            keyvals.push(...mol.atomExtra(n));
+            keyvals.push(...mol.atomTransient(n));
+            bits.push(writeKeyVals(keyvals));
+        }
+        for (let n = 1; n <= mol.numBonds; n++) {
+            let bfr = mol.bondFrom(n), bto = mol.bondTo(n), order = mol.bondOrder(n);
+            bits.push(`${bfr}-${bto}=${order}`);
+            let keyvals = [];
+            let typ = mol.bondType(n);
+            if (typ == _mol_Molecule__WEBPACK_IMPORTED_MODULE_2__.Molecule.BONDTYPE_INCLINED)
+                keyvals.push('i');
+            else if (typ == _mol_Molecule__WEBPACK_IMPORTED_MODULE_2__.Molecule.BONDTYPE_DECLINED)
+                keyvals.push('d');
+            else if (typ == _mol_Molecule__WEBPACK_IMPORTED_MODULE_2__.Molecule.BONDTYPE_UNKNOWN)
+                keyvals.push('u');
+            keyvals.push(...mol.bondExtra(n));
+            keyvals.push(...mol.bondTransient(n));
+            bits.push(writeKeyVals(keyvals));
+        }
+        bits.push('!End\n');
+        return bits.join('');
+    }
+    static writeNativeLegacy(mol) {
         let ret = 'SketchEl!(' + mol.numAtoms + ',' + mol.numBonds + ')\n';
         for (let n = 1; n <= mol.numAtoms; n++) {
             let el = mol.atomElement(n), x = mol.atomX(n), y = mol.atomY(n), charge = mol.atomCharge(n), unpaired = mol.atomUnpaired(n);
@@ -14876,6 +15155,8 @@ class MoleculeStream {
         return ret;
     }
 }
+MoleculeStream.formatV2Elements = false;
+
 
 
 /***/ }),
@@ -18079,6 +18360,8 @@ MolUtil.ABBREV_ATTACHMENT = '*';
 
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   Atom: () => (/* binding */ Atom),
+/* harmony export */   Bond: () => (/* binding */ Bond),
 /* harmony export */   Molecule: () => (/* binding */ Molecule)
 /* harmony export */ });
 /* harmony import */ var _util_Geom__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../util/Geom */ "./src/util/Geom.ts");
@@ -18511,7 +18794,7 @@ class Molecule {
                 return -1;
             if (this.atomMapNum(n) > other.atomMapNum(n))
                 return 1;
-            let tx1 = this.atomExtra(n), tx2 = other.atomExtra(n);
+            let tx1 = this.atomExtra(n).map((v) => v.trimEnd()), tx2 = other.atomExtra(n).map((v) => v.trimEnd());
             if (tx1.length < tx2.length)
                 return -1;
             if (tx1.length > tx2.length)
@@ -18521,8 +18804,8 @@ class Molecule {
                     return -1;
                 else if (tx1[i] > tx2[i])
                     return 1;
-            tx1 = this.atomTransient(n);
-            tx2 = other.atomTransient(n);
+            tx1 = this.atomTransient(n).map((v) => v.trimEnd());
+            tx2 = other.atomTransient(n).map((v) => v.trimEnd());
             if (tx1.length < tx2.length)
                 return -1;
             if (tx1.length > tx2.length)
@@ -18594,6 +18877,132 @@ class Molecule {
     }
     appendBondTransient(bond, trans) {
         this.getBond(bond).transient.push(trans);
+    }
+    getAtomCloned(idx) { return (0,_util_util__WEBPACK_IMPORTED_MODULE_1__.deepClone)(this.getAtom(idx)); }
+    getBondCloned(idx) { return (0,_util_util__WEBPACK_IMPORTED_MODULE_1__.deepClone)(this.getBond(idx)); }
+    setAtom(idx, atom) {
+        if (!atom)
+            return;
+        let curr = this.getAtom(idx);
+        if (atom.element != curr.element)
+            this.setAtomElement(idx, atom.element);
+        if (atom.x != curr.x)
+            this.setAtomX(idx, atom.x);
+        if (atom.y != curr.y)
+            this.setAtomY(idx, atom.y);
+        if (atom.z != curr.z)
+            this.setAtomZ(idx, atom.z);
+        if (atom.charge != curr.charge)
+            this.setAtomCharge(idx, atom.charge);
+        if (atom.unpaired != curr.unpaired)
+            this.setAtomUnpaired(idx, atom.unpaired);
+        if (atom.isotope != curr.isotope)
+            this.setAtomIsotope(idx, atom.isotope);
+        if (atom.hExplicit != curr.hExplicit)
+            this.setAtomHExplicit(idx, atom.hExplicit);
+        if (atom.mapNum != curr.mapNum)
+            this.setAtomMapNum(idx, atom.mapNum);
+        if (!_util_Vec__WEBPACK_IMPORTED_MODULE_2__.Vec.equals(atom.extra, curr.extra))
+            this.setAtomExtra(idx, atom.extra);
+        if (!_util_Vec__WEBPACK_IMPORTED_MODULE_2__.Vec.equals(atom.transient, curr.transient))
+            this.setAtomTransient(idx, atom.transient);
+    }
+    setBond(idx, bond) {
+        if (bond == null)
+            return;
+        let curr = this.getBond(idx);
+        if (bond.from != curr.from)
+            this.setBondFrom(idx, bond.from);
+        if (bond.to != curr.to)
+            this.setBondTo(idx, bond.to);
+        if (bond.order != curr.order)
+            this.setBondOrder(idx, bond.order);
+        if (bond.type != curr.type)
+            this.setBondType(idx, bond.type);
+        if (!_util_Vec__WEBPACK_IMPORTED_MODULE_2__.Vec.equals(bond.extra, curr.extra))
+            this.setBondExtra(idx, bond.extra);
+        if (!_util_Vec__WEBPACK_IMPORTED_MODULE_2__.Vec.equals(bond.transient, curr.transient))
+            this.setBondTransient(idx, bond.transient);
+    }
+    modifyAtoms(lambda) {
+        for (let n = 1; n <= this.numAtoms; n++) {
+            var mod = lambda(n, this.getAtomCloned(n));
+            if (mod != null)
+                this.setAtom(n, mod);
+        }
+    }
+    modifyAtomsIndices(atomIndices, lambda) {
+        for (let n of atomIndices) {
+            var mod = lambda(n, this.getAtomCloned(n));
+            if (mod != null)
+                this.setAtom(n, mod);
+        }
+    }
+    modifyBonds(lambda) {
+        for (let n = 1; n <= this.numBonds; n++) {
+            var mod = lambda(n, this.getBondCloned(n));
+            if (mod != null)
+                this.setBond(n, mod);
+        }
+    }
+    modifyBondsIndices(bondIndices, lambda) {
+        for (let n of bondIndices) {
+            var mod = lambda(n, this.getBondCloned(n));
+            if (mod != null)
+                this.setBond(n, mod);
+        }
+    }
+    findAtomMatch(lambda) {
+        for (let n = 1; n <= this.numAtoms; n++)
+            if (lambda(this.getAtom(n)))
+                return n;
+        return 0;
+    }
+    findBondMatch(lambda) {
+        for (let n = 1; n <= this.numBonds; n++)
+            if (lambda(this.getBond(n)))
+                return n;
+        return 0;
+    }
+    findAllAtoms(lambda) {
+        let indices = [];
+        for (let n = 1; n <= this.numAtoms; n++)
+            if (lambda(this.getAtom(n)))
+                indices.push(n);
+        return indices;
+    }
+    findAllBonds(lambda) {
+        let indices = [];
+        for (let n = 1; n <= this.numBonds; n++)
+            if (lambda(this.getBond(n)))
+                indices.push(n);
+        return indices;
+    }
+    mapAtoms(lambda) {
+        let ret = new Array(this.numAtoms);
+        for (let n = 1; n <= this.numAtoms; n++)
+            ret[n - 1] = lambda(this.getAtom(n));
+        return ret;
+    }
+    mapBonds(lambda) {
+        let ret = new Array(this.numBonds);
+        for (let n = 1; n <= this.numBonds; n++)
+            ret[n - 1] = lambda(this.getBond(n));
+        return ret;
+    }
+    mapAtomsIndices(atomIndices, lambda) {
+        let ret = new Array(atomIndices.length);
+        let pos = 0;
+        for (let n of atomIndices)
+            ret[pos++] = lambda(this.getAtom(n));
+        return ret;
+    }
+    mapBondsIndices(bondIndices, lambda) {
+        let ret = new Array(bondIndices.length);
+        let pos = 0;
+        for (let n of bondIndices)
+            ret[pos++] = lambda(this.getBond(n));
+        return ret;
     }
     trashGraph() {
         this.graph = null;
@@ -28118,8 +28527,6 @@ class QueryFieldsWidget extends _ui_Widget__WEBPACK_IMPORTED_MODULE_2__.Widget {
             this.optRingBlock = new _ui_OptionList__WEBPACK_IMPORTED_MODULE_1__.OptionList(['Maybe', 'Yes', 'No']);
             this.optRingBlock.render((0,_util_dom__WEBPACK_IMPORTED_MODULE_3__.dom)('<div/>').appendTo(grid).css({ 'grid-area': `${row} / value` }));
             (0,_util_dom__WEBPACK_IMPORTED_MODULE_3__.dom)('<div># Small Rings</div>').appendTo(grid).css({ 'grid-area': `${++row} / title` });
-            this.inputNumRings = makeInput();
-            (0,_util_dom__WEBPACK_IMPORTED_MODULE_3__.dom)('<div>Num Rings</div>').appendTo(grid).css({ 'grid-area': `${++row} / title` });
             this.inputNumRings = makeInput();
             (0,_util_dom__WEBPACK_IMPORTED_MODULE_3__.dom)('<div>Bond Orders</div>').appendTo(grid).css({ 'grid-area': `${++row} / title` });
             this.inputOrders = makeInput();
@@ -37779,29 +38186,40 @@ class Validation {
         if (condition)
             return;
         this.recentError = message;
-        throw '!';
+        throw new Error('assert condition triggered');
     }
     assertEqual(got, want, message) {
         if (got == want)
             return;
         this.recentError = message;
-        throw '!';
+        if (typeof got == 'string' && typeof want == 'string') {
+            if (!this.recentError)
+                this.recentError = `Compare got [${got}] with want [${want}]`;
+            for (let n = 0; n < Math.min(got.length, want.length); n++)
+                if (got.charAt(n) != want.charAt(n)) {
+                    this.recentError += ` differ at char ${n} (0-based)`;
+                    let frag1 = got.substring(Math.max(0, n - 10), Math.min(got.length, n + 10));
+                    let frag2 = got.substring(Math.max(0, n - 10), Math.min(got.length, n + 10));
+                    this.recentError += ` regions: [${frag1}] vs [${frag2}]`;
+                }
+        }
+        throw new Error('assert equal triggered');
     }
     assertNull(thing, message) {
         if (thing == null)
             return;
         this.recentError = message;
-        throw '!';
+        throw new Error('assert null triggered');
     }
     assertNotNull(thing, message) {
         if (thing != null)
             return;
         this.recentError = message;
-        throw '!';
+        throw new Error('assert not null triggered');
     }
     fail(message) {
         this.recentError = message;
-        throw '!';
+        throw new Error('failure triggered');
     }
 }
 
@@ -37949,6 +38367,7 @@ class ValidationHeadlessMolecule extends _Validation__WEBPACK_IMPORTED_MODULE_1_
         this.add('Circular ECFP6 fingerprints', this.calcFingerprints);
         this.add('Molfile Round-trip', this.molfileRoundTrip);
         this.add('Rendering structures', this.renderingStructures);
+        this.add('Molecule Format', this.moleculeFormat);
     }
     init() {
         return __awaiter(this, void 0, void 0, function* () {
@@ -37961,6 +38380,7 @@ class ValidationHeadlessMolecule extends _Validation__WEBPACK_IMPORTED_MODULE_1_
             this.dsCircular = _wmk_io_DataSheetStream__WEBPACK_IMPORTED_MODULE_3__.DataSheetStream.readXML(yield (0,_wmk_util_util__WEBPACK_IMPORTED_MODULE_2__.readTextURL)(this.urlBase + 'circular.ds' + BUMP));
             this.dsRoundtrip = _wmk_io_DataSheetStream__WEBPACK_IMPORTED_MODULE_3__.DataSheetStream.readXML(yield (0,_wmk_util_util__WEBPACK_IMPORTED_MODULE_2__.readTextURL)(this.urlBase + 'roundtrip.ds' + BUMP));
             this.dsRendering = _wmk_io_DataSheetStream__WEBPACK_IMPORTED_MODULE_3__.DataSheetStream.readXML(yield (0,_wmk_util_util__WEBPACK_IMPORTED_MODULE_2__.readTextURL)(this.urlBase + 'rendering.ds' + BUMP));
+            this.dsFormat = _wmk_io_DataSheetStream__WEBPACK_IMPORTED_MODULE_3__.DataSheetStream.readXML(yield (0,_wmk_util_util__WEBPACK_IMPORTED_MODULE_2__.readTextURL)(this.urlBase + 'formatelements.ds' + BUMP));
         });
     }
     parseSketchEl() {
@@ -38172,6 +38592,39 @@ class ValidationHeadlessMolecule extends _Validation__WEBPACK_IMPORTED_MODULE_1_
             }
         });
     }
+    moleculeFormat() {
+        var _a;
+        return __awaiter(this, void 0, void 0, function* () {
+            const ds = this.dsFormat;
+            let colMol = ds.findColByName('Molecule'), colSerial = ds.findColByName('Serial');
+            let prevFormat = _wmk_io_MoleculeStream__WEBPACK_IMPORTED_MODULE_4__.MoleculeStream.formatV2Elements;
+            _wmk_io_MoleculeStream__WEBPACK_IMPORTED_MODULE_4__.MoleculeStream.formatV2Elements = true;
+            for (let n = 0; n < ds.numRows; n++) {
+                this.context = { row: n + 1, count: ds.numRows, notes: [] };
+                var mol = ds.getMolecule(n, colMol);
+                let wantSerial = ((_a = ds.getString(n, colSerial)) !== null && _a !== void 0 ? _a : '').trim();
+                let gotSerial = _wmk_io_MoleculeStream__WEBPACK_IMPORTED_MODULE_4__.MoleculeStream.writeNative(mol).trim();
+                this.context.notes =
+                    [
+                        'Got serialised:',
+                        `<pre>${gotSerial}</pre>`,
+                        'Want serialised:',
+                        `<pre>${wantSerial}</pre>`,
+                    ];
+                this.assertEqual(gotSerial, wantSerial);
+                let molBack = _wmk_io_MoleculeStream__WEBPACK_IMPORTED_MODULE_4__.MoleculeStream.readNative(gotSerial);
+                this.context.notes =
+                    [
+                        'Reading serialised molfile. Got:',
+                        `<pre>${molBack.toString()}</pre>`,
+                        'Want:',
+                        `<pre>${mol.toString()}</pre>`,
+                    ];
+                this.assertEqual(mol.compareTo(molBack), 0, 'molecules are different');
+            }
+            _wmk_io_MoleculeStream__WEBPACK_IMPORTED_MODULE_4__.MoleculeStream.formatV2Elements = prevFormat;
+        });
+    }
 }
 
 
@@ -38316,7 +38769,7 @@ class WebValExec {
         }
         for (let note of notes !== null && notes !== void 0 ? notes : []) {
             let divItem = (0,_src_util_dom__WEBPACK_IMPORTED_MODULE_0__.dom)('<div/>').appendTo(domNotes);
-            if (note.startsWith('<svg') || note.startsWith('<div'))
+            if (note.startsWith('<svg') || note.startsWith('<div') || note.startsWith('<pre'))
                 divItem.appendHTML(note);
             else
                 divItem.setText(note);
@@ -38403,6 +38856,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   AspectList: () => (/* reexport safe */ _index_src__WEBPACK_IMPORTED_MODULE_0__.AspectList),
 /* harmony export */   AssayProvenance: () => (/* reexport safe */ _index_src__WEBPACK_IMPORTED_MODULE_0__.AssayProvenance),
 /* harmony export */   AssayProvenanceHeader: () => (/* reexport safe */ _index_src__WEBPACK_IMPORTED_MODULE_0__.AssayProvenanceHeader),
+/* harmony export */   Atom: () => (/* reexport safe */ _index_src__WEBPACK_IMPORTED_MODULE_0__.Atom),
 /* harmony export */   AxisLabeller: () => (/* reexport safe */ _index_src__WEBPACK_IMPORTED_MODULE_0__.AxisLabeller),
 /* harmony export */   BLineType: () => (/* reexport safe */ _index_src__WEBPACK_IMPORTED_MODULE_0__.BLineType),
 /* harmony export */   BONDARTIFACT_EXTRA_ARENE: () => (/* reexport safe */ _index_src__WEBPACK_IMPORTED_MODULE_0__.BONDARTIFACT_EXTRA_ARENE),
@@ -38416,6 +38870,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   BayesianSourceModel: () => (/* reexport safe */ _index_src__WEBPACK_IMPORTED_MODULE_0__.BayesianSourceModel),
 /* harmony export */   BinaryData: () => (/* reexport safe */ _index_src__WEBPACK_IMPORTED_MODULE_0__.BinaryData),
 /* harmony export */   BinaryDataField: () => (/* reexport safe */ _index_src__WEBPACK_IMPORTED_MODULE_0__.BinaryDataField),
+/* harmony export */   Bond: () => (/* reexport safe */ _index_src__WEBPACK_IMPORTED_MODULE_0__.Bond),
 /* harmony export */   BondArtifact: () => (/* reexport safe */ _index_src__WEBPACK_IMPORTED_MODULE_0__.BondArtifact),
 /* harmony export */   Box: () => (/* reexport safe */ _index_src__WEBPACK_IMPORTED_MODULE_0__.Box),
 /* harmony export */   BuildSMILES: () => (/* reexport safe */ _index_src__WEBPACK_IMPORTED_MODULE_0__.BuildSMILES),

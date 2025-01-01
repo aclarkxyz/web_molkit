@@ -94,7 +94,7 @@ export class WebValExec
 		for (let note of notes ?? [])
 		{
 			let divItem = dom('<div/>').appendTo(domNotes);
-			if (note.startsWith('<svg') || note.startsWith('<div'))
+			if (note.startsWith('<svg') || note.startsWith('<div') || note.startsWith('<pre'))
 				divItem.appendHTML(note);
 			else
 				divItem.setText(note);

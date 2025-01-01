@@ -33,13 +33,13 @@ export class PseudoEmbedding
 {
 	public bondMask:boolean[] = null; // optional bond mask: setting a bond to false excludes it from consideration
 	public crossings:LineCrossing[] = [];
-	
+
 	// ------------ public methods ------------
 
 	constructor(private mol:Molecule)
 	{
 	}
-	
+
 	// perform the embedding calculation, based on components that involve some number of line-crossings
 	public calculateCrossings():void
 	{
@@ -51,7 +51,7 @@ export class PseudoEmbedding
 		for (let i = 1; i < nb; i++)
 		{
 			if (bondMask && !bondMask[i - 1]) continue;
-			
+
 			let x1 = mol.atomX(mol.bondFrom(i)), y1 = mol.atomY(mol.bondFrom(i));
 			let x2 = mol.atomX(mol.bondTo(i)), y2 = mol.atomY(mol.bondTo(i));
 			let dx = x2 - x1, dy = y2 - y1;
@@ -63,7 +63,7 @@ export class PseudoEmbedding
 			for (let j = i + 1; j <= nb; j++)
 			{
 				if (bondMask && !bondMask[j - 1]) continue;
-				
+
 				let x3 = mol.atomX(mol.bondFrom(j)), y3 = mol.atomY(mol.bondFrom(j));
 				let x4 = mol.atomX(mol.bondTo(j)), y4 = mol.atomY(mol.bondTo(j));
 				dx = x4 - x3;
@@ -75,7 +75,7 @@ export class PseudoEmbedding
 
 				if (GeomUtil.doLineSegsIntersect(x1, y1, x2, y2, x3, y3, x4, y4))
 				{
-					crossings.push({bond1: i, bond2:  j, higher:  0});
+					crossings.push({bond1: i, bond2: j, higher: 0});
 
 					maskCross[mol.bondFrom(i) - 1] = true;
 					maskCross[mol.bondTo(i) - 1] = true;
@@ -84,7 +84,7 @@ export class PseudoEmbedding
 				}
 			}
 		}
-		
+
 		if (crossings.length == 0) return; // nothing to do
 
 		// extend the atom mask to include ring blocks thereof
@@ -92,7 +92,7 @@ export class PseudoEmbedding
 		for (let n = 1; n <= na; n++)
 		{
 			let rblk = mol.atomRingBlock(n);
-			if (rblk > 0 ) crossRblk.add(rblk);
+			if (rblk > 0) crossRblk.add(rblk);
 		}
 		for (let n = 1; n <= na; n++) if (!maskCross[n - 1])
 		{
@@ -110,7 +110,7 @@ export class PseudoEmbedding
 			this.embedComponent(ccgrp[n]);
 		}
 	}
-	
+
 	// ------------ private methods ------------
 
 	// for an incoming mask that specifies some number of atoms, returns a new mask which joins up any connections between
@@ -128,7 +128,7 @@ export class PseudoEmbedding
 		// until no further changes: keep looking for bonds that bridge between mask/not-mask; create a graph with the edge
 		// missing, and see if the not-mask atom is now in a connected component that shares a masked atom; if it is, then
 		// set its mask, because it lies along a path between two disconnected groups
-		
+
 		while (true)
 		{
 			let anything = false;
@@ -164,7 +164,7 @@ export class PseudoEmbedding
 
 			if (!anything) break;
 		}
-		
+
 		return omask;
 	}
 
@@ -185,7 +185,7 @@ export class PseudoEmbedding
 		else return; // do nothing
 
 		let ucount = this.normaliseHeights(z);
-		
+
 		while (ucount < gsz)
 		{
 			this.expandOutward(z, newZ, atoms, amask);
@@ -261,7 +261,7 @@ export class PseudoEmbedding
 
 		return success;
 	}
-	
+
 	// tries to infer up/down from perspective drawing, by elevating atoms with longer bond lengths
 	private seedFromPerspective(atoms:number[], amask:boolean[], z:number[]):boolean
 	{
@@ -292,7 +292,7 @@ export class PseudoEmbedding
 		z[atoms.indexOf(mol.bondTo(bidx))] = 1;
 		return true;
 	}
-	
+
 	// looks for densely-clustered atoms to raise above the rest
 	private seedFromDensity(atoms:number[], amask:boolean[], z:number[]):boolean
 	{
@@ -303,7 +303,7 @@ export class PseudoEmbedding
 		{
 			let x1 = mol.atomX(atoms[i]), y1 = mol.atomY(atoms[i]);
 			let congest = 0;
-			for (let j = 0; j < atoms.length; j++) if (i != j) 
+			for (let j = 0; j < atoms.length; j++) if (i != j)
 				congest += 1.0 / (0.001 + norm2_xy(mol.atomX(atoms[j]) - x1, mol.atomY(atoms[j]) - y1));
 			if (congest > highCongest)
 			{

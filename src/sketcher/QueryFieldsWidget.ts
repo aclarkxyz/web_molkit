@@ -134,9 +134,6 @@ export class QueryFieldsWidget extends Widget
 			dom('<div># Small Rings</div>').appendTo(grid).css({'grid-area': `${++row} / title`});
 			this.inputNumRings = makeInput();
 
-			dom('<div>Num Rings</div>').appendTo(grid).css({'grid-area': `${++row} / title`});
-			this.inputNumRings = makeInput();
-
 			dom('<div>Bond Orders</div>').appendTo(grid).css({'grid-area': `${++row} / title`});
 			this.inputOrders = makeInput();
 

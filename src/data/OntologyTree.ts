@@ -53,7 +53,6 @@ const ONTOLOGY_SOURCE:Record<string, string> =
 	'units': ontoUnits,
 };
 
-
 export interface OntologyTreeTerm
 {
 	uri:string;

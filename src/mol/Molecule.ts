@@ -538,11 +538,11 @@ export class Molecule
 			if (this.atomIsotope(n) < other.atomIsotope(n)) return -1; if (this.atomIsotope(n) > other.atomIsotope(n)) return 1;
 			if (this.atomMapNum(n) < other.atomMapNum(n)) return -1; if (this.atomMapNum(n) > other.atomMapNum(n)) return 1;
 
-			let tx1 = this.atomExtra(n), tx2 = other.atomExtra(n);
+			let tx1 = this.atomExtra(n).map((v) => v.trimEnd()), tx2 = other.atomExtra(n).map((v) => v.trimEnd());
 			if (tx1.length < tx2.length) return -1; if (tx1.length > tx2.length) return 1;
 			for (let i = 0; i < tx1.length; i++) if (tx1[i] < tx2[i]) return -1; else if (tx1[i] > tx2[i]) return 1;
 
-			tx1 = this.atomTransient(n); tx2 = other.atomTransient(n);
+			tx1 = this.atomTransient(n).map((v) => v.trimEnd()); tx2 = other.atomTransient(n).map((v) => v.trimEnd());
 			if (tx1.length < tx2.length) return -1; if (tx1.length > tx2.length) return 1;
 			for (let i = 0; i < tx1.length; i++) if (tx1[i] < tx2[i]) return -1; else if (tx1[i] > tx2[i]) return 1;
 		}
@@ -597,7 +597,7 @@ export class Molecule
 	public getAtomCloned(idx:number):Atom {return deepClone(this.getAtom(idx));}
 	public getBondCloned(idx:number):Bond {return deepClone(this.getBond(idx));}
 	public setAtom(idx:number, atom:Atom):void
-	{	
+	{
 		if (!atom) return;
 		let curr = this.getAtom(idx);
 		if (atom.element != curr.element) this.setAtomElement(idx, atom.element);
@@ -628,7 +628,7 @@ export class Molecule
 	// return it; a returned value of same or null means make no change; there is some overhead for the object cloning, so avoid for rate limiting steps
 	public modifyAtoms(lambda:(idx:number, atom:Atom) => Atom)
 	{
-		for (let n = 1; n <= this.numAtoms; n++) 
+		for (let n = 1; n <= this.numAtoms; n++)
 		{
 			var mod = lambda(n, this.getAtomCloned(n));
 			if (mod != null) this.setAtom(n, mod);
@@ -644,7 +644,7 @@ export class Molecule
 	}
 	public modifyBonds(lambda:(idx:number, bond:Bond) => Bond)
 	{
-		for (let n = 1; n <= this.numBonds; n++) 
+		for (let n = 1; n <= this.numBonds; n++)
 		{
 			var mod = lambda(n, this.getBondCloned(n));
 			if (mod != null) this.setBond(n, mod);

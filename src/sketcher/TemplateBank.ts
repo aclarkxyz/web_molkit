@@ -125,7 +125,7 @@ export class TemplateBank extends ButtonBank
 	{
 		for (let key of AbbrevContainer.getTemplateKeys())
 		{
-			let dsstr =  AbbrevContainer.getTemplateData(key);
+			let dsstr = AbbrevContainer.getTemplateData(key);
 			TemplateBank.resourceList.push(key);
 			TemplateBank.resourceData.push(DataSheetStream.readXML(dsstr));
 		}

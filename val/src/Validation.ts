@@ -125,30 +125,43 @@ export class Validation
 	{
 		if (condition) return;
 		this.recentError = message;
-		throw '!';
+		throw new Error('assert condition triggered');
 	}
 	public assertEqual(got:any, want:any, message?:string):void
 	{
 		if (got == want) return;
 		this.recentError = message;
-		throw '!';
+
+		if (typeof got == 'string' && typeof want == 'string')
+		{
+			if (!this.recentError) this.recentError = `Compare got [${got}] with want [${want}]`;
+			for (let n = 0; n < Math.min(got.length, want.length); n++) if (got.charAt(n) != want.charAt(n))
+			{
+				this.recentError += ` differ at char ${n} (0-based)`;
+				let frag1 = got.substring(Math.max(0, n - 10), Math.min(got.length, n + 10));
+				let frag2 = got.substring(Math.max(0, n - 10), Math.min(got.length, n + 10));
+				this.recentError += ` regions: [${frag1}] vs [${frag2}]`;
+			}
+		}
+
+		throw new Error('assert equal triggered');
 	}
 	public assertNull(thing:any, message?:string)
 	{
 		if (thing == null) return;
 		this.recentError = message;
-		throw '!';
+		throw new Error('assert null triggered');
 	}
 	public assertNotNull(thing:any, message?:string)
 	{
 		if (thing != null) return;
 		this.recentError = message;
-		throw '!';
+		throw new Error('assert not null triggered');
 	}
 	public fail(message?:string):void
 	{
 		this.recentError = message;
-		throw '!';
+		throw new Error('failure triggered');
 	}
 
 	// ------------ private methods ------------

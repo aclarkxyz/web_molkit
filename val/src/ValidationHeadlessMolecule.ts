@@ -42,6 +42,7 @@ export class ValidationHeadlessMolecule extends Validation
 	private dsCircular:DataSheet;
 	private dsRoundtrip:DataSheet;
 	private dsRendering:DataSheet;
+	private dsFormat:DataSheet;
 
 	constructor(private urlBase:string)
 	{
@@ -55,6 +56,7 @@ export class ValidationHeadlessMolecule extends Validation
 		this.add('Circular ECFP6 fingerprints', this.calcFingerprints);
 		this.add('Molfile Round-trip', this.molfileRoundTrip);
 		this.add('Rendering structures', this.renderingStructures);
+		this.add('Molecule Format', this.moleculeFormat);
 	}
 
 	public async init():Promise<void>
@@ -68,6 +70,7 @@ export class ValidationHeadlessMolecule extends Validation
 		this.dsCircular = DataSheetStream.readXML(await readTextURL(this.urlBase + 'circular.ds' + BUMP));
 		this.dsRoundtrip = DataSheetStream.readXML(await readTextURL(this.urlBase + 'roundtrip.ds' + BUMP));
 		this.dsRendering = DataSheetStream.readXML(await readTextURL(this.urlBase + 'rendering.ds' + BUMP));
+		this.dsFormat = DataSheetStream.readXML(await readTextURL(this.urlBase + 'formatelements.ds' + BUMP));
 	}
 
 	public async parseSketchEl():Promise<void>
@@ -283,6 +286,45 @@ export class ValidationHeadlessMolecule extends Validation
 
 			this.assertEqual(gotMnemonic, wantMnemonic, 'mnemonics did not match');
 		}
+	}
+
+	public async moleculeFormat():Promise<void>
+	{
+		const ds = this.dsFormat;
+		let colMol = ds.findColByName('Molecule'), colSerial = ds.findColByName('Serial');
+
+		let prevFormat = MoleculeStream.formatV2Elements;
+		MoleculeStream.formatV2Elements = true;
+
+		for (let n = 0; n < ds.numRows; n++)
+		{
+			this.context = {row: n + 1, count: ds.numRows, notes: []};
+
+			var mol = ds.getMolecule(n, colMol);
+			let wantSerial = (ds.getString(n, colSerial) ?? '').trim()
+			let gotSerial = MoleculeStream.writeNative(mol).trim();
+			
+			this.context.notes =
+			[
+				'Got serialised:',
+				`<pre>${gotSerial}</pre>`,
+				'Want serialised:',
+				`<pre>${wantSerial}</pre>`,
+			];
+			this.assertEqual(gotSerial, wantSerial);
+
+			let molBack = MoleculeStream.readNative(gotSerial);
+			this.context.notes =
+			[
+				'Reading serialised molfile. Got:',
+				`<pre>${molBack.toString()}</pre>`,
+				'Want:',
+				`<pre>${mol.toString()}</pre>`,
+			];
+			this.assertEqual(mol.compareTo(molBack), 0, 'molecules are different');
+		}
+
+		MoleculeStream.formatV2Elements = prevFormat;
 	}
 }
 
