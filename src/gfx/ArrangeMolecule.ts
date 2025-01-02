@@ -10,7 +10,7 @@
 	[PKG=webmolkit]
 */
 
-import {PseudoEmbedding} from '@wmk/mol/PseudoEmbedding';
+import {PseudoEmbedding} from '../mol/PseudoEmbedding';
 import {BondArtifact} from '../mol/BondArtifact';
 import {CoordUtil} from '../mol/CoordUtil';
 import {Molecule} from '../mol/Molecule';

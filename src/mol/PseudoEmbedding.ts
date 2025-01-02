@@ -10,11 +10,11 @@
 	[PKG=webmolkit]
 */
 
-import {GeomUtil} from '@wmk/util/Geom';
 import {Vec} from '../util/Vec';
 import {Molecule} from './Molecule';
 import {Graph} from './Graph';
-import {norm2_xy, norm_xy} from '@wmk/util/util';
+import {GeomUtil} from '../util/Geom';
+import {norm2_xy, norm_xy} from '../util/util';
 
 /*
 	Calculates a "pseudo-embedding" for a molecule, for the purposes of classifying bonds that intersect, by deciding which

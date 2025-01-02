@@ -7605,7 +7605,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   ArrangeMolecule: () => (/* binding */ ArrangeMolecule),
 /* harmony export */   BLineType: () => (/* binding */ BLineType)
 /* harmony export */ });
-/* harmony import */ var _wmk_mol_PseudoEmbedding__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @wmk/mol/PseudoEmbedding */ "./src/mol/PseudoEmbedding.ts");
+/* harmony import */ var _mol_PseudoEmbedding__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../mol/PseudoEmbedding */ "./src/mol/PseudoEmbedding.ts");
 /* harmony import */ var _mol_BondArtifact__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../mol/BondArtifact */ "./src/mol/BondArtifact.ts");
 /* harmony import */ var _mol_CoordUtil__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../mol/CoordUtil */ "./src/mol/CoordUtil.ts");
 /* harmony import */ var _mol_Molecule__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../mol/Molecule */ "./src/mol/Molecule.ts");
@@ -8007,7 +8007,7 @@ class ArrangeMolecule {
             }
         }
         if (this.wantCrossings) {
-            let emb = new _wmk_mol_PseudoEmbedding__WEBPACK_IMPORTED_MODULE_0__.PseudoEmbedding(mol);
+            let emb = new _mol_PseudoEmbedding__WEBPACK_IMPORTED_MODULE_0__.PseudoEmbedding(mol);
             emb.calculateCrossings();
             for (let cross of emb.crossings) {
                 if (cross.higher == 1)
@@ -14832,7 +14832,7 @@ class MoleculeStream {
         let lines = strData.split(/\r?\n/);
         let match = lines[0].match(/^Elements\!\((\d+),(\d+)\)$/);
         if (!match)
-            throw new Error('Not an Elements molecule file.');
+            return null;
         let numAtoms = parseInt(match[1]), numBonds = parseInt(match[2]);
         if (!(numAtoms >= 0))
             throw new Error(`Invalid atom count: ${match[1]}`);
@@ -19541,11 +19541,11 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   PseudoEmbedding: () => (/* binding */ PseudoEmbedding)
 /* harmony export */ });
-/* harmony import */ var _wmk_util_Geom__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @wmk/util/Geom */ "./src/util/Geom.ts");
-/* harmony import */ var _util_Vec__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../util/Vec */ "./src/util/Vec.ts");
-/* harmony import */ var _Molecule__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./Molecule */ "./src/mol/Molecule.ts");
-/* harmony import */ var _Graph__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./Graph */ "./src/mol/Graph.ts");
-/* harmony import */ var _wmk_util_util__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! @wmk/util/util */ "./src/util/util.ts");
+/* harmony import */ var _util_Vec__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../util/Vec */ "./src/util/Vec.ts");
+/* harmony import */ var _Molecule__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./Molecule */ "./src/mol/Molecule.ts");
+/* harmony import */ var _Graph__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./Graph */ "./src/mol/Graph.ts");
+/* harmony import */ var _util_Geom__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../util/Geom */ "./src/util/Geom.ts");
+/* harmony import */ var _util_util__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../util/util */ "./src/util/util.ts");
 
 
 
@@ -19560,7 +19560,7 @@ class PseudoEmbedding {
     calculateCrossings() {
         const { mol, bondMask, crossings } = this;
         let na = mol.numAtoms, nb = mol.numBonds;
-        let maskCross = _util_Vec__WEBPACK_IMPORTED_MODULE_1__.Vec.booleanArray(false, na);
+        let maskCross = _util_Vec__WEBPACK_IMPORTED_MODULE_0__.Vec.booleanArray(false, na);
         for (let i = 1; i < nb; i++) {
             if (bondMask && !bondMask[i - 1])
                 continue;
@@ -19582,7 +19582,7 @@ class PseudoEmbedding {
                 y3 += dy * 0.001;
                 x4 -= dx * 0.001;
                 y4 -= dy * 0.001;
-                if (_wmk_util_Geom__WEBPACK_IMPORTED_MODULE_0__.GeomUtil.doLineSegsIntersect(x1, y1, x2, y2, x3, y3, x4, y4)) {
+                if (_util_Geom__WEBPACK_IMPORTED_MODULE_3__.GeomUtil.doLineSegsIntersect(x1, y1, x2, y2, x3, y3, x4, y4)) {
                     crossings.push({ bond1: i, bond2: j, higher: 0 });
                     maskCross[mol.bondFrom(i) - 1] = true;
                     maskCross[mol.bondTo(i) - 1] = true;
@@ -19606,7 +19606,7 @@ class PseudoEmbedding {
                     maskCross[n - 1] = true;
             }
         let maskComp = this.connectMaskedComponents(maskCross);
-        let g = _Graph__WEBPACK_IMPORTED_MODULE_3__.Graph.fromMoleculeMask(mol, maskComp);
+        let g = _Graph__WEBPACK_IMPORTED_MODULE_2__.Graph.fromMoleculeMask(mol, maskComp);
         let ccgrp = g.calculateComponentGroups();
         for (let n = 0; n < ccgrp.length; n++) {
             for (let i = 0; i < ccgrp[n].length; i++)
@@ -19616,10 +19616,10 @@ class PseudoEmbedding {
     }
     connectMaskedComponents(imask) {
         const { mol } = this;
-        let omask = _util_Vec__WEBPACK_IMPORTED_MODULE_1__.Vec.duplicate(imask);
-        let gmol = _Graph__WEBPACK_IMPORTED_MODULE_3__.Graph.fromMolecule(mol);
+        let omask = _util_Vec__WEBPACK_IMPORTED_MODULE_0__.Vec.duplicate(imask);
+        let gmol = _Graph__WEBPACK_IMPORTED_MODULE_2__.Graph.fromMolecule(mol);
         let na = mol.numAtoms, nb = mol.numBonds;
-        let maskNever = _util_Vec__WEBPACK_IMPORTED_MODULE_1__.Vec.booleanArray(false, na);
+        let maskNever = _util_Vec__WEBPACK_IMPORTED_MODULE_0__.Vec.booleanArray(false, na);
         while (true) {
             let anything = false;
             for (let n = 1; n <= nb; n++) {
@@ -19657,10 +19657,10 @@ class PseudoEmbedding {
     embedComponent(atoms) {
         const { mol, crossings } = this;
         let na = mol.numAtoms, gsz = atoms.length;
-        let amask = _util_Vec__WEBPACK_IMPORTED_MODULE_1__.Vec.booleanArray(false, na);
+        let amask = _util_Vec__WEBPACK_IMPORTED_MODULE_0__.Vec.booleanArray(false, na);
         for (let n = 0; n < gsz; n++)
             amask[atoms[n] - 1] = true;
-        let z = _util_Vec__WEBPACK_IMPORTED_MODULE_1__.Vec.numberArray(0, gsz), newZ = new Array(gsz);
+        let z = _util_Vec__WEBPACK_IMPORTED_MODULE_0__.Vec.numberArray(0, gsz), newZ = new Array(gsz);
         if (this.seedFromInternalWedges(atoms, amask, z)) { }
         else if (this.seedFromExternalWedges(atoms, amask, z)) { }
         else if (this.seedFromPerspective(atoms, amask, z)) { }
@@ -19688,12 +19688,12 @@ class PseudoEmbedding {
         let success = false;
         for (let n = 1; n <= nb; n++) {
             let bt = mol.bondType(n);
-            if (bt != _Molecule__WEBPACK_IMPORTED_MODULE_2__.Molecule.BONDTYPE_INCLINED && bt != _Molecule__WEBPACK_IMPORTED_MODULE_2__.Molecule.BONDTYPE_DECLINED)
+            if (bt != _Molecule__WEBPACK_IMPORTED_MODULE_1__.Molecule.BONDTYPE_INCLINED && bt != _Molecule__WEBPACK_IMPORTED_MODULE_1__.Molecule.BONDTYPE_DECLINED)
                 continue;
             let bfr = mol.bondFrom(n), bto = mol.bondTo(n);
             if (!amask[bfr - 1] || !amask[bto - 1])
                 continue;
-            if (bt == _Molecule__WEBPACK_IMPORTED_MODULE_2__.Molecule.BONDTYPE_INCLINED) {
+            if (bt == _Molecule__WEBPACK_IMPORTED_MODULE_1__.Molecule.BONDTYPE_INCLINED) {
                 z[atoms.indexOf(bfr)] -= 0.5;
                 z[atoms.indexOf(bto)] += 0.5;
             }
@@ -19711,15 +19711,15 @@ class PseudoEmbedding {
         let success = false;
         for (let n = 1; n <= nb; n++) {
             let bt = mol.bondType(n);
-            if (bt != _Molecule__WEBPACK_IMPORTED_MODULE_2__.Molecule.BONDTYPE_INCLINED && bt != _Molecule__WEBPACK_IMPORTED_MODULE_2__.Molecule.BONDTYPE_DECLINED)
+            if (bt != _Molecule__WEBPACK_IMPORTED_MODULE_1__.Molecule.BONDTYPE_INCLINED && bt != _Molecule__WEBPACK_IMPORTED_MODULE_1__.Molecule.BONDTYPE_DECLINED)
                 continue;
             let bfr = mol.bondFrom(n), bto = mol.bondTo(n);
             if (amask[bfr - 1]) {
-                z[atoms.indexOf(bfr)] += bt == _Molecule__WEBPACK_IMPORTED_MODULE_2__.Molecule.BONDTYPE_INCLINED ? 1 : -1;
+                z[atoms.indexOf(bfr)] += bt == _Molecule__WEBPACK_IMPORTED_MODULE_1__.Molecule.BONDTYPE_INCLINED ? 1 : -1;
                 success = true;
             }
             else if (amask[bto - 1]) {
-                z[atoms.indexOf(bto)] += bt == _Molecule__WEBPACK_IMPORTED_MODULE_2__.Molecule.BONDTYPE_INCLINED ? -1 : 1;
+                z[atoms.indexOf(bto)] += bt == _Molecule__WEBPACK_IMPORTED_MODULE_1__.Molecule.BONDTYPE_INCLINED ? -1 : 1;
                 success = true;
             }
         }
@@ -19734,7 +19734,7 @@ class PseudoEmbedding {
             let bfr = mol.bondFrom(n), bto = mol.bondTo(n);
             if (!amask[bfr - 1] || !amask[bto - 1])
                 continue;
-            let d = (0,_wmk_util_util__WEBPACK_IMPORTED_MODULE_4__.norm_xy)(mol.atomX(bfr) - mol.atomX(bto), mol.atomY(bfr) - mol.atomY(bto));
+            let d = (0,_util_util__WEBPACK_IMPORTED_MODULE_4__.norm_xy)(mol.atomX(bfr) - mol.atomX(bto), mol.atomY(bfr) - mol.atomY(bto));
             avgdist += d;
             count++;
             if (d > maxdist) {
@@ -19760,7 +19760,7 @@ class PseudoEmbedding {
             let congest = 0;
             for (let j = 0; j < atoms.length; j++)
                 if (i != j)
-                    congest += 1.0 / (0.001 + (0,_wmk_util_util__WEBPACK_IMPORTED_MODULE_4__.norm2_xy)(mol.atomX(atoms[j]) - x1, mol.atomY(atoms[j]) - y1));
+                    congest += 1.0 / (0.001 + (0,_util_util__WEBPACK_IMPORTED_MODULE_4__.norm2_xy)(mol.atomX(atoms[j]) - x1, mol.atomY(atoms[j]) - y1));
             if (congest > highCongest) {
                 highIdx = atoms[i];
                 highCongest = congest;
@@ -19772,9 +19772,9 @@ class PseudoEmbedding {
         return true;
     }
     normaliseHeights(z) {
-        _util_Vec__WEBPACK_IMPORTED_MODULE_1__.Vec.addTo(z, -_util_Vec__WEBPACK_IMPORTED_MODULE_1__.Vec.min(z));
-        let eps = _util_Vec__WEBPACK_IMPORTED_MODULE_1__.Vec.max(z) * 1E-6;
-        let idx = _util_Vec__WEBPACK_IMPORTED_MODULE_1__.Vec.idxSort(z);
+        _util_Vec__WEBPACK_IMPORTED_MODULE_0__.Vec.addTo(z, -_util_Vec__WEBPACK_IMPORTED_MODULE_0__.Vec.min(z));
+        let eps = _util_Vec__WEBPACK_IMPORTED_MODULE_0__.Vec.max(z) * 1E-6;
+        let idx = _util_Vec__WEBPACK_IMPORTED_MODULE_0__.Vec.idxSort(z);
         let prevZ = -1;
         let mark = 0;
         for (let n = 0; n < idx.length; n++) {
@@ -19783,7 +19783,7 @@ class PseudoEmbedding {
             prevZ = z[idx[n]];
             z[idx[n]] = mark;
         }
-        _util_Vec__WEBPACK_IMPORTED_MODULE_1__.Vec.addTo(z, -0.5 * (1 + _util_Vec__WEBPACK_IMPORTED_MODULE_1__.Vec.max(z)));
+        _util_Vec__WEBPACK_IMPORTED_MODULE_0__.Vec.addTo(z, -0.5 * (1 + _util_Vec__WEBPACK_IMPORTED_MODULE_0__.Vec.max(z)));
         return mark;
     }
     expandOutward(z, newZ, atoms, amask) {
@@ -19808,7 +19808,7 @@ class PseudoEmbedding {
             return;
         let x1a = mol.atomX(bfr1), y1a = mol.atomY(bfr1), x1b = mol.atomX(bto1), y1b = mol.atomY(bto1);
         let x2a = mol.atomX(bfr2), y2a = mol.atomY(bfr2), x2b = mol.atomX(bto2), y2b = mol.atomY(bto2);
-        let xy = _wmk_util_Geom__WEBPACK_IMPORTED_MODULE_0__.GeomUtil.lineIntersect(x1a, y1a, x1b, y1b, x2a, y2a, x2b, y2b);
+        let xy = _util_Geom__WEBPACK_IMPORTED_MODULE_3__.GeomUtil.lineIntersect(x1a, y1a, x1b, y1b, x2a, y2a, x2b, y2b);
         let dx1 = x1b - x1a, dy1 = y1b - y1a, dx2 = x2b - x2a, dy2 = y2b - y2a;
         let ext1 = Math.abs(dx1) > Math.abs(dy1) ? (xy[0] - x1a) / dx1 : (xy[1] - y1a) / dy1;
         let ext2 = Math.abs(dx2) > Math.abs(dy2) ? (xy[0] - x2a) / dx2 : (xy[1] - y2a) / dy2;

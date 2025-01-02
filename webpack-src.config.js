@@ -22,7 +22,7 @@ module.exports =
 		extensions: ['.ts', '.js'],
 		alias: 
 		{
-			"@wmk": path.resolve(__dirname, "src"),
+			//"@wmk": path.resolve(__dirname, "src"), (note: the validation build uses @wmk, but the main build does not)
 			"@reswmk": path.resolve(__dirname, "res"),
 		} 
 	},

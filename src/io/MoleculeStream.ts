@@ -158,7 +158,7 @@ export class MoleculeStream
 		let lines = strData.split(/\r?\n/);
 
 		let match = lines[0].match(/^Elements\!\((\d+),(\d+)\)$/);
-		if (!match) throw new Error('Not an Elements molecule file.');
+		if (!match) return null; //throw new Error('Not an Elements molecule file.');
 
 		let numAtoms = parseInt(match[1]), numBonds = parseInt(match[2]);
 		if (!(numAtoms >= 0)) throw new Error(`Invalid atom count: ${match[1]}`);
