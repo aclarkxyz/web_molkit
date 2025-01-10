@@ -10,11 +10,13 @@
 	[PKG=webmolkit]
 */
 
-///<reference path='../ui/ButtonBank.ts'/>
+import {Molecule} from '../mol/Molecule';
+import {Geometry} from '../mol/SketchUtil';
+import {ButtonBank, ButtonBankItem} from '../ui/ButtonBank';
+import {KeyCode} from '../util/util';
+import {ActivityType, MoleculeActivity} from './MoleculeActivity';
 
 /* eslint-disable no-multi-spaces, comma-spacing */
-
-namespace WebMolKit /* BOF */ {
 
 /*
 	CommandBank: the various bank styles that correspond to actions (select-then-do, as opposed to toolbank style which
@@ -72,25 +74,52 @@ enum CommandType
 	Noble
 }
 
+import svgMainUndo from '@reswmk/img/actions/MainUndo.svg';
+import svgMainRedo from '@reswmk/img/actions/MainRedo.svg';
+import svgMainZoomIn from '@reswmk/img/actions/MainZoomIn.svg';
+import svgMainZoomOut from '@reswmk/img/actions/MainZoomOut.svg';
+import svgMainZoomFit from '@reswmk/img/actions/MainZoomFit.svg';
+import svgMainSelSide from '@reswmk/img/actions/MainSelSide.svg';
+import svgMainSelAll from '@reswmk/img/actions/MainSelAll.svg';
+import svgMainSelNone from '@reswmk/img/actions/MainSelNone.svg';
+import svgMainDelete from '@reswmk/img/actions/MainDelete.svg';
+import svgMainCut from '@reswmk/img/actions/MainCut.svg';
+import svgMainCopy from '@reswmk/img/actions/MainCopy.svg';
+import svgMainPaste from '@reswmk/img/actions/MainPaste.svg';
+import svgMainAtom from '@reswmk/img/actions/MainAtom.svg';
+import svgMainBond from '@reswmk/img/actions/MainBond.svg';
+import svgMainSelect from '@reswmk/img/actions/MainSelect.svg';
+import svgMainMove from '@reswmk/img/actions/MainMove.svg';
+
 const COMMANDS_MAIN:ButtonBankItem[] =
 [
-	{id: 'undo', imageFN: 'MainUndo', helpText: 'Undo last change.', mnemonic: 'CmdOrCtrl+Z'},
-	{id: 'redo', imageFN: 'MainRedo', helpText: 'Cancel last undo.', mnemonic: 'CmdOrCtrl+Shift+Z'},
-	{id: 'zoomin', imageFN: 'MainZoomIn', helpText: 'Zoom in.', mnemonic: '='},
-	{id: 'zoomout', imageFN: 'MainZoomOut', helpText: 'Zoom out.', mnemonic: '-'},
-	{id: 'zoomfit', imageFN: 'MainZoomFit', helpText: 'Show whole diagram onscreen.', mnemonic: ''},
-	{id: 'selside', imageFN: 'MainSelSide', helpText: 'Select alternate side of current atom or bond.', mnemonic: 'E'},
-	{id: 'selall', imageFN: 'MainSelAll', helpText: 'Select all atoms.', mnemonic: 'Shift+A'},
-	{id: 'selnone', imageFN: 'MainSelNone', helpText: 'Clear selection.', mnemonic: 'Shift+Q'},
-	{id: 'delete', imageFN: 'MainDelete', helpText: 'Delete selected atoms and bonds.', mnemonic: 'D'},
-	{id: 'cut', imageFN: 'MainCut', helpText: 'Copy selection to clipboard, and remove.', mnemonic: 'CmdOrCtrl+X'},
-	{id: 'copy', imageFN: 'MainCopy', helpText: 'Copy selection to clipboard.', mnemonic: 'CmdOrCtrl+C'},
-	{id: 'paste', imageFN: 'MainPaste', helpText: 'Paste clipboard contents.'/*, mnemonic: 'Ctrl+V'*/}, // TODO: web-specific behaviour
-	{id: 'atom', imageFN: 'MainAtom', helpText: 'Open the Atom submenu.', isSubMenu: true, mnemonic: 'A'},
-	{id: 'bond', imageFN: 'MainBond', helpText: 'Open the Bond submenu.', isSubMenu: true, mnemonic: 'B'},
-	{id: 'select', imageFN: 'MainSelect', helpText: 'Open the Selection submenu.', isSubMenu: true, mnemonic: 'S'},
-	{id: 'move', imageFN: 'MainMove', helpText: 'Open the Move submenu.', isSubMenu: true, mnemonic: 'M'},
+	{id: 'undo', svg: svgMainUndo, helpText: 'Undo last change.', mnemonic: 'CmdOrCtrl+Z'},
+	{id: 'redo', svg: svgMainRedo, helpText: 'Cancel last undo.', mnemonic: 'CmdOrCtrl+Shift+Z'},
+	{id: 'zoomin', svg: svgMainZoomIn, helpText: 'Zoom in.', mnemonic: '='},
+	{id: 'zoomout', svg: svgMainZoomOut, helpText: 'Zoom out.', mnemonic: '-'},
+	{id: 'zoomfit', svg: svgMainZoomFit, helpText: 'Show whole diagram onscreen.', mnemonic: ''},
+	{id: 'selside', svg: svgMainSelSide, helpText: 'Select alternate side of current atom or bond.', mnemonic: 'E'},
+	{id: 'selall', svg: svgMainSelAll, helpText: 'Select all atoms.', mnemonic: 'Shift+A'},
+	{id: 'selnone', svg: svgMainSelNone, helpText: 'Clear selection.', mnemonic: 'Shift+Q'},
+	{id: 'delete', svg: svgMainDelete, helpText: 'Delete selected atoms and bonds.', mnemonic: 'D'},
+	{id: 'cut', svg: svgMainCut, helpText: 'Copy selection to clipboard, and remove.', mnemonic: 'CmdOrCtrl+X'},
+	{id: 'copy', svg: svgMainCopy, helpText: 'Copy selection to clipboard.', mnemonic: 'CmdOrCtrl+C'},
+	{id: 'paste', svg: svgMainPaste, helpText: 'Paste clipboard contents.'/*, mnemonic: 'Ctrl+V'*/}, // TODO: web-specific behaviour
+	{id: 'atom', svg: svgMainAtom, helpText: 'Open the Atom submenu.', isSubMenu: true, mnemonic: 'A'},
+	{id: 'bond', svg: svgMainBond, helpText: 'Open the Bond submenu.', isSubMenu: true, mnemonic: 'B'},
+	{id: 'select', svg: svgMainSelect, helpText: 'Open the Selection submenu.', isSubMenu: true, mnemonic: 'S'},
+	{id: 'move', svg: svgMainMove, helpText: 'Open the Move submenu.', isSubMenu: true, mnemonic: 'M'},
 ];
+
+import svgAtomPlus from '@reswmk/img/actions/AtomPlus.svg';
+import svgAtomMinus from '@reswmk/img/actions/AtomMinus.svg';
+import svgAtomAbbrev from '@reswmk/img/actions/AtomAbbrev.svg';
+import svgAtomSBlock from '@reswmk/img/actions/AtomSBlock.svg';
+import svgAtomPBlock from '@reswmk/img/actions/AtomPBlock.svg';
+import svgAtomDBlock from '@reswmk/img/actions/AtomDBlock.svg';
+import svgAtomFBlock from '@reswmk/img/actions/AtomFBlock.svg';
+import svgAtomNoble from '@reswmk/img/actions/AtomNoble.svg';
+
 const COMMANDS_ATOM:ButtonBankItem[] =
 [
 	{id: 'element:C', text: 'C', helpText: 'Change elements to Carbon.', mnemonic: 'Shift+C'},
@@ -103,91 +132,161 @@ const COMMANDS_ATOM:ButtonBankItem[] =
 	{id: 'element:Cl', text: 'Cl', helpText: 'Change elements to Chlorine.', mnemonic: 'Shift+L'},
 	{id: 'element:Br', text: 'Br', helpText: 'Change elements to Bromine.', mnemonic: 'Shift+B'},
 	{id: 'element:I', text: 'I', helpText: 'Change elements to Iodine.', mnemonic: 'Shift+I'},
-	{id: 'plus', imageFN: 'AtomPlus', helpText: 'Increase the atom charge.', mnemonic: 'Shift+=', key: '+'},
-	{id: 'minus', imageFN: 'AtomMinus', helpText: 'Decrease the atom charge.', mnemonic: 'Shift+-', key: '_'},
-	{id: 'abbrev', imageFN: 'AtomAbbrev', helpText: 'Open list of common labels.', isSubMenu: true, mnemonic: ''},
-	{id: 'sblock', imageFN: 'AtomSBlock', helpText: 'Open list of s-block elements.', isSubMenu: true, mnemonic: ''},
-	{id: 'pblock', imageFN: 'AtomPBlock', helpText: 'Open list of p-block elements.', isSubMenu: true, mnemonic: ''},
-	{id: 'dblock', imageFN: 'AtomDBlock', helpText: 'Open list of d-block elements.', isSubMenu: true, mnemonic: ''},
-	{id: 'fblock', imageFN: 'AtomFBlock', helpText: 'Open list of f-block elements.', isSubMenu: true, mnemonic: ''},
-	{id: 'noble', imageFN: 'AtomNoble', helpText: 'Open list of noble elements.', isSubMenu: true, mnemonic: ''},
+	{id: 'plus', svg: svgAtomPlus, helpText: 'Increase the atom charge.', mnemonic: 'Shift+=', key: '+'},
+	{id: 'minus', svg: svgAtomMinus, helpText: 'Decrease the atom charge.', mnemonic: 'Shift+-', key: '_'},
+	{id: 'abbrev', svg: svgAtomAbbrev, helpText: 'Open list of common labels.', isSubMenu: true, mnemonic: ''},
+	{id: 'sblock', svg: svgAtomSBlock, helpText: 'Open list of s-block elements.', isSubMenu: true, mnemonic: ''},
+	{id: 'pblock', svg: svgAtomPBlock, helpText: 'Open list of p-block elements.', isSubMenu: true, mnemonic: ''},
+	{id: 'dblock', svg: svgAtomDBlock, helpText: 'Open list of d-block elements.', isSubMenu: true, mnemonic: ''},
+	{id: 'fblock', svg: svgAtomFBlock, helpText: 'Open list of f-block elements.', isSubMenu: true, mnemonic: ''},
+	{id: 'noble', svg: svgAtomNoble, helpText: 'Open list of noble elements.', isSubMenu: true, mnemonic: ''},
 ];
+
+import svgBondOne from '@reswmk/img/actions/BondOne.svg';
+import svgBondTwo from '@reswmk/img/actions/BondTwo.svg';
+import svgBondThree from '@reswmk/img/actions/BondThree.svg';
+import svgBondFour from '@reswmk/img/actions/BondFour.svg';
+import svgBondZero from '@reswmk/img/actions/BondZero.svg';
+import svgBondUp from '@reswmk/img/actions/BondUp.svg';
+import svgBondDown from '@reswmk/img/actions/BondDown.svg';
+import svgBondSquig from '@reswmk/img/actions/BondSquig.svg';
+import svgBondQAny from '@reswmk/img/actions/BondQAny.svg';
+import svgBondAddTwo from '@reswmk/img/actions/BondAddTwo.svg';
+import svgBondInsert from '@reswmk/img/actions/BondInsert.svg';
+import svgBondSwitch from '@reswmk/img/actions/BondSwitch.svg';
+import svgBondRotate from '@reswmk/img/actions/BondRotate.svg';
+import svgBondLinear from '@reswmk/img/actions/BondLinear.svg';
+import svgBondTrigonal from '@reswmk/img/actions/BondTrigonal.svg';
+import svgBondTetra1 from '@reswmk/img/actions/BondTetra1.svg';
+import svgBondTetra2 from '@reswmk/img/actions/BondTetra2.svg';
+import svgBondSqPlan from '@reswmk/img/actions/BondSqPlan.svg';
+import svgBondOcta1 from '@reswmk/img/actions/BondOcta1.svg';
+import svgBondOcta2 from '@reswmk/img/actions/BondOcta2.svg';
+import svgBondMetalLigate from '@reswmk/img/actions/BondMetalLigate.svg';
+import svgBondArtifactPath from '@reswmk/img/actions/BondArtifactPath.svg';
+import svgBondArtifactRing from '@reswmk/img/actions/BondArtifactRing.svg';
+import svgBondArtifactArene from '@reswmk/img/actions/BondArtifactArene.svg';
+import svgBondArtifactClear from '@reswmk/img/actions/BondArtifactClear.svg';
+import svgBondPolymer from '@reswmk/img/actions/BondPolymer.svg';
+
 const COMMANDS_BOND:ButtonBankItem[] =
 [
-	{id: 'one', imageFN: 'BondOne', helpText: 'Create or set bonds to single.', mnemonic: '1'},
-	{id: 'two', imageFN: 'BondTwo', helpText: 'Create or set bonds to double.', mnemonic: '2'},
-	{id: 'three', imageFN: 'BondThree', helpText: 'Create or set bonds to triple.', mnemonic: '3'},
-	{id: 'four', imageFN: 'BondFour', helpText: 'Create or set bonds to quadruple.', mnemonic: ''},
-	{id: 'zero', imageFN: 'BondZero', helpText: 'Create or set bonds to zero-order.', mnemonic: '0'},
-	{id: 'inclined', imageFN: 'BondUp', helpText: 'Create or set bonds to inclined.', mnemonic: '5'},
-	{id: 'declined', imageFN: 'BondDown', helpText: 'Create or set bonds to declined.', mnemonic: '6'},
-	{id: 'squig', imageFN: 'BondSquig', helpText: 'Create or set bonds to unknown stereochemistry.', mnemonic: '4'},
-	{id: 'bondQAny', imageFN: 'BondQAny', helpText: 'Query bond that matches anything.'},
-	{id: 'addtwo', imageFN: 'BondAddTwo', helpText: 'Add two new bonds to the subject atom.', mnemonic: 'Shift+D'},
-	{id: 'insert', imageFN: 'BondInsert', helpText: 'Insert a methylene into the subject bond.', mnemonic: ''},
-	{id: 'switch', imageFN: 'BondSwitch', helpText: 'Cycle through likely bond geometries.', mnemonic: '\''},
-	{id: 'rotate', imageFN: 'BondRotate', helpText: 'Rotate bond to invert substituent orientation.', mnemonic: ''},
-	{id: 'linear', imageFN: 'BondLinear', helpText: 'Apply linear geometry.', mnemonic: 'Shift+V'},
-	{id: 'trigonal', imageFN: 'BondTrigonal', helpText: 'Apply trigonal geometry.', mnemonic: 'Shift+W'},
-	{id: 'tetra1', imageFN: 'BondTetra1', helpText: 'Apply tetrahedral geometry #1.', mnemonic: 'Shift+E'},
-	{id: 'tetra2', imageFN: 'BondTetra2', helpText: 'Apply tetrahedral geometry #2.', mnemonic: 'Shift+R'},
-	{id: 'sqplan', imageFN: 'BondSqPlan', helpText: 'Apply square planar geometry.', mnemonic: 'Shift+T'},
-	{id: 'octa1', imageFN: 'BondOcta1', helpText: 'Apply octahedral geometry #1.', mnemonic: 'Shift+Y'},
-	{id: 'octa2', imageFN: 'BondOcta2', helpText: 'Apply octahedral geometry #2.', mnemonic: 'Shift+U'},
-	//{id: 'connect', imageFN: 'BondConnect', helpText: 'Connect selected atoms, by proximity.', mnemonic: ''},
-	//{id: 'disconnect', imageFN: 'BondDisconnect', helpText: 'Disconnect selected atoms.', mnemonic: ''},
-	{id: 'metalligate', imageFN: 'BondMetalLigate', helpText: 'Arrange ligands around metal centre.', mnemonic: ''},
-	{id: 'artifactpath', imageFN: 'BondArtifactPath', helpText: 'Add a path bond artifact.', mnemonic: ''},
-	{id: 'artifactring', imageFN: 'BondArtifactRing', helpText: 'Add a ring bond artifact.', mnemonic: ''},
-	{id: 'artifactarene', imageFN: 'BondArtifactArene', helpText: 'Add an arene bond artifact.', mnemonic: ''},
-	{id: 'artifactclear', imageFN: 'BondArtifactClear', helpText: 'Remove a bond artifact.', mnemonic: ''},
-	{id: 'polymer', imageFN: 'BondPolymer', helpText: 'Create a polymer block.', mnemonic: ''},
+	{id: 'one', svg: svgBondOne, helpText: 'Create or set bonds to single.', mnemonic: '1'},
+	{id: 'two', svg: svgBondTwo, helpText: 'Create or set bonds to double.', mnemonic: '2'},
+	{id: 'three', svg: svgBondThree, helpText: 'Create or set bonds to triple.', mnemonic: '3'},
+	{id: 'four', svg: svgBondFour, helpText: 'Create or set bonds to quadruple.', mnemonic: ''},
+	{id: 'zero', svg: svgBondZero, helpText: 'Create or set bonds to zero-order.', mnemonic: '0'},
+	{id: 'inclined', svg: svgBondUp, helpText: 'Create or set bonds to inclined.', mnemonic: '5'},
+	{id: 'declined', svg: svgBondDown, helpText: 'Create or set bonds to declined.', mnemonic: '6'},
+	{id: 'squig', svg: svgBondSquig, helpText: 'Create or set bonds to unknown stereochemistry.', mnemonic: '4'},
+	{id: 'bondQAny', svg: svgBondQAny, helpText: 'Query bond that matches anything.'},
+	{id: 'addtwo', svg: svgBondAddTwo, helpText: 'Add two new bonds to the subject atom.', mnemonic: 'Shift+D'},
+	{id: 'insert', svg: svgBondInsert, helpText: 'Insert a methylene into the subject bond.', mnemonic: ''},
+	{id: 'switch', svg: svgBondSwitch, helpText: 'Cycle through likely bond geometries.', mnemonic: '\''},
+	{id: 'rotate', svg: svgBondRotate, helpText: 'Rotate bond to invert substituent orientation.', mnemonic: ''},
+	{id: 'linear', svg: svgBondLinear, helpText: 'Apply linear geometry.', mnemonic: 'Shift+V'},
+	{id: 'trigonal', svg: svgBondTrigonal, helpText: 'Apply trigonal geometry.', mnemonic: 'Shift+W'},
+	{id: 'tetra1', svg: svgBondTetra1, helpText: 'Apply tetrahedral geometry #1.', mnemonic: 'Shift+E'},
+	{id: 'tetra2', svg: svgBondTetra2, helpText: 'Apply tetrahedral geometry #2.', mnemonic: 'Shift+R'},
+	{id: 'sqplan', svg: svgBondSqPlan, helpText: 'Apply square planar geometry.', mnemonic: 'Shift+T'},
+	{id: 'octa1', svg: svgBondOcta1, helpText: 'Apply octahedral geometry #1.', mnemonic: 'Shift+Y'},
+	{id: 'octa2', svg: svgBondOcta2, helpText: 'Apply octahedral geometry #2.', mnemonic: 'Shift+U'},
+	{id: 'metalligate', svg: svgBondMetalLigate, helpText: 'Arrange ligands around metal centre.', mnemonic: ''},
+	{id: 'artifactpath', svg: svgBondArtifactPath, helpText: 'Add a path bond artifact.', mnemonic: ''},
+	{id: 'artifactring', svg: svgBondArtifactRing, helpText: 'Add a ring bond artifact.', mnemonic: ''},
+	{id: 'artifactarene', svg: svgBondArtifactArene, helpText: 'Add an arene bond artifact.', mnemonic: ''},
+	{id: 'artifactclear', svg: svgBondArtifactClear, helpText: 'Remove a bond artifact.', mnemonic: ''},
+	{id: 'polymer', svg: svgBondPolymer, helpText: 'Create a polymer block.', mnemonic: ''},
 ];
+
+import svgSelectionGrow from '@reswmk/img/actions/SelectionGrow.svg';
+import svgSelectionShrink from '@reswmk/img/actions/SelectionShrink.svg';
+import svgSelectionChain from '@reswmk/img/actions/SelectionChain.svg';
+import svgSelectionSmRing from '@reswmk/img/actions/SelectionSmRing.svg';
+import svgSelectionRingBlk from '@reswmk/img/actions/SelectionRingBlk.svg';
+import svgSelectionCurElement from '@reswmk/img/actions/SelectionCurElement.svg';
+import svgMainSelPrev from '@reswmk/img/actions/MainSelPrev.svg';
+import svgMainSelNext from '@reswmk/img/actions/MainSelNext.svg';
+import svgSelectionToggle from '@reswmk/img/actions/SelectionToggle.svg';
+import svgSelectionUncurrent from '@reswmk/img/actions/SelectionUncurrent.svg';
+import svgMoveJoin from '@reswmk/img/actions/MoveJoin.svg';
+import svgMainNew from '@reswmk/img/actions/MainNew.svg';
+import svgAtomInline from '@reswmk/img/actions/AtomInline.svg';
+import svgAtomFormula from '@reswmk/img/actions/AtomFormula.svg';
+import svgAtomExpandAbbrev from '@reswmk/img/actions/AtomExpandAbbrev.svg';
+import svgAtomClearAbbrev from '@reswmk/img/actions/AtomClearAbbrev.svg';
+
 const COMMANDS_SELECT:ButtonBankItem[] =
 [
-	{id: 'selgrow', imageFN: 'SelectionGrow', helpText: 'Add adjacent atoms to selection.', mnemonic: ''},
-	{id: 'selshrink', imageFN: 'SelectionShrink', helpText: 'Unselect exterior atoms.', mnemonic: ''},
-	{id: 'selchain', imageFN: 'SelectionChain', helpText: 'Extend selection to non-ring atoms.', mnemonic: ''},
-	{id: 'smallring', imageFN: 'SelectionSmRing', helpText: 'Extend selection to small rings.', mnemonic: ''},
-	{id: 'ringblock', imageFN: 'SelectionRingBlk', helpText: 'Extend selection to ring blocks.', mnemonic: ''},
-	{id: 'curelement', imageFN: 'SelectionCurElement', helpText: 'Select all atoms of current element type.', mnemonic: ''},
-	{id: 'selprev', imageFN: 'MainSelPrev', helpText: 'Select previous connected component.', mnemonic: '['},
-	{id: 'selnext', imageFN: 'MainSelNext', helpText: 'Select next connected component.', mnemonic: ']'},
-	{id: 'toggle', imageFN: 'SelectionToggle', helpText: 'Toggle selection of current.', mnemonic: ','},
-	{id: 'uncurrent', imageFN: 'SelectionUncurrent', helpText: 'Undefine current object.', mnemonic: '.'},
-	{id: 'join', imageFN: 'MoveJoin', helpText: 'Overlapping atoms will be joined as one.', mnemonic: ''},
-	{id: 'new', imageFN: 'MainNew', helpText: 'Clear the molecular structure.', mnemonic: ''},
-	{id: 'inline', imageFN: 'AtomInline', helpText: 'Make selected atoms into an inline abbreviation.', mnemonic: '/'},
-	{id: 'formula', imageFN: 'AtomFormula', helpText: 'Make selected atoms into their molecule formula.', mnemonic: '\\'},
-	{id: 'expandabbrev', imageFN: 'AtomExpandAbbrev', helpText: 'Expand out the inline abbreviation.', mnemonic: 'Shift+/', key: '?'},
-	{id: 'clearabbrev', imageFN: 'AtomClearAbbrev', helpText: 'Remove inline abbreviation.', mnemonic: 'Shift+\\', key: '|'},
+	{id: 'selgrow', svg: svgSelectionGrow, helpText: 'Add adjacent atoms to selection.', mnemonic: ''},
+	{id: 'selshrink', svg: svgSelectionShrink, helpText: 'Unselect exterior atoms.', mnemonic: ''},
+	{id: 'selchain', svg: svgSelectionChain, helpText: 'Extend selection to non-ring atoms.', mnemonic: ''},
+	{id: 'smallring', svg: svgSelectionSmRing, helpText: 'Extend selection to small rings.', mnemonic: ''},
+	{id: 'ringblock', svg: svgSelectionRingBlk, helpText: 'Extend selection to ring blocks.', mnemonic: ''},
+	{id: 'curelement', svg: svgSelectionCurElement, helpText: 'Select all atoms of current element type.', mnemonic: ''},
+	{id: 'selprev', svg: svgMainSelPrev, helpText: 'Select previous connected component.', mnemonic: '['},
+	{id: 'selnext', svg: svgMainSelNext, helpText: 'Select next connected component.', mnemonic: ']'},
+	{id: 'toggle', svg: svgSelectionToggle, helpText: 'Toggle selection of current.', mnemonic: ','},
+	{id: 'uncurrent', svg: svgSelectionUncurrent, helpText: 'Undefine current object.', mnemonic: '.'},
+	{id: 'join', svg: svgMoveJoin, helpText: 'Overlapping atoms will be joined as one.', mnemonic: ''},
+	{id: 'new', svg: svgMainNew, helpText: 'Clear the molecular structure.', mnemonic: ''},
+	{id: 'inline', svg: svgAtomInline, helpText: 'Make selected atoms into an inline abbreviation.', mnemonic: '/'},
+	{id: 'formula', svg: svgAtomFormula, helpText: 'Make selected atoms into their molecule formula.', mnemonic: '\\'},
+	{id: 'expandabbrev', svg: svgAtomExpandAbbrev, helpText: 'Expand out the inline abbreviation.', mnemonic: 'Shift+/', key: '?'},
+	{id: 'clearabbrev', svg: svgAtomClearAbbrev, helpText: 'Remove inline abbreviation.', mnemonic: 'Shift+\\', key: '|'},
 ];
+
+import svgMoveUp from '@reswmk/img/actions/MoveUp.svg';
+import svgMoveDown from '@reswmk/img/actions/MoveDown.svg';
+import svgMoveLeft from '@reswmk/img/actions/MoveLeft.svg';
+import svgMoveRight from '@reswmk/img/actions/MoveRight.svg';
+import svgMoveUpLots from '@reswmk/img/actions/MoveUpLots.svg';
+import svgMoveDownLots from '@reswmk/img/actions/MoveDownLots.svg';
+import svgMoveLeftLots from '@reswmk/img/actions/MoveLeftLots.svg';
+import svgMoveRightLots from '@reswmk/img/actions/MoveRightLots.svg';
+import svgMoveUpFar from '@reswmk/img/actions/MoveUpFar.svg';
+import svgMoveDownFar from '@reswmk/img/actions/MoveDownFar.svg';
+import svgMoveLeftFar from '@reswmk/img/actions/MoveLeftFar.svg';
+import svgMoveRightFar from '@reswmk/img/actions/MoveRightFar.svg';
+import svgMoveRotP01 from '@reswmk/img/actions/MoveRotP01.svg';
+import svgMoveRotM01 from '@reswmk/img/actions/MoveRotM01.svg';
+import svgMoveRotP05 from '@reswmk/img/actions/MoveRotP05.svg';
+import svgMoveRotM05 from '@reswmk/img/actions/MoveRotM05.svg';
+import svgMoveRotP15 from '@reswmk/img/actions/MoveRotP15.svg';
+import svgMoveRotM15 from '@reswmk/img/actions/MoveRotM15.svg';
+import svgMoveRotP30 from '@reswmk/img/actions/MoveRotP30.svg';
+import svgMoveRotM30 from '@reswmk/img/actions/MoveRotM30.svg';
+import svgMoveHFlip from '@reswmk/img/actions/MoveHFlip.svg';
+import svgMoveVFlip from '@reswmk/img/actions/MoveVFlip.svg';
+import svgMoveShrink from '@reswmk/img/actions/MoveShrink.svg';
+import svgMoveGrow from '@reswmk/img/actions/MoveGrow.svg';
+
 const COMMANDS_MOVE:ButtonBankItem[] =
 [
-	{id: 'up', imageFN: 'MoveUp', helpText: 'Move subject atoms up slightly.', mnemonic: 'Shift+Up', key: KeyCode.Up},
-	{id: 'down', imageFN: 'MoveDown', helpText: 'Move subject atoms down slightly.', mnemonic: 'Shift+Down', key: KeyCode.Down},
-	{id: 'left', imageFN: 'MoveLeft', helpText: 'Move subject atoms slightly to the left.', mnemonic: 'Shift+Left', key: KeyCode.Left},
-	{id: 'right', imageFN: 'MoveRight', helpText: 'Move subject atoms slightly to the right.', mnemonic: 'Shift+Right', key: KeyCode.Right},
-	{id: 'uplots', imageFN: 'MoveUpLots', helpText: 'Move subject atoms up somewhat.', mnemonic: ''},
-	{id: 'downlots', imageFN: 'MoveDownLots', helpText: 'Move subject atoms down somewhat.', mnemonic: ''},
-	{id: 'leftlots', imageFN: 'MoveLeftLots', helpText: 'Move subject atoms somewhat to the left.', mnemonic: ''},
-	{id: 'rightlots', imageFN: 'MoveRightLots', helpText: 'Move subject atoms somewhat to the right.', mnemonic: ''},
-	{id: 'upfar', imageFN: 'MoveUpFar', helpText: 'Move subject atoms far up.', mnemonic: ''},
-	{id: 'downfar', imageFN: 'MoveDownFar', helpText: 'Move subject atoms far down.', mnemonic: ''},
-	{id: 'leftfar', imageFN: 'MoveLeftFar', helpText: 'Move subject atoms far to the left.', mnemonic: ''},
-	{id: 'rightfar', imageFN: 'MoveRightFar', helpText: 'Move subject atoms far to the right.', mnemonic: ''},
-	{id: 'rotp01', imageFN: 'MoveRotP01', helpText: 'Rotate 1\u00B0 counter-clockwise.', mnemonic: ''},
-	{id: 'rotm01', imageFN: 'MoveRotM01', helpText: 'Rotate 1\u00B0 clockwise.', mnemonic: ''},
-	{id: 'rotp05', imageFN: 'MoveRotP05', helpText: 'Rotate 5\u00B0 counter-clockwise.', mnemonic: ''},
-	{id: 'rotm05', imageFN: 'MoveRotM05', helpText: 'Rotate 5\u00B0 clockwise.', mnemonic: ''},
-	{id: 'rotp15', imageFN: 'MoveRotP15', helpText: 'Rotate 15\u00B0 counter-clockwise.', mnemonic: ''},
-	{id: 'rotm15', imageFN: 'MoveRotM15', helpText: 'Rotate 15\u00B0 clockwise.', mnemonic: ''},
-	{id: 'rotp30', imageFN: 'MoveRotP30', helpText: 'Rotate 30\u00B0 counter-clockwise.', mnemonic: 'Shift+[', key: '{'},
-	{id: 'rotm30', imageFN: 'MoveRotM30', helpText: 'Rotate 30\u00B0 clockwise.', mnemonic: 'Shift+]', key: '}'},
-	{id: 'hflip', imageFN: 'MoveHFlip', helpText: 'Flip subject atoms horizontally.', mnemonic: 'Shift+,', key: '<'},
-	{id: 'vflip', imageFN: 'MoveVFlip', helpText: 'Flip subject atoms vertically.', mnemonic: 'Shift+.', key: '>'},
-	{id: 'shrink', imageFN: 'MoveShrink', helpText: 'Decrease subject bond distances.', mnemonic: 'Shift+Z'},
-	{id: 'grow', imageFN: 'MoveGrow', helpText: 'Increase subject bond distances.', mnemonic: 'Shift+X'},
+	{id: 'up', svg: svgMoveUp, helpText: 'Move subject atoms up slightly.', mnemonic: 'Shift+Up', key: KeyCode.Up},
+	{id: 'down', svg: svgMoveDown, helpText: 'Move subject atoms down slightly.', mnemonic: 'Shift+Down', key: KeyCode.Down},
+	{id: 'left', svg: svgMoveLeft, helpText: 'Move subject atoms slightly to the left.', mnemonic: 'Shift+Left', key: KeyCode.Left},
+	{id: 'right', svg: svgMoveRight, helpText: 'Move subject atoms slightly to the right.', mnemonic: 'Shift+Right', key: KeyCode.Right},
+	{id: 'uplots', svg: svgMoveUpLots, helpText: 'Move subject atoms up somewhat.', mnemonic: ''},
+	{id: 'downlots', svg: svgMoveDownLots, helpText: 'Move subject atoms down somewhat.', mnemonic: ''},
+	{id: 'leftlots', svg: svgMoveLeftLots, helpText: 'Move subject atoms somewhat to the left.', mnemonic: ''},
+	{id: 'rightlots', svg: svgMoveRightLots, helpText: 'Move subject atoms somewhat to the right.', mnemonic: ''},
+	{id: 'upfar', svg: svgMoveUpFar, helpText: 'Move subject atoms far up.', mnemonic: ''},
+	{id: 'downfar', svg: svgMoveDownFar, helpText: 'Move subject atoms far down.', mnemonic: ''},
+	{id: 'leftfar', svg: svgMoveLeftFar, helpText: 'Move subject atoms far to the left.', mnemonic: ''},
+	{id: 'rightfar', svg: svgMoveRightFar, helpText: 'Move subject atoms far to the right.', mnemonic: ''},
+	{id: 'rotp01', svg: svgMoveRotP01, helpText: 'Rotate 1\u00B0 counter-clockwise.', mnemonic: ''},
+	{id: 'rotm01', svg: svgMoveRotM01, helpText: 'Rotate 1\u00B0 clockwise.', mnemonic: ''},
+	{id: 'rotp05', svg: svgMoveRotP05, helpText: 'Rotate 5\u00B0 counter-clockwise.', mnemonic: ''},
+	{id: 'rotm05', svg: svgMoveRotM05, helpText: 'Rotate 5\u00B0 clockwise.', mnemonic: ''},
+	{id: 'rotp15', svg: svgMoveRotP15, helpText: 'Rotate 15\u00B0 counter-clockwise.', mnemonic: ''},
+	{id: 'rotm15', svg: svgMoveRotM15, helpText: 'Rotate 15\u00B0 clockwise.', mnemonic: ''},
+	{id: 'rotp30', svg: svgMoveRotP30, helpText: 'Rotate 30\u00B0 counter-clockwise.', mnemonic: 'Shift+[', key: '{'},
+	{id: 'rotm30', svg: svgMoveRotM30, helpText: 'Rotate 30\u00B0 clockwise.', mnemonic: 'Shift+]', key: '}'},
+	{id: 'hflip', svg: svgMoveHFlip, helpText: 'Flip subject atoms horizontally.', mnemonic: 'Shift+,', key: '<'},
+	{id: 'vflip', svg: svgMoveVFlip, helpText: 'Flip subject atoms vertically.', mnemonic: 'Shift+.', key: '>'},
+	{id: 'shrink', svg: svgMoveShrink, helpText: 'Decrease subject bond distances.', mnemonic: 'Shift+Z'},
+	{id: 'grow', svg: svgMoveGrow, helpText: 'Increase subject bond distances.', mnemonic: 'Shift+X'},
 ];
 
 export class CommandBank extends ButtonBank
@@ -365,5 +464,3 @@ export class CommandBank extends ButtonBank
 		return false;
 	}
 }
-
-/* EOF */ }

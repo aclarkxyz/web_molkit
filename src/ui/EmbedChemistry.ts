@@ -10,7 +10,9 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
+import {RenderPolicy} from '../gfx/Rendering';
+import {colourCanvas} from '../util/util';
+import {Widget} from './Widget';
 
 /*
 	Base class for various kinds of "embedded" chemistry display objects, such as molecules/reactions/collections. These are intended to be largely
@@ -68,4 +70,3 @@ export class EmbedChemistry extends Widget
 
 }
 
-/* EOF */ }

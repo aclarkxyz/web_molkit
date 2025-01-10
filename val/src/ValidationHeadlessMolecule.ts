@@ -10,16 +10,23 @@
 	[PKG=webmolkit]
 */
 
-///<reference path='../../src/util/util.ts'/>
-///<reference path='../../src/util/Vec.ts'/>
-///<reference path='../../src/data/Molecule.ts'/>
-///<reference path='../../src/data/MetaMolecule.ts'/>
-///<reference path='../../src/data/MoleculeStream.ts'/>
-///<reference path='../../src/data/DataSheetStream.ts'/>
-///<reference path='../../src/data/Stereochemistry.ts'/>
-///<reference path='Validation.ts'/>
-
-namespace WebMolKit /* BOF */ {
+import {Molecule} from '@wmk/mol/Molecule';
+import {Validation} from './Validation';
+import {DataSheet, DataSheetColumn} from '@wmk/ds/DataSheet';
+import {escapeHTML, orBlank, readTextURL} from '@wmk/util/util';
+import {DataSheetStream} from '@wmk/io/DataSheetStream';
+import {MoleculeStream} from '@wmk/io/MoleculeStream';
+import {MDLMOLReader, MDLSDFReader} from '@wmk/io/MDLReader';
+import {MetaMolecule} from '@wmk/mol/MetaMolecule';
+import {Stereochemistry} from '@wmk/mol/Stereochemistry';
+import {Vec} from '@wmk/util/Vec';
+import {CircularFingerprints} from '@wmk/calc/CircularFingerprints';
+import {MDLMOLWriter} from '@wmk/io/MDLWriter';
+import {RenderEffects, RenderMnemonics, RenderPolicy} from '@wmk/gfx/Rendering';
+import {OutlineMeasurement} from '@wmk/gfx/ArrangeMeasurement';
+import {ArrangeMolecule} from '@wmk/gfx/ArrangeMolecule';
+import {DrawMolecule} from '@wmk/gfx/DrawMolecule';
+import {MetaVector} from '@wmk/gfx/MetaVector';
 
 /*
 	Headless validation: molecule tests - algorithms that apply to molecular connection tables.
@@ -34,6 +41,8 @@ export class ValidationHeadlessMolecule extends Validation
 	private molStereo:Molecule;
 	private dsCircular:DataSheet;
 	private dsRoundtrip:DataSheet;
+	private dsRendering:DataSheet;
+	private dsFormat:DataSheet;
 
 	constructor(private urlBase:string)
 	{
@@ -46,17 +55,22 @@ export class ValidationHeadlessMolecule extends Validation
 		this.add('Calculate stereochemistry', this.calcStereoChem);
 		this.add('Circular ECFP6 fingerprints', this.calcFingerprints);
 		this.add('Molfile Round-trip', this.molfileRoundTrip);
+		this.add('Rendering structures', this.renderingStructures);
+		this.add('Molecule Format', this.moleculeFormat);
 	}
 
 	public async init():Promise<void>
 	{
-		this.strSketchEl = await readTextURL(this.urlBase + 'molecule.el');
-		this.strMolfile = await readTextURL(this.urlBase + 'molecule.mol');
-		this.strDataXML = await readTextURL(this.urlBase + 'datasheet.ds');
-		this.strSDfile = await readTextURL(this.urlBase + 'datasheet.sdf');
-		this.molStereo = Molecule.fromString(await readTextURL(this.urlBase + 'stereo.el'));
-		this.dsCircular = DataSheetStream.readXML(await readTextURL(this.urlBase + 'circular.ds'));
-		this.dsRoundtrip = DataSheetStream.readXML(await readTextURL(this.urlBase + 'roundtrip.ds'));
+		const BUMP = '?ver=' + new Date().getTime(); // bust the cache
+		this.strSketchEl = await readTextURL(this.urlBase + 'molecule.el' + BUMP);
+		this.strMolfile = await readTextURL(this.urlBase + 'molecule.mol' + BUMP);
+		this.strDataXML = await readTextURL(this.urlBase + 'datasheet.ds' + BUMP);
+		this.strSDfile = await readTextURL(this.urlBase + 'datasheet.sdf' + BUMP);
+		this.molStereo = Molecule.fromString(await readTextURL(this.urlBase + 'stereo.el' + BUMP));
+		this.dsCircular = DataSheetStream.readXML(await readTextURL(this.urlBase + 'circular.ds' + BUMP));
+		this.dsRoundtrip = DataSheetStream.readXML(await readTextURL(this.urlBase + 'roundtrip.ds' + BUMP));
+		this.dsRendering = DataSheetStream.readXML(await readTextURL(this.urlBase + 'rendering.ds' + BUMP));
+		this.dsFormat = DataSheetStream.readXML(await readTextURL(this.urlBase + 'formatelements.ds' + BUMP));
 	}
 
 	public async parseSketchEl():Promise<void>
@@ -65,7 +79,6 @@ export class ValidationHeadlessMolecule extends Validation
 		let mol = MoleculeStream.readNative(this.strSketchEl);
 		this.assert(mol != null, 'parsing failed');
 		this.assert(mol.numAtoms == 10 && mol.numBonds == 10, 'wrong atom/bond count');
-		//console.log(this.strSketchEl);
 	}
 
 	public async parseMolfile():Promise<void>
@@ -74,7 +87,6 @@ export class ValidationHeadlessMolecule extends Validation
 		let mol = MoleculeStream.readMDLMOL(this.strMolfile);
 		this.assert(mol != null, 'parsing failed');
 		this.assert(mol.numAtoms == 10 && mol.numBonds == 10, 'wrong atom/bond count');
-		//console.log(this.strMolfile);
 	}
 
 	public async parseDataXML():Promise<void>
@@ -152,6 +164,8 @@ export class ValidationHeadlessMolecule extends Validation
 		const ds = this.dsCircular;
 		for (let n = 0; n < ds.numRows; n++)
 		{
+			this.context = {row: n + 1, count: ds.numRows, notes: []};
+
 			let mol = ds.getMolecule(n, 'Molecule');
 			let ecfp0:number[] = [], ecfp2:number[] = [], ecfp4:number[] = [], ecfp6:number[] = [];
 			for (let fp of ds.getString(n, 'ECFP0').split(',')) if (fp.length > 0) ecfp0.push(parseInt(fp));
@@ -180,51 +194,137 @@ export class ValidationHeadlessMolecule extends Validation
 		const ds = this.dsRoundtrip;
 		for (let n = 0; n < ds.numRows; n++)
 		{
-			let strRow = 'row#' + (n + 1);
+			this.context = {row: n + 1, count: ds.numRows, notes: []};
 
 			let mol = ds.getMolecule(n, 'Molecule');
 			let mdl = new MDLMOLWriter(mol).write();
 
 			let alt = new MDLMOLReader(mdl).parse();
-			this.assert(mol.numAtoms == alt.numAtoms && mol.numBonds == alt.numBonds, strRow + ', atom/bond count differs');
+			this.assert(mol.numAtoms == alt.numAtoms && mol.numBonds == alt.numBonds, 'atom/bond count differs');
 
 			let problems:string[] = [];
 
 			for (let i = 1; i <= mol.numAtoms; i++)
 			{
-				if (mol.atomElement(i) != alt.atomElement(i)) problems.push(strRow + '/atom #' + i + ': elements different');
-				if (mol.atomCharge(i) != alt.atomCharge(i)) problems.push(strRow + '/atom #' + i + ': charges different');
-				if (mol.atomUnpaired(i) != alt.atomUnpaired(i)) problems.push(strRow + '/atom #' + i + ': unpaired different');
-				if (mol.atomIsotope(i) != alt.atomIsotope(i)) problems.push(strRow + '/atom #' + i + ': isotope different');
-				if (mol.atomMapNum(i) != alt.atomMapNum(i)) problems.push(strRow + '/atom #' + i + ': mapnum different');
-				if (mol.atomHydrogens(i) != alt.atomHydrogens(i)) problems.push(strRow + '/atom #' + i + ': hydrogens different');
-				if (mol.atomHExplicit(i) != alt.atomHExplicit(i)) problems.push(strRow + '/atom #' + i + ': explicitH different');
+				if (mol.atomElement(i) != alt.atomElement(i)) problems.push('/atom #' + i + ': elements different');
+				if (mol.atomCharge(i) != alt.atomCharge(i)) problems.push('/atom #' + i + ': charges different');
+				if (mol.atomUnpaired(i) != alt.atomUnpaired(i)) problems.push('/atom #' + i + ': unpaired different');
+				if (mol.atomIsotope(i) != alt.atomIsotope(i)) problems.push('/atom #' + i + ': isotope different');
+				if (mol.atomMapNum(i) != alt.atomMapNum(i)) problems.push('/atom #' + i + ': mapnum different');
+				if (mol.atomHydrogens(i) != alt.atomHydrogens(i)) problems.push('/atom #' + i + ': hydrogens different');
+				if (mol.atomHExplicit(i) != alt.atomHExplicit(i)) problems.push('/atom #' + i + ': explicitH different');
 			}
 			for (let i = 1; i <= mol.numBonds; i++)
 			{
-				if (mol.bondOrder(i) != alt.bondOrder(i)) problems.push(strRow + '/bond #' + i + ': bond orders different');
-				if (mol.bondType(i) != alt.bondType(i)) problems.push(strRow + '/bond #' + i + ': bond types different');
+				if (mol.bondOrder(i) != alt.bondOrder(i)) problems.push('/bond #' + i + ': bond orders different');
+				if (mol.bondType(i) != alt.bondType(i)) problems.push('/bond #' + i + ': bond types different');
 			}
 
 			if (problems.length > 0)
 			{
-				console.log('Round trip problems:');
-				for (let p of problems) console.log(p);
-				console.log('Original molecule:\n' + mol);
-				console.log('MDL Molfile CTAB:\n' + mdl);
-				console.log('Parsed back molecule:\n' + alt);
+				this.context.notes.push('Round trip problems:');
+				for (let p of problems) this.context.notes.push(p);
+				this.context.notes.push('Original molecule:\n' + mol);
+				this.context.notes.push('MDL Molfile CTAB:\n' + mdl);
+				this.context.notes.push('Parsed back molecule:\n' + alt);
 			}
 			this.assert(problems.length == 0, problems.join('; '));
 
 			let wantMDL = ds.getString(n, 'Molfile');
 			if (mdl.trim() != orBlank(wantMDL).trim())
 			{
-				if (wantMDL) console.log('Molfile missing from validation data.'); else console.log('Desired Molfile:\n' + wantMDL);
-				console.log('Got Molfile:\n' + mdl);
-				this.assert(false, strRow + ': initial Molfile invalid');
+				if (!wantMDL) 
+					this.context.notes.push('Molfile missing from validation data.');
+				else 
+					this.context.notes.push('Desired Molfile:\n' + wantMDL);
+				this.context.notes.push('Got Molfile:\n' + mdl);
+
+				let linesWant = wantMDL.split('\n'), linesGot = mdl.split('\n');
+				for (let i = 0; i < Math.max(linesWant.length, linesGot.length); i++) if (linesWant[i] != linesGot[i])
+				{
+					this.context.notes.push(`Line #${i + 1}: want [${linesWant[i]}], got [${linesGot[i]}]`);
+					break;
+				}
+
+				this.assert(false, 'initial Molfile invalid');
 			}
 		}
 	}
+
+	public async renderingStructures():Promise<void>
+	{
+		const ds = this.dsRendering;
+
+		let policy = RenderPolicy.defaultColourOnWhite();
+		policy.data.pointScale = 15;
+		let effects = new RenderEffects();
+		let measure = new OutlineMeasurement(0, 0, policy.data.pointScale);
+
+		for (let n = 0; n < ds.numRows; n++)
+		{
+			this.context = {row: n + 1, count: ds.numRows, notes: []};
+
+			let mol = ds.getMolecule(n, 'Molecule');
+			let wantMnemonic = ds.getString(n, 'Mnemonic').trim();
+
+			let layout = new ArrangeMolecule(mol, measure, policy, effects);
+			layout.arrange();
+
+			let metavec = new MetaVector();
+			let draw = new DrawMolecule(layout, metavec);
+			draw.mnemonics = new RenderMnemonics();
+			draw.draw();
+			metavec.normalise();
+
+			let gotMnemonic = draw.mnemonics.packWithCoords();
+
+			this.context.notes.push(metavec.createSVG());
+			this.context.notes.push('Got Mnemonic:');
+			this.context.notes.push(`<div><tt>${escapeHTML(gotMnemonic)}</tt></div>`);
+			this.context.notes.push('Want Mnemonic:');
+			this.context.notes.push(`<div><tt>${escapeHTML(wantMnemonic || 'not provided')}</tt></div>`);
+
+			this.assertEqual(gotMnemonic, wantMnemonic, 'mnemonics did not match');
+		}
+	}
+
+	public async moleculeFormat():Promise<void>
+	{
+		const ds = this.dsFormat;
+		let colMol = ds.findColByName('Molecule'), colSerial = ds.findColByName('Serial');
+
+		let prevFormat = MoleculeStream.formatV2Elements;
+		MoleculeStream.formatV2Elements = true;
+
+		for (let n = 0; n < ds.numRows; n++)
+		{
+			this.context = {row: n + 1, count: ds.numRows, notes: []};
+
+			var mol = ds.getMolecule(n, colMol);
+			let wantSerial = (ds.getString(n, colSerial) ?? '').trim()
+			let gotSerial = MoleculeStream.writeNative(mol).trim();
+			
+			this.context.notes =
+			[
+				'Got serialised:',
+				`<pre>${gotSerial}</pre>`,
+				'Want serialised:',
+				`<pre>${wantSerial}</pre>`,
+			];
+			this.assertEqual(gotSerial, wantSerial);
+
+			let molBack = MoleculeStream.readNative(gotSerial);
+			this.context.notes =
+			[
+				'Reading serialised molfile. Got:',
+				`<pre>${molBack.toString()}</pre>`,
+				'Want:',
+				`<pre>${mol.toString()}</pre>`,
+			];
+			this.assertEqual(mol.compareTo(molBack), 0, 'molecules are different');
+		}
+
+		MoleculeStream.formatV2Elements = prevFormat;
+	}
 }
 
-/* EOF */ }

@@ -10,7 +10,18 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
+import {DataSheet, DataSheetColumn} from '../ds/DataSheet';
+import {Molecule} from '../mol/Molecule';
+import {MoleculeStream} from '../io/MoleculeStream';
+import {MolUtil} from '../mol/MolUtil';
+import {OutlineMeasurement} from '../gfx/ArrangeMeasurement';
+import {ArrangeMolecule} from '../gfx/ArrangeMolecule';
+import {DrawMolecule} from '../gfx/DrawMolecule';
+import {MetaVector} from '../gfx/MetaVector';
+import {RenderEffects, RenderPolicy} from '../gfx/Rendering';
+import {Vec} from '../util/Vec';
+import {Aspect, AspectGraphicRendering} from './Aspect';
+import {registerAspect} from './AspectList';
 
 /*
 	SAR Table: provides scaffold/substituent/molecule equivalence based on fragment placeholders (R-groups).
@@ -388,4 +399,3 @@ export class SARTable extends Aspect
 
 registerAspect(SARTable);
 
-/* EOF */ }

@@ -10,9 +10,7 @@
 	[PKG=webmolkit]
 */
 
-///<reference path='../../src/util/util.ts'/>
-
-namespace WebMolKit /* BOF */ {
+import {yieldDOM} from '@wmk/util/util';
 
 /*
 	Storage class for a sequence of tests. Use pattern: inherit the class, and add each of the tests (callback functions) in the constructor; hand over the 
@@ -23,6 +21,14 @@ export interface ValidationTest
 {
 	title:string;
 	func:() => void;
+}
+
+export interface ValidationContext
+{
+	subcategory?:string;
+	row?:number; // typically 1..{count}
+	count?:number; // usually # rows in datasheet
+	notes?:string[]; // arbitrary strings, <svg> autodetected
 }
 
 export class Validation
@@ -41,6 +47,9 @@ export class Validation
 
 	// validation tests can use this to store situational data, especially when subsequent tests re-use data from previous tests
 	public rec:Record<string, any> = {};
+
+	// each test should set this value before doing anything interesting, in order to provide feedback when something goes wrong
+	public context:ValidationContext = null;
 
 	// ------------ public methods ------------
 
@@ -74,7 +83,11 @@ export class Validation
 		
 		let timeStarted = new Date().getTime();
 
-		try {await this.tests[idx].func.call(this);}
+		try 
+		{
+			this.context = null; // the test itself should replace this if possible
+			await this.tests[idx].func.call(this);
+		}
 		catch (e)
 		{
 			// two scenarios: rogue exceptions that happened during the validation are caught and converted into error messages with debug
@@ -82,6 +95,7 @@ export class Validation
 			this.recentSuccess = false;
 			if (this.recentError == null)
 			{
+				console.log('Context: ' + JSON.stringify(this.context, null, 4));
 				this.recentError = 'Exception: ' + (e.message || e);
 				if (e.fileName) this.recentError += ', file: ' + e.fileName;
 				if (e.lineNumber) this.recentError += ', line: ' + e.lineNumber;
@@ -103,7 +117,6 @@ export class Validation
 	// call this to give the DOM a chance to update itself
 	public async gasp()
 	{
-		//await (() => new Promise((resolve) => setTimeout(() => resolve(), 0)))();
 		await yieldDOM();
 	}
 
@@ -112,33 +125,45 @@ export class Validation
 	{
 		if (condition) return;
 		this.recentError = message;
-		throw '!';
+		throw new Error('assert condition triggered');
 	}
-	public assertEqual(thing1:any, thing2:any, message?:string):void
+	public assertEqual(got:any, want:any, message?:string):void
 	{
-		if (thing1 == thing2) return;
+		if (got == want) return;
 		this.recentError = message;
-		throw '!';
+
+		if (typeof got == 'string' && typeof want == 'string')
+		{
+			if (!this.recentError) this.recentError = `Compare got [${got}] with want [${want}]`;
+			for (let n = 0; n < Math.min(got.length, want.length); n++) if (got.charAt(n) != want.charAt(n))
+			{
+				this.recentError += ` differ at char ${n} (0-based)`;
+				let frag1 = got.substring(Math.max(0, n - 10), Math.min(got.length, n + 10));
+				let frag2 = got.substring(Math.max(0, n - 10), Math.min(got.length, n + 10));
+				this.recentError += ` regions: [${frag1}] vs [${frag2}]`;
+			}
+		}
+
+		throw new Error('assert equal triggered');
 	}
 	public assertNull(thing:any, message?:string)
 	{
 		if (thing == null) return;
 		this.recentError = message;
-		throw '!';
+		throw new Error('assert null triggered');
 	}
 	public assertNotNull(thing:any, message?:string)
 	{
 		if (thing != null) return;
 		this.recentError = message;
-		throw '!';
+		throw new Error('assert not null triggered');
 	}
 	public fail(message?:string):void
 	{
 		this.recentError = message;
-		throw '!';
+		throw new Error('failure triggered');
 	}
 
 	// ------------ private methods ------------
 }
 
-/* EOF */ }

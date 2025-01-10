@@ -10,7 +10,10 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
+import {Matrix, SingularValueDecomposition} from './Matrix';
+import {Triangulation2D} from './Triangulation2D';
+import {angleDiff, angleDiffPos, angleNorm, maxArray, minArray, norm2_xy, norm_xy, realEqual, sqr, TWOPI} from './util';
+import {Vec} from './Vec';
 
 /*
 	Geometry utilities, which are typically graphics related.
@@ -1070,4 +1073,3 @@ export class Line
 	public toString():string {return '[' + this.x1 + ',' + this.y1 + ';' + this.x2 + ',' + this.y2 + ']';}
 }
 
-/* EOF */ }

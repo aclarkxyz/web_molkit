@@ -10,7 +10,11 @@
     [PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
+import {DataSheet, DataSheetColumn} from '../ds/DataSheet';
+import {MoleculeStream} from '../io/MoleculeStream';
+import {Vec} from '../util/Vec';
+import {Aspect, AspectTextRendering} from './Aspect';
+import {registerAspect} from './AspectList';
 
 /*
 	Measurement: provides some number of measurement fields, which augment an ordinary numeric field to add units,
@@ -343,4 +347,3 @@ export class MeasurementData extends Aspect
 
 registerAspect(MeasurementData);
 
-/* EOF */ }

@@ -10,7 +10,7 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
+import {FontData} from './FontData';
 
 /*
 	Interface for providing information about the device onto which a molecule is to be drawn, without it needing to
@@ -56,4 +56,3 @@ export class OutlineMeasurement implements ArrangeMeasurement
 	public measureText(str:string, fontSize:number):number[] {return FontData.main.measureText(str, fontSize);}
 }
 
-/* EOF */ }

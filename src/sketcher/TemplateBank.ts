@@ -10,7 +10,17 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
+import {AbbrevContainer} from '../data/AbbrevContainer';
+import {DataSheet, DataSheetColumn} from '../ds/DataSheet';
+import {DataSheetStream} from '../io/DataSheetStream';
+import {MolUtil} from '../mol/MolUtil';
+import {OutlineMeasurement} from '../gfx/ArrangeMeasurement';
+import {ArrangeMolecule} from '../gfx/ArrangeMolecule';
+import {DrawMolecule} from '../gfx/DrawMolecule';
+import {MetaVector} from '../gfx/MetaVector';
+import {RenderEffects, RenderPolicy} from '../gfx/Rendering';
+import {ButtonBank} from '../ui/ButtonBank';
+import {ActivityType, MoleculeActivity} from './MoleculeActivity';
 
 /*
 	TemplateBank: template list... either the top-level list of template groups, or a single folder full of templates.
@@ -51,15 +61,12 @@ export class TemplateBank extends ButtonBank
 		policy.data.lineSize *= 1.5;
 		policy.data.bondSep *= 1.5;
 
-		(async () =>
-		{
-			if (TemplateBank.resourceData.length == 0) await this.loadResourceData();
+		if (TemplateBank.resourceData.length == 0) this.loadResourceData();
 
-			if (this.group == null)
-				this.prepareSubGroups();
-			else
-				this.prepareTemplates();
-		})();
+		if (this.group == null)
+			this.prepareSubGroups();
+		else
+			this.prepareTemplates();
 	}
 
 	// populate the buttons
@@ -114,13 +121,12 @@ export class TemplateBank extends ButtonBank
 	}
 
 	// loads up the resource datasheets one at a time, and stashes them in the static container
-	private async loadResourceData():Promise<void>
+	private loadResourceData():void
 	{
-		for (let fn of TEMPLATE_FILES)
+		for (let key of AbbrevContainer.getTemplateKeys())
 		{
-			let url = Theme.RESOURCE_URL + '/data/templates/' + fn + '.ds';
-			let dsstr = await readTextURL(url);
-			TemplateBank.resourceList.push(fn);
+			let dsstr = AbbrevContainer.getTemplateData(key);
+			TemplateBank.resourceList.push(key);
 			TemplateBank.resourceData.push(DataSheetStream.readXML(dsstr));
 		}
 	}
@@ -206,6 +212,11 @@ export class TemplateBank extends ButtonBank
 	}
 }
 
+import svgGenericAccept from '@reswmk/img/actions/GenericAccept.svg';
+import svgTemplatePrev from '@reswmk/img/actions/TemplatePrev.svg';
+import svgTemplateNext from '@reswmk/img/actions/TemplateNext.svg';
+import {KeyCode} from '../util/util';
+
 export class FusionBank extends ButtonBank
 {
 	constructor(protected owner:any)
@@ -217,10 +228,12 @@ export class FusionBank extends ButtonBank
 	{
 		this.buttons = [];
 
-		this.buttons.push({id: 'accept', imageFN: 'GenericAccept', helpText: 'Apply this template.'});
+		/*this.buttons.push({id: 'accept', imageFN: 'GenericAccept', helpText: 'Apply this template.'});
 		this.buttons.push({id: 'prev', imageFN: 'TemplatePrev', helpText: 'Show previous fusion option.'});
-		this.buttons.push({id: 'next', imageFN: 'TemplateNext', helpText: 'Show next fusion option.'});
-		// (inline?)
+		this.buttons.push({id: 'next', imageFN: 'TemplateNext', helpText: 'Show next fusion option.'});*/
+		this.buttons.push({id: 'accept', svg: svgGenericAccept, helpText: 'Apply this template.'});
+		this.buttons.push({id: 'prev', svg: svgTemplatePrev, helpText: 'Show previous fusion option.'});
+		this.buttons.push({id: 'next', svg: svgTemplateNext, helpText: 'Show next fusion option.'});
 	}
 
 	// react to a button click
@@ -231,10 +244,29 @@ export class FusionBank extends ButtonBank
 		else if (id == 'next') this.owner.templateRotate(1);
 	}
 
+	public claimKey(event:KeyboardEvent):boolean
+	{
+		if (event.key == KeyCode.Enter)
+		{
+			this.owner.templateAccept();
+			return true;
+		}
+		else if (event.key == KeyCode.Left || event.key == KeyCode.Up)
+		{
+			this.owner.templateRotate(-1);
+			return true;
+		}
+		else if (event.key == KeyCode.Right || event.key == KeyCode.Down)
+		{
+			this.owner.templateRotate(1);
+			return true;
+		}
+		return false;
+	}
+
 	public bankClosed()
 	{
 		this.owner.clearPermutations();
 	}
 }
 
-/* EOF */ }

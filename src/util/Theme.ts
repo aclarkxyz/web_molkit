@@ -10,7 +10,7 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
+import {colourCode} from './util';
 
 // public theme definition: the values for these colours can be customised; they will be converted into CSS as soon as the initialisation
 // function is called (see below); the general idea is a tetrachrome: most content is monochrome (black text on white background by default),
@@ -33,21 +33,6 @@ export class Theme
 	public static highlightEdge1 = 0x00CA59;
 	public static highlightEdge2 = 0x008650;
 	public static error = 0xFF0000;
-
-	/* brought over from MMDS app; consider reinstating them
-	public static dialogBackground = 0x20194C66;
-	public static dialogActiveArea1 = 0x20194C26;
-	public static dialogActiveArea2 = 0x20000026;
-	public static buttonShade1 = 0x40236866;;
-	public static buttonShade2 = 0x40004866;;
-	public static buttonSelected1 = 0x3346D4D2;
-	public static buttonSelected2 = 0x33008FD2;
-	public static buttonHighlighted1 = 0x4C00C958;
-	public static buttonHighlighted2 = 0x4C008550;
-	public static current = 0x00A43C;
-	public static currentBorder = 0x40FFC0;
-	public static selected = 0x009488;
-	public static bankTranslucent = 0xC0309070;*/
 }
 
 // to be called as soon as possible from within any environment that uses WebMolKit functionality
@@ -302,4 +287,3 @@ function composeMainCSS():string
 	`;
 }
 
-/* EOF */ }

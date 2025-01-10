@@ -10,26 +10,51 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
+import {CircularFingerprints} from '../calc/CircularFingerprints';
+import {Theme} from '../util/Theme';
+import {DEGRAD, escapeHTML, norm_xy, readTextURL} from '../util/util';
+import {Vec} from '../util/Vec';
+import {CoordUtil} from '../mol/CoordUtil';
+import {DataSheetColumn} from '../ds/DataSheet';
+import {DataSheetStream} from '../io/DataSheetStream';
+import {MetaMolecule} from '../mol/MetaMolecule';
+import {Molecule} from '../mol/Molecule';
+import {MolUtil} from '../mol/MolUtil';
 
-export const TEMPLATE_FILES =
-[
-	'rings',
-	'termgrp',
-	'funcgrp',
-	'protgrp',
-	'nonplrings',
-	'largerings',
-	'crownethers',
-	'ligmonodent',
-	'ligbident',
-	'ligtrident',
-	'ligmultident',
-	'cagecmplx',
-	'aminoacids',
-	'biomolecules',
-	'saccharides'
-];
+import dsRings from '@reswmk/data/templates/rings.ds';
+import dsTermGrp from '@reswmk/data/templates/termgrp.ds';
+import dsFuncGrp from '@reswmk/data/templates/funcgrp.ds';
+import dsProtGrp from '@reswmk/data/templates/protgrp.ds';
+import dsNonPlRings from '@reswmk/data/templates/nonplrings.ds';
+import dsLargeRings from '@reswmk/data/templates/largerings.ds';
+import dsCrownEthers from '@reswmk/data/templates/crownethers.ds';
+import dsLigMonodent from '@reswmk/data/templates/ligmonodent.ds';
+import dsLigBident from '@reswmk/data/templates/ligbident.ds';
+import dsLigTrident from '@reswmk/data/templates/ligtrident.ds';
+import dsLigMultident from '@reswmk/data/templates/ligmultident.ds';
+import dsCageCmplx from '@reswmk/data/templates/cagecmplx.ds';
+import dsAminoAcids from '@reswmk/data/templates/aminoacids.ds';
+import dsBiomolecules from '@reswmk/data/templates/biomolecules.ds';
+import dsSaccharides from '@reswmk/data/templates/saccharides.ds';
+
+const TEMPLATE_SOURCE:Record<string, string> =
+{
+	'rings': dsRings,
+	'termgrp': dsTermGrp,
+	'funcgrp': dsFuncGrp,
+	'protgrp': dsProtGrp,
+	'nonplrings': dsNonPlRings,
+	'largerings': dsLargeRings,
+	'crownethers': dsCrownEthers,
+	'ligmonodent': dsLigMonodent,
+	'ligbident': dsLigBident,
+	'ligtrident': dsLigTrident,
+	'ligmultident': dsLigMultident,
+	'cagecmplx': dsCageCmplx,
+	'aminoacids': dsAminoAcids,
+	'biomolecules': dsBiomolecules,
+	'saccharides': dsSaccharides,
+};
 
 /*
 	Abbreviation container: a singleton list of inline abbreviations which are initially bootstrapped from the available templates.
@@ -51,20 +76,20 @@ export class AbbrevContainer
 
 	// ----------------- static methods -----------------
 
+	public static getTemplateKeys():string[] {return Object.keys(TEMPLATE_SOURCE);}
+	public static getTemplateData(key:string):string {return TEMPLATE_SOURCE[key];}
+
 	// needs to be called once per lifecycle, in order to ensure that the necessary resources are loaded
-	public static needsSetup() {return !this.main;}
-	public static async setupData()
+	public static needsSetup():boolean {return !this.main;}
+	public static async setupData():Promise<void>
 	{
 		if (this.main) return;
 
-		if (!Theme.RESOURCE_URL) throw ('RPC resource URL not defined.');
-
 		this.main = new AbbrevContainer();
 
-		for (let tfn of TEMPLATE_FILES)
+		for (let key of this.getTemplateKeys())
 		{
-			let url = Theme.RESOURCE_URL + '/data/templates/' + tfn + '.ds';
-			let dsstr = await readTextURL(url);
+			let dsstr = this.getTemplateData(key);
 			let ds = DataSheetStream.readXML(dsstr);
 
 			let colMol = ds.firstColOfType(DataSheetColumn.Molecule), colAbbrev = ds.findColByName('Abbrev', DataSheetColumn.String);
@@ -85,7 +110,6 @@ export class AbbrevContainer
 				if (firstConn > 1) frag.swapAtoms(1, firstConn);
 				this.main.submitAbbreviation(name, frag);
 			}
-
 		}
 	}
 
@@ -229,4 +253,3 @@ export class AbbrevContainer
 	}
 }
 
-/* EOF */ }

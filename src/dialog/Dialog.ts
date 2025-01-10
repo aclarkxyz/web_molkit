@@ -10,7 +10,9 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
+import {clearTooltip} from '../ui/Tooltip';
+import {dom, DOM, domLegacy} from '../util/dom';
+import {installInlineCSS} from '../util/Theme';
 
 /*
 	Dialog: base class for popup dialogs.
@@ -193,4 +195,3 @@ export class Dialog
 	}
 }
 
-/* EOF */ }

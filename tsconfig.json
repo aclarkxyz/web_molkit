@@ -1,19 +1,31 @@
 {
 	"compilerOptions": 
 	{
-		"module": "system",
+		"module": "es2020",
 		"noImplicitAny": true,
 		"removeComments": true,
 		"preserveConstEnums": true,
-		"outFile": "bin/webmolkit-build.js",
+		"outDir": "dist",
 		"sourceMap": true,
 		"target": "ES6",
-		"lib": ["es2020", "dom"],
-		"declaration": true
+		"lib": ["es2022", "dom"],
+		"types": [],
+		"declaration": true,
+		"moduleResolution": "node",
+		"paths": 
+		{
+			"@wmk/*": ["./src/*"],
+			"@reswmk/*": ["./res/*"],
+		}
 	},
 	"include": 
 	[
 		"src/**/*.ts",
-		"val/**/*.ts"
+		"val/**/*.ts",
+		"res/**/*.svg",
+	],
+	"exclude":
+	[
+		"node_modules"
 	]
 }

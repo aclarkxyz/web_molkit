@@ -10,9 +10,17 @@
 	[PKG=webmolkit]
 */
 
-///<reference path='Aspect.ts'/>
-
-namespace WebMolKit /* BOF */ {
+import {DataSheet, DataSheetColumn} from '../ds/DataSheet';
+import {Molecule} from '../mol/Molecule';
+import {MolUtil} from '../mol/MolUtil';
+import {ArrangeExperiment} from '../gfx/ArrangeExperiment';
+import {OutlineMeasurement} from '../gfx/ArrangeMeasurement';
+import {DrawExperiment} from '../gfx/DrawExperiment';
+import {MetaVector} from '../gfx/MetaVector';
+import {RenderPolicy} from '../gfx/Rendering';
+import {Vec} from '../util/Vec';
+import {Aspect, AspectGraphicRendering} from './Aspect';
+import {registerAspect} from './AspectList';
 
 /*
 	Experiment aspect: transforms groups of rows from a datasheet into a collection of structures that make up a
@@ -878,4 +886,3 @@ export class Experiment extends Aspect
 
 registerAspect(Experiment);
 
-/* EOF */ }

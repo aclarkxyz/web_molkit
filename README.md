@@ -4,7 +4,7 @@ Cheminformatics toolkit built with _TypeScript_. Can be used to carry out some f
 
 ## License
 
-Copyright &copy; 2010-2022 Molecular Materials Informatics, Inc.
+Copyright &copy; 2010-2024 Molecular Materials Informatics, Inc.
 
 [http://molmatinf.com](http://molmatinf.com)
 
@@ -14,67 +14,217 @@ The _WebMolKit_ library is made available under the terms of the [Apache License
 
 ## Codebase
 
-The framework is written in _TypeScript_. It requires the [TypeScript](https://www.typescriptlang.org/) compiler (`tsc`) to cross-compile into JavaScript. All development has been done using _Visual Studio Code_.
+The framework is written in _TypeScript_. It requires the [TypeScript](https://www.typescriptlang.org/) compiler to cross-compile into JavaScript. All development has been done using _Visual Studio Code_.
 
-Prior to doing anything with the codebase, it needs to be compiled into _JavaScript_:
+Converting each of the source files (`.ts`) into a JavaScript file (`.js` and `.d.ts`) is done by running the TypeScript compiler:
 
 ```
 $ tsc
-$ ls bin
-	webmolkit-build.js
-	webmolkit-build.js.map
+$ ls -lR dist/src
 ```
 
-The compilation creates the file `bin/webmolkit-build.js`. Once this is generated, the file can be used in a runtime context.
-
-The source code uses the older TypeScript namespace technology, which is the lowest common denominator packaging method, making it straightforward to include into 
-existing projects. At some point in the future it will probably be upgraded to use ES6 modules, but this currently introduces some compatibility problems for incorporating
-into a diverse range of JavaScript engines.
-
-## Uses
-
-The framework is designed for use on a standard HTML page _and_ under the NodeJS/Electron framework.
-
-For anyone writing code in _TypeScript_, the method of choice is to include the `src/**.ts` files within the main project, and access the classes and functions within the `WebMolKit` namespace. For using with raw _JavaScript_, or other derivatives, the cross-compiled output file `bin/webmolkit-build.js` contains all of the functionality. The class and function names are all the same as for integrating with _TypeScript_, but the without helpful typing information.
-
-Adding the sketcher to a web page is demonstrated in the example file `val/html/sketcher.html`.
-
-Importing the necessary content into a web page can be most easily done by inserting lines into the header section of the HTML page, e.g.
+Converting these TypeScript outputs into something that can be executed on one of the many different JavaScript runtime engines involves _webpack_:
 
 ```
-<head>
-	<script src="../../bin/webmolkit-build.js" type="text/javascript"></script>
-	...
-</head>
+$ npm run build
+$ ls -l dist
 ```
 
-Embedding a blank sketcher instance on the page can be done as:
+This process creates `webmolkit.js`, which can be included into any web page, allowing functionality to be invoked. Incorporating _WebMolKit_ into a more complex library is most easily done using the NodeJS Package Manager (_npm_), within a project that necessarily uses _webpack_ to assemble all of its own libraries into a final build.
+
+_WebMolKit_ itself uses no dependencies, and runs on baseline JavaScript engines. The only exception is the need for a DOM in order to read/write XML files: for the DOM-less environments (node, web-worker) this must be stubbed in with a custom implementation. 
+
+## Test framework
+
+The `val` subdirectory includes a limited set of regression tests and interactive checks. These can be executed by running a dumb web server (e.g. [http-server](https://www.npmjs.com/package/http-server)) and pointing your browser to each of the HTML files.
+
+## Cookbook
+
+### Simple Embed
+
+The easiest way to use `WebMolKit` is to obtain the compiled bundle from [GitHub](https://github.com/aclarkxyz/web_molkit): copy the file `dist/webmolkit.js` to the appropriate location. A bare-bones web page that invokes the sketcher might look like:
 
 ```
-<script>
-	var url = window.location.href.substring(0, window.location.href.lastIndexOf('/'));
-	WebMolKit.initWebMolKit(url + '../../../res');
+<!DOCTYPE html>
+<html>
+	<head>
+		<script src="webmolkit.js" type="text/javascript" charset="UTF-8"></script>
+	</head>
+	<body>
+		<p id="sketcher"></p>
+		<script>
+			let sketcher = new WebMolKit.Sketcher();
+			sketcher.setSize(800, 700);
+			let proxy = new WebMolKit.ClipboardProxyWeb();
+			let handler = new WebMolKit.ClipboardProxyHandler();
+			handler.copyEvent = (andCut, proxy) =>
+			{
+				sketcher.performCopySelection(andCut);
+				return true;
+			};
+			handler.pasteEvent = (proxy) =>
+			{
+				sketcher.pasteText(proxy.getString());
+				return true;
+			};
+			proxy.pushHandler(handler);
+			sketcher.defineClipboard(proxy);
+			sketcher.defineContext(new WebMolKit.MenuProxyWeb());
 
-	var mol = WebMolKit.Molecule.fromString(document.getElementById('moldata').textContent);
-
-	var sketcher = new WebMolKit.Sketcher();
-	sketcher.setSize(800, 700);
-	sketcher.defineMolecule(mol);
-	let proxy = new WebMolKit.ClipboardProxyWeb();
-	sketcher.defineClipboard(proxy);
-	sketcher.setup(() => sketcher.render(document.getElementById('sketcher')));
-</script>
+			sketcher.setup(() => sketcher.render(document.getElementById('sketcher')));
+		</script>
+	</body>
+</html>
 ```
 
-There are several things going on here. The first step is to make sure the framework knows where to find its own resources, by calling `WebMolKit.initWebMolKit`. The example above constructs a URL relative to the current location. The content that it needs to find is located in the `res` subdirectory of the repository, and contains information such as icons and structure templates.
+### Electron App
 
-Starting with a current molecule is optional: the default is blank. To prepopulate, a `Molecule` object must first be created. The example above creates an instance by unpacking a string that conforms to the _SketchEl_ format, which is the native default. Calling the `defineMolecule` method for the sketcher class makes that the current molecule.
+Using _WebMolKit_ as an incorporated library involves a few more steps. The following sequence can be used to bootstrap a new _Electron_ project (whereby _Electron_ is the desktop framework for _JavaScript_ apps).
 
-A sketcher instance requires several other pieces of information, such as predefined size. It also wants something called a "clipboard proxy", which is a way of intermediating between the two very different styles of clipboard access for web vs. desktop targets, and also to provide a way to capture/release clipboard access under scenarios like dialog box creation. For a simple web page, though, the boilerplate code shown above will suffice.
+```
+$ mkdir electron-wmk && cd-electron-wmk
+$ npm init
+```
 
-The final rendering and activation of the sketcher is done by chaining the `setup` and `render` methods. There is some resource loading that gets done in between the setup and rendering steps, hence the callback.
+In response to the NPM initialisation questions, enter `main.js` for the _entry point_, and for everything else, the default choice is fine.
 
-That is all it takes to embed a sketcher. Interacting with the widget is fairly straightforward, and is done by calling public functions, e.g. `getMolecule`, `defineMolecule`, `performCopy`, etc.
+Add the development libraries and _WebMolKit_:
+
+```
+$ npm i --save-dev webpack electron raw-loader
+$ npm i webmolkit
+```
+
+The bare minimum `main.js` file creates the sketcher window:
+
+```
+const {app, BrowserWindow} = require('electron');
+
+function createWindow()
+{
+    const win = new BrowserWindow(
+    {
+        width: 900,
+        height: 780,
+        webPreferences: {nodeIntegration: true},
+    });
+    win.loadFile('index.html');
+}
+
+app.whenReady().then(() => createWindow());
+```
+
+The rendering task is implemented in `index.js`:
+
+```
+import {Sketcher} from 'webmolkit/sketcher/Sketcher';
+import {ClipboardProxyWeb, ClipboardProxyHandler} from 'webmolkit/ui/ClipboardProxy';
+import {MenuProxyWeb} from 'webmolkit/ui/MenuProxy';
+
+let sketcher = new Sketcher();
+sketcher.setSize(800, 700);
+
+let proxy = new ClipboardProxyWeb();
+let handler = new ClipboardProxyHandler();
+handler.copyEvent = (andCut, proxy) =>
+{
+	sketcher.performCopySelection(andCut);
+	return true;
+};
+handler.pasteEvent = (proxy) =>
+{
+	sketcher.pasteText(proxy.getString());
+	return true;
+};
+proxy.pushHandler(handler);
+sketcher.defineClipboard(proxy);
+sketcher.defineContext(new MenuProxyWeb());
+
+sketcher.setup(() => sketcher.render(document.getElementById('sketcher')));
+```
+
+Note that the code uses ES6-style imports, with reference to the _WebMolKit_ library imported via NPM. This does not actually execute in the Electron runtime, and so for this we need to bring in `webpack` to tie everything together. Create the file `webpack.config.js`:
+
+```
+const path = require('path');
+
+module.exports = 
+{
+	entry: './index.js',
+	target: 'electron-main',
+	mode: 'development',
+	module: 
+	{
+		rules: 
+		[
+			{test: /\.svg$/, loader: 'raw-loader'},
+			{test: /\.ds$/, loader: 'raw-loader'},
+			{test: /\.onto$/, loader: 'raw-loader'},
+		],
+	},
+	performance: 
+	{
+		hints: false,
+		maxEntrypointSize: 512000,
+		maxAssetSize: 512000
+	},
+	output: 
+	{
+		path: path.resolve(__dirname, '.'),
+		filename: 'index-pack.js',
+		library: 'Main',
+	},
+	devtool: 'source-map',
+};
+```
+
+This is a very vanilla configuration, which calls out to `electron-main` as the target type, and transpiles `index.js` to `index-pack.js`, which incorporates all the necessary libraries and uses the module loading system desired by the target. Note specifically in the _rules_ section above, that it invokes `raw-loader` for files with several different extensions. This is necessary for asset bundling, which is used within the sketcher.
+
+The `package.json` file will mostly be filled in, but adding a couple of parts to the _scripts_ section is useful for compiling and running:
+
+```
+{
+  "name": "electron-wmk",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "build": "webpack --config webpack.config.js",
+    "start": "electron ."
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^33.2.1",
+    "raw-loader": "^4.0.2",
+    "webpack": "^5.97.1",
+    "webpack-cli": "^6.0.1"
+  },
+  "dependencies": {
+    "webmolkit": "^2.0.0"
+  }
+}
+```
+
+Rendering is done by `index.html`:
+
+```
+<html>
+    <head>
+        <title>Electron/WebMolKit</title>
+    </head>
+    <body>
+        <div id="sketcher"></div>
+        <script src="index-pack.js" charset="UTF-8"></script>
+    </body>
+</html>
+```
+
+And finally you can run the project with `npm run start` which will fire up the Electron runtime and present a desktop window with a sketcher.
+
+## More information
+
+Documentation is mostly in the form of [source comments](https://github.com/aclarkxyz/web_molkit/tree/master/src) and some [example code](https://github.com/aclarkxyz/web_molkit/tree/master/val/html). As of December 2024 the codebase had been very recently converted to using the new ES6 import syntax, as opposed to the legacy TypeScript _namespace_ feature, so incorporating it into larger projects is more streamlined. 
 
 # Feedback
 

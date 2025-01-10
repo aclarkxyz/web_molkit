@@ -10,12 +10,10 @@
 	[PKG=webmolkit]
 */
 
-///<reference path='../../src/util/util.ts'/>
-///<reference path='../../src/util/Vec.ts'/>
-///<reference path='../../src/gfx/AxisLabeller.ts'/>
-///<reference path='Validation.ts'/>
+import {Vec} from '@wmk/util/Vec';
+import {Validation} from './Validation';
+import {AxisLabeller} from '@wmk/gfx/AxisLabeller';
 
-namespace WebMolKit /* BOF */ {
 
 /*
     Headless validation: basic tests - simple things like vector operators and common utilities.
@@ -77,4 +75,3 @@ export class ValidationHeadlessBasic extends Validation
 	}
 }
 
-/* EOF */ }

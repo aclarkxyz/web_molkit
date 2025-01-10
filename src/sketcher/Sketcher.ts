@@ -10,19 +10,48 @@
 	[PKG=webmolkit]
 */
 
-///<reference path="DrawCanvas.ts"/>
-
-namespace WebMolKit /* BOF */ {
+import {CoordUtil} from '../mol/CoordUtil';
+import {DataSheetColumn} from '../ds/DataSheet';
+import {DataSheetStream} from '../io/DataSheetStream';
+import {Molecule} from '../mol/Molecule';
+import {MoleculeStream} from '../io/MoleculeStream';
+import {MolUtil} from '../mol/MolUtil';
+import {PolymerBlock, PolymerBlockUnit} from '../mol/PolymerBlock';
+import {GuidelineSprout, SketchUtil} from '../mol/SketchUtil';
+import {ArrangeMolecule} from '../gfx/ArrangeMolecule';
+import {DrawMolecule} from '../gfx/DrawMolecule';
+import {MetaVector} from '../gfx/MetaVector';
+import {RenderEffects, RenderPolicy} from '../gfx/Rendering';
+import {ButtonView, ButtonViewPosition} from '../ui/ButtonView';
+import {ClipboardProxy} from '../ui/ClipboardProxy';
+import {MenuProxy} from '../ui/MenuProxy';
+import {angleDiff, clone, DEGRAD, eventCoords, KeyCode, norm2_xy, norm_xy, RADDEG, TWOPI} from '../util/util';
+import {Vec} from '../util/Vec';
+import {CommandBank} from './CommandBank';
+import {ContextSketch} from './ContextSketch';
+import {DraggingTool, DrawCanvas, DrawCanvasDecoration} from './DrawCanvas';
+import {EditAtom} from './EditAtom';
+import {EditBond} from './EditBond';
+import {EditPolymer} from './EditPolymer';
+import {ActivityType, MoleculeActivity, SketchState, TemplatePermutation} from './MoleculeActivity';
+import {FusionBank, TemplateBank} from './TemplateBank';
+import {ToolBank, ToolBankItem} from './ToolBank';
 
 /*
 	Sketcher: a very heavyweight widget that provides 2D structure editing for a molecule.
 */
 
+export interface SketcherPlugins
+{
+	callbackSpecialPaste?:(str:string) => Promise<Molecule>; // define this to add special layer for clipboard interpretation
+	callbackComposeFragment?:(sketcher:Sketcher) => void; // define this to activate when "composition" is requested
+}
+
 export class Sketcher extends DrawCanvas
 {
 	// callbacks
 	public callbackChangeMolecule:(mol:Molecule) => void;
-	public callbackSpecialPaste:(str:string) => Promise<Molecule> = null; // define this to add special layer for clipboard interpretation
+	public plugins:SketcherPlugins = {};
 
 	public inDialog = false; // set to true while a modal dialog is open
 	public initialFocus = true; // normally want to bogart the focus upon creation, but not always
@@ -531,11 +560,11 @@ export class Sketcher extends DrawCanvas
 			else alert('Text from clipboard is not a valid molecule.');
 		};
 
-		if (this.callbackSpecialPaste)
+		if (this.plugins.callbackSpecialPaste)
 		{
 			(async () =>
 			{
-				let mol = await this.callbackSpecialPaste(str);
+				let mol = await this.plugins.callbackSpecialPaste(str);
 				if (mol)
 					this.pasteMolecule(mol);
 				else
@@ -1028,6 +1057,13 @@ export class Sketcher extends DrawCanvas
 		new MoleculeActivity(this.getState(), ActivityType.SproutDirection, {deltaX, deltaY}, this).execute();
 	}
 
+	private launchComposeFragment():void
+	{
+		const {callbackComposeFragment} = this.plugins;
+		if (!callbackComposeFragment || this.inDialog) return;
+		callbackComposeFragment(this);
+	}
+
 	// --------------------------------------- toolkit events ---------------------------------------
 
 	// event responses
@@ -1116,14 +1152,7 @@ export class Sketcher extends DrawCanvas
 
 	private keyPressed(event:KeyboardEvent):void
 	{
-		//let ch = String.fromCharCode(event.keyCode || event.charCode);
-		//console.log('PRESSED['+ch+'] key='+event.keyCode+' chcode='+event.charCode);
-
-		// !! TODO: special cases, like arrow keys/escape...
-
-		/*if (this.toolView != null && this.toolView.topBank.claimKey(event)) {event.preventDefault(); return;}
-		if (this.commandView != null && this.commandView.topBank.claimKey(event)) {event.preventDefault(); return;}
-		if (this.templateView != null && this.templateView.topBank.claimKey(event)) {event.preventDefault(); return;}*/
+		// placeholder
 	}
 	private keyDown(event:KeyboardEvent):void
 	{
@@ -1146,7 +1175,10 @@ export class Sketcher extends DrawCanvas
 
 		// console.log(`Sketcher/Key:${key} Mod:${mod} Date:${new Date()}`);
 
-		if (key == KeyCode.Enter) this.editCurrent();
+		if (this.toolView != null && this.toolView.topBank.claimKey(event)) {}
+		else if (this.commandView != null && this.commandView.topBank.claimKey(event)) {}
+		else if (this.templateView != null && this.templateView.topBank.claimKey(event)) {}
+		else if (key == KeyCode.Enter) this.editCurrent();
 		else if (key == KeyCode.Left && nomod) this.hitArrowKey(-1, 0);
 		else if (key == KeyCode.Right && nomod) this.hitArrowKey(1, 0);
 		else if (key == KeyCode.Up && nomod) this.hitArrowKey(0, 1);
@@ -1155,9 +1187,6 @@ export class Sketcher extends DrawCanvas
 		else if (key == 'Z' && mod == 'SC') this.performRedo();
 		else if (key == 'z' && nomod) this.toolView.cycleSelected(-1);
 		else if (key == 'x' && nomod) this.toolView.cycleSelected(1);
-		else if (this.toolView != null && this.toolView.topBank.claimKey(event)) {}
-		else if (this.commandView != null && this.commandView.topBank.claimKey(event)) {}
-		else if (this.templateView != null && this.templateView.topBank.claimKey(event)) {}
 		else if (key == '#' && mod == 'SC') this.createRing(3, false);
 		else if (key == '$' && mod == 'SC') this.createRing(4, false);
 		else if (key == '%' && mod == 'SC') this.createRing(5, false);
@@ -1183,6 +1212,7 @@ export class Sketcher extends DrawCanvas
 		else if (key == '7' && mod == 'C') this.sproutDirection(-1, 1);
 		else if (key == '8' && mod == 'C') this.sproutDirection(0, 1);
 		else if (key == '9' && mod == 'C') this.sproutDirection(1, 1);
+		else if (key == '`' && nomod) this.launchComposeFragment();
 		else return; // allow the key to percolate upward
 
 		event.preventDefault();
@@ -1852,4 +1882,3 @@ export class Sketcher extends DrawCanvas
 	}
 }
 
-/* EOF */ }

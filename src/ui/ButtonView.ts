@@ -10,7 +10,15 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
+import {FontData} from '../gfx/FontData';
+import {MetaVector} from '../gfx/MetaVector';
+import {dom, DOM} from '../util/dom';
+import {Theme} from '../util/Theme';
+import {colourCanvas, eventCoords, newElement, pathRoundedRect, pixelDensity, setBoundaryPixels} from '../util/util';
+import {Vec} from '../util/Vec';
+import {ButtonBank, ButtonBankItem} from './ButtonBank';
+import {addTooltip} from './Tooltip';
+import {Widget} from './Widget';
 
 /*
 	ButtonView: a container for a stack of ButtonBanks. The ButtonView handles all the display/user interaction parts
@@ -622,6 +630,19 @@ export class ButtonView extends Widget
 				const by = d.y + Math.floor(0.5 * (d.height - sz));
 				setBoundaryPixels(d.imgDOM, bx, by, sz, sz);
 			}
+			else if (b.svg != null)
+			{
+				d.imgDOM = dom('<div/>').appendTo(this.contentDOM).css({'display': 'block', 'position': 'absolute', 'pointer-events': 'none'});
+				const sz = this.prefabImgSize;
+				const bx = d.x + Math.floor(0.5 * (d.width - sz));
+				const by = d.y + Math.floor(0.5 * (d.height - sz));
+				setBoundaryPixels(d.imgDOM, bx, by, sz, sz);
+				let svg = dom(b.svg.substring(b.svg.indexOf('<svg'))).appendTo(d.imgDOM);
+				let oldWidth = svg.getAttr('width'), oldHeight = svg.getAttr('height');
+				svg.attr({'viewBox': `0 0 ${oldWidth} ${oldHeight}`, 'width': `${sz}`, 'height': `${sz}`});
+				svg.css({'width': `${sz}px`, 'height': `${sz}px`, 'pointer-events': 'none'});
+				dom(svg).appendTo(d.imgDOM);
+			}
 			else if (b.metavec != null)
 			{
 				let draw = b.metavec instanceof MetaVector ? b.metavec as MetaVector : new MetaVector(b.metavec);
@@ -1038,4 +1059,3 @@ export class ButtonView extends Widget
 	}
 }
 
-/* EOF */ }

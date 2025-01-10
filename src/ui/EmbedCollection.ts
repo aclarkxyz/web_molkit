@@ -10,7 +10,20 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
+import {Aspect} from '../aspect/Aspect';
+import {AspectList} from '../aspect/AspectList';
+import {DataSheet, DataSheetColumn} from '../ds/DataSheet';
+import {DataSheetStream} from '../io/DataSheetStream';
+import {MDLSDFReader} from '../io/MDLReader';
+import {OutlineMeasurement} from '../gfx/ArrangeMeasurement';
+import {ArrangeMolecule} from '../gfx/ArrangeMolecule';
+import {DrawMolecule} from '../gfx/DrawMolecule';
+import {MetaVector} from '../gfx/MetaVector';
+import {RenderEffects, RenderPolicy} from '../gfx/Rendering';
+import {DOM, dom} from '../util/dom';
+import {fromUTF8, htmlToRGB} from '../util/util';
+import {Vec} from '../util/Vec';
+import {EmbedChemistry} from './EmbedChemistry';
 
 /*
 	Embedded collection: obtains a datasheet representation and displays it as a group of molecules, primitive datatypes, and/or higher
@@ -274,4 +287,3 @@ export class EmbedCollection extends EmbedChemistry
 	}
 }
 
-/* EOF */ }

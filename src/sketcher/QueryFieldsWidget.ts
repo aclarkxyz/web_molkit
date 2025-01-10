@@ -10,7 +10,12 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
+import {Molecule} from '../mol/Molecule';
+import {QueryUtil} from '../mol/QueryUtil';
+import {OptionList} from '../ui/OptionList';
+import {Widget} from '../ui/Widget';
+import {dom, DOM} from '../util/dom';
+import {Vec} from '../util/Vec';
 
 /*
 	Supporting widget for editing query fields, for an atom or a bond.
@@ -127,9 +132,6 @@ export class QueryFieldsWidget extends Widget
 			this.optRingBlock.render(dom('<div/>').appendTo(grid).css({'grid-area': `${row} / value`}));
 
 			dom('<div># Small Rings</div>').appendTo(grid).css({'grid-area': `${++row} / title`});
-			this.inputNumRings = makeInput();
-
-			dom('<div>Num Rings</div>').appendTo(grid).css({'grid-area': `${++row} / title`});
 			this.inputNumRings = makeInput();
 
 			dom('<div>Bond Orders</div>').appendTo(grid).css({'grid-area': `${++row} / title`});
@@ -303,4 +305,3 @@ export class QueryFieldsWidget extends Widget
 	}
 }
 
-/* EOF */ }

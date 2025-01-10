@@ -10,7 +10,13 @@
     [PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
+import {Molecule} from '../mol/Molecule';
+import {GeomUtil} from '../util/Geom';
+import {angleDiff, DEGRAD, invZ, norm2_xy, norm_xy} from '../util/util';
+import {Vec} from '../util/Vec';
+import {ArrangeMolecule, BLine, BLineType} from './ArrangeMolecule';
+import {MetaVector, TextAlign} from './MetaVector';
+import {RenderEffects, RenderMnemonics, RenderMnemonicType, RenderPolicy} from './Rendering';
 
 /*
     Controlling class for drawing a molecule in a vector graphics format: this turns an "arranged molecule" instance into the series of primitives that
@@ -550,4 +556,3 @@ export class DrawMolecule
 	}
 }
 
-/* EOF */ }

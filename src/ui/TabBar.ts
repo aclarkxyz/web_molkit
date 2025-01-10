@@ -10,7 +10,10 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
+import {dom, DOM} from '../util/dom';
+import {hasInlineCSS, installInlineCSS, Theme} from '../util/Theme';
+import {colourCode} from '../util/util';
+import {Widget} from './Widget';
 
 /*
 	TabBar: a series of option buttons with a common area underneath it, of which just one can be selected & visible.
@@ -213,4 +216,3 @@ export class TabBar extends Widget
 	}
 }
 
-/* EOF */ }

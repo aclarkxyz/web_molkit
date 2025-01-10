@@ -10,7 +10,8 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
+import {dom, DOM} from '../util/dom';
+import {addTooltip} from './Tooltip';
 
 /*
 	Base class for widgets. Maintains the wrapping <div> element into which everything is rendered.
@@ -54,4 +55,3 @@ export class Widget
 	}
 }
 
-/* EOF */ }

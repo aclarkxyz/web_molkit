@@ -10,7 +10,7 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
+import {fltEqual} from '../util/util';
 
 /*
 	Determines a series of numeric labels to describe an axis, and makes sure all these labels fit within the given width.
@@ -114,4 +114,3 @@ export class AxisLabeller
 	}
 }
 
-/* EOF */ }

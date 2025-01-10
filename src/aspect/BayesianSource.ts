@@ -10,7 +10,10 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
+import {DataSheet} from '../ds/DataSheet';
+import {MoleculeStream} from '../io/MoleculeStream';
+import {Aspect} from './Aspect';
+import {registerAspect} from './AspectList';
 
 /*
 	BayesianSource: tracks some number of numeric columns which can be used to create Bayesian models. Keeps track of various pre-processing
@@ -137,4 +140,3 @@ export class BayesianSource extends Aspect
 
 registerAspect(BayesianSource);
 
-/* EOF */ }

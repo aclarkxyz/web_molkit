@@ -10,7 +10,9 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
+import {GeomUtil, Spline} from './Geom';
+import {DEGRAD, fltEqual, norm2_xy, norm_xy, sqr, TWOPI} from './util';
+import {Vec} from './Vec';
 
 /*
 	Given a collection of points that is shaped somewhat like an oval-esque outline (i.e. a molecule ring that might be squished and rotated
@@ -331,4 +333,3 @@ export class FitRotatedEllipse
 	}
 }
 
-/* EOF */ }

@@ -10,7 +10,11 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
+import {Chemistry} from '../mol/Chemistry';
+import {MetaMolecule} from '../mol/MetaMolecule';
+import {Molecule} from '../mol/Molecule';
+import {MolUtil} from '../mol/MolUtil';
+import {Permutation, Vec} from '../util/Vec';
 
 /*
 	Circular fingerprints: for generating ECFP-2/4/6 and FCFP-2/4/6 fingerprints. These are described by:
@@ -334,4 +338,3 @@ export class CircularFingerprints
 	}
 }
 
-/* EOF */ }

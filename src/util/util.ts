@@ -10,7 +10,9 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
+import {DOM, dom, domLegacy} from './dom';
+import {Size} from './Geom';
+import {Vec} from './Vec';
 
 /*
 	General purpose functions. Note that these are not in the WebMolKit namespace.
@@ -679,4 +681,3 @@ export function stringSimilarityPermutations(str1:string, str2:string):number
 	return Math.min(Math.min(lev1, lev2), lev3);
 }
 
-/* EOF */ }

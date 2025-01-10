@@ -10,10 +10,13 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
-
 /*
-	Utilities to supplement the rather rudimentary DOM.
+	Utilities to supplement the rather rudimentary DOM, adding readability and convenience.
+
+	Note that the baseline implementation assumes that the JavaScript engine has a DOM, which is the case when running on web browsers or
+	the Electron desktop. When running under command line NodeJS or web-worker environments this is missing. If it is not possible to avoid
+	using XML (e.g. serialisation of DataSheets) then the workaround is to set the static custom methods to call the replacement
+	implementations as a plugin (e.g. from an NPM library that has to be explicitly installed).
 */
 
 // these are defined locally, in case DOM has to be used as a plugin (in NodeJS mode)
@@ -96,7 +99,7 @@ export class XML
 		if (parent == null) return null;
 		let el = this.findElement(parent, tagName);
 		if (el == null) return null;
-		return nodeText(el);
+		return this.nodeText(el);
 	}
 
 	// creates and appends an element
@@ -195,4 +198,3 @@ export class XML
 	}
 }
 
-/* EOF */ }

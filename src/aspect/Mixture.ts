@@ -10,7 +10,12 @@
     [PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
+import {DataSheet} from '../ds/DataSheet';
+import {MoleculeStream} from '../io/MoleculeStream';
+import {Vec} from '../util/Vec';
+import {Aspect} from './Aspect';
+import {registerAspect} from './AspectList';
+import {MeasurementData} from './MeasurementData';
 
 /*
 	Mixture: stores metadata about various columns such that they can be corralled into a hierarchical form that represents
@@ -178,4 +183,3 @@ export class Mixture extends Aspect
 
 registerAspect(Mixture);
 
-/* EOF */ }

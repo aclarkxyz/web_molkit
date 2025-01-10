@@ -10,7 +10,7 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
+import {ButtonView} from './ButtonView';
 
 /*
 	ButtonBank: abstract base class for providing a "bank of buttons". The instance is expected to server up a list
@@ -31,7 +31,8 @@ namespace WebMolKit /* BOF */ {
 export interface ButtonBankItem
 {
 	id:string;
-	imageFN?:string;
+	imageFN?:string; // provide a URL for the SVG...
+	svg?:string; // ... or provide the SVG text directly
 	metavec?:any; // either an instance of MetaVector or a dictionary that can be used to make one (server-generated: semi-deprecated)
 	helpText:string;
 	isSubMenu?:boolean;
@@ -98,4 +99,3 @@ export abstract class ButtonBank
 	}
 }
 
-/* EOF */ }

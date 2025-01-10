@@ -10,15 +10,10 @@
 	[PKG=webmolkit]
 */
 
-///<reference path='../../src/util/util.ts'/>
-///<reference path='../../src/util/Vec.ts'/>
-///<reference path='../../src/data/Molecule.ts'/>
-///<reference path='../../src/data/MoleculeStream.ts'/>
-///<reference path='../../src/data/DataSheetStream.ts'/>
-///<reference path='../../src/aspect/Experiment.ts'/>
-///<reference path='Validation.ts'/>
-
-namespace WebMolKit /* BOF */ {
+import {readTextURL} from '@wmk/util/util';
+import {Validation} from './Validation';
+import {DataSheetStream} from '@wmk/io/DataSheetStream';
+import {Experiment} from '@wmk/aspect/Experiment';
 
 /*
 	Headless validation: reaction tests - validating the Experiment aspect and related functionality
@@ -59,4 +54,3 @@ export class ValidationHeadlessReaction extends Validation
 	}
 }
 
-/* EOF */ }

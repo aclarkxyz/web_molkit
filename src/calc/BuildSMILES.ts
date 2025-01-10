@@ -10,7 +10,9 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
+import {Chemistry} from '../mol/Chemistry';
+import {Molecule} from '../mol/Molecule';
+import {Vec} from '../util/Vec';
 
 /*
 	Turns a molecule into linear notation, following some of the SMILES string patterns. The output will be recognisable as a
@@ -210,4 +212,3 @@ export class BuildSMILES
 
 }
 
-/* EOF */ }

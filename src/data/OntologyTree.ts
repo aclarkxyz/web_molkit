@@ -10,7 +10,9 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
+import {Theme} from '../util/Theme';
+import {readTextURL} from '../util/util';
+import {Vec} from '../util/Vec';
 
 /*
 	Manages a tree of ontology (URI) terms, which is an extremely minimalist subset of the functionality of formats
@@ -39,10 +41,17 @@ namespace WebMolKit /* BOF */ {
 
 let globalInstance:OntologyTree = null;
 
-const ONTOLOGY_FILES =
+/*const ONTOLOGY_FILES =
 [
 	'units'
-];
+];*/
+
+import ontoUnits from '@reswmk/data/ontology/units.onto';
+
+const ONTOLOGY_SOURCE:Record<string, string> =
+{
+	'units': ontoUnits,
+};
 
 export interface OntologyTreeTerm
 {
@@ -62,6 +71,11 @@ export class OntologyTree
 
 	private alreadyLoaded = new Set<string>(); // prevent double-loading files
 
+	// ----------------- static methods -----------------
+
+	public static getOntologyKeys():string[] {return Object.keys(ONTOLOGY_SOURCE);}
+	public static getOntologyData(key:string):string {return ONTOLOGY_SOURCE[key];}
+
 	// ------------------ public methods --------------------
 
 	constructor()
@@ -69,15 +83,14 @@ export class OntologyTree
 	}
 
 	// call this at least once during the early lifecycle: makes sure the default ontology files are loaded
-	public static async init():Promise<void>
+	public static init():void
 	{
 		if (globalInstance) return;
 		globalInstance = new OntologyTree();
 
-		for (let fn of ONTOLOGY_FILES)
+		for (let key of this.getOntologyKeys())
 		{
-			let url = Theme.RESOURCE_URL + '/data/ontology/' + fn + '.onto';
-			globalInstance.loadFromURL(url);
+			globalInstance.loadFromString(key, this.getOntologyData(key));
 		}
 	}
 
@@ -117,13 +130,19 @@ export class OntologyTree
 	}
 
 	// fetches a file and loads it up; throws an exception if it didn't work
-	public async loadFromURL(url:string):Promise<void>
+	/*public async loadFromURL(url:string):Promise<void>
 	{
 		if (this.alreadyLoaded.has(url)) return;
 		this.alreadyLoaded.add(url);
 
 		let text = await readTextURL(url);
 		if (!text) throw `Resource not found: ${url}`;
+		this.loadContent(text);
+	}*/
+	public loadFromString(key:string, text:string):void
+	{
+		if (this.alreadyLoaded.has(key)) return;
+		this.alreadyLoaded.add(key);
 		this.loadContent(text);
 	}
 
@@ -193,4 +212,3 @@ export class OntologyTree
 
 }
 
-/* EOF */ }

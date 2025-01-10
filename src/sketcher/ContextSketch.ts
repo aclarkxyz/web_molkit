@@ -10,7 +10,13 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
+import {Molecule} from '../mol/Molecule';
+import {PolymerBlock} from '../mol/PolymerBlock';
+import {ClipboardProxy} from '../ui/ClipboardProxy';
+import {MenuProxyContext} from '../ui/MenuProxy';
+import {Vec} from '../util/Vec';
+import {ActivityType, MoleculeActivity, SketchState} from './MoleculeActivity';
+import {Sketcher} from './Sketcher';
 
 /*
 	Population of a context menu for the sketcher, which depends on current state.
@@ -144,4 +150,3 @@ export class ContextSketch
 	}
 }
 
-/* EOF */ }

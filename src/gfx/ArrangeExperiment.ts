@@ -10,7 +10,18 @@
 	[PKG=webmolkit]
 */
 
-namespace WebMolKit /* BOF */ {
+import {ExperimentComponent, ExperimentComponentType, ExperimentEntry} from '../aspect/Experiment';
+import {ExperimentMeta, ExperimentMetaApplic} from '../rxn/ExperimentMeta';
+import {Molecule} from '../mol/Molecule';
+import {MolUtil} from '../mol/MolUtil';
+import {QuantityCalc} from '../rxn/QuantityCalc';
+import {Box, Pos, Size} from '../util/Geom';
+import {realEqual} from '../util/util';
+import {Vec} from '../util/Vec';
+import {ArrangeMeasurement} from './ArrangeMeasurement';
+import {ArrangeMolecule} from './ArrangeMolecule';
+import {FontData} from './FontData';
+import {RenderPolicy} from './Rendering';
 
 /*
 	Performs the layout of an experiment, which is a reaction that may be multistep, and contains a variety of
@@ -819,4 +830,3 @@ export class ArrangeExperiment
 	}
 }
 
-/* EOF */ }

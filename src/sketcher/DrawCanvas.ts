@@ -10,9 +10,29 @@
 	[PKG=webmolkit]
 */
 
-///<reference path='../ui/Widget.ts'/>
-
-namespace WebMolKit /* BOF */ {
+import {Chemistry} from '../mol/Chemistry';
+import {CoordUtil} from '../mol/CoordUtil';
+import {MetaMolecule} from '../mol/MetaMolecule';
+import {Molecule} from '../mol/Molecule';
+import {MolUtil} from '../mol/MolUtil';
+import {PolymerBlock, POLYMERBLOCK_SPECIAL_UNCAPPED, PolymerBlockConnectivity, PolymerBlockUnit} from '../mol/PolymerBlock';
+import {QueryTypeBond, QueryUtil} from '../mol/QueryUtil';
+import {GuidelineSprout, SketchUtil} from '../mol/SketchUtil';
+import {Stereochemistry} from '../mol/Stereochemistry';
+import {ArrangeMeasurement} from '../gfx/ArrangeMeasurement';
+import {APoint, ArrangeMolecule} from '../gfx/ArrangeMolecule';
+import {DrawMolecule} from '../gfx/DrawMolecule';
+import {FontData} from '../gfx/FontData';
+import {MetaVector} from '../gfx/MetaVector';
+import {RenderEffects, RenderPolicy} from '../gfx/Rendering';
+import {Widget} from '../ui/Widget';
+import {dom, DOM} from '../util/dom';
+import {GeomUtil} from '../util/Geom';
+import {Theme} from '../util/Theme';
+import {colourCanvas, drawLine, fontSansSerif, invZ, norm2_xy, norm_xy, pixelDensity, setBoundaryPixels, sqr, TWOPI} from '../util/util';
+import {Vec} from '../util/Vec';
+import {SketchState, TemplatePermutation} from './MoleculeActivity';
+import {FusionBank} from './TemplateBank';
 
 /*
 	DrawCanvas: base class for the sketcher, which handles all of the rendering functionality for the live object.
@@ -657,9 +677,8 @@ export class DrawCanvas extends Widget implements ArrangeMeasurement
 		if (this.layout == null) return;
 
 		let x1 = 0, y1 = 0, x2 = 0, y2 = 0, nb = 0, sz = 0;
-		for (let n = 0; n < this.layout.numLines(); n++)
+		for (let l of this.layout.getUnsplitLines() ?? this.layout.getLines())
 		{
-			let l = this.layout.getLine(n);
 			if (l.bnum != bond) continue;
 			x1 += l.line.x1; y1 += l.line.y1; x2 += l.line.x2; y2 += l.line.y2;
 			nb++;
@@ -1247,4 +1266,3 @@ export class DrawCanvas extends Widget implements ArrangeMeasurement
 	}
 }
 
-/* EOF */ }

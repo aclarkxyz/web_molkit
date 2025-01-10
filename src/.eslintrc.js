@@ -1,21 +1,3 @@
-// ESLint rules for BAE TypeScript
-// requirements:
-//
-// LAST-KNOWN-GOOD versions:
-//    sudo npm i eslint@5.16.0 -g
-//    sudo npm i @typescript-eslint/parser@latest -g
-//    sudo npm i @typescript-eslint/eslint-plugin@latest -g
-// (for the latter two, may have to ignore the warnings...)
-//
-// NOTE that the last known good version of eslint is 5.16.0; versions up to 6.4 are totally borked
-// because of some dependency issues (noted September 2019); a later version will probably be OK;
-// parser at version 2.3.0 and plugin at 1.11.0 both worked
-//
-// check versions with:
-//     npm list -g --depth=0
-//
-// to run: $BAE/ts> eslint **/*.ts
-
 module.exports =
 {
 	'parser': '@typescript-eslint/parser',
