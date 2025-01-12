@@ -5,4 +5,4 @@ cp ../../package.json .
 cp ../../README* .
 cp -r ../../res .
 node ../../tools/relativise.js --map \@reswmk res
-npm publish -access public
+npm publish --access public
