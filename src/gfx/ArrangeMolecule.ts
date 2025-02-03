@@ -2171,7 +2171,7 @@ export class ArrangeMolecule
 			});
 		};
 
-		while (true)
+		for (let sanity = 10; sanity > 0; sanity--)
 		{
 			let anything = false;
 
@@ -2188,11 +2188,10 @@ export class ArrangeMolecule
 					if (b2.type == BLineType.DotDir) b2.type = BLineType.Dotted; // zap the directionality when splitting in two
 
 					if (!GeomUtil.doLineSegsIntersect(b1.line.x1, b1.line.y1, b1.line.x2, b1.line.y2, b2.line.x1, b2.line.y1, b2.line.x2, b2.line.y2)) continue;
-					let xy = GeomUtil.lineIntersect(b1.line.x1, b1.line.y1, b1.line.x2, b1.line.y2, b2.line.x1, b2.line.y1, b2.line.x2, b2.line.y2);
+					let [ix, iy] = GeomUtil.lineIntersect(b1.line.x1, b1.line.y1, b1.line.x2, b1.line.y2, b2.line.x1, b2.line.y1, b2.line.x2, b2.line.y2);
 
 					let dx = b2.line.x2 - b2.line.x1, dy = b2.line.y2 - b2.line.y1;
-					let ext = Math.abs(dx) > Math.abs(dy) ? (xy[0] - b2.line.x1) / dx : (xy[1] - b2.line.y1) / dy;
-
+					let ext = Math.abs(dx) > Math.abs(dy) ? (ix - b2.line.x1) / dx : (iy - b2.line.y1) / dy;
 					let dist = norm_xy(dx, dy);
 					let delta = b2.size / dist * (b2.type == BLineType.Normal ? 2 : 4);
 					if (ext > delta && ext < 1 - delta)

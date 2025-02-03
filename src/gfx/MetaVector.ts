@@ -149,6 +149,14 @@ interface TextNativeType extends TypeBase
 	opt:FontDataNativeOpt;
 }
 
+function pixelCoord(val:number):string
+{
+	let str = val.toFixed(4);
+	let match = /^(.*\.\d*?[1-9]+)0+$/.exec(str) ?? /^(.*)\.0+$/.exec(str);
+	if (match) str = match[1];
+	return str;
+}
+
 class SpoolSVG
 {
 	private lines:string[] = [];
@@ -177,9 +185,7 @@ class SpoolSVG
 	{
 		if (typeof val == 'number')
 		{
-			val = val.toFixed(4);
-			let match = /^(.*\.\d*?[1-9]+)0+$/.exec(val) ?? /^(.*)\.0+$/.exec(val);
-			if (match) val = match[1];
+			val = pixelCoord(val);
 		}
 		this.spool(` ${key}="${val}"`);
 	}
@@ -1161,23 +1167,26 @@ export class MetaVector
 			y[n] = this.offsetY + this.scale * y[n];
 		}
 
-		let shape = 'M ' + x[0] + ' ' + y[0];
+		let shape = 'M ' + pixelCoord(x[0]) + ' ' + pixelCoord(y[0]);
 		let n = 1;
 		while (n < count)
 		{
 			if (!ctrl || !ctrl[n])
 			{
-				shape += ' L ' + x[n] + ' ' + y[n];
+				shape += ' L ' + pixelCoord(x[n]) + ' ' + pixelCoord(y[n]);
 				n++;
 			}
 			else if (ctrl[n] && n < count - 1 && !ctrl[n + 1])
 			{
-				shape += ' Q ' + x[n] + ' ' + y[n] + ' ' + x[n + 1] + ' ' + y[n + 1];
+				shape += ' Q ' + pixelCoord(x[n]) + ' ' + pixelCoord(y[n]) + ' '
+						       + pixelCoord(x[n + 1]) + ' ' + pixelCoord(y[n + 1]);
 				n += 2;
 			}
 			else if (ctrl[n] && n < count - 2 && ctrl[n + 1] && !ctrl[n + 2])
 			{
-				shape += ' C ' + x[n] + ' ' + y[n] + ' ' + x[n + 1] + ' ' + y[n + 1] + ' ' + x[n + 2] + ' ' + y[n + 2];
+				shape += ' C ' + pixelCoord(x[n]) + ' ' + pixelCoord(y[n]) + ' '
+							   + pixelCoord(x[n + 1]) + ' ' + pixelCoord(y[n + 1]) + ' '
+							   + pixelCoord(x[n + 2]) + ' ' + pixelCoord(y[n + 2]);
 				n += 3;
 			}
 			else n++; // (dunno, so skip)
@@ -1212,19 +1221,19 @@ export class MetaVector
 		if (direction != 0)
 		{
 			svg.start('<g');
-			svg.attr('transform', `rotate(${direction},${x},${y})`);
+			svg.attr('transform', `rotate(${direction},${pixelCoord(x)},${pixelCoord(y)})`);
 			svg.stop('>');
 			svg.inc();
 		}
 
 		svg.start('<g');
-		svg.attr('transform', 'translate(' + x + ',' + y + ')');
+		svg.attr('transform', `translate(${pixelCoord(x)},${pixelCoord(y)})`);
 		this.defineSVGFill(svg, colour);
 		svg.stop('>');
 		svg.inc();
 
 		svg.start('<g');
-		svg.attr('transform', 'scale(' + scale + ',' + (-scale) + ')');
+		svg.attr('transform', `scale(${pixelCoord(scale)},${pixelCoord(-scale)})`);
 		svg.stop('>');
 		svg.inc();
 

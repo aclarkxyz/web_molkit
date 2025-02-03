@@ -12,7 +12,7 @@
 
 import {Matrix, SingularValueDecomposition} from './Matrix';
 import {Triangulation2D} from './Triangulation2D';
-import {angleDiff, angleDiffPos, angleNorm, maxArray, minArray, norm2_xy, norm_xy, realEqual, sqr, TWOPI} from './util';
+import {angleDiff, angleDiffPos, angleNorm, fltEqual, maxArray, minArray, norm2_xy, norm_xy, realEqual, sqr, TWOPI} from './util';
 import {Vec} from './Vec';
 
 /*
@@ -105,11 +105,24 @@ export class GeomUtil
 	{
 		if (Math.max(x1, x2) < Math.min(x3, x4) || Math.max(y1, y2) < Math.min(y3, y4)) return false;
 		if (Math.min(x1, x2) > Math.max(x3, x4) || Math.min(y1, y2) > Math.max(y3, y4)) return false;
+
+		let ax = x2 - x1, ay = y2 - y1, bx = x4 - x3, by = y4 - y3;
+		if (fltEqual(norm2_xy(ax, ay), 0) || fltEqual(norm2_xy(bx, by), 0)) return false;
+
+		if (Math.abs(ay) > Math.abs(ax) && Math.abs(by) > Math.abs(bx))
+		{
+			if (fltEqual(ax / ay - bx / by, 0)) return false;
+		}
+		else if (Math.abs(ax) > Math.abs(ay) && Math.abs(bx) > Math.abs(by))
+		{
+			if (fltEqual(ay / ax - by / bx, 0)) return false;
+		}
+
 		if ((x1 == x3 && y1 == y3) || (x1 == x4 && y1 == y4) || (x2 == x3 && y2 == y3) || (x2 == x4 && y2 == y4)) return true;
 		if ((x1 == x2 || x3 == x4) && (x1 == x3 || x1 == x4 || x2 == x3 || x2 == x4)) return true;
 		if ((y1 == y2 || y3 == y4) && (y1 == y3 || y1 == y4 || y2 == y3 || y2 == y4)) return true;
 
-		let x4_x3 = x4 - x3, y4_y3 = y4 - y3, x2_x1 = x2 - x1, y2_y1 = y2 - y1, x1_x3 = x1 - x3, y1_y3 = y1 - y3;
+		let x4_x3 = bx, y4_y3 = by, x2_x1 = ax, y2_y1 = ay, x1_x3 = x1 - x3, y1_y3 = y1 - y3;
 
 		let nx = x4_x3 * y1_y3 - y4_y3 * x1_x3;
 		let ny = x2_x1 * y1_y3 - y2_y1 * x1_x3;
@@ -122,6 +135,7 @@ export class GeomUtil
 			nx = -nx;
 			ny = -ny;
 		}
+
 		return nx >= 0 && nx <= dn && ny >= 0 && ny <= dn;
 	}
 

@@ -9371,7 +9371,7 @@ class ArrangeMolecule {
                     return Object.assign(Object.assign({}, b), { line: b.line.clone() });
                 });
         };
-        while (true) {
+        for (let sanity = 10; sanity > 0; sanity--) {
             let anything = false;
             let linesHigher = this.lines.filter((b) => b.bnum == bondHigher && TYPES.includes(b.type));
             let linesLower = this.lines.filter((b) => b.bnum == bondLower && TYPES.includes(b.type));
@@ -9383,9 +9383,9 @@ class ArrangeMolecule {
                         b2.type = BLineType.Dotted;
                     if (!_util_Geom__WEBPACK_IMPORTED_MODULE_7__.GeomUtil.doLineSegsIntersect(b1.line.x1, b1.line.y1, b1.line.x2, b1.line.y2, b2.line.x1, b2.line.y1, b2.line.x2, b2.line.y2))
                         continue;
-                    let xy = _util_Geom__WEBPACK_IMPORTED_MODULE_7__.GeomUtil.lineIntersect(b1.line.x1, b1.line.y1, b1.line.x2, b1.line.y2, b2.line.x1, b2.line.y1, b2.line.x2, b2.line.y2);
+                    let [ix, iy] = _util_Geom__WEBPACK_IMPORTED_MODULE_7__.GeomUtil.lineIntersect(b1.line.x1, b1.line.y1, b1.line.x2, b1.line.y2, b2.line.x1, b2.line.y1, b2.line.x2, b2.line.y2);
                     let dx = b2.line.x2 - b2.line.x1, dy = b2.line.y2 - b2.line.y1;
-                    let ext = Math.abs(dx) > Math.abs(dy) ? (xy[0] - b2.line.x1) / dx : (xy[1] - b2.line.y1) / dy;
+                    let ext = Math.abs(dx) > Math.abs(dy) ? (ix - b2.line.x1) / dx : (iy - b2.line.y1) / dy;
                     let dist = (0,_util_util__WEBPACK_IMPORTED_MODULE_8__.norm_xy)(dx, dy);
                     let delta = b2.size / dist * (b2.type == BLineType.Normal ? 2 : 4);
                     if (ext > delta && ext < 1 - delta) {
@@ -11402,6 +11402,14 @@ var PrimClass;
     PrimClass[PrimClass["Text"] = 5] = "Text";
     PrimClass[PrimClass["TextNative"] = 6] = "TextNative";
 })(PrimClass || (PrimClass = {}));
+function pixelCoord(val) {
+    var _a;
+    let str = val.toFixed(4);
+    let match = (_a = /^(.*\.\d*?[1-9]+)0+$/.exec(str)) !== null && _a !== void 0 ? _a : /^(.*)\.0+$/.exec(str);
+    if (match)
+        str = match[1];
+    return str;
+}
 class SpoolSVG {
     constructor(prettyPrint) {
         this.prettyPrint = prettyPrint;
@@ -11428,12 +11436,8 @@ class SpoolSVG {
             this.lines.push('\n');
     }
     attr(key, val) {
-        var _a;
         if (typeof val == 'number') {
-            val = val.toFixed(4);
-            let match = (_a = /^(.*\.\d*?[1-9]+)0+$/.exec(val)) !== null && _a !== void 0 ? _a : /^(.*)\.0+$/.exec(val);
-            if (match)
-                val = match[1];
+            val = pixelCoord(val);
         }
         this.spool(` ${key}="${val}"`);
     }
@@ -12245,19 +12249,22 @@ class MetaVector {
             x[n] = this.offsetX + this.scale * x[n];
             y[n] = this.offsetY + this.scale * y[n];
         }
-        let shape = 'M ' + x[0] + ' ' + y[0];
+        let shape = 'M ' + pixelCoord(x[0]) + ' ' + pixelCoord(y[0]);
         let n = 1;
         while (n < count) {
             if (!ctrl || !ctrl[n]) {
-                shape += ' L ' + x[n] + ' ' + y[n];
+                shape += ' L ' + pixelCoord(x[n]) + ' ' + pixelCoord(y[n]);
                 n++;
             }
             else if (ctrl[n] && n < count - 1 && !ctrl[n + 1]) {
-                shape += ' Q ' + x[n] + ' ' + y[n] + ' ' + x[n + 1] + ' ' + y[n + 1];
+                shape += ' Q ' + pixelCoord(x[n]) + ' ' + pixelCoord(y[n]) + ' '
+                    + pixelCoord(x[n + 1]) + ' ' + pixelCoord(y[n + 1]);
                 n += 2;
             }
             else if (ctrl[n] && n < count - 2 && ctrl[n + 1] && !ctrl[n + 2]) {
-                shape += ' C ' + x[n] + ' ' + y[n] + ' ' + x[n + 1] + ' ' + y[n + 1] + ' ' + x[n + 2] + ' ' + y[n + 2];
+                shape += ' C ' + pixelCoord(x[n]) + ' ' + pixelCoord(y[n]) + ' '
+                    + pixelCoord(x[n + 1]) + ' ' + pixelCoord(y[n + 1]) + ' '
+                    + pixelCoord(x[n + 2]) + ' ' + pixelCoord(y[n + 2]);
                 n += 3;
             }
             else
@@ -12285,17 +12292,17 @@ class MetaVector {
         let scale = size * this.scale / font.UNITS_PER_EM;
         if (direction != 0) {
             svg.start('<g');
-            svg.attr('transform', `rotate(${direction},${x},${y})`);
+            svg.attr('transform', `rotate(${direction},${pixelCoord(x)},${pixelCoord(y)})`);
             svg.stop('>');
             svg.inc();
         }
         svg.start('<g');
-        svg.attr('transform', 'translate(' + x + ',' + y + ')');
+        svg.attr('transform', `translate(${pixelCoord(x)},${pixelCoord(y)})`);
         this.defineSVGFill(svg, colour);
         svg.stop('>');
         svg.inc();
         svg.start('<g');
-        svg.attr('transform', 'scale(' + scale + ',' + (-scale) + ')');
+        svg.attr('transform', `scale(${pixelCoord(scale)},${pixelCoord(-scale)})`);
         svg.stop('>');
         svg.inc();
         let dx = 0;
@@ -34360,13 +34367,24 @@ class GeomUtil {
             return false;
         if (Math.min(x1, x2) > Math.max(x3, x4) || Math.min(y1, y2) > Math.max(y3, y4))
             return false;
+        let ax = x2 - x1, ay = y2 - y1, bx = x4 - x3, by = y4 - y3;
+        if ((0,_util__WEBPACK_IMPORTED_MODULE_2__.fltEqual)((0,_util__WEBPACK_IMPORTED_MODULE_2__.norm2_xy)(ax, ay), 0) || (0,_util__WEBPACK_IMPORTED_MODULE_2__.fltEqual)((0,_util__WEBPACK_IMPORTED_MODULE_2__.norm2_xy)(bx, by), 0))
+            return false;
+        if (Math.abs(ay) > Math.abs(ax) && Math.abs(by) > Math.abs(bx)) {
+            if ((0,_util__WEBPACK_IMPORTED_MODULE_2__.fltEqual)(ax / ay - bx / by, 0))
+                return false;
+        }
+        else if (Math.abs(ax) > Math.abs(ay) && Math.abs(bx) > Math.abs(by)) {
+            if ((0,_util__WEBPACK_IMPORTED_MODULE_2__.fltEqual)(ay / ax - by / bx, 0))
+                return false;
+        }
         if ((x1 == x3 && y1 == y3) || (x1 == x4 && y1 == y4) || (x2 == x3 && y2 == y3) || (x2 == x4 && y2 == y4))
             return true;
         if ((x1 == x2 || x3 == x4) && (x1 == x3 || x1 == x4 || x2 == x3 || x2 == x4))
             return true;
         if ((y1 == y2 || y3 == y4) && (y1 == y3 || y1 == y4 || y2 == y3 || y2 == y4))
             return true;
-        let x4_x3 = x4 - x3, y4_y3 = y4 - y3, x2_x1 = x2 - x1, y2_y1 = y2 - y1, x1_x3 = x1 - x3, y1_y3 = y1 - y3;
+        let x4_x3 = bx, y4_y3 = by, x2_x1 = ax, y2_y1 = ay, x1_x3 = x1 - x3, y1_y3 = y1 - y3;
         let nx = x4_x3 * y1_y3 - y4_y3 * x1_x3;
         let ny = x2_x1 * y1_y3 - y2_y1 * x1_x3;
         let dn = y4_y3 * x2_x1 - x4_x3 * y2_y1;
