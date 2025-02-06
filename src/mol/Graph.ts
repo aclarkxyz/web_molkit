@@ -83,11 +83,11 @@ export class Graph
 	{
 		let count = Vec.maskCount(mask);
 		let map = Vec.maskMap(mask);
-	
+
 		let g = new Graph(count);
 		g.indices = Vec.maskIdx(mask);
 		Vec.addTo(g.indices, 1); // make it 1-based
-	
+
 		for (let n = 0; n < count; n++)
 		{
 			let adj = mol.atomAdjList(g.indices[n]);
@@ -96,7 +96,7 @@ export class Graph
 			g.nbrs[n] = [];
 			for (let i = 0; i < adj.length; i++) if (mask[adj[i] - 1]) g.nbrs[n].push(adj[i] - 1);
 		}
-		
+
 		return g;
 	}
 
@@ -458,6 +458,9 @@ export class Graph
 		return ret;
 	}
 
+	// calculates the gravity of each node in the graph: isolated nodes have a gravity of 1, while deeply connected
+	// nodes have higher values than terminal nodes; these values are reordered and reindexed at each step to avoid
+	// integer overflow
 	public calculateGravity():number[]
 	{
 		const sz = this.numNodes;
@@ -470,6 +473,43 @@ export class Graph
 			Vec.setTo(wght, wmod);
 		}
 		return wght;
+	}
+
+	// computes the shortest path between two nodes, or null if there is none; the result will be arbitrary if there is more
+	// than one equally good option
+	public calculateShortestPath(node1:number, node2:number):number[]
+	{
+		const sz = this.numNodes;
+		let q = new Set<number>();
+		for (let n = 0; n < sz; n++) q.add(n);
+
+		let dist = Vec.numberArray(Number.MAX_SAFE_INTEGER, sz);
+		let prev = Vec.numberArray(-1, sz);
+		dist[node1] = 0;
+
+		while (q.size > 0)
+		{
+			let u = -1;
+			for (let i of q) if (u < 0 || dist[i] < dist[u]) u = i;
+			q.delete(u);
+
+			if (u == node2) break;
+
+			for (let v of this.nbrs[u])
+			{
+				let alt = dist[u] + 1;
+				if (alt < dist[v])
+				{
+					dist[v] = alt;
+					prev[v] = u;
+				}
+			}
+		}
+
+		let path:number[] = [];
+		for (let u = node2; prev[u] >= 0; u = prev[u]) path.unshift(u);
+		if (path.length > 0) path.unshift(node1);
+		return path.length > 0 ? path : null;
 	}
 
 	// ----------------- private methods -----------------
