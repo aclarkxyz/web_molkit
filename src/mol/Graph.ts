@@ -465,12 +465,12 @@ export class Graph
 	{
 		const sz = this.numNodes;
 		const {nbrs} = this;
-		let wght = Vec.numberArray(1, sz), wmod = Vec.numberArray(0, sz);
+		let wght = Vec.numberArray(1, sz);
 		for (let n = 0; n < sz; n++)
 		{
-			Vec.setTo(wmod, wght);
+			let wmod = Vec.numberArray(0, sz);
 			for (let i = 0; i < sz; i++) for (let j = nbrs[i].length - 1; j >= 0; j--) wmod[i] += wght[nbrs[i][j]];
-			Vec.setTo(wght, wmod);
+			wght = wmod;
 		}
 		return wght;
 	}
