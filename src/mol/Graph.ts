@@ -10,6 +10,7 @@
 	[PKG=webmolkit]
 */
 
+import {deepClone} from '@wmk/util/util';
 import {Vec} from '../util/Vec';
 import {Molecule} from './Molecule';
 
@@ -510,6 +511,41 @@ export class Graph
 		for (let u = node2; prev[u] >= 0; u = prev[u]) path.unshift(u);
 		if (path.length > 0) path.unshift(node1);
 		return path.length > 0 ? path : null;
+	}
+
+	// constructs the adjacency matrix, whereby [i][j] is true if i and j are bonded
+	public adjacencyMatrix():number[][]
+	{
+		const sz = this.numNodes;
+		let mtx:number[][] = [];
+		for (let n = 0; n < sz; n++) mtx.push(Vec.numberArray(0, sz));
+		for (let i = 0; i < sz; i++) for (let j of this.nbrs[i]) mtx[i][j] = mtx[j][i] = 1;
+		return mtx;
+	}
+
+	// constructs the distance matrix, whereby [i][j] is the shortest number of connections between i and j; unconnected nodes have
+	// a distance of infinity; uses the Floyd Warshall algorithm, with O(N^3) scaling
+	public distanceMatrix():number[][]
+	{
+		const sz = this.numNodes;
+		let mtx:number[][] = [];
+		for (let n = 0; n < sz; n++) mtx.push(Vec.numberArray(Number.POSITIVE_INFINITY, sz));
+		for (let i = 0; i < sz; i++)
+		{
+			mtx[i][i] = 0;
+			for (let j of this.nbrs[i]) mtx[i][j] = mtx[j][i] = 1;
+		}
+
+		for (let k = 0; k < sz; k++)
+		{
+			for (let i = 0; i < sz; i++) for (let j = 0; j < sz; j++)
+			{
+				if (!Number.isFinite(mtx[k][j]) || !Number.isFinite(mtx[i][k])) continue;
+				mtx[i][j] = Math.min(mtx[i][j], mtx[i][k] + mtx[k][j]);
+			}
+		}
+
+		return mtx;
 	}
 
 	// ----------------- private methods -----------------
