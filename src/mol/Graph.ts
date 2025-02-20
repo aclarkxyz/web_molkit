@@ -92,10 +92,8 @@ export class Graph
 		for (let n = 0; n < count; n++)
 		{
 			let adj = mol.atomAdjList(g.indices[n]);
-			let sz = 0;
-			for (let i = 0; i < adj.length; i++) if (mask[adj[i] - 1]) sz++;
 			g.nbrs[n] = [];
-			for (let i = 0; i < adj.length; i++) if (mask[adj[i] - 1]) g.nbrs[n].push(adj[i] - 1);
+			for (let i = 0; i < adj.length; i++) if (mask[adj[i] - 1]) g.nbrs[n].push(map[adj[i] - 1]);
 		}
 
 		return g;

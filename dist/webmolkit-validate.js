@@ -16749,14 +16749,10 @@ class Graph {
         _util_Vec__WEBPACK_IMPORTED_MODULE_0__.Vec.addTo(g.indices, 1);
         for (let n = 0; n < count; n++) {
             let adj = mol.atomAdjList(g.indices[n]);
-            let sz = 0;
-            for (let i = 0; i < adj.length; i++)
-                if (mask[adj[i] - 1])
-                    sz++;
             g.nbrs[n] = [];
             for (let i = 0; i < adj.length; i++)
                 if (mask[adj[i] - 1])
-                    g.nbrs[n].push(adj[i] - 1);
+                    g.nbrs[n].push(map[adj[i] - 1]);
         }
         return g;
     }
@@ -17072,15 +17068,76 @@ class Graph {
     calculateGravity() {
         const sz = this.numNodes;
         const { nbrs } = this;
-        let wght = _util_Vec__WEBPACK_IMPORTED_MODULE_0__.Vec.numberArray(1, sz), wmod = _util_Vec__WEBPACK_IMPORTED_MODULE_0__.Vec.numberArray(0, sz);
+        let wght = _util_Vec__WEBPACK_IMPORTED_MODULE_0__.Vec.numberArray(1, sz);
         for (let n = 0; n < sz; n++) {
-            _util_Vec__WEBPACK_IMPORTED_MODULE_0__.Vec.setTo(wmod, wght);
+            let wmod = _util_Vec__WEBPACK_IMPORTED_MODULE_0__.Vec.numberArray(0, sz);
             for (let i = 0; i < sz; i++)
                 for (let j = nbrs[i].length - 1; j >= 0; j--)
                     wmod[i] += wght[nbrs[i][j]];
-            _util_Vec__WEBPACK_IMPORTED_MODULE_0__.Vec.setTo(wght, wmod);
+            wght = wmod;
         }
         return wght;
+    }
+    calculateShortestPath(node1, node2) {
+        const sz = this.numNodes;
+        let q = new Set();
+        for (let n = 0; n < sz; n++)
+            q.add(n);
+        let dist = _util_Vec__WEBPACK_IMPORTED_MODULE_0__.Vec.numberArray(Number.MAX_SAFE_INTEGER, sz);
+        let prev = _util_Vec__WEBPACK_IMPORTED_MODULE_0__.Vec.numberArray(-1, sz);
+        dist[node1] = 0;
+        while (q.size > 0) {
+            let u = -1;
+            for (let i of q)
+                if (u < 0 || dist[i] < dist[u])
+                    u = i;
+            q.delete(u);
+            if (u == node2)
+                break;
+            for (let v of this.nbrs[u]) {
+                let alt = dist[u] + 1;
+                if (alt < dist[v]) {
+                    dist[v] = alt;
+                    prev[v] = u;
+                }
+            }
+        }
+        let path = [];
+        for (let u = node2; prev[u] >= 0; u = prev[u])
+            path.unshift(u);
+        if (path.length > 0)
+            path.unshift(node1);
+        return path.length > 0 ? path : null;
+    }
+    adjacencyMatrix() {
+        const sz = this.numNodes;
+        let mtx = [];
+        for (let n = 0; n < sz; n++)
+            mtx.push(_util_Vec__WEBPACK_IMPORTED_MODULE_0__.Vec.numberArray(0, sz));
+        for (let i = 0; i < sz; i++)
+            for (let j of this.nbrs[i])
+                mtx[i][j] = mtx[j][i] = 1;
+        return mtx;
+    }
+    distanceMatrix() {
+        const sz = this.numNodes;
+        let mtx = [];
+        for (let n = 0; n < sz; n++)
+            mtx.push(_util_Vec__WEBPACK_IMPORTED_MODULE_0__.Vec.numberArray(Number.POSITIVE_INFINITY, sz));
+        for (let i = 0; i < sz; i++) {
+            mtx[i][i] = 0;
+            for (let j of this.nbrs[i])
+                mtx[i][j] = mtx[j][i] = 1;
+        }
+        for (let k = 0; k < sz; k++) {
+            for (let i = 0; i < sz; i++)
+                for (let j = 0; j < sz; j++) {
+                    if (!Number.isFinite(mtx[k][j]) || !Number.isFinite(mtx[i][k]))
+                        continue;
+                    mtx[i][j] = Math.min(mtx[i][j], mtx[i][k] + mtx[k][j]);
+                }
+        }
+        return mtx;
     }
     recursiveRingFind(path, psize, capacity, mask, rings) {
         if (psize < capacity) {
@@ -32209,6 +32266,7 @@ class ClipboardProxyHandler {
 class ClipboardProxy {
     constructor() {
         this.handlers = [new ClipboardProxyHandler()];
+        this.triggerBackupPaste = null;
     }
     pushHandler(handler) {
         this.handlers.push(handler);
@@ -36858,6 +36916,8 @@ class Vec {
         arr[n] += val; }
     static mulBy(arr, val) { for (let n = arr == null ? -1 : arr.length - 1; n >= 0; n--)
         arr[n] *= val; }
+    static setToArray(arr, val) { for (let n = arr == null ? -1 : arr.length - 1; n >= 0; n--)
+        arr[n] = val[n]; }
     static addToArray(arr, val) { for (let n = arr == null ? -1 : arr.length - 1; n >= 0; n--)
         arr[n] += val[n]; }
     static subFromArray(arr, val) { for (let n = arr == null ? -1 : arr.length - 1; n >= 0; n--)
