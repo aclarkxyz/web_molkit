@@ -61,6 +61,9 @@ export class ClipboardProxy
 		document.execCommand('paste');
 	}
 
+	// optional fall through, if the main handler can't figure it out
+	public triggerBackupPaste:() => void = null;
+
 	// fetches the content currently on the clipboard; note that for the web implementation, this is disallowed for
 	// security reasons, but in desktop mode it is allowed (see canAlwaysGet below)
 	public getString():string {return null;}

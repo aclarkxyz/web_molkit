@@ -468,9 +468,9 @@ export class Graph
 		let wght = Vec.numberArray(1, sz), wmod = Vec.numberArray(0, sz);
 		for (let n = 0; n < sz; n++)
 		{
-			Vec.setTo(wmod, wght);
+			Vec.setToArray(wmod, wght);
 			for (let i = 0; i < sz; i++) for (let j = nbrs[i].length - 1; j >= 0; j--) wmod[i] += wght[nbrs[i][j]];
-			Vec.setTo(wght, wmod);
+			Vec.setToArray(wght, wmod);
 		}
 		return wght;
 	}

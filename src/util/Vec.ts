@@ -418,10 +418,11 @@ export class Vec
 	}
 
 	// bulk direct operations
-	public static setTo(arr:any[], val:any):void {for (let n = arr == null ? -1 : arr.length - 1; n >= 0; n--) arr[n] = val;}
+	public static setTo<T>(arr:T[], val:T):void {for (let n = arr == null ? -1 : arr.length - 1; n >= 0; n--) arr[n] = val;}
 	public static addTo(arr:number[], val:number):void {for (let n = arr == null ? -1 : arr.length - 1; n >= 0; n--) arr[n] += val;}
 	public static mulBy(arr:number[], val:number):void {for (let n = arr == null ? -1 : arr.length - 1; n >= 0; n--) arr[n] *= val;}
 
+	public static setToArray<T>(arr:T[], val:T[]):void {for (let n = arr == null ? -1 : arr.length - 1; n >= 0; n--) arr[n] = val[n];}
 	public static addToArray(arr:number[], val:number[]):void {for (let n = arr == null ? -1 : arr.length - 1; n >= 0; n--) arr[n] += val[n];}
 	public static subFromArray(arr:number[], val:number[]):void {for (let n = arr == null ? -1 : arr.length - 1; n >= 0; n--) arr[n] -= val[n];}
 	public static mulByArray(arr:number[], val:number[]):void {for (let n = arr == null ? -1 : arr.length - 1; n >= 0; n--) arr[n] *= val[n];}
