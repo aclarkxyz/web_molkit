@@ -45,6 +45,7 @@ export interface SketcherPlugins
 {
 	callbackSpecialPaste?:(str:string) => Promise<Molecule>; // define this to add special layer for clipboard interpretation
 	callbackComposeFragment?:(sketcher:Sketcher) => void; // define this to activate when "composition" is requested
+	callbackAsyncNameToStructure?:(name:string) => Promise<Molecule>;
 }
 
 export class Sketcher extends DrawCanvas
