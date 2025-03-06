@@ -2084,7 +2084,6 @@ Aspect.TEXT_LINK = 1;
 Aspect.TEXT_HTML = 2;
 
 
-
 /***/ }),
 
 /***/ "./src/aspect/AspectList.ts":
@@ -2459,7 +2458,6 @@ AssayProvenance.URI_UNIT_gL = 'http://purl.obolibrary.org/obo/UO_0000175';
 AssayProvenance.URI_UNIT_mgL = 'http://purl.obolibrary.org/obo/UO_0000273';
 AssayProvenance.URI_UNIT_ugL = 'http://purl.obolibrary.org/obo/UO_0000275';
 AssayProvenance.URI_UNIT_binary = 'http://www.bioassayontology.org/bao#BAO_0080023';
-
 (0,_AspectList__WEBPACK_IMPORTED_MODULE_2__.registerAspect)(AssayProvenance);
 
 
@@ -2610,7 +2608,6 @@ class BayesianPrediction extends _Aspect__WEBPACK_IMPORTED_MODULE_1__.Aspect {
 }
 BayesianPrediction.CODE = 'org.mmi.aspect.BayesianPrediction';
 BayesianPrediction.NAME = 'Bayesian Prediction';
-
 (0,_AspectList__WEBPACK_IMPORTED_MODULE_2__.registerAspect)(BayesianPrediction);
 
 
@@ -2733,7 +2730,6 @@ class BayesianSource extends _Aspect__WEBPACK_IMPORTED_MODULE_1__.Aspect {
 }
 BayesianSource.CODE = 'org.mmi.aspect.BayesianSource';
 BayesianSource.NAME = 'Bayesian Source';
-
 (0,_AspectList__WEBPACK_IMPORTED_MODULE_2__.registerAspect)(BayesianSource);
 
 
@@ -2880,7 +2876,6 @@ class BinaryData extends _Aspect__WEBPACK_IMPORTED_MODULE_2__.Aspect {
 }
 BinaryData.CODE = 'org.mmi.aspect.BinaryData';
 BinaryData.NAME = 'Binary Data';
-
 (0,_AspectList__WEBPACK_IMPORTED_MODULE_3__.registerAspect)(BinaryData);
 
 
@@ -3629,7 +3624,6 @@ Experiment.ALL_COLUMN_PREFIXES = [
     Experiment.COLNAME_PRODUCT_WASTE,
     Experiment.COLNAME_PRODUCT_META,
 ];
-
 (0,_AspectList__WEBPACK_IMPORTED_MODULE_7__.registerAspect)(Experiment);
 
 
@@ -3891,7 +3885,6 @@ MeasurementData.SUFFIX_VALUE = '';
 MeasurementData.SUFFIX_ERROR = '_error';
 MeasurementData.SUFFIX_UNITS = '_units';
 MeasurementData.SUFFIX_MOD = '_mod';
-
 (0,_AspectList__WEBPACK_IMPORTED_MODULE_3__.registerAspect)(MeasurementData);
 
 
@@ -4030,7 +4023,6 @@ class Mixture extends _Aspect__WEBPACK_IMPORTED_MODULE_2__.Aspect {
 Mixture.CODE = 'org.mmi.aspect.Mixture';
 Mixture.NAME = 'Mixture';
 Mixture.SUFFIX_VALUE = '';
-
 (0,_AspectList__WEBPACK_IMPORTED_MODULE_3__.registerAspect)(Mixture);
 
 
@@ -4344,7 +4336,6 @@ SARTable.DESCR_SUBSTITUENT = 'Substituent fragment to be attached to scaffold';
 SARTable.RENDER_CONSTRUCT = 0;
 SARTable.RENDER_SCAFFOLD = 1;
 SARTable.RENDER_SUBSTITUENT = 2;
-
 (0,_AspectList__WEBPACK_IMPORTED_MODULE_9__.registerAspect)(SARTable);
 
 
@@ -5391,7 +5382,6 @@ CircularFingerprints.CLASS_ECFP4 = 2;
 CircularFingerprints.CLASS_ECFP6 = 3;
 
 
-
 /***/ }),
 
 /***/ "./src/calc/ResonanceRemover.ts":
@@ -5849,7 +5839,6 @@ class AbbrevContainer {
 AbbrevContainer.main = null;
 
 
-
 /***/ }),
 
 /***/ "./src/data/FormatList.ts":
@@ -5946,7 +5935,6 @@ FormatList.FORMAT_MIMETYPE = {
     'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
     'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
 };
-
 
 
 /***/ }),
@@ -7558,7 +7546,6 @@ class ArrangeExperiment {
 }
 ArrangeExperiment.COMP_GAP_LEFT = 0.5;
 ArrangeExperiment.COMP_ANNOT_SIZE = 1;
-
 
 
 /***/ }),
@@ -9895,7 +9882,6 @@ class ArrangeMolecule {
 ArrangeMolecule.FONT_CORRECT = 1.5;
 
 
-
 /***/ }),
 
 /***/ "./src/gfx/AxisLabeller.ts":
@@ -11361,7 +11347,6 @@ class FontData {
 FontData.main = new FontData();
 
 
-
 /***/ }),
 
 /***/ "./src/gfx/MetaVector.ts":
@@ -12402,7 +12387,6 @@ class MetaVector {
     }
 }
 MetaVector.NOCOLOUR = -1;
-
 
 
 /***/ }),
@@ -15165,7 +15149,6 @@ class MoleculeStream {
 MoleculeStream.formatV2Elements = false;
 
 
-
 /***/ }),
 
 /***/ "./src/mol/BondArtifact.ts":
@@ -15795,7 +15778,6 @@ Chemistry.ELEMENT_Rg = 111;
 Chemistry.ELEMENT_Cn = 112;
 
 
-
 /***/ }),
 
 /***/ "./src/mol/CoordUtil.ts":
@@ -16166,7 +16148,6 @@ class CoordUtil {
 CoordUtil.OVERLAP_THRESHOLD = 0.2;
 CoordUtil.OVERLAP_THRESHOLD_SQ = CoordUtil.OVERLAP_THRESHOLD * CoordUtil.OVERLAP_THRESHOLD;
 CoordUtil.DEFAULT_EQUIV_TOLERANCE = 0.2;
-
 
 
 /***/ }),
@@ -17623,7 +17604,6 @@ MetaMolecule.skeletonHash = null;
 MetaMolecule.isomorphMatch = null;
 
 
-
 /***/ }),
 
 /***/ "./src/mol/MolUtil.ts":
@@ -18411,7 +18391,6 @@ class MolUtil {
 }
 MolUtil.TEMPLATE_ATTACHMENT = 'X';
 MolUtil.ABBREV_ATTACHMENT = '*';
-
 
 
 /***/ }),
@@ -19277,7 +19256,6 @@ Molecule.HYVALENCE_EL = ['C', 'N', 'O', 'S', 'P'];
 Molecule.HYVALENCE_VAL = [4, 3, 2, 2, 3];
 Molecule.PREFIX_EXTRA = 'x';
 Molecule.PREFIX_TRANSIENT = 'y';
-
 
 
 /***/ }),
@@ -21021,7 +20999,6 @@ SketchUtil.GEOM_ANGLES = [
 ];
 
 
-
 /***/ }),
 
 /***/ "./src/mol/StereoGroup.ts":
@@ -21949,7 +21926,6 @@ Stereochemistry.RUBRIC_EQUIV_OCTA = [
 ];
 
 
-
 /***/ }),
 
 /***/ "./src/rxn/ExperimentMeta.ts":
@@ -22137,7 +22113,6 @@ ExperimentMeta.VALUES = {
     [ExperimentMetaType.Heat]: ExperimentMetaValue.Optional,
     [ExperimentMetaType.Light]: ExperimentMetaValue.Optional,
 };
-
 
 
 /***/ }),
@@ -22784,7 +22759,6 @@ class QuantityCalc {
 QuantityCalc.UNSPECIFIED = -1;
 QuantityCalc.MAX_DENOM = 16;
 QuantityCalc.RATIO_FRACT = null;
-
 
 
 /***/ }),
@@ -30246,7 +30220,6 @@ class Sketcher extends _DrawCanvas__WEBPACK_IMPORTED_MODULE_16__.DrawCanvas {
 Sketcher.UNDO_SIZE = 20;
 
 
-
 /***/ }),
 
 /***/ "./src/sketcher/TemplateBank.ts":
@@ -30402,7 +30375,6 @@ class TemplateBank extends _ui_ButtonBank__WEBPACK_IMPORTED_MODULE_8__.ButtonBan
 }
 TemplateBank.resourceList = [];
 TemplateBank.resourceData = [];
-
 
 
 
@@ -31216,7 +31188,6 @@ class TemplateFusion {
     }
 }
 TemplateFusion.RESERVED_GUIDESYMBOL = 'XXX';
-
 
 
 /***/ }),
@@ -33335,7 +33306,6 @@ EmbedReaction.PTN_DOI2 = /^(\d+\.\d+\/.*)$/;
 EmbedReaction.PTN_ISBN = /^(\d+-\d+-\d+-\d+-\d+)$/;
 
 
-
 /***/ }),
 
 /***/ "./src/ui/MenuProxy.ts":
@@ -34334,7 +34304,6 @@ class FitRotatedEllipse {
 }
 FitRotatedEllipse.cacheVal = [];
 FitRotatedEllipse.cacheMap = new Map();
-
 
 
 /***/ }),
@@ -35811,7 +35780,6 @@ Theme.highlight = 0x00FF00;
 Theme.highlightEdge1 = 0x00CA59;
 Theme.highlightEdge2 = 0x008650;
 Theme.error = 0xFF0000;
-
 function initWebMolKit(resourcePath) {
     Theme.RESOURCE_URL = resourcePath;
     try {
@@ -37118,7 +37086,6 @@ Permutation.MAX_CACHE = 8;
 Permutation.PERM_CACHE = [];
 
 
-
 /***/ }),
 
 /***/ "./src/util/XML.ts":
@@ -37268,7 +37235,6 @@ class XML {
 }
 XML.customParser = null;
 XML.customSerial = null;
-
 
 
 /***/ }),
@@ -38671,8 +38637,8 @@ class ValidationHeadlessMolecule extends _Validation__WEBPACK_IMPORTED_MODULE_1_
         });
     }
     moleculeFormat() {
-        var _a;
         return __awaiter(this, void 0, void 0, function* () {
+            var _a;
             const ds = this.dsFormat;
             let colMol = ds.findColByName('Molecule'), colSerial = ds.findColByName('Serial');
             let prevFormat = _wmk_io_MoleculeStream__WEBPACK_IMPORTED_MODULE_4__.MoleculeStream.formatV2Elements;
