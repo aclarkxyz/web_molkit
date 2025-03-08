@@ -206,6 +206,13 @@ export class Vec
 		return arr;
 	}
 
+	public static numberMatrix(val:number, dim1:number, dim2:number):number[][]
+	{
+		let mtx:number[][] = new Array(dim1);
+		for (let n = 0; n < dim1; n++) mtx[n] = Vec.numberArray(val, dim2);
+		return mtx;
+	}
+
 	// creates an array of given size, using a lambda
 	public static funcArray<T>(sz:number, func:(idx?:number) => T):T[]
 	{
