@@ -74,7 +74,8 @@ export function raiseToolTip(parent:any, avoid:Box, bodyHTML:string, titleHTML?:
 	installInlineCSS('tooltip', CSS_TOOLTIP);
 
 	clearTooltip();
-	new Tooltip(dom(parent), bodyHTML, titleHTML, 0).raise(avoid);
+	globalPopWatermark++;
+	new Tooltip(dom(parent), bodyHTML, titleHTML, 0).start(avoid);
 }
 
 // rudely shutdown the tooltip
@@ -97,7 +98,7 @@ export class Tooltip
 	}
 
 	// raise the tooltip after a delay, assuming someone else hasn't bogarted it in the meanwhile
-	public start()
+	public start(avoid?:Box)
 	{
 		this.watermark = ++globalPopWatermark;
 
@@ -107,7 +108,7 @@ export class Tooltip
 
 			window.setTimeout(() =>
 			{
-				if (this.watermark == globalPopWatermark) this.raise();
+				if (this.watermark == globalPopWatermark) this.raise(avoid);
 			}, this.delay);
 		})();
 	}
