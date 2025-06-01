@@ -289,9 +289,16 @@ export class DOM
 	{
 		if (flag) this.addClass(clsname); else this.removeClass(clsname);
 	}
-	public class(clsname:string):DOM
+	public class(clsnames:string | string[]):DOM
 	{
-		this.addClass(clsname);
+		if (Array.isArray(clsnames))
+		{
+			for (let cls of clsnames) this.addClass(cls);
+		}
+		else
+		{
+			for (let cls of clsnames.split(' ')) this.addClass(cls);
+		}
 		return this;
 	}
 	public toggleClass(dict:Record<string, boolean>):void
