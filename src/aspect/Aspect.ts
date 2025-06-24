@@ -52,6 +52,7 @@ export abstract class Aspect
 {
 	public ds:DataSheet;
 	protected allowModify = true; // if set to false, aspect is not allowed to modify any part of the header
+	public subordinateCodes:string[] = []; // in case this is a subclass, list codes of aspects upon which it's built
 
 	// usually provide an existing datasheet with the aspect already installed; if not, it will be added (as long as
 	// modification is allowed); if no datasheet, creates a blank one

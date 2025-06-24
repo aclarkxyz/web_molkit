@@ -297,6 +297,8 @@ export class Experiment extends Aspect
 	{
 		super(Experiment.CODE, ds, allowModify);
 
+		this.subordinateCodes = [Experiment.CODE_RXN, Experiment.CODE_YLD];
+
 		if (Object.keys(Experiment.COLUMN_DESCRIPTIONS).length == 0)
 		{
 			let v = Experiment.COLUMN_DESCRIPTIONS;
