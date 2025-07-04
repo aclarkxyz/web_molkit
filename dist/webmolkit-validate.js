@@ -2056,6 +2056,7 @@ class Aspect {
     constructor(code, ds, allowModify) {
         this.code = code;
         this.allowModify = true;
+        this.subordinateCodes = [];
         this.ds = ds ? ds : new _ds_DataSheet__WEBPACK_IMPORTED_MODULE_0__.DataSheet();
         if (allowModify != null)
             this.allowModify = allowModify;
@@ -3079,6 +3080,7 @@ class Experiment extends _Aspect__WEBPACK_IMPORTED_MODULE_6__.Aspect {
     }
     constructor(ds, allowModify) {
         super(Experiment.CODE, ds, allowModify);
+        this.subordinateCodes = [Experiment.CODE_RXN, Experiment.CODE_YLD];
         if (Object.keys(Experiment.COLUMN_DESCRIPTIONS).length == 0) {
             let v = Experiment.COLUMN_DESCRIPTIONS;
             v[Experiment.COLNAME_EXPERIMENT_TITLE] = 'Title description for the experiment';
@@ -33918,7 +33920,8 @@ function addTooltipPromise(parent, bodyCallback, titleHTML, delay) {
 function raiseToolTip(parent, avoid, bodyHTML, titleHTML) {
     (0,_util_Theme__WEBPACK_IMPORTED_MODULE_1__.installInlineCSS)('tooltip', CSS_TOOLTIP);
     clearTooltip();
-    new Tooltip((0,_util_dom__WEBPACK_IMPORTED_MODULE_0__.dom)(parent), bodyHTML, titleHTML, 0).raise(avoid);
+    globalPopWatermark++;
+    new Tooltip((0,_util_dom__WEBPACK_IMPORTED_MODULE_0__.dom)(parent), bodyHTML, titleHTML, 0).start(avoid);
 }
 function clearTooltip() {
     if (globalTooltip == null)
@@ -33934,14 +33937,14 @@ class Tooltip {
         this.delay = delay;
         this.domTooltip = null;
     }
-    start() {
+    start(avoid) {
         this.watermark = ++globalPopWatermark;
         (() => __awaiter(this, void 0, void 0, function* () {
             if (this.bodyHTML == null && this.bodyCallback)
                 this.bodyHTML = yield this.bodyCallback();
             window.setTimeout(() => {
                 if (this.watermark == globalPopWatermark)
-                    this.raise();
+                    this.raise(avoid);
             }, this.delay);
         }))();
     }
@@ -36687,6 +36690,12 @@ class Vec {
             arr[n] = [];
         return arr;
     }
+    static numberMatrix(val, dim1, dim2) {
+        let mtx = new Array(dim1);
+        for (let n = 0; n < dim1; n++)
+            mtx[n] = Vec.numberArray(val, dim2);
+        return mtx;
+    }
     static funcArray(sz, func) {
         let arr = new Array(sz);
         for (let n = 0; n < sz; n++)
@@ -37440,8 +37449,15 @@ class DOM {
         else
             this.removeClass(clsname);
     }
-    class(clsname) {
-        this.addClass(clsname);
+    class(clsnames) {
+        if (Array.isArray(clsnames)) {
+            for (let cls of clsnames)
+                this.addClass(cls);
+        }
+        else {
+            for (let cls of clsnames.split(' '))
+                this.addClass(cls);
+        }
         return this;
     }
     toggleClass(dict) {
