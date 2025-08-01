@@ -154,7 +154,7 @@ export class ForeignMolecule
 			idxHigh = Math.max(idxHigh, idx);
 		}
 
-		let tag = `${ForeignMoleculeTransient.AtomSgroupMultiAttach}:${idxHigh + 1},${name}`;
+		let tag = `${ForeignMoleculeTransient.AtomSgroupMultiAttach}:${idxHigh + 1},${name ?? ''}`;
 		for (let [key, val] of Object.entries(keyval)) tag += ',' + key + '=' + val;
 		for (let a of atoms) mol.setAtomTransient(a, Vec.append(mol.atomTransient(a), tag));
 	}
@@ -174,7 +174,7 @@ export class ForeignMolecule
 			let bits = payload.split(',');
 			if (bits.length < 2) continue;
 			let idx = parseInt(bits[0]), name = bits[1];
-			if (!(idx > 0) || !name) continue;
+			if (!(idx > 0)) continue;
 
 			let keyval:Record<string, string> = {};
 			for (let i = 2; i < bits.length; i++)

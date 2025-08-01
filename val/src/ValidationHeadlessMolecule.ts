@@ -32,6 +32,9 @@ import {MetaVector} from '@wmk/gfx/MetaVector';
 	Headless validation: molecule tests - algorithms that apply to molecular connection tables.
 */
 
+const BUMP = '?ver=' + new Date().getTime(); // to bust the cache
+
+
 export class ValidationHeadlessMolecule extends Validation
 {
 	private strSketchEl:string;
@@ -57,20 +60,21 @@ export class ValidationHeadlessMolecule extends Validation
 		this.add('Molfile Round-trip', this.molfileRoundTrip);
 		this.add('Rendering structures', this.renderingStructures);
 		this.add('Molecule Format', this.moleculeFormat);
+		this.add('Parse slightly exotic molfiles', this.parseExoticMolfiles);
 	}
+
 
 	public async init():Promise<void>
 	{
-		const BUMP = '?ver=' + new Date().getTime(); // bust the cache
-		this.strSketchEl = await readTextURL(this.urlBase + 'molecule.el' + BUMP);
-		this.strMolfile = await readTextURL(this.urlBase + 'molecule.mol' + BUMP);
-		this.strDataXML = await readTextURL(this.urlBase + 'datasheet.ds' + BUMP);
-		this.strSDfile = await readTextURL(this.urlBase + 'datasheet.sdf' + BUMP);
-		this.molStereo = Molecule.fromString(await readTextURL(this.urlBase + 'stereo.el' + BUMP));
-		this.dsCircular = DataSheetStream.readXML(await readTextURL(this.urlBase + 'circular.ds' + BUMP));
-		this.dsRoundtrip = DataSheetStream.readXML(await readTextURL(this.urlBase + 'roundtrip.ds' + BUMP));
-		this.dsRendering = DataSheetStream.readXML(await readTextURL(this.urlBase + 'rendering.ds' + BUMP));
-		this.dsFormat = DataSheetStream.readXML(await readTextURL(this.urlBase + 'formatelements.ds' + BUMP));
+		this.strSketchEl = await readTextURL(this.referenceURL('molecule.el'));
+		this.strMolfile = await readTextURL(this.referenceURL('molecule.mol'));
+		this.strDataXML = await readTextURL(this.referenceURL('datasheet.ds'));
+		this.strSDfile = await readTextURL(this.referenceURL('datasheet.sdf'));
+		this.molStereo = Molecule.fromString(await readTextURL(this.referenceURL('stereo.el')));
+		this.dsCircular = DataSheetStream.readXML(await readTextURL(this.referenceURL('circular.ds')));
+		this.dsRoundtrip = DataSheetStream.readXML(await readTextURL(this.referenceURL('roundtrip.ds')));
+		this.dsRendering = DataSheetStream.readXML(await readTextURL(this.referenceURL('rendering.ds')));
+		this.dsFormat = DataSheetStream.readXML(await readTextURL(this.referenceURL('formatelements.ds')));
 	}
 
 	public async parseSketchEl():Promise<void>
@@ -191,6 +195,27 @@ export class ValidationHeadlessMolecule extends Validation
 
 	public async molfileRoundTrip():Promise<void>
 	{
+		const findProblems = (mol:Molecule, alt:Molecule):string[] =>
+		{
+			let problems:string[] = [];
+			for (let n = 1; n <= mol.numAtoms; n++)
+			{
+				if (mol.atomElement(n) != alt.atomElement(n)) problems.push('/atom #' + n + ': elements different');
+				if (mol.atomCharge(n) != alt.atomCharge(n)) problems.push('/atom #' + n + ': charges different');
+				if (mol.atomUnpaired(n) != alt.atomUnpaired(n)) problems.push('/atom #' + n + ': unpaired different');
+				if (mol.atomIsotope(n) != alt.atomIsotope(n)) problems.push('/atom #' + n + ': isotope different');
+				if (mol.atomMapNum(n) != alt.atomMapNum(n)) problems.push('/atom #' + n + ': mapnum different');
+				if (mol.atomHydrogens(n) != alt.atomHydrogens(n)) problems.push('/atom #' + n + ': hydrogens different');
+				if (mol.atomHExplicit(n) != alt.atomHExplicit(n)) problems.push('/atom #' + n + ': explicitH different');
+			}
+			for (let n = 1; n <= mol.numBonds; n++)
+			{
+				if (mol.bondOrder(n) != alt.bondOrder(n)) problems.push('/bond #' + n + ': bond orders different');
+				if (mol.bondType(n) != alt.bondType(n)) problems.push('/bond #' + n + ': bond types different');
+			}
+			return problems;
+		};
+
 		const ds = this.dsRoundtrip;
 		for (let n = 0; n < ds.numRows; n++)
 		{
@@ -201,25 +226,8 @@ export class ValidationHeadlessMolecule extends Validation
 
 			let alt = new MDLMOLReader(mdl).parse();
 			this.assert(mol.numAtoms == alt.numAtoms && mol.numBonds == alt.numBonds, 'atom/bond count differs');
-
-			let problems:string[] = [];
-
-			for (let i = 1; i <= mol.numAtoms; i++)
-			{
-				if (mol.atomElement(i) != alt.atomElement(i)) problems.push('/atom #' + i + ': elements different');
-				if (mol.atomCharge(i) != alt.atomCharge(i)) problems.push('/atom #' + i + ': charges different');
-				if (mol.atomUnpaired(i) != alt.atomUnpaired(i)) problems.push('/atom #' + i + ': unpaired different');
-				if (mol.atomIsotope(i) != alt.atomIsotope(i)) problems.push('/atom #' + i + ': isotope different');
-				if (mol.atomMapNum(i) != alt.atomMapNum(i)) problems.push('/atom #' + i + ': mapnum different');
-				if (mol.atomHydrogens(i) != alt.atomHydrogens(i)) problems.push('/atom #' + i + ': hydrogens different');
-				if (mol.atomHExplicit(i) != alt.atomHExplicit(i)) problems.push('/atom #' + i + ': explicitH different');
-			}
-			for (let i = 1; i <= mol.numBonds; i++)
-			{
-				if (mol.bondOrder(i) != alt.bondOrder(i)) problems.push('/bond #' + i + ': bond orders different');
-				if (mol.bondType(i) != alt.bondType(i)) problems.push('/bond #' + i + ': bond types different');
-			}
-
+			
+			let problems = findProblems(mol, alt);
 			if (problems.length > 0)
 			{
 				this.context.notes.push('Round trip problems:');
@@ -236,8 +244,8 @@ export class ValidationHeadlessMolecule extends Validation
 				if (!wantMDL) 
 					this.context.notes.push('Molfile missing from validation data.');
 				else 
-					this.context.notes.push('Desired Molfile:\n' + wantMDL);
-				this.context.notes.push('Got Molfile:\n' + mdl);
+					this.context.notes.push(...['Desired Molfile:', `<pre>${wantMDL}</pre>`]);
+				this.context.notes.push(...['Got Molfile:', `<pre>${mdl}</pre>`]);
 
 				let linesWant = wantMDL.split('\n'), linesGot = mdl.split('\n');
 				for (let i = 0; i < Math.max(linesWant.length, linesGot.length); i++) if (linesWant[i] != linesGot[i])
@@ -247,6 +255,18 @@ export class ValidationHeadlessMolecule extends Validation
 				}
 
 				this.assert(false, 'initial Molfile invalid');
+			}
+
+			let wantV3000 = ds.getString(n, 'V3000');
+			if (wantV3000)
+			{
+				let gotV3000 = new MDLMOLWriter(mol).writeV3000();
+				if (wantV3000.trim() != gotV3000.trim())
+				{
+					this.context.notes.push(...['Desired V3000:', `<pre>${wantV3000}</pre>`]);
+					this.context.notes.push(...['Got V3000:', `<pre>${gotV3000}</pre>`]);
+					this.assert(false, 'initial V3000 invalid');				
+				}
 			}
 		}
 	}
@@ -326,5 +346,42 @@ export class ValidationHeadlessMolecule extends Validation
 
 		MoleculeStream.formatV2Elements = prevFormat;
 	}
+
+	public async parseExoticMolfiles():Promise<void>
+	{
+		const convertAndCompare = async (base:string):Promise<void> =>
+		{
+			this.context = {subcategory: `Base=${base}`};
+
+			let inRaw = await readTextURL(this.referenceURL(`molfile/${base}.mol`));
+			let mol = MoleculeStream.readMDLMOL(inRaw);
+			this.assert(mol != null, `${base}: parsing failed`);
+
+			let elstr = mol.toString();
+
+			let outRaw:string = null;
+			try {outRaw = await readTextURL(this.referenceURL(`molfile/${base}.el`));}
+			catch (ex) {}
+
+			this.context.notes =
+			[
+				'Produced serialised molecule:',
+				`<pre>${elstr}</pre>`,
+				'Want:',
+				`<pre>${outRaw}</pre>`,
+			];
+			this.assertEqual(elstr.trim(), (outRaw ?? '').trim(), 'output mismatch');
+		};
+
+		let prevFormat = MoleculeStream.formatV2Elements;
+		MoleculeStream.formatV2Elements = true;
+
+		const FILE_COMPARISONS = ['nucleotide2000', 'nucleotide3000'];
+		for (let base of FILE_COMPARISONS) await convertAndCompare(base);
+
+		MoleculeStream.formatV2Elements = prevFormat;
+	}
+
+	private referenceURL(fn:string):string {return this.urlBase + fn + BUMP;}
 }
 

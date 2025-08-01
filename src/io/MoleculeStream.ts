@@ -132,8 +132,21 @@ export class MoleculeStream
 			try
 			{
 				let jsonStr = JSON.parse(strData);
-				let mol = MoleculeStream.readNative(jsonStr);
-				if (mol) return mol;
+				if (jsonStr && typeof jsonStr == 'string')
+				{
+					try
+					{
+						let mol = MoleculeStream.readNative(jsonStr);
+						if (mol) return mol;
+					}
+					catch (ex) {}
+					try
+					{
+						let mol = MoleculeStream.readMDLMOL(jsonStr);
+						if (mol) return mol;
+					}
+					catch (ex) {}
+				}
 			}
 			catch (ex) {}
 		}

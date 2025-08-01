@@ -1823,6 +1823,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   fromUTF8: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.fromUTF8),
 /* harmony export */   getBoundaryPixelsDOM: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.getBoundaryPixelsDOM),
 /* harmony export */   getOffsetPixelsDOM: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.getOffsetPixelsDOM),
+/* harmony export */   getViewportSize: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.getViewportSize),
 /* harmony export */   hasInlineCSS: () => (/* reexport safe */ _src_util_Theme__WEBPACK_IMPORTED_MODULE_80__.hasInlineCSS),
 /* harmony export */   htmlToRGB: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.htmlToRGB),
 /* harmony export */   initWebMolKit: () => (/* reexport safe */ _src_util_Theme__WEBPACK_IMPORTED_MODULE_80__.initWebMolKit),
@@ -13045,6 +13046,12 @@ class MDLMOLReader {
                 if (sup != null)
                     sup.name = line.substring(11).trim();
             }
+            else if (line.startsWith('M  SCL')) {
+                let idx = parseInt(line.substring(6, 10).trim());
+                let sup = superatoms.get(idx);
+                if (sup != null)
+                    sup.templateClass = line.substring(11).trim();
+            }
             else if (line.startsWith('M  SDT')) {
                 let idx = parseInt(line.substring(6, 10).trim());
                 let sup = superatoms.get(idx);
@@ -13638,19 +13645,21 @@ class MDLMOLReader {
             _mol_QueryUtil__WEBPACK_IMPORTED_MODULE_9__.QueryUtil.setQueryAtomElementsNot(mol, atom, elements);
     }
     applySuperAtom(sup, residual) {
-        if (sup.name == null || _util_Vec__WEBPACK_IMPORTED_MODULE_1__.Vec.isBlank(sup.atoms))
+        if ((sup.name == null && sup.templateClass == null) || _util_Vec__WEBPACK_IMPORTED_MODULE_1__.Vec.isBlank(sup.atoms))
             return;
         let mask = _util_Vec__WEBPACK_IMPORTED_MODULE_1__.Vec.booleanArray(true, this.mol.numAtoms);
         for (let a of sup.atoms)
             mask[a - 1] = false;
         let name = sup.name;
-        let i;
-        while ((i = name.indexOf('\\S')) >= 0)
-            name = name.substring(0, i) + '{^' + name.substring(i + 2);
-        while ((i = name.indexOf('\\s')) >= 0)
-            name = name.substring(0, i) + '{' + name.substring(i + 2);
-        while ((i = name.indexOf('\\n')) >= 0)
-            name = name.substring(0, i) + '}' + name.substring(i + 2);
+        if (name != null) {
+            let i;
+            while ((i = name.indexOf('\\S')) >= 0)
+                name = name.substring(0, i) + '{^' + name.substring(i + 2);
+            while ((i = name.indexOf('\\s')) >= 0)
+                name = name.substring(0, i) + '{' + name.substring(i + 2);
+            while ((i = name.indexOf('\\n')) >= 0)
+                name = name.substring(0, i) + '}' + name.substring(i + 2);
+        }
         let [mod, abvAtom] = !sup.templateClass ? _mol_MolUtil__WEBPACK_IMPORTED_MODULE_7__.MolUtil.convertToAbbrevIndex(this.mol, mask, name) : [null, null];
         if (mod == null) {
             let keyval = {};
@@ -14214,8 +14223,15 @@ class MDLMOLWriter {
                     line += this.intrpad(sg.atoms[n + i], 4);
                 this.lines.push(line);
             }
-            if (sg.type != 'DAT')
-                this.lines.push('M  SMT' + sidx + ' ' + sg.name);
+            if (sg.type != 'DAT') {
+                if (sg.name)
+                    this.lines.push('M  SMT' + sidx + ' ' + sg.name);
+                if (sg.templateClass) {
+                    this.lines.push('M  SCL' + sidx + ' ' + sg.templateClass);
+                    if (!sg.name)
+                        this.lines.push('M  SDS EXP  1' + sidx);
+                }
+            }
             if (sg.type == 'MUL') {
                 let mult = parseInt(sg.name), unit = sg.atoms.length / mult;
                 for (let n = 0; n < unit; n += 15) {
@@ -14566,6 +14582,8 @@ class MDLMOLWriter {
                     txt += ' XBONDS=' + this.packV3000List(sg.bonds);
                 if (sg.templateClass)
                     txt += ' CLASS=' + sg.templateClass;
+                if (!sg.name)
+                    txt += ' ESTATE=E';
                 if (sg.natReplace)
                     txt += ' NATREPLACE=' + sg.natReplace;
                 if (sg.attachPoints) {
@@ -14802,9 +14820,20 @@ class MoleculeStream {
         if (strData.startsWith('"')) {
             try {
                 let jsonStr = JSON.parse(strData);
-                let mol = MoleculeStream.readNative(jsonStr);
-                if (mol)
-                    return mol;
+                if (jsonStr && typeof jsonStr == 'string') {
+                    try {
+                        let mol = MoleculeStream.readNative(jsonStr);
+                        if (mol)
+                            return mol;
+                    }
+                    catch (ex) { }
+                    try {
+                        let mol = MoleculeStream.readMDLMOL(jsonStr);
+                        if (mol)
+                            return mol;
+                    }
+                    catch (ex) { }
+                }
             }
             catch (ex) { }
         }
@@ -16533,7 +16562,7 @@ class ForeignMolecule {
                         continue;
                     idxHigh = Math.max(idxHigh, idx);
                 }
-        let tag = `${ForeignMoleculeTransient.AtomSgroupMultiAttach}:${idxHigh + 1},${name}`;
+        let tag = `${ForeignMoleculeTransient.AtomSgroupMultiAttach}:${idxHigh + 1},${name !== null && name !== void 0 ? name : ''}`;
         for (let [key, val] of Object.entries(keyval))
             tag += ',' + key + '=' + val;
         for (let a of atoms)
@@ -16555,7 +16584,7 @@ class ForeignMolecule {
                     if (bits.length < 2)
                         continue;
                     let idx = parseInt(bits[0]), name = bits[1];
-                    if (!(idx > 0) || !name)
+                    if (!(idx > 0))
                         continue;
                     let keyval = {};
                     for (let i = 2; i < bits.length; i++) {
@@ -36115,7 +36144,7 @@ class Triangulation2D {
     }
     traceOutline(tri) {
         const npt = tri.length, ntri = npt / 3;
-        const { sz, px, py } = this;
+        const { sz } = this;
         let edgeCount = new Map();
         for (let n = 0, i = 0; n < ntri; n++, i += 3) {
             const e1 = sz * Math.min(tri[i + 0], tri[i + 1]) + Math.max(tri[i + 0], tri[i + 1]);
@@ -37608,6 +37637,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   fromUTF8: () => (/* binding */ fromUTF8),
 /* harmony export */   getBoundaryPixelsDOM: () => (/* binding */ getBoundaryPixelsDOM),
 /* harmony export */   getOffsetPixelsDOM: () => (/* binding */ getOffsetPixelsDOM),
+/* harmony export */   getViewportSize: () => (/* binding */ getViewportSize),
 /* harmony export */   htmlToRGB: () => (/* binding */ htmlToRGB),
 /* harmony export */   invZ: () => (/* binding */ invZ),
 /* harmony export */   isDef: () => (/* binding */ isDef),
@@ -37793,6 +37823,11 @@ function getBoundaryPixelsDOM(dom) {
 }
 function getOffsetPixelsDOM(dom) {
     return [dom.elHTML.offsetLeft, dom.elHTML.offsetTop, dom.elHTML.offsetWidth, dom.elHTML.offsetHeight];
+}
+function getViewportSize() {
+    if (window.innerWidth != null)
+        return [window.innerWidth, window.innerHeight];
+    return [window.document.body.clientWidth, window.document.body.clientHeight];
 }
 function norm_xy(dx, dy) {
     return Math.hypot(dx, dy);
@@ -38414,6 +38449,7 @@ var __awaiter = (undefined && undefined.__awaiter) || function (thisArg, _argume
 
 
 
+const BUMP = '?ver=' + new Date().getTime();
 class ValidationHeadlessMolecule extends _Validation__WEBPACK_IMPORTED_MODULE_1__.Validation {
     constructor(urlBase) {
         super();
@@ -38428,19 +38464,19 @@ class ValidationHeadlessMolecule extends _Validation__WEBPACK_IMPORTED_MODULE_1_
         this.add('Molfile Round-trip', this.molfileRoundTrip);
         this.add('Rendering structures', this.renderingStructures);
         this.add('Molecule Format', this.moleculeFormat);
+        this.add('Parse slightly exotic molfiles', this.parseExoticMolfiles);
     }
     init() {
         return __awaiter(this, void 0, void 0, function* () {
-            const BUMP = '?ver=' + new Date().getTime();
-            this.strSketchEl = yield (0,_wmk_util_util__WEBPACK_IMPORTED_MODULE_2__.readTextURL)(this.urlBase + 'molecule.el' + BUMP);
-            this.strMolfile = yield (0,_wmk_util_util__WEBPACK_IMPORTED_MODULE_2__.readTextURL)(this.urlBase + 'molecule.mol' + BUMP);
-            this.strDataXML = yield (0,_wmk_util_util__WEBPACK_IMPORTED_MODULE_2__.readTextURL)(this.urlBase + 'datasheet.ds' + BUMP);
-            this.strSDfile = yield (0,_wmk_util_util__WEBPACK_IMPORTED_MODULE_2__.readTextURL)(this.urlBase + 'datasheet.sdf' + BUMP);
-            this.molStereo = _wmk_mol_Molecule__WEBPACK_IMPORTED_MODULE_0__.Molecule.fromString(yield (0,_wmk_util_util__WEBPACK_IMPORTED_MODULE_2__.readTextURL)(this.urlBase + 'stereo.el' + BUMP));
-            this.dsCircular = _wmk_io_DataSheetStream__WEBPACK_IMPORTED_MODULE_3__.DataSheetStream.readXML(yield (0,_wmk_util_util__WEBPACK_IMPORTED_MODULE_2__.readTextURL)(this.urlBase + 'circular.ds' + BUMP));
-            this.dsRoundtrip = _wmk_io_DataSheetStream__WEBPACK_IMPORTED_MODULE_3__.DataSheetStream.readXML(yield (0,_wmk_util_util__WEBPACK_IMPORTED_MODULE_2__.readTextURL)(this.urlBase + 'roundtrip.ds' + BUMP));
-            this.dsRendering = _wmk_io_DataSheetStream__WEBPACK_IMPORTED_MODULE_3__.DataSheetStream.readXML(yield (0,_wmk_util_util__WEBPACK_IMPORTED_MODULE_2__.readTextURL)(this.urlBase + 'rendering.ds' + BUMP));
-            this.dsFormat = _wmk_io_DataSheetStream__WEBPACK_IMPORTED_MODULE_3__.DataSheetStream.readXML(yield (0,_wmk_util_util__WEBPACK_IMPORTED_MODULE_2__.readTextURL)(this.urlBase + 'formatelements.ds' + BUMP));
+            this.strSketchEl = yield (0,_wmk_util_util__WEBPACK_IMPORTED_MODULE_2__.readTextURL)(this.referenceURL('molecule.el'));
+            this.strMolfile = yield (0,_wmk_util_util__WEBPACK_IMPORTED_MODULE_2__.readTextURL)(this.referenceURL('molecule.mol'));
+            this.strDataXML = yield (0,_wmk_util_util__WEBPACK_IMPORTED_MODULE_2__.readTextURL)(this.referenceURL('datasheet.ds'));
+            this.strSDfile = yield (0,_wmk_util_util__WEBPACK_IMPORTED_MODULE_2__.readTextURL)(this.referenceURL('datasheet.sdf'));
+            this.molStereo = _wmk_mol_Molecule__WEBPACK_IMPORTED_MODULE_0__.Molecule.fromString(yield (0,_wmk_util_util__WEBPACK_IMPORTED_MODULE_2__.readTextURL)(this.referenceURL('stereo.el')));
+            this.dsCircular = _wmk_io_DataSheetStream__WEBPACK_IMPORTED_MODULE_3__.DataSheetStream.readXML(yield (0,_wmk_util_util__WEBPACK_IMPORTED_MODULE_2__.readTextURL)(this.referenceURL('circular.ds')));
+            this.dsRoundtrip = _wmk_io_DataSheetStream__WEBPACK_IMPORTED_MODULE_3__.DataSheetStream.readXML(yield (0,_wmk_util_util__WEBPACK_IMPORTED_MODULE_2__.readTextURL)(this.referenceURL('roundtrip.ds')));
+            this.dsRendering = _wmk_io_DataSheetStream__WEBPACK_IMPORTED_MODULE_3__.DataSheetStream.readXML(yield (0,_wmk_util_util__WEBPACK_IMPORTED_MODULE_2__.readTextURL)(this.referenceURL('rendering.ds')));
+            this.dsFormat = _wmk_io_DataSheetStream__WEBPACK_IMPORTED_MODULE_3__.DataSheetStream.readXML(yield (0,_wmk_util_util__WEBPACK_IMPORTED_MODULE_2__.readTextURL)(this.referenceURL('formatelements.ds')));
         });
     }
     parseSketchEl() {
@@ -38567,6 +38603,32 @@ class ValidationHeadlessMolecule extends _Validation__WEBPACK_IMPORTED_MODULE_1_
     }
     molfileRoundTrip() {
         return __awaiter(this, void 0, void 0, function* () {
+            const findProblems = (mol, alt) => {
+                let problems = [];
+                for (let n = 1; n <= mol.numAtoms; n++) {
+                    if (mol.atomElement(n) != alt.atomElement(n))
+                        problems.push('/atom #' + n + ': elements different');
+                    if (mol.atomCharge(n) != alt.atomCharge(n))
+                        problems.push('/atom #' + n + ': charges different');
+                    if (mol.atomUnpaired(n) != alt.atomUnpaired(n))
+                        problems.push('/atom #' + n + ': unpaired different');
+                    if (mol.atomIsotope(n) != alt.atomIsotope(n))
+                        problems.push('/atom #' + n + ': isotope different');
+                    if (mol.atomMapNum(n) != alt.atomMapNum(n))
+                        problems.push('/atom #' + n + ': mapnum different');
+                    if (mol.atomHydrogens(n) != alt.atomHydrogens(n))
+                        problems.push('/atom #' + n + ': hydrogens different');
+                    if (mol.atomHExplicit(n) != alt.atomHExplicit(n))
+                        problems.push('/atom #' + n + ': explicitH different');
+                }
+                for (let n = 1; n <= mol.numBonds; n++) {
+                    if (mol.bondOrder(n) != alt.bondOrder(n))
+                        problems.push('/bond #' + n + ': bond orders different');
+                    if (mol.bondType(n) != alt.bondType(n))
+                        problems.push('/bond #' + n + ': bond types different');
+                }
+                return problems;
+            };
             const ds = this.dsRoundtrip;
             for (let n = 0; n < ds.numRows; n++) {
                 this.context = { row: n + 1, count: ds.numRows, notes: [] };
@@ -38574,29 +38636,7 @@ class ValidationHeadlessMolecule extends _Validation__WEBPACK_IMPORTED_MODULE_1_
                 let mdl = new _wmk_io_MDLWriter__WEBPACK_IMPORTED_MODULE_10__.MDLMOLWriter(mol).write();
                 let alt = new _wmk_io_MDLReader__WEBPACK_IMPORTED_MODULE_5__.MDLMOLReader(mdl).parse();
                 this.assert(mol.numAtoms == alt.numAtoms && mol.numBonds == alt.numBonds, 'atom/bond count differs');
-                let problems = [];
-                for (let i = 1; i <= mol.numAtoms; i++) {
-                    if (mol.atomElement(i) != alt.atomElement(i))
-                        problems.push('/atom #' + i + ': elements different');
-                    if (mol.atomCharge(i) != alt.atomCharge(i))
-                        problems.push('/atom #' + i + ': charges different');
-                    if (mol.atomUnpaired(i) != alt.atomUnpaired(i))
-                        problems.push('/atom #' + i + ': unpaired different');
-                    if (mol.atomIsotope(i) != alt.atomIsotope(i))
-                        problems.push('/atom #' + i + ': isotope different');
-                    if (mol.atomMapNum(i) != alt.atomMapNum(i))
-                        problems.push('/atom #' + i + ': mapnum different');
-                    if (mol.atomHydrogens(i) != alt.atomHydrogens(i))
-                        problems.push('/atom #' + i + ': hydrogens different');
-                    if (mol.atomHExplicit(i) != alt.atomHExplicit(i))
-                        problems.push('/atom #' + i + ': explicitH different');
-                }
-                for (let i = 1; i <= mol.numBonds; i++) {
-                    if (mol.bondOrder(i) != alt.bondOrder(i))
-                        problems.push('/bond #' + i + ': bond orders different');
-                    if (mol.bondType(i) != alt.bondType(i))
-                        problems.push('/bond #' + i + ': bond types different');
-                }
+                let problems = findProblems(mol, alt);
                 if (problems.length > 0) {
                     this.context.notes.push('Round trip problems:');
                     for (let p of problems)
@@ -38611,8 +38651,8 @@ class ValidationHeadlessMolecule extends _Validation__WEBPACK_IMPORTED_MODULE_1_
                     if (!wantMDL)
                         this.context.notes.push('Molfile missing from validation data.');
                     else
-                        this.context.notes.push('Desired Molfile:\n' + wantMDL);
-                    this.context.notes.push('Got Molfile:\n' + mdl);
+                        this.context.notes.push(...['Desired Molfile:', `<pre>${wantMDL}</pre>`]);
+                    this.context.notes.push(...['Got Molfile:', `<pre>${mdl}</pre>`]);
                     let linesWant = wantMDL.split('\n'), linesGot = mdl.split('\n');
                     for (let i = 0; i < Math.max(linesWant.length, linesGot.length); i++)
                         if (linesWant[i] != linesGot[i]) {
@@ -38620,6 +38660,15 @@ class ValidationHeadlessMolecule extends _Validation__WEBPACK_IMPORTED_MODULE_1_
                             break;
                         }
                     this.assert(false, 'initial Molfile invalid');
+                }
+                let wantV3000 = ds.getString(n, 'V3000');
+                if (wantV3000) {
+                    let gotV3000 = new _wmk_io_MDLWriter__WEBPACK_IMPORTED_MODULE_10__.MDLMOLWriter(mol).writeV3000();
+                    if (wantV3000.trim() != gotV3000.trim()) {
+                        this.context.notes.push(...['Desired V3000:', `<pre>${wantV3000}</pre>`]);
+                        this.context.notes.push(...['Got V3000:', `<pre>${gotV3000}</pre>`]);
+                        this.assert(false, 'initial V3000 invalid');
+                    }
                 }
             }
         });
@@ -38685,6 +38734,37 @@ class ValidationHeadlessMolecule extends _Validation__WEBPACK_IMPORTED_MODULE_1_
             _wmk_io_MoleculeStream__WEBPACK_IMPORTED_MODULE_4__.MoleculeStream.formatV2Elements = prevFormat;
         });
     }
+    parseExoticMolfiles() {
+        return __awaiter(this, void 0, void 0, function* () {
+            const convertAndCompare = (base) => __awaiter(this, void 0, void 0, function* () {
+                this.context = { subcategory: `Base=${base}` };
+                let inRaw = yield (0,_wmk_util_util__WEBPACK_IMPORTED_MODULE_2__.readTextURL)(this.referenceURL(`molfile/${base}.mol`));
+                let mol = _wmk_io_MoleculeStream__WEBPACK_IMPORTED_MODULE_4__.MoleculeStream.readMDLMOL(inRaw);
+                this.assert(mol != null, `${base}: parsing failed`);
+                let elstr = mol.toString();
+                let outRaw = null;
+                try {
+                    outRaw = yield (0,_wmk_util_util__WEBPACK_IMPORTED_MODULE_2__.readTextURL)(this.referenceURL(`molfile/${base}.el`));
+                }
+                catch (ex) { }
+                this.context.notes =
+                    [
+                        'Produced serialised molecule:',
+                        `<pre>${elstr}</pre>`,
+                        'Want:',
+                        `<pre>${outRaw}</pre>`,
+                    ];
+                this.assertEqual(elstr.trim(), (outRaw !== null && outRaw !== void 0 ? outRaw : '').trim(), 'output mismatch');
+            });
+            let prevFormat = _wmk_io_MoleculeStream__WEBPACK_IMPORTED_MODULE_4__.MoleculeStream.formatV2Elements;
+            _wmk_io_MoleculeStream__WEBPACK_IMPORTED_MODULE_4__.MoleculeStream.formatV2Elements = true;
+            const FILE_COMPARISONS = ['nucleotide2000', 'nucleotide3000'];
+            for (let base of FILE_COMPARISONS)
+                yield convertAndCompare(base);
+            _wmk_io_MoleculeStream__WEBPACK_IMPORTED_MODULE_4__.MoleculeStream.formatV2Elements = prevFormat;
+        });
+    }
+    referenceURL(fn) { return this.urlBase + fn + BUMP; }
 }
 
 
@@ -39097,6 +39177,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   fromUTF8: () => (/* reexport safe */ _index_src__WEBPACK_IMPORTED_MODULE_0__.fromUTF8),
 /* harmony export */   getBoundaryPixelsDOM: () => (/* reexport safe */ _index_src__WEBPACK_IMPORTED_MODULE_0__.getBoundaryPixelsDOM),
 /* harmony export */   getOffsetPixelsDOM: () => (/* reexport safe */ _index_src__WEBPACK_IMPORTED_MODULE_0__.getOffsetPixelsDOM),
+/* harmony export */   getViewportSize: () => (/* reexport safe */ _index_src__WEBPACK_IMPORTED_MODULE_0__.getViewportSize),
 /* harmony export */   hasInlineCSS: () => (/* reexport safe */ _index_src__WEBPACK_IMPORTED_MODULE_0__.hasInlineCSS),
 /* harmony export */   htmlToRGB: () => (/* reexport safe */ _index_src__WEBPACK_IMPORTED_MODULE_0__.htmlToRGB),
 /* harmony export */   initWebMolKit: () => (/* reexport safe */ _index_src__WEBPACK_IMPORTED_MODULE_0__.initWebMolKit),

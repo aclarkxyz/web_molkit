@@ -312,7 +312,15 @@ export class MDLMOLWriter
 				for (let i = 0; i < sz; i++) line += this.intrpad(sg.atoms[n + i], 4);
 				this.lines.push(line);
 			}
-			if (sg.type != 'DAT') this.lines.push('M  SMT' + sidx + ' ' + sg.name);
+			if (sg.type != 'DAT')
+			{
+				if (sg.name) this.lines.push('M  SMT' + sidx + ' ' + sg.name);
+				if (sg.templateClass)
+				{
+					this.lines.push('M  SCL' + sidx + ' ' + sg.templateClass);
+					if (!sg.name) this.lines.push('M  SDS EXP  1' + sidx);
+				}
+			}
 			if (sg.type == 'MUL')
 			{
 				let mult = parseInt(sg.name), unit = sg.atoms.length / mult;
@@ -719,7 +727,11 @@ export class MDLMOLWriter
 				txt += ' LABEL=' + (sg.name.includes(' ') ? `"${sg.name}"` : sg.name);
 				txt += ' ATOMS=' + this.packV3000List(sg.atoms);
 				if (sg.bonds) txt += ' XBONDS=' + this.packV3000List(sg.bonds);
-				if (sg.templateClass) txt += ' CLASS=' + sg.templateClass;
+				if (sg.templateClass)
+				{
+					txt += ' CLASS=' + sg.templateClass;
+					if (!sg.name) txt += ' ESTATE=E';
+				}
 				if (sg.natReplace) txt += ' NATREPLACE=' + sg.natReplace;
 				if (sg.attachPoints)
 				{

@@ -214,6 +214,13 @@ export function getOffsetPixelsDOM(dom:DOM):[number, number, number, number]
 	return [dom.elHTML.offsetLeft, dom.elHTML.offsetTop, dom.elHTML.offsetWidth, dom.elHTML.offsetHeight];
 }
 
+// convenient access to the total available document size
+export function getViewportSize():[number, number]
+{
+	if (window.innerWidth != null) return [window.innerWidth, window.innerHeight];
+	return [window.document.body.clientWidth, window.document.body.clientHeight];
+}
+
 // geometry functions
 export function norm_xy(dx:number, dy:number):number
 {

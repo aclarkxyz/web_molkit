@@ -18,8 +18,7 @@ import {dom, DOM} from '../util/dom';
 import {Dialog} from './Dialog';
 
 /*
-	Provides a wrapper dialog for the editing of a molecule. The main feature is an instance of molsync.ui.EditMolecule, but it also adds
-	various other widgets.
+	Provides a wrapper dialog for the editing of a molecule.
 */
 
 export class EditCompound extends Dialog

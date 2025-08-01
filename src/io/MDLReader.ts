@@ -358,6 +358,12 @@ export class MDLMOLReader
 				let sup = superatoms.get(idx);
 				if (sup != null) sup.name = line.substring(11).trim();
 			}
+			else if (line.startsWith('M  SCL'))
+			{
+				let idx = parseInt(line.substring(6, 10).trim());
+				let sup = superatoms.get(idx);
+				if (sup != null) sup.templateClass = line.substring(11).trim();
+			}
 			else if (line.startsWith('M  SDT'))
 			{
 				let idx = parseInt(line.substring(6, 10).trim());
@@ -981,15 +987,18 @@ export class MDLMOLReader
 	// are still current
 	private applySuperAtom(sup:MDLReaderSuperAtom, residual:MDLReaderSuperAtom[]):void
 	{
-		if (sup.name == null || Vec.isBlank(sup.atoms)) return;
+		if ((sup.name == null && sup.templateClass == null) || Vec.isBlank(sup.atoms)) return;
 		let mask = Vec.booleanArray(true, this.mol.numAtoms);
 		for (let a of sup.atoms) mask[a - 1] = false;
 
 		let name = sup.name;
-		let i:number;
-		while ((i = name.indexOf('\\S')) >= 0) name = name.substring(0, i) + '{^' + name.substring(i + 2);
-		while ((i = name.indexOf('\\s')) >= 0) name = name.substring(0, i) + '{' + name.substring(i + 2);
-		while ((i = name.indexOf('\\n')) >= 0) name = name.substring(0, i) + '}' + name.substring(i + 2);
+		if (name != null)
+		{
+			let i:number;
+			while ((i = name.indexOf('\\S')) >= 0) name = name.substring(0, i) + '{^' + name.substring(i + 2);
+			while ((i = name.indexOf('\\s')) >= 0) name = name.substring(0, i) + '{' + name.substring(i + 2);
+			while ((i = name.indexOf('\\n')) >= 0) name = name.substring(0, i) + '}' + name.substring(i + 2);
+		}
 
 		let [mod, abvAtom] = !sup.templateClass ? MolUtil.convertToAbbrevIndex(this.mol, mask, name) : [null, null];
 		if (mod == null)

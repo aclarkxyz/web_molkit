@@ -160,7 +160,7 @@ export class Triangulation2D
 	public traceOutline(tri:number[]):number[]
 	{
 		const npt = tri.length, ntri = npt / 3;
-		const {sz, px, py} = this;
+		const {sz} = this;
 
 		let edgeCount = new Map<number, number>();
 
