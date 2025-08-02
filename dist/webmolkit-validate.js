@@ -14580,10 +14580,11 @@ class MDLMOLWriter {
                 txt += ' ATOMS=' + this.packV3000List(sg.atoms);
                 if (sg.bonds)
                     txt += ' XBONDS=' + this.packV3000List(sg.bonds);
-                if (sg.templateClass)
+                if (sg.templateClass) {
                     txt += ' CLASS=' + sg.templateClass;
-                if (!sg.name)
-                    txt += ' ESTATE=E';
+                    if (!sg.name)
+                        txt += ' ESTATE=E';
+                }
                 if (sg.natReplace)
                     txt += ' NATREPLACE=' + sg.natReplace;
                 if (sg.attachPoints) {
