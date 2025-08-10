@@ -39,6 +39,7 @@ export class OptionList extends Widget
 	private selidx = 0;
 	private buttonDiv:DOM[] = [];
 	private auxCell:DOM[] = [];
+	private isDisabled:boolean[] = null;
 
 	public callbackSelect:(idx:number, source?:OptionList) => void = null;
 
@@ -72,6 +73,13 @@ export class OptionList extends Widget
 		this.callbackSelect = callback;
 	}
 
+	// optionally set some of the formats to being disabled
+	public setDisabled(isDisabled:boolean[]):void
+	{
+		this.isDisabled = isDisabled;
+		this.updateButtons();
+	}
+
 	// create the underlying structure; the parent parameter must be jQuery-compatible
 	public render(parent:any):void
 	{
@@ -91,6 +99,7 @@ export class OptionList extends Widget
 			let td = dom('<td class="wmk-option-cell"/>').appendTo(tr);
 			let div = dom('<div class="wmk-option"/>').appendTo(td);
 			div.css({'padding': `${this.padding}px`});
+
 			div.onClick(() => this.clickButton(n));
 
 			this.buttonDiv.push(div);
@@ -109,6 +118,7 @@ export class OptionList extends Widget
 	public clickButton(idx:number):void
 	{
 		if (idx == this.selidx) return;
+		if (this.isDisabled && this.isDisabled[idx]) return;
 
 		this.setSelectedIndex(idx);
 
@@ -145,10 +155,9 @@ export class OptionList extends Widget
 
 			div.removeClass('wmk-option-unselected wmk-option-selected');
 
-			if (n != this.selidx)
-				div.addClass('wmk-option-unselected');
-			else
-				div.addClass('wmk-option-selected');
+			if (this.isDisabled && this.isDisabled[n]) div.addClass('wmk-option-disabled');
+			else if (n != this.selidx) div.addClass('wmk-option-unselected');
+			else div.addClass('wmk-option-selected');
 		}
 	}
 
@@ -192,6 +201,11 @@ export class OptionList extends Widget
 				color: white;
 				background-color: #00C000;
 				background-image: linear-gradient(to right bottom, ${highlightEdge1}, ${highlightEdge2});
+			}
+			.wmk-option-disabled
+			{
+				color: #C0C0C0;
+				cursor: not-allowed;
 			}
 			.wmk-option-table
 			{

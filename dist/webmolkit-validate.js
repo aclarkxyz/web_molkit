@@ -3,6 +3,418 @@ var WebMolKit;
 /******/ 	"use strict";
 /******/ 	var __webpack_modules__ = ({
 
+/***/ "./dist/index-src.ts":
+/*!***************************!*\
+  !*** ./dist/index-src.ts ***!
+  \***************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   ASCENT_FUDGE: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.ASCENT_FUDGE),
+/* harmony export */   AbbrevContainer: () => (/* reexport safe */ _src_data_AbbrevContainer__WEBPACK_IMPORTED_MODULE_14__.AbbrevContainer),
+/* harmony export */   ActivityType: () => (/* reexport safe */ _src_sketcher_MoleculeActivity__WEBPACK_IMPORTED_MODULE_57__.ActivityType),
+/* harmony export */   ArrangeComponent: () => (/* reexport safe */ _src_gfx_ArrangeExperiment__WEBPACK_IMPORTED_MODULE_20__.ArrangeComponent),
+/* harmony export */   ArrangeComponentAnnot: () => (/* reexport safe */ _src_gfx_ArrangeExperiment__WEBPACK_IMPORTED_MODULE_20__.ArrangeComponentAnnot),
+/* harmony export */   ArrangeComponentType: () => (/* reexport safe */ _src_gfx_ArrangeExperiment__WEBPACK_IMPORTED_MODULE_20__.ArrangeComponentType),
+/* harmony export */   ArrangeExperiment: () => (/* reexport safe */ _src_gfx_ArrangeExperiment__WEBPACK_IMPORTED_MODULE_20__.ArrangeExperiment),
+/* harmony export */   ArrangeMolecule: () => (/* reexport safe */ _src_gfx_ArrangeMolecule__WEBPACK_IMPORTED_MODULE_22__.ArrangeMolecule),
+/* harmony export */   Aspect: () => (/* reexport safe */ _src_aspect_Aspect__WEBPACK_IMPORTED_MODULE_0__.Aspect),
+/* harmony export */   AspectList: () => (/* reexport safe */ _src_aspect_AspectList__WEBPACK_IMPORTED_MODULE_1__.AspectList),
+/* harmony export */   AssayProvenance: () => (/* reexport safe */ _src_aspect_AssayProvenance__WEBPACK_IMPORTED_MODULE_2__.AssayProvenance),
+/* harmony export */   AssayProvenanceHeader: () => (/* reexport safe */ _src_aspect_AssayProvenance__WEBPACK_IMPORTED_MODULE_2__.AssayProvenanceHeader),
+/* harmony export */   Atom: () => (/* reexport safe */ _src_mol_Molecule__WEBPACK_IMPORTED_MODULE_41__.Atom),
+/* harmony export */   AxisLabeller: () => (/* reexport safe */ _src_gfx_AxisLabeller__WEBPACK_IMPORTED_MODULE_23__.AxisLabeller),
+/* harmony export */   BLineType: () => (/* reexport safe */ _src_gfx_ArrangeMolecule__WEBPACK_IMPORTED_MODULE_22__.BLineType),
+/* harmony export */   BONDARTIFACT_EXTRA_ARENE: () => (/* reexport safe */ _src_mol_BondArtifact__WEBPACK_IMPORTED_MODULE_33__.BONDARTIFACT_EXTRA_ARENE),
+/* harmony export */   BONDARTIFACT_EXTRA_RESPATH: () => (/* reexport safe */ _src_mol_BondArtifact__WEBPACK_IMPORTED_MODULE_33__.BONDARTIFACT_EXTRA_RESPATH),
+/* harmony export */   BONDARTIFACT_EXTRA_RESRING: () => (/* reexport safe */ _src_mol_BondArtifact__WEBPACK_IMPORTED_MODULE_33__.BONDARTIFACT_EXTRA_RESRING),
+/* harmony export */   BayesianModel: () => (/* reexport safe */ _src_calc_BayesianModel__WEBPACK_IMPORTED_MODULE_10__.BayesianModel),
+/* harmony export */   BayesianPrediction: () => (/* reexport safe */ _src_aspect_BayesianPrediction__WEBPACK_IMPORTED_MODULE_3__.BayesianPrediction),
+/* harmony export */   BayesianPredictionModel: () => (/* reexport safe */ _src_aspect_BayesianPrediction__WEBPACK_IMPORTED_MODULE_3__.BayesianPredictionModel),
+/* harmony export */   BayesianPredictionOutcome: () => (/* reexport safe */ _src_aspect_BayesianPrediction__WEBPACK_IMPORTED_MODULE_3__.BayesianPredictionOutcome),
+/* harmony export */   BayesianSource: () => (/* reexport safe */ _src_aspect_BayesianSource__WEBPACK_IMPORTED_MODULE_4__.BayesianSource),
+/* harmony export */   BayesianSourceModel: () => (/* reexport safe */ _src_aspect_BayesianSource__WEBPACK_IMPORTED_MODULE_4__.BayesianSourceModel),
+/* harmony export */   BinaryData: () => (/* reexport safe */ _src_aspect_BinaryData__WEBPACK_IMPORTED_MODULE_5__.BinaryData),
+/* harmony export */   BinaryDataField: () => (/* reexport safe */ _src_aspect_BinaryData__WEBPACK_IMPORTED_MODULE_5__.BinaryDataField),
+/* harmony export */   Bond: () => (/* reexport safe */ _src_mol_Molecule__WEBPACK_IMPORTED_MODULE_41__.Bond),
+/* harmony export */   BondArtifact: () => (/* reexport safe */ _src_mol_BondArtifact__WEBPACK_IMPORTED_MODULE_33__.BondArtifact),
+/* harmony export */   Box: () => (/* reexport safe */ _src_util_Geom__WEBPACK_IMPORTED_MODULE_77__.Box),
+/* harmony export */   BuildSMILES: () => (/* reexport safe */ _src_calc_BuildSMILES__WEBPACK_IMPORTED_MODULE_11__.BuildSMILES),
+/* harmony export */   ButtonBank: () => (/* reexport safe */ _src_ui_ButtonBank__WEBPACK_IMPORTED_MODULE_64__.ButtonBank),
+/* harmony export */   ButtonView: () => (/* reexport safe */ _src_ui_ButtonView__WEBPACK_IMPORTED_MODULE_65__.ButtonView),
+/* harmony export */   ButtonViewPosition: () => (/* reexport safe */ _src_ui_ButtonView__WEBPACK_IMPORTED_MODULE_65__.ButtonViewPosition),
+/* harmony export */   Chemistry: () => (/* reexport safe */ _src_mol_Chemistry__WEBPACK_IMPORTED_MODULE_34__.Chemistry),
+/* harmony export */   CircularFingerprints: () => (/* reexport safe */ _src_calc_CircularFingerprints__WEBPACK_IMPORTED_MODULE_12__.CircularFingerprints),
+/* harmony export */   ClipboardProxy: () => (/* reexport safe */ _src_ui_ClipboardProxy__WEBPACK_IMPORTED_MODULE_66__.ClipboardProxy),
+/* harmony export */   ClipboardProxyHandler: () => (/* reexport safe */ _src_ui_ClipboardProxy__WEBPACK_IMPORTED_MODULE_66__.ClipboardProxyHandler),
+/* harmony export */   ClipboardProxyWeb: () => (/* reexport safe */ _src_ui_ClipboardProxy__WEBPACK_IMPORTED_MODULE_66__.ClipboardProxyWeb),
+/* harmony export */   CommandBank: () => (/* reexport safe */ _src_sketcher_CommandBank__WEBPACK_IMPORTED_MODULE_48__.CommandBank),
+/* harmony export */   ContextSketch: () => (/* reexport safe */ _src_sketcher_ContextSketch__WEBPACK_IMPORTED_MODULE_49__.ContextSketch),
+/* harmony export */   CoordUtil: () => (/* reexport safe */ _src_mol_CoordUtil__WEBPACK_IMPORTED_MODULE_35__.CoordUtil),
+/* harmony export */   DEGRAD: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.DEGRAD),
+/* harmony export */   DOM: () => (/* reexport safe */ _src_util_dom__WEBPACK_IMPORTED_MODULE_84__.DOM),
+/* harmony export */   DataSheet: () => (/* reexport safe */ _src_ds_DataSheet__WEBPACK_IMPORTED_MODULE_19__.DataSheet),
+/* harmony export */   DataSheetColumn: () => (/* reexport safe */ _src_ds_DataSheet__WEBPACK_IMPORTED_MODULE_19__.DataSheetColumn),
+/* harmony export */   DataSheetStream: () => (/* reexport safe */ _src_io_DataSheetStream__WEBPACK_IMPORTED_MODULE_29__.DataSheetStream),
+/* harmony export */   Dialog: () => (/* reexport safe */ _src_dialog_Dialog__WEBPACK_IMPORTED_MODULE_17__.Dialog),
+/* harmony export */   DotPath: () => (/* reexport safe */ _src_mol_DotPath__WEBPACK_IMPORTED_MODULE_36__.DotPath),
+/* harmony export */   DotPathBond: () => (/* reexport safe */ _src_mol_DotPath__WEBPACK_IMPORTED_MODULE_36__.DotPathBond),
+/* harmony export */   DotPathCharge: () => (/* reexport safe */ _src_mol_DotPath__WEBPACK_IMPORTED_MODULE_36__.DotPathCharge),
+/* harmony export */   DraggingTool: () => (/* reexport safe */ _src_sketcher_DrawCanvas__WEBPACK_IMPORTED_MODULE_50__.DraggingTool),
+/* harmony export */   DrawCanvas: () => (/* reexport safe */ _src_sketcher_DrawCanvas__WEBPACK_IMPORTED_MODULE_50__.DrawCanvas),
+/* harmony export */   DrawCanvasDecoration: () => (/* reexport safe */ _src_sketcher_DrawCanvas__WEBPACK_IMPORTED_MODULE_50__.DrawCanvasDecoration),
+/* harmony export */   DrawExperiment: () => (/* reexport safe */ _src_gfx_DrawExperiment__WEBPACK_IMPORTED_MODULE_24__.DrawExperiment),
+/* harmony export */   DrawMolecule: () => (/* reexport safe */ _src_gfx_DrawMolecule__WEBPACK_IMPORTED_MODULE_25__.DrawMolecule),
+/* harmony export */   EditAtom: () => (/* reexport safe */ _src_sketcher_EditAtom__WEBPACK_IMPORTED_MODULE_51__.EditAtom),
+/* harmony export */   EditBond: () => (/* reexport safe */ _src_sketcher_EditBond__WEBPACK_IMPORTED_MODULE_52__.EditBond),
+/* harmony export */   EditCompound: () => (/* reexport safe */ _src_dialog_EditCompound__WEBPACK_IMPORTED_MODULE_18__.EditCompound),
+/* harmony export */   EditPolymer: () => (/* reexport safe */ _src_sketcher_EditPolymer__WEBPACK_IMPORTED_MODULE_53__.EditPolymer),
+/* harmony export */   EmbedChemistry: () => (/* reexport safe */ _src_ui_EmbedChemistry__WEBPACK_IMPORTED_MODULE_67__.EmbedChemistry),
+/* harmony export */   EmbedCollection: () => (/* reexport safe */ _src_ui_EmbedCollection__WEBPACK_IMPORTED_MODULE_68__.EmbedCollection),
+/* harmony export */   EmbedMolecule: () => (/* reexport safe */ _src_ui_EmbedMolecule__WEBPACK_IMPORTED_MODULE_69__.EmbedMolecule),
+/* harmony export */   EmbedReaction: () => (/* reexport safe */ _src_ui_EmbedReaction__WEBPACK_IMPORTED_MODULE_70__.EmbedReaction),
+/* harmony export */   EmbedReactionFacet: () => (/* reexport safe */ _src_ui_EmbedReaction__WEBPACK_IMPORTED_MODULE_70__.EmbedReactionFacet),
+/* harmony export */   Experiment: () => (/* reexport safe */ _src_aspect_Experiment__WEBPACK_IMPORTED_MODULE_6__.Experiment),
+/* harmony export */   ExperimentComponent: () => (/* reexport safe */ _src_aspect_Experiment__WEBPACK_IMPORTED_MODULE_6__.ExperimentComponent),
+/* harmony export */   ExperimentComponentType: () => (/* reexport safe */ _src_aspect_Experiment__WEBPACK_IMPORTED_MODULE_6__.ExperimentComponentType),
+/* harmony export */   ExperimentEntry: () => (/* reexport safe */ _src_aspect_Experiment__WEBPACK_IMPORTED_MODULE_6__.ExperimentEntry),
+/* harmony export */   ExperimentMeta: () => (/* reexport safe */ _src_rxn_ExperimentMeta__WEBPACK_IMPORTED_MODULE_46__.ExperimentMeta),
+/* harmony export */   ExperimentMetaApplic: () => (/* reexport safe */ _src_rxn_ExperimentMeta__WEBPACK_IMPORTED_MODULE_46__.ExperimentMetaApplic),
+/* harmony export */   ExperimentMetaRoleType: () => (/* reexport safe */ _src_rxn_ExperimentMeta__WEBPACK_IMPORTED_MODULE_46__.ExperimentMetaRoleType),
+/* harmony export */   ExperimentMetaType: () => (/* reexport safe */ _src_rxn_ExperimentMeta__WEBPACK_IMPORTED_MODULE_46__.ExperimentMetaType),
+/* harmony export */   ExperimentMetaValue: () => (/* reexport safe */ _src_rxn_ExperimentMeta__WEBPACK_IMPORTED_MODULE_46__.ExperimentMetaValue),
+/* harmony export */   ExperimentStep: () => (/* reexport safe */ _src_aspect_Experiment__WEBPACK_IMPORTED_MODULE_6__.ExperimentStep),
+/* harmony export */   ExtraFieldsWidget: () => (/* reexport safe */ _src_sketcher_ExtraFieldsWidget__WEBPACK_IMPORTED_MODULE_54__.ExtraFieldsWidget),
+/* harmony export */   FontData: () => (/* reexport safe */ _src_gfx_FontData__WEBPACK_IMPORTED_MODULE_26__.FontData),
+/* harmony export */   ForeignMolecule: () => (/* reexport safe */ _src_mol_ForeignMolecule__WEBPACK_IMPORTED_MODULE_37__.ForeignMolecule),
+/* harmony export */   ForeignMoleculeTransient: () => (/* reexport safe */ _src_mol_ForeignMolecule__WEBPACK_IMPORTED_MODULE_37__.ForeignMoleculeTransient),
+/* harmony export */   FormatList: () => (/* reexport safe */ _src_data_FormatList__WEBPACK_IMPORTED_MODULE_15__.FormatList),
+/* harmony export */   FusionBank: () => (/* reexport safe */ _src_sketcher_TemplateBank__WEBPACK_IMPORTED_MODULE_61__.FusionBank),
+/* harmony export */   FusionPermutation: () => (/* reexport safe */ _src_sketcher_TemplateFusion__WEBPACK_IMPORTED_MODULE_62__.FusionPermutation),
+/* harmony export */   GeomUtil: () => (/* reexport safe */ _src_util_Geom__WEBPACK_IMPORTED_MODULE_77__.GeomUtil),
+/* harmony export */   GeomWidget: () => (/* reexport safe */ _src_sketcher_GeomWidget__WEBPACK_IMPORTED_MODULE_55__.GeomWidget),
+/* harmony export */   GeomWidgetSelType: () => (/* reexport safe */ _src_sketcher_GeomWidget__WEBPACK_IMPORTED_MODULE_55__.GeomWidgetSelType),
+/* harmony export */   GeomWidgetType: () => (/* reexport safe */ _src_sketcher_GeomWidget__WEBPACK_IMPORTED_MODULE_55__.GeomWidgetType),
+/* harmony export */   Geometry: () => (/* reexport safe */ _src_mol_SketchUtil__WEBPACK_IMPORTED_MODULE_44__.Geometry),
+/* harmony export */   Graph: () => (/* reexport safe */ _src_mol_Graph__WEBPACK_IMPORTED_MODULE_38__.Graph),
+/* harmony export */   GreenMetrics: () => (/* reexport safe */ _src_rxn_QuantityCalc__WEBPACK_IMPORTED_MODULE_47__.GreenMetrics),
+/* harmony export */   INV_TWOPI: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.INV_TWOPI),
+/* harmony export */   KeyCode: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.KeyCode),
+/* harmony export */   Line: () => (/* reexport safe */ _src_util_Geom__WEBPACK_IMPORTED_MODULE_77__.Line),
+/* harmony export */   MDLMOLReader: () => (/* reexport safe */ _src_io_MDLReader__WEBPACK_IMPORTED_MODULE_30__.MDLMOLReader),
+/* harmony export */   MDLMOLWriter: () => (/* reexport safe */ _src_io_MDLWriter__WEBPACK_IMPORTED_MODULE_31__.MDLMOLWriter),
+/* harmony export */   MDLMOL_VALENCE: () => (/* reexport safe */ _src_io_MDLReader__WEBPACK_IMPORTED_MODULE_30__.MDLMOL_VALENCE),
+/* harmony export */   MDLSDFReader: () => (/* reexport safe */ _src_io_MDLReader__WEBPACK_IMPORTED_MODULE_30__.MDLSDFReader),
+/* harmony export */   MDLSDFWriter: () => (/* reexport safe */ _src_io_MDLWriter__WEBPACK_IMPORTED_MODULE_31__.MDLSDFWriter),
+/* harmony export */   Matrix: () => (/* reexport safe */ _src_util_Matrix__WEBPACK_IMPORTED_MODULE_78__.Matrix),
+/* harmony export */   MeasurementData: () => (/* reexport safe */ _src_aspect_MeasurementData__WEBPACK_IMPORTED_MODULE_7__.MeasurementData),
+/* harmony export */   MenuProxy: () => (/* reexport safe */ _src_ui_MenuProxy__WEBPACK_IMPORTED_MODULE_71__.MenuProxy),
+/* harmony export */   MenuProxyWeb: () => (/* reexport safe */ _src_ui_MenuProxy__WEBPACK_IMPORTED_MODULE_71__.MenuProxyWeb),
+/* harmony export */   MetaMolecule: () => (/* reexport safe */ _src_mol_MetaMolecule__WEBPACK_IMPORTED_MODULE_39__.MetaMolecule),
+/* harmony export */   MetaVector: () => (/* reexport safe */ _src_gfx_MetaVector__WEBPACK_IMPORTED_MODULE_27__.MetaVector),
+/* harmony export */   MetalLigate: () => (/* reexport safe */ _src_sketcher_MetalLigate__WEBPACK_IMPORTED_MODULE_56__.MetalLigate),
+/* harmony export */   Mixture: () => (/* reexport safe */ _src_aspect_Mixture__WEBPACK_IMPORTED_MODULE_8__.Mixture),
+/* harmony export */   MixtureAttributeType: () => (/* reexport safe */ _src_aspect_Mixture__WEBPACK_IMPORTED_MODULE_8__.MixtureAttributeType),
+/* harmony export */   MolUtil: () => (/* reexport safe */ _src_mol_MolUtil__WEBPACK_IMPORTED_MODULE_40__.MolUtil),
+/* harmony export */   Molecule: () => (/* reexport safe */ _src_mol_Molecule__WEBPACK_IMPORTED_MODULE_41__.Molecule),
+/* harmony export */   MoleculeActivity: () => (/* reexport safe */ _src_sketcher_MoleculeActivity__WEBPACK_IMPORTED_MODULE_57__.MoleculeActivity),
+/* harmony export */   MoleculeStream: () => (/* reexport safe */ _src_io_MoleculeStream__WEBPACK_IMPORTED_MODULE_32__.MoleculeStream),
+/* harmony export */   OntologyTree: () => (/* reexport safe */ _src_data_OntologyTree__WEBPACK_IMPORTED_MODULE_16__.OntologyTree),
+/* harmony export */   OptionList: () => (/* reexport safe */ _src_ui_OptionList__WEBPACK_IMPORTED_MODULE_72__.OptionList),
+/* harmony export */   OutlineMeasurement: () => (/* reexport safe */ _src_gfx_ArrangeMeasurement__WEBPACK_IMPORTED_MODULE_21__.OutlineMeasurement),
+/* harmony export */   Oval: () => (/* reexport safe */ _src_util_Geom__WEBPACK_IMPORTED_MODULE_77__.Oval),
+/* harmony export */   POLYMERBLOCK_EXTRA_POLYMER: () => (/* reexport safe */ _src_mol_PolymerBlock__WEBPACK_IMPORTED_MODULE_42__.POLYMERBLOCK_EXTRA_POLYMER),
+/* harmony export */   POLYMERBLOCK_SPECIAL_UNCAPPED: () => (/* reexport safe */ _src_mol_PolymerBlock__WEBPACK_IMPORTED_MODULE_42__.POLYMERBLOCK_SPECIAL_UNCAPPED),
+/* harmony export */   PeriodicTableWidget: () => (/* reexport safe */ _src_sketcher_PeriodicTableWidget__WEBPACK_IMPORTED_MODULE_58__.PeriodicTableWidget),
+/* harmony export */   Permutation: () => (/* reexport safe */ _src_util_Vec__WEBPACK_IMPORTED_MODULE_82__.Permutation),
+/* harmony export */   PolymerBlock: () => (/* reexport safe */ _src_mol_PolymerBlock__WEBPACK_IMPORTED_MODULE_42__.PolymerBlock),
+/* harmony export */   PolymerBlockConnectivity: () => (/* reexport safe */ _src_mol_PolymerBlock__WEBPACK_IMPORTED_MODULE_42__.PolymerBlockConnectivity),
+/* harmony export */   PolymerBlockUnit: () => (/* reexport safe */ _src_mol_PolymerBlock__WEBPACK_IMPORTED_MODULE_42__.PolymerBlockUnit),
+/* harmony export */   Popup: () => (/* reexport safe */ _src_ui_Popup__WEBPACK_IMPORTED_MODULE_73__.Popup),
+/* harmony export */   Pos: () => (/* reexport safe */ _src_util_Geom__WEBPACK_IMPORTED_MODULE_77__.Pos),
+/* harmony export */   QuantityCalc: () => (/* reexport safe */ _src_rxn_QuantityCalc__WEBPACK_IMPORTED_MODULE_47__.QuantityCalc),
+/* harmony export */   QuantityCalcComp: () => (/* reexport safe */ _src_rxn_QuantityCalc__WEBPACK_IMPORTED_MODULE_47__.QuantityCalcComp),
+/* harmony export */   QuantityCalcRole: () => (/* reexport safe */ _src_rxn_QuantityCalc__WEBPACK_IMPORTED_MODULE_47__.QuantityCalcRole),
+/* harmony export */   QuantityCalcStat: () => (/* reexport safe */ _src_rxn_QuantityCalc__WEBPACK_IMPORTED_MODULE_47__.QuantityCalcStat),
+/* harmony export */   QueryFieldsWidget: () => (/* reexport safe */ _src_sketcher_QueryFieldsWidget__WEBPACK_IMPORTED_MODULE_59__.QueryFieldsWidget),
+/* harmony export */   QueryTypeAtom: () => (/* reexport safe */ _src_mol_QueryUtil__WEBPACK_IMPORTED_MODULE_43__.QueryTypeAtom),
+/* harmony export */   QueryTypeBond: () => (/* reexport safe */ _src_mol_QueryUtil__WEBPACK_IMPORTED_MODULE_43__.QueryTypeBond),
+/* harmony export */   QueryUtil: () => (/* reexport safe */ _src_mol_QueryUtil__WEBPACK_IMPORTED_MODULE_43__.QueryUtil),
+/* harmony export */   QuickHull: () => (/* reexport safe */ _src_util_Geom__WEBPACK_IMPORTED_MODULE_77__.QuickHull),
+/* harmony export */   RADDEG: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.RADDEG),
+/* harmony export */   Random: () => (/* reexport safe */ _src_util_Random__WEBPACK_IMPORTED_MODULE_79__.Random),
+/* harmony export */   RenderEffects: () => (/* reexport safe */ _src_gfx_Rendering__WEBPACK_IMPORTED_MODULE_28__.RenderEffects),
+/* harmony export */   RenderMnemonicType: () => (/* reexport safe */ _src_gfx_Rendering__WEBPACK_IMPORTED_MODULE_28__.RenderMnemonicType),
+/* harmony export */   RenderMnemonics: () => (/* reexport safe */ _src_gfx_Rendering__WEBPACK_IMPORTED_MODULE_28__.RenderMnemonics),
+/* harmony export */   RenderPolicy: () => (/* reexport safe */ _src_gfx_Rendering__WEBPACK_IMPORTED_MODULE_28__.RenderPolicy),
+/* harmony export */   ResonanceRemover: () => (/* reexport safe */ _src_calc_ResonanceRemover__WEBPACK_IMPORTED_MODULE_13__.ResonanceRemover),
+/* harmony export */   RollingBall: () => (/* reexport safe */ _src_util_Geom__WEBPACK_IMPORTED_MODULE_77__.RollingBall),
+/* harmony export */   SARTable: () => (/* reexport safe */ _src_aspect_SARTable__WEBPACK_IMPORTED_MODULE_9__.SARTable),
+/* harmony export */   SingularValueDecomposition: () => (/* reexport safe */ _src_util_Matrix__WEBPACK_IMPORTED_MODULE_78__.SingularValueDecomposition),
+/* harmony export */   Size: () => (/* reexport safe */ _src_util_Geom__WEBPACK_IMPORTED_MODULE_77__.Size),
+/* harmony export */   SketchUtil: () => (/* reexport safe */ _src_mol_SketchUtil__WEBPACK_IMPORTED_MODULE_44__.SketchUtil),
+/* harmony export */   Sketcher: () => (/* reexport safe */ _src_sketcher_Sketcher__WEBPACK_IMPORTED_MODULE_60__.Sketcher),
+/* harmony export */   Stereochemistry: () => (/* reexport safe */ _src_mol_Stereochemistry__WEBPACK_IMPORTED_MODULE_45__.Stereochemistry),
+/* harmony export */   TWOPI: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.TWOPI),
+/* harmony export */   TabBar: () => (/* reexport safe */ _src_ui_TabBar__WEBPACK_IMPORTED_MODULE_74__.TabBar),
+/* harmony export */   TemplateBank: () => (/* reexport safe */ _src_sketcher_TemplateBank__WEBPACK_IMPORTED_MODULE_61__.TemplateBank),
+/* harmony export */   TemplateFusion: () => (/* reexport safe */ _src_sketcher_TemplateFusion__WEBPACK_IMPORTED_MODULE_62__.TemplateFusion),
+/* harmony export */   TextAlign: () => (/* reexport safe */ _src_gfx_MetaVector__WEBPACK_IMPORTED_MODULE_27__.TextAlign),
+/* harmony export */   Theme: () => (/* reexport safe */ _src_util_Theme__WEBPACK_IMPORTED_MODULE_80__.Theme),
+/* harmony export */   ToolBank: () => (/* reexport safe */ _src_sketcher_ToolBank__WEBPACK_IMPORTED_MODULE_63__.ToolBank),
+/* harmony export */   ToolBankItem: () => (/* reexport safe */ _src_sketcher_ToolBank__WEBPACK_IMPORTED_MODULE_63__.ToolBankItem),
+/* harmony export */   Tooltip: () => (/* reexport safe */ _src_ui_Tooltip__WEBPACK_IMPORTED_MODULE_75__.Tooltip),
+/* harmony export */   Triangulation2D: () => (/* reexport safe */ _src_util_Triangulation2D__WEBPACK_IMPORTED_MODULE_81__.Triangulation2D),
+/* harmony export */   Vec: () => (/* reexport safe */ _src_util_Vec__WEBPACK_IMPORTED_MODULE_82__.Vec),
+/* harmony export */   Widget: () => (/* reexport safe */ _src_ui_Widget__WEBPACK_IMPORTED_MODULE_76__.Widget),
+/* harmony export */   XML: () => (/* reexport safe */ _src_util_XML__WEBPACK_IMPORTED_MODULE_83__.XML),
+/* harmony export */   addText: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.addText),
+/* harmony export */   addTooltip: () => (/* reexport safe */ _src_ui_Tooltip__WEBPACK_IMPORTED_MODULE_75__.addTooltip),
+/* harmony export */   addTooltipPromise: () => (/* reexport safe */ _src_ui_Tooltip__WEBPACK_IMPORTED_MODULE_75__.addTooltipPromise),
+/* harmony export */   angleDiff: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.angleDiff),
+/* harmony export */   angleDiffPos: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.angleDiffPos),
+/* harmony export */   angleNorm: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.angleNorm),
+/* harmony export */   blendRGB: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.blendRGB),
+/* harmony export */   clearTooltip: () => (/* reexport safe */ _src_ui_Tooltip__WEBPACK_IMPORTED_MODULE_75__.clearTooltip),
+/* harmony export */   clone: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.clone),
+/* harmony export */   colourAlpha: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.colourAlpha),
+/* harmony export */   colourCanvas: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.colourCanvas),
+/* harmony export */   colourCode: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.colourCode),
+/* harmony export */   coordsRoundedRect: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.coordsRoundedRect),
+/* harmony export */   deepClone: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.deepClone),
+/* harmony export */   dictValues: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.dictValues),
+/* harmony export */   dom: () => (/* reexport safe */ _src_util_dom__WEBPACK_IMPORTED_MODULE_84__.dom),
+/* harmony export */   domLegacy: () => (/* reexport safe */ _src_util_dom__WEBPACK_IMPORTED_MODULE_84__.domLegacy),
+/* harmony export */   drawLine: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.drawLine),
+/* harmony export */   empiricalScrollerSize: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.empiricalScrollerSize),
+/* harmony export */   escapeHTML: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.escapeHTML),
+/* harmony export */   eventCoords: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.eventCoords),
+/* harmony export */   findNode: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.findNode),
+/* harmony export */   findNodes: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.findNodes),
+/* harmony export */   fltEqual: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.fltEqual),
+/* harmony export */   fontSansSerif: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.fontSansSerif),
+/* harmony export */   formatDate: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.formatDate),
+/* harmony export */   formatDouble: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.formatDouble),
+/* harmony export */   fromUTF8: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.fromUTF8),
+/* harmony export */   getBoundaryPixelsDOM: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.getBoundaryPixelsDOM),
+/* harmony export */   getOffsetPixelsDOM: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.getOffsetPixelsDOM),
+/* harmony export */   getViewportSize: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.getViewportSize),
+/* harmony export */   hasInlineCSS: () => (/* reexport safe */ _src_util_Theme__WEBPACK_IMPORTED_MODULE_80__.hasInlineCSS),
+/* harmony export */   htmlToRGB: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.htmlToRGB),
+/* harmony export */   initWebMolKit: () => (/* reexport safe */ _src_util_Theme__WEBPACK_IMPORTED_MODULE_80__.initWebMolKit),
+/* harmony export */   installInlineCSS: () => (/* reexport safe */ _src_util_Theme__WEBPACK_IMPORTED_MODULE_80__.installInlineCSS),
+/* harmony export */   invZ: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.invZ),
+/* harmony export */   isDef: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.isDef),
+/* harmony export */   jsonPrettyPrint: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.jsonPrettyPrint),
+/* harmony export */   maxArray: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.maxArray),
+/* harmony export */   minArray: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.minArray),
+/* harmony export */   newElement: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.newElement),
+/* harmony export */   nodeText: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.nodeText),
+/* harmony export */   norm2_xy: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.norm2_xy),
+/* harmony export */   norm2_xyz: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.norm2_xyz),
+/* harmony export */   norm_xy: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.norm_xy),
+/* harmony export */   norm_xyz: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.norm_xyz),
+/* harmony export */   notDef: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.notDef),
+/* harmony export */   orBlank: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.orBlank),
+/* harmony export */   pathRoundedRect: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.pathRoundedRect),
+/* harmony export */   pause: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.pause),
+/* harmony export */   pixelDensity: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.pixelDensity),
+/* harmony export */   plural: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.plural),
+/* harmony export */   postJSONURL: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.postJSONURL),
+/* harmony export */   raiseToolTip: () => (/* reexport safe */ _src_ui_Tooltip__WEBPACK_IMPORTED_MODULE_75__.raiseToolTip),
+/* harmony export */   randomInt: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.randomInt),
+/* harmony export */   readTextURL: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.readTextURL),
+/* harmony export */   realEqual: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.realEqual),
+/* harmony export */   registerAspect: () => (/* reexport safe */ _src_aspect_AspectList__WEBPACK_IMPORTED_MODULE_1__.registerAspect),
+/* harmony export */   safeFloat: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.safeFloat),
+/* harmony export */   safeInt: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.safeInt),
+/* harmony export */   setBoundaryPixels: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.setBoundaryPixels),
+/* harmony export */   signum: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.signum),
+/* harmony export */   sortAngles: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.sortAngles),
+/* harmony export */   sqr: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.sqr),
+/* harmony export */   stringSimilarityPermutations: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.stringSimilarityPermutations),
+/* harmony export */   toUTF8: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.toUTF8),
+/* harmony export */   uniqueAngles: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.uniqueAngles),
+/* harmony export */   yieldDOM: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.yieldDOM),
+/* harmony export */   zip: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.zip)
+/* harmony export */ });
+/* harmony import */ var _src_aspect_Aspect__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../src/aspect/Aspect */ "./src/aspect/Aspect.ts");
+/* harmony import */ var _src_aspect_AspectList__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../src/aspect/AspectList */ "./src/aspect/AspectList.ts");
+/* harmony import */ var _src_aspect_AssayProvenance__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../src/aspect/AssayProvenance */ "./src/aspect/AssayProvenance.ts");
+/* harmony import */ var _src_aspect_BayesianPrediction__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../src/aspect/BayesianPrediction */ "./src/aspect/BayesianPrediction.ts");
+/* harmony import */ var _src_aspect_BayesianSource__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../src/aspect/BayesianSource */ "./src/aspect/BayesianSource.ts");
+/* harmony import */ var _src_aspect_BinaryData__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../src/aspect/BinaryData */ "./src/aspect/BinaryData.ts");
+/* harmony import */ var _src_aspect_Experiment__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ../src/aspect/Experiment */ "./src/aspect/Experiment.ts");
+/* harmony import */ var _src_aspect_MeasurementData__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ../src/aspect/MeasurementData */ "./src/aspect/MeasurementData.ts");
+/* harmony import */ var _src_aspect_Mixture__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ../src/aspect/Mixture */ "./src/aspect/Mixture.ts");
+/* harmony import */ var _src_aspect_SARTable__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ../src/aspect/SARTable */ "./src/aspect/SARTable.ts");
+/* harmony import */ var _src_calc_BayesianModel__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ../src/calc/BayesianModel */ "./src/calc/BayesianModel.ts");
+/* harmony import */ var _src_calc_BuildSMILES__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! ../src/calc/BuildSMILES */ "./src/calc/BuildSMILES.ts");
+/* harmony import */ var _src_calc_CircularFingerprints__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! ../src/calc/CircularFingerprints */ "./src/calc/CircularFingerprints.ts");
+/* harmony import */ var _src_calc_ResonanceRemover__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(/*! ../src/calc/ResonanceRemover */ "./src/calc/ResonanceRemover.ts");
+/* harmony import */ var _src_data_AbbrevContainer__WEBPACK_IMPORTED_MODULE_14__ = __webpack_require__(/*! ../src/data/AbbrevContainer */ "./src/data/AbbrevContainer.ts");
+/* harmony import */ var _src_data_FormatList__WEBPACK_IMPORTED_MODULE_15__ = __webpack_require__(/*! ../src/data/FormatList */ "./src/data/FormatList.ts");
+/* harmony import */ var _src_data_OntologyTree__WEBPACK_IMPORTED_MODULE_16__ = __webpack_require__(/*! ../src/data/OntologyTree */ "./src/data/OntologyTree.ts");
+/* harmony import */ var _src_dialog_Dialog__WEBPACK_IMPORTED_MODULE_17__ = __webpack_require__(/*! ../src/dialog/Dialog */ "./src/dialog/Dialog.ts");
+/* harmony import */ var _src_dialog_EditCompound__WEBPACK_IMPORTED_MODULE_18__ = __webpack_require__(/*! ../src/dialog/EditCompound */ "./src/dialog/EditCompound.ts");
+/* harmony import */ var _src_ds_DataSheet__WEBPACK_IMPORTED_MODULE_19__ = __webpack_require__(/*! ../src/ds/DataSheet */ "./src/ds/DataSheet.ts");
+/* harmony import */ var _src_gfx_ArrangeExperiment__WEBPACK_IMPORTED_MODULE_20__ = __webpack_require__(/*! ../src/gfx/ArrangeExperiment */ "./src/gfx/ArrangeExperiment.ts");
+/* harmony import */ var _src_gfx_ArrangeMeasurement__WEBPACK_IMPORTED_MODULE_21__ = __webpack_require__(/*! ../src/gfx/ArrangeMeasurement */ "./src/gfx/ArrangeMeasurement.ts");
+/* harmony import */ var _src_gfx_ArrangeMolecule__WEBPACK_IMPORTED_MODULE_22__ = __webpack_require__(/*! ../src/gfx/ArrangeMolecule */ "./src/gfx/ArrangeMolecule.ts");
+/* harmony import */ var _src_gfx_AxisLabeller__WEBPACK_IMPORTED_MODULE_23__ = __webpack_require__(/*! ../src/gfx/AxisLabeller */ "./src/gfx/AxisLabeller.ts");
+/* harmony import */ var _src_gfx_DrawExperiment__WEBPACK_IMPORTED_MODULE_24__ = __webpack_require__(/*! ../src/gfx/DrawExperiment */ "./src/gfx/DrawExperiment.ts");
+/* harmony import */ var _src_gfx_DrawMolecule__WEBPACK_IMPORTED_MODULE_25__ = __webpack_require__(/*! ../src/gfx/DrawMolecule */ "./src/gfx/DrawMolecule.ts");
+/* harmony import */ var _src_gfx_FontData__WEBPACK_IMPORTED_MODULE_26__ = __webpack_require__(/*! ../src/gfx/FontData */ "./src/gfx/FontData.ts");
+/* harmony import */ var _src_gfx_MetaVector__WEBPACK_IMPORTED_MODULE_27__ = __webpack_require__(/*! ../src/gfx/MetaVector */ "./src/gfx/MetaVector.ts");
+/* harmony import */ var _src_gfx_Rendering__WEBPACK_IMPORTED_MODULE_28__ = __webpack_require__(/*! ../src/gfx/Rendering */ "./src/gfx/Rendering.ts");
+/* harmony import */ var _src_io_DataSheetStream__WEBPACK_IMPORTED_MODULE_29__ = __webpack_require__(/*! ../src/io/DataSheetStream */ "./src/io/DataSheetStream.ts");
+/* harmony import */ var _src_io_MDLReader__WEBPACK_IMPORTED_MODULE_30__ = __webpack_require__(/*! ../src/io/MDLReader */ "./src/io/MDLReader.ts");
+/* harmony import */ var _src_io_MDLWriter__WEBPACK_IMPORTED_MODULE_31__ = __webpack_require__(/*! ../src/io/MDLWriter */ "./src/io/MDLWriter.ts");
+/* harmony import */ var _src_io_MoleculeStream__WEBPACK_IMPORTED_MODULE_32__ = __webpack_require__(/*! ../src/io/MoleculeStream */ "./src/io/MoleculeStream.ts");
+/* harmony import */ var _src_mol_BondArtifact__WEBPACK_IMPORTED_MODULE_33__ = __webpack_require__(/*! ../src/mol/BondArtifact */ "./src/mol/BondArtifact.ts");
+/* harmony import */ var _src_mol_Chemistry__WEBPACK_IMPORTED_MODULE_34__ = __webpack_require__(/*! ../src/mol/Chemistry */ "./src/mol/Chemistry.ts");
+/* harmony import */ var _src_mol_CoordUtil__WEBPACK_IMPORTED_MODULE_35__ = __webpack_require__(/*! ../src/mol/CoordUtil */ "./src/mol/CoordUtil.ts");
+/* harmony import */ var _src_mol_DotPath__WEBPACK_IMPORTED_MODULE_36__ = __webpack_require__(/*! ../src/mol/DotPath */ "./src/mol/DotPath.ts");
+/* harmony import */ var _src_mol_ForeignMolecule__WEBPACK_IMPORTED_MODULE_37__ = __webpack_require__(/*! ../src/mol/ForeignMolecule */ "./src/mol/ForeignMolecule.ts");
+/* harmony import */ var _src_mol_Graph__WEBPACK_IMPORTED_MODULE_38__ = __webpack_require__(/*! ../src/mol/Graph */ "./src/mol/Graph.ts");
+/* harmony import */ var _src_mol_MetaMolecule__WEBPACK_IMPORTED_MODULE_39__ = __webpack_require__(/*! ../src/mol/MetaMolecule */ "./src/mol/MetaMolecule.ts");
+/* harmony import */ var _src_mol_MolUtil__WEBPACK_IMPORTED_MODULE_40__ = __webpack_require__(/*! ../src/mol/MolUtil */ "./src/mol/MolUtil.ts");
+/* harmony import */ var _src_mol_Molecule__WEBPACK_IMPORTED_MODULE_41__ = __webpack_require__(/*! ../src/mol/Molecule */ "./src/mol/Molecule.ts");
+/* harmony import */ var _src_mol_PolymerBlock__WEBPACK_IMPORTED_MODULE_42__ = __webpack_require__(/*! ../src/mol/PolymerBlock */ "./src/mol/PolymerBlock.ts");
+/* harmony import */ var _src_mol_QueryUtil__WEBPACK_IMPORTED_MODULE_43__ = __webpack_require__(/*! ../src/mol/QueryUtil */ "./src/mol/QueryUtil.ts");
+/* harmony import */ var _src_mol_SketchUtil__WEBPACK_IMPORTED_MODULE_44__ = __webpack_require__(/*! ../src/mol/SketchUtil */ "./src/mol/SketchUtil.ts");
+/* harmony import */ var _src_mol_Stereochemistry__WEBPACK_IMPORTED_MODULE_45__ = __webpack_require__(/*! ../src/mol/Stereochemistry */ "./src/mol/Stereochemistry.ts");
+/* harmony import */ var _src_rxn_ExperimentMeta__WEBPACK_IMPORTED_MODULE_46__ = __webpack_require__(/*! ../src/rxn/ExperimentMeta */ "./src/rxn/ExperimentMeta.ts");
+/* harmony import */ var _src_rxn_QuantityCalc__WEBPACK_IMPORTED_MODULE_47__ = __webpack_require__(/*! ../src/rxn/QuantityCalc */ "./src/rxn/QuantityCalc.ts");
+/* harmony import */ var _src_sketcher_CommandBank__WEBPACK_IMPORTED_MODULE_48__ = __webpack_require__(/*! ../src/sketcher/CommandBank */ "./src/sketcher/CommandBank.ts");
+/* harmony import */ var _src_sketcher_ContextSketch__WEBPACK_IMPORTED_MODULE_49__ = __webpack_require__(/*! ../src/sketcher/ContextSketch */ "./src/sketcher/ContextSketch.ts");
+/* harmony import */ var _src_sketcher_DrawCanvas__WEBPACK_IMPORTED_MODULE_50__ = __webpack_require__(/*! ../src/sketcher/DrawCanvas */ "./src/sketcher/DrawCanvas.ts");
+/* harmony import */ var _src_sketcher_EditAtom__WEBPACK_IMPORTED_MODULE_51__ = __webpack_require__(/*! ../src/sketcher/EditAtom */ "./src/sketcher/EditAtom.ts");
+/* harmony import */ var _src_sketcher_EditBond__WEBPACK_IMPORTED_MODULE_52__ = __webpack_require__(/*! ../src/sketcher/EditBond */ "./src/sketcher/EditBond.ts");
+/* harmony import */ var _src_sketcher_EditPolymer__WEBPACK_IMPORTED_MODULE_53__ = __webpack_require__(/*! ../src/sketcher/EditPolymer */ "./src/sketcher/EditPolymer.ts");
+/* harmony import */ var _src_sketcher_ExtraFieldsWidget__WEBPACK_IMPORTED_MODULE_54__ = __webpack_require__(/*! ../src/sketcher/ExtraFieldsWidget */ "./src/sketcher/ExtraFieldsWidget.ts");
+/* harmony import */ var _src_sketcher_GeomWidget__WEBPACK_IMPORTED_MODULE_55__ = __webpack_require__(/*! ../src/sketcher/GeomWidget */ "./src/sketcher/GeomWidget.ts");
+/* harmony import */ var _src_sketcher_MetalLigate__WEBPACK_IMPORTED_MODULE_56__ = __webpack_require__(/*! ../src/sketcher/MetalLigate */ "./src/sketcher/MetalLigate.ts");
+/* harmony import */ var _src_sketcher_MoleculeActivity__WEBPACK_IMPORTED_MODULE_57__ = __webpack_require__(/*! ../src/sketcher/MoleculeActivity */ "./src/sketcher/MoleculeActivity.ts");
+/* harmony import */ var _src_sketcher_PeriodicTableWidget__WEBPACK_IMPORTED_MODULE_58__ = __webpack_require__(/*! ../src/sketcher/PeriodicTableWidget */ "./src/sketcher/PeriodicTableWidget.ts");
+/* harmony import */ var _src_sketcher_QueryFieldsWidget__WEBPACK_IMPORTED_MODULE_59__ = __webpack_require__(/*! ../src/sketcher/QueryFieldsWidget */ "./src/sketcher/QueryFieldsWidget.ts");
+/* harmony import */ var _src_sketcher_Sketcher__WEBPACK_IMPORTED_MODULE_60__ = __webpack_require__(/*! ../src/sketcher/Sketcher */ "./src/sketcher/Sketcher.ts");
+/* harmony import */ var _src_sketcher_TemplateBank__WEBPACK_IMPORTED_MODULE_61__ = __webpack_require__(/*! ../src/sketcher/TemplateBank */ "./src/sketcher/TemplateBank.ts");
+/* harmony import */ var _src_sketcher_TemplateFusion__WEBPACK_IMPORTED_MODULE_62__ = __webpack_require__(/*! ../src/sketcher/TemplateFusion */ "./src/sketcher/TemplateFusion.ts");
+/* harmony import */ var _src_sketcher_ToolBank__WEBPACK_IMPORTED_MODULE_63__ = __webpack_require__(/*! ../src/sketcher/ToolBank */ "./src/sketcher/ToolBank.ts");
+/* harmony import */ var _src_ui_ButtonBank__WEBPACK_IMPORTED_MODULE_64__ = __webpack_require__(/*! ../src/ui/ButtonBank */ "./src/ui/ButtonBank.ts");
+/* harmony import */ var _src_ui_ButtonView__WEBPACK_IMPORTED_MODULE_65__ = __webpack_require__(/*! ../src/ui/ButtonView */ "./src/ui/ButtonView.ts");
+/* harmony import */ var _src_ui_ClipboardProxy__WEBPACK_IMPORTED_MODULE_66__ = __webpack_require__(/*! ../src/ui/ClipboardProxy */ "./src/ui/ClipboardProxy.ts");
+/* harmony import */ var _src_ui_EmbedChemistry__WEBPACK_IMPORTED_MODULE_67__ = __webpack_require__(/*! ../src/ui/EmbedChemistry */ "./src/ui/EmbedChemistry.ts");
+/* harmony import */ var _src_ui_EmbedCollection__WEBPACK_IMPORTED_MODULE_68__ = __webpack_require__(/*! ../src/ui/EmbedCollection */ "./src/ui/EmbedCollection.ts");
+/* harmony import */ var _src_ui_EmbedMolecule__WEBPACK_IMPORTED_MODULE_69__ = __webpack_require__(/*! ../src/ui/EmbedMolecule */ "./src/ui/EmbedMolecule.ts");
+/* harmony import */ var _src_ui_EmbedReaction__WEBPACK_IMPORTED_MODULE_70__ = __webpack_require__(/*! ../src/ui/EmbedReaction */ "./src/ui/EmbedReaction.ts");
+/* harmony import */ var _src_ui_MenuProxy__WEBPACK_IMPORTED_MODULE_71__ = __webpack_require__(/*! ../src/ui/MenuProxy */ "./src/ui/MenuProxy.ts");
+/* harmony import */ var _src_ui_OptionList__WEBPACK_IMPORTED_MODULE_72__ = __webpack_require__(/*! ../src/ui/OptionList */ "./src/ui/OptionList.ts");
+/* harmony import */ var _src_ui_Popup__WEBPACK_IMPORTED_MODULE_73__ = __webpack_require__(/*! ../src/ui/Popup */ "./src/ui/Popup.ts");
+/* harmony import */ var _src_ui_TabBar__WEBPACK_IMPORTED_MODULE_74__ = __webpack_require__(/*! ../src/ui/TabBar */ "./src/ui/TabBar.ts");
+/* harmony import */ var _src_ui_Tooltip__WEBPACK_IMPORTED_MODULE_75__ = __webpack_require__(/*! ../src/ui/Tooltip */ "./src/ui/Tooltip.ts");
+/* harmony import */ var _src_ui_Widget__WEBPACK_IMPORTED_MODULE_76__ = __webpack_require__(/*! ../src/ui/Widget */ "./src/ui/Widget.ts");
+/* harmony import */ var _src_util_Geom__WEBPACK_IMPORTED_MODULE_77__ = __webpack_require__(/*! ../src/util/Geom */ "./src/util/Geom.ts");
+/* harmony import */ var _src_util_Matrix__WEBPACK_IMPORTED_MODULE_78__ = __webpack_require__(/*! ../src/util/Matrix */ "./src/util/Matrix.ts");
+/* harmony import */ var _src_util_Random__WEBPACK_IMPORTED_MODULE_79__ = __webpack_require__(/*! ../src/util/Random */ "./src/util/Random.ts");
+/* harmony import */ var _src_util_Theme__WEBPACK_IMPORTED_MODULE_80__ = __webpack_require__(/*! ../src/util/Theme */ "./src/util/Theme.ts");
+/* harmony import */ var _src_util_Triangulation2D__WEBPACK_IMPORTED_MODULE_81__ = __webpack_require__(/*! ../src/util/Triangulation2D */ "./src/util/Triangulation2D.ts");
+/* harmony import */ var _src_util_Vec__WEBPACK_IMPORTED_MODULE_82__ = __webpack_require__(/*! ../src/util/Vec */ "./src/util/Vec.ts");
+/* harmony import */ var _src_util_XML__WEBPACK_IMPORTED_MODULE_83__ = __webpack_require__(/*! ../src/util/XML */ "./src/util/XML.ts");
+/* harmony import */ var _src_util_dom__WEBPACK_IMPORTED_MODULE_84__ = __webpack_require__(/*! ../src/util/dom */ "./src/util/dom.ts");
+/* harmony import */ var _src_util_util__WEBPACK_IMPORTED_MODULE_85__ = __webpack_require__(/*! ../src/util/util */ "./src/util/util.ts");
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/***/ }),
+
 /***/ "./res/data/ontology/units.onto":
 /*!**************************************!*\
   !*** ./res/data/ontology/units.onto ***!
@@ -1624,418 +2036,6 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = ("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>\n<!-- Created with Inkscape (http://www.inkscape.org/) -->\n\n<svg\n   xmlns:dc=\"http://purl.org/dc/elements/1.1/\"\n   xmlns:cc=\"http://creativecommons.org/ns#\"\n   xmlns:rdf=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\"\n   xmlns:svg=\"http://www.w3.org/2000/svg\"\n   xmlns=\"http://www.w3.org/2000/svg\"\n   xmlns:sodipodi=\"http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd\"\n   xmlns:inkscape=\"http://www.inkscape.org/namespaces/inkscape\"\n   width=\"50\"\n   height=\"50\"\n   id=\"svg2\"\n   sodipodi:version=\"0.32\"\n   inkscape:version=\"0.91 r\"\n   version=\"1.0\"\n   sodipodi:docname=\"ToolSelect.svg\"\n   inkscape:output_extension=\"org.inkscape.output.svg.inkscape\"\n   inkscape:export-filename=\"/home/aclark/CRK3/MMTk/images/msk/MainSelect.png\"\n   inkscape:export-xdpi=\"9\"\n   inkscape:export-ydpi=\"9\">\n  <defs\n     id=\"defs4\">\n    <inkscape:perspective\n       id=\"perspective8\"\n       inkscape:persp3d-origin=\"160 : 106.66667 : 1\"\n       inkscape:vp_z=\"320 : 160 : 1\"\n       inkscape:vp_y=\"0 : 1000 : 0\"\n       inkscape:vp_x=\"0 : 160 : 1\"\n       sodipodi:type=\"inkscape:persp3d\" />\n  </defs>\n  <sodipodi:namedview\n     id=\"base\"\n     pagecolor=\"#d3e5ff\"\n     bordercolor=\"#666666\"\n     borderopacity=\"1.0\"\n     gridtolerance=\"10000\"\n     guidetolerance=\"10\"\n     objecttolerance=\"10\"\n     inkscape:pageopacity=\"0\"\n     inkscape:pageshadow=\"2\"\n     inkscape:zoom=\"8.64\"\n     inkscape:cx=\"22.280093\"\n     inkscape:cy=\"25\"\n     inkscape:document-units=\"px\"\n     inkscape:current-layer=\"layer1\"\n     width=\"320px\"\n     height=\"320px\"\n     showborder=\"true\"\n     inkscape:window-width=\"1920\"\n     inkscape:window-height=\"1028\"\n     inkscape:window-x=\"0\"\n     inkscape:window-y=\"0\"\n     showgrid=\"false\"\n     inkscape:window-maximized=\"1\">\n    <inkscape:grid\n       type=\"xygrid\"\n       id=\"grid4135\" />\n  </sodipodi:namedview>\n  <metadata\n     id=\"metadata7\">\n    <rdf:RDF>\n      <cc:Work\n         rdf:about=\"\">\n        <dc:format>image/svg+xml</dc:format>\n        <dc:type\n           rdf:resource=\"http://purl.org/dc/dcmitype/StillImage\" />\n        <dc:title></dc:title>\n      </cc:Work>\n    </rdf:RDF>\n  </metadata>\n  <g\n     inkscape:label=\"Layer 1\"\n     inkscape:groupmode=\"layer\"\n     id=\"layer1\"\n     transform=\"translate(0,-270)\">\n    <g\n       transform=\"matrix(2.2470395,0,0,2.2470395,1.4827876,-402.18041)\"\n       id=\"layer1-1\"\n       inkscape:label=\"Layer 1\"\n       style=\"fill:#ffffff;fill-opacity:1;stroke-width:0.77823228;stroke-miterlimit:4;stroke-dasharray:none\">\n      <path\n         sodipodi:nodetypes=\"cccccccc\"\n         inkscape:connector-curvature=\"0\"\n         id=\"path4141\"\n         d=\"m 3.994178,302.40331 0.011839,13.60146 4.8493426,-3.53325 4.1221284,5.65757 3.232895,-2.3555 -4.122128,-5.65757 4.849343,-3.53325 z\"\n         style=\"fill:#ffffff;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0.77823228;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1\" />\n    </g>\n  </g>\n</svg>\n");
-
-/***/ }),
-
-/***/ "./dist/index-src.ts":
-/*!***************************!*\
-  !*** ./dist/index-src.ts ***!
-  \***************************/
-/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
-
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   ASCENT_FUDGE: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.ASCENT_FUDGE),
-/* harmony export */   AbbrevContainer: () => (/* reexport safe */ _src_data_AbbrevContainer__WEBPACK_IMPORTED_MODULE_14__.AbbrevContainer),
-/* harmony export */   ActivityType: () => (/* reexport safe */ _src_sketcher_MoleculeActivity__WEBPACK_IMPORTED_MODULE_57__.ActivityType),
-/* harmony export */   ArrangeComponent: () => (/* reexport safe */ _src_gfx_ArrangeExperiment__WEBPACK_IMPORTED_MODULE_20__.ArrangeComponent),
-/* harmony export */   ArrangeComponentAnnot: () => (/* reexport safe */ _src_gfx_ArrangeExperiment__WEBPACK_IMPORTED_MODULE_20__.ArrangeComponentAnnot),
-/* harmony export */   ArrangeComponentType: () => (/* reexport safe */ _src_gfx_ArrangeExperiment__WEBPACK_IMPORTED_MODULE_20__.ArrangeComponentType),
-/* harmony export */   ArrangeExperiment: () => (/* reexport safe */ _src_gfx_ArrangeExperiment__WEBPACK_IMPORTED_MODULE_20__.ArrangeExperiment),
-/* harmony export */   ArrangeMolecule: () => (/* reexport safe */ _src_gfx_ArrangeMolecule__WEBPACK_IMPORTED_MODULE_22__.ArrangeMolecule),
-/* harmony export */   Aspect: () => (/* reexport safe */ _src_aspect_Aspect__WEBPACK_IMPORTED_MODULE_0__.Aspect),
-/* harmony export */   AspectList: () => (/* reexport safe */ _src_aspect_AspectList__WEBPACK_IMPORTED_MODULE_1__.AspectList),
-/* harmony export */   AssayProvenance: () => (/* reexport safe */ _src_aspect_AssayProvenance__WEBPACK_IMPORTED_MODULE_2__.AssayProvenance),
-/* harmony export */   AssayProvenanceHeader: () => (/* reexport safe */ _src_aspect_AssayProvenance__WEBPACK_IMPORTED_MODULE_2__.AssayProvenanceHeader),
-/* harmony export */   Atom: () => (/* reexport safe */ _src_mol_Molecule__WEBPACK_IMPORTED_MODULE_41__.Atom),
-/* harmony export */   AxisLabeller: () => (/* reexport safe */ _src_gfx_AxisLabeller__WEBPACK_IMPORTED_MODULE_23__.AxisLabeller),
-/* harmony export */   BLineType: () => (/* reexport safe */ _src_gfx_ArrangeMolecule__WEBPACK_IMPORTED_MODULE_22__.BLineType),
-/* harmony export */   BONDARTIFACT_EXTRA_ARENE: () => (/* reexport safe */ _src_mol_BondArtifact__WEBPACK_IMPORTED_MODULE_33__.BONDARTIFACT_EXTRA_ARENE),
-/* harmony export */   BONDARTIFACT_EXTRA_RESPATH: () => (/* reexport safe */ _src_mol_BondArtifact__WEBPACK_IMPORTED_MODULE_33__.BONDARTIFACT_EXTRA_RESPATH),
-/* harmony export */   BONDARTIFACT_EXTRA_RESRING: () => (/* reexport safe */ _src_mol_BondArtifact__WEBPACK_IMPORTED_MODULE_33__.BONDARTIFACT_EXTRA_RESRING),
-/* harmony export */   BayesianModel: () => (/* reexport safe */ _src_calc_BayesianModel__WEBPACK_IMPORTED_MODULE_10__.BayesianModel),
-/* harmony export */   BayesianPrediction: () => (/* reexport safe */ _src_aspect_BayesianPrediction__WEBPACK_IMPORTED_MODULE_3__.BayesianPrediction),
-/* harmony export */   BayesianPredictionModel: () => (/* reexport safe */ _src_aspect_BayesianPrediction__WEBPACK_IMPORTED_MODULE_3__.BayesianPredictionModel),
-/* harmony export */   BayesianPredictionOutcome: () => (/* reexport safe */ _src_aspect_BayesianPrediction__WEBPACK_IMPORTED_MODULE_3__.BayesianPredictionOutcome),
-/* harmony export */   BayesianSource: () => (/* reexport safe */ _src_aspect_BayesianSource__WEBPACK_IMPORTED_MODULE_4__.BayesianSource),
-/* harmony export */   BayesianSourceModel: () => (/* reexport safe */ _src_aspect_BayesianSource__WEBPACK_IMPORTED_MODULE_4__.BayesianSourceModel),
-/* harmony export */   BinaryData: () => (/* reexport safe */ _src_aspect_BinaryData__WEBPACK_IMPORTED_MODULE_5__.BinaryData),
-/* harmony export */   BinaryDataField: () => (/* reexport safe */ _src_aspect_BinaryData__WEBPACK_IMPORTED_MODULE_5__.BinaryDataField),
-/* harmony export */   Bond: () => (/* reexport safe */ _src_mol_Molecule__WEBPACK_IMPORTED_MODULE_41__.Bond),
-/* harmony export */   BondArtifact: () => (/* reexport safe */ _src_mol_BondArtifact__WEBPACK_IMPORTED_MODULE_33__.BondArtifact),
-/* harmony export */   Box: () => (/* reexport safe */ _src_util_Geom__WEBPACK_IMPORTED_MODULE_77__.Box),
-/* harmony export */   BuildSMILES: () => (/* reexport safe */ _src_calc_BuildSMILES__WEBPACK_IMPORTED_MODULE_11__.BuildSMILES),
-/* harmony export */   ButtonBank: () => (/* reexport safe */ _src_ui_ButtonBank__WEBPACK_IMPORTED_MODULE_64__.ButtonBank),
-/* harmony export */   ButtonView: () => (/* reexport safe */ _src_ui_ButtonView__WEBPACK_IMPORTED_MODULE_65__.ButtonView),
-/* harmony export */   ButtonViewPosition: () => (/* reexport safe */ _src_ui_ButtonView__WEBPACK_IMPORTED_MODULE_65__.ButtonViewPosition),
-/* harmony export */   Chemistry: () => (/* reexport safe */ _src_mol_Chemistry__WEBPACK_IMPORTED_MODULE_34__.Chemistry),
-/* harmony export */   CircularFingerprints: () => (/* reexport safe */ _src_calc_CircularFingerprints__WEBPACK_IMPORTED_MODULE_12__.CircularFingerprints),
-/* harmony export */   ClipboardProxy: () => (/* reexport safe */ _src_ui_ClipboardProxy__WEBPACK_IMPORTED_MODULE_66__.ClipboardProxy),
-/* harmony export */   ClipboardProxyHandler: () => (/* reexport safe */ _src_ui_ClipboardProxy__WEBPACK_IMPORTED_MODULE_66__.ClipboardProxyHandler),
-/* harmony export */   ClipboardProxyWeb: () => (/* reexport safe */ _src_ui_ClipboardProxy__WEBPACK_IMPORTED_MODULE_66__.ClipboardProxyWeb),
-/* harmony export */   CommandBank: () => (/* reexport safe */ _src_sketcher_CommandBank__WEBPACK_IMPORTED_MODULE_48__.CommandBank),
-/* harmony export */   ContextSketch: () => (/* reexport safe */ _src_sketcher_ContextSketch__WEBPACK_IMPORTED_MODULE_49__.ContextSketch),
-/* harmony export */   CoordUtil: () => (/* reexport safe */ _src_mol_CoordUtil__WEBPACK_IMPORTED_MODULE_35__.CoordUtil),
-/* harmony export */   DEGRAD: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.DEGRAD),
-/* harmony export */   DOM: () => (/* reexport safe */ _src_util_dom__WEBPACK_IMPORTED_MODULE_84__.DOM),
-/* harmony export */   DataSheet: () => (/* reexport safe */ _src_ds_DataSheet__WEBPACK_IMPORTED_MODULE_19__.DataSheet),
-/* harmony export */   DataSheetColumn: () => (/* reexport safe */ _src_ds_DataSheet__WEBPACK_IMPORTED_MODULE_19__.DataSheetColumn),
-/* harmony export */   DataSheetStream: () => (/* reexport safe */ _src_io_DataSheetStream__WEBPACK_IMPORTED_MODULE_29__.DataSheetStream),
-/* harmony export */   Dialog: () => (/* reexport safe */ _src_dialog_Dialog__WEBPACK_IMPORTED_MODULE_17__.Dialog),
-/* harmony export */   DotPath: () => (/* reexport safe */ _src_mol_DotPath__WEBPACK_IMPORTED_MODULE_36__.DotPath),
-/* harmony export */   DotPathBond: () => (/* reexport safe */ _src_mol_DotPath__WEBPACK_IMPORTED_MODULE_36__.DotPathBond),
-/* harmony export */   DotPathCharge: () => (/* reexport safe */ _src_mol_DotPath__WEBPACK_IMPORTED_MODULE_36__.DotPathCharge),
-/* harmony export */   DraggingTool: () => (/* reexport safe */ _src_sketcher_DrawCanvas__WEBPACK_IMPORTED_MODULE_50__.DraggingTool),
-/* harmony export */   DrawCanvas: () => (/* reexport safe */ _src_sketcher_DrawCanvas__WEBPACK_IMPORTED_MODULE_50__.DrawCanvas),
-/* harmony export */   DrawCanvasDecoration: () => (/* reexport safe */ _src_sketcher_DrawCanvas__WEBPACK_IMPORTED_MODULE_50__.DrawCanvasDecoration),
-/* harmony export */   DrawExperiment: () => (/* reexport safe */ _src_gfx_DrawExperiment__WEBPACK_IMPORTED_MODULE_24__.DrawExperiment),
-/* harmony export */   DrawMolecule: () => (/* reexport safe */ _src_gfx_DrawMolecule__WEBPACK_IMPORTED_MODULE_25__.DrawMolecule),
-/* harmony export */   EditAtom: () => (/* reexport safe */ _src_sketcher_EditAtom__WEBPACK_IMPORTED_MODULE_51__.EditAtom),
-/* harmony export */   EditBond: () => (/* reexport safe */ _src_sketcher_EditBond__WEBPACK_IMPORTED_MODULE_52__.EditBond),
-/* harmony export */   EditCompound: () => (/* reexport safe */ _src_dialog_EditCompound__WEBPACK_IMPORTED_MODULE_18__.EditCompound),
-/* harmony export */   EditPolymer: () => (/* reexport safe */ _src_sketcher_EditPolymer__WEBPACK_IMPORTED_MODULE_53__.EditPolymer),
-/* harmony export */   EmbedChemistry: () => (/* reexport safe */ _src_ui_EmbedChemistry__WEBPACK_IMPORTED_MODULE_67__.EmbedChemistry),
-/* harmony export */   EmbedCollection: () => (/* reexport safe */ _src_ui_EmbedCollection__WEBPACK_IMPORTED_MODULE_68__.EmbedCollection),
-/* harmony export */   EmbedMolecule: () => (/* reexport safe */ _src_ui_EmbedMolecule__WEBPACK_IMPORTED_MODULE_69__.EmbedMolecule),
-/* harmony export */   EmbedReaction: () => (/* reexport safe */ _src_ui_EmbedReaction__WEBPACK_IMPORTED_MODULE_70__.EmbedReaction),
-/* harmony export */   EmbedReactionFacet: () => (/* reexport safe */ _src_ui_EmbedReaction__WEBPACK_IMPORTED_MODULE_70__.EmbedReactionFacet),
-/* harmony export */   Experiment: () => (/* reexport safe */ _src_aspect_Experiment__WEBPACK_IMPORTED_MODULE_6__.Experiment),
-/* harmony export */   ExperimentComponent: () => (/* reexport safe */ _src_aspect_Experiment__WEBPACK_IMPORTED_MODULE_6__.ExperimentComponent),
-/* harmony export */   ExperimentComponentType: () => (/* reexport safe */ _src_aspect_Experiment__WEBPACK_IMPORTED_MODULE_6__.ExperimentComponentType),
-/* harmony export */   ExperimentEntry: () => (/* reexport safe */ _src_aspect_Experiment__WEBPACK_IMPORTED_MODULE_6__.ExperimentEntry),
-/* harmony export */   ExperimentMeta: () => (/* reexport safe */ _src_rxn_ExperimentMeta__WEBPACK_IMPORTED_MODULE_46__.ExperimentMeta),
-/* harmony export */   ExperimentMetaApplic: () => (/* reexport safe */ _src_rxn_ExperimentMeta__WEBPACK_IMPORTED_MODULE_46__.ExperimentMetaApplic),
-/* harmony export */   ExperimentMetaRoleType: () => (/* reexport safe */ _src_rxn_ExperimentMeta__WEBPACK_IMPORTED_MODULE_46__.ExperimentMetaRoleType),
-/* harmony export */   ExperimentMetaType: () => (/* reexport safe */ _src_rxn_ExperimentMeta__WEBPACK_IMPORTED_MODULE_46__.ExperimentMetaType),
-/* harmony export */   ExperimentMetaValue: () => (/* reexport safe */ _src_rxn_ExperimentMeta__WEBPACK_IMPORTED_MODULE_46__.ExperimentMetaValue),
-/* harmony export */   ExperimentStep: () => (/* reexport safe */ _src_aspect_Experiment__WEBPACK_IMPORTED_MODULE_6__.ExperimentStep),
-/* harmony export */   ExtraFieldsWidget: () => (/* reexport safe */ _src_sketcher_ExtraFieldsWidget__WEBPACK_IMPORTED_MODULE_54__.ExtraFieldsWidget),
-/* harmony export */   FontData: () => (/* reexport safe */ _src_gfx_FontData__WEBPACK_IMPORTED_MODULE_26__.FontData),
-/* harmony export */   ForeignMolecule: () => (/* reexport safe */ _src_mol_ForeignMolecule__WEBPACK_IMPORTED_MODULE_37__.ForeignMolecule),
-/* harmony export */   ForeignMoleculeTransient: () => (/* reexport safe */ _src_mol_ForeignMolecule__WEBPACK_IMPORTED_MODULE_37__.ForeignMoleculeTransient),
-/* harmony export */   FormatList: () => (/* reexport safe */ _src_data_FormatList__WEBPACK_IMPORTED_MODULE_15__.FormatList),
-/* harmony export */   FusionBank: () => (/* reexport safe */ _src_sketcher_TemplateBank__WEBPACK_IMPORTED_MODULE_61__.FusionBank),
-/* harmony export */   FusionPermutation: () => (/* reexport safe */ _src_sketcher_TemplateFusion__WEBPACK_IMPORTED_MODULE_62__.FusionPermutation),
-/* harmony export */   GeomUtil: () => (/* reexport safe */ _src_util_Geom__WEBPACK_IMPORTED_MODULE_77__.GeomUtil),
-/* harmony export */   GeomWidget: () => (/* reexport safe */ _src_sketcher_GeomWidget__WEBPACK_IMPORTED_MODULE_55__.GeomWidget),
-/* harmony export */   GeomWidgetSelType: () => (/* reexport safe */ _src_sketcher_GeomWidget__WEBPACK_IMPORTED_MODULE_55__.GeomWidgetSelType),
-/* harmony export */   GeomWidgetType: () => (/* reexport safe */ _src_sketcher_GeomWidget__WEBPACK_IMPORTED_MODULE_55__.GeomWidgetType),
-/* harmony export */   Geometry: () => (/* reexport safe */ _src_mol_SketchUtil__WEBPACK_IMPORTED_MODULE_44__.Geometry),
-/* harmony export */   Graph: () => (/* reexport safe */ _src_mol_Graph__WEBPACK_IMPORTED_MODULE_38__.Graph),
-/* harmony export */   GreenMetrics: () => (/* reexport safe */ _src_rxn_QuantityCalc__WEBPACK_IMPORTED_MODULE_47__.GreenMetrics),
-/* harmony export */   INV_TWOPI: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.INV_TWOPI),
-/* harmony export */   KeyCode: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.KeyCode),
-/* harmony export */   Line: () => (/* reexport safe */ _src_util_Geom__WEBPACK_IMPORTED_MODULE_77__.Line),
-/* harmony export */   MDLMOLReader: () => (/* reexport safe */ _src_io_MDLReader__WEBPACK_IMPORTED_MODULE_30__.MDLMOLReader),
-/* harmony export */   MDLMOLWriter: () => (/* reexport safe */ _src_io_MDLWriter__WEBPACK_IMPORTED_MODULE_31__.MDLMOLWriter),
-/* harmony export */   MDLMOL_VALENCE: () => (/* reexport safe */ _src_io_MDLReader__WEBPACK_IMPORTED_MODULE_30__.MDLMOL_VALENCE),
-/* harmony export */   MDLSDFReader: () => (/* reexport safe */ _src_io_MDLReader__WEBPACK_IMPORTED_MODULE_30__.MDLSDFReader),
-/* harmony export */   MDLSDFWriter: () => (/* reexport safe */ _src_io_MDLWriter__WEBPACK_IMPORTED_MODULE_31__.MDLSDFWriter),
-/* harmony export */   Matrix: () => (/* reexport safe */ _src_util_Matrix__WEBPACK_IMPORTED_MODULE_78__.Matrix),
-/* harmony export */   MeasurementData: () => (/* reexport safe */ _src_aspect_MeasurementData__WEBPACK_IMPORTED_MODULE_7__.MeasurementData),
-/* harmony export */   MenuProxy: () => (/* reexport safe */ _src_ui_MenuProxy__WEBPACK_IMPORTED_MODULE_71__.MenuProxy),
-/* harmony export */   MenuProxyWeb: () => (/* reexport safe */ _src_ui_MenuProxy__WEBPACK_IMPORTED_MODULE_71__.MenuProxyWeb),
-/* harmony export */   MetaMolecule: () => (/* reexport safe */ _src_mol_MetaMolecule__WEBPACK_IMPORTED_MODULE_39__.MetaMolecule),
-/* harmony export */   MetaVector: () => (/* reexport safe */ _src_gfx_MetaVector__WEBPACK_IMPORTED_MODULE_27__.MetaVector),
-/* harmony export */   MetalLigate: () => (/* reexport safe */ _src_sketcher_MetalLigate__WEBPACK_IMPORTED_MODULE_56__.MetalLigate),
-/* harmony export */   Mixture: () => (/* reexport safe */ _src_aspect_Mixture__WEBPACK_IMPORTED_MODULE_8__.Mixture),
-/* harmony export */   MixtureAttributeType: () => (/* reexport safe */ _src_aspect_Mixture__WEBPACK_IMPORTED_MODULE_8__.MixtureAttributeType),
-/* harmony export */   MolUtil: () => (/* reexport safe */ _src_mol_MolUtil__WEBPACK_IMPORTED_MODULE_40__.MolUtil),
-/* harmony export */   Molecule: () => (/* reexport safe */ _src_mol_Molecule__WEBPACK_IMPORTED_MODULE_41__.Molecule),
-/* harmony export */   MoleculeActivity: () => (/* reexport safe */ _src_sketcher_MoleculeActivity__WEBPACK_IMPORTED_MODULE_57__.MoleculeActivity),
-/* harmony export */   MoleculeStream: () => (/* reexport safe */ _src_io_MoleculeStream__WEBPACK_IMPORTED_MODULE_32__.MoleculeStream),
-/* harmony export */   OntologyTree: () => (/* reexport safe */ _src_data_OntologyTree__WEBPACK_IMPORTED_MODULE_16__.OntologyTree),
-/* harmony export */   OptionList: () => (/* reexport safe */ _src_ui_OptionList__WEBPACK_IMPORTED_MODULE_72__.OptionList),
-/* harmony export */   OutlineMeasurement: () => (/* reexport safe */ _src_gfx_ArrangeMeasurement__WEBPACK_IMPORTED_MODULE_21__.OutlineMeasurement),
-/* harmony export */   Oval: () => (/* reexport safe */ _src_util_Geom__WEBPACK_IMPORTED_MODULE_77__.Oval),
-/* harmony export */   POLYMERBLOCK_EXTRA_POLYMER: () => (/* reexport safe */ _src_mol_PolymerBlock__WEBPACK_IMPORTED_MODULE_42__.POLYMERBLOCK_EXTRA_POLYMER),
-/* harmony export */   POLYMERBLOCK_SPECIAL_UNCAPPED: () => (/* reexport safe */ _src_mol_PolymerBlock__WEBPACK_IMPORTED_MODULE_42__.POLYMERBLOCK_SPECIAL_UNCAPPED),
-/* harmony export */   PeriodicTableWidget: () => (/* reexport safe */ _src_sketcher_PeriodicTableWidget__WEBPACK_IMPORTED_MODULE_58__.PeriodicTableWidget),
-/* harmony export */   Permutation: () => (/* reexport safe */ _src_util_Vec__WEBPACK_IMPORTED_MODULE_82__.Permutation),
-/* harmony export */   PolymerBlock: () => (/* reexport safe */ _src_mol_PolymerBlock__WEBPACK_IMPORTED_MODULE_42__.PolymerBlock),
-/* harmony export */   PolymerBlockConnectivity: () => (/* reexport safe */ _src_mol_PolymerBlock__WEBPACK_IMPORTED_MODULE_42__.PolymerBlockConnectivity),
-/* harmony export */   PolymerBlockUnit: () => (/* reexport safe */ _src_mol_PolymerBlock__WEBPACK_IMPORTED_MODULE_42__.PolymerBlockUnit),
-/* harmony export */   Popup: () => (/* reexport safe */ _src_ui_Popup__WEBPACK_IMPORTED_MODULE_73__.Popup),
-/* harmony export */   Pos: () => (/* reexport safe */ _src_util_Geom__WEBPACK_IMPORTED_MODULE_77__.Pos),
-/* harmony export */   QuantityCalc: () => (/* reexport safe */ _src_rxn_QuantityCalc__WEBPACK_IMPORTED_MODULE_47__.QuantityCalc),
-/* harmony export */   QuantityCalcComp: () => (/* reexport safe */ _src_rxn_QuantityCalc__WEBPACK_IMPORTED_MODULE_47__.QuantityCalcComp),
-/* harmony export */   QuantityCalcRole: () => (/* reexport safe */ _src_rxn_QuantityCalc__WEBPACK_IMPORTED_MODULE_47__.QuantityCalcRole),
-/* harmony export */   QuantityCalcStat: () => (/* reexport safe */ _src_rxn_QuantityCalc__WEBPACK_IMPORTED_MODULE_47__.QuantityCalcStat),
-/* harmony export */   QueryFieldsWidget: () => (/* reexport safe */ _src_sketcher_QueryFieldsWidget__WEBPACK_IMPORTED_MODULE_59__.QueryFieldsWidget),
-/* harmony export */   QueryTypeAtom: () => (/* reexport safe */ _src_mol_QueryUtil__WEBPACK_IMPORTED_MODULE_43__.QueryTypeAtom),
-/* harmony export */   QueryTypeBond: () => (/* reexport safe */ _src_mol_QueryUtil__WEBPACK_IMPORTED_MODULE_43__.QueryTypeBond),
-/* harmony export */   QueryUtil: () => (/* reexport safe */ _src_mol_QueryUtil__WEBPACK_IMPORTED_MODULE_43__.QueryUtil),
-/* harmony export */   QuickHull: () => (/* reexport safe */ _src_util_Geom__WEBPACK_IMPORTED_MODULE_77__.QuickHull),
-/* harmony export */   RADDEG: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.RADDEG),
-/* harmony export */   Random: () => (/* reexport safe */ _src_util_Random__WEBPACK_IMPORTED_MODULE_79__.Random),
-/* harmony export */   RenderEffects: () => (/* reexport safe */ _src_gfx_Rendering__WEBPACK_IMPORTED_MODULE_28__.RenderEffects),
-/* harmony export */   RenderMnemonicType: () => (/* reexport safe */ _src_gfx_Rendering__WEBPACK_IMPORTED_MODULE_28__.RenderMnemonicType),
-/* harmony export */   RenderMnemonics: () => (/* reexport safe */ _src_gfx_Rendering__WEBPACK_IMPORTED_MODULE_28__.RenderMnemonics),
-/* harmony export */   RenderPolicy: () => (/* reexport safe */ _src_gfx_Rendering__WEBPACK_IMPORTED_MODULE_28__.RenderPolicy),
-/* harmony export */   ResonanceRemover: () => (/* reexport safe */ _src_calc_ResonanceRemover__WEBPACK_IMPORTED_MODULE_13__.ResonanceRemover),
-/* harmony export */   RollingBall: () => (/* reexport safe */ _src_util_Geom__WEBPACK_IMPORTED_MODULE_77__.RollingBall),
-/* harmony export */   SARTable: () => (/* reexport safe */ _src_aspect_SARTable__WEBPACK_IMPORTED_MODULE_9__.SARTable),
-/* harmony export */   SingularValueDecomposition: () => (/* reexport safe */ _src_util_Matrix__WEBPACK_IMPORTED_MODULE_78__.SingularValueDecomposition),
-/* harmony export */   Size: () => (/* reexport safe */ _src_util_Geom__WEBPACK_IMPORTED_MODULE_77__.Size),
-/* harmony export */   SketchUtil: () => (/* reexport safe */ _src_mol_SketchUtil__WEBPACK_IMPORTED_MODULE_44__.SketchUtil),
-/* harmony export */   Sketcher: () => (/* reexport safe */ _src_sketcher_Sketcher__WEBPACK_IMPORTED_MODULE_60__.Sketcher),
-/* harmony export */   Stereochemistry: () => (/* reexport safe */ _src_mol_Stereochemistry__WEBPACK_IMPORTED_MODULE_45__.Stereochemistry),
-/* harmony export */   TWOPI: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.TWOPI),
-/* harmony export */   TabBar: () => (/* reexport safe */ _src_ui_TabBar__WEBPACK_IMPORTED_MODULE_74__.TabBar),
-/* harmony export */   TemplateBank: () => (/* reexport safe */ _src_sketcher_TemplateBank__WEBPACK_IMPORTED_MODULE_61__.TemplateBank),
-/* harmony export */   TemplateFusion: () => (/* reexport safe */ _src_sketcher_TemplateFusion__WEBPACK_IMPORTED_MODULE_62__.TemplateFusion),
-/* harmony export */   TextAlign: () => (/* reexport safe */ _src_gfx_MetaVector__WEBPACK_IMPORTED_MODULE_27__.TextAlign),
-/* harmony export */   Theme: () => (/* reexport safe */ _src_util_Theme__WEBPACK_IMPORTED_MODULE_80__.Theme),
-/* harmony export */   ToolBank: () => (/* reexport safe */ _src_sketcher_ToolBank__WEBPACK_IMPORTED_MODULE_63__.ToolBank),
-/* harmony export */   ToolBankItem: () => (/* reexport safe */ _src_sketcher_ToolBank__WEBPACK_IMPORTED_MODULE_63__.ToolBankItem),
-/* harmony export */   Tooltip: () => (/* reexport safe */ _src_ui_Tooltip__WEBPACK_IMPORTED_MODULE_75__.Tooltip),
-/* harmony export */   Triangulation2D: () => (/* reexport safe */ _src_util_Triangulation2D__WEBPACK_IMPORTED_MODULE_81__.Triangulation2D),
-/* harmony export */   Vec: () => (/* reexport safe */ _src_util_Vec__WEBPACK_IMPORTED_MODULE_82__.Vec),
-/* harmony export */   Widget: () => (/* reexport safe */ _src_ui_Widget__WEBPACK_IMPORTED_MODULE_76__.Widget),
-/* harmony export */   XML: () => (/* reexport safe */ _src_util_XML__WEBPACK_IMPORTED_MODULE_83__.XML),
-/* harmony export */   addText: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.addText),
-/* harmony export */   addTooltip: () => (/* reexport safe */ _src_ui_Tooltip__WEBPACK_IMPORTED_MODULE_75__.addTooltip),
-/* harmony export */   addTooltipPromise: () => (/* reexport safe */ _src_ui_Tooltip__WEBPACK_IMPORTED_MODULE_75__.addTooltipPromise),
-/* harmony export */   angleDiff: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.angleDiff),
-/* harmony export */   angleDiffPos: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.angleDiffPos),
-/* harmony export */   angleNorm: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.angleNorm),
-/* harmony export */   blendRGB: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.blendRGB),
-/* harmony export */   clearTooltip: () => (/* reexport safe */ _src_ui_Tooltip__WEBPACK_IMPORTED_MODULE_75__.clearTooltip),
-/* harmony export */   clone: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.clone),
-/* harmony export */   colourAlpha: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.colourAlpha),
-/* harmony export */   colourCanvas: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.colourCanvas),
-/* harmony export */   colourCode: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.colourCode),
-/* harmony export */   coordsRoundedRect: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.coordsRoundedRect),
-/* harmony export */   deepClone: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.deepClone),
-/* harmony export */   dictValues: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.dictValues),
-/* harmony export */   dom: () => (/* reexport safe */ _src_util_dom__WEBPACK_IMPORTED_MODULE_84__.dom),
-/* harmony export */   domLegacy: () => (/* reexport safe */ _src_util_dom__WEBPACK_IMPORTED_MODULE_84__.domLegacy),
-/* harmony export */   drawLine: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.drawLine),
-/* harmony export */   empiricalScrollerSize: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.empiricalScrollerSize),
-/* harmony export */   escapeHTML: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.escapeHTML),
-/* harmony export */   eventCoords: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.eventCoords),
-/* harmony export */   findNode: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.findNode),
-/* harmony export */   findNodes: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.findNodes),
-/* harmony export */   fltEqual: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.fltEqual),
-/* harmony export */   fontSansSerif: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.fontSansSerif),
-/* harmony export */   formatDate: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.formatDate),
-/* harmony export */   formatDouble: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.formatDouble),
-/* harmony export */   fromUTF8: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.fromUTF8),
-/* harmony export */   getBoundaryPixelsDOM: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.getBoundaryPixelsDOM),
-/* harmony export */   getOffsetPixelsDOM: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.getOffsetPixelsDOM),
-/* harmony export */   getViewportSize: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.getViewportSize),
-/* harmony export */   hasInlineCSS: () => (/* reexport safe */ _src_util_Theme__WEBPACK_IMPORTED_MODULE_80__.hasInlineCSS),
-/* harmony export */   htmlToRGB: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.htmlToRGB),
-/* harmony export */   initWebMolKit: () => (/* reexport safe */ _src_util_Theme__WEBPACK_IMPORTED_MODULE_80__.initWebMolKit),
-/* harmony export */   installInlineCSS: () => (/* reexport safe */ _src_util_Theme__WEBPACK_IMPORTED_MODULE_80__.installInlineCSS),
-/* harmony export */   invZ: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.invZ),
-/* harmony export */   isDef: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.isDef),
-/* harmony export */   jsonPrettyPrint: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.jsonPrettyPrint),
-/* harmony export */   maxArray: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.maxArray),
-/* harmony export */   minArray: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.minArray),
-/* harmony export */   newElement: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.newElement),
-/* harmony export */   nodeText: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.nodeText),
-/* harmony export */   norm2_xy: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.norm2_xy),
-/* harmony export */   norm2_xyz: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.norm2_xyz),
-/* harmony export */   norm_xy: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.norm_xy),
-/* harmony export */   norm_xyz: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.norm_xyz),
-/* harmony export */   notDef: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.notDef),
-/* harmony export */   orBlank: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.orBlank),
-/* harmony export */   pathRoundedRect: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.pathRoundedRect),
-/* harmony export */   pause: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.pause),
-/* harmony export */   pixelDensity: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.pixelDensity),
-/* harmony export */   plural: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.plural),
-/* harmony export */   postJSONURL: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.postJSONURL),
-/* harmony export */   raiseToolTip: () => (/* reexport safe */ _src_ui_Tooltip__WEBPACK_IMPORTED_MODULE_75__.raiseToolTip),
-/* harmony export */   randomInt: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.randomInt),
-/* harmony export */   readTextURL: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.readTextURL),
-/* harmony export */   realEqual: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.realEqual),
-/* harmony export */   registerAspect: () => (/* reexport safe */ _src_aspect_AspectList__WEBPACK_IMPORTED_MODULE_1__.registerAspect),
-/* harmony export */   safeFloat: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.safeFloat),
-/* harmony export */   safeInt: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.safeInt),
-/* harmony export */   setBoundaryPixels: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.setBoundaryPixels),
-/* harmony export */   signum: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.signum),
-/* harmony export */   sortAngles: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.sortAngles),
-/* harmony export */   sqr: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.sqr),
-/* harmony export */   stringSimilarityPermutations: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.stringSimilarityPermutations),
-/* harmony export */   toUTF8: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.toUTF8),
-/* harmony export */   uniqueAngles: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.uniqueAngles),
-/* harmony export */   yieldDOM: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.yieldDOM),
-/* harmony export */   zip: () => (/* reexport safe */ _src_util_util__WEBPACK_IMPORTED_MODULE_85__.zip)
-/* harmony export */ });
-/* harmony import */ var _src_aspect_Aspect__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../src/aspect/Aspect */ "./src/aspect/Aspect.ts");
-/* harmony import */ var _src_aspect_AspectList__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../src/aspect/AspectList */ "./src/aspect/AspectList.ts");
-/* harmony import */ var _src_aspect_AssayProvenance__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../src/aspect/AssayProvenance */ "./src/aspect/AssayProvenance.ts");
-/* harmony import */ var _src_aspect_BayesianPrediction__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../src/aspect/BayesianPrediction */ "./src/aspect/BayesianPrediction.ts");
-/* harmony import */ var _src_aspect_BayesianSource__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../src/aspect/BayesianSource */ "./src/aspect/BayesianSource.ts");
-/* harmony import */ var _src_aspect_BinaryData__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../src/aspect/BinaryData */ "./src/aspect/BinaryData.ts");
-/* harmony import */ var _src_aspect_Experiment__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ../src/aspect/Experiment */ "./src/aspect/Experiment.ts");
-/* harmony import */ var _src_aspect_MeasurementData__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ../src/aspect/MeasurementData */ "./src/aspect/MeasurementData.ts");
-/* harmony import */ var _src_aspect_Mixture__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ../src/aspect/Mixture */ "./src/aspect/Mixture.ts");
-/* harmony import */ var _src_aspect_SARTable__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ../src/aspect/SARTable */ "./src/aspect/SARTable.ts");
-/* harmony import */ var _src_calc_BayesianModel__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ../src/calc/BayesianModel */ "./src/calc/BayesianModel.ts");
-/* harmony import */ var _src_calc_BuildSMILES__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! ../src/calc/BuildSMILES */ "./src/calc/BuildSMILES.ts");
-/* harmony import */ var _src_calc_CircularFingerprints__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! ../src/calc/CircularFingerprints */ "./src/calc/CircularFingerprints.ts");
-/* harmony import */ var _src_calc_ResonanceRemover__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(/*! ../src/calc/ResonanceRemover */ "./src/calc/ResonanceRemover.ts");
-/* harmony import */ var _src_data_AbbrevContainer__WEBPACK_IMPORTED_MODULE_14__ = __webpack_require__(/*! ../src/data/AbbrevContainer */ "./src/data/AbbrevContainer.ts");
-/* harmony import */ var _src_data_FormatList__WEBPACK_IMPORTED_MODULE_15__ = __webpack_require__(/*! ../src/data/FormatList */ "./src/data/FormatList.ts");
-/* harmony import */ var _src_data_OntologyTree__WEBPACK_IMPORTED_MODULE_16__ = __webpack_require__(/*! ../src/data/OntologyTree */ "./src/data/OntologyTree.ts");
-/* harmony import */ var _src_dialog_Dialog__WEBPACK_IMPORTED_MODULE_17__ = __webpack_require__(/*! ../src/dialog/Dialog */ "./src/dialog/Dialog.ts");
-/* harmony import */ var _src_dialog_EditCompound__WEBPACK_IMPORTED_MODULE_18__ = __webpack_require__(/*! ../src/dialog/EditCompound */ "./src/dialog/EditCompound.ts");
-/* harmony import */ var _src_ds_DataSheet__WEBPACK_IMPORTED_MODULE_19__ = __webpack_require__(/*! ../src/ds/DataSheet */ "./src/ds/DataSheet.ts");
-/* harmony import */ var _src_gfx_ArrangeExperiment__WEBPACK_IMPORTED_MODULE_20__ = __webpack_require__(/*! ../src/gfx/ArrangeExperiment */ "./src/gfx/ArrangeExperiment.ts");
-/* harmony import */ var _src_gfx_ArrangeMeasurement__WEBPACK_IMPORTED_MODULE_21__ = __webpack_require__(/*! ../src/gfx/ArrangeMeasurement */ "./src/gfx/ArrangeMeasurement.ts");
-/* harmony import */ var _src_gfx_ArrangeMolecule__WEBPACK_IMPORTED_MODULE_22__ = __webpack_require__(/*! ../src/gfx/ArrangeMolecule */ "./src/gfx/ArrangeMolecule.ts");
-/* harmony import */ var _src_gfx_AxisLabeller__WEBPACK_IMPORTED_MODULE_23__ = __webpack_require__(/*! ../src/gfx/AxisLabeller */ "./src/gfx/AxisLabeller.ts");
-/* harmony import */ var _src_gfx_DrawExperiment__WEBPACK_IMPORTED_MODULE_24__ = __webpack_require__(/*! ../src/gfx/DrawExperiment */ "./src/gfx/DrawExperiment.ts");
-/* harmony import */ var _src_gfx_DrawMolecule__WEBPACK_IMPORTED_MODULE_25__ = __webpack_require__(/*! ../src/gfx/DrawMolecule */ "./src/gfx/DrawMolecule.ts");
-/* harmony import */ var _src_gfx_FontData__WEBPACK_IMPORTED_MODULE_26__ = __webpack_require__(/*! ../src/gfx/FontData */ "./src/gfx/FontData.ts");
-/* harmony import */ var _src_gfx_MetaVector__WEBPACK_IMPORTED_MODULE_27__ = __webpack_require__(/*! ../src/gfx/MetaVector */ "./src/gfx/MetaVector.ts");
-/* harmony import */ var _src_gfx_Rendering__WEBPACK_IMPORTED_MODULE_28__ = __webpack_require__(/*! ../src/gfx/Rendering */ "./src/gfx/Rendering.ts");
-/* harmony import */ var _src_io_DataSheetStream__WEBPACK_IMPORTED_MODULE_29__ = __webpack_require__(/*! ../src/io/DataSheetStream */ "./src/io/DataSheetStream.ts");
-/* harmony import */ var _src_io_MDLReader__WEBPACK_IMPORTED_MODULE_30__ = __webpack_require__(/*! ../src/io/MDLReader */ "./src/io/MDLReader.ts");
-/* harmony import */ var _src_io_MDLWriter__WEBPACK_IMPORTED_MODULE_31__ = __webpack_require__(/*! ../src/io/MDLWriter */ "./src/io/MDLWriter.ts");
-/* harmony import */ var _src_io_MoleculeStream__WEBPACK_IMPORTED_MODULE_32__ = __webpack_require__(/*! ../src/io/MoleculeStream */ "./src/io/MoleculeStream.ts");
-/* harmony import */ var _src_mol_BondArtifact__WEBPACK_IMPORTED_MODULE_33__ = __webpack_require__(/*! ../src/mol/BondArtifact */ "./src/mol/BondArtifact.ts");
-/* harmony import */ var _src_mol_Chemistry__WEBPACK_IMPORTED_MODULE_34__ = __webpack_require__(/*! ../src/mol/Chemistry */ "./src/mol/Chemistry.ts");
-/* harmony import */ var _src_mol_CoordUtil__WEBPACK_IMPORTED_MODULE_35__ = __webpack_require__(/*! ../src/mol/CoordUtil */ "./src/mol/CoordUtil.ts");
-/* harmony import */ var _src_mol_DotPath__WEBPACK_IMPORTED_MODULE_36__ = __webpack_require__(/*! ../src/mol/DotPath */ "./src/mol/DotPath.ts");
-/* harmony import */ var _src_mol_ForeignMolecule__WEBPACK_IMPORTED_MODULE_37__ = __webpack_require__(/*! ../src/mol/ForeignMolecule */ "./src/mol/ForeignMolecule.ts");
-/* harmony import */ var _src_mol_Graph__WEBPACK_IMPORTED_MODULE_38__ = __webpack_require__(/*! ../src/mol/Graph */ "./src/mol/Graph.ts");
-/* harmony import */ var _src_mol_MetaMolecule__WEBPACK_IMPORTED_MODULE_39__ = __webpack_require__(/*! ../src/mol/MetaMolecule */ "./src/mol/MetaMolecule.ts");
-/* harmony import */ var _src_mol_MolUtil__WEBPACK_IMPORTED_MODULE_40__ = __webpack_require__(/*! ../src/mol/MolUtil */ "./src/mol/MolUtil.ts");
-/* harmony import */ var _src_mol_Molecule__WEBPACK_IMPORTED_MODULE_41__ = __webpack_require__(/*! ../src/mol/Molecule */ "./src/mol/Molecule.ts");
-/* harmony import */ var _src_mol_PolymerBlock__WEBPACK_IMPORTED_MODULE_42__ = __webpack_require__(/*! ../src/mol/PolymerBlock */ "./src/mol/PolymerBlock.ts");
-/* harmony import */ var _src_mol_QueryUtil__WEBPACK_IMPORTED_MODULE_43__ = __webpack_require__(/*! ../src/mol/QueryUtil */ "./src/mol/QueryUtil.ts");
-/* harmony import */ var _src_mol_SketchUtil__WEBPACK_IMPORTED_MODULE_44__ = __webpack_require__(/*! ../src/mol/SketchUtil */ "./src/mol/SketchUtil.ts");
-/* harmony import */ var _src_mol_Stereochemistry__WEBPACK_IMPORTED_MODULE_45__ = __webpack_require__(/*! ../src/mol/Stereochemistry */ "./src/mol/Stereochemistry.ts");
-/* harmony import */ var _src_rxn_ExperimentMeta__WEBPACK_IMPORTED_MODULE_46__ = __webpack_require__(/*! ../src/rxn/ExperimentMeta */ "./src/rxn/ExperimentMeta.ts");
-/* harmony import */ var _src_rxn_QuantityCalc__WEBPACK_IMPORTED_MODULE_47__ = __webpack_require__(/*! ../src/rxn/QuantityCalc */ "./src/rxn/QuantityCalc.ts");
-/* harmony import */ var _src_sketcher_CommandBank__WEBPACK_IMPORTED_MODULE_48__ = __webpack_require__(/*! ../src/sketcher/CommandBank */ "./src/sketcher/CommandBank.ts");
-/* harmony import */ var _src_sketcher_ContextSketch__WEBPACK_IMPORTED_MODULE_49__ = __webpack_require__(/*! ../src/sketcher/ContextSketch */ "./src/sketcher/ContextSketch.ts");
-/* harmony import */ var _src_sketcher_DrawCanvas__WEBPACK_IMPORTED_MODULE_50__ = __webpack_require__(/*! ../src/sketcher/DrawCanvas */ "./src/sketcher/DrawCanvas.ts");
-/* harmony import */ var _src_sketcher_EditAtom__WEBPACK_IMPORTED_MODULE_51__ = __webpack_require__(/*! ../src/sketcher/EditAtom */ "./src/sketcher/EditAtom.ts");
-/* harmony import */ var _src_sketcher_EditBond__WEBPACK_IMPORTED_MODULE_52__ = __webpack_require__(/*! ../src/sketcher/EditBond */ "./src/sketcher/EditBond.ts");
-/* harmony import */ var _src_sketcher_EditPolymer__WEBPACK_IMPORTED_MODULE_53__ = __webpack_require__(/*! ../src/sketcher/EditPolymer */ "./src/sketcher/EditPolymer.ts");
-/* harmony import */ var _src_sketcher_ExtraFieldsWidget__WEBPACK_IMPORTED_MODULE_54__ = __webpack_require__(/*! ../src/sketcher/ExtraFieldsWidget */ "./src/sketcher/ExtraFieldsWidget.ts");
-/* harmony import */ var _src_sketcher_GeomWidget__WEBPACK_IMPORTED_MODULE_55__ = __webpack_require__(/*! ../src/sketcher/GeomWidget */ "./src/sketcher/GeomWidget.ts");
-/* harmony import */ var _src_sketcher_MetalLigate__WEBPACK_IMPORTED_MODULE_56__ = __webpack_require__(/*! ../src/sketcher/MetalLigate */ "./src/sketcher/MetalLigate.ts");
-/* harmony import */ var _src_sketcher_MoleculeActivity__WEBPACK_IMPORTED_MODULE_57__ = __webpack_require__(/*! ../src/sketcher/MoleculeActivity */ "./src/sketcher/MoleculeActivity.ts");
-/* harmony import */ var _src_sketcher_PeriodicTableWidget__WEBPACK_IMPORTED_MODULE_58__ = __webpack_require__(/*! ../src/sketcher/PeriodicTableWidget */ "./src/sketcher/PeriodicTableWidget.ts");
-/* harmony import */ var _src_sketcher_QueryFieldsWidget__WEBPACK_IMPORTED_MODULE_59__ = __webpack_require__(/*! ../src/sketcher/QueryFieldsWidget */ "./src/sketcher/QueryFieldsWidget.ts");
-/* harmony import */ var _src_sketcher_Sketcher__WEBPACK_IMPORTED_MODULE_60__ = __webpack_require__(/*! ../src/sketcher/Sketcher */ "./src/sketcher/Sketcher.ts");
-/* harmony import */ var _src_sketcher_TemplateBank__WEBPACK_IMPORTED_MODULE_61__ = __webpack_require__(/*! ../src/sketcher/TemplateBank */ "./src/sketcher/TemplateBank.ts");
-/* harmony import */ var _src_sketcher_TemplateFusion__WEBPACK_IMPORTED_MODULE_62__ = __webpack_require__(/*! ../src/sketcher/TemplateFusion */ "./src/sketcher/TemplateFusion.ts");
-/* harmony import */ var _src_sketcher_ToolBank__WEBPACK_IMPORTED_MODULE_63__ = __webpack_require__(/*! ../src/sketcher/ToolBank */ "./src/sketcher/ToolBank.ts");
-/* harmony import */ var _src_ui_ButtonBank__WEBPACK_IMPORTED_MODULE_64__ = __webpack_require__(/*! ../src/ui/ButtonBank */ "./src/ui/ButtonBank.ts");
-/* harmony import */ var _src_ui_ButtonView__WEBPACK_IMPORTED_MODULE_65__ = __webpack_require__(/*! ../src/ui/ButtonView */ "./src/ui/ButtonView.ts");
-/* harmony import */ var _src_ui_ClipboardProxy__WEBPACK_IMPORTED_MODULE_66__ = __webpack_require__(/*! ../src/ui/ClipboardProxy */ "./src/ui/ClipboardProxy.ts");
-/* harmony import */ var _src_ui_EmbedChemistry__WEBPACK_IMPORTED_MODULE_67__ = __webpack_require__(/*! ../src/ui/EmbedChemistry */ "./src/ui/EmbedChemistry.ts");
-/* harmony import */ var _src_ui_EmbedCollection__WEBPACK_IMPORTED_MODULE_68__ = __webpack_require__(/*! ../src/ui/EmbedCollection */ "./src/ui/EmbedCollection.ts");
-/* harmony import */ var _src_ui_EmbedMolecule__WEBPACK_IMPORTED_MODULE_69__ = __webpack_require__(/*! ../src/ui/EmbedMolecule */ "./src/ui/EmbedMolecule.ts");
-/* harmony import */ var _src_ui_EmbedReaction__WEBPACK_IMPORTED_MODULE_70__ = __webpack_require__(/*! ../src/ui/EmbedReaction */ "./src/ui/EmbedReaction.ts");
-/* harmony import */ var _src_ui_MenuProxy__WEBPACK_IMPORTED_MODULE_71__ = __webpack_require__(/*! ../src/ui/MenuProxy */ "./src/ui/MenuProxy.ts");
-/* harmony import */ var _src_ui_OptionList__WEBPACK_IMPORTED_MODULE_72__ = __webpack_require__(/*! ../src/ui/OptionList */ "./src/ui/OptionList.ts");
-/* harmony import */ var _src_ui_Popup__WEBPACK_IMPORTED_MODULE_73__ = __webpack_require__(/*! ../src/ui/Popup */ "./src/ui/Popup.ts");
-/* harmony import */ var _src_ui_TabBar__WEBPACK_IMPORTED_MODULE_74__ = __webpack_require__(/*! ../src/ui/TabBar */ "./src/ui/TabBar.ts");
-/* harmony import */ var _src_ui_Tooltip__WEBPACK_IMPORTED_MODULE_75__ = __webpack_require__(/*! ../src/ui/Tooltip */ "./src/ui/Tooltip.ts");
-/* harmony import */ var _src_ui_Widget__WEBPACK_IMPORTED_MODULE_76__ = __webpack_require__(/*! ../src/ui/Widget */ "./src/ui/Widget.ts");
-/* harmony import */ var _src_util_Geom__WEBPACK_IMPORTED_MODULE_77__ = __webpack_require__(/*! ../src/util/Geom */ "./src/util/Geom.ts");
-/* harmony import */ var _src_util_Matrix__WEBPACK_IMPORTED_MODULE_78__ = __webpack_require__(/*! ../src/util/Matrix */ "./src/util/Matrix.ts");
-/* harmony import */ var _src_util_Random__WEBPACK_IMPORTED_MODULE_79__ = __webpack_require__(/*! ../src/util/Random */ "./src/util/Random.ts");
-/* harmony import */ var _src_util_Theme__WEBPACK_IMPORTED_MODULE_80__ = __webpack_require__(/*! ../src/util/Theme */ "./src/util/Theme.ts");
-/* harmony import */ var _src_util_Triangulation2D__WEBPACK_IMPORTED_MODULE_81__ = __webpack_require__(/*! ../src/util/Triangulation2D */ "./src/util/Triangulation2D.ts");
-/* harmony import */ var _src_util_Vec__WEBPACK_IMPORTED_MODULE_82__ = __webpack_require__(/*! ../src/util/Vec */ "./src/util/Vec.ts");
-/* harmony import */ var _src_util_XML__WEBPACK_IMPORTED_MODULE_83__ = __webpack_require__(/*! ../src/util/XML */ "./src/util/XML.ts");
-/* harmony import */ var _src_util_dom__WEBPACK_IMPORTED_MODULE_84__ = __webpack_require__(/*! ../src/util/dom */ "./src/util/dom.ts");
-/* harmony import */ var _src_util_util__WEBPACK_IMPORTED_MODULE_85__ = __webpack_require__(/*! ../src/util/util */ "./src/util/util.ts");
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 /***/ }),
 
@@ -33447,6 +33447,7 @@ class OptionList extends _Widget__WEBPACK_IMPORTED_MODULE_3__.Widget {
         this.selidx = 0;
         this.buttonDiv = [];
         this.auxCell = [];
+        this.isDisabled = null;
         this.callbackSelect = null;
         if (options.length == 0)
             throw 'molsync.ui.OptionList: must provide a list of option labels.';
@@ -33464,6 +33465,10 @@ class OptionList extends _Widget__WEBPACK_IMPORTED_MODULE_3__.Widget {
     }
     onSelect(callback) {
         this.callbackSelect = callback;
+    }
+    setDisabled(isDisabled) {
+        this.isDisabled = isDisabled;
+        this.updateButtons();
     }
     render(parent) {
         super.render(parent);
@@ -33489,6 +33494,8 @@ class OptionList extends _Widget__WEBPACK_IMPORTED_MODULE_3__.Widget {
     }
     clickButton(idx) {
         if (idx == this.selidx)
+            return;
+        if (this.isDisabled && this.isDisabled[idx])
             return;
         this.setSelectedIndex(idx);
         if (this.callbackSelect)
@@ -33518,7 +33525,9 @@ class OptionList extends _Widget__WEBPACK_IMPORTED_MODULE_3__.Widget {
             else
                 div.setText(txt);
             div.removeClass('wmk-option-unselected wmk-option-selected');
-            if (n != this.selidx)
+            if (this.isDisabled && this.isDisabled[n])
+                div.addClass('wmk-option-disabled');
+            else if (n != this.selidx)
                 div.addClass('wmk-option-unselected');
             else
                 div.addClass('wmk-option-selected');
@@ -33561,6 +33570,11 @@ class OptionList extends _Widget__WEBPACK_IMPORTED_MODULE_3__.Widget {
 				color: white;
 				background-color: #00C000;
 				background-image: linear-gradient(to right bottom, ${highlightEdge1}, ${highlightEdge2});
+			}
+			.wmk-option-disabled
+			{
+				color: #C0C0C0;
+				cursor: not-allowed;
 			}
 			.wmk-option-table
 			{
