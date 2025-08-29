@@ -421,11 +421,11 @@ export class DOM
 	{
 		this.el.addEventListener('mouseover', callback);
 	}
-	public onChange(callback:(event?:MouseEvent) => boolean | void):void
+	public onChange(callback:(event?:Event) => boolean | void):void
 	{
 		this.el.addEventListener('change', callback);
 	}
-	public onInput(callback:(event?:MouseEvent) => boolean | void):void
+	public onInput(callback:(event?:InputEvent) => boolean | void):void
 	{
 		this.el.addEventListener('input', callback);
 	}
