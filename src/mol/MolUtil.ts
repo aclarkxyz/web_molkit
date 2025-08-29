@@ -17,6 +17,7 @@ import {Graph} from './Graph';
 import {Molecule} from './Molecule';
 import {PolymerBlock} from '../mol/PolymerBlock';
 import {SketchUtil} from './SketchUtil';
+import {BondArtifact} from './BondArtifact';
 
 /*
 	MolUtil: static methods for calculating molecule properties.
@@ -457,6 +458,14 @@ export class MolUtil
 	// appends the fragment to the molecule, and makes a token effort to arrange the atom positions so they are along the X-axis
 	public static append(mol:Molecule, frag:Molecule):void
 	{
+		if (BondArtifact.hasAnyArtifacts(mol) && BondArtifact.hasAnyArtifacts(frag))
+		{
+			frag = frag.clone();
+			let afact1 = new BondArtifact(mol), afact2 = new BondArtifact(frag);
+			afact2.harmoniseNumbering(afact1);
+			afact2.rewriteMolecule();
+		}
+
 		let boxm = mol.boundary(), boxf = frag.boundary();
 		let dx = boxm.maxX() + Molecule.IDEALBOND - boxf.minX();
 		let dy = 0.5 * (boxm.minY() + boxm.maxY() - boxf.minY() - boxf.maxY());

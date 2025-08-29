@@ -83,29 +83,42 @@ export class BondArtifact
 			if (res.atoms.length > 1) res.centre = res.atoms.shift();
 			if (!this.pathify(res.atoms, false)) this.arenes.delete(blk);
 		}
+	}	
+
+	// quick scan to see if it looks like there's anything there
+	public static hasAnyArtifacts(mol:Molecule):boolean
+	{
+		for (let n = 1; n <= mol.numAtoms; n++)
+		{
+			for (let str of mol.atomExtra(n))
+			{
+				if (str.startsWith(BONDARTIFACT_EXTRA_RESPATH)) return true;
+				else if (str.startsWith(BONDARTIFACT_EXTRA_RESRING)) return true;
+				else if (str.startsWith(BONDARTIFACT_EXTRA_ARENE)) return true;
+			}
+		}
+		return false;
 	}
 
 	// access to resulting content
+	public hasAny():boolean {return this.resPaths.size > 0 || this.resRings.size > 0 || this.arenes.size > 0;}
 	public getPathBlocks():number[] {return Array.from(this.resPaths.keys());}
 	public getRingBlocks():number[] {return Array.from(this.resRings.keys());}
 	public getAreneBlocks():number[] {return Array.from(this.arenes.keys());}
 	public getResPaths():BondArtifactResPath[]
 	{
-		//return Array.from(this.resPaths.values());
 		let list:BondArtifactResPath[] = [];
 		for (let key of Vec.sorted(Array.from(this.resPaths.keys()))) list.push(this.resPaths.get(key));
 		return list;
 	}
 	public getResRings():BondArtifactResRing[]
 	{
-		//return Array.from(this.resRings.values());
 		let list:BondArtifactResRing[] = [];
 		for (let key of Vec.sorted(Array.from(this.resRings.keys()))) list.push(this.resRings.get(key));
 		return list;
 	}
 	public getArenes():BondArtifactArene[]
 	{
-		//return Array.from(this.arenes.values());
 		let list:BondArtifactArene[] = [];
 		for (let key of Vec.sorted(Array.from(this.arenes.keys()))) list.push(this.arenes.get(key));
 		return list;
