@@ -271,6 +271,10 @@ export class GeomUtil
 	}
 
 	// generate 2D affine transforms
+	public static affineIdentity():number[][]
+	{
+		return [[1, 0, 0], [0, 1, 0], [0, 0, 1]];
+	}
 	public static affineTranslate(dx:number, dy:number):number[][]
 	{
 		return [[1, 0, dx], [0, 1, dy], [0, 0, 1]];
