@@ -34,6 +34,7 @@ interface RenderData
 export class RenderPolicy
 {
 	public data:RenderData;
+	public get scale():number {return this.data.pointScale;}
 
 	constructor(data?:RenderData)
 	{

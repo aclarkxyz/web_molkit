@@ -47,6 +47,7 @@ export class Dialog
 	public title = 'Dialog';
 	public allowScroller = true; // if true, vertical scrolling is enabled
 	public zindex:number = null; // optionally the use of zindex, to ensure it goes on top (usually not necessary)
+	public beenClosed = false; // will be set to true as soon as the close sequence is initiated; assumes no re-opening
 
 	// content information that can be accessed after opening
 	protected domObscureBackground:DOM; // grey covering banner
@@ -158,6 +159,8 @@ export class Dialog
 	// closes and hides the dialog
 	public close():void
 	{
+		this.beenClosed = true;
+
 		clearTooltip();
 
 		this.domObscureBackground.remove();

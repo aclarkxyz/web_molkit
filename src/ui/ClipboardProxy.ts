@@ -68,6 +68,9 @@ export class ClipboardProxy
 	// security reasons, but in desktop mode it is allowed (see canAlwaysGet below)
 	public getString():string {return null;}
 
+	// call this when we want to poll the clipboard at an arbitrary time (check canAlwaysGet to see if this is possible)
+	public async getStringDirect():Promise<string> {return null;}
+
 	// places the clipboard content with the indicated string; this is allowed at any time
 	public setString(str:string):void {}
 	public setImage(blob:Blob):void {}

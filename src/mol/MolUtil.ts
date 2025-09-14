@@ -595,6 +595,22 @@ export class MolUtil
 		return mapnum;
 	}
 
+	// convenience, remove all mappings numbers
+	public static removeMappings(mol:Molecule):void
+	{
+		for (let n = 1; n <= mol.numAtoms; n++) mol.setAtomMapNum(n, 0);
+	}
+	public static withoutMappings(mol:Molecule):Molecule
+	{
+		let dupped = false;
+		for (let n = 1; n <= mol.numAtoms; n++) if (mol.atomMapNum(n) != 0)
+		{
+			if (!dupped) {mol = mol.clone(); dupped = true;}
+			mol.setAtomMapNum(n, 0);
+		}
+		return mol;
+	}
+
 	// calculates the molecular formula
 	public static molecularFormula(mol:Molecule, punctuation?:boolean | string[]):string
 	{
