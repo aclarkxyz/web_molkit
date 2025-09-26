@@ -745,6 +745,11 @@ export class MDLMOLReader
 					}
 				}
 				else if (key == 'VAL') ForeignMolecule.markExplicitValence(this.mol, a, parseInt(val));
+				else if (key == 'RGROUPS')
+				{
+					var rglist = this.unpackList(val);
+					if (rglist?.length == 1) this.mol.setAtomElement(a, `R${rglist[0]}`);
+				}
 				else if (key == 'CLASS')
 				{
 					this.mol.appendAtomTransient(a, ForeignMoleculeTransient.AtomSCSRClass + ':' + val);
