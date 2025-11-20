@@ -178,6 +178,7 @@ export class Molecule
 		a.element = element;
 		a.x = x;
 		a.y = y;
+		a.z = 0;
 		a.charge = charge;
 		a.unpaired = unpaired;
 		a.isotope = Molecule.ISOTOPE_NATURAL;
