@@ -3,7 +3,7 @@
 	"description": "Cheminformatics functionality for JavaScript platforms",
 	"author": "Dr. Alex M. Clark",
 	"license": "Apache 2",
-	"version": "2.0.8",
+	"version": "2.0.9",
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/aclarkxyz/web_molkit.git"

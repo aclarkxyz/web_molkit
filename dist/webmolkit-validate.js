@@ -18587,6 +18587,7 @@ class Molecule {
         a.element = element;
         a.x = x;
         a.y = y;
+        a.z = 0;
         a.charge = charge;
         a.unpaired = unpaired;
         a.isotope = Molecule.ISOTOPE_NATURAL;
@@ -35805,42 +35806,91 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   Random: () => (/* binding */ Random)
 /* harmony export */ });
-/* harmony import */ var _Vec__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./Vec */ "./src/util/Vec.ts");
+/* harmony import */ var _util__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./util */ "./src/util/util.ts");
+/* harmony import */ var _Vec__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./Vec */ "./src/util/Vec.ts");
 
+
+const MT_n = 624;
+const MT_m = 397;
+const MT_w = 32;
+const MT_r = 31;
+const MT_UMASK = (0xFFFFFFFF << MT_r);
+const MT_LMASK = (0xFFFFFFFF >> (MT_w - MT_r));
+const MT_a = 0x9908B0DF;
+const MT_u = 11;
+const MT_s = 7;
+const MT_t = 15;
+const MT_l = 18;
+const MT_b = 0x9D2C5680;
+const MT_c = 0xEFC60000;
+const MT_f = 1812433253;
+const MT_max = 0x7FFFFFFF;
+const MT_invmax = 1.0 / MT_max;
 class Random {
-    constructor(seed = null) {
-        this.seed = seed;
-        this.m = 0x8000000;
-        this.invMN = 1.0 / (this.m - 1);
-        this.a = 1103515245;
-        this.c = 5425153011;
-        if (seed == null)
-            this.state = Math.floor(Math.random() * (this.m - 1));
-        else
-            this.state = seed;
+    constructor(seedOrState = null) {
+        if (seedOrState == null || seedOrState === 0)
+            seedOrState = Math.floor(Math.random() * 65535);
+        if (typeof seedOrState == 'number') {
+            let array = new Array(MT_n);
+            let seed = array[0] = 19650218 + seedOrState;
+            for (let i = 1; i < MT_n; i++) {
+                array[i] = seed = MT_f * (seed ^ (seed >> (MT_w - 2))) + i;
+            }
+            this.state = { array, index: 0 };
+        }
+        else {
+            const { array, index } = seedOrState;
+            if (Array.isArray(array) && typeof index == 'number')
+                this.state = { array: [...array], index };
+            else
+                throw new Error('Invalid random state.');
+        }
+    }
+    getState() {
+        return (0,_util__WEBPACK_IMPORTED_MODULE_0__.deepClone)(this.state);
     }
     next() {
-        this.state = (this.a * this.state + this.c) % this.m;
-        return this.state;
+        const { array } = this.state;
+        let k = this.state.index;
+        let j = k - (MT_n - 1);
+        if (j < 0)
+            j += MT_n;
+        let x = (array[k] & MT_UMASK) | (array[j] & MT_LMASK);
+        let xA = x >> 1;
+        if (x & 0x00000001)
+            xA ^= MT_a;
+        j = k - (MT_n - MT_m);
+        if (j < 0)
+            j += MT_n;
+        x = array[j] ^ xA;
+        array[k++] = x;
+        if (k >= MT_n)
+            k = 0;
+        this.state.index = k;
+        let y = x ^ (x >> MT_u);
+        y = y ^ ((y << MT_s) & MT_b);
+        y = y ^ ((y << MT_t) & MT_c);
+        let z = y ^ (y >> MT_l);
+        return z;
     }
     int(max) {
         return max <= 0 ? 0 : this.next() % max;
     }
     float() {
-        return this.next() * this.invMN;
+        return this.next() * MT_invmax;
     }
     index(arr) {
-        if (_Vec__WEBPACK_IMPORTED_MODULE_0__.Vec.isBlank(arr))
+        if (_Vec__WEBPACK_IMPORTED_MODULE_1__.Vec.isBlank(arr))
             return null;
         return this.int(arr.length);
     }
     peek(arr) {
-        if (_Vec__WEBPACK_IMPORTED_MODULE_0__.Vec.isBlank(arr))
+        if (_Vec__WEBPACK_IMPORTED_MODULE_1__.Vec.isBlank(arr))
             return null;
         return arr[this.int(arr.length)];
     }
     pull(arr) {
-        if (_Vec__WEBPACK_IMPORTED_MODULE_0__.Vec.isBlank(arr))
+        if (_Vec__WEBPACK_IMPORTED_MODULE_1__.Vec.isBlank(arr))
             return null;
         let idx = this.int(arr.length), val = arr[idx];
         arr.splice(idx, 1);
@@ -38401,6 +38451,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _wmk_util_Vec__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @wmk/util/Vec */ "./src/util/Vec.ts");
 /* harmony import */ var _Validation__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./Validation */ "./val/src/Validation.ts");
 /* harmony import */ var _wmk_gfx_AxisLabeller__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @wmk/gfx/AxisLabeller */ "./src/gfx/AxisLabeller.ts");
+/* harmony import */ var _wmk_util_Random__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! @wmk/util/Random */ "./src/util/Random.ts");
 var __awaiter = (undefined && undefined.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -38413,11 +38464,13 @@ var __awaiter = (undefined && undefined.__awaiter) || function (thisArg, _argume
 
 
 
+
 class ValidationHeadlessBasic extends _Validation__WEBPACK_IMPORTED_MODULE_1__.Validation {
     constructor() {
         super();
         this.add('Vector index sort', this.vectorIndexSort);
         this.add('Axis labeller', this.axisLabeller);
+        this.add('Random numbers', this.randomNumbers);
     }
     vectorIndexSort() {
         return __awaiter(this, void 0, void 0, function* () {
@@ -38458,6 +38511,75 @@ class ValidationHeadlessBasic extends _Validation__WEBPACK_IMPORTED_MODULE_1__.V
                     this.fail('Did not get the expected axis labels.');
                 }
             }
+        });
+    }
+    randomNumbers() {
+        return __awaiter(this, void 0, void 0, function* () {
+            const TESTCASES = [
+                { seed: 1, mod: 2, size: 10, expected: [1, 1, 0, 0, 1, 0, 0, 0, 0, 1] },
+                { seed: 2, mod: 2, size: 10, expected: [1, 1, 1, 1, 0, 0, 1, 1, 0, 0] },
+                { seed: 3, mod: 2, size: 10, expected: [0, 0, 0, 0, 1, 0, 0, 1, 0, 1] },
+                { seed: 1, mod: 3, size: 10, expected: [2, 0, 1, 0, 0, 1, 2, 0, 2, 2] },
+                { seed: 2, mod: 3, size: 10, expected: [0, 0, 2, 2, 1, 2, 1, 2, 2, 1] },
+                { seed: 3, mod: 3, size: 10, expected: [2, 2, 2, 2, 1, 2, 2, 0, 2, 0] },
+                { seed: 1, mod: 4, size: 10, expected: [3, 3, 2, 0, 3, 2, 0, 2, 0, 3] },
+                { seed: 2, mod: 4, size: 10, expected: [3, 1, 3, 1, 2, 0, 1, 1, 0, 2] },
+                { seed: 3, mod: 4, size: 10, expected: [0, 2, 2, 0, 1, 0, 0, 3, 2, 3] },
+                { seed: 1, mod: 5, size: 10, expected: [2, 4, 4, 4, 0, 1, 3, 4, 2, 3] },
+                { seed: 2, mod: 5, size: 10, expected: [4, 4, 4, 2, 0, 1, 0, 2, 2, 4] },
+                { seed: 3, mod: 5, size: 10, expected: [3, 4, 4, 4, 1, 1, 2, 2, 0, 4] },
+                { seed: 10, mod: 8, size: 10, expected: [1, 2, 3, 4, 0, 2, 7, 7, 3, 5] },
+                { seed: 20, mod: 8, size: 10, expected: [2, 1, 0, 3, 0, 4, 6, 5, 7, 3] },
+                { seed: 30, mod: 8, size: 10, expected: [1, 5, 1, 0, 4, 1, 1, 2, 3, 4] },
+                { seed: 1, mod: 16, size: 10, expected: [11, 7, 10, 12, 3, 10, 4, 2, 12, 15] },
+                { seed: 2, mod: 16, size: 10, expected: [3, 1, 3, 9, 6, 4, 5, 5, 12, 10] },
+                { seed: 3, mod: 16, size: 10, expected: [4, 14, 14, 4, 5, 0, 4, 15, 6, 7] },
+                { seed: 1, mod: 256, size: 5, expected: [11, 55, 202, 108, 163] },
+                { seed: 2, mod: 256, size: 5, expected: [163, 49, 115, 137, 54] },
+                { seed: 3, mod: 256, size: 5, expected: [212, 78, 190, 100, 197] },
+                { seed: 1, mod: 50000, size: 5, expected: [2347, 44119, 874, 48444, 10195] },
+                { seed: 2, mod: 50000, size: 5, expected: [27779, 23809, 39619, 47337, 25350] },
+                { seed: 3, mod: 50000, size: 5, expected: [1348, 7294, 3134, 14084, 43301] },
+                { seed: 1, mod: 0, size: 5, expected: [1117902347, 1901944119, 457500874, 1187598444, 1441260195] },
+                { seed: 2, mod: 0, size: 5, expected: [284527779, 362773809, 1763989619, 582547337, 1969175350] },
+                { seed: 3, mod: 0, size: 5, expected: [881051348, 1706057294, 3603134, 932714084, 1566543301] },
+                { seed: 1, mod: -1, size: 5, expected: [0.521, 0.886, 0.213, 0.553, 0.671] },
+                { seed: 2, mod: -1, size: 5, expected: [0.132, 0.169, 0.821, 0.271, 0.917] },
+                { seed: 3, mod: -1, size: 5, expected: [0.41, 0.794, 0.002, 0.434, 0.729] },
+            ];
+            let bad = false;
+            for (const { seed, mod, size, expected } of TESTCASES) {
+                let rnd = new _wmk_util_Random__WEBPACK_IMPORTED_MODULE_3__.Random(seed);
+                let got = [];
+                for (let n = 0; n < size; n++) {
+                    if (mod == 0)
+                        got.push(rnd.next());
+                    else if (mod < 0)
+                        got.push(Math.round(rnd.float() * 1000) / 1000);
+                    else
+                        got.push(rnd.int(mod));
+                }
+                if (!_wmk_util_Vec__WEBPACK_IMPORTED_MODULE_0__.Vec.equals(got, expected)) {
+                    console.log('Input: ' + JSON.stringify({ seed, mod, size }));
+                    console.log('  Got: ' + JSON.stringify(got));
+                    console.log(' Want: ' + JSON.stringify(expected));
+                    bad = true;
+                }
+            }
+            if (bad)
+                this.fail('Did not get the right number sequences.');
+            let rnd1 = new _wmk_util_Random__WEBPACK_IMPORTED_MODULE_3__.Random(1);
+            let state = rnd1.getState();
+            let sameVal = rnd1.next();
+            let rnd2 = new _wmk_util_Random__WEBPACK_IMPORTED_MODULE_3__.Random(1);
+            this.assertEqual(sameVal, rnd2.next(), 'Same seed/same number');
+            let rnd3 = new _wmk_util_Random__WEBPACK_IMPORTED_MODULE_3__.Random(state);
+            this.assertEqual(sameVal, rnd3.next(), 'Same state/same number');
+            let avgFloat = 0, numAdd = 1000;
+            for (let n = 0; n < numAdd; n++)
+                avgFloat += rnd1.float();
+            avgFloat /= numAdd;
+            this.assert(avgFloat > 0.49 && avgFloat < 0.51, `Floating point average is off: ${avgFloat}`);
         });
     }
 }
