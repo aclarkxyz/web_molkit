@@ -45,7 +45,7 @@ export enum TextAlign
 	Bottom = 16
 }
 
-enum PrimClass
+export enum PrimClass
 {
 	Line = 1,
 	Rect = 2,
@@ -55,58 +55,58 @@ enum PrimClass
 	TextNative = 6,
 }
 
-interface PrimBase
+export interface PrimBase
 {
 	primClass:PrimClass;
 	typeidx:number;
 }
-interface TypeBase
+export interface TypeBase
 {
 	primClass:PrimClass;
 }
 
-interface LinePrim extends PrimBase
+export interface LinePrim extends PrimBase
 {
 	x1:number;
 	y1:number;
 	x2:number;
 	y2:number;
 }
-interface LineType extends TypeBase
+export interface LineType extends TypeBase
 {
 	thickness:number;
 	colour:number;
 }
 
-interface RectPrim extends PrimBase
+export interface RectPrim extends PrimBase
 {
 	x:number;
 	y:number;
 	w:number;
 	h:number;
 }
-interface RectType extends TypeBase
+export interface RectType extends TypeBase
 {
 	edgeCol:number;
 	fillCol:number;
 	thickness:number;
 }
 
-interface OvalPrim extends PrimBase
+export interface OvalPrim extends PrimBase
 {
 	cx:number;
 	cy:number;
 	rw:number;
 	rh:number;
 }
-interface OvalType extends TypeBase
+export interface OvalType extends TypeBase
 {
 	edgeCol:number;
 	fillCol:number;
 	thickness:number;
 }
 
-interface PathPrim extends PrimBase
+export interface PathPrim extends PrimBase
 {
 	count:number;
 	x:number[];
@@ -114,7 +114,7 @@ interface PathPrim extends PrimBase
 	ctrl:boolean[];
 	closed:boolean;
 }
-interface PathType extends TypeBase
+export interface PathType extends TypeBase
 {
 	edgeCol:number;
 	fillCol:number;
@@ -122,26 +122,26 @@ interface PathType extends TypeBase
 	hardEdge:boolean;
 }
 
-interface TextPrim extends PrimBase
+export interface TextPrim extends PrimBase
 {
 	x:number;
 	y:number;
 	txt:string;
-	direction:number;
+	direction:number; // degrees clockwise to rotate the text; 0=left to right; -90=upward, 90=downward, 180=backward
 }
-interface TextType extends TypeBase
+export interface TextType extends TypeBase
 {
 	size:number;
 	colour:number;
 }
 
-interface TextNativePrim extends PrimBase
+export interface TextNativePrim extends PrimBase
 {
 	x:number;
 	y:number;
 	txt:string;
 }
-interface TextNativeType extends TypeBase
+export interface TextNativeType extends TypeBase
 {
 	family:string;
 	size:number;
@@ -200,8 +200,8 @@ export class MetaVector
 
 	public static NOCOLOUR = -1;
 
-	private types:TypeBase[] = [];
-	private prims:PrimBase[] = [];
+	public types:TypeBase[] = [];
+	public prims:PrimBase[] = [];
 	private typeObj:TypeBase[];
 	public width:number = 0;
 	public height:number = 0;
@@ -349,7 +349,7 @@ export class MetaVector
 			by += dy * cosTheta;
 		}
 
-		// mainstaking measurement of the boundaries (looks like overkill, but it really isn't)
+		// painstaking measurement of the boundaries (looks like overkill, but it really isn't)
 		let x1 = 0, y1 = 0, x2 = 0, y2 = 0;
 		let tx = 0;
 		for (let n = 0; n < txt.length; n++)
@@ -927,6 +927,7 @@ export class MetaVector
 		let font = FontData.main;
 
 		let scale = size * this.scale / font.UNITS_PER_EM;
+		let theta = direction != 0 ? direction * DEGRAD : 0;
 		let dx = 0;
 		for (let n = 0; n < txt.length; n++)
 		{
@@ -943,7 +944,6 @@ export class MetaVector
 			if (path)
 			{
 				ctx.save();
-				let theta = direction != 0 ? direction * DEGRAD : 0;
 				if (theta == 0)
 					ctx.translate(x + dx * scale, y);
 				else
