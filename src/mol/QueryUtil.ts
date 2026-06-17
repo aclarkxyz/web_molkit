@@ -35,9 +35,11 @@ export enum QueryTypeAtom
 	BondSums = 'qO:',		// list of allowed sums of adjacent bond orders
 	Valences = 'qV:',		// list of allowed valences (sum:BO - chg + unp + hyd)
 	Hydrogens = 'qH:',		// list of allowed hydrogen counts (virtual and actual)
+	Whole = 'qW:',			// whole fragment, only heavy atoms on query side allowed, and total H must match
 	Isotopes = 'qI:',		// list of allowed isotopes
 	SubFrags = 'qX:',		// list of allowed sub-fragments (inline encoding, like abbreviations)
 	SubFragsNot = 'qX!',	// list of disallowed sub-fragments
+	Transform = 'qT:',		// reaction transform (c=in changed core, u=unchanged, s=stereo perserved, i=stereo inverted)
 }
 
 export enum QueryTypeBond
@@ -47,6 +49,15 @@ export enum QueryTypeBond
 	RingBlock = 'qB:',		// yes/no; whether the atom must be in a ring block
 	NumRings = 'qN:',		// list of allowed numbers of small rings (3..7) the bond may occur in
 	Orders = 'qO:',			// list of allowed bond orders; allowed: (0,1,2,3,4,-1) (-1==aromatic)
+	Transform = 'qT:',		// reaction transform (c=changed, u=unchanged, s=stereo perserved, i=stereo inverted)
+}
+
+export enum QueryTypeTransform
+{
+	Changed = 'c', // changed (or part of the core mapped atoms)
+	Unchanged = 'u', // unchanged (or part of the non-core mapped atoms)
+	Preserved = 's', // stereo preserved
+	Inverted = 'i', // stereo inverted
 }
 
 export class QueryUtil
@@ -227,12 +238,16 @@ export class QueryUtil
 		{return this.parseIntegers(this.queryAtomString(mol, atom, QueryTypeAtom.Valences));}
 	public static queryAtomHydrogens(mol:Molecule, atom:number):number[]
 		{return this.parseIntegers(this.queryAtomString(mol, atom, QueryTypeAtom.Hydrogens));}
+	public static queryAtomWhole(mol:Molecule, atom:number):boolean
+		{return this.parseBoolean(this.queryAtomString(mol, atom, QueryTypeAtom.Whole));}
 	public static queryAtomIsotope(mol:Molecule, atom:number):number[]
 		{return this.parseIntegers(this.queryAtomString(mol, atom, QueryTypeAtom.Isotopes));}
 	public static queryAtomSubFrags(mol:Molecule, atom:number):Molecule[]
 		{return this.parseMolecules(this.queryAtomStringList(mol, atom, QueryTypeAtom.SubFrags));}
 	public static queryAtomSubFragsNot(mol:Molecule, atom:number):Molecule[]
 		{return this.parseMolecules(this.queryAtomStringList(mol, atom, QueryTypeAtom.SubFragsNot));}
+	public static queryAtomTransform(mol:Molecule, atom:number):QueryTypeTransform[]
+		{return this.parseStrings(this.queryAtomString(mol, atom, QueryTypeAtom.Transform)) as QueryTypeTransform[];}
 
 	// fetching of specific query types from bonds, parsed out into the right datastructure
 	public static queryBondRingSizes(mol:Molecule, bond:number):number[]
@@ -245,6 +260,8 @@ export class QueryUtil
 		{return this.parseIntegers(this.queryBondString(mol, bond, QueryTypeBond.NumRings));}
 	public static queryBondOrders(mol:Molecule, bond:number):number[]
 		{return this.parseIntegers(this.queryBondString(mol, bond, QueryTypeBond.Orders));}
+	public static queryBondTransform(mol:Molecule, bond:number):QueryTypeTransform[]
+		{return this.parseStrings(this.queryBondString(mol, bond, QueryTypeBond.Transform)) as QueryTypeTransform[];}
 
 	// setting of specific query types for atoms
 	public static setQueryAtomCharges(mol:Molecule, atom:number, value:number[]):void
@@ -275,12 +292,16 @@ export class QueryUtil
 		{this.setQueryAtom(mol, atom, QueryTypeAtom.Valences, this.formatIntegers(value));}
 	public static setQueryAtomHydrogens(mol:Molecule, atom:number, value:number[]):void
 		{this.setQueryAtom(mol, atom, QueryTypeAtom.Hydrogens, this.formatIntegers(value));}
+	public static setQueryAtomWhole(mol:Molecule, atom:number, value:boolean):void
+		{this.setQueryAtom(mol, atom, QueryTypeAtom.Whole, this.formatBoolean(value));}
 	public static setQueryAtomIsotope(mol:Molecule, atom:number, value:number[]):void
 		{this.setQueryAtom(mol, atom, QueryTypeAtom.Isotopes, this.formatIntegers(value));}
 	public static setQueryAtomSubFrags(mol:Molecule, atom:number, value:Molecule[]):void
 		{this.setQueryAtomList(mol, atom, QueryTypeAtom.SubFrags, this.formatMolecules(value));}
 	public static setQueryAtomSubFragsNot(mol:Molecule, atom:number, value:Molecule[]):void
 		{this.setQueryAtomList(mol, atom, QueryTypeAtom.SubFragsNot, this.formatMolecules(value));}
+	public static setQueryAtomTransform(mol:Molecule, atom:number, value:QueryTypeTransform[]):void
+		{this.setQueryAtom(mol, atom, QueryTypeAtom.Transform, this.formatStrings(value));}
 
 	// setting of specific query types for bonds
 	public static setQueryBondRingSizes(mol:Molecule, bond:number, value:number[]):void
@@ -293,6 +314,8 @@ export class QueryUtil
 		{this.setQueryBond(mol, bond, QueryTypeBond.NumRings, this.formatIntegers(value));}
 	public static setQueryBondOrders(mol:Molecule, bond:number, value:number[]):void
 		{this.setQueryBond(mol, bond, QueryTypeBond.Orders, this.formatIntegers(value));}
+	public static setQueryBondTransform(mol:Molecule, bond:number, value:QueryTypeTransform[]):void
+		{this.setQueryBond(mol, bond, QueryTypeBond.Transform, this.formatStrings(value));}
 
 	// ------------------ private methods --------------------
 

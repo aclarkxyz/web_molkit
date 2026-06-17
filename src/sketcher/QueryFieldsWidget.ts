@@ -11,7 +11,7 @@
 */
 
 import {Molecule} from '../mol/Molecule';
-import {QueryUtil} from '../mol/QueryUtil';
+import {QueryTypeAtom, QueryTypeBond, QueryTypeTransform, QueryUtil} from '../mol/QueryUtil';
 import {OptionList} from '../ui/OptionList';
 import {Widget} from '../ui/Widget';
 import {dom, DOM} from '../util/dom';
@@ -38,6 +38,11 @@ export class QueryFieldsWidget extends Widget
 	private inputValences:DOM;
 	private inputHydrogens:DOM;
 	private inputIsotopes:DOM;
+	private optWhole:OptionList;
+	private chkTransChanged:DOM;
+	private chkTransUnchanged:DOM;
+	private chkStereoPreserved:DOM;
+	private chkStereoInverted:DOM;
 	//private chkSubFrags:DOM; !! ... include & exclude mutually compatible? because they can be queries...
 	//private divQSubFrags:!!
 	private inputOrders:DOM;
@@ -72,6 +77,13 @@ export class QueryFieldsWidget extends Widget
 			lbl.appendText('Not');
 			let input = dom('<input size="20"/>').appendTo(div).css({'flex-grow': '1'});
 			return [chk, input];
+		};
+		let makeCheckbox = (domParent:DOM, label:string):DOM =>
+		{
+			let lbl = dom('<label/>').css({'margin-right': '0.5em'}).appendTo(domParent);
+			let chk = dom('<input type="checkbox"/>').appendTo(lbl);
+			lbl.appendText(label);
+			return chk;
 		};
 
 		if (this.atom > 0)
@@ -115,10 +127,21 @@ export class QueryFieldsWidget extends Widget
 			dom('<div>Hydrogens</div>').appendTo(grid).css({'grid-area': `${++row} / title`});
 			this.inputHydrogens = makeInput();
 
+			dom('<div>Whole Fragment</div>').appendTo(grid).css({'grid-area': `${++row} / title`});
+			this.optWhole = new OptionList(['Maybe', 'Yes', 'No']);
+			this.optWhole.render(dom('<div/>').appendTo(grid).css({'grid-area': `${row} / value`}));
+
 			dom('<div>Isotopes</div>').appendTo(grid).css({'grid-area': `${++row} / title`});
 			this.inputIsotopes = makeInput();
 
-			// !!! FRAGMENTS...
+			// ...FRAGMENTS...
+	
+			dom('<div>Transform</div>').appendTo(grid).css({'grid-area': `${++row} / title`});
+			let divTransform = dom('<div/>').appendTo(grid).css({'grid-area': `${row} / value`});
+			this.chkTransChanged = makeCheckbox(divTransform, 'Core changed');
+			this.chkTransUnchanged = makeCheckbox(divTransform, 'Unchanged');
+			this.chkStereoPreserved = makeCheckbox(divTransform, 'Stereo preserved');
+			this.chkStereoInverted = makeCheckbox(divTransform, 'Stereo inverted');
 
 			this.setupAtom();
 		}
@@ -137,6 +160,13 @@ export class QueryFieldsWidget extends Widget
 			dom('<div>Bond Orders</div>').appendTo(grid).css({'grid-area': `${++row} / title`});
 			this.inputOrders = makeInput();
 
+			dom('<div>Transform</div>').appendTo(grid).css({'grid-area': `${++row} / title`});
+			let divTransform = dom('<div/>').appendTo(grid).css({'grid-area': `${row} / value`});
+			this.chkTransChanged = makeCheckbox(divTransform, 'Changed');
+			this.chkTransUnchanged = makeCheckbox(divTransform, 'Unchanged');
+			this.chkStereoPreserved = makeCheckbox(divTransform, 'Stereo preserved');
+			this.chkStereoInverted = makeCheckbox(divTransform, 'Stereo inverted');
+
 			this.setupBond();
 		}
 	}
@@ -151,10 +181,16 @@ export class QueryFieldsWidget extends Widget
 		if (chg) QueryUtil.setQueryAtomCharges(mol, atom, chg);
 
 		let arom = this.optAromatic.getSelectedIndex();
-		if (arom > 0) QueryUtil.setQueryAtomAromatic(mol, atom, arom == 1);
+		if (arom > 0) 
+			QueryUtil.setQueryAtomAromatic(mol, atom, arom == 1);
+		else
+			QueryUtil.deleteQueryAtom(mol, atom, QueryTypeAtom.Aromatic);
 
 		let unsat = this.optUnsaturated.getSelectedIndex();
-		if (unsat > 0) QueryUtil.setQueryAtomUnsaturated(mol, atom, unsat == 1);
+		if (unsat > 0) 
+			QueryUtil.setQueryAtomUnsaturated(mol, atom, unsat == 1);
+		else
+			QueryUtil.deleteQueryAtom(mol, atom, QueryTypeAtom.Unsaturated);
 
 		let elem = this.splitStrings(this.inputElements.getValue());
 		if (elem)
@@ -175,7 +211,10 @@ export class QueryFieldsWidget extends Widget
 		}
 
 		let ringblk = this.optRingBlock.getSelectedIndex();
-		if (ringblk > 0) QueryUtil.setQueryAtomRingBlock(mol, atom, ringblk == 1);
+		if (ringblk > 0) 
+			QueryUtil.setQueryAtomRingBlock(mol, atom, ringblk == 1);
+		else
+			QueryUtil.deleteQueryAtom(mol, atom, QueryTypeAtom.RingBlock);
 
 		let nring = this.splitNumbers(this.inputNumRings.getValue());
 		if (nring) QueryUtil.setQueryAtomNumRings(mol, atom, nring);
@@ -195,10 +234,26 @@ export class QueryFieldsWidget extends Widget
 		let hyd = this.splitNumbers(this.inputHydrogens.getValue());
 		if (hyd) QueryUtil.setQueryAtomHydrogens(mol, atom, hyd);
 
+		let whole = this.optWhole.getSelectedIndex();
+		if (whole > 0) 
+			QueryUtil.setQueryAtomWhole(mol, atom, whole == 1);
+		else
+			QueryUtil.deleteQueryAtom(mol, atom, QueryTypeAtom.Whole);
+
 		let iso = this.splitNumbers(this.inputIsotopes.getValue());
 		if (iso) QueryUtil.setQueryAtomIsotope(mol, atom, iso);
 
 		// !! FRAGMENTS
+
+		let transform:QueryTypeTransform[] = [];
+		if (this.chkTransChanged.elInput.checked) transform.push(QueryTypeTransform.Changed);
+		if (this.chkTransUnchanged.elInput.checked) transform.push(QueryTypeTransform.Unchanged);
+		if (this.chkStereoPreserved.elInput.checked) transform.push(QueryTypeTransform.Preserved);
+		if (this.chkStereoInverted.elInput.checked) transform.push(QueryTypeTransform.Inverted);
+		if (transform.length > 0)
+			QueryUtil.setQueryAtomTransform(mol, atom, transform);
+		else
+			QueryUtil.deleteQueryAtom(mol, atom, QueryTypeAtom.Transform);
 	}
 
 	public updateBond():void
@@ -224,6 +279,17 @@ export class QueryFieldsWidget extends Widget
 
 		let order = this.splitNumbers(this.inputOrders.getValue());
 		if (order) QueryUtil.setQueryBondOrders(mol, bond, order);
+
+		let transform:QueryTypeTransform[] = [];
+		if (this.chkTransChanged.elInput.checked) transform.push(QueryTypeTransform.Changed);
+		if (this.chkTransUnchanged.elInput.checked) transform.push(QueryTypeTransform.Unchanged);
+		if (this.chkStereoPreserved.elInput.checked) transform.push(QueryTypeTransform.Preserved);
+		if (this.chkStereoInverted.elInput.checked) transform.push(QueryTypeTransform.Inverted);
+		if (transform.length > 0)
+			QueryUtil.setQueryBondTransform(mol, bond, transform);
+		else
+			QueryUtil.deleteQueryBond(mol, bond, QueryTypeBond.Transform);
+
 	}
 
 	// ------------ private methods ------------
@@ -246,9 +312,11 @@ export class QueryFieldsWidget extends Widget
 		let bond = QueryUtil.queryAtomBondSums(mol, atom);
 		let val = QueryUtil.queryAtomValences(mol, atom);
 		let hyd = QueryUtil.queryAtomHydrogens(mol, atom);
+		let whole = QueryUtil.queryAtomWhole(mol, atom);
 		let iso = QueryUtil.queryAtomIsotope(mol, atom);
 		let frag = QueryUtil.queryAtomSubFrags(mol, atom);
 		let fragNot = QueryUtil.queryAtomSubFragsNot(mol, atom);
+		let transform = QueryUtil.queryAtomTransform(mol, atom) ?? [];
 
 		this.inputCharges.setValue(Vec.notBlank(chg) ? chg.join(',') : '');
 		this.optAromatic.setSelectedIndex(arom == null ? 0 : arom ? 1 : 2);
@@ -264,9 +332,13 @@ export class QueryFieldsWidget extends Widget
 		this.inputBondSums.setValue(Vec.notBlank(bond) ? bond.join(',') : '');
 		this.inputValences.setValue(Vec.notBlank(val) ? val.join(',') : '');
 		this.inputHydrogens.setValue(Vec.notBlank(hyd) ? hyd.join(',') : '');
+		this.optWhole.setSelectedIndex(whole == null ? 0 : whole ? 1 : 2);
 		this.inputIsotopes.setValue(Vec.notBlank(iso) ? iso.join(',') : '');
-
 		// TODO: frag/fragNot
+		this.chkTransChanged.elInput.checked = transform.includes(QueryTypeTransform.Changed);
+		this.chkTransUnchanged.elInput.checked = transform.includes(QueryTypeTransform.Unchanged);
+		this.chkStereoPreserved.elInput.checked = transform.includes(QueryTypeTransform.Preserved);
+		this.chkStereoInverted.elInput.checked = transform.includes(QueryTypeTransform.Inverted);
 	}
 
 	private setupBond():void
@@ -278,12 +350,17 @@ export class QueryFieldsWidget extends Widget
 		let ringblk = QueryUtil.queryBondRingBlock(mol, bond);
 		let nring = QueryUtil.queryBondNumRings(mol, bond);
 		let order = QueryUtil.queryBondOrders(mol, bond);
+		let transform = QueryUtil.queryBondTransform(mol, bond) ?? [];
 
 		this.chkNotRingSizes.elInput.checked = Vec.isBlank(ringsz) && Vec.notBlank(ringszNot);
 		this.inputRingSizes.setValue(Vec.notBlank(ringsz) ? ringsz.join(',') : Vec.notBlank(ringszNot) ? ringszNot.join(',') : '');
 		this.optRingBlock.setSelectedIndex(ringblk == null ? 0 : ringblk ? 1 : 2);
 		this.inputNumRings.setValue(Vec.notBlank(nring) ? nring.join(',') : '');
 		this.inputOrders.setValue(Vec.notBlank(order) ? order.join(',') : '');
+		this.chkTransChanged.elInput.checked = transform.includes(QueryTypeTransform.Changed);
+		this.chkTransUnchanged.elInput.checked = transform.includes(QueryTypeTransform.Unchanged);
+		this.chkStereoPreserved.elInput.checked = transform.includes(QueryTypeTransform.Preserved);
+		this.chkStereoInverted.elInput.checked = transform.includes(QueryTypeTransform.Inverted);
 	}
 
 	private splitStrings(str:string):string[]

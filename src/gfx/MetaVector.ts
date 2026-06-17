@@ -209,6 +209,7 @@ export class MetaVector
 	public offsetY = 0;
 	public scale = 1;
 	public density = 1;
+	public usesNativeFont = false;
 
 	private charMask:boolean[];
 	private charMissing = false;
@@ -417,6 +418,8 @@ export class MetaVector
 
 		let typeidx = this.findOrCreateType({primClass: PrimClass.TextNative, family: fontFamily, size: fontSize, colour, opt} as TextNativeType);
 		this.prims.push({primClass: PrimClass.TextNative, typeidx, x, y, txt} as TextNativePrim);
+
+		this.usesNativeFont = true;
 	}
 
 	// query the boundaries of the drawing, post factum
@@ -976,6 +979,8 @@ export class MetaVector
 		if (opt.italic) pfx += 'italic ';
 		ctx.font = pfx + (size * this.scale) + 'px ' + family;
 		ctx.fillStyle = fill;
+		ctx.textAlign = 'left';
+		ctx.textBaseline = 'alphabetic';
 		ctx.fillText(txt, x, y);
 		ctx.restore();
 	}
