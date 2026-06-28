@@ -31,7 +31,7 @@ export enum QueryTypeAtom
 	RingBlock = 'qB:',		// yes/no; whether the atom must be in a ring block
 	NumRings = 'qN:',		// list of allowed numbers of small rings (3..7) the atom may occur in
 	RingBonds = 'qG:',		// qG: list of allowed # of bonds that are in a ring
-	Adjacency = 'qJ:',		// list of allowed adjacency counts
+	Adjacency = 'qJ:',		// list of allowed adjacency counts (heavy atoms only)
 	BondSums = 'qO:',		// list of allowed sums of adjacent bond orders
 	Valences = 'qV:',		// list of allowed valences (sum:BO - chg + unp + hyd)
 	Hydrogens = 'qH:',		// list of allowed hydrogen counts (virtual and actual)

@@ -10,6 +10,7 @@
 	[PKG=webmolkit]
 */
 
+import {MolUtil} from '@wmk/mol/MolUtil';
 import {Chemistry} from '../mol/Chemistry';
 import {Molecule} from '../mol/Molecule';
 import {Vec} from '../util/Vec';
@@ -29,6 +30,7 @@ import {Vec} from '../util/Vec';
 
 export class BuildSMILES
 {
+	private mol:Molecule;
 	private seq:number[]; // the walk-order atom sequence
 	private link:number[][]; // a list of the linking-codes between nonsequential atoms
 	private conn:number[][]; // a list of the "other atom" indices corresponding to above
@@ -36,8 +38,9 @@ export class BuildSMILES
 	// ------------------ public methods --------------------
 
 	// note: pri is an optional parameter that can be used to specify the walk-order preference
-	constructor(private mol:Molecule, private pri:number[] = null)
+	constructor(mol:Molecule, private pri:number[] = null)
 	{
+		this.mol = MolUtil.expandedAbbrevs(mol);
 	}
 
 	// performs the calculation, and returns the string
