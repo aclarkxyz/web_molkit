@@ -35,10 +35,44 @@ export function domLegacy(obj:any):DOM
 	return dom(obj);
 }
 
+// convenient typing options for CSS properties, for coding convenience rather than enforcement
 export type CSSDictionary = Record<string, string | number | boolean> |
 {
-	'display': 'none' | 'block' | 'inline-block' | 'flex' | 'inline-flex' | 'grid' | 'inline-grid';
+	alignContent: 'stretch' | 'center' | 'start' | 'end';
+	alignItems: 'stretch' | 'center' | 'start' | 'end';
+	alignSelf: 'stretch' | 'center' | 'start' | 'end';
+	cursor: 'auto' | 'pointer' | 'help' | 'wait' | 'crosshair' | 'not-allowed' | 'zoom-in' | 'zoom-out' | 'inherit' | 'unset'
+	display: 'none' | 'block' | 'inline-block' | 'flex' | 'inline-flex' | 'grid' | 'inline-grid';
+	flexDirection: 'row' | 'column' | 'row-reverse' | 'column-reverse';
+	flexWrap: 'wrap' | 'nowrap' | 'wrap-reverse' | 'wrap balance';
+	font: 'inherit'; // (and actual specification)
+	fontWeight: 'normal' | 'bold' | 'lighter' | 'bolder' | 'inherit' | 'unset';
+	justifyContent: 'start' | 'center' | 'space-between' | 'space-around' | 'space-evenly';
+	justifyItems: 'start' | 'center' | 'space-between' | 'space-around' | 'space-evenly';
+	justifySelf: 'start' | 'center' | 'space-between' | 'space-around' | 'space-evenly';
+	overflow: 'visible' | 'hidden' | 'clip' | 'scroll' | 'auto';
+	overflowX: 'visible' | 'hidden' | 'clip' | 'scroll' | 'auto';
+	overflowY: 'visible' | 'hidden' | 'clip' | 'scroll' | 'auto';
+	pointerEvents: 'auto' | 'none';
+	position: 'static' | 'fixed' | 'relative' | 'absolute' | 'sticky' | 'inherit' | 'unset';
+	textAlign: 'start' | 'end' | 'center' | 'justify';
+	textDecoration: 'underline' | 'dotted' | 'overline' | 'none' | 'inherit' | 'unset';
+	textOverflow: 'ellipsis' | 'clip' | 'inherit' | 'unset';
+	userSelect: 'none' | 'text' | 'all' | 'inherit' | 'unset';
+	whiteSpace: 'normal' | 'pre' | 'pre-wrap' | 'pre-line' | 'wrap' | 'collapse' | 'inherit' | 'unset';
 };
+
+// CSS properties internally use "kebab case" (e.g. 'foo-bar') whereas JS code is nicer with camelcase ('fooBar');
+const CAMEL_TO_KEBAB:Record<string, string> =
+{
+	// exceptions to the algorithm? put them here (e.g. acronyms 'fooTLA' if there are any)
+};
+function camelToKebab(camel:string):string
+{
+	let kebab = CAMEL_TO_KEBAB[camel];
+	if (kebab) return kebab;
+	return camel.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
+}
 
 export class DOM
 {
@@ -244,15 +278,21 @@ export class DOM
 	// getting & setting CSS values
 	public getCSS(key:string):string
 	{
+		key = camelToKebab(key);
 		return this.elHTML.style.getPropertyValue(key);
 	}
 	public setCSS(key:string, value:string | number):void
 	{
+		key = camelToKebab(key);
 		this.elHTML.style.setProperty(key, value?.toString());
 	}
 	public css(dict:CSSDictionary):DOM
 	{
-		for (let key in dict) this.setCSS(key, (dict as Record<string, any>)[key].toString());
+		for (let key in dict) 
+		{
+			let kebab = camelToKebab(key);
+			this.setCSS(kebab, (dict as Record<string, any>)[key].toString());
+		}
 		return this;
 	}
 

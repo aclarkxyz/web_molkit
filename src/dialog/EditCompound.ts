@@ -105,7 +105,7 @@ export class EditCompound extends Dialog
 		let skdiv = dom('<div/>').appendTo(body).css({'width': `${skw}px`, 'height': `${skh}px`});
 
 		this.sketcher.setSize(skw, skh);
-		this.sketcher.defineMolecule(this.mol);
+		if (this.mol) this.sketcher.defineMolecule(this.mol);
 		this.sketcher.setup(() => this.sketcher.render(skdiv));
 	}
 
