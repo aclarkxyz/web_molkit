@@ -415,6 +415,13 @@ export class MetaMolecule
 		return this.bondArom == null ? false : this.bondArom[bond - 1];
 	}
 
+	// access to pi-bond flag
+	public isPiAtom(atom:number):boolean
+	{
+		this.ensurePiAtoms();
+		return this.piAtom[atom - 1];
+	}
+
 	// modified version of bond order: returns -1 to encode for aromaticity; if not aromatic, or aromaticity wasn't calculated,
 	// this is the same as the regular bond order
 	public bondOrderArom(bond:number):number

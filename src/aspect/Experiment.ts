@@ -136,7 +136,7 @@ export class ExperimentEntry
 
 	constructor() {}
 
-	// makes a deep copy (assuming that molecules are treated as immutable)
+	// makes a deep copy of the arrays (assuming that molecules are treated as immutable)
 	public clone():ExperimentEntry
 	{
 		let dup = new ExperimentEntry();

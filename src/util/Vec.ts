@@ -117,12 +117,18 @@ export class Vec
 		return arr;
 	}
 
-	// squishes a 2D array down to a single consecutive flattened vector
+	// squishes a 2D-ish array down to a single consecutive flattened vector; it treats null elements like empty arrays; guaranteed shallow clone
 	public static flatten<T>(mtx:T[][]):T[]
 	{
 		let ret:T[] = [];
-		for (let vec of mtx) ret.push(...vec);
+		for (let vec of mtx) if (ret) ret.push(...vec);
 		return ret;
+	}
+
+	// returns a version of the array that has nulls stripped out; guaranteed to be a shallow clone
+	public static packed<T>(vec:T[]):T[]
+	{
+		return vec.filter((v) => v != null);
 	}
 
 	// assuming the input is matrix-like, swaps the first two axes, i.e. {m,n} => {n,m}

@@ -594,6 +594,12 @@ export class MolUtil
 		for (let n = mapnum.length - 1; n >= 0; n--) mapnum[n] = mol.atomMapNum(n + 1);
 		return mapnum;
 	}
+	public static hasAnyMapping(mol:Molecule ):boolean
+	{
+		for (let n = 1; n <= mol.numAtoms; n++) if (mol.atomMapNum(n) > 0) return true;
+		return false;
+	}
+
 
 	// convenience, remove all mappings numbers
 	public static removeMappings(mol:Molecule):void
