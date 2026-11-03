@@ -10,9 +10,10 @@
 	[PKG=webmolkit]
 */
 
-import {Matrix, SingularValueDecomposition} from './Matrix';
+import {Matrix} from './Matrix';
+import {SingularValueDecomposition} from './SingularValueDecomposition';
 import {Triangulation2D} from './Triangulation2D';
-import {angleDiff, angleDiffPos, angleNorm, fltEqual, maxArray, minArray, norm2_xy, norm_xy, realEqual, sqr, TWOPI} from './util';
+import {angleDiff, angleDiffPos, angleNorm, fltEqual, maxArray, minArray, norm2_xy, norm2_xyz, norm_xy, realEqual, sqr, TWOPI} from './util';
 import {Vec} from './Vec';
 
 /*
@@ -268,6 +269,57 @@ export class GeomUtil
 		const y = v1[2] * v2[0] - v1[0] * v2[2];
 		const z = v1[0] * v2[1] - v1[1] * v2[0];
 		return [x, y, z];
+	}
+
+	// rotation around one of the axes (3D)
+	public static rotationX(theta:number):number[][]
+	{
+		let cosTheta = Math.cos(theta), sinTheta = Math.sin(theta);
+		return [[1, 0, 0], [0, cosTheta, -sinTheta], [0, sinTheta, cosTheta]];
+	}
+	public static rotationY(theta:number):number[][]
+	{
+		let cosTheta = Math.cos(theta), sinTheta = Math.sin(theta);
+		return [[cosTheta, 0, sinTheta], [0, 1, 0], [-sinTheta, 0, cosTheta]];
+	}
+	public static rotationZ(theta:number):number[][]
+	{
+		let cosTheta = Math.cos(theta), sinTheta = Math.sin(theta);
+		return [[cosTheta, -sinTheta, 0], [sinTheta, cosTheta, 0], [0, 0, 1]];
+	}
+	
+	// returns the rotation matrix around the given vector (3D)
+	public static rotationMatrix(vec:number[], theta:number):number[][]
+	{
+		let inv = 1.0 / norm2_xyz(vec[0], vec[1], vec[2]);
+		let ux = vec[0] * inv, uy = vec[1] * inv, uz = vec[2] * inv;
+		let cosTheta = Math.cos(theta), sinTheta = Math.sin(theta);
+		return [
+			[
+				cosTheta + ux * ux * (1 - cosTheta),
+				ux * uy * (1 - cosTheta) - uz * sinTheta,
+				ux * uz * (1 - cosTheta) + uy * sinTheta
+			],
+			[
+				uy * ux * (1 - cosTheta) + uz * sinTheta,
+				cosTheta + uy * uy * (1 - cosTheta),
+				uy * uz * (1 - cosTheta) - ux * sinTheta
+			],
+			[
+				uz * ux * (1 - cosTheta) - uy * sinTheta,
+				uz * uy * (1 - cosTheta) + ux * sinTheta,
+				cosTheta + uz * uz * (1 - cosTheta)
+			]
+		];
+	}
+
+	// apply the rotation matrix to a 3D coordinate vector
+	public static rotateCoord(rotmtx:number[][], xyz:number[]):void
+	{
+		let x = xyz[0], y = xyz[1], z = xyz[2];
+		xyz[0] = x * rotmtx[0][0] + y * rotmtx[0][1] + z * rotmtx[0][2];
+		xyz[1] = x * rotmtx[1][0] + y * rotmtx[1][1] + z * rotmtx[1][2];
+		xyz[2] = x * rotmtx[2][0] + y * rotmtx[2][1] + z * rotmtx[2][2];
 	}
 
 	// generate 2D affine transforms

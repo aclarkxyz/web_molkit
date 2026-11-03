@@ -13,16 +13,18 @@
 import {deepClone} from './util';
 import {Vec} from './Vec';
 
+/* eslint-disable @typescript-eslint/naming-convention */
+
 /*
 	Pseudorandom number generator. An implementation of the Mersenne Twister which is based on pseudocode from the Wikipedia page. This is a superior
 	alternative to simplistic linear generators, which can have annoying habits like repeating the same number for certain mod values. This implementation
 	produces good results for general use, as measured empirically by the unit test, but of course don't use it for anything like cryptography.
 */
 
-const MT_n = 624
-const MT_m = 397
-const MT_w = 32
-const MT_r = 31
+const MT_n = 624;
+const MT_m = 397;
+const MT_w = 32;
+const MT_r = 31;
 const MT_UMASK = (0xFFFFFFFF << MT_r);
 const MT_LMASK = (0xFFFFFFFF >> (MT_w - MT_r));
 const MT_a = 0x9908B0DF;
@@ -63,7 +65,7 @@ export class Random
 		else
 		{
 			const {array, index} = seedOrState;
-			if (Array.isArray(array) && typeof index == 'number') 
+			if (Array.isArray(array) && typeof index == 'number')
 				this.state = {array: [...array], index};
 			else
 				throw new Error('Invalid random state.');
@@ -94,7 +96,7 @@ export class Random
 
 		x = array[j] ^ xA;
 		array[k++] = x;
-		
+
 		if (k >= MT_n) k = 0;
 		this.state.index = k;
 

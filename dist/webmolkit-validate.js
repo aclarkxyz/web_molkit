@@ -4633,12 +4633,13 @@ exports.BayesianModel = BayesianModel;
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.BuildSMILES = void 0;
+const MolUtil_1 = __webpack_require__(/*! ../mol/MolUtil */ "./src/mol/MolUtil.ts");
 const Chemistry_1 = __webpack_require__(/*! ../mol/Chemistry */ "./src/mol/Chemistry.ts");
 const Vec_1 = __webpack_require__(/*! ../util/Vec */ "./src/util/Vec.ts");
 class BuildSMILES {
     constructor(mol, pri = null) {
-        this.mol = mol;
         this.pri = pri;
+        this.mol = MolUtil_1.MolUtil.expandedAbbrevs(mol);
     }
     generate() {
         if (this.mol.numAtoms == 0)
@@ -5057,6 +5058,115 @@ CircularFingerprints.CLASS_ECFP0 = 0;
 CircularFingerprints.CLASS_ECFP2 = 1;
 CircularFingerprints.CLASS_ECFP4 = 2;
 CircularFingerprints.CLASS_ECFP6 = 3;
+
+
+/***/ }),
+
+/***/ "./src/calc/DistanceGeometry.ts":
+/*!**************************************!*\
+  !*** ./src/calc/DistanceGeometry.ts ***!
+  \**************************************/
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.DistanceGeometry = void 0;
+const EigenvalueDecomposition_1 = __webpack_require__(/*! @wmk/util/EigenvalueDecomposition */ "./src/util/EigenvalueDecomposition.ts");
+const Geom_1 = __webpack_require__(/*! @wmk/util/Geom */ "./src/util/Geom.ts");
+const Matrix_1 = __webpack_require__(/*! @wmk/util/Matrix */ "./src/util/Matrix.ts");
+const util_1 = __webpack_require__(/*! @wmk/util/util */ "./src/util/util.ts");
+const Vec_1 = __webpack_require__(/*! @wmk/util/Vec */ "./src/util/Vec.ts");
+class DistanceGeometry {
+    constructor(D) {
+        this.D = D;
+        this.eigenValues = null;
+        this.eigenVectors = null;
+    }
+    calculate() {
+        const { D } = this;
+        const sz = D.length;
+        for (let i = 0; i < sz; i++) {
+            if (D[i].length != sz)
+                throw new Error('Distance matrix is not square.');
+            if (D[i][i] != 0)
+                throw new Error('Distance matrix must be hollow, i.e. diagonal all zero');
+            for (let j = i + 1; j < sz; j++)
+                if (D[i][j] != D[j][i])
+                    throw new Error('Matrix must be symmetrical.');
+        }
+        let invsz = 1.0 / sz;
+        let B = new Array(sz);
+        for (let i = 0; i < sz; i++) {
+            let p1 = 0, p2 = 0;
+            for (let j = 0; j < sz; j++) {
+                p1 += (0, util_1.sqr)(D[i][j]);
+                for (let k = j + 1; k < sz; k++)
+                    p2 += (0, util_1.sqr)(D[j][k]);
+            }
+            B[i] = invsz * p1 - (invsz * invsz) * p2;
+        }
+        let M = new Array(sz);
+        for (let i = 0; i < sz; i++) {
+            M[i] = new Array(sz);
+            for (let j = 0; j < sz; j++) {
+                let v1 = B[i], v2 = B[j], v3 = D[i][j];
+                M[i][j] = 0.5 * (v1 * v1 + v2 * v2 - v3 * v3);
+            }
+        }
+        let evd = new EigenvalueDecomposition_1.EigenvalueDecomposition(Matrix_1.Matrix.fromArray(M));
+        this.eigenValues = evd.getRealEigenvalues();
+        this.eigenVectors = evd.getVArray();
+    }
+    getCoordinates(d) {
+        const { eigenValues, eigenVectors } = this;
+        if (d >= eigenValues.length)
+            throw new Error(`Requesting too many dimensions: ${d} of ${eigenValues.length}`);
+        const sz = eigenValues.length;
+        let idx = sz - 1 - d;
+        let eig = eigenValues[idx];
+        if (eig <= 0)
+            return Vec_1.Vec.numberArray(0, sz);
+        let coef = Math.sqrt(eig);
+        let coords = new Array(sz);
+        for (let n = 0; n < sz; n++)
+            coords[n] = coef * eigenVectors[n][idx];
+        return coords;
+    }
+    getBestCoordinates() {
+        const sz = this.D.length;
+        let x = this.getCoordinates(0), y = this.getCoordinates(1), z = this.getCoordinates(2);
+        Vec_1.Vec.addTo(x, -Vec_1.Vec.sum(x) / sz);
+        Vec_1.Vec.addTo(y, -Vec_1.Vec.sum(y) / sz);
+        Vec_1.Vec.addTo(z, -Vec_1.Vec.sum(z) / sz);
+        let A = new Matrix_1.Matrix(sz, 3);
+        let b = new Matrix_1.Matrix(sz, 1);
+        for (let n = 0; n < sz; n++) {
+            A.set(n, 0, x[n]);
+            A.set(n, 1, y[n]);
+            A.set(n, 2, 1);
+            b.set(n, 0, z[n]);
+        }
+        let At = A.transpose();
+        let fit = (At.times(A)).inverse().times(At).times(b);
+        let normal = fit.getColumnPackedCopy();
+        if (Geom_1.GeomUtil.magnitude(normal) < 1E-16)
+            return [x, y, z];
+        Geom_1.GeomUtil.normalise(normal);
+        const ZAXIS = [0, 0, 1];
+        let rotaxis = Geom_1.GeomUtil.crossProduct(normal, ZAXIS);
+        let theta = Math.acos(Geom_1.GeomUtil.dotProduct(normal, ZAXIS));
+        let rotmtx = Geom_1.GeomUtil.rotationMatrix(rotaxis, theta);
+        for (let n = 0; n < sz; n++) {
+            let xyz = [x[n], y[n], z[n]];
+            Geom_1.GeomUtil.rotateCoord(rotmtx, xyz);
+            x[n] = xyz[0];
+            y[n] = xyz[1];
+            z[n] = xyz[2];
+        }
+        return [x, y, z];
+    }
+}
+exports.DistanceGeometry = DistanceGeometry;
 
 
 /***/ }),
@@ -5928,7 +6038,8 @@ class EditCompound extends Dialog_1.Dialog {
         let skw = 800, skh = 650;
         let skdiv = (0, dom_1.dom)('<div/>').appendTo(body).css({ 'width': `${skw}px`, 'height': `${skh}px` });
         this.sketcher.setSize(skw, skh);
-        this.sketcher.defineMolecule(this.mol);
+        if (this.mol)
+            this.sketcher.defineMolecule(this.mol);
         this.sketcher.setup(() => this.sketcher.render(skdiv));
     }
     actionCopy() {
@@ -10962,7 +11073,7 @@ FontData.main = new FontData();
 
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.MetaVector = exports.TextAlign = void 0;
+exports.MetaVector = exports.PrimClass = exports.TextAlign = void 0;
 const Geom_1 = __webpack_require__(/*! ../util/Geom */ "./src/util/Geom.ts");
 const util_1 = __webpack_require__(/*! ../util/util */ "./src/util/util.ts");
 const Vec_1 = __webpack_require__(/*! ../util/Vec */ "./src/util/Vec.ts");
@@ -10985,7 +11096,7 @@ var PrimClass;
     PrimClass[PrimClass["Path"] = 4] = "Path";
     PrimClass[PrimClass["Text"] = 5] = "Text";
     PrimClass[PrimClass["TextNative"] = 6] = "TextNative";
-})(PrimClass || (PrimClass = {}));
+})(PrimClass || (exports.PrimClass = PrimClass = {}));
 function pixelCoord(val) {
     var _a;
     let str = val.toFixed(4);
@@ -11039,6 +11150,7 @@ class MetaVector {
         this.offsetY = 0;
         this.scale = 1;
         this.density = 1;
+        this.usesNativeFont = false;
         this.charMissing = false;
         this.lowX = null;
         this.lowY = null;
@@ -11220,6 +11332,7 @@ class MetaVector {
         this.updateBounds(x + metrics[0], y + metrics[2]);
         let typeidx = this.findOrCreateType({ primClass: PrimClass.TextNative, family: fontFamily, size: fontSize, colour, opt });
         this.prims.push({ primClass: PrimClass.TextNative, typeidx, x, y, txt });
+        this.usesNativeFont = true;
     }
     boundLowX() { return this.lowX; }
     boundLowY() { return this.lowY; }
@@ -11642,6 +11755,7 @@ class MetaVector {
         y = this.offsetY + this.scale * y;
         let font = FontData_1.FontData.main;
         let scale = size * this.scale / font.UNITS_PER_EM;
+        let theta = direction != 0 ? direction * util_1.DEGRAD : 0;
         let dx = 0;
         for (let n = 0; n < txt.length; n++) {
             let ch = txt.charAt(n);
@@ -11655,7 +11769,6 @@ class MetaVector {
                 path = font.getGlyphPath(i);
             if (path) {
                 ctx.save();
-                let theta = direction != 0 ? direction * util_1.DEGRAD : 0;
                 if (theta == 0)
                     ctx.translate(x + dx * scale, y);
                 else
@@ -11686,6 +11799,8 @@ class MetaVector {
             pfx += 'italic ';
         ctx.font = pfx + (size * this.scale) + 'px ' + family;
         ctx.fillStyle = fill;
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'alphabetic';
         ctx.fillText(txt, x, y);
         ctx.restore();
     }
@@ -17085,6 +17200,10 @@ class MetaMolecule {
     isBondAromatic(bond) {
         return this.bondArom == null ? false : this.bondArom[bond - 1];
     }
+    isPiAtom(atom) {
+        this.ensurePiAtoms();
+        return this.piAtom[atom - 1];
+    }
     bondOrderArom(bond) {
         return this.bondArom != null && this.bondArom[bond - 1] ? -1 : this.mol.bondOrder(bond);
     }
@@ -17670,6 +17789,12 @@ class MolUtil {
         for (let n = mapnum.length - 1; n >= 0; n--)
             mapnum[n] = mol.atomMapNum(n + 1);
         return mapnum;
+    }
+    static hasAnyMapping(mol) {
+        for (let n = 1; n <= mol.numAtoms; n++)
+            if (mol.atomMapNum(n) > 0)
+                return true;
+        return false;
     }
     static removeMappings(mol) {
         for (let n = 1; n <= mol.numAtoms; n++)
@@ -19467,7 +19592,7 @@ exports.PseudoEmbedding = PseudoEmbedding;
 
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.QueryUtil = exports.QueryTypeBond = exports.QueryTypeAtom = void 0;
+exports.QueryUtil = exports.QueryTypeTransform = exports.QueryTypeBond = exports.QueryTypeAtom = void 0;
 const Vec_1 = __webpack_require__(/*! ../util/Vec */ "./src/util/Vec.ts");
 const Molecule_1 = __webpack_require__(/*! ./Molecule */ "./src/mol/Molecule.ts");
 const MolUtil_1 = __webpack_require__(/*! ../mol/MolUtil */ "./src/mol/MolUtil.ts");
@@ -19487,9 +19612,11 @@ var QueryTypeAtom;
     QueryTypeAtom["BondSums"] = "qO:";
     QueryTypeAtom["Valences"] = "qV:";
     QueryTypeAtom["Hydrogens"] = "qH:";
+    QueryTypeAtom["Whole"] = "qW:";
     QueryTypeAtom["Isotopes"] = "qI:";
     QueryTypeAtom["SubFrags"] = "qX:";
     QueryTypeAtom["SubFragsNot"] = "qX!";
+    QueryTypeAtom["Transform"] = "qT:";
 })(QueryTypeAtom || (exports.QueryTypeAtom = QueryTypeAtom = {}));
 var QueryTypeBond;
 (function (QueryTypeBond) {
@@ -19498,7 +19625,15 @@ var QueryTypeBond;
     QueryTypeBond["RingBlock"] = "qB:";
     QueryTypeBond["NumRings"] = "qN:";
     QueryTypeBond["Orders"] = "qO:";
+    QueryTypeBond["Transform"] = "qT:";
 })(QueryTypeBond || (exports.QueryTypeBond = QueryTypeBond = {}));
+var QueryTypeTransform;
+(function (QueryTypeTransform) {
+    QueryTypeTransform["Changed"] = "c";
+    QueryTypeTransform["Unchanged"] = "u";
+    QueryTypeTransform["Preserved"] = "s";
+    QueryTypeTransform["Inverted"] = "i";
+})(QueryTypeTransform || (exports.QueryTypeTransform = QueryTypeTransform = {}));
 class QueryUtil {
     static hasAnyQueryAtom(mol, atom) {
         let extra = mol.atomExtra(atom);
@@ -19647,14 +19782,17 @@ class QueryUtil {
     static queryAtomBondSums(mol, atom) { return this.parseIntegers(this.queryAtomString(mol, atom, QueryTypeAtom.BondSums)); }
     static queryAtomValences(mol, atom) { return this.parseIntegers(this.queryAtomString(mol, atom, QueryTypeAtom.Valences)); }
     static queryAtomHydrogens(mol, atom) { return this.parseIntegers(this.queryAtomString(mol, atom, QueryTypeAtom.Hydrogens)); }
+    static queryAtomWhole(mol, atom) { return this.parseBoolean(this.queryAtomString(mol, atom, QueryTypeAtom.Whole)); }
     static queryAtomIsotope(mol, atom) { return this.parseIntegers(this.queryAtomString(mol, atom, QueryTypeAtom.Isotopes)); }
     static queryAtomSubFrags(mol, atom) { return this.parseMolecules(this.queryAtomStringList(mol, atom, QueryTypeAtom.SubFrags)); }
     static queryAtomSubFragsNot(mol, atom) { return this.parseMolecules(this.queryAtomStringList(mol, atom, QueryTypeAtom.SubFragsNot)); }
+    static queryAtomTransform(mol, atom) { return this.parseStrings(this.queryAtomString(mol, atom, QueryTypeAtom.Transform)); }
     static queryBondRingSizes(mol, bond) { return this.parseIntegers(this.queryBondString(mol, bond, QueryTypeBond.RingSizes)); }
     static queryBondRingSizesNot(mol, bond) { return this.parseIntegers(this.queryBondString(mol, bond, QueryTypeBond.RingSizesNot)); }
     static queryBondRingBlock(mol, bond) { return this.parseBoolean(this.queryBondString(mol, bond, QueryTypeBond.RingBlock)); }
     static queryBondNumRings(mol, bond) { return this.parseIntegers(this.queryBondString(mol, bond, QueryTypeBond.NumRings)); }
     static queryBondOrders(mol, bond) { return this.parseIntegers(this.queryBondString(mol, bond, QueryTypeBond.Orders)); }
+    static queryBondTransform(mol, bond) { return this.parseStrings(this.queryBondString(mol, bond, QueryTypeBond.Transform)); }
     static setQueryAtomCharges(mol, atom, value) { this.setQueryAtom(mol, atom, QueryTypeAtom.Charges, this.formatIntegers(value)); }
     static setQueryAtomAromatic(mol, atom, value) { this.setQueryAtom(mol, atom, QueryTypeAtom.Aromatic, this.formatBoolean(value)); }
     static setQueryAtomUnsaturated(mol, atom, value) { this.setQueryAtom(mol, atom, QueryTypeAtom.Unsaturated, this.formatBoolean(value)); }
@@ -19669,14 +19807,17 @@ class QueryUtil {
     static setQueryAtomBondSums(mol, atom, value) { this.setQueryAtom(mol, atom, QueryTypeAtom.BondSums, this.formatIntegers(value)); }
     static setQueryAtomValences(mol, atom, value) { this.setQueryAtom(mol, atom, QueryTypeAtom.Valences, this.formatIntegers(value)); }
     static setQueryAtomHydrogens(mol, atom, value) { this.setQueryAtom(mol, atom, QueryTypeAtom.Hydrogens, this.formatIntegers(value)); }
+    static setQueryAtomWhole(mol, atom, value) { this.setQueryAtom(mol, atom, QueryTypeAtom.Whole, this.formatBoolean(value)); }
     static setQueryAtomIsotope(mol, atom, value) { this.setQueryAtom(mol, atom, QueryTypeAtom.Isotopes, this.formatIntegers(value)); }
     static setQueryAtomSubFrags(mol, atom, value) { this.setQueryAtomList(mol, atom, QueryTypeAtom.SubFrags, this.formatMolecules(value)); }
     static setQueryAtomSubFragsNot(mol, atom, value) { this.setQueryAtomList(mol, atom, QueryTypeAtom.SubFragsNot, this.formatMolecules(value)); }
+    static setQueryAtomTransform(mol, atom, value) { this.setQueryAtom(mol, atom, QueryTypeAtom.Transform, this.formatStrings(value)); }
     static setQueryBondRingSizes(mol, bond, value) { this.setQueryBond(mol, bond, QueryTypeBond.RingSizes, this.formatIntegers(value)); }
     static setQueryBondRingSizesNot(mol, bond, value) { this.setQueryBond(mol, bond, QueryTypeBond.RingSizesNot, this.formatIntegers(value)); }
     static setQueryBondRingBlock(mol, bond, value) { this.setQueryBond(mol, bond, QueryTypeBond.RingBlock, this.formatBoolean(value)); }
     static setQueryBondNumRings(mol, bond, value) { this.setQueryBond(mol, bond, QueryTypeBond.NumRings, this.formatIntegers(value)); }
     static setQueryBondOrders(mol, bond, value) { this.setQueryBond(mol, bond, QueryTypeBond.Orders, this.formatIntegers(value)); }
+    static setQueryBondTransform(mol, bond, value) { this.setQueryBond(mol, bond, QueryTypeBond.Transform, this.formatStrings(value)); }
     static parseIntegers(str) {
         if (!str)
             return null;
@@ -27883,6 +28024,12 @@ class QueryFieldsWidget extends Widget_1.Widget {
             let input = (0, dom_1.dom)('<input size="20"/>').appendTo(div).css({ 'flex-grow': '1' });
             return [chk, input];
         };
+        let makeCheckbox = (domParent, label) => {
+            let lbl = (0, dom_1.dom)('<label/>').css({ 'margin-right': '0.5em' }).appendTo(domParent);
+            let chk = (0, dom_1.dom)('<input type="checkbox"/>').appendTo(lbl);
+            lbl.appendText(label);
+            return chk;
+        };
         if (this.atom > 0) {
             (0, dom_1.dom)('<div>Charges</div>').appendTo(grid).css({ 'grid-area': `${++row} / title` });
             this.inputCharges = makeInput();
@@ -27911,8 +28058,17 @@ class QueryFieldsWidget extends Widget_1.Widget {
             this.inputValences = makeInput();
             (0, dom_1.dom)('<div>Hydrogens</div>').appendTo(grid).css({ 'grid-area': `${++row} / title` });
             this.inputHydrogens = makeInput();
+            (0, dom_1.dom)('<div>Whole Fragment</div>').appendTo(grid).css({ 'grid-area': `${++row} / title` });
+            this.optWhole = new OptionList_1.OptionList(['Maybe', 'Yes', 'No']);
+            this.optWhole.render((0, dom_1.dom)('<div/>').appendTo(grid).css({ 'grid-area': `${row} / value` }));
             (0, dom_1.dom)('<div>Isotopes</div>').appendTo(grid).css({ 'grid-area': `${++row} / title` });
             this.inputIsotopes = makeInput();
+            (0, dom_1.dom)('<div>Transform</div>').appendTo(grid).css({ 'grid-area': `${++row} / title` });
+            let divTransform = (0, dom_1.dom)('<div/>').appendTo(grid).css({ 'grid-area': `${row} / value` });
+            this.chkTransChanged = makeCheckbox(divTransform, 'Core changed');
+            this.chkTransUnchanged = makeCheckbox(divTransform, 'Unchanged');
+            this.chkStereoPreserved = makeCheckbox(divTransform, 'Stereo preserved');
+            this.chkStereoInverted = makeCheckbox(divTransform, 'Stereo inverted');
             this.setupAtom();
         }
         else {
@@ -27925,6 +28081,12 @@ class QueryFieldsWidget extends Widget_1.Widget {
             this.inputNumRings = makeInput();
             (0, dom_1.dom)('<div>Bond Orders</div>').appendTo(grid).css({ 'grid-area': `${++row} / title` });
             this.inputOrders = makeInput();
+            (0, dom_1.dom)('<div>Transform</div>').appendTo(grid).css({ 'grid-area': `${++row} / title` });
+            let divTransform = (0, dom_1.dom)('<div/>').appendTo(grid).css({ 'grid-area': `${row} / value` });
+            this.chkTransChanged = makeCheckbox(divTransform, 'Changed');
+            this.chkTransUnchanged = makeCheckbox(divTransform, 'Unchanged');
+            this.chkStereoPreserved = makeCheckbox(divTransform, 'Stereo preserved');
+            this.chkStereoInverted = makeCheckbox(divTransform, 'Stereo inverted');
             this.setupBond();
         }
     }
@@ -27937,9 +28099,13 @@ class QueryFieldsWidget extends Widget_1.Widget {
         let arom = this.optAromatic.getSelectedIndex();
         if (arom > 0)
             QueryUtil_1.QueryUtil.setQueryAtomAromatic(mol, atom, arom == 1);
+        else
+            QueryUtil_1.QueryUtil.deleteQueryAtom(mol, atom, QueryUtil_1.QueryTypeAtom.Aromatic);
         let unsat = this.optUnsaturated.getSelectedIndex();
         if (unsat > 0)
             QueryUtil_1.QueryUtil.setQueryAtomUnsaturated(mol, atom, unsat == 1);
+        else
+            QueryUtil_1.QueryUtil.deleteQueryAtom(mol, atom, QueryUtil_1.QueryTypeAtom.Unsaturated);
         let elem = this.splitStrings(this.inputElements.getValue());
         if (elem) {
             if (!this.chkNotElements.elInput.checked)
@@ -27957,6 +28123,8 @@ class QueryFieldsWidget extends Widget_1.Widget {
         let ringblk = this.optRingBlock.getSelectedIndex();
         if (ringblk > 0)
             QueryUtil_1.QueryUtil.setQueryAtomRingBlock(mol, atom, ringblk == 1);
+        else
+            QueryUtil_1.QueryUtil.deleteQueryAtom(mol, atom, QueryUtil_1.QueryTypeAtom.RingBlock);
         let nring = this.splitNumbers(this.inputNumRings.getValue());
         if (nring)
             QueryUtil_1.QueryUtil.setQueryAtomNumRings(mol, atom, nring);
@@ -27975,9 +28143,27 @@ class QueryFieldsWidget extends Widget_1.Widget {
         let hyd = this.splitNumbers(this.inputHydrogens.getValue());
         if (hyd)
             QueryUtil_1.QueryUtil.setQueryAtomHydrogens(mol, atom, hyd);
+        let whole = this.optWhole.getSelectedIndex();
+        if (whole > 0)
+            QueryUtil_1.QueryUtil.setQueryAtomWhole(mol, atom, whole == 1);
+        else
+            QueryUtil_1.QueryUtil.deleteQueryAtom(mol, atom, QueryUtil_1.QueryTypeAtom.Whole);
         let iso = this.splitNumbers(this.inputIsotopes.getValue());
         if (iso)
             QueryUtil_1.QueryUtil.setQueryAtomIsotope(mol, atom, iso);
+        let transform = [];
+        if (this.chkTransChanged.elInput.checked)
+            transform.push(QueryUtil_1.QueryTypeTransform.Changed);
+        if (this.chkTransUnchanged.elInput.checked)
+            transform.push(QueryUtil_1.QueryTypeTransform.Unchanged);
+        if (this.chkStereoPreserved.elInput.checked)
+            transform.push(QueryUtil_1.QueryTypeTransform.Preserved);
+        if (this.chkStereoInverted.elInput.checked)
+            transform.push(QueryUtil_1.QueryTypeTransform.Inverted);
+        if (transform.length > 0)
+            QueryUtil_1.QueryUtil.setQueryAtomTransform(mol, atom, transform);
+        else
+            QueryUtil_1.QueryUtil.deleteQueryAtom(mol, atom, QueryUtil_1.QueryTypeAtom.Transform);
     }
     updateBond() {
         const { mol, bond } = this;
@@ -27998,8 +28184,22 @@ class QueryFieldsWidget extends Widget_1.Widget {
         let order = this.splitNumbers(this.inputOrders.getValue());
         if (order)
             QueryUtil_1.QueryUtil.setQueryBondOrders(mol, bond, order);
+        let transform = [];
+        if (this.chkTransChanged.elInput.checked)
+            transform.push(QueryUtil_1.QueryTypeTransform.Changed);
+        if (this.chkTransUnchanged.elInput.checked)
+            transform.push(QueryUtil_1.QueryTypeTransform.Unchanged);
+        if (this.chkStereoPreserved.elInput.checked)
+            transform.push(QueryUtil_1.QueryTypeTransform.Preserved);
+        if (this.chkStereoInverted.elInput.checked)
+            transform.push(QueryUtil_1.QueryTypeTransform.Inverted);
+        if (transform.length > 0)
+            QueryUtil_1.QueryUtil.setQueryBondTransform(mol, bond, transform);
+        else
+            QueryUtil_1.QueryUtil.deleteQueryBond(mol, bond, QueryUtil_1.QueryTypeBond.Transform);
     }
     setupAtom() {
+        var _a;
         const { mol, atom } = this;
         let chg = QueryUtil_1.QueryUtil.queryAtomCharges(mol, atom);
         let arom = QueryUtil_1.QueryUtil.queryAtomAromatic(mol, atom);
@@ -28015,9 +28215,11 @@ class QueryFieldsWidget extends Widget_1.Widget {
         let bond = QueryUtil_1.QueryUtil.queryAtomBondSums(mol, atom);
         let val = QueryUtil_1.QueryUtil.queryAtomValences(mol, atom);
         let hyd = QueryUtil_1.QueryUtil.queryAtomHydrogens(mol, atom);
+        let whole = QueryUtil_1.QueryUtil.queryAtomWhole(mol, atom);
         let iso = QueryUtil_1.QueryUtil.queryAtomIsotope(mol, atom);
         let frag = QueryUtil_1.QueryUtil.queryAtomSubFrags(mol, atom);
         let fragNot = QueryUtil_1.QueryUtil.queryAtomSubFragsNot(mol, atom);
+        let transform = (_a = QueryUtil_1.QueryUtil.queryAtomTransform(mol, atom)) !== null && _a !== void 0 ? _a : [];
         this.inputCharges.setValue(Vec_1.Vec.notBlank(chg) ? chg.join(',') : '');
         this.optAromatic.setSelectedIndex(arom == null ? 0 : arom ? 1 : 2);
         this.optUnsaturated.setSelectedIndex(unsat == null ? 0 : unsat ? 1 : 2);
@@ -28032,20 +28234,31 @@ class QueryFieldsWidget extends Widget_1.Widget {
         this.inputBondSums.setValue(Vec_1.Vec.notBlank(bond) ? bond.join(',') : '');
         this.inputValences.setValue(Vec_1.Vec.notBlank(val) ? val.join(',') : '');
         this.inputHydrogens.setValue(Vec_1.Vec.notBlank(hyd) ? hyd.join(',') : '');
+        this.optWhole.setSelectedIndex(whole == null ? 0 : whole ? 1 : 2);
         this.inputIsotopes.setValue(Vec_1.Vec.notBlank(iso) ? iso.join(',') : '');
+        this.chkTransChanged.elInput.checked = transform.includes(QueryUtil_1.QueryTypeTransform.Changed);
+        this.chkTransUnchanged.elInput.checked = transform.includes(QueryUtil_1.QueryTypeTransform.Unchanged);
+        this.chkStereoPreserved.elInput.checked = transform.includes(QueryUtil_1.QueryTypeTransform.Preserved);
+        this.chkStereoInverted.elInput.checked = transform.includes(QueryUtil_1.QueryTypeTransform.Inverted);
     }
     setupBond() {
+        var _a;
         const { mol, bond } = this;
         let ringsz = QueryUtil_1.QueryUtil.queryBondRingSizes(mol, bond);
         let ringszNot = QueryUtil_1.QueryUtil.queryBondRingSizesNot(mol, bond);
         let ringblk = QueryUtil_1.QueryUtil.queryBondRingBlock(mol, bond);
         let nring = QueryUtil_1.QueryUtil.queryBondNumRings(mol, bond);
         let order = QueryUtil_1.QueryUtil.queryBondOrders(mol, bond);
+        let transform = (_a = QueryUtil_1.QueryUtil.queryBondTransform(mol, bond)) !== null && _a !== void 0 ? _a : [];
         this.chkNotRingSizes.elInput.checked = Vec_1.Vec.isBlank(ringsz) && Vec_1.Vec.notBlank(ringszNot);
         this.inputRingSizes.setValue(Vec_1.Vec.notBlank(ringsz) ? ringsz.join(',') : Vec_1.Vec.notBlank(ringszNot) ? ringszNot.join(',') : '');
         this.optRingBlock.setSelectedIndex(ringblk == null ? 0 : ringblk ? 1 : 2);
         this.inputNumRings.setValue(Vec_1.Vec.notBlank(nring) ? nring.join(',') : '');
         this.inputOrders.setValue(Vec_1.Vec.notBlank(order) ? order.join(',') : '');
+        this.chkTransChanged.elInput.checked = transform.includes(QueryUtil_1.QueryTypeTransform.Changed);
+        this.chkTransUnchanged.elInput.checked = transform.includes(QueryUtil_1.QueryTypeTransform.Unchanged);
+        this.chkStereoPreserved.elInput.checked = transform.includes(QueryUtil_1.QueryTypeTransform.Preserved);
+        this.chkStereoInverted.elInput.checked = transform.includes(QueryUtil_1.QueryTypeTransform.Inverted);
     }
     splitStrings(str) {
         let list = [];
@@ -33307,6 +33520,708 @@ exports.Widget = Widget;
 
 /***/ }),
 
+/***/ "./src/util/EigenvalueDecomposition.ts":
+/*!*********************************************!*\
+  !*** ./src/util/EigenvalueDecomposition.ts ***!
+  \*********************************************/
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.EigenvalueDecomposition = void 0;
+const Matrix_1 = __webpack_require__(/*! ./Matrix */ "./src/util/Matrix.ts");
+class EigenvalueDecomposition {
+    constructor(mtx) {
+        let A = mtx.A;
+        let n = this.n = mtx.n;
+        let V = this.V = new Array(n);
+        for (let i = 0; i < n; i++)
+            V[i] = new Array(n);
+        this.d = new Array(n);
+        this.e = new Array(n);
+        this.issymmetric = true;
+        outer: for (let j = 0; j < n; j++) {
+            for (let i = 0; i < n; i++) {
+                if (A[i][j] != A[j][i]) {
+                    this.issymmetric = false;
+                    break outer;
+                }
+            }
+        }
+        if (this.issymmetric) {
+            for (let i = 0; i < n; i++) {
+                for (let j = 0; j < n; j++) {
+                    V[i][j] = A[i][j];
+                }
+            }
+            this.tred2();
+            this.tql2();
+        }
+        else {
+            let H = this.H = new Array(n);
+            for (let i = 0; i < n; i++)
+                H[i] = new Array(n);
+            this.ort = new Array(n);
+            for (let j = 0; j < n; j++) {
+                for (let i = 0; i < n; i++) {
+                    H[i][j] = A[i][j];
+                }
+            }
+            this.orthes();
+            this.hqr2();
+        }
+    }
+    tred2() {
+        const { n, d, e, V } = this;
+        for (let j = 0; j < n; j++) {
+            d[j] = V[n - 1][j];
+        }
+        for (let i = n - 1; i > 0; i--) {
+            let scale = 0.0;
+            let h = 0.0;
+            for (let k = 0; k < i; k++) {
+                scale = scale + Math.abs(d[k]);
+            }
+            if (scale == 0.0) {
+                e[i] = d[i - 1];
+                for (let j = 0; j < i; j++) {
+                    d[j] = V[i - 1][j];
+                    V[i][j] = 0.0;
+                    V[j][i] = 0.0;
+                }
+            }
+            else {
+                for (let k = 0; k < i; k++) {
+                    d[k] /= scale;
+                    h += d[k] * d[k];
+                }
+                let f = d[i - 1];
+                let g = Math.sqrt(h);
+                if (f > 0) {
+                    g = -g;
+                }
+                e[i] = scale * g;
+                h = h - f * g;
+                d[i - 1] = f - g;
+                for (let j = 0; j < i; j++) {
+                    e[j] = 0.0;
+                }
+                for (let j = 0; j < i; j++) {
+                    f = d[j];
+                    V[j][i] = f;
+                    g = e[j] + V[j][j] * f;
+                    for (let k = j + 1; k <= i - 1; k++) {
+                        g += V[k][j] * d[k];
+                        e[k] += V[k][j] * f;
+                    }
+                    e[j] = g;
+                }
+                f = 0.0;
+                for (let j = 0; j < i; j++) {
+                    e[j] /= h;
+                    f += e[j] * d[j];
+                }
+                let hh = f / (h + h);
+                for (let j = 0; j < i; j++) {
+                    e[j] -= hh * d[j];
+                }
+                for (let j = 0; j < i; j++) {
+                    f = d[j];
+                    g = e[j];
+                    for (let k = j; k <= i - 1; k++) {
+                        V[k][j] -= (f * e[k] + g * d[k]);
+                    }
+                    d[j] = V[i - 1][j];
+                    V[i][j] = 0.0;
+                }
+            }
+            d[i] = h;
+        }
+        for (let i = 0; i < n - 1; i++) {
+            V[n - 1][i] = V[i][i];
+            V[i][i] = 1.0;
+            let h = d[i + 1];
+            if (h != 0.0) {
+                for (let k = 0; k <= i; k++) {
+                    d[k] = V[k][i + 1] / h;
+                }
+                for (let j = 0; j <= i; j++) {
+                    let g = 0.0;
+                    for (let k = 0; k <= i; k++) {
+                        g += V[k][i + 1] * V[k][j];
+                    }
+                    for (let k = 0; k <= i; k++) {
+                        V[k][j] -= g * d[k];
+                    }
+                }
+            }
+            for (let k = 0; k <= i; k++) {
+                V[k][i + 1] = 0.0;
+            }
+        }
+        for (let j = 0; j < n; j++) {
+            d[j] = V[n - 1][j];
+            V[n - 1][j] = 0.0;
+        }
+        V[n - 1][n - 1] = 1.0;
+        e[0] = 0.0;
+    }
+    tql2() {
+        const { n, d, e, V } = this;
+        for (let i = 1; i < n; i++) {
+            e[i - 1] = e[i];
+        }
+        e[n - 1] = 0.0;
+        let f = 0.0;
+        let tst1 = 0.0;
+        let eps = Math.pow(2.0, -52.0);
+        for (let l = 0; l < n; l++) {
+            tst1 = Math.max(tst1, Math.abs(d[l]) + Math.abs(e[l]));
+            let m = l;
+            while (m < n) {
+                if (Math.abs(e[m]) <= eps * tst1) {
+                    break;
+                }
+                m++;
+            }
+            if (m > l) {
+                let iter = 0;
+                do {
+                    iter = iter + 1;
+                    let g = d[l];
+                    let p = (d[l + 1] - g) / (2.0 * e[l]);
+                    let r = Math.hypot(p, 1.0);
+                    if (p < 0) {
+                        r = -r;
+                    }
+                    d[l] = e[l] / (p + r);
+                    d[l + 1] = e[l] * (p + r);
+                    let dl1 = d[l + 1];
+                    let h = g - d[l];
+                    for (let i = l + 2; i < n; i++) {
+                        d[i] -= h;
+                    }
+                    f = f + h;
+                    p = d[m];
+                    let c = 1.0;
+                    let c2 = c;
+                    let c3 = c;
+                    let el1 = e[l + 1];
+                    let s = 0.0;
+                    let s2 = 0.0;
+                    for (let i = m - 1; i >= l; i--) {
+                        c3 = c2;
+                        c2 = c;
+                        s2 = s;
+                        g = c * e[i];
+                        h = c * p;
+                        r = Math.hypot(p, e[i]);
+                        e[i + 1] = s * r;
+                        s = e[i] / r;
+                        c = p / r;
+                        p = c * d[i] - s * g;
+                        d[i + 1] = h + s * (c * g + s * d[i]);
+                        for (let k = 0; k < n; k++) {
+                            h = V[k][i + 1];
+                            V[k][i + 1] = s * V[k][i] + c * h;
+                            V[k][i] = c * V[k][i] - s * h;
+                        }
+                    }
+                    p = -s * s2 * c3 * el1 * e[l] / dl1;
+                    e[l] = s * p;
+                    d[l] = c * p;
+                } while (Math.abs(e[l]) > eps * tst1);
+            }
+            d[l] = d[l] + f;
+            e[l] = 0.0;
+        }
+        for (let i = 0; i < n - 1; i++) {
+            let k = i;
+            let p = d[i];
+            for (let j = i + 1; j < n; j++) {
+                if (d[j] < p) {
+                    k = j;
+                    p = d[j];
+                }
+            }
+            if (k != i) {
+                d[k] = d[i];
+                d[i] = p;
+                for (let j = 0; j < n; j++) {
+                    p = V[j][i];
+                    V[j][i] = V[j][k];
+                    V[j][k] = p;
+                }
+            }
+        }
+    }
+    orthes() {
+        const { n, V, H, ort } = this;
+        let low = 0;
+        let high = n - 1;
+        for (let m = low + 1; m <= high - 1; m++) {
+            let scale = 0.0;
+            for (let i = m; i <= high; i++) {
+                scale = scale + Math.abs(H[i][m - 1]);
+            }
+            if (scale != 0.0) {
+                let h = 0.0;
+                for (let i = high; i >= m; i--) {
+                    ort[i] = H[i][m - 1] / scale;
+                    h += ort[i] * ort[i];
+                }
+                let g = Math.sqrt(h);
+                if (ort[m] > 0) {
+                    g = -g;
+                }
+                h = h - ort[m] * g;
+                ort[m] = ort[m] - g;
+                for (let j = m; j < n; j++) {
+                    let f = 0.0;
+                    for (let i = high; i >= m; i--) {
+                        f += ort[i] * H[i][j];
+                    }
+                    f = f / h;
+                    for (let i = m; i <= high; i++) {
+                        H[i][j] -= f * ort[i];
+                    }
+                }
+                for (let i = 0; i <= high; i++) {
+                    let f = 0.0;
+                    for (let j = high; j >= m; j--) {
+                        f += ort[j] * H[i][j];
+                    }
+                    f = f / h;
+                    for (let j = m; j <= high; j++) {
+                        H[i][j] -= f * ort[j];
+                    }
+                }
+                ort[m] = scale * ort[m];
+                H[m][m - 1] = scale * g;
+            }
+        }
+        for (let i = 0; i < n; i++) {
+            for (let j = 0; j < n; j++) {
+                V[i][j] = (i == j ? 1.0 : 0.0);
+            }
+        }
+        for (let m = high - 1; m >= low + 1; m--) {
+            if (H[m][m - 1] != 0.0) {
+                for (let i = m + 1; i <= high; i++) {
+                    ort[i] = H[i][m - 1];
+                }
+                for (let j = m; j <= high; j++) {
+                    let g = 0.0;
+                    for (let i = m; i <= high; i++) {
+                        g += ort[i] * V[i][j];
+                    }
+                    g = (g / ort[m]) / H[m][m - 1];
+                    for (let i = m; i <= high; i++) {
+                        V[i][j] += g * ort[i];
+                    }
+                }
+            }
+        }
+    }
+    cdiv(xr, xi, yr, yi) {
+        let r, d;
+        if (Math.abs(yr) > Math.abs(yi)) {
+            r = yi / yr;
+            d = yr + r * yi;
+            return [(xr + r * xi) / d, (xi - r * xr) / d];
+        }
+        else {
+            r = yr / yi;
+            d = yi + r * yr;
+            return [(r * xr + xi) / d, (r * xi - xr) / d];
+        }
+    }
+    hqr2() {
+        const { d, e, V, H } = this;
+        let nn = this.n;
+        let n = nn - 1;
+        let low = 0;
+        let high = nn - 1;
+        let eps = Math.pow(2.0, -52.0);
+        let exshift = 0.0;
+        let p = 0, q = 0, r = 0, s = 0, z = 0, t, w, x, y;
+        let norm = 0.0;
+        for (let i = 0; i < nn; i++) {
+            if (i < low || i > high) {
+                d[i] = H[i][i];
+                e[i] = 0.0;
+            }
+            for (let j = Math.max(i - 1, 0); j < nn; j++) {
+                norm = norm + Math.abs(H[i][j]);
+            }
+        }
+        let iter = 0;
+        while (n >= low) {
+            let l = n;
+            while (l > low) {
+                s = Math.abs(H[l - 1][l - 1]) + Math.abs(H[l][l]);
+                if (s == 0.0) {
+                    s = norm;
+                }
+                if (Math.abs(H[l][l - 1]) < eps * s) {
+                    break;
+                }
+                l--;
+            }
+            if (l == n) {
+                H[n][n] = H[n][n] + exshift;
+                d[n] = H[n][n];
+                e[n] = 0.0;
+                n--;
+                iter = 0;
+            }
+            else if (l == n - 1) {
+                w = H[n][n - 1] * H[n - 1][n];
+                p = (H[n - 1][n - 1] - H[n][n]) / 2.0;
+                q = p * p + w;
+                z = Math.sqrt(Math.abs(q));
+                H[n][n] = H[n][n] + exshift;
+                H[n - 1][n - 1] = H[n - 1][n - 1] + exshift;
+                x = H[n][n];
+                if (q >= 0) {
+                    if (p >= 0) {
+                        z = p + z;
+                    }
+                    else {
+                        z = p - z;
+                    }
+                    d[n - 1] = x + z;
+                    d[n] = d[n - 1];
+                    if (z != 0.0) {
+                        d[n] = x - w / z;
+                    }
+                    e[n - 1] = 0.0;
+                    e[n] = 0.0;
+                    x = H[n][n - 1];
+                    s = Math.abs(x) + Math.abs(z);
+                    p = x / s;
+                    q = z / s;
+                    r = Math.sqrt(p * p + q * q);
+                    p = p / r;
+                    q = q / r;
+                    for (let j = n - 1; j < nn; j++) {
+                        z = H[n - 1][j];
+                        H[n - 1][j] = q * z + p * H[n][j];
+                        H[n][j] = q * H[n][j] - p * z;
+                    }
+                    for (let i = 0; i <= n; i++) {
+                        z = H[i][n - 1];
+                        H[i][n - 1] = q * z + p * H[i][n];
+                        H[i][n] = q * H[i][n] - p * z;
+                    }
+                    for (let i = low; i <= high; i++) {
+                        z = V[i][n - 1];
+                        V[i][n - 1] = q * z + p * V[i][n];
+                        V[i][n] = q * V[i][n] - p * z;
+                    }
+                }
+                else {
+                    d[n - 1] = x + p;
+                    d[n] = x + p;
+                    e[n - 1] = z;
+                    e[n] = -z;
+                }
+                n = n - 2;
+                iter = 0;
+            }
+            else {
+                x = H[n][n];
+                y = 0.0;
+                w = 0.0;
+                if (l < n) {
+                    y = H[n - 1][n - 1];
+                    w = H[n][n - 1] * H[n - 1][n];
+                }
+                if (iter == 10) {
+                    exshift += x;
+                    for (let i = low; i <= n; i++) {
+                        H[i][i] -= x;
+                    }
+                    s = Math.abs(H[n][n - 1]) + Math.abs(H[n - 1][n - 2]);
+                    x = y = 0.75 * s;
+                    w = -0.4375 * s * s;
+                }
+                if (iter == 30) {
+                    s = (y - x) / 2.0;
+                    s = s * s + w;
+                    if (s > 0) {
+                        s = Math.sqrt(s);
+                        if (y < x) {
+                            s = -s;
+                        }
+                        s = x - w / ((y - x) / 2.0 + s);
+                        for (let i = low; i <= n; i++) {
+                            H[i][i] -= s;
+                        }
+                        exshift += s;
+                        x = y = w = 0.964;
+                    }
+                }
+                iter = iter + 1;
+                let m = n - 2;
+                while (m >= l) {
+                    z = H[m][m];
+                    r = x - z;
+                    s = y - z;
+                    p = (r * s - w) / H[m + 1][m] + H[m][m + 1];
+                    q = H[m + 1][m + 1] - z - r - s;
+                    r = H[m + 2][m + 1];
+                    s = Math.abs(p) + Math.abs(q) + Math.abs(r);
+                    p = p / s;
+                    q = q / s;
+                    r = r / s;
+                    if (m == l) {
+                        break;
+                    }
+                    if (Math.abs(H[m][m - 1]) * (Math.abs(q) + Math.abs(r)) < eps
+                        * (Math.abs(p) * (Math.abs(H[m - 1][m - 1]) + Math.abs(z) + Math.abs(H[m + 1][m + 1])))) {
+                        break;
+                    }
+                    m--;
+                }
+                for (let i = m + 2; i <= n; i++) {
+                    H[i][i - 2] = 0.0;
+                    if (i > m + 2) {
+                        H[i][i - 3] = 0.0;
+                    }
+                }
+                for (let k = m; k <= n - 1; k++) {
+                    let notlast = (k != n - 1);
+                    if (k != m) {
+                        p = H[k][k - 1];
+                        q = H[k + 1][k - 1];
+                        r = (notlast ? H[k + 2][k - 1] : 0.0);
+                        x = Math.abs(p) + Math.abs(q) + Math.abs(r);
+                        if (x == 0.0) {
+                            continue;
+                        }
+                        p = p / x;
+                        q = q / x;
+                        r = r / x;
+                    }
+                    s = Math.sqrt(p * p + q * q + r * r);
+                    if (p < 0) {
+                        s = -s;
+                    }
+                    if (s != 0) {
+                        if (k != m) {
+                            H[k][k - 1] = -s * x;
+                        }
+                        else if (l != m) {
+                            H[k][k - 1] = -H[k][k - 1];
+                        }
+                        p = p + s;
+                        x = p / s;
+                        y = q / s;
+                        z = r / s;
+                        q = q / p;
+                        r = r / p;
+                        for (let j = k; j < nn; j++) {
+                            p = H[k][j] + q * H[k + 1][j];
+                            if (notlast) {
+                                p = p + r * H[k + 2][j];
+                                H[k + 2][j] = H[k + 2][j] - p * z;
+                            }
+                            H[k][j] = H[k][j] - p * x;
+                            H[k + 1][j] = H[k + 1][j] - p * y;
+                        }
+                        for (let i = 0; i <= Math.min(n, k + 3); i++) {
+                            p = x * H[i][k] + y * H[i][k + 1];
+                            if (notlast) {
+                                p = p + z * H[i][k + 2];
+                                H[i][k + 2] = H[i][k + 2] - p * r;
+                            }
+                            H[i][k] = H[i][k] - p;
+                            H[i][k + 1] = H[i][k + 1] - p * q;
+                        }
+                        for (let i = low; i <= high; i++) {
+                            p = x * V[i][k] + y * V[i][k + 1];
+                            if (notlast) {
+                                p = p + z * V[i][k + 2];
+                                V[i][k + 2] = V[i][k + 2] - p * r;
+                            }
+                            V[i][k] = V[i][k] - p;
+                            V[i][k + 1] = V[i][k + 1] - p * q;
+                        }
+                    }
+                }
+            }
+        }
+        if (norm == 0.0) {
+            return;
+        }
+        for (n = nn - 1; n >= 0; n--) {
+            p = d[n];
+            q = e[n];
+            if (q == 0) {
+                let l = n;
+                H[n][n] = 1.0;
+                for (let i = n - 1; i >= 0; i--) {
+                    w = H[i][i] - p;
+                    r = 0.0;
+                    for (let j = l; j <= n; j++) {
+                        r = r + H[i][j] * H[j][n];
+                    }
+                    if (e[i] < 0.0) {
+                        z = w;
+                        s = r;
+                    }
+                    else {
+                        l = i;
+                        if (e[i] == 0.0) {
+                            if (w != 0.0) {
+                                H[i][n] = -r / w;
+                            }
+                            else {
+                                H[i][n] = -r / (eps * norm);
+                            }
+                        }
+                        else {
+                            x = H[i][i + 1];
+                            y = H[i + 1][i];
+                            q = (d[i] - p) * (d[i] - p) + e[i] * e[i];
+                            t = (x * s - z * r) / q;
+                            H[i][n] = t;
+                            if (Math.abs(x) > Math.abs(z)) {
+                                H[i + 1][n] = (-r - w * t) / x;
+                            }
+                            else {
+                                H[i + 1][n] = (-s - y * t) / z;
+                            }
+                        }
+                        t = Math.abs(H[i][n]);
+                        if ((eps * t) * t > 1) {
+                            for (let j = i; j <= n; j++) {
+                                H[j][n] = H[j][n] / t;
+                            }
+                        }
+                    }
+                }
+            }
+            else if (q < 0) {
+                let l = n - 1;
+                if (Math.abs(H[n][n - 1]) > Math.abs(H[n - 1][n])) {
+                    H[n - 1][n - 1] = q / H[n][n - 1];
+                    H[n - 1][n] = -(H[n][n] - p) / H[n][n - 1];
+                }
+                else {
+                    let ri = this.cdiv(0.0, -H[n - 1][n], H[n - 1][n - 1] - p, q);
+                    H[n - 1][n - 1] = ri[0];
+                    H[n - 1][n] = ri[1];
+                }
+                H[n][n - 1] = 0.0;
+                H[n][n] = 1.0;
+                for (let i = n - 2; i >= 0; i--) {
+                    let ra, sa, vr, vi;
+                    ra = 0.0;
+                    sa = 0.0;
+                    for (let j = l; j <= n; j++) {
+                        ra = ra + H[i][j] * H[j][n - 1];
+                        sa = sa + H[i][j] * H[j][n];
+                    }
+                    w = H[i][i] - p;
+                    if (e[i] < 0.0) {
+                        z = w;
+                        r = ra;
+                        s = sa;
+                    }
+                    else {
+                        l = i;
+                        if (e[i] == 0) {
+                            let ri = this.cdiv(-ra, -sa, w, q);
+                            H[i][n - 1] = ri[0];
+                            H[i][n] = ri[1];
+                        }
+                        else {
+                            x = H[i][i + 1];
+                            y = H[i + 1][i];
+                            vr = (d[i] - p) * (d[i] - p) + e[i] * e[i] - q * q;
+                            vi = (d[i] - p) * 2.0 * q;
+                            if (vr == 0.0 && vi == 0.0) {
+                                vr = eps * norm * (Math.abs(w) + Math.abs(q) + Math.abs(x) + Math.abs(y) + Math.abs(z));
+                            }
+                            let ri = this.cdiv(x * r - z * ra + q * sa, x * s - z * sa - q * ra, vr, vi);
+                            H[i][n - 1] = ri[0];
+                            H[i][n] = ri[1];
+                            if (Math.abs(x) > (Math.abs(z) + Math.abs(q))) {
+                                H[i + 1][n - 1] = (-ra - w * H[i][n - 1] + q * H[i][n]) / x;
+                                H[i + 1][n] = (-sa - w * H[i][n] - q * H[i][n - 1]) / x;
+                            }
+                            else {
+                                let ri = this.cdiv(-r - y * H[i][n - 1], -s - y * H[i][n], z, q);
+                                H[i + 1][n - 1] = ri[0];
+                                H[i + 1][n] = ri[1];
+                            }
+                        }
+                        t = Math.max(Math.abs(H[i][n - 1]), Math.abs(H[i][n]));
+                        if ((eps * t) * t > 1) {
+                            for (let j = i; j <= n; j++) {
+                                H[j][n - 1] = H[j][n - 1] / t;
+                                H[j][n] = H[j][n] / t;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        for (let i = 0; i < nn; i++) {
+            if (i < low || i > high) {
+                for (let j = i; j < nn; j++) {
+                    V[i][j] = H[i][j];
+                }
+            }
+        }
+        for (let j = nn - 1; j >= low; j--) {
+            for (let i = low; i <= high; i++) {
+                z = 0.0;
+                for (let k = low; k <= Math.min(j, high); k++) {
+                    z = z + V[i][k] * H[k][j];
+                }
+                V[i][j] = z;
+            }
+        }
+    }
+    getV() {
+        return Matrix_1.Matrix.fromArray(this.V);
+    }
+    getVArray() {
+        return this.V;
+    }
+    getRealEigenvalues() {
+        return this.d;
+    }
+    getImagEigenvalues() {
+        return this.e;
+    }
+    getD() {
+        const { n, d, e } = this;
+        let X = new Matrix_1.Matrix(n, n);
+        let D = X.A;
+        for (let i = 0; i < n; i++) {
+            for (let j = 0; j < n; j++) {
+                D[i][j] = 0.0;
+            }
+            D[i][i] = d[i];
+            if (e[i] > 0) {
+                D[i][i + 1] = e[i];
+            }
+            else if (e[i] < 0) {
+                D[i][i - 1] = e[i];
+            }
+        }
+        return X;
+    }
+}
+exports.EigenvalueDecomposition = EigenvalueDecomposition;
+
+
+/***/ }),
+
 /***/ "./src/util/FitRotatedEllipse.ts":
 /*!***************************************!*\
   !*** ./src/util/FitRotatedEllipse.ts ***!
@@ -33562,6 +34477,7 @@ FitRotatedEllipse.cacheMap = new Map();
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.Line = exports.Oval = exports.Box = exports.Size = exports.Pos = exports.RollingBall = exports.QuickHull = exports.GeomUtil = void 0;
 const Matrix_1 = __webpack_require__(/*! ./Matrix */ "./src/util/Matrix.ts");
+const SingularValueDecomposition_1 = __webpack_require__(/*! ./SingularValueDecomposition */ "./src/util/SingularValueDecomposition.ts");
 const Triangulation2D_1 = __webpack_require__(/*! ./Triangulation2D */ "./src/util/Triangulation2D.ts");
 const util_1 = __webpack_require__(/*! ./util */ "./src/util/util.ts");
 const Vec_1 = __webpack_require__(/*! ./Vec */ "./src/util/Vec.ts");
@@ -33760,6 +34676,46 @@ class GeomUtil {
         const y = v1[2] * v2[0] - v1[0] * v2[2];
         const z = v1[0] * v2[1] - v1[1] * v2[0];
         return [x, y, z];
+    }
+    static rotationX(theta) {
+        let cosTheta = Math.cos(theta), sinTheta = Math.sin(theta);
+        return [[1, 0, 0], [0, cosTheta, -sinTheta], [0, sinTheta, cosTheta]];
+    }
+    static rotationY(theta) {
+        let cosTheta = Math.cos(theta), sinTheta = Math.sin(theta);
+        return [[cosTheta, 0, sinTheta], [0, 1, 0], [-sinTheta, 0, cosTheta]];
+    }
+    static rotationZ(theta) {
+        let cosTheta = Math.cos(theta), sinTheta = Math.sin(theta);
+        return [[cosTheta, -sinTheta, 0], [sinTheta, cosTheta, 0], [0, 0, 1]];
+    }
+    static rotationMatrix(vec, theta) {
+        let inv = 1.0 / (0, util_1.norm2_xyz)(vec[0], vec[1], vec[2]);
+        let ux = vec[0] * inv, uy = vec[1] * inv, uz = vec[2] * inv;
+        let cosTheta = Math.cos(theta), sinTheta = Math.sin(theta);
+        return [
+            [
+                cosTheta + ux * ux * (1 - cosTheta),
+                ux * uy * (1 - cosTheta) - uz * sinTheta,
+                ux * uz * (1 - cosTheta) + uy * sinTheta
+            ],
+            [
+                uy * ux * (1 - cosTheta) + uz * sinTheta,
+                cosTheta + uy * uy * (1 - cosTheta),
+                uy * uz * (1 - cosTheta) - ux * sinTheta
+            ],
+            [
+                uz * ux * (1 - cosTheta) - uy * sinTheta,
+                uz * uy * (1 - cosTheta) + ux * sinTheta,
+                cosTheta + uz * uz * (1 - cosTheta)
+            ]
+        ];
+    }
+    static rotateCoord(rotmtx, xyz) {
+        let x = xyz[0], y = xyz[1], z = xyz[2];
+        xyz[0] = x * rotmtx[0][0] + y * rotmtx[0][1] + z * rotmtx[0][2];
+        xyz[1] = x * rotmtx[1][0] + y * rotmtx[1][1] + z * rotmtx[1][2];
+        xyz[2] = x * rotmtx[2][0] + y * rotmtx[2][1] + z * rotmtx[2][2];
     }
     static affineIdentity() {
         return [[1, 0, 0], [0, 1, 0], [0, 0, 1]];
@@ -33965,7 +34921,7 @@ class GeomUtil {
             mtxB.set(2, n, 0);
         }
         let cov = mtxA.times(mtxB.transpose());
-        let svd = new Matrix_1.SingularValueDecomposition(cov);
+        let svd = new SingularValueDecomposition_1.SingularValueDecomposition(cov);
         let rotate = svd.getV().times(svd.getU().transpose());
         let rot00 = rotate.get(0, 0), rot01 = rotate.get(0, 1);
         let rot10 = rotate.get(1, 0), rot11 = rotate.get(1, 1);
@@ -34377,7 +35333,10 @@ exports.Line = Line;
 
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.SingularValueDecomposition = exports.Matrix = void 0;
+exports.Matrix = void 0;
+const EigenvalueDecomposition_1 = __webpack_require__(/*! ./EigenvalueDecomposition */ "./src/util/EigenvalueDecomposition.ts");
+const MatrixDecompositions_1 = __webpack_require__(/*! ./MatrixDecompositions */ "./src/util/MatrixDecompositions.ts");
+const SingularValueDecomposition_1 = __webpack_require__(/*! ./SingularValueDecomposition */ "./src/util/SingularValueDecomposition.ts");
 const Vec_1 = __webpack_require__(/*! ./Vec */ "./src/util/Vec.ts");
 class Matrix {
     constructor(m, n, s = 0) {
@@ -34404,10 +35363,79 @@ class Matrix {
                 mtx.A[i][j] = A[i][j];
         return mtx;
     }
+    getRowDimension() { return this.m; }
+    getColumnDimension() { return this.n; }
     get numRows() { return this.m; }
     get numCols() { return this.n; }
     get(i, j) { return this.A[i][j]; }
     set(i, j, v) { this.A[i][j] = v; }
+    getMatrixRange(i0, i1, j0, j1) {
+        const { A } = this;
+        let X = new Matrix(i1 - i0 + 1, j1 - j0 + 1);
+        let B = X.A;
+        for (let i = i0; i <= i1; i++) {
+            for (let j = j0; j <= j1; j++) {
+                B[i - i0][j - j0] = A[i][j];
+            }
+        }
+        return X;
+    }
+    getMatrixIndexes(r, c) {
+        const { A } = this;
+        let X = new Matrix(r.length, c.length);
+        let B = X.A;
+        for (let i = 0; i < r.length; i++) {
+            for (let j = 0; j < c.length; j++) {
+                B[i][j] = A[r[i]][c[j]];
+            }
+        }
+        return X;
+    }
+    getMatrixRangeIdx(i0, i1, c) {
+        const { A } = this;
+        let X = new Matrix(i1 - i0 + 1, c.length);
+        let B = X.A;
+        for (let i = i0; i <= i1; i++) {
+            for (let j = 0; j < c.length; j++) {
+                B[i - i0][j] = A[i][c[j]];
+            }
+        }
+        return X;
+    }
+    getMatrixIdxRange(r, j0, j1) {
+        const { A } = this;
+        let X = new Matrix(r.length, j1 - j0 + 1);
+        let B = X.A;
+        for (let i = 0; i < r.length; i++) {
+            for (let j = j0; j <= j1; j++) {
+                B[i][j - j0] = A[r[i]][j];
+            }
+        }
+        return X;
+    }
+    getArrayCopy() {
+        return this.A.map((row) => [...row]);
+    }
+    getColumnPackedCopy() {
+        const { A, m, n } = this;
+        let vals = new Array(m * n);
+        for (let i = 0; i < m; i++) {
+            for (let j = 0; j < n; j++) {
+                vals[i + j * m] = A[i][j];
+            }
+        }
+        return vals;
+    }
+    getRowPackedCopy() {
+        const { A, m, n } = this;
+        let vals = new Array(m * n);
+        for (let i = 0; i < m; i++) {
+            for (let j = 0; j < n; j++) {
+                vals[i * n + j] = A[i][j];
+            }
+        }
+        return vals;
+    }
     transpose() {
         const { A, m, n } = this;
         let X = new Matrix(n, m);
@@ -34428,6 +35456,9 @@ class Matrix {
         }
         return f;
     }
+    norm2() {
+        return (new SingularValueDecomposition_1.SingularValueDecomposition(this).norm2());
+    }
     normInf() {
         const { A, m, n } = this;
         let f = 0;
@@ -34436,6 +35467,16 @@ class Matrix {
             for (let j = 0; j < n; j++)
                 s += Math.abs(A[i][j]);
             f = Math.max(f, s);
+        }
+        return f;
+    }
+    normF() {
+        const { A, m, n } = this;
+        let f = 0;
+        for (let i = 0; i < m; i++) {
+            for (let j = 0; j < n; j++) {
+                f = Math.hypot(f, A[i][j]);
+            }
         }
         return f;
     }
@@ -34554,11 +35595,38 @@ class Matrix {
         }
         return X;
     }
+    lu() {
+        return new MatrixDecompositions_1.LUDecomposition(this);
+    }
+    qr() {
+        return new MatrixDecompositions_1.QRDecomposition(this);
+    }
+    chol() {
+        return new MatrixDecompositions_1.CholeskyDecomposition(this);
+    }
+    svd() {
+        return new SingularValueDecomposition_1.SingularValueDecomposition(this);
+    }
+    eig() {
+        return new EigenvalueDecomposition_1.EigenvalueDecomposition(this);
+    }
+    solve(B) {
+        return (this.m == this.n ? (new MatrixDecompositions_1.LUDecomposition(this)).solve(B) : (new MatrixDecompositions_1.QRDecomposition(this)).solve(B));
+    }
+    solveTranspose(B) {
+        return this.transpose().solve(B.transpose());
+    }
+    inverse() {
+        return this.solve(Matrix.identity(this.m, this.m));
+    }
+    det() {
+        return new MatrixDecompositions_1.LUDecomposition(this).det();
+    }
     rank() {
-        return new SingularValueDecomposition(this).rank();
+        return new SingularValueDecomposition_1.SingularValueDecomposition(this).rank();
     }
     cond() {
-        return new SingularValueDecomposition(this).cond();
+        return new SingularValueDecomposition_1.SingularValueDecomposition(this).cond();
     }
     trace() {
         const { A, m, n } = this;
@@ -34585,6 +35653,489 @@ class Matrix {
     }
 }
 exports.Matrix = Matrix;
+
+
+/***/ }),
+
+/***/ "./src/util/MatrixDecompositions.ts":
+/*!******************************************!*\
+  !*** ./src/util/MatrixDecompositions.ts ***!
+  \******************************************/
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.CholeskyDecomposition = exports.QRDecomposition = exports.LUDecomposition = void 0;
+const Matrix_1 = __webpack_require__(/*! ./Matrix */ "./src/util/Matrix.ts");
+const Vec_1 = __webpack_require__(/*! ./Vec */ "./src/util/Vec.ts");
+class LUDecomposition {
+    constructor(mtx) {
+        let LU = this.LU = mtx.getArrayCopy();
+        let m = this.m = mtx.getRowDimension();
+        let n = this.n = mtx.getColumnDimension();
+        let piv = this.piv = Vec_1.Vec.identity0(m);
+        this.pivsign = 1;
+        let LUrowi;
+        let LUcolj = new Array(m);
+        for (let j = 0; j < n; j++) {
+            for (let i = 0; i < m; i++) {
+                LUcolj[i] = LU[i][j];
+            }
+            for (let i = 0; i < m; i++) {
+                LUrowi = LU[i];
+                let kmax = Math.min(i, j);
+                let s = 0.0;
+                for (let k = 0; k < kmax; k++) {
+                    s += LUrowi[k] * LUcolj[k];
+                }
+                LUrowi[j] = LUcolj[i] -= s;
+            }
+            let p = j;
+            for (let i = j + 1; i < m; i++) {
+                if (Math.abs(LUcolj[i]) > Math.abs(LUcolj[p])) {
+                    p = i;
+                }
+            }
+            if (p != j) {
+                for (let k = 0; k < n; k++) {
+                    let t = LU[p][k];
+                    LU[p][k] = LU[j][k];
+                    LU[j][k] = t;
+                }
+                let k = piv[p];
+                piv[p] = piv[j];
+                piv[j] = k;
+                this.pivsign = -this.pivsign;
+            }
+            if (j < m && LU[j][j] != 0.0) {
+                for (let i = j + 1; i < m; i++) {
+                    LU[i][j] /= LU[j][j];
+                }
+            }
+        }
+    }
+    isNonsingular() {
+        const { LU, n } = this;
+        for (let j = 0; j < n; j++) {
+            if (LU[j][j] == 0)
+                return false;
+        }
+        return true;
+    }
+    getL() {
+        const { LU, m, n } = this;
+        let X = new Matrix_1.Matrix(m, n);
+        let L = X.A;
+        for (let i = 0; i < m; i++) {
+            for (let j = 0; j < n; j++) {
+                if (i > j) {
+                    L[i][j] = LU[i][j];
+                }
+                else if (i == j) {
+                    L[i][j] = 1.0;
+                }
+                else {
+                    L[i][j] = 0.0;
+                }
+            }
+        }
+        return X;
+    }
+    getU() {
+        const { LU, n } = this;
+        let X = new Matrix_1.Matrix(n, n);
+        let U = X.A;
+        for (let i = 0; i < n; i++) {
+            for (let j = 0; j < n; j++) {
+                if (i <= j) {
+                    U[i][j] = LU[i][j];
+                }
+                else {
+                    U[i][j] = 0.0;
+                }
+            }
+        }
+        return X;
+    }
+    getPivot() {
+        const { m, piv } = this;
+        let p = new Array(m);
+        for (let i = 0; i < m; i++) {
+            p[i] = piv[i];
+        }
+        return p;
+    }
+    getDoublePivot() {
+        const { m, piv } = this;
+        let vals = new Array(m);
+        for (let i = 0; i < m; i++) {
+            vals[i] = piv[i];
+        }
+        return vals;
+    }
+    det() {
+        const { LU, m, n } = this;
+        if (m != n) {
+            throw new Error('Matrix must be square.');
+        }
+        let d = this.pivsign;
+        for (let j = 0; j < n; j++) {
+            d *= LU[j][j];
+        }
+        return d;
+    }
+    solve(B) {
+        const { LU, m, n } = this;
+        if (B.getRowDimension() != m) {
+            throw new Error('Matrix row dimensions must agree.');
+        }
+        if (!this.isNonsingular()) {
+            throw new Error('Matrix is singular.');
+        }
+        let nx = B.getColumnDimension();
+        let Xmat = B.getMatrixIdxRange(this.piv, 0, nx - 1);
+        let X = Xmat.A;
+        for (let k = 0; k < n; k++) {
+            for (let i = k + 1; i < n; i++) {
+                for (let j = 0; j < nx; j++) {
+                    X[i][j] -= X[k][j] * LU[i][k];
+                }
+            }
+        }
+        for (let k = n - 1; k >= 0; k--) {
+            for (let j = 0; j < nx; j++) {
+                X[k][j] /= LU[k][k];
+            }
+            for (let i = 0; i < k; i++) {
+                for (let j = 0; j < nx; j++) {
+                    X[i][j] -= X[k][j] * LU[i][k];
+                }
+            }
+        }
+        return Xmat;
+    }
+}
+exports.LUDecomposition = LUDecomposition;
+class QRDecomposition {
+    constructor(mtx) {
+        let QR = this.QR = mtx.getArrayCopy();
+        let m = this.m = mtx.getRowDimension();
+        let n = this.n = mtx.getColumnDimension();
+        let Rdiag = this.Rdiag = new Array(n);
+        for (let k = 0; k < n; k++) {
+            let nrm = 0;
+            for (let i = k; i < m; i++) {
+                nrm = Math.hypot(nrm, QR[i][k]);
+            }
+            if (nrm != 0.0) {
+                if (QR[k][k] < 0) {
+                    nrm = -nrm;
+                }
+                for (let i = k; i < m; i++) {
+                    QR[i][k] /= nrm;
+                }
+                QR[k][k] += 1.0;
+                for (let j = k + 1; j < n; j++) {
+                    let s = 0.0;
+                    for (let i = k; i < m; i++) {
+                        s += QR[i][k] * QR[i][j];
+                    }
+                    s = -s / QR[k][k];
+                    for (let i = k; i < m; i++) {
+                        QR[i][j] += s * QR[i][k];
+                    }
+                }
+            }
+            Rdiag[k] = -nrm;
+        }
+    }
+    isFullRank() {
+        const { Rdiag, n } = this;
+        for (let j = 0; j < n; j++) {
+            if (Rdiag[j] == 0)
+                return false;
+        }
+        return true;
+    }
+    getH() {
+        const { QR, m, n } = this;
+        let X = new Matrix_1.Matrix(m, n);
+        let H = X.A;
+        for (let i = 0; i < m; i++) {
+            for (let j = 0; j < n; j++) {
+                if (i >= j) {
+                    H[i][j] = QR[i][j];
+                }
+                else {
+                    H[i][j] = 0.0;
+                }
+            }
+        }
+        return X;
+    }
+    getR() {
+        const { QR, n, Rdiag } = this;
+        let X = new Matrix_1.Matrix(n, n);
+        let R = X.A;
+        for (let i = 0; i < n; i++) {
+            for (let j = 0; j < n; j++) {
+                if (i < j) {
+                    R[i][j] = QR[i][j];
+                }
+                else if (i == j) {
+                    R[i][j] = Rdiag[i];
+                }
+                else {
+                    R[i][j] = 0.0;
+                }
+            }
+        }
+        return X;
+    }
+    getQ() {
+        const { QR, m, n } = this;
+        let X = new Matrix_1.Matrix(m, n);
+        let Q = X.A;
+        for (let k = n - 1; k >= 0; k--) {
+            for (let i = 0; i < m; i++) {
+                Q[i][k] = 0.0;
+            }
+            Q[k][k] = 1.0;
+            for (let j = k; j < n; j++) {
+                if (QR[k][k] != 0) {
+                    let s = 0.0;
+                    for (let i = k; i < m; i++) {
+                        s += QR[i][k] * Q[i][j];
+                    }
+                    s = -s / QR[k][k];
+                    for (let i = k; i < m; i++) {
+                        Q[i][j] += s * QR[i][k];
+                    }
+                }
+            }
+        }
+        return X;
+    }
+    solve(B) {
+        const { QR, m, n, Rdiag } = this;
+        if (B.getRowDimension() != m) {
+            throw new Error('Matrix row dimensions must agree.');
+        }
+        if (!this.isFullRank()) {
+            throw new Error('Matrix is rank deficient.');
+        }
+        let nx = B.getColumnDimension();
+        let X = B.A;
+        for (let k = 0; k < n; k++) {
+            for (let j = 0; j < nx; j++) {
+                let s = 0.0;
+                for (let i = k; i < m; i++) {
+                    s += QR[i][k] * X[i][j];
+                }
+                s = -s / QR[k][k];
+                for (let i = k; i < m; i++) {
+                    X[i][j] += s * QR[i][k];
+                }
+            }
+        }
+        for (let k = n - 1; k >= 0; k--) {
+            for (let j = 0; j < nx; j++) {
+                X[k][j] /= Rdiag[k];
+            }
+            for (let i = 0; i < k; i++) {
+                for (let j = 0; j < nx; j++) {
+                    X[i][j] -= X[k][j] * QR[i][k];
+                }
+            }
+        }
+        return Matrix_1.Matrix.fromArray(X).getMatrixRange(0, n - 1, 0, nx - 1);
+    }
+}
+exports.QRDecomposition = QRDecomposition;
+class CholeskyDecomposition {
+    constructor(mtx) {
+        let A = mtx.A;
+        let n = this.n = mtx.getRowDimension();
+        let L = this.L = new Array(n);
+        for (let i = 0; i < n; i++)
+            L[i] = new Array(n);
+        this.isspd = mtx.getColumnDimension() == n;
+        for (let j = 0; j < n; j++) {
+            let Lrowj = L[j];
+            let d = 0.0;
+            for (let k = 0; k < j; k++) {
+                let Lrowk = L[k];
+                let s = 0.0;
+                for (let i = 0; i < k; i++) {
+                    s += Lrowk[i] * Lrowj[i];
+                }
+                Lrowj[k] = s = (A[j][k] - s) / L[k][k];
+                d = d + s * s;
+                this.isspd = this.isspd && A[k][j] == A[j][k];
+            }
+            d = A[j][j] - d;
+            this.isspd = this.isspd && d > 0.0;
+            L[j][j] = Math.sqrt(Math.max(d, 0.0));
+            for (let k = j + 1; k < n; k++) {
+                L[j][k] = 0.0;
+            }
+        }
+    }
+    isSPD() {
+        return this.isspd;
+    }
+    getL() {
+        const { L } = this;
+        return Matrix_1.Matrix.fromArray(L);
+    }
+    solve(B) {
+        const { L, n } = this;
+        if (B.getRowDimension() != n) {
+            throw new Error('Matrix row dimensions must agree.');
+        }
+        if (!this.isspd) {
+            throw new Error('Matrix is not symmetric positive definite.');
+        }
+        let X = B.getArrayCopy();
+        let nx = B.getColumnDimension();
+        for (let k = 0; k < n; k++) {
+            for (let j = 0; j < nx; j++) {
+                for (let i = 0; i < k; i++) {
+                    X[k][j] -= X[i][j] * L[k][i];
+                }
+                X[k][j] /= L[k][k];
+            }
+        }
+        for (let k = n - 1; k >= 0; k--) {
+            for (let j = 0; j < nx; j++) {
+                for (let i = k + 1; i < n; i++) {
+                    X[k][j] -= X[i][j] * L[i][k];
+                }
+                X[k][j] /= L[k][k];
+            }
+        }
+        return Matrix_1.Matrix.fromArray(X).getMatrixRange(0, n, 0, nx);
+    }
+}
+exports.CholeskyDecomposition = CholeskyDecomposition;
+
+
+/***/ }),
+
+/***/ "./src/util/Random.ts":
+/*!****************************!*\
+  !*** ./src/util/Random.ts ***!
+  \****************************/
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.Random = void 0;
+const util_1 = __webpack_require__(/*! ./util */ "./src/util/util.ts");
+const Vec_1 = __webpack_require__(/*! ./Vec */ "./src/util/Vec.ts");
+const MT_n = 624;
+const MT_m = 397;
+const MT_w = 32;
+const MT_r = 31;
+const MT_UMASK = (0xFFFFFFFF << MT_r);
+const MT_LMASK = (0xFFFFFFFF >> (MT_w - MT_r));
+const MT_a = 0x9908B0DF;
+const MT_u = 11;
+const MT_s = 7;
+const MT_t = 15;
+const MT_l = 18;
+const MT_b = 0x9D2C5680;
+const MT_c = 0xEFC60000;
+const MT_f = 1812433253;
+const MT_max = 0x7FFFFFFF;
+const MT_invmax = 1.0 / MT_max;
+class Random {
+    constructor(seedOrState = null) {
+        if (seedOrState == null || seedOrState === 0)
+            seedOrState = Math.floor(Math.random() * 65535);
+        if (typeof seedOrState == 'number') {
+            let array = new Array(MT_n);
+            let seed = array[0] = 19650218 + seedOrState;
+            for (let i = 1; i < MT_n; i++) {
+                array[i] = seed = MT_f * (seed ^ (seed >> (MT_w - 2))) + i;
+            }
+            this.state = { array, index: 0 };
+        }
+        else {
+            const { array, index } = seedOrState;
+            if (Array.isArray(array) && typeof index == 'number')
+                this.state = { array: [...array], index };
+            else
+                throw new Error('Invalid random state.');
+        }
+    }
+    getState() {
+        return (0, util_1.deepClone)(this.state);
+    }
+    next() {
+        const { array } = this.state;
+        let k = this.state.index;
+        let j = k - (MT_n - 1);
+        if (j < 0)
+            j += MT_n;
+        let x = (array[k] & MT_UMASK) | (array[j] & MT_LMASK);
+        let xA = x >> 1;
+        if (x & 0x00000001)
+            xA ^= MT_a;
+        j = k - (MT_n - MT_m);
+        if (j < 0)
+            j += MT_n;
+        x = array[j] ^ xA;
+        array[k++] = x;
+        if (k >= MT_n)
+            k = 0;
+        this.state.index = k;
+        let y = x ^ (x >> MT_u);
+        y = y ^ ((y << MT_s) & MT_b);
+        y = y ^ ((y << MT_t) & MT_c);
+        let z = y ^ (y >> MT_l);
+        return z;
+    }
+    int(max) {
+        return max <= 0 ? 0 : this.next() % max;
+    }
+    float() {
+        return this.next() * MT_invmax;
+    }
+    index(arr) {
+        if (Vec_1.Vec.isBlank(arr))
+            return null;
+        return this.int(arr.length);
+    }
+    peek(arr) {
+        if (Vec_1.Vec.isBlank(arr))
+            return null;
+        return arr[this.int(arr.length)];
+    }
+    pull(arr) {
+        if (Vec_1.Vec.isBlank(arr))
+            return null;
+        let idx = this.int(arr.length), val = arr[idx];
+        arr.splice(idx, 1);
+        return val;
+    }
+}
+exports.Random = Random;
+
+
+/***/ }),
+
+/***/ "./src/util/SingularValueDecomposition.ts":
+/*!************************************************!*\
+  !*** ./src/util/SingularValueDecomposition.ts ***!
+  \************************************************/
+/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.SingularValueDecomposition = void 0;
+const Matrix_1 = __webpack_require__(/*! ./Matrix */ "./src/util/Matrix.ts");
+const Vec_1 = __webpack_require__(/*! ./Vec */ "./src/util/Vec.ts");
 class SingularValueDecomposition {
     constructor(mtx) {
         let A = mtx.A;
@@ -34884,17 +36435,17 @@ class SingularValueDecomposition {
         }
     }
     getU() {
-        return Matrix.fromArray(this.U);
+        return Matrix_1.Matrix.fromArray(this.U);
     }
     getV() {
-        return Matrix.fromArray(this.V);
+        return Matrix_1.Matrix.fromArray(this.V);
     }
     getSingularValues() {
         return this.s;
     }
     getS() {
         const { n } = this;
-        let X = new Matrix(n, n, 0);
+        let X = new Matrix_1.Matrix(n, n, 0);
         let S = X.A;
         for (let i = 0; i < n; i++)
             S[i][i] = this.s[i];
@@ -34934,109 +36485,6 @@ class SingularValueDecomposition {
     }
 }
 exports.SingularValueDecomposition = SingularValueDecomposition;
-
-
-/***/ }),
-
-/***/ "./src/util/Random.ts":
-/*!****************************!*\
-  !*** ./src/util/Random.ts ***!
-  \****************************/
-/***/ ((__unused_webpack_module, exports, __webpack_require__) => {
-
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.Random = void 0;
-const util_1 = __webpack_require__(/*! ./util */ "./src/util/util.ts");
-const Vec_1 = __webpack_require__(/*! ./Vec */ "./src/util/Vec.ts");
-const MT_n = 624;
-const MT_m = 397;
-const MT_w = 32;
-const MT_r = 31;
-const MT_UMASK = (0xFFFFFFFF << MT_r);
-const MT_LMASK = (0xFFFFFFFF >> (MT_w - MT_r));
-const MT_a = 0x9908B0DF;
-const MT_u = 11;
-const MT_s = 7;
-const MT_t = 15;
-const MT_l = 18;
-const MT_b = 0x9D2C5680;
-const MT_c = 0xEFC60000;
-const MT_f = 1812433253;
-const MT_max = 0x7FFFFFFF;
-const MT_invmax = 1.0 / MT_max;
-class Random {
-    constructor(seedOrState = null) {
-        if (seedOrState == null || seedOrState === 0)
-            seedOrState = Math.floor(Math.random() * 65535);
-        if (typeof seedOrState == 'number') {
-            let array = new Array(MT_n);
-            let seed = array[0] = 19650218 + seedOrState;
-            for (let i = 1; i < MT_n; i++) {
-                array[i] = seed = MT_f * (seed ^ (seed >> (MT_w - 2))) + i;
-            }
-            this.state = { array, index: 0 };
-        }
-        else {
-            const { array, index } = seedOrState;
-            if (Array.isArray(array) && typeof index == 'number')
-                this.state = { array: [...array], index };
-            else
-                throw new Error('Invalid random state.');
-        }
-    }
-    getState() {
-        return (0, util_1.deepClone)(this.state);
-    }
-    next() {
-        const { array } = this.state;
-        let k = this.state.index;
-        let j = k - (MT_n - 1);
-        if (j < 0)
-            j += MT_n;
-        let x = (array[k] & MT_UMASK) | (array[j] & MT_LMASK);
-        let xA = x >> 1;
-        if (x & 0x00000001)
-            xA ^= MT_a;
-        j = k - (MT_n - MT_m);
-        if (j < 0)
-            j += MT_n;
-        x = array[j] ^ xA;
-        array[k++] = x;
-        if (k >= MT_n)
-            k = 0;
-        this.state.index = k;
-        let y = x ^ (x >> MT_u);
-        y = y ^ ((y << MT_s) & MT_b);
-        y = y ^ ((y << MT_t) & MT_c);
-        let z = y ^ (y >> MT_l);
-        return z;
-    }
-    int(max) {
-        return max <= 0 ? 0 : this.next() % max;
-    }
-    float() {
-        return this.next() * MT_invmax;
-    }
-    index(arr) {
-        if (Vec_1.Vec.isBlank(arr))
-            return null;
-        return this.int(arr.length);
-    }
-    peek(arr) {
-        if (Vec_1.Vec.isBlank(arr))
-            return null;
-        return arr[this.int(arr.length)];
-    }
-    pull(arr) {
-        if (Vec_1.Vec.isBlank(arr))
-            return null;
-        let idx = this.int(arr.length), val = arr[idx];
-        arr.splice(idx, 1);
-        return val;
-    }
-}
-exports.Random = Random;
 
 
 /***/ }),
@@ -35896,8 +37344,12 @@ class Vec {
     static flatten(mtx) {
         let ret = [];
         for (let vec of mtx)
-            ret.push(...vec);
+            if (ret)
+                ret.push(...vec);
         return ret;
+    }
+    static packed(vec) {
+        return vec.filter((v) => v != null);
     }
     static transpose(mtx) {
         let sz1 = mtx.length, sz2 = mtx[0].length;
@@ -36558,6 +38010,13 @@ function domLegacy(obj) {
         return dom(obj[0]);
     return dom(obj);
 }
+const CAMEL_TO_KEBAB = {};
+function camelToKebab(camel) {
+    let kebab = CAMEL_TO_KEBAB[camel];
+    if (kebab)
+        return kebab;
+    return camel.replace(/([a-z])([A-Z])/g, '$1-$2').toLowerCase();
+}
 class DOM {
     constructor(el) {
         this.el = el;
@@ -36687,14 +38146,18 @@ class DOM {
         this.el.value = str || '';
     }
     getCSS(key) {
+        key = camelToKebab(key);
         return this.elHTML.style.getPropertyValue(key);
     }
     setCSS(key, value) {
+        key = camelToKebab(key);
         this.elHTML.style.setProperty(key, value === null || value === void 0 ? void 0 : value.toString());
     }
     css(dict) {
-        for (let key in dict)
-            this.setCSS(key, dict[key].toString());
+        for (let key in dict) {
+            let kebab = camelToKebab(key);
+            this.setCSS(kebab, dict[key].toString());
+        }
         return this;
     }
     getAttr(key) {
@@ -37585,12 +39048,18 @@ const Vec_1 = __webpack_require__(/*! @wmk/util/Vec */ "./src/util/Vec.ts");
 const Validation_1 = __webpack_require__(/*! ./Validation */ "./val/src/Validation.ts");
 const AxisLabeller_1 = __webpack_require__(/*! @wmk/gfx/AxisLabeller */ "./src/gfx/AxisLabeller.ts");
 const Random_1 = __webpack_require__(/*! @wmk/util/Random */ "./src/util/Random.ts");
+const Matrix_1 = __webpack_require__(/*! @wmk/util/Matrix */ "./src/util/Matrix.ts");
+const util_1 = __webpack_require__(/*! @wmk/util/util */ "./src/util/util.ts");
+const Molecule_1 = __webpack_require__(/*! @wmk/mol/Molecule */ "./src/mol/Molecule.ts");
+const DistanceGeometry_1 = __webpack_require__(/*! @wmk/calc/DistanceGeometry */ "./src/calc/DistanceGeometry.ts");
 class ValidationHeadlessBasic extends Validation_1.Validation {
     constructor() {
         super();
         this.add('Vector index sort', this.vectorIndexSort);
         this.add('Axis labeller', this.axisLabeller);
         this.add('Random numbers', this.randomNumbers);
+        this.add('Eigenvalues', this.eigenValues);
+        this.add('Distance Geometry', this.distanceGeometry);
     }
     vectorIndexSort() {
         return __awaiter(this, void 0, void 0, function* () {
@@ -37700,6 +39169,55 @@ class ValidationHeadlessBasic extends Validation_1.Validation {
                 avgFloat += rnd1.float();
             avgFloat /= numAdd;
             this.assert(avgFloat > 0.49 && avgFloat < 0.51, `Floating point average is off: ${avgFloat}`);
+        });
+    }
+    eigenValues() {
+        return __awaiter(this, void 0, void 0, function* () {
+            let mtx = Matrix_1.Matrix.fromArray([[-6, 3], [4, 5]]);
+            let eig = mtx.eig();
+            let D = eig.getD().A;
+            this.assert((0, util_1.fltEqual)(D[0][0], -7));
+            this.assert((0, util_1.fltEqual)(D[0][1], 0));
+            this.assert((0, util_1.fltEqual)(D[1][0], 0));
+            this.assert((0, util_1.fltEqual)(D[1][1], 6));
+            let v = eig.getRealEigenvalues();
+            this.assert((0, util_1.fltEqual)(v[0], -7));
+            this.assert((0, util_1.fltEqual)(v[1], 6));
+            const SYM = [
+                [0, 0, 0, 0, 0],
+                [0, 8, 0, -8, 0],
+                [0, 0, 8, 0, -8],
+                [0, -8, 0, 8, 0],
+                [0, 0, -8, 0, 0],
+            ];
+            mtx = Matrix_1.Matrix.fromArray(SYM);
+            eig = mtx.eig();
+            v = eig.getRealEigenvalues();
+            this.assert(v.some((ev) => (0, util_1.fltEqual)(ev, 16)));
+        });
+    }
+    distanceGeometry() {
+        return __awaiter(this, void 0, void 0, function* () {
+            let mol = Molecule_1.Molecule.fromString('Elements!(6,6)\nC=-3.1250,8.0750\nC=-4.3385,7.1933\nC=-3.8750,5.7667\nC=-2.3750,5.7667\nC=-1.9115,7.1933\nC=-3.1250,9.5750\n1-2=1\n2-3=1\n3-4=1\n4-5=1\n5-1=1\n1-6=1\n!End\n');
+            let sz = mol.numAtoms;
+            let dist = new Array(sz);
+            for (let i = 0; i < sz; i++) {
+                dist[i] = new Array(sz);
+                for (let j = 0; j < sz; j++)
+                    dist[i][j] = Math.hypot(mol.atomX(i + 1) - mol.atomX(j + 1), mol.atomY(i + 1) - mol.atomY(j + 1));
+            }
+            let dgeom = new DistanceGeometry_1.DistanceGeometry(dist);
+            dgeom.calculate();
+            let [x, y] = dgeom.getBestCoordinates();
+            for (let i = 0; i < sz - 1; i++)
+                for (let j = i + 1; j < sz; j++) {
+                    let dist = (0, util_1.norm_xy)(x[i] - x[j], y[i] - y[j]);
+                    let b = mol.findBond(i + 1, j + 1);
+                    if (b > 0 && mol.bondInRing(b))
+                        this.assert(dist > 1.0 && dist < 1.6);
+                    else
+                        this.assert(dist > 1.7);
+                }
         });
     }
 }

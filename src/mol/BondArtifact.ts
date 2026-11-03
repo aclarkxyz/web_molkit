@@ -83,7 +83,7 @@ export class BondArtifact
 			if (res.atoms.length > 1) res.centre = res.atoms.shift();
 			if (!this.pathify(res.atoms, false)) this.arenes.delete(blk);
 		}
-	}	
+	}
 
 	// quick scan to see if it looks like there's anything there
 	public static hasAnyArtifacts(mol:Molecule):boolean

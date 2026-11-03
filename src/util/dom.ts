@@ -288,7 +288,7 @@ export class DOM
 	}
 	public css(dict:CSSDictionary):DOM
 	{
-		for (let key in dict) 
+		for (let key in dict)
 		{
 			let kebab = camelToKebab(key);
 			this.setCSS(kebab, (dict as Record<string, any>)[key].toString());

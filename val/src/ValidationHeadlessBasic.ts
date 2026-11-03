@@ -14,6 +14,10 @@ import {Vec} from '@wmk/util/Vec';
 import {Validation} from './Validation';
 import {AxisLabeller} from '@wmk/gfx/AxisLabeller';
 import {Random} from '@wmk/util/Random';
+import {Matrix} from '@wmk/util/Matrix';
+import {fltEqual, norm_xy} from '@wmk/util/util';
+import {Molecule} from '@wmk/mol/Molecule';
+import {DistanceGeometry} from '@wmk/calc/DistanceGeometry';
 
 
 /*
@@ -28,6 +32,8 @@ export class ValidationHeadlessBasic extends Validation
 		this.add('Vector index sort', this.vectorIndexSort);
 		this.add('Axis labeller', this.axisLabeller);
 		this.add('Random numbers', this.randomNumbers);
+		this.add('Eigenvalues', this.eigenValues);
+		this.add('Distance Geometry', this.distanceGeometry);
 	}
 
 	public async vectorIndexSort():Promise<void>
@@ -144,6 +150,63 @@ export class ValidationHeadlessBasic extends Validation
 		for (let n = 0; n < numAdd; n++) avgFloat += rnd1.float();
 		avgFloat /= numAdd;
 		this.assert(avgFloat > 0.49 && avgFloat < 0.51, `Floating point average is off: ${avgFloat}`);
+	}
+
+	public async eigenValues():Promise<void>
+	{
+		// asymmetric
+
+		let mtx = Matrix.fromArray([[-6, 3], [4, 5]]);
+		let eig = mtx.eig();
+
+		let D = eig.getD().A;
+		this.assert(fltEqual(D[0][0], -7));
+		this.assert(fltEqual(D[0][1], 0));
+		this.assert(fltEqual(D[1][0], 0));
+		this.assert(fltEqual(D[1][1], 6));
+
+		let v = eig.getRealEigenvalues();
+		this.assert(fltEqual(v[0], -7));
+		this.assert(fltEqual(v[1], 6));
+
+		// symmetrical
+		const SYM =
+		[
+			[0,  0,  0,  0,  0], 
+			[0,  8,  0, -8,  0], 
+			[0,  0,  8,  0, -8], 
+			[0, -8,  0,  8,  0],
+			[0,  0, -8,  0,  0],
+		];
+		mtx = Matrix.fromArray(SYM);
+		eig = mtx.eig();
+		v = eig.getRealEigenvalues();
+		this.assert(v.some((ev) => fltEqual(ev, 16)));
+	}
+
+	public async distanceGeometry():Promise<void>
+	{
+		let mol = Molecule.fromString('Elements!(6,6)\nC=-3.1250,8.0750\nC=-4.3385,7.1933\nC=-3.8750,5.7667\nC=-2.3750,5.7667\nC=-1.9115,7.1933\nC=-3.1250,9.5750\n1-2=1\n2-3=1\n3-4=1\n4-5=1\n5-1=1\n1-6=1\n!End\n');
+		let sz = mol.numAtoms;
+		let dist:number[][] = new Array(sz);
+		for (let i = 0; i < sz; i++)
+		{
+			dist[i] = new Array(sz);
+			for (let j = 0; j < sz; j++) dist[i][j] = Math.hypot(mol.atomX(i + 1) - mol.atomX(j + 1), mol.atomY(i + 1) - mol.atomY(j + 1));
+		}
+		let dgeom = new DistanceGeometry(dist);
+		dgeom.calculate();
+		let [x, y] = dgeom.getBestCoordinates();
+		
+		for (let i = 0; i < sz - 1; i++) for (let j = i + 1; j < sz; j++)
+		{
+			let dist = norm_xy(x[i] - x[j], y[i] - y[j]);
+			let b = mol.findBond(i + 1, j + 1);
+			if (b > 0 && mol.bondInRing(b))
+				this.assert(dist > 1.0 && dist < 1.6);
+			else
+				this.assert(dist > 1.7);
+		}
 	}
 }
 

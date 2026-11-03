@@ -10,7 +10,7 @@
 	[PKG=webmolkit]
 */
 
-import {MolUtil} from '@wmk/mol/MolUtil';
+import {MolUtil} from '../mol/MolUtil';
 import {Chemistry} from '../mol/Chemistry';
 import {Molecule} from '../mol/Molecule';
 import {Vec} from '../util/Vec';

@@ -1472,6 +1472,7 @@ export class MoleculeActivity
 		this.output.mol = mol;
 	}
 
+	// adjust the orientation so that the bond snaps-to a regular bond angle (multiple of 30 degrees)
 	public execAlignRegular():void
 	{
 		let bond = this.input.currentBond;

@@ -135,7 +135,7 @@ export class QueryFieldsWidget extends Widget
 			this.inputIsotopes = makeInput();
 
 			// ...FRAGMENTS...
-	
+
 			dom('<div>Transform</div>').appendTo(grid).css({'grid-area': `${++row} / title`});
 			let divTransform = dom('<div/>').appendTo(grid).css({'grid-area': `${row} / value`});
 			this.chkTransChanged = makeCheckbox(divTransform, 'Core changed');
@@ -181,13 +181,13 @@ export class QueryFieldsWidget extends Widget
 		if (chg) QueryUtil.setQueryAtomCharges(mol, atom, chg);
 
 		let arom = this.optAromatic.getSelectedIndex();
-		if (arom > 0) 
+		if (arom > 0)
 			QueryUtil.setQueryAtomAromatic(mol, atom, arom == 1);
 		else
 			QueryUtil.deleteQueryAtom(mol, atom, QueryTypeAtom.Aromatic);
 
 		let unsat = this.optUnsaturated.getSelectedIndex();
-		if (unsat > 0) 
+		if (unsat > 0)
 			QueryUtil.setQueryAtomUnsaturated(mol, atom, unsat == 1);
 		else
 			QueryUtil.deleteQueryAtom(mol, atom, QueryTypeAtom.Unsaturated);
@@ -211,7 +211,7 @@ export class QueryFieldsWidget extends Widget
 		}
 
 		let ringblk = this.optRingBlock.getSelectedIndex();
-		if (ringblk > 0) 
+		if (ringblk > 0)
 			QueryUtil.setQueryAtomRingBlock(mol, atom, ringblk == 1);
 		else
 			QueryUtil.deleteQueryAtom(mol, atom, QueryTypeAtom.RingBlock);
@@ -235,7 +235,7 @@ export class QueryFieldsWidget extends Widget
 		if (hyd) QueryUtil.setQueryAtomHydrogens(mol, atom, hyd);
 
 		let whole = this.optWhole.getSelectedIndex();
-		if (whole > 0) 
+		if (whole > 0)
 			QueryUtil.setQueryAtomWhole(mol, atom, whole == 1);
 		else
 			QueryUtil.deleteQueryAtom(mol, atom, QueryTypeAtom.Whole);
