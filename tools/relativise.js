@@ -50,7 +50,7 @@ function convertSourceFile(sourceFN, alias, relpath)
 	let modified = false;
 	for (let n = 0; n < lines.length; n++)
 	{
-		if (!lines[n].startsWith('import')) continue;
+		if (!lines[n].startsWith('import') && !lines[n].includes('__importDefault(require')) continue;
 		let i = lines[n].indexOf(alias);
 		if (i < 0) continue;
 		if (!modified ) console.log('Modifying source file ' + sourceFN);
