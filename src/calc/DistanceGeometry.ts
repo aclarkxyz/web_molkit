@@ -10,11 +10,11 @@
 	[PKG=webmolkit]
 */
 
-import {EigenvalueDecomposition} from '@wmk/util/EigenvalueDecomposition';
-import {GeomUtil} from '@wmk/util/Geom';
-import {Matrix} from '@wmk/util/Matrix';
-import {sqr} from '@wmk/util/util';
-import {Vec} from '@wmk/util/Vec';
+import {EigenvalueDecomposition} from '../util/EigenvalueDecomposition';
+import {GeomUtil} from '../util/Geom';
+import {Matrix} from '../util/Matrix';
+import {sqr} from '../util/util';
+import {Vec} from '../util/Vec';
 
 /* eslint-disable @typescript-eslint/naming-convention */
 

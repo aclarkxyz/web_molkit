@@ -10,7 +10,6 @@
 	[PKG=webmolkit]
 */
 
-import {deepClone} from '@wmk/util/util';
 import {Vec} from '../util/Vec';
 import {Molecule} from './Molecule';
 

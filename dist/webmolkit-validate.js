@@ -5071,11 +5071,11 @@ CircularFingerprints.CLASS_ECFP6 = 3;
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.DistanceGeometry = void 0;
-const EigenvalueDecomposition_1 = __webpack_require__(/*! @wmk/util/EigenvalueDecomposition */ "./src/util/EigenvalueDecomposition.ts");
-const Geom_1 = __webpack_require__(/*! @wmk/util/Geom */ "./src/util/Geom.ts");
-const Matrix_1 = __webpack_require__(/*! @wmk/util/Matrix */ "./src/util/Matrix.ts");
-const util_1 = __webpack_require__(/*! @wmk/util/util */ "./src/util/util.ts");
-const Vec_1 = __webpack_require__(/*! @wmk/util/Vec */ "./src/util/Vec.ts");
+const EigenvalueDecomposition_1 = __webpack_require__(/*! ../util/EigenvalueDecomposition */ "./src/util/EigenvalueDecomposition.ts");
+const Geom_1 = __webpack_require__(/*! ../util/Geom */ "./src/util/Geom.ts");
+const Matrix_1 = __webpack_require__(/*! ../util/Matrix */ "./src/util/Matrix.ts");
+const util_1 = __webpack_require__(/*! ../util/util */ "./src/util/util.ts");
+const Vec_1 = __webpack_require__(/*! ../util/Vec */ "./src/util/Vec.ts");
 class DistanceGeometry {
     constructor(D) {
         this.D = D;
